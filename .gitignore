@@ -51,6 +51,11 @@ backend/app/*.db
 backend/app/*.sqlite
 backend/app/game_platform.db
 
+# Database utility scripts
+backend/register_*.py
+backend/update_*.py
+backend/*_game.py
+
 # Logs
 *.log
 logs/

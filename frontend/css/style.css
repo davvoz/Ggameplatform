@@ -9,21 +9,37 @@
 }
 
 :root {
-    /* Color Palette */
-    --primary-color: #6366f1;
-    --primary-dark: #4f46e5;
-    --primary-light: #818cf8;
-    --secondary-color: #ec4899;
-    --background: #0f172a;
-    --background-light: #1e293b;
-    --surface: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --border: #475569;
-    --success: #10b981;
+    /* Color Palette - CUR8 Theme */
+    --primary-color: #ff7518;
+    --primary-dark: #d95800;
+    --primary-light: #ff9248;
+    --secondary-color: #2ecc71;
+    --secondary-dark: #25a55b;
+    --background: #1a1a1a;
+    --background-light: #242424;
+    --background-lighter: #2e2e2e;
+    --surface: rgba(255, 255, 255, 0.03);
+    --surface-elevated: rgba(255, 255, 255, 0.05);
+    --text-primary: #e8e8e8;
+    --text-secondary: #b0b0b0;
+    --text-muted: #6c757d;
+    --border: rgba(255, 255, 255, 0.05);
+    --border-light: rgba(255, 255, 255, 0.1);
+    --success: #2ecc71;
     --warning: #f59e0b;
     --error: #ef4444;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #ff7518 0%, #ff9248 100%);
+    --gradient-secondary: linear-gradient(135deg, #2ecc71 0%, #54d98c 100%);
+    --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    --glow-primary: 0 0 20px rgba(255, 117, 24, 0.5);
     
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -37,15 +53,12 @@
     --radius-sm: 0.25rem;
     --radius-md: 0.5rem;
     --radius-lg: 1rem;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    --radius-xl: 1.5rem;
+    --radius-pill: 50rem;
     
     /* Transitions */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -79,12 +92,13 @@ main {
    ======================================== */
 
 .navbar {
-    background: var(--background-light);
+    background: rgba(26, 26, 26, 0.9);
     border-bottom: 1px solid var(--border);
     padding: var(--spacing-md) 0;
     position: sticky;
     top: 0;
     z-index: 1000;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -98,7 +112,10 @@ main {
 
 .nav-brand h1 {
     font-size: 1.5rem;
-    color: var(--primary-light);
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     font-weight: 700;
 }
 
@@ -209,18 +226,20 @@ main {
 /* Game Card */
 
 .game-card {
-    background: var(--background-light);
+    background: var(--surface);
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: var(--transition);
     cursor: pointer;
     border: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
 
 .game-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-8px);
     box-shadow: var(--shadow-xl);
-    border-color: var(--primary-color);
+    border-color: rgba(255, 117, 24, 0.3);
 }
 
 .game-thumbnail {
@@ -262,8 +281,8 @@ main {
 
 .play-btn {
     padding: var(--spacing-sm) var(--spacing-lg);
-    background: var(--primary-color);
-    color: white;
+    background: var(--gradient-primary);
+    color: var(--background);
     border: none;
     border-radius: var(--radius-md);
     font-size: 1rem;
@@ -273,8 +292,9 @@ main {
 }
 
 .play-btn:hover {
-    background: var(--primary-dark);
+    box-shadow: var(--glow-primary);
     transform: scale(1.05);
+    color: var(--background);
 }
 
 .game-info {

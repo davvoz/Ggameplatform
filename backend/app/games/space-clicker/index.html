@@ -277,16 +277,16 @@
             clicks++;
             clicksDisplay.textContent = clicks;
 
-            // Calculate points with combo
-            const points = pointsPerClick * combo;
+            // Calculate points with combo (arrotonda per evitare decimali)
+            const points = Math.floor(pointsPerClick * combo);
             score += points;
-            scoreDisplay.textContent = score;
+            scoreDisplay.textContent = Math.floor(score);
 
             // Send score to platform
-            PlatformSDK.sendScore(score, {
+            PlatformSDK.sendScore(Math.floor(score), {
                 clicks: clicks,
                 level: level,
-                combo: combo
+                combo: combo.toFixed(1)
             });
 
             // Increase combo
@@ -308,7 +308,7 @@
 
             // Show click message
             if (clicks % 10 === 0) {
-                showMessage(`🎉 ${clicks} clicks! Keep going!`);
+                showMessage(`🎉 ${clicks} clicks! Score: ${Math.floor(score)}`);
             }
         });
 
@@ -321,7 +321,7 @@
                 pointsPerClick++;
                 level++;
                 
-                scoreDisplay.textContent = score;
+                scoreDisplay.textContent = Math.floor(score);
                 levelDisplay.textContent = level;
                 
                 upgradeCost = Math.floor(upgradeCost * 1.5);
@@ -337,9 +337,9 @@
                 });
 
                 // Send updated score
-                PlatformSDK.sendScore(score);
+                PlatformSDK.sendScore(Math.floor(score));
             } else {
-                showMessage(`❌ Need ${upgradeCost - score} more points to upgrade!`);
+                showMessage(`❌ Need ${upgradeCost - Math.floor(score)} more points to upgrade!`);
             }
         });
 
@@ -347,7 +347,7 @@
         resetBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to reset the game?')) {
                 // Send game over
-                PlatformSDK.gameOver(score, {
+                PlatformSDK.gameOver(Math.floor(score), {
                     totalClicks: clicks,
                     finalLevel: level,
                     timePlayed: Math.floor(Date.now() / 1000)

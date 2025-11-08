@@ -4,7 +4,8 @@ from typing import Optional, List
 from app.database import (
     create_user, get_user_by_id, get_user_by_username, 
     authenticate_user, update_user_cur8, get_all_users,
-    create_game_session, end_game_session, get_user_sessions
+    create_game_session, end_game_session, get_user_sessions,
+    get_game_by_id
 )
 
 router = APIRouter()
@@ -186,6 +187,22 @@ async def get_user(user_id: str):
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Enrich game_scores with game titles
+    game_scores_enriched = []
+    if user.get('game_scores'):
+        for game_id, score in user['game_scores'].items():
+            game = get_game_by_id(game_id)
+            game_scores_enriched.append({
+                'game_id': game_id,
+                'game_title': game['title'] if game else 'Unknown Game',
+                'high_score': score,
+                'thumbnail': game.get('thumbnail', '') if game else ''
+            })
+        # Sort by score descending
+        game_scores_enriched.sort(key=lambda x: x['high_score'], reverse=True)
+    
+    user['game_scores_enriched'] = game_scores_enriched
     
     return {
         "success": True,

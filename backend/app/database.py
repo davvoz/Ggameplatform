@@ -48,6 +48,7 @@ def init_db():
             is_anonymous INTEGER DEFAULT 0,
             cur8_multiplier REAL DEFAULT 1.0,
             total_cur8_earned REAL DEFAULT 0.0,
+            game_scores TEXT DEFAULT '{}',
             avatar TEXT,
             created_at TEXT NOT NULL,
             last_login TEXT,
@@ -102,6 +103,30 @@ def init_db():
     
     conn.commit()
     conn.close()
+
+def migrate_add_game_scores():
+    """Add game_scores column to existing users table."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if column exists
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if 'game_scores' not in columns:
+            cursor.execute("""
+                ALTER TABLE users 
+                ADD COLUMN game_scores TEXT DEFAULT '{}'
+            """)
+            conn.commit()
+            print("✓ Added game_scores column to users table")
+        else:
+            print("✓ game_scores column already exists")
+    except Exception as e:
+        print(f"✗ Migration failed: {e}")
+    finally:
+        conn.close()
 
 def create_game(game_data: dict) -> dict:
     """Insert a new game into the database."""
@@ -278,11 +303,11 @@ def create_user(username: Optional[str] = None, email: Optional[str] = None,
         cursor.execute("""
             INSERT INTO users (
                 user_id, username, email, password_hash, is_anonymous,
-                cur8_multiplier, total_cur8_earned, created_at, last_login, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                cur8_multiplier, total_cur8_earned, game_scores, created_at, last_login, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             user_id, username, email, password_hash, is_anonymous,
-            cur8_multiplier, 0.0, now, now, json.dumps({})
+            cur8_multiplier, 0.0, json.dumps({}), now, now, json.dumps({})
         ))
         
         conn.commit()
@@ -318,6 +343,7 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
     if row:
         user = dict(row)
         user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['game_scores'] = json.loads(user['game_scores']) if user.get('game_scores') else {}
         user['is_anonymous'] = bool(user['is_anonymous'])
         # Non restituire password_hash
         user.pop('password_hash', None)
@@ -337,6 +363,7 @@ def get_user_by_username(username: str) -> Optional[dict]:
     if row:
         user = dict(row)
         user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['game_scores'] = json.loads(user['game_scores']) if user.get('game_scores') else {}
         user['is_anonymous'] = bool(user['is_anonymous'])
         return user
     
@@ -394,6 +421,7 @@ def get_all_users() -> List[dict]:
     for row in rows:
         user = dict(row)
         user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['game_scores'] = json.loads(user['game_scores']) if user.get('game_scores') else {}
         user['is_anonymous'] = bool(user['is_anonymous'])
         user.pop('password_hash', None)
         users.append(user)
@@ -436,7 +464,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
     
     # Get session info
     cursor.execute("""
-        SELECT gs.*, u.cur8_multiplier 
+        SELECT gs.*, u.cur8_multiplier, u.game_scores
         FROM game_sessions gs
         JOIN users u ON gs.user_id = u.user_id
         WHERE gs.session_id = ?
@@ -449,6 +477,23 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
     
     session = dict(row)
     multiplier = session['cur8_multiplier']
+    game_id = session['game_id']
+    user_id = session['user_id']
+    
+    # Parse current game scores
+    game_scores = json.loads(session['game_scores']) if session.get('game_scores') else {}
+    
+    # Update high score for this game if new score is higher
+    current_high_score = game_scores.get(game_id, 0)
+    if score > current_high_score:
+        game_scores[game_id] = score
+        
+        # Update user's game_scores in database
+        cursor.execute("""
+            UPDATE users 
+            SET game_scores = ?
+            WHERE user_id = ?
+        """, (json.dumps(game_scores), user_id))
     
     # Calculate CUR8 earned (score * multiplier * duration factor)
     base_cur8 = (score / 100) * multiplier
@@ -469,7 +514,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         UPDATE users 
         SET total_cur8_earned = total_cur8_earned + ?
         WHERE user_id = ?
-    """, (cur8_earned, session['user_id']))
+    """, (cur8_earned, user_id))
     
     conn.commit()
     conn.close()

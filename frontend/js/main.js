@@ -425,8 +425,24 @@ export async function renderProfile() {
         return;
     }
     
-    // Get user data
-    const user = window.AuthManager.getUser();
+    // Get user data from localStorage
+    const cachedUser = window.AuthManager.getUser();
+    
+    // Fetch fresh user data from server to get game_scores_enriched
+    let user = cachedUser;
+    try {
+        const response = await fetch(`http://localhost:8000/users/users/${cachedUser.user_id}`);
+        if (response.ok) {
+            const userData = await response.json();
+            user = userData.user;
+            console.log('Profile: dati utente aggiornati dal server:', user);
+        } else {
+            console.error('Failed to fetch user data:', response.status, response.statusText);
+        }
+    } catch (error) {
+        console.error('Error fetching fresh user data:', error);
+    }
+    
     console.log('Profile: dati utente completi:', user);
     
     // Carica le sessioni di gioco per calcolare le statistiche
@@ -573,7 +589,6 @@ export async function renderProfile() {
     // Usa le statistiche calcolate dalle sessioni
     profileContent.querySelector('#gamesPlayed').textContent = gamesPlayed;
     profileContent.querySelector('#totalPlayTime').textContent = totalPlayTime;
-    profileContent.querySelector('#highScore').textContent = highScore;
     profileContent.querySelector('#cur8Earned').textContent = `${totalCur8.toFixed(2)}`;
     
     // Set account settings
@@ -616,6 +631,33 @@ export async function renderProfile() {
                 <div class="activity-time">${activityDate.toLocaleDateString()} ${activityDate.toLocaleTimeString()}</div>
             `;
             activityList.appendChild(activityItem);
+        });
+    }
+    
+    // Popola i punteggi alti per gioco (questo va fatto DOPO aver aggiunto al DOM)
+    console.log('Profile: checking game_scores_enriched:', user.game_scores_enriched);
+    if (user.game_scores_enriched && user.game_scores_enriched.length > 0) {
+        const highScoresList = document.getElementById('highScoresList');
+        console.log('Profile: highScoresList element found:', highScoresList);
+        highScoresList.innerHTML = '';
+        
+        user.game_scores_enriched.forEach(gameScore => {
+            console.log('Profile: rendering game score:', gameScore);
+            const highScoreItem = document.createElement('div');
+            highScoreItem.className = 'high-score-item';
+            
+            const thumbnailHTML = gameScore.thumbnail 
+                ? `<img src="${gameScore.thumbnail}" alt="${gameScore.game_title}">` 
+                : '🎮';
+            
+            highScoreItem.innerHTML = `
+                <div class="high-score-game">
+                    <div class="high-score-thumbnail">${thumbnailHTML}</div>
+                    <div class="high-score-game-name">${gameScore.game_title}</div>
+                </div>
+                <div class="high-score-value">🏆 ${gameScore.high_score.toLocaleString()}</div>
+            `;
+            highScoresList.appendChild(highScoreItem);
         });
     }
     

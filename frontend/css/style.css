@@ -809,6 +809,73 @@ main {
     font-size: 0.85rem;
 }
 
+.high-scores-list {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid var(--border);
+}
+
+.high-score-item {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.high-score-item:hover {
+    background: rgba(255, 117, 24, 0.05);
+    transform: translateX(4px);
+}
+
+.high-score-item:last-child {
+    border-bottom: none;
+}
+
+.high-score-game {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+}
+
+.high-score-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    background: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 2px solid var(--border);
+}
+
+.high-score-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.high-score-game-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.high-score-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, rgba(255, 117, 24, 0.1), rgba(255, 146, 72, 0.1));
+    border-radius: 50rem;
+    border: 2px solid var(--primary-color);
+}
+
 .settings-section {
     background: var(--surface);
     border-radius: var(--radius-md);

@@ -16,20 +16,32 @@
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value" id="totalGames">-</div>
-                <div class="stat-label">Giochi Totali</div>
+                <div class="stat-label">Giochi</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalCategories">-</div>
-                <div class="stat-label">Categorie</div>
+                <div class="stat-value" id="totalUsers">-</div>
+                <div class="stat-label">Utenti</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalAuthors">-</div>
-                <div class="stat-label">Autori</div>
+                <div class="stat-value" id="totalSessions">-</div>
+                <div class="stat-label">Sessioni</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="dbSize">-</div>
-                <div class="stat-label">Records</div>
+                <div class="stat-value" id="totalAchievements">-</div>
+                <div class="stat-label">Achievement</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalLeaderboard">-</div>
+                <div class="stat-label">Leaderboard</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('games')">Giochi</button>
+            <button class="tab-btn" onclick="switchTab('users')">Utenti</button>
+            <button class="tab-btn" onclick="switchTab('sessions')">Sessioni</button>
+            <button class="tab-btn" onclick="switchTab('achievements')">Achievement</button>
+            <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
         </div>
         
         <div class="controls">
@@ -43,27 +55,107 @@
         
         <div class="table-container">
             <div id="loading" class="loading">Caricamento dati in corso...</div>
-            <table id="gamesTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Thumb</th>
-                        <th>ID</th>
-                        <th>Titolo</th>
-                        <th>Autore</th>
-                        <th>Versione</th>
-                        <th>Categoria</th>
-                        <th>Tags</th>
-                        <th>Data Creazione</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                </tbody>
-            </table>
+            
+            <!-- Games Table -->
+            <div id="gamesContainer" class="tab-content active">
+                <table id="gamesTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Thumb</th>
+                            <th>ID</th>
+                            <th>Titolo</th>
+                            <th>Autore</th>
+                            <th>Versione</th>
+                            <th>Categoria</th>
+                            <th>Play Count</th>
+                            <th>Data Creazione</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gamesTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Users Table -->
+            <div id="usersContainer" class="tab-content">
+                <table id="usersTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Steem</th>
+                            <th>Tipo</th>
+                            <th>CUR8 Totale</th>
+                            <th>Moltiplicatore</th>
+                            <th>Registrato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Sessions Table -->
+            <div id="sessionsContainer" class="tab-content">
+                <table id="sessionsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>User ID</th>
+                            <th>Game ID</th>
+                            <th>Score</th>
+                            <th>CUR8 Guadagnato</th>
+                            <th>Durata</th>
+                            <th>Inizio</th>
+                            <th>Fine</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionsTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Achievements Table -->
+            <div id="achievementsContainer" class="tab-content">
+                <table id="achievementsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Achievement ID</th>
+                            <th>User ID</th>
+                            <th>Game ID</th>
+                            <th>Titolo</th>
+                            <th>Descrizione</th>
+                            <th>Ottenuto il</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="achievementsTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Leaderboard Table -->
+            <div id="leaderboardContainer" class="tab-content">
+                <table id="leaderboardTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Posizione</th>
+                            <th>User ID</th>
+                            <th>Game ID</th>
+                            <th>Score</th>
+                            <th>CUR8 Guadagnato</th>
+                            <th>Data</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardTableBody"></tbody>
+                </table>
+            </div>
+            
             <div id="emptyState" class="empty" style="display: none;">
                 <div class="empty-icon">📋</div>
-                <h3>Nessun gioco nel database</h3>
-                <p>Registra il primo gioco per iniziare</p>
+                <h3>Nessun record nel database</h3>
+                <p>I dati verranno visualizzati qui quando disponibili</p>
             </div>
         </div>
     </div>

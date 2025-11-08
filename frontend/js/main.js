@@ -1,9 +1,25 @@
-import { fetchGames, fetchGameMetadata, getGameResourceUrl } from './api.js';
+import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay } from './api.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.js';
+import authManager from './authManager.js';
+
+// Make authManager globally available
+window.authManager = authManager;
 
 // Initialize router when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+        // Redirect to auth page if not on auth page
+        if (!window.location.pathname.includes('auth.html')) {
+            window.location.href = '/auth.html';
+            return;
+        }
+    } else {
+        // Show user banner
+        authManager.showUserBanner();
+    }
+    
     initRouter();
 });
 
@@ -212,6 +228,9 @@ export async function renderGamePlayer(params) {
     
     try {
         const game = await fetchGameMetadata(gameId);
+        
+        // Track game play (increment play count)
+        trackGamePlay(gameId);
         
         // Set player title
         document.querySelector('.player-title').textContent = game.title;

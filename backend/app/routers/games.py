@@ -12,7 +12,8 @@ from app.database import (
     get_all_games,
     get_game_by_id,
     update_game,
-    delete_game
+    delete_game,
+    increment_play_count
 )
 from app.models import Game
 
@@ -255,4 +256,39 @@ async def delete_game_endpoint(gameId: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to delete game: {str(e)}"
+        )
+
+@router.post(
+    "/{gameId}/play",
+    response_model=SuccessResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Game not found"}
+    }
+)
+async def track_game_play(gameId: str):
+    """
+    Increment the play count for a game.
+    
+    - **gameId**: The unique identifier of the game
+    """
+    try:
+        success = increment_play_count(gameId)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Game with ID '{gameId}' not found"
+            )
+        
+        return SuccessResponse(
+            success=True,
+            message="Play count incremented"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to track play: {str(e)}"
         )

@@ -116,11 +116,35 @@ export async function healthCheck() {
     }
 }
 
+/**
+ * Track game play (increment play count)
+ * @param {string} gameId - The game ID
+ * @returns {Promise<Object>} Response
+ */
+export async function trackGamePlay(gameId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/games/${gameId}/play`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error tracking game play:', error);
+        // Non bloccare il gioco se il tracking fallisce
+        return null;
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
     registerGame,
     getGameResourceUrl,
     getStaticResourceUrl,
-    healthCheck
+    healthCheck,
+    trackGamePlay
 };

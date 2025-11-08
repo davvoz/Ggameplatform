@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Platform - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .auth-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+        
+        .card.featured {
+            border: 2px solid #667eea;
+        }
+        
+        .card.featured::before {
+            height: 6px;
+        }
+        
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        
+        .card p {
+            color: #6c757d;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .benefits {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .benefits h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .benefits li {
+            padding: 6px 0;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .benefits li::before {
+            content: '✓ ';
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            display: none;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        .badge.recommended {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        
+        .multiplier {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 16px 0;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Game Platform</h1>
+            <p>Scegli come vuoi giocare</p>
+        </div>
+        
+        <div class="auth-cards">
+            <!-- Steem Keychain Auth -->
+            <div class="card featured">
+                <span class="badge recommended">⭐ Consigliato</span>
+                <div class="card-icon">🔐</div>
+                <h2>Accedi con Steem</h2>
+                <p>Autentica con SteemKeychain e sblocca i moltiplicatori CUR8</p>
+                
+                <div class="benefits">
+                    <h3>Vantaggi</h3>
+                    <ul>
+                        <li>Moltiplicatore CUR8 2.0x</li>
+                        <li>Identità blockchain verificata</li>
+                        <li>Progressi salvati permanentemente</li>
+                        <li>Accesso a rewards esclusivi</li>
+                        <li>Partecipazione a tornei</li>
+                    </ul>
+                </div>
+                
+                <div class="multiplier">
+                    💰 CUR8 Multiplier: 2.0x
+                </div>
+                
+                <button class="btn-primary" onclick="loginWithSteem()">
+                    Firma con Keychain
+                </button>
+                
+                <div id="steemStatus" class="status"></div>
+            </div>
+            
+            <!-- Anonymous Auth -->
+            <div class="card">
+                <div class="card-icon">👤</div>
+                <h2>Gioca Anonimo</h2>
+                <p>Inizia subito senza registrazione, ideale per provare i giochi</p>
+                
+                <div class="benefits">
+                    <h3>Caratteristiche</h3>
+                    <ul>
+                        <li>Accesso immediato</li>
+                        <li>Nessuna registrazione</li>
+                        <li>Privacy totale</li>
+                        <li>Perfetto per test rapidi</li>
+                    </ul>
+                </div>
+                
+                <div class="multiplier" style="background: #6c757d;">
+                    💰 CUR8 Multiplier: 1.0x
+                </div>
+                
+                <button class="btn-secondary" onclick="playAnonymous()">
+                    Gioca Subito
+                </button>
+                
+                <div id="anonStatus" class="status"></div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Hai già un account? <a href="/static/user-management.html">Gestisci utenti</a></p>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000/users';
+        
+        // Check if Steem Keychain is installed
+        function checkSteemKeychain() {
+            if (typeof window.steem_keychain === 'undefined') {
+                return false;
+            }
+            return true;
+        }
+        
+        // Login with Steem Keychain
+        async function loginWithSteem() {
+            const statusEl = document.getElementById('steemStatus');
+            
+            if (!checkSteemKeychain()) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = '❌ SteemKeychain non rilevato! <br><small>Installa l\'estensione da <a href="https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm" target="_blank">Chrome Web Store</a></small>';
+                statusEl.style.display = 'block';
+                return;
+            }
+            
+            statusEl.className = 'status info';
+            statusEl.innerHTML = '<span class="loading"></span>Richiesta username...';
+            statusEl.style.display = 'block';
+            
+            // Request username
+            const username = prompt('Inserisci il tuo username Steem:');
+            if (!username) {
+                statusEl.style.display = 'none';
+                return;
+            }
+            
+            // Create message to sign (username + timestamp)
+            const timestamp = Math.floor(Date.now() / 1000);
+            const message = `${username}|${timestamp}`;
+            
+            statusEl.innerHTML = '<span class="loading"></span>Attendi firma da Keychain...';
+            
+            // Request signature from Keychain
+            window.steem_keychain.requestSignBuffer(
+                username,
+                message,
+                'Posting',
+                async function(response) {
+                    if (response.success) {
+                        try {
+                            // Send to backend for verification
+                            statusEl.innerHTML = '<span class="loading"></span>Verifica firma in corso...';
+                            
+                            const authResponse = await fetch(`${API_BASE}/steem-auth`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: username,
+                                    signature: response.result,
+                                    message: message,
+                                    cur8_multiplier: 2.0
+                                })
+                            });
+                            
+                            const data = await authResponse.json();
+                            
+                            if (authResponse.ok) {
+                                statusEl.className = 'status success';
+                                statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | CUR8 Totale: ${data.user.total_cur8_earned}</small>`;
+                                
+                                // Save user to localStorage
+                                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                                localStorage.setItem('authMethod', 'steem_keychain');
+                                
+                                // Redirect to game platform after 2 seconds
+                                setTimeout(() => {
+                                    window.location.href = '/';
+                                }, 2000);
+                            } else {
+                                throw new Error(data.detail || 'Authentication failed');
+                            }
+                            
+                        } catch (error) {
+                            statusEl.className = 'status error';
+                            statusEl.innerHTML = `❌ Errore: ${error.message}`;
+                        }
+                    } else {
+                        statusEl.className = 'status error';
+                        statusEl.innerHTML = '❌ Firma rifiutata o fallita';
+                    }
+                }
+            );
+        }
+        
+        // Play Anonymous
+        async function playAnonymous() {
+            const statusEl = document.getElementById('anonStatus');
+            
+            statusEl.className = 'status info';
+            statusEl.innerHTML = '<span class="loading"></span>Creazione utente anonimo...';
+            statusEl.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_BASE}/anonymous`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cur8_multiplier: 1.0
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = `✓ ${data.message}<br><small>ID: ${data.user.user_id}</small>`;
+                    
+                    // Save user to localStorage
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('authMethod', 'anonymous');
+                    
+                    // Redirect to game platform after 1 second
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    throw new Error(data.detail || 'Failed to create anonymous user');
+                }
+                
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `❌ Errore: ${error.message}`;
+            }
+        }
+        
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                const user = JSON.parse(currentUser);
+                if (confirm(`Sei già autenticato come ${user.username || user.user_id}. Vuoi continuare?`)) {
+                    window.location.href = '/';
+                } else {
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('authMethod');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -38,7 +38,7 @@ h1 {
 
 .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1px;
     background: #e1e4e8;
     border: 1px solid #e1e4e8;
@@ -70,6 +70,47 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+.tabs {
+    background: white;
+    padding: 0 24px;
+    border-bottom: 2px solid #e1e4e8;
+    display: flex;
+    gap: 8px;
+}
+
+.tab-btn {
+    background: transparent;
+    color: #6c757d;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-radius: 0;
+}
+
+.tab-btn:hover {
+    background: #f8f9fa;
+    color: #2c3e50;
+    border-bottom-color: #dee2e6;
+}
+
+.tab-btn.active {
+    color: #0366d6;
+    border-bottom-color: #0366d6;
+    background: transparent;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 .controls {

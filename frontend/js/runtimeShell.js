@@ -50,6 +50,11 @@ export default class RuntimeShell {
             timeout: config.timeout || 30000
         };
         
+        // Game session tracking
+        this.sessionId = null;
+        this.sessionStartTime = null;
+        this.currentScore = 0;
+        
         // State management
         this.state = {
             isReady: false,
@@ -176,6 +181,9 @@ export default class RuntimeShell {
         this.state.isReady = true;
         this.log('Game is ready:', payload);
         
+        // Start game session tracking
+        this.startGameSession();
+        
         // Process queued messages
         this.processMessageQueue();
         
@@ -190,6 +198,7 @@ export default class RuntimeShell {
     handleScoreUpdate(payload) {
         if (payload && typeof payload.score === 'number') {
             this.state.score = payload.score;
+            this.currentScore = payload.score; // Track for session
             this.updateScoreDisplay(payload.score);
         }
     }
@@ -466,10 +475,156 @@ export default class RuntimeShell {
      * Clean up resources
      */
     cleanup() {
+        // End game session if active
+        if (this.sessionId) {
+            this.endGameSession();
+        }
+        
         window.removeEventListener('message', this.boundMessageHandler);
         this.eventHandlers.clear();
         this.messageQueue = [];
         this.log('RuntimeShell cleaned up');
+    }
+    
+    /**
+     * Start game session tracking
+     */
+    async startGameSession() {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                this.log('No user logged in, skipping session tracking');
+                return;
+            }
+            
+            const response = await fetch('http://localhost:8000/users/sessions/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: currentUser.user_id,
+                    game_id: this.gameId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.sessionId = data.session.session_id;
+                this.sessionStartTime = Date.now();
+                this.log('Game session started:', this.sessionId);
+            }
+        } catch (error) {
+            this.log('Failed to start game session:', error);
+        }
+    }
+    
+    /**
+     * End game session and send stats
+     */
+    async endGameSession() {
+        if (!this.sessionId) {
+            return;
+        }
+        
+        try {
+            const durationSeconds = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            
+            const response = await fetch('http://localhost:8000/users/sessions/end', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    score: this.currentScore,
+                    duration_seconds: durationSeconds
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.log('Game session ended:', data.session);
+                
+                // Update user's CUR8 in authManager
+                if (window.authManager) {
+                    window.authManager.updateCur8(data.session.cur8_earned);
+                }
+                
+                // Show CUR8 earned notification
+                this.showCur8Notification(data.session.cur8_earned);
+                
+                // Reset session
+                this.sessionId = null;
+                this.sessionStartTime = null;
+            }
+        } catch (error) {
+            this.log('Failed to end game session:', error);
+        }
+    }
+    
+    /**
+     * Show CUR8 earned notification
+     */
+    showCur8Notification(cur8Amount) {
+        const notification = document.createElement('div');
+        notification.className = 'cur8-notification';
+        notification.innerHTML = `
+            <div class="cur8-badge">
+                <span class="cur8-icon">💰</span>
+                <span class="cur8-amount">+${cur8Amount.toFixed(2)} CUR8</span>
+            </div>
+        `;
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .cur8-notification {
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                z-index: 10000;
+                animation: slideInRight 0.5s ease, fadeOut 0.5s ease 3.5s;
+            }
+            .cur8-badge {
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .cur8-icon {
+                font-size: 1.5em;
+            }
+            .cur8-amount {
+                font-size: 1.2em;
+                font-weight: bold;
+                color: #1a1a1a;
+            }
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(notification);
+        
+        // Remove after animation
+        setTimeout(() => {
+            notification.remove();
+            style.remove();
+        }, 4000);
     }
     
     /**

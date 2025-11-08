@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Optional, List, Dict
 import json
 from datetime import datetime
+import uuid
+import hashlib
 
 DATABASE_PATH = Path(__file__).parent / "game_platform.db"
 
@@ -17,6 +19,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Games table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS games (
             game_id TEXT PRIMARY KEY,
@@ -31,6 +34,69 @@ def init_db():
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             metadata TEXT
+        )
+    """)
+    
+    # Users table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id TEXT PRIMARY KEY,
+            username TEXT UNIQUE,
+            email TEXT UNIQUE,
+            password_hash TEXT,
+            steem_username TEXT UNIQUE,
+            is_anonymous INTEGER DEFAULT 0,
+            cur8_multiplier REAL DEFAULT 1.0,
+            total_cur8_earned REAL DEFAULT 0.0,
+            avatar TEXT,
+            created_at TEXT NOT NULL,
+            last_login TEXT,
+            metadata TEXT
+        )
+    """)
+    
+    # Game sessions table (tracks user gameplay)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS game_sessions (
+            session_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            game_id TEXT NOT NULL,
+            score INTEGER DEFAULT 0,
+            cur8_earned REAL DEFAULT 0.0,
+            duration_seconds INTEGER DEFAULT 0,
+            started_at TEXT NOT NULL,
+            ended_at TEXT,
+            metadata TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (game_id) REFERENCES games(game_id)
+        )
+    """)
+    
+    # User achievements table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_achievements (
+            achievement_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            game_id TEXT NOT NULL,
+            achievement_type TEXT NOT NULL,
+            achievement_value TEXT,
+            earned_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (game_id) REFERENCES games(game_id)
+        )
+    """)
+    
+    # Leaderboards table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS leaderboards (
+            entry_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            game_id TEXT NOT NULL,
+            score INTEGER NOT NULL,
+            rank INTEGER,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (game_id) REFERENCES games(game_id)
         )
     """)
     
@@ -149,3 +215,294 @@ def delete_game(game_id: str) -> bool:
     conn.close()
     
     return deleted
+
+def increment_play_count(game_id: str) -> bool:
+    """Increment the play count for a game."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get current metadata
+    cursor.execute("SELECT metadata FROM games WHERE game_id = ?", (game_id,))
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        return False
+    
+    metadata = json.loads(row['metadata']) if row['metadata'] else {}
+    current_count = metadata.get('playCount', 0)
+    metadata['playCount'] = current_count + 1
+    
+    # Update metadata
+    cursor.execute("""
+        UPDATE games SET metadata = ? WHERE game_id = ?
+    """, (json.dumps(metadata), game_id))
+    
+    conn.commit()
+    conn.close()
+    
+    return True
+
+# ============ USER MANAGEMENT ============
+
+def generate_anonymous_id() -> str:
+    """Generate a unique anonymous user ID."""
+    return f"anon_{uuid.uuid4().hex[:12]}"
+
+def hash_password(password: str) -> str:
+    """Hash a password using SHA-256."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_user(username: Optional[str] = None, email: Optional[str] = None, 
+                password: Optional[str] = None, cur8_multiplier: float = 1.0) -> dict:
+    """Create a new user (registered or anonymous)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    now = datetime.utcnow().isoformat()
+    
+    # Determina se è anonimo
+    is_anonymous = 1 if (username is None and email is None) else 0
+    
+    # Genera user_id
+    if is_anonymous:
+        user_id = generate_anonymous_id()
+        username = None
+        email = None
+        password_hash = None
+    else:
+        user_id = f"user_{uuid.uuid4().hex[:16]}"
+        password_hash = hash_password(password) if password else None
+    
+    try:
+        cursor.execute("""
+            INSERT INTO users (
+                user_id, username, email, password_hash, is_anonymous,
+                cur8_multiplier, total_cur8_earned, created_at, last_login, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            user_id, username, email, password_hash, is_anonymous,
+            cur8_multiplier, 0.0, now, now, json.dumps({})
+        ))
+        
+        conn.commit()
+        
+        user = {
+            'user_id': user_id,
+            'username': username,
+            'email': email,
+            'is_anonymous': bool(is_anonymous),
+            'cur8_multiplier': cur8_multiplier,
+            'total_cur8_earned': 0.0,
+            'created_at': now,
+            'last_login': now
+        }
+        
+        return user
+        
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        raise ValueError(f"User already exists: {str(e)}")
+    finally:
+        conn.close()
+
+def get_user_by_id(user_id: str) -> Optional[dict]:
+    """Retrieve a user by ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        user = dict(row)
+        user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['is_anonymous'] = bool(user['is_anonymous'])
+        # Non restituire password_hash
+        user.pop('password_hash', None)
+        return user
+    
+    return None
+
+def get_user_by_username(username: str) -> Optional[dict]:
+    """Retrieve a user by username."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        user = dict(row)
+        user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['is_anonymous'] = bool(user['is_anonymous'])
+        return user
+    
+    return None
+
+def authenticate_user(username: str, password: str) -> Optional[dict]:
+    """Authenticate a user with username and password."""
+    user = get_user_by_username(username)
+    
+    if user and user.get('password_hash') == hash_password(password):
+        # Update last login
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        now = datetime.utcnow().isoformat()
+        cursor.execute("UPDATE users SET last_login = ? WHERE user_id = ?", 
+                      (now, user['user_id']))
+        conn.commit()
+        conn.close()
+        
+        user.pop('password_hash', None)
+        return user
+    
+    return None
+
+def update_user_cur8(user_id: str, cur8_amount: float) -> Optional[dict]:
+    """Update user's total CUR8 earned."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE users 
+        SET total_cur8_earned = total_cur8_earned + ?
+        WHERE user_id = ?
+    """, (cur8_amount, user_id))
+    
+    conn.commit()
+    conn.close()
+    
+    return get_user_by_id(user_id)
+
+def get_all_users() -> List[dict]:
+    """Retrieve all users (excluding anonymous)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT * FROM users 
+        WHERE is_anonymous = 0 
+        ORDER BY created_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    users = []
+    for row in rows:
+        user = dict(row)
+        user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
+        user['is_anonymous'] = bool(user['is_anonymous'])
+        user.pop('password_hash', None)
+        users.append(user)
+    
+    return users
+
+# ============ GAME SESSIONS ============
+
+def create_game_session(user_id: str, game_id: str) -> dict:
+    """Create a new game session."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    now = datetime.utcnow().isoformat()
+    session_id = f"session_{uuid.uuid4().hex[:16]}"
+    
+    cursor.execute("""
+        INSERT INTO game_sessions (
+            session_id, user_id, game_id, score, cur8_earned,
+            duration_seconds, started_at, metadata
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (session_id, user_id, game_id, 0, 0.0, 0, now, json.dumps({})))
+    
+    conn.commit()
+    conn.close()
+    
+    return {
+        'session_id': session_id,
+        'user_id': user_id,
+        'game_id': game_id,
+        'score': 0,
+        'cur8_earned': 0.0,
+        'started_at': now
+    }
+
+def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict:
+    """End a game session and calculate CUR8 earned."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get session info
+    cursor.execute("""
+        SELECT gs.*, u.cur8_multiplier 
+        FROM game_sessions gs
+        JOIN users u ON gs.user_id = u.user_id
+        WHERE gs.session_id = ?
+    """, (session_id,))
+    
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+    
+    session = dict(row)
+    multiplier = session['cur8_multiplier']
+    
+    # Calculate CUR8 earned (score * multiplier * duration factor)
+    base_cur8 = (score / 100) * multiplier
+    time_bonus = (duration_seconds / 60) * 0.1  # Bonus for time played
+    cur8_earned = round(base_cur8 + time_bonus, 2)
+    
+    now = datetime.utcnow().isoformat()
+    
+    # Update session
+    cursor.execute("""
+        UPDATE game_sessions 
+        SET score = ?, cur8_earned = ?, duration_seconds = ?, ended_at = ?
+        WHERE session_id = ?
+    """, (score, cur8_earned, duration_seconds, now, session_id))
+    
+    # Update user's total CUR8
+    cursor.execute("""
+        UPDATE users 
+        SET total_cur8_earned = total_cur8_earned + ?
+        WHERE user_id = ?
+    """, (cur8_earned, session['user_id']))
+    
+    conn.commit()
+    conn.close()
+    
+    return {
+        'session_id': session_id,
+        'score': score,
+        'cur8_earned': cur8_earned,
+        'duration_seconds': duration_seconds,
+        'ended_at': now
+    }
+
+def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:
+    """Get user's game sessions."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT gs.*, g.title as game_title
+        FROM game_sessions gs
+        JOIN games g ON gs.game_id = g.game_id
+        WHERE gs.user_id = ?
+        ORDER BY gs.started_at DESC
+        LIMIT ?
+    """, (user_id, limit))
+    
+    rows = cursor.fetchall()
+    conn.close()
+    
+    sessions = []
+    for row in rows:
+        session = dict(row)
+        session['metadata'] = json.loads(session['metadata']) if session['metadata'] else {}
+        sessions.append(session)
+    
+    return sessions

@@ -6,6 +6,7 @@
     <meta name="description" content="HTML5 Game Platform - Play amazing browser games">
     <title>HTML5 Game Platform</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -18,6 +19,12 @@
                 <a href="#/" class="nav-link active" data-route="/">Games</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
                 <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
+                <button id="loginBtn" class="btn-login">Login / Register</button>
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <span id="userName"></span>
+                    <span id="userCur8" class="cur8-badge"></span>
+                    <button id="logoutBtn" class="btn-logout">Logout</button>
+                </div>
             </div>
         </div>
     </nav>
@@ -159,7 +166,70 @@
         </div>
     </template>
 
+    <!-- Login/Register Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Welcome to Game Platform</h2>
+            
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="steem">Steem Keychain</button>
+                <button class="tab-btn" data-tab="anonymous">Play Anonymous</button>
+            </div>
+            
+            <!-- Steem Keychain Tab -->
+            <div id="steem-tab" class="tab-content active">
+                <div class="auth-info">
+                    <p>🔐 Login with Steem Keychain for enhanced rewards!</p>
+                    <ul class="benefits-list">
+                        <li>✅ Custom CUR8 multipliers</li>
+                        <li>✅ Track your progress and scores</li>
+                        <li>✅ Compete in leaderboards</li>
+                        <li>✅ Earn more CUR8 tokens</li>
+                    </ul>
+                </div>
+                
+                <div class="form-group">
+                    <label>Steem Username</label>
+                    <input type="text" id="steemUsername" placeholder="Enter your @username">
+                </div>
+                
+                <div class="form-group">
+                    <label>CUR8 Multiplier (1.0 - 5.0)</label>
+                    <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1">
+                    <small>Higher multipliers = more CUR8 earned per game!</small>
+                </div>
+                
+                <button id="keychainLoginBtn" class="btn-primary">
+                    🔑 Login with Keychain
+                </button>
+                
+                <div id="keychainStatus" class="status-message"></div>
+            </div>
+            
+            <!-- Anonymous Tab -->
+            <div id="anonymous-tab" class="tab-content">
+                <div class="auth-info">
+                    <p>👤 Play as a guest without registration</p>
+                    <ul class="benefits-list">
+                        <li>⚠️ No CUR8 multipliers (1.0x only)</li>
+                        <li>⚠️ Progress not saved permanently</li>
+                        <li>✅ Instant play, no account needed</li>
+                        <li>✅ Still earn basic CUR8</li>
+                    </ul>
+                </div>
+                
+                <button id="anonymousBtn" class="btn-secondary">
+                    🎮 Play as Anonymous
+                </button>
+                
+                <div id="anonymousStatus" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="/js/auth.js"></script>
     <script type="module" src="/js/main.js"></script>
 </body>
 </html>

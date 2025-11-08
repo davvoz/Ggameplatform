@@ -1,132 +1,298 @@
-let allGames = [];
+const API_BASE = '/admin';
+let allData = {};
+let currentTab = 'games';
 
-async function loadGames() {
+// Load data on page load
+window.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+    const loading = document.getElementById('loading');
+    loading.style.display = 'block';
+    
     try {
-        const response = await fetch('/admin/db-stats');
-        const data = await response.json();
-        allGames = data.games;
-        updateStats(data);
-        displayGames(allGames);
+        const response = await fetch(`${API_BASE}/db-stats`);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        
+        allData = await response.json();
+        
+        // Update stats
+        document.getElementById('totalGames').textContent = allData.total_games || 0;
+        document.getElementById('totalUsers').textContent = allData.total_users || 0;
+        document.getElementById('totalSessions').textContent = allData.total_sessions || 0;
+        document.getElementById('totalAchievements').textContent = allData.total_achievements || 0;
+        document.getElementById('totalLeaderboard').textContent = allData.total_leaderboard_entries || 0;
+        
+        // Display current tab data
+        displayCurrentTab();
+        
     } catch (error) {
-        console.error('Error loading games:', error);
-        alert('Errore nel caricamento dei dati');
+        console.error('Error loading data:', error);
+        alert('Errore nel caricamento dei dati: ' + error.message);
+    } finally {
+        loading.style.display = 'none';
     }
 }
 
-function updateStats(data) {
-    document.getElementById('totalGames').textContent = data.total_games;
-    document.getElementById('totalCategories').textContent = data.total_categories;
-    document.getElementById('totalAuthors').textContent = data.total_authors;
-    document.getElementById('dbSize').textContent = data.total_games;
+function switchTab(tab) {
+    currentTab = tab;
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tab}Container`).classList.add('active');
+    
+    // Display data
+    displayCurrentTab();
 }
 
-function displayGames(games) {
-    const loading = document.getElementById('loading');
+function displayCurrentTab() {
+    switch(currentTab) {
+        case 'games':
+            displayGames();
+            break;
+        case 'users':
+            displayUsers();
+            break;
+        case 'sessions':
+            displaySessions();
+            break;
+        case 'achievements':
+            displayAchievements();
+            break;
+        case 'leaderboard':
+            displayLeaderboard();
+            break;
+    }
+}
+
+function displayGames() {
     const table = document.getElementById('gamesTable');
-    const empty = document.getElementById('emptyState');
-    const tbody = document.getElementById('tableBody');
+    const tbody = document.getElementById('gamesTableBody');
+    const emptyState = document.getElementById('emptyState');
     
-    loading.style.display = 'none';
+    const games = allData.games || [];
     
     if (games.length === 0) {
         table.style.display = 'none';
-        empty.style.display = 'block';
+        emptyState.style.display = 'flex';
         return;
     }
     
+    emptyState.style.display = 'none';
     table.style.display = 'table';
-    empty.style.display = 'none';
+    tbody.innerHTML = '';
     
-    tbody.innerHTML = games.map(game => `
-        <tr>
-            <td>
-                ${game.thumbnail ? 
-                    `<img src="${game.thumbnail}" class="thumbnail" alt="${game.title}">` :
-                    `<div class="thumbnail" style="background: #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 1.2em;">—</div>`
-                }
-            </td>
-            <td><span class="badge">${game.game_id}</span></td>
-            <td><strong>${game.title}</strong></td>
-            <td>${game.author || '—'}</td>
-            <td>${game.version}</td>
-            <td><span class="tag">${game.category}</span></td>
-            <td>
-                <div class="tags">
-                    ${game.tags.length > 0 ? game.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '—'}
-                </div>
-            </td>
-            <td>${formatDate(game.created_at)}</td>
-            <td>
-                <div class="actions">
-                    <button class="btn-small btn-view" onclick="viewDetails('${game.game_id}')">Visualizza</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('it-IT', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }) + ' ' + date.toLocaleTimeString('it-IT', {
-        hour: '2-digit',
-        minute: '2-digit'
+    games.forEach(game => {
+        const row = tbody.insertRow();
+        
+        // Thumbnail
+        const thumbCell = row.insertCell();
+        const thumb = document.createElement('img');
+        thumb.src = game.thumbnail || 'https://via.placeholder.com/60';
+        thumb.style.width = '60px';
+        thumb.style.height = '45px';
+        thumb.style.objectFit = 'cover';
+        thumb.style.borderRadius = '4px';
+        thumbCell.appendChild(thumb);
+        
+        // Data cells
+        row.insertCell().textContent = game.game_id;
+        row.insertCell().textContent = game.title;
+        row.insertCell().textContent = game.author || '-';
+        row.insertCell().textContent = game.version || '1.0.0';
+        row.insertCell().textContent = game.category || '-';
+        row.insertCell().textContent = game.metadata?.playCount || 0;
+        row.insertCell().textContent = formatDate(game.created_at);
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showDetails('Game', game);
+        actionsCell.appendChild(viewBtn);
     });
 }
 
-function viewDetails(gameId) {
-    const game = allGames.find(g => g.game_id === gameId);
-    if (!game) return;
+function displayUsers() {
+    const table = document.getElementById('usersTable');
+    const tbody = document.getElementById('usersTableBody');
+    const emptyState = document.getElementById('emptyState');
     
+    const users = allData.users || [];
+    
+    if (users.length === 0) {
+        table.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    table.style.display = 'table';
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = tbody.insertRow();
+        
+        row.insertCell().textContent = user.user_id;
+        row.insertCell().textContent = user.username || '-';
+        row.insertCell().textContent = user.email || '-';
+        row.insertCell().textContent = user.steem_username || '-';
+        row.insertCell().textContent = user.is_anonymous ? 'Anonimo' : 'Registrato';
+        row.insertCell().textContent = (user.total_cur8_earned || 0).toFixed(2);
+        row.insertCell().textContent = (user.cur8_multiplier || 1.0).toFixed(1) + 'x';
+        row.insertCell().textContent = formatDate(user.created_at);
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showDetails('User', user);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function displaySessions() {
+    const table = document.getElementById('sessionsTable');
+    const tbody = document.getElementById('sessionsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    const sessions = allData.sessions || [];
+    
+    if (sessions.length === 0) {
+        table.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    table.style.display = 'table';
+    tbody.innerHTML = '';
+    
+    sessions.forEach(session => {
+        const row = tbody.insertRow();
+        
+        row.insertCell().textContent = session.session_id;
+        row.insertCell().textContent = session.user_id;
+        row.insertCell().textContent = session.game_id;
+        row.insertCell().textContent = session.final_score || '-';
+        row.insertCell().textContent = session.cur8_earned ? session.cur8_earned.toFixed(2) : '-';
+        row.insertCell().textContent = session.duration_seconds ? formatDuration(session.duration_seconds) : '-';
+        row.insertCell().textContent = formatDate(session.started_at);
+        row.insertCell().textContent = session.ended_at ? formatDate(session.ended_at) : 'In corso';
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showDetails('Session', session);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function displayAchievements() {
+    const table = document.getElementById('achievementsTable');
+    const tbody = document.getElementById('achievementsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    const achievements = allData.achievements || [];
+    
+    if (achievements.length === 0) {
+        table.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    table.style.display = 'table';
+    tbody.innerHTML = '';
+    
+    achievements.forEach(achievement => {
+        const row = tbody.insertRow();
+        
+        row.insertCell().textContent = achievement.achievement_id;
+        row.insertCell().textContent = achievement.user_id;
+        row.insertCell().textContent = achievement.game_id;
+        row.insertCell().textContent = achievement.achievement_title || '-';
+        row.insertCell().textContent = achievement.achievement_description || '-';
+        row.insertCell().textContent = formatDate(achievement.earned_at);
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showDetails('Achievement', achievement);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function displayLeaderboard() {
+    const table = document.getElementById('leaderboardTable');
+    const tbody = document.getElementById('leaderboardTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    const leaderboard = allData.leaderboard || [];
+    
+    if (leaderboard.length === 0) {
+        table.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    table.style.display = 'table';
+    tbody.innerHTML = '';
+    
+    leaderboard.forEach((entry, index) => {
+        const row = tbody.insertRow();
+        
+        // Position with medal emoji
+        const posCell = row.insertCell();
+        let posText = index + 1;
+        if (index === 0) posText = '🥇 1';
+        else if (index === 1) posText = '🥈 2';
+        else if (index === 2) posText = '🥉 3';
+        posCell.textContent = posText;
+        
+        row.insertCell().textContent = entry.user_id;
+        row.insertCell().textContent = entry.game_id;
+        row.insertCell().textContent = entry.score || 0;
+        row.insertCell().textContent = entry.cur8_earned ? entry.cur8_earned.toFixed(2) : '-';
+        row.insertCell().textContent = formatDate(entry.created_at);
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showDetails('Leaderboard Entry', entry);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function showDetails(type, data) {
     const modal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
     
-    modalBody.innerHTML = `
-        <div class="detail-grid">
-            <div class="detail-label">ID Gioco</div>
-            <div class="detail-value"><code>${game.game_id}</code></div>
-            
-            <div class="detail-label">Titolo</div>
-            <div class="detail-value"><strong>${game.title}</strong></div>
-            
-            <div class="detail-label">Descrizione</div>
-            <div class="detail-value">${game.description || '—'}</div>
-            
-            <div class="detail-label">Autore</div>
-            <div class="detail-value">${game.author || '—'}</div>
-            
-            <div class="detail-label">Versione</div>
-            <div class="detail-value">${game.version}</div>
-            
-            <div class="detail-label">Entry Point</div>
-            <div class="detail-value"><code>${game.entry_point}</code></div>
-            
-            <div class="detail-label">Categoria</div>
-            <div class="detail-value">${game.category}</div>
-            
-            <div class="detail-label">Tags</div>
-            <div class="detail-value">${game.tags.length > 0 ? game.tags.join(', ') : '—'}</div>
-            
-            <div class="detail-label">Data Creazione</div>
-            <div class="detail-value">${new Date(game.created_at).toLocaleString('it-IT')}</div>
-            
-            <div class="detail-label">Ultimo Aggiornamento</div>
-            <div class="detail-value">${new Date(game.updated_at).toLocaleString('it-IT')}</div>
-            
-            <div class="detail-label">Thumbnail</div>
-            <div class="detail-value">${game.thumbnail ? `<img src="${game.thumbnail}" style="max-width: 200px; border-radius: 4px; border: 1px solid #e1e4e8;">` : '—'}</div>
-            
-            <div class="detail-label">Metadata</div>
-            <div class="detail-value">
-                <div class="json-view">${JSON.stringify(game.metadata, null, 2)}</div>
-            </div>
-        </div>
-    `;
+    modalTitle.textContent = `Dettagli ${type}`;
     
-    modal.style.display = 'block';
+    // Format JSON data
+    const formatted = JSON.stringify(data, null, 2);
+    modalBody.innerHTML = `<pre style="overflow: auto; max-height: 500px; background: #f6f8fa; padding: 16px; border-radius: 4px;">${formatted}</pre>`;
+    
+    modal.style.display = 'flex';
 }
 
 function closeModal() {
@@ -134,57 +300,146 @@ function closeModal() {
 }
 
 function refreshData() {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('gamesTable').style.display = 'none';
-    loadGames();
+    loadData();
 }
 
-function exportData() {
-    const dataStr = JSON.stringify(allGames, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `games_export_${new Date().toISOString()}.json`;
-    link.click();
+async function exportData() {
+    try {
+        const response = await fetch(`${API_BASE}/db-export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const data = await response.json();
+        
+        // Download as JSON
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `database-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Errore durante l\'export: ' + error.message);
+    }
 }
 
 function exportCSV() {
-    const headers = ['game_id', 'title', 'author', 'version', 'category', 'entry_point', 'created_at'];
-    const csv = [
-        headers.join(','),
-        ...allGames.map(game => 
-            headers.map(h => JSON.stringify(game[h] || '')).join(',')
-        )
-    ].join('\n');
+    const data = getCurrentTabData();
+    if (!data || data.length === 0) {
+        alert('Nessun dato da esportare');
+        return;
+    }
     
-    const blob = new Blob([csv], {type: 'text/csv'});
+    // Get headers from first object
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV content
+    let csv = headers.join(',') + '\n';
+    
+    data.forEach(row => {
+        const values = headers.map(header => {
+            let value = row[header];
+            
+            // Handle objects and arrays
+            if (typeof value === 'object' && value !== null) {
+                value = JSON.stringify(value);
+            }
+            
+            // Escape quotes and wrap in quotes if contains comma
+            if (value && (value.toString().includes(',') || value.toString().includes('"'))) {
+                value = '"' + value.toString().replace(/"/g, '""') + '"';
+            }
+            
+            return value || '';
+        });
+        csv += values.join(',') + '\n';
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `games_export_${new Date().toISOString()}.csv`;
-    link.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentTab}-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function getCurrentTabData() {
+    switch(currentTab) {
+        case 'games': return allData.games;
+        case 'users': return allData.users;
+        case 'sessions': return allData.sessions;
+        case 'achievements': return allData.achievements;
+        case 'leaderboard': return allData.leaderboard;
+        default: return [];
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleString('it-IT', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatDuration(seconds) {
+    if (!seconds) return '0s';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 }
 
 // Search functionality
 document.getElementById('searchInput').addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
-    const filtered = allGames.filter(game => 
-        game.title.toLowerCase().includes(searchTerm) ||
-        game.game_id.toLowerCase().includes(searchTerm) ||
-        game.author.toLowerCase().includes(searchTerm) ||
-        game.category.toLowerCase().includes(searchTerm)
-    );
-    displayGames(filtered);
+    const data = getCurrentTabData();
+    
+    if (!searchTerm) {
+        displayCurrentTab();
+        return;
+    }
+    
+    // Filter data based on search term
+    const filtered = data.filter(item => {
+        return Object.values(item).some(value => {
+            if (value === null || value === undefined) return false;
+            return value.toString().toLowerCase().includes(searchTerm);
+        });
+    });
+    
+    // Update allData with filtered results temporarily
+    const originalData = { ...allData };
+    allData[getCurrentTabKey()] = filtered;
+    displayCurrentTab();
+    
+    // If search is cleared, restore original data
+    if (!searchTerm) {
+        allData = originalData;
+    }
 });
 
-// Close modal on click outside
+function getCurrentTabKey() {
+    const keyMap = {
+        'games': 'games',
+        'users': 'users',
+        'sessions': 'sessions',
+        'achievements': 'achievements',
+        'leaderboard': 'leaderboard'
+    };
+    return keyMap[currentTab];
+}
+
+// Close modal on outside click
 window.onclick = function(event) {
     const modal = document.getElementById('detailModal');
     if (event.target === modal) {
         closeModal();
     }
 }
-
-// Load data on page load
-loadGames();

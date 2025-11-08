@@ -2,6 +2,64 @@ import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay, getUs
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.js';
 
+/**
+ * Fetch Steem user profile data
+ */
+async function fetchSteemProfile(username) {
+    console.log('Fetching Steem profile for:', username);
+    try {
+        const response = await fetch('https://api.steemit.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'condenser_api.get_accounts',
+                params: [[username]],
+                id: 1
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Steem API response:', data);
+            
+            if (data.result && data.result.length > 0) {
+                const account = data.result[0];
+                console.log('Account data:', account);
+                
+                let metadata = {};
+                try {
+                    // Try posting_json_metadata first (newer format)
+                    if (account.posting_json_metadata) {
+                        metadata = JSON.parse(account.posting_json_metadata);
+                    } else if (account.json_metadata) {
+                        metadata = JSON.parse(account.json_metadata);
+                    }
+                    console.log('Parsed metadata:', metadata);
+                } catch (e) {
+                    console.warn('Failed to parse Steem metadata:', e);
+                }
+                
+                const profile = {
+                    profileImage: metadata.profile?.profile_image || '',
+                    coverImage: metadata.profile?.cover_image || '',
+                    about: metadata.profile?.about || '',
+                    location: metadata.profile?.location || '',
+                    website: metadata.profile?.website || ''
+                };
+                
+                console.log('Extracted profile:', profile);
+                return profile;
+            }
+        } else {
+            console.error('Steem API error:', response.status, response.statusText);
+        }
+    } catch (error) {
+        console.error('Error fetching Steem profile:', error);
+    }
+    return null;
+}
+
 // Initialize router when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication - use window.AuthManager defined in auth.js
@@ -429,21 +487,67 @@ export async function renderProfile() {
     
     // IMPORTANTE: Popola i dati NEL clone PRIMA di aggiungerlo al DOM
     
-    // Set avatar icon based on user type
-    let avatarEmoji = '🎮';
-    if (user.is_anonymous) {
-        avatarEmoji = '👤';
-    } else if (user.steemUsername) {
-        avatarEmoji = '⚡';
+    // Fetch Steem profile data if user has Steem account
+    let steemProfile = null;
+    let steemUsername = user.steemUsername || user.steem_username;
+    
+    // Se non c'è il campo steem, ma l'email finisce con @steem.local, estrai lo username
+    if (!steemUsername && user.email && user.email.endsWith('@steem.local')) {
+        steemUsername = user.email.replace('@steem.local', '');
     }
-    profileContent.querySelector('.avatar-icon').textContent = avatarEmoji;
+    
+    // Oppure usa direttamente lo username se sembra un account Steem
+    if (!steemUsername && user.username && !user.is_anonymous) {
+        steemUsername = user.username;
+    }
+    
+    if (steemUsername) {
+        console.log('User has Steem account:', steemUsername);
+        steemProfile = await fetchSteemProfile(steemUsername);
+        console.log('Profile: Steem data fetched:', steemProfile);
+    } else {
+        console.log('User does not have Steem account. User object:', user);
+    }
+    
+    // Set avatar and background
+    const profileHeader = profileContent.querySelector('.profile-header');
+    const avatarCircle = profileContent.querySelector('.avatar-circle');
+    const avatarIcon = profileContent.querySelector('.avatar-icon');
+    
+    if (steemProfile && steemProfile.profileImage) {
+        // Use Steem profile image
+        avatarIcon.style.backgroundImage = `url(${steemProfile.profileImage})`;
+        avatarIcon.style.backgroundSize = 'cover';
+        avatarIcon.style.backgroundPosition = 'center';
+        avatarIcon.style.width = '100%';
+        avatarIcon.style.height = '100%';
+        avatarIcon.textContent = ''; // Remove emoji
+        avatarCircle.style.background = 'transparent';
+        avatarCircle.style.border = '4px solid rgba(255, 255, 255, 0.8)';
+    } else {
+        // Use emoji based on user type
+        let avatarEmoji = '🎮';
+        if (user.is_anonymous) {
+            avatarEmoji = '👤';
+        } else if (steemUsername) {
+            avatarEmoji = '⚡';
+        }
+        avatarIcon.textContent = avatarEmoji;
+    }
+    
+    // Set header background
+    if (steemProfile && steemProfile.coverImage) {
+        profileHeader.style.backgroundImage = `url(${steemProfile.coverImage})`;
+        profileHeader.style.backgroundSize = 'cover';
+        profileHeader.style.backgroundPosition = 'center';
+    }
     
     // Set username
     let displayName = '';
     if (user.is_anonymous) {
         displayName = `Guest #${user.user_id.slice(-6)}`;
-    } else if (user.steemUsername) {
-        displayName = user.steemUsername;
+    } else if (steemUsername) {
+        displayName = steemUsername;
     } else {
         displayName = user.username || 'User';
     }
@@ -454,7 +558,7 @@ export async function renderProfile() {
     let userTypeText = '🎮 Registered Player';
     if (user.is_anonymous) {
         userTypeText = '👤 Anonymous Player';
-    } else if (user.steemUsername) {
+    } else if (steemUsername) {
         userTypeText = '⚡ Steem Verified Player';
     }
     profileContent.querySelector('.profile-type').textContent = userTypeText;
@@ -478,7 +582,7 @@ export async function renderProfile() {
     let accountTypeText = 'Standard Account';
     if (user.is_anonymous) {
         accountTypeText = 'Anonymous (Guest)';
-    } else if (user.steemUsername) {
+    } else if (steemUsername) {
         accountTypeText = 'Steem Keychain';
     }
     profileContent.querySelector('#accountType').textContent = accountTypeText;

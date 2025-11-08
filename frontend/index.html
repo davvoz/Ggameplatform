@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="HTML5 Game Platform - Play amazing browser games">
     <title>HTML5 Game Platform</title>
-    <link rel="stylesheet" href="/css/style.css?v=9">
+    <link rel="stylesheet" href="/css/style.css?v=11">
     <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
@@ -15,16 +15,21 @@
             <div class="nav-brand">
                 <h1>🎮 Game Platform</h1>
             </div>
-            <div class="nav-menu">
-                <a href="#/" class="nav-link active" data-route="/">Games</a>
-                <a href="#/about" class="nav-link" data-route="/about">About</a>
-                <a href="#/profile" class="nav-link" data-route="/profile" id="profileLink" style="display: none;">👤 Profile</a>
-                <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-menu" id="navMenu">
                 <div id="userInfo" class="user-info" style="display: none;">
                     <span id="userName"></span>
                     <span id="userCur8" class="cur8-badge"></span>
                     <button id="logoutBtn" class="btn-logout">Logout</button>
                 </div>
+                <a href="#/" class="nav-link active" data-route="/">Games</a>
+                <a href="#/about" class="nav-link" data-route="/about">About</a>
+                <a href="#/profile" class="nav-link" data-route="/profile" id="profileLink" style="display: none;">👤 Profile</a>
+                <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
             </div>
         </div>
     </nav>
@@ -315,6 +320,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="/js/nav.js?v=2"></script>
     <script src="/js/auth.js?v=11"></script>
     <script type="module" src="/js/main.js?v=11"></script>
 </body>

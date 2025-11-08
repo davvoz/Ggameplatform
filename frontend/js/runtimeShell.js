@@ -474,10 +474,10 @@ export default class RuntimeShell {
     /**
      * Clean up resources
      */
-    cleanup() {
+    cleanup(useBeacon = false) {
         // End game session if active
         if (this.sessionId) {
-            this.endGameSession();
+            this.endGameSession(useBeacon);
         }
         
         window.removeEventListener('message', this.boundMessageHandler);
@@ -521,7 +521,7 @@ export default class RuntimeShell {
     /**
      * End game session and send stats
      */
-    async endGameSession() {
+    async endGameSession(useBeacon = false) {
         if (!this.sessionId) {
             return;
         }
@@ -529,14 +529,27 @@ export default class RuntimeShell {
         try {
             const durationSeconds = Math.floor((Date.now() - this.sessionStartTime) / 1000);
             
+            const payload = {
+                session_id: this.sessionId,
+                score: this.currentScore,
+                duration_seconds: durationSeconds
+            };
+            
+            // Use sendBeacon for page unload (more reliable)
+            if (useBeacon && navigator.sendBeacon) {
+                const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                navigator.sendBeacon('http://localhost:8000/users/sessions/end', blob);
+                this.log('Game session ended via beacon');
+                this.sessionId = null;
+                this.sessionStartTime = null;
+                return;
+            }
+            
+            // Regular fetch for normal game end
             const response = await fetch('http://localhost:8000/users/sessions/end', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: this.sessionId,
-                    score: this.currentScore,
-                    duration_seconds: durationSeconds
-                })
+                body: JSON.stringify(payload)
             });
             
             const data = await response.json();
@@ -549,8 +562,10 @@ export default class RuntimeShell {
                     window.authManager.updateCur8(data.session.cur8_earned);
                 }
                 
-                // Show CUR8 earned notification
-                this.showCur8Notification(data.session.cur8_earned);
+                // Show CUR8 earned notification (only for normal end, not beacon)
+                if (!useBeacon) {
+                    this.showCur8Notification(data.session.cur8_earned);
+                }
                 
                 // Reset session
                 this.sessionId = null;

@@ -192,7 +192,7 @@ async def get_user(user_id: str):
         "user": user
     }
 
-@router.get("/users/{user_id}/sessions")
+@router.get("/{user_id}/sessions")
 async def get_user_game_sessions(user_id: str, limit: int = 10):
     """Get user's game sessions."""
     sessions = get_user_sessions(user_id, limit)

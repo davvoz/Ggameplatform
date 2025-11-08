@@ -130,100 +130,38 @@ class AuthManager {
     }
 
     /**
-     * Mostra banner informativo dell'utente
+     * Aggiorna le informazioni utente nella navbar
      */
     showUserBanner() {
-        const existingBanner = document.querySelector('.auth-banner');
-        if (existingBanner) {
-            existingBanner.remove();
-        }
-
         if (!this.isAuthenticated()) {
+            // Nascondi userInfo se non autenticato
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                userInfo.style.display = 'none';
+            }
             return;
         }
 
-        const banner = document.createElement('div');
-        banner.className = 'auth-banner';
+        // Mostra e aggiorna userInfo nella navbar esistente
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        const userCur8 = document.getElementById('userCur8');
         
-        let username = this.currentUser.username || `Anonymous #${this.currentUser.user_id.slice(-6)}`;
-        let multiplierInfo = `CUR8 ${this.getCur8Multiplier()}x`;
-        let methodBadge = '';
-
-        if (this.isSteemUser()) {
-            methodBadge = '<span class="badge steem">⚡ Steem</span>';
-        } else if (this.isAnonymous()) {
-            methodBadge = '<span class="badge anon">👤 Guest</span>';
+        if (userInfo && userName && userCur8) {
+            let displayName = this.currentUser.username || `Anonymous #${this.currentUser.user_id.slice(-6)}`;
+            
+            // Aggiungi badge per tipo di autenticazione
+            let methodBadge = '';
+            if (this.isSteemUser()) {
+                methodBadge = '⚡ ';
+            } else if (this.isAnonymous()) {
+                methodBadge = '👤 ';
+            }
+            
+            userName.textContent = methodBadge + displayName;
+            userCur8.textContent = `💰 ${this.getTotalCur8().toFixed(2)} CUR8`;
+            userInfo.style.display = 'flex';
         }
-
-        banner.innerHTML = `
-            <div class="user-info-banner">
-                ${methodBadge}
-                <span class="username">${username}</span>
-                <span class="multiplier">${multiplierInfo}</span>
-                <span class="cur8-total">💰 ${this.getTotalCur8().toFixed(2)} CUR8</span>
-                <button class="logout-btn" onclick="authManager.logout()">Logout</button>
-            </div>
-        `;
-
-        // Aggiungi stili
-        const style = document.createElement('style');
-        style.textContent = `
-            .auth-banner {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 12px 20px;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                z-index: 1000;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            .user-info-banner {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                color: white;
-                font-size: 0.9em;
-            }
-            .user-info-banner .username {
-                font-weight: 600;
-                flex: 1;
-            }
-            .user-info-banner .badge {
-                padding: 4px 10px;
-                border-radius: 12px;
-                font-size: 0.85em;
-                font-weight: 600;
-            }
-            .user-info-banner .badge.steem {
-                background: #ffd700;
-                color: #1a1a1a;
-            }
-            .user-info-banner .badge.anon {
-                background: rgba(255,255,255,0.2);
-            }
-            .user-info-banner .logout-btn {
-                background: rgba(255,255,255,0.2);
-                border: 1px solid rgba(255,255,255,0.3);
-                color: white;
-                padding: 6px 14px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.9em;
-            }
-            .user-info-banner .logout-btn:hover {
-                background: rgba(255,255,255,0.3);
-            }
-            body.has-auth-banner {
-                padding-top: 50px;
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.body.insertBefore(banner, document.body.firstChild);
-        document.body.classList.add('has-auth-banner');
     }
 
     /**
@@ -253,13 +191,6 @@ class AuthManager {
 
 // Istanza globale
 const authManager = new AuthManager();
-
-// Mostra banner all'avvio se autenticato
-if (authManager.isAuthenticated()) {
-    document.addEventListener('DOMContentLoaded', () => {
-        authManager.showUserBanner();
-    });
-}
 
 // Esporta per uso nei moduli
 export default authManager;

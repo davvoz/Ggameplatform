@@ -139,6 +139,27 @@ export async function trackGamePlay(gameId) {
     }
 }
 
+/**
+ * Get user game sessions and statistics
+ * @param {string} userId - The user ID
+ * @param {number} limit - Number of sessions to retrieve
+ * @returns {Promise<Object>} User sessions data
+ */
+export async function getUserSessions(userId, limit = 50) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/sessions?limit=${limit}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching user sessions:', error);
+        return { count: 0, sessions: [] };
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
@@ -146,5 +167,6 @@ export default {
     getGameResourceUrl,
     getStaticResourceUrl,
     healthCheck,
-    trackGamePlay
+    trackGamePlay,
+    getUserSessions
 };

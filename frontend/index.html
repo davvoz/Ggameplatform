@@ -18,8 +18,8 @@
             <div class="nav-menu">
                 <a href="#/" class="nav-link active" data-route="/">Games</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
+                <a href="#/profile" class="nav-link" data-route="/profile" id="profileLink" style="display: none;">👤 Profile</a>
                 <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
-                <button id="loginBtn" class="btn-login">Login / Register</button>
                 <div id="userInfo" class="user-info" style="display: none;">
                     <span id="userName"></span>
                     <span id="userCur8" class="cur8-badge"></span>
@@ -166,6 +166,94 @@
         </div>
     </template>
 
+    <!-- Profile Template -->
+    <template id="profile-template">
+        <div class="profile">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <div class="avatar-circle">
+                        <span class="avatar-icon"></span>
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-username"></h2>
+                    <p class="profile-type"></p>
+                    <div class="profile-stats-quick">
+                        <div class="stat-badge">
+                            <span class="stat-label">CUR8 Multiplier</span>
+                            <span class="stat-value multiplier"></span>
+                        </div>
+                        <div class="stat-badge">
+                            <span class="stat-label">Total CUR8</span>
+                            <span class="stat-value total-cur8"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-content">
+                <h3>📊 Game Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="gamesPlayed">0</span>
+                            <span class="stat-text">Games Played</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="totalPlayTime">0h</span>
+                            <span class="stat-text">Total Play Time</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="highScore">0</span>
+                            <span class="stat-text">Highest Score</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="cur8Earned"></span>
+                            <span class="stat-text">CUR8 Earned</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>🎯 Recent Activity</h3>
+                <div class="activity-list" id="recentActivity">
+                    <p class="text-muted">No recent activity</p>
+                </div>
+
+                <h3>⚙️ Account Settings</h3>
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <strong>User ID</strong>
+                            <span class="setting-value" id="userId"></span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <strong>Account Type</strong>
+                            <span class="setting-value" id="accountType"></span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <strong>Member Since</strong>
+                            <span class="setting-value" id="memberSince"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Login/Register Modal -->
     <div id="authModal" class="modal">
         <div class="modal-content">
@@ -229,7 +317,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/js/auth.js"></script>
-    <script type="module" src="/js/main.js"></script>
+    <script src="/js/auth.js?v=8"></script>
+    <script type="module" src="/js/main.js?v=8"></script>
 </body>
 </html>

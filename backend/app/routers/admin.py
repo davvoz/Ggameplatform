@@ -2,7 +2,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from typing import Dict, List, Any
 from pathlib import Path
-from app.database import get_db_connection
+from app.database import (
+    get_db_connection, 
+    get_open_sessions, 
+    close_open_sessions, 
+    force_close_session
+)
 import json
 from datetime import datetime
 
@@ -160,3 +165,48 @@ async def export_database():
         "achievements": achievements,
         "leaderboard": leaderboard
     }
+
+@router.get("/sessions/open")
+async def get_open_sessions_endpoint():
+    """Get all open (unclosed) game sessions"""
+    try:
+        open_sessions = get_open_sessions()
+        return {
+            "success": True,
+            "total_open": len(open_sessions),
+            "sessions": open_sessions
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/sessions/close-all")
+async def close_all_sessions(max_duration_seconds: int = None):
+    """Force close all open sessions"""
+    try:
+        closed_count = close_open_sessions(max_duration_seconds)
+        return {
+            "success": True,
+            "message": f"Closed {closed_count} open sessions",
+            "closed_count": closed_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/sessions/{session_id}/close")
+async def force_close_single_session(session_id: str):
+    """Force close a specific open session"""
+    try:
+        success = force_close_session(session_id)
+        if not success:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Session {session_id} not found or already closed"
+            )
+        return {
+            "success": True,
+            "message": f"Session {session_id} closed successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

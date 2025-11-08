@@ -1,4 +1,4 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, render404 } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, render404 } from './main.js';
 
 /**
  * Router configuration
@@ -6,9 +6,13 @@ import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, render4
 const routes = {
     '/': renderCatalog,
     '/about': renderAbout,
+    '/profile': renderProfile,
     '/game/:id': renderGameDetail,
     '/play/:id': renderGamePlayer
 };
+
+// Flag to prevent duplicate route handling
+let isHandlingRoute = false;
 
 /**
  * Initialize the router
@@ -25,8 +29,24 @@ export function initRouter() {
  * Handle route changes
  */
 function handleRoute() {
+    // Prevent duplicate handling
+    if (isHandlingRoute) {
+        console.log('Route handling already in progress, skipping...');
+        return;
+    }
+    
+    isHandlingRoute = true;
+    
     const hash = window.location.hash.slice(1) || '/';
     const route = matchRoute(hash);
+    
+    console.log('Handling route:', hash);
+    
+    // Cleanup previous game runtime when navigating away from player
+    if (!hash.startsWith('/play/') && window.currentGameRuntime) {
+        window.currentGameRuntime.cleanup();
+        window.currentGameRuntime = null;
+    }
     
     if (route) {
         route.handler(route.params);
@@ -34,6 +54,11 @@ function handleRoute() {
     } else {
         render404();
     }
+    
+    // Reset flag after a short delay to allow next navigation
+    setTimeout(() => {
+        isHandlingRoute = false;
+    }, 100);
 }
 
 /**

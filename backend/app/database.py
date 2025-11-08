@@ -506,3 +506,141 @@ def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:
         sessions.append(session)
     
     return sessions
+
+def get_open_sessions() -> List[dict]:
+    """Get all open/unclosed game sessions."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT gs.*, g.title as game_title, u.username
+        FROM game_sessions gs
+        LEFT JOIN games g ON gs.game_id = g.game_id
+        LEFT JOIN users u ON gs.user_id = u.user_id
+        WHERE gs.ended_at IS NULL
+        ORDER BY gs.started_at DESC
+    """)
+    
+    rows = cursor.fetchall()
+    conn.close()
+    
+    sessions = []
+    for row in rows:
+        session = dict(row)
+        session['metadata'] = json.loads(session['metadata']) if session['metadata'] else {}
+        sessions.append(session)
+    
+    return sessions
+
+def close_open_sessions(max_duration_seconds: int = None) -> int:
+    """Close all open sessions, optionally with default duration."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get all open sessions
+    cursor.execute("""
+        SELECT gs.session_id, gs.user_id, gs.started_at, gs.score, u.cur8_multiplier
+        FROM game_sessions gs
+        JOIN users u ON gs.user_id = u.user_id
+        WHERE gs.ended_at IS NULL
+    """)
+    
+    open_sessions = cursor.fetchall()
+    now = datetime.utcnow().isoformat()
+    closed_count = 0
+    
+    for row in open_sessions:
+        session = dict(row)
+        session_id = session['session_id']
+        user_id = session['user_id']
+        multiplier = session['cur8_multiplier']
+        score = session['score'] or 0
+        
+        # Calculate duration
+        if max_duration_seconds:
+            duration = max_duration_seconds
+        else:
+            # Calculate actual duration from started_at
+            started = datetime.fromisoformat(session['started_at'])
+            ended = datetime.utcnow()
+            duration = int((ended - started).total_seconds())
+        
+        # Calculate CUR8
+        base_cur8 = (score / 100) * multiplier
+        time_bonus = (duration / 60) * 0.1
+        cur8_earned = round(base_cur8 + time_bonus, 2)
+        
+        # Update session
+        cursor.execute("""
+            UPDATE game_sessions 
+            SET score = ?, cur8_earned = ?, duration_seconds = ?, ended_at = ?
+            WHERE session_id = ?
+        """, (score, cur8_earned, duration, now, session_id))
+        
+        # Update user's total CUR8
+        cursor.execute("""
+            UPDATE users 
+            SET total_cur8_earned = total_cur8_earned + ?
+            WHERE user_id = ?
+        """, (cur8_earned, user_id))
+        
+        closed_count += 1
+    
+    conn.commit()
+    conn.close()
+    
+    return closed_count
+
+def force_close_session(session_id: str) -> bool:
+    """Force close a specific open session."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get session info
+    cursor.execute("""
+        SELECT gs.*, u.cur8_multiplier 
+        FROM game_sessions gs
+        JOIN users u ON gs.user_id = u.user_id
+        WHERE gs.session_id = ? AND gs.ended_at IS NULL
+    """, (session_id,))
+    
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return False
+    
+    session = dict(row)
+    
+    # Calculate duration from started_at
+    started = datetime.fromisoformat(session['started_at'])
+    ended = datetime.utcnow()
+    duration = int((ended - started).total_seconds())
+    
+    score = session['score'] or 0
+    multiplier = session['cur8_multiplier']
+    
+    # Calculate CUR8
+    base_cur8 = (score / 100) * multiplier
+    time_bonus = (duration / 60) * 0.1
+    cur8_earned = round(base_cur8 + time_bonus, 2)
+    
+    now = datetime.utcnow().isoformat()
+    
+    # Update session
+    cursor.execute("""
+        UPDATE game_sessions 
+        SET score = ?, cur8_earned = ?, duration_seconds = ?, ended_at = ?
+        WHERE session_id = ?
+    """, (score, cur8_earned, duration, now, session_id))
+    
+    # Update user's total CUR8
+    cursor.execute("""
+        UPDATE users 
+        SET total_cur8_earned = total_cur8_earned + ?
+        WHERE user_id = ?
+    """, (cur8_earned, session['user_id']))
+    
+    conn.commit()
+    conn.close()
+    
+    return True

@@ -22,6 +22,9 @@ async function loadData() {
         document.getElementById('totalAchievements').textContent = allData.total_achievements || 0;
         document.getElementById('totalLeaderboard').textContent = allData.total_leaderboard_entries || 0;
         
+        // Check for open sessions and update button visibility
+        await updateOpenSessionsButton();
+        
         // Display current tab data
         displayCurrentTab();
         
@@ -30,6 +33,25 @@ async function loadData() {
         alert('Errore nel caricamento dei dati: ' + error.message);
     } finally {
         loading.style.display = 'none';
+    }
+}
+
+async function updateOpenSessionsButton() {
+    try {
+        const response = await fetch(`${API_BASE}/sessions/open`);
+        const data = await response.json();
+        
+        const openSessionsBtn = document.getElementById('openSessionsBtn');
+        if (!openSessionsBtn) return;
+        
+        if (data.success && data.total_open > 0) {
+            openSessionsBtn.style.display = 'inline-block';
+            openSessionsBtn.innerHTML = `⚠️ Sessioni Aperte (${data.total_open})`;
+        } else {
+            openSessionsBtn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking open sessions:', error);
     }
 }
 
@@ -442,4 +464,144 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeModal();
     }
+}
+
+// Open Sessions Management
+async function showOpenSessions() {
+    try {
+        const response = await fetch(`${API_BASE}/sessions/open`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            alert('Errore nel caricamento delle sessioni aperte');
+            return;
+        }
+        
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = `Sessioni Aperte (${data.total_open})`;
+        
+        if (data.total_open === 0) {
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                    <h3>Nessuna sessione aperta</h3>
+                    <p>Tutte le sessioni di gioco sono state chiuse correttamente.</p>
+                </div>
+            `;
+        } else {
+            let html = `
+                <div style="margin-bottom: 16px;">
+                    <button onclick="closeAllOpenSessions()" 
+                            style="background: #dc3545; border-color: #dc3545; width: 100%;">
+                        🔒 Chiudi Tutte le ${data.total_open} Sessioni Aperte
+                    </button>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                    <thead>
+                        <tr style="background: #f6f8fa; border-bottom: 2px solid #e1e4e8;">
+                            <th style="padding: 8px; text-align: left;">Session ID</th>
+                            <th style="padding: 8px; text-align: left;">User</th>
+                            <th style="padding: 8px; text-align: left;">Game</th>
+                            <th style="padding: 8px; text-align: left;">Inizio</th>
+                            <th style="padding: 8px; text-align: left;">Durata</th>
+                            <th style="padding: 8px; text-align: left;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.sessions.forEach(session => {
+                const duration = calculateDuration(session.started_at);
+                html += `
+                    <tr style="border-bottom: 1px solid #e1e4e8;">
+                        <td style="padding: 8px; font-family: monospace; font-size: 0.85em;">${session.session_id.substring(0, 12)}...</td>
+                        <td style="padding: 8px;">${session.username || session.user_id.substring(0, 12)}</td>
+                        <td style="padding: 8px;">${session.game_title || session.game_id}</td>
+                        <td style="padding: 8px;">${formatDate(session.started_at)}</td>
+                        <td style="padding: 8px; color: ${duration > 1800 ? '#dc3545' : '#28a745'};">${formatDuration(duration)}</td>
+                        <td style="padding: 8px;">
+                            <button onclick="closeSingleSession('${session.session_id}')" 
+                                    style="font-size: 0.8em; padding: 4px 8px; background: #ffc107; border-color: #ffc107; color: #000;">
+                                Chiudi
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            modalBody.innerHTML = html;
+        }
+        
+        modal.style.display = 'flex';
+        
+    } catch (error) {
+        console.error('Error loading open sessions:', error);
+        alert('Errore nel caricamento delle sessioni aperte: ' + error.message);
+    }
+}
+
+async function closeAllOpenSessions() {
+    if (!confirm('Sei sicuro di voler chiudere TUTTE le sessioni aperte?\n\nQuesto calcolerà il CUR8 guadagnato e chiuderà forzatamente tutte le sessioni in corso.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/sessions/close-all`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ ${data.closed_count} sessioni chiuse con successo!`);
+            closeModal();
+            await updateOpenSessionsButton(); // Update button visibility
+            loadData(); // Refresh data
+        } else {
+            alert('Errore nella chiusura delle sessioni');
+        }
+    } catch (error) {
+        console.error('Error closing sessions:', error);
+        alert('Errore: ' + error.message);
+    }
+}
+
+async function closeSingleSession(sessionId) {
+    if (!confirm('Chiudere questa sessione?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/sessions/${sessionId}/close`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Sessione chiusa!');
+            showOpenSessions(); // Refresh the modal
+            await updateOpenSessionsButton(); // Update button visibility
+            loadData(); // Refresh main data
+        } else {
+            alert('Errore nella chiusura della sessione');
+        }
+    } catch (error) {
+        console.error('Error closing session:', error);
+        alert('Errore: ' + error.message);
+    }
+}
+
+function calculateDuration(startedAt) {
+    const started = new Date(startedAt);
+    const now = new Date();
+    return Math.floor((now - started) / 1000);
 }

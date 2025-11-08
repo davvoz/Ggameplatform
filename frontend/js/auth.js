@@ -4,9 +4,16 @@ const AuthManager = {
     apiBase: 'http://localhost:8000/users',
     
     init() {
+        console.log('AuthManager: inizializzazione...');
+        // Pulisci eventuali banner residui da vecchie sessioni
+        document.querySelectorAll('.auth-banner').forEach(el => el.remove());
+        document.body.classList.remove('has-auth-banner');
+        
         this.loadUserFromStorage();
         this.attachEventListeners();
         this.updateUI();
+        
+        console.log('AuthManager: inizializzato, utente corrente:', this.currentUser);
     },
     
     attachEventListeners() {
@@ -222,6 +229,8 @@ const AuthManager = {
     
     setUser(userData) {
         this.currentUser = userData;
+        // Usa la stessa chiave usata da authManager.js per compatibilità
+        localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
         this.updateUI();
         
@@ -230,55 +239,89 @@ const AuthManager = {
     },
     
     loadUserFromStorage() {
-        const stored = localStorage.getItem('gameplatform_user');
+        // Prova prima con 'gameplatform_user', poi con 'currentUser' per compatibilità
+        let stored = localStorage.getItem('gameplatform_user');
+        if (!stored) {
+            stored = localStorage.getItem('currentUser');
+        }
+        console.log('AuthManager: caricamento da localStorage:', stored);
         if (stored) {
             try {
                 this.currentUser = JSON.parse(stored);
+                console.log('AuthManager: utente caricato:', this.currentUser);
             } catch (e) {
                 console.error('Failed to parse stored user:', e);
                 localStorage.removeItem('gameplatform_user');
+                localStorage.removeItem('currentUser');
             }
+        } else {
+            console.log('AuthManager: nessun utente salvato in localStorage');
         }
     },
     
     logout() {
+        console.log('AuthManager: logout chiamato');
         this.currentUser = null;
         localStorage.removeItem('gameplatform_user');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('authMethod');
         this.updateUI();
         
         // Dispatch custom event
         window.dispatchEvent(new Event('userLogout'));
         
-        // Redirect to home if needed
-        if (window.location.hash.includes('play')) {
-            window.location.hash = '/';
-        }
+        // Redirect to auth page
+        console.log('AuthManager: redirect a auth.html');
+        window.location.href = '/auth.html';
     },
     
     updateUI() {
-        const loginBtn = document.getElementById('loginBtn');
         const userInfo = document.getElementById('userInfo');
         const userName = document.getElementById('userName');
         const userCur8 = document.getElementById('userCur8');
+        const profileLink = document.getElementById('profileLink');
+        
+        // Verifica che gli elementi esistano (potrebbero non essere presenti in tutte le pagine)
+        if (!userInfo || !userName || !userCur8) {
+            console.log('AuthManager: elementi UI non trovati');
+            return;
+        }
+        
+        console.log('AuthManager: aggiornamento UI, utente:', this.currentUser);
         
         if (this.currentUser) {
             // User logged in
-            loginBtn.style.display = 'none';
             userInfo.style.display = 'flex';
-            
-            if (this.currentUser.is_anonymous) {
-                userName.textContent = `Guest ${this.currentUser.user_id.slice(-6)}`;
-            } else if (this.currentUser.steemUsername) {
-                userName.textContent = `@${this.currentUser.steemUsername}`;
-            } else {
-                userName.textContent = this.currentUser.username || 'User';
+            if (profileLink) {
+                profileLink.style.display = 'inline-block';
+                console.log('AuthManager: link profilo mostrato');
             }
             
-            userCur8.textContent = `💰 ${this.currentUser.total_cur8_earned.toFixed(2)} CUR8 (${this.currentUser.cur8_multiplier}x)`;
+            let displayName = '';
+            let badge = '';
+            
+            if (this.currentUser.is_anonymous) {
+                badge = '👤 ';
+                displayName = `Guest #${this.currentUser.user_id.slice(-6)}`;
+            } else if (this.currentUser.steemUsername) {
+                badge = '⚡ ';
+                displayName = this.currentUser.steemUsername;
+            } else {
+                displayName = this.currentUser.username || 'User';
+            }
+            
+            userName.textContent = badge + displayName;
+            
+            const cur8Total = this.currentUser.total_cur8_earned || 0;
+            const multiplier = this.currentUser.cur8_multiplier || 1.0;
+            userCur8.textContent = `CUR8 ${multiplier}x 💰 ${cur8Total.toFixed(2)} CUR8`;
+            
+            console.log('AuthManager: UI aggiornata -', displayName, multiplier, cur8Total);
         } else {
             // User not logged in
-            loginBtn.style.display = 'block';
             userInfo.style.display = 'none';
+            if (profileLink) profileLink.style.display = 'none';
+            console.log('AuthManager: nessun utente loggato');
         }
     },
     

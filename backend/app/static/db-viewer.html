@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Viewer - Game Platform</title>
+    <link rel="stylesheet" href="/static/css/db-viewer.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Database Viewer</h1>
+            <p class="subtitle">Sistema di gestione e visualizzazione giochi</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalGames">-</div>
+                <div class="stat-label">Giochi Totali</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCategories">-</div>
+                <div class="stat-label">Categorie</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAuthors">-</div>
+                <div class="stat-label">Autori</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dbSize">-</div>
+                <div class="stat-label">Records</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cerca per titolo, ID, autore o categoria...">
+            </div>
+            <button onclick="refreshData()">↻ Aggiorna</button>
+            <button onclick="exportData()">JSON</button>
+            <button onclick="exportCSV()">CSV</button>
+        </div>
+        
+        <div class="table-container">
+            <div id="loading" class="loading">Caricamento dati in corso...</div>
+            <table id="gamesTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Thumb</th>
+                        <th>ID</th>
+                        <th>Titolo</th>
+                        <th>Autore</th>
+                        <th>Versione</th>
+                        <th>Categoria</th>
+                        <th>Tags</th>
+                        <th>Data Creazione</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div id="emptyState" class="empty" style="display: none;">
+                <div class="empty-icon">📋</div>
+                <h3>Nessun gioco nel database</h3>
+                <p>Registra il primo gioco per iniziare</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Dettagli Record</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/db-viewer.js"></script>
+</body>
+</html>

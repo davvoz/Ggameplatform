@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.routers import games
+from app.routers import admin
 from app.database import init_db
 
 app = FastAPI(
@@ -25,6 +26,7 @@ init_db()
 
 # Include routers
 app.include_router(games.router, prefix="/games", tags=["games"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

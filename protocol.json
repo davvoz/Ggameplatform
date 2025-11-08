@@ -1,0 +1,563 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HTML5 Game Platform Communication Protocol",
+  "version": "1.0.0",
+  "description": "Formal message protocol specification for communication between the HTML5 Game Platform and games running in iframes",
+  
+  "definitions": {
+    "baseMessage": {
+      "type": "object",
+      "description": "Base message format for all communication",
+      "required": ["type", "payload", "timestamp", "protocolVersion"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Message type identifier"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Message payload containing type-specific data"
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Unix timestamp in milliseconds when message was created",
+          "minimum": 0
+        },
+        "protocolVersion": {
+          "type": "string",
+          "description": "Protocol version (semver format)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "const": "1.0.0"
+        },
+        "gameId": {
+          "type": "string",
+          "description": "Optional game identifier for message routing"
+        }
+      }
+    }
+  },
+  
+  "platformToGameMessages": {
+    "description": "Messages sent from Platform → Game",
+    
+    "start": {
+      "description": "Signal to start the game",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "start" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "integer",
+              "description": "Game start timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "start",
+        "payload": {
+          "timestamp": 1699459200000
+        },
+        "timestamp": 1699459200000,
+        "protocolVersion": "1.0.0",
+        "gameId": "space-shooter-v1"
+      }
+    },
+    
+    "pause": {
+      "description": "Signal to pause the game",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "pause" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "integer",
+              "description": "Pause timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "pause",
+        "payload": {
+          "timestamp": 1699459300000
+        },
+        "timestamp": 1699459300000,
+        "protocolVersion": "1.0.0",
+        "gameId": "space-shooter-v1"
+      }
+    },
+    
+    "resume": {
+      "description": "Signal to resume the game from pause",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "resume" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "integer",
+              "description": "Resume timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "resume",
+        "payload": {
+          "timestamp": 1699459400000
+        },
+        "timestamp": 1699459400000,
+        "protocolVersion": "1.0.0",
+        "gameId": "space-shooter-v1"
+      }
+    },
+    
+    "exit": {
+      "description": "Signal to exit/cleanup the game",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "exit" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "integer",
+              "description": "Exit timestamp"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Optional reason for exit"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "exit",
+        "payload": {
+          "timestamp": 1699459500000,
+          "reason": "User requested exit"
+        },
+        "timestamp": 1699459500000,
+        "protocolVersion": "1.0.0",
+        "gameId": "space-shooter-v1"
+      }
+    },
+    
+    "config": {
+      "description": "Platform configuration sent to game",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "config" },
+        "payload": {
+          "type": "object",
+          "required": ["gameId", "platformVersion"],
+          "properties": {
+            "gameId": {
+              "type": "string",
+              "description": "Unique game identifier"
+            },
+            "platformVersion": {
+              "type": "string",
+              "description": "Platform version"
+            },
+            "features": {
+              "type": "object",
+              "description": "Available platform features",
+              "properties": {
+                "scoreTracking": {
+                  "type": "boolean",
+                  "description": "Whether score tracking is enabled"
+                },
+                "levelTracking": {
+                  "type": "boolean",
+                  "description": "Whether level tracking is enabled"
+                },
+                "fullscreen": {
+                  "type": "boolean",
+                  "description": "Whether fullscreen is supported"
+                }
+              }
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "config",
+        "payload": {
+          "gameId": "space-shooter-v1",
+          "platformVersion": "1.0.0",
+          "features": {
+            "scoreTracking": true,
+            "levelTracking": true,
+            "fullscreen": true
+          }
+        },
+        "timestamp": 1699459100000,
+        "protocolVersion": "1.0.0"
+      }
+    }
+  },
+  
+  "gameToPlat formMessages": {
+    "description": "Messages sent from Game → Platform",
+    
+    "ready": {
+      "description": "Game is ready to receive commands",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "ready" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "sdkVersion": {
+              "type": "string",
+              "description": "SDK version used by game"
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "Ready timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "ready",
+        "payload": {
+          "sdkVersion": "1.0.0",
+          "timestamp": 1699459150000
+        },
+        "timestamp": 1699459150000,
+        "protocolVersion": "1.0.0"
+      }
+    },
+    
+    "scoreUpdate": {
+      "description": "Game score has been updated",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "scoreUpdate" },
+        "payload": {
+          "type": "object",
+          "required": ["score"],
+          "properties": {
+            "score": {
+              "type": "number",
+              "description": "Current game score",
+              "minimum": 0
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "Score update timestamp"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "example": {
+        "type": "scoreUpdate",
+        "payload": {
+          "score": 1000,
+          "combo": 5,
+          "multiplier": 2,
+          "timestamp": 1699459250000
+        },
+        "timestamp": 1699459250000,
+        "protocolVersion": "1.0.0"
+      }
+    },
+    
+    "gameOver": {
+      "description": "Game has ended",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "gameOver" },
+        "payload": {
+          "type": "object",
+          "required": ["score"],
+          "properties": {
+            "score": {
+              "type": "number",
+              "description": "Final game score",
+              "minimum": 0
+            },
+            "timePlayed": {
+              "type": "number",
+              "description": "Time played in seconds",
+              "minimum": 0
+            },
+            "achievements": {
+              "type": "array",
+              "description": "Achievements unlocked",
+              "items": {
+                "type": "string"
+              }
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "Game over timestamp"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "example": {
+        "type": "gameOver",
+        "payload": {
+          "score": 5000,
+          "timePlayed": 180,
+          "achievements": ["first_win", "speed_demon"],
+          "difficulty": "hard",
+          "timestamp": 1699459600000
+        },
+        "timestamp": 1699459600000,
+        "protocolVersion": "1.0.0"
+      }
+    },
+    
+    "levelCompleted": {
+      "description": "A game level has been completed",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "levelCompleted" },
+        "payload": {
+          "type": "object",
+          "required": ["level"],
+          "properties": {
+            "level": {
+              "type": "integer",
+              "description": "Completed level number",
+              "minimum": 1
+            },
+            "timeToComplete": {
+              "type": "number",
+              "description": "Time to complete level in seconds",
+              "minimum": 0
+            },
+            "stars": {
+              "type": "integer",
+              "description": "Stars earned (typically 1-3)",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "perfectClear": {
+              "type": "boolean",
+              "description": "Whether level was completed perfectly"
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "Level completion timestamp"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "example": {
+        "type": "levelCompleted",
+        "payload": {
+          "level": 5,
+          "timeToComplete": 45,
+          "stars": 3,
+          "perfectClear": true,
+          "collectibles": 10,
+          "timestamp": 1699459350000
+        },
+        "timestamp": 1699459350000,
+        "protocolVersion": "1.0.0"
+      }
+    },
+    
+    "requestFullScreen": {
+      "description": "Game requests fullscreen mode",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "requestFullScreen" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "integer",
+              "description": "Request timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "requestFullScreen",
+        "payload": {
+          "timestamp": 1699459450000
+        },
+        "timestamp": 1699459450000,
+        "protocolVersion": "1.0.0"
+      }
+    },
+    
+    "log": {
+      "description": "Log message from game for debugging",
+      "allOf": [
+        { "$ref": "#/definitions/baseMessage" }
+      ],
+      "properties": {
+        "type": { "const": "log" },
+        "payload": {
+          "type": "object",
+          "required": ["message"],
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Log message"
+            },
+            "data": {
+              "description": "Optional additional data to log"
+            },
+            "level": {
+              "type": "string",
+              "enum": ["debug", "info", "warn", "error"],
+              "description": "Log level",
+              "default": "info"
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "Log timestamp"
+            }
+          }
+        }
+      },
+      "example": {
+        "type": "log",
+        "payload": {
+          "message": "Player spawned",
+          "data": {
+            "x": 100,
+            "y": 200,
+            "health": 100
+          },
+          "level": "info",
+          "timestamp": 1699459220000
+        },
+        "timestamp": 1699459220000,
+        "protocolVersion": "1.0.0"
+      }
+    }
+  },
+  
+  "messagingRules": {
+    "description": "Rules and best practices for message exchange",
+    "rules": [
+      {
+        "rule": "Protocol Version",
+        "description": "All messages MUST include protocolVersion field set to '1.0.0'"
+      },
+      {
+        "rule": "Timestamp",
+        "description": "All messages MUST include a timestamp field with Unix time in milliseconds"
+      },
+      {
+        "rule": "Message Validation",
+        "description": "Receivers SHOULD validate message format before processing"
+      },
+      {
+        "rule": "Origin Validation",
+        "description": "Platform MUST validate message origin for security"
+      },
+      {
+        "rule": "Ready Signal",
+        "description": "Game MUST send 'ready' message after initialization before receiving other messages"
+      },
+      {
+        "rule": "Pause Handling",
+        "description": "Game SHOULD pause all activity (audio, animation, logic) when receiving 'pause' message"
+      },
+      {
+        "rule": "Resume Handling",
+        "description": "Game SHOULD resume all activity when receiving 'resume' message"
+      },
+      {
+        "rule": "Exit Cleanup",
+        "description": "Game SHOULD cleanup resources when receiving 'exit' message"
+      },
+      {
+        "rule": "Score Updates",
+        "description": "Game SHOULD send scoreUpdate when score changes significantly (not on every point)"
+      },
+      {
+        "rule": "Additional Properties",
+        "description": "Payload objects MAY include additional custom properties for extensibility"
+      }
+    ]
+  },
+  
+  "securityConsiderations": {
+    "description": "Security guidelines for protocol implementation",
+    "guidelines": [
+      {
+        "guideline": "Origin Validation",
+        "description": "Always validate postMessage origin against allowed domains",
+        "severity": "CRITICAL"
+      },
+      {
+        "guideline": "Message Sanitization",
+        "description": "Sanitize and validate all incoming message data",
+        "severity": "HIGH"
+      },
+      {
+        "guideline": "Type Checking",
+        "description": "Verify message type and payload structure before processing",
+        "severity": "HIGH"
+      },
+      {
+        "guideline": "Protocol Version Check",
+        "description": "Reject messages with unsupported protocol versions",
+        "severity": "MEDIUM"
+      },
+      {
+        "guideline": "Rate Limiting",
+        "description": "Consider implementing rate limiting for message processing",
+        "severity": "MEDIUM"
+      },
+      {
+        "guideline": "Content Security Policy",
+        "description": "Use appropriate CSP headers and iframe sandbox attributes",
+        "severity": "HIGH"
+      }
+    ]
+  },
+  
+  "versionHistory": {
+    "1.0.0": {
+      "releaseDate": "2025-11-08",
+      "changes": [
+        "Initial protocol specification",
+        "Platform to game messages: start, pause, resume, exit, config",
+        "Game to platform messages: ready, scoreUpdate, gameOver, levelCompleted, requestFullScreen, log",
+        "Base message format with type, payload, timestamp, protocolVersion",
+        "Security guidelines and best practices"
+      ]
+    }
+  }
+}

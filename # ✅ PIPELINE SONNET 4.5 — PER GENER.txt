@@ -1,0 +1,222 @@
+# ✅ **PIPELINE SONNET 4.5 — PER GENERARE LA PIATTAFORMA (VANILLA JS + FASTAPI + SDK)**
+
+Ogni step è un prompt separato da dare a Sonnet 4.5.
+Ordine consigliato: **1 → 2 → 3 → 4 → 5 → 6**.
+
+---
+
+# **STEP 1 — Backend FastAPI**
+
+Prompt Sonnet:
+
+```
+Generate STEP 1 of the system.
+
+Task:
+Create the complete backend for a modular and scalable HTML5 game platform.
+
+Requirements:
+- Python FastAPI
+- Endpoints:
+  POST /games/register
+  GET /games/list
+  GET /games/{gameId}/metadata
+- Metadata validation with Pydantic
+- Storage in SQLite or JSON
+- Static file serving for /static and /games/<gameId>/
+- CORS enabled
+- Folder structure:
+  /backend
+    /app
+      main.py
+      routers/games.py
+      schemas.py
+      models.py
+      database.py
+      static/
+      games/
+- Production-ready code, no placeholders.
+- Clean architecture.
+
+Output:
+Return all backend source files with full code.
+```
+
+✅ Risultato: backend pronto.
+
+---
+
+# **STEP 2 — Frontend Vanilla JS (Catalog, Details, Player)**
+
+Prompt Sonnet:
+
+```
+Generate STEP 2 of the system.
+
+Task:
+Create the complete frontend using ONLY Vanilla JavaScript, HTML, and CSS (no frameworks).
+
+Features required:
+1. Game Catalog page (fetch from /games/list)
+2. Game Detail page
+3. Game Player page with iframe loader
+4. Mobile-first design
+5. Modular JS structure
+
+Frontend folder structure:
+  /frontend
+    index.html
+    /css/style.css
+    /js/main.js
+    /js/router.js
+    /js/api.js
+    /js/runtimeShell.js   (empty placeholder for next step)
+
+The runtimeShell.js file must be empty or minimal, as it will be fully generated in Step 3.
+
+Output:
+Return the full frontend code.
+```
+
+✅ Risultato: frontend base completo.
+
+---
+
+# **STEP 3 — Runtime Shell (iframe communication layer)**
+
+Prompt Sonnet:
+
+```
+Generate STEP 3 of the system.
+
+Task:
+Create the complete Runtime Shell for the platform.
+
+Requirements:
+- Pure Vanilla JS
+- load game in iframe
+- send platform → game events using postMessage:
+    start, pause, resume, exit, config
+- receive events:
+    scoreUpdate, gameOver, levelCompleted,
+    requestFullScreen, log
+- validate origins
+- event bus system
+- UI overlay (pause/resume/exit)
+
+Output target file:
+  /frontend/js/runtimeShell.js
+
+Output:
+Return the full runtimeShell.js code only.
+```
+
+✅ Risultato: logica della shell finale.
+
+---
+
+# **STEP 4 — Integration SDK (for game developers)**
+
+Prompt Sonnet:
+
+```
+Generate STEP 4 of the system.
+
+Task:
+Create a universal Integration SDK for games.
+
+Requirements:
+- Framework-agnostic
+- Works inside games built with Phaser, Unity WebGL, Godot, Three.js, Vanilla JS
+- Public API:
+    PlatformSDK.init()
+    PlatformSDK.sendScore(score)
+    PlatformSDK.gameOver(score)
+    PlatformSDK.levelCompleted(level)
+    PlatformSDK.requestFullScreen()
+    PlatformSDK.on(event, callback)
+- Internals:
+    postMessage wrapper
+    message validator
+    event callback registry
+    state management
+- ES module + UMD bundle
+
+Output files:
+  /sdk/platformsdk.js
+  /sdk/platformsdk.min.js
+  /sdk/platformsdk.d.ts
+
+Output:
+Return full code for all three files.
+```
+
+✅ Risultato: SDK pronto per gli sviluppatori.
+
+---
+
+# **STEP 5 — Protocol Specification (JSON)**
+
+Prompt Sonnet:
+
+```
+Generate STEP 5 of the system.
+
+Task:
+Create the formal message protocol used between platform and games.
+
+File:
+  /protocol.json
+
+The protocol must include:
+- Base message format:
+    type, payload, timestamp, protocolVersion
+- Platform → Game events:
+    start, pause, resume, exit, config
+- Game → Platform events:
+    scoreUpdate, gameOver, levelCompleted,
+    requestFullScreen, log
+- JSON schemas for each message type
+
+Output:
+Return full protocol.json content.
+```
+
+✅ Risultato: protocollo ufficiale.
+
+---
+
+# **STEP 6 — Final Folder Layout Documentation**
+
+Prompt Sonnet:
+
+```
+Generate STEP 6 of the system.
+
+Task:
+Produce the final folder structure of the entire project, with annotations describing the responsibility of each folder and file.
+
+Structure must include:
+  /backend
+  /frontend
+  /sdk
+  /protocol.json
+
+Output:
+Return the complete structured layout with descriptions.
+```
+
+✅ Risultato: guida tecnica finale.
+
+---
+
+# ✅ RISULTATO DELLA PIPELINE
+
+Dopo questi 6 step avrai:
+
+* backend FastAPI completo
+* frontend Vanilla JS mobile-first
+* runtime iframe shell
+* integration SDK
+* protocollo di comunicazione
+* progetto scalabile multi-gioco pronto

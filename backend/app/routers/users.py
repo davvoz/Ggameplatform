@@ -121,39 +121,35 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
         user = get_user_by_username(auth_data.username)
         
         if user:
-            # Aggiorna last login
-            from app.database import get_db_connection
-            from datetime import datetime
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            now = datetime.utcnow().isoformat()
-            cursor.execute("UPDATE users SET last_login = ? WHERE user_id = ?", 
-                          (now, user['user_id']))
-            conn.commit()
-            conn.close()
-            user['last_login'] = now
+            # User already exists - use ORM update via database.py
+            # The authenticate_user function in database.py handles last_login update
+            pass
         else:
-            # Crea nuovo utente Steem
+            # Crea nuovo utente Steem usando la funzione ORM
             user = create_user(
                 username=auth_data.username,
                 email=f"{auth_data.username}@steem.blockchain",  # Email placeholder
                 password=None,  # Nessuna password per utenti Steem
                 cur8_multiplier=auth_data.cur8_multiplier
             )
-            # Aggiungi metadata Steem
-            from app.database import get_db_connection
+            
+            # Aggiungi metadata Steem usando ORM
+            from app.database import get_db_session
+            from app.models import User
             import json
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            metadata = json.dumps({
-                "auth_method": "steem_keychain",
-                "steem_username": auth_data.username,
-                "verified": True
-            })
-            cursor.execute("UPDATE users SET metadata = ? WHERE user_id = ?", 
-                          (metadata, user['user_id']))
-            conn.commit()
-            conn.close()
+            
+            with get_db_session() as session:
+                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
+                if db_user:
+                    extra_data = {
+                        "auth_method": "steem_keychain",
+                        "steem_username": auth_data.username,
+                        "verified": True
+                    }
+                    db_user.extra_data = json.dumps(extra_data)
+                    db_user.steem_username = auth_data.username
+                    session.flush()
+                    user = db_user.to_dict()
         
         return {
             "success": True,
@@ -254,41 +250,97 @@ async def end_game(session_data: SessionEnd):
         "session": session
     }
 
+@router.get("/leaderboard")
+async def get_global_leaderboard(limit: int = 50):
+    """Get global leaderboard reading from leaderboards table."""
+    from app.database import get_db_session
+    from app.models import Leaderboard, User, Game
+    from sqlalchemy import func, desc
+    
+    with get_db_session() as session:
+        # Query leaderboard table grouped by user with game info
+        results = session.query(
+            User.user_id,
+            User.username,
+            User.is_anonymous,
+            User.total_cur8_earned,
+            func.count(Leaderboard.entry_id).label('games_played'),
+            func.sum(Leaderboard.score).label('total_score')
+        ).join(
+            Leaderboard, User.user_id == Leaderboard.user_id
+        ).group_by(
+            User.user_id
+        ).order_by(
+            desc('total_score')
+        ).limit(limit).all()
+        
+        leaderboard = []
+        for idx, row in enumerate(results, 1):
+            username = row.username
+            if row.is_anonymous:
+                username = f"Anonymous #{row.user_id[-6:]}"
+            
+            entry = {
+                'rank': idx,
+                'user_id': row.user_id,
+                'username': username,
+                'is_anonymous': bool(row.is_anonymous),
+                'games_played': row.games_played or 0,
+                'total_score': float(row.total_score or 0),
+                'total_cur8': float(row.total_cur8_earned or 0)
+            }
+            
+            leaderboard.append(entry)
+    
+    return {
+        "success": True,
+        "count": len(leaderboard),
+        "leaderboard": leaderboard
+    }
+
 @router.get("/leaderboard/{game_id}")
 async def get_game_leaderboard(game_id: str, limit: int = 10):
     """Get top scores for a specific game."""
-    from app.database import get_db_connection
+    from app.database import get_db_session
+    from app.models import GameSession, User
+    from sqlalchemy import desc
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT 
-            gs.session_id,
-            gs.score,
-            gs.cur8_earned,
-            gs.started_at,
-            u.username,
-            u.user_id,
-            u.is_anonymous
-        FROM game_sessions gs
-        JOIN users u ON gs.user_id = u.user_id
-        WHERE gs.game_id = ? AND gs.ended_at IS NOT NULL
-        ORDER BY gs.score DESC
-        LIMIT ?
-    """, (game_id, limit))
-    
-    rows = cursor.fetchall()
-    conn.close()
-    
-    leaderboard = []
-    for idx, row in enumerate(rows, 1):
-        entry = dict(row)
-        entry['rank'] = idx
-        entry['is_anonymous'] = bool(entry['is_anonymous'])
-        if entry['is_anonymous']:
-            entry['username'] = f"Anonymous #{entry['user_id'][-6:]}"
-        leaderboard.append(entry)
+    with get_db_session() as session:
+        # Query using ORM with join
+        results = session.query(
+            GameSession.session_id,
+            GameSession.score,
+            GameSession.cur8_earned,
+            GameSession.started_at,
+            User.username,
+            User.user_id,
+            User.is_anonymous
+        ).join(
+            User, GameSession.user_id == User.user_id
+        ).filter(
+            GameSession.game_id == game_id,
+            GameSession.ended_at != None
+        ).order_by(
+            desc(GameSession.score)
+        ).limit(limit).all()
+        
+        leaderboard = []
+        for idx, row in enumerate(results, 1):
+            entry = {
+                'session_id': row.session_id,
+                'score': row.score,
+                'cur8_earned': row.cur8_earned,
+                'started_at': row.started_at,
+                'username': row.username,
+                'user_id': row.user_id,
+                'is_anonymous': bool(row.is_anonymous),
+                'rank': idx
+            }
+            
+            if entry['is_anonymous']:
+                entry['username'] = f"Anonymous #{entry['user_id'][-6:]}"
+            
+            leaderboard.append(entry)
     
     return {
         "success": True,

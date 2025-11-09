@@ -1,4 +1,4 @@
-import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay, getUserSessions } from './api.js';
+import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay, getUserSessions, fetchLeaderboard } from './api.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.js';
 
@@ -662,6 +662,90 @@ export async function renderProfile() {
     }
     
     console.log('Profile: pagina renderizzata completamente');
+}
+
+/**
+ * Render the leaderboard page
+ */
+export async function renderLeaderboard() {
+    const appContainer = document.getElementById('app');
+    
+    appContainer.innerHTML = `
+        <div class="leaderboard">
+            <div class="leaderboard-header">
+                <h2>🏆 Global Leaderboard</h2>
+                <p class="leaderboard-subtitle">Top players and high scores across all games</p>
+            </div>
+            <div class="loading">Loading leaderboard...</div>
+        </div>
+    `;
+    
+    try {
+        // Fetch leaderboard data from API
+        const data = await fetchLeaderboard();
+        console.log('Leaderboard data:', data);
+        
+        // Create leaderboard content
+        let leaderboardHTML = `
+            <div class="leaderboard">
+                <div class="leaderboard-header">
+                    <h2>🏆 Global Leaderboard</h2>
+                    <p class="leaderboard-subtitle">Top players and high scores across all games</p>
+                </div>
+        `;
+        
+        if (data.leaderboard && data.leaderboard.length > 0) {
+            leaderboardHTML += `
+                <div class="leaderboard-list">
+                    ${data.leaderboard.map((entry, index) => `
+                        <div class="leaderboard-item ${index < 3 ? 'top-' + (index + 1) : ''}">
+                            <div class="leaderboard-rank">
+                                ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                            </div>
+                            <div class="leaderboard-player">
+                                <div class="player-name">${entry.username || 'Anonymous'}</div>
+                                <div class="player-games">${entry.games_played || 0} games played</div>
+                            </div>
+                            <div class="leaderboard-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Score</span>
+                                    <span class="stat-value">${(entry.total_score || 0).toLocaleString()}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">CUR8 Earned</span>
+                                    <span class="stat-value">${(entry.total_cur8 || 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            leaderboardHTML += `
+                <div class="leaderboard-empty">
+                    <p>No leaderboard data available yet.</p>
+                    <p>Start playing games to appear on the leaderboard!</p>
+                </div>
+            `;
+        }
+        
+        leaderboardHTML += `</div>`;
+        
+        appContainer.innerHTML = leaderboardHTML;
+        
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        appContainer.innerHTML = `
+            <div class="leaderboard">
+                <div class="leaderboard-header">
+                    <h2>🏆 Global Leaderboard</h2>
+                </div>
+                <div class="error-message">
+                    Failed to load leaderboard. Please try again later.
+                </div>
+            </div>
+        `;
+    }
 }
 
 /**

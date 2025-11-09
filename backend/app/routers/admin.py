@@ -3,11 +3,13 @@ from fastapi.responses import HTMLResponse, FileResponse
 from typing import Dict, List, Any
 from pathlib import Path
 from app.database import (
-    get_db_connection, 
+    get_db_session,
     get_open_sessions, 
     close_open_sessions, 
     force_close_session
 )
+from app.models import Game, User, GameSession, UserAchievement, Leaderboard
+from sqlalchemy import desc
 import json
 from datetime import datetime
 
@@ -22,64 +24,37 @@ async def db_viewer():
 @router.get("/db-stats")
 async def get_db_stats():
     """Get database statistics and all data from all tables"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Get all games
-    cursor.execute("SELECT * FROM games ORDER BY created_at DESC")
-    rows = cursor.fetchall()
-    
-    games = []
-    categories = set()
-    authors = set()
-    
-    for row in rows:
-        game = dict(row)
-        game['tags'] = json.loads(game['tags']) if game['tags'] else []
-        game['metadata'] = json.loads(game['metadata']) if game['metadata'] else {}
-        games.append(game)
+    with get_db_session() as session:
+        # Get all games using ORM
+        games_query = session.query(Game).order_by(desc(Game.created_at)).all()
         
-        categories.add(game['category'])
-        if game['author']:
-            authors.add(game['author'])
-    
-    # Get all users
-    cursor.execute("SELECT * FROM users ORDER BY created_at DESC")
-    user_rows = cursor.fetchall()
-    users = []
-    for row in user_rows:
-        user = dict(row)
-        user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
-        users.append(user)
-    
-    # Get all game sessions
-    cursor.execute("SELECT * FROM game_sessions ORDER BY started_at DESC LIMIT 100")
-    session_rows = cursor.fetchall()
-    sessions = []
-    for row in session_rows:
-        session = dict(row)
-        session['metadata'] = json.loads(session['metadata']) if session['metadata'] else {}
-        sessions.append(session)
-    
-    # Get all achievements
-    cursor.execute("SELECT * FROM user_achievements ORDER BY earned_at DESC LIMIT 100")
-    achievement_rows = cursor.fetchall()
-    achievements = []
-    for row in achievement_rows:
-        achievement = dict(row)
-        achievement['metadata'] = json.loads(achievement['metadata']) if achievement['metadata'] else {}
-        achievements.append(achievement)
-    
-    # Get all leaderboard entries
-    cursor.execute("SELECT * FROM leaderboards ORDER BY score DESC LIMIT 100")
-    leaderboard_rows = cursor.fetchall()
-    leaderboard = []
-    for row in leaderboard_rows:
-        entry = dict(row)
-        entry['metadata'] = json.loads(entry['metadata']) if entry['metadata'] else {}
-        leaderboard.append(entry)
-    
-    conn.close()
+        games = []
+        categories = set()
+        authors = set()
+        
+        for game in games_query:
+            game_dict = game.to_dict()
+            games.append(game_dict)
+            
+            categories.add(game.category)
+            if game.author:
+                authors.add(game.author)
+        
+        # Get all users using ORM
+        users_query = session.query(User).order_by(desc(User.created_at)).all()
+        users = [user.to_dict() for user in users_query]
+        
+        # Get all game sessions (limited to 100)
+        sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).limit(100).all()
+        sessions = [s.to_dict() for s in sessions_query]
+        
+        # Get all achievements (limited to 100)
+        achievements_query = session.query(UserAchievement).order_by(desc(UserAchievement.earned_at)).limit(100).all()
+        achievements = [a.to_dict() for a in achievements_query]
+        
+        # Get all leaderboard entries (limited to 100)
+        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).limit(100).all()
+        leaderboard = [entry.to_dict() for entry in leaderboard_query]
     
     return {
         "total_games": len(games),
@@ -101,56 +76,26 @@ async def get_db_stats():
 @router.get("/db-export")
 async def export_database():
     """Export complete database as JSON"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Export games
-    cursor.execute("SELECT * FROM games ORDER BY created_at DESC")
-    rows = cursor.fetchall()
-    games = []
-    for row in rows:
-        game = dict(row)
-        game['tags'] = json.loads(game['tags']) if game['tags'] else []
-        game['metadata'] = json.loads(game['metadata']) if game['metadata'] else {}
-        games.append(game)
-    
-    # Export users
-    cursor.execute("SELECT * FROM users ORDER BY created_at DESC")
-    user_rows = cursor.fetchall()
-    users = []
-    for row in user_rows:
-        user = dict(row)
-        user['metadata'] = json.loads(user['metadata']) if user['metadata'] else {}
-        users.append(user)
-    
-    # Export sessions
-    cursor.execute("SELECT * FROM game_sessions ORDER BY started_at DESC")
-    session_rows = cursor.fetchall()
-    sessions = []
-    for row in session_rows:
-        session = dict(row)
-        session['metadata'] = json.loads(session['metadata']) if session['metadata'] else {}
-        sessions.append(session)
-    
-    # Export achievements
-    cursor.execute("SELECT * FROM user_achievements ORDER BY earned_at DESC")
-    achievement_rows = cursor.fetchall()
-    achievements = []
-    for row in achievement_rows:
-        achievement = dict(row)
-        achievement['metadata'] = json.loads(achievement['metadata']) if achievement['metadata'] else {}
-        achievements.append(achievement)
-    
-    # Export leaderboard
-    cursor.execute("SELECT * FROM leaderboards ORDER BY score DESC")
-    leaderboard_rows = cursor.fetchall()
-    leaderboard = []
-    for row in leaderboard_rows:
-        entry = dict(row)
-        entry['metadata'] = json.loads(entry['metadata']) if entry['metadata'] else {}
-        leaderboard.append(entry)
-    
-    conn.close()
+    with get_db_session() as session:
+        # Export games using ORM
+        games_query = session.query(Game).order_by(desc(Game.created_at)).all()
+        games = [game.to_dict() for game in games_query]
+        
+        # Export users using ORM
+        users_query = session.query(User).order_by(desc(User.created_at)).all()
+        users = [user.to_dict() for user in users_query]
+        
+        # Export sessions using ORM
+        sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).all()
+        sessions = [s.to_dict() for s in sessions_query]
+        
+        # Export achievements using ORM
+        achievements_query = session.query(UserAchievement).order_by(desc(UserAchievement.earned_at)).all()
+        achievements = [a.to_dict() for a in achievements_query]
+        
+        # Export leaderboard using ORM
+        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
+        leaderboard = [entry.to_dict() for entry in leaderboard_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),

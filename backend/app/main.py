@@ -45,18 +45,10 @@ games_path = Path(__file__).parent / "games"
 games_path.mkdir(exist_ok=True)
 app.mount("/games", StaticFiles(directory=str(games_path), html=True), name="games")
 
-@app.get("/")
-async def root():
-    return {
-        "message": "HTML5 Game Platform API",
-        "version": "1.0.0",
-        "endpoints": {
-            "games": "/games",
-            "docs": "/docs",
-            "static": "/static",
-            "game_files": "/games"
-        }
-    }
+# Frontend files serving
+frontend_path = Path(__file__).parent.parent.parent / "frontend"
+if frontend_path.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
 
 @app.get("/health")
 async def health_check():

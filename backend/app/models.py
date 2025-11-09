@@ -1,37 +1,34 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, ForeignKey, JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+import json
 
-class Game:
-    """Game model representing a game in the platform."""
+Base = declarative_base()
+
+class Game(Base):
+    """Game model using SQLAlchemy ORM."""
+    __tablename__ = 'games'
     
-    def __init__(
-        self,
-        game_id: str,
-        title: str,
-        entry_point: str,
-        description: str = "",
-        author: str = "",
-        version: str = "1.0.0",
-        thumbnail: str = "",
-        category: str = "uncategorized",
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        created_at: Optional[str] = None,
-        updated_at: Optional[str] = None
-    ):
-        self.game_id = game_id
-        self.title = title
-        self.entry_point = entry_point
-        self.description = description
-        self.author = author
-        self.version = version
-        self.thumbnail = thumbnail
-        self.category = category
-        self.tags = tags or []
-        self.metadata = metadata or {}
-        self.created_at = created_at or datetime.utcnow().isoformat()
-        self.updated_at = updated_at or datetime.utcnow().isoformat()
-
+    game_id = Column(String, primary_key=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, default='')
+    author = Column(String, default='')
+    version = Column(String, default='1.0.0')
+    thumbnail = Column(String, default='')
+    entry_point = Column(String, nullable=False)
+    category = Column(String, default='uncategorized')
+    tags = Column(Text, default='[]')  # JSON string
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    extra_data = Column(Text, default='{}')  # Renamed from 'metadata' to avoid SQLAlchemy conflict
+    
+    # Relationships
+    sessions = relationship("GameSession", back_populates="game", cascade="all, delete-orphan")
+    achievements = relationship("UserAchievement", back_populates="game", cascade="all, delete-orphan")
+    leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade="all, delete-orphan")
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert game instance to dictionary."""
         return {
@@ -43,32 +40,151 @@ class Game:
             "thumbnail": self.thumbnail,
             "entry_point": self.entry_point,
             "category": self.category,
-            "tags": self.tags,
+            "tags": json.loads(self.tags) if self.tags else [],
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "metadata": self.metadata
+            "metadata": json.loads(self.extra_data) if self.extra_data else {}
         }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Game':
-        """Create game instance from dictionary."""
-        return cls(
-            game_id=data.get("game_id"),
-            title=data.get("title"),
-            entry_point=data.get("entry_point"),
-            description=data.get("description", ""),
-            author=data.get("author", ""),
-            version=data.get("version", "1.0.0"),
-            thumbnail=data.get("thumbnail", ""),
-            category=data.get("category", "uncategorized"),
-            tags=data.get("tags", []),
-            metadata=data.get("metadata", {}),
-            created_at=data.get("created_at"),
-            updated_at=data.get("updated_at")
-        )
-
+    
     def __repr__(self) -> str:
         return f"<Game {self.game_id}: {self.title}>"
 
-    def __str__(self) -> str:
-        return f"{self.title} (v{self.version}) by {self.author}"
+
+class User(Base):
+    """User model using SQLAlchemy ORM."""
+    __tablename__ = 'users'
+    
+    user_id = Column(String, primary_key=True)
+    username = Column(String, unique=True, nullable=True)
+    email = Column(String, unique=True, nullable=True)
+    password_hash = Column(String, nullable=True)
+    steem_username = Column(String, unique=True, nullable=True)
+    is_anonymous = Column(Integer, default=0)
+    cur8_multiplier = Column(Float, default=1.0)
+    total_cur8_earned = Column(Float, default=0.0)
+    game_scores = Column(Text, default='{}')  # JSON string
+    avatar = Column(String, nullable=True)
+    created_at = Column(String, nullable=False)
+    last_login = Column(String, nullable=True)
+    extra_data = Column(Text, default='{}')  # Renamed from 'metadata'
+    
+    # Relationships
+    sessions = relationship("GameSession", back_populates="user", cascade="all, delete-orphan")
+    achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
+    leaderboard_entries = relationship("Leaderboard", back_populates="user", cascade="all, delete-orphan")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert user instance to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "email": self.email,
+            "steem_username": self.steem_username,
+            "is_anonymous": bool(self.is_anonymous),
+            "cur8_multiplier": self.cur8_multiplier,
+            "total_cur8_earned": self.total_cur8_earned,
+            "game_scores": json.loads(self.game_scores) if self.game_scores else {},
+            "avatar": self.avatar,
+            "created_at": self.created_at,
+            "last_login": self.last_login,
+            "metadata": json.loads(self.extra_data) if self.extra_data else {}
+        }
+    
+    def __repr__(self) -> str:
+        return f"<User {self.user_id}: {self.username or 'Anonymous'}>"
+
+
+class GameSession(Base):
+    """Game session model using SQLAlchemy ORM."""
+    __tablename__ = 'game_sessions'
+    
+    session_id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    score = Column(Integer, default=0)
+    cur8_earned = Column(Float, default=0.0)
+    duration_seconds = Column(Integer, default=0)
+    started_at = Column(String, nullable=False)
+    ended_at = Column(String, nullable=True)
+    extra_data = Column(Text, default='{}')  # Renamed from 'metadata'
+    
+    # Relationships
+    user = relationship("User", back_populates="sessions")
+    game = relationship("Game", back_populates="sessions")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert session instance to dictionary."""
+        return {
+            "session_id": self.session_id,
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "score": self.score,
+            "cur8_earned": self.cur8_earned,
+            "duration_seconds": self.duration_seconds,
+            "started_at": self.started_at,
+            "ended_at": self.ended_at,
+            "metadata": json.loads(self.extra_data) if self.extra_data else {}
+        }
+    
+    def __repr__(self) -> str:
+        return f"<GameSession {self.session_id}: User {self.user_id} - Game {self.game_id}>"
+
+
+class UserAchievement(Base):
+    """User achievement model using SQLAlchemy ORM."""
+    __tablename__ = 'user_achievements'
+    
+    achievement_id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    achievement_type = Column(String, nullable=False)
+    achievement_value = Column(String, nullable=True)
+    earned_at = Column(String, nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="achievements")
+    game = relationship("Game", back_populates="achievements")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert achievement instance to dictionary."""
+        return {
+            "achievement_id": self.achievement_id,
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "achievement_type": self.achievement_type,
+            "achievement_value": self.achievement_value,
+            "earned_at": self.earned_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<Achievement {self.achievement_id}: {self.achievement_type}>"
+
+
+class Leaderboard(Base):
+    """Leaderboard model using SQLAlchemy ORM."""
+    __tablename__ = 'leaderboards'
+    
+    entry_id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    score = Column(Integer, nullable=False)
+    rank = Column(Integer, nullable=True)
+    created_at = Column(String, nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="leaderboard_entries")
+    game = relationship("Game", back_populates="leaderboard_entries")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert leaderboard entry to dictionary."""
+        return {
+            "entry_id": self.entry_id,
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "score": self.score,
+            "rank": self.rank,
+            "created_at": self.created_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<Leaderboard {self.entry_id}: Rank {self.rank} - Score {self.score}>"

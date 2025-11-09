@@ -269,3 +269,7 @@ public
 tmp/
 temp/
 .hintrc
+backend/backup_database.py
+backend/migrate_to_orm.py
+backend/check_leaderboard.py
+backend/populate_leaderboard.py

@@ -1,4 +1,4 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, render404 } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, renderLeaderboard, render404 } from './main.js';
 
 /**
  * Router configuration
@@ -7,9 +7,13 @@ const routes = {
     '/': renderCatalog,
     '/about': renderAbout,
     '/profile': renderProfile,
+    '/leaderboard': renderLeaderboard,
     '/game/:id': renderGameDetail,
     '/play/:id': renderGamePlayer
 };
+
+console.log('Routes configured:', routes);
+console.log('renderLeaderboard function:', renderLeaderboard);
 
 // Flag to prevent duplicate route handling
 let isHandlingRoute = false;
@@ -41,6 +45,7 @@ function handleRoute() {
     const route = matchRoute(hash);
     
     console.log('Handling route:', hash);
+    console.log('Matched route:', route);
     
     // Cleanup previous game runtime when navigating away from player
     if (!hash.startsWith('/play/') && window.currentGameRuntime) {

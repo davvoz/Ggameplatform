@@ -160,6 +160,26 @@ export async function getUserSessions(userId, limit = 50) {
     }
 }
 
+/**
+ * Get global leaderboard
+ * @param {number} limit - Number of entries to retrieve
+ * @returns {Promise<Object>} Leaderboard data
+ */
+export async function fetchLeaderboard(limit = 50) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/leaderboard?limit=${limit}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        throw error;
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
@@ -168,5 +188,6 @@ export default {
     getStaticResourceUrl,
     healthCheck,
     trackGamePlay,
-    getUserSessions
+    getUserSessions,
+    fetchLeaderboard
 };

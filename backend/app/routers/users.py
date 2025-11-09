@@ -235,6 +235,11 @@ async def start_game_session(session_data: SessionStart):
 @router.post("/sessions/end")
 async def end_game(session_data: SessionEnd):
     """End a game session and calculate CUR8 earned."""
+    print(f"[DEBUG] Received session end request:")
+    print(f"  - session_id: {session_data.session_id}")
+    print(f"  - score: {session_data.score} (type: {type(session_data.score).__name__})")
+    print(f"  - duration_seconds: {session_data.duration_seconds}")
+    
     session = end_game_session(
         session_id=session_data.session_id,
         score=session_data.score,
@@ -243,6 +248,8 @@ async def end_game(session_data: SessionEnd):
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    
+    print(f"[DEBUG] Session ended with score: {session.get('score')}")
     
     return {
         "success": True,

@@ -458,8 +458,7 @@
             document.getElementById('gameOver').style.display = 'block';
 
             // Send game over event to platform
-            PlatformSDK.gameOver({
-                score: score,
+            PlatformSDK.gameOver(score, {
                 reason: 'collision'
             });
         }

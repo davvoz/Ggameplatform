@@ -48,6 +48,11 @@ async def get_db_stats():
         sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).limit(100).all()
         sessions = [s.to_dict() for s in sessions_query]
         
+        # DEBUG: Check if score is in the dict
+        if sessions:
+            print(f"[DEBUG] First session from db-stats: {sessions[0]}")
+            print(f"[DEBUG] First session score: {sessions[0].get('score')}")
+        
         # Get all achievements (limited to 100)
         achievements_query = session.query(UserAchievement).order_by(desc(UserAchievement.earned_at)).limit(100).all()
         achievements = [a.to_dict() for a in achievements_query]

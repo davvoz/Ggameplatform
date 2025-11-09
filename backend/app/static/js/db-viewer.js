@@ -197,13 +197,19 @@ function displaySessions() {
     table.style.display = 'table';
     tbody.innerHTML = '';
     
+    // DEBUG: Log first session to see what we receive
+    if (sessions.length > 0) {
+        console.log('First session object:', sessions[0]);
+        console.log('First session score:', sessions[0].score);
+    }
+    
     sessions.forEach(session => {
         const row = tbody.insertRow();
         
         row.insertCell().textContent = session.session_id;
         row.insertCell().textContent = session.user_id;
         row.insertCell().textContent = session.game_id;
-        row.insertCell().textContent = session.final_score || '-';
+        row.insertCell().textContent = session.score || '-';
         row.insertCell().textContent = session.cur8_earned ? session.cur8_earned.toFixed(2) : '-';
         row.insertCell().textContent = session.duration_seconds ? formatDuration(session.duration_seconds) : '-';
         row.insertCell().textContent = formatDate(session.started_at);

@@ -309,7 +309,9 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         
         # Update session
         now = datetime.utcnow().isoformat()
+        print(f"[DEBUG] Before update - game_session.score: {game_session.score}")
         game_session.score = score
+        print(f"[DEBUG] After update - game_session.score: {game_session.score}")
         game_session.cur8_earned = cur8_earned
         game_session.duration_seconds = duration_seconds
         game_session.ended_at = now
@@ -322,9 +324,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         # Update user's total CUR8
         user.total_cur8_earned += cur8_earned
         
+        print(f"[DEBUG] Before flush - game_session.score: {game_session.score}")
         session.flush()
+        print(f"[DEBUG] After flush - game_session.score: {game_session.score}")
         
         result = game_session.to_dict()
+        print(f"[DEBUG] Result dict score: {result.get('score')}")
         
     # After commit, recalculate ranks for this game
     from app.leaderboard_triggers import recalculate_ranks_for_game

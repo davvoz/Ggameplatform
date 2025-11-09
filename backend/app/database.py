@@ -331,10 +331,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         result = game_session.to_dict()
         print(f"[DEBUG] Result dict score: {result.get('score')}")
         
-    # After commit, recalculate ranks for this game
-    from app.leaderboard_triggers import recalculate_ranks_for_game
-    with get_db_session() as session:
-        recalculate_ranks_for_game(session, game_id)
+    # Note: Leaderboard is automatically updated by the trigger system
+    # No need to manually recalculate ranks here
     
     return result
 

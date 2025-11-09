@@ -106,7 +106,10 @@ def receive_after_flush(session, flush_context):
         try:
             update_leaderboard_for_session(session, game_session)
         except Exception as e:
-            print(f"❌ Error updating leaderboard: {e}")
+            print(f"❌ Error updating leaderboard for session {game_session.session_id}: {e}")
+            # Log the error but don't raise it to avoid blocking the main transaction
+            import traceback
+            traceback.print_exc()
     
     # Clear the set
     sessions_to_update.clear()

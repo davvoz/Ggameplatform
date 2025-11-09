@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Zombie Tower Defense</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 600px;  /* Limita la larghezza su desktop */
+            max-height: 95vh;   /* Usa quasi tutto lo schermo in altezza */
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #1a0033 0%, #0d1b2a 50%, #001a00 100%);
+            border: 4px solid #00ff00;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.3);
+            padding-bottom: 0;
+            overflow: hidden;
+        }
+
+        #topBar {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 3px solid #00ff00;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .stat {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 8px 15px;
+            border-radius: 8px;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #66ff66;
+            display: block;
+        }
+
+        .stat-value {
+            color: #00ff00;
+            font-size: 18px;
+            display: block;
+        }
+
+        #energy .stat-value {
+            color: #ff3333;
+        }
+
+        #wave .stat-value {
+            color: #ffff00;
+        }
+
+        #canvasWrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #shop {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 3px solid #00ff00;
+            overflow-x: hidden;
+            justify-content: space-evenly;
+            flex-shrink: 0;
+        }
+
+        .cannon-btn {
+            flex: 1;
+            min-width: 70px;
+            max-width: 100px;
+            padding: 10px 6px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #555;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            position: relative;
+        }
+
+        .cannon-btn:hover {
+            transform: translateY(-2px);
+            border-color: #00ff00;
+        }
+
+        .cannon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .cannon-btn.selected {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            background: linear-gradient(135deg, #2a3a4e 0%, #26334e 100%);
+        }
+
+        .cannon-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .cannon-icon {
+            font-size: 24px;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+
+        .cannon-name {
+            font-size: 9px;
+            color: #00ff00;
+        }
+
+        .cannon-cost {
+            font-size: 10px;
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .cannon-stats {
+            font-size: 8px;
+            color: #aaa;
+        }
+
+        #gameOver, #pauseOverlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.98);
+            color: #00ff00;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+            border: 4px solid #ff0000;
+            min-width: 300px;
+        }
+
+        #pauseOverlay {
+            border-color: #00ff00;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.5);
+        }
+
+        #gameOver h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #ff3333;
+            text-shadow: 0 0 20px #ff0000;
+        }
+
+        #gameOver p {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #00ff00;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00ff00 0%, #00aa00 100%);
+            color: #000;
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px 30px;
+            border-radius: 10px;
+            color: #00ff00;
+            font-size: 16px;
+            z-index: 500;
+            text-align: center;
+            border: 3px solid #00ff00;
+            pointer-events: none;
+            animation: pulse 2s ease-in-out;
+        }
+
+        #hint.hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes zombieWalk {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-3px) rotate(2deg); }
+        }
+
+        @keyframes zombieFastWalk {
+            0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
+            25% { transform: translateY(-5px) rotate(5deg) scale(1.05); }
+            50% { transform: translateY(0) rotate(-5deg) scale(0.95); }
+            75% { transform: translateY(-5px) rotate(5deg) scale(1.05); }
+        }
+
+        @keyframes zombieTankWalk {
+            0%, 100% { transform: translateY(0) scale(1.1); }
+            50% { transform: translateY(-2px) scale(1.12); }
+        }
+
+        @keyframes zombieBossWalk {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1.2); }
+            25% { transform: translateY(-4px) rotate(-3deg) scale(1.22); }
+            50% { transform: translateY(0) rotate(0deg) scale(1.18); }
+            75% { transform: translateY(-4px) rotate(3deg) scale(1.22); }
+        }
+
+        @keyframes cannonRecoil {
+            0% { transform: translateY(0) scale(1); }
+            20% { transform: translateY(-8px) scale(1.15); }
+            40% { transform: translateY(3px) scale(0.95); }
+            60% { transform: translateY(-2px) scale(1.05); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        @keyframes muzzleFlash {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.5); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+
+        #fullscreenPrompt {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        #fullscreenPrompt.show {
+            display: flex;
+        }
+
+        #fullscreenPrompt h1 {
+            color: #00ff00;
+            font-size: 42px;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 20px;
+        }
+
+        #fullscreenPrompt p {
+            color: #00ff00;
+            font-size: 20px;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        #fullscreenBtn {
+            padding: 20px 60px;
+            font-size: 24px;
+            background: linear-gradient(135deg, #00ff00 0%, #00aa00 100%);
+            color: #000;
+            border: 4px solid #00ff00;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        #fullscreenBtn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(0, 255, 0, 1);
+        }
+
+        #fullscreenBtn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 0, 0.8); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 0, 1); }
+        }
+
+        @media (max-width: 600px) {
+            #topBar {
+                font-size: 12px;
+            }
+            
+            .stat {
+                min-width: 70px;
+                padding: 6px 10px;
+            }
+            
+            .cannon-btn {
+                padding: 8px 4px;
+                min-width: 60px;
+                max-width: 80px;
+            }
+            
+            .cannon-icon {
+                font-size: 20px;
+            }
+
+            .cannon-name {
+                font-size: 8px;
+            }
+
+            .cannon-cost {
+                font-size: 9px;
+            }
+
+            .cannon-stats {
+                font-size: 7px;
+            }
+
+            #shop {
+                padding: 8px;
+                gap: 4px;
+            }
+
+            #fullscreenPrompt h1 {
+                font-size: 32px;
+            }
+
+            #fullscreenPrompt p {
+                font-size: 16px;
+            }
+
+            #fullscreenBtn {
+                padding: 15px 40px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="fullscreenPrompt" class="show">
+        <h1>🧟 ZOMBIE TOWER DEFENSE 🧟</h1>
+        <p>
+            For the best experience, this game requires fullscreen mode.<br>
+            Click the button below to enter fullscreen and start defending!
+        </p>
+        <button id="fullscreenBtn">🎮 ENTER FULLSCREEN & PLAY 🎮</button>
+    </div>
+
+    <div id="gameContainer">
+        <div id="topBar">
+            <div class="stat" id="coins">
+                <span class="stat-label">COINS</span>
+                <span class="stat-value">100</span>
+            </div>
+            <div class="stat" id="wave">
+                <span class="stat-label">WAVE</span>
+                <span class="stat-value">1</span>
+            </div>
+            <div class="stat" id="energy">
+                <span class="stat-label">ENERGY</span>
+                <span class="stat-value">100</span>
+            </div>
+            <div class="stat" id="score">
+                <span class="stat-label">SCORE</span>
+                <span class="stat-value">0</span>
+            </div>
+        </div>
+
+        <div id="canvasWrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="shop">
+            <button class="cannon-btn selected" data-type="basic">
+                <div class="cannon-icon">🔫</div>
+                <div class="cannon-name">BASIC</div>
+                <div class="cannon-cost">💰 20</div>
+                <div class="cannon-stats">DMG:1 SPD:1x</div>
+            </button>
+            <button class="cannon-btn" data-type="rapid">
+                <div class="cannon-icon">⚡</div>
+                <div class="cannon-name">RAPID</div>
+                <div class="cannon-cost">💰 50</div>
+                <div class="cannon-stats">DMG:1 SPD:3x</div>
+            </button>
+            <button class="cannon-btn" data-type="heavy">
+                <div class="cannon-icon">💥</div>
+                <div class="cannon-name">HEAVY</div>
+                <div class="cannon-cost">💰 80</div>
+                <div class="cannon-stats">DMG:5 SPD:0.5x</div>
+            </button>
+            <button class="cannon-btn" data-type="laser">
+                <div class="cannon-icon">🔆</div>
+                <div class="cannon-name">LASER</div>
+                <div class="cannon-cost">💰 150</div>
+                <div class="cannon-stats">DMG:3 SPD:2x</div>
+            </button>
+            <button class="cannon-btn" data-type="freeze">
+                <div class="cannon-icon">❄️</div>
+                <div class="cannon-name">FREEZE</div>
+                <div class="cannon-cost">💰 120</div>
+                <div class="cannon-stats">DMG:1 SLOW</div>
+            </button>
+        </div>
+
+        <div id="hint">
+            🎮 Click bottom grid to place cannons<br>
+            🔄 Drag 3 same cannons together to MERGE<br>
+            🧟 Stop zombies before they reach the RED LINE!
+        </div>
+    </div>
+
+    <div id="pauseOverlay">
+        <h2>⏸ PAUSED</h2>
+    </div>
+
+    <div id="gameOver">
+        <h2>💀 GAME OVER 💀</h2>
+        <p id="finalWave">Wave Reached: 0</p>
+        <p id="finalScore">Score: 0</p>
+        <p id="zombiesKilled">Zombies Killed: 0</p>
+        <button class="btn" id="restartBtn">▶ PLAY AGAIN</button>
+    </div>
+
+    <script src="../../sdk/platformsdk.js"></script>
+    <script>
+        // ============ GAME CONFIGURATION ============
+        const CONFIG = {
+            COLS: 6,
+            ROWS: 10,
+            DEFENSE_LINE: 7,
+            CANNON_ZONE_START: 7,
+            INITIAL_COINS: 100,
+            INITIAL_ENERGY: 100,
+            ENERGY_DRAIN_RATE: 15
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            const topBar = document.getElementById('topBar');
+            const shop = document.getElementById('shop');
+            const hint = document.getElementById('hint');
+            
+            // Calculate actual heights of fixed elements
+            const topBarHeight = topBar ? topBar.offsetHeight : 0;
+            const shopHeight = shop ? shop.offsetHeight : 0;
+            const hintHeight = hint ? hint.offsetHeight : 0;
+            const margins = 10; // Small margin
+            
+            const reservedHeight = topBarHeight + shopHeight + hintHeight + margins;
+            const availableHeight = container.clientHeight - reservedHeight;
+            const availableWidth = container.clientWidth - 20;
+            
+            // Calculate cell size to fit the screen
+            const cellSize = Math.min(
+                Math.floor(availableWidth / CONFIG.COLS),
+                Math.floor(availableHeight / CONFIG.ROWS)
+            );
+            
+            canvas.width = CONFIG.COLS * cellSize;
+            canvas.height = CONFIG.ROWS * cellSize;
+            return cellSize;
+        }
+
+        let CELL_SIZE = resizeCanvas();
+        window.addEventListener('resize', () => {
+            CELL_SIZE = resizeCanvas();
+        });
+        
+   
+
+        // ============ FULLSCREEN MANAGEMENT ============
+        let isFullscreenActive = false;
+
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function checkFullscreen() {
+            isFullscreenActive = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            
+            if (!isFullscreenActive && !game.isGameOver) {
+                // User exited fullscreen - pause game and show prompt
+                game.isPaused = true;
+                document.getElementById('fullscreenPrompt').classList.add('show');
+            }
+        }
+
+        document.addEventListener('fullscreenchange', checkFullscreen);
+        document.addEventListener('webkitfullscreenchange', checkFullscreen);
+        document.addEventListener('mozfullscreenchange', checkFullscreen);
+        document.addEventListener('MSFullscreenChange', checkFullscreen);
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            enterFullscreen();
+            document.getElementById('fullscreenPrompt').classList.remove('show');
+            
+            // Start game after entering fullscreen
+            setTimeout(() => {
+                isFullscreenActive = true;
+                game.isPaused = false;
+                CELL_SIZE = resizeCanvas();
+            }, 100);
+        });
+
+        // ============ CANNON TYPES ============
+        const CANNONS = {
+            basic: {
+                name: 'BASIC',
+                icon: '🔫',
+                cost: 20,
+                damage: 2,
+                fireRate: 1000,
+                range: 3,
+                color: '#00ff00',
+                projectileColor: '#ffff00'
+            },
+            rapid: {
+                name: 'RAPID',
+                icon: '⚡',
+                cost: 50,
+                damage: 1,
+                fireRate: 400,
+                range: 2,
+                color: '#00ffff',
+                projectileColor: '#00ffff'
+            },
+            heavy: {
+                name: 'HEAVY',
+                icon: '💥',
+                cost: 80,
+                damage: 8,
+                fireRate: 2000,
+                range: 4,
+                color: '#ff0000',
+                projectileColor: '#ff0000'
+            },
+            laser: {
+                name: 'LASER',
+                icon: '🔆',
+                cost: 150,
+                damage: 5,
+                fireRate: 600,
+                range: 6,
+                color: '#ffff00',
+                projectileColor: '#ffff00'
+            },
+            freeze: {
+                name: 'FREEZE',
+                icon: '❄️',
+                cost: 120,
+                damage: 2,
+                fireRate: 1200,
+                range: 3,
+                color: '#aaffff',
+                projectileColor: '#aaffff',
+                slowFactor: 0.4
+            }
+        };
+
+        // ============ ZOMBIE TYPES ============
+        const ZOMBIES = {
+            normal: { 
+                icon: '🧟',
+                hp: 5, 
+                speed: 0.4, 
+                reward: 15,
+                color: '#00ff00'
+            },
+            fast: { 
+                icon: '🧟‍♂️',
+                hp: 3, 
+                speed: 0.8, 
+                reward: 20,
+                color: '#ffff00'
+            },
+            tank: { 
+                icon: '🧟‍♀️',
+                hp: 20, 
+                speed: 0.2, 
+                reward: 40,
+                color: '#ff0000'
+            },
+            boss: { 
+                icon: '👹',
+                hp: 50, 
+                speed: 0.25, 
+                reward: 150,
+                color: '#ff00ff'
+            }
+        };
+
+        // ============ GAME STATE ============
+        let game = {
+            coins: CONFIG.INITIAL_COINS,
+            energy: CONFIG.INITIAL_ENERGY,
+            wave: 1,
+            score: 0,
+            kills: 0,
+            isPaused: true, // Start paused until fullscreen
+            isGameOver: false,
+            selectedType: 'basic',
+            selectedCannons: [], // For merge system
+            cannons: [],
+            zombies: [],
+            projectiles: [],
+            particles: [],
+            muzzleFlashes: [], // New: muzzle flash effects
+            waveZombiesSpawned: 0,
+            waveZombiesTotal: 5,
+            lastSpawn: 0,
+            draggedCannon: null,
+            draggedFrom: null
+        };
+
+        // ============ PLATFORM SDK ============
+        (async () => {
+            await PlatformSDK.init();
+            
+            PlatformSDK.on('pause', () => {
+                game.isPaused = true;
+                document.getElementById('pauseOverlay').style.display = 'block';
+            });
+            
+            PlatformSDK.on('resume', () => {
+                game.isPaused = false;
+                document.getElementById('pauseOverlay').style.display = 'none';
+            });
+        })();
+
+        // ============ SHOP HANDLERS ============
+        document.querySelectorAll('.cannon-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cannon-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                game.selectedType = btn.dataset.type;
+            });
+        });
+
+        // ============ CANVAS INPUT ============
+        canvas.addEventListener('click', (e) => {
+            if (game.isPaused || game.isGameOver) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            const col = Math.floor(x / CELL_SIZE);
+            const row = Math.floor(y / CELL_SIZE);
+            
+            const cannon = getCannon(col, row);
+            if (cannon) {
+                // Click on existing cannon - select for merge
+                toggleCannonSelection(cannon);
+            } else {
+                // Click on empty cell - place new cannon
+                placeCannon(col, row);
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (game.isPaused || game.isGameOver) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            const col = Math.floor(x / CELL_SIZE);
+            const row = Math.floor(y / CELL_SIZE);
+            
+            const cannon = getCannon(col, row);
+            if (cannon) {
+                // Tap on existing cannon - select for merge
+                toggleCannonSelection(cannon);
+            } else {
+                // Tap on empty cell - place new cannon
+                placeCannon(col, row);
+            }
+        });
+
+        // ============ GAME LOGIC ============
+        function placeCannon(col, row) {
+            if (row < CONFIG.CANNON_ZONE_START) return;
+            if (getCannon(col, row)) return;
+            
+            const type = CANNONS[game.selectedType];
+            if (game.coins < type.cost) {
+                createParticle(col, row, '💸', '#ff0000');
+                return;
+            }
+            
+            game.coins -= type.cost;
+            game.cannons.push({
+                col, row,
+                type: game.selectedType,
+                level: 1,
+                lastFire: 0
+            });
+            
+            createParticle(col, row, '✨', type.color);
+            updateUI();
+        }
+
+        function getCannon(col, row) {
+            return game.cannons.find(c => c.col === col && c.row === row);
+        }
+        
+        function toggleCannonSelection(cannon) {
+            const index = game.selectedCannons.indexOf(cannon);
+            
+            if (index >= 0) {
+                // Deselect
+                game.selectedCannons.splice(index, 1);
+            } else {
+                // Select
+                game.selectedCannons.push(cannon);
+                
+                // Check if we have 3 cannons of same type and level
+                checkMerge();
+            }
+        }
+        
+        function checkMerge() {
+            if (game.selectedCannons.length !== 3) return;
+            
+            const first = game.selectedCannons[0];
+            const allSameType = game.selectedCannons.every(c => c.type === first.type);
+            const allSameLevel = game.selectedCannons.every(c => c.level === first.level);
+            
+            if (allSameType && allSameLevel) {
+                // MERGE! Use last selected cannon position
+                const lastCannon = game.selectedCannons[2];
+                const mergeCol = lastCannon.col;
+                const mergeRow = lastCannon.row;
+                
+                // Remove old cannons
+                game.cannons = game.cannons.filter(c => !game.selectedCannons.includes(c));
+                
+                // Add upgraded cannon at last selected position
+                game.cannons.push({
+                    col: mergeCol,
+                    row: mergeRow,
+                    type: first.type,
+                    level: first.level + 1,
+                    lastFire: 0
+                });
+                
+                createParticle(mergeCol, mergeRow, '⭐', '#ffff00');
+                createParticle(mergeCol, mergeRow, '💫', '#00ffff');
+                createParticle(mergeCol, mergeRow, `LV${first.level + 1}!`, '#00ff00');
+                
+                game.selectedCannons = [];
+            } else {
+                // Not compatible - deselect all
+                createParticle(first.col, first.row, '❌', '#ff0000');
+                game.selectedCannons = [];
+            }
+        }
+
+        function attemptMerge(cannon, targetCol, targetRow) {
+            if (targetRow < CONFIG.CANNON_ZONE_START) return;
+            
+            // Find nearby cannons of same type and level
+            const nearby = game.cannons.filter(c => {
+                if (c === cannon) return false;
+                if (c.type !== cannon.type || c.level !== cannon.level) return false;
+                
+                const dist = Math.abs(c.col - targetCol) + Math.abs(c.row - targetRow);
+                return dist <= 2;
+            });
+            
+            if (nearby.length >= 2) {
+                // Merge!
+                const toRemove = [cannon, nearby[0], nearby[1]];
+                game.cannons = game.cannons.filter(c => !toRemove.includes(c));
+                
+                game.cannons.push({
+                    col: targetCol,
+                    row: targetRow,
+                    type: cannon.type,
+                    level: cannon.level + 1,
+                    lastFire: 0
+                });
+                
+                createParticle(targetCol, targetRow, '⭐', '#ffff00');
+                createParticle(targetCol, targetRow, '💫', '#00ffff');
+            }
+        }
+
+        function spawnZombie() {
+            const col = Math.floor(Math.random() * CONFIG.COLS);
+            
+            let type = 'normal';
+            const rand = Math.random();
+            const waveBonus = game.wave / 15;
+            
+            if (game.wave >= 5 && rand < 0.15 * waveBonus) type = 'boss';
+            else if (game.wave >= 3 && rand < 0.25) type = 'tank';
+            else if (game.wave >= 2 && rand < 0.35) type = 'fast';
+            
+            const zType = ZOMBIES[type];
+            const hpMultiplier = 1 + (game.wave - 1) * 0.3;
+            
+            game.zombies.push({
+                col,
+                row: -0.5,
+                type,
+                hp: zType.hp * hpMultiplier,
+                maxHp: zType.hp * hpMultiplier,
+                slowUntil: 0,
+                animPhase: Math.random() * Math.PI * 2 // Random animation start
+            });
+        }
+
+        function updateZombies(dt) {
+            game.zombies.forEach(z => {
+                const zType = ZOMBIES[z.type];
+                const isSlow = Date.now() < z.slowUntil;
+                const speed = isSlow ? zType.speed * 0.5 : zType.speed;
+                
+                z.row += speed * dt;
+                
+                // Update animation phase
+                z.animPhase += dt * 5; // Animation speed
+                
+                // Drain energy if past defense line
+                if (z.row >= CONFIG.DEFENSE_LINE) {
+                    game.energy -= CONFIG.ENERGY_DRAIN_RATE * dt;
+                }
+            });
+            
+            // Remove dead or escaped zombies
+            game.zombies = game.zombies.filter(z => z.hp > 0 && z.row < CONFIG.ROWS + 1);
+            
+            if (game.energy <= 0) endGame();
+        }
+
+        function updateCannons(dt) {
+            const now = Date.now();
+            
+            game.cannons.forEach(cannon => {
+                const type = CANNONS[cannon.type];
+                const levelBonus = Math.pow(1.4, cannon.level - 1);
+                const fireRate = type.fireRate / levelBonus;
+                
+                if (now - cannon.lastFire < fireRate) return;
+                
+                // Find closest zombie in column
+                const targets = game.zombies
+                    .filter(z => z.col === cannon.col && z.row < cannon.row)
+                    .sort((a, b) => b.row - a.row);
+                
+                if (targets.length > 0) {
+                    const target = targets[0];
+                    cannon.lastFire = now;
+                    cannon.recoilTime = now; // Trigger recoil animation
+                    
+                    // Add muzzle flash effect
+                    game.muzzleFlashes.push({
+                        col: cannon.col,
+                        row: cannon.row,
+                        color: type.projectileColor,
+                        life: 0.15,
+                        maxLife: 0.15
+                    });
+                    
+                    game.projectiles.push({
+                        col: cannon.col,
+                        row: cannon.row,
+                        targetCol: target.col,
+                        targetRow: target.row,
+                        damage: type.damage * levelBonus,
+                        color: type.projectileColor,
+                        slowFactor: type.slowFactor,
+                        speed: 12
+                    });
+                }
+            });
+        }
+
+        function updateProjectiles(dt) {
+            game.projectiles.forEach(p => {
+                const dx = p.targetCol - p.col;
+                const dy = p.targetRow - p.row;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 0.3) {
+                    // Hit!
+                    const zombie = game.zombies.find(z => 
+                        Math.abs(z.col - p.targetCol) < 0.5 && 
+                        Math.abs(z.row - p.targetRow) < 1
+                    );
+                    
+                    if (zombie) {
+                        zombie.hp -= p.damage;
+                        
+                        if (p.slowFactor) {
+                            zombie.slowUntil = Date.now() + 2000;
+                        }
+                        
+                        if (zombie.hp <= 0) {
+                            const zType = ZOMBIES[zombie.type];
+                            game.coins += zType.reward;
+                            game.kills++;
+                            game.score += Math.floor(zType.reward * game.wave * 1.5);
+                            
+                            createParticle(zombie.col, zombie.row, '💀', '#00ff00');
+                            createParticle(zombie.col, zombie.row, `+${zType.reward}`, '#ffff00');
+                        } else {
+                            createParticle(zombie.col, zombie.row, '💥', p.color);
+                        }
+                    }
+                    
+                    p.hit = true;
+                } else {
+                    p.col += (dx / dist) * p.speed * dt;
+                    p.row += (dy / dist) * p.speed * dt;
+                }
+            });
+            
+            game.projectiles = game.projectiles.filter(p => !p.hit);
+            
+            // Update muzzle flashes
+            game.muzzleFlashes.forEach(mf => {
+                mf.life -= dt;
+            });
+            game.muzzleFlashes = game.muzzleFlashes.filter(mf => mf.life > 0);
+        }
+
+        function updateWaves(dt) {
+            if (game.waveZombiesSpawned >= game.waveZombiesTotal) {
+                if (game.zombies.length === 0) {
+                    // Next wave!
+                    game.wave++;
+                    game.waveZombiesSpawned = 0;
+                    game.waveZombiesTotal = 5 + game.wave * 2;
+                    game.lastSpawn = Date.now();
+                    
+                    // Wave bonus
+                    game.coins += 30 + game.wave * 10;
+                    createParticle(CONFIG.COLS / 2, CONFIG.ROWS / 2, `WAVE ${game.wave}`, '#00ff00');
+                }
+                return;
+            }
+            
+            const now = Date.now();
+            const spawnInterval = Math.max(400, 1500 - game.wave * 50);
+            
+            if (now - game.lastSpawn > spawnInterval) {
+                spawnZombie();
+                game.waveZombiesSpawned++;
+                game.lastSpawn = now;
+            }
+        }
+
+        function updateParticles(dt) {
+            game.particles.forEach(p => {
+                p.life -= dt;
+                p.y -= 30 * dt;
+                p.alpha = p.life / p.maxLife;
+            });
+            
+            game.particles = game.particles.filter(p => p.life > 0);
+        }
+
+        function createParticle(col, row, text, color) {
+            game.particles.push({
+                col, row,
+                x: col * CELL_SIZE + CELL_SIZE / 2,
+                y: row * CELL_SIZE + CELL_SIZE / 2,
+                text,
+                color,
+                life: 1,
+                maxLife: 1,
+                alpha: 1
+            });
+        }
+
+        // ============ RENDERING ============
+        function draw() {
+            // Clear
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= CONFIG.COLS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= CONFIG.ROWS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * CELL_SIZE);
+                ctx.lineTo(canvas.width, i * CELL_SIZE);
+                ctx.stroke();
+            }
+            
+            // Defense line
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0000';
+            ctx.beginPath();
+            ctx.moveTo(0, CONFIG.DEFENSE_LINE * CELL_SIZE);
+            ctx.lineTo(canvas.width, CONFIG.DEFENSE_LINE * CELL_SIZE);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Cannon zone highlight
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.05)';
+            ctx.fillRect(0, CONFIG.CANNON_ZONE_START * CELL_SIZE, 
+                        canvas.width, (CONFIG.ROWS - CONFIG.CANNON_ZONE_START) * CELL_SIZE);
+            
+            // Cannons
+            game.cannons.forEach(c => {
+                const type = CANNONS[c.type];
+                let x = c.col * CELL_SIZE + CELL_SIZE / 2;
+                let y = c.row * CELL_SIZE + CELL_SIZE / 2;
+                let scale = 1;
+                
+                // Selection indicator
+                const isSelected = game.selectedCannons.includes(c);
+                if (isSelected) {
+                    const pulse = Math.sin(Date.now() * 0.008) * 0.5 + 0.5;
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 4;
+                    ctx.shadowBlur = 20 + pulse * 10;
+                    ctx.shadowColor = '#ffff00';
+                    ctx.strokeRect(
+                        c.col * CELL_SIZE + 2,
+                        c.row * CELL_SIZE + 2,
+                        CELL_SIZE - 4,
+                        CELL_SIZE - 4
+                    );
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Recoil animation - simple and smooth
+                const now = Date.now();
+                if (c.recoilTime && now - c.recoilTime < 150) {
+                    const t = (now - c.recoilTime) / 150;
+                    const recoil = Math.sin(t * Math.PI);
+                    y -= recoil * 5; // Quick upward kick
+                    scale = 1 + recoil * 0.1; // Slight scale
+                }
+                
+                const radius = CELL_SIZE * 0.35 * scale;
+                
+                // Base
+                ctx.fillStyle = type.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = type.color;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Icon
+                ctx.font = `${CELL_SIZE * 0.5 * scale}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(type.icon, x, y);
+                
+                // Level
+                if (c.level > 1) {
+                    ctx.fillStyle = '#ffff00';
+                    ctx.font = `bold ${CELL_SIZE * 0.25}px Arial`;
+                    ctx.fillText(`★${c.level}`, x, y - CELL_SIZE * 0.45);
+                }
+            });
+            
+            // Muzzle flashes
+            game.muzzleFlashes.forEach(mf => {
+                const x = mf.col * CELL_SIZE + CELL_SIZE / 2;
+                const y = mf.row * CELL_SIZE + CELL_SIZE / 2;
+                const alpha = mf.life / mf.maxLife;
+                const scale = 1 + (1 - alpha) * 2;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = mf.color;
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = mf.color;
+                ctx.beginPath();
+                ctx.arc(x, y - CELL_SIZE * 0.4, 8 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            
+            // Projectiles
+            game.projectiles.forEach(p => {
+                const x = p.col * CELL_SIZE + CELL_SIZE / 2;
+                const y = p.row * CELL_SIZE + CELL_SIZE / 2;
+                
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Projectile trail
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+            
+            // Zombies
+            game.zombies.forEach(z => {
+                const zType = ZOMBIES[z.type];
+                let x = z.col * CELL_SIZE + CELL_SIZE / 2;
+                let y = z.row * CELL_SIZE + CELL_SIZE / 2;
+                let offsetX = 0;
+                let offsetY = 0;
+                let iconSize = CELL_SIZE * 0.6;
+                let glowColor = '#00ff00';
+                let glowIntensity = 10;
+                
+                // Animazioni diverse per ogni tipo di zombie
+                if (z.type === 'normal') {
+                    // Movimento ondulatorio leggero
+                    offsetY = Math.sin(z.animPhase) * 3;
+                    offsetX = Math.sin(z.animPhase * 0.5) * 1.5;
+                    glowColor = '#00ff00';
+                    glowIntensity = 8 + Math.sin(z.animPhase * 2) * 4;
+                } else if (z.type === 'fast') {
+                    // Movimento veloce e nervoso con zigzag
+                    offsetY = Math.sin(z.animPhase * 2.5) * 4;
+                    offsetX = Math.cos(z.animPhase * 3) * 3;
+                    iconSize = CELL_SIZE * (0.6 + Math.abs(Math.sin(z.animPhase * 2.5)) * 0.1);
+                    glowColor = '#ffff00';
+                    glowIntensity = 12 + Math.sin(z.animPhase * 4) * 8;
+                } else if (z.type === 'tank') {
+                    // Movimento pesante tipo "stomp"
+                    const stomp = Math.abs(Math.sin(z.animPhase * 0.8));
+                    offsetY = stomp * stomp * 4;
+                    iconSize = CELL_SIZE * (0.65 - stomp * 0.05);
+                    glowColor = '#ff6600';
+                    glowIntensity = 15 + stomp * 10;
+                } else if (z.type === 'boss') {
+                    // Movimento intimidatorio con rotazione sprite
+                    offsetY = Math.sin(z.animPhase * 0.9) * 5;
+                    offsetX = Math.sin(z.animPhase * 0.45) * 2.5;
+                    iconSize = CELL_SIZE * (0.7 + Math.sin(z.animPhase * 0.9) * 0.08);
+                    glowColor = '#ff0000';
+                    glowIntensity = 20 + Math.sin(z.animPhase * 1.5) * 10;
+                }
+                
+                x += offsetX;
+                y += offsetY;
+                
+                // Slow effect
+                if (Date.now() < z.slowUntil) {
+                    ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, CELL_SIZE * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Contorno animato colorato
+                ctx.strokeStyle = glowColor;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = glowIntensity;
+                ctx.shadowColor = glowColor;
+                ctx.font = `${iconSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText(zType.icon, x, y);
+                
+                // Icon
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(zType.icon, x, y);
+                
+                // HP bar
+                const barW = CELL_SIZE * 0.8;
+                const barH = 5;
+                const hpPct = z.hp / z.maxHp;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x - barW / 2, y - CELL_SIZE * 0.5, barW, barH);
+                
+                ctx.fillStyle = hpPct > 0.6 ? '#00ff00' : hpPct > 0.3 ? '#ffff00' : '#ff0000';
+                ctx.fillRect(x - barW / 2, y - CELL_SIZE * 0.5, barW * hpPct, barH);
+            });
+            
+            // Particles
+            game.particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.font = `bold ${CELL_SIZE * 0.4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = p.color;
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.restore();
+            });
+        }
+
+        function updateUI() {
+            document.querySelector('#coins .stat-value').textContent = game.coins;
+            document.querySelector('#wave .stat-value').textContent = game.wave;
+            document.querySelector('#energy .stat-value').textContent = Math.max(0, Math.floor(game.energy));
+            document.querySelector('#score .stat-value').textContent = game.score;
+            
+            // Update shop buttons
+            document.querySelectorAll('.cannon-btn').forEach(btn => {
+                const type = CANNONS[btn.dataset.type];
+                if (game.coins < type.cost) {
+                    btn.classList.add('disabled');
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            });
+            
+            PlatformSDK.sendScore(game.score);
+        }
+
+        function endGame() {
+            if (game.isGameOver) return;
+            game.isGameOver = true;
+            
+            document.getElementById('finalWave').textContent = `Wave Reached: ${game.wave}`;
+            document.getElementById('finalScore').textContent = `Score: ${game.score}`;
+            document.getElementById('zombiesKilled').textContent = `Zombies Killed: ${game.kills}`;
+            document.getElementById('gameOver').style.display = 'block';
+            
+            PlatformSDK.gameOver(game.score, {
+                wave: game.wave,
+                kills: game.kills
+            });
+        }
+
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            document.getElementById('gameOver').style.display = 'none';
+            
+            game = {
+                coins: CONFIG.INITIAL_COINS,
+                energy: CONFIG.INITIAL_ENERGY,
+                wave: 1,
+                score: 0,
+                kills: 0,
+                isPaused: false,
+                isGameOver: false,
+                selectedType: 'basic',
+                selectedCannons: [],
+                cannons: [],
+                zombies: [],
+                projectiles: [],
+                particles: [],
+                muzzleFlashes: [],
+                waveZombiesSpawned: 0,
+                waveZombiesTotal: 5,
+                lastSpawn: Date.now()
+            };
+            
+            updateUI();
+            
+            // Check if still in fullscreen
+            checkFullscreen();
+            if (!isFullscreenActive) {
+                game.isPaused = true;
+                document.getElementById('fullscreenPrompt').classList.add('show');
+            }
+        });
+
+        // ============ GAME LOOP ============
+        let lastTime = Date.now();
+
+        function gameLoop() {
+            const now = Date.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            
+            if (!game.isPaused && !game.isGameOver) {
+                updateWaves(dt);
+                updateZombies(dt);
+                updateCannons(dt);
+                updateProjectiles(dt);
+                updateParticles(dt);
+                
+                // Hide hint after player has been playing for 5 seconds
+                if (now - game.lastSpawn > 5000) {
+                    document.getElementById('hint').classList.add('hidden');
+                }
+            }
+            
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>

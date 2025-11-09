@@ -348,17 +348,7 @@ function setupPlayerControls(gameId, iframe) {
     runtime.on('gameOver', (data) => {
         console.log('Game over:', data);
         // Session will be automatically ended by RuntimeShell
-        
-        // Optionally show a "Play Again" dialog after a delay
-        setTimeout(() => {
-            if (confirm('Game Over! Play again?')) {
-                // Reload the game
-                window.location.reload();
-            } else {
-                // Go back to game details
-                navigateTo(`/game/${gameId}`);
-            }
-        }, 2000);
+        // The game's own UI will handle the restart
     });
     
     runtime.on('levelCompleted', (data) => {

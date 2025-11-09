@@ -198,7 +198,6 @@ export default class RuntimeShell {
     handleScoreUpdate(payload) {
         if (payload && typeof payload.score === 'number') {
             this.state.score = payload.score;
-            this.currentScore = payload.score; // Track for session
             this.updateScoreDisplay(payload.score);
         }
     }
@@ -213,6 +212,13 @@ export default class RuntimeShell {
         
         this.log('Game Over! Final score:', this.state.score);
         this.showGameOverOverlay(this.state.score);
+        
+        // End game session and save score (prevent double-ending by clearing sessionId first)
+        if (this.sessionId) {
+            const sessionToEnd = this.sessionId;
+            this.sessionId = null; // Clear immediately to prevent double-ending
+            this.endGameSessionById(sessionToEnd, this.state.score, false);
+        }
     }
     
     /**
@@ -526,22 +532,39 @@ export default class RuntimeShell {
             return;
         }
         
+        const sessionToEnd = this.sessionId;
+        const finalScore = this.state.score;
+        
+        // Clear session immediately to prevent double-ending
+        this.sessionId = null;
+        this.sessionStartTime = null;
+        
+        await this.endGameSessionById(sessionToEnd, finalScore, useBeacon);
+    }
+    
+    /**
+     * End a specific game session by ID
+     */
+    async endGameSessionById(sessionId, score, useBeacon = false) {
+        if (!sessionId) {
+            return;
+        }
+        
         try {
-            const durationSeconds = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            const durationSeconds = Math.floor((Date.now() - this.sessionStartTime) / 1000) || 0;
             
             const payload = {
-                session_id: this.sessionId,
-                score: this.currentScore,
+                session_id: sessionId,
+                score: score,
                 duration_seconds: durationSeconds
             };
+            
             
             // Use sendBeacon for page unload (more reliable)
             if (useBeacon && navigator.sendBeacon) {
                 const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
                 navigator.sendBeacon('http://localhost:8000/users/sessions/end', blob);
                 this.log('Game session ended via beacon');
-                this.sessionId = null;
-                this.sessionStartTime = null;
                 return;
             }
             
@@ -566,10 +589,6 @@ export default class RuntimeShell {
                 if (!useBeacon) {
                     this.showCur8Notification(data.session.cur8_earned);
                 }
-                
-                // Reset session
-                this.sessionId = null;
-                this.sessionStartTime = null;
             }
         } catch (error) {
             this.log('Failed to end game session:', error);

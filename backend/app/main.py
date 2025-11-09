@@ -6,6 +6,7 @@ from app.routers import games
 from app.routers import admin
 from app.routers import users
 from app.database import init_db
+from app.leaderboard_triggers import setup_leaderboard_triggers
 
 app = FastAPI(
     title="HTML5 Game Platform API",
@@ -24,6 +25,9 @@ app.add_middleware(
 
 # Initialize database
 init_db()
+
+# Initialize leaderboard triggers
+setup_leaderboard_triggers()
 
 # Include routers
 app.include_router(games.router, prefix="/games", tags=["games"])

@@ -180,6 +180,27 @@ export async function fetchLeaderboard(limit = 50) {
     }
 }
 
+/**
+ * Get leaderboard for a specific game
+ * @param {string} gameId - The game ID
+ * @param {number} limit - Number of entries to retrieve
+ * @returns {Promise<Object>} Game leaderboard data
+ */
+export async function fetchGameLeaderboard(gameId, limit = 10) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/leaderboard/${gameId}?limit=${limit}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching leaderboard for game ${gameId}:`, error);
+        throw error;
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
@@ -189,5 +210,6 @@ export default {
     healthCheck,
     trackGamePlay,
     getUserSessions,
-    fetchLeaderboard
+    fetchLeaderboard,
+    fetchGameLeaderboard
 };

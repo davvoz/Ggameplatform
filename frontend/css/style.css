@@ -1325,6 +1325,110 @@ main {
     margin-bottom: var(--spacing-md);
 }
 
+/* Game Leaderboards Styles */
+.game-leaderboards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.game-leaderboard-section {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.game-leaderboard-section:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-lg);
+}
+
+.game-leaderboard-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.game-leaderboard-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.game-leaderboard-info h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.game-leaderboard-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.game-leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.game-leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--background-lighter);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.game-leaderboard-item:hover {
+    background: var(--background-light);
+}
+
+.game-leaderboard-item.top-1 {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.game-leaderboard-item.top-2 {
+    background: linear-gradient(90deg, rgba(192, 192, 192, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.game-leaderboard-item.top-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.leaderboard-rank-small {
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+
+.leaderboard-player-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.leaderboard-score {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.game-leaderboard-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
     .leaderboard-header h2 {
         font-size: 2rem;
@@ -1348,5 +1452,9 @@ main {
     
     .leaderboard-stats .stat-item {
         text-align: center;
+    }
+    
+    .game-leaderboards {
+        grid-template-columns: 1fr;
     }
 }

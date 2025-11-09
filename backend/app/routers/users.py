@@ -300,45 +300,44 @@ async def get_global_leaderboard(limit: int = 50):
 
 @router.get("/leaderboard/{game_id}")
 async def get_game_leaderboard(game_id: str, limit: int = 10):
-    """Get top scores for a specific game."""
+    """Get top scores for a specific game from leaderboards table."""
     from app.database import get_db_session
-    from app.models import GameSession, User
+    from app.models import Leaderboard, User
     from sqlalchemy import desc
     
     with get_db_session() as session:
-        # Query using ORM with join
+        # Query leaderboard table for this game
         results = session.query(
-            GameSession.session_id,
-            GameSession.score,
-            GameSession.cur8_earned,
-            GameSession.started_at,
+            Leaderboard.entry_id,
+            Leaderboard.score,
+            Leaderboard.rank,
+            Leaderboard.created_at,
             User.username,
             User.user_id,
             User.is_anonymous
         ).join(
-            User, GameSession.user_id == User.user_id
+            User, Leaderboard.user_id == User.user_id
         ).filter(
-            GameSession.game_id == game_id,
-            GameSession.ended_at != None
+            Leaderboard.game_id == game_id
         ).order_by(
-            desc(GameSession.score)
+            desc(Leaderboard.score)
         ).limit(limit).all()
         
         leaderboard = []
         for idx, row in enumerate(results, 1):
-            entry = {
-                'session_id': row.session_id,
-                'score': row.score,
-                'cur8_earned': row.cur8_earned,
-                'started_at': row.started_at,
-                'username': row.username,
-                'user_id': row.user_id,
-                'is_anonymous': bool(row.is_anonymous),
-                'rank': idx
-            }
+            username = row.username
+            if row.is_anonymous:
+                username = f"Anonymous #{row.user_id[-6:]}"
             
-            if entry['is_anonymous']:
-                entry['username'] = f"Anonymous #{entry['user_id'][-6:]}"
+            entry = {
+                'entry_id': row.entry_id,
+                'score': row.score,
+                'rank': idx,
+                'created_at': row.created_at,
+                'username': username,
+                'user_id': row.user_id,
+                'is_anonymous': bool(row.is_anonymous)
+            }
             
             leaderboard.append(entry)
     

@@ -1,4 +1,4 @@
-import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay, getUserSessions, fetchLeaderboard } from './api.js';
+import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay, getUserSessions, fetchLeaderboard, fetchGameLeaderboard } from './api.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.js';
 
@@ -673,75 +673,124 @@ export async function renderLeaderboard() {
     appContainer.innerHTML = `
         <div class="leaderboard">
             <div class="leaderboard-header">
-                <h2>🏆 Global Leaderboard</h2>
-                <p class="leaderboard-subtitle">Top players and high scores across all games</p>
+                <h2>🏆 Game Leaderboards</h2>
+                <p class="leaderboard-subtitle">Top players for each game</p>
             </div>
-            <div class="loading">Loading leaderboard...</div>
+            <div class="loading">Loading leaderboards...</div>
         </div>
     `;
     
     try {
-        // Fetch leaderboard data from API
-        const data = await fetchLeaderboard();
-        console.log('Leaderboard data:', data);
+        // Fetch all games first
+        const games = await fetchGames();
+        console.log('Games:', games);
         
-        // Create leaderboard content
+        if (!games || games.length === 0) {
+            appContainer.innerHTML = `
+                <div class="leaderboard">
+                    <div class="leaderboard-header">
+                        <h2>🏆 Game Leaderboards</h2>
+                    </div>
+                    <div class="leaderboard-empty">
+                        <p>No games available.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Fetch leaderboard for each game
+        const gameLeaderboards = await Promise.all(
+            games.map(async (game) => {
+                try {
+                    const leaderboard = await fetchGameLeaderboard(game.game_id, 10);
+                    return {
+                        game: game,
+                        leaderboard: leaderboard.leaderboard || []
+                    };
+                } catch (error) {
+                    console.error(`Error fetching leaderboard for ${game.game_id}:`, error);
+                    return {
+                        game: game,
+                        leaderboard: []
+                    };
+                }
+            })
+        );
+        
+        // Create leaderboard HTML
         let leaderboardHTML = `
             <div class="leaderboard">
                 <div class="leaderboard-header">
-                    <h2>🏆 Global Leaderboard</h2>
-                    <p class="leaderboard-subtitle">Top players and high scores across all games</p>
+                    <h2>🏆 Game Leaderboards</h2>
+                    <p class="leaderboard-subtitle">Top players for each game</p>
                 </div>
+                <div class="game-leaderboards">
         `;
         
-        if (data.leaderboard && data.leaderboard.length > 0) {
+        gameLeaderboards.forEach(({ game, leaderboard }) => {
+            const thumbnailUrl = game.thumbnail 
+                ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
+                : 'https://via.placeholder.com/100x100?text=No+Image';
+            
             leaderboardHTML += `
-                <div class="leaderboard-list">
-                    ${data.leaderboard.map((entry, index) => `
-                        <div class="leaderboard-item ${index < 3 ? 'top-' + (index + 1) : ''}">
-                            <div class="leaderboard-rank">
+                <div class="game-leaderboard-section">
+                    <div class="game-leaderboard-header">
+                        <img src="${thumbnailUrl}" alt="${game.title}" class="game-leaderboard-thumbnail">
+                        <div class="game-leaderboard-info">
+                            <h3>${game.title}</h3>
+                            <p>${game.category || 'Uncategorized'}</p>
+                        </div>
+                    </div>
+                    <div class="game-leaderboard-list">
+            `;
+            
+            if (leaderboard && leaderboard.length > 0) {
+                leaderboard.forEach((entry, index) => {
+                    leaderboardHTML += `
+                        <div class="game-leaderboard-item ${index < 3 ? 'top-' + (index + 1) : ''}">
+                            <div class="leaderboard-rank-small">
                                 ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                             </div>
-                            <div class="leaderboard-player">
-                                <div class="player-name">${entry.username || 'Anonymous'}</div>
-                                <div class="player-games">${entry.games_played || 0} games played</div>
+                            <div class="leaderboard-player-name">
+                                ${entry.username || 'Anonymous'}
                             </div>
-                            <div class="leaderboard-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Total Score</span>
-                                    <span class="stat-value">${(entry.total_score || 0).toLocaleString()}</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">CUR8 Earned</span>
-                                    <span class="stat-value">${(entry.total_cur8 || 0).toFixed(2)}</span>
-                                </div>
+                            <div class="leaderboard-score">
+                                ${(entry.score || 0).toLocaleString()}
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            `;
-        } else {
+                    `;
+                });
+            } else {
+                leaderboardHTML += `
+                    <div class="game-leaderboard-empty">
+                        <p>No scores yet. Be the first to play!</p>
+                    </div>
+                `;
+            }
+            
             leaderboardHTML += `
-                <div class="leaderboard-empty">
-                    <p>No leaderboard data available yet.</p>
-                    <p>Start playing games to appear on the leaderboard!</p>
+                    </div>
                 </div>
             `;
-        }
+        });
         
-        leaderboardHTML += `</div>`;
+        leaderboardHTML += `
+                </div>
+            </div>
+        `;
         
         appContainer.innerHTML = leaderboardHTML;
         
     } catch (error) {
-        console.error('Error loading leaderboard:', error);
+        console.error('Error loading leaderboards:', error);
         appContainer.innerHTML = `
             <div class="leaderboard">
                 <div class="leaderboard-header">
-                    <h2>🏆 Global Leaderboard</h2>
+                    <h2>🏆 Game Leaderboards</h2>
                 </div>
                 <div class="error-message">
-                    Failed to load leaderboard. Please try again later.
+                    Failed to load leaderboards. Please try again later.
                 </div>
             </div>
         `;

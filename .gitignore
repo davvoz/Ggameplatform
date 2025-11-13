@@ -280,3 +280,5 @@ test_api.py
 backend/test_trigger.py
 backend/test_trigger.py
 backend/test_trigger.py
+backend/migrate_xp_rules.py
+backend/test_xp_calculator.py

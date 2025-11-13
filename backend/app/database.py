@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import hashlib
 import uuid
 import json
@@ -8,8 +8,9 @@ from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 
-from app.models import Base, Game, User, GameSession, UserAchievement, Leaderboard
+from app.models import Base, Game, User, GameSession, UserAchievement, Leaderboard, XPRule
 from app.leaderboard_triggers import setup_leaderboard_triggers
+from app.xp_calculator import XPCalculator, SessionContext
 
 DATABASE_PATH = Path(__file__).parent / "game_platform.db"
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
@@ -235,6 +236,174 @@ def get_all_users() -> List[dict]:
         users = session.query(User).filter(User.is_anonymous == 0).order_by(desc(User.created_at)).all()
         return [user.to_dict() for user in users]
 
+# ============ XP RULES MANAGEMENT ============
+
+def create_xp_rule(
+    game_id: str, 
+    rule_name: str, 
+    rule_type: str, 
+    parameters: dict, 
+    priority: int = 0,
+    is_active: bool = True
+) -> dict:
+    """
+    Create a new XP calculation rule for a game.
+    
+    Args:
+        game_id: Game identifier
+        rule_name: Human-readable name for the rule
+        rule_type: Type of calculation strategy
+        parameters: Rule-specific parameters
+        priority: Priority (higher = applied first)
+        is_active: Whether the rule is active
+        
+    Returns:
+        Created rule as dictionary
+    """
+    with get_db_session() as session:
+        # Verify game exists
+        game = session.query(Game).filter(Game.game_id == game_id).first()
+        if not game:
+            raise ValueError(f"Game {game_id} not found")
+        
+        now = datetime.utcnow().isoformat()
+        rule_id = f"xpr_{uuid.uuid4().hex[:16]}"
+        
+        xp_rule = XPRule(
+            rule_id=rule_id,
+            game_id=game_id,
+            rule_name=rule_name,
+            rule_type=rule_type,
+            parameters=json.dumps(parameters),
+            priority=priority,
+            is_active=1 if is_active else 0,
+            created_at=now,
+            updated_at=now
+        )
+        
+        session.add(xp_rule)
+        session.flush()
+        
+        return xp_rule.to_dict()
+
+
+def get_game_xp_rules(game_id: str, active_only: bool = True) -> List[dict]:
+    """
+    Get all XP rules for a specific game.
+    
+    Args:
+        game_id: Game identifier
+        active_only: If True, only return active rules
+        
+    Returns:
+        List of XP rules as dictionaries
+    """
+    with get_db_session() as session:
+        query = session.query(XPRule).filter(XPRule.game_id == game_id)
+        
+        if active_only:
+            query = query.filter(XPRule.is_active == 1)
+        
+        rules = query.order_by(desc(XPRule.priority)).all()
+        return [rule.to_dict() for rule in rules]
+
+
+def get_xp_rule_by_id(rule_id: str) -> Optional[dict]:
+    """Get a specific XP rule by ID."""
+    with get_db_session() as session:
+        rule = session.query(XPRule).filter(XPRule.rule_id == rule_id).first()
+        return rule.to_dict() if rule else None
+
+
+def update_xp_rule(rule_id: str, updates: dict) -> Optional[dict]:
+    """
+    Update an existing XP rule.
+    
+    Args:
+        rule_id: Rule identifier
+        updates: Dictionary of fields to update
+        
+    Returns:
+        Updated rule as dictionary or None if not found
+    """
+    with get_db_session() as session:
+        rule = session.query(XPRule).filter(XPRule.rule_id == rule_id).first()
+        
+        if not rule:
+            return None
+        
+        now = datetime.utcnow().isoformat()
+        
+        # Update allowed fields
+        if 'rule_name' in updates:
+            rule.rule_name = updates['rule_name']
+        if 'rule_type' in updates:
+            rule.rule_type = updates['rule_type']
+        if 'parameters' in updates:
+            rule.parameters = json.dumps(updates['parameters'])
+        if 'priority' in updates:
+            rule.priority = updates['priority']
+        if 'is_active' in updates:
+            rule.is_active = 1 if updates['is_active'] else 0
+        
+        rule.updated_at = now
+        session.flush()
+        
+        return rule.to_dict()
+
+
+def delete_xp_rule(rule_id: str) -> bool:
+    """Delete an XP rule."""
+    with get_db_session() as session:
+        rule = session.query(XPRule).filter(XPRule.rule_id == rule_id).first()
+        
+        if not rule:
+            return False
+        
+        session.delete(rule)
+        return True
+
+
+def toggle_xp_rule(rule_id: str, is_active: bool) -> Optional[dict]:
+    """Toggle XP rule active status."""
+    return update_xp_rule(rule_id, {'is_active': is_active})
+
+
+def calculate_session_xp(
+    game_id: str,
+    score: int,
+    duration_seconds: int,
+    is_new_high_score: bool,
+    user_multiplier: float,
+    previous_high_score: int = 0
+) -> Dict[str, Any]:
+    """
+    Calculate XP for a game session using the rules system.
+    
+    Args:
+        game_id: Game identifier
+        score: Score achieved in session
+        duration_seconds: Duration of session in seconds
+        is_new_high_score: Whether this is a new high score
+        user_multiplier: User's CUR8 multiplier
+        previous_high_score: Previous high score (for improvement calculation)
+        
+    Returns:
+        Dictionary with total_xp, base_xp, and breakdown
+    """
+    rules = get_game_xp_rules(game_id, active_only=True)
+    
+    context = SessionContext(
+        score=score,
+        duration_seconds=duration_seconds,
+        is_new_high_score=is_new_high_score,
+        user_multiplier=user_multiplier,
+        previous_high_score=previous_high_score
+    )
+    
+    calculator = XPCalculator()
+    return calculator.calculate_total_xp(rules, context)
+
 # ============ GAME SESSIONS ============
 
 def create_game_session(user_id: str, game_id: str) -> dict:
@@ -260,7 +429,7 @@ def create_game_session(user_id: str, game_id: str) -> dict:
         return game_session.to_dict()
 
 def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict:
-    """End a game session and calculate XP earned."""
+    """End a game session and calculate XP earned using the rules system."""
     with get_db_session() as session:
         game_session = session.query(GameSession).filter(
             GameSession.session_id == session_id
@@ -276,8 +445,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         
         multiplier = user.cur8_multiplier
         game_id = game_session.game_id
-        user_id = game_session.user_id
-        
+                
         # Parse current game scores
         game_scores = json.loads(user.game_scores) if user.game_scores else {}
         
@@ -290,28 +458,21 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             game_scores[game_id] = score
             user.game_scores = json.dumps(game_scores)
         
-        # Calculate XP earned
-        base_xp = 0.0
+        # Calculate XP using the new rules system
+        xp_result = calculate_session_xp(
+            game_id=game_id,
+            score=score,
+            duration_seconds=duration_seconds,
+            is_new_high_score=is_new_high_score,
+            user_multiplier=multiplier,
+            previous_high_score=previous_high_score
+        )
         
-        # Base score reward (0.01 XP per point)
-        base_xp += score * 0.01
-        
-        # Time played bonus (0.1 XP per minute, max 10 minutes)
-        minutes_played = min(duration_seconds / 60, 10)
-        base_xp += minutes_played * 0.1
-        
-        # High score bonus (extra 10 XP for new high score)
-        if is_new_high_score:
-            base_xp += 10.0
-        
-        # Apply user's multiplier
-        xp_earned = base_xp * multiplier
+        xp_earned = xp_result['total_xp']
         
         # Update session
         now = datetime.utcnow().isoformat()
-        print(f"[DEBUG] Before update - game_session.score: {game_session.score}")
         game_session.score = score
-        print(f"[DEBUG] After update - game_session.score: {game_session.score}")
         game_session.xp_earned = xp_earned
         game_session.duration_seconds = duration_seconds
         game_session.ended_at = now
@@ -319,21 +480,15 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         extra_data = json.loads(game_session.extra_data) if game_session.extra_data else {}
         extra_data['is_new_high_score'] = is_new_high_score
         extra_data['previous_high_score'] = previous_high_score
+        extra_data['xp_breakdown'] = xp_result['rule_breakdown']
+        extra_data['base_xp'] = xp_result['base_xp']
         game_session.extra_data = json.dumps(extra_data)
         
         # Update user's total XP
-        print(f"[DEBUG] User total_xp_earned BEFORE: {user.total_xp_earned}")
-        print(f"[DEBUG] Adding xp_earned: {xp_earned}")
         user.total_xp_earned += xp_earned
-        print(f"[DEBUG] User total_xp_earned AFTER: {user.total_xp_earned}")
-        
-        print(f"[DEBUG] Before flush - game_session.score: {game_session.score}")
         session.flush()
-        print(f"[DEBUG] After flush - game_session.score: {game_session.score}")
-        print(f"[DEBUG] After flush - user.total_xp_earned: {user.total_xp_earned}")
         
         result = game_session.to_dict()
-        print(f"[DEBUG] Result dict score: {result.get('score')}")
         
     # Note: Leaderboard is automatically updated by the trigger system
     # No need to manually recalculate ranks here

@@ -8,7 +8,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, UserAchievement, Leaderboard
+from app.models import Game, User, GameSession, UserAchievement, Leaderboard, XPRule
 from sqlalchemy import desc
 import json
 from datetime import datetime
@@ -60,6 +60,10 @@ async def get_db_stats():
         # Get all leaderboard entries (limited to 100)
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).limit(100).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
+        
+        # Get all XP rules
+        xp_rules_query = session.query(XPRule).order_by(XPRule.game_id, desc(XPRule.priority)).all()
+        xp_rules = [rule.to_dict() for rule in xp_rules_query]
     
     data = {
         "total_games": len(games),
@@ -67,6 +71,7 @@ async def get_db_stats():
         "total_sessions": len(sessions),
         "total_achievements": len(achievements),
         "total_leaderboard_entries": len(leaderboard),
+        "total_xp_rules": len(xp_rules),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -74,6 +79,7 @@ async def get_db_stats():
         "sessions": sessions,
         "achievements": achievements,
         "leaderboard": leaderboard,
+        "xp_rules": xp_rules,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -111,6 +117,10 @@ async def export_database():
         # Export leaderboard using ORM
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
+        
+        # Export XP rules using ORM
+        xp_rules_query = session.query(XPRule).order_by(XPRule.game_id, desc(XPRule.priority)).all()
+        xp_rules = [rule.to_dict() for rule in xp_rules_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -119,11 +129,13 @@ async def export_database():
         "total_sessions": len(sessions),
         "total_achievements": len(achievements),
         "total_leaderboard_entries": len(leaderboard),
+        "total_xp_rules": len(xp_rules),
         "games": games,
         "users": users,
         "sessions": sessions,
         "achievements": achievements,
-        "leaderboard": leaderboard
+        "leaderboard": leaderboard,
+        "xp_rules": xp_rules
     }
 
 @router.get("/sessions/open")

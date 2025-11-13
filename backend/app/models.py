@@ -28,6 +28,7 @@ class Game(Base):
     sessions = relationship("GameSession", back_populates="game", cascade="all, delete-orphan")
     achievements = relationship("UserAchievement", back_populates="game", cascade="all, delete-orphan")
     leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade="all, delete-orphan")
+    xp_rules = relationship("XPRule", back_populates="game", cascade="all, delete-orphan")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert game instance to dictionary."""
@@ -188,3 +189,38 @@ class Leaderboard(Base):
     
     def __repr__(self) -> str:
         return f"<Leaderboard {self.entry_id}: Rank {self.rank} - Score {self.score}>"
+
+
+class XPRule(Base):
+    """XP Rule model for configurable XP calculation per game."""
+    __tablename__ = 'xp_rules'
+    
+    rule_id = Column(String, primary_key=True)
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    rule_name = Column(String, nullable=False)
+    rule_type = Column(String, nullable=False)  # score_multiplier, time_bonus, threshold, etc.
+    parameters = Column(Text, default='{}')  # JSON string for rule parameters
+    priority = Column(Integer, default=0)  # Higher priority rules are applied first
+    is_active = Column(Integer, default=1)  # 0=inactive, 1=active
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    
+    # Relationships
+    game = relationship("Game", back_populates="xp_rules")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert XP rule instance to dictionary."""
+        return {
+            "rule_id": self.rule_id,
+            "game_id": self.game_id,
+            "rule_name": self.rule_name,
+            "rule_type": self.rule_type,
+            "parameters": json.loads(self.parameters) if self.parameters else {},
+            "priority": self.priority,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<XPRule {self.rule_id}: {self.rule_name} ({self.rule_type})>"

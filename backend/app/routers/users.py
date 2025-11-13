@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional
 from app.database import (
     create_user, get_user_by_id, get_user_by_username, 
-    authenticate_user, update_user_xp, get_all_users,
+    authenticate_user,  get_all_users,
     create_game_session, end_game_session, get_user_sessions,
     get_game_by_id
 )

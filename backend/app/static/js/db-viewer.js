@@ -34,6 +34,7 @@ async function loadData() {
         document.getElementById('totalSessions').textContent = allData.total_sessions || 0;
         document.getElementById('totalAchievements').textContent = allData.total_achievements || 0;
         document.getElementById('totalLeaderboard').textContent = allData.total_leaderboard_entries || 0;
+        document.getElementById('totalXPRules').textContent = allData.total_xp_rules || 0;
         
         // Check for open sessions and update button visibility
         await updateOpenSessionsButton();
@@ -93,6 +94,9 @@ function displayCurrentTab() {
             break;
         case 'sessions':
             displaySessions();
+            break;
+        case 'xp-rules':
+            displayXPRules();
             break;
         case 'achievements':
             displayAchievements();
@@ -242,6 +246,142 @@ function displaySessions() {
         viewBtn.onclick = () => showDetails('Session', session);
         actionsCell.appendChild(viewBtn);
     });
+}
+
+function displayXPRules() {
+    const table = document.getElementById('xpRulesTable');
+    const tbody = document.getElementById('xpRulesTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    const rules = allData.xp_rules || [];
+    
+    if (rules.length === 0) {
+        table.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    table.style.display = 'table';
+    tbody.innerHTML = '';
+    
+    rules.forEach(rule => {
+        const row = tbody.insertRow();
+        
+        row.insertCell().textContent = rule.rule_id;
+        row.insertCell().textContent = rule.game_id;
+        row.insertCell().textContent = rule.rule_name;
+        row.insertCell().textContent = rule.rule_type;
+        
+        // Priority with badge
+        const priorityCell = row.insertCell();
+        const priorityBadge = document.createElement('span');
+        priorityBadge.textContent = rule.priority;
+        priorityBadge.style.padding = '3px 8px';
+        priorityBadge.style.borderRadius = '12px';
+        priorityBadge.style.fontSize = '0.85em';
+        priorityBadge.style.fontWeight = 'bold';
+        if (rule.priority >= 20) {
+            priorityBadge.style.background = '#dc3545';
+            priorityBadge.style.color = 'white';
+        } else if (rule.priority >= 10) {
+            priorityBadge.style.background = '#ffc107';
+            priorityBadge.style.color = '#000';
+        } else {
+            priorityBadge.style.background = '#6c757d';
+            priorityBadge.style.color = 'white';
+        }
+        priorityCell.appendChild(priorityBadge);
+        
+        // Active status
+        const statusCell = row.insertCell();
+        const statusBadge = document.createElement('span');
+        statusBadge.textContent = rule.is_active ? '✓ Attiva' : '✗ Disattiva';
+        statusBadge.style.padding = '3px 8px';
+        statusBadge.style.borderRadius = '12px';
+        statusBadge.style.fontSize = '0.85em';
+        statusBadge.style.fontWeight = 'bold';
+        if (rule.is_active) {
+            statusBadge.style.background = '#28a745';
+            statusBadge.style.color = 'white';
+        } else {
+            statusBadge.style.background = '#6c757d';
+            statusBadge.style.color = 'white';
+        }
+        statusCell.appendChild(statusBadge);
+        
+        // Parameters (truncated)
+        const paramsCell = row.insertCell();
+        const paramsText = JSON.stringify(rule.parameters);
+        paramsCell.textContent = paramsText.length > 50 ? paramsText.substring(0, 50) + '...' : paramsText;
+        paramsCell.style.fontFamily = 'monospace';
+        paramsCell.style.fontSize = '0.85em';
+        paramsCell.title = paramsText; // Full text on hover
+        
+        row.insertCell().textContent = formatDate(rule.created_at);
+        
+        // Actions
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Dettagli';
+        viewBtn.style.fontSize = '0.85em';
+        viewBtn.style.padding = '6px 12px';
+        viewBtn.onclick = () => showXPRuleDetails(rule);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function showXPRuleDetails(rule) {
+    const modal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = `Regola XP: ${rule.rule_name}`;
+    
+    // Create a formatted view
+    let html = `
+        <div style="background: #f6f8fa; padding: 20px; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div>
+                    <strong style="color: #6c757d;">Rule ID:</strong><br>
+                    <code style="background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">${rule.rule_id}</code>
+                </div>
+                <div>
+                    <strong style="color: #6c757d;">Game ID:</strong><br>
+                    <code style="background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">${rule.game_id}</code>
+                </div>
+                <div>
+                    <strong style="color: #6c757d;">Tipo:</strong><br>
+                    <span style="background: #0366d6; color: white; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-top: 4px;">${rule.rule_type}</span>
+                </div>
+                <div>
+                    <strong style="color: #6c757d;">Priorità:</strong><br>
+                    <span style="background: ${rule.priority >= 20 ? '#dc3545' : rule.priority >= 10 ? '#ffc107' : '#6c757d'}; color: ${rule.priority >= 10 && rule.priority < 20 ? '#000' : 'white'}; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-top: 4px; font-weight: bold;">${rule.priority}</span>
+                </div>
+                <div>
+                    <strong style="color: #6c757d;">Stato:</strong><br>
+                    <span style="background: ${rule.is_active ? '#28a745' : '#6c757d'}; color: white; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-top: 4px;">${rule.is_active ? '✓ Attiva' : '✗ Disattiva'}</span>
+                </div>
+                <div>
+                    <strong style="color: #6c757d;">Creata:</strong><br>
+                    <span style="margin-top: 4px; display: inline-block;">${formatDate(rule.created_at)}</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 16px;">
+                <strong style="color: #6c757d; margin-bottom: 8px; display: block;">Parametri:</strong>
+                <pre style="background: white; padding: 16px; border-radius: 4px; overflow: auto; max-height: 300px; margin: 0;">${JSON.stringify(rule.parameters, null, 2)}</pre>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1e4e8;">
+                <strong style="color: #6c757d; margin-bottom: 8px; display: block;">JSON Completo:</strong>
+                <pre style="background: white; padding: 16px; border-radius: 4px; overflow: auto; max-height: 200px; font-size: 0.85em; margin: 0;">${JSON.stringify(rule, null, 2)}</pre>
+            </div>
+        </div>
+    `;
+    
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex';
 }
 
 function displayAchievements() {
@@ -417,6 +557,7 @@ function getCurrentTabData() {
         case 'games': return allData.games;
         case 'users': return allData.users;
         case 'sessions': return allData.sessions;
+        case 'xp-rules': return allData.xp_rules;
         case 'achievements': return allData.achievements;
         case 'leaderboard': return allData.leaderboard;
         default: return [];
@@ -476,6 +617,7 @@ function getCurrentTabKey() {
         'games': 'games',
         'users': 'users',
         'sessions': 'sessions',
+        'xp-rules': 'xp_rules',
         'achievements': 'achievements',
         'leaderboard': 'leaderboard'
     };

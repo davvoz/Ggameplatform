@@ -34,12 +34,17 @@
                 <div class="stat-value" id="totalLeaderboard">-</div>
                 <div class="stat-label">Leaderboard</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalXPRules">-</div>
+                <div class="stat-label">XP Rules</div>
+            </div>
         </div>
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('games')">Giochi</button>
             <button class="tab-btn" onclick="switchTab('users')">Utenti</button>
             <button class="tab-btn" onclick="switchTab('sessions')">Sessioni</button>
+            <button class="tab-btn" onclick="switchTab('xp-rules')">XP Rules</button>
             <button class="tab-btn" onclick="switchTab('achievements')">Achievement</button>
             <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
         </div>
@@ -114,6 +119,26 @@
                         </tr>
                     </thead>
                     <tbody id="sessionsTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- XP Rules Table -->
+            <div id="xp-rulesContainer" class="tab-content">
+                <table id="xpRulesTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Rule ID</th>
+                            <th>Game</th>
+                            <th>Nome Regola</th>
+                            <th>Tipo</th>
+                            <th>Priorità</th>
+                            <th>Stato</th>
+                            <th>Parametri</th>
+                            <th>Creata</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xpRulesTableBody"></tbody>
                 </table>
             </div>
             

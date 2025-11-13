@@ -7,6 +7,7 @@ erDiagram
     GAMES ||--o{ GAME_SESSIONS : "has"
     GAMES ||--o{ USER_ACHIEVEMENTS : "awards"
     GAMES ||--o{ LEADERBOARD : "ranks"
+    GAMES ||--o{ XP_RULES : "defines"
     USERS ||--o{ GAME_SESSIONS : "plays"
     USERS ||--o{ USER_ACHIEVEMENTS : "earns"
     USERS ||--o{ LEADERBOARD : "competes"
@@ -71,6 +72,18 @@ erDiagram
         integer score "Best score"
         integer rank "Current rank position"
         string achieved_at "Score achievement timestamp"
+        string updated_at "Last update timestamp"
+    }
+
+    XP_RULES {
+        string rule_id PK "Unique identifier"
+        string game_id FK "References GAMES"
+        string rule_name "Rule name"
+        string rule_type "Strategy type"
+        text parameters "JSON rule parameters"
+        integer priority "Application priority"
+        integer is_active "Active flag (0 or 1)"
+        string created_at "Creation timestamp"
         string updated_at "Last update timestamp"
     }
 ```
@@ -177,9 +190,11 @@ Traccia ogni partita giocata dagli utenti.
 | `duration_seconds` | INTEGER | Durata in secondi |
 | `started_at` | STRING | Timestamp inizio |
 | `ended_at` | STRING | Timestamp fine (NULL se aperta) |
-| `extra_data` | TEXT (JSON) | Dati aggiuntivi (`is_new_high_score`, `previous_high_score`) |
+| `extra_data` | TEXT (JSON) | Dati aggiuntivi (`is_new_high_score`, `xp_breakdown`, `base_xp`) |
 
 **Calcolo XP:**
+Gli XP vengono ora calcolati usando il sistema di regole configurabile (vedi XP_RULES).
+Il calcolo legacy di fallback è:
 ```python
 base_xp = (score × 0.01) + (min(minutes, 10) × 0.1)
 if is_new_high_score:
@@ -194,6 +209,122 @@ xp_earned = base_xp × user.cur8_multiplier
 **Note:**
 - Sessioni aperte possono essere forzate alla chiusura
 - Trigger automatici aggiornano LEADERBOARD al termine
+- `extra_data` contiene `xp_breakdown` con dettagli del calcolo XP
+
+---
+
+### 🎯 **XP_RULES** - Regole di Calcolo XP
+
+Definisce come vengono calcolati gli XP per ogni gioco usando il pattern Strategy.
+
+| Campo | Tipo | Descrizione |
+|-------|------|-------------|
+| `rule_id` | STRING (PK) | ID univoco (`xpr_*`) |
+| `game_id` | STRING (FK) | Riferimento a GAMES |
+| `rule_name` | STRING | Nome descrittivo della regola |
+| `rule_type` | STRING | Tipo di strategia di calcolo |
+| `parameters` | TEXT (JSON) | Parametri specifici della regola |
+| `priority` | INTEGER | Priorità applicazione (più alto = prima) |
+| `is_active` | INTEGER | Regola attiva (0=no, 1=sì) |
+| `created_at` | STRING | Timestamp creazione |
+| `updated_at` | STRING | Timestamp aggiornamento |
+
+**Tipi di Regole (`rule_type`):**
+
+1. **`score_multiplier`** - XP basato sul punteggio
+   ```json
+   {
+     "multiplier": 0.01,
+     "max_xp": 100.0
+   }
+   ```
+   Formula: `xp = min(score × multiplier, max_xp)`
+
+2. **`time_bonus`** - Bonus basato sul tempo giocato
+   ```json
+   {
+     "xp_per_minute": 0.1,
+     "max_minutes": 10
+   }
+   ```
+   Formula: `xp = min(duration_minutes, max_minutes) × xp_per_minute`
+
+3. **`threshold`** - Bonus per soglie raggiunte
+   ```json
+   {
+     "thresholds": [
+       {"score": 5000, "xp": 100},
+       {"score": 2500, "xp": 50},
+       {"score": 1000, "xp": 25}
+     ]
+   }
+   ```
+   Assegna XP della soglia più alta raggiunta
+
+4. **`high_score_bonus`** - Bonus per nuovo record
+   ```json
+   {
+     "bonus_xp": 10.0
+   }
+   ```
+   Assegnato solo se `is_new_high_score = true`
+
+5. **`combo`** - Bonus per condizioni multiple
+   ```json
+   {
+     "min_score": 1000,
+     "min_duration": 60,
+     "bonus_xp": 20.0
+   }
+   ```
+   Bonus se ENTRAMBE le condizioni sono soddisfatte
+
+6. **`percentile_improvement`** - XP per miglioramento %
+   ```json
+   {
+     "xp_per_percent": 0.5,
+     "max_xp": 50.0
+   }
+   ```
+   Formula: `xp = min(improvement_percent × xp_per_percent, max_xp)`
+
+**Esempio di Configurazione per Snake:**
+```python
+# Regola 1: Base score
+{
+  "rule_name": "Base Score Multiplier",
+  "rule_type": "score_multiplier",
+  "parameters": {"multiplier": 0.01, "max_xp": 100},
+  "priority": 10
+}
+
+# Regola 2: Milestones
+{
+  "rule_name": "Snake Milestones",
+  "rule_type": "threshold",
+  "parameters": {
+    "thresholds": [
+      {"score": 5000, "xp": 100},
+      {"score": 1000, "xp": 25}
+    ]
+  },
+  "priority": 20
+}
+
+# Regola 3: High score bonus
+{
+  "rule_name": "High Score Bonus",
+  "rule_type": "high_score_bonus",
+  "parameters": {"bonus_xp": 10.0},
+  "priority": 15
+}
+```
+
+**Note:**
+- Le regole vengono applicate in ordine di `priority` (decrescente)
+- Gli XP di tutte le regole attive vengono sommati
+- Il totale viene moltiplicato per `user.cur8_multiplier`
+- Sistema estendibile: nuove strategy possono essere aggiunte facilmente
 
 ---
 
@@ -289,6 +420,13 @@ Un achievement appartiene a un solo utente
 ON DELETE CASCADE
 ```
 
+### 7. **GAMES ↔ XP_RULES** (1:N)
+```
+Un gioco può avere molte regole XP
+Una regola appartiene a un solo gioco
+ON DELETE CASCADE
+```
+
 ---
 
 ## Sistema di Trigger
@@ -345,9 +483,11 @@ CREATE INDEX idx_leaderboard_ranking ON leaderboard(game_id, score DESC);
 ```
 
 ### **File Principali**
-- `backend/app/models.py` - Definizioni SQLAlchemy
-- `backend/app/database.py` - Funzioni CRUD
+- `backend/app/models.py` - Definizioni SQLAlchemy (incluso XPRule)
+- `backend/app/database.py` - Funzioni CRUD e calcolo XP
+- `backend/app/xp_calculator.py` - Sistema Strategy Pattern per calcolo XP
 - `backend/app/leaderboard_triggers.py` - Setup trigger automatici
+- `backend/migrate_xp_rules.py` - Script migrazione regole XP
 
 ---
 

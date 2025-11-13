@@ -13,7 +13,13 @@ from app.database import (
     get_game_by_id,
     update_game,
     delete_game,
-    increment_play_count
+    increment_play_count,
+    get_game_xp_rules,
+    create_xp_rule,
+    get_xp_rule_by_id,
+    update_xp_rule,
+    delete_xp_rule,
+    toggle_xp_rule
 )
 from app.models import Game
 
@@ -291,4 +297,324 @@ async def track_game_play(gameId: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to track play: {str(e)}"
+        )
+
+
+# ============ XP RULES ENDPOINTS ============
+
+@router.get(
+    "/{gameId}/xp-rules",
+    responses={
+        404: {"model": ErrorResponse, "description": "Game not found"},
+        200: {"description": "List of XP rules for the game"}
+    }
+)
+async def get_game_xp_rules_endpoint(gameId: str, active_only: bool = True):
+    """
+    Get all XP calculation rules for a specific game.
+    
+    - **gameId**: The unique identifier of the game
+    - **active_only**: If true, return only active rules (default: true)
+    """
+    try:
+        # Verify game exists
+        game = get_game_by_id(gameId)
+        if not game:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Game with ID '{gameId}' not found"
+            )
+        
+        rules = get_game_xp_rules(gameId, active_only=active_only)
+        
+        return {
+            "success": True,
+            "game_id": gameId,
+            "total_rules": len(rules),
+            "rules": rules
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve XP rules: {str(e)}"
+        )
+
+
+@router.post(
+    "/{gameId}/xp-rules",
+    response_model=SuccessResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        404: {"model": ErrorResponse, "description": "Game not found"},
+        400: {"model": ErrorResponse, "description": "Invalid rule data"}
+    }
+)
+async def create_xp_rule_endpoint(gameId: str, rule_data: dict):
+    """
+    Create a new XP calculation rule for a game.
+    
+    - **gameId**: The unique identifier of the game
+    - **rule_data**: Rule configuration (name, type, parameters, priority)
+    
+    Example request body:
+    ```json
+    {
+        "rule_name": "Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {"multiplier": 0.01, "max_xp": 100},
+        "priority": 10,
+        "is_active": true
+    }
+    ```
+    
+    Available rule types:
+    - **score_multiplier**: XP = score * multiplier
+    - **time_bonus**: XP based on time played
+    - **threshold**: XP awarded when score reaches thresholds
+    - **high_score_bonus**: Bonus XP for new high score
+    - **combo**: Bonus for meeting multiple conditions
+    - **percentile_improvement**: XP for % improvement
+    """
+    try:
+        # Verify game exists
+        game = get_game_by_id(gameId)
+        if not game:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Game with ID '{gameId}' not found"
+            )
+        
+        # Validate required fields
+        required_fields = ['rule_name', 'rule_type', 'parameters']
+        for field in required_fields:
+            if field not in rule_data:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing required field: {field}"
+                )
+        
+        # Create rule
+        rule = create_xp_rule(
+            game_id=gameId,
+            rule_name=rule_data['rule_name'],
+            rule_type=rule_data['rule_type'],
+            parameters=rule_data['parameters'],
+            priority=rule_data.get('priority', 0),
+            is_active=rule_data.get('is_active', True)
+        )
+        
+        return SuccessResponse(
+            success=True,
+            message=f"XP rule '{rule_data['rule_name']}' created successfully",
+            data=rule
+        )
+    
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create XP rule: {str(e)}"
+        )
+
+
+@router.get(
+    "/{gameId}/xp-rules/{ruleId}",
+    responses={
+        404: {"model": ErrorResponse, "description": "Rule not found"}
+    }
+)
+async def get_xp_rule_endpoint(gameId: str, ruleId: str):
+    """
+    Get a specific XP rule by ID.
+    
+    - **gameId**: The unique identifier of the game
+    - **ruleId**: The unique identifier of the XP rule
+    """
+    try:
+        rule = get_xp_rule_by_id(ruleId)
+        
+        if not rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule with ID '{ruleId}' not found"
+            )
+        
+        # Verify rule belongs to this game
+        if rule['game_id'] != gameId:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+            )
+        
+        return {
+            "success": True,
+            "rule": rule
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve XP rule: {str(e)}"
+        )
+
+
+@router.put(
+    "/{gameId}/xp-rules/{ruleId}",
+    response_model=SuccessResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Rule not found"},
+        400: {"model": ErrorResponse, "description": "Invalid update data"}
+    }
+)
+async def update_xp_rule_endpoint(gameId: str, ruleId: str, updates: dict):
+    """
+    Update an existing XP rule.
+    
+    - **gameId**: The unique identifier of the game
+    - **ruleId**: The unique identifier of the XP rule
+    - **updates**: Fields to update (rule_name, rule_type, parameters, priority, is_active)
+    """
+    try:
+        # Verify rule exists and belongs to game
+        existing_rule = get_xp_rule_by_id(ruleId)
+        if not existing_rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule with ID '{ruleId}' not found"
+            )
+        
+        if existing_rule['game_id'] != gameId:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+            )
+        
+        # Update rule
+        updated_rule = update_xp_rule(ruleId, updates)
+        
+        return SuccessResponse(
+            success=True,
+            message=f"XP rule '{ruleId}' updated successfully",
+            data=updated_rule
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update XP rule: {str(e)}"
+        )
+
+
+@router.delete(
+    "/{gameId}/xp-rules/{ruleId}",
+    response_model=SuccessResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Rule not found"}
+    }
+)
+async def delete_xp_rule_endpoint(gameId: str, ruleId: str):
+    """
+    Delete an XP rule.
+    
+    - **gameId**: The unique identifier of the game
+    - **ruleId**: The unique identifier of the XP rule
+    """
+    try:
+        # Verify rule exists and belongs to game
+        existing_rule = get_xp_rule_by_id(ruleId)
+        if not existing_rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule with ID '{ruleId}' not found"
+            )
+        
+        if existing_rule['game_id'] != gameId:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+            )
+        
+        # Delete rule
+        deleted = delete_xp_rule(ruleId)
+        
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete XP rule"
+            )
+        
+        return SuccessResponse(
+            success=True,
+            message=f"XP rule '{ruleId}' deleted successfully"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete XP rule: {str(e)}"
+        )
+
+
+@router.patch(
+    "/{gameId}/xp-rules/{ruleId}/toggle",
+    response_model=SuccessResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Rule not found"}
+    }
+)
+async def toggle_xp_rule_endpoint(gameId: str, ruleId: str, is_active: bool):
+    """
+    Toggle an XP rule's active status.
+    
+    - **gameId**: The unique identifier of the game
+    - **ruleId**: The unique identifier of the XP rule
+    - **is_active**: New active status (true/false)
+    """
+    try:
+        # Verify rule exists and belongs to game
+        existing_rule = get_xp_rule_by_id(ruleId)
+        if not existing_rule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule with ID '{ruleId}' not found"
+            )
+        
+        if existing_rule['game_id'] != gameId:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+            )
+        
+        # Toggle rule
+        updated_rule = toggle_xp_rule(ruleId, is_active)
+        
+        status_text = "activated" if is_active else "deactivated"
+        
+        return SuccessResponse(
+            success=True,
+            message=f"XP rule '{ruleId}' {status_text} successfully",
+            data=updated_rule
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to toggle XP rule: {str(e)}"
         )

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import APIRouter, HTTPException, Response
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from typing import Dict, List, Any
 from pathlib import Path
 from app.database import (
@@ -61,7 +61,7 @@ async def get_db_stats():
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).limit(100).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
     
-    return {
+    data = {
         "total_games": len(games),
         "total_users": len(users),
         "total_sessions": len(sessions),
@@ -77,6 +77,16 @@ async def get_db_stats():
         "categories": list(categories),
         "authors": list(authors)
     }
+    
+    # Return with no-cache headers
+    return JSONResponse(
+        content=data,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 @router.get("/db-export")
 async def export_database():

@@ -10,10 +10,23 @@ async function loadData() {
     loading.style.display = 'block';
     
     try {
-        const response = await fetch(`${API_BASE}/db-stats`);
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${API_BASE}/db-stats?t=${timestamp}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         if (!response.ok) throw new Error('Failed to fetch data');
         
         allData = await response.json();
+        
+        console.log('[DEBUG] Loaded data:', allData.users?.length, 'users');
+        if (allData.users?.[0]) {
+            console.log('[DEBUG] First user:', allData.users[0]);
+        }
         
         // Update stats
         document.getElementById('totalGames').textContent = allData.total_games || 0;
@@ -165,7 +178,12 @@ function displayUsers() {
         row.insertCell().textContent = user.email || '-';
         row.insertCell().textContent = user.steem_username || '-';
         row.insertCell().textContent = user.is_anonymous ? 'Anonimo' : 'Registrato';
-        row.insertCell().textContent = (user.total_cur8_earned || 0).toFixed(2);
+        
+        // Debug XP value
+        const xpValue = user.total_xp_earned;
+        console.log(`User ${user.username}: total_xp_earned =`, xpValue, typeof xpValue);
+        
+        row.insertCell().textContent = (parseFloat(xpValue) || 0).toFixed(2);
         row.insertCell().textContent = (user.cur8_multiplier || 1.0).toFixed(1) + 'x';
         row.insertCell().textContent = formatDate(user.created_at);
         
@@ -210,7 +228,7 @@ function displaySessions() {
         row.insertCell().textContent = session.user_id;
         row.insertCell().textContent = session.game_id;
         row.insertCell().textContent = session.score || '-';
-        row.insertCell().textContent = session.cur8_earned ? session.cur8_earned.toFixed(2) : '-';
+        row.insertCell().textContent = session.xp_earned ? session.xp_earned.toFixed(2) : '-';
         row.insertCell().textContent = session.duration_seconds ? formatDuration(session.duration_seconds) : '-';
         row.insertCell().textContent = formatDate(session.started_at);
         row.insertCell().textContent = session.ended_at ? formatDate(session.ended_at) : 'In corso';
@@ -291,11 +309,11 @@ function displayLeaderboard() {
         else if (index === 1) posText = '🥈 2';
         else if (index === 2) posText = '🥉 3';
         posCell.textContent = posText;
-        
+        console.log(`Leaderboard Entry ${index + 1}:`, entry);
         row.insertCell().textContent = entry.user_id;
         row.insertCell().textContent = entry.game_id;
         row.insertCell().textContent = entry.score || 0;
-        row.insertCell().textContent = entry.cur8_earned ? entry.cur8_earned.toFixed(2) : '-';
+        //row.insertCell().textContent = entry.xp_earned ? entry.xp_earned.toFixed(2) : '-';
         row.insertCell().textContent = formatDate(entry.created_at);
         
         // Actions

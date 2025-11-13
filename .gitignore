@@ -273,3 +273,10 @@ backend/backup_database.py
 backend/migrate_to_orm.py
 backend/check_leaderboard.py
 backend/populate_leaderboard.py
+backend/test_trigger.py
+backend/migrate_cur8_to_xp.py
+test_api_users.py
+test_api.py
+backend/test_trigger.py
+backend/test_trigger.py
+backend/test_trigger.py

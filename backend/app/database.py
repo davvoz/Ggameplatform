@@ -178,7 +178,7 @@ def create_user(username: Optional[str] = None, email: Optional[str] = None,
             password_hash=hash_password(password) if password else None,
             is_anonymous=is_anonymous,
             cur8_multiplier=cur8_multiplier,
-            total_cur8_earned=0.0,
+            total_xp_earned=0.0,
             game_scores='{}',
             created_at=now,
             last_login=now if not is_anonymous else None,
@@ -216,15 +216,15 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     
     return None
 
-def update_user_cur8(user_id: str, cur8_amount: float) -> Optional[dict]:
-    """Update user's total CUR8 earned."""
+def update_user_xp(user_id: str, xp_amount: float) -> Optional[dict]:
+    """Update user's total XP earned."""
     with get_db_session() as session:
         user = session.query(User).filter(User.user_id == user_id).first()
         
         if not user:
             return None
         
-        user.total_cur8_earned += cur8_amount
+        user.total_xp_earned += xp_amount
         session.flush()
         
         return user.to_dict()
@@ -248,7 +248,7 @@ def create_game_session(user_id: str, game_id: str) -> dict:
             user_id=user_id,
             game_id=game_id,
             score=0,
-            cur8_earned=0.0,
+            xp_earned=0.0,
             duration_seconds=0,
             started_at=now,
             extra_data='{}'
@@ -260,7 +260,7 @@ def create_game_session(user_id: str, game_id: str) -> dict:
         return game_session.to_dict()
 
 def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict:
-    """End a game session and calculate CUR8 earned."""
+    """End a game session and calculate XP earned."""
     with get_db_session() as session:
         game_session = session.query(GameSession).filter(
             GameSession.session_id == session_id
@@ -290,29 +290,29 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             game_scores[game_id] = score
             user.game_scores = json.dumps(game_scores)
         
-        # Calculate CUR8 earned
-        base_cur8 = 0.0
+        # Calculate XP earned
+        base_xp = 0.0
         
-        # Base score reward (0.01 CUR8 per point)
-        base_cur8 += score * 0.01
+        # Base score reward (0.01 XP per point)
+        base_xp += score * 0.01
         
-        # Time played bonus (0.1 CUR8 per minute, max 10 minutes)
+        # Time played bonus (0.1 XP per minute, max 10 minutes)
         minutes_played = min(duration_seconds / 60, 10)
-        base_cur8 += minutes_played * 0.1
+        base_xp += minutes_played * 0.1
         
-        # High score bonus (extra 10 CUR8 for new high score)
+        # High score bonus (extra 10 XP for new high score)
         if is_new_high_score:
-            base_cur8 += 10.0
+            base_xp += 10.0
         
         # Apply user's multiplier
-        cur8_earned = base_cur8 * multiplier
+        xp_earned = base_xp * multiplier
         
         # Update session
         now = datetime.utcnow().isoformat()
         print(f"[DEBUG] Before update - game_session.score: {game_session.score}")
         game_session.score = score
         print(f"[DEBUG] After update - game_session.score: {game_session.score}")
-        game_session.cur8_earned = cur8_earned
+        game_session.xp_earned = xp_earned
         game_session.duration_seconds = duration_seconds
         game_session.ended_at = now
         
@@ -321,12 +321,16 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         extra_data['previous_high_score'] = previous_high_score
         game_session.extra_data = json.dumps(extra_data)
         
-        # Update user's total CUR8
-        user.total_cur8_earned += cur8_earned
+        # Update user's total XP
+        print(f"[DEBUG] User total_xp_earned BEFORE: {user.total_xp_earned}")
+        print(f"[DEBUG] Adding xp_earned: {xp_earned}")
+        user.total_xp_earned += xp_earned
+        print(f"[DEBUG] User total_xp_earned AFTER: {user.total_xp_earned}")
         
         print(f"[DEBUG] Before flush - game_session.score: {game_session.score}")
         session.flush()
         print(f"[DEBUG] After flush - game_session.score: {game_session.score}")
+        print(f"[DEBUG] After flush - user.total_xp_earned: {user.total_xp_earned}")
         
         result = game_session.to_dict()
         print(f"[DEBUG] Result dict score: {result.get('score')}")
@@ -373,23 +377,23 @@ def close_open_sessions(max_duration_seconds: int = None) -> int:
             if max_duration_seconds and duration > max_duration_seconds:
                 duration = max_duration_seconds
             
-            # Calculate CUR8 (minimal since we're forcing close)
-            user = session.query(User).filter(User.user_id == game_session.user_id).first()
-            multiplier = user.cur8_multiplier if user else 1.0
-            
-            minutes_played = min(duration / 60, 10)
-            cur8_earned = minutes_played * 0.1 * multiplier
-            
-            # Update session
-            game_session.duration_seconds = duration
-            game_session.cur8_earned = cur8_earned
-            game_session.ended_at = now
-            
-            # Update user's total CUR8
-            if user:
-                user.total_cur8_earned += cur8_earned
-            
-            closed_count += 1
+        # Calculate CUR8 (minimal since we're forcing close)
+        user = session.query(User).filter(User.user_id == game_session.user_id).first()
+        multiplier = user.cur8_multiplier if user else 1.0
+        
+        minutes_played = min(duration / 60, 10)
+        xp_earned = minutes_played * 0.1 * multiplier
+        
+        # Update session
+        game_session.duration_seconds = duration
+        game_session.xp_earned = xp_earned
+        game_session.ended_at = now
+        
+        # Update user's total XP
+        if user:
+            user.total_xp_earned += xp_earned
+        
+        closed_count += 1
         
         session.flush()
         
@@ -416,17 +420,17 @@ def force_close_session(session_id: str) -> bool:
         multiplier = user.cur8_multiplier if user else 1.0
         
         minutes_played = min(duration / 60, 10)
-        cur8_earned = minutes_played * 0.1 * multiplier
+        xp_earned = minutes_played * 0.1 * multiplier
         
         # Update session
         now = datetime.utcnow().isoformat()
         game_session.duration_seconds = duration
-        game_session.cur8_earned = cur8_earned
+        game_session.xp_earned = xp_earned
         game_session.ended_at = now
         
-        # Update user's total CUR8
+        # Update user's total XP
         if user:
-            user.total_cur8_earned += cur8_earned
+            user.total_xp_earned += xp_earned
         
         session.flush()
         

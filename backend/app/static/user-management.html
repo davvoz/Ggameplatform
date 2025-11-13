@@ -317,7 +317,7 @@
                     result.textContent = `✓ ${data.message}`;
                     result.innerHTML += `<div class="user-info">
                         <strong>Welcome back, ${data.user.username}!</strong><br>
-                        <strong>Total CUR8 Earned:</strong> ${data.user.total_cur8_earned}<br>
+                        <strong>Total XP Earned:</strong> ${data.user.total_xp_earned}<br>
                         <strong>CUR8 Multiplier:</strong> ${data.user.cur8_multiplier}x<br>
                         <strong>Last Login:</strong> ${new Date(data.user.last_login).toLocaleString('it-IT')}
                     </div>`;
@@ -396,7 +396,7 @@
                     html += `<tr>
                         <td><strong>${user.username}</strong></td>
                         <td>${user.email}</td>
-                        <td>${user.total_cur8_earned.toFixed(2)}</td>
+                        <td>${user.total_xp_earned.toFixed(2)}</td>
                         <td>${user.cur8_multiplier}x</td>
                         <td>${new Date(user.created_at).toLocaleDateString('it-IT')}</td>
                     </tr>`;

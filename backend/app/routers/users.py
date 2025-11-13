@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from app.database import (
     create_user, get_user_by_id, get_user_by_username, 
-    authenticate_user, update_user_cur8, get_all_users,
+    authenticate_user, update_user_xp, get_all_users,
     create_game_session, end_game_session, get_user_sessions,
     get_game_by_id
 )
@@ -234,7 +234,7 @@ async def start_game_session(session_data: SessionStart):
 
 @router.post("/sessions/end")
 async def end_game(session_data: SessionEnd):
-    """End a game session and calculate CUR8 earned."""
+    """End a game session and calculate XP earned."""
     print(f"[DEBUG] Received session end request:")
     print(f"  - session_id: {session_data.session_id}")
     print(f"  - score: {session_data.score} (type: {type(session_data.score).__name__})")
@@ -253,7 +253,7 @@ async def end_game(session_data: SessionEnd):
     
     return {
         "success": True,
-        "message": f"Game ended! You earned {session['cur8_earned']} CUR8",
+        "message": f"Game ended! You earned {session['xp_earned']} XP",
         "session": session
     }
 
@@ -270,7 +270,7 @@ async def get_global_leaderboard(limit: int = 50):
             User.user_id,
             User.username,
             User.is_anonymous,
-            User.total_cur8_earned,
+            User.total_xp_earned,
             func.count(Leaderboard.entry_id).label('games_played'),
             func.sum(Leaderboard.score).label('total_score')
         ).join(
@@ -294,7 +294,7 @@ async def get_global_leaderboard(limit: int = 50):
                 'is_anonymous': bool(row.is_anonymous),
                 'games_played': row.games_played or 0,
                 'total_score': float(row.total_score or 0),
-                'total_cur8': float(row.total_cur8_earned or 0)
+                'total_xp': float(row.total_xp_earned or 0)
             }
             
             leaderboard.append(entry)

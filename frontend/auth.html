@@ -420,7 +420,7 @@
                             
                             if (authResponse.ok) {
                                 statusEl.className = 'auth-status success';
-                                statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | CUR8 Totale: ${data.user.total_cur8_earned}</small>`;
+                                statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | XP Totale: ${data.user.total_xp_earned}</small>`;
                                 
                                 // Save user to localStorage
                                 localStorage.setItem('currentUser', JSON.stringify(data.user));

@@ -468,7 +468,7 @@ export async function renderProfile() {
             recentActivity.push({
                 game_name: session.game_id || 'Unknown Game',
                 score: sessionScore,
-                cur8_earned: session.cur8_earned || 0,
+                xp_earned: session.xp_earned || 0,
                 timestamp: session.ended_at || session.started_at
             });
         }
@@ -569,12 +569,12 @@ export async function renderProfile() {
     }
     profileContent.querySelector('.profile-type').textContent = userTypeText;
     
-    // Set multiplier and total CUR8
+    // Set multiplier and total XP
     const multiplier = user.cur8_multiplier || 1.0;
-    const totalCur8 = user.total_cur8_earned || 0;
+    const totalCur8 = user.total_xp_earned || 0;
     profileContent.querySelector('.stat-value.multiplier').textContent = `${multiplier}x`;
-    profileContent.querySelector('.stat-value.total-cur8').textContent = `💰 ${totalCur8.toFixed(2)} CUR8`;
-    console.log('Profile: multiplier e CUR8 impostati:', multiplier, totalCur8);
+    profileContent.querySelector('.stat-value.total-cur8').textContent = `💰 ${totalCur8.toFixed(2)} XP`;
+    console.log('Profile: multiplier e XP impostati:', multiplier, totalCur8);
     
     // Usa le statistiche calcolate dalle sessioni
     profileContent.querySelector('#gamesPlayed').textContent = gamesPlayed;
@@ -616,7 +616,7 @@ export async function renderProfile() {
             activityItem.innerHTML = `
                 <div>
                     <div class="activity-game">${activity.game_name}</div>
-                    <div class="activity-details">Score: ${activity.score} • CUR8: +${activity.cur8_earned.toFixed(2)}</div>
+                    <div class="activity-details">Score: ${activity.score} • XP: +${activity.xp_earned.toFixed(2)}</div>
                 </div>
                 <div class="activity-time">${activityDate.toLocaleDateString()} ${activityDate.toLocaleTimeString()}</div>
             `;

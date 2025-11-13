@@ -61,7 +61,7 @@ class User(Base):
     steem_username = Column(String, unique=True, nullable=True)
     is_anonymous = Column(Integer, default=0)
     cur8_multiplier = Column(Float, default=1.0)
-    total_cur8_earned = Column(Float, default=0.0)
+    total_xp_earned = Column(Float, default=0.0)
     game_scores = Column(Text, default='{}')  # JSON string
     avatar = Column(String, nullable=True)
     created_at = Column(String, nullable=False)
@@ -82,7 +82,7 @@ class User(Base):
             "steem_username": self.steem_username,
             "is_anonymous": bool(self.is_anonymous),
             "cur8_multiplier": self.cur8_multiplier,
-            "total_cur8_earned": self.total_cur8_earned,
+            "total_xp_earned": self.total_xp_earned,
             "game_scores": json.loads(self.game_scores) if self.game_scores else {},
             "avatar": self.avatar,
             "created_at": self.created_at,
@@ -102,7 +102,7 @@ class GameSession(Base):
     user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
     game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
     score = Column(Integer, default=0)
-    cur8_earned = Column(Float, default=0.0)
+    xp_earned = Column(Float, default=0.0)
     duration_seconds = Column(Integer, default=0)
     started_at = Column(String, nullable=False)
     ended_at = Column(String, nullable=True)
@@ -119,7 +119,7 @@ class GameSession(Base):
             "user_id": self.user_id,
             "game_id": self.game_id,
             "score": self.score,
-            "cur8_earned": self.cur8_earned,
+            "xp_earned": self.xp_earned,
             "duration_seconds": self.duration_seconds,
             "started_at": self.started_at,
             "ended_at": self.ended_at,

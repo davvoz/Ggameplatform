@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Bouncing Balls - Gravity Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 600px;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #0f0c29, #302b63, #24243e);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #topBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 3px solid #667eea;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            min-width: 70px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.8);
+            margin-top: 2px;
+        }
+
+        #coins .stat-value {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+
+        #canvasWrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0a 100%);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        #upgradeBar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 3px solid #667eea;
+            flex-shrink: 0;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .upgrade-btn {
+            padding: 10px 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upgrade-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .upgrade-btn:hover::before {
+            left: 100%;
+        }
+
+        .upgrade-btn:active {
+            transform: scale(0.95);
+        }
+
+        .upgrade-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #555 0%, #333 100%);
+        }
+
+        .upgrade-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .upgrade-name {
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .upgrade-cost {
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .upgrade-level {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffd700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        #gameOver, #pauseOverlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.8);
+            border: 3px solid #667eea;
+            min-width: 300px;
+        }
+
+        #gameOver h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #gameOver p {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #aaa;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.8);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            border: 3px solid #667eea;
+            z-index: 500;
+            max-width: 90%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        #tutorial.hidden {
+            display: none;
+        }
+
+        #tutorial h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #tutorial p {
+            font-size: 16px;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.02); }
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        @media (max-width: 600px) {
+            #topBar {
+                padding: 10px 12px;
+            }
+
+            .stat {
+                min-width: 60px;
+            }
+
+            .stat-value {
+                font-size: 18px;
+            }
+
+            .upgrade-btn {
+                padding: 8px 6px;
+            }
+
+            .upgrade-icon {
+                font-size: 24px;
+            }
+
+            .upgrade-name {
+                font-size: 10px;
+            }
+
+            #upgradeBar {
+                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+                gap: 6px;
+                padding: 10px;
+            }
+        }
+
+        /* Scrollbar styling */
+        #upgradeBar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #upgradeBar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #upgradeBar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="topBar">
+            <div class="stat" id="score">
+                <span class="stat-label">Punteggio</span>
+                <span class="stat-value">0</span>
+            </div>
+            <div class="stat" id="coins">
+                <span class="stat-label">Monete</span>
+                <span class="stat-value">50</span>
+            </div>
+            <div class="stat" id="balls">
+                <span class="stat-label">Palline</span>
+                <span class="stat-value">1</span>
+            </div>
+        </div>
+
+        <div id="canvasWrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div id="tutorial">
+                <h3>🎮 Come Giocare</h3>
+                <p>👆 <strong>Tocca</strong> per creare palline</p>
+                <p>🎯 <strong>Tap su pallina</strong> per selezionarla</p>
+                <p>⭐ <strong>3 palline stesso colore vicine</strong> = MERGE!</p>
+                <p>💰 Raccogli monete e fai <strong>COMBO</strong></p>
+                <p>🧲 Prendi <strong>POWERUP</strong> speciali</p>
+                <p>💥 Distruggi <strong>OSTACOLI</strong> per bonus</p>
+                <p><small>Tocca per iniziare...</small></p>
+            </div>
+        </div>
+
+        <div id="upgradeBar">
+            <button class="upgrade-btn" data-upgrade="newBall">
+                <span class="upgrade-icon">🎾</span>
+                <span class="upgrade-name">Nuova Pallina</span>
+                <span class="upgrade-cost">💰 10</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="gravity">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">⬇️</span>
+                <span class="upgrade-name">Gravità</span>
+                <span class="upgrade-cost">💰 20</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="bounce">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">⚡</span>
+                <span class="upgrade-name">Rimbalzo</span>
+                <span class="upgrade-cost">💰 25</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="size">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">🔵</span>
+                <span class="upgrade-name">Dimensione</span>
+                <span class="upgrade-cost">💰 30</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="value">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">💎</span>
+                <span class="upgrade-name">Valore</span>
+                <span class="upgrade-cost">💰 40</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="speed">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">💨</span>
+                <span class="upgrade-name">Velocità</span>
+                <span class="upgrade-cost">💰 35</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="multiplier">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">✖️</span>
+                <span class="upgrade-name">Moltiplicatore</span>
+                <span class="upgrade-cost">💰 50</span>
+            </button>
+            <button class="upgrade-btn" data-upgrade="rainbow">
+                <span class="upgrade-level">Lv 1</span>
+                <span class="upgrade-icon">🌈</span>
+                <span class="upgrade-name">Arcobaleno</span>
+                <span class="upgrade-cost">💰 100</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="pauseOverlay">
+        <h2>⏸ IN PAUSA</h2>
+    </div>
+
+    <div id="gameOver">
+        <h2>🎮 Game Over!</h2>
+        <p id="finalScore">Punteggio Finale: 0</p>
+        <p id="totalCoins">Monete Totali: 0</p>
+        <p id="maxBalls">Palline Massime: 0</p>
+        <button class="btn" id="restartBtn">🔄 Gioca Ancora</button>
+    </div>
+
+    <script src="../../sdk/platformsdk.js"></script>
+    <script>
+        // ============ CONFIGURAZIONE GIOCO ============
+        const CONFIG = {
+            INITIAL_COINS: 150,
+            BALL_BASE_RADIUS: 22,
+            BALL_BASE_VALUE: 1,
+            GRAVITY_BASE: 0.4,
+            BOUNCE_BASE: 0.85,
+            FRICTION: 0.98,
+            MAX_BALLS: 15, // Più palle per più divertimento
+            COIN_SPAWN_INTERVAL: 1200,
+            COIN_LIFETIME: 8000,
+            OBSTACLE_SPAWN_INTERVAL: 5000,
+            POWERUP_SPAWN_INTERVAL: 7000,
+            COMBO_TIMEOUT: 2500,
+            MERGE_RADIUS: 100,
+            BALL_COST_BASE: 10, // Costa meno creare palle
+            BALL_COST_MULTIPLIER: 1.2 // Crescita più lenta
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvasWrapper');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ============ STATO GIOCO ============
+        let game = {
+            score: 0,
+            money: CONFIG.INITIAL_COINS,
+            isPaused: false,
+            isGameOver: false,
+            balls: [],
+            coins: [],
+            obstacles: [],
+            powerups: [],
+            particles: [],
+            floatingTexts: [],
+            lastCoinSpawn: 0,
+            lastObstacleSpawn: 0,
+            lastPowerupSpawn: 0,
+            combo: 0,
+            comboTimer: 0,
+            comboMultiplier: 1,
+            selectedBalls: [],
+            upgrades: {
+                gravity: 1,
+                bounce: 1,
+                size: 1,
+                value: 1,
+                speed: 1,
+                multiplier: 1,
+                rainbow: 1
+            },
+            stats: {
+                totalCoins: CONFIG.INITIAL_COINS,
+                maxBalls: 0,
+                ballsCreated: 0,
+                maxCombo: 0
+            }
+        };
+
+        // ============ UPGRADE DEFINITIONS ============
+        const UPGRADES = {
+            newBall: {
+                name: 'Nuova Pallina',
+                icon: '🎾',
+                baseCost: 10,
+                costMultiplier: 1.15,
+                maxLevel: 999,
+                effect: () => {
+                    if (game.balls.length < CONFIG.MAX_BALLS) {
+                        createBall(Math.random() * canvas.width, 50);
+                        game.stats.ballsCreated++;
+                    }
+                }
+            },
+            gravity: {
+                name: 'Gravità',
+                icon: '⬇️',
+                baseCost: 20,
+                costMultiplier: 1.5,
+                maxLevel: 50,
+                effect: (level) => {
+                    game.upgrades.gravity = level;
+                }
+            },
+            bounce: {
+                name: 'Rimbalzo',
+                icon: '⚡',
+                baseCost: 25,
+                costMultiplier: 1.6,
+                maxLevel: 30,
+                effect: (level) => {
+                    game.upgrades.bounce = level;
+                }
+            },
+            size: {
+                name: 'Dimensione',
+                icon: '🔵',
+                baseCost: 30,
+                costMultiplier: 1.7,
+                maxLevel: 20,
+                effect: (level) => {
+                    game.upgrades.size = level;
+                }
+            },
+            value: {
+                name: 'Valore',
+                icon: '💎',
+                baseCost: 40,
+                costMultiplier: 1.8,
+                maxLevel: 40,
+                effect: (level) => {
+                    game.upgrades.value = level;
+                }
+            },
+            speed: {
+                name: 'Velocità',
+                icon: '💨',
+                baseCost: 35,
+                costMultiplier: 1.65,
+                maxLevel: 25,
+                effect: (level) => {
+                    game.upgrades.speed = level;
+                }
+            },
+            multiplier: {
+                name: 'Moltiplicatore',
+                icon: '✖️',
+                baseCost: 50,
+                costMultiplier: 2.0,
+                maxLevel: 30,
+                effect: (level) => {
+                    game.upgrades.multiplier = level;
+                }
+            },
+            rainbow: {
+                name: 'Arcobaleno',
+                icon: '🌈',
+                baseCost: 100,
+                costMultiplier: 2.5,
+                maxLevel: 10,
+                effect: (level) => {
+                    game.upgrades.rainbow = level;
+                }
+            }
+        };
+
+        // ============ PLATFORM SDK ============
+        (async () => {
+            await PlatformSDK.init();
+            
+            PlatformSDK.on('pause', () => {
+                game.isPaused = true;
+                document.getElementById('pauseOverlay').style.display = 'block';
+            });
+            
+            PlatformSDK.on('resume', () => {
+                game.isPaused = false;
+                document.getElementById('pauseOverlay').style.display = 'none';
+            });
+
+            PlatformSDK.on('exit', () => {
+                game.isPaused = true;
+            });
+        })();
+
+        // ============ CLASSI ============
+        class Ball {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4 * game.upgrades.speed;
+                this.vy = -2;
+                this.radius = CONFIG.BALL_BASE_RADIUS + (game.upgrades.size - 1) * 3;
+                this.color = this.getRandomColor();
+                this.hue = Math.random() * 360;
+                this.trail = [];
+                this.selected = false;
+                this.powerLevel = 1;
+            }
+
+            getRandomColor() {
+                const colors = [
+                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#f7dc6f',
+                    '#bb8fce', '#85c1e9', '#f8b500', '#ff85a2'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update(dt) {
+                // Gravity
+                this.vy += CONFIG.GRAVITY_BASE * game.upgrades.gravity * dt * 60;
+                
+                // Apply velocity
+                this.x += this.vx * dt * 60;
+                this.y += this.vy * dt * 60;
+                
+                // Friction
+                this.vx *= CONFIG.FRICTION;
+                this.vy *= CONFIG.FRICTION;
+                
+                // Trail semplice - solo se potente
+                if (this.powerLevel > 2) {
+                    this.trail.push({
+                        x: this.x, 
+                        y: this.y, 
+                        life: 0.3,
+                        color: this.color
+                    });
+                    
+                    if (this.trail.length > 5) {
+                        this.trail.shift();
+                    }
+                    
+                    this.trail = this.trail.filter(t => {
+                        t.life -= dt;
+                        return t.life > 0;
+                    });
+                }
+                
+                // Rainbow color
+                if (game.upgrades.rainbow >= 5) {
+                    this.hue = (this.hue + dt * 100) % 360;
+                    this.color = `hsl(${this.hue}, 70%, 60%)`;
+                }
+                
+                // Wall collisions semplici
+                const bounceCoef = CONFIG.BOUNCE_BASE + (game.upgrades.bounce - 1) * 0.02;
+                
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx *= -bounceCoef;
+                } else if (this.x + this.radius > canvas.width) {
+                    this.x = canvas.width - this.radius;
+                    this.vx *= -bounceCoef;
+                }
+                
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy *= -bounceCoef;
+                } else if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.vy *= -bounceCoef;
+                }
+            }
+
+            createImpactEffect(isWall = false) {
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > 5) {
+                    // Solo 2-3 particelle, no shockwave
+                    for (let i = 0; i < 2; i++) {
+                        createParticle(this.x, this.y, this.color);
+                    }
+                }
+            }
+
+            draw() {
+                // Trail visibile quando potente
+                if (this.trail.length > 0) {
+                    this.trail.forEach((t, i) => {
+                        const alpha = t.life / 0.3;
+                        ctx.globalAlpha = alpha * 0.6;
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, this.radius * 0.6 * alpha, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalAlpha = 1;
+                }
+
+                // Glow per palle potenti
+                if (this.powerLevel > 1.5) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                }
+
+                // Selection highlight semplice
+                if (this.selected) {
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Main ball - semplice e veloce
+                const gradient = ctx.createRadialGradient(
+                    this.x - this.radius * 0.3,
+                    this.y - this.radius * 0.3,
+                    0,
+                    this.x,
+                    this.y,
+                    this.radius
+                );
+                
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                gradient.addColorStop(0.5, this.color);
+                gradient.addColorStop(1, this.color);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Power level indicator
+                if (this.powerLevel > 1.5) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`×${this.powerLevel.toFixed(1)}`, this.x, this.y + 5);
+                }
+            }
+        }
+
+        class Coin {
+            constructor(x, y, value) {
+                this.x = x;
+                this.y = y;
+                this.value = value;
+                this.radius = 15 + value * 2;
+                this.collected = false;
+                this.life = CONFIG.COIN_LIFETIME / 1000;
+                this.maxLife = this.life;
+                this.pulse = 0;
+                this.rotation = 0;
+            }
+
+            update(dt) {
+                this.life -= dt;
+                this.pulse += dt * 5;
+                this.rotation += dt * 2;
+
+                if (this.life <= 0) {
+                    return false;
+                }
+
+                // Check collision with balls
+                game.balls.forEach(ball => {
+                    const dx = this.x - ball.x;
+                    const dy = this.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < this.radius + ball.radius && !this.collected) {
+                        this.collected = true;
+                        
+                        // Combo system
+                        game.combo++;
+                        game.comboTimer = CONFIG.COMBO_TIMEOUT / 1000;
+                        game.stats.maxCombo = Math.max(game.stats.maxCombo, game.combo);
+                        
+                        if (game.combo > 1) {
+                            game.comboMultiplier = 1 + (game.combo - 1) * 0.2;
+                        }
+                        
+                        const earnedCoins = Math.floor(this.value * game.upgrades.multiplier * game.comboMultiplier);
+                        game.money += earnedCoins;
+                        game.stats.totalCoins += earnedCoins;
+                        game.score += earnedCoins * 10;
+                        
+                        if (game.combo > 1) {
+                            createFloatingText(this.x, this.y, `${game.combo}x COMBO!`, '#ff00ff', 22);
+                            createFloatingText(this.x, this.y + 30, `+${earnedCoins} 💰`, '#ffd700', 24);
+                        } else {
+                            createFloatingText(this.x, this.y, `+${earnedCoins} 💰`, '#ffd700', 24);
+                        }
+                        
+                        for (let i = 0; i < 10; i++) {
+                            createParticle(this.x, this.y, '#ffd700');
+                        }
+                        
+                        updateUI();
+                        PlatformSDK.sendScore(game.score);
+                    }
+                });
+
+                return !this.collected;
+            }
+
+            draw() {
+                const lifeRatio = this.life / this.maxLife;
+                const alpha = lifeRatio < 0.3 ? lifeRatio / 0.3 : 1;
+                const scale = 1 + Math.sin(this.pulse) * 0.2;
+                const size = this.radius * scale;
+
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                
+                // Glow
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ffd700';
+                
+                // Coin body
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+                gradient.addColorStop(0, '#fff9c4');
+                gradient.addColorStop(0.5, '#ffd700');
+                gradient.addColorStop(1, '#ff8f00');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Inner circle
+                ctx.strokeStyle = '#ff8f00';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, size * 0.7, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Value text
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#000';
+                ctx.font = `bold ${size * 0.8}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.value, 0, 0);
+
+                ctx.restore();
+            }
+        }
+
+        class Obstacle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type || 'bumper';
+                this.radius = type === 'bumper' ? 30 : 25;
+                this.angle = 0;
+                this.destroyed = false;
+                this.hp = type === 'breakable' ? 3 : 999;
+                this.maxHp = this.hp;
+            }
+
+            update(dt) {
+                this.angle += dt;
+                
+                // Check collision with balls
+                game.balls.forEach(ball => {
+                    const dx = this.x - ball.x;
+                    const dy = this.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < this.radius + ball.radius) {
+                        if (this.type === 'bumper') {
+                            // Super bounce
+                            const angle = Math.atan2(dy, dx);
+                            const speed = 10;
+                            ball.vx = -Math.cos(angle) * speed;
+                            ball.vy = -Math.sin(angle) * speed;
+                            
+                            createFloatingText(this.x, this.y, '💥 BOOST!', '#ff00ff', 20);
+                            for (let i = 0; i < 15; i++) {
+                                createParticle(this.x, this.y, '#ff00ff');
+                            }
+                        } else if (this.type === 'breakable') {
+                            this.hp--;
+                            if (this.hp <= 0) {
+                                this.destroyed = true;
+                                game.money += 20;
+                                game.score += 200;
+                                createFloatingText(this.x, this.y, '+20 💰', '#ffd700', 22);
+                                for (let i = 0; i < 20; i++) {
+                                    createParticle(this.x, this.y, '#ff6b6b');
+                                }
+                            } else {
+                                createFloatingText(this.x, this.y, `${this.hp} HP`, '#ff6b6b', 18);
+                            }
+                            
+                            // Bounce back
+                            const angle = Math.atan2(dy, dx);
+                            ball.vx = -Math.cos(angle) * 5;
+                            ball.vy = -Math.sin(angle) * 5;
+                        }
+                    }
+                });
+                
+                return !this.destroyed;
+            }
+
+            draw() {
+                if (this.type === 'bumper') {
+                    // Bumper - triangolo rotante
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+                    
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#ff00ff';
+                    
+                    ctx.beginPath();
+                    for (let i = 0; i < 3; i++) {
+                        const angle = (Math.PI * 2 / 3) * i;
+                        const x = Math.cos(angle) * this.radius;
+                        const y = Math.sin(angle) * this.radius;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('💥', 0, 0);
+                    
+                    ctx.restore();
+                } else if (this.type === 'breakable') {
+                    // Breakable - cubo con HP
+                    const hpRatio = this.hp / this.maxHp;
+                    const color = hpRatio > 0.6 ? '#ff6b6b' : hpRatio > 0.3 ? '#ff8f00' : '#ffff00';
+                    
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle * 0.5);
+                    
+                    ctx.fillStyle = color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = color;
+                    ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.hp, 0, 0);
+                    
+                    ctx.restore();
+                }
+            }
+        }
+
+        class Powerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type || this.randomType();
+                this.radius = 20;
+                this.collected = false;
+                this.life = 10;
+                this.maxLife = this.life;
+                this.pulse = 0;
+            }
+
+            randomType() {
+                const types = ['magnet', 'bomb', 'multiplier', 'rainbow'];
+                return types[Math.floor(Math.random() * types.length)];
+            }
+
+            update(dt) {
+                this.life -= dt;
+                this.pulse += dt * 5;
+
+                if (this.life <= 0) {
+                    return false;
+                }
+
+                // Check collision with balls
+                game.balls.forEach(ball => {
+                    const dx = this.x - ball.x;
+                    const dy = this.y - ball.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < this.radius + ball.radius && !this.collected) {
+                        this.collected = true;
+                        this.activate(ball);
+                    }
+                });
+
+                return !this.collected;
+            }
+
+            activate(ball) {
+                switch(this.type) {
+                    case 'magnet':
+                        ball.magnetRadius = 150;
+                        ball.selected = true;
+                        createFloatingText(this.x, this.y, '🧲 MAGNET!', '#4ecdc4', 24);
+                        setTimeout(() => {
+                            ball.magnetRadius = 0;
+                            ball.selected = false;
+                        }, 5000);
+                        break;
+                        
+                    case 'bomb':
+                        // Esplosione che raccoglie tutte le monete vicine
+                        const explosionRadius = 200;
+                        game.coins.forEach(coin => {
+                            const dx = coin.x - this.x;
+                            const dy = coin.y - this.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < explosionRadius) {
+                                coin.collected = true;
+                                const earnedCoins = coin.value * game.upgrades.multiplier;
+                                game.money += earnedCoins;
+                                game.score += earnedCoins * 10;
+                            }
+                        });
+                        createFloatingText(this.x, this.y, '💣 BOOM!', '#ff6b6b', 28);
+                        for (let i = 0; i < 50; i++) {
+                            createParticle(this.x, this.y, '#ff6b6b');
+                        }
+                        break;
+                        
+                    case 'multiplier':
+                        const oldMult = game.upgrades.multiplier;
+                        game.upgrades.multiplier *= 2;
+                        createFloatingText(this.x, this.y, '✖️ x2 MULTI!', '#f7dc6f', 24);
+                        setTimeout(() => {
+                            game.upgrades.multiplier = oldMult;
+                        }, 10000);
+                        break;
+                        
+                    case 'rainbow':
+                        ball.charge = 5;
+                        createFloatingText(this.x, this.y, '⚡ CARICA!', '#bb8fce', 24);
+                        break;
+                }
+                
+                for (let i = 0; i < 20; i++) {
+                    createParticle(this.x, this.y, this.getColor());
+                }
+            }
+
+            getColor() {
+                switch(this.type) {
+                    case 'magnet': return '#4ecdc4';
+                    case 'bomb': return '#ff6b6b';
+                    case 'multiplier': return '#f7dc6f';
+                    case 'rainbow': return '#bb8fce';
+                    default: return '#fff';
+                }
+            }
+
+            getIcon() {
+                switch(this.type) {
+                    case 'magnet': return '🧲';
+                    case 'bomb': return '💣';
+                    case 'multiplier': return '✖️';
+                    case 'rainbow': return '⚡';
+                    default: return '?';
+                }
+            }
+
+            draw() {
+                const lifeRatio = this.life / this.maxLife;
+                const alpha = lifeRatio < 0.3 ? lifeRatio / 0.3 : 1;
+                const scale = 1 + Math.sin(this.pulse) * 0.15;
+                const size = this.radius * scale;
+
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.getColor();
+                
+                ctx.fillStyle = this.getColor();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = `${size * 1.2}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.getIcon(), this.x, this.y);
+
+                ctx.restore();
+            }
+        }
+
+        // ============ FUNZIONI DI GIOCO ============
+        function createBall(x, y) {
+            if (game.balls.length >= CONFIG.MAX_BALLS) {
+                createFloatingText(x, y, `⚠️ MAX ${CONFIG.MAX_BALLS} PALLINE!`, '#ff6b6b', 22);
+                return;
+            }
+
+            const ball = new Ball(x, y);
+            game.balls.push(ball);
+            game.stats.maxBalls = Math.max(game.stats.maxBalls, game.balls.length);
+            
+            createFloatingText(x, y, '✨ NUOVA!', '#4ecdc4', 20);
+            
+            for (let i = 0; i < 20; i++) {
+                createParticle(x, y, ball.color);
+            }
+            
+            updateUI();
+        }
+
+        function autoSpawnBalls() {
+            // Auto-spawn se hai poche palline ma tanti soldi
+            if (game.balls.length < 5 && game.money > 100 && Math.random() < 0.02) {
+                const x = canvas.width / 2 + (Math.random() - 0.5) * 200;
+                const y = 50;
+                createBall(x, y);
+                createFloatingText(canvas.width / 2, 50, '🎁 PALLINA BONUS!', '#4ecdc4', 24);
+            }
+        }
+
+        function createCoin() {
+            const margin = 50;
+            const x = margin + Math.random() * (canvas.width - margin * 2);
+            const y = margin + Math.random() * (canvas.height - margin * 2);
+            const value = CONFIG.BALL_BASE_VALUE + Math.floor(game.upgrades.value - 1);
+            
+            const coin = new Coin(x, y, value);
+            game.coins.push(coin);
+        }
+
+        function createObstacle() {
+            const margin = 60;
+            const x = margin + Math.random() * (canvas.width - margin * 2);
+            const y = margin + Math.random() * (canvas.height - margin * 2);
+            const type = Math.random() < 0.5 ? 'bumper' : 'breakable';
+            
+            const obstacle = new Obstacle(x, y, type);
+            game.obstacles.push(obstacle);
+        }
+
+        function createPowerup() {
+            const margin = 50;
+            const x = margin + Math.random() * (canvas.width - margin * 2);
+            const y = margin + Math.random() * (canvas.height - margin * 2);
+            
+            const powerup = new Powerup(x, y);
+            game.powerups.push(powerup);
+        }
+
+        function tryMergeBalls() {
+            // Trova gruppi di palline vicine dello stesso colore
+            game.balls.forEach((ball, i) => {
+                if (!ball.selected) return;
+                
+                const nearby = game.balls.filter((other, j) => {
+                    if (i === j || other.selected) return false;
+                    const dx = ball.x - other.x;
+                    const dy = ball.y - other.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    return dist < CONFIG.MERGE_RADIUS && ball.color === other.color;
+                });
+                
+                if (nearby.length >= 2) {
+                    // MERGE!
+                    const mergedBalls = [ball, nearby[0], nearby[1]];
+                    
+                    // Rimuovi le palline mergiate
+                    game.balls = game.balls.filter(b => !mergedBalls.includes(b));
+                    
+                    // Crea pallina super potenziata
+                    const newBall = new Ball(ball.x, ball.y);
+                    newBall.radius = ball.radius * 1.5;
+                    newBall.color = ball.color;
+                    newBall.charge = 3;
+                    newBall.vx = ball.vx * 1.5;
+                    newBall.vy = ball.vy * 1.5;
+                    game.balls.push(newBall);
+                    
+                    createFloatingText(ball.x, ball.y, '⭐ MERGE!', '#ffff00', 28);
+                    game.money += 50;
+                    game.score += 500;
+                    
+                    for (let i = 0; i < 30; i++) {
+                        createParticle(ball.x, ball.y, ball.color);
+                    }
+                    
+                    updateUI();
+                }
+            });
+        }
+
+        function createParticle(x, y, color) {
+            // Limita particelle max
+            if (game.particles.length > 30) return;
+            
+            game.particles.push({
+                x, y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 0.6,
+                maxLife: 0.6,
+                color,
+                size: 2 + Math.random() * 2
+            });
+        }
+
+        function createFloatingText(x, y, text, color, size) {
+            game.floatingTexts.push({
+                x, y,
+                text,
+                color,
+                size,
+                life: 2,
+                maxLife: 2,
+                vy: -50
+            });
+        }
+
+        function updateParticles(dt) {
+            game.particles.forEach(p => {
+                p.x += p.vx * dt * 60;
+                p.y += p.vy * dt * 60;
+                p.vy += 0.5 * dt * 60;
+                p.vx *= 0.98;
+                p.life -= dt;
+            });
+            
+            game.particles = game.particles.filter(p => p.life > 0);
+        }
+
+        function updateFloatingTexts(dt) {
+            game.floatingTexts.forEach(t => {
+                t.y += t.vy * dt;
+                t.life -= dt;
+            });
+            
+            game.floatingTexts = game.floatingTexts.filter(t => t.life > 0);
+        }
+
+        function updateCoins(dt) {
+            game.coins = game.coins.filter(coin => coin.update(dt));
+            
+            // Spawn new coins
+            const now = Date.now();
+            if (now - game.lastCoinSpawn > CONFIG.COIN_SPAWN_INTERVAL) {
+                createCoin();
+                game.lastCoinSpawn = now;
+            }
+        }
+
+        function updateObstacles(dt) {
+            game.obstacles = game.obstacles.filter(obstacle => obstacle.update(dt));
+            
+            // Spawn new obstacles
+            const now = Date.now();
+            if (now - game.lastObstacleSpawn > CONFIG.OBSTACLE_SPAWN_INTERVAL && game.obstacles.length < 5) {
+                createObstacle();
+                game.lastObstacleSpawn = now;
+            }
+        }
+
+        function updatePowerups(dt) {
+            game.powerups = game.powerups.filter(powerup => powerup.update(dt));
+            
+            // Spawn new powerups
+            const now = Date.now();
+            if (now - game.lastPowerupSpawn > CONFIG.POWERUP_SPAWN_INTERVAL && game.powerups.length < 3) {
+                createPowerup();
+                game.lastPowerupSpawn = now;
+            }
+        }
+
+        function updateCombo(dt) {
+            if (game.comboTimer > 0) {
+                game.comboTimer -= dt;
+                if (game.comboTimer <= 0) {
+                    if (game.combo > 1) {
+                        createFloatingText(canvas.width / 2, 100, `COMBO FINITO: ${game.combo}x`, '#ff00ff', 24);
+                    }
+                    game.combo = 0;
+                    game.comboMultiplier = 1;
+                }
+            }
+        }
+
+        function updateBalls(dt) {
+            game.balls.forEach(ball => ball.update(dt));
+            
+            // Collisioni ESPLOSIVE
+            for (let i = 0; i < game.balls.length; i++) {
+                for (let j = i + 1; j < game.balls.length; j++) {
+                    const b1 = game.balls[i];
+                    const b2 = game.balls[j];
+                    
+                    const dx = b2.x - b1.x;
+                    const dy = b2.y - b1.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const minDist = b1.radius + b2.radius;
+                    
+                    if (dist < minDist && dist > 0) {
+                        // Separazione
+                        const overlap = minDist - dist;
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+                        
+                        b1.x -= nx * overlap * 0.5;
+                        b1.y -= ny * overlap * 0.5;
+                        b2.x += nx * overlap * 0.5;
+                        b2.y += ny * overlap * 0.5;
+                        
+                        // Scambio velocità con BOOST
+                        const dvx = b2.vx - b1.vx;
+                        const dvy = b2.vy - b1.vy;
+                        const dotProduct = dvx * nx + dvy * ny;
+                        
+                        if (dotProduct < 0) {
+                            const impulse = -dotProduct * 1.1; // BOOST x1.1
+                            
+                            b1.vx -= impulse * nx;
+                            b1.vy -= impulse * ny;
+                            b2.vx += impulse * nx;
+                            b2.vy += impulse * ny;
+                            
+                            // Power level aumenta con collisioni
+                            b1.powerLevel = Math.min(3, b1.powerLevel + 0.1);
+                            b2.powerLevel = Math.min(3, b2.powerLevel + 0.1);
+                            
+                            // Combo system
+                            game.combo++;
+                            game.comboTimer = CONFIG.COMBO_TIMEOUT / 1000;
+                            
+                            const collX = (b1.x + b2.x) / 2;
+                            const collY = (b1.y + b2.y) / 2;
+                            
+                            // Effetti visivi
+                            const speed = Math.sqrt(impulse * impulse);
+                            if (speed > 5) {
+                                // Particelle esplosive
+                                for (let k = 0; k < 5; k++) {
+                                    createParticle(collX, collY, k % 2 ? b1.color : b2.color);
+                                }
+                                
+                                if (game.combo > 3) {
+                                    createFloatingText(collX, collY, `${game.combo}x 💥`, '#ff00ff', 20);
+                                    game.money += game.combo;
+                                    game.score += game.combo * 5;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawParticles() {
+            game.particles.forEach(p => {
+                const alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function drawFloatingTexts() {
+            game.floatingTexts.forEach(t => {
+                const alpha = t.life / t.maxLife;
+                const scale = 1 + (1 - alpha) * 0.5;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.font = `bold ${t.size * scale}px Arial`;
+                ctx.fillStyle = t.color;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = t.color;
+                
+                ctx.strokeText(t.text, t.x, t.y);
+                ctx.fillText(t.text, t.x, t.y);
+                
+                ctx.restore();
+            });
+        }
+
+        function draw() {
+            // Clear canvas with gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#0a0a0a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Stars background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 137.5) % canvas.width;
+                const y = (i * 97.3) % canvas.height;
+                const size = (i % 3) + 1;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            // Draw game objects
+            drawParticles();
+            game.obstacles.forEach(obstacle => obstacle.draw());
+            game.powerups.forEach(powerup => powerup.draw());
+            game.coins.forEach(coin => coin.draw());
+            game.balls.forEach(ball => ball.draw());
+            drawFloatingTexts();
+            
+            // Draw combo meter
+            if (game.combo > 1) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(10, 10, 200, 50);
+                
+                ctx.fillStyle = '#ff00ff';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`COMBO: ${game.combo}x`, 20, 35);
+                
+                // Combo timer bar
+                const timerWidth = 180 * (game.comboTimer / (CONFIG.COMBO_TIMEOUT / 1000));
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(10, 50, timerWidth, 5);
+            }
+        }
+
+        function updateUI() {
+            document.querySelector('#score .stat-value').textContent = game.score;
+            document.querySelector('#coins .stat-value').textContent = game.money;
+            document.querySelector('#balls .stat-value').textContent = game.balls.length;
+            
+            // Update upgrade buttons
+            document.querySelectorAll('.upgrade-btn').forEach(btn => {
+                const type = btn.dataset.upgrade;
+                const upgrade = UPGRADES[type];
+                
+                if (type === 'newBall') {
+                    const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, game.stats.ballsCreated));
+                    btn.querySelector('.upgrade-cost').textContent = `💰 ${cost}`;
+                    btn.classList.toggle('disabled', game.money < cost);
+                } else {
+                    const level = game.upgrades[type];
+                    const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, level - 1));
+                    btn.querySelector('.upgrade-cost').textContent = `💰 ${cost}`;
+                    btn.querySelector('.upgrade-level').textContent = `Lv ${level}`;
+                    btn.classList.toggle('disabled', game.money < cost || level >= upgrade.maxLevel);
+                }
+            });
+        }
+
+        // ============ UPGRADE HANDLERS ============
+        document.querySelectorAll('.upgrade-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (game.isPaused || game.isGameOver) return;
+                
+                const type = btn.dataset.upgrade;
+                const upgrade = UPGRADES[type];
+                
+                let cost;
+                if (type === 'newBall') {
+                    cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, game.stats.ballsCreated));
+                } else {
+                    const level = game.upgrades[type];
+                    if (level >= upgrade.maxLevel) {
+                        createFloatingText(canvas.width / 2, canvas.height / 2, '⚠️ LIVELLO MAX!', '#ff6b6b', 24);
+                        return;
+                    }
+                    cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, level - 1));
+                }
+                
+                if (game.money >= cost) {
+                    game.money -= cost;
+                    
+                    if (type === 'newBall') {
+                        upgrade.effect();
+                    } else {
+                        game.upgrades[type]++;
+                        upgrade.effect(game.upgrades[type]);
+                        createFloatingText(canvas.width / 2, 100, `${upgrade.icon} LIVELLO ${game.upgrades[type]}!`, '#667eea', 28);
+                    }
+                    
+                    // Visual feedback
+                    btn.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        btn.style.transform = '';
+                    }, 100);
+                    
+                    updateUI();
+                } else {
+                    createFloatingText(canvas.width / 2, canvas.height / 2, '❌ MONETE INSUFFICIENTI!', '#ff6b6b', 22);
+                }
+            });
+        });
+
+        // ============ INPUT HANDLERS ============
+        canvas.addEventListener('click', (e) => {
+            if (game.isPaused || game.isGameOver) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // Hide tutorial on first click
+            document.getElementById('tutorial').classList.add('hidden');
+            
+            // Check coins first - priorità alle monete!
+            let coinClicked = false;
+            game.coins.forEach(coin => {
+                if (coin.collected) return;
+                const dx = x - coin.x;
+                const dy = y - coin.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < coin.radius) {
+                    coinClicked = true;
+                    coin.collected = true;
+                }
+            });
+            
+            if (coinClicked) return; // Se hai cliccato una moneta, esci
+            
+            // Check if clicking on a ball - BOOST IT!
+            let ballClicked = false;
+            game.balls.forEach(ball => {
+                const dx = x - ball.x;
+                const dy = y - ball.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < ball.radius) {
+                    ballClicked = true;
+                    
+                    // BOOST la palla verso l'alto con esplosione
+                    ball.vy = -15;
+                    ball.vx += (Math.random() - 0.5) * 8;
+                    ball.powerLevel = Math.min(3, ball.powerLevel + 0.5);
+                    
+                    // Particelle esplosive
+                    for (let i = 0; i < 8; i++) {
+                        createParticle(ball.x, ball.y, ball.color);
+                    }
+                    
+                    createFloatingText(ball.x, ball.y - 30, '🚀 BOOST!', '#ffff00', 24);
+                    game.money += 2;
+                    game.score += 10;
+                }
+            });
+            
+            // NON creare palle con click - solo con upgrade button!
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (game.isPaused || game.isGameOver) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // Hide tutorial on first touch
+            document.getElementById('tutorial').classList.add('hidden');
+            
+            // Check coins first - priorità alle monete!
+            let coinTouched = false;
+            game.coins.forEach(coin => {
+                if (coin.collected) return;
+                const dx = x - coin.x;
+                const dy = y - coin.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < coin.radius) {
+                    coinTouched = true;
+                    coin.collected = true;
+                }
+            });
+            
+            if (coinTouched) return; // Se hai toccato una moneta, esci
+            
+            // Check if touching a ball - BOOST IT!
+            let ballTouched = false;
+            game.balls.forEach(ball => {
+                const dx = x - ball.x;
+                const dy = y - ball.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < ball.radius) {
+                    ballTouched = true;
+                    
+                    // BOOST la palla
+                    ball.vy = -15;
+                    ball.vx += (Math.random() - 0.5) * 8;
+                    ball.powerLevel = Math.min(3, ball.powerLevel + 0.5);
+                    
+                    // Particelle esplosive
+                    for (let i = 0; i < 8; i++) {
+                        createParticle(ball.x, ball.y, ball.color);
+                    }
+                    
+                    createFloatingText(ball.x, ball.y - 30, '🚀 BOOST!', '#ffff00', 24);
+                    game.money += 2;
+                    game.score += 10;
+                }
+            });
+            
+            // NON creare palle con touch - solo con upgrade button!
+        });
+
+        // Tutorial click to dismiss
+        document.getElementById('tutorial').addEventListener('click', () => {
+            document.getElementById('tutorial').classList.add('hidden');
+        });
+
+        // ============ GAME LOOP ============
+        let lastTime = Date.now();
+
+        function gameLoop() {
+            const now = Date.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            
+            if (!game.isPaused && !game.isGameOver) {
+                updateBalls(dt);
+                updateCoins(dt);
+                updateObstacles(dt);
+                updatePowerups(dt);
+                updateParticles(dt);
+                updateFloatingTexts(dt);
+                updateCombo(dt);
+                // autoSpawnBalls(); // Disabilitato per performance
+            }
+            
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============ RESTART ============
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            document.getElementById('gameOver').style.display = 'none';
+            
+            game = {
+                score: 0,
+                money: CONFIG.INITIAL_COINS,
+                isPaused: false,
+                isGameOver: false,
+                balls: [],
+                coins: [],
+                obstacles: [],
+                powerups: [],
+                particles: [],
+                floatingTexts: [],
+                lastCoinSpawn: Date.now(),
+                lastObstacleSpawn: Date.now(),
+                lastPowerupSpawn: Date.now(),
+                combo: 0,
+                comboTimer: 0,
+                comboMultiplier: 1,
+                selectedBalls: [],
+                upgrades: {
+                    gravity: 1,
+                    bounce: 1,
+                    size: 1,
+                    value: 1,
+                    speed: 1,
+                    multiplier: 1,
+                    rainbow: 1
+                },
+                stats: {
+                    totalCoins: CONFIG.INITIAL_COINS,
+                    maxBalls: 0,
+                    ballsCreated: 0,
+                    maxCombo: 0
+                }
+            };
+            
+            updateUI();
+            document.getElementById('tutorial').classList.remove('hidden');
+        });
+
+        // ============ START ============
+        updateUI();
+        gameLoop();
+        createBall(canvas.width / 2, 100); // Initial ball
+    </script>
+</body>
+</html>

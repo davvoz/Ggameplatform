@@ -49,7 +49,7 @@ def test_trigger():
     result = end_game_session(session_id, test_score, test_duration)
     print(f"   ✅ Sessione terminata")
     print(f"   📊 Score registrato: {result.get('score')}")
-    print(f"   💰 CUR8 guadagnato: {result.get('cur8_earned')}\n")
+    print(f"   💰 XP guadagnato: {result.get('xp_earned')}\n")
     
     # Verifica se la leaderboard è stata aggiornata
     print(f"5️⃣ Verifica aggiornamento leaderboard...")

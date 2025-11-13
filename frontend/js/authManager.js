@@ -81,10 +81,10 @@ class AuthManager {
     }
 
     /**
-     * Ottiene il totale CUR8 guadagnato
+     * Ottiene il totale XP guadagnato
      */
     getTotalCur8() {
-        return this.currentUser?.total_cur8_earned || 0.0;
+        return this.currentUser?.total_xp_earned || 0.0;
     }
 
     /**
@@ -159,7 +159,7 @@ class AuthManager {
             }
             
             userName.textContent = methodBadge + displayName;
-            userCur8.textContent = `💰 ${this.getTotalCur8().toFixed(2)} CUR8`;
+            userCur8.textContent = `⭐ ${this.getTotalCur8().toFixed(2)} XP`;
             userInfo.style.display = 'flex';
         }
     }
@@ -178,11 +178,11 @@ class AuthManager {
     }
 
     /**
-     * Aggiorna CUR8 dell'utente corrente
+     * Aggiorna XP dell'utente corrente
      */
     updateCur8(amount) {
         if (this.currentUser) {
-            this.currentUser.total_cur8_earned = (this.currentUser.total_cur8_earned || 0) + amount;
+            this.currentUser.total_xp_earned = (this.currentUser.total_xp_earned || 0) + amount;
             this.saveToStorage();
             this.showUserBanner(); // Aggiorna banner
         }

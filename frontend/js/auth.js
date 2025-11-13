@@ -312,9 +312,9 @@ const AuthManager = {
             
             userName.textContent = badge + displayName;
             
-            const cur8Total = this.currentUser.total_cur8_earned || 0;
+            const cur8Total = this.currentUser.total_xp_earned || 0;
             const multiplier = this.currentUser.cur8_multiplier || 1.0;
-            userCur8.textContent = `CUR8 ${multiplier}x 💰 ${cur8Total.toFixed(2)} CUR8`;
+            userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
             
             console.log('AuthManager: UI aggiornata -', displayName, multiplier, cur8Total);
         } else {

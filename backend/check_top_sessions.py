@@ -38,7 +38,7 @@ def check_top_sessions():
                 print(f"   {idx}. Session ID: {sess.session_id}")
                 print(f"      Utente: {username}")
                 print(f"      Score: {sess.score}")
-                print(f"      CUR8 guadagnato: {sess.cur8_earned:.2f}")
+                print(f"      XP guadagnato: {sess.xp_earned:.2f}")
                 print(f"      Durata: {sess.duration_seconds} secondi ({sess.duration_seconds // 60}m {sess.duration_seconds % 60}s)")
                 print(f"      Iniziata: {sess.started_at}")
                 print(f"      Terminata: {sess.ended_at}")
@@ -63,7 +63,7 @@ def check_top_sessions():
             print(f"   Gioco: {game.title}")
             print(f"   Utente: {username}")
             print(f"   Score: {top_session_overall.score}")
-            print(f"   CUR8 guadagnato: {top_session_overall.cur8_earned:.2f}")
+            print(f"   XP guadagnato: {top_session_overall.xp_earned:.2f}")
             print(f"   Durata: {top_session_overall.duration_seconds // 60}m {top_session_overall.duration_seconds % 60}s")
             print()
         

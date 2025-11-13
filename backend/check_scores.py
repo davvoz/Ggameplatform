@@ -13,7 +13,7 @@ for col in cursor.fetchall():
 print('\n')
 
 cursor.execute('''
-    SELECT session_id, score, cur8_earned, duration_seconds, ended_at 
+    SELECT session_id, score, xp_earned, duration_seconds, ended_at 
     FROM game_sessions 
     ORDER BY started_at DESC 
     LIMIT 10

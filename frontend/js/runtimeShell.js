@@ -212,6 +212,7 @@ export default class RuntimeShell {
         // Log the received payload for debugging
         this.log('GameOver payload received:', payload);
         this.log('Current state.score before update:', this.state.score);
+        this.log('Current sessionId:', this.sessionId);
         
         // Get score from payload, fallback to current state
         const finalScore = payload?.score ?? this.state.score ?? 0;
@@ -222,11 +223,14 @@ export default class RuntimeShell {
         
         // End game session and save score (prevent double-ending by clearing sessionId first)
         if (this.sessionId) {
+            this.log('✅ SessionId exists, ending session...');
             const sessionToEnd = this.sessionId;
             const startTime = this.sessionStartTime; // Save before clearing
             this.sessionId = null; // Clear immediately to prevent double-ending
             this.sessionStartTime = null;
             this.endGameSessionById(sessionToEnd, this.state.score, startTime, false);
+        } else {
+            this.log('❌ No sessionId found - session was not started or already ended');
         }
     }
     
@@ -505,13 +509,17 @@ export default class RuntimeShell {
      * Start game session tracking
      */
     async startGameSession() {
+        this.log('🎮 startGameSession() called');
         try {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            this.log('Current user from localStorage:', currentUser ? currentUser.user_id : 'null');
+            
             if (!currentUser) {
-                this.log('No user logged in, skipping session tracking');
+                this.log('❌ No user logged in, skipping session tracking');
                 return;
             }
             
+            this.log('📡 Sending session start request to backend...');
             const response = await fetch('http://localhost:8000/users/sessions/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -521,15 +529,19 @@ export default class RuntimeShell {
                 })
             });
             
+            this.log('Response status:', response.status);
             const data = await response.json();
+            this.log('Response data:', data);
             
             if (data.success) {
                 this.sessionId = data.session.session_id;
                 this.sessionStartTime = Date.now();
-                this.log('Game session started:', this.sessionId);
+                this.log('✅ Game session started:', this.sessionId);
+            } else {
+                this.log('❌ Failed to start session:', data);
             }
         } catch (error) {
-            this.log('Failed to start game session:', error);
+            this.log('❌ Exception in startGameSession:', error);
         }
     }
     
@@ -600,14 +612,14 @@ export default class RuntimeShell {
             if (data.success) {
                 this.log('Game session ended:', data.session);
                 
-                // Update user's CUR8 in authManager
+                // Update user's XP in authManager
                 if (window.authManager) {
-                    window.authManager.updateCur8(data.session.cur8_earned);
+                    window.authManager.updateCur8(data.session.xp_earned);
                 }
                 
-                // Show CUR8 earned notification (only for normal end, not beacon)
+                // Show XP earned notification (only for normal end, not beacon)
                 if (!useBeacon) {
-                    this.showCur8Notification(data.session.cur8_earned);
+                    this.showCur8Notification(data.session.xp_earned);
                 }
             }
         } catch (error) {
@@ -616,29 +628,29 @@ export default class RuntimeShell {
     }
     
     /**
-     * Show CUR8 earned notification
+     * Show XP earned notification
      */
-    showCur8Notification(cur8Amount) {
+    showCur8Notification(xpAmount) {
         const notification = document.createElement('div');
-        notification.className = 'cur8-notification';
+        notification.className = 'xp-notification';
         notification.innerHTML = `
-            <div class="cur8-badge">
-                <span class="cur8-icon">💰</span>
-                <span class="cur8-amount">+${cur8Amount.toFixed(2)} CUR8</span>
+            <div class="xp-badge">
+                <span class="xp-icon">⭐</span>
+                <span class="xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
         `;
         
         // Add styles
         const style = document.createElement('style');
         style.textContent = `
-            .cur8-notification {
+            .xp-notification {
                 position: fixed;
                 top: 70px;
                 right: 20px;
                 z-index: 10000;
                 animation: slideInRight 0.5s ease, fadeOut 0.5s ease 3.5s;
             }
-            .cur8-badge {
+            .xp-badge {
                 background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
                 padding: 16px 24px;
                 border-radius: 12px;
@@ -647,10 +659,10 @@ export default class RuntimeShell {
                 align-items: center;
                 gap: 12px;
             }
-            .cur8-icon {
+            .xp-icon {
                 font-size: 1.5em;
             }
-            .cur8-amount {
+            .xp-amount {
                 font-size: 1.2em;
                 font-weight: bold;
                 color: #1a1a1a;

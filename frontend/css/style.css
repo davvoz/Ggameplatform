@@ -9,37 +9,33 @@
 }
 
 :root {
-    /* Color Palette - CUR8 Theme */
-    --primary-color: #ff7518;
-    --primary-dark: #d95800;
-    --primary-light: #ff9248;
-    --secondary-color: #2ecc71;
-    --secondary-dark: #25a55b;
-    --background: #1a1a1a;
-    --background-light: #242424;
-    --background-lighter: #2e2e2e;
-    --surface: rgba(255, 255, 255, 0.03);
-    --surface-elevated: rgba(255, 255, 255, 0.05);
-    --text-primary: #e8e8e8;
-    --text-secondary: #b0b0b0;
-    --text-muted: #6c757d;
-    --border: rgba(255, 255, 255, 0.05);
-    --border-light: rgba(255, 255, 255, 0.1);
-    --success: #2ecc71;
-    --warning: #f59e0b;
-    --error: #ef4444;
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #ff7518 0%, #ff9248 100%);
-    --gradient-secondary: linear-gradient(135deg, #2ecc71 0%, #54d98c 100%);
-    --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+    /* Color Palette - Gaming Platform */
+    --primary-color: #00d9ff;
+    --primary-dark: #00b8d4;
+    --primary-light: #4dffff;
+    --secondary-color: #ff3d71;
+    --accent-purple: #b388ff;
+    --accent-green: #69f0ae;
+    --background: #0a0e17;
+    --background-light: #141824;
+    --background-lighter: #1e2430;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-elevated: rgba(255, 255, 255, 0.06);
+    --text-primary: #ffffff;
+    --text-secondary: #b4bcd0;
+    --text-muted: #7a8499;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-light: rgba(255, 255, 255, 0.12);
+    --success: #69f0ae;
+    --warning: #ffc107;
+    --error: #ff3d71;
+    --grid-color: rgba(0, 217, 255, 0.1);
     
     /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    --glow-primary: 0 0 20px rgba(255, 117, 24, 0.5);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
     
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -51,14 +47,13 @@
     
     /* Border Radius */
     --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --radius-pill: 50rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
     
     /* Transitions */
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: all 0.2s ease;
+    --transition-fast: all 0.1s ease;
 }
 
 body {
@@ -69,6 +64,37 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+/* Grid Background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: center center;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, var(--background) 100%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* ========================================
@@ -80,11 +106,15 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--spacing-md);
+    position: relative;
+    z-index: 1;
 }
 
 main {
     flex: 1;
     padding: var(--spacing-xl) 0;
+    position: relative;
+    z-index: 1;
 }
 
 /* ========================================
@@ -92,14 +122,15 @@ main {
    ======================================== */
 
 .navbar {
-    background: rgba(26, 26, 26, 0.95);
+    background: rgba(10, 14, 23, 0.9);
     border-bottom: 1px solid var(--border);
-    padding: var(--spacing-sm) 0;
+    padding: var(--spacing-md) 0;
     position: sticky;
     top: 0;
     z-index: 1000;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .navbar .container {
@@ -111,11 +142,10 @@ main {
 
 .nav-brand h1 {
     font-size: 1.5rem;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--primary-color);
     font-weight: 700;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
 }
 
 .nav-menu {
@@ -142,7 +172,8 @@ main {
 
 .nav-link.active {
     background: var(--primary-color);
-    color: white;
+    color: var(--background);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
 }
 
 /* Hamburger Menu */
@@ -202,6 +233,8 @@ main {
     font-size: 2rem;
     margin-bottom: var(--spacing-md);
     color: var(--text-primary);
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .filters {
@@ -241,11 +274,13 @@ main {
 .filter-btn:hover {
     background: var(--primary-color);
     border-color: var(--primary-color);
+    color: var(--background);
 }
 
 .filter-btn.active {
     background: var(--primary-color);
     border-color: var(--primary-color);
+    color: var(--background);
 }
 
 /* Game Grid */
@@ -265,14 +300,14 @@ main {
     transition: var(--transition);
     cursor: pointer;
     border: 1px solid var(--border);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .game-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
-    border-color: rgba(255, 117, 24, 0.3);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 217, 255, 0.2);
+    border-color: var(--primary-color);
 }
 
 .game-thumbnail {
@@ -314,7 +349,7 @@ main {
 
 .play-btn {
     padding: var(--spacing-sm) var(--spacing-lg);
-    background: var(--gradient-primary);
+    background: var(--primary-color);
     color: var(--background);
     border: none;
     border-radius: var(--radius-md);
@@ -325,9 +360,9 @@ main {
 }
 
 .play-btn:hover {
-    box-shadow: var(--glow-primary);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
     transform: scale(1.05);
-    color: var(--background);
+    background: var(--primary-light);
 }
 
 .game-info {
@@ -397,6 +432,7 @@ main {
 .back-btn:hover {
     background: var(--primary-color);
     border-color: var(--primary-color);
+    color: var(--background);
 }
 
 .detail-content {
@@ -490,19 +526,20 @@ main {
     width: 100%;
     padding: var(--spacing-md) var(--spacing-xl);
     background: var(--primary-color);
-    color: white;
+    color: var(--background);
     border: none;
     border-radius: var(--radius-md);
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
+    box-shadow: var(--shadow-md);
 }
 
 .play-game-btn:hover {
-    background: var(--primary-dark);
+    background: var(--primary-light);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 217, 255, 0.4);
 }
 
 /* ========================================
@@ -553,6 +590,7 @@ main {
 .control-btn:hover {
     background: var(--primary-color);
     border-color: var(--primary-color);
+    color: var(--background);
 }
 
 .player-controls {
@@ -589,7 +627,8 @@ main {
 }
 
 #current-score {
-    color: var(--primary-light);
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 .game-status {
@@ -618,7 +657,7 @@ main {
 .about h3 {
     font-size: 1.5rem;
     margin: var(--spacing-xl) 0 var(--spacing-md);
-    color: var(--primary-light);
+    color: var(--primary-color);
 }
 
 .about p {
@@ -648,7 +687,7 @@ main {
 }
 
 .profile-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: var(--background-light);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-lg);
     display: flex;
@@ -658,6 +697,7 @@ main {
     box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--border);
 }
 
 .profile-header::before {
@@ -667,7 +707,7 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, transparent 100%);
     z-index: 1;
 }
 
@@ -751,10 +791,11 @@ main {
 }
 
 .profile-content h3 {
-    color: var(--primary-light);
+    color: var(--primary-color);
     margin-bottom: var(--spacing-lg);
     margin-top: var(--spacing-xl);
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .profile-content h3:first-child {
@@ -781,7 +822,7 @@ main {
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), 0 0 15px rgba(0, 217, 255, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -904,8 +945,8 @@ main {
     font-weight: 700;
     color: var(--primary-color);
     padding: var(--spacing-sm) var(--spacing-md);
-    background: linear-gradient(135deg, rgba(255, 117, 24, 0.1), rgba(255, 146, 72, 0.1));
-    border-radius: 50rem;
+    background: rgba(0, 217, 255, 0.1);
+    border-radius: var(--radius-lg);
     border: 2px solid var(--primary-color);
 }
 
@@ -1217,11 +1258,10 @@ main {
 
 .leaderboard-header h2 {
     font-size: 2.5rem;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .leaderboard-subtitle {
@@ -1312,6 +1352,7 @@ main {
     font-size: 1.3rem;
     font-weight: bold;
     color: var(--primary-color);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .leaderboard-empty {

@@ -1,23 +1,22 @@
-/* Authentication Styles - CUR8 Theme */
+/* Authentication Styles - Clean Gaming Design */
 
-/* Aggiorna i bottoni per usare il gradiente arancione */
 .btn-login {
-    background: linear-gradient(135deg, #ff7518 0%, #ff9248 100%);
-    color: #1a1a1a;
+    background: var(--primary-color);
+    color: var(--background);
     border: none;
     padding: 0.6rem 1.2rem;
-    border-radius: 50rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-login:hover {
-    box-shadow: 0 0 20px rgba(255, 117, 24, 0.5);
+    background: var(--primary-light);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 217, 255, 0.3);
     transform: translateY(-2px);
-    color: #1a1a1a;
 }
 
 .user-info {
@@ -25,45 +24,44 @@
     align-items: center;
     gap: 0.8rem;
     padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 50rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
 }
 
 .user-info #userName {
-    color: #e8e8e8;
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 0.9rem;
 }
 
 .cur8-badge {
-    background: linear-gradient(135deg, #ff7518 0%, #ff9248 100%);
-    color: #1a1a1a;
+    background: var(--primary-color);
+    color: var(--background);
     padding: 0.25rem 0.6rem;
-    border-radius: 50rem;
+    border-radius: var(--radius-md);
     font-size: 0.8rem;
     font-weight: 700;
     white-space: nowrap;
-    box-shadow: 0 0 10px rgba(255, 117, 24, 0.3);
 }
 
 .btn-logout {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #b0b0b0;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     padding: 0.35rem 0.7rem;
-    border-radius: 50rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.8rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition);
     white-space: nowrap;
 }
 
 .btn-logout:hover {
-    background: #ef4444;
-    border-color: #ef4444;
+    background: var(--error);
+    border-color: var(--error);
     color: white;
 }
 
@@ -77,8 +75,8 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
-    -webkit-backdrop-filter: blur(5px);
-    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     animation: fadeIn 0.3s ease;
 }
 
@@ -88,14 +86,14 @@
 }
 
 .modal-content {
-    background: #242424;
+    background: var(--background-light);
     margin: 5% auto;
     padding: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
     width: 90%;
     max-width: 500px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-xl);
     animation: slideDown 0.3s ease;
 }
 
@@ -111,24 +109,25 @@
 }
 
 .modal-content h2 {
-    color: #e8e8e8;
+    color: var(--text-primary);
     margin-bottom: 1.5rem;
     text-align: center;
+    font-weight: 600;
 }
 
 .close-modal {
-    color: #6c757d;
+    color: var(--text-muted);
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition);
     line-height: 1;
 }
 
 .close-modal:hover,
 .close-modal:focus {
-    color: #e8e8e8;
+    color: var(--text-primary);
 }
 
 /* Auth Tabs */
@@ -136,7 +135,7 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 2px solid var(--border);
 }
 
 .tab-btn {
@@ -144,22 +143,22 @@
     padding: 0.8rem;
     background: transparent;
     border: none;
-    color: #b0b0b0;
+    color: var(--text-secondary);
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
     border-bottom: 3px solid transparent;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition);
 }
 
 .tab-btn:hover {
-    color: #e8e8e8;
-    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    background: var(--surface);
 }
 
 .tab-btn.active {
-    color: #ff7518;
-    border-bottom-color: #ff7518;
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 
 .tab-content {
@@ -173,17 +172,15 @@
 
 /* Auth Info Box */
 .auth-info {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--surface);
     padding: 1rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     margin-bottom: 1.5rem;
-    border-left: 4px solid #ff7518;
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    border-left: 3px solid var(--primary-color);
 }
 
 .auth-info p {
-    color: #e8e8e8;
+    color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 0.8rem;
 }
@@ -194,7 +191,7 @@
 }
 
 .benefits-list li {
-    color: #b0b0b0;
+    color: var(--text-secondary);
     padding: 0.4rem 0;
     font-size: 0.9rem;
 }
@@ -206,7 +203,7 @@
 
 .form-group label {
     display: block;
-    color: #e8e8e8;
+    color: var(--text-primary);
     font-weight: 500;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -215,23 +212,23 @@
 .form-group input {
     width: 100%;
     padding: 0.8rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
-    color: #e8e8e8;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
     font-size: 0.95rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition);
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #ff7518;
-    box-shadow: 0 0 0 2px rgba(255, 117, 24, 0.2);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
 }
 
 .form-group small {
     display: block;
-    color: #6c757d;
+    color: var(--text-muted);
     font-size: 0.8rem;
     margin-top: 0.3rem;
 }
@@ -242,23 +239,24 @@
     width: 100%;
     padding: 0.9rem;
     border: none;
-    border-radius: 50rem;
+    border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition);
     margin-top: 0.5rem;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #ff7518 0%, #ff9248 100%);
-    color: #1a1a1a;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    background: var(--primary-color);
+    color: var(--background);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
+    background: var(--primary-light);
     transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(255, 117, 24, 0.5);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 217, 255, 0.3);
 }
 
 .btn-primary:active {
@@ -266,43 +264,43 @@
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.03);
-    color: #e8e8e8;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
-    background: #ff7518;
-    border-color: #ff7518;
-    color: #1a1a1a;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--background);
 }
 
 /* Status Messages */
 .status-message {
     margin-top: 1rem;
     padding: 0.8rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     text-align: center;
     font-weight: 500;
 }
 
 .status-message.info {
-    background: rgba(255, 117, 24, 0.1);
-    color: #ff9248;
-    border: 1px solid rgba(255, 117, 24, 0.3);
+    background: rgba(0, 217, 255, 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
 }
 
 .status-message.success {
-    background: rgba(46, 204, 113, 0.1);
-    color: #2ecc71;
-    border: 1px solid rgba(46, 204, 113, 0.3);
+    background: rgba(105, 240, 174, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
 }
 
 .status-message.error {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(255, 61, 113, 0.1);
+    color: var(--error);
+    border: 1px solid var(--error);
 }
 
 /* Responsive */

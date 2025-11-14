@@ -1,5 +1,6 @@
 const API_BASE = '/admin';
 let allData = {};
+let originalData = {}; // Keep original data separate from filtered data
 let currentTab = 'games';
 
 // Load data on page load
@@ -22,6 +23,7 @@ async function loadData() {
         if (!response.ok) throw new Error('Failed to fetch data');
         
         allData = await response.json();
+        originalData = JSON.parse(JSON.stringify(allData)); // Deep copy of original data
         
         console.log('[DEBUG] Loaded data:', allData.users?.length, 'users');
         if (allData.users?.[0]) {
@@ -71,6 +73,13 @@ async function updateOpenSessionsButton() {
 
 function switchTab(tab) {
     currentTab = tab;
+    
+    // Clear search input when switching tabs
+    const searchInput = document.getElementById('searchInput');
+    searchInput.value = '';
+    
+    // Restore original data for all tabs
+    allData = JSON.parse(JSON.stringify(originalData));
     
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -486,6 +495,11 @@ function closeModal() {
 }
 
 function refreshData() {
+    // Clear search on refresh
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
     loadData();
 }
 
@@ -585,31 +599,36 @@ function formatDuration(seconds) {
 
 // Search functionality
 document.getElementById('searchInput').addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const data = getCurrentTabData();
+    const searchTerm = e.target.value.toLowerCase().trim();
     
     if (!searchTerm) {
+        // Restore original data
+        allData = JSON.parse(JSON.stringify(originalData));
         displayCurrentTab();
         return;
     }
     
+    // Get current tab key
+    const tabKey = getCurrentTabKey();
+    const originalTabData = originalData[tabKey] || [];
+    
     // Filter data based on search term
-    const filtered = data.filter(item => {
-        return Object.values(item).some(value => {
+    const filtered = originalTabData.filter(item => {
+        return Object.entries(item).some(([key, value]) => {
             if (value === null || value === undefined) return false;
+            
+            // Handle nested objects (like metadata)
+            if (typeof value === 'object') {
+                return JSON.stringify(value).toLowerCase().includes(searchTerm);
+            }
+            
             return value.toString().toLowerCase().includes(searchTerm);
         });
     });
     
-    // Update allData with filtered results temporarily
-    const originalData = { ...allData };
-    allData[getCurrentTabKey()] = filtered;
+    // Update allData with filtered results
+    allData[tabKey] = filtered;
     displayCurrentTab();
-    
-    // If search is cleared, restore original data
-    if (!searchTerm) {
-        allData = originalData;
-    }
 });
 
 function getCurrentTabKey() {

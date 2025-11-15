@@ -6,13 +6,13 @@ export class ProceduralLevelGenerator {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        this.difficulty = 0.3; // Even easier start
+        this.difficulty = 0.6; // Balanced start
         this.platformPool = [];
         this.obstaclePool = [];
         this.lastPlatformX = 0;
         this.lastPlatformY = 0;
-        this.platformSpacing = { min: 50, max: 100 }; // Very close
-        this.platformWidth = { min: 180, max: 350 }; // Very wide
+        this.platformSpacing = { min: 70, max: 140 }; // Medium spacing
+        this.platformWidth = { min: 150, max: 280 }; // Good width
         this.platformHeight = 20;
         this.maxJumpHeight = 200;
         this.colors = this.generateRainbowColors();
@@ -55,21 +55,21 @@ export class ProceduralLevelGenerator {
 
         const width = this.random(this.platformWidth.min, this.platformWidth.max);
         
-        // Ensure vertical variation keeps platforms within easy jump reach
+        // Ensure platforms don't overlap vertically
         let y;
         if (this.lastPlatformY === 0) {
             // First platform
-            const baseY = this.canvasHeight * 0.7;
+            const baseY = this.canvasHeight * 0.65;
             y = baseY;
         } else {
-            // Subsequent platforms - minimal vertical variation
-            const maxYVariation = this.maxJumpHeight * 0.25; // Only 25% of max jump
-            const yOffset = this.random(-maxYVariation * 0.5, maxYVariation * 0.5); // Very small range
+            // Subsequent platforms - vary significantly to avoid overlap
+            const maxYVariation = 120; // Fixed pixel variation
+            const yOffset = this.random(-maxYVariation, maxYVariation);
             y = this.lastPlatformY + yOffset;
             
             // Clamp to playable area
-            const minY = this.canvasHeight * 0.4;
-            const maxY = this.canvasHeight * 0.8;
+            const minY = this.canvasHeight * 0.25;
+            const maxY = this.canvasHeight * 0.75;
             y = Math.max(minY, Math.min(maxY, y));
         }
         
@@ -83,7 +83,7 @@ export class ProceduralLevelGenerator {
             height: this.platformHeight,
             color,
             type: 'platform',
-            velocity: -50 * this.difficulty // Much slower!
+            velocity: -120 * this.difficulty // Better speed!
         };
 
         this.lastPlatformX = x;
@@ -95,17 +95,17 @@ export class ProceduralLevelGenerator {
         const obstacleTypes = ['spike', 'enemy'];
         const type = obstacleTypes[Math.floor(this.random(0, obstacleTypes.length))];
         
-        const x = platformX + this.random(platformWidth * 0.2, platformWidth * 0.8);
-        const y = platformY - 30;
+        const x = platformX + this.random(platformWidth * 0.3, platformWidth * 0.7);
+        const y = platformY - 20; // Even lower
         
         const obstacle = {
             x,
             y,
-            width: 20,
-            height: 30,
+            width: 12, // Reduced from 15
+            height: 20, // Reduced from 25
             type,
             color: type === 'spike' ? [0.8, 0.1, 0.1, 1.0] : [0.4, 0.1, 0.6, 1.0],
-            velocity: -50 * this.difficulty
+            velocity: -120 * this.difficulty
         };
 
         return obstacle;
@@ -121,20 +121,20 @@ export class ProceduralLevelGenerator {
             radius: 15,
             type: 'collectible',
             color: [1.0, 0.84, 0.0, 1.0], // Gold
-            velocity: -50 * this.difficulty,
+            velocity: -120 * this.difficulty,
             value: 10
         };
     }
 
     shouldGenerateObstacle() {
-        // Almost no obstacles at start (5% at start, up to 30% at high difficulty)
-        const threshold = 1.0 - (0.05 + this.difficulty * 0.12);
+        // Gradual obstacles (20% at start, up to 40% at high difficulty)
+        const threshold = 1.0 - (0.2 + this.difficulty * 0.2);
         return this.random(0, 1) > threshold;
     }
 
     shouldGenerateCollectible() {
-        // Many collectibles at start (80% at start, 50% at high difficulty)
-        const threshold = 0.8 - this.difficulty * 0.15;
+        // Many collectibles at start (70% at start, 50% at high difficulty)
+        const threshold = 0.7 - this.difficulty * 0.2;
         return this.random(0, 1) < threshold;
     }
 

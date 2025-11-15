@@ -10,10 +10,10 @@ export class Player {
         this.height = 30;
         this.velocityY = 0;
         this.velocityX = 0;
-        this.gravity = 800; // Lower gravity for floatier feel
-        this.jumpForce = -550; // Strong consistent jump
-        this.minJumpForce = -300; // Short hop
-        this.maxJumpForce = -550; // Full jump
+        this.gravity = 750; // Slightly lower for floatier feel
+        this.jumpForce = -550;
+        this.minJumpForce = -350; // Increased from -300
+        this.maxJumpForce = -700; // Increased from -600 for much higher jump
         this.isGrounded = false;
         this.isJumping = false;
         this.canvasHeight = canvasHeight;

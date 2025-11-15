@@ -8,184 +8,42 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header Section -->
         <div class="header">
-            <h1>Database Viewer</h1>
-            <p class="subtitle">Sistema di gestione e visualizzazione giochi</p>
+            <h1>🎮 Database Viewer</h1>
+            <p class="subtitle">Sistema di gestione e visualizzazione database - Architettura Scalabile</p>
         </div>
         
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="totalGames">-</div>
-                <div class="stat-label">Giochi</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalUsers">-</div>
-                <div class="stat-label">Utenti</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalSessions">-</div>
-                <div class="stat-label">Sessioni</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalLeaderboard">-</div>
-                <div class="stat-label">Leaderboard</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalXPRules">-</div>
-                <div class="stat-label">XP Rules</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalQuests">-</div>
-                <div class="stat-label">Quests</div>
-            </div>
-        </div>
+        <!-- Stats Cards - Generated dynamically -->
+        <div class="stats" id="statsContainer"></div>
         
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('games')">Giochi</button>
-            <button class="tab-btn" onclick="switchTab('users')">Utenti</button>
-            <button class="tab-btn" onclick="switchTab('sessions')">Sessioni</button>
-            <button class="tab-btn" onclick="switchTab('xp-rules')">XP Rules</button>
-            <button class="tab-btn" onclick="switchTab('quests')">Quests</button>
-            <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
-            <button class="tab-btn" onclick="switchTab('er-diagram')">📊 ER Diagram</button>
-        </div>
+        <!-- Tabs - Generated dynamically -->
+        <div class="tabs" id="tabsContainer"></div>
         
+        <!-- Controls -->
         <div class="controls">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Cerca per titolo, ID, autore o categoria...">
+                <input type="text" id="searchInput" placeholder="🔍 Cerca per qualsiasi campo...">
             </div>
             <button onclick="refreshData()">↻ Aggiorna</button>
             <button id="openSessionsBtn" onclick="showOpenSessions()" style="background: #e67700; border-color: #e67700; display: none;">⚠️ Sessioni Aperte</button>
-            <button onclick="exportData()">JSON</button>
-            <button onclick="exportCSV()">CSV</button>
+            <button onclick="exportData()">💾 JSON</button>
+            <button onclick="exportCSV()">📊 CSV</button>
         </div>
         
+        <!-- Table Container -->
         <div class="table-container">
-            <div id="loading" class="loading">Caricamento dati in corso...</div>
+            <div id="loading" class="loading">⏳ Caricamento dati in corso...</div>
             
-            <!-- Games Table -->
-            <div id="gamesContainer" class="tab-content active">
-                <table id="gamesTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Thumb</th>
-                            <th>ID</th>
-                            <th>Titolo</th>
-                            <th>Autore</th>
-                            <th>Versione</th>
-                            <th>Categoria</th>
-                            <th>Play Count</th>
-                            <th>Data Creazione</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="gamesTableBody"></tbody>
-                </table>
-            </div>
+            <!-- Dynamic Table Containers - Generated from config -->
+            <div id="dynamicTablesContainer"></div>
             
-            <!-- Users Table -->
-            <div id="usersContainer" class="tab-content">
-                <table id="usersTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Steem</th>
-                            <th>Tipo</th>
-                            <th>XP Totale</th>
-                            <th>Moltiplicatore</th>
-                            <th>Registrato</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- Sessions Table -->
-            <div id="sessionsContainer" class="tab-content">
-                <table id="sessionsTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Session ID</th>
-                            <th>User ID</th>
-                            <th>Game ID</th>
-                            <th>Score</th>
-                            <th>XP Guadagnato</th>
-                            <th>Durata</th>
-                            <th>Inizio</th>
-                            <th>Fine</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sessionsTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- XP Rules Table -->
-            <div id="xp-rulesContainer" class="tab-content">
-                <table id="xp-rulesTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Rule ID</th>
-                            <th>Game ID</th>
-                            <th>Nome</th>
-                            <th>Tipo</th>
-                            <th>Priorità</th>
-                            <th>Attivo</th>
-                            <th>Parametri</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="xp-rulesTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- Quests Table -->
-            <div id="questsContainer" class="tab-content">
-                <table id="questsTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Titolo</th>
-                            <th>Tipo</th>
-                            <th>Target</th>
-                            <th>XP</th>
-                            <th>Sats</th>
-                            <th>Attivo</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="questsTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- Leaderboard Table -->
-            <div id="leaderboardContainer" class="tab-content">
-                <table id="leaderboardTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Posizione</th>
-                            <th>User ID</th>
-                            <th>Game ID</th>
-                            <th>Score</th>
-                           
-                            <th>Data</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardTableBody"></tbody>
-                </table>
-            </div>
-            
-            <!-- ER Diagram -->
+            <!-- ER Diagram Container -->
             <div id="er-diagramContainer" class="tab-content">
                 <div class="er-controls">
                     <button onclick="resetERDiagram()" style="margin-right: 10px;">🔄 Reset View</button>
-                    <button onclick="zoomIn()" style="margin-right: 5px;">🔍 Zoom In</button>
-                    <button onclick="zoomOut()" style="margin-right: 10px;">🔍 Zoom Out</button>
-                    <button onclick="exportERDiagram()" style="margin-right: 10px;">💾 Esporta PNG</button>
+                    <button onclick="zoomIn()" style="margin-right: 5px;">🔍+ Zoom In</button>
+                    <button onclick="zoomOut()" style="margin-right: 10px;">🔍- Zoom Out</button>
                     <label style="display: inline-block; margin-left: 10px;">
                         <input type="checkbox" id="showFieldTypes" checked onchange="updateERDiagram()"> Mostra tipi campi
                     </label>
@@ -195,24 +53,53 @@
                 </div>
             </div>
             
-            <div id="emptyState" class="empty" style="display: none;">
-                <div class="empty-icon">📋</div>
-                <h3>Nessun record nel database</h3>
-                <p>I dati verranno visualizzati qui quando disponibili</p>
-            </div>
+            <!-- Empty State -->
+            <div id="emptyState" class="empty" style="display: none;"></div>
         </div>
     </div>
     
+    <!-- Modal -->
     <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Dettagli Record</h2>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="modal-body" id="modalBody"></div>
-        </div>
+        <div class="modal-content"></div>
     </div>
 
-    <script src="/static/js/db-viewer-oop.js"></script>
+    <!-- Scripts - Load in order -->
+    <script src="/static/js/db-viewer-config.js"></script>
+    <script src="/static/js/db-viewer-templates.js"></script>
+    <script src="/static/js/db-viewer.js"></script>
+    
+    <!-- Dynamic UI Generator -->
+    <script>
+        // Generate Stats Cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const statsContainer = document.getElementById('statsContainer');
+            STATS_CONFIG.forEach(stat => {
+                statsContainer.innerHTML += TemplateEngine.renderStatCard(stat, '-');
+            });
+
+            // Generate Tabs
+            const tabsContainer = document.getElementById('tabsContainer');
+            const registry = new TableRegistry();
+            let isFirst = true;
+            
+            registry.getAllTables().forEach(({ key, definition }) => {
+                tabsContainer.innerHTML += TemplateEngine.renderTabButton(key, definition, isFirst);
+                isFirst = false;
+            });
+            
+            // Add ER Diagram tab
+            tabsContainer.innerHTML += TemplateEngine.renderTabButton('er-diagram', { 
+                label: 'ER Diagram', 
+                icon: '📊' 
+            }, false);
+
+            // Generate Table Containers
+            const dynamicTablesContainer = document.getElementById('dynamicTablesContainer');
+            registry.getTableKeys().forEach(tableKey => {
+                const tableDef = registry.getTable(tableKey);
+                dynamicTablesContainer.innerHTML += TemplateEngine.renderTableContainer(tableKey, tableDef);
+            });
+        });
+    </script>
 </body>
 </html>

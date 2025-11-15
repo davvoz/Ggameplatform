@@ -107,12 +107,12 @@ class TemplateEngine {
                 break;
 
             case 'actions':
-                const actionMethod = column.customAction || 'showDetails';
                 const btn = document.createElement('button');
                 btn.textContent = 'Dettagli';
                 btn.className = 'btn-small btn-view';
                 btn.onclick = () => {
-                    if (actionMethod === 'showQuestDetails') {
+                    const tableDef = cell.tableDef || { label: 'Item' };
+                    if (column.customAction === 'showQuestDetails') {
                         app.showQuestDetails(item);
                     } else {
                         app.showDetails(tableDef.label, item);
@@ -174,7 +174,7 @@ class TemplateEngine {
 
     static renderERDiagramTable(table, showTypes = true) {
         const tableConfig = table.config;
-        const pos = table.position;
+        const pos = { x: table.x, y: table.y };
         const width = 250;
         const headerHeight = 40;
         const rowHeight = showTypes ? 24 : 20;

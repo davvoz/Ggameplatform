@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Rainbow Rush - Un colorato endless runner platform game">
+    <meta name="theme-color" content="#87CEEB">
+    <title>Rainbow Rush - Platform Runner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI Overlay -->
+    <div id="ui-overlay">
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <div class="menu-content">
+                <h1 class="game-title rainbow-text">🌈 Rainbow Rush</h1>
+                <p class="game-subtitle">Jump and collect through colorful platforms!</p>
+                <div class="high-score">
+                    High Score: <span id="menu-high-score">0</span>
+                </div>
+                <button id="start-button" class="game-button">
+                    Start Game
+                </button>
+                <div class="controls-info">
+                    <p>🖱️ Click/Tap to Jump</p>
+                    <p>⌨️ Space/W/↑ to Jump</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game HUD -->
+        <div id="game-hud" class="screen">
+            <div class="hud-top">
+                <div class="hud-item">
+                    <span class="hud-label">Score:</span>
+                    <span id="score-display" class="hud-value">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Level:</span>
+                    <span id="level-display" class="hud-value">1</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">💎</span>
+                    <span id="collectibles-display" class="hud-value">0</span>
+                </div>
+            </div>
+            <button id="pause-button" class="icon-button">⏸️</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <div class="gameover-content">
+                <h2 class="gameover-title">Game Over!</h2>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-label">Final Score</span>
+                        <span id="final-score" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Level Reached</span>
+                        <span id="final-level" class="stat-value">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Collectibles</span>
+                        <span id="final-collectibles" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item highlight">
+                        <span class="stat-label">High Score</span>
+                        <span id="final-high-score" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div id="leaderboard-container">
+                    <h3>🏆 Leaderboard</h3>
+                    <div id="leaderboard-list"></div>
+                </div>
+                <button id="restart-button" class="game-button">
+                    Play Again
+                </button>
+                <button id="menu-button" class="game-button secondary">
+                    Main Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Loading Rainbow Rush...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/sdk/platformsdk.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

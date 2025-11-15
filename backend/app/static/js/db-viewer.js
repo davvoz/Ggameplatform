@@ -147,7 +147,16 @@ class TableView extends BaseView {
         this.container = document.getElementById(`${this.tableKey}Container`);
         this.table = document.getElementById(`${this.tableKey}Table`);
         this.tbody = this.table?.querySelector('tbody');
-        this.emptyState = document.getElementById('emptyState');
+        // Each tab should have its own empty state element
+        this.emptyState = this.container?.querySelector('.empty-state');
+        
+        // Create empty state if it doesn't exist
+        if (this.container && !this.emptyState) {
+            this.emptyState = document.createElement('div');
+            this.emptyState.className = 'empty empty-state';
+            this.emptyState.style.display = 'none';
+            this.container.appendChild(this.emptyState);
+        }
     }
 
     render(data) {

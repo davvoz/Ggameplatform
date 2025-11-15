@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from app.models import Base, Game, User, GameSession, Leaderboard, XPRule
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
+from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
 
 DATABASE_PATH = Path(__file__).parent / "game_platform.db"
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
@@ -213,6 +214,10 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
             db_user = session.query(User).filter(User.user_id == user['user_id']).first()
             db_user.last_login = datetime.utcnow().isoformat()
             session.flush()
+            
+            # Track quest progress for login
+            track_quest_progress_for_login(session, user['user_id'])
+            
             return db_user.to_dict()
     
     return None
@@ -489,6 +494,15 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         session.flush()
         
         result = game_session.to_dict()
+        
+        # Track quest progress
+        track_quest_progress_for_session(session, {
+            'user_id': game_session.user_id,
+            'game_id': game_session.game_id,
+            'score': score,
+            'duration_seconds': duration_seconds,
+            'xp_earned': xp_earned
+        })
         
     # Note: Leaderboard is automatically updated by the trigger system
     # No need to manually recalculate ranks here

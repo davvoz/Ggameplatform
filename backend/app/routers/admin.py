@@ -8,7 +8,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, UserAchievement, Leaderboard, XPRule
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
 from sqlalchemy import desc
 import json
 from datetime import datetime
@@ -53,10 +53,6 @@ async def get_db_stats():
             print(f"[DEBUG] First session from db-stats: {sessions[0]}")
             print(f"[DEBUG] First session score: {sessions[0].get('score')}")
         
-        # Get all achievements (limited to 100)
-        achievements_query = session.query(UserAchievement).order_by(desc(UserAchievement.earned_at)).limit(100).all()
-        achievements = [a.to_dict() for a in achievements_query]
-        
         # Get all leaderboard entries (limited to 100)
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).limit(100).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
@@ -64,22 +60,32 @@ async def get_db_stats():
         # Get all XP rules
         xp_rules_query = session.query(XPRule).order_by(XPRule.game_id, desc(XPRule.priority)).all()
         xp_rules = [rule.to_dict() for rule in xp_rules_query]
+        
+        # Get all quests
+        quests_query = session.query(Quest).order_by(Quest.quest_id).all()
+        quests = [quest.to_dict() for quest in quests_query]
+        
+        # Get user quest progress (limited to 100)
+        user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).limit(100).all()
+        user_quests = [uq.to_dict() for uq in user_quests_query]
     
     data = {
         "total_games": len(games),
         "total_users": len(users),
         "total_sessions": len(sessions),
-        "total_achievements": len(achievements),
         "total_leaderboard_entries": len(leaderboard),
         "total_xp_rules": len(xp_rules),
+        "total_quests": len(quests),
+        "total_user_quests": len(user_quests),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
         "users": users,
         "sessions": sessions,
-        "achievements": achievements,
         "leaderboard": leaderboard,
         "xp_rules": xp_rules,
+        "quests": quests,
+        "user_quests": user_quests,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -110,10 +116,6 @@ async def export_database():
         sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).all()
         sessions = [s.to_dict() for s in sessions_query]
         
-        # Export achievements using ORM
-        achievements_query = session.query(UserAchievement).order_by(desc(UserAchievement.earned_at)).all()
-        achievements = [a.to_dict() for a in achievements_query]
-        
         # Export leaderboard using ORM
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
@@ -121,21 +123,31 @@ async def export_database():
         # Export XP rules using ORM
         xp_rules_query = session.query(XPRule).order_by(XPRule.game_id, desc(XPRule.priority)).all()
         xp_rules = [rule.to_dict() for rule in xp_rules_query]
+        
+        # Export quests using ORM
+        quests_query = session.query(Quest).order_by(Quest.quest_id).all()
+        quests = [quest.to_dict() for quest in quests_query]
+        
+        # Export user quests using ORM
+        user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
+        user_quests = [uq.to_dict() for uq in user_quests_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
         "total_games": len(games),
         "total_users": len(users),
         "total_sessions": len(sessions),
-        "total_achievements": len(achievements),
         "total_leaderboard_entries": len(leaderboard),
         "total_xp_rules": len(xp_rules),
+        "total_quests": len(quests),
+        "total_user_quests": len(user_quests),
         "games": games,
         "users": users,
         "sessions": sessions,
-        "achievements": achievements,
         "leaderboard": leaderboard,
-        "xp_rules": xp_rules
+        "xp_rules": xp_rules,
+        "quests": quests,
+        "user_quests": user_quests
     }
 
 @router.get("/sessions/open")

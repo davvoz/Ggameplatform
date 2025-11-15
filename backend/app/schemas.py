@@ -129,3 +129,54 @@ class ErrorResponse(BaseModel):
     success: bool = False
     error: str
     detail: Optional[str] = None
+
+
+class QuestBase(BaseModel):
+    """Base schema for quest."""
+    title: str = Field(..., min_length=1, max_length=200, description="Quest title")
+    description: Optional[str] = Field(None, description="Quest description")
+    quest_type: str = Field(..., description="Type of quest: play_games, play_time, login, score, level, xp, complete_quests")
+    target_value: int = Field(..., ge=0, description="Target value to complete the quest")
+    xp_reward: int = Field(..., ge=0, description="XP reward for completing the quest")
+    sats_reward: int = Field(0, ge=0, description="Sats reward for completing the quest")
+    is_active: bool = Field(True, description="Whether the quest is active")
+
+
+class QuestCreate(QuestBase):
+    """Schema for creating a new quest."""
+    pass
+
+
+class QuestResponse(BaseModel):
+    """Schema for quest response."""
+    quest_id: int
+    title: str
+    description: Optional[str]
+    quest_type: str
+    target_value: int
+    xp_reward: int
+    sats_reward: int
+    is_active: bool
+    created_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+class UserQuestProgress(BaseModel):
+    """Schema for user quest progress."""
+    id: int
+    user_id: str
+    quest_id: int
+    current_progress: int
+    is_completed: bool
+    completed_at: Optional[str]
+    started_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+class QuestWithProgress(QuestResponse):
+    """Schema for quest with user progress."""
+    progress: Optional[UserQuestProgress] = None

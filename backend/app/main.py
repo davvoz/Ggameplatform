@@ -5,6 +5,7 @@ from pathlib import Path
 from app.routers import games
 from app.routers import admin
 from app.routers import users
+from app.routers import quests
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 
@@ -33,6 +34,7 @@ setup_leaderboard_triggers()
 app.include_router(games.router, prefix="/games", tags=["games"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(quests.router, prefix="/api", tags=["quests"])
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

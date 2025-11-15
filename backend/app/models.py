@@ -26,7 +26,6 @@ class Game(Base):
     
     # Relationships
     sessions = relationship("GameSession", back_populates="game", cascade="all, delete-orphan")
-    achievements = relationship("UserAchievement", back_populates="game", cascade="all, delete-orphan")
     leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade="all, delete-orphan")
     xp_rules = relationship("XPRule", back_populates="game", cascade="all, delete-orphan")
     
@@ -71,7 +70,6 @@ class User(Base):
     
     # Relationships
     sessions = relationship("GameSession", back_populates="user", cascade="all, delete-orphan")
-    achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
     leaderboard_entries = relationship("Leaderboard", back_populates="user", cascade="all, delete-orphan")
     
     def to_dict(self) -> Dict[str, Any]:
@@ -129,36 +127,6 @@ class GameSession(Base):
     
     def __repr__(self) -> str:
         return f"<GameSession {self.session_id}: User {self.user_id} - Game {self.game_id}>"
-
-
-class UserAchievement(Base):
-    """User achievement model using SQLAlchemy ORM."""
-    __tablename__ = 'user_achievements'
-    
-    achievement_id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
-    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
-    achievement_type = Column(String, nullable=False)
-    achievement_value = Column(String, nullable=True)
-    earned_at = Column(String, nullable=False)
-    
-    # Relationships
-    user = relationship("User", back_populates="achievements")
-    game = relationship("Game", back_populates="achievements")
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert achievement instance to dictionary."""
-        return {
-            "achievement_id": self.achievement_id,
-            "user_id": self.user_id,
-            "game_id": self.game_id,
-            "achievement_type": self.achievement_type,
-            "achievement_value": self.achievement_value,
-            "earned_at": self.earned_at
-        }
-    
-    def __repr__(self) -> str:
-        return f"<Achievement {self.achievement_id}: {self.achievement_type}>"
 
 
 class Leaderboard(Base):
@@ -224,3 +192,70 @@ class XPRule(Base):
     
     def __repr__(self) -> str:
         return f"<XPRule {self.rule_id}: {self.rule_name} ({self.rule_type})>"
+
+
+class Quest(Base):
+    """Quest model for platform challenges."""
+    __tablename__ = 'quests'
+    
+    quest_id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    quest_type = Column(String, nullable=False)  # play_games, play_time, login, score, level, xp, complete_quests
+    target_value = Column(Integer, nullable=False)  # Target to reach
+    xp_reward = Column(Integer, nullable=False)
+    sats_reward = Column(Integer, default=0)
+    is_active = Column(Integer, default=1)
+    created_at = Column(String, nullable=False)
+    
+    # Relationships
+    user_progress = relationship("UserQuest", back_populates="quest", cascade="all, delete-orphan")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert quest instance to dictionary."""
+        return {
+            "quest_id": self.quest_id,
+            "title": self.title,
+            "description": self.description,
+            "quest_type": self.quest_type,
+            "target_value": self.target_value,
+            "xp_reward": self.xp_reward,
+            "sats_reward": self.sats_reward,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<Quest {self.quest_id}: {self.title}>"
+
+
+class UserQuest(Base):
+    """User quest progress tracking."""
+    __tablename__ = 'user_quests'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    quest_id = Column(Integer, ForeignKey('quests.quest_id'), nullable=False)
+    current_progress = Column(Integer, default=0)
+    is_completed = Column(Integer, default=0)
+    completed_at = Column(String, nullable=True)
+    started_at = Column(String, nullable=False)
+    
+    # Relationships
+    user = relationship("User")
+    quest = relationship("Quest", back_populates="user_progress")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert user quest progress to dictionary."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "quest_id": self.quest_id,
+            "current_progress": self.current_progress,
+            "is_completed": bool(self.is_completed),
+            "completed_at": self.completed_at,
+            "started_at": self.started_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<UserQuest User:{self.user_id} Quest:{self.quest_id} Progress:{self.current_progress}>"

@@ -27,16 +27,16 @@
                 <div class="stat-label">Sessioni</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalAchievements">-</div>
-                <div class="stat-label">Achievement</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-value" id="totalLeaderboard">-</div>
                 <div class="stat-label">Leaderboard</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="totalXPRules">-</div>
                 <div class="stat-label">XP Rules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalQuests">-</div>
+                <div class="stat-label">Quests</div>
             </div>
         </div>
         
@@ -45,8 +45,9 @@
             <button class="tab-btn" onclick="switchTab('users')">Utenti</button>
             <button class="tab-btn" onclick="switchTab('sessions')">Sessioni</button>
             <button class="tab-btn" onclick="switchTab('xp-rules')">XP Rules</button>
-            <button class="tab-btn" onclick="switchTab('achievements')">Achievement</button>
+            <button class="tab-btn" onclick="switchTab('quests')">Quests</button>
             <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
+            <button class="tab-btn" onclick="switchTab('er-diagram')">📊 ER Diagram</button>
         </div>
         
         <div class="controls">
@@ -124,39 +125,39 @@
             
             <!-- XP Rules Table -->
             <div id="xp-rulesContainer" class="tab-content">
-                <table id="xpRulesTable" style="display: none;">
+                <table id="xp-rulesTable" style="display: none;">
                     <thead>
                         <tr>
                             <th>Rule ID</th>
-                            <th>Game</th>
-                            <th>Nome Regola</th>
+                            <th>Game ID</th>
+                            <th>Nome</th>
                             <th>Tipo</th>
                             <th>Priorità</th>
-                            <th>Stato</th>
+                            <th>Attivo</th>
                             <th>Parametri</th>
-                            <th>Creata</th>
                             <th>Azioni</th>
                         </tr>
                     </thead>
-                    <tbody id="xpRulesTableBody"></tbody>
+                    <tbody id="xp-rulesTableBody"></tbody>
                 </table>
             </div>
             
-            <!-- Achievements Table -->
-            <div id="achievementsContainer" class="tab-content">
-                <table id="achievementsTable" style="display: none;">
+            <!-- Quests Table -->
+            <div id="questsContainer" class="tab-content">
+                <table id="questsTable" style="display: none;">
                     <thead>
                         <tr>
-                            <th>Achievement ID</th>
-                            <th>User ID</th>
-                            <th>Game ID</th>
+                            <th>#</th>
                             <th>Titolo</th>
-                            <th>Descrizione</th>
-                            <th>Ottenuto il</th>
+                            <th>Tipo</th>
+                            <th>Target</th>
+                            <th>XP</th>
+                            <th>Sats</th>
+                            <th>Attivo</th>
                             <th>Azioni</th>
                         </tr>
                     </thead>
-                    <tbody id="achievementsTableBody"></tbody>
+                    <tbody id="questsTableBody"></tbody>
                 </table>
             </div>
             
@@ -178,6 +179,22 @@
                 </table>
             </div>
             
+            <!-- ER Diagram -->
+            <div id="er-diagramContainer" class="tab-content">
+                <div class="er-controls">
+                    <button onclick="resetERDiagram()" style="margin-right: 10px;">🔄 Reset View</button>
+                    <button onclick="zoomIn()" style="margin-right: 5px;">🔍 Zoom In</button>
+                    <button onclick="zoomOut()" style="margin-right: 10px;">🔍 Zoom Out</button>
+                    <button onclick="exportERDiagram()" style="margin-right: 10px;">💾 Esporta PNG</button>
+                    <label style="display: inline-block; margin-left: 10px;">
+                        <input type="checkbox" id="showFieldTypes" checked onchange="updateERDiagram()"> Mostra tipi campi
+                    </label>
+                </div>
+                <div id="erDiagramCanvas" style="width: 100%; height: 700px; border: 1px solid #ddd; background: #fafafa; position: relative; overflow: hidden; cursor: grab;">
+                    <svg id="erSvg" style="width: 100%; height: 100%;"></svg>
+                </div>
+            </div>
+            
             <div id="emptyState" class="empty" style="display: none;">
                 <div class="empty-icon">📋</div>
                 <h3>Nessun record nel database</h3>
@@ -196,6 +213,6 @@
         </div>
     </div>
 
-    <script src="/static/js/db-viewer.js"></script>
+    <script src="/static/js/db-viewer-oop.js"></script>
 </body>
 </html>

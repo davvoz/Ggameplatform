@@ -407,3 +407,76 @@ tbody tr:last-child td {
     color: #737373;
     font-size: 0.875rem;
 }
+
+/* ER Diagram Styles */
+.er-controls {
+    background: #fff;
+    padding: 16px 32px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.er-controls button {
+    background: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #d4d4d4;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.er-controls button:hover {
+    background: #f5f5f5;
+    border-color: #a3a3a3;
+}
+
+.er-controls label {
+    color: #737373;
+    font-size: 0.875rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.er-controls input[type="checkbox"] {
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+#erDiagramCanvas {
+    background: linear-gradient(90deg, #f0f0f0 1px, transparent 1px),
+                linear-gradient(#f0f0f0 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+#erDiagramCanvas:active {
+    cursor: grabbing;
+}
+
+.er-table {
+    cursor: move;
+}
+
+.er-table rect {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.er-table:hover rect {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.er-relationship {
+    stroke: #666;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+.er-relationship:hover {
+    stroke: #007bff;
+    stroke-width: 3;
+}

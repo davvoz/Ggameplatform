@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 
-from app.models import Base, Game, User, GameSession, UserAchievement, Leaderboard, XPRule
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 

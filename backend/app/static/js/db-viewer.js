@@ -524,11 +524,40 @@ class DBViewerController {
         const modal = document.getElementById('detailModal');
         const modalContent = modal.querySelector('.modal-content');
 
-        const html = TemplateEngine.renderDetailModal(
-            `${type} Details`,
-            TemplateEngine.renderJSONDetails(item)
-        );
-        
+        // Determina quale template usare in base al tipo
+        let title = `${type} - Dettagli`;
+        let content = '';
+
+        switch (type) {
+            case 'Giochi':
+                title = `🎮 ${item.title || 'Gioco'}`;
+                content = TemplateEngine.renderGameDetails(item);
+                break;
+            case 'Utenti':
+                title = `👤 ${item.username || 'Utente'}`;
+                content = TemplateEngine.renderUserDetails(item);
+                break;
+            case 'Sessioni':
+                title = `🎯 Sessione ${item.session_id.substring(0, 8)}...`;
+                content = TemplateEngine.renderSessionDetails(item);
+                break;
+            case 'XP Rules':
+                title = `⭐ ${item.rule_name || 'XP Rule'}`;
+                content = TemplateEngine.renderXPRuleDetails(item);
+                break;
+            case 'Leaderboard':
+                title = `🥇 Record Leaderboard`;
+                content = TemplateEngine.renderLeaderboardDetails(item);
+                break;
+            case 'User Quests':
+                title = `📋 User Quest #${item.id}`;
+                content = TemplateEngine.renderUserQuestDetails(item);
+                break;
+            default:
+                content = TemplateEngine.renderJSONDetails(item);
+        }
+
+        const html = TemplateEngine.renderDetailModal(title, content);
         modalContent.innerHTML = html;
         modal.style.display = 'flex';
     }

@@ -168,6 +168,107 @@ class TemplateEngine {
         `;
     }
 
+    static renderGameDetails(game) {
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${game.game_id}</code></div>
+                    <div><strong style="color:#6c757d">Titolo:</strong><br><span style="font-size:1.1em;font-weight:600;color:#1a1a1a">${Utils.escapeHtml(game.title)}</span></div>
+                    <div><strong style="color:#6c757d">Autore:</strong><br>${Utils.escapeHtml(game.author || '-')}</div>
+                    <div><strong style="color:#6c757d">Versione:</strong><br><span style="color:#2563eb">${game.version}</span></div>
+                    <div><strong style="color:#6c757d">Categoria:</strong><br><span class="badge" style="background:#e0f2fe;color:#0284c7;padding:4px 12px;border-radius:6px;font-size:0.875rem">${game.category}</span></div>
+                    <div><strong style="color:#6c757d">Play Count:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${game.metadata?.playCount || 0}</span></div>
+                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Thumbnail:</strong><br><img src="${game.thumbnail || 'https://via.placeholder.com/300x200'}" style="max-width:300px;border-radius:8px;border:1px solid #e5e5e5;margin-top:8px" alt="Game thumbnail"></div>
+                </div>
+                ${game.description ? `<div style="margin-top:16px"><strong style="color:#6c757d">Descrizione:</strong><p style="background:#f9fafb;padding:16px;border-radius:8px;border-left:4px solid #4CAF50;color:#404040;line-height:1.6">${Utils.escapeHtml(game.description)}</p></div>` : ''}
+                ${game.metadata ? `<div style="margin-top:16px"><strong style="color:#6c757d">Metadata:</strong><pre style="background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;max-height:200px;font-size:0.875rem">${JSON.stringify(game.metadata, null, 2)}</pre></div>` : ''}
+            </div>
+        `;
+    }
+
+    static renderUserDetails(user) {
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${user.user_id}</code></div>
+                    <div><strong style="color:#6c757d">Username:</strong><br><span style="font-size:1.1em;font-weight:600;color:#1a1a1a">${Utils.escapeHtml(user.username)}</span></div>
+                    <div><strong style="color:#6c757d">Email:</strong><br>${Utils.escapeHtml(user.email || '-')}</div>
+                    <div><strong style="color:#6c757d">Steem Username:</strong><br>${Utils.escapeHtml(user.steem_username || '-')}</div>
+                    <div><strong style="color:#6c757d">Tipo Account:</strong><br><span style="color:${user.is_anonymous ? '#ff9800' : '#4caf50'};font-weight:600">${user.is_anonymous ? '🔓 Anonimo' : '🔐 Registrato'}</span></div>
+                    <div><strong style="color:#6c757d">XP Totale:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#28a745">${parseFloat(user.total_xp_earned || 0).toFixed(2)}</span></div>
+                    <div><strong style="color:#6c757d">Moltiplicatore CUR8:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#9c27b0">${(user.cur8_multiplier || 1.0).toFixed(1)}x</span></div>
+                    <div><strong style="color:#6c757d">Data Registrazione:</strong><br>${Utils.formatDate(user.created_at)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    static renderSessionDetails(session) {
+        const isOpen = !session.ended_at;
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">Session ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.85em">${session.session_id}</code></div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br><span style="color:${isOpen ? '#ff9800' : '#28a745'};font-weight:600;font-size:1.1em">${isOpen ? '⏳ In Corso' : '✓ Completata'}</span></div>
+                    <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${session.user_id}</code></div>
+                    <div><strong style="color:#6c757d">Game ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${session.game_id}</code></div>
+                    <div><strong style="color:#6c757d">Score:</strong><br><span style="font-size:1.3em;font-weight:bold;color:#2563eb">${session.score || 0}</span></div>
+                    <div><strong style="color:#6c757d">XP Guadagnato:</strong><br><span style="font-size:1.3em;font-weight:bold;color:#28a745">${parseFloat(session.xp_earned || 0).toFixed(2)}</span></div>
+                    <div><strong style="color:#6c757d">Durata:</strong><br><span style="font-size:1.1em;font-weight:600;color:#ff9800">${Utils.formatDuration(session.duration_seconds)}</span></div>
+                    <div><strong style="color:#6c757d">Inizio:</strong><br>${Utils.formatDate(session.started_at)}</div>
+                    ${!isOpen ? `<div style="grid-column:1/-1"><strong style="color:#6c757d">Fine:</strong><br>${Utils.formatDate(session.ended_at)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    static renderXPRuleDetails(rule) {
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">Rule ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${rule.rule_id}</code></div>
+                    <div><strong style="color:#6c757d">Nome:</strong><br><span style="font-size:1.1em;font-weight:600;color:#1a1a1a">${Utils.escapeHtml(rule.rule_name)}</span></div>
+                    <div><strong style="color:#6c757d">Game ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${rule.game_id}</code></div>
+                    <div><strong style="color:#6c757d">Tipo:</strong><br><span class="badge" style="background:#e0e7ff;color:#4338ca;padding:4px 12px;border-radius:6px">${rule.rule_type}</span></div>
+                    <div><strong style="color:#6c757d">Priorità:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${rule.priority}</span></div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br><span style="color:${rule.is_active ? '#28a745' : '#dc3545'};font-weight:600;font-size:1.1em">${rule.is_active ? '✓ Attivo' : '✗ Inattivo'}</span></div>
+                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Data Creazione:</strong><br>${Utils.formatDate(rule.created_at)}</div>
+                </div>
+                ${rule.parameters ? `<div style="margin-top:16px"><strong style="color:#6c757d">Parametri:</strong><pre style="background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;max-height:300px;font-size:0.875rem;border-left:4px solid #9C27B0">${JSON.stringify(rule.parameters, null, 2)}</pre></div>` : ''}
+            </div>
+        `;
+    }
+
+    static renderLeaderboardDetails(entry) {
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">Entry ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.85em">${entry.entry_id}</code></div>
+                    <div><strong style="color:#6c757d">Score:</strong><br><span style="font-size:1.5em;font-weight:bold;color:#ff5722">${entry.score}</span></div>
+                    <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${entry.user_id}</code></div>
+                    <div><strong style="color:#6c757d">Game ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${entry.game_id}</code></div>
+                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Data Record:</strong><br>${Utils.formatDate(entry.created_at)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    static renderUserQuestDetails(userQuest) {
+        const isCompleted = userQuest.is_completed;
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">ID:</strong><br>${userQuest.id}</div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br><span style="color:${isCompleted ? '#28a745' : '#6c757d'};font-weight:600;font-size:1.1em">${isCompleted ? '✓ Completata' : '⏳ In Corso'}</span></div>
+                    <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${userQuest.user_id}</code></div>
+                    <div><strong style="color:#6c757d">Quest ID:</strong><br><span style="font-size:1.1em;font-weight:bold;color:#E91E63">${userQuest.quest_id}</span></div>
+                    <div><strong style="color:#6c757d">Progresso:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${userQuest.current_progress || 0}</span></div>
+                    ${isCompleted && userQuest.completed_at ? `<div><strong style="color:#6c757d">Completata il:</strong><br>${Utils.formatDate(userQuest.completed_at)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
     static renderJSONDetails(item) {
         return `<pre style="background:#f5f5f5;padding:16px;border-radius:4px;overflow:auto;max-height:400px;">${JSON.stringify(item, null, 2)}</pre>`;
     }

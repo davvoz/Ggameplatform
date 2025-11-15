@@ -28,8 +28,9 @@
                 </div>
                 <a href="#/" class="nav-link active" data-route="/">Games</a>
                 <a href="#/leaderboard" class="nav-link" data-route="/leaderboard">🏆 Leaderboard</a>
+                <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">🎯 Quests</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
-                <a href="#/profile" class="nav-link" data-route="/profile" id="profileLink" style="display: none;">👤 Profile</a>
+                <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">👤 Profile</a>
                 <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
             </div>
         </div>
@@ -169,6 +170,33 @@
             </ul>
             <h3>Technology</h3>
             <p>Built with Vanilla JavaScript, FastAPI backend, and modern web standards.</p>
+        </div>
+    </template>
+
+    <!-- Quests Template -->
+    <template id="quests-template">
+        <div class="quests">
+            <div class="quests-header">
+                <h2>🎯 Your Quests</h2>
+                <p class="quests-subtitle">Complete challenges to earn rewards!</p>
+            </div>
+            <div class="quests-stats">
+                <div class="stat-badge">
+                    <span class="stat-label">Active Quests</span>
+                    <span class="stat-value" id="activeQuestsCount">0</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Completed</span>
+                    <span class="stat-value" id="completedQuestsCount">0</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Total XP Earned</span>
+                    <span class="stat-value" id="totalQuestXP">0</span>
+                </div>
+            </div>
+            <div class="quests-list" id="questsList">
+                <div class="loading">Loading quests...</div>
+            </div>
         </div>
     </template>
 

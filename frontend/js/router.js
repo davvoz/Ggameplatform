@@ -1,4 +1,4 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, renderLeaderboard, render404 } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, renderLeaderboard, renderQuests, render404 } from './main.js';
 
 /**
  * Router configuration
@@ -8,6 +8,7 @@ const routes = {
     '/about': renderAbout,
     '/profile': renderProfile,
     '/leaderboard': renderLeaderboard,
+    '/quests': renderQuests,
     '/game/:id': renderGameDetail,
     '/play/:id': renderGamePlayer
 };

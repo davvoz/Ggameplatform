@@ -18,7 +18,13 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,7 +40,7 @@ setup_leaderboard_triggers()
 app.include_router(games.router, prefix="/games", tags=["games"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(users.router, prefix="/users", tags=["users"])
-app.include_router(quests.router, prefix="/api", tags=["quests"])
+app.include_router(quests.router, prefix="/quests", tags=["quests"])
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

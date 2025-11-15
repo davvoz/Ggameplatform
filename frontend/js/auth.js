@@ -14,6 +14,12 @@ const AuthManager = {
         this.updateUI();
         
         console.log('AuthManager: inizializzato, utente corrente:', this.currentUser);
+        
+        // Force UI update after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            console.log('AuthManager: force UI update');
+            this.updateUI();
+        }, 100);
     },
     
     attachEventListeners() {
@@ -232,6 +238,10 @@ const AuthManager = {
         // Usa la stessa chiave usata da authManager.js per compatibilità
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
+        
+        console.log('AuthManager: setUser chiamato, userData:', userData);
+        console.log('AuthManager: is_anonymous:', userData.is_anonymous);
+        
         this.updateUI();
         
         // Dispatch custom event
@@ -280,10 +290,20 @@ const AuthManager = {
         const userName = document.getElementById('userName');
         const userCur8 = document.getElementById('userCur8');
         const profileLink = document.getElementById('profileLink');
+        const questsLink = document.getElementById('questsLink');
+        
+        console.log('AuthManager: updateUI chiamato');
+        console.log('AuthManager: elementi trovati -', {
+            userInfo: !!userInfo,
+            userName: !!userName,
+            userCur8: !!userCur8,
+            profileLink: !!profileLink,
+            questsLink: !!questsLink
+        });
         
         // Verifica che gli elementi esistano (potrebbero non essere presenti in tutte le pagine)
         if (!userInfo || !userName || !userCur8) {
-            console.log('AuthManager: elementi UI non trovati');
+            console.log('AuthManager: elementi UI principali non trovati');
             return;
         }
         
@@ -292,9 +312,28 @@ const AuthManager = {
         if (this.currentUser) {
             // User logged in
             userInfo.style.display = 'flex';
+            
+            // Show profile link
             if (profileLink) {
+                profileLink.classList.remove('auth-required');
                 profileLink.style.display = 'inline-block';
                 console.log('AuthManager: link profilo mostrato');
+            }
+            
+            // Show Quests link only for non-anonymous users
+            if (questsLink) {
+                console.log('AuthManager: questsLink trovato, is_anonymous:', this.currentUser.is_anonymous);
+                if (this.currentUser.is_anonymous) {
+                    questsLink.classList.add('auth-required');
+                    questsLink.style.display = 'none';
+                    console.log('AuthManager: link quests NASCOSTO per utente anonimo');
+                } else {
+                    questsLink.classList.remove('auth-required');
+                    questsLink.style.display = 'inline-block';
+                    console.log('AuthManager: link quests MOSTRATO per utente autenticato');
+                }
+            } else {
+                console.log('AuthManager: questsLink NON trovato nel DOM');
             }
             
             let displayName = '';
@@ -320,8 +359,15 @@ const AuthManager = {
         } else {
             // User not logged in
             userInfo.style.display = 'none';
-            if (profileLink) profileLink.style.display = 'none';
-            console.log('AuthManager: nessun utente loggato');
+            if (profileLink) {
+                profileLink.classList.add('auth-required');
+                profileLink.style.display = 'none';
+            }
+            if (questsLink) {
+                questsLink.classList.add('auth-required');
+                questsLink.style.display = 'none';
+            }
+            console.log('AuthManager: nessun utente loggato, tutti i link nascosti');
         }
     },
     
@@ -349,6 +395,12 @@ if (document.readyState === 'loading') {
 } else {
     AuthManager.init();
 }
+
+// Listen for login event and update UI
+window.addEventListener('userLogin', () => {
+    console.log('AuthManager: evento userLogin ricevuto, aggiornamento UI');
+    AuthManager.updateUI();
+});
 
 // Export for use in other modules
 window.AuthManager = AuthManager;

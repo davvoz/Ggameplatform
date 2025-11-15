@@ -201,6 +201,46 @@ export async function fetchGameLeaderboard(gameId, limit = 10) {
     }
 }
 
+/**
+ * Get all quests with user progress
+ * @param {string} userId - The user ID
+ * @returns {Promise<Array>} Quests with progress
+ */
+export async function fetchUserQuests(userId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/quests/user/${userId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching user quests:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get all quests
+ * @param {boolean} activeOnly - Only get active quests
+ * @returns {Promise<Array>} All quests
+ */
+export async function fetchQuests(activeOnly = true) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/quests/?active_only=${activeOnly}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching quests:', error);
+        throw error;
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
@@ -211,5 +251,7 @@ export default {
     trackGamePlay,
     getUserSessions,
     fetchLeaderboard,
-    fetchGameLeaderboard
+    fetchGameLeaderboard,
+    fetchUserQuests,
+    fetchQuests
 };

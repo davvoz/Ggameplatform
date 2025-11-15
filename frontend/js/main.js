@@ -782,6 +782,153 @@ export async function renderLeaderboard() {
 }
 
 /**
+ * Render the quests page
+ */
+export async function renderQuests() {
+    const appContainer = document.getElementById('app');
+    
+    // Check if user is logged in
+    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+        appContainer.innerHTML = `
+            <div class="about text-center">
+                <h2>🔒 Login Required</h2>
+                <p>You need to be logged in to view quests.</p>
+                <button class="play-game-btn" onclick="window.location.hash = '/'">Go to Games</button>
+            </div>
+        `;
+        return;
+    }
+    
+    const user = window.AuthManager.getUser();
+    
+    // Check if user is anonymous
+    if (user.is_anonymous) {
+        appContainer.innerHTML = `
+            <div class="about text-center">
+                <h2>⚠️ Quests Not Available</h2>
+                <p>Quests are only available for registered users, not for anonymous players.</p>
+                <p>Please login with Steem Keychain to access quests and earn rewards!</p>
+                <button class="play-game-btn" onclick="window.location.href = '/auth.html'">Login with Keychain</button>
+            </div>
+        `;
+        return;
+    }
+    
+    const template = document.getElementById('quests-template');
+    const questsContent = template.content.cloneNode(true);
+    
+    appContainer.innerHTML = '';
+    appContainer.appendChild(questsContent);
+    
+    try {
+        // Import fetchUserQuests from api.js
+        const { fetchUserQuests } = await import('./api.js');
+        const quests = await fetchUserQuests(user.user_id);
+        
+        console.log('Quests loaded:', quests);
+        
+        // Calculate statistics
+        let activeCount = 0;
+        let completedCount = 0;
+        let totalXP = 0;
+        
+        quests.forEach(quest => {
+            if (quest.progress && quest.progress.is_completed) {
+                completedCount++;
+                totalXP += quest.progress.xp_earned || 0;
+            } else {
+                activeCount++;
+            }
+        });
+        
+        // Update stats
+        document.getElementById('activeQuestsCount').textContent = activeCount;
+        document.getElementById('completedQuestsCount').textContent = completedCount;
+        document.getElementById('totalQuestXP').textContent = totalXP.toFixed(2);
+        
+        // Render quests
+        const questsList = document.getElementById('questsList');
+        questsList.innerHTML = '';
+        
+        if (quests.length === 0) {
+            questsList.innerHTML = '<p class="text-center">No quests available at the moment.</p>';
+            return;
+        }
+        
+        quests.forEach(quest => {
+            const questCard = document.createElement('div');
+            questCard.className = 'quest-card';
+            
+            const isCompleted = quest.progress && quest.progress.is_completed;
+            const currentProgress = quest.progress ? quest.progress.current_progress : 0;
+            const progressPercent = Math.min((currentProgress / quest.target_value) * 100, 100);
+            
+            questCard.innerHTML = `
+                <div class="quest-header">
+                    <div class="quest-title-row">
+                        <h3 class="quest-title">${quest.title}</h3>
+                        ${isCompleted ? '<span class="quest-completed-badge">✓ Completed</span>' : ''}
+                    </div>
+                    <p class="quest-description">${quest.description}</p>
+                </div>
+                <div class="quest-body">
+                    <div class="quest-info">
+                        <span class="quest-type">${formatQuestType(quest.quest_type)}</span>
+                        ${quest.game_id ? `<span class="quest-game">Game: ${quest.game_id}</span>` : ''}
+                    </div>
+                    <div class="quest-progress">
+                        <div class="progress-info">
+                            <span>Progress: ${currentProgress} / ${quest.target_value}</span>
+                            <span>${progressPercent.toFixed(0)}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>
+                    <div class="quest-rewards">
+                        <div class="reward-item">
+                            <span class="reward-icon">⭐</span>
+                            <span class="reward-value">${quest.xp_reward} XP</span>
+                        </div>
+                        ${quest.sats_reward ? `
+                        <div class="reward-item">
+                            <span class="reward-icon">💰</span>
+                            <span class="reward-value">${quest.sats_reward} Sats</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            if (isCompleted) {
+                questCard.classList.add('completed');
+            }
+            
+            questsList.appendChild(questCard);
+        });
+        
+    } catch (error) {
+        console.error('Error loading quests:', error);
+        const questsList = document.getElementById('questsList');
+        questsList.innerHTML = '<div class="error-message">Failed to load quests. Please try again later.</div>';
+    }
+}
+
+/**
+ * Format quest type for display
+ */
+function formatQuestType(type) {
+    const typeMap = {
+        'play_games': '🎮 Play Games',
+        'score': '🎯 Score',
+        'total_xp': '⭐ Total XP',
+        'daily': '📅 Daily',
+        'streak': '🔥 Streak'
+    };
+    return typeMap[type] || type;
+}
+
+/**
  * Render a 404 not found page
  */
 export function render404() {

@@ -7,17 +7,17 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from app.database import get_db_session
+from app.database import get_db
 from app.models import Quest, UserQuest, User
 from app.schemas import QuestResponse, QuestCreate, QuestWithProgress, UserQuestProgress
 
-router = APIRouter(prefix="/quests", tags=["quests"])
+router = APIRouter()
 
 
 @router.get("/", response_model=List[QuestResponse])
 async def get_all_quests(
     active_only: bool = True,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Get all quests, optionally filtered by active status."""
     query = db.query(Quest)
@@ -32,7 +32,7 @@ async def get_all_quests(
 @router.get("/user/{user_id}", response_model=List[QuestWithProgress])
 async def get_user_quests(
     user_id: str,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Get all quests with user progress."""
     
@@ -67,7 +67,7 @@ async def get_user_quests(
 @router.get("/{quest_id}", response_model=QuestResponse)
 async def get_quest(
     quest_id: int,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Get a specific quest by ID."""
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
@@ -81,7 +81,7 @@ async def get_quest(
 @router.post("/", response_model=QuestResponse)
 async def create_quest(
     quest_data: QuestCreate,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Create a new quest (admin only)."""
     
@@ -110,7 +110,7 @@ async def create_quest(
 async def update_quest(
     quest_id: int,
     quest_data: QuestCreate,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Update an existing quest (admin only)."""
     
@@ -138,7 +138,7 @@ async def update_quest(
 @router.delete("/{quest_id}")
 async def delete_quest(
     quest_id: int,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Delete a quest (admin only)."""
     
@@ -155,7 +155,7 @@ async def delete_quest(
 
 @router.get("/stats/summary")
 async def get_quests_stats(
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db)
 ):
     """Get quest statistics."""
     

@@ -151,20 +151,27 @@ class TableView extends BaseView {
     }
 
     render(data) {
+        // Always re-initialize to ensure elements exist
+        this.initialize();
+        
         if (!this.table || !this.tbody) {
-            this.initialize();
+            console.warn(`Cannot render ${this.tableKey}: table or tbody not found`);
+            return;
         }
 
+        this.doRender(data);
+    }
+
+    doRender(data) {
         if (!data || data.length === 0) {
-            if (this.table) this.table.style.display = 'none';
+            this.table.style.display = 'none';
             this.showEmpty(`Nessun ${this.tableDef.label.toLowerCase()} trovato`);
             return;
         }
 
         this.hideEmpty();
-        if (this.table) this.table.style.display = 'table';
+        this.table.style.display = 'table';
         this.tbody.innerHTML = '';
-
         data.forEach((item, index) => this.renderRow(item, index));
     }
 
@@ -342,6 +349,12 @@ class DBViewerController {
     init() {
         this.initializeViews();
         this.setupEventListeners();
+        // Don't load data immediately - wait for DOM to be ready
+        console.log('Controller initialized, waiting for DOM ready signal');
+    }
+
+    startDataLoad() {
+        console.log('Starting data load...');
         this.loadData();
     }
 
@@ -378,16 +391,16 @@ class DBViewerController {
 
     async loadData() {
         const loading = document.getElementById('loading');
-        if (loading) loading.style.display = 'block';
+        if (loading) loading.style.display = 'flex';
 
         try {
             await this.model.fetchData();
             await this.updateOpenSessionsButton();
+            // Loading will be hidden by handleModelEvent when data is rendered
         } catch (error) {
             console.error('Error loading data:', error);
-            alert('Errore nel caricamento dei dati: ' + error.message);
-        } finally {
             if (loading) loading.style.display = 'none';
+            alert('Errore nel caricamento dei dati: ' + error.message);
         }
     }
 
@@ -395,13 +408,45 @@ class DBViewerController {
         switch (event) {
             case 'dataLoaded':
                 this.updateStats(this.model.getStats());
-                this.renderCurrentView();
+                
+                // Pre-render ALL views on first load so data is ready for all tabs
+                console.log('Pre-rendering all views...');
+                this.registry.getTableKeys().forEach(tableKey => {
+                    const view = this.views[tableKey];
+                    const tableDef = this.registry.getTable(tableKey);
+                    if (view && tableDef) {
+                        const viewData = this.model.getData(tableDef.dataKey);
+                        view.render(viewData);
+                    }
+                });
+                
+                // Make sure the first tab is active and visible
+                const firstTabBtn = document.querySelector('.tab-btn');
+                if (firstTabBtn && !document.querySelector('.tab-btn.active')) {
+                    firstTabBtn.classList.add('active');
+                }
+                
+                // Show the current view
+                const currentContainer = document.getElementById(`${this.currentView}Container`);
+                if (currentContainer) {
+                    currentContainer.classList.add('active');
+                }
+                
+                // Hide loading
+                const loading = document.getElementById('loading');
+                if (loading) loading.style.display = 'none';
+                
+                console.log('All views pre-rendered!');
                 break;
+                
             case 'dataFiltered':
                 this.renderCurrentView();
                 break;
+                
             case 'error':
                 console.error('Model error:', data);
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) loadingEl.style.display = 'none';
                 break;
         }
     }
@@ -427,21 +472,34 @@ class DBViewerController {
         const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
         if (activeBtn) activeBtn.classList.add('active');
 
+        // Force render when switching tabs - this ensures data is always displayed
         this.renderCurrentView();
     }
 
     renderCurrentView() {
         const view = this.views[this.currentView];
-        if (!view) return;
+        if (!view) {
+            console.warn(`View not found for: ${this.currentView}`);
+            return;
+        }
 
+        // Hide all tab contents first
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        
+        // Show current view
         view.show();
 
         if (this.currentView === 'er-diagram') {
             view.render();
         } else {
             const tableDef = this.registry.getTable(this.currentView);
+            if (!tableDef) {
+                console.warn(`Table definition not found for: ${this.currentView}`);
+                return;
+            }
             const dataKey = tableDef.dataKey;
             const data = this.model.getData(dataKey);
+            console.log(`Rendering ${this.currentView} with ${data?.length || 0} items`);
             view.render(data);
         }
     }
@@ -708,6 +766,59 @@ function calculateDuration(startedAt) {
 }
 
 // ============ INITIALIZATION ============
-window.addEventListener('DOMContentLoaded', () => {
+function initializeDynamicUI() {
+    // Generate Stats Cards
+    const statsContainer = document.getElementById('statsContainer');
+    STATS_CONFIG.forEach(stat => {
+        statsContainer.innerHTML += TemplateEngine.renderStatCard(stat, '-');
+    });
+
+    // Generate Tabs
+    const tabsContainer = document.getElementById('tabsContainer');
+    const registry = new TableRegistry();
+    let isFirst = true;
+    
+    registry.getAllTables().forEach(({ key, definition }) => {
+        tabsContainer.innerHTML += TemplateEngine.renderTabButton(key, definition, isFirst);
+        isFirst = false;
+    });
+    
+    // Add ER Diagram tab
+    tabsContainer.innerHTML += TemplateEngine.renderTabButton('er-diagram', { 
+        label: 'ER Diagram', 
+        icon: '📊' 
+    }, false);
+
+    // Generate Table Containers
+    const dynamicTablesContainer = document.getElementById('dynamicTablesContainer');
+    registry.getTableKeys().forEach(tableKey => {
+        const tableDef = registry.getTable(tableKey);
+        dynamicTablesContainer.innerHTML += TemplateEngine.renderTableContainer(tableKey, tableDef);
+    });
+    
+    console.log('Dynamic UI initialized');
+}
+
+function initializeApp() {
+    console.log('Initializing app...');
     app = new DBViewerController();
+    
+    // Wait another frame to ensure views are fully initialized
+    requestAnimationFrame(() => {
+        console.log('DOM is ready, starting data load');
+        app.startDataLoad();
+    });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Step 1: Create all dynamic UI elements
+    initializeDynamicUI();
+    
+    // Step 2: Force browser to process DOM updates using double requestAnimationFrame
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // Step 3: Now initialize the app when DOM is guaranteed to be ready
+            initializeApp();
+        });
+    });
 });

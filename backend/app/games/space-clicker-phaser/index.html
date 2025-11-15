@@ -2,25 +2,43 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Space Clicker - Phaser Edition</title>
   <!-- Phaser framework -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
   <style>
-    body { 
-      margin: 0; 
-      padding: 0; 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    html, body { 
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      position: fixed;
       background: #000;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    
+    body {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
     }
+    
     canvas { 
-      display: block; 
-      margin: 0 auto;
-      box-shadow: 0 0 30px rgba(52, 152, 219, 0.5);
+      display: block;
+      touch-action: none;
     }
   </style>
 </head>
@@ -29,19 +47,37 @@
 <script>
 let score = 0;
 let scoreText;
+let cpsText;
+let comboText;
 let clicksPerSecond = 0;
 let lastClickTime = 0;
-let particles = [];
+let combo = 0;
+let comboTimer = null;
+
+// Dimensioni native HD per qualità ottimale
+const GAME_WIDTH = 1080;  // 1080p width per mobile portrait
+const GAME_HEIGHT = 1920; // 1080p height per mobile portrait (9:16 ratio)
 
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+  },
   backgroundColor: '#0a0a1a',
   scene: {
     preload: preload,
     create: create,
     update: update
+  },
+  input: {
+    activePointers: 5
+  },
+  render: {
+    pixelArt: false,
+    antialias: true
   }
 };
 
@@ -54,172 +90,249 @@ function preload() {
 }
 
 function create() {
-  // Background
-  this.add.image(400, 300, 'space').setAlpha(0.6);
+  const { width, height } = this.scale;
+  const centerX = width / 2;
+  const centerY = height / 2;
 
-  // Rocket - centered and larger
-  const rocket = this.add.image(400, 300, 'rocket')
-    .setInteractive()
-    .setScale(2);
+  // Background responsive
+  const bg = this.add.image(centerX, centerY, 'space');
+  bg.setDisplaySize(width, height);
+  bg.setAlpha(0.5);
 
-  // Score display
-  scoreText = this.add.text(16, 16, 'Punteggio: 0', { 
-    fontSize: '32px', 
-    fill: '#3498db',
-    fontFamily: 'Arial',
-    stroke: '#000',
-    strokeThickness: 4
-  });
-
-  // Click counter
-  const cpsText = this.add.text(16, 56, 'Click/sec: 0', { 
-    fontSize: '20px', 
-    fill: '#ecf0f1',
-    fontFamily: 'Arial',
-    stroke: '#000',
-    strokeThickness: 3
-  });
-
-  // Instructions
-  this.add.text(400, 550, '🖱️ Clicca il razzo per guadagnare punti!', { 
-    fontSize: '24px', 
-    fill: '#f39c12',
-    fontFamily: 'Arial',
-    stroke: '#000',
-    strokeThickness: 3
-  }).setOrigin(0.5);
-
-  // High score display
-  const highScoreText = this.add.text(784, 16, 'Record: 0', { 
-    fontSize: '20px', 
-    fill: '#e74c3c',
-    fontFamily: 'Arial',
-    stroke: '#000',
-    strokeThickness: 3
-  }).setOrigin(1, 0);
-
-  // Rocket click handler
-  rocket.on('pointerdown', () => {
-    score += 10;
-    scoreText.setText('Punteggio: ' + score);
-    
-    // Calculate CPS
-    const now = Date.now();
-    if (now - lastClickTime < 1000) {
-      clicksPerSecond++;
-    } else {
-      clicksPerSecond = 1;
-    }
-    lastClickTime = now;
-    cpsText.setText('Click/sec: ' + clicksPerSecond);
-
-    // Rocket animation
+  // Starfield animato
+  const starCount = 50;
+  for (let i = 0; i < starCount; i++) {
+    const star = this.add.circle(
+      Phaser.Math.Between(0, width),
+      Phaser.Math.Between(0, height),
+      Phaser.Math.Between(2, 6),
+      0xffffff, 0.8
+    );
     this.tweens.add({
-      targets: rocket,
-      scaleX: 2.2,
-      scaleY: 2.2,
-      duration: 100,
+      targets: star,
+      alpha: 0.2,
+      duration: Phaser.Math.Between(1000, 3000),
       yoyo: true,
-      ease: 'Power2'
+      repeat: -1
     });
+  }
 
-    // Rotation effect
-    this.tweens.add({
-      targets: rocket,
-      angle: rocket.angle + 360,
-      duration: 500,
-      ease: 'Power2'
-    });
+  // Area di click grande - quasi tutto lo schermo
+  const clickZone = this.add.zone(centerX, centerY, width * 0.9, height * 0.7)
+    .setInteractive({ useHandCursor: true });
 
-    // Create particle effect
-    for (let i = 0; i < 5; i++) {
-      const particle = this.add.circle(
-        rocket.x + (Math.random() - 0.5) * 100,
-        rocket.y + (Math.random() - 0.5) * 100,
-        5 + Math.random() * 5,
-        0x3498db
-      );
-      
-      this.tweens.add({
-        targets: particle,
-        alpha: 0,
-        scale: 0,
-        duration: 500 + Math.random() * 500,
-        onComplete: () => particle.destroy()
-      });
-    }
+  // Rocket - dimensione adattata allo schermo verticale
+  const rocketScale = 7;
+  const rocket = this.add.image(centerX, centerY, 'rocket')
+    .setScale(rocketScale)
+    .setDepth(10);
 
-    // Send score to platform
-    if (typeof PlatformSDK !== 'undefined') {
-      PlatformSDK.sendScore(score);
-    }
+  // UI consistente - scalata per 1080x1920
+  const padding = 32;
+  const topY = padding + 20;
+  
+  // Score - grande e visibile
+  scoreText = this.add.text(padding, topY, '0', { 
+    fontSize: '96px', 
+    fill: '#00ffff',
+    fontFamily: 'Arial Black, sans-serif',
+    stroke: '#000',
+    strokeThickness: 10,
+    fontStyle: 'bold'
+  }).setDepth(100);
 
-    // Update high score
-    const highScore = localStorage.getItem('spaceClickerHighScore') || 0;
-    if (score > highScore) {
-      localStorage.setItem('spaceClickerHighScore', score);
-      highScoreText.setText('Record: ' + score);
-    }
-  });
+  // Combo indicator - centrale
+  comboText = this.add.text(centerX, topY + 40, '', { 
+    fontSize: '72px', 
+    fill: '#ffaa00',
+    fontFamily: 'Arial Black, sans-serif',
+    stroke: '#000',
+    strokeThickness: 8,
+    fontStyle: 'bold'
+  }).setOrigin(0.5, 0).setDepth(100).setAlpha(0);
 
-  // Hover effect
-  rocket.on('pointerover', () => {
-    this.tweens.add({
-      targets: rocket,
-      scaleX: 2.1,
-      scaleY: 2.1,
-      duration: 200
-    });
-  });
+  // CPS counter - in basso
+  cpsText = this.add.text(padding, height - padding - 40, '', { 
+    fontSize: '44px', 
+    fill: '#ffffff',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 6
+  }).setOrigin(0, 1).setDepth(100);
 
-  rocket.on('pointerout', () => {
-    this.tweens.add({
-      targets: rocket,
-      scaleX: 2,
-      scaleY: 2,
-      duration: 200
-    });
-  });
+  // Record - in alto a destra
+  const highScoreText = this.add.text(width - padding, topY, '🏆 0', { 
+    fontSize: '52px', 
+    fill: '#ffd700',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 7
+  }).setOrigin(1, 0).setDepth(100);
 
-  // Load and display high score
-  const savedHighScore = localStorage.getItem('spaceClickerHighScore') || 0;
-  highScoreText.setText('Record: ' + savedHighScore);
+  // Istruzioni - in basso
+  const instructionText = this.add.text(centerX, height - padding - 20, 
+    '👆 CLICCA!', { 
+    fontSize: '60px', 
+    fill: '#ff00ff',
+    fontFamily: 'Arial Black, sans-serif',
+    stroke: '#000',
+    strokeThickness: 7
+  }).setOrigin(0.5, 1).setDepth(100);
 
-  // Floating rocket animation
+  // Animazione pulse istruzioni
   this.tweens.add({
-    targets: rocket,
-    y: 280,
-    duration: 2000,
+    targets: instructionText,
+    scale: 1.1,
+    duration: 800,
     yoyo: true,
     repeat: -1,
     ease: 'Sine.easeInOut'
   });
 
-  // Initialize Platform SDK
+  // Click/Touch handler con sistema combo
+  clickZone.on('pointerdown', (pointer) => {
+    if (pointer.event) pointer.event.preventDefault();
+
+    const now = Date.now();
+    if (now - lastClickTime < 800) {
+      combo++;
+    } else {
+      combo = 1;
+    }
+    lastClickTime = now;
+
+    // Punti con bonus combo
+    const basePoints = 10;
+    const comboBonus = Math.min(combo - 1, 10) * 5;
+    score += basePoints + comboBonus;
+    scoreText.setText(score);
+    
+    // Mostra combo
+    if (combo > 1) {
+      comboText.setText(`x${combo} COMBO!`);
+      comboText.setAlpha(1);
+      this.tweens.add({
+        targets: comboText,
+        scale: 1.2,
+        duration: 100,
+        yoyo: true
+      });
+    }
+
+    // Reset combo timer
+    if (comboTimer) clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => {
+      combo = 0;
+      this.tweens.add({ targets: comboText, alpha: 0, duration: 300 });
+    }, 800);
+
+    // CPS
+    clicksPerSecond++;
+    cpsText.setText(`${clicksPerSecond}/s`);
+
+    // Animazione esplosiva - scala proporzionata
+    this.tweens.add({
+      targets: rocket,
+      scale: rocketScale + 1,
+      duration: 80,
+      yoyo: true,
+      ease: 'Back.easeOut'
+    });
+    this.tweens.add({
+      targets: rocket,
+      angle: rocket.angle + (Phaser.Math.Between(0, 1) ? 30 : -30),
+      duration: 150,
+      ease: 'Power2'
+    });
+
+    // Particelle esplosive - scalate per HD
+    const particleCount = Math.min(8 + combo * 2, 30);
+    const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x00ff00];
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (Math.PI * 2 * i) / particleCount;
+      const distance = 100 + Math.random() * 200;
+      const particle = this.add.circle(centerX, centerY, 
+        6 + Math.random() * 8, Phaser.Utils.Array.GetRandom(colors))
+        .setDepth(20);
+      this.tweens.add({
+        targets: particle,
+        x: centerX + Math.cos(angle) * distance,
+        y: centerY + Math.sin(angle) * distance,
+        alpha: 0,
+        scale: 0,
+        duration: 400 + Math.random() * 400,
+        ease: 'Power2',
+        onComplete: () => particle.destroy()
+      });
+    }
+
+    // Flash per combo alto - su tutti i device
+    if (combo > 5) {
+      const flash = this.add.rectangle(centerX, centerY, width, height, 0xffffff, 0.3)
+        .setDepth(50);
+      this.tweens.add({
+        targets: flash,
+        alpha: 0,
+        duration: 200,
+        onComplete: () => flash.destroy()
+      });
+    }
+
+    // Vibrazione solo su mobile
+    if (navigator.vibrate && combo > 1) {
+      try { navigator.vibrate(30); } catch(e) {}
+    }
+
+    // Platform SDK
+    if (typeof PlatformSDK !== 'undefined') {
+      PlatformSDK.sendScore(score);
+    }
+
+    // High score
+    const highScore = localStorage.getItem('spaceClickerHighScore') || 0;
+    if (score > highScore) {
+      localStorage.setItem('spaceClickerHighScore', score);
+      highScoreText.setText('🏆 ' + score);
+    }
+  });
+
+  // Animazione idle razzo
+  this.tweens.add({
+    targets: rocket,
+    y: centerY - 20,
+    duration: 2000,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+  });
+  this.tweens.add({
+    targets: rocket,
+    angle: -10,
+    duration: 1500,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+  });
+
+  // Load high score
+  const savedHighScore = localStorage.getItem('spaceClickerHighScore') || 0;
+  highScoreText.setText('🏆 ' + savedHighScore);
+
+  // Platform SDK
   if (typeof PlatformSDK !== 'undefined') {
     PlatformSDK.init().then(() => {
-      console.log('Platform SDK initialized');
-      
-      PlatformSDK.on('pause', () => {
-        console.log('Game paused');
-        game.scene.pause();
-      });
-
-      PlatformSDK.on('resume', () => {
-        console.log('Game resumed');
-        game.scene.resume();
-      });
-    }).catch(err => {
-      console.warn('Platform SDK not available:', err);
-    });
+      PlatformSDK.on('pause', () => game.scene.pause());
+      PlatformSDK.on('resume', () => game.scene.resume());
+    }).catch(err => console.warn('Platform SDK not available:', err));
   }
 }
 
 function update() {
-  // Decay CPS counter
+  // Decay CPS
   const now = Date.now();
   if (now - lastClickTime > 1000) {
-    clicksPerSecond = 0;
+    clicksPerSecond = Math.max(0, clicksPerSecond - 1);
+    cpsText.setText(clicksPerSecond > 0 ? `${clicksPerSecond}/s` : '');
   }
 }
 </script>

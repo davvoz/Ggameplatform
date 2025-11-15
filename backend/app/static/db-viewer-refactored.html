@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Viewer - Game Platform</title>
+    <link rel="stylesheet" href="/static/css/db-viewer.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>🎮 Database Viewer</h1>
+            <p class="subtitle">Sistema di gestione e visualizzazione database - Architettura Scalabile</p>
+        </div>
+        
+        <!-- Stats Cards - Generated dynamically -->
+        <div class="stats" id="statsContainer"></div>
+        
+        <!-- Tabs - Generated dynamically -->
+        <div class="tabs" id="tabsContainer"></div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Cerca per qualsiasi campo...">
+            </div>
+            <button onclick="refreshData()">↻ Aggiorna</button>
+            <button id="openSessionsBtn" onclick="showOpenSessions()" style="background: #e67700; border-color: #e67700; display: none;">⚠️ Sessioni Aperte</button>
+            <button onclick="exportData()">💾 JSON</button>
+            <button onclick="exportCSV()">📊 CSV</button>
+        </div>
+        
+        <!-- Table Container -->
+        <div class="table-container">
+            <div id="loading" class="loading">⏳ Caricamento dati in corso...</div>
+            
+            <!-- Dynamic Table Containers - Generated from config -->
+            <div id="dynamicTablesContainer"></div>
+            
+            <!-- ER Diagram Container -->
+            <div id="er-diagramContainer" class="tab-content">
+                <div class="er-controls">
+                    <button onclick="resetERDiagram()" style="margin-right: 10px;">🔄 Reset View</button>
+                    <button onclick="zoomIn()" style="margin-right: 5px;">🔍+ Zoom In</button>
+                    <button onclick="zoomOut()" style="margin-right: 10px;">🔍- Zoom Out</button>
+                    <label style="display: inline-block; margin-left: 10px;">
+                        <input type="checkbox" id="showFieldTypes" checked onchange="updateERDiagram()"> Mostra tipi campi
+                    </label>
+                </div>
+                <div id="erDiagramCanvas" style="width: 100%; height: 700px; border: 1px solid #ddd; background: #fafafa; position: relative; overflow: hidden; cursor: grab;">
+                    <svg id="erSvg" style="width: 100%; height: 100%;"></svg>
+                </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="empty" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content"></div>
+    </div>
+
+    <!-- Scripts - Load in order -->
+    <script src="/static/js/db-viewer-config.js"></script>
+    <script src="/static/js/db-viewer-templates.js"></script>
+    <script src="/static/js/db-viewer-oop-refactored.js"></script>
+    
+    <!-- Dynamic UI Generator -->
+    <script>
+        // Generate Stats Cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const statsContainer = document.getElementById('statsContainer');
+            STATS_CONFIG.forEach(stat => {
+                statsContainer.innerHTML += TemplateEngine.renderStatCard(stat, '-');
+            });
+
+            // Generate Tabs
+            const tabsContainer = document.getElementById('tabsContainer');
+            const registry = new TableRegistry();
+            let isFirst = true;
+            
+            registry.getAllTables().forEach(({ key, definition }) => {
+                tabsContainer.innerHTML += TemplateEngine.renderTabButton(key, definition, isFirst);
+                isFirst = false;
+            });
+            
+            // Add ER Diagram tab
+            tabsContainer.innerHTML += TemplateEngine.renderTabButton('er-diagram', { 
+                label: 'ER Diagram', 
+                icon: '📊' 
+            }, false);
+
+            // Generate Table Containers
+            const dynamicTablesContainer = document.getElementById('dynamicTablesContainer');
+            registry.getTableKeys().forEach(tableKey => {
+                const tableDef = registry.getTable(tableKey);
+                dynamicTablesContainer.innerHTML += TemplateEngine.renderTableContainer(tableKey, tableDef);
+            });
+        });
+    </script>
+</body>
+</html>

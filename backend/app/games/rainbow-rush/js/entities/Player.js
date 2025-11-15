@@ -10,22 +10,46 @@ export class Player {
         this.height = 30;
         this.velocityY = 0;
         this.velocityX = 0;
-        this.gravity = 1200;
-        this.jumpForce = -500;
+        this.gravity = 800; // Lower gravity for floatier feel
+        this.jumpForce = -550; // Strong consistent jump
+        this.minJumpForce = -300; // Short hop
+        this.maxJumpForce = -550; // Full jump
         this.isGrounded = false;
+        this.isJumping = false;
         this.canvasHeight = canvasHeight;
         this.color = [0.2, 0.6, 1.0, 1.0]; // Blue player
-        this.maxFallSpeed = 800;
+        this.maxFallSpeed = 600;
         this.alive = true;
     }
 
     jump() {
         if (this.isGrounded) {
-            this.velocityY = this.jumpForce;
+            // Apply full jump force immediately
+            this.velocityY = this.maxJumpForce;
             this.isGrounded = false;
+            this.isJumping = true;
             return true; // Successful jump for sound trigger
         }
         return false;
+    }
+
+    releaseJump(pressDuration) {
+        if (this.isJumping && this.velocityY < 0) {
+            // Modulate jump based on hold time
+            const shortTapThreshold = 100; // 100ms
+            const longTapThreshold = 200; // 200ms
+            
+            if (pressDuration < shortTapThreshold) {
+                // Very short tap: minimal jump (50% power)
+                this.velocityY = this.velocityY * 0.5;
+            } else if (pressDuration < longTapThreshold) {
+                // Medium tap: partial jump (70% power)
+                this.velocityY = this.velocityY * 0.7;
+            }
+            // Long hold (>200ms): full jump - no reduction
+            
+            this.isJumping = false;
+        }
     }
 
     update(deltaTime) {
@@ -43,15 +67,8 @@ export class Player {
         this.y += this.velocityY * deltaTime;
         this.x += this.velocityX * deltaTime;
 
-        // Check ground collision
-        if (this.y + this.height >= this.canvasHeight) {
-            this.y = this.canvasHeight - this.height;
-            this.velocityY = 0;
-            this.isGrounded = true;
-        }
-
-        // Check if fell off screen
-        if (this.y > this.canvasHeight + 100) {
+        // Check if fell off screen (game over when falling too low)
+        if (this.y > this.canvasHeight) {
             this.alive = false;
         }
     }
@@ -61,17 +78,20 @@ export class Player {
 
         const playerBottom = this.y + this.height;
         const playerRight = this.x + this.width;
+        const playerLeft = this.x;
         const platformRight = platform.x + platform.width;
+        const platformLeft = platform.x;
         const platformTop = platform.y;
-        const platformBottom = platform.y + platform.height;
 
-        // Check if player is falling onto platform
-        if (this.velocityY > 0 &&
-            playerBottom >= platformTop &&
-            playerBottom <= platformBottom &&
-            playerRight > platform.x &&
-            this.x < platformRight) {
-            
+        // Check horizontal overlap
+        const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
+        
+        // Check if player is on top of platform (generous tolerance)
+        const verticalDistance = Math.abs(playerBottom - platformTop);
+        const onPlatform = verticalDistance < 15 && horizontalOverlap; // Increased from 10 to 15
+
+        if (onPlatform && this.velocityY >= 0) {
+            // Snap to platform
             this.y = platformTop - this.height;
             this.velocityY = 0;
             this.isGrounded = true;
@@ -122,6 +142,7 @@ export class Player {
         this.velocityY = 0;
         this.velocityX = 0;
         this.isGrounded = false;
+        this.isJumping = false;
         this.alive = true;
     }
 

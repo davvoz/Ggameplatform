@@ -8,8 +8,11 @@ export class InputManager {
         this.keys = new Set();
         this.touchActive = false;
         this.mouseDown = false;
+        this.jumpPressed = false;
+        this.jumpPressTime = 0;
         this.listeners = {
-            jump: []
+            jump: [],
+            jumpRelease: []
         };
 
         this.setupEventListeners();
@@ -40,38 +43,73 @@ export class InputManager {
             
             if (key === ' ' || key === 'arrowup' || key === 'w') {
                 event.preventDefault();
-                this.triggerJump();
+                if (!this.jumpPressed) {
+                    this.jumpPressed = true;
+                    this.jumpPressTime = performance.now();
+                    this.triggerJump();
+                }
             }
         }
     }
 
     handleKeyUp(event) {
-        this.keys.delete(event.key.toLowerCase());
+        const key = event.key.toLowerCase();
+        this.keys.delete(key);
+        
+        if (key === ' ' || key === 'arrowup' || key === 'w') {
+            if (this.jumpPressed) {
+                const pressDuration = performance.now() - this.jumpPressTime;
+                this.jumpPressed = false;
+                this.triggerJumpRelease(pressDuration);
+            }
+        }
     }
 
     handleMouseDown(event) {
         event.preventDefault();
-        this.mouseDown = true;
-        this.triggerJump();
+        if (!this.mouseDown) {
+            this.mouseDown = true;
+            this.jumpPressed = true;
+            this.jumpPressTime = performance.now();
+            this.triggerJump();
+        }
     }
 
     handleMouseUp(event) {
-        this.mouseDown = false;
+        if (this.mouseDown) {
+            const pressDuration = performance.now() - this.jumpPressTime;
+            this.mouseDown = false;
+            this.jumpPressed = false;
+            this.triggerJumpRelease(pressDuration);
+        }
     }
 
     handleTouchStart(event) {
         event.preventDefault();
-        this.touchActive = true;
-        this.triggerJump();
+        if (!this.touchActive) {
+            this.touchActive = true;
+            this.jumpPressed = true;
+            this.jumpPressTime = performance.now();
+            this.triggerJump();
+        }
     }
 
     handleTouchEnd(event) {
         event.preventDefault();
-        this.touchActive = false;
+        if (this.touchActive) {
+            const pressDuration = performance.now() - this.jumpPressTime;
+            this.touchActive = false;
+            this.jumpPressed = false;
+            this.triggerJumpRelease(pressDuration);
+        }
     }
 
     triggerJump() {
         this.notifyListeners('jump');
+    }
+
+    triggerJumpRelease(duration) {
+        this.notifyListeners('jumpRelease', duration);
     }
 
     addEventListener(event, callback) {
@@ -80,9 +118,9 @@ export class InputManager {
         }
     }
 
-    notifyListeners(event) {
+    notifyListeners(event, data) {
         if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback());
+            this.listeners[event].forEach(callback => callback(data));
         }
     }
 

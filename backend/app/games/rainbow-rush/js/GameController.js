@@ -104,6 +104,12 @@ export class GameController {
                 this.startGame();
             }
         });
+        
+        this.inputManager.addEventListener('jumpRelease', (duration) => {
+            if (this.gameState.isPlaying()) {
+                this.player.releaseJump(duration);
+            }
+        });
     }
 
     setupScoreListeners() {
@@ -176,6 +182,9 @@ export class GameController {
     }
 
     checkCollisions() {
+        // Reset grounded state - player must be on a platform to be grounded
+        this.player.isGrounded = false;
+        
         // Platform collisions
         for (const platform of this.platforms) {
             this.player.checkPlatformCollision(platform);
@@ -256,6 +265,7 @@ export class GameController {
         
         // Reset level generator
         this.levelGenerator.lastPlatformX = 0;
+        this.levelGenerator.lastPlatformY = 0;
         this.levelGenerator.setDifficulty(1);
         
         // Setup initial platforms

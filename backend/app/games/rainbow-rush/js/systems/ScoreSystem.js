@@ -36,11 +36,11 @@ export class ScoreSystem {
     addScore(points) {
         this.score += points;
         
-        // Check for level up (every 500 points)
-        const newLevel = Math.floor(this.score / 500) + 1;
+        // Check for level up (every 1000 points for gentler progression)
+        const newLevel = Math.floor(this.score / 1000) + 1;
         if (newLevel > this.level) {
             this.level = newLevel;
-            this.multiplier = 1 + (this.level - 1) * 0.5;
+            this.multiplier = 1 + (this.level - 1) * 0.3; // Slower multiplier increase
             this.notifyLevelUp(this.level);
         }
 

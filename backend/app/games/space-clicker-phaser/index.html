@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Clicker - Phaser Edition</title>
+  <!-- Phaser framework -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    canvas { 
+      display: block; 
+      margin: 0 auto;
+      box-shadow: 0 0 30px rgba(52, 152, 219, 0.5);
+    }
+  </style>
+</head>
+<body>
+<script src="../../sdk/platformsdk.js"></script>
+<script>
+let score = 0;
+let scoreText;
+let clicksPerSecond = 0;
+let lastClickTime = 0;
+let particles = [];
+
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#0a0a1a',
+  scene: {
+    preload: preload,
+    create: create,
+    update: update
+  }
+};
+
+const game = new Phaser.Game(config);
+
+function preload() {
+  this.load.setBaseURL('https://labs.phaser.io');
+  this.load.image('space', 'assets/skies/space3.png');
+  this.load.image('rocket', 'assets/sprites/space-baddie.png');
+}
+
+function create() {
+  // Background
+  this.add.image(400, 300, 'space').setAlpha(0.6);
+
+  // Rocket - centered and larger
+  const rocket = this.add.image(400, 300, 'rocket')
+    .setInteractive()
+    .setScale(2);
+
+  // Score display
+  scoreText = this.add.text(16, 16, 'Punteggio: 0', { 
+    fontSize: '32px', 
+    fill: '#3498db',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 4
+  });
+
+  // Click counter
+  const cpsText = this.add.text(16, 56, 'Click/sec: 0', { 
+    fontSize: '20px', 
+    fill: '#ecf0f1',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 3
+  });
+
+  // Instructions
+  this.add.text(400, 550, '🖱️ Clicca il razzo per guadagnare punti!', { 
+    fontSize: '24px', 
+    fill: '#f39c12',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 3
+  }).setOrigin(0.5);
+
+  // High score display
+  const highScoreText = this.add.text(784, 16, 'Record: 0', { 
+    fontSize: '20px', 
+    fill: '#e74c3c',
+    fontFamily: 'Arial',
+    stroke: '#000',
+    strokeThickness: 3
+  }).setOrigin(1, 0);
+
+  // Rocket click handler
+  rocket.on('pointerdown', () => {
+    score += 10;
+    scoreText.setText('Punteggio: ' + score);
+    
+    // Calculate CPS
+    const now = Date.now();
+    if (now - lastClickTime < 1000) {
+      clicksPerSecond++;
+    } else {
+      clicksPerSecond = 1;
+    }
+    lastClickTime = now;
+    cpsText.setText('Click/sec: ' + clicksPerSecond);
+
+    // Rocket animation
+    this.tweens.add({
+      targets: rocket,
+      scaleX: 2.2,
+      scaleY: 2.2,
+      duration: 100,
+      yoyo: true,
+      ease: 'Power2'
+    });
+
+    // Rotation effect
+    this.tweens.add({
+      targets: rocket,
+      angle: rocket.angle + 360,
+      duration: 500,
+      ease: 'Power2'
+    });
+
+    // Create particle effect
+    for (let i = 0; i < 5; i++) {
+      const particle = this.add.circle(
+        rocket.x + (Math.random() - 0.5) * 100,
+        rocket.y + (Math.random() - 0.5) * 100,
+        5 + Math.random() * 5,
+        0x3498db
+      );
+      
+      this.tweens.add({
+        targets: particle,
+        alpha: 0,
+        scale: 0,
+        duration: 500 + Math.random() * 500,
+        onComplete: () => particle.destroy()
+      });
+    }
+
+    // Send score to platform
+    if (typeof PlatformSDK !== 'undefined') {
+      PlatformSDK.sendScore(score);
+    }
+
+    // Update high score
+    const highScore = localStorage.getItem('spaceClickerHighScore') || 0;
+    if (score > highScore) {
+      localStorage.setItem('spaceClickerHighScore', score);
+      highScoreText.setText('Record: ' + score);
+    }
+  });
+
+  // Hover effect
+  rocket.on('pointerover', () => {
+    this.tweens.add({
+      targets: rocket,
+      scaleX: 2.1,
+      scaleY: 2.1,
+      duration: 200
+    });
+  });
+
+  rocket.on('pointerout', () => {
+    this.tweens.add({
+      targets: rocket,
+      scaleX: 2,
+      scaleY: 2,
+      duration: 200
+    });
+  });
+
+  // Load and display high score
+  const savedHighScore = localStorage.getItem('spaceClickerHighScore') || 0;
+  highScoreText.setText('Record: ' + savedHighScore);
+
+  // Floating rocket animation
+  this.tweens.add({
+    targets: rocket,
+    y: 280,
+    duration: 2000,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+  });
+
+  // Initialize Platform SDK
+  if (typeof PlatformSDK !== 'undefined') {
+    PlatformSDK.init().then(() => {
+      console.log('Platform SDK initialized');
+      
+      PlatformSDK.on('pause', () => {
+        console.log('Game paused');
+        game.scene.pause();
+      });
+
+      PlatformSDK.on('resume', () => {
+        console.log('Game resumed');
+        game.scene.resume();
+      });
+    }).catch(err => {
+      console.warn('Platform SDK not available:', err);
+    });
+  }
+}
+
+function update() {
+  // Decay CPS counter
+  const now = Date.now();
+  if (now - lastClickTime > 1000) {
+    clicksPerSecond = 0;
+  }
+}
+</script>
+</body>
+</html>

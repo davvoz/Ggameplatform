@@ -32,15 +32,27 @@ export class GameEngine {
     }
 
     resizeCanvas() {
-        const displayWidth = window.innerWidth;
-        const displayHeight = window.innerHeight;
+        // Mobile-like aspect ratio on desktop, full screen on mobile
+        const isMobile = window.innerWidth <= 768;
         
-        if (this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
-            this.canvas.width = displayWidth;
-            this.canvas.height = displayHeight;
+        let targetWidth, targetHeight;
+        
+        if (isMobile) {
+            // Full screen on mobile
+            targetWidth = window.innerWidth;
+            targetHeight = window.innerHeight;
+        } else {
+            // Fixed mobile-like dimensions on desktop
+            targetWidth = Math.min(450, window.innerWidth);
+            targetHeight = Math.min(800, window.innerHeight);
+        }
+        
+        if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
+            this.canvas.width = targetWidth;
+            this.canvas.height = targetHeight;
             
             if (this.gl) {
-                this.gl.viewport(0, 0, displayWidth, displayHeight);
+                this.gl.viewport(0, 0, targetWidth, targetHeight);
             }
         }
     }

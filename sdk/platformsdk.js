@@ -61,6 +61,20 @@
                 console.warn('[PlatformSDK] Not running in iframe - platform features may not be available');
             }
             
+            // Support legacy callback style (onPause, onResume, onExit, onStart)
+            if (options.onPause) {
+                this.on('pause', options.onPause);
+            }
+            if (options.onResume) {
+                this.on('resume', options.onResume);
+            }
+            if (options.onExit) {
+                this.on('exit', options.onExit);
+            }
+            if (options.onStart) {
+                this.on('start', options.onStart);
+            }
+            
             // Listen for messages from platform
             window.addEventListener('message', this.boundMessageHandler);
             

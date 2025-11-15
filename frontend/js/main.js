@@ -297,10 +297,7 @@ export async function renderGamePlayer(params) {
         
         // Track game play (increment play count)
         trackGamePlay(gameId);
-        
-        // Set player title
-        document.querySelector('.player-title').textContent = game.title;
-        
+                
         // Load game in iframe
         const iframe = document.getElementById('game-iframe');
         const gameUrl = getGameResourceUrl(gameId, game.entry_point);
@@ -312,14 +309,11 @@ export async function renderGamePlayer(params) {
         // Exit button
         const exitBtn = document.querySelector('.exit-btn');
         exitBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to exit this game?')) {
-                // Cleanup game runtime before navigation
-                if (window.currentGameRuntime) {
+            if (window.currentGameRuntime) {
                     window.currentGameRuntime.cleanup();
                     window.currentGameRuntime = null;
                 }
                 navigateTo(`/game/${gameId}`);
-            }
         });
         
     } catch (error) {

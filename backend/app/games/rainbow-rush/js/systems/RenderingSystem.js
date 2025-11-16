@@ -521,6 +521,59 @@ export class RenderingSystem {
                     this.renderer.drawRect(baseX + platform.width * 0.35, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
                     this.renderer.drawRect(baseX + platform.width * 0.65, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
                     break;
+
+                case 'RESCUE':
+                    // Laser effect - elaborate rescue platform visualization
+                    const time = Date.now() / 1000;
+                    const phase = platform.laserPhase || 0;
+                    
+                    // Pulsating core
+                    const pulse = Math.sin(time * 8 + phase) * 0.3 + 0.7;
+                    const coreColor = [0.2 * pulse, 1.0 * pulse, 0.4 * pulse, 0.9];
+                    
+                    // Energy core lines
+                    for (let i = 0; i < 3; i++) {
+                        const offset = i * (platform.width / 3);
+                        const linePhase = time * 10 + phase + i * 0.5;
+                        const lineAlpha = (Math.sin(linePhase) * 0.5 + 0.5) * 0.8;
+                        this.renderer.drawRect(
+                            baseX + offset + 5, 
+                            baseY + 2, 
+                            2, 
+                            platform.height - 4, 
+                            [0.3, 1.0, 0.5, lineAlpha]
+                        );
+                    }
+                    
+                    // Top laser beam
+                    const beamWidth = platform.width * (0.8 + Math.sin(time * 6 + phase) * 0.15);
+                    const beamX = baseX + (platform.width - beamWidth) / 2;
+                    this.renderer.drawRect(beamX, baseY - 1, beamWidth, 1, [0.5, 1.0, 0.6, 0.9]);
+                    
+                    // Outer glow
+                    const glowPulse = Math.sin(time * 5 + phase) * 0.4 + 0.6;
+                    this.renderer.drawRect(beamX - 2, baseY - 3, beamWidth + 4, 2, [0.2, 0.9, 0.4, glowPulse * 0.4]);
+                    
+                    // Scanning line effect
+                    const scanPos = ((time * 2 + phase) % 1) * platform.width;
+                    this.renderer.drawRect(
+                        baseX + scanPos - 1, 
+                        baseY, 
+                        2, 
+                        platform.height, 
+                        [1.0, 1.0, 1.0, 0.7]
+                    );
+                    
+                    // Energy particles
+                    for (let i = 0; i < 4; i++) {
+                        const particlePhase = (time * 3 + phase + i * 1.5) % (Math.PI * 2);
+                        const particleX = baseX + platform.width * (0.2 + i * 0.2);
+                        const particleY = baseY + platform.height / 2 + Math.sin(particlePhase) * 3;
+                        this.renderer.drawCircle(particleX, particleY, 1.5, [0.7, 1.0, 0.8, 0.8]);
+                    }
+                    
+                    glowColor = [0.2, 1.0, 0.5, 0.7];
+                    break;
             }
 
             // Single top glow

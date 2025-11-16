@@ -153,7 +153,9 @@ export class GameController {
     setupPowerupListeners() {
         this.powerupSystem.addEventListener('activate', (type) => {
             this.player.activatePowerup(type);
-            this.audioManager.playSound('powerup');
+            // Play specific sound for each powerup type
+            const soundName = `powerup_${type}`;
+            this.audioManager.playSound(soundName);
         });
 
         this.powerupSystem.addEventListener('deactivate', (type) => {
@@ -323,6 +325,7 @@ export class GameController {
                 }
             } else {
                 // Reset when player leaves
+                this.playerOnSafetyPlatformTimer = 0;
                 this.rescuePlatformSpawnTimer = 0;
                 this.hasSpawnedFirstRescue = false;
             }
@@ -372,7 +375,11 @@ export class GameController {
                 color: [0.3, 0.9, 0.5, 1.0], // Bright green for rescue
                 velocity: -150, // Moving left
                 type: 'platform',
-                platformType: 'NORMAL'
+                platformType: 'RESCUE',
+                // Laser effect properties
+                laserPhase: Math.random() * Math.PI * 2,
+                laserIntensity: 1.0,
+                spawnTime: Date.now()
             };
             this.platforms.push(platform);
         }

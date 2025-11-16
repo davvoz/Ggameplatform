@@ -174,3 +174,60 @@ async def get_quests_stats(
         "total_completions": total_completions,
         "users_with_quests": users_with_quests
     }
+
+
+@router.post("/claim/{quest_id}")
+async def claim_quest_reward(
+    quest_id: int,
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """Claim reward for a completed quest."""
+    
+    # Get user
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get quest
+    quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    # Get user progress
+    progress = db.query(UserQuest).filter(
+        UserQuest.user_id == user_id,
+        UserQuest.quest_id == quest_id
+    ).first()
+    
+    if not progress:
+        raise HTTPException(status_code=404, detail="Quest progress not found")
+    
+    # Check if quest is completed
+    if not progress.is_completed:
+        raise HTTPException(status_code=400, detail="Quest not completed yet")
+    
+    # Check if already claimed
+    if progress.is_claimed:
+        raise HTTPException(status_code=400, detail="Quest reward already claimed")
+    
+    # Claim reward
+    now = datetime.utcnow().isoformat()
+    progress.is_claimed = 1
+    progress.claimed_at = now
+    
+    # Add rewards to user
+    user.total_xp_earned += quest.xp_reward
+    
+    db.commit()
+    db.refresh(progress)
+    db.refresh(user)
+    
+    return {
+        "success": True,
+        "quest_id": quest_id,
+        "xp_reward": quest.xp_reward,
+        "sats_reward": quest.sats_reward,
+        "total_xp": user.total_xp_earned,
+        "claimed_at": now
+    }

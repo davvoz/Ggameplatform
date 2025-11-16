@@ -189,12 +189,13 @@ async def get_user(user_id: str):
     if user.get('game_scores'):
         for game_id, score in user['game_scores'].items():
             game = get_game_by_id(game_id)
-            game_scores_enriched.append({
-                'game_id': game_id,
-                'game_title': game['title'] if game else 'Unknown Game',
-                'high_score': score,
-                'thumbnail': game.get('thumbnail', '') if game else ''
-            })
+            if game:
+                game_scores_enriched.append({
+                    'game_id': game_id,
+                    'game_title': game['title'],
+                    'high_score': score,
+                    'thumbnail': game.get('thumbnail', '')
+                })
         # Sort by score descending
         game_scores_enriched.sort(key=lambda x: x['high_score'], reverse=True)
     

@@ -51,7 +51,7 @@ class TemplateEngine {
 
         switch (column.type) {
             case 'image':
-                const rendered = column.render ? column.render(value) : { type: 'image', src: value };
+                const rendered = column.render ? column.render(value, item) : { type: 'image', src: value };
                 const img = document.createElement('img');
                 img.src = rendered.src;
                 if (rendered.style) img.style.cssText = rendered.style;
@@ -153,15 +153,32 @@ class TemplateEngine {
     }
 
     static renderQuestDetails(quest) {
+        const isActive = quest.is_active;
         return `
             <div style="line-height:1.8">
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
                     <div><strong style="color:#6c757d">ID:</strong><br>${quest.quest_id}</div>
                     <div><strong style="color:#6c757d">Tipo:</strong><br><code>${quest.quest_type}</code></div>
                     <div><strong style="color:#6c757d">Target:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#007bff">${quest.target_value}</span></div>
-                    <div><strong style="color:#6c757d">XP Reward:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#28a745">${quest.xp_reward}</span></div>
-                    <div><strong style="color:#6c757d">Sats:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#ffc107">${quest.sats_reward}</span></div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br><span style="color:${isActive ? '#28a745' : '#dc3545'};font-weight:600;font-size:1.1em">${isActive ? '✓ Attiva' : '✗ Inattiva'}</span></div>
                     <div><strong style="color:#6c757d">Game:</strong><br>${quest.game_id || '<em>Platform-wide</em>'}</div>
+                </div>
+                <div style="background:linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);padding:20px;border-radius:12px;margin-bottom:20px">
+                    <h4 style="margin:0 0 16px 0;color:#1a1a1a;display:flex;align-items:center;gap:8px">🎁 Ricompense</h4>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;border:2px solid #28a745">
+                            <div style="font-size:2.5em;margin-bottom:8px">⭐</div>
+                            <div style="font-size:1.8em;font-weight:bold;color:#28a745">${quest.xp_reward}</div>
+                            <div style="color:#6c757d;font-size:0.9em;margin-top:4px">XP Points</div>
+                        </div>
+                        ${quest.sats_reward > 0 ? `
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;border:2px solid #ffc107">
+                            <div style="font-size:2.5em;margin-bottom:8px">💰</div>
+                            <div style="font-size:1.8em;font-weight:bold;color:#ffc107">${quest.sats_reward}</div>
+                            <div style="color:#6c757d;font-size:0.9em;margin-top:4px">Satoshi</div>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
                 ${quest.description ? `<div style="margin-top:16px"><strong style="color:#6c757d">Descrizione:</strong><p style="background:#fff;padding:16px;border-radius:4px;border-left:4px solid #007bff">${Utils.escapeHtml(quest.description)}</p></div>` : ''}
             </div>
@@ -255,6 +272,8 @@ class TemplateEngine {
 
     static renderUserQuestDetails(userQuest) {
         const isCompleted = userQuest.is_completed;
+        const isClaimed = userQuest.is_claimed;
+        
         return `
             <div style="line-height:1.8">
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
@@ -263,7 +282,21 @@ class TemplateEngine {
                     <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${userQuest.user_id}</code></div>
                     <div><strong style="color:#6c757d">Quest ID:</strong><br><span style="font-size:1.1em;font-weight:bold;color:#E91E63">${userQuest.quest_id}</span></div>
                     <div><strong style="color:#6c757d">Progresso:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${userQuest.current_progress || 0}</span></div>
-                    ${isCompleted && userQuest.completed_at ? `<div><strong style="color:#6c757d">Completata il:</strong><br>${Utils.formatDate(userQuest.completed_at)}</div>` : ''}
+                    <div><strong style="color:#6c757d">Iniziata il:</strong><br>${Utils.formatDate(userQuest.started_at)}</div>
+                    <div>
+                        <strong style="color:#6c757d">Completata:</strong><br>
+                        <span style="color:${isCompleted ? '#28a745' : '#6c757d'};font-weight:500">
+                            ${isCompleted ? '✓ Sì' : '✗ No'}
+                        </span>
+                    </div>
+                    <div>
+                        <strong style="color:#6c757d">Ricompensa Reclamata:</strong><br>
+                        <span style="color:${isClaimed ? '#69f0ae' : (isCompleted ? '#ffc107' : '#6c757d')};font-weight:500">
+                            ${isClaimed ? '✓ Reclamata' : (isCompleted ? '⏳ Da Reclamare' : '✗ No')}
+                        </span>
+                    </div>
+                    ${userQuest.completed_at ? `<div><strong style="color:#6c757d">Completata il:</strong><br>${Utils.formatDate(userQuest.completed_at)}</div>` : '<div></div>'}
+                    ${userQuest.claimed_at ? `<div><strong style="color:#6c757d">Reclamata il:</strong><br><span style="color:#69f0ae;font-weight:500">${Utils.formatDate(userQuest.claimed_at)}</span></div>` : '<div></div>'}
                 </div>
             </div>
         `;

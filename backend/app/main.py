@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -8,12 +8,31 @@ from app.routers import users
 from app.routers import quests
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    """Middleware to prevent caching of HTML, CSS, and JS files"""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Apply no-cache headers to HTML, CSS, JS files
+        if any(request.url.path.endswith(ext) for ext in ['.html', '.css', '.js']):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            response.headers['X-Version'] = str(int(time.time()))
+        
+        return response
 
 app = FastAPI(
     title="HTML5 Game Platform API",
     description="Modular and scalable game platform backend",
     version="1.0.0"
 )
+
+# Add no-cache middleware FIRST
+app.add_middleware(NoCacheMiddleware)
 
 # CORS configuration
 app.add_middleware(

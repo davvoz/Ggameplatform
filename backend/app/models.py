@@ -238,7 +238,9 @@ class UserQuest(Base):
     quest_id = Column(Integer, ForeignKey('quests.quest_id'), nullable=False)
     current_progress = Column(Integer, default=0)
     is_completed = Column(Integer, default=0)
+    is_claimed = Column(Integer, default=0)
     completed_at = Column(String, nullable=True)
+    claimed_at = Column(String, nullable=True)
     started_at = Column(String, nullable=False)
     
     # Relationships
@@ -253,7 +255,9 @@ class UserQuest(Base):
             "quest_id": self.quest_id,
             "current_progress": self.current_progress,
             "is_completed": bool(self.is_completed),
+            "is_claimed": bool(self.is_claimed),
             "completed_at": self.completed_at,
+            "claimed_at": self.claimed_at,
             "started_at": self.started_at
         }
     

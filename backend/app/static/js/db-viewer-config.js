@@ -23,11 +23,22 @@ const TABLE_DEFINITIONS = {
                 label: 'Thumb',
                 type: 'image',
                 width: '80px',
-                render: (value) => ({
-                    type: 'image',
-                    src: value || 'https://via.placeholder.com/60',
-                    style: 'width:60px;height:45px;object-fit:cover;border-radius:4px'
-                })
+                render: (value, row) => {
+                    // Costruisci il percorso completo del thumbnail
+                    let src = 'https://via.placeholder.com/60x45?text=No+Image';
+                    if (value && row.game_id) {
+                        if (value.startsWith('http')) {
+                            src = value;
+                        } else {
+                            src = `/games/${row.game_id}/${value}`;
+                        }
+                    }
+                    return {
+                        type: 'image',
+                        src: src,
+                        style: 'width:60px;height:45px;object-fit:cover;border-radius:4px;border:1px solid #333'
+                    };
+                }
             },
             {
                 key: 'game_id',
@@ -515,9 +526,28 @@ const TABLE_DEFINITIONS = {
                 falseColor: '#6c757d'
             },
             {
+                key: 'is_claimed',
+                label: 'Ricompensa Reclamata',
+                type: 'boolean',
+                trueText: '✓ Reclamata',
+                falseText: '✗ Non reclamata',
+                trueColor: '#69f0ae',
+                falseColor: '#ffc107'
+            },
+            {
                 key: 'completed_at',
                 label: 'Data Completamento',
                 type: 'date'
+            },
+            {
+                key: 'claimed_at',
+                label: 'Data Reclamo',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: value ? Utils.formatDate(value) : '-',
+                    style: value ? 'color: #69f0ae; font-weight: 500;' : 'color: #6c757d;'
+                })
             },
             {
                 key: 'actions',
@@ -531,7 +561,9 @@ const TABLE_DEFINITIONS = {
             { name: 'quest_id', type: 'INTEGER', fk: 'quests.quest_id' },
             { name: 'current_progress', type: 'INTEGER' },
             { name: 'is_completed', type: 'BOOLEAN' },
-            { name: 'completed_at', type: 'DATETIME' }
+            { name: 'is_claimed', type: 'BOOLEAN' },
+            { name: 'completed_at', type: 'DATETIME' },
+            { name: 'claimed_at', type: 'DATETIME' }
         ]
     }
 };

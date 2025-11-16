@@ -202,13 +202,20 @@ export async function fetchGameLeaderboard(gameId, limit = 10) {
 }
 
 /**
- * Get all quests with user progress
+ * Get user quests with progress
  * @param {string} userId - The user ID
- * @returns {Promise<Array>} Quests with progress
+ * @returns {Promise<Array>} User quests with progress
  */
 export async function fetchUserQuests(userId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/quests/user/${userId}`);
+        // Add timestamp to prevent caching
+        const timestamp = Date.now();
+        const response = await fetch(`${API_BASE_URL}/quests/user/${userId}?_t=${timestamp}`, {
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -241,6 +248,33 @@ export async function fetchQuests(activeOnly = true) {
     }
 }
 
+/**
+ * Claim quest reward
+ * @param {number} questId - The quest ID
+ * @param {string} userId - The user ID
+ * @returns {Promise<Object>} Claim response
+ */
+export async function claimQuestReward(questId, userId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/quests/claim/${questId}?user_id=${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error claiming quest reward:', error);
+        throw error;
+    }
+}
+
 export default {
     fetchGames,
     fetchGameMetadata,
@@ -253,5 +287,6 @@ export default {
     fetchLeaderboard,
     fetchGameLeaderboard,
     fetchUserQuests,
-    fetchQuests
+    fetchQuests,
+    claimQuestReward
 };

@@ -170,7 +170,9 @@ class UserQuestProgress(BaseModel):
     quest_id: int
     current_progress: int
     is_completed: bool
+    is_claimed: bool
     completed_at: Optional[str]
+    claimed_at: Optional[str]
     started_at: str
     
     class Config:

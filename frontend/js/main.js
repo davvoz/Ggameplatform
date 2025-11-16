@@ -630,9 +630,12 @@ export async function renderProfile() {
             const highScoreItem = document.createElement('div');
             highScoreItem.className = 'high-score-item';
             
-            const thumbnailHTML = gameScore.thumbnail 
-                ? `<img src="${gameScore.thumbnail}" alt="${gameScore.game_title}">` 
-                : '🎮';
+            // Usa la stessa logica dei game cards per le thumbnail
+            const thumbnailUrl = gameScore.thumbnail 
+                ? (gameScore.thumbnail.startsWith('http') ? gameScore.thumbnail : getGameResourceUrl(gameScore.game_id, gameScore.thumbnail))
+                : 'https://via.placeholder.com/100x75?text=No+Image';
+            
+            const thumbnailHTML = `<img src="${thumbnailUrl}" alt="${gameScore.game_title}">`;
             
             highScoreItem.innerHTML = `
                 <div class="high-score-game">
@@ -860,14 +863,46 @@ export async function renderQuests() {
             questCard.className = 'quest-card';
             
             const isCompleted = quest.progress && quest.progress.is_completed;
+            const isClaimed = quest.progress && (quest.progress.is_claimed === true || quest.progress.is_claimed === 1);
             const currentProgress = quest.progress ? quest.progress.current_progress : 0;
             const progressPercent = Math.min((currentProgress / quest.target_value) * 100, 100);
+            
+            // DEBUG: Log dei valori
+            if (isCompleted) {
+                console.log(`Quest ${quest.quest_id} - is_completed: ${quest.progress.is_completed}, is_claimed: ${quest.progress.is_claimed}, type: ${typeof quest.progress.is_claimed}`);
+            }
+            
+            // Determine quest status
+            let statusBadge = '';
+            let claimButton = '';
+            
+            if (isClaimed) {
+                statusBadge = '<span class="quest-claimed-badge">✓ Claimed</span>';
+                // Add claimed date if available
+                if (quest.progress.claimed_at) {
+                    const claimedDate = new Date(quest.progress.claimed_at);
+                    const dateStr = claimedDate.toLocaleDateString('it-IT', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    claimButton = `<div class="claimed-info">Claimed on ${dateStr}</div>`;
+                }
+            } else if (isCompleted) {
+                statusBadge = '<span class="quest-ready-badge">🎁 Ready to Claim!</span>';
+                claimButton = `<button class="claim-btn" data-quest-id="${quest.quest_id}">
+                    <span class="claim-btn-icon">🎁</span>
+                    <span class="claim-btn-text">CLAIM REWARD</span>
+                </button>`;
+            }
             
             questCard.innerHTML = `
                 <div class="quest-header">
                     <div class="quest-title-row">
                         <h3 class="quest-title">${quest.title}</h3>
-                        ${isCompleted ? '<span class="quest-completed-badge">✓ Completed</span>' : ''}
+                        ${statusBadge}
                     </div>
                     <p class="quest-description">${quest.description}</p>
                 </div>
@@ -897,14 +932,26 @@ export async function renderQuests() {
                         </div>
                         ` : ''}
                     </div>
+                    ${claimButton}
                 </div>
             `;
             
-            if (isCompleted) {
-                questCard.classList.add('completed');
+            if (isClaimed) {
+                questCard.classList.add('claimed');
+            } else if (isCompleted) {
+                questCard.classList.add('ready-to-claim');
             }
             
             questsList.appendChild(questCard);
+        });
+        
+        // Add click handlers for claim buttons
+        document.querySelectorAll('.claim-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const questId = parseInt(btn.dataset.questId);
+                await handleClaimReward(questId, user.user_id);
+            });
         });
         
     } catch (error) {
@@ -923,9 +970,118 @@ function formatQuestType(type) {
         'score': '🎯 Score',
         'total_xp': '⭐ Total XP',
         'daily': '📅 Daily',
-        'streak': '🔥 Streak'
+        'streak': '🔥 Streak',
+        'play_time': '⏱️ Play Time'
     };
     return typeMap[type] || type;
+}
+
+/**
+ * Handle quest reward claim with animation
+ */
+async function handleClaimReward(questId, userId) {
+    const btn = document.querySelector(`[data-quest-id="${questId}"]`);
+    const questCard = btn.closest('.quest-card');
+    
+    try {
+        // Disable button
+        btn.disabled = true;
+        btn.classList.add('claiming');
+        btn.innerHTML = '<span class="spinner"></span><span>Claiming...</span>';
+        
+        // Import claimQuestReward from api.js
+        const { claimQuestReward } = await import('./api.js');
+        const result = await claimQuestReward(questId, userId);
+        
+        // Success animation
+        btn.classList.remove('claiming');
+        btn.classList.add('claimed-success');
+        btn.innerHTML = '<span class="checkmark">✓</span><span>Claimed!</span>';
+        
+        // Create reward animation
+        createRewardAnimation(questCard, result.xp_reward, result.sats_reward);
+        
+        // Update user XP in header
+        if (window.AuthManager) {
+            const user = window.AuthManager.getUser();
+            user.total_xp_earned = result.total_xp;
+            window.AuthManager.setUser(user);
+        }
+        
+        // Wait for animation to complete, then reload quests
+        setTimeout(() => {
+            renderQuests();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error claiming reward:', error);
+        btn.disabled = false;
+        btn.classList.remove('claiming');
+        btn.innerHTML = '<span class="claim-btn-icon">❌</span><span class="claim-btn-text">Failed - Try Again</span>';
+        
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        errorMsg.textContent = error.message || 'Failed to claim reward';
+        questCard.appendChild(errorMsg);
+        
+        setTimeout(() => {
+            errorMsg.remove();
+            btn.innerHTML = '<span class="claim-btn-icon">🎁</span><span class="claim-btn-text">CLAIM REWARD</span>';
+        }, 3000);
+    }
+}
+
+/**
+ * Create reward claim animation
+ */
+function createRewardAnimation(questCard, xpReward, satsReward) {
+    const rewards = [];
+    
+    // Create XP particles
+    for (let i = 0; i < 10; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'reward-particle xp-particle';
+        particle.textContent = `+${Math.floor(xpReward / 10)} XP`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${i * 0.1}s`;
+        questCard.appendChild(particle);
+        rewards.push(particle);
+    }
+    
+    // Create Sats particles if applicable
+    if (satsReward) {
+        for (let i = 0; i < 5; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'reward-particle sats-particle';
+            particle.textContent = `+${Math.floor(satsReward / 5)} Sats`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDelay = `${i * 0.15}s`;
+            questCard.appendChild(particle);
+            rewards.push(particle);
+        }
+    }
+    
+    // Add celebration effect
+    const celebration = document.createElement('div');
+    celebration.className = 'celebration-overlay';
+    celebration.innerHTML = `
+        <div class="celebration-content">
+            <div class="celebration-icon">🎉</div>
+            <div class="celebration-text">Quest Completed!</div>
+            <div class="celebration-rewards">
+                <div class="celebration-reward-item">⭐ +${xpReward} XP</div>
+                ${satsReward ? `<div class="celebration-reward-item">💰 +${satsReward} Sats</div>` : ''}
+            </div>
+        </div>
+    `;
+    questCard.appendChild(celebration);
+    
+    // Remove particles after animation
+    setTimeout(() => {
+        rewards.forEach(p => p.remove());
+        celebration.remove();
+    }, 2000);
 }
 
 /**

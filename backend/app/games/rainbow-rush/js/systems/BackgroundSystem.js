@@ -110,6 +110,32 @@ export class BackgroundSystem {
                 type: 'cloud'
             });
         }
+        
+        // Flying birds
+        for (let i = 0; i < 5; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.4,
+                speed: 40 + Math.random() * 30,
+                wingPhase: Math.random() * Math.PI * 2,
+                size: 4 + Math.random() * 3,
+                color: [0.2, 0.2, 0.2, 0.6],
+                type: 'bird'
+            });
+        }
+        
+        // Sun rays
+        for (let i = 0; i < 3; i++) {
+            this.layers.push({
+                x: this.canvasWidth * 0.8,
+                y: this.canvasHeight * 0.15,
+                angle: (i * Math.PI / 6) - Math.PI / 12,
+                length: 150 + i * 30,
+                width: 40,
+                color: [1.0, 0.95, 0.7, 0.15],
+                type: 'sunray'
+            });
+        }
     }
     
     initOcean() {
@@ -131,14 +157,42 @@ export class BackgroundSystem {
         }
         
         // Bubbles
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 25; i++) {
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * (0.6 + Math.random() * 0.4),
-                radius: 3 + Math.random() * 5,
-                speed: 20 + Math.random() * 30,
-                color: [0.8, 0.9, 1.0, 0.4],
+                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.5,
+                radius: 2 + Math.random() * 4,
+                speed: 20 + Math.random() * 40,
+                wobble: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 1.0, 0.4],
                 type: 'bubble'
+            });
+        }
+        
+        // Fish swimming
+        for (let i = 0; i < 4; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3,
+                speed: 30 + Math.random() * 25,
+                size: 8 + Math.random() * 6,
+                swimPhase: Math.random() * Math.PI * 2,
+                color: [0.9, 0.5, 0.2, 0.7],
+                type: 'fish'
+            });
+        }
+        
+        // Seaweed/coral
+        for (let i = 0; i < 5; i++) {
+            this.layers.push({
+                x: (i + 0.5) * this.canvasWidth / 5,
+                y: this.canvasHeight * 0.8,
+                height: 60 + Math.random() * 40,
+                width: 8 + Math.random() * 6,
+                swayPhase: Math.random() * Math.PI * 2,
+                color: [0.1, 0.6 - i * 0.08, 0.4, 0.6],
+                type: 'seaweed',
+                speed: 0.5 + Math.random() * 0.5
             });
         }
     }
@@ -164,7 +218,7 @@ export class BackgroundSystem {
         }
         
         // Sand particles
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 30; i++) {
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
@@ -172,6 +226,32 @@ export class BackgroundSystem {
                 speed: 30 + Math.random() * 40,
                 color: [0.9, 0.8, 0.5, 0.5],
                 type: 'sand'
+            });
+        }
+        
+        // Heat waves
+        for (let i = 0; i < 4; i++) {
+            this.layers.push({
+                y: this.canvasHeight * (0.4 + i * 0.1),
+                amplitude: 5 + i * 2,
+                frequency: 0.02 + i * 0.005,
+                speed: 2 + i * 0.5,
+                offset: 0,
+                color: [1.0, 0.9, 0.7, 0.15 - i * 0.03],
+                type: 'heatwave'
+            });
+        }
+        
+        // Sand dunes in background
+        for (let i = 0; i < 3; i++) {
+            this.layers.push({
+                x: i * this.canvasWidth / 2,
+                y: this.canvasHeight * 0.65,
+                width: 300 + Math.random() * 200,
+                height: 40 + Math.random() * 30,
+                color: [0.88 - i * 0.08, 0.73 - i * 0.08, 0.45, 0.4],
+                type: 'dune',
+                speed: 5 + i * 3
             });
         }
     }
@@ -265,15 +345,43 @@ export class BackgroundSystem {
         }
         
         // Fireflies
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 18; i++) {
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight * 0.8,
                 radius: 2,
-                speed: 15 + Math.random() * 10,
-                floatY: Math.sin(Math.random() * Math.PI * 2),
-                color: [1.0, 1.0, 0.6, 0.8],
+                speed: 15 + Math.random() * 15,
+                floatY: Math.random() * Math.PI * 2,
+                glowPhase: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 0.5, 0.8],
                 type: 'firefly'
+            });
+        }
+        
+        // Falling leaves
+        for (let i = 0; i < 12; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: 3 + Math.random() * 4,
+                speed: 15 + Math.random() * 20,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 3,
+                drift: (Math.random() - 0.5) * 30,
+                color: [0.8, 0.4 + Math.random() * 0.3, 0.1, 0.6],
+                type: 'leaf'
+            });
+        }
+        
+        // Mushrooms on ground
+        for (let i = 0; i < 6; i++) {
+            this.layers.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.85,
+                size: 6 + Math.random() * 8,
+                color: i % 2 === 0 ? [0.9, 0.3, 0.3, 0.7] : [0.8, 0.6, 0.3, 0.7],
+                type: 'mushroom',
+                speed: 8 + i * 2
             });
         }
     }
@@ -360,16 +468,46 @@ export class BackgroundSystem {
             switch (p.type) {
                 case 'cloud':
                     p.x -= p.speed * deltaTime;
-                    if (p.x + p.width < 0) {
+                    if (p.x + (p.baseSize * 3) < 0) {
                         p.x = this.canvasWidth;
                         p.y = Math.random() * this.canvasHeight * 0.6;
                     }
                     break;
                     
+                case 'bird':
+                    p.x -= p.speed * deltaTime;
+                    p.wingPhase += deltaTime * 5;
+                    if (p.x < -20) {
+                        p.x = this.canvasWidth + 20;
+                        p.y = Math.random() * this.canvasHeight * 0.4;
+                    }
+                    break;
+                    
+                case 'fish':
+                    p.x -= p.speed * deltaTime;
+                    p.swimPhase += deltaTime * 4;
+                    if (p.x < -20) {
+                        p.x = this.canvasWidth + 20;
+                        p.y = this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3;
+                    }
+                    break;
+                    
                 case 'bubble':
                     p.y -= p.speed * deltaTime;
+                    p.wobble += deltaTime * 2;
+                    p.x += Math.sin(p.wobble) * 15 * deltaTime;
                     if (p.y < this.canvasHeight * 0.3) {
                         p.y = this.canvasHeight;
+                        p.x = Math.random() * this.canvasWidth;
+                    }
+                    break;
+                    
+                case 'leaf':
+                    p.y += p.speed * deltaTime;
+                    p.x += p.drift * deltaTime;
+                    p.rotation += p.rotationSpeed * deltaTime;
+                    if (p.y > this.canvasHeight) {
+                        p.y = -10;
                         p.x = Math.random() * this.canvasWidth;
                     }
                     break;
@@ -378,7 +516,7 @@ export class BackgroundSystem {
                 case 'ember':
                     p.x -= p.speed * deltaTime;
                     if (p.type === 'ember') {
-                        p.y += p.speed * deltaTime * 0.5; // Rise up
+                        p.y -= p.speed * deltaTime * 0.5; // Rise up
                     }
                     if (p.x < 0 || (p.type === 'ember' && p.y < 0)) {
                         p.x = this.canvasWidth;

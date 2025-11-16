@@ -14,7 +14,9 @@ export class Powerup {
         this.x = x;
         this.y = y;
         this.type = type;
-        this.radius = 18;
+        this.powerupType = type; // Tipo specifico del powerup
+        this.entityType = 'powerup'; // Per il rendering
+        this.radius = 28; // Molto più grande!
         this.velocity = -120;
         this.collected = false;
         this.particleTimer = 0;

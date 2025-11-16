@@ -10,6 +10,10 @@ export class PowerupUIRenderer {
         this.canvasHeight = canvasHeight;
         this.animationTime = 0;
         
+        // Ottieni il canvas dal renderer WebGL per scrivere testo
+        this.canvas = renderer.gl.canvas;
+        this.ctx2d = null;
+        
         // Powerup bar configuration
         this.barWidth = 200;
         this.barHeight = 10;
@@ -24,19 +28,19 @@ export class PowerupUIRenderer {
                 color: [1.0, 0.84, 0.0, 1.0], // Gold
                 glowColor: [1.0, 0.95, 0.6, 0.8],
                 bgColor: [0.3, 0.25, 0.1, 0.6],
-                name: 'Shield'
+                name: '⭐ IMMORTALE'
             },
             flight: {
                 color: [0.4, 0.7, 1.0, 1.0], // Light blue
                 glowColor: [0.6, 0.85, 1.0, 0.8],
                 bgColor: [0.1, 0.2, 0.3, 0.6],
-                name: 'Flight'
+                name: '🪶 VOLO'
             },
             superJump: {
                 color: [1.0, 0.3, 0.5, 1.0], // Pink
                 glowColor: [1.0, 0.5, 0.7, 0.8],
                 bgColor: [0.3, 0.1, 0.2, 0.6],
-                name: 'Power'
+                name: '⚡ SUPER SALTO'
             }
         };
     }
@@ -47,6 +51,25 @@ export class PowerupUIRenderer {
     
     render(powerupTimers) {
         if (!powerupTimers) return;
+        
+        // Crea contesto 2D se non esiste
+        if (!this.ctx2d && this.canvas) {
+            // Crea un canvas 2D overlay temporaneo
+            this.overlayCanvas = document.createElement('canvas');
+            this.overlayCanvas.width = this.canvas.width;
+            this.overlayCanvas.height = this.canvas.height;
+            this.overlayCanvas.style.position = 'absolute';
+            this.overlayCanvas.style.top = this.canvas.offsetTop + 'px';
+            this.overlayCanvas.style.left = this.canvas.offsetLeft + 'px';
+            this.overlayCanvas.style.pointerEvents = 'none';
+            this.canvas.parentElement.appendChild(this.overlayCanvas);
+            this.ctx2d = this.overlayCanvas.getContext('2d');
+        }
+        
+        // Pulisci il canvas overlay
+        if (this.ctx2d) {
+            this.ctx2d.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        }
         
         let visibleIndex = 0;
         const powerupTypes = ['immortality', 'flight', 'superJump'];
@@ -209,6 +232,9 @@ export class PowerupUIRenderer {
             const secondsLeft = Math.ceil(timer.duration / 1000);
             this.drawTimeDigit(barX + this.barWidth + 8, yPos + 8, secondsLeft, config.color);
         }
+        
+        // Nome del powerup - grande e visibile accanto alla barra
+        this.drawPowerupName(barX + this.barWidth + 25, yPos + 5, config.name, config.color, isActive);
     }
     
     drawCircleOutline(x, y, radius, color, thickness) {
@@ -250,6 +276,22 @@ export class PowerupUIRenderer {
                 this.renderer.drawCircle(dx + 1, y + d * 2, 0.5, digitColor);
             }
         }
+    }
+    
+    drawPowerupName(x, y, text, color, isActive) {
+        if (!this.ctx2d) return;
+        
+        // Converti colore da array RGB a stringa CSS
+        const r = Math.floor(color[0] * 255);
+        const g = Math.floor(color[1] * 255);
+        const b = Math.floor(color[2] * 255);
+        const alpha = isActive ? 1.0 : 0.7;
+        
+        this.ctx2d.save();
+        this.ctx2d.font = 'bold 14px Arial';
+        this.ctx2d.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        this.ctx2d.fillText(text, x, y + 16);
+        this.ctx2d.restore();
     }
     
     updateDimensions(width, height) {

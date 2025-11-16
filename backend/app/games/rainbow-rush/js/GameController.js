@@ -5,7 +5,7 @@
 import { GameEngine } from './core/GameEngine.js';
 import { GameState, GameStates } from './core/GameState.js';
 import { Player } from './entities/Player.js';
-import { ProceduralLevelGenerator } from './systems/ProceduralLevelGenerator.js';
+import { ProceduralLevelGenerator, PlatformTypes } from './systems/ProceduralLevelGenerator.js';
 import { RenderingSystem } from './systems/RenderingSystem.js';
 import { ScoreSystem } from './systems/ScoreSystem.js';
 import { PowerupSystem, PowerupTypes, Powerup } from './systems/PowerupSystem.js';
@@ -24,7 +24,7 @@ export class GameController {
         this.audioManager = new AudioManager();
         this.inputManager = new InputManager(canvas);
         this.sdkManager = new PlatformSDKManager();
-        
+
         this.platforms = [];
         this.obstacles = [];
         this.collectibles = [];
@@ -33,7 +33,7 @@ export class GameController {
         this.levelGenerator = null;
         this.backgroundSystem = null;
         this.renderingSystem = null;
-        
+
         // Safety platform
         this.safetyPlatform = null;
         this.safetyPlatformTimer = 0;
@@ -47,81 +47,81 @@ export class GameController {
         this.rescuePlatformSpawnTimer = 0;
         this.rescuePlatformSpawnInterval = 2.0; // Spawn every 2 seconds
         this.hasSpawnedFirstRescue = false;
-        
+
         this.spawnTimer = 0;
         this.spawnInterval = 1.5;
         this.powerupSpawnTimer = 0;
         this.powerupSpawnInterval = 8; // Spawn powerup every 8 seconds
         this.platformCounter = 0;
         this.platformsPerLevel = 15; // Level up every 15 platforms
-        
+
         this.initialize();
     }
 
     async initialize() {
         // Initialize audio
         await this.audioManager.initialize();
-        
+
         // Initialize SDK
         await this.sdkManager.initialize();
-        
+
         // Get canvas dimensions
         const dims = this.engine.getCanvasDimensions();
-        
+
         // Create player
         this.player = new Player(100, dims.height / 2, dims.height);
         this.player.type = 'player';
-        
+
         // Create level generator
         this.levelGenerator = new ProceduralLevelGenerator(dims.width, dims.height);
-        
+
         // Create background system
         this.backgroundSystem = new BackgroundSystem(dims.width, dims.height);
-        
+
         // Setup initial platforms
         this.setupInitialPlatforms();
-        
+
         // Setup safety platform
         this.setupSafetyPlatform();
-        
+
         // Setup systems
         this.setupSystems();
-        
+
         // Setup input handlers
         this.setupInput();
-        
+
         // Setup score listeners
         this.setupScoreListeners();
-        
+
         // Setup powerup listeners
         this.setupPowerupListeners();
-        
+
         // Setup state listeners
         this.setupStateListeners();
-        
+
         // Show menu
         this.showMenu();
     }
 
     setupInitialPlatforms() {
         const dims = this.engine.getCanvasDimensions();
-        
+
         // Starting platform
         const startPlatform = this.levelGenerator.generatePlatform(0);
         startPlatform.x = 50;
         startPlatform.y = dims.height * 0.7;
         startPlatform.width = 200;
         this.platforms.push(startPlatform);
-        
+
         // Generate a few more platforms
         for (let i = 0; i < 5; i++) {
             this.platforms.push(this.levelGenerator.generatePlatform());
         }
     }
-    
+
     setupSafetyPlatform() {
         const dims = this.engine.getCanvasDimensions();
-        
+
         this.safetyPlatform = {
             x: dims.width / 2 - 200,
             y: dims.height - 60,
@@ -141,21 +141,22 @@ export class GameController {
         this.renderingSystem.update = (deltaTime, entities) => {
             this.updateGame(deltaTime);
             this.renderingSystem.setPowerupTimers(this.powerupSystem.getAllTimers());
+            this.renderingSystem.setPlayer(this.player);
         };
         this.engine.registerSystem(this.renderingSystem);
     }
-    
+
     setupPowerupListeners() {
         this.powerupSystem.addEventListener('activate', (type) => {
             this.player.activatePowerup(type);
             this.audioManager.playSound('powerup');
         });
-        
+
         this.powerupSystem.addEventListener('deactivate', (type) => {
             this.player.deactivatePowerup(type);
             this.audioManager.playSound('powerup_end');
         });
-        
+
         this.powerupSystem.addEventListener('ready', (type) => {
             this.audioManager.playSound('powerup_ready');
         });
@@ -172,7 +173,7 @@ export class GameController {
                 this.startGame();
             }
         });
-        
+
         this.inputManager.addEventListener('jumpRelease', (duration) => {
             if (this.gameState.isPlaying()) {
                 this.player.releaseJump(duration);
@@ -185,7 +186,7 @@ export class GameController {
             this.levelGenerator.setDifficulty(level);
             this.backgroundSystem.setLevel(level);
             this.audioManager.playSound('score');
-            
+
             // Update background color
             const bgColor = this.backgroundSystem.getBackgroundColor();
             this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
@@ -203,45 +204,45 @@ export class GameController {
 
         // Update background
         this.backgroundSystem.update(deltaTime);
-        
+
         // Update powerup system
         this.powerupSystem.update(deltaTime);
-        
+
         // Update safety platform
         this.updateSafetyPlatform(deltaTime);
-        
+
         // Update player
         this.player.update(deltaTime);
-        
+
         // Update platforms, obstacles, collectibles, powerups
         this.updateEntities(deltaTime);
-        
+
         // Check collisions
         this.checkCollisions();
-        
+
         // Spawn new entities
         this.spawnTimer += deltaTime;
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnNewPlatform();
             this.spawnTimer = 0;
         }
-        
+
         // Spawn powerups
         this.powerupSpawnTimer += deltaTime;
         if (this.powerupSpawnTimer >= this.powerupSpawnInterval) {
             this.spawnPowerup();
             this.powerupSpawnTimer = 0;
         }
-        
+
         // Update score based on distance
         this.scoreSystem.addDistance(Math.abs(this.platforms[0]?.velocity || 0) * deltaTime);
-        
+
         // Update entities for rendering
         this.updateRenderEntities();
-        
+
         // Update UI
         this.updateUI();
-        
+
         // Check if player is dead
         if (!this.player.alive) {
             this.gameOver();
@@ -250,7 +251,7 @@ export class GameController {
 
     updateSafetyPlatform(deltaTime) {
         if (!this.safetyPlatform) return;
-        
+
         if (this.safetyPlatformActive) {
             // Check if player is on safety platform
             if (this.playerOnSafetyPlatform) {
@@ -260,16 +261,16 @@ export class GameController {
                     this.hasSpawnedFirstRescue = true;
                     this.rescuePlatformSpawnTimer = 0;
                 }
-                
+
                 this.playerOnSafetyPlatformTimer += deltaTime;
                 this.rescuePlatformSpawnTimer += deltaTime;
-                
+
                 // Spawn rescue platforms every interval while on safety platform
                 if (this.rescuePlatformSpawnTimer >= this.rescuePlatformSpawnInterval) {
                     this.spawnRescuePlatforms();
                     this.rescuePlatformSpawnTimer = 0;
                 }
-                
+
                 // Start dissolving after duration
                 if (this.playerOnSafetyPlatformTimer >= this.safetyPlatformDissolveDuration) {
                     this.safetyPlatformDissolving = true;
@@ -279,11 +280,11 @@ export class GameController {
                 this.rescuePlatformSpawnTimer = 0;
                 this.hasSpawnedFirstRescue = false;
             }
-            
+
             // Handle dissolving animation
             if (this.safetyPlatformDissolving) {
                 this.safetyPlatformDissolveProgress += deltaTime * 2; // 0.5 seconds dissolve
-                
+
                 if (this.safetyPlatformDissolveProgress >= 1.0) {
                     // Platform fully dissolved
                     this.safetyPlatformActive = false;
@@ -295,7 +296,7 @@ export class GameController {
         } else {
             // Platform is respawning
             this.safetyPlatformTimer += deltaTime;
-            
+
             if (this.safetyPlatformTimer >= this.safetyPlatformRespawnTime) {
                 // Respawn platform
                 this.safetyPlatformActive = true;
@@ -307,14 +308,14 @@ export class GameController {
             }
         }
     }
-    
+
     spawnRescuePlatforms() {
         const dims = this.engine.getCanvasDimensions();
         const rescueY = dims.height - 150; // Slightly above safety platform
         const platformWidth = 80;
         const spacing = 100;
         const startX = dims.width + 50;
-        
+
         // Create 5 rescue platforms coming from the right
         for (let i = 0; i < 5; i++) {
             const platform = {
@@ -330,14 +331,14 @@ export class GameController {
             this.platforms.push(platform);
         }
     }
-    
+
     updateEntities(deltaTime) {
         const dims = this.engine.getCanvasDimensions();
-        
+
         // Update platforms with crumbling logic
         this.platforms = this.platforms.filter(platform => {
             platform.x += platform.velocity * deltaTime;
-            
+
             // Handle crumbling platforms
             if (platform.isCrumbling) {
                 platform.crumbleTimer += deltaTime;
@@ -345,22 +346,22 @@ export class GameController {
                     return false; // Remove crumbled platform
                 }
             }
-            
+
             return platform.x + platform.width > 0;
         });
-        
+
         // Update obstacles
         this.obstacles = this.obstacles.filter(obstacle => {
             obstacle.x += obstacle.velocity * deltaTime;
             return obstacle.x + obstacle.width > 0;
         });
-        
+
         // Update collectibles
         this.collectibles = this.collectibles.filter(collectible => {
             collectible.x += collectible.velocity * deltaTime;
             return collectible.x + collectible.radius > 0;
         });
-        
+
         // Update powerups
         this.powerups = this.powerups.filter(powerup => {
             powerup.update(deltaTime);
@@ -372,7 +373,7 @@ export class GameController {
         // Reset grounded state - player must be on a platform to be grounded
         this.player.isGrounded = false;
         this.playerOnSafetyPlatform = false;
-        
+
         // Safety platform collision (check first)
         if (this.safetyPlatform && this.safetyPlatformActive && !this.safetyPlatformDissolving) {
             const onSafety = this.player.checkPlatformCollision(this.safetyPlatform);
@@ -380,19 +381,19 @@ export class GameController {
                 this.playerOnSafetyPlatform = true;
             }
         }
-        
+
         // Platform collisions
         for (const platform of this.platforms) {
             this.player.checkPlatformCollision(platform);
         }
-        
+
         // Obstacle collisions
         for (const obstacle of this.obstacles) {
             if (this.player.checkObstacleCollision(obstacle)) {
                 this.audioManager.playSound('hit');
             }
         }
-        
+
         // Collectible collisions
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             if (this.player.checkCollectibleCollision(this.collectibles[i])) {
@@ -401,46 +402,52 @@ export class GameController {
                 this.audioManager.playSound('collect');
             }
         }
-        
+
         // Powerup collisions
         for (let i = this.powerups.length - 1; i >= 0; i--) {
             if (this.player.checkPowerupCollision(this.powerups[i])) {
                 const powerup = this.powerups[i];
                 powerup.collected = true;
-                
-                // Activate powerup
+
+                console.log('Power-up collected!', powerup.powerupType || powerup.type);
+
+                // Activate powerup usando il tipo corretto
+                const powerupType = powerup.powerupType || powerup.type;
                 const activated = this.powerupSystem.activatePowerup(
-                    powerup.type,
+                    powerupType,
                     powerup.duration,
                     powerup.cooldown
                 );
-                
+
+                console.log('Power-up activated:', activated);
+
                 if (activated) {
                     this.powerups.splice(i, 1);
                 }
             }
         }
+
     }
 
     spawnNewPlatform() {
         const platform = this.levelGenerator.generatePlatform();
         this.platforms.push(platform);
         this.platformCounter++;
-        
+
         // Level up based on platform count
         if (this.platformCounter >= this.platformsPerLevel) {
             this.scoreSystem.levelUp();
             this.platformCounter = 0;
         }
-        
+
         // Maybe spawn obstacle (but not on bouncy platforms)
-        if (platform.platformType !== 'BOUNCY' && this.levelGenerator.shouldGenerateObstacle()) {
+        if (platform.platformType !== PlatformTypes.BOUNCY && this.levelGenerator.shouldGenerateObstacle()) {
             const obstacle = this.levelGenerator.generateObstacle(
                 platform.x, platform.y, platform.width, platform.velocity
             );
             this.obstacles.push(obstacle);
         }
-        
+
         // Maybe spawn collectible
         if (this.levelGenerator.shouldGenerateCollectible()) {
             const collectible = this.levelGenerator.generateCollectible(
@@ -449,19 +456,19 @@ export class GameController {
             this.collectibles.push(collectible);
         }
     }
-    
+
     spawnPowerup() {
         const dims = this.engine.getCanvasDimensions();
-        
+
         // Choose random powerup type
         const types = Object.values(PowerupTypes);
         const randomType = types[Math.floor(Math.random() * types.length)];
-        
+
         // Find a platform to spawn on
-        const validPlatforms = this.platforms.filter(p => 
+        const validPlatforms = this.platforms.filter(p =>
             p.x > dims.width * 0.3 && p.x < dims.width * 0.8
         );
-        
+
         if (validPlatforms.length > 0) {
             const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
             const powerup = new Powerup(
@@ -469,9 +476,11 @@ export class GameController {
                 platform.y - 80,
                 randomType
             );
-            powerup.type = 'powerup';
+            powerup.entityType = 'powerup'; // Per il rendering
+            powerup.powerupType = randomType; // Tipo specifico del powerup
             powerup.velocity = platform.velocity;
             this.powerups.push(powerup);
+            console.log('Power-up spawned:', randomType, 'at', powerup.x, powerup.y);
         }
     }
 
@@ -481,7 +490,7 @@ export class GameController {
             this.backgroundSystem.getLayers(),
             this.backgroundSystem.getParticles()
         );
-        
+
         // Include safety platform with dissolve info
         const entities = [
             ...this.platforms,
@@ -489,7 +498,7 @@ export class GameController {
             ...this.collectibles,
             ...this.powerups
         ];
-        
+
         // Add safety platform if active or dissolving
         if (this.safetyPlatform && (this.safetyPlatformActive || this.safetyPlatformDissolving)) {
             const safetyClone = { ...this.safetyPlatform };
@@ -498,26 +507,26 @@ export class GameController {
             safetyClone.respawnProgress = this.safetyPlatformActive ? 0 : (this.safetyPlatformTimer / this.safetyPlatformRespawnTime);
             entities.push(safetyClone);
         }
-        
+
         entities.push(this.player);
-        
+
         this.engine.entities = entities;
     }
-    
+
     updateUI() {
         const stats = this.scoreSystem.getGameStats();
         const powerupTimers = this.powerupSystem.getAllTimers();
-        
-        const event = new CustomEvent('gameUpdate', { 
-            detail: { ...stats, powerupTimers } 
+
+        const event = new CustomEvent('gameUpdate', {
+            detail: { ...stats, powerupTimers }
         });
         window.dispatchEvent(event);
     }
 
     showMenu() {
         this.gameState.setState(GameStates.MENU);
-        const event = new CustomEvent('showMenu', { 
-            detail: { highScore: this.scoreSystem.getHighScore() } 
+        const event = new CustomEvent('showMenu', {
+            detail: { highScore: this.scoreSystem.getHighScore() }
         });
         window.dispatchEvent(event);
     }
@@ -533,25 +542,25 @@ export class GameController {
         this.spawnTimer = 0;
         this.powerupSpawnTimer = 0;
         this.platformCounter = 0;
-        
+
         // Reset player
         const dims = this.engine.getCanvasDimensions();
         this.player.reset(100, dims.height / 2);
-        
+
         // Reset level generator
         this.levelGenerator.lastPlatformX = 0;
         this.levelGenerator.lastPlatformY = 0;
         this.levelGenerator.setDifficulty(1);
         this.levelGenerator.resetPlatformCount();
-        
+
         // Reset background
         this.backgroundSystem.setLevel(1);
         const bgColor = this.backgroundSystem.getBackgroundColor();
         this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
-        
+
         // Setup initial platforms
         this.setupInitialPlatforms();
-        
+
         // Reset safety platform
         this.safetyPlatformActive = true;
         this.safetyPlatformDissolving = false;
@@ -559,23 +568,23 @@ export class GameController {
         this.safetyPlatformTimer = 0;
         this.playerOnSafetyPlatformTimer = 0;
         this.setupSafetyPlatform();
-        
+
         // Start game
         this.gameState.setState(GameStates.PLAYING);
         this.engine.start();
         this.audioManager.resume();
-        
+
         const event = new CustomEvent('gameStart');
         window.dispatchEvent(event);
     }
 
     async gameOver() {
         this.gameState.setState(GameStates.GAME_OVER);
-        
+
         // Submit score to platform
         const stats = this.scoreSystem.getGameStats();
         await this.sdkManager.submitScore(stats.score);
-        
+
         const event = new CustomEvent('gameOver', { detail: stats });
         window.dispatchEvent(event);
     }

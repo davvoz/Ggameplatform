@@ -95,15 +95,19 @@ export class Player {
     }
     
     updateTrailParticles(deltaTime) {
-        // Add trail particles when powerups are active
+        // Add trail particles when powerups are active (più frequenti e visibili)
         if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
-            this.trailParticles.push({
-                x: this.x + this.width / 2,
-                y: this.y + this.height / 2,
-                life: 0.5,
-                maxLife: 0.5,
-                color: this.getPowerupTrailColor()
-            });
+            // Aggiungi più particelle per frame
+            for (let i = 0; i < 2; i++) {
+                this.trailParticles.push({
+                    x: this.x + this.width / 2 + (Math.random() - 0.5) * 10,
+                    y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                    life: 0.8,
+                    maxLife: 0.8,
+                    color: this.getPowerupTrailColor(),
+                    size: 8 + Math.random() * 4
+                });
+            }
         }
         
         // Update existing particles
@@ -112,6 +116,11 @@ export class Player {
             if (this.trailParticles[i].life <= 0) {
                 this.trailParticles.splice(i, 1);
             }
+        }
+        
+        // Limita il numero di particelle per performance
+        if (this.trailParticles.length > 50) {
+            this.trailParticles.splice(0, this.trailParticles.length - 50);
         }
     }
     
@@ -203,7 +212,9 @@ export class Player {
             Math.pow(playerCenterY - powerupCenterY, 2)
         );
 
-        return distance < (this.width / 2 + powerup.radius);
+        // Raggio di collisione aumentato per facilitare la raccolta
+        const collisionRadius = this.width / 2 + powerup.radius * 1.5;
+        return distance < collisionRadius;
     }
 
     checkCollectibleCollision(collectible) {

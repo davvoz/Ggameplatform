@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, ForeignKey, JSON
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, ForeignKey, JSON, UniqueConstraint, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import json
@@ -130,7 +130,13 @@ class GameSession(Base):
 
 
 class Leaderboard(Base):
-    """Leaderboard model using SQLAlchemy ORM."""
+    """Leaderboard model using SQLAlchemy ORM.
+    
+    REGOLA FONDAMENTALE:
+    - UN solo record per utente per gioco
+    - Il record contiene il punteggio MIGLIORE (massimo)
+    - Constraint UNIQUE(user_id, game_id) garantisce questa regola
+    """
     __tablename__ = 'leaderboards'
     
     entry_id = Column(String, primary_key=True)
@@ -143,6 +149,12 @@ class Leaderboard(Base):
     # Relationships
     user = relationship("User", back_populates="leaderboard_entries")
     game = relationship("Game", back_populates="leaderboard_entries")
+    
+    # Constraints e Indici
+    __table_args__ = (
+        UniqueConstraint('user_id', 'game_id', name='uix_leaderboard_user_game'),
+        Index('idx_leaderboard_game_score', 'game_id', 'score'),
+    )
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert leaderboard entry to dictionary."""

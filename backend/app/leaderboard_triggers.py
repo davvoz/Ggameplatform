@@ -12,7 +12,12 @@ from app.models import GameSession, Leaderboard, User
 def update_leaderboard_for_session(session: Session, game_session: GameSession):
     """
     Update leaderboard when a game session is completed.
-    Maintains top N scores per game.
+    
+    REGOLA FONDAMENTALE:
+    - UN solo record per utente per gioco
+    - Il record contiene sempre il punteggio MIGLIORE (massimo)
+    - Se l'utente non ha un record: crea nuovo
+    - Se l'utente ha già un record: aggiorna SOLO se il nuovo score è maggiore
     """
     if not game_session.ended_at:
         # Session not yet ended, skip
@@ -22,27 +27,26 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
     user_id = game_session.user_id
     score = game_session.score
     
-    # Configuration: How many top scores to keep per game
-    MAX_LEADERBOARD_ENTRIES_PER_GAME = 100
-    
-    # Check if user already has an entry for this game
+    # Check if user already has an entry for this game (deve essercene max 1 per via del constraint UNIQUE)
     existing_entry = session.query(Leaderboard).filter(
         Leaderboard.game_id == game_id,
         Leaderboard.user_id == user_id
     ).first()
     
     if existing_entry:
-        # User already has a leaderboard entry for this game
+        # L'utente ha già un record per questo gioco
         if score > existing_entry.score:
-            # New high score! Update the existing entry
+            # Nuovo punteggio migliore! Aggiorna il record esistente
             print(f"🏆 New high score for user {user_id} in game {game_id}: {score} (was {existing_entry.score})")
             existing_entry.score = score
             existing_entry.created_at = datetime.utcnow().isoformat()
+            # Il rank verrà ricalcolato dopo
         else:
-            # Not a high score, no update needed
+            # Non è un punteggio migliore, nessun aggiornamento necessario
+            print(f"📊 Score {score} for user {user_id} in game {game_id} is not better than current best {existing_entry.score}")
             return
     else:
-        # User doesn't have a leaderboard entry yet, create one
+        # L'utente non ha ancora un record per questo gioco, creane uno nuovo
         print(f"🎯 New leaderboard entry for user {user_id} in game {game_id}: {score}")
         new_entry = Leaderboard(
             entry_id=f"lb_{uuid.uuid4().hex[:16]}",
@@ -54,27 +58,25 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
         )
         session.add(new_entry)
     
-    # Recalculate ranks for this game
-    recalculate_ranks_for_game(session, game_id, MAX_LEADERBOARD_ENTRIES_PER_GAME)
+    # Ricalcola i rank per questo gioco (ordina per score DESC)
+    recalculate_ranks_for_game(session, game_id)
 
 
-def recalculate_ranks_for_game(session: Session, game_id: str, max_entries: int = 100):
+def recalculate_ranks_for_game(session: Session, game_id: str):
     """
     Recalculate ranks for all entries in a specific game's leaderboard.
-    Also removes entries beyond max_entries limit.
+    
+    Ordina per score (DESC) e assegna rank sequenziali.
+    Non rimuove entry: ogni utente ha 1 solo record per gioco grazie al constraint UNIQUE.
     """
     # Get all entries for this game, ordered by score (descending)
     entries = session.query(Leaderboard).filter(
         Leaderboard.game_id == game_id
-    ).order_by(desc(Leaderboard.score)).all()
+    ).order_by(Leaderboard.score.desc()).all()
     
-    # Update ranks and remove excess entries
+    # Update ranks
     for idx, entry in enumerate(entries, start=1):
-        if idx <= max_entries:
-            entry.rank = idx
-        else:
-            # Remove entries beyond the limit
-            session.delete(entry)
+        entry.rank = idx
 
 
 def recalculate_all_ranks(session: Session):
@@ -93,11 +95,12 @@ def recalculate_all_ranks(session: Session):
 sessions_to_update = set()
 
 
-@event.listens_for(Session, 'after_flush')
-def receive_after_flush(session, flush_context):
+@event.listens_for(Session, 'after_flush_postexec')
+def receive_after_flush_postexec(session, flush_context):
     """
-    Triggered after flush completes.
+    Triggered after flush completes (post-execution phase).
     Updates leaderboard for any completed game sessions.
+    This happens after all SQL has been executed, allowing safe modifications.
     """
     global sessions_to_update
     
@@ -124,6 +127,19 @@ def receive_before_update(mapper, connection, target):
     global sessions_to_update
     
     # Check if session was just completed
+    if target.ended_at:
+        sessions_to_update.add(target)
+
+
+@event.listens_for(GameSession, 'after_insert')
+def receive_after_insert(mapper, connection, target):
+    """
+    Triggered after a GameSession is inserted.
+    Marks completed sessions for leaderboard update.
+    """
+    global sessions_to_update
+    
+    # Check if session is completed at insert time
     if target.ended_at:
         sessions_to_update.add(target)
 

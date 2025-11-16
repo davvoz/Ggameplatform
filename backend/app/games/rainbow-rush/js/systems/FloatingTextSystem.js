@@ -239,7 +239,7 @@ export class FloatingTextSystem {
         const scaledSize = fontSize * scale;
         
         // Badge GIGANTE per il floating text
-        const width = scaledSize * 6;
+        const width = scaledSize * 2;
         const height = scaledSize * 1.5;
         const startX = x - width / 2;
         const startY = y - height / 2;
@@ -292,7 +292,7 @@ export class FloatingTextSystem {
     
     addFloatingText(text, x, y, color, duration = 2.0) {
         console.log('Adding floating text:', text, 'at', x, y);
-        this.floatingTexts.push(new FloatingText(text, x, y, color, duration));
+        //this.floatingTexts.push(new FloatingText(text, x, y, color, duration));
     }
     
     clear() {

@@ -23,6 +23,15 @@ export class BackgroundSystem {
         this.layers = [];
         this.particles = [];
         
+        // Transition system
+        this.isTransitioning = false;
+        this.transitionProgress = 0;
+        this.transitionDuration = 2.5; // 2.5 seconds for smooth transition
+        this.nextTheme = null;
+        this.oldLayers = [];
+        this.oldParticles = [];
+        this.oldBaseColors = null;
+        
         this.themeSequence = [
             BackgroundThemes.SKY,
             BackgroundThemes.OCEAN,
@@ -42,9 +51,42 @@ export class BackgroundSystem {
         const newTheme = this.themeSequence[themeIndex];
         
         if (newTheme !== this.currentTheme) {
-            this.currentTheme = newTheme;
-            this.initializeTheme();
+            this.startTransition(newTheme);
         }
+    }
+    
+    startTransition(newTheme) {
+        if (this.isTransitioning) return; // Avoid overlapping transitions
+        
+        this.isTransitioning = true;
+        this.transitionProgress = 0;
+        this.nextTheme = newTheme;
+        
+        // Save old theme data
+        this.oldLayers = [...this.layers];
+        this.oldParticles = [...this.particles];
+        this.oldBaseColors = [...this.baseColors];
+        
+        // Initialize new theme (but don't switch yet)
+        const tempTheme = this.currentTheme;
+        this.currentTheme = newTheme;
+        this.initializeTheme();
+        
+        // Store new theme data separately
+        const newLayers = [...this.layers];
+        const newParticles = [...this.particles];
+        const newBaseColors = [...this.baseColors];
+        
+        // Restore old theme temporarily
+        this.currentTheme = tempTheme;
+        this.layers = this.oldLayers;
+        this.particles = this.oldParticles;
+        this.baseColors = this.oldBaseColors;
+        
+        // Store new theme for transition
+        this.newLayers = newLayers;
+        this.newParticles = newParticles;
+        this.newBaseColors = newBaseColors;
     }
     
     initializeTheme() {
@@ -461,6 +503,24 @@ export class BackgroundSystem {
     update(deltaTime) {
         this.animationTime += deltaTime;
         
+        // Handle theme transition
+        if (this.isTransitioning) {
+            this.transitionProgress += deltaTime / this.transitionDuration;
+            
+            if (this.transitionProgress >= 1.0) {
+                // Transition complete
+                this.isTransitioning = false;
+                this.transitionProgress = 1.0;
+                this.currentTheme = this.nextTheme;
+                this.layers = this.newLayers;
+                this.particles = this.newParticles;
+                this.baseColors = this.newBaseColors;
+                this.oldLayers = [];
+                this.oldParticles = [];
+                this.oldBaseColors = null;
+            }
+        }
+        
         // Update particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
@@ -585,15 +645,81 @@ export class BackgroundSystem {
     }
     
     getBackgroundColor() {
-        return this.baseColors[0];
+        if (!this.isTransitioning || !this.oldBaseColors || !this.newBaseColors) {
+            return this.baseColors[0];
+        }
+        
+        // Smooth easing function (ease-in-out)
+        const t = this.transitionProgress < 0.5 
+            ? 2 * this.transitionProgress * this.transitionProgress 
+            : 1 - Math.pow(-2 * this.transitionProgress + 2, 2) / 2;
+        
+        // Interpolate between old and new background colors
+        const oldColor = this.oldBaseColors[0];
+        const newColor = this.newBaseColors[0];
+        
+        return [
+            oldColor[0] + (newColor[0] - oldColor[0]) * t,
+            oldColor[1] + (newColor[1] - oldColor[1]) * t,
+            oldColor[2] + (newColor[2] - oldColor[2]) * t,
+            1.0
+        ];
     }
     
     getLayers() {
-        return this.layers;
+        if (!this.isTransitioning) {
+            return this.layers;
+        }
+        
+        // During transition, blend old and new layers
+        const t = this.transitionProgress;
+        const fadeOutLayers = this.oldLayers.map(layer => {
+            const fadedLayer = { ...layer };
+            if (fadedLayer.color) {
+                fadedLayer.color = [...fadedLayer.color];
+                fadedLayer.color[3] *= (1 - t); // Fade out old layers
+            }
+            return fadedLayer;
+        });
+        
+        const fadeInLayers = this.newLayers.map(layer => {
+            const fadedLayer = { ...layer };
+            if (fadedLayer.color) {
+                fadedLayer.color = [...fadedLayer.color];
+                fadedLayer.color[3] *= t; // Fade in new layers
+            }
+            return fadedLayer;
+        });
+        
+        return [...fadeOutLayers, ...fadeInLayers];
     }
     
     getParticles() {
-        return this.particles;
+        if (!this.isTransitioning) {
+            return this.particles;
+        }
+        
+        // During transition, blend old and new particles
+        const t = this.transitionProgress;
+        const fadeOutParticles = this.oldParticles.map(particle => {
+            const fadedParticle = { ...particle };
+            if (fadedParticle.color) {
+                fadedParticle.color = [...fadedParticle.color];
+                fadedParticle.color[3] *= (1 - t); // Fade out old particles
+            }
+            return fadedParticle;
+        });
+        
+        const fadeInParticles = this.newParticles.map(particle => {
+            const fadedParticle = { ...particle };
+            if (fadedParticle.color) {
+                fadedParticle.color = [...fadedParticle.color];
+                fadedParticle.color[3] *= t; // Fade in new particles
+            }
+            return fadedParticle;
+        });
+        
+        return [...fadeOutParticles, ...fadeInParticles];
     }
     
     getCurrentTheme() {

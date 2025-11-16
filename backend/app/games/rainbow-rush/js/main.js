@@ -75,7 +75,6 @@ class RainbowRushApp {
         window.addEventListener('gameOver', (e) => this.showGameOver(e.detail));
         window.addEventListener('gameStart', () => this.showGameHUD());
         window.addEventListener('showMenu', (e) => this.showMenuScreen(e.detail));
-        window.addEventListener('showLeaderboard', (e) => this.updateLeaderboard(e.detail));
     }
 
     setupWindowListeners() {
@@ -143,33 +142,6 @@ class RainbowRushApp {
         this.updateElement('score-display', stats.score);
         this.updateElement('level-display', stats.level);
         this.updateElement('collectibles-display', stats.collectibles);
-    }
-
-    updateLeaderboard(entries) {
-        const leaderboardList = document.getElementById('leaderboard-list');
-        if (!leaderboardList) return;
-
-        leaderboardList.innerHTML = '';
-
-        if (!entries || entries.length === 0) {
-            leaderboardList.innerHTML = '<p style="opacity: 0.6;">No leaderboard data yet</p>';
-            return;
-        }
-
-        entries.forEach((entry, index) => {
-            const div = document.createElement('div');
-            div.className = 'leaderboard-entry';
-            if (entry.isCurrentUser) {
-                div.classList.add('current-user');
-            }
-
-            div.innerHTML = `
-                <span>${index + 1}. ${entry.username || 'Player'}</span>
-                <span>${entry.score}</span>
-            `;
-
-            leaderboardList.appendChild(div);
-        });
     }
 
     updateElement(id, value) {

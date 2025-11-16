@@ -337,37 +337,6 @@ body {
     color: #FFD700;
 }
 
-#leaderboard-container {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 1.5rem;
-    border-radius: 15px;
-    margin: 2rem 0;
-}
-
-#leaderboard-container h3 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-}
-
-#leaderboard-list {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.leaderboard-entry {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 5px;
-}
-
-.leaderboard-entry.current-user {
-    background: rgba(255, 215, 0, 0.2);
-    border: 2px solid #FFD700;
-}
-
 /* Loading Screen */
 #loading-screen {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

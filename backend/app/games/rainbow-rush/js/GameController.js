@@ -55,6 +55,9 @@ export class GameController {
         this.powerupSpawnInterval = 8; // Spawn powerup every 8 seconds
         this.platformCounter = 0;
         this.platformsPerLevel = 15; // Level up every 15 platforms
+        
+        // Level up animation
+        this.levelUpAnimation = null;
 
         this.initialize();
     }
@@ -187,11 +190,26 @@ export class GameController {
             this.levelGenerator.setDifficulty(level);
             this.backgroundSystem.setLevel(level);
             this.audioManager.playSound('score');
-
-            // Update background color
-            const bgColor = this.backgroundSystem.getBackgroundColor();
-            this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
+            
+            // Show "LEVEL UP!" message
+            const dims = this.engine.getCanvasDimensions();
+            this.showLevelUpAnimation(level, dims.width / 2, dims.height / 3);
         });
+    }
+    
+    showLevelUpAnimation(level, x, y) {
+        // Create a temporary level up indicator
+        this.levelUpAnimation = {
+            text: `✨ LEVEL ${level} ✨`,
+            x: x,
+            y: y,
+            life: 2.5, // Match transition duration
+            maxLife: 2.5,
+            fontSize: 80,
+            pulsePhase: 0,
+            color: [1.0, 0.9, 0.2, 1.0], // Golden color
+            scale: 0
+        };
     }
 
     setupStateListeners() {
@@ -203,8 +221,35 @@ export class GameController {
     updateGame(deltaTime) {
         if (!this.gameState.isPlaying()) return;
 
-        // Update background
+        // Update background (includes transition handling)
         this.backgroundSystem.update(deltaTime);
+        
+        // Update background color during transition
+        const bgColor = this.backgroundSystem.getBackgroundColor();
+        this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
+        
+        // Update level up animation
+        if (this.levelUpAnimation) {
+            this.levelUpAnimation.life -= deltaTime;
+            this.levelUpAnimation.pulsePhase += deltaTime * 5;
+            
+            // Scale animation: grow quickly, then shrink slowly
+            const progress = 1 - (this.levelUpAnimation.life / this.levelUpAnimation.maxLife);
+            if (progress < 0.2) {
+                // Grow phase (0 to 1.2)
+                this.levelUpAnimation.scale = (progress / 0.2) * 1.2;
+            } else if (progress < 0.8) {
+                // Stable phase (1.2 to 1.0)
+                this.levelUpAnimation.scale = 1.2 - ((progress - 0.2) / 0.6) * 0.2;
+            } else {
+                // Shrink phase (1.0 to 0)
+                this.levelUpAnimation.scale = 1.0 - ((progress - 0.8) / 0.2);
+            }
+            
+            if (this.levelUpAnimation.life <= 0) {
+                this.levelUpAnimation = null;
+            }
+        }
 
         // Update powerup system
         this.powerupSystem.update(deltaTime);
@@ -517,6 +562,9 @@ export class GameController {
             this.backgroundSystem.getLayers(),
             this.backgroundSystem.getParticles()
         );
+        
+        // Pass level up animation to rendering system
+        this.renderingSystem.setLevelUpAnimation(this.levelUpAnimation);
 
         // Include safety platform with dissolve info
         const entities = [
@@ -571,6 +619,7 @@ export class GameController {
         this.spawnTimer = 0;
         this.powerupSpawnTimer = 0;
         this.platformCounter = 0;
+        this.levelUpAnimation = null;
 
         // Reset player
         const dims = this.engine.getCanvasDimensions();
@@ -619,10 +668,7 @@ export class GameController {
     }
 
     async onGameOver() {
-        // Show leaderboard
-        const leaderboard = await this.sdkManager.getLeaderboard();
-        const event = new CustomEvent('showLeaderboard', { detail: leaderboard });
-        window.dispatchEvent(event);
+        // Game over handling - leaderboard removed
     }
 
     pauseGame() {

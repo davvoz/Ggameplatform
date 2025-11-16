@@ -9,6 +9,10 @@ export class AudioManager {
         this.masterVolume = 0.5;
         this.initialized = false;
         this.enabled = true;
+        this.backgroundMusic = null;
+        this.backgroundMusicGain = null;
+        this.musicVolume = 0.3;
+        this.musicPlaying = false;
     }
 
     async initialize() {
@@ -17,16 +21,74 @@ export class AudioManager {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.generateSounds();
+            await this.loadBackgroundMusic();
             this.initialized = true;
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
             this.enabled = false;
         }
     }
+    
+    async loadBackgroundMusic() {
+        try {
+            const response = await fetch('./assets/background_music.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            this.backgroundMusic = await this.audioContext.decodeAudioData(arrayBuffer);
+            console.log('Background music loaded successfully');
+        } catch (error) {
+            console.warn('Failed to load background music:', error);
+        }
+    }
+    
+    playBackgroundMusic() {
+        if (!this.enabled || !this.audioContext || !this.backgroundMusic || this.musicPlaying) return;
+        
+        try {
+            // Create gain node for volume control
+            this.backgroundMusicGain = this.audioContext.createGain();
+            this.backgroundMusicGain.gain.value = this.musicVolume;
+            this.backgroundMusicGain.connect(this.audioContext.destination);
+            
+            // Create and configure source
+            const source = this.audioContext.createBufferSource();
+            source.buffer = this.backgroundMusic;
+            source.loop = true;
+            source.connect(this.backgroundMusicGain);
+            
+            // Store reference for stopping
+            this.musicSource = source;
+            
+            source.start(0);
+            this.musicPlaying = true;
+            console.log('Background music started');
+        } catch (error) {
+            console.warn('Failed to play background music:', error);
+        }
+    }
+    
+    stopBackgroundMusic() {
+        if (this.musicSource && this.musicPlaying) {
+            try {
+                this.musicSource.stop();
+                this.musicPlaying = false;
+                console.log('Background music stopped');
+            } catch (error) {
+                console.warn('Failed to stop background music:', error);
+            }
+        }
+    }
+    
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        if (this.backgroundMusicGain) {
+            this.backgroundMusicGain.gain.value = this.musicVolume;
+        }
+    }
 
     generateSounds() {
         // Generate procedural sound effects
         this.sounds.set('jump', this.createJumpSound.bind(this));
+        this.sounds.set('land', this.createLandSound.bind(this));
         this.sounds.set('collect', this.createCollectSound.bind(this));
         this.sounds.set('hit', this.createHitSound.bind(this));
         this.sounds.set('score', this.createScoreSound.bind(this));
@@ -58,6 +120,28 @@ export class AudioManager {
 
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.1);
+    }
+    
+    createLandSound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        // Suono più grave e corto per l'atterraggio (thud)
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(150, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.08);
+
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.25, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.08);
     }
 
     createCollectSound() {
@@ -341,6 +425,11 @@ export class AudioManager {
     resume() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             this.audioContext.resume();
+        }
+        
+        // Start background music if not already playing
+        if (!this.musicPlaying) {
+            this.playBackgroundMusic();
         }
     }
 }

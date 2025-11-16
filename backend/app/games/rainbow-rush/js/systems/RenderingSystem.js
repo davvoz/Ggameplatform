@@ -15,8 +15,18 @@ export class RenderingSystem {
         this.powerupTimers = null;
         this.player = null;
         this.levelUpAnimation = null;
+        this.comboAnimation = null;
+        this.floatingTexts = [];
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        
+        // Canvas 2D per testo
+        this.textCanvas = document.getElementById('textCanvas');
+        if (this.textCanvas) {
+            this.textCanvas.width = canvasWidth;
+            this.textCanvas.height = canvasHeight;
+            this.textCtx = this.textCanvas.getContext('2d');
+        }
     }
 
     setBackground(layers, particles) {
@@ -35,12 +45,25 @@ export class RenderingSystem {
     setLevelUpAnimation(animation) {
         this.levelUpAnimation = animation;
     }
+    
+    setComboAnimation(animation) {
+        this.comboAnimation = animation;
+    }
+    
+    setFloatingTexts(texts) {
+        this.floatingTexts = texts;
+    }
 
     update(deltaTime, entities) {
         this.powerupUIRenderer.update(deltaTime);
     }
 
     render(gl, entities) {
+        // Pulisci text canvas
+        if (this.textCtx) {
+            this.textCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        }
+        
         // Render background layers first
         this.renderBackgroundLayers();
         this.renderBackgroundParticles();
@@ -57,6 +80,16 @@ export class RenderingSystem {
                 this.powerupUIRenderer.setPlayerHealth(this.player.health, this.player.maxHealth);
             }
             this.powerupUIRenderer.render(this.powerupTimers);
+        }
+        
+        // Render floating texts
+        for (const text of this.floatingTexts) {
+            this.renderFloatingText(text);
+        }
+        
+        // Render combo animation
+        if (this.comboAnimation) {
+            this.renderComboAnimation(this.comboAnimation);
         }
 
         // Render level up animation on top of everything
@@ -192,6 +225,120 @@ export class RenderingSystem {
             this.drawRect(charX, charY, charWidth, fontSize, textColor);
         }
     }
+    
+    renderComboAnimation(animation) {
+        if (!animation || !this.textCtx) return;
+        
+        const alpha = animation.life / animation.maxLife;
+        const x = animation.x;
+        const y = animation.floatY;
+        const fontSize = animation.fontSize * animation.scale;
+        
+        // Alone colorato pulsante (WebGL)
+        const glowSize = fontSize * 1.5;
+        const glowColor = [...animation.color];
+        glowColor[3] = alpha * 0.3 * (0.7 + Math.sin(animation.pulsePhase) * 0.3);
+        
+        for (let i = 0; i < 3; i++) {
+            const size = glowSize + i * 15;
+            const layerAlpha = glowColor[3] / (i + 1);
+            const layerColor = [...animation.color];
+            layerColor[3] = layerAlpha;
+            this.renderer.drawCircle(x + 80, y + fontSize/2, size, layerColor);
+        }
+        
+        // Sfondo scuro (WebGL)
+        const bgWidth = this.textCtx.measureText(animation.text).width + 40;
+        const bgColor = [0.05, 0.05, 0.15, alpha * 0.85];
+        this.renderer.drawRect(x - 10, y - 10, bgWidth + 20, fontSize + 20, bgColor);
+        
+        // Bordo colorato (WebGL)
+        const borderColor = [...animation.color];
+        borderColor[3] = alpha;
+        this.renderer.drawRect(x - 10, y - 10, bgWidth + 20, 3, borderColor);
+        this.renderer.drawRect(x - 10, y + fontSize + 7, bgWidth + 20, 3, borderColor);
+        this.renderer.drawRect(x - 10, y - 10, 3, fontSize + 20, borderColor);
+        this.renderer.drawRect(x + bgWidth + 7, y - 10, 3, fontSize + 20, borderColor);
+        
+        // TESTO VERO con Canvas 2D
+        this.textCtx.save();
+        this.textCtx.globalAlpha = alpha;
+        this.textCtx.font = `bold ${fontSize}px Arial, sans-serif`;
+        this.textCtx.textAlign = 'left';
+        this.textCtx.textBaseline = 'top';
+        
+        // Ombra
+        this.textCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.textCtx.fillText(animation.text, x + 2, y + 2);
+        
+        // Testo principale
+        const rgbColor = `rgb(${animation.color[0] * 255}, ${animation.color[1] * 255}, ${animation.color[2] * 255})`;
+        this.textCtx.fillStyle = rgbColor;
+        this.textCtx.fillText(animation.text, x, y);
+        
+        this.textCtx.restore();
+        
+        // Barra progresso combo timer (WebGL)
+        const combo = animation.combo;
+        if (combo >= 2) {
+            const barWidth = bgWidth;
+            const barHeight = 4;
+            const barY = y + fontSize + 15;
+            
+            // Background barra
+            this.renderer.drawRect(x, barY, barWidth, barHeight, [0.2, 0.2, 0.2, alpha * 0.6]);
+            
+            // Barra colorata
+            const progress = animation.life / animation.maxLife;
+            const barColor = progress > 0.3 ? [...animation.color] : [1.0, 0.3, 0.0, alpha];
+            this.renderer.drawRect(x, barY, barWidth * progress, barHeight, barColor);
+        }
+        
+        // Particelle scintillanti (WebGL)
+        const time = Date.now() / 1000;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + time * 3;
+            const radius = fontSize * 0.8;
+            const px = x + bgWidth/2 + Math.cos(angle) * radius;
+            const py = y + fontSize/2 + Math.sin(angle) * radius;
+            const sparkleSize = 3 + Math.sin(time * 5 + i) * 1.5;
+            const sparkleColor = [...animation.color];
+            sparkleColor[3] = alpha * (0.6 + Math.sin(time * 8 + i) * 0.4);
+            this.renderer.drawCircle(px, py, sparkleSize, sparkleColor);
+        }
+    }
+    
+    renderFloatingText(text) {
+        if (!text || !this.textCtx) return;
+        
+        const alpha = text.alpha;
+        const fontSize = text.fontSize;
+        
+        // TESTO VERO con Canvas 2D
+        this.textCtx.save();
+        this.textCtx.globalAlpha = alpha;
+        this.textCtx.font = `bold ${fontSize}px Arial, sans-serif`;
+        this.textCtx.textAlign = 'center';
+        this.textCtx.textBaseline = 'middle';
+        
+        // Alone glow
+        this.textCtx.shadowColor = `rgba(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255}, ${alpha * 0.8})`;
+        this.textCtx.shadowBlur = 10;
+        
+        // Ombra
+        this.textCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        this.textCtx.fillText(text.text, text.x + 2, text.y + 2);
+        
+        // Reset shadow
+        this.textCtx.shadowBlur = 0;
+        
+        // Testo principale
+        const rgbColor = `rgb(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255})`;
+        this.textCtx.fillStyle = rgbColor;
+        this.textCtx.fillText(text.text, text.x, text.y);
+        
+        this.textCtx.restore();
+    }
 
     renderEntity(entity) {
         const entityType = entity.entityType || entity.type;
@@ -211,11 +358,17 @@ export class RenderingSystem {
             case 'heart':
                 this.renderHeart(entity);
                 break;
+            case 'boost':
+                this.renderBoost(entity);
+                break;
             case 'powerup':
                 this.renderPowerup(entity);
                 break;
             case 'powerupParticle':
                 this.renderPowerupParticle(entity);
+                break;
+            case 'boostParticle':
+                this.renderBoostParticle(entity);
                 break;
             case 'spike':
             case 'enemy':
@@ -524,6 +677,70 @@ export class RenderingSystem {
                     this.renderer.drawRect(baseX + platform.width * 0.35, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
                     this.renderer.drawRect(baseX + platform.width * 0.65, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
                     break;
+                    
+                case PlatformTypes.SPRING:
+                    glowColor = [1.0, 0.5, 1.0, 0.7];
+                    const springTime = platform.springAnimationTime || 0;
+                    const compression = platform.springCompression || 0;
+                    
+                    // Animazione molla compressa - MOLLE PIÙ STRETTE E ALTE
+                    const numCoils = 8; // Aumentato da 6 a 8 per più densità
+                    const coilSpacing = platform.width / (numCoils + 1);
+                    const baseCoilHeight = platform.height * 1.2; // Aumentato da 0.6 a 1.2 (più alte)
+                    
+                    for (let i = 0; i < numCoils; i++) {
+                        const coilX = baseX + coilSpacing * (i + 1);
+                        const oscillation = Math.sin(springTime * 8 + i * 0.5) * 2;
+                        
+                        // Altezza molla con compressione
+                        const coilHeight = baseCoilHeight * (1 - compression * 0.7) + oscillation;
+                        const coilY = baseY + platform.height - coilHeight;
+                        
+                        // Molla con gradiente (chiaro -> scuro)
+                        const topColor = [1.0, 0.6, 1.0, 1.0];
+                        const bottomColor = [0.8, 0.3, 0.8, 1.0];
+                        
+                        // Molle molto strette per look più professionale
+                        const coilWidth = 1.8;
+                        
+                        // Top half
+                        this.renderer.drawRect(coilX - coilWidth/2, coilY, coilWidth, coilHeight * 0.5, topColor);
+                        // Bottom half
+                        this.renderer.drawRect(coilX - coilWidth/2, coilY + coilHeight * 0.5, coilWidth, coilHeight * 0.5, bottomColor);
+                        
+                        // Highlight sulla molla (più stretto)
+                        this.renderer.drawRect(coilX - 0.6, coilY + 1, 1.2, coilHeight * 0.3, [1.0, 1.0, 1.0, 0.5]);
+                    }
+                    
+                    // Energia accumulata (più compressa = più energia)
+                    if (compression > 0.3) {
+                        const energyPulse = Math.sin(springTime * 15) * 0.5 + 0.5;
+                        const energyColor = [1.0, 1.0, 0.3, compression * 0.8 * energyPulse];
+                        this.renderer.drawRect(baseX, baseY - 3, platform.width, 3, energyColor);
+                        
+                        // Particelle energia
+                        for (let i = 0; i < 3; i++) {
+                            const px = baseX + platform.width * (0.25 + i * 0.25);
+                            const py = baseY - 5 - Math.sin(springTime * 10 + i) * 8 * compression;
+                            this.renderer.drawCircle(px, py, 2, [1.0, 1.0, 0.5, compression * energyPulse]);
+                        }
+                    }
+                    
+                    // Frecce "su" per indicare rimbalzo
+                    const arrowCount = 3;
+                    for (let i = 0; i < arrowCount; i++) {
+                        const arrowX = baseX + platform.width * (0.25 + i * 0.25);
+                        const arrowY = baseY - 15 - Math.sin(springTime * 4 + i * 2) * 5;
+                        const arrowAlpha = 0.7 + Math.sin(springTime * 6 + i) * 0.3;
+                        const arrowColor = [1.0, 0.7, 1.0, arrowAlpha];
+                        
+                        // Freccia verso l'alto (triangolo)
+                        this.renderer.drawRect(arrowX - 4, arrowY, 8, 2, arrowColor);
+                        this.renderer.drawRect(arrowX - 3, arrowY - 2, 6, 2, arrowColor);
+                        this.renderer.drawRect(arrowX - 2, arrowY - 4, 4, 2, arrowColor);
+                        this.renderer.drawRect(arrowX - 1, arrowY - 6, 2, 2, arrowColor);
+                    }
+                    break;
 
                 case 'RESCUE':
                     // Laser effect - elaborate rescue platform visualization
@@ -588,8 +805,24 @@ export class RenderingSystem {
 
     renderPlayer(player) {
         const centerX = player.x + player.width / 2;
-        const centerY = player.y + player.height / 2;
-        const radius = player.width / 2;
+        // Applica offset idle per animazione di respirazione
+        const idleOffset = player.getIdleOffset ? player.getIdleOffset() : 0;
+        const centerY = player.y + player.height / 2 + idleOffset;
+        
+        // Ottieni squash/stretch e rotazione
+        const squashStretch = player.getSquashStretch ? player.getSquashStretch() : { squash: 0, stretch: 0 };
+        const rotation = player.getRotation ? player.getRotation() : 0;
+        const cameraShake = player.getCameraShake ? player.getCameraShake() : { x: 0, y: 0 };
+        
+        // Applica camera shake alla posizione
+        const shakenX = centerX + cameraShake.x;
+        const shakenY = centerY + cameraShake.y;
+        
+        // Calcola dimensioni con squash & stretch (minimo per forma tonda)
+        const baseRadius = player.width / 2;
+        const radiusX = baseRadius * (1 + squashStretch.squash * 0.1 - squashStretch.stretch * 0.05);
+        const radiusY = baseRadius * (1 - squashStretch.squash * 0.1 + squashStretch.stretch * 0.05);
+        const avgRadius = (radiusX + radiusY) / 2;
 
         // Render trail particles first
         const trailParticles = player.getTrailParticles();
@@ -597,25 +830,43 @@ export class RenderingSystem {
             const alpha = particle.life / particle.maxLife;
             const particleColor = [...particle.color];
             particleColor[3] = alpha * 0.7;
-            this.renderer.drawCircle(particle.x, particle.y, 12, particleColor);
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 12, particleColor);
+        }
+        
+        // Render boost particles
+        if (player.boostActive && player.getBoostParticles) {
+            const boostParticles = player.getBoostParticles();
+            for (const particle of boostParticles) {
+                const alpha = particle.life / particle.maxLife;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.9;
+                
+                // Glow
+                const glowColor = [...particle.color];
+                glowColor[3] = alpha * 0.3;
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size * 2, glowColor);
+                
+                // Particle
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size, particleColor);
+            }
         }
 
         // FLASH ROSSO quando danneggiato
         if (player.damageFlash && player.damageFlash > 0) {
             const flashIntensity = Math.min(player.damageFlash * 2, 1.0);
             const redFlash = [1.0, 0.1, 0.1, flashIntensity * 0.6];
-            this.renderer.drawCircle(centerX, centerY, radius * 2.5, redFlash);
+            this.renderer.drawCircle(centerX, centerY, avgRadius * 2.5, redFlash);
 
             // Flash rosso intenso sul player
             const redOverlay = [1.0, 0.2, 0.2, flashIntensity * 0.8];
-            this.renderer.drawCircle(centerX, centerY, radius * 1.5, redOverlay);
+            this.renderer.drawCircle(centerX, centerY, avgRadius * 1.5, redOverlay);
         }
 
         if (!player.alive) {
             // Render dead state with fade
             const fadedColor = [...player.color];
             fadedColor[3] = 0.3;
-            this.renderer.drawCircle(centerX, centerY, radius, fadedColor);
+            this.renderer.drawCircle(centerX, centerY, avgRadius, fadedColor);
         } else {
             // Determina il power-up attivo
             const activePowerups = [];
@@ -635,20 +886,20 @@ export class RenderingSystem {
                     const outerGlowSize = 50 * pulse;
                     const outerGlow = [...powerup.color];
                     outerGlow[3] = 0.25 * pulse;
-                    this.renderer.drawCircle(centerX, centerY, radius + outerGlowSize, outerGlow);
+                    this.renderer.drawCircle(centerX, centerY, avgRadius + outerGlowSize, outerGlow);
 
                     // 2. ALONE MEDIO
                     const midGlowSize = 30 * fastPulse;
                     const midGlow = [...powerup.color];
                     midGlow[3] = 0.4 * fastPulse;
-                    this.renderer.drawCircle(centerX, centerY, radius + midGlowSize, midGlow);
+                    this.renderer.drawCircle(centerX, centerY, avgRadius + midGlowSize, midGlow);
 
                     // 3. CONTORNO COLORATO SPESSO
                     const borderThickness = 5;
                     for (let i = 0; i < borderThickness; i++) {
                         const borderColor = [...powerup.color];
                         borderColor[3] = 0.8 - (i * 0.15);
-                        this.renderer.drawCircle(centerX, centerY, radius + 8 + i, borderColor);
+                        this.renderer.drawCircle(centerX, centerY, avgRadius + 8 + i, borderColor);
                     }
 
                     // 4. PARTICELLE ORBITANTI GRANDI (più visibili)
@@ -673,8 +924,8 @@ export class RenderingSystem {
                     for (let i = 0; i < 6; i++) {
                         const rayAngle = rotationOffset * 0.7 + (i * Math.PI * 2 / 6);
                         const rayLength = 25 + Math.sin(player.animationTime * 6 + i) * 8;
-                        const rayEndX = centerX + Math.cos(rayAngle) * (radius + rayLength);
-                        const rayEndY = centerY + Math.sin(rayAngle) * (radius + rayLength);
+                        const rayEndX = centerX + Math.cos(rayAngle) * (avgRadius + rayLength);
+                        const rayEndY = centerY + Math.sin(rayAngle) * (avgRadius + rayLength);
 
                         const rayColor = [...powerup.color];
                         rayColor[3] = 0.6 * pulse;
@@ -704,6 +955,32 @@ export class RenderingSystem {
             } else if (player.powerups.superJump) {
                 bodyColor = [1.0, 0.4, 0.7, 1.0]; // Rosa vivace
             }
+            
+            // BOOST ATTIVO - alone cyan pulsante
+            if (player.boostActive) {
+                const boostPulse = Math.abs(Math.sin(player.animationTime * 10)) * 0.5 + 0.5;
+                
+                // Enormi aloni cyan
+                const boostGlow1 = [0.0, 1.0, 0.9, boostPulse * 0.4];
+                const boostGlow2 = [0.0, 0.8, 1.0, boostPulse * 0.3];
+                
+                this.renderer.drawCircle(centerX, centerY, avgRadius * 4, boostGlow1);
+                this.renderer.drawCircle(centerX, centerY, avgRadius * 2.5, boostGlow2);
+                
+                // Strisce di velocità dietro
+                for (let i = 0; i < 5; i++) {
+                    const lineX = centerX - avgRadius - i * 15;
+                    const lineLength = 20 + i * 5;
+                    const lineAlpha = (1 - i * 0.15) * boostPulse;
+                    const lineColor = [0.0, 1.0, 0.9, lineAlpha];
+                    
+                    this.renderer.drawRect(lineX - lineLength, centerY - 2, lineLength, 4, lineColor);
+                }
+                
+                // Tint cyan sul corpo
+                const cyanTint = [0.0, 1.0, 0.9, 0.3 * boostPulse];
+                this.renderer.drawCircle(centerX, centerY, avgRadius * 1.3, cyanTint);
+            }
 
             // Flickering durante invulnerabilità
             if (player.invulnerable) {
@@ -713,62 +990,141 @@ export class RenderingSystem {
                 }
             }
 
-            // Ombra sotto il corpo
+            // Ombra sotto il corpo (ellittica con squash)
             const shadowColor = [0.0, 0.0, 0.0, 0.3];
-            this.renderer.drawCircle(centerX + 2, centerY + 3, radius, shadowColor);
+            this.renderer.drawCircle(shakenX + 2, shakenY + 3 + radiusY * 0.3, radiusX * 1.1, shadowColor);
 
-            // Corpo principale arrotondato
-            this.renderer.drawCircle(centerX, centerY, radius, bodyColor);
+            // Corpo principale - QUADRATO
+            const size = player.width;
+            const rectX = shakenX - size / 2;
+            const rectY = shakenY - size / 2;
+            this.renderer.drawRect(rectX, rectY, size, size, bodyColor);
 
             // Highlight per dare profondità
             const highlightColor = [1.0, 1.0, 1.0, 0.4];
-            this.renderer.drawCircle(centerX - 4, centerY - 4, radius * 0.4, highlightColor);
+            this.renderer.drawCircle(shakenX - size * 0.2, shakenY - size * 0.2, size * 0.2, highlightColor);
 
-            // OCCHI GRANDI E ESPRESSIVI
-            const eyeY = centerY - 3;
-            const eyeSize = 6;
+            // OCCHI GRANDI E ESPRESSIVI con diverse espressioni
+            const expression = player.getExpression ? player.getExpression() : 'happy';
+            const isBlinking = player.isEyeBlinking ? player.isEyeBlinking() : false;
+            
+            let eyeY = shakenY - radiusY * 0.2;
+            let eyeSize = 6;
+            let pupilOffsetX = 0;
+            let pupilOffsetY = 0;
+            let pupilSize = 3;
+            
+            // Modifica occhi in base all'espressione
+            switch(expression) {
+                case 'worried':
+                    eyeSize = 7; // Occhi più grandi quando preoccupato
+                    pupilSize = 4;
+                    pupilOffsetY = 2; // Pupille verso il basso
+                    break;
+                case 'excited':
+                    eyeSize = 8; // Occhi molto aperti
+                    pupilSize = 4;
+                    break;
+                case 'surprised':
+                    eyeSize = 9; // Occhi spalancati
+                    pupilSize = 5;
+                    break;
+                case 'determined':
+                    eyeSize = 5; // Occhi più stretti, concentrato
+                    pupilSize = 3;
+                    pupilOffsetY = -1;
+                    break;
+                case 'happy':
+                default:
+                    eyeSize = 6;
+                    pupilSize = 3;
+                    break;
+            }
 
-            // Bianchi degli occhi con contorno
-            const eyeWhite = [1.0, 1.0, 1.0, 1.0];
-            const eyeOutline = [0.0, 0.0, 0.0, 0.4];
+            if (!isBlinking) {
+                // Bianchi degli occhi con contorno
+                const eyeWhite = [1.0, 1.0, 1.0, 1.0];
+                const eyeOutline = [0.0, 0.0, 0.0, 0.4];
 
-            // Occhio sinistro
-            this.renderer.drawCircle(centerX - 7, eyeY, eyeSize + 1, eyeOutline);
-            this.renderer.drawCircle(centerX - 7, eyeY, eyeSize, eyeWhite);
+                // Occhio sinistro
+                this.renderer.drawCircle(shakenX - 7, eyeY, eyeSize + 1, eyeOutline);
+                this.renderer.drawCircle(shakenX - 7, eyeY, eyeSize, eyeWhite);
 
-            // Occhio destro
-            this.renderer.drawCircle(centerX + 7, eyeY, eyeSize + 1, eyeOutline);
-            this.renderer.drawCircle(centerX + 7, eyeY, eyeSize, eyeWhite);
+                // Occhio destro
+                this.renderer.drawCircle(shakenX + 7, eyeY, eyeSize + 1, eyeOutline);
+                this.renderer.drawCircle(shakenX + 7, eyeY, eyeSize, eyeWhite);
 
-            // Pupille grandi
-            const pupilColor = [0.0, 0.0, 0.0, 1.0];
-            const pupilSize = 3;
-            this.renderer.drawCircle(centerX - 7, eyeY, pupilSize, pupilColor);
-            this.renderer.drawCircle(centerX + 7, eyeY, pupilSize, pupilColor);
+                // Pupille
+                const pupilColor = [0.0, 0.0, 0.0, 1.0];
+                this.renderer.drawCircle(shakenX - 7 + pupilOffsetX, eyeY + pupilOffsetY, pupilSize, pupilColor);
+                this.renderer.drawCircle(shakenX + 7 + pupilOffsetX, eyeY + pupilOffsetY, pupilSize, pupilColor);
 
-            // Riflessi negli occhi
-            const glintColor = [1.0, 1.0, 1.0, 0.8];
-            this.renderer.drawCircle(centerX - 8, eyeY - 1, 1.5, glintColor);
-            this.renderer.drawCircle(centerX + 6, eyeY - 1, 1.5, glintColor);
+                // Riflessi negli occhi
+                const glintColor = [1.0, 1.0, 1.0, 0.8];
+                this.renderer.drawCircle(shakenX - 8, eyeY - 1, 1.5, glintColor);
+                this.renderer.drawCircle(shakenX + 6, eyeY - 1, 1.5, glintColor);
+            } else {
+                // Occhi chiusi (blink) - linee orizzontali
+                const blinkColor = [0.0, 0.0, 0.0, 0.8];
+                this.renderer.drawRect(shakenX - 10, eyeY, 6, 2, blinkColor);
+                this.renderer.drawCircle(shakenX - 7, eyeY, 3, blinkColor);
+                this.renderer.drawRect(shakenX + 4, eyeY, 6, 2, blinkColor);
+                this.renderer.drawCircle(shakenX + 7, eyeY, 3, blinkColor);
+            }
 
-            // BOCCA ESPRESSIVA
-            const mouthY = centerY + 8;
+            // BOCCA ESPRESSIVA in base all'espressione
+            const mouthY = shakenY + radiusY * 0.4;
             const mouthColor = [0.0, 0.0, 0.0, 0.7];
 
-            if (!player.isGrounded && player.velocityY > 0) {
-                // Faccia preoccupata quando cade (bocca "O")
-                this.renderer.drawCircle(centerX, mouthY, 4, mouthColor);
-                const innerMouth = [0.4, 0.2, 0.2, 1.0];
-                this.renderer.drawCircle(centerX, mouthY, 3, innerMouth);
-            } else {
-                // Sorriso felice (semicerchio fatto con cerchi)
-                for (let i = 0; i < 7; i++) {
-                    const angle = Math.PI * 0.2 + (i * Math.PI * 0.6 / 6);
-                    const smileRadius = 8;
-                    const sx = centerX + Math.cos(angle) * smileRadius;
-                    const sy = mouthY + Math.sin(angle) * smileRadius * 0.6;
-                    this.renderer.drawCircle(sx, sy, 1.5, mouthColor);
-                }
+            switch(expression) {
+                case 'worried':
+                    // Bocca preoccupata (curva verso il basso)
+                    for (let i = 0; i < 7; i++) {
+                        const t = i / 6;
+                        const angle = Math.PI * 0.7 + (t * Math.PI * 0.6);
+                        const smileRadius = 8;
+                        const sx = shakenX + Math.cos(angle) * smileRadius;
+                        const sy = mouthY + 3 + Math.sin(angle) * smileRadius * 0.6;
+                        this.renderer.drawCircle(sx, sy, 1.5, mouthColor);
+                    }
+                    break;
+                    
+                case 'excited':
+                    // Bocca molto felice (grande sorriso)
+                    for (let i = 0; i < 9; i++) {
+                        const t = i / 8;
+                        const angle = Math.PI * 0.15 + (t * Math.PI * 0.7);
+                        const smileRadius = 10;
+                        const sx = shakenX + Math.cos(angle) * smileRadius;
+                        const sy = mouthY + Math.sin(angle) * smileRadius * 0.7;
+                        this.renderer.drawCircle(sx, sy, 2, mouthColor);
+                    }
+                    break;
+                    
+                case 'surprised':
+                    // Bocca "O" sorpresa
+                    this.renderer.drawCircle(shakenX, mouthY + 2, 5, mouthColor);
+                    const innerMouth = [0.4, 0.2, 0.2, 1.0];
+                    this.renderer.drawCircle(shakenX, mouthY + 2, 4, innerMouth);
+                    break;
+                    
+                case 'determined':
+                    // Bocca determinata (linea dritta)
+                    this.renderer.drawRect(shakenX - 6, mouthY, 12, 2, mouthColor);
+                    break;
+                    
+                case 'happy':
+                default:
+                    // Sorriso normale
+                    for (let i = 0; i < 7; i++) {
+                        const t = i / 6;
+                        const angle = Math.PI * 0.2 + (t * Math.PI * 0.6);
+                        const smileRadius = 8;
+                        const sx = shakenX + Math.cos(angle) * smileRadius;
+                        const sy = mouthY + Math.sin(angle) * smileRadius * 0.6;
+                        this.renderer.drawCircle(sx, sy, 1.5, mouthColor);
+                    }
+                    break;
             }
 
             // ANIMAZIONI EXTRA quando ha power-up
@@ -889,6 +1245,148 @@ export class RenderingSystem {
             const sparkleSize = 2.5 + Math.sin(time * 5 + i) * 1;
             this.renderer.drawCircle(px, py, sparkleSize, sparkleColor);
         }
+    }
+
+    renderBoost(boost) {
+        const time = Date.now() / 1000;
+        const pulse = Math.abs(Math.sin(boost.pulsePhase + time * 5)) * 0.4 + 0.6;
+        const currentRadius = boost.radius * pulse;
+        
+        // ENORME alone pulsante esterno
+        for (let i = 0; i < 4; i++) {
+            const auraSize = currentRadius * (4.5 - i * 0.7);
+            const auraColor = [...boost.color];
+            auraColor[3] = (0.35 - i * 0.08) * pulse;
+            this.renderer.drawCircle(boost.x, boost.y, auraSize, auraColor);
+        }
+        
+        // Render trail particles
+        for (const particle of boost.trailParticles) {
+            const alpha = particle.life / particle.maxLife;
+            const pColor = [...particle.color];
+            pColor[3] = alpha * 0.6;
+            this.renderer.drawCircle(particle.x, particle.y, particle.size, pColor);
+        }
+        
+        // Anello rotante esterno
+        const ringCount = 8;
+        for (let i = 0; i < ringCount; i++) {
+            const angle = boost.rotationAngle + (i * Math.PI * 2 / ringCount);
+            const ringRadius = currentRadius * 2.3;
+            const rx = boost.x + Math.cos(angle) * ringRadius;
+            const ry = boost.y + Math.sin(angle) * ringRadius;
+            const ringColor = [0.3, 1.0, 1.0, 0.9 * pulse];
+            this.renderer.drawCircle(rx, ry, 7, ringColor);
+        }
+        
+        // Corpo principale - forma di FRECCIA verso destra
+        const arrowWidth = currentRadius * 2.5;
+        const arrowHeight = currentRadius * 1.8;
+        const arrowX = boost.x - arrowWidth * 0.3;
+        const arrowY = boost.y;
+        
+        // Corpo freccia (rettangolo)
+        const bodyColor = [...boost.color];
+        this.renderer.drawRect(
+            arrowX - arrowWidth * 0.3,
+            arrowY - arrowHeight * 0.25,
+            arrowWidth * 0.6,
+            arrowHeight * 0.5,
+            bodyColor
+        );
+        
+        // Punta freccia (triangolo fatto con rettangoli degradanti)
+        const tipSteps = 6;
+        for (let i = 0; i < tipSteps; i++) {
+            const stepWidth = arrowWidth * 0.4 * (1 - i / tipSteps);
+            const stepHeight = arrowHeight * (1 - i / tipSteps) * 0.5;
+            const stepX = arrowX + arrowWidth * 0.3 + i * (arrowWidth * 0.15);
+            
+            this.renderer.drawRect(
+                stepX,
+                arrowY - stepHeight / 2,
+                arrowWidth * 0.15,
+                stepHeight,
+                bodyColor
+            );
+        }
+        
+        // Glow bianco interno
+        const innerGlow = [1.0, 1.0, 1.0, 0.9];
+        this.renderer.drawRect(
+            arrowX - arrowWidth * 0.2,
+            arrowY - arrowHeight * 0.15,
+            arrowWidth * 0.4,
+            arrowHeight * 0.3,
+            innerGlow
+        );
+        
+        // Linee di velocità dietro la freccia
+        const speedLineCount = 4;
+        for (let i = 0; i < speedLineCount; i++) {
+            const lineX = arrowX - arrowWidth * 0.5 - i * 12;
+            const lineLength = 15 + i * 5;
+            const lineY = arrowY + (Math.random() - 0.5) * arrowHeight * 0.6;
+            const lineAlpha = (1 - i * 0.2) * pulse;
+            const lineColor = [...boost.color];
+            lineColor[3] = lineAlpha;
+            
+            this.renderer.drawRect(lineX - lineLength, lineY, lineLength, 3, lineColor);
+        }
+        
+        // Particelle scintillanti orbitanti
+        const sparkleCount = 6;
+        for (let i = 0; i < sparkleCount; i++) {
+            const angle = -boost.rotationAngle * 1.8 + (i * Math.PI * 2 / sparkleCount);
+            const distance = currentRadius * 1.9;
+            const sx = boost.x + Math.cos(angle) * distance;
+            const sy = boost.y + Math.sin(angle) * distance;
+            
+            const sparkleSize = 4 + Math.sin(time * 7 + i) * 2;
+            const sparkleColor = [1.0, 1.0, 1.0, 0.9 * pulse];
+            
+            // Glow sparkle
+            const sparkleGlow = [...boost.color];
+            sparkleGlow[3] = 0.5;
+            this.renderer.drawCircle(sx, sy, sparkleSize * 2, sparkleGlow);
+            
+            // Sparkle
+            this.renderer.drawCircle(sx, sy, sparkleSize, sparkleColor);
+        }
+        
+        // Testo "BOOST" al centro (simulato con rettangoli)
+        const textScale = 0.6;
+        const charHeight = 8 * textScale;
+        const charSpacing = 6 * textScale;
+        const textStartX = arrowX - arrowWidth * 0.15;
+        const textColor = [0.0, 0.2, 0.2, 1.0];
+        
+        // Disegna lettere stilizzate ">>" per indicare velocità
+        for (let i = 0; i < 2; i++) {
+            const baseX = textStartX + i * charSpacing * 2;
+            // Simbolo ">" stilizzato
+            this.renderer.drawRect(baseX, arrowY - charHeight * 0.3, charSpacing, 2, textColor);
+            this.renderer.drawRect(baseX, arrowY + charHeight * 0.3, charSpacing, 2, textColor);
+            this.renderer.drawRect(baseX + charSpacing * 0.7, arrowY, 2, charHeight * 0.6, textColor);
+        }
+    }
+    
+    renderBoostParticle(particle) {
+        const alpha = particle.life / particle.maxLife;
+        const color = [...particle.color];
+        color[3] *= alpha;
+        
+        // Glow
+        const glowColor = [...color];
+        glowColor[3] *= 0.4;
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 2.5, glowColor);
+        
+        // Particle
+        this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
+        
+        // Bright core
+        const coreColor = [1.0, 1.0, 1.0, alpha * 0.7];
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.4, coreColor);
     }
 
     renderPowerup(powerup) {
@@ -1042,6 +1540,40 @@ export class RenderingSystem {
         this.canvasWidth = width;
         this.canvasHeight = height;
         this.powerupUIRenderer.updateDimensions(width, height);
+        
+        // Ridimensiona text canvas
+        if (this.textCanvas) {
+            this.textCanvas.width = width;
+            this.textCanvas.height = height;
+        }
+    }
+    
+    drawLine(x1, y1, x2, y2, color, width) {
+        // Simula linea con rettangolo sottile
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        // Approssimazione semplice
+        const steps = Math.ceil(length / 5);
+        for (let i = 0; i < steps; i++) {
+            const t = i / steps;
+            const x = x1 + dx * t;
+            const y = y1 + dy * t;
+            this.renderer.drawRect(x, y, width, width, color);
+        }
+    }
+    
+    drawRect(x, y, width, height, color) {
+        this.renderer.drawRect(x, y, width, height, color);
+    }
+    
+    drawStar(x, y, size, color) {
+        // Stella a 4 punte
+        this.renderer.drawCircle(x, y, size, color);
+        this.renderer.drawRect(x - size * 1.5, y - 1, size * 3, 2, color);
+        this.renderer.drawRect(x - 1, y - size * 1.5, 2, size * 3, color);
     }
 
     renderSafetyPlatform(platform) {

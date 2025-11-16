@@ -9,7 +9,14 @@ export const PlatformTypes = {
     FAST: 'fast',
     SLOW: 'slow',
     BOUNCY: 'bouncy',
-    CRUMBLING: 'crumbling'
+    CRUMBLING: 'crumbling',
+    SPRING: 'spring'
+};
+
+// Bonus types for collectibles
+export const BonusTypes = {
+    BOOST: 'boost',
+    MAGNET: 'magnet'
 };
 
 export class ProceduralLevelGenerator {
@@ -111,14 +118,16 @@ export class ProceduralLevelGenerator {
         const difficultyFactor = Math.min(this.difficulty, 1.0);
         
         // Higher difficulty = more varied platforms
-        if (rand < 0.5 - difficultyFactor * 0.1) {
+        if (rand < 0.45 - difficultyFactor * 0.1) {
             return PlatformTypes.NORMAL;
-        } else if (rand < 0.65) {
+        } else if (rand < 0.6) {
             return PlatformTypes.FAST;
-        } else if (rand < 0.8) {
+        } else if (rand < 0.73) {
             return PlatformTypes.SLOW;
-        } else if (rand < 0.9) {
+        } else if (rand < 0.83) {
             return PlatformTypes.BOUNCY;
+        } else if (rand < 0.92) {
+            return PlatformTypes.SPRING; // Nuove molle!
         } else {
             return PlatformTypes.CRUMBLING;
         }
@@ -152,6 +161,12 @@ export class ProceduralLevelGenerator {
                 height = this.platformHeight;
                 break;
                 
+            case PlatformTypes.SPRING:
+                velocity = -this.baseSpeed * this.difficulty;
+                color = [1.0, 0.4, 0.9, 1.0]; // Vivid magenta/purple
+                height = this.platformHeight * 1.3; // Leggermente più alta
+                break;
+                
             default: // NORMAL
                 velocity = -this.baseSpeed * this.difficulty;
                 color = baseColor;
@@ -168,10 +183,12 @@ export class ProceduralLevelGenerator {
             platformType,
             velocity,
             originalVelocity: velocity,
-            bounceMultiplier: platformType === PlatformTypes.BOUNCY ? 1.3 : 1.0,
+            bounceMultiplier: platformType === PlatformTypes.BOUNCY ? 1.3 : (platformType === PlatformTypes.SPRING ? 2.5 : 1.0),
             crumbleTimer: 0,
             crumbleDuration: 1.0, // 1 second before crumbling
-            isCrumbling: false
+            isCrumbling: false,
+            springCompression: 0, // Per animazione compressione molla
+            springAnimationTime: 0
         };
     }
 
@@ -235,6 +252,29 @@ export class ProceduralLevelGenerator {
     shouldGenerateHeart() {
         // 12% chance di generare cuoricini
         return this.random(0, 1) < 0.12;
+    }
+    
+    shouldGenerateBoost() {
+        // 30% chance di generare boost (aumentato per più combo)
+        return this.random(0, 1) < 0.30;
+    }
+    
+    generateBoost(platformX, platformY, platformWidth, platformVelocity) {
+        const x = platformX + this.random(platformWidth * 0.25, platformWidth * 0.75);
+        const y = platformY - 65;
+        
+        return {
+            x,
+            y,
+            radius: 18,
+            type: 'boost',
+            bonusType: BonusTypes.BOOST,
+            color: [0.0, 1.0, 0.9, 1.0], // Cyan brillante
+            velocity: platformVelocity,
+            pulsePhase: this.random(0, Math.PI * 2),
+            rotationAngle: 0,
+            trailParticles: []
+        };
     }
     
     generateHeart(platformX, platformY, platformWidth, platformVelocity) {

@@ -290,6 +290,106 @@ body {
     backdrop-filter: blur(10px);
 }
 
+/* Pause Screen */
+#pause-screen {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+}
+
+.pause-content {
+    text-align: center;
+    color: white;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+}
+
+.pause-title {
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.volume-controls {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.volume-item {
+    margin-bottom: 1.5rem;
+}
+
+.volume-item:last-child {
+    margin-bottom: 0;
+}
+
+.volume-label {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    font-weight: bold;
+    color: #FFD700;
+}
+
+.volume-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.volume-slider {
+    flex: 1;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.volume-value {
+    min-width: 45px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    text-align: right;
+}
+
 .gameover-content {
     text-align: center;
     color: white;

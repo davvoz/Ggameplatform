@@ -500,7 +500,7 @@ export class BackgroundSystem {
         }
     }
     
-    update(deltaTime) {
+    update(deltaTime, cameraSpeed = 0) {
         this.animationTime += deltaTime;
         
         // Handle theme transition
@@ -521,13 +521,13 @@ export class BackgroundSystem {
             }
         }
         
-        // Update particles
+        // Update particles (con effetto parallasse camera)
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             
             switch (p.type) {
                 case 'cloud':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     if (p.x + (p.baseSize * 3) < 0) {
                         p.x = this.canvasWidth;
                         p.y = Math.random() * this.canvasHeight * 0.6;
@@ -535,7 +535,7 @@ export class BackgroundSystem {
                     break;
                     
                 case 'bird':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     p.wingPhase += deltaTime * 5;
                     if (p.x < -20) {
                         p.x = this.canvasWidth + 20;
@@ -544,7 +544,7 @@ export class BackgroundSystem {
                     break;
                     
                 case 'fish':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     p.swimPhase += deltaTime * 4;
                     if (p.x < -20) {
                         p.x = this.canvasWidth + 20;
@@ -556,6 +556,7 @@ export class BackgroundSystem {
                     p.y -= p.speed * deltaTime;
                     p.wobble += deltaTime * 2;
                     p.x += Math.sin(p.wobble) * 15 * deltaTime;
+                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
                     if (p.y < this.canvasHeight * 0.3) {
                         p.y = this.canvasHeight;
                         p.x = Math.random() * this.canvasWidth;
@@ -565,6 +566,7 @@ export class BackgroundSystem {
                 case 'leaf':
                     p.y += p.speed * deltaTime;
                     p.x += p.drift * deltaTime;
+                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
                     p.rotation += p.rotationSpeed * deltaTime;
                     if (p.y > this.canvasHeight) {
                         p.y = -10;
@@ -574,7 +576,7 @@ export class BackgroundSystem {
                     
                 case 'sand':
                 case 'ember':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     if (p.type === 'ember') {
                         p.y -= p.speed * deltaTime * 0.5; // Rise up
                     }
@@ -585,7 +587,7 @@ export class BackgroundSystem {
                     break;
                     
                 case 'star':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     p.twinkle += deltaTime * 2;
                     if (p.x < 0) {
                         p.x = this.canvasWidth;
@@ -594,7 +596,7 @@ export class BackgroundSystem {
                     break;
                     
                 case 'firefly':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     p.y += Math.sin(this.animationTime * 2 + p.floatY) * 0.5;
                     if (p.x < 0) {
                         p.x = this.canvasWidth;
@@ -605,6 +607,7 @@ export class BackgroundSystem {
                 case 'snowflake':
                     p.y += p.speed * deltaTime;
                     p.x += p.drift * deltaTime;
+                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
                     if (p.y > this.canvasHeight) {
                         p.y = 0;
                         p.x = Math.random() * this.canvasWidth;
@@ -612,7 +615,7 @@ export class BackgroundSystem {
                     break;
                     
                 case 'shootingStar':
-                    p.x -= p.speed * deltaTime;
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
                     p.y += p.speed * deltaTime * 0.3;
                     if (p.x < -p.length) {
                         this.particles.splice(i, 1);
@@ -625,16 +628,16 @@ export class BackgroundSystem {
         if (this.currentTheme === BackgroundThemes.OCEAN) {
             this.layers.forEach(layer => {
                 if (layer.type === 'wave') {
-                    layer.offset = (layer.offset || 0) + layer.speed * deltaTime;
+                    layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.5) * deltaTime;
                 }
             });
         }
         
-        // Update pyramids and volcano layers
+        // Update pyramids and volcano layers con parallasse
         if (this.currentTheme === BackgroundThemes.PYRAMIDS || this.currentTheme === BackgroundThemes.VOLCANO) {
             this.layers.forEach(layer => {
                 if ((layer.type === 'pyramid' || layer.type === 'volcano') && layer.speed) {
-                    layer.x -= layer.speed * deltaTime;
+                    layer.x -= (layer.speed + cameraSpeed * 0.4) * deltaTime;
                     // Wrap around when off screen
                     if (layer.x + layer.width < 0) {
                         layer.x = this.canvasWidth + Math.random() * 100;

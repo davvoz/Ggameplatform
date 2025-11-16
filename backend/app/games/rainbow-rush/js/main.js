@@ -65,7 +65,31 @@ class RainbowRushApp {
         // Pause button
         const pauseButton = document.getElementById('pause-button');
         if (pauseButton) {
-            pauseButton.addEventListener('click', () => this.togglePause());
+            pauseButton.addEventListener('click', () => this.showPauseMenu());
+        }
+        
+        // Resume button
+        const resumeButton = document.getElementById('resume-button');
+        if (resumeButton) {
+            resumeButton.addEventListener('click', () => this.resumeGame());
+        }
+        
+        // Pause menu button
+        const pauseMenuButton = document.getElementById('pause-menu-button');
+        if (pauseMenuButton) {
+            pauseMenuButton.addEventListener('click', () => this.showMenu());
+        }
+        
+        // Volume sliders
+        const sfxSlider = document.getElementById('sfx-volume');
+        const musicSlider = document.getElementById('music-volume');
+        
+        if (sfxSlider) {
+            sfxSlider.addEventListener('input', (e) => this.updateSFXVolume(e.target.value));
+        }
+        
+        if (musicSlider) {
+            musicSlider.addEventListener('input', (e) => this.updateMusicVolume(e.target.value));
         }
     }
 
@@ -182,6 +206,48 @@ class RainbowRushApp {
             if (pauseButton) {
                 pauseButton.textContent = '▶️';
             }
+        }
+    }
+    
+    showPauseMenu() {
+        if (this.gameController && this.gameController.gameState.isPlaying()) {
+            this.gameController.pauseGame();
+            const pauseScreen = document.getElementById('pause-screen');
+            if (pauseScreen) {
+                pauseScreen.classList.add('active');
+            }
+        }
+    }
+    
+    resumeGame() {
+        if (this.gameController) {
+            this.gameController.resumeGame();
+            const pauseScreen = document.getElementById('pause-screen');
+            if (pauseScreen) {
+                pauseScreen.classList.remove('active');
+            }
+        }
+    }
+    
+    updateSFXVolume(value) {
+        const volume = value / 100;
+        if (this.gameController && this.gameController.audioManager) {
+            this.gameController.audioManager.setVolume(volume);
+        }
+        const valueDisplay = document.querySelector('#sfx-volume + .volume-value');
+        if (valueDisplay) {
+            valueDisplay.textContent = `${value}%`;
+        }
+    }
+    
+    updateMusicVolume(value) {
+        const volume = value / 100;
+        if (this.gameController && this.gameController.audioManager) {
+            this.gameController.audioManager.setMusicVolume(volume);
+        }
+        const valueDisplay = document.querySelector('#music-volume + .volume-value');
+        if (valueDisplay) {
+            valueDisplay.textContent = `${value}%`;
         }
     }
 

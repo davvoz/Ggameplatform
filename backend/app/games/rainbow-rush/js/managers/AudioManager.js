@@ -96,6 +96,13 @@ export class AudioManager {
         this.sounds.set('powerup_end', this.createPowerupEndSound.bind(this));
         this.sounds.set('powerup_ready', this.createPowerupReadySound.bind(this));
         
+        // Gamification sounds
+        this.sounds.set('perfect_land', this.createPerfectLandSound.bind(this));
+        this.sounds.set('streak', this.createStreakSound.bind(this));
+        this.sounds.set('achievement', this.createAchievementSound.bind(this));
+        this.sounds.set('near_miss', this.createNearMissSound.bind(this));
+        this.sounds.set('combo_break', this.createComboBreakSound.bind(this));
+        
         // Power-up specific sounds
         this.sounds.set('powerup_immortality', this.createImmortalitySound.bind(this));
         this.sounds.set('powerup_flight', this.createFlightSound.bind(this));
@@ -402,6 +409,116 @@ export class AudioManager {
         charge.stop(ctx.currentTime + 0.4);
         sparkle.start(ctx.currentTime);
         sparkle.stop(ctx.currentTime + 0.4);
+    }
+    
+    createPerfectLandSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, this.audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.4, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.15);
+    }
+    
+    createStreakSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const osc1 = this.audioContext.createOscillator();
+        const osc2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(523, this.audioContext.currentTime);
+        osc2.frequency.setValueAtTime(659, this.audioContext.currentTime);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        
+        osc1.start(this.audioContext.currentTime);
+        osc2.start(this.audioContext.currentTime);
+        osc1.stop(this.audioContext.currentTime + 0.2);
+        osc2.stop(this.audioContext.currentTime + 0.2);
+    }
+    
+    createAchievementSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const notes = [523, 659, 784, 1047];
+        const duration = 0.15;
+        
+        notes.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            const startTime = this.audioContext.currentTime + i * 0.08;
+            gainNode.gain.setValueAtTime(this.masterVolume * 0.35, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        });
+    }
+    
+    createNearMissSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, this.audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.2, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.1);
+    }
+    
+    createComboBreakSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, this.audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.25, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.2);
     }
 
     playSound(soundName) {

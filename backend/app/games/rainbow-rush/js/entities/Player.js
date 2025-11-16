@@ -30,6 +30,11 @@ export class Player {
         this.invulnerabilityDuration = 1.5; // 1.5 secondi dopo danno
         this.damageFlash = 0;
         
+        // Shield bonus
+        this.shieldActive = false;
+        this.shieldDuration = 0;
+        this.shieldRotation = 0;
+        
         // Boost system
         this.boostActive = false;
         this.boostTimer = 0;
@@ -38,7 +43,7 @@ export class Player {
         this.boostParticles = [];
         this.boostDecelerating = false;
         this.boostDecelerationTime = 0;
-        this.boostDecelerationDuration = 1.8; // 1.8 secondi per decelerazione molto più graduale
+        this.boostDecelerationDuration = 2.5; // 2.5 secondi per decelerazione molto dolce
         this.boostPeakVelocity = 0; // Velocità di picco del boost
         
         // Powerup states
@@ -178,6 +183,16 @@ export class Player {
             }
         }
         
+        // Update shield
+        if (this.shieldActive) {
+            this.shieldDuration -= deltaTime;
+            this.shieldRotation += deltaTime * 3; // Rotazione scudo
+            if (this.shieldDuration <= 0) {
+                this.shieldActive = false;
+                this.shieldDuration = 0;
+            }
+        }
+        
         // Update damage flash
         if (this.damageFlash > 0) {
             this.damageFlash -= deltaTime;
@@ -212,14 +227,14 @@ export class Player {
             this.boostDecelerationTime += deltaTime;
             const progress = Math.min(1.0, this.boostDecelerationTime / this.boostDecelerationDuration);
             
-            // Easing cubico in uscita (easeOutCubic) - molto più morbido e graduale
+            // Easing esponenziale in uscita - decelerazione molto dolce e naturale
             const smoothEase = (t) => {
-                return 1 - Math.pow(1 - t, 3);
+                return 1 - Math.pow(2, -10 * t);
             };
             
             const easedProgress = smoothEase(progress);
             
-            // Interpola da velocità di picco a 0 con easing morbido
+            // Interpola da velocità di picco a 0 con easing molto dolce
             this.velocityX = this.boostPeakVelocity * (1 - easedProgress);
             
             // Particelle decelerazione (meno intense)
@@ -318,6 +333,9 @@ export class Player {
     }
     
     takeDamage(amount = 1) {
+        // Scudo blocca TUTTI i danni
+        if (this.shieldActive) return false;
+        
         if (this.invulnerable || this.powerups.immortality) return false;
         
         this.health = Math.max(0, this.health - amount);

@@ -20,6 +20,10 @@ export class ScoreSystem {
         this.comboMultiplier = 1.0;
         this.maxCombo = 0;
         this.comboListeners = [];
+        
+        // Bonus multiplier (da bonus speciali)
+        this.bonusMultiplier = 1.0;
+        this.bonusMultiplierDuration = 0;
     }
 
     reset() {
@@ -32,6 +36,8 @@ export class ScoreSystem {
         this.comboTimer = 0;
         this.comboMultiplier = 1.0;
         this.maxCombo = 0;
+        this.bonusMultiplier = 1.0;
+        this.bonusMultiplierDuration = 0;
     }
     
     update(deltaTime) {
@@ -40,6 +46,15 @@ export class ScoreSystem {
             this.comboTimer -= deltaTime;
             if (this.comboTimer <= 0) {
                 this.resetCombo();
+            }
+        }
+        
+        // Decrementa bonus multiplier
+        if (this.bonusMultiplierDuration > 0) {
+            this.bonusMultiplierDuration -= deltaTime;
+            if (this.bonusMultiplierDuration <= 0) {
+                this.bonusMultiplier = 1.0;
+                this.bonusMultiplierDuration = 0;
             }
         }
     }
@@ -53,8 +68,9 @@ export class ScoreSystem {
         // Reset timer
         this.comboTimer = this.comboTimeout;
         
-        // Calcola moltiplicatore combo (cresce progressivamente)
-        this.comboMultiplier = 1.0 + (this.combo * 0.1);
+        // Moltiplicatore esponenziale più generoso
+        // x1 → x1.2 → x1.5 → x2.0 → x2.6 → x3.5 → x4.5...
+        this.comboMultiplier = 1.0 + (Math.pow(this.combo, 1.3) * 0.15);
         
         // Notifica listeners
         this.notifyComboChange();
@@ -93,20 +109,24 @@ export class ScoreSystem {
     addCollectible() {
         this.collectibles++;
         this.addCombo();
-        const points = Math.floor(10 * this.multiplier * this.comboMultiplier);
+        // Rewards più generose: base 15 invece di 10
+        const points = Math.floor(15 * this.multiplier * this.comboMultiplier);
         this.addScore(points);
-        return points; // Ritorna punti per visualizzazione
+        return points;
     }
     
     addBoostCombo() {
         this.addCombo();
-        const points = Math.floor(25 * this.multiplier * this.comboMultiplier);
+        // Boost reward: base 50 invece di 25
+        const points = Math.floor(50 * this.multiplier * this.comboMultiplier);
         this.addScore(points);
         return points;
     }
 
     addScore(points) {
-        this.score += points;
+        // Applica bonus multiplier
+        const finalPoints = points * this.bonusMultiplier;
+        this.score += finalPoints;
 
         // Update high score
         if (this.score > this.highScore) {
@@ -115,6 +135,10 @@ export class ScoreSystem {
         }
 
         this.notifyScoreChange();
+    }
+    
+    addPoints(points) {
+        this.addScore(points);
     }
     
     // Called externally to level up (e.g., every N platforms)

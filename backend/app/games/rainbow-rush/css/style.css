@@ -204,46 +204,70 @@ body {
     margin: 0.5rem 0;
 }
 
-/* Game HUD */
+/* Game HUD - Single Line Layout */
 #game-hud {
     background: transparent;
     pointer-events: none;
 }
 
-.hud-top {
+.hud-single-line {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
+    top: 15px;
+    left: 15px;
+    right: 15px;
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.pause-btn {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.pause-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.05);
 }
 
 .hud-item {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
     color: white;
     font-weight: bold;
     backdrop-filter: blur(5px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .hud-label {
-    opacity: 0.8;
-    margin-right: 0.5rem;
+    opacity: 0.9;
+    font-size: 0.95rem;
 }
 
 .hud-value {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     color: #FFD700;
+    font-weight: bold;
 }
 
 .icon-button {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     background: rgba(0, 0, 0, 0.6);
     border: none;
     border-radius: 50%;

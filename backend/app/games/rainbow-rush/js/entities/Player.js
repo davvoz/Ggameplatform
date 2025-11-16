@@ -22,6 +22,14 @@ export class Player {
         this.maxFallSpeed = 600;
         this.alive = true;
         
+        // Sistema cuori/energia
+        this.maxHealth = 5;
+        this.health = 5;
+        this.invulnerable = false;
+        this.invulnerabilityTimer = 0;
+        this.invulnerabilityDuration = 1.5; // 1.5 secondi dopo danno
+        this.damageFlash = 0;
+        
         // Powerup states
         this.powerups = {
             immortality: false,
@@ -71,6 +79,19 @@ export class Player {
         if (!this.alive) return;
 
         this.animationTime += deltaTime;
+        
+        // Update invulnerabilità
+        if (this.invulnerable) {
+            this.invulnerabilityTimer -= deltaTime;
+            if (this.invulnerabilityTimer <= 0) {
+                this.invulnerable = false;
+            }
+        }
+        
+        // Update damage flash
+        if (this.damageFlash > 0) {
+            this.damageFlash -= deltaTime;
+        }
         
         // Apply gravity (reduced if flight is active)
         const currentGravity = this.powerups.flight ? this.gravity * 0.3 : this.gravity;
@@ -129,6 +150,27 @@ export class Player {
         if (this.powerups.flight) return [0.4, 0.7, 1.0, 0.8]; // Light blue
         if (this.powerups.superJump) return [1.0, 0.3, 0.5, 0.8]; // Pink
         return [1.0, 1.0, 1.0, 0.5];
+    }
+    
+    takeDamage(amount = 1) {
+        if (this.invulnerable || this.powerups.immortality) return false;
+        
+        this.health = Math.max(0, this.health - amount);
+        this.invulnerable = true;
+        this.invulnerabilityTimer = this.invulnerabilityDuration;
+        this.damageFlash = 0.5; // Flash rosso per 0.5s
+        
+        if (this.health <= 0) {
+            this.alive = false;
+        }
+        
+        return true; // Danno inflitto
+    }
+    
+    heal(amount = 1) {
+        const oldHealth = this.health;
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        return this.health > oldHealth; // True se curato
     }
 
     checkPlatformCollision(platform) {
@@ -192,8 +234,7 @@ export class Player {
             playerRight > obstacle.x &&
             this.y < obstacleBottom &&
             playerBottom > obstacle.y) {
-            this.alive = false;
-            return true;
+            return this.takeDamage(1); // Usa sistema cuori
         }
 
         return false;
@@ -247,6 +288,10 @@ export class Player {
             superJump: false
         };
         this.trailParticles = [];
+        this.health = this.maxHealth;
+        this.invulnerable = false;
+        this.invulnerabilityTimer = 0;
+        this.damageFlash = 0;
         this.currentPlatform = null;
         this.animationTime = 0;
     }

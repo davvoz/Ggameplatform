@@ -92,6 +92,80 @@ export class PowerupUIRenderer {
             this.renderPowerupBar(type, timer, config, yPos);
             visibleIndex++;
         }
+        
+        // Renderizza cuori del player (passati dall'esterno)
+        if (this.playerHealth !== undefined && this.playerMaxHealth !== undefined) {
+            this.renderHearts(this.playerHealth, this.playerMaxHealth);
+        }
+    }
+    
+    setPlayerHealth(health, maxHealth) {
+        this.playerHealth = health;
+        this.playerMaxHealth = maxHealth;
+    }
+    
+    renderHearts(health, maxHealth) {
+        const heartSize = 20;
+        const spacing = 28;
+        const startX = this.canvasWidth - (maxHealth * spacing + 20);
+        const y = 35;  // Allineato con l'header HUD singola riga
+        
+        for (let i = 0; i < maxHealth; i++) {
+            const x = startX + i * spacing;
+            const filled = i < health;
+            
+            if (filled) {
+                // Cuore pieno - rosso brillante
+                const color = [1.0, 0.1, 0.3, 1.0];
+                
+                // Glow più evidente
+                const glowColor = [...color];
+                glowColor[3] = 0.4;
+                this.renderer.drawCircle(x + heartSize/2, y, heartSize, glowColor);
+                
+                // Cuore (2 cerchi + corpo)
+                const lobeRadius = heartSize * 0.35;
+                const lobeY = y - heartSize * 0.1;
+                this.renderer.drawCircle(x + heartSize * 0.3, lobeY, lobeRadius, color);
+                this.renderer.drawCircle(x + heartSize * 0.7, lobeY, lobeRadius, color);
+                
+                // Corpo del cuore
+                this.renderer.drawRect(x + heartSize * 0.15, y, heartSize * 0.7, heartSize * 0.5, color);
+                
+                // Punta del cuore (3 rettangoli scalati)
+                for (let step = 0; step < 3; step++) {
+                    const stepWidth = heartSize * 0.7 * (1 - (step + 1) / 3);
+                    const stepY = y + heartSize * 0.5 + step * (heartSize * 0.15);
+                    this.renderer.drawRect(
+                        x + heartSize * 0.5 - stepWidth / 2,
+                        stepY,
+                        stepWidth,
+                        heartSize * 0.15,
+                        color
+                    );
+                }
+            } else {
+                // Cuore vuoto - grigio
+                const emptyColor = [0.3, 0.3, 0.3, 0.5];
+                const lobeRadius = heartSize * 0.35;
+                const lobeY = y - heartSize * 0.1;
+                this.renderer.drawCircle(x + heartSize * 0.3, lobeY, lobeRadius, emptyColor);
+                this.renderer.drawCircle(x + heartSize * 0.7, lobeY, lobeRadius, emptyColor);
+                this.renderer.drawRect(x + heartSize * 0.15, y, heartSize * 0.7, heartSize * 0.5, emptyColor);
+                
+                for (let step = 0; step < 3; step++) {
+                    const stepWidth = heartSize * 0.7 * (1 - (step + 1) / 3);
+                    const stepY = y + heartSize * 0.5 + step * (heartSize * 0.15);
+                    this.renderer.drawRect(
+                        x + heartSize * 0.5 - stepWidth / 2,
+                        stepY,
+                        stepWidth,
+                        heartSize * 0.15,
+                        emptyColor
+                    );
+                }
+            }
+        }
     }
     
     renderPowerupBar(type, timer, config, yPos) {

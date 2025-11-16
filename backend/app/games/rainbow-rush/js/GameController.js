@@ -29,6 +29,7 @@ export class GameController {
         this.obstacles = [];
         this.collectibles = [];
         this.powerups = [];
+        this.hearts = []; // Cuoricini per recuperare vita
         this.player = null;
         this.levelGenerator = null;
         this.backgroundSystem = null;
@@ -367,6 +368,14 @@ export class GameController {
             powerup.update(deltaTime);
             return powerup.x + powerup.radius > 0 && !powerup.collected;
         });
+        
+        // Update hearts (cuoricini)
+        this.hearts = this.hearts.filter(heart => {
+            heart.x += heart.velocity * deltaTime;
+            // Animazione float
+            heart.pulsePhase += deltaTime * 3;
+            return heart.x + heart.radius > 0;
+        });
     }
 
     checkCollisions() {
@@ -400,6 +409,16 @@ export class GameController {
                 this.collectibles.splice(i, 1);
                 this.scoreSystem.addCollectible();
                 this.audioManager.playSound('collect');
+            }
+        }
+        
+        // Heart collisions (cuoricini)
+        for (let i = this.hearts.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(this.hearts[i])) {
+                if (this.player.heal(1)) {
+                    this.hearts.splice(i, 1);
+                    this.audioManager.playSound('powerup'); // Suono positivo
+                }
             }
         }
 
@@ -455,6 +474,14 @@ export class GameController {
             );
             this.collectibles.push(collectible);
         }
+        
+        // Maybe spawn heart (cuoricino)
+        if (this.levelGenerator.shouldGenerateHeart()) {
+            const heart = this.levelGenerator.generateHeart(
+                platform.x, platform.y, platform.width, platform.velocity
+            );
+            this.hearts.push(heart);
+        }
     }
 
     spawnPowerup() {
@@ -496,7 +523,8 @@ export class GameController {
             ...this.platforms,
             ...this.obstacles,
             ...this.collectibles,
-            ...this.powerups
+            ...this.powerups,
+            ...this.hearts
         ];
 
         // Add safety platform if active or dissolving
@@ -537,6 +565,7 @@ export class GameController {
         this.obstacles = [];
         this.collectibles = [];
         this.powerups = [];
+        this.hearts = [];
         this.scoreSystem.reset();
         this.powerupSystem.reset();
         this.spawnTimer = 0;

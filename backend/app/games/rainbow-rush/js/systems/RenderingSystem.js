@@ -45,6 +45,10 @@ export class RenderingSystem {
         
         // Render powerup UI on top
         if (this.powerupTimers) {
+            // Passa la salute del player al renderer UI
+            if (this.player) {
+                this.powerupUIRenderer.setPlayerHealth(this.player.health, this.player.maxHealth);
+            }
             this.powerupUIRenderer.render(this.powerupTimers);
         }
     }
@@ -63,6 +67,9 @@ export class RenderingSystem {
                 break;
             case 'collectible':
                 this.renderCollectible(entity);
+                break;
+            case 'heart':
+                this.renderHeart(entity);
                 break;
             case 'powerup':
                 this.renderPowerup(entity);
@@ -397,6 +404,17 @@ export class RenderingSystem {
             this.renderer.drawCircle(particle.x, particle.y, 12, particleColor);
         }
         
+        // FLASH ROSSO quando danneggiato
+        if (player.damageFlash && player.damageFlash > 0) {
+            const flashIntensity = Math.min(player.damageFlash * 2, 1.0);
+            const redFlash = [1.0, 0.1, 0.1, flashIntensity * 0.6];
+            this.renderer.drawCircle(centerX, centerY, radius * 2.5, redFlash);
+            
+            // Flash rosso intenso sul player
+            const redOverlay = [1.0, 0.2, 0.2, flashIntensity * 0.8];
+            this.renderer.drawCircle(centerX, centerY, radius * 1.5, redOverlay);
+        }
+        
         if (!player.alive) {
             // Render dead state with fade
             const fadedColor = [...player.color];
@@ -489,6 +507,14 @@ export class RenderingSystem {
                 bodyColor = [0.5, 0.9, 1.0, 1.0]; // Azzurro cielo
             } else if (player.powerups.superJump) {
                 bodyColor = [1.0, 0.4, 0.7, 1.0]; // Rosa vivace
+            }
+            
+            // Flickering durante invulnerabilità
+            if (player.invulnerable) {
+                const flicker = Math.floor(Date.now() / 100) % 2;
+                if (flicker === 0) {
+                    bodyColor[3] = 0.4; // Semi-trasparente
+                }
             }
             
             // Ombra sotto il corpo
@@ -604,6 +630,69 @@ export class RenderingSystem {
             sparkleSize,
             sparkleColor
         );
+    }
+    
+    renderHeart(heart) {
+        // Animazione float
+        const time = Date.now() / 1000;
+        const floatY = heart.y + Math.sin(heart.pulsePhase + time * 2) * (heart.floatAmplitude || 8);
+        const pulse = Math.sin(heart.pulsePhase + time * 4) * 0.25 + 1.0;
+        const size = heart.radius * pulse;
+        
+        // ✨ ALONE ESTERNO - 3 layers di glow rosso intenso
+        const glowColor = [...heart.color];
+        for (let i = 0; i < 3; i++) {
+            glowColor[3] = (0.35 - i * 0.1) * pulse;
+            this.renderer.drawCircle(heart.x, floatY, size * (3.0 - i * 0.5), glowColor);
+        }
+        
+        // ❤️ FORMA CUORE PERFETTA
+        
+        // Top lobes (i due cerchi superiori)
+        const lobeRadius = size * 0.55;
+        const lobeOffset = size * 0.4;
+        this.renderer.drawCircle(heart.x - lobeOffset, floatY - size * 0.15, lobeRadius, heart.color);
+        this.renderer.drawCircle(heart.x + lobeOffset, floatY - size * 0.15, lobeRadius, heart.color);
+        
+        // Corpo centrale (rettangolo che connette i lobi)
+        this.renderer.drawRect(
+            heart.x - size * 0.7,
+            floatY,
+            size * 1.4,
+            size * 0.8,
+            heart.color
+        );
+        
+        // Punta del cuore (5 rettangoli a scala per formare triangolo)
+        const pointSteps = 5;
+        for (let i = 0; i < pointSteps; i++) {
+            const stepHeight = size * 0.25;
+            const stepWidth = size * 1.4 * (1 - (i + 1) / pointSteps);
+            const stepY = floatY + size * 0.8 + i * stepHeight;
+            this.renderer.drawRect(
+                heart.x - stepWidth / 2,
+                stepY,
+                stepWidth,
+                stepHeight + 2, // +2 per evitare gap
+                heart.color
+            );
+        }
+        
+        // ✨ HIGHLIGHT bianco per profondità (sui lobi)
+        const highlightColor = [1.0, 1.0, 1.0, 0.5 * pulse];
+        this.renderer.drawCircle(heart.x - lobeOffset * 0.6, floatY - size * 0.3, size * 0.2, highlightColor);
+        this.renderer.drawCircle(heart.x + lobeOffset * 0.6, floatY - size * 0.3, size * 0.2, highlightColor);
+        
+        // ⭐ SPARKLES rotanti attorno al cuore (6 particelle)
+        const sparkleColor = [1.0, 1.0, 1.0, 0.9 * pulse];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + time * 2.5;
+            const orbitRadius = size * 2.2;
+            const px = heart.x + Math.cos(angle) * orbitRadius;
+            const py = floatY + Math.sin(angle) * orbitRadius;
+            const sparkleSize = 2.5 + Math.sin(time * 5 + i) * 1;
+            this.renderer.drawCircle(px, py, sparkleSize, sparkleColor);
+        }
     }
     
     renderPowerup(powerup) {

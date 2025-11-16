@@ -28,7 +28,7 @@ export class ProceduralLevelGenerator {
         this.colors = this.generateRainbowColors();
         this.seed = Date.now();
         this.platformsGenerated = 0;
-        this.baseSpeed = 120;
+        this.baseSpeed = 180; // Aumentato da 120 a 180 per più velocità
     }
 
     generateRainbowColors() {
@@ -230,6 +230,27 @@ export class ProceduralLevelGenerator {
         // Many collectibles at start (70% at start, 50% at high difficulty)
         const threshold = 0.7 - this.difficulty * 0.2;
         return this.random(0, 1) < threshold;
+    }
+    
+    shouldGenerateHeart() {
+        // 12% chance di generare cuoricini
+        return this.random(0, 1) < 0.12;
+    }
+    
+    generateHeart(platformX, platformY, platformWidth, platformVelocity) {
+        const x = platformX + this.random(platformWidth * 0.3, platformWidth * 0.7);
+        const y = platformY - 70;
+        
+        return {
+            x,
+            y,
+            radius: 12,
+            type: 'heart',
+            color: [1.0, 0.1, 0.3, 1.0], // Rosso cuore
+            velocity: platformVelocity,
+            pulsePhase: Math.random() * Math.PI * 2,
+            floatAmplitude: 8
+        };
     }
 
     random(min, max) {

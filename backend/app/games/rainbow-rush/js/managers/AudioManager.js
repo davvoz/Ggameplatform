@@ -30,6 +30,9 @@ export class AudioManager {
         this.sounds.set('collect', this.createCollectSound.bind(this));
         this.sounds.set('hit', this.createHitSound.bind(this));
         this.sounds.set('score', this.createScoreSound.bind(this));
+        this.sounds.set('powerup', this.createPowerupSound.bind(this));
+        this.sounds.set('powerup_end', this.createPowerupEndSound.bind(this));
+        this.sounds.set('powerup_ready', this.createPowerupReadySound.bind(this));
     }
 
     createJumpSound() {
@@ -118,6 +121,78 @@ export class AudioManager {
             oscillator.start(ctx.currentTime + index * 0.08);
             oscillator.stop(ctx.currentTime + index * 0.08 + 0.15);
         });
+    }
+
+    createPowerupSound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        
+        // Magical ascending arpeggio
+        const frequencies = [440, 554.37, 659.25, 880]; // A, C#, E, A
+        
+        frequencies.forEach((freq, index) => {
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.06);
+            
+            gainNode.gain.setValueAtTime(0, ctx.currentTime + index * 0.06);
+            gainNode.gain.linearRampToValueAtTime(this.masterVolume * 0.3, ctx.currentTime + index * 0.06 + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.06 + 0.2);
+
+            oscillator.start(ctx.currentTime + index * 0.06);
+            oscillator.stop(ctx.currentTime + index * 0.06 + 0.2);
+        });
+    }
+
+    createPowerupEndSound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        
+        // Descending sound
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(600, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.3);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.2, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.3);
+    }
+
+    createPowerupReadySound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        
+        // Short ding
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.25, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.15);
     }
 
     playSound(soundName) {

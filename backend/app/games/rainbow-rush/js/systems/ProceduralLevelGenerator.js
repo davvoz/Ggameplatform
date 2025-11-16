@@ -2,6 +2,16 @@
  * ProceduralLevelGenerator - Generates platforms and obstacles procedurally
  * Implements Builder Pattern and Dependency Inversion
  */
+
+// Platform types with different speeds and behaviors
+export const PlatformTypes = {
+    NORMAL: 'normal',
+    FAST: 'fast',
+    SLOW: 'slow',
+    BOUNCY: 'bouncy',
+    CRUMBLING: 'crumbling'
+};
+
 export class ProceduralLevelGenerator {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
@@ -17,6 +27,8 @@ export class ProceduralLevelGenerator {
         this.maxJumpHeight = 200;
         this.colors = this.generateRainbowColors();
         this.seed = Date.now();
+        this.platformsGenerated = 0;
+        this.baseSpeed = 120;
     }
 
     generateRainbowColors() {
@@ -73,25 +85,97 @@ export class ProceduralLevelGenerator {
             y = Math.max(minY, Math.min(maxY, y));
         }
         
+        // Determine platform type based on difficulty and randomness
+        const platformType = this.determinePlatformType();
+        
         const colorIndex = Math.floor(this.random(0, this.colors.length));
-        const color = this.colors[colorIndex];
-
-        const platform = {
-            x,
-            y,
-            width,
-            height: this.platformHeight,
-            color,
-            type: 'platform',
-            velocity: -120 * this.difficulty // Better speed!
-        };
+        const baseColor = this.colors[colorIndex];
+        
+        // Adjust color and properties based on type
+        const platform = this.createTypedPlatform(x, y, width, platformType, baseColor);
 
         this.lastPlatformX = x;
         this.lastPlatformY = y;
+        this.platformsGenerated++;
+        
         return platform;
     }
+    
+    determinePlatformType() {
+        // First platforms are always normal
+        if (this.platformsGenerated < 5) {
+            return PlatformTypes.NORMAL;
+        }
+        
+        const rand = this.random(0, 1);
+        const difficultyFactor = Math.min(this.difficulty, 1.0);
+        
+        // Higher difficulty = more varied platforms
+        if (rand < 0.5 - difficultyFactor * 0.1) {
+            return PlatformTypes.NORMAL;
+        } else if (rand < 0.65) {
+            return PlatformTypes.FAST;
+        } else if (rand < 0.8) {
+            return PlatformTypes.SLOW;
+        } else if (rand < 0.9) {
+            return PlatformTypes.BOUNCY;
+        } else {
+            return PlatformTypes.CRUMBLING;
+        }
+    }
+    
+    createTypedPlatform(x, y, width, platformType, baseColor) {
+        let velocity, color, height;
+        
+        switch (platformType) {
+            case PlatformTypes.FAST:
+                velocity = -this.baseSpeed * this.difficulty * 1.6; // 60% faster
+                color = [baseColor[0] * 1.2, baseColor[1] * 0.8, baseColor[2] * 0.8, 1.0]; // Reddish tint
+                height = this.platformHeight;
+                break;
+                
+            case PlatformTypes.SLOW:
+                velocity = -this.baseSpeed * this.difficulty * 0.6; // 40% slower
+                color = [baseColor[0] * 0.8, baseColor[1] * 1.1, baseColor[2] * 1.1, 1.0]; // Blueish tint
+                height = this.platformHeight;
+                break;
+                
+            case PlatformTypes.BOUNCY:
+                velocity = -this.baseSpeed * this.difficulty;
+                color = [baseColor[0], baseColor[1] * 1.2, baseColor[2] * 0.9, 1.0]; // Greenish tint
+                height = this.platformHeight;
+                break;
+                
+            case PlatformTypes.CRUMBLING:
+                velocity = -this.baseSpeed * this.difficulty * 0.8;
+                color = [baseColor[0] * 0.7, baseColor[1] * 0.7, baseColor[2] * 0.7, 1.0]; // Grayish
+                height = this.platformHeight;
+                break;
+                
+            default: // NORMAL
+                velocity = -this.baseSpeed * this.difficulty;
+                color = baseColor;
+                height = this.platformHeight;
+        }
+        
+        return {
+            x,
+            y,
+            width,
+            height,
+            color,
+            type: 'platform',
+            platformType,
+            velocity,
+            originalVelocity: velocity,
+            bounceMultiplier: platformType === PlatformTypes.BOUNCY ? 1.3 : 1.0,
+            crumbleTimer: 0,
+            crumbleDuration: 1.0, // 1 second before crumbling
+            isCrumbling: false
+        };
+    }
 
-    generateObstacle(platformX, platformY, platformWidth) {
+    generateObstacle(platformX, platformY, platformWidth, platformVelocity) {
         const obstacleTypes = ['spike', 'enemy'];
         const type = obstacleTypes[Math.floor(this.random(0, obstacleTypes.length))];
         
@@ -101,17 +185,18 @@ export class ProceduralLevelGenerator {
         const obstacle = {
             x,
             y,
-            width: 12, // Reduced from 15
-            height: 20, // Reduced from 25
+            width: 12,
+            height: 20,
             type,
             color: type === 'spike' ? [0.8, 0.1, 0.1, 1.0] : [0.4, 0.1, 0.6, 1.0],
-            velocity: -120 * this.difficulty
+            velocity: platformVelocity, // Match platform speed
+            animationOffset: Math.random() * Math.PI * 2
         };
 
         return obstacle;
     }
 
-    generateCollectible(platformX, platformY, platformWidth) {
+    generateCollectible(platformX, platformY, platformWidth, platformVelocity) {
         const x = platformX + this.random(platformWidth * 0.3, platformWidth * 0.7);
         const y = platformY - 60;
         
@@ -121,9 +206,18 @@ export class ProceduralLevelGenerator {
             radius: 15,
             type: 'collectible',
             color: [1.0, 0.84, 0.0, 1.0], // Gold
-            velocity: -120 * this.difficulty,
-            value: 10
+            velocity: platformVelocity, // Match platform speed
+            value: 10,
+            pulsePhase: Math.random() * Math.PI * 2
         };
+    }
+    
+    getPlatformsGenerated() {
+        return this.platformsGenerated;
+    }
+    
+    resetPlatformCount() {
+        this.platformsGenerated = 0;
     }
 
     shouldGenerateObstacle() {

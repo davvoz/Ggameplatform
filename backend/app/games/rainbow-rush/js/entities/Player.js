@@ -10,22 +10,37 @@ export class Player {
         this.height = 30;
         this.velocityY = 0;
         this.velocityX = 0;
-        this.gravity = 750; // Slightly lower for floatier feel
+        this.gravity = 750;
         this.jumpForce = -550;
-        this.minJumpForce = -350; // Increased from -300
-        this.maxJumpForce = -700; // Increased from -600 for much higher jump
+        this.minJumpForce = -350;
+        this.maxJumpForce = -700;
+        this.superJumpForce = -950; // Super jump powerup
         this.isGrounded = false;
         this.isJumping = false;
         this.canvasHeight = canvasHeight;
         this.color = [0.2, 0.6, 1.0, 1.0]; // Blue player
         this.maxFallSpeed = 600;
         this.alive = true;
+        
+        // Powerup states
+        this.powerups = {
+            immortality: false,
+            flight: false,
+            superJump: false
+        };
+        
+        // Animation
+        this.animationTime = 0;
+        this.trailParticles = [];
+        this.currentPlatform = null;
     }
 
     jump() {
-        if (this.isGrounded) {
-            // Apply full jump force immediately
-            this.velocityY = this.maxJumpForce;
+        // Flight powerup allows unlimited jumping
+        if (this.isGrounded || this.powerups.flight) {
+            // Apply jump force (super jump if active)
+            const jumpPower = this.powerups.superJump ? this.superJumpForce : this.maxJumpForce;
+            this.velocityY = jumpPower;
             this.isGrounded = false;
             this.isJumping = true;
             return true; // Successful jump for sound trigger
@@ -55,8 +70,11 @@ export class Player {
     update(deltaTime) {
         if (!this.alive) return;
 
-        // Apply gravity
-        this.velocityY += this.gravity * deltaTime;
+        this.animationTime += deltaTime;
+        
+        // Apply gravity (reduced if flight is active)
+        const currentGravity = this.powerups.flight ? this.gravity * 0.3 : this.gravity;
+        this.velocityY += currentGravity * deltaTime;
         
         // Cap fall speed
         if (this.velocityY > this.maxFallSpeed) {
@@ -67,10 +85,41 @@ export class Player {
         this.y += this.velocityY * deltaTime;
         this.x += this.velocityX * deltaTime;
 
-        // Check if fell off screen (game over when falling too low)
-        if (this.y > this.canvasHeight) {
+        // Check if fell off screen (game over when falling too low, unless immortal)
+        if (this.y > this.canvasHeight && !this.powerups.immortality) {
             this.alive = false;
         }
+        
+        // Update trail particles for powerups
+        this.updateTrailParticles(deltaTime);
+    }
+    
+    updateTrailParticles(deltaTime) {
+        // Add trail particles when powerups are active
+        if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
+            this.trailParticles.push({
+                x: this.x + this.width / 2,
+                y: this.y + this.height / 2,
+                life: 0.5,
+                maxLife: 0.5,
+                color: this.getPowerupTrailColor()
+            });
+        }
+        
+        // Update existing particles
+        for (let i = this.trailParticles.length - 1; i >= 0; i--) {
+            this.trailParticles[i].life -= deltaTime;
+            if (this.trailParticles[i].life <= 0) {
+                this.trailParticles.splice(i, 1);
+            }
+        }
+    }
+    
+    getPowerupTrailColor() {
+        if (this.powerups.immortality) return [1.0, 0.84, 0.0, 0.8]; // Gold
+        if (this.powerups.flight) return [0.4, 0.7, 1.0, 0.8]; // Light blue
+        if (this.powerups.superJump) return [1.0, 0.3, 0.5, 0.8]; // Pink
+        return [1.0, 1.0, 1.0, 0.5];
     }
 
     checkPlatformCollision(platform) {
@@ -88,14 +137,32 @@ export class Player {
         
         // Check if player is on top of platform (generous tolerance)
         const verticalDistance = Math.abs(playerBottom - platformTop);
-        const onPlatform = verticalDistance < 15 && horizontalOverlap; // Increased from 10 to 15
+        const onPlatform = verticalDistance < 15 && horizontalOverlap;
 
         if (onPlatform && this.velocityY >= 0) {
             // Snap to platform
             this.y = platformTop - this.height;
-            this.velocityY = 0;
+            
+            // Apply bounce multiplier for bouncy platforms
+            if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {
+                this.velocityY = -Math.abs(this.velocityY) * platform.bounceMultiplier;
+            } else {
+                this.velocityY = 0;
+            }
+            
             this.isGrounded = true;
+            this.currentPlatform = platform;
+            
+            // Trigger crumbling for crumbling platforms
+            if (platform.platformType === 'crumbling' && !platform.isCrumbling) {
+                platform.isCrumbling = true;
+            }
+            
             return true;
+        } else {
+            if (this.currentPlatform === platform) {
+                this.currentPlatform = null;
+            }
         }
 
         return false;
@@ -103,6 +170,9 @@ export class Player {
 
     checkObstacleCollision(obstacle) {
         if (!this.alive) return false;
+        
+        // Immortality powerup makes player invincible
+        if (this.powerups.immortality) return false;
 
         const playerRight = this.x + this.width;
         const playerBottom = this.y + this.height;
@@ -118,6 +188,22 @@ export class Player {
         }
 
         return false;
+    }
+    
+    checkPowerupCollision(powerup) {
+        if (!this.alive) return false;
+
+        const playerCenterX = this.x + this.width / 2;
+        const playerCenterY = this.y + this.height / 2;
+        const powerupCenterX = powerup.x;
+        const powerupCenterY = powerup.y;
+
+        const distance = Math.sqrt(
+            Math.pow(playerCenterX - powerupCenterX, 2) +
+            Math.pow(playerCenterY - powerupCenterY, 2)
+        );
+
+        return distance < (this.width / 2 + powerup.radius);
     }
 
     checkCollectibleCollision(collectible) {
@@ -144,6 +230,46 @@ export class Player {
         this.isGrounded = false;
         this.isJumping = false;
         this.alive = true;
+        this.powerups = {
+            immortality: false,
+            flight: false,
+            superJump: false
+        };
+        this.trailParticles = [];
+        this.currentPlatform = null;
+        this.animationTime = 0;
+    }
+    
+    activatePowerup(type) {
+        switch (type) {
+            case 'immortality':
+                this.powerups.immortality = true;
+                break;
+            case 'flight':
+                this.powerups.flight = true;
+                break;
+            case 'superJump':
+                this.powerups.superJump = true;
+                break;
+        }
+    }
+    
+    deactivatePowerup(type) {
+        switch (type) {
+            case 'immortality':
+                this.powerups.immortality = false;
+                break;
+            case 'flight':
+                this.powerups.flight = false;
+                break;
+            case 'superJump':
+                this.powerups.superJump = false;
+                break;
+        }
+    }
+    
+    getTrailParticles() {
+        return this.trailParticles;
     }
 
     updateCanvasHeight(height) {

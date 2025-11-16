@@ -102,6 +102,7 @@ export class AudioManager {
         this.sounds.set('achievement', this.createAchievementSound.bind(this));
         this.sounds.set('near_miss', this.createNearMissSound.bind(this));
         this.sounds.set('combo_break', this.createComboBreakSound.bind(this));
+        this.sounds.set('boost', this.createBoostSound.bind(this));
         
         // Power-up specific sounds
         this.sounds.set('powerup_immortality', this.createImmortalitySound.bind(this));
@@ -149,6 +150,43 @@ export class AudioManager {
 
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.08);
+    }
+    
+    createBoostSound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        
+        // Suono di accelerazione "whoosh" con sweep di frequenza
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = 'sawtooth';
+        
+        // Sweep di frequenza crescente per effetto accelerazione
+        oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+        oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
+        
+        // Filtro passa-basso che si apre
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(500, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.2);
+        filter.Q.value = 2;
+
+        // Envelope volume: rapido attacco, sustain, decay
+        gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.5, ctx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.35);
     }
 
     createCollectSound() {

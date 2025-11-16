@@ -932,6 +932,9 @@ export class GameController {
                 // Applica boost velocità al player
                 this.player.applyBoost();
                 
+                // Suono di accelerazione
+                this.audioManager.playSound('boost');
+                
                 // Aggiungi combo e punti
                 const points = this.scoreSystem.addBoostCombo();
                 

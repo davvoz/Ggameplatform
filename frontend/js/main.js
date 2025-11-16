@@ -838,7 +838,10 @@ export async function renderQuests() {
         quests.forEach(quest => {
             if (quest.progress && quest.progress.is_completed) {
                 completedCount++;
-                totalXP += quest.progress.xp_earned || 0;
+                // Use xp_reward from quest if claimed, not xp_earned from progress
+                if (quest.progress.is_claimed) {
+                    totalXP += quest.xp_reward || 0;
+                }
             } else {
                 activeCount++;
             }

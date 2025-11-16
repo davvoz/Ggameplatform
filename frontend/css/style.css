@@ -516,7 +516,7 @@ main {
 
 .stat-label {
     display: block;
-    color: var(--text-muted);
+    color: var(--text-primary);
     font-size: 0.85rem;
     margin-bottom: var(--spacing-xs);
 }

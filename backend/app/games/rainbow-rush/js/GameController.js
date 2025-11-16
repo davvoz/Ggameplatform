@@ -822,11 +822,18 @@ export class GameController {
         this.player.isGrounded = false;
         this.playerOnSafetyPlatform = false;
 
-        // Safety platform collision (check first)
+        // Safety platform collision (check first) - con tolleranza MOLTO maggiore
         if (this.safetyPlatform && this.safetyPlatformActive && !this.safetyPlatformDissolving) {
-            const onSafety = this.player.checkPlatformCollision(this.safetyPlatform);
+            // Usa tolleranza ENORME (80px) per essere sicuri che non passi attraverso
+            const onSafety = this.player.checkPlatformCollision(this.safetyPlatform, 80);
             if (onSafety) {
                 this.playerOnSafetyPlatform = true;
+                // FORZA la posizione sopra la piattaforma
+                if (this.player.velocityY > 0) {
+                    this.player.y = this.safetyPlatform.y - this.player.height;
+                    this.player.velocityY = 0;
+                    this.player.isGrounded = true;
+                }
             }
         }
 
@@ -1089,6 +1096,24 @@ export class GameController {
             }
         }
 
+    }
+
+    checkDeathCondition() {
+        // Check if player fell off screen
+        // Safety platform salva il player SOLO se è attiva (non dissolta)
+        const hasSafetyPlatform = this.safetyPlatformActive && !this.safetyPlatformDissolving;
+        
+        if (this.player.y > this.canvasHeight) {
+            if (!this.player.powerups.immortality && !hasSafetyPlatform) {
+                // Morte solo se non è immortale E non c'è safety platform ATTIVA
+                this.player.alive = false;
+            } else if (hasSafetyPlatform && this.player.y > this.safetyPlatform.y + 100) {
+                // Se è caduto MOLTO sotto la safety platform, emergency teleport
+                this.player.y = this.safetyPlatform.y - 50;
+                this.player.velocityY = 0;
+                console.log('Emergency teleport to safety platform!');
+            }
+        }
     }
 
     spawnNewPlatform() {

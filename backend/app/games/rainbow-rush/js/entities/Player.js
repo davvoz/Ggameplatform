@@ -286,7 +286,7 @@ export class Player {
             this.velocityX *= 0.92;
         }
 
-        // Check if fell off screen (game over when falling too low, unless immortal)
+        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
         if (this.y > this.canvasHeight && !this.powerups.immortality) {
             this.alive = false;
         }
@@ -372,7 +372,7 @@ export class Player {
         this.velocityY = Math.min(this.velocityY, -150);
     }
 
-    checkPlatformCollision(platform) {
+    checkPlatformCollision(platform, toleranceOverride = null) {
         if (!this.alive) return false;
 
         const playerBottom = this.y + this.height;
@@ -386,8 +386,10 @@ export class Player {
         const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
         
         // Check if player is on top of platform (generous tolerance)
+        // Use toleranceOverride if provided (for safety platform), otherwise use default 15
+        const tolerance = toleranceOverride !== null ? toleranceOverride : 15;
         const verticalDistance = Math.abs(playerBottom - platformTop);
-        const onPlatform = verticalDistance < 15 && horizontalOverlap;
+        const onPlatform = verticalDistance < tolerance && horizontalOverlap;
 
         if (onPlatform && this.velocityY >= 0) {
             // Snap to platform

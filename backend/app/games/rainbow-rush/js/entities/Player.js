@@ -19,7 +19,7 @@ export class Player {
         this.isJumping = false;
         this.canvasHeight = canvasHeight;
         this.color = [0.2, 0.6, 1.0, 1.0]; // Blue player
-        this.maxFallSpeed = 600;
+        this.maxFallSpeed = 500; // Ridotta da 600 per migliori collisioni
         this.alive = true;
         
         // Sistema cuori/energia
@@ -382,18 +382,21 @@ export class Player {
         const platformLeft = platform.x;
         const platformTop = platform.y;
 
-        // Check horizontal overlap
-        const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
+        // Check horizontal overlap (con margine più generoso)
+        const horizontalMargin = 5;
+        const horizontalOverlap = playerRight > (platformLeft - horizontalMargin) && 
+                                  playerLeft < (platformRight + horizontalMargin);
         
-        // Check if player is on top of platform (generous tolerance)
-        // Use toleranceOverride if provided (for safety platform), otherwise use default 15
-        const tolerance = toleranceOverride !== null ? toleranceOverride : 15;
+        // Check if player is on top of platform (tolleranza più generosa)
+        // Use toleranceOverride if provided (for safety platform), otherwise use default 25
+        const tolerance = toleranceOverride !== null ? toleranceOverride : 25;
         const verticalDistance = Math.abs(playerBottom - platformTop);
         const onPlatform = verticalDistance < tolerance && horizontalOverlap;
 
         if (onPlatform && this.velocityY >= 0) {
-            // Snap to platform
+            // Snap forte alla piattaforma
             this.y = platformTop - this.height;
+            this.velocityY = Math.max(this.velocityY, 0); // Forza velocità positiva a 0
             
             // Apply bounce multiplier for bouncy platforms
             if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {

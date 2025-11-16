@@ -27,6 +27,56 @@ export class RenderingSystem {
             this.textCanvas.height = canvasHeight;
             this.textCtx = this.textCanvas.getContext('2d');
         }
+        
+        // PARTICELLE AMBIENTALI DI SFONDO
+        this.ambientParticles = [];
+        this.initAmbientParticles();
+    }
+    
+    initAmbientParticles() {
+        // Stelle scintillanti (minime)
+        for (let i = 0; i < 15; i++) {
+            this.ambientParticles.push({
+                type: 'star',
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: 1.5,
+                twinklePhase: Math.random() * Math.PI * 2,
+                twinkleSpeed: 3,
+                brightness: 0.6,
+                color: [1.0, 1.0, 0.9]
+            });
+        }
+        
+        // Nebbia colorata (minima)
+        for (let i = 0; i < 3; i++) {
+            const hue = Math.random();
+            this.ambientParticles.push({
+                type: 'mist',
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: 80,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 10,
+                hue: hue,
+                pulsePhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Particelle energetiche (minime)
+        for (let i = 0; i < 8; i++) {
+            this.ambientParticles.push({
+                type: 'energy',
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: 2 + Math.random() * 3,
+                vx: (Math.random() - 0.5) * 40,
+                vy: (Math.random() - 0.5) * 40,
+                life: 1.0,
+                maxLife: 2 + Math.random() * 3,
+                color: [0.4 + Math.random() * 0.6, 0.5 + Math.random() * 0.5, 0.8 + Math.random() * 0.2]
+            });
+        }
     }
 
     setBackground(layers, particles) {
@@ -72,6 +122,9 @@ export class RenderingSystem {
 
     update(deltaTime, entities) {
         this.powerupUIRenderer.update(deltaTime);
+        
+        // Update particelle ambientali
+        this.updateAmbientParticles(deltaTime);
         
         // Update level transition
         if (this.levelTransition) {
@@ -122,6 +175,9 @@ export class RenderingSystem {
         // Render background layers first
         this.renderBackgroundLayers();
         this.renderBackgroundParticles();
+        
+        // Render particelle ambientali (PRIMA delle entità per stare sullo sfondo)
+        this.renderAmbientParticles();
 
         // Render entities
         for (const entity of entities) {
@@ -768,6 +824,7 @@ export class RenderingSystem {
     }
 
     renderPlatform(platform) {
+        const time = Date.now() / 1000;
         let renderColor = platform.color;
         let baseX = platform.x;
         let baseY = platform.y;
@@ -778,83 +835,130 @@ export class RenderingSystem {
             renderColor = [...platform.color];
             renderColor[3] = 1.0 - crumbleProgress * 0.7;
 
-            // Shake effect
-            baseX += (Math.random() - 0.5) * crumbleProgress * 5;
-            baseY += (Math.random() - 0.5) * crumbleProgress * 5;
+            // Shake effect PIÙ VIOLENTO
+            baseX += (Math.random() - 0.5) * crumbleProgress * 8;
+            baseY += (Math.random() - 0.5) * crumbleProgress * 8;
+            
+            // Particelle di polvere che cadono
+            for (let i = 0; i < 6; i++) {
+                const px = baseX + Math.random() * platform.width;
+                const py = baseY + platform.height + Math.random() * 15 * crumbleProgress;
+                const pSize = 1 + Math.random() * 2;
+                this.renderer.drawCircle(px, py, pSize, [0.6, 0.5, 0.4, (1 - crumbleProgress) * 0.6]);
+            }
         }
         
         // Combo color boost - platforms glow more with higher combo
-        const comboBoost = Math.min(this.currentCombo / 50, 1.0); // Max boost at 50 combo
+        const comboBoost = Math.min(this.currentCombo / 50, 1.0);
         if (comboBoost > 0) {
             renderColor = [...renderColor];
-            // Boost brightness slightly
-            renderColor[0] = Math.min(renderColor[0] * (1.0 + comboBoost * 0.3), 1.0);
-            renderColor[1] = Math.min(renderColor[1] * (1.0 + comboBoost * 0.3), 1.0);
-            renderColor[2] = Math.min(renderColor[2] * (1.0 + comboBoost * 0.3), 1.0);
+            renderColor[0] = Math.min(renderColor[0] * (1.0 + comboBoost * 0.5), 1.0);
+            renderColor[1] = Math.min(renderColor[1] * (1.0 + comboBoost * 0.5), 1.0);
+            renderColor[2] = Math.min(renderColor[2] * (1.0 + comboBoost * 0.5), 1.0);
         }
 
-        // Shadow (single rect)
-        this.renderer.drawRect(
-            baseX + 2,
-            baseY + platform.height,
-            platform.width,
-            3,
-            [0.0, 0.0, 0.0, 0.2]
-        );
+        // Shadow MULTIPLA con blur effect
+        for (let i = 0; i < 3; i++) {
+            this.renderer.drawRect(
+                baseX + 2 + i,
+                baseY + platform.height + i,
+                platform.width,
+                2,
+                [0.0, 0.0, 0.0, 0.15 / (i + 1)]
+            );
+        }
 
-        // Main platform body
-        this.renderer.drawRect(baseX, baseY, platform.width, platform.height, renderColor);
+        // Main platform body con gradiente verticale
+        const topColor = [...renderColor];
+        const bottomColor = [...renderColor];
+        bottomColor[0] *= 0.7;
+        bottomColor[1] *= 0.7;
+        bottomColor[2] *= 0.7;
+        
+        // Top half (più chiaro)
+        this.renderer.drawRect(baseX, baseY, platform.width, platform.height * 0.5, topColor);
+        // Bottom half (più scuro)
+        this.renderer.drawRect(baseX, baseY + platform.height * 0.5, platform.width, platform.height * 0.5, bottomColor);
 
-        // Simple gradient effect (darker bottom stripe)
-        const darkColor = [...renderColor];
-        darkColor[0] *= 0.6;
-        darkColor[1] *= 0.6;
-        darkColor[2] *= 0.6;
-        this.renderer.drawRect(baseX, baseY + platform.height - 3, platform.width, 3, darkColor);
+        // Top half (più chiaro)
+        this.renderer.drawRect(baseX, baseY, platform.width, platform.height * 0.5, topColor);
+        // Bottom half (più scuro)
+        this.renderer.drawRect(baseX, baseY + platform.height * 0.5, platform.width, platform.height * 0.5, bottomColor);
 
-        // Top highlight - brighter with combo
-        const highlightAlpha = 0.3 + comboBoost * 0.2;
-        this.renderer.drawRect(baseX + 2, baseY + 1, platform.width - 4, 1, [1.0, 1.0, 1.0, highlightAlpha]);
+        // Top highlight BRILLANTE con pulsazione
+        const highlightPulse = Math.sin(time * 3) * 0.1 + 0.5 + comboBoost * 0.3;
+        this.renderer.drawRect(baseX + 3, baseY + 1, platform.width - 6, 2, [1.0, 1.0, 1.0, highlightPulse]);
+        
+        // Bordo luminoso su tutti i lati
+        const borderGlow = 0.4 + Math.sin(time * 4) * 0.2;
+        const borderColor = [...renderColor];
+        borderColor[3] = borderGlow;
+        this.renderer.drawRect(baseX, baseY, platform.width, 1, borderColor); // Top
+        this.renderer.drawRect(baseX, baseY + platform.height - 1, platform.width, 1, borderColor); // Bottom
+        this.renderer.drawRect(baseX, baseY, 1, platform.height, borderColor); // Left
+        this.renderer.drawRect(baseX + platform.width - 1, baseY, 1, platform.height, borderColor); // Right
 
-        // Type-specific minimal indicators
+        // Type-specific ANIMAZIONI SPETTACOLARI
         if (platform.platformType !== PlatformTypes.NORMAL) {
-            let glowColor;
-
             switch (platform.platformType) {
-                case PlatformTypes.FAST:
-                    glowColor = [1.0, 0.3, 0.3, 0.5];
-                    // 2 speed lines only
-                    this.renderer.drawRect(baseX + platform.width * 0.3, baseY + 2, 2, platform.height - 4, [1.0, 0.5, 0.3, 0.5]);
-                    this.renderer.drawRect(baseX + platform.width * 0.7, baseY + 2, 2, platform.height - 4, [1.0, 0.5, 0.3, 0.5]);
-                    break;
-
-                case PlatformTypes.SLOW:
-                    glowColor = [0.3, 0.5, 1.0, 0.5];
-                    // 3 ice crystals only
-                    this.renderer.drawCircle(baseX + platform.width * 0.25, baseY + platform.height / 2, 2, [0.7, 0.9, 1.0, 0.6]);
-                    this.renderer.drawCircle(baseX + platform.width * 0.5, baseY + platform.height / 2, 2, [0.7, 0.9, 1.0, 0.6]);
-                    this.renderer.drawCircle(baseX + platform.width * 0.75, baseY + platform.height / 2, 2, [0.7, 0.9, 1.0, 0.6]);
-                    break;
-
-                case PlatformTypes.BOUNCY:
-                    glowColor = [0.3, 1.0, 0.5, 0.5];
-                    // 3 spring coils
-                    const bounce = Math.sin(Date.now() / 250) * 0.1 + 1.0;
-                    for (let i = 0; i < 3; i++) {
-                        const springX = baseX + platform.width / 2 + (i - 1) * 10;
-                        this.renderer.drawRect(springX, baseY + platform.height - 4 * bounce, 3, 3 * bounce, [0.4, 1.0, 0.6, 0.6]);
+                case PlatformTypes.FAST: {
+                    // Solo 2 linee di velocità
+                    for (let i = 0; i < 2; i++) {
+                        const lineX = baseX + ((time * 300 + i * 40) % platform.width);
+                        this.renderer.drawRect(lineX, baseY + 3, 2, platform.height - 6, [1.0, 0.5, 0.2, 0.4]);
                     }
                     break;
+                }
 
-                case PlatformTypes.CRUMBLING:
-                    glowColor = [0.6, 0.5, 0.4, 0.4];
-                    // 2 crack lines only
-                    this.renderer.drawRect(baseX + platform.width * 0.35, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
-                    this.renderer.drawRect(baseX + platform.width * 0.65, baseY, 1, platform.height, [0.3, 0.2, 0.1, 0.5]);
-                    break;
+                case PlatformTypes.SLOW: {
+                    // Cristalli di ghiaccio (ridotti)
+                    for (let i = 0; i < 4; i++) {
+                        const crystalX = baseX + (platform.width / 8) * i;
+                        const crystalY = baseY + platform.height / 2;
+                        const crystalSize = 3 + Math.abs(Math.sin(time * 3 + i * 0.5)) * 3;
+                        
+                        // Esagono di ghiaccio
+                        for (let j = 0; j < 6; j++) {
+                            const angle = (j / 6) * Math.PI * 2 + time;
+                            const px = crystalX + Math.cos(angle) * crystalSize;
+                            const py = crystalY + Math.sin(angle) * crystalSize;
+                            this.renderer.drawCircle(px, py, 1.5, [0.7, 0.9, 1.0, 0.8]);
+                        }
+                        
+                        // Centro brillante
+                        this.renderer.drawCircle(crystalX, crystalY, crystalSize * 0.5, [1.0, 1.0, 1.0, 0.9]);
+                    }
                     
-                case PlatformTypes.SPRING:
-                    glowColor = [1.0, 0.5, 1.0, 0.7];
+                    // Neve che cade (ridotta)
+                    for (let i = 0; i < 6; i++) {
+                        const snowX = baseX + (platform.width / 12) * i + Math.sin(time * 2 + i) * 8;
+                        const snowY = baseY - ((time * 30 + i * 10) % 30);
+                        const snowSize = 1 + Math.sin(time * 5 + i) * 0.5;
+                        this.renderer.drawCircle(snowX, snowY, snowSize, [0.9, 0.95, 1.0, 0.7]);
+                    }
+                    
+                    break;
+                }
+
+                case PlatformTypes.BOUNCY: {
+                    // Solo onde d'urto verdi semplici
+                    const wavePhase = (time * 4) % 1;
+                    const waveY = baseY + platform.height + wavePhase * 30;
+                    const waveAlpha = (1 - wavePhase) * 0.6;
+                    this.renderer.drawRect(baseX, waveY, platform.width, 2, [0.4, 1.0, 0.6, waveAlpha]);
+                    this.renderer.drawRect(baseX, waveY - 5, platform.width, 1, [0.6, 1.0, 0.8, waveAlpha * 0.5]);
+                    break;
+                }
+
+                case PlatformTypes.CRUMBLING: {
+                    // Solo alone rosso di pericolo pulsante
+                    const dangerPulse = Math.sin(time * 8) * 0.3 + 0.4;
+                    this.renderer.drawRect(baseX, baseY, platform.width, 2, [1.0, 0.3, 0.2, dangerPulse]);
+                    this.renderer.drawRect(baseX, baseY + platform.height - 2, platform.width, 2, [1.0, 0.3, 0.2, dangerPulse]);
+                    break;
+                }
+                    
+                case PlatformTypes.SPRING: {
                     const springTime = platform.springAnimationTime || 0;
                     const compression = platform.springCompression || 0;
                     
@@ -893,31 +997,11 @@ export class RenderingSystem {
                         const energyColor = [1.0, 1.0, 0.3, compression * 0.8 * energyPulse];
                         this.renderer.drawRect(baseX, baseY - 3, platform.width, 3, energyColor);
                         
-                        // Particelle energia
-                        for (let i = 0; i < 3; i++) {
-                            const px = baseX + platform.width * (0.25 + i * 0.25);
-                            const py = baseY - 5 - Math.sin(springTime * 10 + i) * 8 * compression;
-                            this.renderer.drawCircle(px, py, 2, [1.0, 1.0, 0.5, compression * energyPulse]);
-                        }
-                    }
-                    
-                    // Frecce "su" per indicare rimbalzo
-                    const arrowCount = 3;
-                    for (let i = 0; i < arrowCount; i++) {
-                        const arrowX = baseX + platform.width * (0.25 + i * 0.25);
-                        const arrowY = baseY - 15 - Math.sin(springTime * 4 + i * 2) * 5;
-                        const arrowAlpha = 0.7 + Math.sin(springTime * 6 + i) * 0.3;
-                        const arrowColor = [1.0, 0.7, 1.0, arrowAlpha];
-                        
-                        // Freccia verso l'alto (triangolo)
-                        this.renderer.drawRect(arrowX - 4, arrowY, 8, 2, arrowColor);
-                        this.renderer.drawRect(arrowX - 3, arrowY - 2, 6, 2, arrowColor);
-                        this.renderer.drawRect(arrowX - 2, arrowY - 4, 4, 2, arrowColor);
-                        this.renderer.drawRect(arrowX - 1, arrowY - 6, 2, 2, arrowColor);
                     }
                     break;
+                }
 
-                case 'RESCUE':
+                case 'RESCUE': {
                     // Laser effect - elaborate rescue platform visualization
                     const time = Date.now() / 1000;
                     const phase = platform.laserPhase || 0;
@@ -966,14 +1050,8 @@ export class RenderingSystem {
                         const particleY = baseY + platform.height / 2 + Math.sin(particlePhase) * 3;
                         this.renderer.drawCircle(particleX, particleY, 1.5, [0.7, 1.0, 0.8, 0.8]);
                     }
-                    
-                    glowColor = [0.2, 1.0, 0.5, 0.7];
                     break;
-            }
-
-            // Single top glow
-            if (glowColor) {
-                this.renderer.drawRect(baseX, baseY - 2, platform.width, 2, glowColor);
+                }
             }
         }
     }
@@ -1374,37 +1452,104 @@ export class RenderingSystem {
     }
 
     renderCollectible(collectible) {
-        // Enhanced pulsing effect
-        const time = collectible.pulsePhase ? Date.now() / 200 + collectible.pulsePhase : Date.now() / 200;
-        const pulseRadius = collectible.radius + Math.sin(time) * 3;
+        const time = Date.now() / 1000;
+        const pulsePhase = collectible.pulsePhase || 0;
+        const pulseRadius = collectible.radius + Math.sin(time * 4 + pulsePhase) * 2;
+        const rotation = time * 3 + pulsePhase;
 
-        // Outer glow
-        const outerGlowColor = [...collectible.color];
-        outerGlowColor[3] = 0.3;
+        // Alone semplice (2 layer)
         this.renderer.drawCircle(
             collectible.x,
             collectible.y,
-            pulseRadius * 1.5,
-            outerGlowColor
+            pulseRadius * 1.8,
+            [...collectible.color, 0.3]
         );
-
-        // Main body
         this.renderer.drawCircle(
             collectible.x,
             collectible.y,
-            pulseRadius,
-            collectible.color
+            pulseRadius * 1.3,
+            [...collectible.color, 0.5]
         );
 
-        // Inner sparkle
-        const sparkleColor = [1.0, 1.0, 1.0, 0.9];
-        const sparkleSize = pulseRadius * 0.4;
+        // Anello esterno rotante (8 segmenti arcobaleno)
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + rotation;
+            const arcX = collectible.x + Math.cos(angle) * pulseRadius * 1.8;
+            const arcY = collectible.y + Math.sin(angle) * pulseRadius * 1.8;
+            const hue = (i / 8);
+            const rgb = this.hslToRgb(hue, 1.0, 0.6);
+            this.renderer.drawCircle(arcX, arcY, 2.5, [...rgb, 0.9]);
+        }
+
+        // Main body con gradiente radiale (simulato con cerchi concentrici)
+        const numLayers = 5;
+        for (let i = 0; i < numLayers; i++) {
+            const layerRadius = pulseRadius * (1 - i * 0.2);
+            const layerAlpha = 1.0 - i * 0.15;
+            const layerColor = [...collectible.color];
+            // Più chiaro verso il centro
+            layerColor[0] = Math.min(layerColor[0] * (1 + i * 0.2), 1.0);
+            layerColor[1] = Math.min(layerColor[1] * (1 + i * 0.2), 1.0);
+            layerColor[2] = Math.min(layerColor[2] * (1 + i * 0.2), 1.0);
+            layerColor[3] = layerAlpha;
+            this.renderer.drawCircle(collectible.x, collectible.y, layerRadius, layerColor);
+        }
+
+        // Stella centrale rotante (5 punte)
+        const starPoints = 5;
+        const starRotation = time * 2 + pulsePhase;
+        for (let i = 0; i < starPoints * 2; i++) {
+            const angle = (i / (starPoints * 2)) * Math.PI * 2 + starRotation;
+            const radius = i % 2 === 0 ? pulseRadius * 0.6 : pulseRadius * 0.3;
+            const px = collectible.x + Math.cos(angle) * radius;
+            const py = collectible.y + Math.sin(angle) * radius;
+            
+            // Linee della stella
+            const nextI = (i + 1) % (starPoints * 2);
+            const nextAngle = (nextI / (starPoints * 2)) * Math.PI * 2 + starRotation;
+            const nextRadius = nextI % 2 === 0 ? pulseRadius * 0.6 : pulseRadius * 0.3;
+            const nextPx = collectible.x + Math.cos(nextAngle) * nextRadius;
+            const nextPy = collectible.y + Math.sin(nextAngle) * nextRadius;
+            
+            // Disegna segmento stella
+            const steps = 3;
+            for (let j = 0; j < steps; j++) {
+                const t = j / steps;
+                const lineX = px + (nextPx - px) * t;
+                const lineY = py + (nextPy - py) * t;
+                this.renderer.drawCircle(lineX, lineY, 1.5, [1.0, 1.0, 0.5, 0.9]);
+            }
+        }
+
+        // Highlight centrale super brillante
+        const sparkleSize = pulseRadius * 0.35;
+        const sparkleColor = [1.0, 1.0, 1.0, 0.95 + Math.sin(time * 8) * 0.05];
         this.renderer.drawCircle(
-            collectible.x - sparkleSize * 0.3,
-            collectible.y - sparkleSize * 0.3,
+            collectible.x - sparkleSize * 0.2,
+            collectible.y - sparkleSize * 0.2,
             sparkleSize,
             sparkleColor
         );
+
+        // Particelle scintillanti (2 soltanto)
+        for (let i = 0; i < 2; i++) {
+            const angle = (i / 12) * Math.PI * 2 + time * 4 + pulsePhase;
+            const orbitRadius = pulseRadius * 2.2 + Math.sin(time * 6 + i) * 3;
+            const px = collectible.x + Math.cos(angle) * orbitRadius;
+            const py = collectible.y + Math.sin(angle) * orbitRadius;
+            const pSize = 1.5 + Math.sin(time * 10 + i) * 0.8;
+            const hue = ((i / 12) + time * 0.3) % 1;
+            const rgb = this.hslToRgb(hue, 1.0, 0.7);
+            this.renderer.drawCircle(px, py, pSize, [...rgb, 0.85]);
+        }
+
+        // Trail effect (scia dietro)
+        for (let i = 0; i < 5; i++) {
+            const trailAlpha = (1 - i * 0.2) * 0.4;
+            const trailSize = pulseRadius * (1 - i * 0.1);
+            const trailY = collectible.y + i * 2;
+            this.renderer.drawCircle(collectible.x, trailY, trailSize, [...collectible.color, trailAlpha]);
+        }
     }
 
     renderHeart(heart) {
@@ -2051,79 +2196,148 @@ export class RenderingSystem {
     }
 
     renderSpike(spike) {
-        // Enhanced spike with sharper look
+        const time = Date.now() / 1000;
         const offset = spike.animationOffset || 0;
-        const wobble = Math.sin(Date.now() / 200 + offset) * 1;
+        const wobble = Math.sin(time * 4 + offset) * 2;
+        const pulse = Math.sin(time * 6 + offset) * 0.15 + 0.85;
 
-        // Shadow
-        const shadowColor = [0.0, 0.0, 0.0, 0.3];
-        this.renderer.drawRect(
-            spike.x + 2,
-            spike.y + 2,
-            spike.width,
-            spike.height,
-            shadowColor
-        );
+        // Shadow multi-layer
+        for (let i = 0; i < 3; i++) {
+            this.renderer.drawRect(
+                spike.x + 3 + i,
+                spike.y + spike.height + i,
+                spike.width,
+                2,
+                [0.0, 0.0, 0.0, 0.2 / (i + 1)]
+            );
+        }
 
-        // Main spike body
-        this.renderer.drawRect(
-            spike.x + wobble,
-            spike.y,
-            spike.width,
-            spike.height,
-            spike.color
-        );
+        // Alone rosso pulsante di pericolo
+        for (let i = 0; i < 4; i++) {
+            this.renderer.drawRect(
+                spike.x + wobble - i * 2,
+                spike.y - i * 2,
+                spike.width + i * 4,
+                spike.height + i * 4,
+                [1.0, 0.2, 0.2, pulse * 0.15 / (i + 1)]
+            );
+        }
 
-        // Highlight edge
-        const highlightColor = [1.0, 0.4, 0.4, 0.8];
-        this.renderer.drawRect(
-            spike.x + wobble,
-            spike.y,
-            2,
-            spike.height,
-            highlightColor
-        );
+        // Main spike body con gradiente verticale rosso scuro -> rosso brillante
+        const topColor = [0.6 * pulse, 0.1, 0.1, 1.0];
+        const bottomColor = [1.0 * pulse, 0.3, 0.2, 1.0];
+        this.renderer.drawRect(spike.x + wobble, spike.y, spike.width, spike.height * 0.5, topColor);
+        this.renderer.drawRect(spike.x + wobble, spike.y + spike.height * 0.5, spike.width, spike.height * 0.5, bottomColor);
+
+        // Punte triangolari sopra
+        const numSpikes = 5;
+        for (let i = 0; i < numSpikes; i++) {
+            const spikeX = spike.x + wobble + (spike.width / numSpikes) * i + spike.width / (numSpikes * 2);
+            const spikeHeight = 8 + Math.sin(time * 8 + offset + i) * 2;
+            const spikeY = spike.y - spikeHeight;
+            const spikeWidth = 4;
+            
+            // Triangolo rosso brillante
+            this.renderer.drawRect(spikeX - spikeWidth/2, spikeY + spikeHeight * 0.7, spikeWidth, spikeHeight * 0.3, [1.0, 0.4, 0.3, 1.0]);
+            this.renderer.drawRect(spikeX - spikeWidth * 0.3, spikeY + spikeHeight * 0.4, spikeWidth * 0.6, spikeHeight * 0.3, [1.0, 0.6, 0.4, 1.0]);
+            this.renderer.drawRect(spikeX - 1, spikeY, 2, spikeHeight * 0.4, [1.0, 0.8, 0.6, 1.0]);
+        }
+
+        // Highlight luccicante sui bordi
+        const shimmer = Math.sin(time * 10 + offset) * 0.4 + 0.6;
+        this.renderer.drawRect(spike.x + wobble, spike.y, 2, spike.height, [1.0, 0.5, 0.4, shimmer]);
+        this.renderer.drawRect(spike.x + wobble + spike.width - 2, spike.y, 2, spike.height, [1.0, 0.5, 0.4, shimmer]);
+        
+        // Scintille rosse rotanti
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + time * 3 + offset;
+            const radius = 12 + Math.sin(time * 5 + i) * 3;
+            const px = spike.x + wobble + spike.width / 2 + Math.cos(angle) * radius;
+            const py = spike.y + spike.height / 2 + Math.sin(angle) * radius;
+            const sparkleSize = 1.5 + Math.sin(time * 12 + i) * 0.8;
+            this.renderer.drawCircle(px, py, sparkleSize, [1.0, 0.3, 0.2, 0.7]);
+        }
     }
 
     renderEnemy(enemy) {
-        // Enhanced enemy with animation
+        const time = Date.now() / 1000;
         const offset = enemy.animationOffset || 0;
-        const bounce = Math.sin(Date.now() / 300 + offset) * 3;
-        const squish = Math.abs(Math.sin(Date.now() / 300 + offset)) * 0.1 + 0.9;
+        const bounce = Math.sin(time * 3 + offset) * 5;
+        const squish = Math.abs(Math.sin(time * 3 + offset)) * 0.15 + 0.85;
+        const rotation = Math.sin(time * 2 + offset) * 0.1;
 
-        // Shadow
-        const shadowColor = [0.0, 0.0, 0.0, 0.3];
+        // Shadow dinamica che cambia con il bounce
+        const shadowWidth = enemy.width * (1.2 - Math.abs(bounce) * 0.02);
         this.renderer.drawRect(
-            enemy.x + 2,
-            enemy.y + enemy.height,
-            enemy.width,
-            3,
-            shadowColor
+            enemy.x + (enemy.width - shadowWidth) / 2,
+            enemy.y + enemy.height + Math.abs(bounce) * 0.5,
+            shadowWidth,
+            4,
+            [0.0, 0.0, 0.0, 0.35]
         );
 
-        // Main enemy body (squishing)
-        this.renderer.drawRect(
-            enemy.x,
-            enemy.y + bounce,
-            enemy.width,
-            enemy.height * squish,
-            enemy.color
-        );
+        // Alone viola pulsante
+        const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
+        for (let i = 0; i < 3; i++) {
+            this.renderer.drawRect(
+                enemy.x - i * 3,
+                enemy.y + bounce - i * 3,
+                enemy.width + i * 6,
+                enemy.height * squish + i * 6,
+                [0.6, 0.3, 1.0, glowPulse * 0.2 / (i + 1)]
+            );
+        }
 
-        // Enemy eyes
-        const eyeColor = [1.0, 0.0, 0.0, 1.0];
-        this.renderer.drawCircle(
-            enemy.x + enemy.width * 0.3,
-            enemy.y + bounce + enemy.height * 0.3,
-            2,
-            eyeColor
-        );
-        this.renderer.drawCircle(
-            enemy.x + enemy.width * 0.7,
-            enemy.y + bounce + enemy.height * 0.3,
-            2,
-            eyeColor
-        );
+        // Main enemy body (squishing) con gradiente
+        const bodyTopColor = [0.5, 0.2, 0.8, 1.0];
+        const bodyBottomColor = [0.3, 0.1, 0.6, 1.0];
+        this.renderer.drawRect(enemy.x, enemy.y + bounce, enemy.width, enemy.height * squish * 0.5, bodyTopColor);
+        this.renderer.drawRect(enemy.x, enemy.y + bounce + enemy.height * squish * 0.5, enemy.width, enemy.height * squish * 0.5, bodyBottomColor);
+
+        // Bordo luminoso
+        const borderGlow = Math.sin(time * 8 + offset) * 0.3 + 0.6;
+        this.renderer.drawRect(enemy.x, enemy.y + bounce, enemy.width, 1, [0.8, 0.5, 1.0, borderGlow]);
+        this.renderer.drawRect(enemy.x, enemy.y + bounce + enemy.height * squish - 1, enemy.width, 1, [0.8, 0.5, 1.0, borderGlow]);
+
+        // Enemy eyes GRANDI e ANIMATI
+        const eyeScale = 1.0 + Math.sin(time * 10 + offset) * 0.2;
+        const eyeY = enemy.y + bounce + enemy.height * squish * 0.35;
+        
+        // Occhi bianchi con pupille rosse
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Pupille rosse che si muovono
+        const pupilOffsetX = Math.sin(time * 2 + offset) * 1.5;
+        const pupilOffsetY = Math.cos(time * 3 + offset) * 1;
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
+        
+        // Highlight occhi
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
+
+        // Bocca cattiva
+        const mouthY = enemy.y + bounce + enemy.height * squish * 0.65;
+        const mouthWidth = enemy.width * 0.5;
+        const mouthX = enemy.x + (enemy.width - mouthWidth) / 2;
+        this.renderer.drawRect(mouthX, mouthY, mouthWidth, 2, [0.2, 0.0, 0.0, 1.0]);
+        
+        // Denti appuntiti
+        for (let i = 0; i < 4; i++) {
+            const toothX = mouthX + (mouthWidth / 4) * i + mouthWidth / 8;
+            this.renderer.drawRect(toothX - 1, mouthY - 3, 2, 3, [1.0, 1.0, 1.0, 0.9]);
+        }
+        
+        // Particelle malvagie viola
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + time * 4 + offset;
+            const radius = 18 + Math.sin(time * 6 + i) * 4;
+            const px = enemy.x + enemy.width / 2 + Math.cos(angle) * radius;
+            const py = enemy.y + bounce + enemy.height * squish / 2 + Math.sin(angle) * radius;
+            const pSize = 1 + Math.sin(time * 15 + i) * 0.5;
+            this.renderer.drawCircle(px, py, pSize, [0.7, 0.4, 1.0, 0.6]);
+        }
     }
     
     renderScreenFlash(flash) {
@@ -2133,145 +2347,352 @@ export class RenderingSystem {
     }
     
     renderMagnetBonus(bonus) {
-        const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
-        const size = bonus.radius * pulse;
-        
-        // Alone multiplo
-        for (let i = 0; i < 3; i++) {
-            const auraColor = [...bonus.glowColor];
-            auraColor[3] = (0.4 - i * 0.1) * pulse;
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (2 + i * 0.5), auraColor);
-        }
-        
-        // Simbolo magnete (M stilizzata con cerchi)
-        this.renderer.drawCircle(bonus.x - 8, bonus.y, 8, bonus.color);
-        this.renderer.drawCircle(bonus.x + 8, bonus.y, 8, bonus.color);
-        this.renderer.drawRect(bonus.x - 3, bonus.y - 10, 6, 20, bonus.color);
-        
-        // Core luminoso
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.4, [1.0, 1.0, 1.0, 0.8]);
-    }
-    
-    renderTimeSlowBonus(bonus) {
-        const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
-        const size = bonus.radius * pulse;
-        
-        // Alone
-        for (let i = 0; i < 3; i++) {
-            const auraColor = [...bonus.glowColor];
-            auraColor[3] = (0.4 - i * 0.1) * pulse;
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (2 + i * 0.5), auraColor);
-        }
-        
-        // Simbolo orologio (cerchio + lancette)
-        this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
-        
-        // Lancette dell'orologio
-        const angle = bonus.rotation;
-        const shortLen = size * 0.5;
-        const longLen = size * 0.7;
-        this.renderer.drawRect(bonus.x - 1.5, bonus.y - longLen, 3, longLen, [1.0, 1.0, 1.0, 1.0]);
-        const shortX = Math.cos(angle) * shortLen;
-        const shortY = Math.sin(angle) * shortLen;
-        
-        // Core
-        this.renderer.drawCircle(bonus.x, bonus.y, 3, [1.0, 1.0, 1.0, 1.0]);
-    }
-    
-    renderShieldBonus(bonus) {
-        const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
-        const size = bonus.radius * pulse;
-        
-        // Alone
-        for (let i = 0; i < 3; i++) {
-            const auraColor = [...bonus.glowColor];
-            auraColor[3] = (0.4 - i * 0.1) * pulse;
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (2 + i * 0.5), auraColor);
-        }
-        
-        // Scudo (esagono)
-        const sides = 6;
-        for (let i = 0; i < sides; i++) {
-            const angle1 = (Math.PI * 2 * i) / sides + bonus.rotation;
-            const angle2 = (Math.PI * 2 * (i + 1)) / sides + bonus.rotation;
-            const x1 = bonus.x + Math.cos(angle1) * size;
-            const y1 = bonus.y + Math.sin(angle1) * size;
-            const x2 = bonus.x + Math.cos(angle2) * size;
-            const y2 = bonus.y + Math.sin(angle2) * size;
-            
-            // Linea del bordo
-            this.renderer.drawRect(x1 - 2, y1 - 2, 4, 4, bonus.color);
-        }
-        
-        // Centro
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.5, bonus.color);
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.3, [1.0, 1.0, 1.0, 0.9]);
-    }
-    
-    renderMultiplierBonus(bonus) {
+        const time = Date.now() / 1000;
         const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
         const size = bonus.radius * pulse;
         
-        // Alone oro
-        for (let i = 0; i < 4; i++) {
-            const auraColor = [...bonus.glowColor];
-            auraColor[3] = (0.5 - i * 0.1) * pulse;
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (2.5 + i * 0.6), auraColor);
+        // Alone semplice (2 layer)
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 2.5, [1.0, 0.3, 0.9, 0.3]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.8, [1.0, 0.4, 0.9, 0.5]);
+        
+        // Magnete base
+        const magnetWidth = size * 0.6;
+        const magnetHeight = size * 1.0;
+        
+        // Polo Nord (rosso)
+        this.renderer.drawRect(bonus.x - magnetWidth - 2, bonus.y - magnetHeight/2, magnetWidth, magnetHeight, [1.0, 0.2, 0.2, 1.0]);
+        // Polo Sud (blu)
+        this.renderer.drawRect(bonus.x + 2, bonus.y - magnetHeight/2, magnetWidth, magnetHeight, [0.2, 0.3, 1.0, 1.0]);
+        // Barra
+        this.renderer.drawRect(bonus.x - 3, bonus.y - magnetHeight/2 - 4, 6, 4, [0.7, 0.7, 0.7, 1.0]);
+        
+        // Core
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.3, [1.0, 1.0, 1.0, 0.9]);
+    }
+    
+    renderTimeSlowBonus(bonus) {
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
+        const size = bonus.radius * pulse;
+        
+        // Alone semplice
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 2, [0.3, 0.6, 1.0, 0.3]);
+        
+        // Corpo orologio
+        this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.8, [0.3, 0.5, 0.8, 1.0]);
+        
+        // Lancette (animazione LENTA)
+        const slowRotation = time * 0.3;
+        const hourAngle = slowRotation - Math.PI / 2;
+        const minuteAngle = slowRotation * 3 - Math.PI / 2;
+        
+        // Lancetta ore
+        const hourLen = size * 0.5;
+        for (let i = 0; i < 3; i++) {
+            const t = i / 3;
+            const px = bonus.x + Math.cos(hourAngle) * hourLen * t;
+            const py = bonus.y + Math.sin(hourAngle) * hourLen * t;
+            this.renderer.drawCircle(px, py, 2.5, [1.0, 1.0, 1.0, 1.0]);
         }
         
-        // Stella dorata
+        // Lancetta minuti
+        const minuteLen = size * 0.7;
+        for (let i = 0; i < 4; i++) {
+            const t = i / 4;
+            const px = bonus.x + Math.cos(minuteAngle) * minuteLen * t;
+            const py = bonus.y + Math.sin(minuteAngle) * minuteLen * t;
+            this.renderer.drawCircle(px, py, 1.8, [0.9, 0.95, 1.0, 1.0]);
+        }
+        
+        // Perno
+        this.renderer.drawCircle(bonus.x, bonus.y, 4, [1.0, 1.0, 1.0, 1.0]);
+    }
+    
+    renderShieldBonus(bonus) {
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(bonus.pulsePhase) * 0.25 + 1.0;
+        const size = bonus.radius * pulse;
+        
+        // Barriera difensiva (cerchi protettivi)
+        for (let ring = 0; ring < 4; ring++) {
+            const ringPhase = (time * 3 + ring * 0.25) % 1;
+            const ringSize = size * (2.5 + ringPhase * 2);
+            const ringAlpha = (1 - ringPhase) * 0.6;
+            this.renderer.drawCircle(bonus.x, bonus.y, ringSize, [0.3, 1.0, 0.5, ringAlpha]);
+        }
+        
+        // Alone verde energetico
+        for (let i = 0; i < 5; i++) {
+            const auraColor = [...bonus.glowColor];
+            auraColor[3] = (0.6 - i * 0.1) * pulse;
+            this.renderer.drawCircle(bonus.x, bonus.y, size * (3 + i * 0.4), auraColor);
+        }
+        
+        // Scudo esagonale ROTANTE con prospettiva 3D
+        const sides = 6;
+        const hexRotation = bonus.rotation + time * 1.5;
+        
+        // Esagono esterno (bordo)
+        for (let i = 0; i < sides; i++) {
+            const angle1 = (Math.PI * 2 * i) / sides + hexRotation;
+            const angle2 = (Math.PI * 2 * (i + 1)) / sides + hexRotation;
+            const x1 = bonus.x + Math.cos(angle1) * size * 1.3;
+            const y1 = bonus.y + Math.sin(angle1) * size * 1.3;
+            const x2 = bonus.x + Math.cos(angle2) * size * 1.3;
+            const y2 = bonus.y + Math.sin(angle2) * size * 1.3;
+            
+            // Linea del bordo (spessa)
+            const steps = 8;
+            for (let j = 0; j < steps; j++) {
+                const t = j / steps;
+                const px = x1 + (x2 - x1) * t;
+                const py = y1 + (y2 - y1) * t;
+                this.renderer.drawCircle(px, py, 4, [0.3, 1.0, 0.5, 1.0]);
+            }
+            
+            // Highlight sui vertici
+            this.renderer.drawCircle(x1, y1, 6, [0.6, 1.0, 0.7, 1.0]);
+            this.renderer.drawCircle(x1, y1, 4, [1.0, 1.0, 1.0, 0.9]);
+        }
+        
+        // Esagono medio (pattern energetico)
+        for (let i = 0; i < sides; i++) {
+            const angle1 = (Math.PI * 2 * i) / sides + hexRotation;
+            const angle2 = (Math.PI * 2 * (i + 1)) / sides + hexRotation;
+            const midAngle = (angle1 + angle2) / 2;
+            const x1 = bonus.x + Math.cos(angle1) * size * 0.9;
+            const y1 = bonus.y + Math.sin(angle1) * size * 0.9;
+            const x2 = bonus.x + Math.cos(angle2) * size * 0.9;
+            const y2 = bonus.y + Math.sin(angle2) * size * 0.9;
+            const mx = bonus.x + Math.cos(midAngle) * size * 0.9;
+            const my = bonus.y + Math.sin(midAngle) * size * 0.9;
+            
+            // Linea al centro (pattern)
+            const steps = 5;
+            for (let j = 0; j < steps; j++) {
+                const t = j / steps;
+                const px = mx + (bonus.x - mx) * t;
+                const py = my + (bonus.y - my) * t;
+                this.renderer.drawCircle(px, py, 2.5, [0.4, 1.0, 0.6, 0.8]);
+            }
+        }
+        
+        // Centro scudo con gradiente
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.7, [0.2, 0.8, 0.4, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.5, [0.4, 1.0, 0.6, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.3, [0.7, 1.0, 0.8, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.15, [1.0, 1.0, 1.0, 1.0]);
+        
+    }
+    
+    renderMultiplierBonus(bonus) {
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(bonus.pulsePhase) * 0.35 + 1.0;
+        const size = bonus.radius * pulse;
+        
+        // Raggi di luce dorata (ridotti)
+        const numRays = 8;
+        for (let i = 0; i < numRays; i++) {
+            const rayAngle = (i / numRays) * Math.PI * 2 + bonus.rotation;
+            const rayLength = size * (3 + Math.sin(time * 5 + i * 0.5) * 1.5);
+            const rayWidth = 4 + Math.sin(time * 8 + i) * 2;
+            
+            // Raggio con gradiente
+            for (let j = 0; j < 8; j++) {
+                const t = j / 8;
+                const px = bonus.x + Math.cos(rayAngle) * rayLength * t;
+                const py = bonus.y + Math.sin(rayAngle) * rayLength * t;
+                const rayAlpha = (1 - t) * 0.8;
+                const raySize = rayWidth * (1 - t * 0.5);
+                this.renderer.drawCircle(px, py, raySize, [1.0, 0.9, 0.3, rayAlpha]);
+            }
+        }
+        
+        // Alone oro massiccio pulsante
+        for (let i = 0; i < 6; i++) {
+            const auraColor = [...bonus.glowColor];
+            auraColor[3] = (0.7 - i * 0.1) * pulse;
+            this.renderer.drawCircle(bonus.x, bonus.y, size * (3.5 + i * 0.5), auraColor);
+        }
+        
+        // Stella dorata 3D (8 punte con profondità)
         const spikes = 8;
-        for (let i = 0; i < spikes; i++) {
-            const angle = (Math.PI * 2 * i) / spikes + bonus.rotation;
-            const x = bonus.x + Math.cos(angle) * size * 1.2;
-            const y = bonus.y + Math.sin(angle) * size * 1.2;
-            this.renderer.drawCircle(x, y, 4, bonus.color);
+        const starRotation = bonus.rotation + time * 2;
+        
+        // Layer di profondità della stella
+        for (let layer = 2; layer >= 0; layer--) {
+            const layerSize = size * (1.4 - layer * 0.15);
+            const layerAlpha = 1.0 - layer * 0.2;
+            
+            for (let i = 0; i < spikes; i++) {
+                const angle = (Math.PI * 2 * i) / spikes + starRotation + layer * 0.1;
+                const x = bonus.x + Math.cos(angle) * layerSize;
+                const y = bonus.y + Math.sin(angle) * layerSize;
+                const spikeSize = 6 - layer * 1.5;
+                
+                // Punta stella
+                this.renderer.drawCircle(x, y, spikeSize, [1.0, 0.8 - layer * 0.15, 0.2, layerAlpha]);
+                
+                // Alone sulla punta
+                this.renderer.drawCircle(x, y, spikeSize * 1.8, [1.0, 0.9, 0.5, layerAlpha * 0.3]);
+            }
+        }
+        
+        // Anelli interni (dettaglio stella)
+        for (let ring = 0; ring < 3; ring++) {
+            const ringSize = size * (0.9 - ring * 0.25);
+            const ringColor = ring === 0 ? [1.0, 0.9, 0.3, 1.0] : 
+                            ring === 1 ? [1.0, 0.85, 0.2, 1.0] : 
+                                        [1.0, 0.75, 0.1, 1.0];
+            this.renderer.drawCircle(bonus.x, bonus.y, ringSize, ringColor);
         }
         
         // Core
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.8, bonus.color);
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.5, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.4, [1.0, 1.0, 1.0, 1.0]);
         
-        // Simbolo X3
+        // Testo X3 semplice
         if (this.textCtx) {
-            this.textCtx.font = 'bold 16px Arial';
-            this.textCtx.fillStyle = '#000';
+            this.textCtx.save();
+            this.textCtx.font = 'bold 20px Arial';
             this.textCtx.textAlign = 'center';
             this.textCtx.textBaseline = 'middle';
+            
+            // Testo semplice
+            this.textCtx.fillStyle = 'rgb(255, 230, 100)';
             this.textCtx.fillText('x3', bonus.x, bonus.y);
+            
+            this.textCtx.restore();
         }
     }
     
     renderRainbowBonus(bonus) {
-        const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(bonus.pulsePhase) * 0.4 + 1.0;
         const size = bonus.radius * pulse;
         
-        // Alone arcobaleno rotante
+        // ESPLOSIONE arcobaleno con onde multiple
+        for (let wave = 0; wave < 4; wave++) {
+            const wavePhase = (time * 2 + wave * 0.25) % 1;
+            const waveSize = size * (3 + wavePhase * 5);
+            const waveAlpha = (1 - wavePhase) * 0.6;
+            const hue = ((bonus.rainbowPhase * 100 + wave * 90) % 360) / 360;
+            const rgb = this.hslToRgb(hue, 1.0, 0.6);
+            this.renderer.drawCircle(bonus.x, bonus.y, waveSize, [...rgb, waveAlpha]);
+        }
+        
+        // Alone arcobaleno STRATIFICATO (10 layer!)
+        for (let i = 0; i < 10; i++) {
+            const hue = ((bonus.rainbowPhase * 100 + i * 36) % 360) / 360;
+            const rgb = this.hslToRgb(hue, 1.0, 0.5);
+            const auraColor = [...rgb, (0.7 - i * 0.06) * pulse];
+            this.renderer.drawCircle(bonus.x, bonus.y, size * (4 + i * 0.35), auraColor);
+        }
+        
+        // Spirale arcobaleno rotante
+        const numSpirals = 3;
+        for (let s = 0; s < numSpirals; s++) {
+            const spiralRotation = time * (s % 2 === 0 ? 2 : -2) + s * Math.PI * 2 / numSpirals;
+            for (let i = 0; i < 30; i++) {
+                const t = i / 30;
+                const angle = spiralRotation + t * Math.PI * 4;
+                const radius = size * (0.5 + t * 2.5);
+                const px = bonus.x + Math.cos(angle) * radius;
+                const py = bonus.y + Math.sin(angle) * radius;
+                const hue = ((bonus.rainbowPhase * 100 + i * 12) % 360) / 360;
+                const rgb = this.hslToRgb(hue, 1.0, 0.6);
+                const spiralAlpha = (1 - t) * 0.9;
+                this.renderer.drawCircle(px, py, 3, [...rgb, spiralAlpha]);
+            }
+        }
+        
+        // Cerchi concentrici arcobaleno con gradiente
         for (let i = 0; i < 7; i++) {
-            const hue = ((bonus.rainbowPhase * 100 + i * 51) % 360) / 360;
+            const hue = ((bonus.rainbowPhase * 100 + i * 51.4) % 360) / 360;
             const rgb = this.hslToRgb(hue, 1.0, 0.5);
-            const auraColor = [...rgb, 0.6 * pulse];
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (3 + i * 0.3), auraColor);
-        }
-        
-        // Cerchi concentrici arcobaleno
-        for (let i = 0; i < 5; i++) {
-            const hue = ((bonus.rainbowPhase * 100 + i * 72) % 360) / 360;
-            const rgb = this.hslToRgb(hue, 1.0, 0.5);
-            const ringSize = size * (1.0 - i * 0.15);
+            const ringSize = size * (1.2 - i * 0.15);
             this.renderer.drawCircle(bonus.x, bonus.y, ringSize, [...rgb, 1.0]);
+            
+            // Highlight su ogni anello
+            const highlightSize = ringSize * 0.85;
+            this.renderer.drawCircle(bonus.x - 3, bonus.y - 3, highlightSize * 0.3, [1.0, 1.0, 1.0, 0.5]);
         }
         
-        // Trail particles
+        // Raggi prismatici esplosivi (24 raggi)
+        const numRays = 24;
+        for (let i = 0; i < numRays; i++) {
+            const rayAngle = (i / numRays) * Math.PI * 2 + time * 1.5;
+            const rayLength = size * (2.5 + Math.sin(time * 4 + i * 0.2) * 1);
+            const hue = ((bonus.rainbowPhase * 100 + i * 15) % 360) / 360;
+            const rgb = this.hslToRgb(hue, 1.0, 0.6);
+            
+            // Raggio con gradiente
+            for (let j = 0; j < 6; j++) {
+                const t = j / 6;
+                const px = bonus.x + Math.cos(rayAngle) * rayLength * t;
+                const py = bonus.y + Math.sin(rayAngle) * rayLength * t;
+                const rayAlpha = (1 - t) * 0.8;
+                const raySize = 4 * (1 - t * 0.6);
+                this.renderer.drawCircle(px, py, raySize, [...rgb, rayAlpha]);
+            }
+        }
+        
+        // Particelle arcobaleno orbitanti (30 particelle!)
+        for (let i = 0; i < 30; i++) {
+            const orbitAngle = (i / 30) * Math.PI * 2 + time * 4;
+            const orbitRadius = size * (2.8 + Math.sin(time * 6 + i) * 0.5);
+            const px = bonus.x + Math.cos(orbitAngle) * orbitRadius;
+            const py = bonus.y + Math.sin(orbitAngle) * orbitRadius;
+            const hue = ((bonus.rainbowPhase * 100 + i * 12) % 360) / 360;
+            const rgb = this.hslToRgb(hue, 1.0, 0.7);
+            const pSize = 2.5 + Math.sin(time * 10 + i) * 1.2;
+            this.renderer.drawCircle(px, py, pSize, [...rgb, 0.95]);
+            
+            // Alone sulle particelle
+            this.renderer.drawCircle(px, py, pSize * 2, [...rgb, 0.3]);
+        }
+        
+        // Stelle arcobaleno rotanti (6 stelle)
+        for (let star = 0; star < 6; star++) {
+            const starAngle = (star / 6) * Math.PI * 2 + time * 2;
+            const starX = bonus.x + Math.cos(starAngle) * size * 2.2;
+            const starY = bonus.y + Math.sin(starAngle) * size * 2.2;
+            const hue = ((bonus.rainbowPhase * 100 + star * 60) % 360) / 360;
+            const rgb = this.hslToRgb(hue, 1.0, 0.6);
+            
+            // Stella 5 punte
+            for (let i = 0; i < 10; i++) {
+                const angle = (i / 10) * Math.PI * 2 + time * 3;
+                const radius = i % 2 === 0 ? 6 : 3;
+                const px = starX + Math.cos(angle) * radius;
+                const py = starY + Math.sin(angle) * radius;
+                this.renderer.drawCircle(px, py, 2, [...rgb, 1.0]);
+            }
+        }
+        
+        // Trail particles (migliorate)
         bonus.particles.forEach(p => {
             const alpha = p.life / 0.8;
             const pColor = [...p.color];
-            pColor[3] = alpha;
-            this.renderer.drawCircle(p.x, p.y, p.size * alpha, pColor);
+            pColor[3] = alpha * 0.9;
+            this.renderer.drawCircle(p.x, p.y, p.size * alpha * 1.5, pColor);
+            
+            // Alone sulla particella
+            const glowColor = [...p.color];
+            glowColor[3] = alpha * 0.4;
+            this.renderer.drawCircle(p.x, p.y, p.size * alpha * 2.5, glowColor);
         });
         
-        // Core bianco pulsante
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.3, [1.0, 1.0, 1.0, 1.0]);
+        // Core SUPER brillante pulsante
+        const coreSize = size * 0.5 * pulse;
+        this.renderer.drawCircle(bonus.x, bonus.y, coreSize, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, coreSize * 0.7, [1.0, 1.0, 0.9, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, coreSize * 0.4, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Croce luminosa centrale
+        const crossSize = coreSize * 1.5;
+        this.renderer.drawRect(bonus.x - crossSize, bonus.y - 2, crossSize * 2, 4, [1.0, 1.0, 1.0, 0.8]);
+        this.renderer.drawRect(bonus.x - 2, bonus.y - crossSize, 4, crossSize * 2, [1.0, 1.0, 1.0, 0.8]);
     }
     
     hslToRgb(h, s, l) {
@@ -2294,6 +2715,80 @@ export class RenderingSystem {
             b = hue2rgb(p, q, h - 1/3);
         }
         return [r, g, b];
+    }
+    
+    updateAmbientParticles(deltaTime) {
+        const time = Date.now() / 1000;
+        
+        this.ambientParticles.forEach(p => {
+            if (p.type === 'mist') {
+                // Movimento nebbia
+                p.x += p.vx * deltaTime;
+                p.y += p.vy * deltaTime;
+                
+                // Wrap around screen
+                if (p.x < -p.size) p.x = this.canvasWidth + p.size;
+                if (p.x > this.canvasWidth + p.size) p.x = -p.size;
+                if (p.y < -p.size) p.y = this.canvasHeight + p.size;
+                if (p.y > this.canvasHeight + p.size) p.y = -p.size;
+            } else if (p.type === 'energy') {
+                // Movimento particelle energetiche
+                p.x += p.vx * deltaTime;
+                p.y += p.vy * deltaTime;
+                p.life -= deltaTime;
+                
+                // Respawn quando muoiono
+                if (p.life <= 0) {
+                    p.x = Math.random() * this.canvasWidth;
+                    p.y = Math.random() * this.canvasHeight;
+                    p.vx = (Math.random() - 0.5) * 40;
+                    p.vy = (Math.random() - 0.5) * 40;
+                    p.life = p.maxLife;
+                }
+                
+                // Wrap around
+                if (p.x < 0) p.x = this.canvasWidth;
+                if (p.x > this.canvasWidth) p.x = 0;
+                if (p.y < 0) p.y = this.canvasHeight;
+                if (p.y > this.canvasHeight) p.y = 0;
+            }
+        });
+    }
+    
+    renderAmbientParticles() {
+        const time = Date.now() / 1000;
+        
+        this.ambientParticles.forEach(p => {
+            if (p.type === 'star') {
+                // Scintillio
+                const twinkle = Math.sin(time * p.twinkleSpeed + p.twinklePhase) * 0.5 + 0.5;
+                const alpha = p.brightness * twinkle * 0.6;
+                const color = [...p.color, alpha];
+                
+                // Stella con alone
+                this.renderer.drawCircle(p.x, p.y, p.size * 2, [...p.color, alpha * 0.3]);
+                this.renderer.drawCircle(p.x, p.y, p.size, color);
+                
+                // Scintilla centrale
+                const sparkleAlpha = twinkle * 0.9;
+                this.renderer.drawCircle(p.x, p.y, p.size * 0.5, [1.0, 1.0, 1.0, sparkleAlpha]);
+            } else if (p.type === 'mist') {
+                // Nebbia colorata
+                const pulse = Math.sin(time * 2 + p.pulsePhase) * 0.3 + 0.5;
+                const rgb = this.hslToRgb(p.hue, 0.7, 0.5);
+                const alpha = pulse * 0.15;
+                this.renderer.drawCircle(p.x, p.y, p.size, [...rgb, alpha]);
+            } else if (p.type === 'energy') {
+                // Particella energetica
+                const alpha = (p.life / p.maxLife) * 0.5;
+                const color = [...p.color, alpha];
+                
+                // Alone
+                this.renderer.drawCircle(p.x, p.y, p.size * 2, [...p.color, alpha * 0.3]);
+                // Core
+                this.renderer.drawCircle(p.x, p.y, p.size, color);
+            }
+        });
     }
     
     renderLevelTransition(transition) {

@@ -214,6 +214,9 @@ export class RenderingSystem {
             case 'powerup':
                 this.renderPowerup(entity);
                 break;
+            case 'powerupParticle':
+                this.renderPowerupParticle(entity);
+                break;
             case 'spike':
             case 'enemy':
                 this.renderObstacle(entity);
@@ -978,6 +981,63 @@ export class RenderingSystem {
         }
     }
 
+    renderPowerupParticle(particle) {
+        // Calculate alpha based on lifetime
+        const alpha = particle.life / particle.maxLife;
+        const color = [...particle.color];
+        color[3] *= alpha;
+        
+        // Render based on shape
+        if (particle.shape === 'circle') {
+            // Glow effect
+            const glowColor = [...color];
+            glowColor[3] *= 0.3;
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 2, glowColor);
+            
+            // Main particle
+            this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
+            
+            // Inner bright spot
+            const brightColor = [1.0, 1.0, 1.0, alpha * 0.8];
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, brightColor);
+        } else {
+            // Rotated square
+            const halfSize = particle.size / 2;
+            const cos = Math.cos(particle.rotation);
+            const sin = Math.sin(particle.rotation);
+            
+            // Calculate rotated corners
+            const corners = [
+                {x: -halfSize, y: -halfSize},
+                {x: halfSize, y: -halfSize},
+                {x: halfSize, y: halfSize},
+                {x: -halfSize, y: halfSize}
+            ].map(p => ({
+                x: particle.x + p.x * cos - p.y * sin,
+                y: particle.y + p.x * sin + p.y * cos
+            }));
+            
+            // Draw diamond/square shape
+            const glowColor = [...color];
+            glowColor[3] *= 0.3;
+            this.renderer.drawRect(
+                particle.x - particle.size * 1.2,
+                particle.y - particle.size * 1.2,
+                particle.size * 2.4,
+                particle.size * 2.4,
+                glowColor
+            );
+            
+            this.renderer.drawRect(
+                particle.x - halfSize,
+                particle.y - halfSize,
+                particle.size,
+                particle.size,
+                color
+            );
+        }
+    }
+
     updateDimensions(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
@@ -1051,6 +1111,116 @@ export class RenderingSystem {
             highlightColor
         );
 
+        // Timer indicator when player is on platform
+        if (platform.playerOnPlatform && platform.timeOnPlatform !== undefined && platform.maxTimeOnPlatform) {
+            const timerProgress = platform.timeOnPlatform / platform.maxTimeOnPlatform;
+            const centerX = platform.x + platform.width / 2;
+            const centerY = platform.y - 40;
+            const radius = 20;
+            
+            // Outer ring (background)
+            const bgColor = [0.2, 0.2, 0.2, 0.6];
+            this.renderer.drawCircle(centerX, centerY, radius + 2, bgColor);
+            
+            // Warning color transition
+            let ringColor;
+            if (timerProgress < 0.5) {
+                // Green to yellow
+                ringColor = [
+                    timerProgress * 2,
+                    1.0,
+                    0.0,
+                    0.9
+                ];
+            } else {
+                // Yellow to red
+                ringColor = [
+                    1.0,
+                    1.0 - (timerProgress - 0.5) * 2,
+                    0.0,
+                    0.9
+                ];
+            }
+            
+            // Draw timer ring segments
+            const segments = 24;
+            const filledSegments = Math.floor(segments * (1 - timerProgress));
+            
+            for (let i = 0; i < segments; i++) {
+                if (i < filledSegments) {
+                    const angle1 = (i / segments) * Math.PI * 2 - Math.PI / 2;
+                    const angle2 = ((i + 1) / segments) * Math.PI * 2 - Math.PI / 2;
+                    const angleMiddle = (angle1 + angle2) / 2;
+                    
+                    // Calculate segment position
+                    const x = centerX + Math.cos(angleMiddle) * radius;
+                    const y = centerY + Math.sin(angleMiddle) * radius;
+                    
+                    // Pulsing effect
+                    const segmentPulse = Math.sin(time * 8 + i * 0.2) * 0.2 + 0.8;
+                    const segmentColor = [...ringColor];
+                    segmentColor[3] *= segmentPulse;
+                    
+                    this.renderer.drawCircle(x, y, 3, segmentColor);
+                }
+            }
+            
+            // Inner circle with time remaining
+            const innerColor = [0.1, 0.1, 0.1, 0.8];
+            this.renderer.drawCircle(centerX, centerY, radius - 5, innerColor);
+            
+            // Center glow
+            const glowIntensity = timerProgress > 0.7 ? (timerProgress - 0.7) / 0.3 : 0;
+            if (glowIntensity > 0) {
+                const warningGlow = [1.0, 0.3, 0.0, glowIntensity * 0.5];
+                this.renderer.drawCircle(centerX, centerY, radius - 3, warningGlow);
+            }
+            
+            // Countdown number
+            const timeLeft = Math.ceil(platform.maxTimeOnPlatform - platform.timeOnPlatform);
+            const numberColor = timerProgress > 0.7 ? [1.0, 0.3, 0.0, 1.0] : [1.0, 1.0, 1.0, 1.0];
+            
+            // Draw simple number using rectangles
+            const fontSize = 12;
+            const numberStr = timeLeft.toString();
+            const charWidth = 7;
+            const totalWidth = numberStr.length * charWidth;
+            let charX = centerX - totalWidth / 2;
+            
+            for (const char of numberStr) {
+                // Draw a simple filled rectangle for each character
+                // This is a simplified representation
+                const segments = this.getDigitSegments(char);
+                const segW = 1.5;
+                const segH = fontSize / 3;
+                
+                // Draw 7-segment display
+                if (segments[0]) this.renderer.drawRect(charX + 1, centerY - fontSize/2, charWidth - 2, segW, numberColor); // top
+                if (segments[1]) this.renderer.drawRect(charX, centerY - fontSize/2, segW, segH, numberColor); // top-left
+                if (segments[2]) this.renderer.drawRect(charX + charWidth - segW, centerY - fontSize/2, segW, segH, numberColor); // top-right
+                if (segments[3]) this.renderer.drawRect(charX + 1, centerY - segW/2, charWidth - 2, segW, numberColor); // middle
+                if (segments[4]) this.renderer.drawRect(charX, centerY, segW, segH, numberColor); // bottom-left
+                if (segments[5]) this.renderer.drawRect(charX + charWidth - segW, centerY, segW, segH, numberColor); // bottom-right
+                if (segments[6]) this.renderer.drawRect(charX + 1, centerY + fontSize/2 - segW, charWidth - 2, segW, numberColor); // bottom
+                
+                charX += charWidth + 1;
+            }
+            
+            // Warning particles when time is running out
+            if (timerProgress > 0.8) {
+                const particleCount = 3;
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = (time * 5 + i * (Math.PI * 2 / particleCount)) % (Math.PI * 2);
+                    const distance = radius + 8 + Math.sin(time * 10 + i) * 3;
+                    const px = centerX + Math.cos(angle) * distance;
+                    const py = centerY + Math.sin(angle) * distance;
+                    
+                    const particleColor = [1.0, 0.4, 0.0, 0.8];
+                    this.renderer.drawCircle(px, py, 2, particleColor);
+                }
+            }
+        }
+
         // Respawn indicator (if respawning)
         if (!platform.isDissolving && platform.respawnProgress && platform.respawnProgress > 0) {
             const respawnWidth = platform.width * platform.respawnProgress;
@@ -1063,6 +1233,25 @@ export class RenderingSystem {
                 respawnColor
             );
         }
+    }
+
+    getDigitSegments(digit) {
+        // Returns which segments to light for 7-segment display
+        // [top, top-left, top-right, middle, bottom-left, bottom-right, bottom]
+        const segments = {
+            '0': [true, true, true, false, true, true, true],
+            '1': [false, false, true, false, false, true, false],
+            '2': [true, false, true, true, true, false, true],
+            '3': [true, false, true, true, false, true, true],
+            '4': [false, true, true, true, false, true, false],
+            '5': [true, true, false, true, false, true, true],
+            '6': [true, true, false, true, true, true, true],
+            '7': [true, false, true, false, false, true, false],
+            '8': [true, true, true, true, true, true, true],
+            '9': [true, true, true, true, false, true, true]
+        };
+        
+        return segments[digit] || segments['0'];
     }
 
     renderObstacle(obstacle) {

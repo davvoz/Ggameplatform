@@ -30,6 +30,7 @@ export class GameController {
         this.collectibles = [];
         this.powerups = [];
         this.hearts = []; // Cuoricini per recuperare vita
+        this.powerupParticles = []; // Particelle per animazioni powerup
         this.player = null;
         this.levelGenerator = null;
         this.backgroundSystem = null;
@@ -428,6 +429,16 @@ export class GameController {
             heart.pulsePhase += deltaTime * 3;
             return heart.x + heart.radius > 0;
         });
+        
+        // Update powerup particles
+        this.powerupParticles = this.powerupParticles.filter(particle => {
+            particle.x += particle.vx * deltaTime;
+            particle.y += particle.vy * deltaTime;
+            particle.vy += particle.gravity * deltaTime; // Gravity
+            particle.life -= deltaTime;
+            particle.rotation += particle.rotationSpeed * deltaTime;
+            return particle.life > 0;
+        });
     }
 
     checkCollisions() {
@@ -481,6 +492,9 @@ export class GameController {
                 powerup.collected = true;
 
                 console.log('Power-up collected!', powerup.powerupType || powerup.type);
+
+                // Create particle explosion
+                this.createPowerupParticles(powerup);
 
                 // Activate powerup usando il tipo corretto
                 const powerupType = powerup.powerupType || powerup.type;
@@ -563,6 +577,64 @@ export class GameController {
         }
     }
 
+    createPowerupParticles(powerup) {
+        const particleCount = 30; // Number of particles
+        const centerX = powerup.x;
+        const centerY = powerup.y;
+        
+        // Get powerup-specific colors
+        let particleColors = [];
+        switch (powerup.powerupType || powerup.type) {
+            case 'immortality':
+                particleColors = [
+                    [1.0, 0.84, 0.0, 1.0],  // Gold
+                    [1.0, 0.95, 0.6, 1.0],  // Light gold
+                    [1.0, 0.75, 0.0, 1.0]   // Deep gold
+                ];
+                break;
+            case 'flight':
+                particleColors = [
+                    [0.4, 0.7, 1.0, 1.0],   // Light blue
+                    [0.6, 0.85, 1.0, 1.0],  // Lighter blue
+                    [0.3, 0.6, 0.9, 1.0]    // Sky blue
+                ];
+                break;
+            case 'superJump':
+                particleColors = [
+                    [1.0, 0.3, 0.5, 1.0],   // Pink
+                    [1.0, 0.5, 0.7, 1.0],   // Light pink
+                    [1.0, 0.2, 0.4, 1.0]    // Deep pink
+                ];
+                break;
+            default:
+                particleColors = [[1.0, 1.0, 1.0, 1.0]];
+        }
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.5;
+            const speed = 100 + Math.random() * 150;
+            const size = 3 + Math.random() * 5;
+            
+            const particle = {
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 50, // Initial upward velocity
+                gravity: 200, // Gravity effect
+                life: 0.8 + Math.random() * 0.4,
+                maxLife: 1.2,
+                size: size,
+                color: particleColors[Math.floor(Math.random() * particleColors.length)],
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 10,
+                type: 'powerupParticle',
+                shape: Math.random() > 0.5 ? 'circle' : 'square' // Mix of shapes
+            };
+            
+            this.powerupParticles.push(particle);
+        }
+    }
+
     updateRenderEntities() {
         // Update background in rendering system
         this.renderingSystem.setBackground(
@@ -579,7 +651,8 @@ export class GameController {
             ...this.obstacles,
             ...this.collectibles,
             ...this.powerups,
-            ...this.hearts
+            ...this.hearts,
+            ...this.powerupParticles
         ];
 
         // Add safety platform if active or dissolving
@@ -588,6 +661,10 @@ export class GameController {
             safetyClone.dissolveProgress = this.safetyPlatformDissolveProgress;
             safetyClone.isDissolving = this.safetyPlatformDissolving;
             safetyClone.respawnProgress = this.safetyPlatformActive ? 0 : (this.safetyPlatformTimer / this.safetyPlatformRespawnTime);
+            // Add timer info for visual indicator
+            safetyClone.playerOnPlatform = this.playerOnSafetyPlatform;
+            safetyClone.timeOnPlatform = this.playerOnSafetyPlatformTimer;
+            safetyClone.maxTimeOnPlatform = this.safetyPlatformDissolveDuration;
             entities.push(safetyClone);
         }
 
@@ -621,6 +698,7 @@ export class GameController {
         this.collectibles = [];
         this.powerups = [];
         this.hearts = [];
+        this.powerupParticles = [];
         this.scoreSystem.reset();
         this.powerupSystem.reset();
         this.spawnTimer = 0;

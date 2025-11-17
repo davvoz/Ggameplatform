@@ -1,0 +1,85 @@
+/* ========================================
+   Container & Layout
+   ======================================== */
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    position: relative;
+    z-index: 1;
+}
+
+main {
+    flex: 1;
+    padding: var(--spacing-xl) 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.loading {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* ========================================
+   About Page
+   ======================================== */
+
+.about {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--background-light);
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.about h2 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-primary);
+}
+
+.about h3 {
+    font-size: 1.5rem;
+    margin: var(--spacing-xl) 0 var(--spacing-md);
+    color: var(--primary-color);
+}
+
+.about p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: var(--spacing-md);
+}
+
+.about ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.about li {
+    padding: var(--spacing-sm) 0;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+
+.footer {
+    background: var(--background-light);
+    border-top: 1px solid var(--border);
+    padding: var(--spacing-lg) 0;
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: auto;
+}

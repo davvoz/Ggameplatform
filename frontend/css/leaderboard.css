@@ -1,0 +1,258 @@
+/* ========================================
+   Leaderboard Styles
+   ======================================== */
+
+.leaderboard {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.leaderboard-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.leaderboard-header h2 {
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.leaderboard-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.leaderboard-item {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.leaderboard-item:hover {
+    background: var(--background-lighter);
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.leaderboard-item.top-1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--surface-elevated) 100%);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-item.top-2 {
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.1) 0%, var(--surface-elevated) 100%);
+    border-color: rgba(192, 192, 192, 0.3);
+}
+
+.leaderboard-item.top-3 {
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, var(--surface-elevated) 100%);
+    border-color: rgba(205, 127, 50, 0.3);
+}
+
+.leaderboard-rank {
+    font-size: 2rem;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+}
+
+.leaderboard-player {
+    flex: 1;
+}
+
+.player-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.player-games {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.leaderboard-stats {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.leaderboard-stats .stat-item {
+    text-align: right;
+}
+
+.leaderboard-stats .stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.leaderboard-stats .stat-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.leaderboard-empty {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--text-secondary);
+}
+
+.leaderboard-empty p {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-md);
+}
+
+/* Game Leaderboards Styles */
+.game-leaderboards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.game-leaderboard-section {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.game-leaderboard-section:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-lg);
+}
+
+.game-leaderboard-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.game-leaderboard-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.game-leaderboard-info h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.game-leaderboard-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.game-leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.game-leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--background-lighter);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.game-leaderboard-item:hover {
+    background: var(--background-light);
+}
+
+.game-leaderboard-item.top-1 {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.game-leaderboard-item.top-2 {
+    background: linear-gradient(90deg, rgba(192, 192, 192, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.game-leaderboard-item.top-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.15) 0%, var(--background-lighter) 100%);
+}
+
+.leaderboard-rank-small {
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+
+.leaderboard-player-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.leaderboard-score {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.game-leaderboard-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .leaderboard-header h2 {
+        font-size: 2rem;
+    }
+    
+    .leaderboard-item {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-md);
+    }
+    
+    .leaderboard-rank {
+        font-size: 1.5rem;
+    }
+    
+    .leaderboard-stats {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        width: 100%;
+    }
+    
+    .leaderboard-stats .stat-item {
+        text-align: center;
+    }
+    
+    .game-leaderboards {
+        grid-template-columns: 1fr;
+    }
+}

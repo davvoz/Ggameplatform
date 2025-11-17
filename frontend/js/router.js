@@ -1,4 +1,6 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderProfile, renderLeaderboard, renderQuests, render404 } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404 } from './main.js';
+import { renderLeaderboard } from './LeaderboardRenderer.js';
+import { renderProfile } from './ProfileRenderer.js';
 
 /**
  * Router configuration

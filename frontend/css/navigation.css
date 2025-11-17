@@ -1,0 +1,204 @@
+/* ========================================
+   Navigation
+   ======================================== */
+
+.navbar {
+    background: rgba(10, 14, 23, 0.9);
+    border-bottom: 1px solid var(--border);
+    padding: var(--spacing-md) 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.nav-brand h1 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    background: var(--primary-color);
+    color: var(--background);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+}
+
+/* Hide auth-required links by default */
+.nav-link.auth-required {
+    display: none;
+}
+
+/* Hamburger Menu */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    z-index: 1001;
+    position: relative;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.nav-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.nav-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+    
+    /* Add padding to main content to account for fixed header */
+    main {
+        padding-top: calc(60px + var(--spacing-xl));
+    }
+    
+    .nav-toggle {
+        display: flex;
+    }
+    
+    .navbar .container {
+        flex-wrap: nowrap;
+    }
+    
+    .nav-menu {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        height: 100vh;
+        width: 280px;
+        flex-direction: column;
+        align-items: stretch;
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(20px);
+        padding: 80px var(--spacing-lg) var(--spacing-lg);
+        gap: 0;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+        border-left: 1px solid var(--border);
+        overflow-y: auto;
+        z-index: 999;
+    }
+    
+    .nav-menu.active {
+        right: 0;
+    }
+    
+    .nav-link {
+        text-align: left;
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-xs);
+        border-radius: var(--radius-md);
+    }
+    
+    .user-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--surface);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .user-info #userName {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .user-info .cur8-badge {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--primary-color);
+        border-radius: var(--radius-sm);
+        text-align: center;
+    }
+    
+    .user-info #logoutBtn {
+        width: 100%;
+        padding: var(--spacing-sm);
+        background: var(--error);
+        border: none;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .user-info #logoutBtn:hover {
+        background: #dc2626;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-brand h1 {
+        font-size: 1.2rem;
+    }
+    
+    .nav-menu {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .nav-menu.active {
+        right: 0;
+    }
+}

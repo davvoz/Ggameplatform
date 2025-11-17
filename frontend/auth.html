@@ -3,355 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Platform - Login</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            background: var(--background);
-        }
-        
-        .auth-container {
-            max-width: 1000px;
-            width: 100%;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .auth-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        
-        .auth-header h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            text-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
-        }
-        
-        .auth-header p {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-        }
-        
-        .auth-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .auth-card {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            border: 1px solid var(--border);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-        }
-        
-        .auth-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--primary-color);
-        }
-        
-        .auth-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 217, 255, 0.2);
-            border-color: var(--primary-color);
-        }
-        
-        .auth-card.featured {
-            border: 2px solid var(--primary-color);
-        }
-        
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .auth-card h2 {
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .auth-card > p {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-            text-align: center;
-            line-height: 1.6;
-        }
-        
-        .auth-benefits {
-            background: var(--surface-elevated);
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border);
-        }
-        
-        .auth-benefits h3 {
-            color: var(--primary-color);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-        
-        .auth-benefits ul {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .auth-benefits li {
-            padding: 0.5rem 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .auth-benefits li::before {
-            content: '✓ ';
-            color: var(--success);
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-        
-        .auth-card button {
-            width: 100%;
-            padding: 1rem 1.5rem;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .btn-auth-primary {
-            background: var(--primary-color);
-            color: var(--background);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .btn-auth-primary:hover {
-            background: var(--primary-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 217, 255, 0.4);
-        }
-        
-        .btn-auth-secondary {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-        
-        .btn-auth-secondary:hover {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: var(--background);
-        }
-        
-        .auth-status {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            display: none;
-            text-align: center;
-        }
-        
-        .auth-status.success {
-            background: rgba(105, 240, 174, 0.1);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-        
-        .auth-status.error {
-            background: rgba(255, 61, 113, 0.1);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-        
-        .auth-status.info {
-            background: rgba(0, 217, 255, 0.1);
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
-        
-        .auth-loading {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .auth-badge {
-            display: inline-block;
-            padding: 0.25rem 1rem;
-            border-radius: var(--radius-md);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1rem;
-        }
-        
-        .auth-badge.recommended {
-            background: var(--primary-color);
-            color: var(--background);
-        }
-        
-        .auth-multiplier {
-            background: var(--primary-color);
-            color: var(--background);
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            text-align: center;
-            margin: 1rem 0;
-            font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .auth-multiplier.secondary {
-            background: var(--surface-elevated);
-            color: var(--text-secondary);
-            box-shadow: none;
-        }
-        
-        .auth-footer {
-            text-align: center;
-            color: var(--text-muted);
-            margin-top: 2rem;
-        }
-        
-        .auth-footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        
-        .auth-footer a:hover {
-            color: var(--primary-light);
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .auth-header h1 {
-                font-size: 2rem;
-            }
-            
-            .auth-header p {
-                font-size: 1rem;
-            }
-            
-            .auth-cards {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-    </style>
+    <title>Game Platform - Authentication</title>
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/layout.css">
+    <link rel="stylesheet" href="./css/auth.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-header">
-            <h1>🎮 CUR8 Game Platform</h1>
-            <p>Scegli come vuoi giocare</p>
-        </div>
-        
-        <div class="auth-cards">
-            <!-- Steem Keychain Auth -->
-            <div class="auth-card featured">
-                <span class="auth-badge recommended">⭐ Consigliato</span>
-                <div class="card-icon">🔐</div>
-                <h2>Accedi con Steem</h2>
-                <p>Autentica con SteemKeychain e sblocca i moltiplicatori CUR8</p>
-                
-                <div class="auth-benefits">
-                    <h3>Vantaggi</h3>
-                    <ul>
-                        <li>Moltiplicatore CUR8 2.0x</li>
-                        <li>Identità blockchain verificata</li>
-                        <li>Progressi salvati permanentemente</li>
-                        <li>Accesso a rewards esclusivi</li>
-                        <li>Partecipazione a tornei</li>
-                    </ul>
-                </div>
-                
-                <div class="auth-multiplier">
-                    💰 CUR8 Multiplier: 2.0x
-                </div>
-                
-                <button class="btn-auth-primary" onclick="loginWithSteem()">
-                    Firma con Keychain
-                </button>
-                
-                <div id="steemStatus" class="auth-status"></div>
+    <main class="container">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="logo">🎮</div>
+                <h1>Game Platform</h1>
+                <p class="auth-subtitle">Choose your login method to start playing</p>
             </div>
             
-            <!-- Anonymous Auth -->
-            <div class="auth-card">
-                <div class="card-icon">👤</div>
-                <h2>Gioca Anonimo</h2>
-                <p>Inizia subito senza registrazione, ideale per provare i giochi</p>
-                
-                <div class="auth-benefits">
-                    <h3>Caratteristiche</h3>
-                    <ul>
-                        <li>Accesso immediato</li>
-                        <li>Nessuna registrazione</li>
-                        <li>Privacy totale</li>
-                        <li>Perfetto per test rapidi</li>
-                    </ul>
+            <div class="auth-cards">
+                <!-- Steem Keychain Auth -->
+                <div class="auth-card featured">
+                    <div class="card-badge">⭐ Recommended</div>
+                    <div class="card-icon">🔐</div>
+                    <h2 class="card-title">Steem Keychain</h2>
+                    <p class="card-description">Authenticate with blockchain and unlock maximum rewards</p>
+                    
+                    <div class="benefits-compact">
+                        <div class="benefit-item">✨ 2.0x CUR8 Multiplier</div>
+                        <div class="benefit-item">🔗 Blockchain Identity</div>
+                        <div class="benefit-item">💾 Progress Saved</div>
+                        <div class="benefit-item">🏆 Tournaments</div>
+                    </div>
+                    
+                    <button class="btn-auth btn-auth-primary" onclick="loginWithSteem()">
+                        <span class="btn-icon">🔑</span>
+                        <span>Sign with Keychain</span>
+                    </button>
+                    
+                    <div id="steemStatus" class="auth-status"></div>
                 </div>
                 
-                <div class="auth-multiplier secondary">
-                    💰 CUR8 Multiplier: 1.0x
+                <!-- Anonymous Auth -->
+                <div class="auth-card">
+                    <div class="card-icon">👤</div>
+                    <h2 class="card-title">Play Anonymous</h2>
+                    <p class="card-description">Start playing instantly without registration</p>
+                    
+                    <div class="benefits-compact">
+                        <div class="benefit-item">⚡ Instant Access</div>
+                        <div class="benefit-item">🔒 Complete Privacy</div>
+                        <div class="benefit-item">🎮 No Registration</div>
+                        <div class="benefit-item">🧪 Quick Testing</div>
+                    </div>
+                    
+                    <button class="btn-auth btn-auth-secondary" onclick="playAnonymous()">
+                        <span class="btn-icon">🚀</span>
+                        <span>Play Now</span>
+                    </button>
+                    
+                    <div id="anonStatus" class="auth-status"></div>
                 </div>
-                
-                <button class="btn-auth-secondary" onclick="playAnonymous()">
-                    Gioca Subito
-                </button>
-                
-                <div id="anonStatus" class="auth-status"></div>
             </div>
+            
+ 
         </div>
-        
-        <div class="auth-footer">
-            <p>Hai già un account? <a href="/static/user-management.html">Gestisci utenti</a></p>
-        </div>
-    </div>
+    </main>
     
     <script>
         const API_BASE = 'http://localhost:8000/users';

@@ -288,8 +288,13 @@ export class SafetyPlatformSystem {
     getPlatform() { return this.platform; }
     getCharges() { return this.charges; }
     getDissolveProgress() { return this.state === 'DISSOLVING' ? this.dissolveProgress : 0; }
-    // Platform is ONLY active if in IDLE or ACTIVE state (NOT when dissolving)
-    isActive() { return (this.state === 'IDLE' || this.state === 'ACTIVE') && this.charges > 0; }
+    // Platform is active if: has charges in IDLE state, OR already ACTIVE/DISSOLVING (even with 0 charges)
+    isActive() { 
+        if (this.state === 'ACTIVE' || this.state === 'DISSOLVING') {
+            return true; // Sempre collidibile se già attiva o in dissoluzione
+        }
+        return this.state === 'IDLE' && this.charges > 0; // In IDLE serve almeno 1 carica
+    }
     
     // Getters for UI/rendering compatibility
     get playerOnPlatformTimer() { return this.timeOnPlatform; }

@@ -50,8 +50,9 @@ export class GameController {
         this.safetyPlatformDissolveDuration = 2.5; // 2.5 seconds on platform before dissolve
         this.safetyPlatformRespawnTime = 5.0; // 5 seconds to respawn
         this.safetyPlatformActive = true;
-        this.safetyPlatformDissolving = false;
+        this.safetyPlatformDissolving = true; // Inizia subito a dissolversi lentamente
         this.safetyPlatformDissolveProgress = 0;
+        this.safetyPlatformAutoDissolveSpeed = 0.02; // Dissolvimento automatico lento
         this.playerOnSafetyPlatform = false;
         this.playerOnSafetyPlatformTimer = 0;
         this.rescuePlatformSpawnTimer = 0;
@@ -550,14 +551,18 @@ export class GameController {
         // Update player
         this.player.update(deltaTime);
         
+        // BLOCCA il player leggermente a SINISTRA del centro (circa 1/3 dello schermo)
+        const dims = this.engine.getCanvasDimensions();
+        this.player.x = (dims.width * 0.35) - this.player.width / 2; // 35% invece di 50%
+        
         // Update turbo button UI
         if (this.turboButtonUI) {
             this.turboButtonUI.update(deltaTime, this.player);
         }
         
-        // Update flight slider UI
-        if (this.flightSliderUI) {
-            this.flightSliderUI.update(deltaTime, this.player);
+        // Update flight button UI
+        if (this.flightButtonUI) {
+            this.flightButtonUI.update(deltaTime, this.player);
         }
         
         // Check if player just stopped sliding on ice - trigger brake shake
@@ -694,7 +699,9 @@ export class GameController {
 
             // Handle dissolving animation
             if (this.safetyPlatformDissolving) {
-                this.safetyPlatformDissolveProgress += deltaTime * 2; // 0.5 seconds dissolve
+                // Dissolvimento più veloce se player è sopra, altrimenti lento e automatico
+                const dissolveSpeed = this.playerOnSafetyPlatform ? 2.0 : this.safetyPlatformAutoDissolveSpeed;
+                this.safetyPlatformDissolveProgress += deltaTime * dissolveSpeed;
 
                 if (this.safetyPlatformDissolveProgress >= 1.0) {
                     // Platform fully dissolved
@@ -711,6 +718,7 @@ export class GameController {
             if (this.safetyPlatformTimer >= this.safetyPlatformRespawnTime) {
                 // Respawn platform
                 this.safetyPlatformActive = true;
+                this.safetyPlatformDissolving = true; // Ricomincia a dissolversi
                 this.safetyPlatformTimer = 0;
                 this.playerOnSafetyPlatformTimer = 0;
                 this.rescuePlatformSpawnTimer = 0;
@@ -722,19 +730,43 @@ export class GameController {
 
     spawnRescuePlatforms() {
         const dims = this.engine.getCanvasDimensions();
-        const rescueY = dims.height - 150; // Slightly above safety platform
-        const platformWidth = 80;
-        const spacing = 100;
+        const level = this.scoreSystem.getLevel();
+        
+        // Parametri variabili per livello
+        const patterns = [
+            { name: 'staircase', yFunc: (i, count) => -i * 40 },
+            { name: 'wave', yFunc: (i, count) => Math.sin(i * Math.PI / count) * 60 },
+            { name: 'zigzag', yFunc: (i, count) => (i % 2 === 0 ? -30 : 30) },
+            { name: 'diagonal', yFunc: (i, count) => -i * 25 },
+            { name: 'scattered', yFunc: (i, count) => (Math.random() - 0.5) * 100 }
+        ];
+        
+        const colors = [
+            [0.3, 0.9, 0.5, 1.0],  // Verde
+            [0.9, 0.5, 0.3, 1.0],  // Arancione
+            [0.5, 0.3, 0.9, 1.0],  // Viola
+            [0.3, 0.5, 0.9, 1.0],  // Blu
+            [0.9, 0.9, 0.3, 1.0],  // Giallo
+            [0.9, 0.3, 0.5, 1.0]   // Rosa
+        ];
+        
+        // Selezione basata su livello
+        const pattern = patterns[level % patterns.length];
+        const color = colors[level % colors.length];
+        const platformCount = 3 + (level % 5); // Da 3 a 7 piattaforme
+        const platformWidth = 60 + (level % 3) * 15; // 60, 75, 90
+        const spacing = 90 + (level % 4) * 20; // 90-150
+        const baseY = dims.height - 150 - (level % 3) * 30; // Altezza variabile
         const startX = dims.width + 50;
 
-        // Create 5 rescue platforms coming from the right
-        for (let i = 0; i < 5; i++) {
+        // Create rescue platforms con pattern variabile
+        for (let i = 0; i < platformCount; i++) {
             const platform = {
                 x: startX + (i * spacing),
-                y: rescueY - (i * 30), // Staircase pattern going up
+                y: baseY + pattern.yFunc(i, platformCount),
                 width: platformWidth,
                 height: 12,
-                color: [0.3, 0.9, 0.5, 1.0], // Bright green for rescue
+                color: color,
                 velocity: -150, // Moving left
                 type: 'platform',
                 platformType: 'RESCUE',

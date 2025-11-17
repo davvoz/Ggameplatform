@@ -29,10 +29,10 @@ export class ProceduralLevelGenerator {
         this.obstaclePool = [];
         this.lastPlatformX = 0;
         this.lastPlatformY = 0;
-        this.platformSpacing = { min: 70, max: 140 }; // Medium spacing
-        this.platformWidth = { min: 150, max: 280 }; // Good width
+        this.platformSpacing = { min: 40, max: 80 }; // Più vicine - ridotto da 70-140
+        this.platformWidth = { min: 180, max: 320 }; // Più larghe - aumentato da 150-280
         this.platformHeight = 20;
-        this.maxJumpHeight = 200;
+        this.maxJumpHeight = 150; // Ridotto da 200 per salti più gestibili
         this.colors = this.generateRainbowColors();
         this.seed = Date.now();
         this.platformsGenerated = 0;
@@ -56,16 +56,16 @@ export class ProceduralLevelGenerator {
         this.difficulty = Math.min(0.3 + level * 0.02, 1.2);
         this.currentLevel = level; // Track current level
         
-        // Very gradual spacing increase
-        this.platformSpacing.min = Math.min(50 + (level * 0.8), 90);
-        this.platformSpacing.max = Math.min(100 + (level * 1.5), 150);
+        // Spacing molto più contenuto - aumenta lentamente
+        this.platformSpacing.min = Math.min(40 + (level * 0.5), 65);
+        this.platformSpacing.max = Math.min(80 + (level * 1.0), 110);
         
-        // Gradual platform width decrease
-        this.platformWidth.min = Math.max(120, 180 - level * 1.2);
-        this.platformWidth.max = Math.max(200, 350 - level * 2);
+        // Platform width più generoso
+        this.platformWidth.min = Math.max(140, 200 - level * 0.8);
+        this.platformWidth.max = Math.max(220, 380 - level * 1.5);
         
         // Slightly increase allowed vertical variation with difficulty
-        this.maxJumpHeight = 200 + (level * 1);
+        this.maxJumpHeight = 150 + (level * 0.8);
     }
 
     generatePlatform(x = null) {
@@ -83,8 +83,8 @@ export class ProceduralLevelGenerator {
             const baseY = this.canvasHeight * 0.65;
             y = baseY;
         } else {
-            // Subsequent platforms - vary significantly to avoid overlap
-            const maxYVariation = 120; // Fixed pixel variation
+            // Subsequent platforms - variazione verticale più contenuta
+            const maxYVariation = 80; // Ridotto da 120 per salti più facili
             const yOffset = this.random(-maxYVariation, maxYVariation);
             y = this.lastPlatformY + yOffset;
             

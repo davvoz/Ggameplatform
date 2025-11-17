@@ -1534,6 +1534,65 @@ export class RenderingSystem {
                 }
             }
             
+            // ALI DURANTE IL VOLO - usando cerchi per le piume
+            if (player.isFlightActive) {
+                const wingFlapPhase = player.wingFlapPhase || 0;
+                const wingFlap = Math.sin(wingFlapPhase) * 0.5 + 0.5; // 0 a 1
+                
+                // Ala SINISTRA - 5 piume come cerchi
+                const leftWingAngle = -Math.PI / 6 - wingFlap * Math.PI / 4;
+                const leftWingLength = 25 + wingFlap * 10;
+                for (let i = 0; i < 5; i++) {
+                    const featherOffset = i * 7;
+                    const featherAngle = leftWingAngle - i * 0.15;
+                    const featherLength = leftWingLength - i * 3;
+                    const fx = centerX - 15 + Math.cos(featherAngle) * featherOffset;
+                    const fy = centerY - 5 + Math.sin(featherAngle) * featherOffset;
+                    const featherEndX = fx + Math.cos(featherAngle) * featherLength;
+                    const featherEndY = fy + Math.sin(featherAngle) * featherLength;
+                    
+                    // Piume come serie di cerchi lungo la linea
+                    const steps = 3 + i;
+                    for (let s = 0; s < steps; s++) {
+                        const t = s / steps;
+                        const px = fx + (featherEndX - fx) * t;
+                        const py = fy + (featherEndY - fy) * t;
+                        const featherRadius = (5 - i) * (1 - t * 0.5);
+                        const featherAlpha = (0.8 - i * 0.1) * (1 - t * 0.3);
+                        this.renderer.drawCircle(px, py, featherRadius, [0.9, 0.95 + i * 0.01, 1.0, featherAlpha]);
+                    }
+                }
+                
+                // Ala DESTRA - 5 piume come cerchi
+                const rightWingAngle = -Math.PI + Math.PI / 6 + wingFlap * Math.PI / 4;
+                const rightWingLength = 25 + wingFlap * 10;
+                for (let i = 0; i < 5; i++) {
+                    const featherOffset = i * 7;
+                    const featherAngle = rightWingAngle + i * 0.15;
+                    const featherLength = rightWingLength - i * 3;
+                    const fx = centerX + 15 + Math.cos(featherAngle) * featherOffset;
+                    const fy = centerY - 5 + Math.sin(featherAngle) * featherOffset;
+                    const featherEndX = fx + Math.cos(featherAngle) * featherLength;
+                    const featherEndY = fy + Math.sin(featherAngle) * featherLength;
+                    
+                    // Piume come serie di cerchi lungo la linea
+                    const steps = 3 + i;
+                    for (let s = 0; s < steps; s++) {
+                        const t = s / steps;
+                        const px = fx + (featherEndX - fx) * t;
+                        const py = fy + (featherEndY - fy) * t;
+                        const featherRadius = (5 - i) * (1 - t * 0.5);
+                        const featherAlpha = (0.8 - i * 0.1) * (1 - t * 0.3);
+                        this.renderer.drawCircle(px, py, featherRadius, [0.9, 0.95 + i * 0.01, 1.0, featherAlpha]);
+                    }
+                }
+                
+                // Aura azzurra attorno al player che vola
+                const flightAura = Math.sin(player.flightFloatPhase || 0) * 0.3 + 0.7;
+                this.renderer.drawCircle(centerX, centerY, avgRadius * 1.8, [0.4, 0.85, 1.0, 0.3 * flightAura]);
+                this.renderer.drawCircle(centerX, centerY, avgRadius * 1.5, [0.5, 0.9, 1.0, 0.4 * flightAura]);
+            }
+            
             // SCUDO BONUS - rendering spettacolare
             if (player.shieldActive) {
                 const shieldRadius = avgRadius * 2;

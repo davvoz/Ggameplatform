@@ -514,6 +514,11 @@ export class Player {
     }
     
     applyBoost() {
+        // Reset decelerazione se attiva (nuovo boost interrompe la decelerazione)
+        this.boostDecelerating = false;
+        this.boostDecelerationTime = 0;
+        
+        // Attiva boost (resetta timer anche se già attivo)
         this.boostActive = true;
         this.boostTimer = this.boostDuration;
         
@@ -534,27 +539,37 @@ export class Player {
         const platformLeft = platform.x;
         const platformTop = platform.y;
 
-        // Check horizontal overlap (con margine più generoso)
+        // Check horizontal overlap
         const horizontalMargin = 5;
         const horizontalOverlap = playerRight > (platformLeft - horizontalMargin) && 
                                   playerLeft < (platformRight + horizontalMargin);
         
-        // Check if player is on top of platform (tolleranza più generosa)
-        // Use toleranceOverride if provided (for safety platform), otherwise use default 40 (increased from 25)
-        const tolerance = toleranceOverride !== null ? toleranceOverride : 40;
+        if (!horizontalOverlap) return false;
+        
+        // CONTINUOUS COLLISION DETECTION
+        // Store previous Y position to check if player crossed platform during this frame
+        const prevBottom = playerBottom - this.velocityY * (1/60); // Approximate previous position
+        
+        // Check if player was above platform and is now at or below it (falling through)
+        const wasAbove = prevBottom <= platformTop;
+        const isNowAtOrBelow = playerBottom >= platformTop;
+        const isFalling = this.velocityY > 0;
+        
+        // Tolerance for landing (smaller than before for better precision)
+        const tolerance = toleranceOverride !== null ? toleranceOverride : 25;
         const verticalDistance = Math.abs(playerBottom - platformTop);
         
-        // IMPROVED: Also check if player is falling through the platform
-        const isFallingThrough = playerBottom > platformTop && 
-                                 playerBottom < platformTop + platform.height &&
-                                 this.velocityY > 0;
+        // Collision occurs if:
+        // 1. Player is falling AND crossed the platform top this frame
+        // 2. OR player is very close to platform top
+        const crossedPlatform = isFalling && wasAbove && isNowAtOrBelow;
+        const nearPlatform = verticalDistance < tolerance && isFalling;
         
-        const onPlatform = (verticalDistance < tolerance || isFallingThrough) && horizontalOverlap;
+        const onPlatform = (crossedPlatform || nearPlatform) && horizontalOverlap;
 
-        if (onPlatform && this.velocityY >= 0) {
-            // Snap forte alla piattaforma
+        if (onPlatform) {
+            // Snap precisely to platform top
             this.y = platformTop - this.height;
-            this.velocityY = Math.max(this.velocityY, 0); // Forza velocità positiva a 0
             
             // Apply bounce multiplier for bouncy platforms
             if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {

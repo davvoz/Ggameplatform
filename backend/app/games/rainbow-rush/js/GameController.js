@@ -408,15 +408,12 @@ export class GameController {
         if (safetyPlatform) {
             const safetyClone = { ...safetyPlatform };
             safetyClone.dissolveProgress = this.safetyPlatformSystem.getDissolveProgress();
-            safetyClone.isDissolving = this.safetyPlatformSystem.dissolving;
-            safetyClone.respawnProgress = this.safetyPlatformSystem.getRechargeProgress();
+            safetyClone.isDissolving = this.safetyPlatformSystem.state === 'DISSOLVING';
             safetyClone.playerOnPlatform = this.safetyPlatformSystem.playerOnPlatform;
             safetyClone.timeOnPlatform = this.safetyPlatformSystem.playerOnPlatformTimer;
             safetyClone.maxTimeOnPlatform = this.safetyPlatformSystem.dissolveDuration;
             safetyClone.charges = this.safetyPlatformSystem.getCharges();
             safetyClone.maxCharges = this.safetyPlatformSystem.maxCharges;
-            safetyClone.isRecharging = this.safetyPlatformSystem.recharging;
-            safetyClone.rechargeProgress = this.safetyPlatformSystem.getRechargeProgress();
             safetyClone.useTimes = this.safetyPlatformSystem.useTimes;
             safetyClone.useWindow = this.safetyPlatformSystem.useWindow;
             safetyClone.currentTime = Date.now() / 1000;

@@ -1,6 +1,7 @@
 /**
  * SafetyPlatformSystem - Manages the emergency rescue platform with 4-charge system
  * Handles charge tracking, rescue platform spawning with 5 patterns, dissolve/recharge logic
+ * Uses State Pattern for clean, scalable state management
  */
 export class SafetyPlatformSystem {
     constructor(canvasDimensions) {
@@ -16,15 +17,11 @@ export class SafetyPlatformSystem {
         this.useTimes = []; // Track recent uses
         
         // State tracking
-        this.active = true;
-        this.dissolving = false;
+        this.state = 'IDLE'; // IDLE, ACTIVE, DISSOLVING
         this.dissolveProgress = 0;
-        this.recharging = false;
-        this.rechargeTimer = 0;
         
         // Timing constants
         this.dissolveDuration = 2.5; // 2.5 seconds on platform before dissolve
-        this.respawnTime = 5.0; // 5 seconds to recharge
         this.autoDissolveSpeed = 0.02; // Slow automatic dissolve
         
         // Player interaction tracking
@@ -36,7 +33,12 @@ export class SafetyPlatformSystem {
         this.rescuePlatformSpawnInterval = 2.0;
         this.hasSpawnedFirstRescue = false;
         
-        this.timer = 0;
+        // State handlers map
+        this.stateHandlers = {
+            'IDLE': this.handleIdleState.bind(this),
+            'ACTIVE': this.handleActiveState.bind(this),
+            'DISSOLVING': this.handleDissolvingState.bind(this)
+        };
         
         this.initialize();
     }
@@ -58,91 +60,124 @@ export class SafetyPlatformSystem {
     }
 
     /**
-     * Update safety platform system
+     * Update safety platform system - Main update loop
      */
     update(deltaTime, playerOnPlatform, entityManager, scoreSystem) {
         this.playerOnPlatform = playerOnPlatform;
         
-        const currentTime = Date.now() / 1000;
+        // Update charge recharge logic
+        this.updateCharges();
         
-        // FULL RECHARGE EVERY 15 SECONDS
-        // Check if oldest use is beyond 15 seconds window
+        // Execute current state handler
+        const handler = this.stateHandlers[this.state];
+        if (handler) {
+            handler(deltaTime, entityManager, scoreSystem);
+        }
+    }
+
+    /**
+     * Update charge system - removes expired uses
+     */
+    updateCharges() {
+        const currentTime = Date.now() / 1000;
         if (this.useTimes.length > 0) {
-            const oldestUse = this.useTimes[0];
-            if ((currentTime - oldestUse) >= this.useWindow) {
-                // 15 seconds passed, reset ALL charges
-                this.useTimes = [];
-                this.charges = this.maxCharges;
-            }
+            this.useTimes = this.useTimes.filter(useTime => (currentTime - useTime) < this.useWindow);
+            this.charges = Math.max(0, this.maxCharges - this.useTimes.length);
+        }
+    }
+
+    /**
+     * IDLE State: Platform waiting, no player interaction
+     */
+    handleIdleState(deltaTime, entityManager, scoreSystem) {
+        if (this.charges === 0) {
+            this.platform.color = [0.5, 0.5, 0.5, 0.3]; // Grayed out
+            return;
         }
 
-        // Check if platform is currently being used (even if charges are 0)
-        const platformInUse = this.dissolving || (this.playerOnPlatform && this.hasSpawnedFirstRescue);
+        this.platform.color = [0.2, 0.8, 0.4, 1.0]; // Green ready
+        
+        if (this.playerOnPlatform) {
+            this.transitionToActive(entityManager, scoreSystem);
+        }
+    }
 
-        // Normal platform logic when has charges OR platform is dissolving current use
-        if (this.charges > 0 || platformInUse) {
-            if (this.playerOnPlatform) {
-                // Spawn rescue platforms immediately on first landing (only if we have charges)
-                if (!this.hasSpawnedFirstRescue && this.charges > 0) {
-                    this.spawnRescuePlatforms(entityManager, scoreSystem);
-                    this.hasSpawnedFirstRescue = true;
-                    this.rescuePlatformSpawnTimer = 0;
-                    
-                    // Consume a charge on first landing
-                    this.useTimes.push(currentTime);
-                    this.charges = this.maxCharges - this.useTimes.length;
-                }
+    /**
+     * ACTIVE State: Player on platform, spawning rescue platforms
+     */
+    handleActiveState(deltaTime, entityManager, scoreSystem) {
+        if (!this.playerOnPlatform) {
+            this.transitionToIdle();
+            return;
+        }
 
-                this.playerOnPlatformTimer += deltaTime;
-                this.rescuePlatformSpawnTimer += deltaTime;
+        this.playerOnPlatformTimer += deltaTime;
+        this.rescuePlatformSpawnTimer += deltaTime;
 
-                // Spawn rescue platforms every interval while on platform
-                if (this.rescuePlatformSpawnTimer >= this.rescuePlatformSpawnInterval) {
-                    this.spawnRescuePlatforms(entityManager, scoreSystem);
-                    this.rescuePlatformSpawnTimer = 0;
-                }
-
-                // Dissolve platform after 2.5 seconds
-                if (this.playerOnPlatformTimer >= this.dissolveDuration) {
-                    this.dissolving = true;
-                }
-            } else {
-                // Reset when player leaves (only if not dissolving)
-                if (!this.dissolving) {
-                    this.playerOnPlatformTimer = 0;
-                    this.rescuePlatformSpawnTimer = 0;
-                    this.hasSpawnedFirstRescue = false;
-                }
-            }
-
-            // Handle dissolving animation
-            if (this.dissolving) {
-                const dissolveSpeed = this.playerOnPlatform ? 2.0 : this.autoDissolveSpeed;
-                this.dissolveProgress += deltaTime * dissolveSpeed;
-
-                if (this.dissolveProgress >= 1.0) {
-                    // Platform fully dissolved
-                    this.active = false;
-                    this.dissolving = false;
-                    this.dissolveProgress = 0;
-                    this.timer = 0;
-                    this.playerOnPlatformTimer = 0;
-                    this.rescuePlatformSpawnTimer = 0;
-                    this.hasSpawnedFirstRescue = false;
-                }
-            }
-            
-            // Platform visible if not fully dissolved
-            this.active = !this.dissolving || this.dissolveProgress < 1.0;
-        } else {
-            // No charges available and not in use - platform invisible
-            this.active = false;
-            this.dissolving = false;
-            this.dissolveProgress = 0;
-            this.playerOnPlatformTimer = 0;
+        // Spawn rescue platforms at intervals
+        if (this.rescuePlatformSpawnTimer >= this.rescuePlatformSpawnInterval) {
+            this.spawnRescuePlatforms(entityManager, scoreSystem);
             this.rescuePlatformSpawnTimer = 0;
-            this.hasSpawnedFirstRescue = false;
         }
+
+        // Check for dissolve trigger
+        if (this.playerOnPlatformTimer >= this.dissolveDuration) {
+            this.transitionToDissolving();
+        }
+    }
+
+    /**
+     * DISSOLVING State: Platform dissolving animation
+     */
+    handleDissolvingState(deltaTime, entityManager, scoreSystem) {
+        const dissolveSpeed = this.playerOnPlatform ? 2.0 : this.autoDissolveSpeed;
+        this.dissolveProgress += deltaTime * dissolveSpeed;
+
+        if (this.dissolveProgress >= 1.0) {
+            this.completeDissolution();
+        }
+    }
+
+    /**
+     * State Transitions
+     */
+    transitionToActive(entityManager, scoreSystem) {
+        if (this.charges === 0) return;
+
+        this.state = 'ACTIVE';
+        this.hasSpawnedFirstRescue = true;
+        this.rescuePlatformSpawnTimer = 0;
+        this.playerOnPlatformTimer = 0;
+
+        // Spawn first rescue platforms
+        this.spawnRescuePlatforms(entityManager, scoreSystem);
+
+        // Consume one charge
+        const currentTime = Date.now() / 1000;
+        this.useTimes.push(currentTime);
+        this.charges = Math.max(0, this.maxCharges - this.useTimes.length);
+    }
+
+    transitionToDissolving() {
+        this.state = 'DISSOLVING';
+        this.dissolveProgress = 0;
+    }
+
+    transitionToIdle() {
+        this.state = 'IDLE';
+        this.playerOnPlatformTimer = 0;
+        this.rescuePlatformSpawnTimer = 0;
+        this.hasSpawnedFirstRescue = false;
+    }
+
+    completeDissolution() {
+        this.dissolveProgress = 0;
+        this.hasSpawnedFirstRescue = false;
+        this.playerOnPlatformTimer = 0;
+        this.rescuePlatformSpawnTimer = 0;
+
+        // Transition based on remaining charges
+        this.state = this.charges > 0 ? 'IDLE' : 'IDLE';
     }
 
     /**
@@ -209,7 +244,7 @@ export class SafetyPlatformSystem {
      * Check if safety platform is active
      */
     isActive() {
-        return this.active && !this.recharging;
+        return this.charges > 0 || this.state === 'DISSOLVING';
     }
 
     /**
@@ -220,18 +255,10 @@ export class SafetyPlatformSystem {
     }
 
     /**
-     * Get recharge progress (0-1)
-     */
-    getRechargeProgress() {
-        if (!this.recharging) return 1.0;
-        return this.rechargeTimer / this.respawnTime;
-    }
-
-    /**
      * Get dissolve progress (0-1)
      */
     getDissolveProgress() {
-        return this.dissolveProgress;
+        return this.state === 'DISSOLVING' ? this.dissolveProgress : 0;
     }
 
     /**
@@ -252,16 +279,12 @@ export class SafetyPlatformSystem {
     reset() {
         this.charges = this.maxCharges;
         this.useTimes = [];
-        this.active = true;
-        this.dissolving = false;
+        this.state = 'IDLE';
         this.dissolveProgress = 0;
-        this.recharging = false;
-        this.rechargeTimer = 0;
         this.playerOnPlatform = false;
         this.playerOnPlatformTimer = 0;
         this.rescuePlatformSpawnTimer = 0;
         this.hasSpawnedFirstRescue = false;
-        this.timer = 0;
         this.initialize();
     }
 }

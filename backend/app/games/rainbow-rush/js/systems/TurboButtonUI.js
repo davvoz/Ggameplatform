@@ -323,12 +323,27 @@ export class TurboButtonUI {
             // Timer attivo - grande e colorato a destra
             const timerX = this.buttonX + this.buttonRadius + 10;
             
-            // Background bubble
+            // Background bubble (usando archi per compatibilità)
+            const bubbleX = timerX;
+            const bubbleY = displayY - 12;
+            const bubbleW = 35;
+            const bubbleH = 24;
+            const bubbleR = 12;
+            
             ctx.fillStyle = '#FFD54F';
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(timerX, displayY - 12, 35, 24, 12);
+            ctx.moveTo(bubbleX + bubbleR, bubbleY);
+            ctx.lineTo(bubbleX + bubbleW - bubbleR, bubbleY);
+            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleR, bubbleR, -Math.PI/2, 0);
+            ctx.lineTo(bubbleX + bubbleW, bubbleY + bubbleH - bubbleR);
+            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, 0, Math.PI/2);
+            ctx.lineTo(bubbleX + bubbleR, bubbleY + bubbleH);
+            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, Math.PI/2, Math.PI);
+            ctx.lineTo(bubbleX, bubbleY + bubbleR);
+            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleR, bubbleR, Math.PI, 3*Math.PI/2);
+            ctx.closePath();
             ctx.fill();
             ctx.stroke();
             

@@ -2172,10 +2172,29 @@ export class RenderingSystem {
     renderSafetyPlatform(platform) {
         const time = Date.now() / 1000;
         let alpha = 1.0;
+        
+        // Se in ricarica, mostra effetto speciale e rendi la piattaforma MOLTO trasparente
+        if (platform.isRecharging) {
+            alpha = 0.2 + Math.sin(time * 5) * 0.1; // Molto trasparente durante ricarica
+            
+            // Particelle di ricarica (blu/ciano per indicare ricarica)
+            for (let i = 0; i < 8; i++) {
+                const angle = (time * 2 + i * Math.PI / 4) % (Math.PI * 2);
+                const distance = 30 + Math.sin(time * 3 + i) * 10;
+                const px = platform.x + platform.width / 2 + Math.cos(angle) * distance;
+                const py = platform.y + platform.height / 2 + Math.sin(angle) * distance;
+                const particleColor = [0.3, 0.8, 1.0, 0.8]; // Blu brillante
+                this.renderer.drawCircle(px, py, 4, particleColor);
+                
+                // Alone più forte
+                const glowColor = [0.3, 0.8, 1.0, 0.3];
+                this.renderer.drawCircle(px, py, 8, glowColor);
+            }
+        }
 
         // Dissolving effect
         if (platform.isDissolving && platform.dissolveProgress) {
-            alpha = 1.0 - platform.dissolveProgress;
+            alpha *= (1.0 - platform.dissolveProgress);
 
             // Particle effect while dissolving
             for (let i = 0; i < 5; i++) {
@@ -2235,13 +2254,161 @@ export class RenderingSystem {
             2,
             highlightColor
         );
+        
+        // === INDICATORE CARICHE ===
+        // Mostra le cariche disponibili sopra la piattaforma
+        if (platform.charges !== undefined && platform.maxCharges) {
+            const chargeSize = 14;
+            const chargeSpacing = 20;
+            const totalWidth = platform.maxCharges * chargeSpacing - chargeSpacing + chargeSize;
+            const startX = platform.x + platform.width / 2 - totalWidth / 2;
+            const chargeY = platform.y - 40;
+            
+            const useTimes = platform.useTimes || [];
+            const currentTime = platform.currentTime || (Date.now() / 1000);
+            const useWindow = platform.useWindow || 20;
+            
+            for (let i = 0; i < platform.maxCharges; i++) {
+                const cx = startX + i * chargeSpacing + chargeSize / 2;
+                
+                // Carica piena o vuota (senza animazione individuale)
+                if (i < platform.charges) {
+                    // CARICA DISPONIBILE - verde brillante molto visibile
+                    
+                    // Glow esterno forte
+                    const glowPulse = Math.sin(time * 4 + i) * 0.3 + 0.7;
+                    const outerGlow = [0.2, 1.0, 0.4, 0.5 * glowPulse];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize + 6, outerGlow);
+                    
+                    // Glow medio
+                    const midGlow = [0.3, 1.0, 0.5, 0.7 * glowPulse];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize + 3, midGlow);
+                    
+                    // Sfondo scuro per contrasto
+                    const bgColor = [0.0, 0.0, 0.0, 0.9];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize, bgColor);
+                    
+                    // Core interno brillante
+                    const coreColor = [0.4, 1.0, 0.6, 1.0];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize - 3, coreColor);
+                    
+                    // Centro super brillante
+                    const centerColor = [0.8, 1.0, 0.9, 1.0];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize - 6, centerColor);
+                    
+                    // Bordo bianco luminoso
+                    const borderColor = [1.0, 1.0, 1.0, 0.9];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize + 1, borderColor);
+                    this.renderer.drawCircle(cx, chargeY, chargeSize - 1, [0.1, 0.6, 0.3, 1.0]);
+                } else {
+                    // CARICA USATA - grigio scuro
+                    
+                    // Sfondo nero
+                    const outerDark = [0.0, 0.0, 0.0, 0.8];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize + 2, outerDark);
+                    
+                    // Interno grigio scuro
+                    const emptyColor = [0.2, 0.2, 0.2, 0.9];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize - 1, emptyColor);
+                    
+                    // Bordo arancione per cariche usate
+                    const usedBorder = [0.8, 0.5, 0.1, 0.8];
+                    this.renderer.drawCircle(cx, chargeY, chargeSize, usedBorder);
+                    this.renderer.drawCircle(cx, chargeY, chargeSize - 2, [0.15, 0.15, 0.15, 0.9]);
+                }
+            }
+            
+            // === BARRA COOLDOWN 20 SECONDI ===
+            // Mostra quanto tempo manca al reset completo della finestra temporale
+            if (useTimes.length > 0) {
+                const oldestUseTime = useTimes[0]; // Il primo uso (più vecchio)
+                const timeSinceOldest = currentTime - oldestUseTime;
+                const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0); // 0-1
+                const timeRemaining = Math.max(0, useWindow - timeSinceOldest);
+                
+                // Barra sotto i pallini
+                const barWidth = totalWidth;
+                const barHeight = 6;
+                const barY = chargeY + chargeSize + 12;
+                const barX = startX;
+                
+                // Sfondo barra
+                const barBgColor = [0.1, 0.1, 0.1, 0.8];
+                this.renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, barBgColor);
+                
+                // Barra di progresso (da rosso a verde)
+                const progressWidth = barWidth * windowProgress;
+                const r = 1.0 - windowProgress * 0.5; // Da 1.0 a 0.5
+                const g = 0.3 + windowProgress * 0.7; // Da 0.3 a 1.0
+                const progressColor = [r, g, 0.2, 0.9];
+                this.renderer.drawRect(barX, barY, progressWidth, barHeight, progressColor);
+                
+                // Parte rimanente (scura)
+                const remainWidth = barWidth - progressWidth;
+                if (remainWidth > 0) {
+                    const darkColor = [0.3, 0.2, 0.2, 0.7];
+                    this.renderer.drawRect(barX + progressWidth, barY, remainWidth, barHeight, darkColor);
+                }
+                
+                // Bordo barra
+                const borderColor = [1.0, 1.0, 1.0, 0.6];
+                this.renderer.drawRect(barX - 1, barY - 1, barWidth + 2, 1, borderColor);
+                this.renderer.drawRect(barX - 1, barY + barHeight, barWidth + 2, 1, borderColor);
+                this.renderer.drawRect(barX - 1, barY, 1, barHeight, borderColor);
+                this.renderer.drawRect(barX + barWidth, barY, 1, barHeight, borderColor);
+                
+                // Glow sulla barra in progresso
+                if (windowProgress < 1.0) {
+                    const glowPulse = Math.sin(time * 5) * 0.2 + 0.3;
+                    const glowColor = [r, g, 0.3, glowPulse];
+                    this.renderer.drawRect(barX, barY - 1, progressWidth, 1, glowColor);
+                    this.renderer.drawRect(barX, barY + barHeight, progressWidth, 1, glowColor);
+                }
+                
+                // Indicatore tempo rimanente (punto luminoso alla fine della barra)
+                if (windowProgress < 1.0) {
+                    const dotX = barX + progressWidth;
+                    const dotY = barY + barHeight / 2;
+                    const dotPulse = Math.sin(time * 8) * 0.3 + 0.7;
+                    const dotColor = [1.0, 0.8, 0.3, dotPulse];
+                    this.renderer.drawCircle(dotX, dotY, 4, dotColor);
+                    this.renderer.drawCircle(dotX, dotY, 2, [1.0, 1.0, 1.0, 1.0]);
+                }
+            }
+            
+            // Barra di ricarica completa (5 secondi) se tutte esaurite
+            if (platform.isRecharging && platform.rechargeProgress !== undefined) {
+                const barWidth = totalWidth;
+                const barHeight = 4;
+                const barY = chargeY + chargeSize + 8;
+                const barX = startX;
+                
+                // Sfondo barra
+                const barBgColor = [0.2, 0.2, 0.2, 0.6];
+                this.renderer.drawRect(barX, barY, barWidth, barHeight, barBgColor);
+                
+                // Progresso ricarica
+                const progressWidth = barWidth * platform.rechargeProgress;
+                const progressColor = [0.3, 0.8, 1.0, 0.8];
+                this.renderer.drawRect(barX, barY, progressWidth, barHeight, progressColor);
+                
+                // Bordo barra
+                const borderColor = [1.0, 1.0, 1.0, 0.4];
+                this.renderer.drawRect(barX - 1, barY - 1, barWidth + 2, 1, borderColor);
+                this.renderer.drawRect(barX - 1, barY + barHeight, barWidth + 2, 1, borderColor);
+                this.renderer.drawRect(barX - 1, barY, 1, barHeight, borderColor);
+                this.renderer.drawRect(barX + barWidth, barY, 1, barHeight, borderColor);
+            }
+        }
 
         // Timer indicator when player is on platform
         if (platform.playerOnPlatform && platform.timeOnPlatform !== undefined && platform.maxTimeOnPlatform) {
             const timerProgress = platform.timeOnPlatform / platform.maxTimeOnPlatform;
+            
+            // Position: centered on the safety platform itself, well visible
             const centerX = platform.x + platform.width / 2;
-            const centerY = platform.y - 40;
-            const radius = 20;
+            const centerY = platform.y + platform.height / 2; // Center of platform
+            const radius = 30; // Bigger to be more visible
             
             // Outer ring (background)
             const bgColor = [0.2, 0.2, 0.2, 0.6];

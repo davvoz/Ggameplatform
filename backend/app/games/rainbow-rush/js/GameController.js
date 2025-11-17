@@ -72,6 +72,10 @@ export class GameController {
         this.comboAnimation = null;
         this.floatingTexts = []; // Testi galleggianti per punti
         
+        // Death animation
+        this.deathAnimation = null;
+        this.isShowingDeathAnimation = false;
+        
         // New bonus types
         this.magnetBonuses = []; // Magnete che attira collectibles
         this.timeBonuses = []; // Rallenta il tempo
@@ -355,6 +359,36 @@ export class GameController {
     }
 
     updateGame(deltaTime) {
+        // Update death animation anche se non playing
+        if (this.deathAnimation) {
+            this.deathAnimation.timer += deltaTime;
+            this.deathAnimation.fadeAlpha = Math.min(1.0, this.deathAnimation.timer / 0.8);
+            this.deathAnimation.playerAlpha = Math.max(0, 1.0 - (this.deathAnimation.timer / 1.5));
+            this.deathAnimation.rotation += deltaTime * 3;
+            this.deathAnimation.scale = 1.0 + (this.deathAnimation.timer * 0.5);
+            
+            // Update death particles
+            this.deathAnimation.particles.forEach(p => {
+                p.x += p.vx * deltaTime;
+                p.y += p.vy * deltaTime;
+                p.vy += 300 * deltaTime; // Gravity
+                p.life -= deltaTime;
+                p.alpha = Math.max(0, p.life / p.maxLife);
+            });
+            
+            this.deathAnimation.particles = this.deathAnimation.particles.filter(p => p.life > 0);
+            
+            // Update rendering for death animation
+            this.renderingSystem.setDeathAnimation(this.deathAnimation);
+            
+            if (this.deathAnimation.timer >= this.deathAnimation.duration) {
+                this.deathAnimation = null;
+                // NON resettare isShowingDeathAnimation qui per evitare doppie chiamate
+                // Verrà resettato solo quando si riavvia il gioco
+                this.renderingSystem.setDeathAnimation(null);
+            }
+        }
+        
         if (!this.gameState.isPlaying()) return;
         
         // Update score system (include combo timer)
@@ -504,8 +538,8 @@ export class GameController {
         this.updateUI();
 
         // Check if player is dead
-        if (!this.player.alive) {
-            this.gameOver();
+        if (!this.player.alive && !this.isShowingDeathAnimation) {
+            this.startDeathSequence();
         }
     }
 
@@ -876,7 +910,10 @@ export class GameController {
             }
             
             if (this.player.checkObstacleCollision(obstacle)) {
-                this.audioManager.playSound('hit');
+                // Play hit sound only if player is still alive
+                if (this.player.alive) {
+                    this.audioManager.playSound('hit');
+                }
                 this.achievementSystem.recordDamage();
                 
                 // Combo break notification
@@ -1636,6 +1673,8 @@ export class GameController {
         this.powerupSpawnTimer = 0;
         this.platformCounter = 0;
         this.levelUpAnimation = null;
+        this.deathAnimation = null;
+        this.isShowingDeathAnimation = false;
 
         // Reset player
         const dims = this.engine.getCanvasDimensions();
@@ -1672,6 +1711,58 @@ export class GameController {
         window.dispatchEvent(event);
     }
 
+    startDeathSequence() {
+        // Prevent multiple calls
+        if (this.isShowingDeathAnimation) return;
+        
+        this.isShowingDeathAnimation = true;
+        
+        // Stop background music
+        this.audioManager.stopBackgroundMusic();
+        
+        // Play sad death sound
+        this.audioManager.playSound('death');
+        
+        // Create death animation
+        this.deathAnimation = {
+            timer: 0,
+            duration: 2.5, // Durata del suono di morte
+            fadeAlpha: 0,
+            playerAlpha: 1.0,
+            rotation: 0,
+            scale: 1.0,
+            particles: [],
+            playerX: this.player.x,
+            playerY: this.player.y,
+            playerWidth: this.player.width,
+            playerHeight: this.player.height
+        };
+        
+        // Create sad particle explosion
+        const particleCount = 40;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = 100 + Math.random() * 150;
+            
+            this.deathAnimation.particles.push({
+                x: this.player.x + this.player.width / 2,
+                y: this.player.y + this.player.height / 2,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 100,
+                size: 3 + Math.random() * 4,
+                color: [0.5, 0.5, 0.5, 1.0], // Gray particles for sad effect
+                life: 1.5 + Math.random() * 0.5,
+                maxLife: 2.0,
+                alpha: 1.0
+            });
+        }
+        
+        // After death animation, show game over
+        setTimeout(() => {
+            this.gameOver();
+        }, 2500);
+    }
+    
     async gameOver() {
         this.gameState.setState(GameStates.GAME_OVER);
 

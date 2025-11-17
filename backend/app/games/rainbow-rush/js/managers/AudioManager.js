@@ -95,6 +95,7 @@ export class AudioManager {
         this.sounds.set('powerup', this.createPowerupSound.bind(this));
         this.sounds.set('powerup_end', this.createPowerupEndSound.bind(this));
         this.sounds.set('powerup_ready', this.createPowerupReadySound.bind(this));
+        this.sounds.set('death', this.createDeathSound.bind(this));
         
         // Gamification sounds
         this.sounds.set('perfect_land', this.createPerfectLandSound.bind(this));
@@ -557,6 +558,69 @@ export class AudioManager {
         
         osc.start(this.audioContext.currentTime);
         osc.stop(this.audioContext.currentTime + 0.2);
+    }
+    
+    createDeathSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        
+        // Suono triste e lungo - discesa drammatica con riverbero
+        // Nota principale - discesa lenta e triste
+        const mainOsc = ctx.createOscillator();
+        const mainGain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        
+        mainOsc.connect(filter);
+        filter.connect(mainGain);
+        mainGain.connect(ctx.destination);
+        
+        // Suono orchestrale triste (tipo violino triste)
+        mainOsc.type = 'triangle';
+        
+        // Discesa drammatica da nota alta a bassa (2.5 secondi)
+        mainOsc.frequency.setValueAtTime(440, ctx.currentTime); // A4
+        mainOsc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 1.0); // A3
+        mainOsc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 2.5); // A2
+        
+        // Filtro passa-basso che si chiude per dare effetto "morte"
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 2.5);
+        filter.Q.value = 1;
+        
+        // Volume che sale e scende dolcemente
+        mainGain.gain.setValueAtTime(0.01, ctx.currentTime);
+        mainGain.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.3);
+        mainGain.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 1.8);
+        mainGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
+        
+        mainOsc.start(ctx.currentTime);
+        mainOsc.stop(ctx.currentTime + 2.5);
+        
+        // Accordo triste di accompagnamento (minore settima)
+        const chord = [330, 392, 494]; // E4, G4, B4 (Em7 parziale)
+        
+        chord.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + 2.5);
+            
+            const startDelay = index * 0.1;
+            gain.gain.setValueAtTime(0.01, ctx.currentTime + startDelay);
+            gain.gain.exponentialRampToValueAtTime(this.masterVolume * 0.15, ctx.currentTime + startDelay + 0.2);
+            gain.gain.setValueAtTime(this.masterVolume * 0.15, ctx.currentTime + 1.8);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
+            
+            osc.start(ctx.currentTime + startDelay);
+            osc.stop(ctx.currentTime + 2.5);
+        });
     }
 
     playSound(soundName) {

@@ -119,6 +119,10 @@ export class RenderingSystem {
     setLevelTransition(transition) {
         this.levelTransition = transition;
     }
+    
+    setDeathAnimation(animation) {
+        this.deathAnimation = animation;
+    }
 
     update(deltaTime, entities) {
         this.powerupUIRenderer.update(deltaTime);
@@ -216,6 +220,11 @@ export class RenderingSystem {
         // Render level transition (EPICO!)
         if (this.levelTransition) {
             this.renderLevelTransition(this.levelTransition);
+        }
+        
+        // Render death animation
+        if (this.deathAnimation) {
+            this.renderDeathAnimation(this.deathAnimation);
         }
         
         // Render screen flash effect (last, on top of everything)
@@ -2848,6 +2857,71 @@ export class RenderingSystem {
             this.textCtx.strokeStyle = '#fff';
             this.textCtx.lineWidth = 4;
             this.textCtx.strokeText(transition.message, 0, 0);
+            
+            this.textCtx.restore();
+        }
+    }
+    
+    renderDeathAnimation(death) {
+        // Fade to black overlay
+        if (death.fadeAlpha > 0) {
+            const fadeColor = [0, 0, 0, death.fadeAlpha * 0.7];
+            this.renderer.drawRect(0, 0, this.canvasWidth, this.canvasHeight, fadeColor);
+        }
+        
+        // Render death particles
+        death.particles.forEach(p => {
+            const color = [...p.color];
+            color[3] = p.alpha;
+            this.renderer.drawCircle(p.x, p.y, p.size, color);
+        });
+        
+        // Render fading player with rotation and scale
+        if (death.playerAlpha > 0 && this.textCtx) {
+            this.textCtx.save();
+            
+            const centerX = death.playerX + death.playerWidth / 2;
+            const centerY = death.playerY + death.playerHeight / 2;
+            
+            this.textCtx.translate(centerX, centerY);
+            this.textCtx.rotate(death.rotation);
+            this.textCtx.scale(death.scale, death.scale);
+            this.textCtx.globalAlpha = death.playerAlpha;
+            
+            // Draw a sad face or skull emoji
+            this.textCtx.font = `${death.playerWidth}px Arial`;
+            this.textCtx.textAlign = 'center';
+            this.textCtx.textBaseline = 'middle';
+            this.textCtx.fillText('💀', 0, 0);
+            
+            this.textCtx.restore();
+        }
+        
+        // "YOU DIED" text che appare progressivamente
+        if (death.timer > 0.5 && this.textCtx) {
+            const textAlpha = Math.min(1.0, (death.timer - 0.5) / 0.8);
+            
+            this.textCtx.save();
+            this.textCtx.globalAlpha = textAlpha;
+            
+            const centerX = this.canvasWidth / 2;
+            const centerY = this.canvasHeight / 2;
+            
+            // Shadow effect
+            this.textCtx.shadowColor = '#000';
+            this.textCtx.shadowBlur = 20;
+            
+            // Main text
+            this.textCtx.font = 'bold 80px Arial';
+            this.textCtx.textAlign = 'center';
+            this.textCtx.textBaseline = 'middle';
+            this.textCtx.fillStyle = '#8B0000'; // Dark red
+            this.textCtx.fillText('YOU DIED', centerX, centerY);
+            
+            // Outline
+            this.textCtx.strokeStyle = '#000';
+            this.textCtx.lineWidth = 3;
+            this.textCtx.strokeText('YOU DIED', centerX, centerY);
             
             this.textCtx.restore();
         }

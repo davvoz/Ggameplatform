@@ -14,6 +14,8 @@ import { AchievementSystem } from './systems/AchievementSystem.js';
 import { AudioManager } from './managers/AudioManager.js';
 import { InputManager } from './managers/InputManager.js';
 import { PlatformSDKManager } from './managers/PlatformSDKManager.js';
+import { TurboButtonUI } from './systems/TurboButtonUI.js';
+import { FlightButtonUI } from './systems/FlightButtonUI.js';
 
 export class GameController {
     constructor(canvas) {
@@ -39,6 +41,8 @@ export class GameController {
         this.levelGenerator = null;
         this.backgroundSystem = null;
         this.renderingSystem = null;
+        this.turboButtonUI = null; // Turbo boost button
+        this.flightSliderUI = null; // Flight slider control
 
         // Safety platform
         this.safetyPlatform = null;
@@ -131,6 +135,10 @@ export class GameController {
 
         // Create background system
         this.backgroundSystem = new BackgroundSystem(dims.width, dims.height);
+        
+        // Create UI systems
+        this.turboButtonUI = new TurboButtonUI(dims.width, dims.height);
+        this.flightButtonUI = new FlightButtonUI(dims.width, dims.height);
 
         // Setup initial platforms
         this.setupInitialPlatforms();
@@ -140,6 +148,9 @@ export class GameController {
 
         // Setup systems
         this.setupSystems();
+        
+        // Setup UI input handlers
+        this.setupUIInputHandlers();
 
         // Setup input handlers
         this.setupInput();
@@ -198,6 +209,18 @@ export class GameController {
             this.renderingSystem.setPlayer(this.player);
         };
         this.engine.registerSystem(this.renderingSystem);
+        
+        // Setup UI controls - NON ricrearli se già esistono
+        if (!this.turboButtonUI) {
+            this.turboButtonUI = new TurboButtonUI(dims.width, dims.height);
+        }
+        if (!this.flightButtonUI) {
+            this.flightButtonUI = new FlightButtonUI(dims.width, dims.height);
+        }
+        
+        // Pass UI to rendering system
+        this.renderingSystem.setTurboButton(this.turboButtonUI);
+        this.renderingSystem.setFlightButton(this.flightButtonUI);
     }
 
     setupPowerupListeners() {
@@ -236,6 +259,60 @@ export class GameController {
                 this.player.releaseJump(duration);
             }
         });
+        
+        // Turbo e Flight button click handler
+        this.inputManager.addEventListener('click', (data) => {
+            if (!this.gameState.isPlaying()) return;
+            
+            const dims = this.engine.getCanvasDimensions();
+            
+            // Check turbo button
+            if (this.turboButtonUI) {
+                const shouldActivateTurbo = this.turboButtonUI.checkClick(data.x, data.y, this.player);
+                if (shouldActivateTurbo) {
+                    const level = this.scoreSystem.getLevel();
+                    const activated = this.player.activateTurbo(level);
+                    if (activated) {
+                        this.audioManager.playSound('turbo');
+                        this.screenFlash.alpha = 0.3;
+                        this.screenFlash.color = [1.0, 0.8, 0.0];
+                    }
+                    return; // Non processare altri click
+                }
+            }
+            
+            // Check flight button
+            if (this.flightButtonUI) {
+                const shouldActivateFlight = this.flightButtonUI.checkClick(data.x, data.y, this.player);
+                if (shouldActivateFlight) {
+                    const activated = this.player.activateFlight();
+                    if (activated) {
+                        this.audioManager.playSound('flight');
+                        this.screenFlash.alpha = 0.2;
+                        this.screenFlash.color = [0.4, 0.8, 1.0]; // Blue flash
+                    }
+                    return;
+                }
+            }
+            
+            // Se volo è attivo, controlla click su/giù
+            if (this.player.isFlightActive) {
+                const middleY = dims.height / 2;
+                if (data.y < middleY) {
+                    // Click nella metà superiore = sali
+                    this.player.flightMoveUp();
+                } else {
+                    // Click nella metà inferiore = scendi
+                    this.player.flightMoveDown();
+                }
+            }
+        });
+    }
+    
+    setupUIInputHandlers() {
+        // Handler già gestiti in setupInput per turbo button
+        // Il flight button funziona come il turbo: click per attivare
+        // Poi click in alto/basso dello schermo per salire/scendere mentre volo è attivo
     }
 
     setupScoreListeners() {
@@ -401,8 +478,9 @@ export class GameController {
         // Update camera offset basato sul boost del player
         this.updateCameraOffset(deltaTime);
         
-        // Calcola velocità camera per effetto parallasse
-        const cameraSpeed = this.player.boostActive ? this.player.velocityX : 0;
+        // Calcola velocità camera per effetto parallasse - include turbo boost
+        const cameraSpeed = this.player.boostActive ? this.player.velocityX : 
+                           this.player.isTurboActive ? this.player.velocityX : 0;
 
         // Update background (includes transition handling)
         // Passa camera speed per effetto parallasse
@@ -471,6 +549,23 @@ export class GameController {
 
         // Update player
         this.player.update(deltaTime);
+        
+        // Update turbo button UI
+        if (this.turboButtonUI) {
+            this.turboButtonUI.update(deltaTime, this.player);
+        }
+        
+        // Update flight slider UI
+        if (this.flightSliderUI) {
+            this.flightSliderUI.update(deltaTime, this.player);
+        }
+        
+        // Check if player just stopped sliding on ice - trigger brake shake
+        if (this.player.hasJustStoppedSliding()) {
+            this.player.addCameraShake(12, 0.4); // Strong brake shake
+            this.audioManager.playSound('brake'); // Brake skid sound
+            this.player.slideDecelerationTime = 0; // Reset to avoid repeated triggers
+        }
 
         // Update platforms, obstacles, collectibles, powerups
         this.updateEntities(deltaTime);
@@ -485,9 +580,25 @@ export class GameController {
 
         // Spawn new entities
         this.spawnTimer += deltaTime;
+        
+        // Spawn normale ogni spawnInterval
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnNewPlatform();
             this.spawnTimer = 0;
+        } else {
+            // Check occasionale per garantire minimo 3 piattaforme (solo ogni 0.5s)
+            if (this.spawnTimer % 0.5 < deltaTime) {
+                const dims = this.engine.getCanvasDimensions();
+                const visiblePlatforms = this.platforms.filter(p => 
+                    p.x + p.width > 0 && p.x < dims.width
+                ).length;
+                
+                // Spawn emergenza se meno di 3 piattaforme visibili
+                if (visiblePlatforms < 3) {
+                    this.spawnNewPlatform();
+                    this.spawnTimer = 0;
+                }
+            }
         }
 
         // Spawn powerups
@@ -639,8 +750,9 @@ export class GameController {
     updateEntities(deltaTime) {
         const dims = this.engine.getCanvasDimensions();
         
-        // Calcola velocità aggiuntiva dalle entità in base al camera offset
-        const cameraSpeed = this.player.boostActive ? this.player.velocityX : 0;
+        // Calcola velocità aggiuntiva dalle entità in base al camera offset - include turbo boost
+        const cameraSpeed = this.player.boostActive ? this.player.velocityX : 
+                           this.player.isTurboActive ? this.player.velocityX : 0;
 
         // Update platforms with crumbling logic
         this.platforms = this.platforms.filter(platform => {
@@ -652,6 +764,7 @@ export class GameController {
             if (platform.isCrumbling) {
                 platform.crumbleTimer += deltaTime;
                 if (platform.crumbleTimer >= platform.crumbleDuration) {
+                    this.disposePlatform(platform); // Cleanup memoria
                     return false; // Remove crumbled platform
                 }
             }
@@ -665,15 +778,24 @@ export class GameController {
                     platform.springCompression = Math.max(0, platform.springCompression - deltaTime * 3);
                 }
             }
+            
+            // Handle icy platform shimmer effect
+            if (platform.platformType === PlatformTypes.ICY) {
+                platform.icyShimmer += deltaTime * 5; // Shimmer animation speed
+            }
 
-            return platform.x + platform.width > 0;
+            const keep = platform.x + platform.width > -100;
+            if (!keep) this.disposePlatform(platform);
+            return keep;
         });
 
         // Update obstacles
         this.obstacles = this.obstacles.filter(obstacle => {
             const totalVelocity = obstacle.velocity - cameraSpeed;
             obstacle.x += totalVelocity * deltaTime;
-            return obstacle.x + obstacle.width > 0;
+            const keep = obstacle.x + obstacle.width > -50;
+            if (!keep) this.disposeObstacle(obstacle);
+            return keep;
         });
 
         // Update collectibles
@@ -691,14 +813,17 @@ export class GameController {
                     const dy = (this.player.y + this.player.height / 2) - collectible.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist > 5) {
-                        const magnetSpeed = 400;
+                        // Magnete più veloce durante il turbo per compensare la velocità aumentata
+                        const magnetSpeed = this.player.isTurboActive ? 1200 : 400;
                         collectible.x += (dx / dist) * magnetSpeed * deltaTime;
                         collectible.y += (dy / dist) * magnetSpeed * deltaTime;
                     }
                 }
             }
             
-            return collectible.x + collectible.radius > 0;
+            const keep = collectible.x + collectible.radius > -50;
+            if (!keep) this.disposeCollectible(collectible);
+            return keep;
         });
 
         // Update powerups
@@ -707,7 +832,9 @@ export class GameController {
             const originalX = powerup.x;
             powerup.update(deltaTime);
             powerup.x += -cameraSpeed * deltaTime;
-            return powerup.x + powerup.radius > 0 && !powerup.collected;
+            const keep = powerup.x + powerup.radius > -50 && !powerup.collected;
+            if (!keep) this.disposePowerup(powerup);
+            return keep;
         });
         
         // Update hearts (cuoricini)
@@ -716,7 +843,9 @@ export class GameController {
             heart.x += totalVelocity * deltaTime;
             // Animazione float
             heart.pulsePhase += deltaTime * 3;
-            return heart.x + heart.radius > 0;
+            const keep = heart.x + heart.radius > -50;
+            if (!keep) this.disposeCollectible(heart);
+            return keep;
         });
         
         // Update boosts
@@ -741,10 +870,14 @@ export class GameController {
             // Update trail particles
             boost.trailParticles = boost.trailParticles.filter(p => {
                 p.life -= deltaTime;
-                return p.life > 0;
+                const pKeep = p.life > 0;
+                if (!pKeep) this.disposeParticle(p);
+                return pKeep;
             });
             
-            return boost.x + boost.radius > 0;
+            const keep = boost.x + boost.radius > -50;
+            if (!keep) this.disposeCollectible(boost);
+            return keep;
         });
         
         // Update nuovi bonus
@@ -754,7 +887,9 @@ export class GameController {
             bonus.x += totalVelocity * deltaTime;
             bonus.pulsePhase += deltaTime * 5;
             bonus.rotation += deltaTime * 2;
-            return bonus.x + bonus.radius > 0;
+            const keep = bonus.x + bonus.radius > -50;
+            if (!keep) this.disposeBonus(bonus);
+            return keep;
         });
         
         this.timeBonuses = this.timeBonuses.filter(bonus => {
@@ -762,7 +897,9 @@ export class GameController {
             bonus.x += totalVelocity * deltaTime;
             bonus.pulsePhase += deltaTime * 4;
             bonus.rotation += deltaTime * 3;
-            return bonus.x + bonus.radius > 0;
+            const keep = bonus.x + bonus.radius > -50;
+            if (!keep) this.disposeBonus(bonus);
+            return keep;
         });
         
         this.shieldBonuses = this.shieldBonuses.filter(bonus => {
@@ -770,7 +907,9 @@ export class GameController {
             bonus.x += totalVelocity * deltaTime;
             bonus.pulsePhase += deltaTime * 6;
             bonus.rotation += deltaTime * 2.5;
-            return bonus.x + bonus.radius > 0;
+            const keep = bonus.x + bonus.radius > -50;
+            if (!keep) this.disposeBonus(bonus);
+            return keep;
         });
         
         this.multiplierBonuses = this.multiplierBonuses.filter(bonus => {
@@ -778,7 +917,9 @@ export class GameController {
             bonus.x += totalVelocity * deltaTime;
             bonus.pulsePhase += deltaTime * 7;
             bonus.rotation += deltaTime * 4;
-            return bonus.x + bonus.radius > 0;
+            const keep = bonus.x + bonus.radius > -50;
+            if (!keep) this.disposeBonus(bonus);
+            return keep;
         });
         
         this.rainbowBonuses = this.rainbowBonuses.filter(bonus => {
@@ -801,12 +942,17 @@ export class GameController {
                 });
             }
             
+            // Update particles
             bonus.particles = bonus.particles.filter(p => {
                 p.life -= deltaTime;
-                return p.life > 0;
+                const pKeep = p.life > 0;
+                if (!pKeep) this.disposeParticle(p);
+                return pKeep;
             });
             
-            return bonus.x + bonus.radius > 0;
+            const keep = bonus.x + bonus.radius > -50;
+            if (!keep) this.disposeBonus(bonus);
+            return keep;
         });
         
         // Update boost particles
@@ -1001,13 +1147,14 @@ export class GameController {
                 const magnet = this.magnetBonuses[i];
                 this.magnetBonuses.splice(i, 1);
                 
-                // Attira tutti i collectibles verso il player
+                // Attira tutti i collectibles verso il player (anche quelli fuori schermo)
                 this.collectibles.forEach(c => {
                     const dx = this.player.x - c.x;
                     const dy = this.player.y - c.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     c.magnetized = true;
-                    c.magnetDuration = 5.0; // 5 secondi
+                    // Durata più lunga durante turbo per compensare velocità
+                    c.magnetDuration = this.player.isTurboActive ? 8.0 : 5.0;
                 });
                 
                 this.createBonusExplosion(magnet.x, magnet.y, magnet.color);
@@ -1601,6 +1748,9 @@ export class GameController {
         this.renderingSystem.setScreenFlash(this.screenFlash);
         this.renderingSystem.setCombo(this.scoreSystem.getCombo());
         this.renderingSystem.setLevelTransition(this.levelTransition);
+        
+        // Pass turbo button UI to rendering system
+        this.renderingSystem.setTurboButton(this.turboButtonUI);
 
         // Include safety platform with dissolve info
         const entities = [
@@ -1800,5 +1950,50 @@ export class GameController {
         if (this.renderingSystem) {
             this.renderingSystem.updateDimensions(dims.width, dims.height);
         }
+        if (this.turboButtonUI) {
+            this.turboButtonUI.resize(dims.width, dims.height);
+        }
+        if (this.flightButtonUI) {
+            this.flightButtonUI.resize(dims.width, dims.height);
+        }
+    }
+    
+    // ============================================
+    // DISPOSE METHODS - Gestione efficiente memoria
+    // ============================================
+    
+    disposePlatform(platform) {
+        // Pulisce riferimenti per garbage collection efficiente
+        if (platform.vertices) platform.vertices = null;
+        if (platform.colors) platform.colors = null;
+        if (platform.indices) platform.indices = null;
+        platform.platformType = null;
+    }
+    
+    disposeObstacle(obstacle) {
+        if (obstacle.vertices) obstacle.vertices = null;
+        if (obstacle.colors) obstacle.colors = null;
+        if (obstacle.indices) obstacle.indices = null;
+    }
+    
+    disposeCollectible(collectible) {
+        collectible.color = null;
+        collectible.magnetized = null;
+    }
+    
+    disposePowerup(powerup) {
+        if (powerup.particles) powerup.particles = null;
+        powerup.powerupType = null;
+        powerup.entityType = null;
+    }
+    
+    disposeBonus(bonus) {
+        bonus.color = null;
+        bonus.entityType = null;
+    }
+    
+    disposeParticle(particle) {
+        if (particle.color) particle.color = null;
     }
 }
+

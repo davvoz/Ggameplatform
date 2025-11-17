@@ -123,6 +123,10 @@ export class RenderingSystem {
     setDeathAnimation(animation) {
         this.deathAnimation = animation;
     }
+    
+    setTurboButton(turboButton) {
+        this.turboButton = turboButton;
+    }
 
     update(deltaTime, entities) {
         this.powerupUIRenderer.update(deltaTime);
@@ -225,6 +229,14 @@ export class RenderingSystem {
         // Render death animation
         if (this.deathAnimation) {
             this.renderDeathAnimation(this.deathAnimation);
+        }
+        
+        // Render UI controls
+        if (this.turboButton && this.player) {
+            this.turboButton.render(gl, this, this.player);
+        }
+        if (this.flightButton && this.player) {
+            this.flightButton.render(gl, this, this.player);
         }
         
         // Render screen flash effect (last, on top of everything)
@@ -1112,6 +1124,40 @@ export class RenderingSystem {
                 this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size, particleColor);
             }
         }
+        
+        // Render turbo trail particles
+        if (player.isTurboActive && player.getTurboTrailParticles) {
+            const turboParticles = player.getTurboTrailParticles();
+            for (const particle of turboParticles) {
+                const alpha = particle.life;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.8;
+                
+                // Large glow for turbo effect
+                const glowColor = [1.0, 0.9, 0.3, alpha * 0.4];
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 15, glowColor);
+                
+                // Particle core
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 8, particleColor);
+            }
+        }
+
+        // Render flight trail particles
+        if (player.isFlightActive && player.getFlightTrailParticles) {
+            const flightParticles = player.getFlightTrailParticles();
+            for (const particle of flightParticles) {
+                const alpha = particle.life;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.7;
+                
+                // Soft cyan glow for flight effect
+                const glowColor = [0.3, 0.8, 1.0, alpha * 0.3];
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 12, glowColor);
+                
+                // Particle core
+                this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 6, particleColor);
+            }
+        }
 
         // FLASH ROSSO quando danneggiato
         if (player.damageFlash && player.damageFlash > 0) {
@@ -1135,6 +1181,82 @@ export class RenderingSystem {
             if (player.powerups.immortality) activePowerups.push({ type: 'immortality', color: [1.0, 0.84, 0.0, 1.0], name: 'IMMORTALE' });
             if (player.powerups.flight) activePowerups.push({ type: 'flight', color: [0.4, 0.85, 1.0, 1.0], name: 'VOLO' });
             if (player.powerups.superJump) activePowerups.push({ type: 'superJump', color: [1.0, 0.2, 0.6, 1.0], name: 'SUPER SALTO' });
+            
+            // Turbo mode effects - SPETTACOLARE!
+            if (player.isTurboActive) {
+                const turboPulse = Math.abs(Math.sin(player.animationTime * 8)) * 0.3 + 0.7;
+                const turboFastPulse = Math.abs(Math.sin(player.animationTime * 12)) * 0.4 + 0.6;
+                const superFastPulse = Math.abs(Math.sin(player.animationTime * 20)) * 0.5 + 0.5;
+                
+                // ENORME alone esterno arcobaleno
+                const rainbow1 = [1.0, 0.3, 0.8, 0.4 * turboPulse];
+                this.renderer.drawCircle(centerX, centerY, avgRadius + 100 * turboPulse, rainbow1);
+                
+                const rainbow2 = [1.0, 0.6, 0.2, 0.5 * turboFastPulse];
+                this.renderer.drawCircle(centerX, centerY, avgRadius + 80 * turboFastPulse, rainbow2);
+                
+                // Alone dorato medio
+                const turboGlow2 = [1.0, 0.9, 0.3, 0.7 * superFastPulse];
+                this.renderer.drawCircle(centerX, centerY, avgRadius + 50 * superFastPulse, turboGlow2);
+                
+                // SPEED LINES INTENSE - molte più linee
+                for (let i = 0; i < 16; i++) {
+                    const lineLength = 80 + i * 30;
+                    const lineY = centerY + (i - 8) * 6;
+                    const lineAlpha = (1 - i / 16) * 0.8 * turboPulse;
+                    const lineColor = [1.0, 0.7 + Math.random() * 0.3, 0.2, lineAlpha];
+                    
+                    for (let j = 0; j < 8; j++) {
+                        const lx = centerX - lineLength + j * 4;
+                        this.renderer.drawCircle(lx, lineY, 5 - j * 0.5, lineColor);
+                    }
+                }
+                
+                // ANELLI ENERGETICI ROTANTI - più grandi e colorati
+                for (let ring = 0; ring < 5; ring++) {
+                    const ringRotation = player.animationTime * (5 + ring * 3);
+                    const ringRadius = 50 + ring * 18;
+                    const numPoints = 16;
+                    const hue = (ring * 0.2) % 1.0;
+                    
+                    for (let i = 0; i < numPoints; i++) {
+                        const angle = ringRotation + (i * Math.PI * 2 / numPoints);
+                        const px = centerX + Math.cos(angle) * ringRadius;
+                        const py = centerY + Math.sin(angle) * ringRadius;
+                        
+                        // Colori arcobaleno
+                        let r, g, b;
+                        if (ring % 3 === 0) {
+                            r = 1.0; g = 0.3; b = 0.3; // Rosso
+                        } else if (ring % 3 === 1) {
+                            r = 1.0; g = 0.9; b = 0.2; // Giallo
+                        } else {
+                            r = 0.3; g = 1.0; b = 0.9; // Cyan
+                        }
+                        
+                        const pointGlow = [r, g, b, 0.6];
+                        this.renderer.drawCircle(px, py, 10, pointGlow);
+                        
+                        const pointColor = [1.0, 1.0, 1.0, 0.9];
+                        this.renderer.drawCircle(px, py, 5, pointColor);
+                    }
+                }
+                
+                // STELLE SCINTILLANTI attorno al player
+                for (let i = 0; i < 12; i++) {
+                    const starAngle = player.animationTime * 6 + (i * Math.PI / 6);
+                    const starDist = 70 + Math.sin(player.animationTime * 8 + i) * 20;
+                    const sx = centerX + Math.cos(starAngle) * starDist;
+                    const sy = centerY + Math.sin(starAngle) * starDist;
+                    const starSize = 8 + Math.sin(player.animationTime * 10 + i) * 4;
+                    
+                    const starGlow = [1.0, 1.0, 0.5, 0.7];
+                    this.renderer.drawCircle(sx, sy, starSize, starGlow);
+                    
+                    const starCore = [1.0, 1.0, 1.0, 1.0];
+                    this.renderer.drawCircle(sx, sy, starSize * 0.5, starCore);
+                }
+            }
 
             // EFFETTI POWER-UP MOLTO VISIBILI
             if (activePowerups.length > 0) {
@@ -1209,8 +1331,10 @@ export class RenderingSystem {
             // CORPO PRINCIPALE - forma arrotondata più bella
             let bodyColor = [0.3, 0.7, 1.0, 1.0]; // Azzurro più vivace
 
-            // Cambia colore in base al powerup attivo
-            if (player.powerups.immortality) {
+            // Cambia colore in base al powerup attivo o turbo
+            if (player.isTurboActive) {
+                bodyColor = [1.0, 0.95, 0.3, 1.0]; // Bright golden yellow for turbo
+            } else if (player.powerups.immortality) {
                 bodyColor = [1.0, 0.9, 0.2, 1.0]; // Oro brillante
             } else if (player.powerups.flight) {
                 bodyColor = [0.5, 0.9, 1.0, 1.0]; // Azzurro cielo
@@ -2925,5 +3049,13 @@ export class RenderingSystem {
             
             this.textCtx.restore();
         }
+    }
+    
+    setTurboButton(turboButtonUI) {
+        this.turboButton = turboButtonUI;
+    }
+    
+    setFlightButton(flightButtonUI) {
+        this.flightButton = flightButtonUI;
     }
 }

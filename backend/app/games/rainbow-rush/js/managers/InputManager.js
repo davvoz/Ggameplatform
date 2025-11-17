@@ -12,7 +12,8 @@ export class InputManager {
         this.jumpPressTime = 0;
         this.listeners = {
             jump: [],
-            jumpRelease: []
+            jumpRelease: [],
+            click: []
         };
 
         this.setupEventListeners();
@@ -67,6 +68,15 @@ export class InputManager {
 
     handleMouseDown(event) {
         event.preventDefault();
+        
+        // Get click position
+        const rect = this.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Notify click listeners
+        this.notifyListeners('click', { x, y });
+        
         if (!this.mouseDown) {
             this.mouseDown = true;
             this.jumpPressed = true;
@@ -86,6 +96,17 @@ export class InputManager {
 
     handleTouchStart(event) {
         event.preventDefault();
+        
+        // Get touch position
+        if (event.touches.length > 0) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = event.touches[0].clientX - rect.left;
+            const y = event.touches[0].clientY - rect.top;
+            
+            // Notify click listeners
+            this.notifyListeners('click', { x, y });
+        }
+        
         if (!this.touchActive) {
             this.touchActive = true;
             this.jumpPressed = true;

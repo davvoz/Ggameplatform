@@ -91,6 +91,32 @@ export class Player {
         // Anticipazione salto
         this.isPreparingJump = false;
         this.jumpPreparationTime = 0;
+        
+        // Icy platform sliding
+        this.isOnIcyPlatform = false;
+        this.slideVelocityX = 0;
+        this.slideFriction = 0.96; // Very low friction
+        this.slideDecelerationTime = 0;
+        this.isSliding = false;
+        
+        // Turbo boost immortal mode
+        this.isTurboActive = false;
+        this.turboTimeRemaining = 0;
+        this.turboCooldownRemaining = 0;
+        this.turboCooldownDuration = 20; // 20 seconds cooldown
+        this.turboBaseDuration = 5; // Base 5 seconds + level
+        this.turboSpeedMultiplier = 2.5; // 2.5x speed - fast but manageable
+        this.turboTrailParticles = [];
+        
+        // Flight horizontal mode - controllo volo orizzontale
+        this.isFlightActive = false;
+        this.flightTimeRemaining = 0;
+        this.flightCooldownRemaining = 0;
+        this.flightCooldownDuration = 15; // 15 seconds cooldown
+        this.flightBaseDuration = 6; // 6 seconds flight
+        this.flightTargetY = 0; // Target Y position per smooth movement
+        this.flightStep = 100; // Pixel per step su/giù
+        this.flightTrailParticles = [];
     }
 
     jump() {
@@ -198,6 +224,93 @@ export class Player {
             this.damageFlash -= deltaTime;
         }
         
+        // Update turbo boost
+        if (this.isTurboActive) {
+            this.turboTimeRemaining -= deltaTime;
+            if (this.turboTimeRemaining <= 0) {
+                this.isTurboActive = false;
+                this.turboTimeRemaining = 0;
+                this.turboCooldownRemaining = this.turboCooldownDuration;
+            }
+            
+            // Genera particelle turbo trail
+            this.turboTrailParticles.push({
+                x: this.x + this.width / 2,
+                y: this.y + this.height / 2,
+                vx: (Math.random() - 0.5) * 200,
+                vy: Math.random() * 100,
+                life: 1.0,
+                maxLife: 0.6,
+                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
+            });
+        }
+        
+        // Update turbo cooldown
+        if (this.turboCooldownRemaining > 0) {
+            this.turboCooldownRemaining -= deltaTime;
+            if (this.turboCooldownRemaining < 0) {
+                this.turboCooldownRemaining = 0;
+            }
+        }
+        
+        // Update turbo trail particles
+        this.turboTrailParticles = this.turboTrailParticles.filter(p => {
+            p.life -= deltaTime / p.maxLife;
+            p.x += p.vx * deltaTime;
+            p.y += p.vy * deltaTime;
+            p.vy -= 200 * deltaTime; // Gravity
+            return p.life > 0;
+        });
+        
+        // Update flight mode
+        if (this.isFlightActive) {
+            this.flightTimeRemaining -= deltaTime;
+            if (this.flightTimeRemaining <= 0) {
+                this.isFlightActive = false;
+                this.flightTimeRemaining = 0;
+                this.flightCooldownRemaining = this.flightCooldownDuration;
+                this.flightTargetY = this.y; // Reset target
+            }
+            
+            // Smooth movement verso target Y
+            const diff = this.flightTargetY - this.y;
+            const moveSpeed = 400; // Velocità smooth
+            if (Math.abs(diff) > 1) {
+                this.velocityY = Math.sign(diff) * Math.min(Math.abs(diff) * 5, moveSpeed);
+            } else {
+                this.velocityY = 0;
+            }
+            
+            // Genera particelle flight trail (ali/propulsori)
+            if (Math.random() < 0.3) {
+                this.flightTrailParticles.push({
+                    x: this.x + this.width / 2 + (Math.random() - 0.5) * 20,
+                    y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                    vx: (Math.random() - 0.5) * 50,
+                    vy: Math.random() * 80 - 40,
+                    life: 0.8,
+                    maxLife: 0.8,
+                    color: [0.7 + Math.random() * 0.3, 0.9 + Math.random() * 0.1, 1.0, 0.8]
+                });
+            }
+        }
+        
+        // Update flight cooldown
+        if (this.flightCooldownRemaining > 0) {
+            this.flightCooldownRemaining -= deltaTime;
+            if (this.flightCooldownRemaining < 0) {
+                this.flightCooldownRemaining = 0;
+            }
+        }
+        
+        // Update flight trail particles
+        this.flightTrailParticles = this.flightTrailParticles.filter(p => {
+            p.life -= deltaTime * 2;
+            p.x += p.vx * deltaTime;
+            p.y += p.vy * deltaTime;
+            return p.life > 0;
+        });
+        
         // Update boost
         if (this.boostActive) {
             this.boostTimer -= deltaTime;
@@ -281,13 +394,37 @@ export class Player {
         // Solo l'ambiente si muove attorno a lui
         // VelocityX viene usata solo come riferimento per la velocità della camera
         
-        // Decay velocityX (friction) - solo se non in boost o decelerazione
-        if (!this.boostActive && !this.boostDecelerating) {
+        // Handle icy platform sliding
+        if (this.isOnIcyPlatform && this.isGrounded) {
+            // Continua a scivolare
+            this.isSliding = true;
+            this.slideVelocityX *= this.slideFriction; // Very slow decay
+            this.slideDecelerationTime += deltaTime;
+            
+            // Se la velocità di slide è quasi zero, ferma lo slide
+            if (Math.abs(this.slideVelocityX) < 5) {
+                this.slideVelocityX = 0;
+                this.isSliding = false;
+            }
+        } else if (this.isSliding && !this.isGrounded) {
+            // Se lascia la piattaforma ghiacciata mentre scivola
+            this.slideVelocityX = 0;
+            this.isSliding = false;
+            this.slideDecelerationTime = 0;
+        }
+        
+        // Apply turbo speed boost to camera velocity
+        if (this.isTurboActive) {
+            this.velocityX = 500 * this.turboSpeedMultiplier; // Super fast forward speed!
+        }
+        
+        // Decay velocityX (friction) - solo se non in boost, turbo o decelerazione
+        if (!this.boostActive && !this.boostDecelerating && !this.isTurboActive) {
             this.velocityX *= 0.92;
         }
 
-        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
-        if (this.y > this.canvasHeight && !this.powerups.immortality) {
+        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale o turbo)
+        if (this.y > this.canvasHeight && !this.powerups.immortality && !this.isTurboActive) {
             this.alive = false;
         }
         
@@ -336,7 +473,8 @@ export class Player {
         // Scudo blocca TUTTI i danni
         if (this.shieldActive) return false;
         
-        if (this.invulnerable || this.powerups.immortality) return false;
+        // Turbo mode blocks all damage
+        if (this.invulnerable || this.powerups.immortality || this.isTurboActive) return false;
         
         this.health = Math.max(0, this.health - amount);
         this.invulnerable = true;
@@ -413,6 +551,18 @@ export class Player {
             this.isGrounded = true;
             this.currentPlatform = platform;
             
+            // Handle icy platform
+            if (platform.platformType === 'icy') {
+                this.isOnIcyPlatform = true;
+                // Start sliding with momentum when landing on ice
+                if (!this.isSliding) {
+                    this.slideVelocityX = platform.velocity * 0.5; // Inherit some platform velocity
+                    this.slideDecelerationTime = 0;
+                }
+            } else {
+                this.isOnIcyPlatform = false;
+            }
+            
             // Trigger crumbling for crumbling platforms
             if (platform.platformType === 'crumbling' && !platform.isCrumbling) {
                 platform.isCrumbling = true;
@@ -422,6 +572,7 @@ export class Player {
         } else {
             if (this.currentPlatform === platform) {
                 this.currentPlatform = null;
+                this.isOnIcyPlatform = false;
             }
         }
 
@@ -521,6 +672,10 @@ export class Player {
         this.rotation = 0;
         this.targetRotation = 0;
         this.cameraShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+        this.isOnIcyPlatform = false;
+        this.slideVelocityX = 0;
+        this.slideDecelerationTime = 0;
+        this.isSliding = false;
     }
     
     activatePowerup(type) {
@@ -549,6 +704,34 @@ export class Player {
                 this.powerups.superJump = false;
                 break;
         }
+    }
+    
+    activateTurbo(currentLevel = 1) {
+        // Check if cooldown is ready
+        if (this.turboCooldownRemaining > 0) {
+            return false; // Still on cooldown
+        }
+        
+        // Activate turbo boost
+        this.isTurboActive = true;
+        this.turboTimeRemaining = this.turboBaseDuration + currentLevel; // 5 + level seconds
+        this.turboCooldownRemaining = this.turboCooldownDuration;
+        this.expression = 'excited';
+        
+        return true; // Successfully activated
+    }
+    
+    getTurboTrailParticles() {
+        return this.turboTrailParticles;
+    }
+    
+    isTurboCooldownReady() {
+        return this.turboCooldownRemaining === 0;
+    }
+    
+    getTurboCooldownProgress() {
+        if (this.turboCooldownRemaining === 0) return 1.0;
+        return 1.0 - (this.turboCooldownRemaining / this.turboCooldownDuration);
     }
     
     getTrailParticles() {
@@ -695,6 +878,52 @@ export class Player {
     
     isEyeBlinking() {
         return this.isBlinking;
+    }
+    
+    getSlideVelocity() {
+        return this.slideVelocityX;
+    }
+    
+    hasJustStoppedSliding() {
+        // Returns true when slide just stopped (for camera shake trigger)
+        return this.slideDecelerationTime > 0 && !this.isSliding && this.slideVelocityX === 0;
+    }
+    
+    // ============================================
+    // FLIGHT HORIZONTAL MODE METHODS
+    // ============================================
+    
+    activateFlight() {
+        if (!this.isFlightCooldownReady()) return false;
+        
+        this.isFlightActive = true;
+        this.flightTimeRemaining = this.flightBaseDuration;
+        this.flightCooldownRemaining = this.flightCooldownDuration;
+        this.flightTargetY = this.y; // Inizia dalla posizione corrente
+        
+        return true;
+    }
+    
+    flightMoveUp() {
+        if (!this.isFlightActive) return;
+        this.flightTargetY = Math.max(50, this.flightTargetY - this.flightStep);
+    }
+    
+    flightMoveDown() {
+        if (!this.isFlightActive) return;
+        this.flightTargetY = Math.min(this.canvasHeight - 50, this.flightTargetY + this.flightStep);
+    }
+    
+    isFlightCooldownReady() {
+        return this.flightCooldownRemaining <= 0;
+    }
+    
+    getFlightCooldownProgress() {
+        return 1.0 - (this.flightCooldownRemaining / this.flightCooldownDuration);
+    }
+    
+    getFlightTrailParticles() {
+        return this.flightTrailParticles;
     }
 
     updateCanvasHeight(height) {

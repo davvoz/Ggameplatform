@@ -96,6 +96,9 @@ export class AudioManager {
         this.sounds.set('powerup_end', this.createPowerupEndSound.bind(this));
         this.sounds.set('powerup_ready', this.createPowerupReadySound.bind(this));
         this.sounds.set('death', this.createDeathSound.bind(this));
+        this.sounds.set('brake', this.createBrakeSound.bind(this));
+        this.sounds.set('turbo', this.createTurboSound.bind(this));
+        this.sounds.set('flight', this.createFlightActivateSound.bind(this));
         
         // Gamification sounds
         this.sounds.set('perfect_land', this.createPerfectLandSound.bind(this));
@@ -621,6 +624,131 @@ export class AudioManager {
             osc.start(ctx.currentTime + startDelay);
             osc.stop(ctx.currentTime + 2.5);
         });
+    }
+    
+    createBrakeSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        
+        // Skid/brake sound - harsh friction noise
+        const noise = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gainNode = ctx.createGain();
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Use sawtooth for harsh sound
+        noise.type = 'sawtooth';
+        
+        // Descending frequency for skid effect
+        noise.frequency.setValueAtTime(180, ctx.currentTime);
+        noise.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.25);
+        
+        // Band-pass filter for realistic friction
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(400, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.25);
+        filter.Q.value = 3;
+        
+        // Sharp attack, quick decay
+        gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        
+        noise.start(ctx.currentTime);
+        noise.stop(ctx.currentTime + 0.25);
+    }
+    
+    createTurboSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        
+        // Power-up turbo sound - energetic ascending sweep
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gainNode = ctx.createGain();
+        
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Two oscillators for rich sound
+        osc1.type = 'sawtooth';
+        osc2.type = 'square';
+        
+        // Fast ascending sweep for energy boost feel
+        osc1.frequency.setValueAtTime(100, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
+        osc1.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
+        
+        osc2.frequency.setValueAtTime(150, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.3);
+        osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.5);
+        
+        // Bright filter opening
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(4000, ctx.currentTime + 0.4);
+        filter.Q.value = 5;
+        
+        // Punchy envelope
+        gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.6, ctx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.5, ctx.currentTime + 0.3);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.5);
+        osc2.start(ctx.currentTime);
+        osc2.stop(ctx.currentTime + 0.5);
+    }
+    
+    createFlightActivateSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gainNode = ctx.createGain();
+        
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Suono aereo e leggero - come ali che si aprono
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        
+        // Sweep ascendente delicato
+        osc1.frequency.setValueAtTime(200, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.4);
+        
+        osc2.frequency.setValueAtTime(400, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
+        
+        // High-pass filter per suono aereo
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(300, ctx.currentTime);
+        filter.Q.value = 2;
+        
+        // Envelope morbida
+        gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.3, ctx.currentTime + 0.25);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.4);
+        osc2.start(ctx.currentTime);
+        osc2.stop(ctx.currentTime + 0.4);
     }
 
     playSound(soundName) {

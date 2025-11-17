@@ -10,7 +10,8 @@ export const PlatformTypes = {
     SLOW: 'slow',
     BOUNCY: 'bouncy',
     CRUMBLING: 'crumbling',
-    SPRING: 'spring'
+    SPRING: 'spring',
+    ICY: 'icy'
 };
 
 // Bonus types for collectibles
@@ -53,6 +54,7 @@ export class ProceduralLevelGenerator {
     setDifficulty(level) {
         // Extremely slow difficulty progression (0.3 to 1.2 over many levels)
         this.difficulty = Math.min(0.3 + level * 0.02, 1.2);
+        this.currentLevel = level; // Track current level
         
         // Very gradual spacing increase
         this.platformSpacing.min = Math.min(50 + (level * 0.8), 90);
@@ -116,18 +118,24 @@ export class ProceduralLevelGenerator {
         
         const rand = this.random(0, 1);
         const difficultyFactor = Math.min(this.difficulty, 1.0);
+        const level = this.currentLevel || 1;
+        
+        // Icy platforms only from level 5
+        const icyChance = level >= 5 ? 0.15 : 0; // 15% chance from level 5
         
         // Higher difficulty = more varied platforms
         if (rand < 0.45 - difficultyFactor * 0.1) {
             return PlatformTypes.NORMAL;
-        } else if (rand < 0.6) {
+        } else if (rand < 0.55) {
             return PlatformTypes.FAST;
-        } else if (rand < 0.73) {
+        } else if (rand < 0.68) {
             return PlatformTypes.SLOW;
-        } else if (rand < 0.83) {
+        } else if (rand < 0.78) {
             return PlatformTypes.BOUNCY;
-        } else if (rand < 0.92) {
-            return PlatformTypes.SPRING; // Nuove molle!
+        } else if (rand < 0.86) {
+            return PlatformTypes.SPRING;
+        } else if (rand < 0.86 + icyChance) {
+            return PlatformTypes.ICY; // Piattaforme ghiacciate!
         } else {
             return PlatformTypes.CRUMBLING;
         }
@@ -167,6 +175,12 @@ export class ProceduralLevelGenerator {
                 height = this.platformHeight * 1.3; // Leggermente più alta
                 break;
                 
+            case PlatformTypes.ICY:
+                velocity = -this.baseSpeed * this.difficulty;
+                color = [0.7, 0.9, 1.0, 0.9]; // Light blue/cyan icy color
+                height = this.platformHeight;
+                break;
+                
             default: // NORMAL
                 velocity = -this.baseSpeed * this.difficulty;
                 color = baseColor;
@@ -188,7 +202,8 @@ export class ProceduralLevelGenerator {
             crumbleDuration: 1.0, // 1 second before crumbling
             isCrumbling: false,
             springCompression: 0, // Per animazione compressione molla
-            springAnimationTime: 0
+            springAnimationTime: 0,
+            icyShimmer: 0 // Per effetto shimmer ghiaccio
         };
     }
 

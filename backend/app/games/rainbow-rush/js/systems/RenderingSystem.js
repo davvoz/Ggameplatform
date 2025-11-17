@@ -268,6 +268,10 @@ export class RenderingSystem {
         
         // Powerup UI
         if (this.powerupTimers && this.powerupUIRenderer) {
+            // Update player health for hearts display
+            if (this.player && this.player.health !== undefined) {
+                this.powerupUIRenderer.setPlayerHealth(this.player.health, this.player.maxHealth || 3);
+            }
             this.powerupUIRenderer.render(this.powerupTimers, Date.now());
         }
     }

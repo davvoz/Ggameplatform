@@ -214,26 +214,36 @@ export class PlayerRenderer extends IEntityRenderer {
         const activePowerups = this.getActivePowerups(player);
         if (activePowerups.length === 0) return;
 
-        const pulse = RenderingUtils.getPulse(time, 5, 0.6, 1.0);
-        const fastPulse = RenderingUtils.getPulse(time, 8, 0.7, 1.0);
+        const pulse = Math.abs(Math.sin(player.animationTime * 5)) * 0.4 + 0.6;
+        const fastPulse = Math.abs(Math.sin(player.animationTime * 8)) * 0.3 + 0.7;
 
         activePowerups.forEach((powerup, index) => {
             const rotationOffset = player.animationTime * 3 + index * Math.PI * 2 / activePowerups.length;
 
-            // Glows
-            RenderingUtils.drawGlow(this.renderer, x, y, radius + 50 * pulse, powerup.color, 3, 0.25 * pulse, 0.08);
-            
-            // Border
-            for (let i = 0; i < 5; i++) {
+            // 1. ENORME ALONE ESTERNO pulsante
+            const outerGlowSize = 50 * pulse;
+            const outerGlow = [...powerup.color];
+            outerGlow[3] = 0.25 * pulse;
+            this.renderer.drawCircle(x, y, radius + outerGlowSize, outerGlow);
+
+            // 2. ALONE MEDIO
+            const midGlowSize = 30 * fastPulse;
+            const midGlow = [...powerup.color];
+            midGlow[3] = 0.4 * fastPulse;
+            this.renderer.drawCircle(x, y, radius + midGlowSize, midGlow);
+
+            // 3. CONTORNO COLORATO SPESSO
+            const borderThickness = 5;
+            for (let i = 0; i < borderThickness; i++) {
                 const borderColor = [...powerup.color];
                 borderColor[3] = 0.8 - (i * 0.15);
                 this.renderer.drawCircle(x, y, radius + 8 + i, borderColor);
             }
 
-            // Orbiting particles
+            // 4. PARTICELLE ORBITANTI GRANDI
             this.renderOrbitingParticles(x, y, rotationOffset, powerup.color, index, pulse);
             
-            // Light rays
+            // 5. RAGGI DI LUCE rotanti
             this.renderLightRays(player, time, x, y, radius, rotationOffset, powerup.color, pulse);
         });
     }
@@ -289,12 +299,13 @@ export class PlayerRenderer extends IEntityRenderer {
     renderBoostEffect(player, time, x, y, radius) {
         if (!player.boostActive) return;
 
-        const boostPulse = RenderingUtils.getPulse(time, 10, 0.5, 1.0);
+        const boostPulse = Math.abs(Math.sin(player.animationTime * 10)) * 0.5 + 0.5;
         
+        // Enormi aloni cyan pulsanti
         this.renderer.drawCircle(x, y, radius * 4, [0.0, 1.0, 0.9, boostPulse * 0.4]);
         this.renderer.drawCircle(x, y, radius * 2.5, [0.0, 0.8, 1.0, boostPulse * 0.3]);
         
-        // Speed lines
+        // Strisce di velocità dietro (speed lines)
         for (let i = 0; i < 5; i++) {
             const lineX = x - radius - i * 15;
             const lineLength = 20 + i * 5;
@@ -304,8 +315,8 @@ export class PlayerRenderer extends IEntityRenderer {
             this.renderer.drawRect(lineX - lineLength, y - 2, lineLength, 4, lineColor);
         }
         
-        const cyanTint = [0.0, 1.0, 0.9, 0.3 * boostPulse];
-        this.renderer.drawCircle(x, y, radius * 1.3, cyanTint);
+        // Tint cyan sul corpo del player
+        this.renderer.drawCircle(x, y, radius * 1.3, [0.0, 1.0, 0.9, 0.3 * boostPulse]);
     }
 
     renderBody(player, x, y, radius) {

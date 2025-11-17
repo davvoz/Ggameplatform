@@ -9,46 +9,28 @@ export class ParticleSystem {
     }
 
     /**
-     * Create boost particles explosion
+     * Create boost particles explosion - Simple and elegant
      */
     createBoostExplosion(x, y, entityManager) {
-        const particleCount = 50;
-        
-        // Multi-layer explosion with vibrant cyan colors
-        for (let i = 0; i < particleCount; i++) {
-            const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.5;
-            const layer = Math.floor(i / (particleCount / 3));
-            const speed = 150 + Math.random() * 150 + layer * 50;
-            const size = 4 + Math.random() * 5;
-            
-            // Cyan/turquoise colors
-            const colorVariant = Math.random();
-            let color;
-            if (colorVariant < 0.33) {
-                color = [0.0, 1.0, 0.9, 1.0]; // Bright cyan
-            } else if (colorVariant < 0.66) {
-                color = [0.0, 0.8, 1.0, 1.0]; // Turquoise
-            } else {
-                color = [0.2, 1.0, 1.0, 1.0]; // Light cyan
-            }
+        // 15 particelle cyan piccole e semplici
+        for (let i = 0; i < 15; i++) {
+            const angle = (Math.PI * 2 * i) / 15;
+            const speed = 100 + Math.random() * 60;
             
             const particle = {
                 x, y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 0.8 + Math.random() * 0.4,
-                maxLife: 1.2,
-                size: size,
-                color: color,
+                life: 0.5 + Math.random() * 0.2,
+                maxLife: 0.7,
+                size: 2 + Math.random() * 1,
+                color: [0.0, 0.85, 1.0, 1.0],
                 type: 'boostParticle',
                 glow: true
             };
             
             entityManager.addEntity('boostParticles', particle);
         }
-        
-        // Add explosion ring
-        this.createExplosionRing(x, y, [0.0, 1.0, 0.9, 1.0], 80, entityManager);
     }
 
     /**

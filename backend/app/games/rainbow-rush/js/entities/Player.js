@@ -439,6 +439,7 @@ export class Player {
 
         // Check if fell off screen (game over quando cade troppo basso, a meno che immortale o turbo)
         if (this.y > this.canvasHeight && !this.powerups.immortality && !this.isTurboActive) {
+            console.log('Player is dead! y:', this.y, 'canvasHeight:', this.canvasHeight);
             this.alive = false;
         }
         

@@ -78,14 +78,7 @@ export class PowerupUIRenderer {
             const timer = powerupTimers[type];
             if (!timer) continue;
             
-            // Show only if active or on cooldown
-            const isActive = timer.active;
-            const isOnCooldown = timer.cooldown > 0;
-            
-            if (!isActive && !isOnCooldown) {
-                continue; // Skip if ready but not used
-            }
-            
+            // Show always (ready, active, or cooldown)
             const config = this.powerupConfig[type];
             const yPos = this.startY + (visibleIndex * this.barSpacing);
             

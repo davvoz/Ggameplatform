@@ -148,50 +148,112 @@ export class CollectibleRenderer extends IEntityRenderer {
     }
 
     renderBoost(boost, time) {
-        const pulse = RenderingUtils.getPulse(time + boost.pulsePhase, 5, 0.6, 1.0);
+        const pulse = Math.abs(Math.sin((boost.pulsePhase || 0) + time * 5)) * 0.3 + 0.7;
         const currentRadius = boost.radius * pulse;
         
-        // Halos
-        RenderingUtils.drawGlow(this.renderer, boost.x, boost.y, currentRadius * 4.5, boost.color, 4, 0.35 * pulse, 0.08);
+        // Alone semplice
+        const auraSize = currentRadius * 1.5;
+        const auraColor = [...boost.color];
+        auraColor[3] = 0.3 * pulse;
+        this.renderer.drawCircle(boost.x, boost.y, auraSize, auraColor);
         
-        // Trail particles
-        if (boost.trailParticles) {
-            for (const particle of boost.trailParticles) {
-                const alpha = particle.life / particle.maxLife;
-                const pColor = [...particle.color];
-                pColor[3] = alpha * 0.6;
-                this.renderer.drawCircle(particle.x, particle.y, particle.size, pColor);
-            }
-        }
-        
-        // Arrow shape
-        const arrowWidth = currentRadius * 2.5;
-        const arrowHeight = currentRadius * 1.8;
-        const arrowX = boost.x - arrowWidth * 0.3;
+        // Freccia semplice verso destra
+        const arrowWidth = currentRadius * 2;
+        const arrowHeight = currentRadius * 1.5;
+        const arrowX = boost.x;
         const arrowY = boost.y;
         
-        this.renderer.drawRect(arrowX - arrowWidth * 0.3, arrowY - arrowHeight * 0.25, arrowWidth * 0.6, arrowHeight * 0.5, boost.color);
+        // Corpo freccia
+        this.renderer.drawRect(
+            arrowX - arrowWidth * 0.3,
+            arrowY - arrowHeight * 0.2,
+            arrowWidth * 0.5,
+            arrowHeight * 0.4,
+            boost.color
+        );
         
-        // Arrow tip
-        for (let i = 0; i < 6; i++) {
-            const stepWidth = arrowWidth * 0.4 * (1 - i / 6);
-            const stepHeight = arrowHeight * (1 - i / 6) * 0.5;
-            const stepX = arrowX + arrowWidth * 0.3 + i * (arrowWidth * 0.15);
-            this.renderer.drawRect(stepX, arrowY - stepHeight / 2, arrowWidth * 0.15, stepHeight, boost.color);
+        // Punta freccia (triangolo semplice)
+        for (let i = 0; i < 3; i++) {
+            const stepHeight = arrowHeight * (1 - i / 3) * 0.4;
+            const stepX = arrowX + arrowWidth * 0.2 + i * (arrowWidth * 0.2);
+            
+            this.renderer.drawRect(
+                stepX,
+                arrowY - stepHeight / 2,
+                arrowWidth * 0.2,
+                stepHeight,
+                boost.color
+            );
         }
     }
 
     renderPowerup(powerup, time) {
-        const rotationPulse = Math.sin(powerup.rotationAngle * 2) * 0.3 + 1.0;
-        const bigPulse = RenderingUtils.getPulse(powerup.rotationAngle, 3, 0.5, 1.0);
-        const currentRadius = powerup.radius * rotationPulse;
+        const radius = powerup.radius || 20;
+        const rotationPulse = Math.sin((powerup.rotationAngle || 0) * 2) * 0.3 + 1.0;
+        const bigPulse = Math.abs(Math.sin((powerup.rotationAngle || 0) * 3)) * 0.5 + 0.5;
+        const currentRadius = radius * rotationPulse;
 
-        RenderingUtils.drawGlow(this.renderer, powerup.x, powerup.y, currentRadius * 4, powerup.glowColor, 3, 0.3 * bigPulse, 0.08);
+        // ENORME alone esterno multiplo
+        for (let i = 0; i < 3; i++) {
+            const auraSize = currentRadius * (4 - i * 0.8);
+            const auraColor = [...powerup.glowColor];
+            auraColor[3] = (0.3 - i * 0.08) * bigPulse;
+            this.renderer.drawCircle(powerup.x, powerup.y, auraSize, auraColor);
+        }
 
-        // Body
+        // Anello rotante colorato
+        const ringCount = 12;
+        for (let i = 0; i < ringCount; i++) {
+            const angle = (powerup.rotationAngle || 0) * 2 + (i * Math.PI * 2 / ringCount);
+            const ringRadius = currentRadius * 2.2;
+            const rx = powerup.x + Math.cos(angle) * ringRadius;
+            const ry = powerup.y + Math.sin(angle) * ringRadius;
+            const ringColor = [...powerup.color];
+            ringColor[3] = 0.8 * bigPulse;
+            this.renderer.drawCircle(rx, ry, 6, ringColor);
+        }
+
+        // Corpo principale
         this.renderer.drawCircle(powerup.x, powerup.y, currentRadius, powerup.color);
+
+        // Inner glow brillante
         this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.7, [1.0, 1.0, 1.0, 0.9]);
-        this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.5, [...powerup.color, 1.0]);
+
+        // Centro con colore del powerup
+        const centerColor = [...powerup.color];
+        centerColor[3] = 1.0;
+        this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.5, centerColor);
+
+        // Particelle orbitanti
+        const particleCount = 8;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (-(powerup.rotationAngle || 0) * 1.5 + (i * Math.PI * 2 / particleCount));
+            const distance = currentRadius * 1.8;
+            const px = powerup.x + Math.cos(angle) * distance;
+            const py = powerup.y + Math.sin(angle) * distance;
+
+            // Alone particella
+            const particleGlow = [...powerup.color];
+            particleGlow[3] = 0.5;
+            this.renderer.drawCircle(px, py, 8, particleGlow);
+
+            // Particella
+            const particleColor = [...powerup.color];
+            particleColor[3] = 0.9;
+            this.renderer.drawCircle(px, py, 5, particleColor);
+        }
+
+        // Stella pulsante al centro
+        const starPoints = 8;
+        for (let i = 0; i < starPoints; i++) {
+            const angle = (powerup.rotationAngle || 0) * 3 + (i * Math.PI * 2 / starPoints);
+            const rayLength = currentRadius * 0.4 * bigPulse;
+            const sx = powerup.x + Math.cos(angle) * rayLength;
+            const sy = powerup.y + Math.sin(angle) * rayLength;
+
+            const starColor = [1.0, 1.0, 1.0, 0.8 * bigPulse];
+            this.renderer.drawCircle(sx, sy, 3, starColor);
+        }
     }
 
     renderMagnetBonus(bonus, time) {

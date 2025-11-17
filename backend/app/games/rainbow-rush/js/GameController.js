@@ -52,6 +52,10 @@ export class GameController {
         this.collisionDetector = null; // Initialized after creating player
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
+        
+        // Performance optimization - cleanup timer
+        this.cleanupTimer = 0;
+        this.cleanupInterval = 1.0; // Cleanup ogni 1 secondo (ridotto da 2)
 
         // Time scale for slow motion effects
         this.timeScale = 1.0;
@@ -413,6 +417,13 @@ export class GameController {
         // Spawn new entities via SpawnManager
         this.spawnManager.update(deltaTime, this.scoreSystem);
 
+        // Periodic cleanup of offscreen entities (every 1 second)
+        this.cleanupTimer += deltaTime;
+        if (this.cleanupTimer >= this.cleanupInterval) {
+            this.cleanupOffscreenEntities();
+            this.cleanupTimer = 0;
+        }
+
         // Update score based on distance
         const platforms = this.entityManager.getEntities('platforms');
         this.scoreSystem.addDistance(Math.abs(platforms[0]?.velocity || 0) * deltaTime);
@@ -485,6 +496,60 @@ export class GameController {
         this.engine.entities = entities;
     }
 
+    /**
+     * Cleanup entities that are far offscreen to prevent memory leaks
+     */
+    cleanupOffscreenEntities() {
+        const leftBound = -100; // Più aggressivo: 100px invece di 200px
+        
+        // Filter out offscreen platforms
+        this.entityManager.platforms = this.entityManager.platforms.filter(p => 
+            p.x + p.width > leftBound
+        );
+        
+        // Filter out offscreen obstacles
+        this.entityManager.obstacles = this.entityManager.obstacles.filter(o => 
+            o.x + o.width > leftBound
+        );
+        
+        // Filter out offscreen collectibles
+        this.entityManager.collectibles = this.entityManager.collectibles.filter(c => 
+            c.x + (c.radius || c.width) > leftBound
+        );
+        
+        // Filter out offscreen powerups
+        this.entityManager.powerups = this.entityManager.powerups.filter(p => 
+            p.x + (p.radius || p.width) > leftBound
+        );
+        
+        // Filter out offscreen hearts
+        this.entityManager.hearts = this.entityManager.hearts.filter(h => 
+            h.x + h.radius > leftBound
+        );
+        
+        // Filter out offscreen boosts
+        this.entityManager.boosts = this.entityManager.boosts.filter(b => 
+            b.x + b.radius > leftBound
+        );
+        
+        // Filter out offscreen bonuses
+        this.entityManager.magnetBonuses = this.entityManager.magnetBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
+        this.entityManager.timeBonuses = this.entityManager.timeBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
+        this.entityManager.shieldBonuses = this.entityManager.shieldBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
+        this.entityManager.multiplierBonuses = this.entityManager.multiplierBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
+        this.entityManager.rainbowBonuses = this.entityManager.rainbowBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
+    }
+
     showMenu() {
         const event = new CustomEvent('showMenu', {
             detail: { highScore: this.scoreSystem.getHighScore() }
@@ -538,6 +603,7 @@ export class GameController {
         this.levelUpAnimation = null;
         this.deathAnimation = null;
         this.isShowingDeathAnimation = false;
+        this.cleanupTimer = 0; // Reset cleanup timer
 
         // Reset player
         const dims = this.engine.getCanvasDimensions();
@@ -634,13 +700,9 @@ export class GameController {
             this.turboButtonUI.resize(dims.width, dims.height);
         }
         if (this.flightButtonUI) {
-            this.flightButtonUI.resize(dims.width, dims.height);
+            this.flightButtonUI.resize(dims.width, dims.height);s
         }
     }
-
-    // ============================================
-    // DISPOSE METHODS - Gestione efficiente memoria
-    // ============================================
 
     disposePlatform(platform) {
         // Pulisce riferimenti per garbage collection efficiente

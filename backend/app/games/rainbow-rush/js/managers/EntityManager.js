@@ -20,6 +20,13 @@ export class EntityManager {
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
+        
+        // Performance limits - Aggressive optimization
+        this.MAX_POWERUP_PARTICLES = 80; // Ridotto da 150
+        this.MAX_BOOST_PARTICLES = 50;   // Ridotto da 100
+        this.MAX_FLOATING_TEXTS = 10;    // Ridotto da 20
+        this.MAX_RAINBOW_PARTICLES = 10; // Nuovo limite per rainbow trails
+        this.MAX_BOOST_TRAIL = 6;        // Nuovo limite per boost trails
     }
 
     /**
@@ -31,6 +38,16 @@ export class EntityManager {
             console.warn(`Unknown entity type: ${type}`);
             return;
         }
+        
+        // Limit particle count for performance
+        if (type === 'powerupParticles' && collection.length >= this.MAX_POWERUP_PARTICLES) {
+            collection.shift(); // Remove oldest particle
+        } else if (type === 'boostParticles' && collection.length >= this.MAX_BOOST_PARTICLES) {
+            collection.shift(); // Remove oldest particle
+        } else if (type === 'floatingTexts' && collection.length >= this.MAX_FLOATING_TEXTS) {
+            collection.shift(); // Remove oldest text
+        }
+        
         collection.push(entity);
     }
 
@@ -74,6 +91,10 @@ export class EntityManager {
      * Update all entities based on their type
      */
     updateAll(deltaTime, cameraSpeed, player) {
+        // Aggressive particle cleanup - remove nearly dead particles
+        this.powerupParticles = this.powerupParticles.filter(p => p.life > 0.05);
+        this.boostParticles = this.boostParticles.filter(p => p.life > 0.05);
+        
         // Update platforms with special logic for crumbling, spring, icy types
         this.platforms = this.platforms.filter(platform => 
             this.updatePlatform(platform, deltaTime, cameraSpeed)
@@ -241,23 +262,30 @@ export class EntityManager {
         boost.pulsePhase += deltaTime * 4;
         boost.rotationAngle += deltaTime * 3;
 
-        // Trail particles for boost
-        if (Math.random() < 0.3) {
+        // Initialize trail particles if needed
+        if (!boost.trailParticles) {
+            boost.trailParticles = [];
+        }
+
+        // Trail particles for boost - ultra ridotto al 10% con max 6 particelle
+        if (Math.random() < 0.1 && boost.trailParticles.length < this.MAX_BOOST_TRAIL) {
             boost.trailParticles.push({
                 x: boost.x,
                 y: boost.y,
-                life: 0.5,
-                maxLife: 0.5,
-                size: 4 + Math.random() * 3,
+                life: 0.3, // Vita ancora più breve
+                maxLife: 0.3,
+                size: 3 + Math.random() * 2,
                 color: [...boost.color]
             });
         }
 
         // Update trail particles
-        boost.trailParticles = boost.trailParticles.filter(p => {
-            p.life -= deltaTime;
-            return p.life > 0;
-        });
+        if (boost.trailParticles.length > 0) {
+            boost.trailParticles = boost.trailParticles.filter(p => {
+                p.life -= deltaTime;
+                return p.life > 0;
+            });
+        }
 
         return boost.x + boost.radius > -50;
     }
@@ -316,24 +344,31 @@ export class EntityManager {
         bonus.pulsePhase += deltaTime * 5;
         bonus.rotation += deltaTime * 3;
 
-        // Rainbow trail
-        if (Math.random() < 0.5) {
+        // Initialize particles array if needed
+        if (!bonus.particles) {
+            bonus.particles = [];
+        }
+
+        // Rainbow trail - ultra ridotto al 20% con max 10 particelle
+        if (Math.random() < 0.2 && bonus.particles.length < this.MAX_RAINBOW_PARTICLES) {
             const hue = (bonus.rainbowPhase * 100) % 360;
             const rgb = this.hslToRgb(hue / 360, 1.0, 0.5);
             bonus.particles.push({
                 x: bonus.x,
                 y: bonus.y,
-                life: 0.8,
-                size: 6,
+                life: 0.35, // Vita ancora più breve
+                size: 5,
                 color: [...rgb, 1.0]
             });
         }
 
-        // Update particles
-        bonus.particles = bonus.particles.filter(p => {
-            p.life -= deltaTime;
-            return p.life > 0;
-        });
+        // Update particles - pulisci più aggressivamente
+        if (bonus.particles.length > 0) {
+            bonus.particles = bonus.particles.filter(p => {
+                p.life -= deltaTime;
+                return p.life > 0;
+            });
+        }
 
         return bonus.x + bonus.radius > -50;
     }

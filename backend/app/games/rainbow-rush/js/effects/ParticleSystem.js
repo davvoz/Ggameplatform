@@ -9,21 +9,21 @@ export class ParticleSystem {
     }
 
     /**
-     * Create boost particles explosion - Simple and elegant
+     * Create boost particles explosion - Ultra minimal
      */
     createBoostExplosion(x, y, entityManager) {
-        // 15 particelle cyan piccole e semplici
-        for (let i = 0; i < 15; i++) {
-            const angle = (Math.PI * 2 * i) / 15;
-            const speed = 100 + Math.random() * 60;
+        // 6 particelle cyan minime (ridotto da 10)
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+            const speed = 80 + Math.random() * 40;
             
             const particle = {
                 x, y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 0.5 + Math.random() * 0.2,
-                maxLife: 0.7,
-                size: 2 + Math.random() * 1,
+                life: 0.3 + Math.random() * 0.1,
+                maxLife: 0.4,
+                size: 2,
                 color: [0.0, 0.85, 1.0, 1.0],
                 type: 'boostParticle',
                 glow: true
@@ -37,7 +37,7 @@ export class ParticleSystem {
      * Create powerup particles explosion
      */
     createPowerupExplosion(x, y, powerupType, entityManager) {
-        const particleCount = 60;
+        const particleCount = 25; // Ridotto drasticamente da 40
         
         // Get powerup-specific colors
         let particleColors = [];
@@ -88,8 +88,8 @@ export class ParticleSystem {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - 60,
                 gravity: 200,
-                life: 1.0 + Math.random() * 0.5,
-                maxLife: 1.5,
+                life: 0.6 + Math.random() * 0.2, // Vita breve
+                maxLife: 0.8,
                 size: size,
                 color: particleColors[Math.floor(Math.random() * particleColors.length)],
                 rotation: Math.random() * Math.PI * 2,
@@ -102,24 +102,23 @@ export class ParticleSystem {
             entityManager.addEntity('powerupParticles', particle);
         }
         
-        // Add explosion ring and sparkles
-        this.createExplosionRing(x, y, ringColor, 100, entityManager);
-        this.createSparkles(x, y, ringColor, 20, entityManager);
+        // Solo sparkles, no explosion ring per performance
+        this.createSparkles(x, y, ringColor, 8, entityManager); // Ridotto da 15 a 8
     }
 
     /**
      * Create explosion ring effect
      */
     createExplosionRing(x, y, color, maxRadius, entityManager) {
-        for (let i = 0; i < 40; i++) {
-            const angle = (Math.PI * 2 * i) / 40;
+        for (let i = 0; i < 15; i++) { // Ridotto da 25
+            const angle = (Math.PI * 2 * i) / 15;
             const particle = {
                 x, y,
-                vx: Math.cos(angle) * 300,
-                vy: Math.sin(angle) * 300,
-                life: 0.3,
-                maxLife: 0.3,
-                size: 3,
+                vx: Math.cos(angle) * 250,
+                vy: Math.sin(angle) * 250,
+                life: 0.2, // Vita più breve
+                maxLife: 0.2,
+                size: 2,
                 color: [...color],
                 type: 'ringParticle',
                 glow: true
@@ -155,18 +154,18 @@ export class ParticleSystem {
      * Create bonus explosion (magnet, shield, etc.)
      */
     createBonusExplosion(x, y, color, count, entityManager) {
-        count = count || 80;
+        count = count || 30; // Ridotto drasticamente da 50
         
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count;
-            const speed = 200 + Math.random() * 200;
+            const speed = 150 + Math.random() * 150;
             const particle = {
                 x, y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 0.8 + Math.random() * 0.4,
-                maxLife: 1.2,
-                size: 5 + Math.random() * 4,
+                life: 0.5 + Math.random() * 0.2, // Vita breve
+                maxLife: 0.7,
+                size: 4 + Math.random() * 3,
                 color: [...color],
                 type: 'bonusParticle',
                 glow: true
@@ -174,15 +173,11 @@ export class ParticleSystem {
             entityManager.addEntity('boostParticles', particle);
         }
         
-        // Multiple explosion rings
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
-                this.createExplosionRing(x, y, color, 80 + i * 20, entityManager);
-            }, i * 100);
-        }
+        // Solo 1 explosion ring invece di 2
+        this.createExplosionRing(x, y, color, 80, entityManager);
         
-        // Super sparkles
-        this.createSparkles(x, y, color, 30, entityManager);
+        // Ridotte le sparkles da 20 a 12
+        this.createSparkles(x, y, color, 12, entityManager);
     }
 
     /**
@@ -190,21 +185,21 @@ export class ParticleSystem {
      */
     createDeathParticles(x, y, playerWidth, playerHeight) {
         const particles = [];
-        const particleCount = 40;
+        const particleCount = 20; // Ridotto drasticamente da 30
         
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
-            const speed = 100 + Math.random() * 150;
+            const speed = 80 + Math.random() * 120;
             
             particles.push({
                 x: x + playerWidth / 2,
                 y: y + playerHeight / 2,
                 vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 50,
-                life: 1.5,
-                maxLife: 1.5,
+                vy: Math.sin(angle) * speed - 40,
+                life: 0.9, // Vita breve
+                maxLife: 0.9,
                 alpha: 1.0,
-                size: 3 + Math.random() * 4,
+                size: 3 + Math.random() * 3,
                 color: [1.0, 0.3, 0.3, 1.0]
             });
         }

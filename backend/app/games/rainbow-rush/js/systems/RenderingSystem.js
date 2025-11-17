@@ -158,8 +158,19 @@ export class RenderingSystem {
         const particles = [];
         let player = null;
         
+        // Viewport culling bounds
+        const leftBound = -100;
+        const rightBound = this.canvasWidth + 100;
+        
         entities.forEach(entity => {
             if (!entity || !entity.type) return;
+            
+            // Skip offscreen entities for performance (except player)
+            const x = entity.x || 0;
+            const width = entity.width || entity.radius * 2 || 0;
+            if (entity.type !== 'player' && (x + width < leftBound || x > rightBound)) {
+                return;
+            }
             
             // Categorize by type
             if (entity.type === 'player') {
@@ -177,18 +188,14 @@ export class RenderingSystem {
         
         // Render in correct order: platforms first, then collectibles, then particles
         platforms.forEach(entity => {
-            if (this._isVisible(entity, context)) {
-                this.factory.render(entity, context);
-            }
+            this.factory.render(entity, context);
         });
         
         collectiblesAndPowerups.forEach(entity => {
-            if (this._isVisible(entity, context)) {
-                this.factory.render(entity, context);
-            }
+            this.factory.render(entity, context);
         });
         
-        // Render particles
+        // Render particles with batching optimization
         particles.forEach(p => {
             if (p.type === 'powerup-particle') {
                 this.particleRenderer.renderPowerupParticle(p);

@@ -214,9 +214,12 @@ export class EntityManager {
      * Update powerup entity
      */
     updatePowerup(powerup, deltaTime, cameraSpeed) {
-        powerup.update(deltaTime);
+        // Update powerup properties directly (no class method)
+        powerup.x += powerup.velocity * deltaTime;
         powerup.x += -cameraSpeed * deltaTime;
-        return powerup.x + powerup.radius > -50 && !powerup.collected;
+        powerup.particleTimer = (powerup.particleTimer || 0) + deltaTime;
+        powerup.rotationAngle = (powerup.rotationAngle || 0) + deltaTime * 2;
+        return powerup.x + (powerup.radius || powerup.width / 2) > -50 && !powerup.collected;
     }
 
     /**

@@ -177,18 +177,44 @@ export class SpawnManager {
         if (validPlatforms.length > 0) {
             const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
             
-            // Import Powerup class dynamically
-            import('../entities/Powerup.js').then(({ Powerup }) => {
-                const powerup = new Powerup(
-                    platform.x + platform.width / 2,
-                    platform.y - 80,
-                    randomType
-                );
-                powerup.entityType = 'powerup';
-                powerup.powerupType = randomType;
-                powerup.velocity = platform.velocity;
-                this.entityManager.addEntity('powerups', powerup);
-            });
+            // Get colors based on powerup type
+            let color, glowColor;
+            switch (randomType) {
+                case 'immortality':
+                    color = [1.0, 0.84, 0.0, 1.0]; // Gold
+                    glowColor = [1.0, 0.95, 0.6, 0.8];
+                    break;
+                case 'flight':
+                    color = [0.4, 0.7, 1.0, 1.0]; // Light blue
+                    glowColor = [0.6, 0.85, 1.0, 0.8];
+                    break;
+                case 'superJump':
+                    color = [1.0, 0.3, 0.5, 1.0]; // Pink
+                    glowColor = [1.0, 0.5, 0.7, 0.8];
+                    break;
+                default:
+                    color = [1.0, 1.0, 1.0, 1.0];
+                    glowColor = [1.0, 1.0, 1.0, 0.8];
+            }
+            
+            // Create powerup object directly (Powerup class is in PowerupSystem.js)
+            const powerup = {
+                x: platform.x + platform.width / 2,
+                y: platform.y - 80,
+                width: 40,
+                height: 40,
+                entityType: 'powerup',
+                powerupType: randomType,
+                velocity: platform.velocity,
+                pulsePhase: 0,
+                rotation: 0,
+                rotationAngle: 0,
+                particleTimer: 0,
+                color: color,
+                glowColor: glowColor
+            };
+            
+            this.entityManager.addEntity('powerups', powerup);
         }
     }
 

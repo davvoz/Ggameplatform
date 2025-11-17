@@ -7,7 +7,7 @@
 const SAFETY_CONFIG = {
     // Charge system
     MAX_CHARGES: 4,
-    RECHARGE_WINDOW: 15, // seconds - window for charge tracking
+    RECHARGE_WINDOW: 5, // seconds - window for charge tracking
     
     // Timing
     TIME_BEFORE_DISSOLVE: 3.0, // seconds on platform before dissolve starts
@@ -31,7 +31,8 @@ export class SafetyPlatformSystem {
         
         // Charge tracking
         this.charges = this.config.MAX_CHARGES;
-        this.useTimes = []; // Timestamps of when charges were used
+        this.lastUseTime = null; // Timestamp dell'ULTIMO uso
+        this.cooldownActive = false;
         
         // State machine
         this.state = 'IDLE'; // IDLE | ACTIVE | DISSOLVING
@@ -91,26 +92,21 @@ export class SafetyPlatformSystem {
     }
 
     /**
-     * Auto-recharge: Each charge recharges independently 15 seconds after being used
+     * Auto-recharge: TUTTI i pallini si ricaricano insieme dopo 15 secondi dall'ULTIMO uso
      */
     updateChargeRecharge() {
+        if (!this.cooldownActive) return;
+        
         const currentTime = Date.now() / 1000;
-        const initialLength = this.useTimes.length;
+        const timeSinceLastUse = currentTime - this.lastUseTime;
         
-        // Remove charges that have recharged (15 seconds since use)
-        this.useTimes = this.useTimes.filter(useTime => {
-            const timeSinceUse = currentTime - useTime;
-            return timeSinceUse < this.config.RECHARGE_WINDOW;
-        });
-        
-        // Log recharge events
-        if (this.useTimes.length < initialLength) {
-            const rechargedCount = initialLength - this.useTimes.length;
-            console.log(`🔋 Recharged ${rechargedCount} charge(s)! Now at ${this.config.MAX_CHARGES - this.useTimes.length}/${this.config.MAX_CHARGES}`);
+        // Dopo 15 secondi dall'ultimo uso, ricarica TUTTI i pallini
+        if (timeSinceLastUse >= this.config.RECHARGE_WINDOW) {
+            console.log(`🔋 COOLDOWN FINITO! Ricaricati TUTTI i pallini: 4/4`);
+            this.charges = this.config.MAX_CHARGES;
+            this.cooldownActive = false;
+            this.lastUseTime = null;
         }
-        
-        // Update available charges
-        this.charges = this.config.MAX_CHARGES - this.useTimes.length;
     }
 
     /**
@@ -186,11 +182,13 @@ export class SafetyPlatformSystem {
         console.log('🟢 Player landed on safety! Consuming 1 charge. Charges before:', this.charges);
         
         // Consume one charge
-        const currentTime = Date.now() / 1000;
-        this.useTimes.push(currentTime);
-        this.charges = this.config.MAX_CHARGES - this.useTimes.length;
+        this.charges--;
         
-        console.log('   Charges after:', this.charges, 'useTimes:', this.useTimes.length);
+        // Aggiorna il timestamp dell'ultimo uso
+        this.lastUseTime = Date.now() / 1000;
+        this.cooldownActive = true;
+        
+        console.log('   Charges after:', this.charges, '/', this.config.MAX_CHARGES);
         
         // Transition to active state
         this.state = 'ACTIVE';
@@ -298,6 +296,10 @@ export class SafetyPlatformSystem {
     get dissolveDuration() { return this.config.TIME_BEFORE_DISSOLVE; }
     get maxCharges() { return this.config.MAX_CHARGES; }
     get useWindow() { return this.config.RECHARGE_WINDOW; }
+    get useTimes() { 
+        // Per compatibilità rendering: ritorna array vuoto o con lastUseTime
+        return this.lastUseTime ? [this.lastUseTime] : [];
+    }
 
     updateDimensions(width, height) {
         this.dims = { width, height };
@@ -309,7 +311,8 @@ export class SafetyPlatformSystem {
 
     reset() {
         this.charges = this.config.MAX_CHARGES;
-        this.useTimes = [];
+        this.lastUseTime = null;
+        this.cooldownActive = false;
         this.state = 'IDLE';
         this.dissolveProgress = 0;
         this.playerOnPlatform = false;

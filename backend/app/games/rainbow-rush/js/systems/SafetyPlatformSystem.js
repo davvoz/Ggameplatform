@@ -91,14 +91,23 @@ export class SafetyPlatformSystem {
     }
 
     /**
-     * Auto-recharge: Remove expired charge uses from tracking
+     * Auto-recharge: Each charge recharges independently 15 seconds after being used
      */
     updateChargeRecharge() {
         const currentTime = Date.now() / 1000;
-        const windowStart = currentTime - this.config.RECHARGE_WINDOW;
+        const initialLength = this.useTimes.length;
         
-        // Remove charges older than recharge window
-        this.useTimes = this.useTimes.filter(useTime => useTime > windowStart);
+        // Remove charges that have recharged (15 seconds since use)
+        this.useTimes = this.useTimes.filter(useTime => {
+            const timeSinceUse = currentTime - useTime;
+            return timeSinceUse < this.config.RECHARGE_WINDOW;
+        });
+        
+        // Log recharge events
+        if (this.useTimes.length < initialLength) {
+            const rechargedCount = initialLength - this.useTimes.length;
+            console.log(`🔋 Recharged ${rechargedCount} charge(s)! Now at ${this.config.MAX_CHARGES - this.useTimes.length}/${this.config.MAX_CHARGES}`);
+        }
         
         // Update available charges
         this.charges = this.config.MAX_CHARGES - this.useTimes.length;
@@ -218,7 +227,7 @@ export class SafetyPlatformSystem {
      * Complete dissolution and reset
      */
     completeDissolution() {
-        console.log('💥 Dissolve complete! Resetting to IDLE');
+        console.log('💥 Dissolve complete! Player falls. Resetting to IDLE');
         this.state = 'IDLE';
         this.dissolveProgress = 0;
         this.timeOnPlatform = 0;
@@ -281,7 +290,8 @@ export class SafetyPlatformSystem {
     getPlatform() { return this.platform; }
     getCharges() { return this.charges; }
     getDissolveProgress() { return this.state === 'DISSOLVING' ? this.dissolveProgress : 0; }
-    isActive() { return this.charges > 0 || this.state === 'DISSOLVING'; }
+    // Platform is ONLY active if in IDLE or ACTIVE state (NOT when dissolving)
+    isActive() { return (this.state === 'IDLE' || this.state === 'ACTIVE') && this.charges > 0; }
     
     // Getters for UI/rendering compatibility
     get playerOnPlatformTimer() { return this.timeOnPlatform; }

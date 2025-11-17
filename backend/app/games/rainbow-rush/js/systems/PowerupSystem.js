@@ -72,7 +72,8 @@ export class PowerupSystem {
                 duration: 0,
                 maxDuration: 0,
                 cooldown: 0,
-                maxCooldown: 0
+                maxCooldown: 0,
+                everActivated: false // Track if this powerup was ever used
             });
         });
     }
@@ -89,7 +90,8 @@ export class PowerupSystem {
                 duration: 0,
                 maxDuration: 0,
                 cooldown: 0,
-                maxCooldown: 0
+                maxCooldown: 0,
+                everActivated: false
             });
         } else if (timer.cooldown > 0) {
             return false; // Still on cooldown
@@ -101,7 +103,8 @@ export class PowerupSystem {
             duration: duration,
             maxDuration: duration,
             cooldown: 0,
-            maxCooldown: cooldown
+            maxCooldown: cooldown,
+            everActivated: true // Mark as used
         });
         
         this.activePowerups.set(type, {
@@ -126,6 +129,7 @@ export class PowerupSystem {
                     timer.active = false;
                     timer.duration = 0;
                     timer.cooldown = timer.maxCooldown;
+                    // Keep everActivated as true
                     this.activePowerups.delete(type);
                     this.notifyDeactivation(type);
                 }
@@ -165,7 +169,8 @@ export class PowerupSystem {
                 duration: 0,
                 maxDuration: 0,
                 cooldown: 0,
-                maxCooldown: 0
+                maxCooldown: 0,
+                everActivated: false
             });
         });
     }

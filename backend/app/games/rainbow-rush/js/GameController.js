@@ -531,7 +531,7 @@ export class GameController {
         this.audioManager.playSound('death');
 
         // Game over after animation
-        setTimeout(() => this.gameOver(), 2500);
+        setTimeout(() => this.gameOver(), 4000);
     }
 
     async gameOver() {

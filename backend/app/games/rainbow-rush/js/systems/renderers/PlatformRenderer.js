@@ -114,9 +114,9 @@ export class PlatformRenderer extends IEntityRenderer {
     }
 
     renderSlowEffect(x, y, width, height, time) {
-        // Ice crystals
+        // Ice crystals - centered on the platform
         for (let i = 0; i < 4; i++) {
-            const crystalX = x + (width / 8) * i;
+            const crystalX = x + width * 0.2 + (width * 0.6 / 3) * i; // Distributed across 60% of width, centered
             const crystalY = y + height / 2;
             const crystalSize = 3 + Math.abs(Math.sin(time * 3 + i * 0.5)) * 3;
             
@@ -129,9 +129,9 @@ export class PlatformRenderer extends IEntityRenderer {
             this.renderer.drawCircle(crystalX, crystalY, crystalSize * 0.5, [1.0, 1.0, 1.0, 0.9]);
         }
         
-        // Snow particles
+        // Snow particles - centered
         for (let i = 0; i < 6; i++) {
-            const snowX = x + (width / 12) * i + Math.sin(time * 2 + i) * 8;
+            const snowX = x + width * 0.15 + (width * 0.7 / 5) * i + Math.sin(time * 2 + i) * 8; // Distributed across 70% of width
             const snowY = y - ((time * 30 + i * 10) % 30);
             const snowSize = 1 + Math.sin(time * 5 + i) * 0.5;
             this.renderer.drawCircle(snowX, snowY, snowSize, [0.9, 0.95, 1.0, 0.7]);

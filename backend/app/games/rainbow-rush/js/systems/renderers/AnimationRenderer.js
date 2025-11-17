@@ -207,26 +207,56 @@ export class AnimationRenderer {
             this.textCtx.restore();
         }
         
-        // "YOU DIED" text
+        // "YOU DIED" text - rimane visibile fino alla fine
         if (death.timer > 0.5 && this.textCtx) {
-            const textAlpha = Math.min(1.0, (death.timer - 0.5) / 0.8);
-            // Font size proporzionale al canvas (10% dell'altezza)
-            const fontSize = Math.max(40, Math.min(this.canvasHeight * 0.1, 120));
-            const shadowBlur = fontSize / 4;
-            const strokeWidth = fontSize / 26;
+            // Alpha rimane sempre a 1.0 dopo il fade-in iniziale
+            const fadeInTime = 0.8;
+            const textAlpha = death.timer < (0.5 + fadeInTime) 
+                ? Math.min(1.0, (death.timer - 0.5) / fadeInTime)
+                : 1.0; // Rimane sempre a 1.0 dopo il fade-in
+            
+            // Font size proporzionale al canvas (12% dell'altezza per più impatto)
+            const fontSize = Math.max(50, Math.min(this.canvasHeight * 0.12, 140));
+            const shadowBlur = fontSize / 3;
+            const strokeWidth = fontSize / 22;
+            
+            // Effetto oscillazione
+            const bounce = Math.sin(death.timer * 8) * 5;
+            const scale = 1.0 + Math.sin(death.timer * 6) * 0.05;
             
             this.textCtx.save();
             this.textCtx.globalAlpha = textAlpha;
-            this.textCtx.shadowColor = '#000';
-            this.textCtx.shadowBlur = shadowBlur;
-            this.textCtx.font = `bold ${fontSize}px Arial`;
+            this.textCtx.translate(this.canvasWidth / 2, this.canvasHeight / 2 + bounce);
+            this.textCtx.scale(scale, scale);
+            
+            // Ombra multipla per effetto più drammatico
+            this.textCtx.shadowColor = '#8B0000';
+            this.textCtx.shadowBlur = shadowBlur * 2;
+            this.textCtx.shadowOffsetX = 4;
+            this.textCtx.shadowOffsetY = 4;
+            
+            this.textCtx.font = `bold ${fontSize}px Impact, Arial`;
             this.textCtx.textAlign = 'center';
             this.textCtx.textBaseline = 'middle';
-            this.textCtx.fillStyle = '#8B0000';
-            this.textCtx.fillText('YOU DIED', this.canvasWidth / 2, this.canvasHeight / 2);
+            
+            // Gradiente rosso sangue
+            const gradient = this.textCtx.createLinearGradient(0, -fontSize/2, 0, fontSize/2);
+            gradient.addColorStop(0, '#FF0000');
+            gradient.addColorStop(0.5, '#8B0000');
+            gradient.addColorStop(1, '#4B0000');
+            this.textCtx.fillStyle = gradient;
+            this.textCtx.fillText('YOU DIED', 0, 0);
+            
+            // Bordo nero spesso
             this.textCtx.strokeStyle = '#000';
             this.textCtx.lineWidth = strokeWidth;
-            this.textCtx.strokeText('YOU DIED', this.canvasWidth / 2, this.canvasHeight / 2);
+            this.textCtx.strokeText('YOU DIED', 0, 0);
+            
+            // Bordo interno bianco per contrasto
+            this.textCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            this.textCtx.lineWidth = strokeWidth / 2;
+            this.textCtx.strokeText('YOU DIED', 0, 0);
+            
             this.textCtx.restore();
         }
     }

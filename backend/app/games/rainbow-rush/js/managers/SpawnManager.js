@@ -177,27 +177,35 @@ export class SpawnManager {
         if (validPlatforms.length > 0) {
             const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
             
-            // Get colors based on powerup type
-            let color, glowColor;
+            // Get colors, duration, and cooldown based on powerup type
+            let color, glowColor, duration, cooldown;
             switch (randomType) {
                 case 'immortality':
                     color = [1.0, 0.84, 0.0, 1.0]; // Gold
                     glowColor = [1.0, 0.95, 0.6, 0.8];
+                    duration = 5000; // 5 seconds
+                    cooldown = 15000; // 15 seconds
                     break;
                 case 'flight':
                     color = [0.4, 0.7, 1.0, 1.0]; // Light blue
                     glowColor = [0.6, 0.85, 1.0, 0.8];
+                    duration = 4000; // 4 seconds
+                    cooldown = 20000; // 20 seconds
                     break;
                 case 'superJump':
                     color = [1.0, 0.3, 0.5, 1.0]; // Pink
                     glowColor = [1.0, 0.5, 0.7, 0.8];
+                    duration = 6000; // 6 seconds
+                    cooldown = 12000; // 12 seconds
                     break;
                 default:
                     color = [1.0, 1.0, 1.0, 1.0];
                     glowColor = [1.0, 1.0, 1.0, 0.8];
+                    duration = 5000;
+                    cooldown = 15000;
             }
             
-            // Create powerup object directly (Powerup class is in PowerupSystem.js)
+            // Create powerup object with duration and cooldown
             const powerup = {
                 x: platform.x + platform.width / 2,
                 y: platform.y - 80,
@@ -212,7 +220,9 @@ export class SpawnManager {
                 rotationAngle: 0,
                 particleTimer: 0,
                 color: color,
-                glowColor: glowColor
+                glowColor: glowColor,
+                duration: duration,
+                cooldown: cooldown
             };
             
             this.entityManager.addEntity('powerups', powerup);

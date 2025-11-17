@@ -101,9 +101,8 @@ export class AnimationController {
         
         this.deathAnimation.particles = this.deathAnimation.particles.filter(p => p.life > 0);
         
-        if (this.deathAnimation.timer >= this.deathAnimation.duration) {
-            this.deathAnimation = null;
-        }
+        // NON eliminare l'animazione - lasciala attiva per il rendering
+        // Verrà pulita dal reset() quando il gioco ricomincia
     }
 
     /**
@@ -250,7 +249,7 @@ export class AnimationController {
             playerWidth: playerWidth,
             playerHeight: playerHeight,
             timer: 0,
-            duration: 2.5,
+            duration: 4.0,
             fadeAlpha: 0,
             playerAlpha: 1.0,
             rotation: 0,

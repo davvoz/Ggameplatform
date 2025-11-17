@@ -34,6 +34,63 @@ export class AnimationController {
         this.updateDeathAnimation(deltaTime);
         this.updateScreenFlash(deltaTime);
     }
+    
+    /**
+     * Update floating texts con animazioni EPICHE
+     */
+    updateFloatingTexts(floatingTexts, deltaTime) {
+        if (floatingTexts.length > 0) {
+            console.log('🔄 Updating', floatingTexts.length, 'floating texts');
+        }
+        
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            const text = floatingTexts[i];
+            
+            text.life -= deltaTime;
+            
+            // Animazione di scala: ESPLODE all'inizio, poi si stabilizza
+            const lifeProgress = 1 - (text.life / text.maxLife);
+            if (lifeProgress < 0.15) {
+                // ESPLOSIONE iniziale (0.1 -> 1.3)
+                text.scale = 0.1 + (lifeProgress / 0.15) * 1.2;
+            } else if (lifeProgress < 0.3) {
+                // Rimbalzo (1.3 -> 1.0)
+                const bounceProgress = (lifeProgress - 0.15) / 0.15;
+                text.scale = 1.3 - (bounceProgress * 0.3);
+            } else {
+                // Stabile con leggero pulse
+                text.scale = 1.0 + Math.sin(text.pulsePhase) * 0.08;
+            }
+            
+            // Movimento verso l'alto CON DECELERAZIONE
+            const speedMultiplier = Math.max(0.3, 1.0 - lifeProgress); // Rallenta gradualmente
+            text.y += text.velocityY * deltaTime * speedMultiplier;
+            
+            // Leggera oscillazione laterale per effetto fluido
+            text.x += Math.sin(text.pulsePhase * 2) * 15 * deltaTime;
+            
+            // Rotazione leggera
+            text.rotation += deltaTime * 0.5;
+            
+            // Pulse phase per effetti pulsanti
+            text.pulsePhase += deltaTime * 4;
+            
+            // Fade out negli ultimi istanti
+            if (text.life < 0.5) {
+                text.alpha = text.life / 0.5;
+                text.glowIntensity = text.alpha;
+            } else {
+                text.alpha = 1.0;
+                // Glow pulsante
+                text.glowIntensity = 0.7 + Math.sin(text.pulsePhase * 3) * 0.3;
+            }
+            
+            // Rimuovi se morto
+            if (text.life <= 0) {
+                floatingTexts.splice(i, 1);
+            }
+        }
+    }
 
     /**
      * Update level up animation
@@ -259,20 +316,28 @@ export class AnimationController {
     }
 
     /**
-     * Create floating text
+     * Create floating text STRABELLLO con effetti EPICI
      */
     createFloatingText(text, x, y, color, entityManager) {
+        console.log('🎯 CREATING FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
         const floatingText = {
             text: text,
             x: x,
             y: y,
-            life: 1.0,
-            maxLife: 1.0,
+            startY: y,
+            life: 2.5,        // Vita più lunga per godersi l'animazione
+            maxLife: 2.5,
             alpha: 1.0,
             color: color,
-            fontSize: 20
+            fontSize: 48,     // GRANDE E VISIBILE
+            velocityY: -80,   // Sale verso l'alto
+            scale: 0.1,       // Parte piccolo
+            rotation: 0,      // Rotazione per effetto wow
+            pulsePhase: 0,    // Per effetto pulsante
+            glowIntensity: 1.0 // Intensità del bagliore
         };
         entityManager.addEntity('floatingTexts', floatingText);
+        console.log('✅ Floating text added to entityManager. Total floatingTexts:', entityManager.floatingTexts.length);
     }
 
     /**

@@ -164,6 +164,35 @@ export class CollisionDetector {
                 const combo = this.scoreSystem.getCombo();
                 const multiplier = this.scoreSystem.getComboMultiplier();
                 this.animationController.showCombo(combo, multiplier, 0, 80); // x, y will be set in controller
+                
+                // FLOATING TEXT EPICO per COMBO AL CENTRO!
+                if (combo >= 5) {
+                    let comboText = '';
+                    let comboColor = [1.0, 1.0, 1.0, 1.0];
+                    
+                    if (combo >= 50) {
+                        comboText = `🌟 x${combo} DIVINO! 🌟`;
+                        comboColor = [1.0, 0.0, 1.0, 1.0]; // Magenta
+                    } else if (combo >= 30) {
+                        comboText = `🔥 x${combo} EPICO! 🔥`;
+                        comboColor = [1.0, 0.3, 0.0, 1.0]; // Arancione fuoco
+                    } else if (combo >= 20) {
+                        comboText = `💥 x${combo} BRUTALE! 💥`;
+                        comboColor = [1.0, 0.2, 0.2, 1.0]; // Rosso
+                    } else if (combo >= 15) {
+                        comboText = `⚡ x${combo} PAZZESCO! ⚡`;
+                        comboColor = [1.0, 1.0, 0.0, 1.0]; // Giallo
+                    } else if (combo >= 10) {
+                        comboText = `🌈 x${combo} SUPER! 🌈`;
+                        comboColor = [0.0, 1.0, 1.0, 1.0]; // Ciano
+                    } else if (combo >= 5) {
+                        comboText = `🚀 COMBO x${combo}! 🚀`;
+                        comboColor = [0.5, 1.0, 0.5, 1.0]; // Verde
+                    }
+                    
+                    // Centro schermo: 400x400 (canvas 800x800)
+                    this.animationController.createFloatingText(comboText, 400, 400, comboColor, entityManager);
+                }
             }
         }
     }

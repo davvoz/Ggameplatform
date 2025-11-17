@@ -18,6 +18,11 @@ body {
     justify-content: center;
 }
 
+#game-container {
+    position: relative;
+    display: block;
+}
+
 #gameCanvas {
     display: block;
     touch-action: none;
@@ -25,9 +30,20 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
+#textCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 10;
+    display: block;
+}
+
 /* Desktop: mobile-like aspect ratio */
 @media (min-width: 769px) {
-    #gameCanvas {
+    #game-container,
+    #gameCanvas,
+    #textCanvas {
         width: min(450px, 100vw);
         height: min(800px, 100vh);
     }
@@ -35,7 +51,9 @@ body {
 
 /* Mobile: full screen */
 @media (max-width: 768px) {
-    #gameCanvas {
+    #game-container,
+    #gameCanvas,
+    #textCanvas {
         width: 100vw;
         height: 100vh;
     }
@@ -55,6 +73,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 100;
 }
 
 @media (min-width: 769px) {

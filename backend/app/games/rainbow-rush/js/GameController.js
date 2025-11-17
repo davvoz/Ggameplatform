@@ -273,6 +273,9 @@ export class GameController {
     updateGame(deltaTime) {
         // Update animations (including death animation)
         this.animationController.update(deltaTime);
+        
+        // Update floating texts con animazioni EPICHE
+        this.animationController.updateFloatingTexts(this.entityManager.floatingTexts, deltaTime);
 
         // Update rendering for death animation
         const animations = this.animationController.getAnimations();
@@ -377,7 +380,7 @@ export class GameController {
         // Pass level up animation to rendering system
         this.renderingSystem.setLevelUpAnimation(this.levelUpAnimation);
         this.renderingSystem.setComboAnimation(this.comboAnimation);
-        this.renderingSystem.setFloatingTexts(this.floatingTexts);
+        this.renderingSystem.setFloatingTexts(this.entityManager.floatingTexts); // FIX: usa entityManager.floatingTexts!
         this.renderingSystem.setAchievementNotifications(this.achievementSystem.getNotifications());
         this.renderingSystem.setScreenFlash(this.screenFlash);
         this.renderingSystem.setCombo(this.scoreSystem.getCombo());

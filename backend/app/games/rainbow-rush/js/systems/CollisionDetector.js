@@ -65,13 +65,26 @@ export class CollisionDetector {
     checkPlatformCollisions(entityManager) {
         const platforms = entityManager.getEntities('platforms');
         
-        for (const platform of platforms) {
+        // Sort platforms by vertical distance to player (closest first)
+        const playerBottom = this.player.y + this.player.height;
+        const sortedPlatforms = platforms.slice().sort((a, b) => {
+            const distA = Math.abs(playerBottom - a.y);
+            const distB = Math.abs(playerBottom - b.y);
+            return distA - distB;
+        });
+        
+        // Check collision only with the closest platform that we can collide with
+        for (const platform of sortedPlatforms) {
             const wasGrounded = this.player.grounded;
             const landed = this.player.checkPlatformCollision(platform);
             
-            if (landed && !wasGrounded) {
-                this.achievementSystem.recordNormalLanding();
-                this.achievementSystem.checkAchievements();
+            if (landed) {
+                if (!wasGrounded) {
+                    this.achievementSystem.recordNormalLanding();
+                    this.achievementSystem.checkAchievements();
+                }
+                // Stop checking other platforms once we've landed on one
+                break;
             }
         }
     }

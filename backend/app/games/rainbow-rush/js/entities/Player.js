@@ -540,10 +540,16 @@ export class Player {
                                   playerLeft < (platformRight + horizontalMargin);
         
         // Check if player is on top of platform (tolleranza più generosa)
-        // Use toleranceOverride if provided (for safety platform), otherwise use default 25
-        const tolerance = toleranceOverride !== null ? toleranceOverride : 25;
+        // Use toleranceOverride if provided (for safety platform), otherwise use default 40 (increased from 25)
+        const tolerance = toleranceOverride !== null ? toleranceOverride : 40;
         const verticalDistance = Math.abs(playerBottom - platformTop);
-        const onPlatform = verticalDistance < tolerance && horizontalOverlap;
+        
+        // IMPROVED: Also check if player is falling through the platform
+        const isFallingThrough = playerBottom > platformTop && 
+                                 playerBottom < platformTop + platform.height &&
+                                 this.velocityY > 0;
+        
+        const onPlatform = (verticalDistance < tolerance || isFallingThrough) && horizontalOverlap;
 
         if (onPlatform && this.velocityY >= 0) {
             // Snap forte alla piattaforma

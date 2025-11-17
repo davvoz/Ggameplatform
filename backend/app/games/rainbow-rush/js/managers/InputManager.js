@@ -13,7 +13,11 @@ export class InputManager {
         this.listeners = {
             jump: [],
             jumpRelease: [],
-            click: []
+            click: [],
+            turbo: [],
+            flight: [],
+            flightUp: [],
+            flightDown: []
         };
 
         this.setupEventListeners();
@@ -42,7 +46,39 @@ export class InputManager {
         if (!this.keys.has(key)) {
             this.keys.add(key);
             
-            if (key === ' ' || key === 'arrowup' || key === 'w') {
+            // Turbo activation with 'A' key
+            if (key === 'a') {
+                event.preventDefault();
+                this.notifyListeners('turbo');
+            }
+            
+            // Flight activation with 'D' key
+            if (key === 'd') {
+                event.preventDefault();
+                this.notifyListeners('flight');
+            }
+            
+            // Flight up with 'W' or Arrow Up
+            if (key === 'w' || key === 'arrowup') {
+                event.preventDefault();
+                this.notifyListeners('flightUp');
+                
+                // Also trigger jump if not in flight mode
+                if (!this.jumpPressed) {
+                    this.jumpPressed = true;
+                    this.jumpPressTime = performance.now();
+                    this.triggerJump();
+                }
+            }
+            
+            // Flight down with 'S' or Arrow Down
+            if (key === 's' || key === 'arrowdown') {
+                event.preventDefault();
+                this.notifyListeners('flightDown');
+            }
+            
+            // Jump with Space
+            if (key === ' ') {
                 event.preventDefault();
                 if (!this.jumpPressed) {
                     this.jumpPressed = true;

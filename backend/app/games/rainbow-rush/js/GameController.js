@@ -123,16 +123,17 @@ export class GameController {
     setupInitialPlatforms() {
         const dims = this.engine.getCanvasDimensions();
 
-        // Starting platform
+        // Starting platform - più grande e accogliente
         const startPlatform = this.levelGenerator.generatePlatform(0);
         startPlatform.x = 50;
         startPlatform.y = dims.height * 0.7;
-        startPlatform.width = 200;
+        startPlatform.width = 250; // Più larga per partenza comoda
         this.entityManager.addEntity('platforms', startPlatform);
 
-        // Generate a few more platforms
-        for (let i = 0; i < 5; i++) {
-            this.entityManager.addEntity('platforms', this.levelGenerator.generatePlatform());
+        // Genera piattaforme iniziali con spaziatura ottimale
+        for (let i = 0; i < 6; i++) {
+            const platform = this.levelGenerator.generatePlatform();
+            this.entityManager.addEntity('platforms', platform);
         }
     }
 
@@ -196,8 +197,49 @@ export class GameController {
                 this.player.releaseJump(duration);
             }
         });
+        
+        // Turbo activation with 'A' key
+        this.inputManager.addEventListener('turbo', () => {
+            if (!this.gameState.isPlaying()) return;
+            
+            const level = this.scoreSystem.getLevel();
+            const activated = this.player.activateTurbo(level);
+            if (activated) {
+                this.audioManager.playSound('turbo');
+                this.screenFlash.alpha = 0.3;
+                this.screenFlash.color = [1.0, 0.8, 0.0];
+            }
+        });
+        
+        // Flight activation with 'D' key
+        this.inputManager.addEventListener('flight', () => {
+            if (!this.gameState.isPlaying()) return;
+            
+            const activated = this.player.activateFlight();
+            if (activated) {
+                this.audioManager.playSound('flight');
+                this.screenFlash.alpha = 0.2;
+                this.screenFlash.color = [0.4, 0.8, 1.0];
+            }
+        });
+        
+        // Flight up with 'W' or Arrow Up
+        this.inputManager.addEventListener('flightUp', () => {
+            if (!this.gameState.isPlaying()) return;
+            if (this.player.isFlightActive) {
+                this.player.flightMoveUp();
+            }
+        });
+        
+        // Flight down with 'S' or Arrow Down
+        this.inputManager.addEventListener('flightDown', () => {
+            if (!this.gameState.isPlaying()) return;
+            if (this.player.isFlightActive) {
+                this.player.flightMoveDown();
+            }
+        });
 
-        // Turbo e Flight button click handler
+        // Turbo e Flight button click handler (mouse/touch)
         this.inputManager.addEventListener('click', (data) => {
             if (!this.gameState.isPlaying()) return;
 
@@ -261,7 +303,21 @@ export class GameController {
             // Show "LEVEL UP!" message
             const dims = this.engine.getCanvasDimensions();
             this.animationController.showLevelUp(level, dims.width / 2, dims.height / 3);
+            
+            // Update HUD
+            this.emitGameUpdate();
         });
+        
+        this.scoreSystem.onScoreChange(() => {
+            // Update HUD when score changes
+            this.emitGameUpdate();
+        });
+    }
+    
+    emitGameUpdate() {
+        const stats = this.scoreSystem.getGameStats();
+        const event = new CustomEvent('gameUpdate', { detail: stats });
+        window.dispatchEvent(event);
     }
 
     setupStateListeners() {

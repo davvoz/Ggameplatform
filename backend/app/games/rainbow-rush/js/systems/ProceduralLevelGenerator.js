@@ -29,14 +29,22 @@ export class ProceduralLevelGenerator {
         this.obstaclePool = [];
         this.lastPlatformX = 0;
         this.lastPlatformY = 0;
-        this.platformSpacing = { min: 40, max: 80 }; // Più vicine - ridotto da 70-140
-        this.platformWidth = { min: 180, max: 320 }; // Più larghe - aumentato da 150-280
+        this.lastPlatformWidth = 0;
+        this.lastPlatformHeight = 20;
+        this.platformSpacing = { min: 50, max: 100 }; // FISSO - non cresce con i livelli
+        this.platformWidth = { min: 220, max: 380 }; // Piattaforme larghe sempre
         this.platformHeight = 20;
-        this.maxJumpHeight = 150; // Ridotto da 200 per salti più gestibili
+        this.maxJumpHeight = 180; // Altezza massima salto del player
+        this.maxJumpDistance = 170; // Distanza orizzontale massima saltabile 
+        this.minVerticalGap = 15; // Gap verticale minimo per evitare sovrapposizioni
+        this.maxVerticalGap = 100; // Gap verticale massimo - più conservativo
+        this.safeJumpRatio = 0.75; // 75% della capacità massima per più margine
         this.colors = this.generateRainbowColors();
         this.seed = Date.now();
         this.platformsGenerated = 0;
         this.baseSpeed = 180; // Aumentato da 120 a 180 per più velocità
+        this.recentPlatforms = []; // Traccia ultime piattaforme per evitare sovrapposizioni
+        this.maxRecentPlatforms = 8; // Più piattaforme da controllare per sovrapposizioni
     }
 
     generateRainbowColors() {
@@ -56,16 +64,22 @@ export class ProceduralLevelGenerator {
         this.difficulty = Math.min(0.3 + level * 0.02, 1.2);
         this.currentLevel = level; // Track current level
         
-        // Spacing molto più contenuto - aumenta lentamente
-        this.platformSpacing.min = Math.min(40 + (level * 0.5), 65);
-        this.platformSpacing.max = Math.min(80 + (level * 1.0), 110);
+        // DISTANZE FISSE - La difficoltà aumenta con velocità e varietà piattaforme, NON con distanza!
+        // Questo garantisce che il gioco rimanga SEMPRE giocabile anche ai livelli alti
         
-        // Platform width più generoso
-        this.platformWidth.min = Math.max(140, 200 - level * 0.8);
-        this.platformWidth.max = Math.max(220, 380 - level * 1.5);
+        // Piccola variazione solo per aggiungere imprevedibilità, ma sempre giocabile
+        const smallVariation = Math.min(level * 0.5, 8); // Max +8px ai livelli alti
         
-        // Slightly increase allowed vertical variation with difficulty
-        this.maxJumpHeight = 150 + (level * 0.8);
+        this.platformSpacing.min = 50 + smallVariation; // Da 50 a max 58
+        this.platformSpacing.max = 100 + smallVariation; // Da 100 a max 108
+        
+        // Le piattaforme si riducono MINIMAMENTE per aggiungere sfida visiva
+        this.platformWidth.min = Math.max(200, 220 - level * 0.3); // Da 220 a min 200
+        this.platformWidth.max = Math.max(320, 380 - level * 0.5); // Da 380 a min 320
+        
+        // Gap verticale rimane sempre gestibile
+        this.maxVerticalGap = Math.min(100 + level * 0.4, 110); // Da 100 a max 110
+        this.minVerticalGap = 15; // Fisso
     }
 
     generatePlatform(x = null) {
@@ -75,24 +89,107 @@ export class ProceduralLevelGenerator {
         }
 
         const width = this.random(this.platformWidth.min, this.platformWidth.max);
+        const height = this.platformHeight;
         
-        // Ensure platforms don't overlap vertically
+        // Calcola variazione verticale intelligente
+        // Alterna tra salite e discese per creare un pattern piacevole
+        const shouldGoUp = (this.platformsGenerated % 3) === 0;
+        const shouldGoDown = (this.platformsGenerated % 3) === 2;
+        
+        // Calcola Y ottimale per evitare sovrapposizioni e garantire saltabilità
         let y;
-        if (this.lastPlatformY === 0) {
-            // First platform
-            const baseY = this.canvasHeight * 0.65;
-            y = baseY;
-        } else {
-            // Subsequent platforms - variazione verticale più contenuta
-            const maxYVariation = 80; // Ridotto da 120 per salti più facili
-            const yOffset = this.random(-maxYVariation, maxYVariation);
-            y = this.lastPlatformY + yOffset;
+        let attempts = 0;
+        const maxAttempts = 15; // Più tentativi per trovare posizione valida
+        
+        do {
+            if (this.lastPlatformY === 0) {
+                // Prima piattaforma
+                const baseY = this.canvasHeight * 0.65;
+                y = baseY;
+            } else {
+                let yOffset;
+                if (shouldGoUp) {
+                    // Salita graduale - negativo
+                    yOffset = this.random(-this.maxVerticalGap * 0.6, -this.minVerticalGap * 2);
+                } else if (shouldGoDown) {
+                    // Discesa graduale - positivo
+                    yOffset = this.random(this.minVerticalGap * 2, this.maxVerticalGap * 0.6);
+                } else {
+                    // Movimento casuale ma controllato - preferisce il piano
+                    yOffset = this.random(-this.maxVerticalGap * 0.4, this.maxVerticalGap * 0.4);
+                }
+                
+                y = this.lastPlatformY + yOffset;
+                
+                // Clamp a zona giocabile
+                const minY = this.canvasHeight * 0.2;
+                const maxY = this.canvasHeight * 0.75;
+                y = Math.max(minY, Math.min(maxY, y));
+            }
             
-            // Clamp to playable area
-            const minY = this.canvasHeight * 0.25;
-            const maxY = this.canvasHeight * 0.75;
-            y = Math.max(minY, Math.min(maxY, y));
+            // Verifica che non si sovrapponga con piattaforme recenti
+            const overlaps = this.checkOverlapWithRecentPlatforms(x, y, width, height);
+            
+            if (!overlaps) {
+                break; // Posizione valida trovata
+            }
+            
+            attempts++;
+            
+            // Se troppi tentativi, forza una posizione sicura spostata verticalmente
+            if (attempts >= maxAttempts) {
+                // Sposta drasticamente in verticale per evitare sovrapposizione
+                const offset = attempts * 15; // Ogni tentativo sposta più in alto/basso
+                y = this.lastPlatformY + (shouldGoUp ? -offset : offset);
+                const minY = this.canvasHeight * 0.2;
+                const maxY = this.canvasHeight * 0.75;
+                y = Math.max(minY, Math.min(maxY, y));
+                break;
+            }
+        } while (attempts < maxAttempts);
+        
+        // VALIDAZIONE SALTABILITÀ STRETTA - Garantisce SEMPRE che il salto sia possibile
+        const horizontalDist = x - this.lastPlatformX;
+        const verticalDist = Math.abs(y - this.lastPlatformY);
+        
+        // Limiti di sicurezza molto conservativi
+        const safeHorizontalDist = this.maxJumpDistance * this.safeJumpRatio; // ~128px
+        const safeVerticalHeight = this.maxJumpHeight * this.safeJumpRatio; // ~135px
+        
+        const isJumpingUp = y < this.lastPlatformY;
+        const isJumpingDown = y > this.lastPlatformY;
+        
+        // REGOLA CRITICA: Relazione inversa tra distanza orizzontale e verticale
+        // Più è lontano orizzontalmente, meno può essere alto
+        const horizontalRatio = horizontalDist / safeHorizontalDist; // 0.0 a 1.0
+        
+        if (isJumpingUp) {
+            // Salto verso l'alto - il più difficile
+            // Riduci altezza massima in base alla distanza orizzontale
+            const maxAllowedUp = safeVerticalHeight * (1.0 - horizontalRatio * 0.7);
+            
+            if (verticalDist > maxAllowedUp) {
+                y = this.lastPlatformY - maxAllowedUp;
+            }
+        } else if (isJumpingDown) {
+            // Salto verso il basso - più facile, permetti più libertà
+            const maxAllowedDown = safeVerticalHeight * (1.0 - horizontalRatio * 0.3);
+            
+            if (verticalDist > maxAllowedDown) {
+                y = this.lastPlatformY + maxAllowedDown;
+            }
         }
+        
+        // Forza distanza orizzontale nei limiti se troppo lontana
+        if (horizontalDist > safeHorizontalDist) {
+            // Se supera il limite, metti la piattaforma più vicina verticalmente
+            y = this.lastPlatformY + this.random(-20, 20);
+        }
+        
+        // Clamp finale alla zona giocabile
+        const minY = this.canvasHeight * 0.2;
+        const maxY = this.canvasHeight * 0.75;
+        y = Math.max(minY, Math.min(maxY, y));
         
         // Determine platform type based on difficulty and randomness
         const platformType = this.determinePlatformType();
@@ -103,11 +200,48 @@ export class ProceduralLevelGenerator {
         // Adjust color and properties based on type
         const platform = this.createTypedPlatform(x, y, width, platformType, baseColor);
 
+        // Aggiorna tracciamento ultime piattaforme
+        this.recentPlatforms.push({
+            x: x,
+            y: y,
+            width: width,
+            height: height
+        });
+        
+        // Mantieni solo le ultime N piattaforme
+        if (this.recentPlatforms.length > this.maxRecentPlatforms) {
+            this.recentPlatforms.shift();
+        }
+
         this.lastPlatformX = x;
         this.lastPlatformY = y;
+        this.lastPlatformWidth = width;
+        this.lastPlatformHeight = height;
         this.platformsGenerated++;
         
         return platform;
+    }
+    
+    /**
+     * Verifica se una nuova piattaforma si sovrappone con quelle recenti
+     */
+    checkOverlapWithRecentPlatforms(x, y, width, height) {
+        for (const recent of this.recentPlatforms) {
+            // Controllo sovrapposizione con margini di sicurezza più ampi
+            const horizontalMargin = 25; // Margine orizzontale più ampio
+            const verticalMargin = 25; // Margine verticale più ampio
+            
+            const xOverlap = (x < recent.x + recent.width + horizontalMargin) && 
+                           (x + width + horizontalMargin > recent.x);
+            const yOverlap = (y < recent.y + recent.height + verticalMargin) && 
+                           (y + height + verticalMargin > recent.y);
+            
+            if (xOverlap && yOverlap) {
+                return true; // C'è sovrapposizione
+            }
+        }
+        
+        return false; // Nessuna sovrapposizione
     }
     
     determinePlatformType() {
@@ -250,6 +384,10 @@ export class ProceduralLevelGenerator {
     
     resetPlatformCount() {
         this.platformsGenerated = 0;
+        this.recentPlatforms = []; // Reset anche le piattaforme recenti
+        this.lastPlatformX = 0;
+        this.lastPlatformY = 0;
+        this.lastPlatformWidth = 0;
     }
 
     shouldGenerateObstacle() {

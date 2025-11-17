@@ -10,9 +10,9 @@ export class SpawnManager {
 
         // Spawn timers
         this.platformTimer = 0;
-        this.platformInterval = 1.5;
+        this.platformInterval = 0.75; // Spawn ancora più frequente
         this.platformCounter = 0;
-        this.platformsPerLevel = 15;
+        this.platformsPerLevel = 20; // Più piattaforme per livello = progressione più lenta
 
         this.powerupTimer = 0;
         this.powerupInterval = 8;

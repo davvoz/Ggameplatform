@@ -584,6 +584,7 @@ const CONFIG = {
     REFRESH_INTERVAL: null,
     MAX_RECORDS: 100,
     PAGINATION_SIZE: 20,
+    PAGINATION_THRESHOLD: 50, // Mostra paginazione solo se ci sono più di 50 record
     DATE_FORMAT: {
         locale: 'it-IT',
         options: {

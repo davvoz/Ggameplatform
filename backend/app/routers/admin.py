@@ -44,8 +44,17 @@ async def get_db_stats():
         users_query = session.query(User).order_by(desc(User.created_at)).all()
         users = [user.to_dict() for user in users_query]
         
-        # Get all game sessions (limited to 100)
-        sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).limit(100).all()
+        # Count total records for accurate statistics
+        total_sessions_count = session.query(GameSession).count()
+        total_leaderboard_count = session.query(Leaderboard).count()
+        total_user_quests_count = session.query(UserQuest).count()
+        
+        print(f"[DEBUG] Total sessions in DB: {total_sessions_count}")
+        print(f"[DEBUG] Total leaderboard in DB: {total_leaderboard_count}")
+        print(f"[DEBUG] Total user quests in DB: {total_user_quests_count}")
+        
+        # Get game sessions (all records for display)
+        sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).all()
         sessions = [s.to_dict() for s in sessions_query]
         
         # DEBUG: Check if score is in the dict
@@ -53,8 +62,8 @@ async def get_db_stats():
             print(f"[DEBUG] First session from db-stats: {sessions[0]}")
             print(f"[DEBUG] First session score: {sessions[0].get('score')}")
         
-        # Get all leaderboard entries (limited to 100)
-        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).limit(100).all()
+        # Get all leaderboard entries
+        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
         
         # Get all XP rules
@@ -65,18 +74,18 @@ async def get_db_stats():
         quests_query = session.query(Quest).order_by(Quest.quest_id).all()
         quests = [quest.to_dict() for quest in quests_query]
         
-        # Get user quest progress (limited to 100)
-        user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).limit(100).all()
+        # Get user quest progress
+        user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
         user_quests = [uq.to_dict() for uq in user_quests_query]
     
     data = {
         "total_games": len(games),
         "total_users": len(users),
-        "total_sessions": len(sessions),
-        "total_leaderboard_entries": len(leaderboard),
+        "total_sessions": total_sessions_count,
+        "total_leaderboard_entries": total_leaderboard_count,
         "total_xp_rules": len(xp_rules),
         "total_quests": len(quests),
-        "total_user_quests": len(user_quests),
+        "total_user_quests": total_user_quests_count,
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,

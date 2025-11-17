@@ -141,6 +141,10 @@ class TableView extends BaseView {
         super(tableKey, tableDef);
         this.table = null;
         this.tbody = null;
+        this.currentPage = 1;
+        this.pageSize = CONFIG.PAGINATION_SIZE;
+        this.totalRecords = 0;
+        this.paginationContainer = null;
     }
 
     initialize() {
@@ -156,6 +160,14 @@ class TableView extends BaseView {
             this.emptyState.className = 'empty empty-state';
             this.emptyState.style.display = 'none';
             this.container.appendChild(this.emptyState);
+        }
+        
+        // Initialize pagination container
+        this.paginationContainer = this.container?.querySelector('.pagination-controls');
+        if (this.container && !this.paginationContainer) {
+            this.paginationContainer = document.createElement('div');
+            this.paginationContainer.className = 'pagination-controls';
+            this.container.appendChild(this.paginationContainer);
         }
     }
 
@@ -174,14 +186,33 @@ class TableView extends BaseView {
     doRender(data) {
         if (!data || data.length === 0) {
             this.table.style.display = 'none';
+            this.hidePagination();
             this.showEmpty(`Nessun ${this.tableDef.label.toLowerCase()} trovato`);
             return;
         }
 
         this.hideEmpty();
         this.table.style.display = 'table';
-        this.tbody.innerHTML = '';
-        data.forEach((item, index) => this.renderRow(item, index));
+        this.totalRecords = data.length;
+        
+        // Determina se mostrare la paginazione
+        const needsPagination = this.totalRecords > CONFIG.PAGINATION_THRESHOLD;
+        
+        if (needsPagination) {
+            // Calcola i dati per la pagina corrente
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = Math.min(startIndex + this.pageSize, this.totalRecords);
+            const pageData = data.slice(startIndex, endIndex);
+            
+            this.tbody.innerHTML = '';
+            pageData.forEach((item, index) => this.renderRow(item, startIndex + index));
+            this.showPagination();
+        } else {
+            // Mostra tutti i dati senza paginazione
+            this.tbody.innerHTML = '';
+            data.forEach((item, index) => this.renderRow(item, index));
+            this.hidePagination();
+        }
     }
 
     renderRow(item, index) {
@@ -194,6 +225,64 @@ class TableView extends BaseView {
             cell.tableDef = this.tableDef;
             row.appendChild(cell);
         });
+    }
+    
+    showPagination() {
+        if (!this.paginationContainer) return;
+        
+        const totalPages = Math.ceil(this.totalRecords / this.pageSize);
+        const startRecord = (this.currentPage - 1) * this.pageSize + 1;
+        const endRecord = Math.min(this.currentPage * this.pageSize, this.totalRecords);
+        
+        this.paginationContainer.innerHTML = `
+            <div class="pagination-info">
+                Visualizzati ${startRecord}-${endRecord} di ${this.totalRecords} record
+            </div>
+            <div class="pagination-buttons">
+                <button class="pagination-btn" onclick="app.views['${this.tableKey}'].goToPage(1)" ${this.currentPage === 1 ? 'disabled' : ''}>
+                    ⏮ Prima
+                </button>
+                <button class="pagination-btn" onclick="app.views['${this.tableKey}'].goToPage(${this.currentPage - 1})" ${this.currentPage === 1 ? 'disabled' : ''}>
+                    ◀ Prec
+                </button>
+                <span class="pagination-page">Pagina ${this.currentPage} di ${totalPages}</span>
+                <button class="pagination-btn" onclick="app.views['${this.tableKey}'].goToPage(${this.currentPage + 1})" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    Succ ▶
+                </button>
+                <button class="pagination-btn" onclick="app.views['${this.tableKey}'].goToPage(${totalPages})" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    Ultima ⏭
+                </button>
+            </div>
+            <div class="pagination-size">
+                <label for="pageSize-${this.tableKey}">Record per pagina:</label>
+                <select id="pageSize-${this.tableKey}" onchange="app.views['${this.tableKey}'].changePageSize(this.value)">
+                    <option value="10" ${this.pageSize === 10 ? 'selected' : ''}>10</option>
+                    <option value="20" ${this.pageSize === 20 ? 'selected' : ''}>20</option>
+                    <option value="50" ${this.pageSize === 50 ? 'selected' : ''}>50</option>
+                    <option value="100" ${this.pageSize === 100 ? 'selected' : ''}>100</option>
+                </select>
+            </div>
+        `;
+        
+        this.paginationContainer.style.display = 'flex';
+    }
+    
+    hidePagination() {
+        if (this.paginationContainer) {
+            this.paginationContainer.style.display = 'none';
+        }
+    }
+    
+    goToPage(pageNumber) {
+        const totalPages = Math.ceil(this.totalRecords / this.pageSize);
+        this.currentPage = Math.max(1, Math.min(pageNumber, totalPages));
+        app.renderCurrentView();
+    }
+    
+    changePageSize(newSize) {
+        this.pageSize = parseInt(newSize);
+        this.currentPage = 1; // Reset alla prima pagina
+        app.renderCurrentView();
     }
 }
 

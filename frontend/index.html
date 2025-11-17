@@ -184,13 +184,35 @@
                     <span class="stat-value" id="activeQuestsCount">0</span>
                 </div>
                 <div class="stat-badge">
-                    <span class="stat-label">Completed</span>
-                    <span class="stat-value" id="completedQuestsCount">0</span>
+                    <span class="stat-label">Ready to Claim</span>
+                    <span class="stat-value" id="readyToClaimCount">0</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Claimed</span>
+                    <span class="stat-value" id="claimedQuestsCount">0</span>
                 </div>
                 <div class="stat-badge">
                     <span class="stat-label">Total XP Earned</span>
                     <span class="stat-value" id="totalQuestXP">0</span>
                 </div>
+            </div>
+            <div class="quest-filters">
+                <button class="quest-filter-btn active" data-filter="all">
+                    <span class="filter-icon">🎮</span>
+                    <span class="filter-text">All Quests</span>
+                </button>
+                <button class="quest-filter-btn" data-filter="active">
+                    <span class="filter-icon">📋</span>
+                    <span class="filter-text">Da Fare</span>
+                </button>
+                <button class="quest-filter-btn" data-filter="ready">
+                    <span class="filter-icon">🎁</span>
+                    <span class="filter-text">Da Claimare</span>
+                </button>
+                <button class="quest-filter-btn" data-filter="claimed">
+                    <span class="filter-icon">✅</span>
+                    <span class="filter-text">Claimate</span>
+                </button>
             </div>
             <div class="quests-list" id="questsList">
                 <div class="loading">Loading quests...</div>

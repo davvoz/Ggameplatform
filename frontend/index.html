@@ -6,6 +6,7 @@
     <meta name="description" content="HTML5 Game Platform - Play amazing browser games">
     <title>HTML5 Game Platform</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/quest-hero.css">
     <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
@@ -174,28 +175,39 @@
     <!-- Quests Template -->
     <template id="quests-template">
         <div class="quests">
-            <div class="quests-header">
-                <h2>🎯 Your Quests</h2>
-                <p class="quests-subtitle">Complete challenges to earn rewards!</p>
+            <!-- Hero Section with Parallax -->
+            <div class="quests-hero" id="questsHero">
+                <div class="hero-background">
+                    <div class="hero-gradient"></div>
+                </div>
+                <div class="hero-content">
+                    <div class="hero-badge">QUEST SYSTEM</div>
+                    <h1 class="hero-title">
+                        <span class="hero-title-main">Your Epic Journey</span>
+                        <span class="hero-title-sub">Awaits</span>
+                    </h1>
+                    <p class="hero-description">Complete challenges, earn rewards, and become a legend</p>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-value" id="heroActiveCount">0</div>
+                            <div class="hero-stat-label">Active</div>
+                        </div>
+                        <div class="hero-stat hero-stat-highlight">
+                            <div class="hero-stat-value" id="heroReadyCount">0</div>
+                            <div class="hero-stat-label">Ready</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value" id="heroClaimedCount">0</div>
+                            <div class="hero-stat-label">Claimed</div>
+                        </div>
+                        <div class="hero-stat hero-stat-xp">
+                            <div class="hero-stat-value" id="heroTotalXP">0</div>
+                            <div class="hero-stat-label">Total XP</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="quests-stats">
-                <div class="stat-badge">
-                    <span class="stat-label">Active Quests</span>
-                    <span class="stat-value" id="activeQuestsCount">0</span>
-                </div>
-                <div class="stat-badge">
-                    <span class="stat-label">Ready to Claim</span>
-                    <span class="stat-value" id="readyToClaimCount">0</span>
-                </div>
-                <div class="stat-badge">
-                    <span class="stat-label">Claimed</span>
-                    <span class="stat-value" id="claimedQuestsCount">0</span>
-                </div>
-                <div class="stat-badge">
-                    <span class="stat-label">Total XP Earned</span>
-                    <span class="stat-value" id="totalQuestXP">0</span>
-                </div>
-            </div>
+            
             <div class="quest-filters">
                 <button class="quest-filter-btn active" data-filter="all">
                     <span class="filter-icon">🎮</span>

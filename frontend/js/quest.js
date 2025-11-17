@@ -331,29 +331,16 @@ class QuestStatistics {
     }
 
     render() {
-        const elements = this.getStatElements();
-
-        if (!this.validateElements(elements)) {
-            throw new Error('Quest stats elements not found in DOM');
-        }
-
-        elements.activeQuestsEl.textContent = String(this.activeCount);
-        elements.readyToClaimEl.textContent = String(this.readyToClaimCount);
-        elements.claimedQuestsEl.textContent = String(this.claimedCount);
-        elements.totalQuestXPEl.textContent = this.totalXP.toFixed(2);
-    }
-
-    getStatElements() {
-        return {
-            activeQuestsEl: document.getElementById('activeQuestsCount'),
-            readyToClaimEl: document.getElementById('readyToClaimCount'),
-            claimedQuestsEl: document.getElementById('claimedQuestsCount'),
-            totalQuestXPEl: document.getElementById('totalQuestXP')
-        };
-    }
-
-    validateElements(elements) {
-        return Object.values(elements).every(element => element !== null);
+        // Only use hero stats now
+        const heroActiveEl = document.getElementById('heroActiveCount');
+        const heroReadyEl = document.getElementById('heroReadyCount');
+        const heroClaimedEl = document.getElementById('heroClaimedCount');
+        const heroTotalXPEl = document.getElementById('heroTotalXP');
+        
+        if (heroActiveEl) heroActiveEl.textContent = String(this.activeCount);
+        if (heroReadyEl) heroReadyEl.textContent = String(this.readyToClaimCount);
+        if (heroClaimedEl) heroClaimedEl.textContent = String(this.claimedCount);
+        if (heroTotalXPEl) heroTotalXPEl.textContent = Math.floor(this.totalXP.toFixed(2));
     }
 }
 /**

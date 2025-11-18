@@ -381,6 +381,8 @@ export class PlayerRenderer extends IEntityRenderer {
             'excited': { eyeSize: 8, pupilSize: 4, pupilOffsetX: 0, pupilOffsetY: 0 },
             'surprised': { eyeSize: 9, pupilSize: 5, pupilOffsetX: 0, pupilOffsetY: 0 },
             'determined': { eyeSize: 5, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -1 },
+            'running': { eyeSize: 4, pupilSize: 2, pupilOffsetX: 0, pupilOffsetY: 0 },
+            'lookingUp': { eyeSize: 7, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -3 },
             'happy': { eyeSize: 6, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: 0 }
         };
         return configs[expression] || configs['happy'];
@@ -431,6 +433,12 @@ export class PlayerRenderer extends IEntityRenderer {
             case 'determined':
                 this.renderDeterminedMouth(x, mouthY, mouthColor);
                 break;
+            case 'running':
+                this.renderRunningMouth(x, mouthY, mouthColor);
+                break;
+            case 'lookingUp':
+                this.renderLookingUpMouth(x, mouthY, mouthColor);
+                break;
             default:
                 this.renderHappyMouth(x, mouthY, mouthColor);
         }
@@ -476,6 +484,19 @@ export class PlayerRenderer extends IEntityRenderer {
 
     renderDeterminedMouth(x, y, color) {
         this.renderer.drawRect(x - 6, y, 12, 2, color);
+    }
+
+    renderRunningMouth(x, y, color) {
+        // Bocca aperta ansimante - ovale verticale
+        this.renderer.drawCircle(x, y + 2, 4, color);
+        this.renderer.drawCircle(x, y + 4, 3.5, color);
+        this.renderer.drawCircle(x, y + 2, 3, [0.3, 0.1, 0.1, 1.0]);
+    }
+
+    renderLookingUpMouth(x, y, color) {
+        // Bocca aperta tipo "O" sorpresa/meraviglia
+        this.renderer.drawCircle(x, y + 2, 5, color);
+        this.renderer.drawCircle(x, y + 2, 4, [0.3, 0.1, 0.1, 1.0]);
     }
 
     renderWings(player, time, x, y) {

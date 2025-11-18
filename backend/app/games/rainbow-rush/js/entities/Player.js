@@ -75,7 +75,7 @@ export class Player {
         this.justLanded = false;
         
         // Sistema espressioni e animazioni
-        this.expression = 'happy'; // happy, worried, excited, surprised, determined
+        this.expression = 'happy'; // happy, worried, excited, surprised, determined, running, lookingUp
         this.eyeBlinkTimer = 0;
         this.eyeBlinkInterval = 3 + Math.random() * 2; // Battito ciglia casuale
         this.isBlinking = false;
@@ -904,6 +904,8 @@ export class Player {
         // Cambia espressione in base al contesto
         if (!this.alive) {
             this.expression = 'dead';
+        } else if (this.isFlightActive) {
+            this.expression = 'lookingUp'; // Guarda verso l'alto durante il volo verticale
         } else if (this.onSafetyPlatform) {
             this.expression = 'worried'; // Espressione preoccupata sulla safety platform
         } else if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
@@ -914,6 +916,8 @@ export class Player {
             this.expression = 'worried'; // Caduta veloce
         } else if (!this.isGrounded && this.velocityY < -200) {
             this.expression = 'excited'; // Salto verso l'alto
+        } else if (this.isGrounded && !this.isIdle && Math.abs(this.velocityX) > 100) {
+            this.expression = 'running'; // Espressione trafelata quando corre
         } else if (this.isGrounded && this.isIdle) {
             // Alterna tra happy e blink quando idle
             this.expression = 'happy';

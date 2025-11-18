@@ -521,19 +521,17 @@ export class Player {
     }
     
     updateTrailParticles(deltaTime) {
-        // Add trail particles when powerups are active (più frequenti e visibili)
+        // Add trail particles when powerups are active (ridotte per performance)
         if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
-            // Aggiungi più particelle per frame
-            for (let i = 0; i < 2; i++) {
-                this.trailParticles.push({
-                    x: this.x + this.width / 2 + (Math.random() - 0.5) * 10,
-                    y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
-                    life: 0.8,
-                    maxLife: 0.8,
-                    color: this.getPowerupTrailColor(),
-                    size: 8 + Math.random() * 4
-                });
-            }
+            // Solo 1 particella invece di 2 per frame
+            this.trailParticles.push({
+                x: this.x + this.width / 2 + (Math.random() - 0.5) * 10,
+                y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                life: 0.6, // Ridotto da 0.8
+                maxLife: 0.6,
+                color: this.getPowerupTrailColor(),
+                size: 6 + Math.random() * 3 // Ridotto da 8+4
+            });
         }
         
         // Update existing particles
@@ -545,16 +543,16 @@ export class Player {
         }
         
         // Limita il numero di particelle per performance
-        if (this.trailParticles.length > 50) {
-            this.trailParticles.splice(0, this.trailParticles.length - 50);
+        if (this.trailParticles.length > 30) { // Ridotto da 50
+            this.trailParticles.splice(0, this.trailParticles.length - 30);
         }
     }
     
     getPowerupTrailColor() {
-        if (this.powerups.immortality) return [1.0, 0.84, 0.0, 0.8]; // Gold
-        if (this.powerups.flight) return [0.4, 0.7, 1.0, 0.8]; // Light blue
-        if (this.powerups.superJump) return [1.0, 0.3, 0.5, 0.8]; // Pink
-        return [1.0, 1.0, 1.0, 0.5];
+        if (this.powerups.immortality) return [1.0, 0.84, 0.0, 0.6]; // Gold - ridotto alpha da 0.8
+        if (this.powerups.flight) return [0.4, 0.7, 1.0, 0.6]; // Light blue - ridotto
+        if (this.powerups.superJump) return [1.0, 0.3, 0.5, 0.6]; // Pink - ridotto
+        return [1.0, 1.0, 1.0, 0.4]; // Ridotto da 0.5
     }
     
     takeDamage(amount = 1) {

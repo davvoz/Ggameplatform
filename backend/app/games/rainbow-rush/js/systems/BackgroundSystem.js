@@ -122,14 +122,14 @@ export class BackgroundSystem {
     }
     
     initSky() {
-        // Sky gradient background
+        // Sky gradient background - PIÙ BRILLANTE
         this.baseColors = [
-            [0.53, 0.81, 0.92, 1.0], // Light blue
-            [0.68, 0.85, 0.90, 1.0]  // Lighter blue
+            [0.4, 0.7, 1.0, 1.0], // Blu più brillante (era 0.53, 0.81, 0.92)
+            [0.6, 0.85, 1.0, 1.0]  // Celeste vivace (era 0.68, 0.85, 0.90)
         ];
         
-        // Floating clouds with varied shapes
-        for (let i = 0; i < 8; i++) {
+        // Floating clouds with varied shapes - RIDOTTE
+        for (let i = 0; i < 5; i++) { // Ridotto da 8 a 5
             const baseSize = 40 + Math.random() * 40;
             const numPuffs = 3 + Math.floor(Math.random() * 3); // 3-5 puffs per cloud
             const puffs = [];
@@ -148,7 +148,7 @@ export class BackgroundSystem {
                 baseSize: baseSize,
                 puffs: puffs,
                 speed: 10 + Math.random() * 20,
-                color: [1.0, 1.0, 1.0, 0.7 + Math.random() * 0.2],
+                color: [0.95, 0.95, 0.98, 0.45 + Math.random() * 0.12], // Meno bianche e meno opache
                 type: 'cloud'
             });
         }
@@ -182,8 +182,8 @@ export class BackgroundSystem {
     
     initOcean() {
         this.baseColors = [
-            [0.0, 0.4, 0.8, 1.0],  // Deep blue
-            [0.2, 0.6, 0.9, 1.0]   // Ocean blue
+            [0.0, 0.5, 1.0, 1.0],  // Blu oceano più brillante (era 0.4, 0.8)
+            [0.1, 0.7, 1.0, 1.0]   // Azzurro oceano vivace (era 0.2, 0.6, 0.9)
         ];
         
         // Waves
@@ -241,8 +241,8 @@ export class BackgroundSystem {
     
     initPyramids() {
         this.baseColors = [
-            [0.95, 0.85, 0.6, 1.0], // Sand yellow
-            [0.85, 0.7, 0.4, 1.0]   // Dark sand
+            [0.85, 0.7, 0.35, 1.0], // Giallo sabbia meno luminoso (ridotta luminosità)
+            [0.75, 0.6, 0.25, 1.0]   // Sabbia dorata più scura
         ];
         
         // Pyramids in background
@@ -279,7 +279,7 @@ export class BackgroundSystem {
                 frequency: 0.02 + i * 0.005,
                 speed: 2 + i * 0.5,
                 offset: 0,
-                color: [1.0, 0.9, 0.7, 0.15 - i * 0.03],
+                color: [0.9, 0.8, 0.5, 0.08 - i * 0.02], // Ridotta opacità drasticamente
                 type: 'heatwave'
             });
         }
@@ -300,8 +300,8 @@ export class BackgroundSystem {
     
     initVolcano() {
         this.baseColors = [
-            [0.3, 0.1, 0.1, 1.0],  // Dark red
-            [0.5, 0.2, 0.1, 1.0]   // Brown-red
+            [0.5, 0.1, 0.0, 1.0],  // Rosso scuro più intenso (era 0.3, 0.1, 0.1)
+            [0.8, 0.3, 0.1, 1.0]   // Rosso-marrone più saturo (era 0.5, 0.2, 0.1)
         ];
         
         // Volcano in background
@@ -330,8 +330,8 @@ export class BackgroundSystem {
     
     initSpace() {
         this.baseColors = [
-            [0.05, 0.05, 0.15, 1.0], // Dark space
-            [0.1, 0.1, 0.25, 1.0]    // Deep purple
+            [0.05, 0.05, 0.2, 1.0], // Blu spazio scuro (ok)
+            [0.15, 0.1, 0.4, 1.0]    // Viola più intenso (era 0.25)
         ];
         
         // Stars
@@ -366,8 +366,8 @@ export class BackgroundSystem {
     
     initForest() {
         this.baseColors = [
-            [0.2, 0.4, 0.3, 1.0],  // Dark green
-            [0.3, 0.5, 0.4, 1.0]   // Forest green
+            [0.2, 0.6, 0.3, 1.0],  // Verde bosco più brillante (era 0.4)
+            [0.3, 0.7, 0.4, 1.0]   // Verde foresta più vivace (era 0.5)
         ];
         
         // Trees in background (multiple layers)
@@ -430,8 +430,8 @@ export class BackgroundSystem {
     
     initIce() {
         this.baseColors = [
-            [0.7, 0.85, 0.95, 1.0], // Light ice blue
-            [0.8, 0.9, 1.0, 1.0]    // White blue
+            [0.4, 0.75, 0.95, 1.0], // Azzurro ghiaccio più scuro (ridotta luminosità)
+            [0.65, 0.85, 0.98, 1.0]    // Azzurro chiaro meno abbagliante
         ];
         
         // Ice crystals in background
@@ -441,7 +441,7 @@ export class BackgroundSystem {
                 y: Math.random() * this.canvasHeight * 0.6,
                 size: 30 + Math.random() * 40,
                 rotation: Math.random() * Math.PI * 2,
-                color: [0.8, 0.9, 1.0, 0.6],
+                color: [0.6, 0.8, 0.95, 0.4], // Ridotta opacità da 0.6 a 0.4
                 type: 'crystal'
             });
         }
@@ -454,7 +454,7 @@ export class BackgroundSystem {
                 radius: 2 + Math.random() * 3,
                 speed: 30 + Math.random() * 40,
                 drift: Math.random() * 20 - 10,
-                color: [1.0, 1.0, 1.0, 0.8],
+                color: [0.9, 0.95, 1.0, 0.5], // Ridotta opacità e luminosità
                 type: 'snowflake'
             });
         }
@@ -462,8 +462,8 @@ export class BackgroundSystem {
     
     initNight() {
         this.baseColors = [
-            [0.05, 0.05, 0.2, 1.0],  // Dark night blue
-            [0.15, 0.1, 0.3, 1.0]    // Purple night
+            [0.05, 0.1, 0.3, 1.0],  // Blu notte più visibile (era 0.05, 0.2)
+            [0.2, 0.15, 0.45, 1.0]    // Viola notte più vivace (era 0.15, 0.1, 0.3)
         ];
         
         // Moon

@@ -124,6 +124,39 @@ export class CollisionDetector {
             if (this.player.checkObstacleCollision(obstacle)) {
                 if (this.player.alive) {
                     this.audioManager.playSound('hit');
+                    
+                    // Floating text per il danno
+                    this.animationController.createFloatingText(
+                        '💥 -1 ❤️', 
+                        this.player.x + this.player.width / 2, 
+                        this.player.y - 20, 
+                        [1.0, 0.2, 0.2, 1.0], 
+                        entityManager
+                    );
+                    
+                    // Camera shake intenso
+                    this.player.addCameraShake(15, 0.5); // Shake forte per 0.5 secondi
+                    
+                    // Screen flash rosso
+                    this.animationController.triggerScreenFlash(0.4, [1.0, 0.2, 0.2]);
+                    
+                    // Particelle di danno intorno al player
+                    for (let j = 0; j < 12; j++) {
+                        const angle = (Math.PI * 2 * j) / 12;
+                        const speed = 100 + Math.random() * 80;
+                        entityManager.addEntity('powerupParticles', {
+                            x: this.player.x + this.player.width / 2,
+                            y: this.player.y + this.player.height / 2,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed - 50,
+                            life: 0.6,
+                            maxLife: 0.6,
+                            size: 4 + Math.random() * 3,
+                            color: [1.0, 0.2, 0.2, 1.0],
+                            gravity: 200,
+                            type: 'damage-particle'
+                        });
+                    }
                 }
                 this.achievementSystem.recordDamage();
                 

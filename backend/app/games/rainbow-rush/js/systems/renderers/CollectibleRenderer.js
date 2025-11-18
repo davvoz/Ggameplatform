@@ -203,31 +203,31 @@ export class CollectibleRenderer extends IEntityRenderer {
         const bigPulse = Math.abs(Math.sin((powerup.rotationAngle || 0) * 3)) * 0.5 + 0.5;
         const currentRadius = radius * rotationPulse;
 
-        // ENORME alone esterno multiplo
-        for (let i = 0; i < 3; i++) {
-            const auraSize = currentRadius * (4 - i * 0.8);
+        // Alone esterno ridotto
+        for (let i = 0; i < 2; i++) {
+            const auraSize = currentRadius * (2.2 - i * 0.5);
             const auraColor = [...powerup.glowColor];
-            auraColor[3] = (0.3 - i * 0.08) * bigPulse;
+            auraColor[3] = (0.15 - i * 0.05) * bigPulse;
             this.renderer.drawCircle(powerup.x, powerup.y, auraSize, auraColor);
         }
 
         // Anello rotante colorato
-        const ringCount = 12;
+        const ringCount = 8;
         for (let i = 0; i < ringCount; i++) {
             const angle = (powerup.rotationAngle || 0) * 2 + (i * Math.PI * 2 / ringCount);
-            const ringRadius = currentRadius * 2.2;
+            const ringRadius = currentRadius * 1.6;
             const rx = powerup.x + Math.cos(angle) * ringRadius;
             const ry = powerup.y + Math.sin(angle) * ringRadius;
             const ringColor = [...powerup.color];
-            ringColor[3] = 0.8 * bigPulse;
-            this.renderer.drawCircle(rx, ry, 6, ringColor);
+            ringColor[3] = 0.5 * bigPulse;
+            this.renderer.drawCircle(rx, ry, 4, ringColor);
         }
 
         // Corpo principale
         this.renderer.drawCircle(powerup.x, powerup.y, currentRadius, powerup.color);
 
         // Inner glow brillante
-        this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.7, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.7, [1.0, 1.0, 1.0, 0.5]);
 
         // Centro con colore del powerup
         const centerColor = [...powerup.color];
@@ -235,34 +235,34 @@ export class CollectibleRenderer extends IEntityRenderer {
         this.renderer.drawCircle(powerup.x, powerup.y, currentRadius * 0.5, centerColor);
 
         // Particelle orbitanti
-        const particleCount = 8;
+        const particleCount = 6;
         for (let i = 0; i < particleCount; i++) {
             const angle = (-(powerup.rotationAngle || 0) * 1.5 + (i * Math.PI * 2 / particleCount));
-            const distance = currentRadius * 1.8;
+            const distance = currentRadius * 1.5;
             const px = powerup.x + Math.cos(angle) * distance;
             const py = powerup.y + Math.sin(angle) * distance;
 
             // Alone particella
             const particleGlow = [...powerup.color];
-            particleGlow[3] = 0.5;
-            this.renderer.drawCircle(px, py, 8, particleGlow);
+            particleGlow[3] = 0.3;
+            this.renderer.drawCircle(px, py, 5, particleGlow);
 
             // Particella
             const particleColor = [...powerup.color];
-            particleColor[3] = 0.9;
-            this.renderer.drawCircle(px, py, 5, particleColor);
+            particleColor[3] = 0.7;
+            this.renderer.drawCircle(px, py, 3, particleColor);
         }
 
         // Stella pulsante al centro
-        const starPoints = 8;
+        const starPoints = 6;
         for (let i = 0; i < starPoints; i++) {
             const angle = (powerup.rotationAngle || 0) * 3 + (i * Math.PI * 2 / starPoints);
-            const rayLength = currentRadius * 0.4 * bigPulse;
+            const rayLength = currentRadius * 0.3 * bigPulse;
             const sx = powerup.x + Math.cos(angle) * rayLength;
             const sy = powerup.y + Math.sin(angle) * rayLength;
 
-            const starColor = [1.0, 1.0, 1.0, 0.8 * bigPulse];
-            this.renderer.drawCircle(sx, sy, 3, starColor);
+            const starColor = [1.0, 1.0, 1.0, 0.5 * bigPulse];
+            this.renderer.drawCircle(sx, sy, 2, starColor);
         }
     }
 
@@ -270,8 +270,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
         const size = bonus.radius * pulse;
         
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 2.5, [1.0, 0.3, 0.9, 0.3]);
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.8, [1.0, 0.4, 0.9, 0.5]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.5, [1.0, 0.3, 0.9, 0.2]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.2, [1.0, 0.4, 0.9, 0.3]);
         
         const magnetWidth = size * 0.6;
         const magnetHeight = size * 1.0;
@@ -286,7 +286,7 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
         const size = bonus.radius * pulse;
         
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 2, [0.3, 0.6, 1.0, 0.3]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.3, [0.3, 0.6, 1.0, 0.2]);
         this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
         this.renderer.drawCircle(bonus.x, bonus.y, size * 0.8, [0.3, 0.5, 0.8, 1.0]);
         
@@ -313,7 +313,7 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.25 + 1.0;
         const size = bonus.radius * pulse;
         
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 3.5, bonus.glowColor, 5, 0.6 * pulse, 0.1);
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 4, 0.4 * pulse, 0.08);
         
         // Hexagon
         const sides = 6;
@@ -347,21 +347,21 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.35 + 1.0;
         const size = bonus.radius * pulse;
         
-        // Light rays
-        for (let i = 0; i < 8; i++) {
-            const rayAngle = (i / 8) * Math.PI * 2 + (bonus.rotation || 0);
-            const rayLength = size * (3 + Math.sin(time * 5 + i * 0.5) * 1.5);
+        // Light rays - ridotti
+        for (let i = 0; i < 6; i++) {
+            const rayAngle = (i / 6) * Math.PI * 2 + (bonus.rotation || 0);
+            const rayLength = size * (2 + Math.sin(time * 5 + i * 0.5) * 0.8);
             
-            for (let j = 0; j < 8; j++) {
-                const t = j / 8;
+            for (let j = 0; j < 6; j++) {
+                const t = j / 6;
                 const px = bonus.x + Math.cos(rayAngle) * rayLength * t;
                 const py = bonus.y + Math.sin(rayAngle) * rayLength * t;
-                const rayAlpha = (1 - t) * 0.8;
-                this.renderer.drawCircle(px, py, 4 * (1 - t * 0.5), [1.0, 0.9, 0.3, rayAlpha]);
+                const rayAlpha = (1 - t) * 0.5;
+                this.renderer.drawCircle(px, py, 3 * (1 - t * 0.5), [1.0, 0.9, 0.3, rayAlpha]);
             }
         }
         
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 3.5, bonus.glowColor, 6, 0.7 * pulse, 0.1);
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 4, 0.4 * pulse, 0.08);
         
         // Star
         const starPoints = 8;
@@ -380,11 +380,11 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.4 + 1.0;
         const size = bonus.radius * pulse;
         
-        // Rainbow layers
-        for (let i = 0; i < 10; i++) {
-            const hue = ((bonus.rainbowPhase * 100 + i * 36) % 360) / 360;
+        // Rainbow layers - ridotti
+        for (let i = 0; i < 6; i++) {
+            const hue = ((bonus.rainbowPhase * 100 + i * 60) % 360) / 360;
             const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.5);
-            this.renderer.drawCircle(bonus.x, bonus.y, size * (4 + i * 0.35), [...rgb, (0.7 - i * 0.06) * pulse]);
+            this.renderer.drawCircle(bonus.x, bonus.y, size * (2.5 + i * 0.2), [...rgb, (0.4 - i * 0.05) * pulse]);
         }
         
         // Concentric rings
@@ -394,15 +394,15 @@ export class CollectibleRenderer extends IEntityRenderer {
             this.renderer.drawCircle(bonus.x, bonus.y, size * (1.2 - i * 0.15), [...rgb, 1.0]);
         }
         
-        // Orbiting particles
-        for (let i = 0; i < 30; i++) {
-            const orbitAngle = (i / 30) * Math.PI * 2 + time * 4;
-            const orbitRadius = size * (2.8 + Math.sin(time * 6 + i) * 0.5);
+        // Orbiting particles - ridotte
+        for (let i = 0; i < 15; i++) {
+            const orbitAngle = (i / 15) * Math.PI * 2 + time * 4;
+            const orbitRadius = size * (2.0 + Math.sin(time * 6 + i) * 0.3);
             const px = bonus.x + Math.cos(orbitAngle) * orbitRadius;
             const py = bonus.y + Math.sin(orbitAngle) * orbitRadius;
-            const hue = ((bonus.rainbowPhase * 100 + i * 12) % 360) / 360;
+            const hue = ((bonus.rainbowPhase * 100 + i * 24) % 360) / 360;
             const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.7);
-            this.renderer.drawCircle(px, py, 2.5 + Math.sin(time * 10 + i) * 1.2, [...rgb, 0.95]);
+            this.renderer.drawCircle(px, py, 2 + Math.sin(time * 10 + i) * 0.8, [...rgb, 0.8]);
         }
         
         // Core
@@ -414,33 +414,33 @@ export class CollectibleRenderer extends IEntityRenderer {
         const size = bonus.radius * pulse;
         const wingPhase = Math.sin(bonus.wingPhase);
         
-        // Glow esterno azzurro
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 3.5, bonus.glowColor, 5, 0.6 * pulse, 0.12);
+        // Glow esterno azzurro - ridotto
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 4, 0.4 * pulse, 0.08);
         
         // Cerchio principale
         this.renderer.drawCircle(bonus.x, bonus.y, size * 1.5, [...bonus.color, 0.4]);
         this.renderer.drawCircle(bonus.x, bonus.y, size * 1.2, [...bonus.color, 0.7]);
         this.renderer.drawCircle(bonus.x, bonus.y, size * 0.9, bonus.color);
         
-        // Ali animate (battito)
-        const wingWidth = size * 1.5;
+        // Ali animate (battito) - ridotte
+        const wingWidth = size * 1.2;
         const wingHeight = size * 0.8;
         const wingY = wingPhase * 8; // Movimento su/giù
         
         // Ala sinistra
         this.renderer.drawCircle(
-            bonus.x - size * 1.2, 
+            bonus.x - size * 1.0, 
             bonus.y + wingY, 
             wingWidth, 
-            [0.8, 0.95, 1.0, 0.6 + wingPhase * 0.2]
+            [0.8, 0.95, 1.0, 0.4 + wingPhase * 0.15]
         );
         
         // Ala destra
         this.renderer.drawCircle(
-            bonus.x + size * 1.2, 
+            bonus.x + size * 1.0, 
             bonus.y - wingY, 
             wingWidth, 
-            [0.8, 0.95, 1.0, 0.6 - wingPhase * 0.2]
+            [0.8, 0.95, 1.0, 0.4 - wingPhase * 0.15]
         );
         
         // Piume decorative
@@ -477,8 +477,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const size = bonus.radius * pulse;
         const energyPhase = bonus.energyPhase;
         
-        // Glow esterno verde elettrico pulsante
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 4.5, bonus.glowColor, 8, 0.8 * pulse, 0.1);
+        // Glow esterno verde elettrico pulsante - ridotto
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.2, bonus.glowColor, 5, 0.5 * pulse, 0.08);
         
         // Anelli energetici espandenti
         for (let i = 0; i < 3; i++) {
@@ -536,14 +536,14 @@ export class CollectibleRenderer extends IEntityRenderer {
             );
         }
         
-        // Particelle orbitanti elettriche
-        const particleCount = 8;
+        // Particelle orbitanti elettriche - ridotte
+        const particleCount = 6;
         for (let i = 0; i < particleCount; i++) {
             const orbitAngle = (i / particleCount) * Math.PI * 2 + bonus.orbitPhase;
-            const orbitRadius = size * (2.2 + Math.sin(energyPhase + i) * 0.3);
+            const orbitRadius = size * (1.8 + Math.sin(energyPhase + i) * 0.2);
             const px = bonus.x + Math.cos(orbitAngle) * orbitRadius;
             const py = bonus.y + Math.sin(orbitAngle) * orbitRadius;
-            const particleSize = 3 + Math.sin(energyPhase * 3 + i) * 1.5;
+            const particleSize = 2.5 + Math.sin(energyPhase * 3 + i) * 1;
             
             // Particella con scia
             this.renderer.drawCircle(px, py, particleSize, [0.5, 1.0, 0.6, 1.0]);

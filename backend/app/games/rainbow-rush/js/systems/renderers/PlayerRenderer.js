@@ -72,8 +72,8 @@ export class PlayerRenderer extends IEntityRenderer {
         for (const particle of trailParticles) {
             const alpha = particle.life / particle.maxLife;
             const particleColor = [...particle.color];
-            particleColor[3] = alpha * 0.7;
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 12, particleColor);
+            particleColor[3] = alpha * 0.4; // Ridotto da 0.7 per meno luminosità
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 8, particleColor); // Ridotto radius da 12 a 8
         }
     }
 
@@ -84,11 +84,11 @@ export class PlayerRenderer extends IEntityRenderer {
         for (const particle of boostParticles) {
             const alpha = particle.life / particle.maxLife;
             const particleColor = [...particle.color];
-            particleColor[3] = alpha * 0.9;
+            particleColor[3] = alpha * 0.6; // Ridotto da 0.9 per meno luminosità
             
             const glowColor = [...particle.color];
-            glowColor[3] = alpha * 0.3;
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size * 2, glowColor);
+            glowColor[3] = alpha * 0.15; // Ridotto da 0.3
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size * 1.5, glowColor); // Ridotto da *2
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size, particleColor);
         }
     }
@@ -100,11 +100,11 @@ export class PlayerRenderer extends IEntityRenderer {
         for (const particle of turboParticles) {
             const alpha = particle.life;
             const particleColor = [...particle.color];
-            particleColor[3] = alpha * 0.8;
+            particleColor[3] = alpha * 0.5; // Ridotto da 0.8
             
-            const glowColor = [1.0, 0.9, 0.3, alpha * 0.4];
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 15, glowColor);
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 8, particleColor);
+            const glowColor = [1.0, 0.9, 0.3, alpha * 0.2]; // Ridotto da 0.4
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 10, glowColor); // Ridotto da 15
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 6, particleColor); // Ridotto da 8
         }
     }
 
@@ -115,21 +115,21 @@ export class PlayerRenderer extends IEntityRenderer {
         for (const particle of flightParticles) {
             const alpha = particle.life;
             const particleColor = [...particle.color];
-            particleColor[3] = alpha * 0.7;
+            particleColor[3] = alpha * 0.5; // Ridotto da 0.7
             
-            const glowColor = [0.3, 0.8, 1.0, alpha * 0.3];
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 12, glowColor);
-            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 6, particleColor);
+            const glowColor = [0.3, 0.8, 1.0, alpha * 0.15]; // Ridotto da 0.3
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 8, glowColor); // Ridotto da 12
+            this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 5, particleColor); // Ridotto da 6
         }
     }
 
     renderDamageFlash(x, y, radius, flashValue) {
         const flashIntensity = Math.min(flashValue * 2, 1.0);
-        const redFlash = [1.0, 0.1, 0.1, flashIntensity * 0.6];
-        this.renderer.drawCircle(x, y, radius * 2.5, redFlash);
+        const redFlash = [1.0, 0.1, 0.1, flashIntensity * 0.3]; // Ridotto da 0.6
+        this.renderer.drawCircle(x, y, radius * 1.8, redFlash); // Ridotto da 2.5
 
-        const redOverlay = [1.0, 0.2, 0.2, flashIntensity * 0.8];
-        this.renderer.drawCircle(x, y, radius * 1.5, redOverlay);
+        const redOverlay = [1.0, 0.2, 0.2, flashIntensity * 0.5]; // Ridotto da 0.8
+        this.renderer.drawCircle(x, y, radius * 1.3, redOverlay); // Ridotto da 1.5
     }
 
     renderDeadState(x, y, radius, color) {
@@ -141,25 +141,25 @@ export class PlayerRenderer extends IEntityRenderer {
     renderTurboEffects(player, time, x, y, radius) {
         if (!player.isTurboActive) return;
 
-        const turboPulse = RenderingUtils.getPulse(time, 8, 0.7, 1.0);
-        const turboFastPulse = RenderingUtils.getPulse(time, 12, 0.6, 1.0);
-        const superFastPulse = RenderingUtils.getPulse(time, 20, 0.5, 1.0);
+        const turboPulse = RenderingUtils.getPulse(time, 8, 0.5, 0.8); // Range ridotto
+        const turboFastPulse = RenderingUtils.getPulse(time, 12, 0.4, 0.7); // Range ridotto
+        const superFastPulse = RenderingUtils.getPulse(time, 20, 0.3, 0.6); // Range ridotto
         
-        // Rainbow halos
-        this.renderer.drawCircle(x, y, radius + 100 * turboPulse, [1.0, 0.3, 0.8, 0.4 * turboPulse]);
-        this.renderer.drawCircle(x, y, radius + 80 * turboFastPulse, [1.0, 0.6, 0.2, 0.5 * turboFastPulse]);
-        this.renderer.drawCircle(x, y, radius + 50 * superFastPulse, [1.0, 0.9, 0.3, 0.7 * superFastPulse]);
+        // Rainbow halos - RIDOTTI drasticamente
+        this.renderer.drawCircle(x, y, radius + 60 * turboPulse, [1.0, 0.3, 0.8, 0.2 * turboPulse]); // Ridotto radius e alpha
+        this.renderer.drawCircle(x, y, radius + 45 * turboFastPulse, [1.0, 0.6, 0.2, 0.25 * turboFastPulse]); // Ridotto
+        this.renderer.drawCircle(x, y, radius + 30 * superFastPulse, [1.0, 0.9, 0.3, 0.35 * superFastPulse]); // Ridotto
         
-        // Speed lines
-        for (let i = 0; i < 16; i++) {
-            const lineLength = 80 + i * 30;
-            const lineY = y + (i - 8) * 6;
-            const lineAlpha = (1 - i / 16) * 0.8 * turboPulse;
+        // Speed lines - RIDOTTE
+        for (let i = 0; i < 10; i++) { // Ridotto da 16
+            const lineLength = 60 + i * 20; // Ridotto
+            const lineY = y + (i - 5) * 5; // Ridotto spacing
+            const lineAlpha = (1 - i / 10) * 0.5 * turboPulse; // Ridotto alpha
             const lineColor = [1.0, 0.7 + Math.random() * 0.3, 0.2, lineAlpha];
             
-            for (let j = 0; j < 8; j++) {
-                const lx = x - lineLength + j * 4;
-                this.renderer.drawCircle(lx, lineY, 5 - j * 0.5, lineColor);
+            for (let j = 0; j < 6; j++) { // Ridotto da 8
+                const lx = x - lineLength + j * 3;
+                this.renderer.drawCircle(lx, lineY, 4 - j * 0.4, lineColor); // Ridotto size
             }
         }
 
@@ -171,10 +171,10 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderEnergyRings(player, time, x, y, radius) {
-        for (let ring = 0; ring < 5; ring++) {
+        for (let ring = 0; ring < 3; ring++) { // Ridotto da 5 a 3
             const ringRotation = player.animationTime * (5 + ring * 3);
-            const ringRadius = 50 + ring * 18;
-            const numPoints = 16;
+            const ringRadius = 40 + ring * 15; // Ridotto spacing
+            const numPoints = 12; // Ridotto da 16
             
             for (let i = 0; i < numPoints; i++) {
                 const angle = ringRotation + (i * Math.PI * 2 / numPoints);
@@ -190,23 +190,23 @@ export class PlayerRenderer extends IEntityRenderer {
                     r = 0.3; g = 1.0; b = 0.9;
                 }
                 
-                this.renderer.drawCircle(px, py, 10, [r, g, b, 0.6]);
-                this.renderer.drawCircle(px, py, 5, [1.0, 1.0, 1.0, 0.9]);
+                this.renderer.drawCircle(px, py, 8, [r, g, b, 0.45]); // Ridotto alpha da 0.6
+                this.renderer.drawCircle(px, py, 4, [1.0, 1.0, 1.0, 0.7]); // Ridotto da 5 e alpha da 0.9
             }
         }
     }
 
     renderSparkles(player, time, x, y, radius) {
-        for (let i = 0; i < 12; i++) {
-            const starAngle = player.animationTime * 6 + (i * Math.PI / 6);
-            const starDist = 70 + Math.sin(player.animationTime * 8 + i) * 20;
+        for (let i = 0; i < 6; i++) { // Ridotto da 12 a 6
+            const starAngle = player.animationTime * 6 + (i * Math.PI / 3); // Adattato spacing
+            const starDist = 60 + Math.sin(player.animationTime * 8 + i) * 15; // Ridotto da 70+20
             const sx = x + Math.cos(starAngle) * starDist;
             const sy = y + Math.sin(starAngle) * starDist;
-            const starSize = 8 + Math.sin(player.animationTime * 10 + i) * 4;
+            const starSize = 6 + Math.sin(player.animationTime * 10 + i) * 3; // Ridotto da 8+4
             
-            const sparkleAlpha = 0.6 + Math.sin(time * 8 + i) * 0.4;
+            const sparkleAlpha = 0.4 + Math.sin(time * 8 + i) * 0.3; // Ridotto da 0.6+0.4
             this.renderer.drawCircle(sx, sy, starSize, [1.0, 1.0, 0.8, sparkleAlpha]);
-            this.renderer.drawCircle(sx, sy, starSize * 0.5, [1.0, 1.0, 1.0, 1.0]);
+            this.renderer.drawCircle(sx, sy, starSize * 0.5, [1.0, 1.0, 1.0, 0.8]); // Ridotto alpha da 1.0
         }
     }
 
@@ -214,36 +214,36 @@ export class PlayerRenderer extends IEntityRenderer {
         const activePowerups = this.getActivePowerups(player);
         if (activePowerups.length === 0) return;
 
-        const pulse = Math.abs(Math.sin(player.animationTime * 5)) * 0.4 + 0.6;
-        const fastPulse = Math.abs(Math.sin(player.animationTime * 8)) * 0.3 + 0.7;
+        const pulse = Math.abs(Math.sin(player.animationTime * 5)) * 0.3 + 0.5; // Ridotto range
+        const fastPulse = Math.abs(Math.sin(player.animationTime * 8)) * 0.2 + 0.6; // Ridotto
 
         activePowerups.forEach((powerup, index) => {
             const rotationOffset = player.animationTime * 3 + index * Math.PI * 2 / activePowerups.length;
 
-            // 1. ENORME ALONE ESTERNO pulsante
-            const outerGlowSize = 50 * pulse;
+            // 1. ALONE ESTERNO ridotto
+            const outerGlowSize = 25 * pulse; // Ridotto da 50
             const outerGlow = [...powerup.color];
-            outerGlow[3] = 0.25 * pulse;
+            outerGlow[3] = 0.12 * pulse; // Ridotto da 0.25
             this.renderer.drawCircle(x, y, radius + outerGlowSize, outerGlow);
 
-            // 2. ALONE MEDIO
-            const midGlowSize = 30 * fastPulse;
+            // 2. ALONE MEDIO ridotto
+            const midGlowSize = 15 * fastPulse; // Ridotto da 30
             const midGlow = [...powerup.color];
-            midGlow[3] = 0.4 * fastPulse;
+            midGlow[3] = 0.2 * fastPulse; // Ridotto da 0.4
             this.renderer.drawCircle(x, y, radius + midGlowSize, midGlow);
 
-            // 3. CONTORNO COLORATO SPESSO
-            const borderThickness = 5;
+            // 3. CONTORNO COLORATO più sottile
+            const borderThickness = 3; // Ridotto da 5
             for (let i = 0; i < borderThickness; i++) {
                 const borderColor = [...powerup.color];
-                borderColor[3] = 0.8 - (i * 0.15);
-                this.renderer.drawCircle(x, y, radius + 8 + i, borderColor);
+                borderColor[3] = 0.7 - (i * 0.2); // Ridotto da 0.8
+                this.renderer.drawCircle(x, y, radius + 6 + i, borderColor); // Ridotto da 8
             }
 
-            // 4. PARTICELLE ORBITANTI GRANDI
+            // 4. PARTICELLE ORBITANTI ridotte
             this.renderOrbitingParticles(x, y, rotationOffset, powerup.color, index, pulse);
             
-            // 5. RAGGI DI LUCE rotanti
+            // 5. RAGGI DI LUCE ridotti
             this.renderLightRays(player, time, x, y, radius, rotationOffset, powerup.color, pulse);
         });
     }
@@ -257,38 +257,38 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderOrbitingParticles(x, y, rotation, color, indexOffset, pulse) {
-        const numParticles = 8;
+        const numParticles = 6; // Ridotto da 8
         for (let i = 0; i < numParticles; i++) {
             const angle = rotation + (i * Math.PI * 2 / numParticles);
-            const orbitRadius = 35 + indexOffset * 8;
+            const orbitRadius = 30 + indexOffset * 6; // Ridotto da 35 + 8
             const px = x + Math.cos(angle) * orbitRadius;
             const py = y + Math.sin(angle) * orbitRadius;
 
             const particleGlow = [...color];
-            particleGlow[3] = 0.4;
-            this.renderer.drawCircle(px, py, 8, particleGlow);
+            particleGlow[3] = 0.2; // Ridotto da 0.4
+            this.renderer.drawCircle(px, py, 6, particleGlow); // Ridotto da 8
 
             const particleColor = [...color];
-            particleColor[3] = 0.9;
-            this.renderer.drawCircle(px, py, 5, particleColor);
+            particleColor[3] = 0.8; // Ridotto da 0.9
+            this.renderer.drawCircle(px, py, 4, particleColor); // Ridotto da 5
         }
     }
 
     renderLightRays(player, time, x, y, radius, rotation, color, pulse) {
-        for (let i = 0; i < 6; i++) {
-            const rayAngle = rotation * 0.7 + (i * Math.PI * 2 / 6);
-            const rayLength = 25 + Math.sin(player.animationTime * 6 + i) * 8;
+        for (let i = 0; i < 4; i++) { // Ridotto da 6 a 4
+            const rayAngle = rotation * 0.7 + (i * Math.PI * 2 / 4);
+            const rayLength = 18 + Math.sin(player.animationTime * 6 + i) * 6; // Ridotto da 25+8
             const rayEndX = x + Math.cos(rayAngle) * (radius + rayLength);
             const rayEndY = y + Math.sin(rayAngle) * (radius + rayLength);
 
             const rayColor = [...color];
-            rayColor[3] = 0.6 * pulse;
+            rayColor[3] = 0.35 * pulse; // Ridotto da 0.6
 
-            for (let j = 0; j < 5; j++) {
-                const t = j / 5;
+            for (let j = 0; j < 4; j++) { // Ridotto da 5 a 4
+                const t = j / 4;
                 const rx = x + (rayEndX - x) * t;
                 const ry = y + (rayEndY - y) * t;
-                const rSize = 4 - j * 0.6;
+                const rSize = 3 - j * 0.5; // Ridotto da 4
                 const rColor = [...rayColor];
                 rColor[3] = rayColor[3] * (1 - t * 0.7);
                 this.renderer.drawCircle(rx, ry, rSize, rColor);
@@ -299,24 +299,24 @@ export class PlayerRenderer extends IEntityRenderer {
     renderBoostEffect(player, time, x, y, radius) {
         if (!player.boostActive) return;
 
-        const boostPulse = Math.abs(Math.sin(player.animationTime * 10)) * 0.5 + 0.5;
+        const boostPulse = Math.abs(Math.sin(player.animationTime * 10)) * 0.4 + 0.4; // Ridotto range
         
-        // Enormi aloni cyan pulsanti
-        this.renderer.drawCircle(x, y, radius * 4, [0.0, 1.0, 0.9, boostPulse * 0.4]);
-        this.renderer.drawCircle(x, y, radius * 2.5, [0.0, 0.8, 1.0, boostPulse * 0.3]);
+        // Aloni cyan ridotti
+        this.renderer.drawCircle(x, y, radius * 2.5, [0.0, 1.0, 0.9, boostPulse * 0.2]); // Ridotto da *4 e 0.4
+        this.renderer.drawCircle(x, y, radius * 1.8, [0.0, 0.8, 1.0, boostPulse * 0.18]); // Ridotto da *2.5 e 0.3
         
-        // Strisce di velocità dietro (speed lines)
-        for (let i = 0; i < 5; i++) {
-            const lineX = x - radius - i * 15;
-            const lineLength = 20 + i * 5;
-            const lineAlpha = (1 - i * 0.15) * boostPulse;
+        // Strisce di velocità dietro (speed lines) - ridotte
+        for (let i = 0; i < 4; i++) { // Ridotto da 5
+            const lineX = x - radius - i * 12; // Ridotto spacing
+            const lineLength = 15 + i * 4; // Ridotto da 20+5
+            const lineAlpha = (1 - i * 0.2) * boostPulse;
             const lineColor = [0.0, 1.0, 0.9, lineAlpha];
             
             this.renderer.drawRect(lineX - lineLength, y - 2, lineLength, 4, lineColor);
         }
         
-        // Tint cyan sul corpo del player
-        this.renderer.drawCircle(x, y, radius * 1.3, [0.0, 1.0, 0.9, 0.3 * boostPulse]);
+        // Tint cyan sul corpo del player - ridotto
+        this.renderer.drawCircle(x, y, radius * 1.15, [0.0, 1.0, 0.9, 0.2 * boostPulse]); // Ridotto da *1.3 e 0.3
     }
 
     renderBody(player, x, y, radius) {
@@ -480,9 +480,9 @@ export class PlayerRenderer extends IEntityRenderer {
         this.renderWing(x, y, wingFlap, -1, time); // Left wing
         this.renderWing(x, y, wingFlap, 1, time); // Right wing
         
-        const flightAura = Math.sin(player.flightFloatPhase || 0) * 0.3 + 0.7;
-        this.renderer.drawCircle(x, y, player.width, [0.4, 0.85, 1.0, 0.3 * flightAura]);
-        this.renderer.drawCircle(x, y, player.width * 0.75, [0.5, 0.9, 1.0, 0.4 * flightAura]);
+        const flightAura = Math.sin(player.flightFloatPhase || 0) * 0.2 + 0.5; // Ridotto range
+        this.renderer.drawCircle(x, y, player.width, [0.4, 0.85, 1.0, 0.15 * flightAura]); // Ridotto alpha
+        this.renderer.drawCircle(x, y, player.width * 0.75, [0.5, 0.9, 1.0, 0.2 * flightAura]); // Ridotto
     }
 
     renderWing(x, y, wingFlap, side, time) {
@@ -513,18 +513,18 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderShield(player, time, x, y, radius) {
-        const shieldRadius = radius * 2;
-        const shieldPulse = Math.sin(player.animationTime * 8) * 0.15 + 1.0;
+        const shieldRadius = radius * 1.7; // Ridotto da 2
+        const shieldPulse = Math.sin(player.animationTime * 8) * 0.1 + 0.9; // Ridotto range
         const sides = 8;
         
-        // Outer auras
-        for (let i = 0; i < 3; i++) {
-            const auraRadius = shieldRadius * (1.5 + i * 0.3) * shieldPulse;
-            const auraColor = [0.0, 1.0, 0.5, (0.3 - i * 0.08) * shieldPulse];
+        // Outer auras - RIDOTTE drasticamente
+        for (let i = 0; i < 2; i++) { // Solo 2 invece di 3
+            const auraRadius = shieldRadius * (1.2 + i * 0.2) * shieldPulse; // Ridotto
+            const auraColor = [0.0, 1.0, 0.5, (0.15 - i * 0.05) * shieldPulse]; // Ridotto opacità
             this.renderer.drawCircle(x, y, auraRadius, auraColor);
         }
         
-        // Hexagon
+        // Hexagon - più definito
         for (let i = 0; i < sides; i++) {
             const angle1 = (Math.PI * 2 * i) / sides + player.shieldRotation;
             const angle2 = (Math.PI * 2 * (i + 1)) / sides + player.shieldRotation;
@@ -534,25 +534,25 @@ export class PlayerRenderer extends IEntityRenderer {
             const x2 = x + Math.cos(angle2) * shieldRadius * shieldPulse;
             const y2 = y + Math.sin(angle2) * shieldRadius * shieldPulse;
             
-            const shieldColor = [0.0, 1.0, 0.7, 0.8];
-            this.renderer.drawCircle(x1, y1, 4, shieldColor);
+            const shieldColor = [0.0, 1.0, 0.7, 0.65]; // Ridotto opacità da 0.8
+            this.renderer.drawCircle(x1, y1, 3.5, shieldColor); // Ridotto da 4
             
-            const steps = 5;
+            const steps = 4; // Ridotto da 5
             for (let s = 0; s <= steps; s++) {
                 const t = s / steps;
                 const px = x1 + (x2 - x1) * t;
                 const py = y1 + (y2 - y1) * t;
-                this.renderer.drawCircle(px, py, 2, shieldColor);
+                this.renderer.drawCircle(px, py, 1.8, shieldColor); // Ridotto da 2
             }
         }
         
-        // Sparkles
-        for (let i = 0; i < 12; i++) {
-            const sparkAngle = (Math.PI * 2 * i) / 12 + player.shieldRotation * 2;
+        // Sparkles - RIDOTTE
+        for (let i = 0; i < 8; i++) { // Ridotto da 12 a 8
+            const sparkAngle = (Math.PI * 2 * i) / 8 + player.shieldRotation * 2;
             const sparkDist = shieldRadius * shieldPulse;
             const sx = x + Math.cos(sparkAngle) * sparkDist;
             const sy = y + Math.sin(sparkAngle) * sparkDist;
-            this.renderer.drawCircle(sx, sy, 3, [1.0, 1.0, 1.0, 0.9 * shieldPulse]);
+            this.renderer.drawCircle(sx, sy, 2.5, [1.0, 1.0, 1.0, 0.7 * shieldPulse]); // Ridotto size e opacità
         }
     }
 }

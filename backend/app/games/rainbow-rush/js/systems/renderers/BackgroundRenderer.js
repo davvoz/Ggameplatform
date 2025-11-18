@@ -30,19 +30,19 @@ export class BackgroundRenderer {
                 size: 1.5,
                 twinklePhase: Math.random() * Math.PI * 2,
                 twinkleSpeed: 3,
-                brightness: 0.6,
+                brightness: 0.4, // Ridotto da 0.6
                 color: [1.0, 1.0, 0.9]
             });
         }
         
-        // Mist
-        for (let i = 0; i < 3; i++) {
+        // Mist - RIDOTTE da 3 a 1
+        for (let i = 0; i < 1; i++) {
             const hue = Math.random();
             this.ambientParticles.push({
                 type: 'mist',
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
-                size: 80,
+                size: 60, // Ridotto da 80
                 vx: (Math.random() - 0.5) * 15,
                 vy: (Math.random() - 0.5) * 10,
                 hue: hue,
@@ -50,8 +50,8 @@ export class BackgroundRenderer {
             });
         }
         
-        // Energy particles
-        for (let i = 0; i < 8; i++) {
+        // Energy particles - RIDOTTE da 8 a 5
+        for (let i = 0; i < 5; i++) {
             this.ambientParticles.push({
                 type: 'energy',
                 x: Math.random() * this.canvasWidth,
@@ -210,7 +210,7 @@ export class BackgroundRenderer {
         if (!particle.puffs) return;
         
         for (const puff of particle.puffs) {
-            this.renderer.drawCircle(particle.x + puff.offsetX + 2, particle.y + puff.offsetY + 2, puff.radius, [0.8, 0.8, 0.9, 0.3]);
+            this.renderer.drawCircle(particle.x + puff.offsetX + 2, particle.y + puff.offsetY + 2, puff.radius, [0.6, 0.6, 0.7, 0.2]); // Ombra più scura
         }
         
         for (const puff of particle.puffs) {
@@ -220,7 +220,7 @@ export class BackgroundRenderer {
         for (let i = 0; i < Math.min(2, particle.puffs.length); i++) {
             const puff = particle.puffs[i];
             this.renderer.drawCircle(particle.x + puff.offsetX - puff.radius * 0.3, particle.y + puff.offsetY - puff.radius * 0.3, 
-                                    puff.radius * 0.3, [1.0, 1.0, 1.0, 0.5]);
+                                    puff.radius * 0.3, [0.95, 0.95, 0.98, 0.3]); // Highlight meno bianco
         }
     }
 
@@ -230,12 +230,10 @@ export class BackgroundRenderer {
         
         if (particle.type === 'star') {
             alpha = Math.abs(Math.sin(particle.twinkle || 0)) * 0.8 + 0.2;
-        } else if (particle.type === 'firefly') {
-            alpha = Math.abs(Math.sin(time / 0.4 + (particle.glowPhase || 0))) * 0.6 + 0.4;
-            this.renderer.drawCircle(particle.x, particle.y, particle.radius * 3, [1.0, 1.0, 0.3, alpha * 0.3]);
-        }
-        
-        const particleColor = [...particle.color];
+            } else if (particle.type === 'firefly') {
+                alpha = Math.abs(Math.sin(time / 0.4 + (particle.glowPhase || 0))) * 0.4 + 0.3; // Ridotto range
+                this.renderer.drawCircle(particle.x, particle.y, particle.radius * 2.5, [0.9, 0.9, 0.3, alpha * 0.2]); // Alone più scuro
+            }        const particleColor = [...particle.color];
         particleColor[3] = alpha;
         this.renderer.drawCircle(particle.x, particle.y, particle.radius, particleColor);
     }
@@ -265,22 +263,22 @@ export class BackgroundRenderer {
         this.ambientParticles.forEach(p => {
             if (p.type === 'star') {
                 const twinkle = Math.sin(time * p.twinkleSpeed + p.twinklePhase) * 0.5 + 0.5;
-                const alpha = p.brightness * twinkle * 0.6;
+                const alpha = p.brightness * twinkle * 0.4; // Ridotto da 0.6
                 const color = [...p.color, alpha];
                 
-                this.renderer.drawCircle(p.x, p.y, p.size * 2, [...p.color, alpha * 0.3]);
+                this.renderer.drawCircle(p.x, p.y, p.size * 1.5, [...p.color, alpha * 0.2]); // Ridotto alone
                 this.renderer.drawCircle(p.x, p.y, p.size, color);
-                this.renderer.drawCircle(p.x, p.y, p.size * 0.5, [1.0, 1.0, 1.0, twinkle * 0.9]);
+                this.renderer.drawCircle(p.x, p.y, p.size * 0.5, [1.0, 1.0, 1.0, twinkle * 0.6]); // Ridotto core
             } else if (p.type === 'mist') {
                 const pulse = Math.sin(time * 2 + p.pulsePhase) * 0.3 + 0.5;
                 const rgb = RenderingUtils.hslToRgb(p.hue, 0.7, 0.5);
-                const alpha = pulse * 0.15;
+                const alpha = pulse * 0.08; // Ridotto DRASTICAMENTE da 0.15
                 this.renderer.drawCircle(p.x, p.y, p.size, [...rgb, alpha]);
             } else if (p.type === 'energy') {
-                const alpha = (p.life / p.maxLife) * 0.5;
+                const alpha = (p.life / p.maxLife) * 0.3; // Ridotto da 0.5
                 const color = [...p.color, alpha];
                 
-                this.renderer.drawCircle(p.x, p.y, p.size * 2, [...p.color, alpha * 0.3]);
+                this.renderer.drawCircle(p.x, p.y, p.size * 1.5, [...p.color, alpha * 0.15]); // Ridotto alone
                 this.renderer.drawCircle(p.x, p.y, p.size, color);
             }
         });

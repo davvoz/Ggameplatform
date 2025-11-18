@@ -660,6 +660,16 @@ export class GameController {
             this.player.height,
             this.particleSystem
         );
+        
+        // Floating text GAME OVER gigante al centro
+        this.animationController.createFloatingText(
+            '💀 GAME OVER 💀', 
+            400, 
+            300, 
+            [1.0, 0.2, 0.2, 1.0], 
+            this.entityManager,
+            3.0 // Durata più lunga
+        );
 
         // Stop background music and play death sound
         this.audioManager.stopBackgroundMusic();

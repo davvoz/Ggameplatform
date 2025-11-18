@@ -167,13 +167,17 @@ export class SafetyPlatformSystem {
             this.rescueSpawnTimer = 0;
         }
         
-        // After 3 seconds, safety is gone - return to IDLE
+        // After 3 seconds, safety dissolves completely - player dies
         if (this.timeOnPlatform >= this.config.TIME_BEFORE_DISSOLVE) {
-            console.log('💥 Safety timeout! Player must jump or die!');
+            console.log('💥 Safety timeout! Platform dissolved - player dies!');
+            // Azzera i charges per far sparire completamente la safety
+            this.charges = 0;
+            // Torna a IDLE ma senza charges (piattaforma non collidibile)
             this.state = 'IDLE';
             this.timeOnPlatform = 0;
             this.rescueSpawnTimer = 0;
             this.hasSpawnedInitialRescue = false;
+            // Il player cadrà attraverso la piattaforma e morirà
         }
     }
 

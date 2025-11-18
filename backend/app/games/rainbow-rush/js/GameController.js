@@ -472,6 +472,9 @@ export class GameController {
             ...this.entityManager.shieldBonuses,
             ...this.entityManager.multiplierBonuses,
             ...this.entityManager.rainbowBonuses,
+            ...this.entityManager.flightBonuses,
+            ...this.entityManager.rechargeBonuses,
+            ...this.entityManager.heartRechargeBonuses,
             ...this.entityManager.powerupParticles,
             ...this.entityManager.boostParticles
         ];
@@ -551,6 +554,9 @@ export class GameController {
         this.entityManager.rainbowBonuses = this.entityManager.rainbowBonuses.filter(b => 
             b.x + b.radius > leftBound
         );
+        this.entityManager.heartRechargeBonuses = this.entityManager.heartRechargeBonuses.filter(b => 
+            b.x + b.radius > leftBound
+        );
     }
 
     showMenu() {
@@ -577,6 +583,7 @@ export class GameController {
         this.entityManager.shieldBonuses = [];
         this.entityManager.multiplierBonuses = [];
         this.entityManager.rainbowBonuses = [];
+        this.entityManager.heartRechargeBonuses = [];
         this.entityManager.powerupParticles = [];
         this.entityManager.boostParticles = [];
         this.entityManager.floatingTexts = [];

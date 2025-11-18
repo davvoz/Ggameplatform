@@ -37,7 +37,7 @@ export class RenderingSystem {
         }
         
         // Initialize specialized renderers
-        this.factory = new RendererFactory(this.renderer);
+        this.factory = new RendererFactory(this.renderer, this.textCtx);
         this.backgroundRenderer = new BackgroundRenderer(this.renderer, canvasWidth, canvasHeight);
         this.animationRenderer = new AnimationRenderer(this.renderer, this.textCtx, canvasWidth, canvasHeight);
         this.particleRenderer = new ParticleRenderer(this.renderer);

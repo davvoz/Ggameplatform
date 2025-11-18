@@ -31,12 +31,15 @@ export class SpawnManager {
 
         this.rainbowTimer = 0;
         this.rainbowInterval = 40;
-        
+
         this.flightBonusTimer = 0;
         this.flightBonusInterval = 22; // Ogni 22 secondi
-        
+
         this.rechargeBonusTimer = 0;
         this.rechargeBonusInterval = 30; // Ogni 30 secondi
+
+        this.heartRechargeBonusTimer = 0;
+        this.heartRechargeBonusInterval = 35; // Ogni 35 secondi
     }
 
     /**
@@ -62,7 +65,7 @@ export class SpawnManager {
             // Emergency check to ensure minimum 3 platforms (only every 0.5s)
             if (this.platformTimer % 0.5 < deltaTime) {
                 const visibleCount = this.entityManager.getVisiblePlatformCount(this.dims.width);
-                
+
                 // Emergency spawn if less than 3 visible platforms
                 if (visibleCount < 3) {
                     this.spawnPlatform(scoreSystem);
@@ -116,13 +119,31 @@ export class SpawnManager {
             this.spawnRainbowBonus();
             this.rainbowTimer = 0;
         }
-        
+
         this.flightBonusTimer += deltaTime;
         if (this.flightBonusTimer >= this.flightBonusInterval) {
             this.spawnFlightBonus();
             this.flightBonusTimer = 0;
         }
-        
+
+        this.rechargeBonusTimer += deltaTime;
+        if (this.rechargeBonusTimer >= this.rechargeBonusInterval) {
+            this.spawnRechargeBonus();
+            this.rechargeBonusTimer = 0;
+        }
+
+        this.heartRechargeBonusTimer += deltaTime;
+        if (this.heartRechargeBonusTimer >= this.heartRechargeBonusInterval) {
+            this.spawnHeartRechargeBonus();
+            this.heartRechargeBonusTimer = 0;
+        }
+
+        this.flightBonusTimer += deltaTime;
+        if (this.flightBonusTimer >= this.flightBonusInterval) {
+            this.spawnFlightBonus();
+            this.flightBonusTimer = 0;
+        }
+
         this.rechargeBonusTimer += deltaTime;
         if (this.rechargeBonusTimer >= this.rechargeBonusInterval) {
             this.spawnRechargeBonus();
@@ -169,8 +190,8 @@ export class SpawnManager {
         }
 
         // Maybe spawn boost (not on bouncy or spring)
-        if (platform.platformType !== 'BOUNCY' && 
-            platform.platformType !== 'SPRING' && 
+        if (platform.platformType !== 'BOUNCY' &&
+            platform.platformType !== 'SPRING' &&
             this.levelGenerator.shouldGenerateBoost()) {
             const boost = this.levelGenerator.generateBoost(
                 platform.x, platform.y, platform.width, platform.velocity
@@ -194,7 +215,7 @@ export class SpawnManager {
 
         if (validPlatforms.length > 0) {
             const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
-            
+
             // Get colors, duration, and cooldown based on powerup type
             let color, glowColor, duration, cooldown;
             switch (randomType) {
@@ -222,7 +243,7 @@ export class SpawnManager {
                     duration = 5000;
                     cooldown = 15000;
             }
-            
+
             // Create powerup object with duration and cooldown
             const powerup = {
                 x: platform.x + platform.width / 2,
@@ -242,7 +263,7 @@ export class SpawnManager {
                 duration: duration,
                 cooldown: cooldown
             };
-            
+
             this.entityManager.addEntity('powerups', powerup);
         }
     }
@@ -353,7 +374,7 @@ export class SpawnManager {
             orbitPhase: 0 // Fase orbita particelle
         });
     }
-    
+
     /**
      * Spawn flight bonus (instant flight power)
      */
@@ -375,7 +396,7 @@ export class SpawnManager {
             wingPhase: 0 // Per animazione ali
         });
     }
-    
+
     /**
      * Spawn rainbow bonus
      */
@@ -398,6 +419,29 @@ export class SpawnManager {
     }
 
     /**
+     * Spawn heart recharge bonus (ricarica tutti i cuoricini)
+     */
+    spawnHeartRechargeBonus() {
+        const x = this.dims.width + 50;
+        const y = 100 + Math.random() * (this.dims.height - 300);
+
+        this.entityManager.addEntity('heartRechargeBonuses', {
+            x, y,
+            width: 40,
+            height: 40,
+            velocity: -200,
+            type: 'heartrecharge',
+            rotation: 0,
+            color: [1.0, 0.2, 0.5, 1.0], // Rosa/Rosso intenso
+            glowColor: [1.0, 0.5, 0.7, 0.9],
+            pulsePhase: 0,
+            radius: 20,
+            heartPhase: 0, // Fase battito cuore
+            glowPhase: 0 // Fase glow pulsante
+        });
+    }
+
+    /**
      * Reset all timers
      */
     reset() {
@@ -409,5 +453,8 @@ export class SpawnManager {
         this.shieldTimer = 0;
         this.multiplierTimer = 0;
         this.rainbowTimer = 0;
+        this.flightBonusTimer = 0;
+        this.rechargeBonusTimer = 0;
+        this.heartRechargeBonusTimer = 0;
     }
 }

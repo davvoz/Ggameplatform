@@ -108,6 +108,7 @@ export class Player {
         // Turbo boost immortal mode
         this.isTurboActive = false;
         this.turboTimeRemaining = 0;
+        this.turboInitialDuration = 0; // Salva la durata totale iniziale
         this.turboCooldownRemaining = 0;
         this.instantFlightActive = false;
         this.instantFlightDuration = 0;
@@ -119,6 +120,7 @@ export class Player {
         // Flight horizontal mode - controllo volo orizzontale
         this.isFlightActive = false;
         this.flightTimeRemaining = 0;
+        this.flightInitialDuration = 0; // Salva la durata totale iniziale
         this.flightCooldownRemaining = 0;
         this.flightCooldownDuration = 15; // 15 seconds cooldown
         this.flightBaseDuration = 6; // 6 seconds flight
@@ -257,7 +259,9 @@ export class Player {
             if (this.turboTimeRemaining <= 0) {
                 this.isTurboActive = false;
                 this.turboTimeRemaining = 0;
+                // Inizia il cooldown SOLO quando il turbo finisce
                 this.turboCooldownRemaining = this.turboCooldownDuration;
+                console.log(`⏱️ Turbo finito! Cooldown di ${this.turboCooldownDuration}s iniziato`);
             }
             
             // Genera particelle turbo trail
@@ -271,12 +275,12 @@ export class Player {
                 color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
             });
         }
-        
-        // Update turbo cooldown
-        if (this.turboCooldownRemaining > 0) {
+        // Update turbo cooldown SOLO quando il turbo NON è attivo
+        else if (this.turboCooldownRemaining > 0) {
             this.turboCooldownRemaining -= deltaTime;
             if (this.turboCooldownRemaining < 0) {
                 this.turboCooldownRemaining = 0;
+                console.log(`✅ Cooldown turbo completato! Turbo pronto`);
             }
         }
         
@@ -295,6 +299,7 @@ export class Player {
             if (this.flightTimeRemaining <= 0) {
                 this.isFlightActive = false;
                 this.flightTimeRemaining = 0;
+                // Inizia il cooldown SOLO quando il volo finisce
                 this.flightCooldownRemaining = this.flightCooldownDuration;
                 this.flightTargetY = this.y; // Reset target
             }
@@ -329,9 +334,8 @@ export class Player {
                 });
             }
         }
-        
-        // Update flight cooldown
-        if (this.flightCooldownRemaining > 0) {
+        // Update flight cooldown SOLO quando il volo NON è attivo
+        else if (this.flightCooldownRemaining > 0) {
             this.flightCooldownRemaining -= deltaTime;
             if (this.flightCooldownRemaining < 0) {
                 this.flightCooldownRemaining = 0;
@@ -507,6 +511,9 @@ export class Player {
         if (this.y > this.canvasHeight && !this.powerups.immortality && !this.isTurboActive) {
             console.log('Player is dead! y:', this.y, 'canvasHeight:', this.canvasHeight);
             this.alive = false;
+            // Azzera i cooldown quando muori
+            this.turboCooldownRemaining = 0;
+            this.flightCooldownRemaining = 0;
         }
         
         // Update trail particles for powerups
@@ -569,6 +576,9 @@ export class Player {
         
         if (this.health <= 0) {
             this.alive = false;
+            // Azzera i cooldown quando muori
+            this.turboCooldownRemaining = 0;
+            this.flightCooldownRemaining = 0;
         }
         
         return true; // Danno inflitto
@@ -828,9 +838,12 @@ export class Player {
         
         // Activate turbo boost
         this.isTurboActive = true;
-        this.turboTimeRemaining = this.turboBaseDuration + currentLevel; // 5 + level seconds
-        this.turboCooldownRemaining = this.turboCooldownDuration;
+        this.turboInitialDuration = this.turboBaseDuration + currentLevel; // Salva durata totale
+        this.turboTimeRemaining = this.turboInitialDuration; // 5 + level seconds
+        // NON iniziare il cooldown qui - inizierà quando il turbo finisce
         this.expression = 'excited';
+        
+        console.log(`🚀 Turbo attivato! Durata: ${this.turboInitialDuration}s, Cooldown partirà tra ${this.turboInitialDuration}s`);
         
         return true; // Successfully activated
     }
@@ -1011,8 +1024,9 @@ export class Player {
         if (!this.isFlightCooldownReady()) return false;
         
         this.isFlightActive = true;
-        this.flightTimeRemaining = this.flightBaseDuration;
-        this.flightCooldownRemaining = this.flightCooldownDuration;
+        this.flightInitialDuration = this.flightBaseDuration; // Salva durata totale
+        this.flightTimeRemaining = this.flightInitialDuration;
+        // NON iniziare il cooldown qui - inizierà quando il volo finisce
         this.flightTargetY = this.y; // Inizia dalla posizione corrente
         
         return true;

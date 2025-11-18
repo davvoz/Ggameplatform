@@ -9,8 +9,9 @@ import { ObstacleRenderer } from './ObstacleRenderer.js';
 import { SafetyPlatformRenderer } from './SafetyPlatformRenderer.js';
 
 export class RendererFactory {
-    constructor(renderer) {
+    constructor(renderer, textCtx = null) {
         this.renderer = renderer;
+        this.textCtx = textCtx;
         this.renderers = new Map();
         this._initRenderers();
     }
@@ -31,7 +32,7 @@ export class RendererFactory {
         this.renderers.set('safetyPlatform', safetyPlatformRenderer);
         
         // Collectibles
-        const collectibleRenderer = new CollectibleRenderer(this.renderer);
+        const collectibleRenderer = new CollectibleRenderer(this.renderer, this.textCtx);
         this.renderers.set('collectible', collectibleRenderer);
         this.renderers.set('heart', collectibleRenderer);
         this.renderers.set('boost', collectibleRenderer);
@@ -52,6 +53,8 @@ export class RendererFactory {
         this.renderers.set('flight-bonus', collectibleRenderer);
         this.renderers.set('recharge', collectibleRenderer);
         this.renderers.set('recharge-bonus', collectibleRenderer);
+        this.renderers.set('heartrecharge', collectibleRenderer);
+        this.renderers.set('heartrecharge-bonus', collectibleRenderer);
         
         // Obstacles
         const obstacleRenderer = new ObstacleRenderer(this.renderer);

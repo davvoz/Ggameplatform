@@ -142,8 +142,8 @@ export class TurboButtonUI {
         
         // Progress bar circolare quando TURBO ATTIVO - si consuma
         if (isActive) {
-            const turboProgress = player.turboTimeRemaining / (player.turboBaseDuration + (player.turboTimeRemaining / player.turboTimeRemaining)); // Calcola da tempo totale
-            const totalDuration = player.turboBaseDuration + Math.floor(player.turboTimeRemaining); // Stima durata iniziale
+            // Usa la durata iniziale salvata invece di calcolarla dinamicamente
+            const totalDuration = player.turboInitialDuration || (player.turboBaseDuration + 1);
             const remainingProgress = player.turboTimeRemaining / totalDuration;
             
             // Background ring semi-trasparente

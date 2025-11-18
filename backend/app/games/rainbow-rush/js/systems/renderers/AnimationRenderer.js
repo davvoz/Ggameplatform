@@ -207,12 +207,12 @@ export class AnimationRenderer {
             this.textCtx.restore();
         }
         
-        // "YOU DIED" text - rimane visibile fino alla fine
-        if (death.timer > 0.5 && this.textCtx) {
-            // Alpha rimane sempre a 1.0 dopo il fade-in iniziale
-            const fadeInTime = 0.8;
-            const textAlpha = death.timer < (0.5 + fadeInTime) 
-                ? Math.min(1.0, (death.timer - 0.5) / fadeInTime)
+        // "YOU DIED" text - appare immediatamente
+        if (this.textCtx) {
+            // Fade-in veloce solo nei primi 0.2 secondi
+            const fadeInTime = 0.2;
+            const textAlpha = death.timer < fadeInTime 
+                ? Math.min(1.0, death.timer / fadeInTime)
                 : 1.0; // Rimane sempre a 1.0 dopo il fade-in
             
             // Font size proporzionale al canvas (12% dell'altezza per più impatto)

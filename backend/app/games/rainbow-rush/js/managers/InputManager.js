@@ -20,6 +20,12 @@ export class InputManager {
             flightDown: []
         };
 
+        // Assicura che il canvas possa ricevere il focus della tastiera
+        if (this.canvas) {
+            this.canvas.setAttribute('tabindex', '1');
+            this.canvas.style.outline = 'none';
+        }
+
         this.setupEventListeners();
     }
 

@@ -6,8 +6,9 @@ import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
 
 export class CollectibleRenderer extends IEntityRenderer {
-    constructor(renderer) {
+    constructor(renderer, textCtx = null) {
         super(renderer);
+        this.textCtx = textCtx;
     }
 
     render(entity, context) {
@@ -43,6 +44,9 @@ export class CollectibleRenderer extends IEntityRenderer {
                 break;
             case 'recharge':
                 this.renderRechargeBonus(entity, time);
+                break;
+            case 'heartrecharge':
+                this.renderHeartRechargeBonus(entity, time);
                 break;
             case 'powerup':
                 this.renderPowerup(entity, time);
@@ -582,5 +586,141 @@ export class CollectibleRenderer extends IEntityRenderer {
             sparkleSize, 
             [1.0, 1.0, 1.0, 0.95 + Math.sin(time * 12) * 0.05]
         );
+    }
+    
+    renderHeartRechargeBonus(bonus, time) {
+        const pulse = Math.sin(bonus.pulsePhase) * 0.4 + 1.0;
+        const size = bonus.radius * pulse;
+        const heartPhase = bonus.heartPhase;
+        const glowPhase = bonus.glowPhase;
+        
+        // Glow esterno rosa/rosso pulsante molto intenso
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 5, bonus.glowColor, 10, 0.9 * pulse, 0.15);
+        
+        // Anelli concentrici rosa che pulsano
+        for (let i = 0; i < 4; i++) {
+            const ringPulse = Math.sin(glowPhase + i * 0.8) * 0.3 + 1.0;
+            const ringSize = size * (1.3 + i * 0.4) * ringPulse;
+            const ringAlpha = (0.6 - i * 0.12) * pulse;
+            this.renderer.drawCircle(
+                bonus.x, 
+                bonus.y, 
+                ringSize, 
+                [1.0, 0.3 + i * 0.1, 0.5, ringAlpha]
+            );
+        }
+        
+        // Cuori orbitanti
+        const heartCount = 8;
+        for (let i = 0; i < heartCount; i++) {
+            const orbitAngle = (i / heartCount) * Math.PI * 2 + heartPhase;
+            const orbitRadius = size * (2.5 + Math.sin(heartPhase * 2 + i) * 0.4);
+            const hx = bonus.x + Math.cos(orbitAngle) * orbitRadius;
+            const hy = bonus.y + Math.sin(orbitAngle) * orbitRadius;
+            const heartSize = 6 + Math.sin(heartPhase * 3 + i) * 2;
+            const heartPulse = Math.sin(heartPhase * 4 + i * 0.5) * 0.3 + 1.0;
+            
+            // Cuoricino (doppio cerchio per formare cuore stilizzato)
+            this.renderer.drawCircle(hx - heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
+            this.renderer.drawCircle(hx + heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
+            this.renderer.drawCircle(hx, hy + heartSize * 0.2, heartSize * 0.6 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
+            
+            // Glow cuoricino
+            this.renderer.drawCircle(hx, hy, heartSize * 1.2, [1.0, 0.5, 0.7, 0.3]);
+        }
+        
+        // Cerchio centrale principale
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.6, [1.0, 0.15, 0.4, 0.5]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.2, [1.0, 0.2, 0.45, 0.7]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
+        
+        // Cuore centrale grande (battito)
+        const heartBeat = Math.sin(heartPhase * 5) * 0.2 + 1.0;
+        const centerHeartSize = size * 0.7 * heartBeat;
+        
+        // Cuore stilizzato centrale (3 cerchi)
+        this.renderer.drawCircle(
+            bonus.x - centerHeartSize * 0.3, 
+            bonus.y - centerHeartSize * 0.2, 
+            centerHeartSize * 0.6, 
+            [1.0, 1.0, 1.0, 1.0]
+        );
+        this.renderer.drawCircle(
+            bonus.x + centerHeartSize * 0.3, 
+            bonus.y - centerHeartSize * 0.2, 
+            centerHeartSize * 0.6, 
+            [1.0, 1.0, 1.0, 1.0]
+        );
+        this.renderer.drawCircle(
+            bonus.x, 
+            bonus.y + centerHeartSize * 0.3, 
+            centerHeartSize * 0.8, 
+            [1.0, 1.0, 1.0, 1.0]
+        );
+        
+        // Particelle cuoricini che volano via
+        if (Math.random() < 0.4) {
+            const particleAngle = Math.random() * Math.PI * 2;
+            const particleSpeed = 50 + Math.random() * 30;
+            // Questi verranno renderizzati dal particle system
+        }
+        
+        // Croce medica/più al centro (simbolo ricarica)
+        const crossSize = size * 0.35;
+        const crossThickness = crossSize * 0.35;
+        
+        // Barra orizzontale
+        this.renderer.drawRect(
+            bonus.x - crossSize, 
+            bonus.y - crossThickness / 2, 
+            crossSize * 2, 
+            crossThickness, 
+            [1.0, 0.9, 0.95, 0.9]
+        );
+        
+        // Barra verticale
+        this.renderer.drawRect(
+            bonus.x - crossThickness / 2, 
+            bonus.y - crossSize, 
+            crossThickness, 
+            crossSize * 2, 
+            [1.0, 0.9, 0.95, 0.9]
+        );
+        
+        // Centro luminoso brillante
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.25, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Sparkle effect
+        const sparkleSize = size * 0.3;
+        const sparkleOffset = Math.sin(time * 8) * sparkleSize * 0.15;
+        this.renderer.drawCircle(
+            bonus.x + sparkleOffset, 
+            bonus.y - sparkleOffset, 
+            sparkleSize * 0.8, 
+            [1.0, 1.0, 1.0, 0.85 + Math.sin(time * 10) * 0.15]
+        );
+        
+        // Emoji cuore al centro (💕) - renderizzato tramite context
+        this.renderEmojiOnBonus(bonus.x, bonus.y, '💕', size * 1.2);
+    }
+    
+    renderEmojiOnBonus(x, y, emoji, size) {
+        // Questo metodo sarà sovrascritto dal sistema di rendering principale
+        // che ha accesso al canvas 2D context
+        if (this.textCtx) {
+            this.textCtx.save();
+            this.textCtx.textAlign = 'center';
+            this.textCtx.textBaseline = 'middle';
+            this.textCtx.font = `bold ${size}px Arial`;
+            
+            // Ombra per migliore visibilità
+            this.textCtx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            this.textCtx.shadowBlur = 4;
+            this.textCtx.shadowOffsetX = 2;
+            this.textCtx.shadowOffsetY = 2;
+            this.textCtx.fillText(emoji, x, y);
+            
+            this.textCtx.restore();
+        }
     }
 }

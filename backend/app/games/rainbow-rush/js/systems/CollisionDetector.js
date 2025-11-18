@@ -277,6 +277,7 @@ export class CollisionDetector {
         this.checkRainbowBonusCollisions(entityManager);
         this.checkFlightBonusCollisions(entityManager);
         this.checkRechargeBonusCollisions(entityManager);
+        this.checkHeartRechargeBonusCollisions(entityManager);
     }
 
     /**
@@ -437,6 +438,58 @@ export class CollisionDetector {
                 this.animationController.createFloatingText('🪶 VOLO ISTANTANEO!', flight.x, flight.y, flight.color, entityManager);
                 this.achievementSystem.addNotification('🪶 Volo Attivato!', '5 secondi di volo libero!', 'info');
                 this.audioManager.playSound('powerup');
+            }
+        }
+    }
+    
+    /**
+     * Check heart recharge bonus collisions
+     */
+    checkHeartRechargeBonusCollisions(entityManager) {
+        const heartRechargeBonuses = entityManager.getEntities('heartRechargeBonuses');
+        
+        for (let i = heartRechargeBonuses.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(heartRechargeBonuses[i])) {
+                const heartRecharge = heartRechargeBonuses[i];
+                heartRechargeBonuses.splice(i, 1);
+                
+                // Ricarica tutti i cuoricini
+                const healedAmount = this.player.maxHealth - this.player.health;
+                this.player.health = this.player.maxHealth;
+                
+                // Esplosione di cuoricini
+                for (let j = 0; j < 50; j++) {
+                    const angle = (Math.PI * 2 * j) / 50;
+                    const speed = 150 + Math.random() * 120;
+                    entityManager.addEntity('powerupParticles', {
+                        x: heartRecharge.x,
+                        y: heartRecharge.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1.0,
+                        maxLife: 1.0,
+                        size: 6 + Math.random() * 4,
+                        color: [1.0, 0.2 + Math.random() * 0.3, 0.5, 1.0],
+                        gravity: -50,
+                        rotationSpeed: (Math.random() - 0.5) * 12,
+                        rotation: 0,
+                        type: 'powerup-particle'
+                    });
+                }
+                
+                this.particleSystem.createBonusExplosion(heartRecharge.x, heartRecharge.y, heartRecharge.color, 100, entityManager);
+                this.animationController.createFloatingText('💕 CUORI RICARICATI!', heartRecharge.x, heartRecharge.y, [1.0, 0.2, 0.5, 1.0], entityManager);
+                
+                if (healedAmount > 0) {
+                    this.achievementSystem.addNotification('💕 Cuori Completamente Ricaricati!', `+${healedAmount} cuoricini ripristinati!`, 'achievement');
+                } else {
+                    this.achievementSystem.addNotification('💕 Già al Massimo!', 'Cuori già pieni!', 'info');
+                }
+                
+                this.audioManager.playSound('powerup');
+                
+                // Screen flash rosa
+                this.animationController.triggerScreenFlash(0.4, [1.0, 0.2, 0.5]);
             }
         }
     }

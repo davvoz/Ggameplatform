@@ -19,6 +19,7 @@ export class EntityManager {
         this.rainbowBonuses = [];
         this.flightBonuses = [];
         this.rechargeBonuses = [];
+        this.heartRechargeBonuses = [];
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -86,6 +87,7 @@ export class EntityManager {
         this.rainbowBonuses = [];
         this.flightBonuses = [];
         this.rechargeBonuses = [];
+        this.heartRechargeBonuses = [];
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -156,6 +158,10 @@ export class EntityManager {
         
         this.rechargeBonuses = this.rechargeBonuses.filter(bonus => 
             this.updateRechargeBonus(bonus, deltaTime, cameraSpeed)
+        );
+        
+        this.heartRechargeBonuses = this.heartRechargeBonuses.filter(bonus => 
+            this.updateHeartRechargeBonus(bonus, deltaTime, cameraSpeed)
         );
 
         // Update particles
@@ -405,6 +411,17 @@ export class EntityManager {
         
         return bonus.x > -100;
     }
+    
+    updateHeartRechargeBonus(bonus, deltaTime, cameraSpeed) {
+        const totalVelocity = bonus.velocity - cameraSpeed;
+        bonus.x += totalVelocity * deltaTime;
+        bonus.pulsePhase += deltaTime * 5;
+        bonus.rotation += deltaTime * 2.5;
+        bonus.heartPhase += deltaTime * 8; // Animazione battito cuore
+        bonus.glowPhase += deltaTime * 6; // Pulsazione glow
+        
+        return bonus.x > -100;
+    }
 
     /**
      * Update boost particle
@@ -491,6 +508,7 @@ export class EntityManager {
             rainbowBonuses: this.rainbowBonuses,
             flightBonuses: this.flightBonuses,
             rechargeBonuses: this.rechargeBonuses,
+            heartRechargeBonuses: this.heartRechargeBonuses,
             powerupParticles: this.powerupParticles,
             boostParticles: this.boostParticles,
             floatingTexts: this.floatingTexts

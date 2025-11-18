@@ -201,7 +201,8 @@ export class FlightButtonUI {
         
         // Progress ring del tempo attivo (quando volo è attivo) - ATTORNO AL BOTTONE
         if (isActive && player.flightTimeRemaining > 0) {
-            const progress = player.flightTimeRemaining / player.flightBaseDuration;
+            const totalDuration = player.flightInitialDuration || player.flightBaseDuration;
+            const progress = player.flightTimeRemaining / totalDuration;
             const startAngle = -Math.PI / 2;
             const endAngle = startAngle + (Math.PI * 2 * progress);
             const pulse = Math.sin(this.pulseTime * 6) * 0.15 + 0.85;

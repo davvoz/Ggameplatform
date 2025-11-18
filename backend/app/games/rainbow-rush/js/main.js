@@ -146,6 +146,12 @@ class RainbowRushApp {
         if (gameHUD) {
             gameHUD.classList.add('active');
         }
+        
+        // Assicura che il canvas abbia il focus per ricevere eventi tastiera
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            canvas.focus();
+        }
     }
 
     showGameOver(stats) {

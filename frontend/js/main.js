@@ -338,23 +338,10 @@ export function renderAbout() {
 /**
  * Render the quests page
  */
-let isRenderingQuests = false;
-
 export async function renderQuests() {
-    // Prevent multiple simultaneous renders
-    if (isRenderingQuests) {
-        console.log('renderQuests already in progress, skipping...');
-        return;
-    }
-
-    isRenderingQuests = true;
-
-    try {
-        const questRenderer = new QuestRenderer();
-        await questRenderer.render();
-    } finally {
-        isRenderingQuests = false;
-    }
+    console.log('Rendering quests page...');
+    const questRenderer = new QuestRenderer();
+    await questRenderer.render();
 }
 
 

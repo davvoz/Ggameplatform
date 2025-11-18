@@ -131,74 +131,82 @@ function setupQuestFilters(quests) {
             btn.classList.add('active');
 
             const filter = btn.dataset.filter;
-            const questCards = questsList.querySelectorAll('.quest-card');
-
-            // Remove empty message if exists
-            const emptyMessage = questsList.querySelector('.quests-empty-message');
-            if (emptyMessage) emptyMessage.remove();
-
-            questCards.forEach(card => {
-                card.style.display = 'none';
-                card.classList.remove('fade-in');
-            });
-
-            // Count visible quests
-            let visibleCount = 0;
-
-            // Show filtered quests with animation
-            setTimeout(() => {
-                questCards.forEach((card, index) => {
-                    const status = card.dataset.questStatus;
-                    let shouldShow = false;
-
-                    if (filter === 'all') {
-                        shouldShow = true;
-                    } else if (filter === 'active' && status === 'active') {
-                        shouldShow = true;
-                    } else if (filter === 'ready' && status === 'ready') {
-                        shouldShow = true;
-                    } else if (filter === 'claimed' && status === 'claimed') {
-                        shouldShow = true;
-                    }
-
-                    if (shouldShow) {
-                        visibleCount++;
-                        setTimeout(() => {
-                            card.style.display = 'block';
-                            setTimeout(() => {
-                                card.classList.add('fade-in');
-                            }, 10);
-                        }, index * 50);
-                    }
-                });
-
-                // Show empty message if no quests match filter
-                setTimeout(() => {
-                    if (visibleCount === 0) {
-                        const emptyMsg = document.createElement('div');
-                        emptyMsg.className = 'quests-empty-message';
-
-                        const emptyIcon = filter === 'active' ? '📋' :
-                            filter === 'ready' ? '🎁' :
-                                filter === 'claimed' ? '✅' : '🎮';
-
-                        const emptyText = filter === 'active' ? 'Nessuna quest attiva al momento' :
-                            filter === 'ready' ? 'Nessuna ricompensa da claimare' :
-                                filter === 'claimed' ? 'Nessuna quest completata ancora' :
-                                    'Nessuna quest disponibile';
-
-                        emptyMsg.innerHTML = `
-                            <div class="empty-icon">${emptyIcon}</div>
-                            <div class="empty-text">${emptyText}</div>
-                            <div class="empty-subtext">Continua a giocare per sbloccare nuove quest!</div>
-                        `;
-                        questsList.appendChild(emptyMsg);
-                    }
-                }, questCards.length * 50 + 200);
-            }, 100);
+            applyFilter(filter, questsList);
         });
     });
+
+    // Automatically show all quests on initial load
+    applyFilter('all', questsList);
 }
+
+function applyFilter(filter, questsList) {
+    const questCards = questsList.querySelectorAll('.quest-card');
+
+    // Remove empty message if exists
+    const emptyMessage = questsList.querySelector('.quests-empty-message');
+    if (emptyMessage) emptyMessage.remove();
+
+    questCards.forEach(card => {
+        card.style.display = 'none';
+        card.classList.remove('fade-in');
+    });
+
+    // Count visible quests
+    let visibleCount = 0;
+
+    // Show filtered quests with animation
+    setTimeout(() => {
+        questCards.forEach((card, index) => {
+            const status = card.dataset.questStatus;
+            let shouldShow = false;
+
+            if (filter === 'all') {
+                shouldShow = true;
+            } else if (filter === 'active' && status === 'active') {
+                shouldShow = true;
+            } else if (filter === 'ready' && status === 'ready') {
+                shouldShow = true;
+            } else if (filter === 'claimed' && status === 'claimed') {
+                shouldShow = true;
+            }
+
+            if (shouldShow) {
+                visibleCount++;
+                setTimeout(() => {
+                    card.style.display = 'block';
+                    setTimeout(() => {
+                        card.classList.add('fade-in');
+                    }, 10);
+                }, index * 50);
+            }
+        });
+
+        // Show empty message if no quests match filter
+        setTimeout(() => {
+            if (visibleCount === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'quests-empty-message';
+
+                const emptyIcon = filter === 'active' ? '📋' :
+                    filter === 'ready' ? '🎁' :
+                        filter === 'claimed' ? '✅' : '🎮';
+
+                const emptyText = filter === 'active' ? 'Nessuna quest attiva al momento' :
+                    filter === 'ready' ? 'Nessuna ricompensa da claimare' :
+                        filter === 'claimed' ? 'Nessuna quest completata ancora' :
+                            'Nessuna quest disponibile';
+
+                emptyMsg.innerHTML = `
+                    <div class="empty-icon">${emptyIcon}</div>
+                    <div class="empty-text">${emptyText}</div>
+                    <div class="empty-subtext">Continua a giocare per sbloccare nuove quest!</div>
+                `;
+                questsList.appendChild(emptyMsg);
+            }
+        }, questCards.length * 50 + 200);
+    }, 100);
+}
+
 /**
  * Quest Renderer - Handles quest page rendering
  */
@@ -263,13 +271,22 @@ export class QuestRenderer {
     }
 
     async loadAndDisplayQuests() {
+        // Wait for DOM to be fully ready
+        await this.waitForDOM();
+
+        const questsList = document.getElementById('questsList');
+        if (!questsList) {
+            console.error('questsList element not found in DOM');
+            return;
+        }
+
+        questsList.innerHTML = '<div class="loading">Loading quests...</div>';
+
         try {
             const { fetchUserQuests } = await import('./api.js');
             const quests = await fetchUserQuests(this.user.user_id);
 
             console.log('Quests loaded:', quests);
-
-            await this.waitForDOM();
 
             const statistics = new QuestStatistics(quests);
             statistics.render();
@@ -284,6 +301,9 @@ export class QuestRenderer {
     }
 
     async waitForDOM() {
+        // Wait multiple frames to ensure DOM is stable
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => requestAnimationFrame(resolve));
         await new Promise(resolve => requestAnimationFrame(resolve));
     }
 

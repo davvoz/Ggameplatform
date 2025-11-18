@@ -18,9 +18,6 @@ const routes = {
 console.log('Routes configured:', routes);
 console.log('renderLeaderboard function:', renderLeaderboard);
 
-// Flag to prevent duplicate route handling
-let isHandlingRoute = false;
-
 /**
  * Initialize the router
  */
@@ -36,14 +33,6 @@ export function initRouter() {
  * Handle route changes
  */
 function handleRoute() {
-    // Prevent duplicate handling
-    if (isHandlingRoute) {
-        console.log('Route handling already in progress, skipping...');
-        return;
-    }
-    
-    isHandlingRoute = true;
-    
     const hash = window.location.hash.slice(1) || '/';
     const route = matchRoute(hash);
     
@@ -62,11 +51,6 @@ function handleRoute() {
     } else {
         render404();
     }
-    
-    // Reset flag after a short delay to allow next navigation
-    setTimeout(() => {
-        isHandlingRoute = false;
-    }, 100);
 }
 
 /**

@@ -1,0 +1,1003 @@
+{
+  "backup_date": "2025-11-18T14:39:16.763314",
+  "backup_timestamp": "20251118_153916",
+  "description": "Backup di Games, Quests e XP Rules",
+  "tables": {
+    "games": [
+      {
+        "game_id": "space-clicker",
+        "title": "Space Clicker",
+        "description": "A fun clicking game where you collect space points by clicking on planets! Features combo multipliers, upgrades, and level progression. Perfect example of Platform SDK integration.",
+        "author": "Platform Team",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "casual",
+        "tags": [
+          "clicker",
+          "casual",
+          "space",
+          "arcade",
+          "simple"
+        ],
+        "created_at": "2025-11-08T09:57:39.009265",
+        "updated_at": "2025-11-08T09:57:39.009265",
+        "extra_data": {
+          "minPlayers": 1,
+          "maxPlayers": 1,
+          "difficulty": "easy",
+          "rating": 4.5,
+          "playCount": 26,
+          "featured": true,
+          "additionalData": {
+            "controls": "Mouse or Spacebar",
+            "gameType": "Incremental Clicker",
+            "playtime": "5-10 minutes"
+          }
+        }
+      },
+      {
+        "game_id": "snake",
+        "title": "Snake Mobile",
+        "description": "Classic snake game optimized for mobile with swipe controls! Eat food, grow longer, and avoid hitting walls or yourself.",
+        "author": "Platform Team",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "arcade",
+        "tags": [
+          "snake",
+          "arcade",
+          "mobile",
+          "classic"
+        ],
+        "created_at": "2025-11-08T10:19:54.222799",
+        "updated_at": "2025-11-08T10:19:54.222799",
+        "extra_data": {
+          "difficulty": "medium",
+          "max_players": 1,
+          "min_age": 7,
+          "featured": true,
+          "playCount": 50
+        }
+      },
+      {
+        "game_id": "zombie-tower",
+        "title": "Zombie Tower Defense",
+        "description": "A thrilling tower defense game! Place cannons strategically to defend against endless waves of zombies. Merge 3 cannons of the same type to upgrade them. Features multiple cannon types with unique abilities, progressive difficulty, and an energy system. Perfect for mobile and desktop!",
+        "author": "Platform Team",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "strategy",
+        "tags": [
+          "tower-defense",
+          "strategy",
+          "zombies",
+          "action",
+          "merge",
+          "mobile-friendly"
+        ],
+        "created_at": "2025-11-09T10:10:45.133082",
+        "updated_at": "2025-11-09T10:10:45.133082",
+        "extra_data": {
+          "minPlayers": 1,
+          "maxPlayers": 1,
+          "difficulty": "medium",
+          "rating": 4.8,
+          "playCount": 73,
+          "featured": true,
+          "additionalData": {
+            "controls": "Touch/Mouse - Tap to place, Drag to merge",
+            "gameType": "Tower Defense",
+            "playtime": "10-20 minutes",
+            "orientation": "vertical",
+            "features": [
+              "5 unique cannon types",
+              "Merge system (3 cannons → upgrade)",
+              "4 zombie types with progressive difficulty",
+              "Energy-based defense system",
+              "Wave-based progression",
+              "Mobile and desktop optimized"
+            ]
+          }
+        }
+      },
+      {
+        "game_id": "bouncing-balls",
+        "title": "Bouncing Balls - Gravity Master",
+        "description": "Un gioco ipnotico e rilassante dove crei palline rimbalzanti! Tocca lo schermo per generare nuove palline, raccogli monete e sblocca potenziamenti incredibili. Aumenta gravità, rimbalzo, dimensione e molto altro. Goditi le spettacolari animazioni con effetti arcobaleno e particelle esplosive. Perfetto per mobile!",
+        "author": "Platform Team",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "casual",
+        "tags": [
+          "casual",
+          "arcade",
+          "physics",
+          "relaxing",
+          "mobile-friendly",
+          "upgrade"
+        ],
+        "created_at": "2025-11-09T21:05:05.667104",
+        "updated_at": "2025-11-09T21:05:05.667104",
+        "extra_data": {
+          "minPlayers": 1,
+          "maxPlayers": 1,
+          "difficulty": "easy",
+          "rating": 4.9,
+          "playCount": 21,
+          "featured": true,
+          "additionalData": {
+            "controls": "Touch/Click - Tap anywhere to create balls",
+            "gameType": "Casual Physics",
+            "playtime": "5-15 minutes",
+            "orientation": "both",
+            "features": [
+              "Physics-based gameplay",
+              "8 unique upgrades",
+              "Spectacular particle effects",
+              "Rainbow trail effects",
+              "Floating text animations",
+              "Auto-spawning collectible coins",
+              "Smooth 60 FPS animations",
+              "Mobile and desktop optimized",
+              "Relaxing and addictive",
+              "Beautiful gradient visuals"
+            ]
+          }
+        }
+      },
+      {
+        "game_id": "rainbow-rush",
+        "title": "Rainbow Rush",
+        "description": "A colorful endless runner platform game! Jump through rainbow-colored platforms, collect golden gems, avoid obstacles, and see how far you can go. Features procedurally generated levels that get progressively harder. Perfect for quick gaming sessions on mobile and desktop!",
+        "author": "Ggameplatform",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "Platform",
+        "tags": [
+          "platform",
+          "runner",
+          "endless",
+          "colorful",
+          "mobile",
+          "casual"
+        ],
+        "created_at": "2025-11-14T00:45:39.442905",
+        "updated_at": "2025-11-14T00:45:39.442905",
+        "extra_data": {
+          "playCount": 486
+        }
+      },
+      {
+        "game_id": "space-clicker-phaser",
+        "title": "Space Clicker - Phaser Edition",
+        "description": "An engaging space-themed clicker game built with Phaser 3! Click the rocket to increase your score. Features stunning space graphics, smooth animations, and addictive gameplay. Perfect for quick gaming sessions!",
+        "author": "Ggameplatform",
+        "version": "1.0.0",
+        "thumbnail": "thumbnail.png",
+        "entry_point": "index.html",
+        "category": "Clicker",
+        "tags": [
+          "clicker",
+          "space",
+          "phaser",
+          "idle",
+          "casual",
+          "arcade"
+        ],
+        "created_at": "2025-11-15T10:50:08.999864",
+        "updated_at": "2025-11-15T10:50:08.999864",
+        "extra_data": {
+          "playCount": 26
+        }
+      }
+    ],
+    "xp_rules": [
+      {
+        "rule_id": "xpr_750c7d074e9c4e43",
+        "game_id": "bouncing-balls",
+        "rule_name": "Survival Master",
+        "rule_type": "combo",
+        "parameters": {
+          "min_score": 500,
+          "min_duration": 120,
+          "bonus_xp": 25.0
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.310390",
+        "updated_at": "2025-11-13T23:16:27.310390"
+      },
+      {
+        "rule_id": "xpr_ebc0024b1e74434c",
+        "game_id": "bouncing-balls",
+        "rule_name": "Ball Master Tiers",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 3000,
+              "xp": 75
+            },
+            {
+              "score": 1500,
+              "xp": 40
+            },
+            {
+              "score": 750,
+              "xp": 20
+            },
+            {
+              "score": 300,
+              "xp": 10
+            }
+          ]
+        },
+        "priority": 18,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.316844",
+        "updated_at": "2025-11-13T23:16:27.316844"
+      },
+      {
+        "rule_id": "xpr_ac6cd99747e14683",
+        "game_id": "bouncing-balls",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.310390",
+        "updated_at": "2025-11-13T23:16:27.310390"
+      },
+      {
+        "rule_id": "xpr_74b553994fc249aa",
+        "game_id": "bouncing-balls",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.301978",
+        "updated_at": "2025-11-13T23:16:27.301978"
+      },
+      {
+        "rule_id": "xpr_d942a8773d2640dd",
+        "game_id": "bouncing-balls",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.306388",
+        "updated_at": "2025-11-13T23:16:27.306388"
+      },
+      {
+        "rule_id": "xpr_5a452a03795b4f97",
+        "game_id": "rainbow-rush",
+        "rule_name": "Color Master Milestones",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 5000,
+              "xp": 100
+            },
+            {
+              "score": 2500,
+              "xp": 50
+            },
+            {
+              "score": 1000,
+              "xp": 25
+            },
+            {
+              "score": 500,
+              "xp": 10
+            },
+            {
+              "score": 200,
+              "xp": 5
+            }
+          ]
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.732554",
+        "updated_at": "2025-11-15T16:12:10.732554"
+      },
+      {
+        "rule_id": "xpr_3d8fe0589d3843a4",
+        "game_id": "rainbow-rush",
+        "rule_name": "Rainbow Combo Master",
+        "rule_type": "combo",
+        "parameters": {
+          "min_score": 1000,
+          "min_duration": 90,
+          "bonus_xp": 20.0
+        },
+        "priority": 18,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.765833",
+        "updated_at": "2025-11-15T16:12:10.765833"
+      },
+      {
+        "rule_id": "xpr_286d0442f65a4e8b",
+        "game_id": "rainbow-rush",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.699111",
+        "updated_at": "2025-11-15T16:12:10.699111"
+      },
+      {
+        "rule_id": "xpr_9b388ad28b684461",
+        "game_id": "rainbow-rush",
+        "rule_name": "Improvement Bonus",
+        "rule_type": "percentile_improvement",
+        "parameters": {
+          "xp_per_percent": 0.5,
+          "max_xp": 50.0
+        },
+        "priority": 12,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.798438",
+        "updated_at": "2025-11-15T16:12:10.798438"
+      },
+      {
+        "rule_id": "xpr_94555da67a1a4bf9",
+        "game_id": "rainbow-rush",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.625154",
+        "updated_at": "2025-11-15T16:12:10.625154"
+      },
+      {
+        "rule_id": "xpr_474c3b69e00d495c",
+        "game_id": "rainbow-rush",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-15T16:12:10.661134",
+        "updated_at": "2025-11-15T16:12:10.661134"
+      },
+      {
+        "rule_id": "xpr_56f1e67c669b4c43",
+        "game_id": "snake",
+        "rule_name": "Snake Milestones",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 10000,
+              "xp": 200
+            },
+            {
+              "score": 5000,
+              "xp": 100
+            },
+            {
+              "score": 2500,
+              "xp": 50
+            },
+            {
+              "score": 1000,
+              "xp": 25
+            },
+            {
+              "score": 500,
+              "xp": 10
+            }
+          ]
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.347973",
+        "updated_at": "2025-11-13T23:16:27.347973"
+      },
+      {
+        "rule_id": "xpr_3ef05f59200d49cd",
+        "game_id": "snake",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.344973",
+        "updated_at": "2025-11-13T23:16:27.344973"
+      },
+      {
+        "rule_id": "xpr_e65c9c24ad8443cc",
+        "game_id": "snake",
+        "rule_name": "Improvement Bonus",
+        "rule_type": "percentile_improvement",
+        "parameters": {
+          "xp_per_percent": 0.5,
+          "max_xp": 50.0
+        },
+        "priority": 12,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.351051",
+        "updated_at": "2025-11-13T23:16:27.351051"
+      },
+      {
+        "rule_id": "xpr_10996878172f4c0f",
+        "game_id": "snake",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.338298",
+        "updated_at": "2025-11-13T23:16:27.338298"
+      },
+      {
+        "rule_id": "xpr_7dea06a2a8b0479b",
+        "game_id": "snake",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.341303",
+        "updated_at": "2025-11-13T23:16:27.341303"
+      },
+      {
+        "rule_id": "xpr_9a55395ab7174198",
+        "game_id": "space-clicker",
+        "rule_name": "Speed Clicker Bonus",
+        "rule_type": "combo",
+        "parameters": {
+          "min_score": 1000,
+          "min_duration": 60,
+          "bonus_xp": 20.0
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.365707",
+        "updated_at": "2025-11-13T23:16:27.365707"
+      },
+      {
+        "rule_id": "xpr_8b4c4a6f454640b9",
+        "game_id": "space-clicker",
+        "rule_name": "Click Milestones",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 5000,
+              "xp": 100
+            },
+            {
+              "score": 2500,
+              "xp": 50
+            },
+            {
+              "score": 1000,
+              "xp": 20
+            },
+            {
+              "score": 500,
+              "xp": 10
+            }
+          ]
+        },
+        "priority": 18,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.368712",
+        "updated_at": "2025-11-13T23:16:27.368712"
+      },
+      {
+        "rule_id": "xpr_4d6720d110fb4114",
+        "game_id": "space-clicker",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.361463",
+        "updated_at": "2025-11-13T23:16:27.361463"
+      },
+      {
+        "rule_id": "xpr_ab7f31481a8445ce",
+        "game_id": "space-clicker",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.354988",
+        "updated_at": "2025-11-13T23:16:27.354988"
+      },
+      {
+        "rule_id": "xpr_59db364f99f94d51",
+        "game_id": "space-clicker",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.358990",
+        "updated_at": "2025-11-13T23:16:27.358990"
+      },
+      {
+        "rule_id": "xpr_ace106d7e53847d8",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "Speed Clicker Bonus",
+        "rule_type": "combo",
+        "parameters": {
+          "min_score": 1000,
+          "min_duration": 60,
+          "bonus_xp": 20.0
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.035373",
+        "updated_at": "2025-11-15T10:52:22.035373"
+      },
+      {
+        "rule_id": "xpr_0c4ca3e2ecfe4060",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "Click Milestones",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 5000,
+              "xp": 100
+            },
+            {
+              "score": 2500,
+              "xp": 50
+            },
+            {
+              "score": 1000,
+              "xp": 20
+            },
+            {
+              "score": 500,
+              "xp": 10
+            },
+            {
+              "score": 100,
+              "xp": 5
+            }
+          ]
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.038785",
+        "updated_at": "2025-11-15T10:52:22.038785"
+      },
+      {
+        "rule_id": "xpr_434ed4d5b3304f83",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.031375",
+        "updated_at": "2025-11-15T10:52:22.031375"
+      },
+      {
+        "rule_id": "xpr_dc5b7c3e6be04f3a",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "Improvement Bonus",
+        "rule_type": "percentile_improvement",
+        "parameters": {
+          "xp_per_percent": 0.5,
+          "max_xp": 50.0
+        },
+        "priority": 12,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.041965",
+        "updated_at": "2025-11-15T10:52:22.041965"
+      },
+      {
+        "rule_id": "xpr_fc91eec39540406a",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.020150",
+        "updated_at": "2025-11-15T10:52:22.020150"
+      },
+      {
+        "rule_id": "xpr_6f35b9e594a74806",
+        "game_id": "space-clicker-phaser",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-15T10:52:22.026501",
+        "updated_at": "2025-11-15T10:52:22.026501"
+      },
+      {
+        "rule_id": "xpr_7f9ee21d81e84872",
+        "game_id": "zombie-tower",
+        "rule_name": "Wave Completion Tiers",
+        "rule_type": "threshold",
+        "parameters": {
+          "thresholds": [
+            {
+              "score": 10000,
+              "xp": 150
+            },
+            {
+              "score": 5000,
+              "xp": 80
+            },
+            {
+              "score": 2500,
+              "xp": 40
+            },
+            {
+              "score": 1000,
+              "xp": 20
+            },
+            {
+              "score": 500,
+              "xp": 10
+            }
+          ]
+        },
+        "priority": 20,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.329788",
+        "updated_at": "2025-11-13T23:16:27.329788"
+      },
+      {
+        "rule_id": "xpr_095f6c807f674da9",
+        "game_id": "zombie-tower",
+        "rule_name": "Zombie Endurance",
+        "rule_type": "combo",
+        "parameters": {
+          "min_score": 1000,
+          "min_duration": 180,
+          "bonus_xp": 30.0
+        },
+        "priority": 18,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.334371",
+        "updated_at": "2025-11-13T23:16:27.334371"
+      },
+      {
+        "rule_id": "xpr_1a5747f6aa88452b",
+        "game_id": "zombie-tower",
+        "rule_name": "High Score Bonus",
+        "rule_type": "high_score_bonus",
+        "parameters": {
+          "bonus_xp": 10.0
+        },
+        "priority": 15,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.327788",
+        "updated_at": "2025-11-13T23:16:27.327788"
+      },
+      {
+        "rule_id": "xpr_873dfba4c6ea451a",
+        "game_id": "zombie-tower",
+        "rule_name": "Base Score Multiplier",
+        "rule_type": "score_multiplier",
+        "parameters": {
+          "multiplier": 0.01,
+          "max_xp": 100.0
+        },
+        "priority": 10,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.320844",
+        "updated_at": "2025-11-13T23:16:27.320844"
+      },
+      {
+        "rule_id": "xpr_8bfc539e34dc4044",
+        "game_id": "zombie-tower",
+        "rule_name": "Time Played Bonus",
+        "rule_type": "time_bonus",
+        "parameters": {
+          "xp_per_minute": 0.1,
+          "max_minutes": 10
+        },
+        "priority": 5,
+        "is_active": 1,
+        "created_at": "2025-11-13T23:16:27.321768",
+        "updated_at": "2025-11-13T23:16:27.321768"
+      }
+    ],
+    "quests": [
+      {
+        "quest_id": 1,
+        "title": "Gioca 10 partite",
+        "description": "Completa 10 partite su qualsiasi gioco della piattaforma",
+        "quest_type": "play_games",
+        "target_value": 10,
+        "xp_reward": 150,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 2,
+        "title": "Gioca 50 partite",
+        "description": "Completa 50 partite su qualsiasi gioco della piattaforma",
+        "quest_type": "play_games",
+        "target_value": 50,
+        "xp_reward": 250,
+        "sats_reward": 3,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 3,
+        "title": "Gioca 100 partite",
+        "description": "Completa 100 partite su qualsiasi gioco della piattaforma",
+        "quest_type": "play_games",
+        "target_value": 100,
+        "xp_reward": 350,
+        "sats_reward": 5,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 4,
+        "title": "Gioca 10 minuti",
+        "description": "Gioca per un totale di 10 minuti",
+        "quest_type": "play_time",
+        "target_value": 600,
+        "xp_reward": 100,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 5,
+        "title": "Gioca 60 minuti totali",
+        "description": "Gioca per un totale di 60 minuti",
+        "quest_type": "play_time",
+        "target_value": 3600,
+        "xp_reward": 200,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 6,
+        "title": "Gioca 24 ore totali (cumulative)",
+        "description": "Gioca per un totale cumulativo di 24 ore",
+        "quest_type": "play_time_cumulative",
+        "target_value": 86400,
+        "xp_reward": 500,
+        "sats_reward": 10,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 7,
+        "title": "Completa 5 partite di un gioco con punteggio ≥ X",
+        "description": "Completa 5 partite dello stesso gioco con un punteggio minimo definito per-game",
+        "quest_type": "score_threshold_per_game",
+        "target_value": 5,
+        "xp_reward": 200,
+        "sats_reward": 3,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 8,
+        "title": "Login dopo 24h",
+        "description": "Effettua il login dopo almeno 24 ore dall'ultimo accesso",
+        "quest_type": "login_after_24h",
+        "target_value": 1,
+        "xp_reward": 50,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 9,
+        "title": "Login 7 giorni consecutivi",
+        "description": "Effettua il login per 7 giorni consecutivi",
+        "quest_type": "login_streak",
+        "target_value": 7,
+        "xp_reward": 200,
+        "sats_reward": 10,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 10,
+        "title": "Gioca 5 partite dello stesso gioco",
+        "description": "Completa 5 partite dello stesso gioco",
+        "quest_type": "play_same_game",
+        "target_value": 5,
+        "xp_reward": 150,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 11,
+        "title": "Ottieni un punteggio che termina con 0",
+        "description": "Ottieni un punteggio che termina con la cifra 0",
+        "quest_type": "score_ends_with",
+        "target_value": 0,
+        "xp_reward": 100,
+        "sats_reward": 0,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 12,
+        "title": "Entra nella Top 5 della leaderboard settimanale",
+        "description": "Raggiungi una posizione nella top 5 della classifica settimanale",
+        "quest_type": "leaderboard_top",
+        "target_value": 5,
+        "xp_reward": 400,
+        "sats_reward": 10,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 13,
+        "title": "Completa 50 partite in una settimana",
+        "description": "Completa 50 partite nell'arco di una settimana",
+        "quest_type": "play_games_weekly",
+        "target_value": 50,
+        "xp_reward": 350,
+        "sats_reward": 7,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 14,
+        "title": "Gioca 30 minuti totali in un giorno",
+        "description": "Gioca per un totale di 30 minuti in un singolo giorno",
+        "quest_type": "play_time_daily",
+        "target_value": 1800,
+        "xp_reward": 200,
+        "sats_reward": 3,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 15,
+        "title": "Raggiungi livello 10",
+        "description": "Raggiungi il livello 10 della piattaforma",
+        "quest_type": "reach_level",
+        "target_value": 10,
+        "xp_reward": 200,
+        "sats_reward": 3,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 16,
+        "title": "Guadagna 500 XP in un giorno",
+        "description": "Guadagna un totale di 500 XP in un singolo giorno",
+        "quest_type": "xp_daily",
+        "target_value": 500,
+        "xp_reward": 200,
+        "sats_reward": 5,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 17,
+        "title": "Guadagna 2000 XP in una settimana",
+        "description": "Guadagna un totale di 2000 XP nell'arco di una settimana",
+        "quest_type": "xp_weekly",
+        "target_value": 2000,
+        "xp_reward": 250,
+        "sats_reward": 5,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 18,
+        "title": "Raggiungi livello 30",
+        "description": "Raggiungi il livello 30 della piattaforma",
+        "quest_type": "reach_level",
+        "target_value": 30,
+        "xp_reward": 350,
+        "sats_reward": 7,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 19,
+        "title": "Raggiungi livello 50",
+        "description": "Raggiungi il livello 50 della piattaforma",
+        "quest_type": "reach_level",
+        "target_value": 50,
+        "xp_reward": 500,
+        "sats_reward": 10,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      },
+      {
+        "quest_id": 20,
+        "title": "Completa 10 quest totali",
+        "description": "Completa un totale di 10 quest diverse",
+        "quest_type": "complete_quests",
+        "target_value": 10,
+        "xp_reward": 500,
+        "sats_reward": 10,
+        "game_id": null,
+        "is_active": 1,
+        "created_at": "2025-11-15T17:21:10.839047"
+      }
+    ]
+  }
+}

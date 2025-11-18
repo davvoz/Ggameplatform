@@ -89,16 +89,22 @@ async function handleClaimReward(questId, userId) {
         // Create reward animation
         createRewardAnimation(questCard, result.xp_reward, result.sats_reward);
 
-        // Update user XP in header
+        // Update user XP in header and AuthManager
         if (window.AuthManager) {
             const user = window.AuthManager.getUser();
             user.total_xp_earned = result.total_xp;
             window.AuthManager.setUser(user);
+            
+            // Update XP display in navigation
+            const userCur8Element = document.getElementById('userCur8');
+            if (userCur8Element) {
+                userCur8Element.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
+            }
         }
 
         // Wait for animation to complete, then reload quests
-        setTimeout(() => {
-            renderQuests();
+        setTimeout(async () => {
+            await reloadQuests(userId);
         }, 2000);
 
     } catch (error) {
@@ -117,6 +123,36 @@ async function handleClaimReward(questId, userId) {
             errorMsg.remove();
             btn.innerHTML = '<span class="claim-btn-icon">🎁</span><span class="claim-btn-text">CLAIM REWARD</span>';
         }, 3000);
+    }
+}
+
+/**
+ * Reload quests after claim
+ */
+async function reloadQuests(userId) {
+    try {
+        const { fetchUserQuests } = await import('./api.js');
+        const quests = await fetchUserQuests(userId);
+
+        console.log('Quests reloaded after claim:', quests);
+
+        // Update statistics
+        const statistics = new QuestStatistics(quests);
+        statistics.render();
+
+        // Update quest list
+        const questList = new QuestList(quests, userId);
+        questList.render();
+
+        // Reapply current filter
+        const activeFilterBtn = document.querySelector('.quest-filter-btn.active');
+        const currentFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
+        const questsList = document.getElementById('questsList');
+        if (questsList) {
+            applyFilter(currentFilter, questsList);
+        }
+    } catch (error) {
+        console.error('Error reloading quests:', error);
     }
 }
 function setupQuestFilters(quests) {

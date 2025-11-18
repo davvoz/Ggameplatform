@@ -14,6 +14,10 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import time
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class NoCacheMiddleware(BaseHTTPMiddleware):
     """Middleware to prevent caching of HTML, CSS, and JS files"""
@@ -85,13 +89,29 @@ allowed_origins_str = os.getenv(
 )
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
-)
+# Check if we should allow all origins (for LAN access)
+allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
+
+if allow_all_origins:
+    # More permissive CORS for LAN access
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"http://.*",  # Allow any HTTP origin on LAN
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
+    )
+    print("⚠️  CORS: Allowing all HTTP origins (LAN mode)")
+else:
+    # Strict CORS for production
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
+    )
+    print(f"🔒 CORS: Allowing specific origins: {allowed_origins}")
 
 # Initialize database
 init_db()

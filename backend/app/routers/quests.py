@@ -19,9 +19,15 @@ ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
 
 def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
     """Verify admin access via API key or localhost"""
-    # Allow localhost in development
-    if request and request.client.host in ["127.0.0.1", "localhost", "::1"]:
-        return True
+    # Allow localhost and local network in development
+    if request:
+        client_ip = request.client.host
+        # Allow localhost
+        if client_ip in ["127.0.0.1", "localhost", "::1"]:
+            return True
+        # Allow local network (192.168.x.x)
+        if client_ip.startswith("192.168."):
+            return True
     
     # Check API key
     if x_api_key != ADMIN_API_KEY:

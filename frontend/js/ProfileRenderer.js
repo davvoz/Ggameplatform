@@ -1,5 +1,6 @@
 import { getUserSessions, getGameResourceUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
+import { config } from './config.js';
 
 /**
  * Profile page renderer with refactored architecture
@@ -54,7 +55,7 @@ class ProfileRenderer {
         const cachedUser = this.authManager.getUser();
 
         try {
-            const response = await fetch(`http://localhost:8000/users/users/${cachedUser.user_id}`);
+            const response = await fetch(`${config.API_URL}/users/users/${cachedUser.user_id}`);
             if (response.ok) {
                 const userData = await response.json();
                 return userData.user;

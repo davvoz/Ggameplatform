@@ -9,7 +9,11 @@ from app.routers import quests
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import time
+import os
 
 class NoCacheMiddleware(BaseHTTPMiddleware):
     """Middleware to prevent caching of HTML, CSS, and JS files"""
@@ -25,28 +29,68 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
         
         return response
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers"""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Security headers
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        # X-Frame-Options: DENY for admin/auth, permissive solo per /games/*
+        if request.url.path.startswith('/games/'):
+            # Allow iframe embedding for games
+            pass
+        else:
+            # Block clickjacking on admin/auth endpoints
+            response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        
+        # Content Security Policy (permissive for game iframes)
+        # Adjust in production based on actual needs
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.steemit.com https://sds.steemworld.org; "
+            "frame-src 'self'; "
+            "font-src 'self' data:;"
+        )
+        response.headers['Content-Security-Policy'] = csp
+        
+        return response
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="HTML5 Game Platform API",
     description="Modular and scalable game platform backend",
     version="1.0.0"
 )
 
-# Add no-cache middleware FIRST
+# Add rate limiter state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add security middlewares
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(NoCacheMiddleware)
 
-# CORS configuration
+# CORS configuration - Use environment variable for allowed origins
+allowed_origins_str = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000"
+)
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "*"
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
 )
 
 # Initialize database

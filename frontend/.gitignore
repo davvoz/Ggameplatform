@@ -1,0 +1,22 @@
+# Environment files
+.env
+.env.local
+.env.production
+env.js
+
+# Node modules (if using a bundler)
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

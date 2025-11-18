@@ -2,16 +2,32 @@
 Quests router for managing platform quests.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
+import os
 
 from app.database import get_db
 from app.models import Quest, UserQuest, User
 from app.schemas import QuestResponse, QuestCreate, QuestWithProgress, UserQuestProgress
 
 router = APIRouter()
+
+# Admin API key from environment
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
+
+def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
+    """Verify admin access via API key or localhost"""
+    # Allow localhost in development
+    if request and request.client.host in ["127.0.0.1", "localhost", "::1"]:
+        return True
+    
+    # Check API key
+    if x_api_key != ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Admin access denied")
+    
+    return True
 
 
 @router.get("/", response_model=List[QuestResponse])
@@ -81,9 +97,12 @@ async def get_quest(
 @router.post("/", response_model=QuestResponse)
 async def create_quest(
     quest_data: QuestCreate,
+    request: Request,
+    x_api_key: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
     """Create a new quest (admin only)."""
+    verify_admin(x_api_key, request)
     
     now = datetime.utcnow().isoformat()
     
@@ -110,9 +129,12 @@ async def create_quest(
 async def update_quest(
     quest_id: int,
     quest_data: QuestCreate,
+    request: Request,
+    x_api_key: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
     """Update an existing quest (admin only)."""
+    verify_admin(x_api_key, request)
     
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
     
@@ -138,9 +160,12 @@ async def update_quest(
 @router.delete("/{quest_id}")
 async def delete_quest(
     quest_id: int,
+    request: Request,
+    x_api_key: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
     """Delete a quest (admin only)."""
+    verify_admin(x_api_key, request)
     
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
     

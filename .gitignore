@@ -107,6 +107,8 @@ coverage.xml
 .env.local
 .env.*.local
 *.env
+backend/.env
+frontend/.env
 
 # Backup files
 *.bak

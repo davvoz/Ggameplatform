@@ -13,6 +13,8 @@
  * - UI overlay management
  */
 
+import { config } from './config.js';
+
 const PROTOCOL_VERSION = '1.0.0';
 
 // Allowed game message types (Game → Platform)
@@ -44,8 +46,18 @@ export default class RuntimeShell {
     constructor(iframeElement, gameId, config = {}) {
         this.iframe = iframeElement;
         this.gameId = gameId;
+        
+        // Get allowed origins from config, fallback to current origin and API URL
+        const apiUrl = window.ENV?.API_URL || window.location.origin;
+        const defaultOrigins = [
+            window.location.origin,
+            apiUrl,
+            'http://localhost:8000',
+            'http://localhost:3000'
+        ];
+        
         this.config = {
-            allowedOrigins: config.allowedOrigins || ['http://localhost:8000', window.location.origin],
+            allowedOrigins: config.allowedOrigins || defaultOrigins,
             debug: config.debug || false,
             timeout: config.timeout || 30000
         };
@@ -157,8 +169,21 @@ export default class RuntimeShell {
      * @returns {boolean} Whether the origin is valid
      */
     isValidOrigin(origin) {
-        return this.config.allowedOrigins.includes(origin) || 
-               this.config.allowedOrigins.includes('*');
+        // Never allow wildcard in production
+        if (this.config.allowedOrigins.includes('*')) {
+            console.warn('⚠️ Wildcard origin (*) is allowed - this is insecure!');
+            return true;
+        }
+        
+        // Check if origin is in whitelist
+        const isAllowed = this.config.allowedOrigins.includes(origin);
+        
+        if (!isAllowed) {
+            console.warn('🔒 Rejected message from unauthorized origin:', origin);
+            console.log('Allowed origins:', this.config.allowedOrigins);
+        }
+        
+        return isAllowed;
     }
     
     /**
@@ -520,7 +545,7 @@ export default class RuntimeShell {
             }
             
             this.log('📡 Sending session start request to backend...');
-            const response = await fetch('http://localhost:8000/users/sessions/start', {
+            const response = await fetch(`${config.API_URL}/users/sessions/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -591,13 +616,13 @@ export default class RuntimeShell {
             // Use sendBeacon for page unload (more reliable)
             if (useBeacon && navigator.sendBeacon) {
                 const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-                navigator.sendBeacon('http://localhost:8000/users/sessions/end', blob);
+                navigator.sendBeacon(`${config.API_URL}/users/sessions/end`, blob);
                 this.log('Game session ended via beacon');
                 return;
             }
             
             // Regular fetch for normal game end
-            const response = await fetch('http://localhost:8000/users/sessions/end', {
+            const response = await fetch(`${config.API_URL}/users/sessions/end`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

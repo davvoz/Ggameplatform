@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from typing import List
 from app.schemas import (
     GameRegister, 
@@ -22,8 +22,34 @@ from app.database import (
     toggle_xp_rule
 )
 from app.models import Game
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+import re
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
+
+# Path validation regex - only alphanumeric, dash, underscore
+GAME_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
+
+def validate_game_id(game_id: str) -> str:
+    """Validate and sanitize game_id to prevent path traversal"""
+    if not game_id:
+        raise HTTPException(status_code=400, detail="game_id is required")
+    
+    # Block path traversal attempts
+    if '..' in game_id or '/' in game_id or '\\' in game_id:
+        raise HTTPException(status_code=400, detail="Invalid game_id: path traversal detected")
+    
+    # Only allow safe characters
+    if not GAME_ID_PATTERN.match(game_id):
+        raise HTTPException(status_code=400, detail="Invalid game_id: only alphanumeric, dash and underscore allowed")
+    
+    # Limit length
+    if len(game_id) > 100:
+        raise HTTPException(status_code=400, detail="Invalid game_id: too long (max 100 chars)")
+    
+    return game_id
 
 @router.post(
     "/register",
@@ -34,7 +60,8 @@ router = APIRouter()
         400: {"model": ErrorResponse, "description": "Invalid game data"}
     }
 )
-async def register_game(game_data: GameRegister):
+@limiter.limit("10/hour")
+async def register_game(request: Request, game_data: GameRegister):
     """
     Register a new game in the platform.
     
@@ -50,6 +77,9 @@ async def register_game(game_data: GameRegister):
     - **metadata**: Additional game metadata
     """
     try:
+        # Validate game_id to prevent path traversal
+        game_data.gameId = validate_game_id(game_data.gameId)
+        
         # Check if game already exists
         existing_game = get_game_by_id(game_data.gameId)
         if existing_game:
@@ -157,6 +187,9 @@ async def get_game_metadata(gameId: str):
     
     - **gameId**: The unique identifier of the game
     """
+    # Validate game_id to prevent path traversal
+    gameId = validate_game_id(gameId)
+    
     try:
         game = get_game_by_id(gameId)
         
@@ -203,6 +236,7 @@ async def update_game_metadata(gameId: str, game_data: GameRegister):
     
     - **gameId**: The unique identifier of the game to update
     """
+    gameId = validate_game_id(gameId)
     try:
         existing_game = get_game_by_id(gameId)
         if not existing_game:
@@ -242,6 +276,7 @@ async def delete_game_endpoint(gameId: str):
     
     - **gameId**: The unique identifier of the game to delete
     """
+    gameId = validate_game_id(gameId)
     try:
         deleted = delete_game(gameId)
         
@@ -273,10 +308,11 @@ async def delete_game_endpoint(gameId: str):
 )
 async def track_game_play(gameId: str):
     """
-    Increment the play count for a game.
+    Track when a game is played (increment play count).
     
     - **gameId**: The unique identifier of the game
     """
+    gameId = validate_game_id(gameId)
     try:
         success = increment_play_count(gameId)
         
@@ -311,11 +347,12 @@ async def track_game_play(gameId: str):
 )
 async def get_game_xp_rules_endpoint(gameId: str, active_only: bool = True):
     """
-    Get all XP calculation rules for a specific game.
+    Get all XP rules for a specific game.
     
     - **gameId**: The unique identifier of the game
-    - **active_only**: If true, return only active rules (default: true)
+    - **active_only**: Filter only active rules (default: True)
     """
+    gameId = validate_game_id(gameId)
     try:
         # Verify game exists
         game = get_game_by_id(gameId)

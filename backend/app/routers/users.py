@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from app.database import (
@@ -7,8 +7,11 @@ from app.database import (
     create_game_session, end_game_session, get_user_sessions,
     get_game_by_id
 )
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # ============ SCHEMAS ============
 
@@ -43,7 +46,8 @@ class SessionEnd(BaseModel):
 # ============ ENDPOINTS ============
 
 @router.post("/register")
-async def register_user(user_data: UserRegister):
+@limiter.limit("5/minute")
+async def register_user(request: Request, user_data: UserRegister):
     """Register a new user with username and password."""
     try:
         user = create_user(
@@ -61,7 +65,8 @@ async def register_user(user_data: UserRegister):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/login")
-async def login_user(credentials: UserLogin):
+@limiter.limit("10/minute")
+async def login_user(request: Request, credentials: UserLogin):
     """Login with username and password."""
     user = authenticate_user(credentials.username, credentials.password)
     
@@ -75,7 +80,8 @@ async def login_user(credentials: UserLogin):
     }
 
 @router.post("/anonymous")
-async def create_anonymous_user(data: Optional[AnonymousUserCreate] = None):
+@limiter.limit("3/minute")
+async def create_anonymous_user(request: Request, data: Optional[AnonymousUserCreate] = None):
     """Create an anonymous user for guest play."""
     multiplier = data.cur8_multiplier if data else 1.0
     
@@ -218,7 +224,8 @@ async def get_user_game_sessions(user_id: str, limit: int = 10):
     }
 
 @router.post("/sessions/start")
-async def start_game_session(session_data: SessionStart):
+@limiter.limit("30/minute")
+async def start_session(request: Request, session_data: SessionStart):
     """Start a new game session."""
     try:
         session = create_game_session(

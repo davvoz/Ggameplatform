@@ -66,8 +66,12 @@
         </div>
     </main>
     
+    <!-- Load environment config first -->
+    <script src="/env.js"></script>
+    
     <script>
-        const API_BASE = 'http://localhost:8000/users';
+        // Get API URL from window.ENV
+        const API_BASE = `${window.ENV?.API_URL || 'http://localhost:8000'}/users`;
         
         // Check if Steem Keychain is installed
         function checkSteemKeychain() {

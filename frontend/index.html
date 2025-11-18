@@ -39,7 +39,7 @@
                 <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">🎯 Quests</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
                 <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">👤 Profile</a>
-                <a href="http://localhost:8000/admin/db-viewer" class="nav-link" target="_blank" rel="noopener">🗄️ DB Viewer</a>
+                <a href="#" class="nav-link" id="dbViewerLink">🗄️ DB Viewer</a>
             </div>
         </div>
     </nav>
@@ -153,7 +153,10 @@
                 </div>
             </div>
             <div class="player-container">
-                <iframe id="game-iframe" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms" allowfullscreen></iframe>
+                <iframe id="game-iframe" 
+                    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups" 
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
             </div>
             <div class="player-footer">
                 <div class="score-display">Score: <span id="current-score">0</span></div>
@@ -389,6 +392,8 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Load environment config first -->
+    <script src="/env.js"></script>
     <script src="./js/nav.js"></script>
     <script src="./js/auth.js"></script>
     <script type="module" src="./js/main.js"></script>

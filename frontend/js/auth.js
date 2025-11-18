@@ -1,7 +1,12 @@
 // Authentication Manager
 const AuthManager = {
     currentUser: null,
-    apiBase: 'http://localhost:8000/users',
+    
+    // Get API base URL from window.ENV (set by env.js)
+    get apiBase() {
+        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        return `${apiUrl}/users`;
+    },
     
     init() {
         console.log('AuthManager: inizializzazione...');

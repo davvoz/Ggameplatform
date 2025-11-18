@@ -9,19 +9,27 @@
     <button onclick="testAPI()">Test Backend API</button>
     <pre id="result"></pre>
 
-    <script>
+    <!-- Load environment config -->
+    <script src="/env.js"></script>
+    
+    <script type="module">
+        import { config } from './js/config.js';
+        
         async function testAPI() {
             const resultEl = document.getElementById('result');
             resultEl.textContent = 'Loading...';
             
             try {
-                const response = await fetch('http://localhost:8000/games/list');
+                const response = await fetch(`${config.API_URL}/games/list`);
                 const data = await response.json();
                 resultEl.textContent = JSON.stringify(data, null, 2);
             } catch (error) {
                 resultEl.textContent = 'ERROR: ' + error.message;
             }
         }
+        
+        // Make testAPI global
+        window.testAPI = testAPI;
         
         // Auto-test on load
         testAPI();

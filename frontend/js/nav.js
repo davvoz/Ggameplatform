@@ -3,6 +3,30 @@
  */
 console.log('nav.js loaded');
 
+/**
+ * Initialize DB Viewer link with dynamic URL
+ */
+function initDbViewerLink() {
+    const dbViewerLink = document.getElementById('dbViewerLink');
+    if (dbViewerLink) {
+        // Get API URL from window.ENV (set by env.js)
+        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        const dbViewerUrl = `${apiUrl}/admin/db-viewer`;
+        
+        dbViewerLink.href = dbViewerUrl;
+        dbViewerLink.target = '_blank';
+        dbViewerLink.rel = 'noopener';
+        
+        // Prevent SPA router from intercepting
+        dbViewerLink.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Don't call window.open - href already handles it
+        });
+        
+        console.log('DB Viewer link initialized:', dbViewerUrl);
+    }
+}
+
 function initMobileNav() {
     console.log('initMobileNav called');
     
@@ -78,10 +102,12 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOMContentLoaded fired');
         initMobileNav();
+        initDbViewerLink();
     });
 } else {
     console.log('DOM already loaded, initializing immediately');
     initMobileNav();
+    initDbViewerLink();
 }
 
 // Backup initialization after a delay
@@ -89,6 +115,7 @@ setTimeout(function() {
     console.log('Backup initialization check');
     if (document.getElementById('navToggle') && document.getElementById('navMenu')) {
         initMobileNav();
+        initDbViewerLink();
     }
 }, 500);
 

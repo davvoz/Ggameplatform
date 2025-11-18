@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Request, Header
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from pathlib import Path
 from app.database import (
     get_db_session,
@@ -11,19 +11,37 @@ from app.database import (
 from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
 from sqlalchemy import desc
 import json
+import os
 from datetime import datetime
 
 router = APIRouter()
 
+# Admin API key from environment
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
+
+def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
+    """Verify admin access via API key or localhost"""
+    # Allow localhost in development
+    if request and request.client.host in ["127.0.0.1", "localhost", "::1"]:
+        return True
+    
+    # Check API key
+    if x_api_key != ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Admin access denied")
+    
+    return True
+
 @router.get("/db-viewer", response_class=HTMLResponse)
-async def db_viewer():
+async def db_viewer(request: Request, x_api_key: Optional[str] = Header(None)):
     """Database viewer interface"""
+    verify_admin(x_api_key, request)
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 
 @router.get("/db-stats")
-async def get_db_stats():
+async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)):
     """Get database statistics and all data from all tables"""
+    verify_admin(x_api_key, request)
     with get_db_session() as session:
         # Get all games using ORM
         games_query = session.query(Game).order_by(desc(Game.created_at)).all()

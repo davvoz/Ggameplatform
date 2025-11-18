@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-import hashlib
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
+import bcrypt
+from jose import JWTError, jwt
+import secrets
 
 from app.models import Base, Game, User, GameSession, Leaderboard, XPRule
 from app.leaderboard_triggers import setup_leaderboard_triggers
@@ -144,8 +146,16 @@ def generate_anonymous_id() -> str:
     return f"anon_{uuid.uuid4().hex[:12]}"
 
 def hash_password(password: str) -> str:
-    """Hash a password using SHA-256."""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash a password using bcrypt with salt."""
+    salt = bcrypt.gensalt(rounds=12)  # 12 rounds = ~250ms per hash (secure)
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its bcrypt hash."""
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
 def create_user(username: Optional[str] = None, email: Optional[str] = None, 
                 password: Optional[str] = None, cur8_multiplier: float = 1.0) -> dict:
@@ -208,17 +218,19 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     """Authenticate a user with username and password."""
     user = get_user_by_username(username)
     
-    if user and user.get('password_hash') == hash_password(password):
-        # Update last login
-        with get_db_session() as session:
-            db_user = session.query(User).filter(User.user_id == user['user_id']).first()
-            db_user.last_login = datetime.utcnow().isoformat()
-            session.flush()
-            
-            # Track quest progress for login
-            track_quest_progress_for_login(session, user['user_id'])
-            
-            return db_user.to_dict()
+    if user and user.get('password_hash'):
+        # Verify password using bcrypt
+        if verify_password(password, user.get('password_hash')):
+            # Update last login
+            with get_db_session() as session:
+                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
+                db_user.last_login = datetime.utcnow().isoformat()
+                session.flush()
+                
+                # Track quest progress for login
+                track_quest_progress_for_login(session, user['user_id'])
+                
+                return db_user.to_dict()
     
     return None
 

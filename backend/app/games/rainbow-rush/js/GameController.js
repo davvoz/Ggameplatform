@@ -703,7 +703,7 @@ export class GameController {
             this.turboButtonUI.resize(dims.width, dims.height);
         }
         if (this.flightButtonUI) {
-            this.flightButtonUI.resize(dims.width, dims.height);s
+            this.flightButtonUI.resize(dims.width, dims.height);
         }
     }
 

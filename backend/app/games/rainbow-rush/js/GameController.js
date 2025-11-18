@@ -409,6 +409,9 @@ export class GameController {
             this.powerupSystem
         );
 
+        // Pass safety platform state to player for expression
+        this.player.onSafetyPlatform = playerOnSafetyPlatform;
+
         // Update safety platform system with collision state
         this.safetyPlatformSystem.update(deltaTime, playerOnSafetyPlatform, this.entityManager, this.scoreSystem);
 

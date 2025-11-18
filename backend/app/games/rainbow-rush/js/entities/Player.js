@@ -117,6 +117,9 @@ export class Player {
         this.turboSpeedMultiplier = 2.5; // 2.5x speed - fast but manageable
         this.turboTrailParticles = [];
         
+        // Safety platform state
+        this.onSafetyPlatform = false;
+        
         // Flight horizontal mode - controllo volo orizzontale
         this.isFlightActive = false;
         this.flightTimeRemaining = 0;
@@ -901,6 +904,8 @@ export class Player {
         // Cambia espressione in base al contesto
         if (!this.alive) {
             this.expression = 'dead';
+        } else if (this.onSafetyPlatform) {
+            this.expression = 'worried'; // Espressione preoccupata sulla safety platform
         } else if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
             this.expression = 'excited';
         } else if (this.boostActive) {

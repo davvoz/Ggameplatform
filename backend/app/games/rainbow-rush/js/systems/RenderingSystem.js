@@ -293,6 +293,8 @@ export class RenderingSystem {
             time: Date.now() / 1000, // Convert to seconds
             scrollSpeed: gameState.scrollSpeed || 0,
             cameraY: gameState.camera?.y || 0,
+            canvasWidth: this.canvasWidth,
+            canvasHeight: this.canvasHeight,
             effects: {
                 shake: gameState.screenShake || { x: 0, y: 0 },
                 zoom: gameState.zoom || 1.0,

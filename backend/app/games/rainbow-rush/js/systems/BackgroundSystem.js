@@ -175,7 +175,8 @@ export class BackgroundSystem {
                 length: 150 + i * 30,
                 width: 40,
                 color: [1.0, 0.95, 0.7, 0.15],
-                type: 'sunray'
+                type: 'sunray',
+                speed: 1 + i * 0.3 // Rotazione lenta
             });
         }
     }
@@ -359,7 +360,8 @@ export class BackgroundSystem {
                     0.5 + Math.random() * 0.5,
                     0.7
                 ],
-                type: 'planet'
+                type: 'planet',
+                speed: 2 + i // Velocità parallasse lenta
             });
         }
     }
@@ -381,7 +383,8 @@ export class BackgroundSystem {
                     height: 80 - layer * 20,
                     color: [0.1 + layer * 0.1, 0.3 + layer * 0.1, 0.15, 0.8 - layer * 0.2],
                     type: 'tree',
-                    layer: layer
+                    layer: layer,
+                    speed: 8 + layer * 4 // Parallasse: alberi lontani più lenti
                 });
             }
         }
@@ -442,7 +445,8 @@ export class BackgroundSystem {
                 size: 30 + Math.random() * 40,
                 rotation: Math.random() * Math.PI * 2,
                 color: [0.6, 0.8, 0.95, 0.4], // Ridotta opacità da 0.6 a 0.4
-                type: 'crystal'
+                type: 'crystal',
+                speed: 5 + i * 2 // Velocità parallasse
             });
         }
         
@@ -472,7 +476,8 @@ export class BackgroundSystem {
             y: this.canvasHeight * 0.15,
             radius: 40,
             color: [0.95, 0.95, 0.85, 0.9],
-            type: 'moon'
+            type: 'moon',
+            speed: 2 // Velocità parallasse molto lenta
         });
         
         // Stars (more than space)
@@ -624,27 +629,76 @@ export class BackgroundSystem {
             }
         }
         
-        // Update wave layers for ocean
-        if (this.currentTheme === BackgroundThemes.OCEAN) {
-            this.layers.forEach(layer => {
-                if (layer.type === 'wave') {
-                    layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.5) * deltaTime;
+        // Update ALL layers con parallasse (non solo wave/pyramid/volcano)
+        this.layers.forEach(layer => {
+            // Wave layers (ocean)
+            if (layer.type === 'wave') {
+                layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.5) * deltaTime;
+            }
+            
+            // Layers che si muovono orizzontalmente con parallasse
+            if (layer.type === 'pyramid' || layer.type === 'volcano' || layer.type === 'dune' || 
+                layer.type === 'tree' || layer.type === 'mushroom') {
+                const layerSpeed = layer.speed || 10; // Default speed se non definito
+                layer.x -= (layerSpeed + cameraSpeed * 0.3) * deltaTime;
+                
+                // Wrap around quando escono dallo schermo
+                const layerWidth = layer.width || 100;
+                if (layer.x + layerWidth < 0) {
+                    layer.x = this.canvasWidth + Math.random() * 100;
                 }
-            });
-        }
-        
-        // Update pyramids and volcano layers con parallasse
-        if (this.currentTheme === BackgroundThemes.PYRAMIDS || this.currentTheme === BackgroundThemes.VOLCANO) {
-            this.layers.forEach(layer => {
-                if ((layer.type === 'pyramid' || layer.type === 'volcano') && layer.speed) {
-                    layer.x -= (layer.speed + cameraSpeed * 0.4) * deltaTime;
-                    // Wrap around when off screen
-                    if (layer.x + layer.width < 0) {
-                        layer.x = this.canvasWidth + Math.random() * 100;
-                    }
+            }
+            
+            // Seaweed oscillazione
+            if (layer.type === 'seaweed') {
+                const layerSpeed = layer.speed || 0.5;
+                layer.swayPhase = (layer.swayPhase || 0) + layerSpeed * deltaTime;
+                // Anche il seaweed si muove leggermente con la camera
+                layer.x -= cameraSpeed * 0.2 * deltaTime;
+                if (layer.x < -50) {
+                    layer.x = this.canvasWidth + 50;
                 }
-            });
-        }
+            }
+            
+            // Heatwave movement
+            if (layer.type === 'heatwave') {
+                layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.3) * deltaTime;
+            }
+            
+            // Sunray rotation
+            if (layer.type === 'sunray') {
+                layer.angle = (layer.angle || 0) + deltaTime * 0.1;
+            }
+            
+            // Crystal rotation
+            if (layer.type === 'crystal') {
+                layer.rotation = (layer.rotation || 0) + deltaTime * 0.5;
+                // I cristalli si muovono anche loro
+                const crystalSpeed = layer.speed || 8;
+                layer.x -= (crystalSpeed + cameraSpeed * 0.25) * deltaTime;
+                if (layer.x < -100) {
+                    layer.x = this.canvasWidth + 100;
+                }
+            }
+            
+            // Planet movement (very slow parallax)
+            if (layer.type === 'planet') {
+                const planetSpeed = layer.speed || 3;
+                layer.x -= (planetSpeed + cameraSpeed * 0.15) * deltaTime;
+                if (layer.x + layer.radius < 0) {
+                    layer.x = this.canvasWidth + layer.radius;
+                }
+            }
+            
+            // Moon movement (very slow)
+            if (layer.type === 'moon') {
+                const moonSpeed = layer.speed || 2;
+                layer.x -= (moonSpeed + cameraSpeed * 0.1) * deltaTime;
+                if (layer.x + layer.radius < 0) {
+                    layer.x = this.canvasWidth + layer.radius;
+                }
+            }
+        });
     }
     
     getBackgroundColor() {

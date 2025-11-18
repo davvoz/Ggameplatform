@@ -31,6 +31,12 @@ export class SpawnManager {
 
         this.rainbowTimer = 0;
         this.rainbowInterval = 40;
+        
+        this.flightBonusTimer = 0;
+        this.flightBonusInterval = 22; // Ogni 22 secondi
+        
+        this.rechargeBonusTimer = 0;
+        this.rechargeBonusInterval = 30; // Ogni 30 secondi
     }
 
     /**
@@ -109,6 +115,18 @@ export class SpawnManager {
         if (this.rainbowTimer >= this.rainbowInterval) {
             this.spawnRainbowBonus();
             this.rainbowTimer = 0;
+        }
+        
+        this.flightBonusTimer += deltaTime;
+        if (this.flightBonusTimer >= this.flightBonusInterval) {
+            this.spawnFlightBonus();
+            this.flightBonusTimer = 0;
+        }
+        
+        this.rechargeBonusTimer += deltaTime;
+        if (this.rechargeBonusTimer >= this.rechargeBonusInterval) {
+            this.spawnRechargeBonus();
+            this.rechargeBonusTimer = 0;
         }
     }
 
@@ -313,6 +331,51 @@ export class SpawnManager {
         });
     }
 
+    /**
+     * Spawn recharge bonus (resets safety platform cooldown)
+     */
+    spawnRechargeBonus() {
+        const x = this.dims.width + 50;
+        const y = 100 + Math.random() * (this.dims.height - 300);
+
+        this.entityManager.addEntity('rechargeBonuses', {
+            x, y,
+            width: 42,
+            height: 42,
+            velocity: -200,
+            type: 'recharge',
+            rotation: 0,
+            color: [0.2, 1.0, 0.4, 1.0], // Verde elettrico
+            glowColor: [0.4, 1.0, 0.6, 0.8],
+            pulsePhase: 0,
+            radius: 21,
+            energyPhase: 0, // Fase energia interna
+            orbitPhase: 0 // Fase orbita particelle
+        });
+    }
+    
+    /**
+     * Spawn flight bonus (instant flight power)
+     */
+    spawnFlightBonus() {
+        const x = this.dims.width + 50;
+        const y = 100 + Math.random() * (this.dims.height - 300);
+
+        this.entityManager.addEntity('flightBonuses', {
+            x, y,
+            width: 38,
+            height: 38,
+            velocity: -200,
+            type: 'instantflight',
+            rotation: 0,
+            color: [0.6, 0.9, 1.0, 1.0], // Azzurro chiaro
+            glowColor: [0.8, 1.0, 1.0, 0.7],
+            pulsePhase: 0,
+            radius: 19,
+            wingPhase: 0 // Per animazione ali
+        });
+    }
+    
     /**
      * Spawn rainbow bonus
      */

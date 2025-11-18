@@ -11,7 +11,7 @@ const SAFETY_CONFIG = {
     
     // Timing
     TIME_BEFORE_DISSOLVE: 3.0, // seconds on platform before dissolve starts
-    DISSOLVE_SPEED_ACTIVE: 2.0, // dissolve speed when player on platform
+    DISSOLVE_DURATION: 1.5, // seconds to complete dissolve animation
     DISSOLVE_SPEED_AUTO: 0.02, // slow dissolve when player leaves
     
     // Rescue platforms
@@ -77,6 +77,13 @@ export class SafetyPlatformSystem {
         // Update color based on charges
         this.updatePlatformColor();
         
+        // Update dissolve animation for rendering (independent from logic)
+        if (this.timeOnPlatform > 0) {
+            this.dissolveProgress = Math.min(1.0, this.timeOnPlatform / this.config.TIME_BEFORE_DISSOLVE);
+        } else {
+            this.dissolveProgress = 0;
+        }
+        
         // Execute state-specific logic
         switch (this.state) {
             case 'IDLE':
@@ -85,12 +92,19 @@ export class SafetyPlatformSystem {
             case 'ACTIVE':
                 this.handleActiveState(deltaTime, entityManager, scoreSystem);
                 break;
-            case 'DISSOLVING':
-                this.handleDissolvingState(deltaTime);
-                break;
         }
     }
 
+    /**
+     * Reset cooldown immediately (from recharge bonus)
+     */
+    resetCooldown() {
+        this.charges = this.config.MAX_CHARGES;
+        this.cooldownActive = false;
+        this.lastUseTime = null;
+        console.log('⚡ RECHARGE BONUS! Tutti i pallini ripristinati istantaneamente!');
+    }
+    
     /**
      * Auto-recharge: TUTTI i pallini si ricaricano insieme dopo 15 secondi dall'ULTIMO uso
      */
@@ -153,25 +167,13 @@ export class SafetyPlatformSystem {
             this.rescueSpawnTimer = 0;
         }
         
-        // Start dissolving after time limit
+        // After 3 seconds, safety is gone - return to IDLE
         if (this.timeOnPlatform >= this.config.TIME_BEFORE_DISSOLVE) {
-            this.startDissolving();
-        }
-    }
-
-    /**
-     * DISSOLVING State: Platform dissolving animation
-     */
-    handleDissolvingState(deltaTime) {
-        const speed = this.playerOnPlatform 
-            ? this.config.DISSOLVE_SPEED_ACTIVE 
-            : this.config.DISSOLVE_SPEED_AUTO;
-        
-        this.dissolveProgress += deltaTime * speed;
-        
-        // Dissolve complete
-        if (this.dissolveProgress >= 1.0) {
-            this.completeDissolution();
+            console.log('💥 Safety timeout! Player must jump or die!');
+            this.state = 'IDLE';
+            this.timeOnPlatform = 0;
+            this.rescueSpawnTimer = 0;
+            this.hasSpawnedInitialRescue = false;
         }
     }
 
@@ -205,29 +207,8 @@ export class SafetyPlatformSystem {
      * Deactivate platform when player leaves before dissolve
      */
     deactivatePlatform() {
-        console.log('⚪ Player left safety platform (before dissolve)');
+        console.log('⚪ Player left safety platform (before timeout)');
         this.state = 'IDLE';
-        this.timeOnPlatform = 0;
-        this.rescueSpawnTimer = 0;
-        this.hasSpawnedInitialRescue = false;
-    }
-
-    /**
-     * Start dissolving animation
-     */
-    startDissolving() {
-        console.log('🔴 Starting dissolve animation (3 seconds elapsed)');
-        this.state = 'DISSOLVING';
-        this.dissolveProgress = 0;
-    }
-
-    /**
-     * Complete dissolution and reset
-     */
-    completeDissolution() {
-        console.log('💥 Dissolve complete! Player falls. Resetting to IDLE');
-        this.state = 'IDLE';
-        this.dissolveProgress = 0;
         this.timeOnPlatform = 0;
         this.rescueSpawnTimer = 0;
         this.hasSpawnedInitialRescue = false;
@@ -287,11 +268,11 @@ export class SafetyPlatformSystem {
     // Getters
     getPlatform() { return this.platform; }
     getCharges() { return this.charges; }
-    getDissolveProgress() { return this.state === 'DISSOLVING' ? this.dissolveProgress : 0; }
-    // Platform is active if: has charges in IDLE state, OR already ACTIVE/DISSOLVING (even with 0 charges)
+    getDissolveProgress() { return this.dissolveProgress; }
+    // Platform is active only in IDLE (with charges) or ACTIVE state
     isActive() { 
-        if (this.state === 'ACTIVE' || this.state === 'DISSOLVING') {
-            return true; // Sempre collidibile se già attiva o in dissoluzione
+        if (this.state === 'ACTIVE') {
+            return true; // Attiva e collidibile
         }
         return this.state === 'IDLE' && this.charges > 0; // In IDLE serve almeno 1 carica
     }

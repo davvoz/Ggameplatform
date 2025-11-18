@@ -17,6 +17,8 @@ export class EntityManager {
         this.shieldBonuses = [];
         this.multiplierBonuses = [];
         this.rainbowBonuses = [];
+        this.flightBonuses = [];
+        this.rechargeBonuses = [];
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -82,6 +84,8 @@ export class EntityManager {
         this.shieldBonuses = [];
         this.multiplierBonuses = [];
         this.rainbowBonuses = [];
+        this.flightBonuses = [];
+        this.rechargeBonuses = [];
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -144,6 +148,14 @@ export class EntityManager {
 
         this.rainbowBonuses = this.rainbowBonuses.filter(bonus => 
             this.updateRainbowBonus(bonus, deltaTime, cameraSpeed)
+        );
+        
+        this.flightBonuses = this.flightBonuses.filter(bonus => 
+            this.updateFlightBonus(bonus, deltaTime, cameraSpeed)
+        );
+        
+        this.rechargeBonuses = this.rechargeBonuses.filter(bonus => 
+            this.updateRechargeBonus(bonus, deltaTime, cameraSpeed)
         );
 
         // Update particles
@@ -372,6 +384,27 @@ export class EntityManager {
 
         return bonus.x + bonus.radius > -50;
     }
+    
+    updateFlightBonus(bonus, deltaTime, cameraSpeed) {
+        const totalVelocity = bonus.velocity - cameraSpeed;
+        bonus.x += totalVelocity * deltaTime;
+        bonus.pulsePhase += deltaTime * 4;
+        bonus.rotation += deltaTime * 2;
+        bonus.wingPhase += deltaTime * 8; // Animazione battito ali
+        
+        return bonus.x > -100;
+    }
+    
+    updateRechargeBonus(bonus, deltaTime, cameraSpeed) {
+        const totalVelocity = bonus.velocity - cameraSpeed;
+        bonus.x += totalVelocity * deltaTime;
+        bonus.pulsePhase += deltaTime * 6;
+        bonus.rotation += deltaTime * 3;
+        bonus.energyPhase += deltaTime * 10; // Animazione energia
+        bonus.orbitPhase += deltaTime * 4; // Orbita particelle
+        
+        return bonus.x > -100;
+    }
 
     /**
      * Update boost particle
@@ -456,6 +489,8 @@ export class EntityManager {
             shieldBonuses: this.shieldBonuses,
             multiplierBonuses: this.multiplierBonuses,
             rainbowBonuses: this.rainbowBonuses,
+            flightBonuses: this.flightBonuses,
+            rechargeBonuses: this.rechargeBonuses,
             powerupParticles: this.powerupParticles,
             boostParticles: this.boostParticles,
             floatingTexts: this.floatingTexts

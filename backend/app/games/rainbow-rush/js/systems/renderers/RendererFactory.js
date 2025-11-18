@@ -48,6 +48,10 @@ export class RendererFactory {
         this.renderers.set('multiplier-bonus', collectibleRenderer);
         this.renderers.set('rainbow', collectibleRenderer);
         this.renderers.set('rainbow-bonus', collectibleRenderer);
+        this.renderers.set('instantflight', collectibleRenderer);
+        this.renderers.set('flight-bonus', collectibleRenderer);
+        this.renderers.set('recharge', collectibleRenderer);
+        this.renderers.set('recharge-bonus', collectibleRenderer);
         
         // Obstacles
         const obstacleRenderer = new ObstacleRenderer(this.renderer);

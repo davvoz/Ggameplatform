@@ -98,6 +98,9 @@ export class GameController {
             this.particleSystem,
             this.animationController
         );
+        
+        // Pass safetyPlatformSystem reference to collisionDetector after initialization
+        this.collisionDetector.safetyPlatformSystem = this.safetyPlatformSystem;
 
         // Setup initial platforms
         this.setupInitialPlatforms();

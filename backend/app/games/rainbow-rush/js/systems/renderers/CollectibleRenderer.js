@@ -38,6 +38,12 @@ export class CollectibleRenderer extends IEntityRenderer {
             case 'rainbow':
                 this.renderRainbowBonus(entity, time);
                 break;
+            case 'instantflight':
+                this.renderFlightBonus(entity, time);
+                break;
+            case 'recharge':
+                this.renderRechargeBonus(entity, time);
+                break;
             case 'powerup':
                 this.renderPowerup(entity, time);
                 break;
@@ -397,5 +403,184 @@ export class CollectibleRenderer extends IEntityRenderer {
         
         // Core
         this.renderer.drawCircle(bonus.x, bonus.y, size * 0.5 * pulse, [1.0, 1.0, 1.0, 1.0]);
+    }
+    
+    renderFlightBonus(bonus, time) {
+        const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
+        const size = bonus.radius * pulse;
+        const wingPhase = Math.sin(bonus.wingPhase);
+        
+        // Glow esterno azzurro
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 3.5, bonus.glowColor, 5, 0.6 * pulse, 0.12);
+        
+        // Cerchio principale
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.5, [...bonus.color, 0.4]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.2, [...bonus.color, 0.7]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.9, bonus.color);
+        
+        // Ali animate (battito)
+        const wingWidth = size * 1.5;
+        const wingHeight = size * 0.8;
+        const wingY = wingPhase * 8; // Movimento su/giù
+        
+        // Ala sinistra
+        this.renderer.drawCircle(
+            bonus.x - size * 1.2, 
+            bonus.y + wingY, 
+            wingWidth, 
+            [0.8, 0.95, 1.0, 0.6 + wingPhase * 0.2]
+        );
+        
+        // Ala destra
+        this.renderer.drawCircle(
+            bonus.x + size * 1.2, 
+            bonus.y - wingY, 
+            wingWidth, 
+            [0.8, 0.95, 1.0, 0.6 - wingPhase * 0.2]
+        );
+        
+        // Piume decorative
+        for (let i = 0; i < 3; i++) {
+            const featherAngle = (i / 3) * Math.PI * 0.5 - Math.PI * 0.25;
+            const featherDist = size * 1.8;
+            
+            // Sinistra
+            const fx1 = bonus.x - size * 1.2 + Math.cos(featherAngle) * featherDist;
+            const fy1 = bonus.y + wingY + Math.sin(featherAngle) * featherDist;
+            this.renderer.drawCircle(fx1, fy1, 3, [1.0, 1.0, 1.0, 0.5]);
+            
+            // Destra
+            const fx2 = bonus.x + size * 1.2 + Math.cos(Math.PI - featherAngle) * featherDist;
+            const fy2 = bonus.y - wingY + Math.sin(Math.PI - featherAngle) * featherDist;
+            this.renderer.drawCircle(fx2, fy2, 3, [1.0, 1.0, 1.0, 0.5]);
+        }
+        
+        // Centro luminoso
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.5, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Sparkle
+        const sparkleSize = size * 0.3;
+        this.renderer.drawCircle(
+            bonus.x - sparkleSize * 0.3, 
+            bonus.y - sparkleSize * 0.3, 
+            sparkleSize, 
+            [1.0, 1.0, 1.0, 0.9 + Math.sin(time * 10) * 0.1]
+        );
+    }
+    
+    renderRechargeBonus(bonus, time) {
+        const pulse = Math.sin(bonus.pulsePhase) * 0.35 + 1.0;
+        const size = bonus.radius * pulse;
+        const energyPhase = bonus.energyPhase;
+        
+        // Glow esterno verde elettrico pulsante
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 4.5, bonus.glowColor, 8, 0.8 * pulse, 0.1);
+        
+        // Anelli energetici espandenti
+        for (let i = 0; i < 3; i++) {
+            const ringPhase = (energyPhase + i * 2) % 6;
+            const ringSize = size * (0.8 + ringPhase * 0.4);
+            const ringAlpha = (1 - ringPhase / 6) * 0.8;
+            this.renderer.drawCircle(
+                bonus.x, 
+                bonus.y, 
+                ringSize, 
+                [0.2, 1.0, 0.4, ringAlpha]
+            );
+        }
+        
+        // Cerchi concentrici pulsanti
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.8, [0.1, 0.8, 0.3, 0.4]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.4, [0.2, 1.0, 0.4, 0.6]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
+        
+        // Simbolo batteria/energia al centro
+        const batteryWidth = size * 0.8;
+        const batteryHeight = size * 1.2;
+        const batteryX = bonus.x - batteryWidth / 2;
+        const batteryY = bonus.y - batteryHeight / 2;
+        
+        // Corpo batteria
+        this.renderer.drawRect(
+            batteryX, 
+            batteryY, 
+            batteryWidth, 
+            batteryHeight, 
+            [0.15, 0.8, 0.3, 1.0]
+        );
+        
+        // Polo positivo
+        this.renderer.drawRect(
+            bonus.x - size * 0.2, 
+            batteryY - size * 0.2, 
+            size * 0.4, 
+            size * 0.2, 
+            [0.2, 1.0, 0.4, 1.0]
+        );
+        
+        // Barre energia interne (animate)
+        const barCount = 4;
+        const barHeight = (batteryHeight - 8) / barCount;
+        for (let i = 0; i < barCount; i++) {
+            const barPulse = Math.sin(energyPhase * 2 + i * 0.5) * 0.3 + 0.7;
+            this.renderer.drawRect(
+                batteryX + 4, 
+                batteryY + 4 + i * barHeight, 
+                batteryWidth - 8, 
+                barHeight - 2, 
+                [0.4, 1.0, 0.5, barPulse]
+            );
+        }
+        
+        // Particelle orbitanti elettriche
+        const particleCount = 8;
+        for (let i = 0; i < particleCount; i++) {
+            const orbitAngle = (i / particleCount) * Math.PI * 2 + bonus.orbitPhase;
+            const orbitRadius = size * (2.2 + Math.sin(energyPhase + i) * 0.3);
+            const px = bonus.x + Math.cos(orbitAngle) * orbitRadius;
+            const py = bonus.y + Math.sin(orbitAngle) * orbitRadius;
+            const particleSize = 3 + Math.sin(energyPhase * 3 + i) * 1.5;
+            
+            // Particella con scia
+            this.renderer.drawCircle(px, py, particleSize, [0.5, 1.0, 0.6, 1.0]);
+            
+            // Scia
+            const trailAngle = orbitAngle + Math.PI;
+            const tx = px + Math.cos(trailAngle) * particleSize * 2;
+            const ty = py + Math.sin(trailAngle) * particleSize * 2;
+            this.renderer.drawCircle(tx, ty, particleSize * 0.5, [0.3, 0.8, 0.4, 0.5]);
+        }
+        
+        // Fulmini casuali
+        if (Math.random() < 0.3) {
+            const boltCount = 3;
+            for (let i = 0; i < boltCount; i++) {
+                const boltAngle = Math.random() * Math.PI * 2;
+                const boltLength = size * (1.5 + Math.random() * 0.8);
+                const boltX = bonus.x + Math.cos(boltAngle) * boltLength;
+                const boltY = bonus.y + Math.sin(boltAngle) * boltLength;
+                
+                // Linea fulmine (simulata con cerchietti)
+                const steps = 5;
+                for (let s = 0; s < steps; s++) {
+                    const t = s / steps;
+                    const sx = bonus.x + (boltX - bonus.x) * t;
+                    const sy = bonus.y + (boltY - bonus.y) * t;
+                    this.renderer.drawCircle(sx, sy, 2, [1.0, 1.0, 1.0, 1 - t]);
+                }
+            }
+        }
+        
+        // Centro ultra luminoso
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.4, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Sparkle centrale
+        const sparkleSize = size * 0.25;
+        this.renderer.drawCircle(
+            bonus.x - sparkleSize * 0.2, 
+            bonus.y - sparkleSize * 0.2, 
+            sparkleSize, 
+            [1.0, 1.0, 1.0, 0.95 + Math.sin(time * 12) * 0.05]
+        );
     }
 }

@@ -46,6 +46,12 @@ export class Player {
         this.boostDecelerationDuration = 2.5; // 2.5 secondi per decelerazione molto dolce
         this.boostPeakVelocity = 0; // Velocità di picco del boost
         
+        // Boost combo system
+        this.boostCombo = 0;
+        this.boostComboTimer = 0;
+        this.boostComboTimeout = 4.0; // 4 secondi per mantenere la combo
+        this.boostComboSpeedBonus = 0; // Bonus velocità dalla combo
+        
         // Powerup states
         this.powerups = {
             immortality: false,
@@ -103,6 +109,8 @@ export class Player {
         this.isTurboActive = false;
         this.turboTimeRemaining = 0;
         this.turboCooldownRemaining = 0;
+        this.instantFlightActive = false;
+        this.instantFlightDuration = 0;
         this.turboCooldownDuration = 20; // 20 seconds cooldown
         this.turboBaseDuration = 5; // Base 5 seconds + level
         this.turboSpeedMultiplier = 2.5; // 2.5x speed - fast but manageable
@@ -118,6 +126,11 @@ export class Player {
         this.flightStep = 100; // Pixel per step su/giù
         this.flightTrailParticles = [];
         
+        // Instant flight bonus (separate from button flight)
+        this.instantFlightActive = false;
+        this.instantFlightDuration = 0;
+        this.instantFlightMaxDuration = 5.0; // 5 secondi
+        
         // Animazione volo fluttuante
         this.flightFloatPhase = 0;
         this.flightFloatAmplitude = 8; // Oscillazione verticale in pixel
@@ -125,9 +138,17 @@ export class Player {
         this.wingFlapSpeed = 8; // Velocità battito ali
     }
 
+    activateInstantFlight() {
+        this.instantFlightActive = true;
+        this.instantFlightDuration = this.instantFlightMaxDuration;
+        // Inizia il volo ad un'altezza sicura
+        this.flightTargetY = 150;
+        this.velocityY = 0;
+    }
+    
     jump() {
-        // Flight powerup allows unlimited jumping
-        if (this.isGrounded || this.powerups.flight) {
+        // Flight powerup or instant flight allows unlimited jumping
+        if (this.isGrounded || this.powerups.flight || this.instantFlightActive) {
             // Animazione anticipazione salto
             this.squashAmount = 0.3; // Compresso prima del salto
             this.expression = 'determined';
@@ -384,6 +405,48 @@ export class Player {
             }
         }
         
+        // Gestione timer combo boost
+        if (this.boostCombo > 0) {
+            this.boostComboTimer -= deltaTime;
+            if (this.boostComboTimer <= 0) {
+                // Combo scaduta
+                this.boostCombo = 0;
+                this.boostComboSpeedBonus = 0;
+            }
+        }
+        
+        // Gestione instant flight bonus
+        if (this.instantFlightActive) {
+            this.instantFlightDuration -= deltaTime;
+            if (this.instantFlightDuration <= 0) {
+                this.instantFlightActive = false;
+                this.instantFlightDuration = 0;
+            } else {
+                // Comportamento volo come il flight button
+                const targetDistance = this.flightTargetY - this.y;
+                const moveSpeed = 400;
+                if (Math.abs(targetDistance) > 5) {
+                    this.velocityY = Math.sign(targetDistance) * moveSpeed;
+                } else {
+                    this.velocityY = 0;
+                    this.y = this.flightTargetY;
+                }
+                
+                // Particelle volo
+                if (Math.random() < 0.4) {
+                    this.flightTrailParticles.push({
+                        x: this.x + this.width / 2,
+                        y: this.y + this.height / 2,
+                        vx: -80 - Math.random() * 40,
+                        vy: (Math.random() - 0.5) * 60,
+                        life: 0.5,
+                        size: 4 + Math.random() * 3,
+                        color: [0.6, 0.9, 1.0, 0.8]
+                    });
+                }
+            }
+        }
+        
         // Update boost particles
         this.boostParticles = this.boostParticles.filter(p => {
             p.x += p.vx * deltaTime;
@@ -392,8 +455,11 @@ export class Player {
             return p.life > 0;
         });
         
-        // Apply gravity (reduced if flight is active)
-        const currentGravity = this.powerups.flight ? this.gravity * 0.3 : this.gravity;
+        // Apply gravity (reduced if flight is active or instant flight is active)
+        let currentGravity = this.gravity;
+        if (this.powerups.flight || this.instantFlightActive) {
+            currentGravity = this.gravity * 0.3;
+        }
         this.velocityY += currentGravity * deltaTime;
         
         // Cap fall speed
@@ -519,15 +585,24 @@ export class Player {
         this.boostDecelerating = false;
         this.boostDecelerationTime = 0;
         
+        // Incrementa combo boost
+        this.boostCombo++;
+        this.boostComboTimer = this.boostComboTimeout;
+        
+        // Calcola bonus velocità dalla combo (ogni boost +15% velocità, max +150%)
+        this.boostComboSpeedBonus = Math.min(this.boostCombo * 0.15, 1.5);
+        
         // Attiva boost (resetta timer anche se già attivo)
         this.boostActive = true;
         this.boostTimer = this.boostDuration;
         
-        // Salva la velocità boost per la camera
-        this.velocityX = 300 * this.boostSpeedMultiplier;
+        // Salva la velocità boost con bonus combo
+        const totalSpeedMultiplier = this.boostSpeedMultiplier + this.boostComboSpeedBonus;
+        this.velocityX = 300 * totalSpeedMultiplier;
         
-        // Small upward boost for visual effect
-        this.velocityY = Math.min(this.velocityY, -150);
+        // Small upward boost for visual effect (più forte con combo)
+        const boostJump = -150 - (this.boostCombo * 20);
+        this.velocityY = Math.min(this.velocityY, boostJump);
     }
 
     checkPlatformCollision(platform, toleranceOverride = null) {
@@ -688,6 +763,9 @@ export class Player {
         this.boostActive = false;
         this.boostTimer = 0;
         this.boostDecelerating = false;
+        this.boostCombo = 0;
+        this.boostComboTimer = 0;
+        this.boostComboSpeedBonus = 0;
         this.boostDecelerationTime = 0;
         this.boostPeakVelocity = 0;
         this.health = this.maxHealth;

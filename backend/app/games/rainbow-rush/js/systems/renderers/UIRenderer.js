@@ -2,7 +2,6 @@
  * UIRenderer - Handles UI elements (floating text, notifications)
  * Single Responsibility: UI visualization
  */
-import { RenderingUtils } from './RenderingUtils.js';
 
 export class UIRenderer {
     constructor(renderer, textCtx, canvasWidth, canvasHeight) {

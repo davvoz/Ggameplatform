@@ -232,7 +232,30 @@ export class CollisionDetector {
                 this.achievementSystem.checkAchievements();
                 
                 this.particleSystem.createBoostExplosion(boost.x, boost.y, entityManager);
-                this.animationController.createFloatingText(`+${points} BOOST!`, boost.x, boost.y, [0.0, 1.0, 0.9, 1.0], entityManager);
+                
+                // Mostra combo boost se >= 2
+                const boostCombo = this.player.boostCombo;
+                if (boostCombo >= 2) {
+                    const speedBonus = Math.floor(this.player.boostComboSpeedBonus * 100);
+                    this.animationController.createFloatingText(
+                        `+${points} BOOST x${boostCombo}! 🚀 +${speedBonus}% VELOCITÀ`, 
+                        boost.x, 
+                        boost.y, 
+                        [0.0, 1.0, 0.9, 1.0], 
+                        entityManager
+                    );
+                    
+                    // Notifica achievement per combo boost epiche
+                    if (boostCombo >= 5) {
+                        this.achievementSystem.addNotification(
+                            `🚀 BOOST COMBO x${boostCombo}!`, 
+                            `+${speedBonus}% velocità!`, 
+                            'achievement'
+                        );
+                    }
+                } else {
+                    this.animationController.createFloatingText(`+${points} BOOST!`, boost.x, boost.y, [0.0, 1.0, 0.9, 1.0], entityManager);
+                }
                 
                 const combo = this.scoreSystem.getCombo();
                 const multiplier = this.scoreSystem.getComboMultiplier();
@@ -252,6 +275,8 @@ export class CollisionDetector {
         this.checkShieldBonusCollisions(entityManager);
         this.checkMultiplierBonusCollisions(entityManager);
         this.checkRainbowBonusCollisions(entityManager);
+        this.checkFlightBonusCollisions(entityManager);
+        this.checkRechargeBonusCollisions(entityManager);
     }
 
     /**
@@ -348,6 +373,74 @@ export class CollisionDetector {
         }
     }
 
+    /**
+     * Check recharge bonus collisions
+     */
+    checkRechargeBonusCollisions(entityManager) {
+        const rechargeBonuses = entityManager.getEntities('rechargeBonuses');
+        
+        for (let i = rechargeBonuses.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(rechargeBonuses[i])) {
+                const recharge = rechargeBonuses[i];
+                rechargeBonuses.splice(i, 1);
+                
+                // Accedi al SafetyPlatformSystem tramite il riferimento passato
+                if (this.safetyPlatformSystem) {
+                    this.safetyPlatformSystem.resetCooldown();
+                }
+                
+                // Esplosione energia elettrica
+                for (let j = 0; j < 40; j++) {
+                    const angle = (Math.PI * 2 * j) / 40;
+                    const speed = 150 + Math.random() * 100;
+                    entityManager.addEntity('powerupParticles', {
+                        x: recharge.x,
+                        y: recharge.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 0.8,
+                        maxLife: 0.8,
+                        size: 4 + Math.random() * 3,
+                        color: [0.2, 1.0, 0.4, 1.0],
+                        gravity: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 10,
+                        rotation: 0,
+                        type: 'powerup-particle'
+                    });
+                }
+                
+                this.particleSystem.createBonusExplosion(recharge.x, recharge.y, recharge.color, 80, entityManager);
+                this.animationController.createFloatingText('⚡ RICARICA ISTANTANEA!', recharge.x, recharge.y, [0.2, 1.0, 0.4, 1.0], entityManager);
+                this.achievementSystem.addNotification('⚡ Safety Ricaricato!', 'Tutti i pallini ripristinati!', 'achievement');
+                this.audioManager.playSound('powerup');
+                
+                // Screen flash verde
+                this.animationController.triggerScreenFlash(0.3, [0.2, 1.0, 0.4]);
+            }
+        }
+    }
+    
+    /**
+     * Check instant flight bonus collisions
+     */
+    checkFlightBonusCollisions(entityManager) {
+        const flightBonuses = entityManager.getEntities('flightBonuses');
+        
+        for (let i = flightBonuses.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(flightBonuses[i])) {
+                const flight = flightBonuses[i];
+                flightBonuses.splice(i, 1);
+                
+                this.player.activateInstantFlight();
+                
+                this.particleSystem.createBonusExplosion(flight.x, flight.y, flight.color, 70, entityManager);
+                this.animationController.createFloatingText('🪶 VOLO ISTANTANEO!', flight.x, flight.y, flight.color, entityManager);
+                this.achievementSystem.addNotification('🪶 Volo Attivato!', '5 secondi di volo libero!', 'info');
+                this.audioManager.playSound('powerup');
+            }
+        }
+    }
+    
     /**
      * Check rainbow bonus collisions
      */

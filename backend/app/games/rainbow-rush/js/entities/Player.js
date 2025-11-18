@@ -143,14 +143,27 @@ export class Player {
     activateInstantFlight() {
         this.instantFlightActive = true;
         this.instantFlightDuration = this.instantFlightMaxDuration;
-        // Inizia il volo ad un'altezza sicura
-        this.flightTargetY = 150;
+        // Inizia il volo dalla posizione corrente (come il flight button)
+        this.flightTargetY = this.y;
         this.velocityY = 0;
+        // Inizializza le animazioni volo (stesse del flight button)
+        this.flightFloatPhase = 0;
+        this.wingFlapPhase = 0;
+    }
+    
+    instantFlightMoveUp() {
+        if (!this.instantFlightActive) return;
+        this.flightTargetY = Math.max(50, this.flightTargetY - this.flightStep);
+    }
+    
+    instantFlightMoveDown() {
+        if (!this.instantFlightActive) return;
+        this.flightTargetY = Math.min(this.canvasHeight - 50, this.flightTargetY + this.flightStep);
     }
     
     jump() {
-        // Flight powerup or instant flight allows unlimited jumping
-        if (this.isGrounded || this.powerups.flight || this.instantFlightActive) {
+        // Flight powerup, flight button or instant flight allows unlimited jumping
+        if (this.isGrounded || this.powerups.flight || this.isFlightActive || this.instantFlightActive) {
             // Animazione anticipazione salto
             this.squashAmount = 0.3; // Compresso prima del salto
             this.expression = 'determined';
@@ -419,33 +432,40 @@ export class Player {
             }
         }
         
-        // Gestione instant flight bonus
+        // Gestione instant flight bonus - IDENTICO al volo normale
         if (this.instantFlightActive) {
             this.instantFlightDuration -= deltaTime;
             if (this.instantFlightDuration <= 0) {
                 this.instantFlightActive = false;
                 this.instantFlightDuration = 0;
             } else {
-                // Comportamento volo come il flight button
-                const targetDistance = this.flightTargetY - this.y;
-                const moveSpeed = 400;
-                if (Math.abs(targetDistance) > 5) {
-                    this.velocityY = Math.sign(targetDistance) * moveSpeed;
+                // Animazione fluttuante durante il volo (IDENTICO al volo normale)
+                this.flightFloatPhase += deltaTime * 4;
+                this.wingFlapPhase += deltaTime * this.wingFlapSpeed;
+                const floatOffset = Math.sin(this.flightFloatPhase) * this.flightFloatAmplitude;
+                
+                // Smooth movement verso target Y + oscillazione fluttuante
+                const diff = this.flightTargetY - this.y;
+                const moveSpeed = 400; // Velocità smooth
+                if (Math.abs(diff) > 1) {
+                    this.velocityY = Math.sign(diff) * Math.min(Math.abs(diff) * 5, moveSpeed);
                 } else {
-                    this.velocityY = 0;
-                    this.y = this.flightTargetY;
+                    // Quando vicino al target, applica solo oscillazione
+                    this.velocityY = Math.cos(this.flightFloatPhase) * this.flightFloatAmplitude * 4;
                 }
                 
-                // Particelle volo
-                if (Math.random() < 0.4) {
+                // Genera particelle flight trail (ali/propulsori) più frequenti
+                if (Math.random() < 0.5) {
+                    // Particelle dalle ali (sinistra e destra)
+                    const wingOffset = Math.sin(this.wingFlapPhase) * 15;
                     this.flightTrailParticles.push({
-                        x: this.x + this.width / 2,
-                        y: this.y + this.height / 2,
-                        vx: -80 - Math.random() * 40,
-                        vy: (Math.random() - 0.5) * 60,
-                        life: 0.5,
-                        size: 4 + Math.random() * 3,
-                        color: [0.6, 0.9, 1.0, 0.8]
+                        x: this.x + this.width / 2 + wingOffset,
+                        y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                        vx: (Math.random() - 0.5) * 80,
+                        vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
+                        life: 1.0,
+                        maxLife: 1.0,
+                        color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
                     });
                 }
             }

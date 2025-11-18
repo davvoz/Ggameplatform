@@ -235,6 +235,8 @@ export class GameController {
             if (!this.gameState.isPlaying()) return;
             if (this.player.isFlightActive) {
                 this.player.flightMoveUp();
+            } else if (this.player.instantFlightActive) {
+                this.player.instantFlightMoveUp();
             }
         });
         
@@ -243,6 +245,8 @@ export class GameController {
             if (!this.gameState.isPlaying()) return;
             if (this.player.isFlightActive) {
                 this.player.flightMoveDown();
+            } else if (this.player.instantFlightActive) {
+                this.player.instantFlightMoveDown();
             }
         });
 
@@ -281,15 +285,23 @@ export class GameController {
                 }
             }
 
-            // Se volo è attivo, controlla click su/giù
-            if (this.player.isFlightActive) {
+            // Se volo è attivo (flight button o instant flight), controlla click su/giù
+            if (this.player.isFlightActive || this.player.instantFlightActive) {
                 const middleY = dims.height / 2;
                 if (data.y < middleY) {
                     // Click nella metà superiore = sali
-                    this.player.flightMoveUp();
+                    if (this.player.isFlightActive) {
+                        this.player.flightMoveUp();
+                    } else {
+                        this.player.instantFlightMoveUp();
+                    }
                 } else {
                     // Click nella metà inferiore = scendi
-                    this.player.flightMoveDown();
+                    if (this.player.isFlightActive) {
+                        this.player.flightMoveDown();
+                    } else {
+                        this.player.instantFlightMoveDown();
+                    }
                 }
             }
         });

@@ -56,9 +56,14 @@ export class PlayerRenderer extends IEntityRenderer {
         this.renderEyes(player, shakenX, shakenY, radiusY);
         this.renderMouth(player, shakenX, shakenY, radiusY);
 
-        // Wings if flying
-        if (player.isFlightActive) {
+        // Wings if flying (flight button o instant flight)
+        if (player.isFlightActive || player.instantFlightActive) {
             this.renderWings(player, time, centerX, centerY);
+        }
+
+        // Circular progress bar per instant flight
+        if (player.instantFlightActive && player.instantFlightDuration > 0) {
+            this.renderInstantFlightProgress(player, centerX, centerY, avgRadius);
         }
 
         // Shield
@@ -508,6 +513,80 @@ export class PlayerRenderer extends IEntityRenderer {
                 const featherRadius = (5 - i) * (1 - t * 0.5);
                 const featherAlpha = (0.8 - i * 0.1) * (1 - t * 0.3);
                 this.renderer.drawCircle(px, py, featherRadius, [0.9, 0.95 + i * 0.01, 1.0, featherAlpha]);
+            }
+        }
+    }
+
+    renderInstantFlightProgress(player, x, y, radius) {
+        // Progress bar circolare per mostrare la durata del volo istantaneo
+        const progress = player.instantFlightDuration / player.instantFlightMaxDuration;
+        const progressRadius = radius * 2.2; // Cerchio esterno
+        const thickness = 4; // Spessore della barra
+        const segments = 60; // Segmenti per smoothness
+        
+        // Colore progressivo da cyan a blu
+        const baseColor = [0.4, 0.85, 1.0]; // Cyan chiaro
+        
+        // Alone esterno sottile
+        const glowRadius = progressRadius + 3;
+        this.renderer.drawCircle(x, y, glowRadius, [0.3, 0.7, 1.0, 0.15]);
+        
+        // Disegna il cerchio di background (grigio scuro)
+        for (let i = 0; i < segments; i++) {
+            const angle = (Math.PI * 2 * i) / segments - Math.PI / 2; // Inizia dall'alto
+            const px = x + Math.cos(angle) * progressRadius;
+            const py = y + Math.sin(angle) * progressRadius;
+            this.renderer.drawCircle(px, py, thickness * 0.6, [0.2, 0.2, 0.3, 0.4]);
+        }
+        
+        // Disegna il progresso (parte piena)
+        const filledSegments = Math.floor(segments * progress);
+        for (let i = 0; i < filledSegments; i++) {
+            const t = i / segments;
+            const angle = (Math.PI * 2 * i) / segments - Math.PI / 2; // Inizia dall'alto
+            const px = x + Math.cos(angle) * progressRadius;
+            const py = y + Math.sin(angle) * progressRadius;
+            
+            // Gradiente di colore basato su progresso
+            const alpha = 0.6 + (1 - progress) * 0.3; // Più opaco quando sta finendo
+            const color = [
+                baseColor[0] + (1 - progress) * 0.3, // Più rosso quando sta finendo
+                baseColor[1] * progress, // Meno verde
+                baseColor[2], // Blu costante
+                alpha
+            ];
+            
+            // Particella principale
+            this.renderer.drawCircle(px, py, thickness, color);
+            
+            // Glow interno per dare profondità
+            const glowColor = [...color];
+            glowColor[3] = alpha * 0.3;
+            this.renderer.drawCircle(px, py, thickness * 1.5, glowColor);
+        }
+        
+        // Effetto "testa" della progress bar (particella brillante all'inizio)
+        if (filledSegments > 0) {
+            const headAngle = (Math.PI * 2 * filledSegments) / segments - Math.PI / 2;
+            const headX = x + Math.cos(headAngle) * progressRadius;
+            const headY = y + Math.sin(headAngle) * progressRadius;
+            
+            // Testa brillante che pulsa
+            const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
+            this.renderer.drawCircle(headX, headY, thickness * 1.8 * pulse, [1.0, 1.0, 1.0, 0.9 * pulse]);
+            this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1.0, 1.0]);
+        }
+        
+        // Sparkles attorno al cerchio (opzionale, per rendere più carino)
+        if (progress > 0.2) { // Solo se c'è abbastanza progresso
+            const numSparkles = 6;
+            for (let i = 0; i < numSparkles; i++) {
+                const sparkleAngle = (Math.PI * 2 * i / numSparkles) + (Date.now() / 1000);
+                const sparkleRadius = progressRadius + Math.sin(Date.now() / 200 + i) * 4;
+                const sx = x + Math.cos(sparkleAngle) * sparkleRadius;
+                const sy = y + Math.sin(sparkleAngle) * sparkleRadius;
+                const sparkleAlpha = (Math.sin(Date.now() / 300 + i) * 0.3 + 0.5) * progress;
+                this.renderer.drawCircle(sx, sy, 2, [1.0, 1.0, 1.0, sparkleAlpha]);
             }
         }
     }

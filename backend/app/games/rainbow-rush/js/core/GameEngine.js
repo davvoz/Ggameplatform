@@ -19,7 +19,8 @@ export class GameEngine {
     }
 
     initWebGL() {
-        const gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+        const gl = this.canvas.getContext('webgl', { preserveDrawingBuffer: true }) || 
+                   this.canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
         if (!gl) {
             throw new Error('WebGL not supported');
         }
@@ -27,6 +28,21 @@ export class GameEngine {
         gl.clearColor(0.53, 0.81, 0.92, 1.0); // Sky blue
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        
+        // Handle WebGL context loss/restore
+        this.canvas.addEventListener('webglcontextlost', (e) => {
+            console.warn('WebGL context lost');
+            e.preventDefault();
+            this.stop();
+        }, false);
+        
+        this.canvas.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored');
+            this.gl = this.initWebGL();
+            if (this.running) {
+                this.start();
+            }
+        }, false);
         
         return gl;
     }
@@ -110,6 +126,13 @@ export class GameEngine {
 
     render() {
         const gl = this.gl;
+        
+        // Verify WebGL context is still valid
+        if (!gl || gl.isContextLost()) {
+            console.warn('WebGL context lost, skipping render');
+            return;
+        }
+        
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         for (const system of this.systems) {

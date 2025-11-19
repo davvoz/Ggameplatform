@@ -109,10 +109,23 @@ class RainbowRushApp {
             }
         });
 
-        // Handle visibility change (pause when tab hidden)
+        // Handle visibility change (pause when tab hidden, resume when visible)
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden && this.gameController) {
-                this.gameController.pauseGame();
+            if (!this.gameController) return;
+            
+            if (document.hidden) {
+                // Tab nascosta - metti in pausa solo se sta giocando
+                if (this.gameController.gameState.isPlaying()) {
+                    this.gameController.pauseGame();
+                    // Segna che è stata messa in pausa automaticamente
+                    this.gameController.autoPaused = true;
+                }
+            } else {
+                // Tab visibile - riprendi solo se era stata pausata automaticamente
+                if (this.gameController.gameState.isPaused() && this.gameController.autoPaused) {
+                    this.gameController.resumeGame();
+                    this.gameController.autoPaused = false;
+                }
             }
         });
     }

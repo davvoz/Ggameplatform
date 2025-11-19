@@ -28,6 +28,9 @@ export class GameController {
         this.canvas = canvas;
         this.engine = new GameEngine(canvas);
         this.gameState = new GameState();
+        
+        // Track auto-pause state for visibility changes
+        this.autoPaused = false;
 
         // Core systems
         this.scoreSystem = new ScoreSystem();
@@ -824,6 +827,10 @@ export class GameController {
         if (this.gameState.isPlaying()) {
             this.gameState.setState(GameStates.PAUSED);
             this.engine.stop();
+            // Pausa anche l'audio
+            if (this.audioManager) {
+                this.audioManager.pause();
+            }
         }
     }
 
@@ -831,6 +838,10 @@ export class GameController {
         if (this.gameState.isPaused()) {
             this.gameState.setState(GameStates.PLAYING);
             this.engine.start();
+            // Riprendi l'audio
+            if (this.audioManager) {
+                this.audioManager.resume();
+            }
         }
     }
 

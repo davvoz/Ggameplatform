@@ -814,6 +814,12 @@ export class AudioManager {
         return this.enabled;
     }
 
+    pause() {
+        if (this.audioContext && this.audioContext.state === 'running') {
+            this.audioContext.suspend();
+        }
+    }
+
     resume() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             this.audioContext.resume();

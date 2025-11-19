@@ -53,13 +53,13 @@ export class InputManager {
             this.keys.add(key);
             
             // Turbo activation with 'A' key
-            if (key === 'a') {
+            if (key === 'd') {
                 event.preventDefault();
                 this.notifyListeners('turbo');
             }
             
             // Flight activation with 'D' key
-            if (key === 'd') {
+            if (key === 'a') {
                 event.preventDefault();
                 this.notifyListeners('flight');
             }

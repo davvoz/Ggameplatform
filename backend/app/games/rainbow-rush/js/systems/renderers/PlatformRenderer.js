@@ -181,17 +181,172 @@ export class PlatformRenderer extends IEntityRenderer {
     renderRescueEffect(platform, x, y, time) {
         const phase = platform.laserPhase || 0;
         const pulse = Math.sin(time * 8 + phase) * 0.3 + 0.7;
+        const glowIntensity = platform.glowIntensity || 0.8;
+        const pulsePhase = platform.pulsePhase || 0;
+        
+        // Platform pulsing effect
+        const currentPulse = Math.sin(time * 3 + pulsePhase) * 0.15 + 1.0;
+        
+        // Glow effetto halo
+        const glowSize = 6 * currentPulse;
+        const glowColor = [...platform.color];
+        glowColor[3] = 0.3 * glowIntensity * currentPulse;
+        this.renderer.drawRect(x - glowSize/2, y - glowSize/2, platform.width + glowSize, platform.height + glowSize, glowColor);
+        
+        // Shape-specific rendering (solo forme simili a barre)
+        const shape = platform.shape || 'rect';
+        
+        switch(shape) {
+            case 'rounded':
+                this.renderRoundedRescue(platform, x, y, time, currentPulse);
+                break;
+            default:
+                this.renderDefaultRescue(platform, x, y, time, currentPulse);
+        }
+        
+        // Sparkles
+        if (platform.sparkles) {
+            this.renderSparkles(platform, x, y, time);
+        }
+        
+        // Particle trail
+        if (platform.particleTrail) {
+            this.renderParticleTrail(platform, x, y, time);
+        }
+        
+        // Scanning line
+        const scanPos = ((time * 2 + phase) % 1) * platform.width;
+        this.renderer.drawRect(x + scanPos - 1, y, 2, platform.height, [1.0, 1.0, 1.0, 0.7 * currentPulse]);
+    }
+    
+    renderDefaultRescue(platform, x, y, time, pulse) {
+        const phase = platform.laserPhase || 0;
         
         // Energy core lines
         for (let i = 0; i < 3; i++) {
             const offset = i * (platform.width / 3);
             const linePhase = time * 10 + phase + i * 0.5;
-            const lineAlpha = (Math.sin(linePhase) * 0.5 + 0.5) * 0.8;
+            const lineAlpha = (Math.sin(linePhase) * 0.5 + 0.5) * 0.8 * pulse;
             this.renderer.drawRect(x + offset + 5, y + 2, 2, platform.height - 4, [0.3, 1.0, 0.5, lineAlpha]);
         }
+    }
+    
+    renderRoundedRescue(platform, x, y, time, pulse) {
+        // Render as rounded edges with circles
+        const radius = platform.height / 2;
         
-        // Scanning line
-        const scanPos = ((time * 2 + phase) % 1) * platform.width;
-        this.renderer.drawRect(x + scanPos - 1, y, 2, platform.height, [1.0, 1.0, 1.0, 0.7]);
+        // Left circle
+        this.renderer.drawCircle(x + radius, y + radius, radius * pulse, platform.color);
+        // Right circle
+        this.renderer.drawCircle(x + platform.width - radius, y + radius, radius * pulse, platform.color);
+        // Center rectangle
+        this.renderer.drawRect(x + radius, y, platform.width - radius * 2, platform.height, platform.color);
+        
+        // Highlight
+        const highlightColor = [1.0, 1.0, 1.0, 0.4 * pulse];
+        this.renderer.drawCircle(x + radius, y + radius * 0.6, radius * 0.5 * pulse, highlightColor);
+        this.renderer.drawCircle(x + platform.width - radius, y + radius * 0.6, radius * 0.5 * pulse, highlightColor);
+    }
+    
+    renderStarRescue(platform, x, y, time, pulse) {
+        const centerX = x + platform.width / 2;
+        const centerY = y + platform.height / 2;
+        const points = 5;
+        const outerRadius = platform.width / 2 * pulse;
+        const innerRadius = outerRadius * 0.4;
+        const rotation = time + (platform.rotationSpeed || 0) * time;
+        
+        // Draw star with triangles
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i / (points * 2)) * Math.PI * 2 + rotation;
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const nextAngle = ((i + 1) / (points * 2)) * Math.PI * 2 + rotation;
+            const nextRadius = (i + 1) % 2 === 0 ? outerRadius : innerRadius;
+            
+            const x1 = centerX + Math.cos(angle) * radius;
+            const y1 = centerY + Math.sin(angle) * radius;
+            const x2 = centerX + Math.cos(nextAngle) * nextRadius;
+            const y2 = centerY + Math.sin(nextAngle) * nextRadius;
+            
+            // Draw line approximation
+            this.renderer.drawRect(Math.min(x1, x2), Math.min(y1, y2), 
+                                 Math.abs(x2 - x1) || 2, Math.abs(y2 - y1) || 2, 
+                                 platform.color);
+        }
+        
+        // Center glow
+        this.renderer.drawCircle(centerX, centerY, outerRadius * 0.3 * pulse, [1.0, 1.0, 1.0, 0.8]);
+    }
+    
+    renderCloudRescue(platform, x, y, time, pulse) {
+        const cloudColor = [...platform.color];
+        cloudColor[3] = 0.9;
+        
+        // 3 bumps for cloud effect
+        const bump1X = x + platform.width * 0.25;
+        const bump2X = x + platform.width * 0.5;
+        const bump3X = x + platform.width * 0.75;
+        const bumpY = y + platform.height / 2;
+        const bumpRadius = platform.height * 0.6 * pulse;
+        
+        this.renderer.drawCircle(bump1X, bumpY, bumpRadius, cloudColor);
+        this.renderer.drawCircle(bump2X, bumpY - 2, bumpRadius * 1.2, cloudColor);
+        this.renderer.drawCircle(bump3X, bumpY, bumpRadius, cloudColor);
+        
+        // Base cloud body
+        this.renderer.drawRect(x, y + platform.height / 2, platform.width, platform.height / 2, cloudColor);
+        
+        // Shimmer effect
+        const shimmer = Math.sin(time * 6) * 0.3 + 0.5;
+        this.renderer.drawCircle(bump2X, bumpY - 2, bumpRadius * 0.4, [1.0, 1.0, 1.0, shimmer]);
+    }
+    
+    renderSparkles(platform, x, y, time) {
+        const sparkleCount = 5;
+        for (let i = 0; i < sparkleCount; i++) {
+            const sparklePhase = (time * 4 + i * 0.8) % 1;
+            const sparkleAlpha = Math.sin(sparklePhase * Math.PI) * 0.9;
+            
+            const sparkleX = x + (platform.width / sparkleCount) * i + platform.width / (sparkleCount * 2);
+            const sparkleY = y - 5 - Math.sin(sparklePhase * Math.PI) * 10;
+            const sparkleSize = 1.5 + Math.sin(sparklePhase * Math.PI) * 1.5;
+            
+            // Cross sparkle
+            this.renderer.drawRect(sparkleX - sparkleSize, sparkleY, sparkleSize * 2, 1, [1.0, 1.0, 0.8, sparkleAlpha]);
+            this.renderer.drawRect(sparkleX, sparkleY - sparkleSize, 1, sparkleSize * 2, [1.0, 1.0, 0.8, sparkleAlpha]);
+        }
+    }
+    
+    renderParticleTrail(platform, x, y, time) {
+        // Update trail (limit to 8 particles)
+        if (!platform.lastTrailTime || time - platform.lastTrailTime > 0.05) {
+            platform.lastTrailTime = time;
+            
+            if (platform.particleTrail.length > 8) {
+                platform.particleTrail.shift();
+            }
+            
+            platform.particleTrail.push({
+                x: x + platform.width / 2,
+                y: y + platform.height / 2,
+                life: 1.0,
+                color: [...platform.color]
+            });
+        }
+        
+        // Render trail
+        for (let i = 0; i < platform.particleTrail.length; i++) {
+            const particle = platform.particleTrail[i];
+            particle.life -= 0.015;
+            
+            if (particle.life > 0) {
+                const size = 3 * particle.life;
+                particle.color[3] = particle.life * 0.7;
+                this.renderer.drawCircle(particle.x, particle.y, size, particle.color);
+            }
+        }
+        
+        // Clean up dead particles
+        platform.particleTrail = platform.particleTrail.filter(p => p.life > 0);
     }
 }

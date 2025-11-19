@@ -104,6 +104,37 @@ export class WebGLRenderer {
         this.draw(new Float32Array(positions), new Float32Array(colors), gl.TRIANGLES);
     }
 
+    drawLine(x1, y1, x2, y2, thickness, color) {
+        const gl = this.gl;
+        
+        // Calculate perpendicular vector for line thickness
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        if (length === 0) return; // Skip zero-length lines
+        
+        const perpX = -dy / length * thickness / 2;
+        const perpY = dx / length * thickness / 2;
+        
+        // Create rectangle along the line
+        const positions = new Float32Array([
+            x1 - perpX, y1 - perpY,
+            x1 + perpX, y1 + perpY,
+            x2 - perpX, y2 - perpY,
+            x2 - perpX, y2 - perpY,
+            x1 + perpX, y1 + perpY,
+            x2 + perpX, y2 + perpY
+        ]);
+        
+        const colors = new Float32Array([
+            ...color, ...color, ...color,
+            ...color, ...color, ...color
+        ]);
+        
+        this.draw(positions, colors, gl.TRIANGLES);
+    }
+
     draw(positions, colors, mode) {
         const gl = this.gl;
         

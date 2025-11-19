@@ -119,6 +119,8 @@ export class Player {
         
         // Safety platform state
         this.onSafetyPlatform = false;
+        this.wasOnSafetyPlatform = false;
+        this.previousVelocityY = 0;
         
         // Flight horizontal mode - controllo volo orizzontale
         this.isFlightActive = false;
@@ -141,6 +143,12 @@ export class Player {
         this.flightFloatAmplitude = 8; // Oscillazione verticale in pixel
         this.wingFlapPhase = 0;
         this.wingFlapSpeed = 8; // Velocità battito ali
+        
+        // Offscreen altitude scoring
+        this.isOffscreenTop = false;
+        this.offscreenAltitudeTimer = 0;
+        this.offscreenScoreInterval = 0.15; // Score every 0.15 seconds
+        this.lastOffscreenScore = 0;
     }
 
     activateInstantFlight() {
@@ -206,6 +214,8 @@ export class Player {
     }
 
     update(deltaTime) {
+        // Store previous velocity for collision detection
+        this.previousVelocityY = this.velocityY;
         if (!this.alive) return;
 
         this.animationTime += deltaTime;

@@ -24,6 +24,10 @@ export class ScoreSystem {
         // Bonus multiplier (da bonus speciali)
         this.bonusMultiplier = 1.0;
         this.bonusMultiplierDuration = 0;
+        
+        // Speed multiplier (basato sulla velocità del gioco)
+        this.speedMultiplier = 1.0;
+        this.currentSpeed = 0;
     }
 
     reset() {
@@ -38,6 +42,8 @@ export class ScoreSystem {
         this.maxCombo = 0;
         this.bonusMultiplier = 1.0;
         this.bonusMultiplierDuration = 0;
+        this.speedMultiplier = 1.0;
+        this.currentSpeed = 0;
     }
     
     update(deltaTime) {
@@ -57,6 +63,16 @@ export class ScoreSystem {
                 this.bonusMultiplierDuration = 0;
             }
         }
+    }
+    
+    updateSpeedMultiplier(currentSpeed) {
+        this.currentSpeed = currentSpeed;
+        // Calcola moltiplicatore basato su velocità (speed 120 = 1x, 240 = 2x, 360 = 3x, etc.)
+        this.speedMultiplier = 1.0 + Math.max(0, (currentSpeed - 120) / 120);
+    }
+    
+    getSpeedMultiplier() {
+        return this.speedMultiplier;
     }
     
     addCombo() {
@@ -99,6 +115,15 @@ export class ScoreSystem {
     getComboProgress() {
         return this.combo > 0 ? this.comboTimer / this.comboTimeout : 0;
     }
+    
+    addAltitudeScore(basePoints, speedMultiplier) {
+        // Base points moltiplicato per velocità, combo e bonus
+        // Il speedMultiplier passato come parametro viene ignorato, usiamo quello interno
+        const totalMultiplier = this.multiplier * this.comboMultiplier * this.bonusMultiplier;
+        const points = Math.floor(basePoints * totalMultiplier);
+        this.addScore(points); // addScore applicherà automaticamente this.speedMultiplier
+        return points;
+    }
 
     addDistance(pixels) {
         this.distance += pixels;
@@ -124,8 +149,8 @@ export class ScoreSystem {
     }
 
     addScore(points) {
-        // Applica bonus multiplier
-        const finalPoints = points * this.bonusMultiplier;
+        // Applica tutti i moltiplicatori (bonus + velocità)
+        const finalPoints = Math.floor(points * this.bonusMultiplier * this.speedMultiplier);
         this.score += finalPoints;
 
         // Update high score
@@ -135,6 +160,29 @@ export class ScoreSystem {
         }
 
         this.notifyScoreChange();
+        
+        // Emit event for floating text with multiplier info
+        let text = `+${finalPoints}`;
+        let color = '#FFD700';
+        
+        if (this.speedMultiplier >= 1.5) {
+            text = `+${finalPoints} ×${this.speedMultiplier.toFixed(1)}`;
+            if (this.speedMultiplier >= 3.0) {
+                color = '#ff0066'; // Rosa intenso per moltiplicatori alti
+            } else if (this.speedMultiplier >= 2.0) {
+                color = '#ff6600'; // Arancione
+            } else {
+                color = '#ffcc00'; // Giallo
+            }
+        }
+        
+        window.dispatchEvent(new CustomEvent('scoreAdded', {
+            detail: {
+                points: finalPoints,
+                text: text,
+                color: color
+            }
+        }));
     }
     
     addPoints(points) {
@@ -218,7 +266,8 @@ export class ScoreSystem {
             distance: this.getDistance(),
             combo: this.combo,
             comboMultiplier: this.comboMultiplier,
-            maxCombo: this.maxCombo
+            maxCombo: this.maxCombo,
+            speedMultiplier: this.speedMultiplier
         };
     }
 }

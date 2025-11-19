@@ -89,7 +89,7 @@ export class GameController {
 
         // NEW: Initialize specialized systems
         this.spawnManager = new SpawnManager(this.levelGenerator, this.entityManager, dims);
-        this.safetyPlatformSystem = new SafetyPlatformSystem(dims);
+        this.safetyPlatformSystem = new SafetyPlatformSystem(dims, this.audioManager);
         this.collisionDetector = new CollisionDetector(
             this.player,
             this.audioManager,
@@ -383,6 +383,9 @@ export class GameController {
         // Lock player at 35% of screen width
         const dims = this.engine.getCanvasDimensions();
         this.player.x = (dims.width * 0.35) - this.player.width / 2;
+        
+        // Check if player is offscreen (top) and award altitude points
+        this.checkOffscreenAltitudeBonus(deltaTime);
 
         // Update UI buttons
         if (this.turboButtonUI) {
@@ -444,7 +447,9 @@ export class GameController {
 
         // Update score based on distance
         const platforms = this.entityManager.getEntities('platforms');
-        this.scoreSystem.addDistance(Math.abs(platforms[0]?.velocity || 0) * deltaTime);
+        const currentSpeed = Math.abs(platforms[0]?.velocity || 0);
+        this.scoreSystem.updateSpeedMultiplier(currentSpeed);
+        this.scoreSystem.addDistance(currentSpeed * deltaTime);
 
         // Update entities for rendering
         this.updateRenderEntities();
@@ -502,6 +507,8 @@ export class GameController {
             safetyClone.isDissolving = this.safetyPlatformSystem.state === 'DISSOLVING';
             safetyClone.playerOnPlatform = this.safetyPlatformSystem.playerOnPlatform;
             safetyClone.timeOnPlatform = this.safetyPlatformSystem.playerOnPlatformTimer;
+            safetyClone.lastChargeConsumed = this.safetyPlatformSystem.lastChargeConsumed;
+            safetyClone.chargeConsumedTime = this.safetyPlatformSystem.chargeConsumedTime;
             safetyClone.maxTimeOnPlatform = this.safetyPlatformSystem.dissolveDuration;
             safetyClone.charges = this.safetyPlatformSystem.getCharges();
             safetyClone.maxCharges = this.safetyPlatformSystem.maxCharges;
@@ -509,6 +516,12 @@ export class GameController {
             safetyClone.useWindow = this.safetyPlatformSystem.useWindow;
             safetyClone.currentTime = Date.now() / 1000;
             safetyClone.canCollide = this.safetyPlatformSystem.isActive();
+            safetyClone.crackProgress = this.safetyPlatformSystem.getCrackProgress();
+            safetyClone.cracks = this.safetyPlatformSystem.getCracks();
+            safetyClone.isRecharging = this.safetyPlatformSystem.isRechargingNow();
+            safetyClone.rechargeAnimProgress = this.safetyPlatformSystem.getRechargeAnimProgress();
+            safetyClone.rechargeAnimDuration = this.safetyPlatformSystem.getRechargeAnimDuration();
+            safetyClone.chargesBeforeRecharge = this.safetyPlatformSystem.getChargesBeforeRecharge();
             entities.push(safetyClone);
         }
 
@@ -572,6 +585,104 @@ export class GameController {
         this.entityManager.heartRechargeBonuses = this.entityManager.heartRechargeBonuses.filter(b => 
             b.x + b.radius > leftBound
         );
+    }
+    
+    checkOffscreenAltitudeBonus(deltaTime) {
+        const wasOffscreen = this.player.isOffscreenTop;
+        const isNowOffscreen = this.player.y + this.player.height < 0;
+        
+        this.player.isOffscreenTop = isNowOffscreen;
+        
+        if (isNowOffscreen) {
+            // Player is above screen - award altitude points
+            this.player.offscreenAltitudeTimer += deltaTime;
+            
+            // Award points periodically
+            if (this.player.offscreenAltitudeTimer - this.player.lastOffscreenScore >= this.player.offscreenScoreInterval) {
+                this.player.lastOffscreenScore = this.player.offscreenAltitudeTimer;
+                
+                // Base altitude points (addAltitudeScore applicherà automaticamente il moltiplicatore di velocità)
+                const basePoints = 50;
+                const finalPoints = this.scoreSystem.addAltitudeScore(basePoints, 0); // Il secondo parametro viene ignorato
+                
+                // Get current speed multiplier for display
+                const speedMult = this.scoreSystem.getSpeedMultiplier();
+                
+                // Visual feedback - floating text with multiplier
+                const altitude = Math.abs(this.player.y);
+                let text = `⬆ ${finalPoints} pts`;
+                let color = [0.2, 0.9, 1.0, 1.0]; // Cyan base
+                
+                if (speedMult >= 1.5) {
+                    text = `⬆ ${finalPoints} (×${speedMult.toFixed(1)})`;
+                    // Color based on multiplier
+                    if (speedMult >= 3.0) {
+                        color = [1.0, 0.0, 0.4, 1.0]; // Rosa intenso
+                    } else if (speedMult >= 2.0) {
+                        color = [1.0, 0.4, 0.0, 1.0]; // Arancione
+                    } else {
+                        color = [1.0, 0.8, 0.0, 1.0]; // Giallo
+                    }
+                }
+                
+                this.animationController.createFloatingText(
+                    text,
+                    this.player.x + this.player.width / 2,
+                    120, // Più in basso per leggibilità
+                    color,
+                    this.entityManager
+                );
+                
+                // Sound feedback - higher pitch as you go higher
+                const pitchVariation = 1.0 + Math.min(altitude / 500, 1.0);
+                this.playAltitudeSound(pitchVariation);
+                
+                // Screen flash effect
+                this.screenFlash.alpha = 0.1;
+                this.screenFlash.color = [0.2, 0.9, 1.0];
+            }
+            
+            // First time going offscreen - special notification
+            if (!wasOffscreen) {
+                const dims = this.engine.getCanvasDimensions();
+                this.audioManager.playSound('streak');
+                this.animationController.createFloatingText(
+                    '🚀 SKY HIGH!',
+                    dims.width / 2,
+                    140, // Più in basso per leggibilità
+                    [1.0, 1.0, 0.3, 1.0],
+                    this.entityManager
+                );
+            }
+        } else {
+            // Reset timer when back on screen
+            if (wasOffscreen) {
+                this.player.offscreenAltitudeTimer = 0;
+                this.player.lastOffscreenScore = 0;
+            }
+        }
+    }
+    
+    playAltitudeSound(pitchMultiplier = 1.0) {
+        if (!this.audioManager.enabled || !this.audioManager.audioContext) return;
+        
+        const ctx = this.audioManager.audioContext;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        // Playful ascending tone
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(600 * pitchMultiplier, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(900 * pitchMultiplier, ctx.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.15);
     }
 
     showMenu() {

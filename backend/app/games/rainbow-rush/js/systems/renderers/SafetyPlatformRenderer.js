@@ -45,6 +45,11 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         // Highlight
         this.renderer.drawRect(platform.x, platform.y, platform.width, 2, [1.0, 1.0, 1.0, 0.5 * alpha]);
         
+        // Glass cracks effect
+        if (platform.crackProgress > 0 && platform.cracks && platform.cracks.length > 0) {
+            this.renderGlassCracks(platform, alpha);
+        }
+        
         // Charge indicators
         if (platform.charges !== undefined && platform.maxCharges) {
             this.renderChargeIndicators(platform, time);
@@ -116,45 +121,371 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
     }
 
     renderChargeIndicators(platform, time) {
-        const chargeSize = 14;
-        const chargeSpacing = 20;
-        const totalWidth = platform.maxCharges * chargeSpacing - chargeSpacing + chargeSize;
+        const chargeSize = 16; // Pallini ancora più grandi
+        const chargeSpacing = 28; // Più spazio tra loro
+        const totalWidth = platform.maxCharges * chargeSpacing - 4;
         const startX = platform.x + platform.width / 2 - totalWidth / 2;
-        const chargeY = platform.y - 40;
+        const chargeY = platform.y - 35; // Più alti
         
         for (let i = 0; i < platform.maxCharges; i++) {
-            const cx = startX + i * chargeSpacing + chargeSize / 2;
+            const cx = startX + i * chargeSpacing;
+            
+            // Animazione quando un pallino viene spento
+            const isJustConsumed = (platform.lastChargeConsumed === i) && (platform.chargeConsumedTime < 0.5);
+            
+            // Animazione ricarica sequenziale
+            const isRecharging = platform.isRecharging || false;
+            const rechargeProgress = platform.rechargeAnimProgress || 0;
+            const rechargeDuration = platform.rechargeAnimDuration || 0.6;
+            const chargesBeforeRecharge = platform.chargesBeforeRecharge || 0;
+            
+            // Calcola se questo pallino è in fase di ricarica
+            let isThisChargeRecharging = false;
+            let thisChargeRechargeProgress = 0;
+            
+            if (isRecharging && i >= chargesBeforeRecharge) {
+                const chargesToRecharge = platform.maxCharges - chargesBeforeRecharge;
+                const chargeIndex = i - chargesBeforeRecharge;
+                const timePerCharge = rechargeDuration / chargesToRecharge;
+                const startTime = chargeIndex * timePerCharge;
+                const endTime = (chargeIndex + 1) * timePerCharge;
+                
+                if (rechargeProgress >= startTime && rechargeProgress < endTime) {
+                    isThisChargeRecharging = true;
+                    thisChargeRechargeProgress = (rechargeProgress - startTime) / timePerCharge;
+                }
+            }
             
             if (i < platform.charges) {
-                this.renderAvailableCharge(cx, chargeY, chargeSize, time, i);
+                this.renderAvailableCharge(cx, chargeY, chargeSize, time, i, false, isThisChargeRecharging, thisChargeRechargeProgress);
             } else {
-                this.renderUsedCharge(cx, chargeY, chargeSize);
+                this.renderUsedCharge(cx, chargeY, chargeSize, isJustConsumed, platform.chargeConsumedTime, time);
             }
         }
         
-        // Cooldown bar
-        this.renderCooldownBar(platform, time, startX, chargeY, totalWidth, chargeSize);
+        // Cooldown bar orizzontale centrata sotto i pallini
+        this.renderHorizontalCooldownBar(platform, time, startX, chargeY + 26, totalWidth);
     }
 
-    renderAvailableCharge(x, y, size, time, index) {
-        const glowPulse = Math.sin(time * 4 + index) * 0.3 + 0.7;
+    renderAvailableCharge(x, y, size, time, index, isConsuming, isRecharging, rechargeProgress) {
+        // Bounce verticale allegro
+        const bounce = Math.sin(time * 4 + index * 0.5) * 3;
+        const yBounce = y + bounce;
         
-        this.renderer.drawCircle(x, y, size + 6, [0.2, 1.0, 0.4, 0.5 * glowPulse]);
-        this.renderer.drawCircle(x, y, size + 3, [0.3, 1.0, 0.5, 0.7 * glowPulse]);
-        this.renderer.drawCircle(x, y, size, [0.0, 0.0, 0.0, 0.9]);
-        this.renderer.drawCircle(x, y, size - 3, [0.4, 1.0, 0.6, 1.0]);
-        this.renderer.drawCircle(x, y, size - 6, [0.8, 1.0, 0.9, 1.0]);
-        this.renderer.drawCircle(x, y, size + 1, [1.0, 1.0, 1.0, 0.9]);
-        this.renderer.drawCircle(x, y, size - 1, [0.1, 0.6, 0.3, 1.0]);
+        const glowPulse = Math.sin(time * 3 + index * 0.8) * 0.3 + 0.7;
+        
+        // Animazione ricarica - POP molto veloce!
+        let scale = 1.0;
+        let extraGlow = 0;
+        let flashAlpha = 0;
+        
+        if (isRecharging) {
+            // Animazione super veloce con POP
+            if (rechargeProgress < 0.3) {
+                // Esplosione iniziale
+                const popProg = rechargeProgress / 0.3;
+                scale = 0.3 + popProg * 1.2; // Parte piccolo e esplode
+                extraGlow = (1 - popProg) * 20;
+                flashAlpha = (1 - popProg) * 0.9;
+            } else if (rechargeProgress < 0.6) {
+                // Bounce back
+                const bounceProg = (rechargeProgress - 0.3) / 0.3;
+                scale = 1.2 - bounceProg * 0.25;
+                extraGlow = 0;
+                flashAlpha = 0;
+            } else {
+                // Settle
+                const settleProg = (rechargeProgress - 0.6) / 0.4;
+                scale = 0.95 + settleProg * 0.05;
+            }
+        }
+        
+        // Flash bianco quando si ricarica
+        if (flashAlpha > 0) {
+            this.renderer.drawCircle(x, yBounce, (size + 15) * scale, [1.0, 1.0, 1.0, flashAlpha]);
+            this.renderer.drawCircle(x, yBounce, (size + 10) * scale, [1.0, 1.0, 0.5, flashAlpha * 0.8]);
+        }
+        
+        // Glow colorato arcobaleno
+        this.renderer.drawCircle(x, yBounce, (size + 10 + extraGlow) * scale, [0.4, 1.0, 0.6, 0.15 * glowPulse]);
+        this.renderer.drawCircle(x, yBounce, (size + 6 + extraGlow * 0.5) * scale, [0.5, 1.0, 0.7, 0.25 * glowPulse]);
+        
+        // Bordo nero stile fumetto
+        this.renderer.drawCircle(x, yBounce, (size + 3) * scale, [0.1, 0.1, 0.15, 1.0]);
+        
+        // Bordo bianco interno
+        this.renderer.drawCircle(x, yBounce, (size + 1.5) * scale, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Pallino verde lime brillante
+        this.renderer.drawCircle(x, yBounce, size * scale, [0.2, 1.0, 0.3, 1.0]);
+        
+        // Gradiente verso il centro - giallo lime
+        this.renderer.drawCircle(x, yBounce, size * 0.7 * scale, [0.6, 1.0, 0.5, 1.0]);
+        
+        // Centro giallo brillante
+        this.renderer.drawCircle(x, yBounce, size * 0.4 * scale, [1.0, 1.0, 0.4, 1.0]);
+        
+        // Highlight cartoon GRANDE (stile lucido giocoso)
+        this.renderer.drawCircle(x - size * 0.3 * scale, yBounce - size * 0.3 * scale, size * 0.45 * scale, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(x - size * 0.3 * scale, yBounce - size * 0.3 * scale, size * 0.35 * scale, [1.0, 1.0, 1.0, 0.8]);
+        
+        // Piccolo riflesso laterale
+        this.renderer.drawCircle(x + size * 0.35 * scale, yBounce + size * 0.2 * scale, size * 0.2 * scale, [1.0, 1.0, 1.0, 0.5]);
+        
+        // Stellina decorativa che pulsa (solo se non in ricarica)
+        if (glowPulse > 0.85 && !isRecharging) {
+            const starSize = 3;
+            this.renderer.drawCircle(x + size * 0.6, yBounce - size * 0.6, starSize, [1.0, 1.0, 0.3, glowPulse]);
+            this.renderer.drawCircle(x + size * 0.6 + starSize * 0.6, yBounce - size * 0.6, starSize * 0.4, [1.0, 1.0, 0.9, glowPulse]);
+            this.renderer.drawCircle(x + size * 0.6 - starSize * 0.6, yBounce - size * 0.6, starSize * 0.4, [1.0, 1.0, 0.9, glowPulse]);
+            this.renderer.drawCircle(x + size * 0.6, yBounce - size * 0.6 + starSize * 0.6, starSize * 0.4, [1.0, 1.0, 0.9, glowPulse]);
+            this.renderer.drawCircle(x + size * 0.6, yBounce - size * 0.6 - starSize * 0.6, starSize * 0.4, [1.0, 1.0, 0.9, glowPulse]);
+        }
+        
+        // Particelle di ricarica che volano via
+        if (isRecharging && rechargeProgress < 0.5) {
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2 + rechargeProgress * Math.PI * 4;
+                const dist = rechargeProgress * 40;
+                const px = x + Math.cos(angle) * dist;
+                const py = yBounce + Math.sin(angle) * dist;
+                const particleAlpha = 1 - rechargeProgress * 2;
+                this.renderer.drawCircle(px, py, 3, [1.0, 1.0, 0.5, particleAlpha]);
+                this.renderer.drawCircle(px, py, 2, [1.0, 1.0, 1.0, particleAlpha]);
+            }
+        }
     }
 
-    renderUsedCharge(x, y, size) {
-        this.renderer.drawCircle(x, y, size + 2, [0.0, 0.0, 0.0, 0.8]);
-        this.renderer.drawCircle(x, y, size - 1, [0.2, 0.2, 0.2, 0.9]);
-        this.renderer.drawCircle(x, y, size, [0.8, 0.5, 0.1, 0.8]);
-        this.renderer.drawCircle(x, y, size - 2, [0.15, 0.15, 0.15, 0.9]);
+    renderUsedCharge(x, y, size, isJustConsumed, consumedTime, time) {
+        if (isJustConsumed && consumedTime < 0.5) {
+            // Animazione EXPLOSION super divertente
+            const progress = consumedTime / 0.5;
+            
+            if (progress < 0.3) {
+                // BOOM esplosivo
+                const boomProgress = progress / 0.3;
+                const boomSize = size * (1 + boomProgress * 0.8);
+                const boomAlpha = 1.0 - boomProgress;
+                
+                // Flash arancione/giallo esplosivo
+                this.renderer.drawCircle(x, y, boomSize + 12, [1.0, 0.8, 0.0, boomAlpha * 0.7]);
+                this.renderer.drawCircle(x, y, boomSize + 8, [1.0, 0.5, 0.0, boomAlpha * 0.9]);
+                
+                // Bordo nero
+                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
+                this.renderer.drawCircle(x, y, size + 1.5, [1.0, 1.0, 1.0, 1.0]);
+                
+                // Pallino rosso che pulsa
+                this.renderer.drawCircle(x, y, size * (1 + boomProgress * 0.2), [1.0, 0.2, 0.2, 1.0]);
+                
+                // Particelle esplosive a stella (8 direzioni)
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = boomProgress * 35;
+                    const px = x + Math.cos(angle) * distance;
+                    const py = y + Math.sin(angle) * distance;
+                    const particleSize = 5 * (1 - boomProgress);
+                    
+                    // Particella con bordo nero
+                    this.renderer.drawCircle(px, py, particleSize + 1.5, [0.1, 0.1, 0.15, boomAlpha]);
+                    this.renderer.drawCircle(px, py, particleSize, [1.0, 0.6 - boomProgress * 0.3, 0.2, boomAlpha]);
+                    
+                    // Centro bianco brillante
+                    this.renderer.drawCircle(px, py, particleSize * 0.4, [1.0, 1.0, 0.8, boomAlpha]);
+                }
+            } else {
+                // Fade to grigio con rotazione
+                const fadeProgress = (progress - 0.3) / 0.7;
+                const rotation = fadeProgress * Math.PI * 2;
+                
+                // Interpolazione colore
+                const r = 1.0 * (1 - fadeProgress) + 0.4 * fadeProgress;
+                const g = 0.2 * (1 - fadeProgress) + 0.4 * fadeProgress;
+                const b = 0.2 * (1 - fadeProgress) + 0.45 * fadeProgress;
+                
+                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
+                this.renderer.drawCircle(x, y, size + 1.5, [1.0, 1.0, 1.0, 1.0 - fadeProgress * 0.3]);
+                this.renderer.drawCircle(x, y, size, [r, g, b, 1.0]);
+                this.renderer.drawCircle(x, y, size * 0.6, [r * 0.9, g * 0.9, b * 0.95, 1.0]);
+            }
+        } else {
+            // Pallino spento - FACCINA TRISTE
+            // Bordo nero
+            this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
+            
+            // Bordo bianco
+            this.renderer.drawCircle(x, y, size + 1.5, [1.0, 1.0, 1.0, 0.5]);
+            
+            // Pallino grigio
+            this.renderer.drawCircle(x, y, size, [0.4, 0.4, 0.45, 1.0]);
+            
+            // Centro più scuro
+            this.renderer.drawCircle(x, y, size * 0.6, [0.5, 0.5, 0.55, 1.0]);
+            
+            // FACCINA TRISTE :(
+            const eyeSize = 2;
+            const eyeY = y - size * 0.25;
+            const eyeSpacing = size * 0.35;
+            
+            // Occhi (cerchietti neri)
+            this.renderer.drawCircle(x - eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1.0]);
+            this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1.0]);
+            
+            // Bocca triste (curva verso il basso)
+            const mouthY = y + size * 0.2;
+            const mouthWidth = size * 0.6;
+            const mouthHeight = 3;
+            
+            for (let i = 0; i < 5; i++) {
+                const t = i / 4;
+                const mx = x - mouthWidth / 2 + t * mouthWidth;
+                const curve = Math.sin(t * Math.PI) * (-mouthHeight);
+                const my = mouthY + curve;
+                this.renderer.drawCircle(mx, my, 1.5, [0.2, 0.2, 0.25, 1.0]);
+            }
+        }
     }
 
+    renderHorizontalCooldownBar(platform, time, startX, barY, totalWidth) {
+        const useTimes = platform.useTimes || [];
+        if (useTimes.length === 0) return;
+        
+        const currentTime = platform.currentTime || (Date.now() / 1000);
+        const useWindow = platform.useWindow || 20;
+        const oldestUseTime = useTimes[0];
+        const timeSinceOldest = currentTime - oldestUseTime;
+        const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0);
+        
+        const barWidth = totalWidth;
+        const barHeight = 8; // Barra più spessa
+        const barX = startX;
+        
+        // Ombra divertente spostata
+        this.renderer.drawRect(barX + 2, barY + 2, barWidth + 2, barHeight + 1, [0.1, 0.1, 0.15, 0.5]);
+        
+        // Bordo nero stile fumetto
+        this.renderer.drawRect(barX - 3, barY - 3, barWidth + 6, barHeight + 6, [0.1, 0.1, 0.15, 1.0]);
+        
+        // Bordo bianco
+        this.renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, [1.0, 1.0, 1.0, 1.0]);
+        
+        // Background grigio con texture
+        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.35, 0.35, 0.4, 1.0]);
+        this.renderer.drawRect(barX, barY, barWidth, barHeight / 2, [0.4, 0.4, 0.45, 0.5]);
+        
+        // Progress ARCOBALENO gradiente
+        const progressWidth = barWidth * windowProgress;
+        
+        if (progressWidth > 0) {
+            // Colore cambia nel tempo - effetto arcobaleno
+            const hue = (time * 0.5 + windowProgress * 2) % 1.0;
+            let r, g, b;
+            
+            if (hue < 0.33) {
+                // Rosso -> Giallo
+                r = 1.0;
+                g = 0.3 + (hue / 0.33) * 0.7;
+                b = 0.2;
+            } else if (hue < 0.66) {
+                // Giallo -> Verde
+                r = 1.0 - ((hue - 0.33) / 0.33) * 0.7;
+                g = 1.0;
+                b = 0.2;
+            } else {
+                // Verde -> Ciano
+                r = 0.3;
+                g = 1.0;
+                b = 0.2 + ((hue - 0.66) / 0.34) * 0.6;
+            }
+            
+            this.renderer.drawRect(barX, barY, progressWidth, barHeight, [r, g, b, 1.0]);
+            
+            // Highlight glossy superiore
+            this.renderer.drawRect(barX, barY, progressWidth, barHeight / 3, [1.0, 1.0, 1.0, 0.6]);
+            
+            // Ombra interna in basso
+            this.renderer.drawRect(barX, barY + barHeight * 0.7, progressWidth, barHeight * 0.3, [0.0, 0.0, 0.0, 0.3]);
+        }
+        
+        // Pallino indicatore SUPER CARINO sulla punta
+        if (windowProgress < 1.0 && progressWidth > 8) {
+            const dotX = barX + progressWidth;
+            const dotY = barY + barHeight / 2;
+            const dotPulse = Math.sin(time * 8) * 0.4 + 0.6;
+            const dotSize = 6 + dotPulse * 2;
+            
+            // Colore sincronizzato con la barra
+            const hue = (time * 0.5 + windowProgress * 2) % 1.0;
+            let r, g, b;
+            if (hue < 0.33) {
+                r = 1.0; g = 0.3 + (hue / 0.33) * 0.7; b = 0.2;
+            } else if (hue < 0.66) {
+                r = 1.0 - ((hue - 0.33) / 0.33) * 0.7; g = 1.0; b = 0.2;
+            } else {
+                r = 0.3; g = 1.0; b = 0.2 + ((hue - 0.66) / 0.34) * 0.6;
+            }
+            
+            // Glow pulsante colorato
+            this.renderer.drawCircle(dotX, dotY, dotSize + 6, [r, g, b, 0.3 * dotPulse]);
+            this.renderer.drawCircle(dotX, dotY, dotSize + 3, [r, g, b, 0.5 * dotPulse]);
+            
+            // Bordo nero
+            this.renderer.drawCircle(dotX, dotY, dotSize + 1, [0.1, 0.1, 0.15, 1.0]);
+            
+            // Pallino colorato
+            this.renderer.drawCircle(dotX, dotY, dotSize, [r, g, b, 1.0]);
+            
+            // Centro più chiaro
+            this.renderer.drawCircle(dotX, dotY, dotSize * 0.6, [r + 0.3, g + 0.2, b + 0.2, 1.0]);
+            
+            // Highlight glossy
+            this.renderer.drawCircle(dotX - dotSize * 0.3, dotY - dotSize * 0.3, dotSize * 0.4, [1.0, 1.0, 1.0, 1.0]);
+            this.renderer.drawCircle(dotX - dotSize * 0.3, dotY - dotSize * 0.3, dotSize * 0.25, [1.0, 1.0, 1.0, 0.7]);
+        }
+    }
+    
+    renderVerticalCooldownBar(platform, time, centerX, startY, chargeSize) {
+        const useTimes = platform.useTimes || [];
+        if (useTimes.length === 0) return;
+        
+        const currentTime = platform.currentTime || (Date.now() / 1000);
+        const useWindow = platform.useWindow || 20;
+        const oldestUseTime = useTimes[0];
+        const timeSinceOldest = currentTime - oldestUseTime;
+        const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0);
+        
+        const barWidth = 8; // Barra sottile ed elegante
+        const barHeight = 50; // Più compatta
+        const barX = centerX - barWidth / 2;
+        const barY = startY;
+        
+        // Bordo bianco arrotondato (stile pop)
+        this.renderer.drawRect(barX - 2, barY - 1, barWidth + 4, barHeight + 2, [1.0, 1.0, 1.0, 0.9]);
+        
+        // Background grigio scuro
+        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.25, 0.25, 0.3, 1.0]);
+        
+        // Progress colorato (dal basso verso l'alto)
+        const progressHeight = barHeight * windowProgress;
+        const r = 1.0 - windowProgress * 0.6;
+        const g = 0.4 + windowProgress * 0.6;
+        this.renderer.drawRect(barX, barY + barHeight - progressHeight, barWidth, progressHeight, [r, g, 0.3, 1.0]);
+        
+        // Highlight sottile sulla progress bar
+        if (progressHeight > 2) {
+            this.renderer.drawRect(barX + 1, barY + barHeight - progressHeight, 2, progressHeight, [1.0, 1.0, 1.0, 0.3]);
+        }
+        
+        // Pallino indicatore in cima alla barra (solo se in progress)
+        if (windowProgress < 1.0 && progressHeight > 4) {
+            const dotX = barX + barWidth / 2;
+            const dotY = barY + barHeight - progressHeight;
+            const dotPulse = Math.sin(time * 6) * 0.2 + 0.8;
+            this.renderer.drawCircle(dotX, dotY, 4, [1.0, 1.0, 1.0, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, 3, [r, g, 0.3, dotPulse]);
+        }
+    }
+    
     renderCooldownBar(platform, time, startX, chargeY, totalWidth, chargeSize) {
         const useTimes = platform.useTimes || [];
         if (useTimes.length === 0) return;
@@ -490,6 +821,75 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const px = centerX + Math.cos(angle) * distance;
             const py = centerY + Math.sin(angle) * distance;
             this.renderer.drawCircle(px, py, 2, [1.0, 0.4, 0.0, 0.8]);
+        }
+    }
+    
+    renderGlassCracks(platform, alpha) {
+        const cracks = platform.cracks || [];
+        const platformX = platform.x;
+        const platformY = platform.y;
+        const crackProgress = platform.crackProgress || 0;
+        
+        for (const crack of cracks) {
+            const points = crack.points;
+            if (points.length < 2) continue;
+            
+            // Calculate crack alpha once per crack - PIÙ FINE E DELICATO
+            const crackAlpha = crack.opacity * crackProgress * alpha;
+            
+            // Draw crack line segments
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                
+                // World coordinates
+                const x1 = platformX + p1.x;
+                const y1 = platformY + p1.y;
+                const x2 = platformX + p2.x;
+                const y2 = platformY + p2.y;
+                
+                // Calculate line segments for thick line
+                const thickness = crack.thickness * 0.8; // PIÙ FINE
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                
+                if (length > 0) {
+                    const perpX = -dy / length * thickness;
+                    const perpY = dx / length * thickness;
+                    
+                    // Linea scura principale - sottile e delicata
+                    this.renderer.drawLine(x1, y1, x2, y2, thickness, [0.0, 0.0, 0.05, crackAlpha * 0.7]);
+                    
+                    // Highlight bianco sottile (effetto vetro delicato)
+                    this.renderer.drawLine(
+                        x1 + perpX * 0.4, 
+                        y1 + perpY * 0.4, 
+                        x2 + perpX * 0.4, 
+                        y2 + perpY * 0.4, 
+                        thickness * 0.3, 
+                        [1.0, 1.0, 1.0, crackAlpha * 0.4]
+                    );
+                    
+                    // Riflesso azzurrato sottile
+                    this.renderer.drawLine(
+                        x1 + perpX * 0.25, 
+                        y1 + perpY * 0.25, 
+                        x2 + perpX * 0.25, 
+                        y2 + perpY * 0.25, 
+                        thickness * 0.2, 
+                        [0.7, 0.9, 1.0, crackAlpha * 0.3]
+                    );
+                }
+                
+                // Punti di giunzione molto piccoli
+                if (i > 0 && i < points.length - 1) {
+                    // Punto scuro piccolo
+                    this.renderer.drawCircle(x1, y1, thickness * 1.2, [0.0, 0.0, 0.05, crackAlpha * 0.6]);
+                    // Piccolo highlight
+                    this.renderer.drawCircle(x1 - thickness * 0.3, y1 - thickness * 0.3, thickness * 0.5, [1.0, 1.0, 1.0, crackAlpha * 0.3]);
+                }
+            }
         }
     }
 }

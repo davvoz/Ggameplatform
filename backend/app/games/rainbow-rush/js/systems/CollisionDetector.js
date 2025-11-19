@@ -24,14 +24,25 @@ export class CollisionDetector {
         if (safetyPlatformSystem.isActive()) {
             const safetyPlatform = safetyPlatformSystem.getPlatform();
             const onSafety = this.player.checkPlatformCollision(safetyPlatform, 80);
+            console.log('Safety check:', { onSafety, velocityY: this.player.velocityY, prevVelY: this.player.previousVelocityY });
             if (onSafety) {
                 playerOnSafetyPlatform = true;
+                
+                // Suono negativo quando atterriamo (usa previousVelocityY perché velocityY potrebbe essere già azzerata)
+                if (this.player.previousVelocityY > 50 && !this.player.wasOnSafetyPlatform) {
+                    console.log('🔊 PLAYING SAFETY LAND SOUND! prevVel:', this.player.previousVelocityY);
+                    this.audioManager.playSound('safety_land');
+                    this.player.wasOnSafetyPlatform = true;
+                }
+                
                 // Force position above platform
                 if (this.player.velocityY > 0) {
                     this.player.y = safetyPlatform.y - this.player.height;
                     this.player.velocityY = 0;
                     this.player.isGrounded = true;
                 }
+            } else {
+                this.player.wasOnSafetyPlatform = false;
             }
         }
 
@@ -191,7 +202,23 @@ export class CollisionDetector {
                     this.achievementSystem.addNotification(`🔥 Streak x${this.achievementSystem.currentStreak}!`, 'Continua così!', 'streak');
                 }
                 
-                this.animationController.createFloatingText(`+${points}`, collectible.x, collectible.y, [1.0, 0.9, 0.2, 1.0], entityManager);
+                // Show score with speed multiplier
+                const speedMult = this.scoreSystem.getSpeedMultiplier();
+                let text = `+${points}`;
+                let color = [1.0, 0.9, 0.2, 1.0];
+                
+                if (speedMult >= 1.5) {
+                    text = `+${points} ×${speedMult.toFixed(1)}`;
+                    if (speedMult >= 3.0) {
+                        color = [1.0, 0.0, 0.4, 1.0]; // Rosa intenso
+                    } else if (speedMult >= 2.0) {
+                        color = [1.0, 0.4, 0.0, 1.0]; // Arancione
+                    } else {
+                        color = [1.0, 0.8, 0.0, 1.0]; // Giallo
+                    }
+                }
+                
+                this.animationController.createFloatingText(text, collectible.x, collectible.y, color, entityManager);
                 
                 // Show combo animation
                 const combo = this.scoreSystem.getCombo();
@@ -270,11 +297,24 @@ export class CollisionDetector {
                 const boostCombo = this.player.boostCombo;
                 if (boostCombo >= 2) {
                     const speedBonus = Math.floor(this.player.boostComboSpeedBonus * 100);
+                    const speedMult = this.scoreSystem.getSpeedMultiplier();
+                    let text = `+${points} BOOST x${boostCombo}! 🚀`;
+                    let color = [0.0, 1.0, 0.9, 1.0];
+                    
+                    if (speedMult >= 1.5) {
+                        text = `+${points} ×${speedMult.toFixed(1)} BOOST x${boostCombo}! 🚀`;
+                        if (speedMult >= 3.0) {
+                            color = [1.0, 0.0, 0.4, 1.0];
+                        } else if (speedMult >= 2.0) {
+                            color = [1.0, 0.4, 0.0, 1.0];
+                        }
+                    }
+                    
                     this.animationController.createFloatingText(
-                        `+${points} BOOST x${boostCombo}! 🚀 +${speedBonus}% VELOCITÀ`, 
+                        text, 
                         boost.x, 
                         boost.y, 
-                        [0.0, 1.0, 0.9, 1.0], 
+                        color, 
                         entityManager
                     );
                     
@@ -287,7 +327,19 @@ export class CollisionDetector {
                         );
                     }
                 } else {
-                    this.animationController.createFloatingText(`+${points} BOOST!`, boost.x, boost.y, [0.0, 1.0, 0.9, 1.0], entityManager);
+                    const speedMult = this.scoreSystem.getSpeedMultiplier();
+                    let text = `+${points} BOOST!`;
+                    let color = [0.0, 1.0, 0.9, 1.0];
+                    
+                    if (speedMult >= 1.5) {
+                        text = `+${points} BOOST! ×${speedMult.toFixed(1)}`;
+                        if (speedMult >= 3.0) {
+                            color = [1.0, 0.0, 0.4, 1.0];
+                        } else if (speedMult >= 2.0) {
+                            color = [1.0, 0.4, 0.0, 1.0];
+                        }
+                    }
+                    this.animationController.createFloatingText(text, boost.x, boost.y, color, entityManager);
                 }
                 
                 const combo = this.scoreSystem.getCombo();

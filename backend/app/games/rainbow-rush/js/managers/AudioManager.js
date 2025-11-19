@@ -107,6 +107,8 @@ export class AudioManager {
         this.sounds.set('near_miss', this.createNearMissSound.bind(this));
         this.sounds.set('combo_break', this.createComboBreakSound.bind(this));
         this.sounds.set('boost', this.createBoostSound.bind(this));
+        this.sounds.set('safety_land', this.createSafetyLandSound.bind(this));
+        this.sounds.set('tick', this.createTickSound.bind(this));
         
         // Power-up specific sounds
         this.sounds.set('powerup_immortality', this.createImmortalitySound.bind(this));
@@ -561,6 +563,49 @@ export class AudioManager {
         
         osc.start(this.audioContext.currentTime);
         osc.stop(this.audioContext.currentTime + 0.2);
+    }
+    
+    createSafetyLandSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Suono negativo più forte e udibile - discesa triste
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+    }
+    
+    createTickSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Ticchettio breve e secco tipo orologio meccanico
+        osc.type = 'square'; // Più meccanico
+        osc.frequency.setValueAtTime(1200, ctx.currentTime); // Più acuto
+        
+        gainNode.gain.setValueAtTime(this.masterVolume * 0.25, ctx.currentTime); // Più forte
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03); // Più corto
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.03);
     }
     
     createDeathSound() {

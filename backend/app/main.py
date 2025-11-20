@@ -50,17 +50,28 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         
-        # Content Security Policy (permissive for game iframes)
-        # Adjust in production based on actual needs
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.steemit.com https://sds.steemworld.org; "
-            "frame-src 'self'; "
-            "font-src 'self' data:;"
-        )
+        # Content Security Policy - permissive for Swagger UI and games
+        if request.url.path in ['/docs', '/openapi.json']:
+            # Allow CDN resources for Swagger UI
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self'; "
+                "font-src 'self' data:;"
+            )
+        else:
+            # Default CSP for other endpoints
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' https://api.steemit.com https://sds.steemworld.org; "
+                "frame-src 'self'; "
+                "font-src 'self' data:;"
+            )
         response.headers['Content-Security-Policy'] = csp
         
         return response

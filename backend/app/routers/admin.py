@@ -30,6 +30,9 @@ def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = Non
         # Allow local network (192.168.x.x)
         if client_ip.startswith("192.168."):
             return True
+        # Allow Docker networks (172.x.x.x)
+        if client_ip.startswith("172."):
+            return True
     
     # Check API key
     if x_api_key != ADMIN_API_KEY:

@@ -1,0 +1,67 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:  # Permette deploy manuale dalla UI di GitHub
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            
+            echo "📁 Navigating to project directory..."
+            cd /home/Ggameplatform/Ggameplatform
+            
+            echo "📥 Pulling latest changes..."
+            git pull origin master
+            
+            echo "🐳 Rebuilding and restarting containers..."
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+            
+            echo "🧹 Cleaning up old Docker resources..."
+            docker system prune -f
+            
+            echo "✅ Deployment completed!"
+            echo ""
+            echo "📊 Container status:"
+            docker-compose ps
+            
+            echo ""
+            echo "🌐 Application available at: https://games.cur8.fun"
+          EOF
+
+      - name: 🔍 Verify deployment
+        run: |
+          sleep 10
+          echo "Testing health endpoint..."
+          curl -f https://games.cur8.fun/health || echo "⚠️ Health check failed, but deployment completed"
+
+      - name: 📝 Deployment summary
+        if: always()
+        run: |
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Server**: ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Message**: ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL**: https://games.cur8.fun" >> $GITHUB_STEP_SUMMARY

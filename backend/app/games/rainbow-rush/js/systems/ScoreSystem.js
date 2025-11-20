@@ -248,44 +248,44 @@ export class ScoreSystem {
         let color = [0.7, 0.7, 0.7, 1.0];
         
         if (timeInSeconds <= perfectTime) {
-            // PERFECT! Moltiplicatore 3.0x - TRIPLI I PUNTI!
+            // PERFECT! Moltiplicatore 1.20x - +20% punti
             multiplier = 1.0;
-            bonusMultiplier = 3.0;
+            bonusMultiplier = 1.20;
             rank = 'perfect';
             rankIcon = '💎';
             color = [0.4, 0.9, 1.0, 1.0]; // Cyan brillante
         } else if (timeInSeconds <= goldTime) {
-            // GOLD! Moltiplicatore 2.0x - RADDOPPI I PUNTI!
+            // GOLD! Moltiplicatore 1.15x - +15% punti
             multiplier = 0.8;
-            bonusMultiplier = 2.0;
+            bonusMultiplier = 1.15;
             rank = 'gold';
             rankIcon = '🥇';
             color = [1.0, 0.84, 0.0, 1.0]; // Gold
         } else if (timeInSeconds <= silverTime) {
-            // SILVER! Moltiplicatore 1.5x
+            // SILVER! Moltiplicatore 1.10x - +10% punti
             multiplier = 0.6;
-            bonusMultiplier = 1.5;
+            bonusMultiplier = 1.10;
             rank = 'silver';
             rankIcon = '🥈';
             color = [0.75, 0.75, 0.75, 1.0]; // Silver
         } else if (timeInSeconds <= bronzeTime) {
-            // BRONZE! Moltiplicatore 1.2x
+            // BRONZE! Moltiplicatore 1.05x - +5% punti
             multiplier = 0.4;
-            bonusMultiplier = 1.2;
+            bonusMultiplier = 1.05;
             rank = 'bronze';
             rankIcon = '🥉';
             color = [0.8, 0.5, 0.2, 1.0]; // Bronze
         } else {
-            // TOO SLOW - NESSUN BONUS, anzi PENALITÀ!
+            // TOO SLOW - NESSUN BONUS
             multiplier = 0.0;
-            bonusMultiplier = 0.5; // PENALITÀ: perdi metà punti!
+            bonusMultiplier = 1.0; // Nessun bonus/penalità
             rank = 'slow';
             rankIcon = '⏱️';
             color = [0.5, 0.5, 0.5, 1.0]; // Gray
         }
         
-        // Calcola i punti bonus come percentuale dello score attuale
-        const bonusPoints = Math.floor(this.score * (bonusMultiplier - 1.0));
+        // Calcola i punti bonus come percentuale dello score attuale, diviso per 10
+        const bonusPoints = Math.floor(this.score * (bonusMultiplier - 1.0) / 10);
         
         return {
             points: bonusPoints,

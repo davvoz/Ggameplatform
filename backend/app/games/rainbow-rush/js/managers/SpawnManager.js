@@ -92,8 +92,8 @@ export class SpawnManager {
     updateBonusSpawning(deltaTime) {
         this.magnetTimer += deltaTime;
         if (this.magnetTimer >= this.magnetInterval) {
-            // 50% chance to spawn magnet + coin rain combo
-            if (Math.random() < 0.5) {
+            // 70% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.7) {
                 this.spawnBonusCombo();
                 // Reset both timers to avoid double spawning
                 this.magnetTimer = 0;
@@ -106,8 +106,8 @@ export class SpawnManager {
 
         this.coinRainTimer += deltaTime;
         if (this.coinRainTimer >= this.coinRainInterval) {
-            // 50% chance to spawn magnet + coin rain combo
-            if (Math.random() < 0.5) {
+            // 70% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.7) {
                 this.spawnBonusCombo();
                 // Reset both timers to avoid double spawning
                 this.magnetTimer = 0;
@@ -307,16 +307,16 @@ export class SpawnManager {
 
     /**
      * Spawn magnet + coin rain combo (50% chance)
-     * The two bonuses spawn very close together
+     * The two bonuses spawn very close together horizontally
      */
     spawnBonusCombo() {
-        const x = this.dims.width + 50;
-        const baseY = 150 + Math.random() * (this.dims.height - 400);
+        const baseX = this.dims.width + 50;
+        const y = 150 + Math.random() * (this.dims.height - 400);
         
         // Spawn magnet
         this.entityManager.addEntity('magnetBonuses', {
-            x: x,
-            y: baseY,
+            x: baseX,
+            y: y,
             width: 35,
             height: 35,
             velocity: -200,
@@ -328,11 +328,11 @@ export class SpawnManager {
             radius: 17.5
         });
         
-        // Spawn coin rain very close (60-80 pixels apart vertically)
-        const offset = 60 + Math.random() * 20;
+        // Spawn coin rain very close horizontally (60-100 pixels behind)
+        const offsetX = 60 + Math.random() * 40;
         this.entityManager.addEntity('coinRainBonuses', {
-            x: x,
-            y: baseY + offset,
+            x: baseX + offsetX,
+            y: y,
             width: 40,
             height: 40,
             velocity: -200,

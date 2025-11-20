@@ -92,14 +92,30 @@ export class SpawnManager {
     updateBonusSpawning(deltaTime) {
         this.magnetTimer += deltaTime;
         if (this.magnetTimer >= this.magnetInterval) {
-            this.spawnMagnetBonus();
-            this.magnetTimer = 0;
+            // 50% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.5) {
+                this.spawnBonusCombo();
+                // Reset both timers to avoid double spawning
+                this.magnetTimer = 0;
+                this.coinRainTimer = 0;
+            } else {
+                this.spawnMagnetBonus();
+                this.magnetTimer = 0;
+            }
         }
 
         this.coinRainTimer += deltaTime;
         if (this.coinRainTimer >= this.coinRainInterval) {
-            this.spawnCoinRainBonus();
-            this.coinRainTimer = 0;
+            // 50% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.5) {
+                this.spawnBonusCombo();
+                // Reset both timers to avoid double spawning
+                this.magnetTimer = 0;
+                this.coinRainTimer = 0;
+            } else {
+                this.spawnCoinRainBonus();
+                this.coinRainTimer = 0;
+            }
         }
 
         this.shieldTimer += deltaTime;
@@ -286,6 +302,48 @@ export class SpawnManager {
             glowColor: [1.0, 0.5, 1.0, 0.6],
             pulsePhase: 0,
             radius: 17.5
+        });
+    }
+
+    /**
+     * Spawn magnet + coin rain combo (50% chance)
+     * The two bonuses spawn very close together
+     */
+    spawnBonusCombo() {
+        const x = this.dims.width + 50;
+        const baseY = 150 + Math.random() * (this.dims.height - 400);
+        
+        // Spawn magnet
+        this.entityManager.addEntity('magnetBonuses', {
+            x: x,
+            y: baseY,
+            width: 35,
+            height: 35,
+            velocity: -200,
+            type: 'magnet',
+            rotation: 0,
+            color: [1.0, 0.0, 1.0, 1.0],
+            glowColor: [1.0, 0.5, 1.0, 0.6],
+            pulsePhase: 0,
+            radius: 17.5
+        });
+        
+        // Spawn coin rain very close (60-80 pixels apart vertically)
+        const offset = 60 + Math.random() * 20;
+        this.entityManager.addEntity('coinRainBonuses', {
+            x: x,
+            y: baseY + offset,
+            width: 40,
+            height: 40,
+            velocity: -200,
+            type: 'coinrain',
+            rotation: 0,
+            color: [1.0, 0.84, 0.0, 1.0],
+            glowColor: [1.0, 0.95, 0.5, 0.8],
+            pulsePhase: 0,
+            radius: 20,
+            sparklePhase: 0,
+            coinOrbitPhase: 0
         });
     }
 

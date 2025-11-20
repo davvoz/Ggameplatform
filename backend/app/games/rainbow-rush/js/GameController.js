@@ -546,9 +546,10 @@ export class GameController {
         // Spawn new entities via SpawnManager
         this.spawnManager.update(deltaTime, this.scoreSystem);
 
-        // Periodic cleanup of offscreen entities (every 1 second)
+        // Periodic cleanup of offscreen entities (every 1 second, più frequente durante coin rain)
         this.cleanupTimer += deltaTime;
-        if (this.cleanupTimer >= this.cleanupInterval) {
+        const cleanupInterval = this.coinRainActive ? 0.5 : this.cleanupInterval; // Cleanup più frequente durante coin rain
+        if (this.cleanupTimer >= cleanupInterval) {
             this.cleanupOffscreenEntities();
             this.cleanupTimer = 0;
         }

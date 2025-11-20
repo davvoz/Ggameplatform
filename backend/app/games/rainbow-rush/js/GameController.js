@@ -22,6 +22,7 @@ import { SafetyPlatformSystem } from './systems/SafetyPlatformSystem.js';
 import { CollisionDetector } from './systems/CollisionDetector.js';
 import { AnimationController } from './controllers/AnimationController.js';
 import { ParticleSystem } from './effects/ParticleSystem.js';
+import { LevelProgressBar } from './systems/LevelProgressBar.js';
 
 export class GameController {
     constructor(canvas) {
@@ -55,6 +56,7 @@ export class GameController {
         this.collisionDetector = null; // Initialized after creating player
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
+        this.levelProgressBar = null; // Initialized after getting dimensions
         
         // Performance optimization - cleanup timer
         this.cleanupTimer = 0;
@@ -93,6 +95,7 @@ export class GameController {
         // NEW: Initialize specialized systems
         this.spawnManager = new SpawnManager(this.levelGenerator, this.entityManager, dims);
         this.safetyPlatformSystem = new SafetyPlatformSystem(dims, this.audioManager);
+        this.levelProgressBar = new LevelProgressBar(dims.width, dims.height);
         this.collisionDetector = new CollisionDetector(
             this.player,
             this.audioManager,
@@ -317,7 +320,7 @@ export class GameController {
     }
 
     setupScoreListeners() {
-        this.scoreSystem.onLevelUp((level) => {
+        this.scoreSystem.onLevelUp((level, bonus) => {
             this.levelGenerator.setDifficulty(level);
             this.backgroundSystem.setLevel(level);
             this.audioManager.playSound('score');
@@ -325,6 +328,11 @@ export class GameController {
             // Show "LEVEL UP!" message
             const dims = this.engine.getCanvasDimensions();
             this.animationController.showLevelUp(level, dims.width / 2, dims.height / 3);
+            
+            // Show epic time bonus with floating text
+            if (bonus && bonus.points > 0) {
+                this.showLevelTimeBonus(bonus, dims);
+            }
             
             // Update HUD
             this.emitGameUpdate();
@@ -334,6 +342,82 @@ export class GameController {
             // Update HUD when score changes
             this.emitGameUpdate();
         });
+    }
+    
+    showLevelTimeBonus(bonus, dims) {
+        console.log('🎯 SHOWING LEVEL BONUS:', bonus);
+        
+        // Play special sound for level completion
+        this.audioManager.playSound('level_complete');
+        
+        // Play additional sound based on rank
+        if (bonus.rank === 'perfect') {
+            setTimeout(() => this.audioManager.playSound('streak'), 150);
+        } else if (bonus.rank === 'gold') {
+            setTimeout(() => this.audioManager.playSound('powerup_ready'), 150);
+        }
+        
+        // Reset progress bar per il nuovo livello
+        if (this.levelProgressBar) {
+            this.levelProgressBar.reset();
+        }
+        
+        // Create floating text al CENTRO dello schermo
+        const centerX = dims.width / 2;
+        const centerY = dims.height / 2;
+        
+        // Colori distintivi per ogni rank
+        let textColor;
+        switch(bonus.rank) {
+            case 'perfect':
+                textColor = [1.0, 0.9, 0.1, 1.0]; // Oro brillante
+                break;
+            case 'gold':
+                textColor = [1.0, 0.7, 0.0, 1.0]; // Arancione dorato
+                break;
+            case 'silver':
+                textColor = [0.8, 0.9, 1.0, 1.0]; // Argento/azzurro
+                break;
+            case 'bronze':
+                textColor = [0.8, 0.5, 0.2, 1.0]; // Bronzo
+                break;
+            default:
+                textColor = [0.7, 0.7, 0.7, 1.0]; // Grigio per slow
+        }
+        
+        // Testo con MOLTIPLICATORE
+        let rankText = '';
+        switch(bonus.rank) {
+            case 'perfect':
+                rankText = `×${bonus.multiplier.toFixed(1)}`;
+                break;
+            case 'gold':
+                rankText = `×${bonus.multiplier.toFixed(1)}`;
+                break;
+            case 'silver':
+                rankText = `×${bonus.multiplier.toFixed(1)}`;
+                break;
+            case 'bronze':
+                rankText = `×${bonus.multiplier.toFixed(2)}`;
+                break;
+            default:
+                rankText = 'NO BONUS';
+        }
+        
+        // Main bonus text con MOLTIPLICATORE su riga separata (usando \n)
+        const bonusText = `${bonus.rankIcon} LV${this.scoreSystem.level - 1}\n${rankText} +${bonus.points}`;
+        console.log('Creating bonus text:', bonusText, 'at CENTER', centerX, centerY);
+        
+        this.animationController.createFloatingText(
+            bonusText,
+            centerX,
+            centerY,
+            textColor, // Usa il colore distintivo
+            this.entityManager,
+            6 // Durata maggiore per il bonus livello (4.5 secondi invece di 2.5)
+        );
+        
+        console.log('FloatingTexts count:', this.entityManager.floatingTexts.length);
     }
     
     emitGameUpdate() {
@@ -396,6 +480,16 @@ export class GameController {
         }
         if (this.flightButtonUI) {
             this.flightButtonUI.update(deltaTime, this.player);
+        }
+        
+        // Update level progress bar
+        if (this.levelProgressBar) {
+            this.levelProgressBar.update(
+                deltaTime,
+                this.spawnManager.platformCounter,
+                this.spawnManager.platformsPerLevel,
+                this.scoreSystem.level
+            );
         }
 
         // Check for ice brake effect
@@ -481,6 +575,9 @@ export class GameController {
 
         // Pass turbo button UI to rendering system
         this.renderingSystem.setTurboButton(this.turboButtonUI);
+        
+        // Pass level progress bar to rendering system
+        this.renderingSystem.setLevelProgressBar(this.levelProgressBar);
 
         // Get entities from EntityManager
         const entities = [
@@ -767,6 +864,9 @@ export class GameController {
         this.safetyPlatformSystem.reset();
         this.spawnManager.reset();
         this.animationController.reset();
+        if (this.levelProgressBar) {
+            this.levelProgressBar.reset();
+        }
 
         // Start game
         this.gameState.setState(GameStates.PLAYING);

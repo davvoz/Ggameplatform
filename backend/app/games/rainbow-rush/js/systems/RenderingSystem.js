@@ -14,6 +14,7 @@ import { AnimationRenderer } from './renderers/AnimationRenderer.js';
 import { ParticleRenderer } from './renderers/ParticleRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
 import { PowerupUIRenderer } from './PowerupUIRenderer.js';
+import { LevelProgressBarRenderer } from './renderers/LevelProgressBarRenderer.js';
 
 export class RenderingSystem {
     constructor(gl, canvasWidth, canvasHeight) {
@@ -43,6 +44,7 @@ export class RenderingSystem {
         this.particleRenderer = new ParticleRenderer(this.renderer);
         this.uiRenderer = new UIRenderer(this.renderer, this.textCtx, canvasWidth, canvasHeight);
         this.powerupUIRenderer = new PowerupUIRenderer(this.renderer, canvasWidth, canvasHeight);
+        this.levelProgressBarRenderer = new LevelProgressBarRenderer(this.renderer, this.textCtx);
     }
 
     // Setter methods for game state
@@ -98,6 +100,10 @@ export class RenderingSystem {
     setFlightButton(flightButton) {
         this.flightButton = flightButton;
     }
+    
+    setLevelProgressBar(progressBar) {
+        this.levelProgressBar = progressBar;
+    }
 
     /**
      * Main render method - orchestrates all rendering in correct order
@@ -136,7 +142,12 @@ export class RenderingSystem {
         // 4. UI elements
         this._renderUI();
         
-        // 5. Turbo/Flight buttons
+        // Render level progress bar
+        if (this.levelProgressBar) {
+            this.levelProgressBarRenderer.render(this.levelProgressBar);
+        }
+        
+        // 6. Turbo/Flight buttons
         if (this.turboButton && this.player) {
             this.turboButton.render(this.renderer.gl, this, this.player);
         }
@@ -341,5 +352,10 @@ export class RenderingSystem {
         this.backgroundRenderer.canvasHeight = height;
         this.animationRenderer.updateDimensions(width, height);
         this.uiRenderer.updateDimensions(width, height);
+        
+        // Update level progress bar dimensions
+        if (this.levelProgressBar) {
+            this.levelProgressBar.updateDimensions(width, height);
+        }
     }
 }

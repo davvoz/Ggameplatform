@@ -28,6 +28,10 @@ export class ScoreSystem {
         // Speed multiplier (basato sulla velocità del gioco)
         this.speedMultiplier = 1.0;
         this.currentSpeed = 0;
+        
+        // Level time tracking for speed bonus
+        this.levelStartTime = Date.now();
+        this.levelTimeBonus = [];
     }
 
     reset() {
@@ -44,6 +48,8 @@ export class ScoreSystem {
         this.bonusMultiplierDuration = 0;
         this.speedMultiplier = 1.0;
         this.currentSpeed = 0;
+        this.levelStartTime = Date.now();
+        this.levelTimeBonus = [];
     }
     
     update(deltaTime) {
@@ -191,9 +197,109 @@ export class ScoreSystem {
     
     // Called externally to level up (e.g., every N platforms)
     levelUp() {
+        // Calculate time bonus before leveling up
+        const now = Date.now();
+        const levelTime = (now - this.levelStartTime) / 1000; // seconds
+        
+        console.log('⏱️ Level', this.level, 'completed in', levelTime.toFixed(2), 'seconds');
+        console.log('   levelStartTime:', this.levelStartTime, 'now:', now);
+        
+        const bonus = this.calculateLevelTimeBonus(levelTime, this.level);
+        
+        console.log('   Bonus:', bonus.rank, bonus.points, 'points');
+        
+        // Store bonus info for display
+        this.levelTimeBonus.push({
+            level: this.level,
+            time: levelTime,
+            bonus: bonus.points,
+            rank: bonus.rank
+        });
+        
+        // Award bonus points
+        if (bonus.points > 0) {
+            this.addScore(bonus.points);
+        }
+        
         this.level++;
         this.multiplier = 1 + (this.level - 1) * 0.3;
-        this.notifyLevelUp(this.level);
+        
+        // Reset level timer for next level
+        this.levelStartTime = Date.now();
+        
+        this.notifyLevelUp(this.level, bonus);
+    }
+    
+    calculateLevelTimeBonus(timeInSeconds, level) {
+        // Target times for each rank - PIÙ SFIDANTI!
+        const baseTargetTime = 8; // 8 secondi per perfect (era 20)
+        const levelAdjustment = (level - 1) * 1; // +1 secondo per livello
+        
+        const perfectTime = baseTargetTime + levelAdjustment;
+        const goldTime = perfectTime * 1.5;      // 50% più tempo
+        const silverTime = perfectTime * 2.0;     // Doppio tempo
+        const bronzeTime = perfectTime * 3.0;     // Triplo tempo
+        
+        // MOLTIPLICATORE invece di bonus fisso - PIÙ AGGRESSIVO!
+        let multiplier = 0;
+        let bonusMultiplier = 1.0;
+        let rank = 'none';
+        let rankIcon = '';
+        let color = [0.7, 0.7, 0.7, 1.0];
+        
+        if (timeInSeconds <= perfectTime) {
+            // PERFECT! Moltiplicatore 3.0x - TRIPLI I PUNTI!
+            multiplier = 1.0;
+            bonusMultiplier = 3.0;
+            rank = 'perfect';
+            rankIcon = '💎';
+            color = [0.4, 0.9, 1.0, 1.0]; // Cyan brillante
+        } else if (timeInSeconds <= goldTime) {
+            // GOLD! Moltiplicatore 2.0x - RADDOPPI I PUNTI!
+            multiplier = 0.8;
+            bonusMultiplier = 2.0;
+            rank = 'gold';
+            rankIcon = '🥇';
+            color = [1.0, 0.84, 0.0, 1.0]; // Gold
+        } else if (timeInSeconds <= silverTime) {
+            // SILVER! Moltiplicatore 1.5x
+            multiplier = 0.6;
+            bonusMultiplier = 1.5;
+            rank = 'silver';
+            rankIcon = '🥈';
+            color = [0.75, 0.75, 0.75, 1.0]; // Silver
+        } else if (timeInSeconds <= bronzeTime) {
+            // BRONZE! Moltiplicatore 1.2x
+            multiplier = 0.4;
+            bonusMultiplier = 1.2;
+            rank = 'bronze';
+            rankIcon = '🥉';
+            color = [0.8, 0.5, 0.2, 1.0]; // Bronze
+        } else {
+            // TOO SLOW - NESSUN BONUS, anzi PENALITÀ!
+            multiplier = 0.0;
+            bonusMultiplier = 0.5; // PENALITÀ: perdi metà punti!
+            rank = 'slow';
+            rankIcon = '⏱️';
+            color = [0.5, 0.5, 0.5, 1.0]; // Gray
+        }
+        
+        // Calcola i punti bonus come percentuale dello score attuale
+        const bonusPoints = Math.floor(this.score * (bonusMultiplier - 1.0));
+        
+        return {
+            points: bonusPoints,
+            multiplier: bonusMultiplier,
+            rank: rank,
+            rankIcon: rankIcon,
+            color: color,
+            time: timeInSeconds,
+            targetTime: perfectTime
+        };
+    }
+    
+    getLastLevelBonus() {
+        return this.levelTimeBonus[this.levelTimeBonus.length - 1] || null;
     }
 
     getScore() {
@@ -249,8 +355,8 @@ export class ScoreSystem {
         this.scoreListeners.forEach(callback => callback(this.getScore()));
     }
 
-    notifyLevelUp(level) {
-        this.levelListeners.forEach(callback => callback(level));
+    notifyLevelUp(level, bonus) {
+        this.levelListeners.forEach(callback => callback(level, bonus));
     }
     
     notifyComboChange() {

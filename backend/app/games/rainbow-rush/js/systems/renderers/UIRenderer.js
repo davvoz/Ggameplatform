@@ -25,6 +25,10 @@ export class UIRenderer {
         const rotation = text.rotation || 0;
         const glowIntensity = text.glowIntensity || 1.0;
         
+        // Dividi il testo per newline
+        const lines = text.text.split('\n');
+        const lineHeight = fontSize * 1.2; // Spazio tra le righe
+        
         this.textCtx.save();
         
         // Trasforma con rotazione e scala
@@ -37,43 +41,48 @@ export class UIRenderer {
         this.textCtx.textAlign = 'center';
         this.textCtx.textBaseline = 'middle';
         
-        // BAGLIORE MULTIPLO EPICO - più layers = più glow
-        const glowLayers = 5;
-        for (let i = glowLayers; i > 0; i--) {
-            const glowSize = (fontSize / 10) * i * glowIntensity;
-            const glowAlpha = (alpha * 0.4 * glowIntensity) / i;
-            this.textCtx.shadowColor = `rgba(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255}, ${glowAlpha})`;
-            this.textCtx.shadowBlur = glowSize;
-            this.textCtx.strokeStyle = `rgba(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255}, ${glowAlpha * 0.5})`;
-            this.textCtx.lineWidth = i * 2;
-            this.textCtx.strokeText(text.text, 0, 0);
-        }
-        
-        // OMBRA NERA FORTE per contrasto
-        this.textCtx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-        this.textCtx.shadowBlur = fontSize / 8;
-        this.textCtx.shadowOffsetX = 4;
-        this.textCtx.shadowOffsetY = 4;
-        this.textCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-        this.textCtx.lineWidth = fontSize / 10;
-        this.textCtx.strokeText(text.text, 0, 0);
-        
-        // GRADIENTE per il riempimento
-        const gradient = this.textCtx.createLinearGradient(0, -fontSize/2, 0, fontSize/2);
-        gradient.addColorStop(0, `rgb(${Math.min(255, text.color[0] * 255 + 80)}, ${Math.min(255, text.color[1] * 255 + 80)}, ${Math.min(255, text.color[2] * 255 + 80)})`);
-        gradient.addColorStop(0.5, `rgb(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255})`);
-        gradient.addColorStop(1, `rgb(${text.color[0] * 255 * 0.7}, ${text.color[1] * 255 * 0.7}, ${text.color[2] * 255 * 0.7})`);
-        
-        this.textCtx.shadowBlur = 0;
-        this.textCtx.shadowOffsetX = 0;
-        this.textCtx.shadowOffsetY = 0;
-        this.textCtx.fillStyle = gradient;
-        this.textCtx.fillText(text.text, 0, 0);
-        
-        // BORDO BIANCO INTERNO per più pop
-        this.textCtx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.4})`;
-        this.textCtx.lineWidth = fontSize / 20;
-        this.textCtx.strokeText(text.text, 0, 0);
+        // Renderizza ogni riga
+        lines.forEach((line, index) => {
+            const yOffset = (index - (lines.length - 1) / 2) * lineHeight;
+            
+            // BAGLIORE MULTIPLO EPICO - più layers = più glow
+            const glowLayers = 5;
+            for (let i = glowLayers; i > 0; i--) {
+                const glowSize = (fontSize / 10) * i * glowIntensity;
+                const glowAlpha = (alpha * 0.4 * glowIntensity) / i;
+                this.textCtx.shadowColor = `rgba(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255}, ${glowAlpha})`;
+                this.textCtx.shadowBlur = glowSize;
+                this.textCtx.strokeStyle = `rgba(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255}, ${glowAlpha * 0.5})`;
+                this.textCtx.lineWidth = i * 2;
+                this.textCtx.strokeText(line, 0, yOffset);
+            }
+            
+            // OMBRA NERA FORTE per contrasto
+            this.textCtx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+            this.textCtx.shadowBlur = fontSize / 8;
+            this.textCtx.shadowOffsetX = 4;
+            this.textCtx.shadowOffsetY = 4;
+            this.textCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+            this.textCtx.lineWidth = fontSize / 10;
+            this.textCtx.strokeText(line, 0, yOffset);
+            
+            // GRADIENTE per il riempimento
+            const gradient = this.textCtx.createLinearGradient(0, yOffset - fontSize/2, 0, yOffset + fontSize/2);
+            gradient.addColorStop(0, `rgb(${Math.min(255, text.color[0] * 255 + 80)}, ${Math.min(255, text.color[1] * 255 + 80)}, ${Math.min(255, text.color[2] * 255 + 80)})`);
+            gradient.addColorStop(0.5, `rgb(${text.color[0] * 255}, ${text.color[1] * 255}, ${text.color[2] * 255})`);
+            gradient.addColorStop(1, `rgb(${text.color[0] * 255 * 0.7}, ${text.color[1] * 255 * 0.7}, ${text.color[2] * 255 * 0.7})`);
+            
+            this.textCtx.shadowBlur = 0;
+            this.textCtx.shadowOffsetX = 0;
+            this.textCtx.shadowOffsetY = 0;
+            this.textCtx.fillStyle = gradient;
+            this.textCtx.fillText(line, 0, yOffset);
+            
+            // BORDO BIANCO INTERNO per più pop
+            this.textCtx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.4})`;
+            this.textCtx.lineWidth = fontSize / 20;
+            this.textCtx.strokeText(line, 0, yOffset);
+        });
         
         this.textCtx.restore();
     }

@@ -70,10 +70,17 @@ export class SafetyPlatformSystem {
     }
 
     initialize() {
+        // Margini laterali: 20px su mobile, 40px su desktop
+        const sideMargin = this.dims.width < 600 ? 20 : 40;
+        const maxWidth = this.dims.width - (sideMargin * 2);
+        
+        // Larghezza piattaforma: min tra config e larghezza disponibile
+        const platformWidth = Math.min(this.config.PLATFORM_WIDTH, maxWidth);
+        
         this.platform = {
-            x: this.dims.width / 2 - this.config.PLATFORM_WIDTH / 2,
+            x: this.dims.width / 2 - platformWidth / 2,
             y: this.dims.height - 60,
-            width: this.config.PLATFORM_WIDTH,
+            width: platformWidth,
             height: this.config.PLATFORM_HEIGHT,
             color: [...this.config.COLOR_READY],
             type: 'safetyPlatform',
@@ -501,8 +508,16 @@ export class SafetyPlatformSystem {
     updateDimensions(width, height) {
         this.dims = { width, height };
         if (this.platform) {
-            this.platform.x = width / 2 - this.config.PLATFORM_WIDTH / 2;
+            // Margini laterali: 20px su mobile, 40px su desktop
+            const sideMargin = width < 600 ? 20 : 40;
+            const maxWidth = width - (sideMargin * 2);
+            
+            // Larghezza piattaforma: min tra config e larghezza disponibile
+            const platformWidth = Math.min(this.config.PLATFORM_WIDTH, maxWidth);
+            
+            this.platform.x = width / 2 - platformWidth / 2;
             this.platform.y = height - 60;
+            this.platform.width = platformWidth;
         }
     }
 

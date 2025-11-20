@@ -59,18 +59,18 @@ export class AnimationController {
                 text.scale = 1.3 - (bounceProgress * 0.3);
             } else {
                 // Stabile con leggero pulse
-                text.scale = 1.0 + Math.sin(text.pulsePhase) * 0.08;
+                text.scale = 1.0 + Math.sin(text.pulsePhase) * 0.05;
             }
             
             // Movimento verso l'alto CON DECELERAZIONE
             const speedMultiplier = Math.max(0.3, 1.0 - lifeProgress); // Rallenta gradualmente
             text.y += text.velocityY * deltaTime * speedMultiplier;
             
-            // Leggera oscillazione laterale per effetto fluido
-            text.x += Math.sin(text.pulsePhase * 2) * 15 * deltaTime;
+            // NIENTE oscillazione laterale per bonus livello - testo dritto!
+            // text.x += Math.sin(text.pulsePhase * 2) * 15 * deltaTime;
             
-            // Rotazione leggera
-            text.rotation += deltaTime * 0.5;
+            // NIENTE rotazione - testo dritto!
+            // text.rotation += deltaTime * 0.5;
             
             // Pulse phase per effetti pulsanti
             text.pulsePhase += deltaTime * 4;
@@ -318,26 +318,51 @@ export class AnimationController {
     /**
      * Create floating text STRABELLLO con effetti EPICI
      */
-    createFloatingText(text, x, y, color, entityManager) {
+    createFloatingText(text, x, y, color, entityManager, duration = 2.5) {
         console.log('🎯 CREATING FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
         const floatingText = {
             text: text,
             x: x,
             y: y,
             startY: y,
-            life: 2.5,        // Vita più lunga per godersi l'animazione
-            maxLife: 2.5,
+            life: duration,
+            maxLife: duration,
             alpha: 1.0,
             color: color,
             fontSize: 48,     // GRANDE E VISIBILE
-            velocityY: -80,   // Sale verso l'alto
+            velocityY: -50,   // Sale verso l'alto più lentamente
             scale: 0.1,       // Parte piccolo
-            rotation: 0,      // Rotazione per effetto wow
+            rotation: 0,      // NIENTE ROTAZIONE per bonus livello
             pulsePhase: 0,    // Per effetto pulsante
             glowIntensity: 1.0 // Intensità del bagliore
         };
         entityManager.addEntity('floatingTexts', floatingText);
         console.log('✅ Floating text added to entityManager. Total floatingTexts:', entityManager.floatingTexts.length);
+    }
+    
+    /**
+     * Create EPIC floating text con dimensioni ENORMI per bonus livello
+     */
+    createEpicFloatingText(text, x, y, color, entityManager, duration = 3.0) {
+        console.log('🌟 CREATING EPIC FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
+        const floatingText = {
+            text: text,
+            x: x,
+            y: y,
+            startY: y,
+            life: duration,
+            maxLife: duration,
+            alpha: 1.0,
+            color: color,
+            fontSize: 72,     // ENORME!
+            velocityY: -60,   // Sale verso l'alto più lentamente per essere leggibile
+            scale: 0.1,       // Parte piccolo
+            rotation: 0,
+            pulsePhase: 0,
+            glowIntensity: 1.5 // Bagliore più intenso
+        };
+        entityManager.addEntity('floatingTexts', floatingText);
+        console.log('✅ EPIC floating text added! Total floatingTexts:', entityManager.floatingTexts.length);
     }
 
     /**

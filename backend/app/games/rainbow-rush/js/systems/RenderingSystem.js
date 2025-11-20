@@ -15,6 +15,7 @@ import { ParticleRenderer } from './renderers/ParticleRenderer.js';
 import { UIRenderer } from './renderers/UIRenderer.js';
 import { PowerupUIRenderer } from './PowerupUIRenderer.js';
 import { LevelProgressBarRenderer } from './renderers/LevelProgressBarRenderer.js';
+import { HUDRenderer } from './HUDRenderer.js';
 
 export class RenderingSystem {
     constructor(gl, canvasWidth, canvasHeight) {
@@ -45,6 +46,12 @@ export class RenderingSystem {
         this.uiRenderer = new UIRenderer(this.renderer, this.textCtx, canvasWidth, canvasHeight);
         this.powerupUIRenderer = new PowerupUIRenderer(this.renderer, canvasWidth, canvasHeight);
         this.levelProgressBarRenderer = new LevelProgressBarRenderer(this.renderer, this.textCtx);
+        this.hudRenderer = new HUDRenderer(this.renderer, this.textCtx, canvasWidth, canvasHeight);
+        
+        // HUD state
+        this.currentScore = 0;
+        this.currentLevel = 1;
+        this.isPaused = false;
     }
 
     // Setter methods for game state
@@ -103,6 +110,18 @@ export class RenderingSystem {
     
     setLevelProgressBar(progressBar) {
         this.levelProgressBar = progressBar;
+    }
+    
+    setScore(score) {
+        this.currentScore = score;
+    }
+    
+    setLevel(level) {
+        this.currentLevel = level;
+    }
+    
+    setIsPaused(isPaused) {
+        this.isPaused = isPaused;
     }
 
     /**
@@ -292,6 +311,11 @@ export class RenderingSystem {
             }
             this.powerupUIRenderer.render(this.powerupTimers, Date.now());
         }
+        
+        // HUD (pause button, score, level)
+        if (this.hudRenderer) {
+            this.hudRenderer.render(this.currentScore, this.currentLevel, this.isPaused);
+        }
     }
 
     /**
@@ -333,6 +357,9 @@ export class RenderingSystem {
         if (this.powerupUIRenderer) {
             this.powerupUIRenderer.update(deltaTime);
         }
+        if (this.hudRenderer) {
+            this.hudRenderer.update(deltaTime, this.currentScore, this.currentLevel);
+        }
     }
 
     /**
@@ -349,6 +376,10 @@ export class RenderingSystem {
         }
         
         this.backgroundRenderer.canvasWidth = width;
+        
+        if (this.hudRenderer) {
+            this.hudRenderer.updateDimensions(width, height);
+        }
         this.backgroundRenderer.canvasHeight = height;
         this.animationRenderer.updateDimensions(width, height);
         this.uiRenderer.updateDimensions(width, height);

@@ -40,18 +40,8 @@
 
         <!-- Game HUD -->
         <div id="game-hud" class="screen">
-            <div class="hud-single-line">
-                <button id="pause-button" class="pause-btn">⏸️</button>
-                <div class="hud-item">
-                    <span class="hud-label">Score:</span>
-                    <span id="score-display" class="hud-value">0</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Level:</span>
-                    <span id="level-display" class="hud-value">1</span>
-                </div>
-                <!-- Hearts renderizzati via WebGL in alto a destra -->
-            </div>
+            <!-- HUD elements now rendered via WebGL/Canvas2D framework -->
+            <!-- Pause button, score, and level are rendered in HUDRenderer.js -->
         </div>
 
         <!-- Pause Screen -->

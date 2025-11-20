@@ -265,9 +265,22 @@ export class GameController {
 
         // Turbo e Flight button click handler (mouse/touch)
         this.inputManager.addEventListener('click', (data) => {
-            if (!this.gameState.isPlaying()) return;
-
             const dims = this.engine.getCanvasDimensions();
+
+            // Check pause button (sempre disponibile durante il gioco)
+            if (this.renderingSystem && this.renderingSystem.hudRenderer) {
+                const pauseClicked = this.renderingSystem.hudRenderer.checkPauseClick(data.x, data.y);
+                if (pauseClicked) {
+                    if (this.gameState.isPlaying()) {
+                        this.pauseGame();
+                    } else if (this.gameState.isPaused()) {
+                        this.resumeGame();
+                    }
+                    return; // Non processare altri click
+                }
+            }
+            
+            if (!this.gameState.isPlaying()) return;
 
             // Check turbo button
             if (this.turboButtonUI) {
@@ -618,6 +631,11 @@ export class GameController {
         
         // Pass level progress bar to rendering system
         this.renderingSystem.setLevelProgressBar(this.levelProgressBar);
+        
+        // Pass HUD data to rendering system
+        this.renderingSystem.setScore(this.scoreSystem.getScore());
+        this.renderingSystem.setLevel(this.scoreSystem.getLevel());
+        this.renderingSystem.setIsPaused(this.gameState.isPaused());
 
         // Get entities from EntityManager
         const entities = [
@@ -977,6 +995,11 @@ export class GameController {
             if (this.audioManager) {
                 this.audioManager.pause();
             }
+            // Mostra schermata di pausa
+            const pauseScreen = document.getElementById('pause-screen');
+            if (pauseScreen) {
+                pauseScreen.classList.add('active');
+            }
         }
     }
 
@@ -987,6 +1010,11 @@ export class GameController {
             // Riprendi l'audio
             if (this.audioManager) {
                 this.audioManager.resume();
+            }
+            // Nascondi schermata di pausa
+            const pauseScreen = document.getElementById('pause-screen');
+            if (pauseScreen) {
+                pauseScreen.classList.remove('active');
             }
         }
     }

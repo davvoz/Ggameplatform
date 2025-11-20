@@ -62,11 +62,8 @@ class RainbowRushApp {
             menuButton.addEventListener('click', () => this.showMenu());
         }
 
-        // Pause button
-        const pauseButton = document.getElementById('pause-button');
-        if (pauseButton) {
-            pauseButton.addEventListener('click', () => this.showPauseMenu());
-        }
+        // Pause button is now rendered via HUDRenderer and handled in GameController
+        // No need for HTML event listener
         
         // Resume button
         const resumeButton = document.getElementById('resume-button');
@@ -182,8 +179,8 @@ class RainbowRushApp {
     }
 
     updateHUD(stats) {
-        this.updateElement('score-display', stats.score);
-        this.updateElement('level-display', stats.level);
+        // Score and level are now rendered via HUDRenderer, no need to update HTML elements
+        // Only update collectibles if needed
         this.updateElement('collectibles-display', stats.collectibles);
     }
 

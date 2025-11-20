@@ -24,7 +24,7 @@ export class CollisionDetector {
         if (safetyPlatformSystem.isActive()) {
             const safetyPlatform = safetyPlatformSystem.getPlatform();
             const onSafety = this.player.checkPlatformCollision(safetyPlatform, 80);
-            console.log('Safety check:', { onSafety, velocityY: this.player.velocityY, prevVelY: this.player.previousVelocityY });
+           // console.log('Safety check:', { onSafety, velocityY: this.player.velocityY, prevVelY: this.player.previousVelocityY });
             if (onSafety) {
                 playerOnSafetyPlatform = true;
                 
@@ -61,8 +61,8 @@ export class CollisionDetector {
         // Boost collisions
         this.checkBoostCollisions(entityManager);
 
-        // Bonus collisions
-        this.checkBonusCollisions(entityManager);
+        // Bonus collisions - REMOVED: now called separately in GameController to get return value
+        // this.checkBonusCollisions(entityManager);
 
         // Powerup collisions
         this.checkPowerupCollisions(entityManager, powerupSystem);
@@ -356,13 +356,21 @@ export class CollisionDetector {
      */
     checkBonusCollisions(entityManager) {
         this.checkMagnetBonusCollisions(entityManager);
-        this.checkTimeBonusCollisions(entityManager);
+        
+        const coinRainResult = this.checkCoinRainBonusCollisions(entityManager);
+        if (coinRainResult) return coinRainResult;
+        
         this.checkShieldBonusCollisions(entityManager);
         this.checkMultiplierBonusCollisions(entityManager);
-        this.checkRainbowBonusCollisions(entityManager);
+        
+        const rainbowResult = this.checkRainbowBonusCollisions(entityManager);
+        if (rainbowResult) return rainbowResult;
+        
         this.checkFlightBonusCollisions(entityManager);
         this.checkRechargeBonusCollisions(entityManager);
         this.checkHeartRechargeBonusCollisions(entityManager);
+        
+        return null;
     }
 
     /**
@@ -392,24 +400,24 @@ export class CollisionDetector {
     }
 
     /**
-     * Check time slow bonus collisions
+     * Check coin rain bonus collisions
      */
-    checkTimeBonusCollisions(entityManager) {
-        const timeBonuses = entityManager.getEntities('timeBonuses');
+    checkCoinRainBonusCollisions(entityManager) {
+        const coinRainBonuses = entityManager.getEntities('coinRainBonuses');
         
-        for (let i = timeBonuses.length - 1; i >= 0; i--) {
-            if (this.player.checkCollectibleCollision(timeBonuses[i])) {
-                const timeSlow = timeBonuses[i];
-                timeBonuses.splice(i, 1);
+        for (let i = coinRainBonuses.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(coinRainBonuses[i])) {
+                const coinRain = coinRainBonuses[i];
+                coinRainBonuses.splice(i, 1);
                 
-                // Slow motion for 8 seconds (handled in GameController)
-                this.particleSystem.createBonusExplosion(timeSlow.x, timeSlow.y, timeSlow.color, 80, entityManager);
-                this.animationController.createFloatingText('⏰ SLOW MOTION!', timeSlow.x, timeSlow.y, timeSlow.color, entityManager);
-                this.achievementSystem.addNotification('⏰ Tempo Rallentato!', 'Hai 8 secondi di tempo!', 'info');
+                // Activate coin rain for 10 seconds
+                this.particleSystem.createBonusExplosion(coinRain.x, coinRain.y, coinRain.color, 100, entityManager);
+                this.animationController.createFloatingText('💰 COIN RAIN!', coinRain.x, coinRain.y, coinRain.color, entityManager);
+                this.achievementSystem.addNotification('💰 Pioggia di Monete!', 'Pioverann monete per 10 secondi!', 'achievement');
                 this.audioManager.playSound('powerup');
                 
-                // Return true to signal GameController to apply time scale
-                return { type: 'timeSlow', activated: true };
+                // Return signal to start coin rain effect in GameController
+                return { type: 'coinRain', activated: true, duration: 10.0 };
             }
         }
         return null;

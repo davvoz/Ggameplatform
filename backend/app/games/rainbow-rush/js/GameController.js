@@ -64,6 +64,13 @@ export class GameController {
 
         // Time scale for slow motion effects
         this.timeScale = 1.0;
+        
+        // Coin rain effect
+        this.coinRainActive = false;
+        this.coinRainTimer = 0;
+        this.coinRainDuration = 0;
+        this.coinRainSpawnTimer = 0;
+        this.coinRainSpawnInterval = 0.3; // Spawn coin ogni 0.3 secondi
 
         this.initialize();
     }
@@ -385,27 +392,11 @@ export class GameController {
                 textColor = [0.7, 0.7, 0.7, 1.0]; // Grigio per slow
         }
         
-        // Testo con MOLTIPLICATORE
-        let rankText = '';
-        switch(bonus.rank) {
-            case 'perfect':
-                rankText = `×${bonus.multiplier.toFixed(1)}`;
-                break;
-            case 'gold':
-                rankText = `×${bonus.multiplier.toFixed(1)}`;
-                break;
-            case 'silver':
-                rankText = `×${bonus.multiplier.toFixed(1)}`;
-                break;
-            case 'bronze':
-                rankText = `×${bonus.multiplier.toFixed(2)}`;
-                break;
-            default:
-                rankText = 'NO BONUS';
-        }
-        
-        // Main bonus text con MOLTIPLICATORE su riga separata (usando \n)
-        const bonusText = `${bonus.rankIcon} LV${this.scoreSystem.level - 1}\n${rankText} +${bonus.points}`;
+        // Testo semplice senza moltiplicatore visibile
+        // Main bonus text senza mostrare il moltiplicatore
+        const bonusText = bonus.points > 0 
+            ? `${bonus.rankIcon} LV${this.scoreSystem.level - 1}\n+${bonus.points}`
+            : `${bonus.rankIcon} LV${this.scoreSystem.level - 1}`;
         console.log('Creating bonus text:', bonusText, 'at CENTER', centerX, centerY);
         
         this.animationController.createFloatingText(
@@ -515,15 +506,35 @@ export class GameController {
         // Update safety platform system with collision state
         this.safetyPlatformSystem.update(deltaTime, playerOnSafetyPlatform, this.entityManager, this.scoreSystem);
 
-        // Handle special bonus effects (time slow, rainbow)
+        // Handle special bonus effects (coin rain, rainbow)
         const bonusEffect = this.collisionDetector.checkBonusCollisions(this.entityManager);
         if (bonusEffect) {
-            if (bonusEffect.type === 'timeSlow' && bonusEffect.activated) {
-                this.timeScale = 0.5;
-                setTimeout(() => { this.timeScale = 1.0; }, 8000);
+            if (bonusEffect.type === 'coinRain' && bonusEffect.activated) {
+                this.coinRainActive = true;
+                this.coinRainTimer = 0;
+                this.coinRainDuration = bonusEffect.duration;
+                this.coinRainSpawnTimer = 0;
             } else if (bonusEffect.type === 'rainbow' && bonusEffect.activated) {
                 this.timeScale = 0.6;
                 setTimeout(() => { this.timeScale = 1.0; }, 8000);
+            }
+        }
+        
+        // Update coin rain effect
+        if (this.coinRainActive) {
+            this.coinRainTimer += deltaTime;
+            this.coinRainSpawnTimer += deltaTime;
+            
+            // Spawn coins from the sky
+            if (this.coinRainSpawnTimer >= this.coinRainSpawnInterval) {
+                this.spawnCoinRainCollectible();
+                this.coinRainSpawnTimer = 0;
+            }
+            
+            // Check if duration expired
+            if (this.coinRainTimer >= this.coinRainDuration) {
+                this.coinRainActive = false;
+                this.coinRainTimer = 0;
             }
         }
 
@@ -555,6 +566,34 @@ export class GameController {
         if (!this.player.alive && !this.animationController.isShowingDeathAnimation) {
             this.startDeathSequence();
         }
+    }
+    
+    /**
+     * Spawn a collectible coin from coin rain bonus
+     */
+    spawnCoinRainCollectible() {
+        const dims = this.engine.getCanvasDimensions();
+        
+        // Random X position across the screen
+        const x = Math.random() * dims.width;
+        // Spawn from top of screen
+        const y = -30;
+        
+        const collectible = {
+            x: x,
+            y: y,
+            radius: 15,
+            type: 'collectible',
+            color: [1.0, 0.84, 0.0, 1.0], // Gold
+            velocity: 0, // No horizontal velocity
+            value: 10,
+            pulsePhase: Math.random() * Math.PI * 2,
+            fromCoinRain: true, // Mark as coin rain collectible
+            velocityY: 200 + Math.random() * 150, // Falls down at variable speed (200-350 px/s)
+            drift: (Math.random() - 0.5) * 30 // Random horizontal drift
+        };
+        
+        this.entityManager.addEntity('collectibles', collectible);
     }
 
     updateRenderEntities() {
@@ -588,7 +627,7 @@ export class GameController {
             ...this.entityManager.hearts,
             ...this.entityManager.boosts,
             ...this.entityManager.magnetBonuses,
-            ...this.entityManager.timeBonuses,
+            ...this.entityManager.coinRainBonuses,
             ...this.entityManager.shieldBonuses,
             ...this.entityManager.multiplierBonuses,
             ...this.entityManager.rainbowBonuses,
@@ -670,7 +709,7 @@ export class GameController {
         this.entityManager.magnetBonuses = this.entityManager.magnetBonuses.filter(b => 
             b.x + b.radius > leftBound
         );
-        this.entityManager.timeBonuses = this.entityManager.timeBonuses.filter(b => 
+        this.entityManager.coinRainBonuses = this.entityManager.coinRainBonuses.filter(b => 
             b.x + b.radius > leftBound
         );
         this.entityManager.shieldBonuses = this.entityManager.shieldBonuses.filter(b => 
@@ -805,7 +844,7 @@ export class GameController {
         this.entityManager.hearts = [];
         this.entityManager.boosts = [];
         this.entityManager.magnetBonuses = [];
-        this.entityManager.timeBonuses = [];
+        this.entityManager.coinRainBonuses = [];
         this.entityManager.shieldBonuses = [];
         this.entityManager.multiplierBonuses = [];
         this.entityManager.rainbowBonuses = [];
@@ -816,6 +855,12 @@ export class GameController {
 
         // Reset time scale
         this.timeScale = 1.0;
+        
+        // Reset coin rain effect
+        this.coinRainActive = false;
+        this.coinRainTimer = 0;
+        this.coinRainDuration = 0;
+        this.coinRainSpawnTimer = 0;
 
         // Reset screen flash
         this.screenFlash = {

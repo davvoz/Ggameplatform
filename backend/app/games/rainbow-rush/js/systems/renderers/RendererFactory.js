@@ -41,8 +41,8 @@ export class RendererFactory {
         // Bonuses (both with and without dash for compatibility)
         this.renderers.set('magnet', collectibleRenderer);
         this.renderers.set('magnet-bonus', collectibleRenderer);
-        this.renderers.set('timeslow', collectibleRenderer);
-        this.renderers.set('timeslow-bonus', collectibleRenderer);
+        this.renderers.set('coinrain', collectibleRenderer);
+        this.renderers.set('coinrain-bonus', collectibleRenderer);
         this.renderers.set('shield', collectibleRenderer);
         this.renderers.set('shield-bonus', collectibleRenderer);
         this.renderers.set('multiplier', collectibleRenderer);

@@ -39,9 +39,7 @@ export class AnimationController {
      * Update floating texts con animazioni EPICHE
      */
     updateFloatingTexts(floatingTexts, deltaTime) {
-        if (floatingTexts.length > 0) {
-            console.log('🔄 Updating', floatingTexts.length, 'floating texts');
-        }
+        
         
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
             const text = floatingTexts[i];
@@ -319,7 +317,7 @@ export class AnimationController {
      * Create floating text STRABELLLO con effetti EPICI
      */
     createFloatingText(text, x, y, color, entityManager, duration = 2.5) {
-        console.log('🎯 CREATING FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
+        //console.log('🎯 CREATING FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
         const floatingText = {
             text: text,
             x: x,
@@ -337,14 +335,14 @@ export class AnimationController {
             glowIntensity: 1.0 // Intensità del bagliore
         };
         entityManager.addEntity('floatingTexts', floatingText);
-        console.log('✅ Floating text added to entityManager. Total floatingTexts:', entityManager.floatingTexts.length);
+        //console.log('✅ Floating text added to entityManager. Total floatingTexts:', entityManager.floatingTexts.length);
     }
     
     /**
      * Create EPIC floating text con dimensioni ENORMI per bonus livello
      */
     createEpicFloatingText(text, x, y, color, entityManager, duration = 3.0) {
-        console.log('🌟 CREATING EPIC FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
+        //console.log('🌟 CREATING EPIC FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
         const floatingText = {
             text: text,
             x: x,
@@ -362,7 +360,7 @@ export class AnimationController {
             glowIntensity: 1.5 // Bagliore più intenso
         };
         entityManager.addEntity('floatingTexts', floatingText);
-        console.log('✅ EPIC floating text added! Total floatingTexts:', entityManager.floatingTexts.length);
+        //console.log('✅ EPIC floating text added! Total floatingTexts:', entityManager.floatingTexts.length);
     }
 
     /**

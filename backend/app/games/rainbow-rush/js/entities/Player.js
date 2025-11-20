@@ -540,13 +540,15 @@ export class Player {
             this.velocityX *= 0.92;
         }
 
-        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale o turbo)
-        if (this.y > this.canvasHeight && !this.powerups.immortality && !this.isTurboActive) {
+        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
+        if (this.y > this.canvasHeight && !this.powerups.immortality) {
             console.log('Player is dead! y:', this.y, 'canvasHeight:', this.canvasHeight);
             this.alive = false;
-            // Azzera i cooldown quando muori
+            // Azzera i cooldown e disattiva il turbo quando muori
             this.turboCooldownRemaining = 0;
             this.flightCooldownRemaining = 0;
+            this.isTurboActive = false;
+            this.turboTimeRemaining = 0;
         }
         
         // Update trail particles for powerups

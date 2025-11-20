@@ -20,8 +20,8 @@ export class SpawnManager {
         this.magnetTimer = 0;
         this.magnetInterval = 15;
 
-        this.timeSlowTimer = 0;
-        this.timeSlowInterval = 20;
+        this.coinRainTimer = 0;
+        this.coinRainInterval = 20;
 
         this.shieldTimer = 0;
         this.shieldInterval = 18;
@@ -96,10 +96,10 @@ export class SpawnManager {
             this.magnetTimer = 0;
         }
 
-        this.timeSlowTimer += deltaTime;
-        if (this.timeSlowTimer >= this.timeSlowInterval) {
-            this.spawnTimeSlowBonus();
-            this.timeSlowTimer = 0;
+        this.coinRainTimer += deltaTime;
+        if (this.coinRainTimer >= this.coinRainInterval) {
+            this.spawnCoinRainBonus();
+            this.coinRainTimer = 0;
         }
 
         this.shieldTimer += deltaTime;
@@ -290,24 +290,28 @@ export class SpawnManager {
     }
 
     /**
-     * Spawn time slow bonus
+     * Spawn coin rain bonus - creates a rain of coins for 10 seconds
      */
-    spawnTimeSlowBonus() {
+    spawnCoinRainBonus() {
         const x = this.dims.width + 50;
         const y = 100 + Math.random() * (this.dims.height - 300);
 
-        this.entityManager.addEntity('timeBonuses', {
+        const bonus = {
             x, y,
-            width: 35,
-            height: 35,
+            width: 40,
+            height: 40,
             velocity: -200,
-            type: 'timeslow',
+            type: 'coinrain',
             rotation: 0,
-            color: [0.5, 0.5, 1.0, 1.0],
-            glowColor: [0.7, 0.7, 1.0, 0.6],
+            color: [1.0, 0.84, 0.0, 1.0], // Oro
+            glowColor: [1.0, 0.95, 0.5, 0.8],
             pulsePhase: 0,
-            radius: 17.5
-        });
+            radius: 20,
+            sparklePhase: 0,
+            coinOrbitPhase: 0
+        };
+        
+        this.entityManager.addEntity('coinRainBonuses', bonus);
     }
 
     /**
@@ -449,7 +453,7 @@ export class SpawnManager {
         this.platformCounter = 0;
         this.powerupTimer = 0;
         this.magnetTimer = 0;
-        this.timeSlowTimer = 0;
+        this.coinRainTimer = 0;
         this.shieldTimer = 0;
         this.multiplierTimer = 0;
         this.rainbowTimer = 0;

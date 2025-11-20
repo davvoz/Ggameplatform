@@ -27,8 +27,8 @@ export class CollectibleRenderer extends IEntityRenderer {
             case 'magnet':
                 this.renderMagnetBonus(entity, time);
                 break;
-            case 'timeslow':
-                this.renderTimeSlowBonus(entity, time);
+            case 'coinrain':
+                this.renderCoinRainBonus(entity, time);
                 break;
             case 'shield':
                 this.renderShieldBonus(entity, time);
@@ -282,31 +282,44 @@ export class CollectibleRenderer extends IEntityRenderer {
         this.renderer.drawCircle(bonus.x, bonus.y, size * 0.3, [1.0, 1.0, 1.0, 0.9]);
     }
 
-    renderTimeSlowBonus(bonus, time) {
-        const pulse = Math.sin(bonus.pulsePhase) * 0.2 + 1.0;
+    renderCoinRainBonus(bonus, time) {
+        const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
         const size = bonus.radius * pulse;
         
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 1.3, [0.3, 0.6, 1.0, 0.2]);
+        // Glow dorato esterno
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.5, bonus.glowColor, 6, 0.5 * pulse, 0.1);
+        
+        // Cerchio principale oro
         this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
-        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.8, [0.3, 0.5, 0.8, 1.0]);
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.85, [1.0, 0.95, 0.6, 1.0]);
         
-        // Clock hands
-        const slowRotation = time * 0.3;
-        const hourAngle = slowRotation - Math.PI / 2;
-        const minuteAngle = slowRotation * 3 - Math.PI / 2;
-        
-        this.drawClockHand(bonus.x, bonus.y, hourAngle, size * 0.5, 2.5, [1.0, 1.0, 1.0, 1.0]);
-        this.drawClockHand(bonus.x, bonus.y, minuteAngle, size * 0.7, 1.8, [0.9, 0.95, 1.0, 1.0]);
-        this.renderer.drawCircle(bonus.x, bonus.y, 4, [1.0, 1.0, 1.0, 1.0]);
-    }
-
-    drawClockHand(x, y, angle, length, width, color) {
-        for (let i = 0; i < 3; i++) {
-            const t = i / 3;
-            const px = x + Math.cos(angle) * length * t;
-            const py = y + Math.sin(angle) * length * t;
-            this.renderer.drawCircle(px, py, width, color);
+        // Disegna monete che orbitano
+        const numCoins = 5;
+        for (let i = 0; i < numCoins; i++) {
+            const angle = (bonus.coinOrbitPhase + i * (Math.PI * 2 / numCoins));
+            const orbitRadius = size * 1.5;
+            const coinX = bonus.x + Math.cos(angle) * orbitRadius;
+            const coinY = bonus.y + Math.sin(angle) * orbitRadius;
+            const coinSize = 6;
+            
+            // Moneta orbitante
+            this.renderer.drawCircle(coinX, coinY, coinSize, [1.0, 0.84, 0.0, 1.0]);
+            this.renderer.drawCircle(coinX, coinY, coinSize * 0.7, [1.0, 0.95, 0.4, 1.0]);
         }
+        
+        // Brillantini sparkle
+        for (let i = 0; i < 8; i++) {
+            const sparkleAngle = bonus.sparklePhase + i * (Math.PI / 4);
+            const sparkleRadius = size * 1.2 + Math.sin(bonus.sparklePhase * 3 + i) * 8;
+            const sparkleX = bonus.x + Math.cos(sparkleAngle) * sparkleRadius;
+            const sparkleY = bonus.y + Math.sin(sparkleAngle) * sparkleRadius;
+            const sparkleAlpha = (Math.sin(bonus.sparklePhase * 4 + i) + 1) * 0.5;
+            
+            this.renderer.drawCircle(sparkleX, sparkleY, 3, [1.0, 1.0, 0.8, sparkleAlpha]);
+        }
+        
+        // Centro luminoso
+        this.renderer.drawCircle(bonus.x, bonus.y, size * 0.4, [1.0, 1.0, 1.0, 0.9]);
     }
 
     renderShieldBonus(bonus, time) {

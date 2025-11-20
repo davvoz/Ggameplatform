@@ -17,7 +17,7 @@ export class UIRenderer {
             return;
         }
         
-        console.log('🎨 RENDERING FLOATING TEXT:', text.text, 'at', text.x, text.y, 'scale:', text.scale, 'alpha:', text.alpha);
+        //console.log('🎨 RENDERING FLOATING TEXT:', text.text, 'at', text.x, text.y, 'scale:', text.scale, 'alpha:', text.alpha);
         
         const alpha = text.alpha || 1.0;
         const scale = text.scale || 1.0;

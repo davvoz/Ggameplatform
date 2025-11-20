@@ -13,7 +13,7 @@ export class EntityManager {
         this.hearts = [];
         this.boosts = [];
         this.magnetBonuses = [];
-        this.timeBonuses = [];
+        this.coinRainBonuses = [];
         this.shieldBonuses = [];
         this.multiplierBonuses = [];
         this.rainbowBonuses = [];
@@ -81,7 +81,7 @@ export class EntityManager {
         this.hearts = [];
         this.boosts = [];
         this.magnetBonuses = [];
-        this.timeBonuses = [];
+        this.coinRainBonuses = [];
         this.shieldBonuses = [];
         this.multiplierBonuses = [];
         this.rainbowBonuses = [];
@@ -136,8 +136,8 @@ export class EntityManager {
             this.updateMagnetBonus(bonus, deltaTime, cameraSpeed)
         );
 
-        this.timeBonuses = this.timeBonuses.filter(bonus => 
-            this.updateTimeBonus(bonus, deltaTime, cameraSpeed)
+        this.coinRainBonuses = this.coinRainBonuses.filter(bonus => 
+            this.updateCoinRainBonus(bonus, deltaTime, cameraSpeed)
         );
 
         this.shieldBonuses = this.shieldBonuses.filter(bonus => 
@@ -225,10 +225,30 @@ export class EntityManager {
      * Update collectible with magnet effect
      */
     updateCollectible(collectible, deltaTime, cameraSpeed, player) {
-        const totalVelocity = collectible.velocity - cameraSpeed;
-        collectible.x += totalVelocity * deltaTime;
+        // Coin rain collectibles fall down with gravity
+        if (collectible.fromCoinRain) {
+            // Initialize velocityY if not present
+            if (collectible.velocityY === undefined) {
+                collectible.velocityY = 200;
+            }
+            
+            // Apply gravity
+            collectible.velocityY += 400 * deltaTime; // Gravity acceleration
+            collectible.y += collectible.velocityY * deltaTime;
+            
+            // Slight horizontal drift
+            if (collectible.drift === undefined) {
+                collectible.drift = (Math.random() - 0.5) * 30;
+            }
+            collectible.x += collectible.drift * deltaTime;
+            collectible.pulsePhase += deltaTime * 2;
+        } else {
+            // Normal collectibles move with camera
+            const totalVelocity = collectible.velocity - cameraSpeed;
+            collectible.x += totalVelocity * deltaTime;
+        }
 
-        // Magnet effect - attracts toward player
+        // Magnet effect - attracts toward player (works for both types)
         if (collectible.magnetized) {
             collectible.magnetDuration -= deltaTime;
             if (collectible.magnetDuration <= 0) {
@@ -246,7 +266,10 @@ export class EntityManager {
             }
         }
 
-        return collectible.x + collectible.radius > -50;
+        // Remove if off screen (left side or too far down)
+        const offScreenLeft = collectible.x + collectible.radius < -50;
+        const offScreenBottom = collectible.y > 1200;
+        return !offScreenLeft && !offScreenBottom;
     }
 
     /**
@@ -320,13 +343,15 @@ export class EntityManager {
     }
 
     /**
-     * Update time slow bonus
+     * Update coin rain bonus
      */
-    updateTimeBonus(bonus, deltaTime, cameraSpeed) {
+    updateCoinRainBonus(bonus, deltaTime, cameraSpeed) {
         const totalVelocity = bonus.velocity - cameraSpeed;
         bonus.x += totalVelocity * deltaTime;
-        bonus.pulsePhase += deltaTime * 4;
+        bonus.pulsePhase += deltaTime * 5;
         bonus.rotation += deltaTime * 3;
+        bonus.sparklePhase += deltaTime * 12; // Brillantini veloci
+        bonus.coinOrbitPhase += deltaTime * 6; // Orbita monete
         return bonus.x + bonus.radius > -50;
     }
 
@@ -502,7 +527,7 @@ export class EntityManager {
             hearts: this.hearts,
             boosts: this.boosts,
             magnetBonuses: this.magnetBonuses,
-            timeBonuses: this.timeBonuses,
+            coinRainBonuses: this.coinRainBonuses,
             shieldBonuses: this.shieldBonuses,
             multiplierBonuses: this.multiplierBonuses,
             rainbowBonuses: this.rainbowBonuses,

@@ -185,7 +185,7 @@ export class FloatingTextSystem {
             const color = [...text.color];
             color[3] = alpha;
             
-            console.log('Rendering floating text:', text.text, 'life:', text.life, 'alpha:', alpha);
+            //console.log('Rendering floating text:', text.text, 'life:', text.life, 'alpha:', alpha);
             
             this.renderText(
                 text.text,
@@ -244,7 +244,7 @@ export class FloatingTextSystem {
         const startX = x - width / 2;
         const startY = y - height / 2;
         
-        console.log('RENDERING FLOATING TEXT:', text, 'at', startX, startY, 'size:', width, 'x', height);
+        //console.log('RENDERING FLOATING TEXT:', text, 'at', startX, startY, 'size:', width, 'x', height);
         
         // Sfondo NERO SOLIDO molto visibile
         const bgColor = [0.0, 0.0, 0.0, 0.95 * color[3]];

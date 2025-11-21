@@ -141,10 +141,13 @@ static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
-# SDK files serving
-sdk_path = Path(__file__).parent.parent.parent / "sdk"
+# SDK files serving - now in backend/sdk/
+sdk_path = Path(__file__).parent.parent / "sdk"  # /app/sdk in Docker
 if sdk_path.exists():
     app.mount("/sdk", StaticFiles(directory=str(sdk_path)), name="sdk")
+    print(f"✅ SDK mounted at /sdk from {sdk_path}")
+else:
+    print(f"⚠️ SDK directory not found at {sdk_path}")
 
 # Game files serving
 games_path = Path(__file__).parent / "games"

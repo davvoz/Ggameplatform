@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia l'applicazione
 COPY . .
 
+# Copia SDK dalla root del progetto
+COPY ../sdk /app/sdk
+
 # Crea le directory necessarie
 RUN mkdir -p /app/app/games /app/app/static
 

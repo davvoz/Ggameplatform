@@ -5,7 +5,9 @@ Questa guida spiega come configurare l'applicazione per ambienti di sviluppo e p
 ## 📋 Indice
 
 1. [Configurazione Frontend](#configurazione-frontend)
+
 2. [Configurazione Backend](#configurazione-backend)
+
 3. [Deployment in Produzione](#deployment-in-produzione)
 
 ---

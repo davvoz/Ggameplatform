@@ -10,9 +10,8 @@ services:
     environment:
       - ALLOW_ALL_ORIGINS=true
     volumes:
+      - ./backend/data:/app/data  # ✅ Database persistente
       - ./backend/backups:/app/backups
-      - ./backend/game_platform.db:/app/game_platform.db  # ⬅️ AGGIUNGI QUESTO!
-      - ./backend/database.db:/app/database.db            # ⬅️ E QUESTO!
     networks:
       - gameplatform_network
 

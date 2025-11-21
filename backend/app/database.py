@@ -15,8 +15,12 @@ from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
 
-DATABASE_PATH = Path(__file__).parent / "game_platform.db"
+# Database in cartella dedicata (persistente con Docker volumes)
+DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+
+# Assicurati che la directory data esista
+DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # Create engine and session factory
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})

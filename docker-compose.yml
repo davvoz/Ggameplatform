@@ -8,13 +8,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000
-      - DATABASE_URL=sqlite:///./database.db
       - ALLOW_ALL_ORIGINS=true
     volumes:
-      - ./backend/database.db:/app/database.db
-      - ./backend/app/games:/app/app/games
       - ./backend/backups:/app/backups
+      - ./backend/game_platform.db:/app/game_platform.db  # ⬅️ AGGIUNGI QUESTO!
+      - ./backend/database.db:/app/database.db            # ⬅️ E QUESTO!
     networks:
       - gameplatform_network
 

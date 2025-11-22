@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blocky Road - Three.js</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #87CEEB;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #score {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #coins {
+            font-size: 24px;
+            color: #FFD700;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+            pointer-events: all;
+        }
+
+        #gameOver h1 {
+            color: #ff4444;
+            font-size: 64px;
+            margin: 0 0 20px 0;
+        }
+
+        #gameOver p {
+            color: white;
+            font-size: 32px;
+            margin: 10px 0;
+        }
+
+        #gameOver button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #gameOver button:hover {
+            background: #45a049;
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 200;
+            pointer-events: all;
+        }
+
+        #startScreen h1 {
+            color: #4CAF50;
+            font-size: 64px;
+            margin: 0 0 20px 0;
+        }
+
+        #startScreen p {
+            color: white;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #startScreen button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #startScreen button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div id="score">0</div>
+        <div id="coins">🪙 0</div>
+    </div>
+
+    <div id="startScreen">
+        <h1>🚗 Blocky Road 🚗</h1>
+        <p>Cross the road without getting hit!</p>
+        <p>🎮 Arrow Keys or WASD to move</p>
+        <p>🪙 Collect coins for bonus points</p>
+        <button id="startButton">START GAME</button>
+    </div>
+
+    <div id="gameOver">
+        <h1>💀 GAME OVER 💀</h1>
+        <p id="finalScore">Score: 0</p>
+        <p id="finalCoins">Coins: 0</p>
+        <button id="restartButton">PLAY AGAIN</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
+    <script src="/sdk/platformsdk.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/models.js"></script>
+    <script src="js/materials.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/obstacles.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

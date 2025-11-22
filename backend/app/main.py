@@ -61,12 +61,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "connect-src 'self'; "
                 "font-src 'self' data:;"
             )
-        else:
-            # Default CSP for other endpoints
+        elif request.url.path.startswith('/games/'):
+            # Very permissive CSP for game iframes - allow CDN scripts
             csp = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' 'unsafe-inline'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https:; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https:; "
+                "img-src 'self' data: https: http:; "
+                "connect-src 'self' http://localhost:3000 http://localhost:8000; "
+                "frame-src 'self'; "
+                "font-src 'self' data:; "
+                "media-src 'self' data: blob:;"
+            )
+        else:
+            # Default CSP for other endpoints (permissive for games with CDN libraries)
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "img-src 'self' data: https:; "
                 "connect-src 'self' https://api.steemit.com https://sds.steemworld.org; "
                 "frame-src 'self'; "

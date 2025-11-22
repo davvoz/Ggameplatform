@@ -12,6 +12,8 @@ services:
     volumes:
       - ./backend/data:/app/data  # ✅ Database persistente
       - ./backend/backups:/app/backups
+      - ./backend/app:/app/app  # ✅ Codice backend live reload
+      - ./backend/sdk:/app/sdk  # ✅ SDK disponibile
     networks:
       - gameplatform_network
 

@@ -75,58 +75,91 @@ def register_blocky_road():
         print()
         
         # Create XP Rules
+        now = datetime.now().isoformat()
+        
         xp_rules = [
             {
                 'rule_id': 'blocky_road_move_forward',
                 'game_id': 'blocky-road',
-                'event_type': 'score',
-                'condition': json.dumps({'min_score': 1}),
-                'xp_reward': 1,
-                'description': 'Move forward one step',
-                'created_at': datetime.now()
+                'rule_name': 'Move forward one step',
+                'rule_type': 'score',
+                'parameters': json.dumps({
+                    'event_type': 'score',
+                    'xp_reward': 1,
+                    'condition': {'min_score': 1}
+                }),
+                'priority': 0,
+                'is_active': 1,
+                'created_at': now,
+                'updated_at': now
             },
             {
                 'rule_id': 'blocky_road_collect_coin',
                 'game_id': 'blocky-road',
-                'event_type': 'coin',
-                'condition': json.dumps({}),
-                'xp_reward': 5,
-                'description': 'Collect a coin',
-                'created_at': datetime.now()
+                'rule_name': 'Collect a coin',
+                'rule_type': 'coin',
+                'parameters': json.dumps({
+                    'event_type': 'coin',
+                    'xp_reward': 5,
+                    'condition': {}
+                }),
+                'priority': 0,
+                'is_active': 1,
+                'created_at': now,
+                'updated_at': now
             },
             {
                 'rule_id': 'blocky_road_reach_25',
                 'game_id': 'blocky-road',
-                'event_type': 'milestone',
-                'condition': json.dumps({'min_score': 25}),
-                'xp_reward': 25,
-                'description': 'Reach score 25',
-                'created_at': datetime.now()
+                'rule_name': 'Reach score 25',
+                'rule_type': 'milestone',
+                'parameters': json.dumps({
+                    'event_type': 'milestone',
+                    'xp_reward': 25,
+                    'condition': {'min_score': 25}
+                }),
+                'priority': 0,
+                'is_active': 1,
+                'created_at': now,
+                'updated_at': now
             },
             {
                 'rule_id': 'blocky_road_reach_50',
                 'game_id': 'blocky-road',
-                'event_type': 'milestone',
-                'condition': json.dumps({'min_score': 50}),
-                'xp_reward': 50,
-                'description': 'Reach score 50',
-                'created_at': datetime.now()
+                'rule_name': 'Reach score 50',
+                'rule_type': 'milestone',
+                'parameters': json.dumps({
+                    'event_type': 'milestone',
+                    'xp_reward': 50,
+                    'condition': {'min_score': 50}
+                }),
+                'priority': 0,
+                'is_active': 1,
+                'created_at': now,
+                'updated_at': now
             },
             {
                 'rule_id': 'blocky_road_reach_100',
                 'game_id': 'blocky-road',
-                'event_type': 'milestone',
-                'condition': json.dumps({'min_score': 100}),
-                'xp_reward': 100,
-                'description': 'Reach score 100',
-                'created_at': datetime.now()
+                'rule_name': 'Reach score 100',
+                'rule_type': 'milestone',
+                'parameters': json.dumps({
+                    'event_type': 'milestone',
+                    'xp_reward': 100,
+                    'condition': {'min_score': 100}
+                }),
+                'priority': 0,
+                'is_active': 1,
+                'created_at': now,
+                'updated_at': now
             }
         ]
         
         for rule_data in xp_rules:
+            params = json.loads(rule_data['parameters'])
             xp_rule = XPRule(**rule_data)
             db.add(xp_rule)
-            print(f"✅ XP Rule: {rule_data['description']} (+{rule_data['xp_reward']} XP)")
+            print(f"✅ XP Rule: {rule_data['rule_name']} (+{params['xp_reward']} XP)")
         
         db.commit()
         

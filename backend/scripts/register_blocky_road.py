@@ -26,7 +26,11 @@ def register_blocky_road():
             print("⚠️  Blocky Road already exists in database")
             print(f"   Game ID: blocky-road")
             print(f"   Title: {existing_game.title}")
-            return
+            print()
+            print("📝 Proceeding with XP Rules registration...")
+            game_already_exists = True
+        else:
+            game_already_exists = False
         
         game_data = {
             'game_id': 'blocky-road',
@@ -53,26 +57,27 @@ def register_blocky_road():
             'updated_at': datetime.now()
         }
         
-        print("=" * 70)
-        print("  🎮 BLOCKY ROAD - GAME REGISTRATION")
-        print("=" * 70)
-        print()
-        
-        # Create game
-        game = Game(**game_data)
-        db.add(game)
-        db.commit()
-        
-        print(f"✅ Game '{game_data['title']}' registered successfully!")
-        print()
-        print(f"   Game ID:      {game_data['game_id']}")
-        print(f"   Title:        {game_data['title']}")
-        print(f"   Category:     {game_data['category']}")
-        print(f"   Entry Point:  {game_data['entry_point']}")
-        print()
-        print("🎯 Description:")
-        print(f"   {game_data['description']}")
-        print()
+        if not game_already_exists:
+            print("=" * 70)
+            print("  🎮 BLOCKY ROAD - GAME REGISTRATION")
+            print("=" * 70)
+            print()
+            
+            # Create game
+            game = Game(**game_data)
+            db.add(game)
+            db.commit()
+            
+            print(f"✅ Game '{game_data['title']}' registered successfully!")
+            print()
+            print(f"   Game ID:      {game_data['game_id']}")
+            print(f"   Title:        {game_data['title']}")
+            print(f"   Category:     {game_data['category']}")
+            print(f"   Entry Point:  {game_data['entry_point']}")
+            print()
+            print("🎯 Description:")
+            print(f"   {game_data['description']}")
+            print()
         
         # Create XP Rules
         now = datetime.now().isoformat()
@@ -154,6 +159,17 @@ def register_blocky_road():
                 'updated_at': now
             }
         ]
+        
+        # Check and delete existing XP rules
+        existing_rules = db.query(XPRule).filter(XPRule.game_id == 'blocky-road').all()
+        if existing_rules:
+            print(f"🗑️  Deleting {len(existing_rules)} existing XP rules...")
+            for rule in existing_rules:
+                db.delete(rule)
+            db.commit()
+        
+        print("📝 Creating XP Rules...")
+        print()
         
         for rule_data in xp_rules:
             params = json.loads(rule_data['parameters'])

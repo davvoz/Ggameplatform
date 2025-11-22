@@ -835,9 +835,6 @@ async function showOpenSessions() {
 }
 
 async function closeAllOpenSessions() {
-    if (!confirm('Sei sicuro di voler chiudere TUTTE le sessioni aperte?\n\nQuesto calcolerà il CUR8 guadagnato e chiuderà forzatamente tutte le sessioni in corso.')) {
-        return;
-    }
     
     try {
         const response = await fetch(`${CONFIG.API_BASE}/sessions/close-all`, {

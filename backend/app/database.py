@@ -545,42 +545,51 @@ def get_open_sessions() -> List[dict]:
 
 def close_open_sessions(max_duration_seconds: int = None) -> int:
     """Force close all open sessions."""
-    with get_db_session() as session:
-        open_sessions = session.query(GameSession).filter(
+    with get_db_session() as db:
+        open_sessions = db.query(GameSession).filter(
             GameSession.ended_at == None
         ).all()
+        
+        print(f"🔄 Found {len(open_sessions)} open sessions to close")
         
         closed_count = 0
         now = datetime.utcnow().isoformat()
         
         for game_session in open_sessions:
+            print(f"  ⏱️  Processing session {game_session.session_id} (user: {game_session.user_id}, game: {game_session.game_id})")
+            
             # Calculate duration
             started = datetime.fromisoformat(game_session.started_at)
             ended = datetime.utcnow()
             duration = int((ended - started).total_seconds())
             
             if max_duration_seconds and duration > max_duration_seconds:
+                print(f"    ⚠️  Duration capped from {duration}s to {max_duration_seconds}s")
                 duration = max_duration_seconds
             
-        # Calculate CUR8 (minimal since we're forcing close)
-        user = session.query(User).filter(User.user_id == game_session.user_id).first()
-        multiplier = user.cur8_multiplier if user else 1.0
+            # Calculate CUR8 (minimal since we're forcing close)
+            user = db.query(User).filter(User.user_id == game_session.user_id).first()
+            multiplier = user.cur8_multiplier if user else 1.0
+            
+            minutes_played = min(duration / 60, 10)
+            xp_earned = minutes_played * 0.1 * multiplier
+            
+            print(f"    💎 XP earned: {xp_earned:.2f} (duration: {duration}s, multiplier: {multiplier})")
+            
+            # Update session
+            game_session.duration_seconds = duration
+            game_session.xp_earned = xp_earned
+            game_session.ended_at = now
+            
+            # Update user's total XP
+            if user:
+                user.total_xp_earned += xp_earned
+            
+            closed_count += 1
         
-        minutes_played = min(duration / 60, 10)
-        xp_earned = minutes_played * 0.1 * multiplier
+        db.commit()
         
-        # Update session
-        game_session.duration_seconds = duration
-        game_session.xp_earned = xp_earned
-        game_session.ended_at = now
-        
-        # Update user's total XP
-        if user:
-            user.total_xp_earned += xp_earned
-        
-        closed_count += 1
-        
-        session.flush()
+        print(f"✅ Closed {closed_count} sessions")
         
         return closed_count
 

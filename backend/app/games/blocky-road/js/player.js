@@ -37,22 +37,32 @@ class Player {
     move(dx, dz, onComplete) {
         if (!this.canMove()) return false;
         
-        this.isMoving = true;
-        this.gridX += dx;
-        this.gridZ += dz;
+        const targetX = this.gridX + dx;
+        const targetZ = this.gridZ + dz;
         
-        const targetX = this.gridX;
-        const targetZ = this.gridZ;
+        // Check for obstacles (trees, rocks) before moving
+        if (window.game && window.game.terrain && window.game.terrain.hasObstacle(targetX, targetZ)) {
+            return false; // Can't move - obstacle blocking
+        }
+        
+        // Check boundaries - limit horizontal movement
+        if (targetX < -5 || targetX > 5) {
+            return false; // Out of playable area
+        }
+        
+        this.isMoving = true;
+        this.gridX = targetX;
+        this.gridZ = targetZ;
         
         // Determine jump direction for rotation
         if (dz > 0) {
-            this.mesh.rotation.y = 0;
+            this.mesh.rotation.y = 0; // Forward
         } else if (dz < 0) {
-            this.mesh.rotation.y = Math.PI;
+            this.mesh.rotation.y = Math.PI; // Backward
         } else if (dx > 0) {
-            this.mesh.rotation.y = -Math.PI / 2;
+            this.mesh.rotation.y = Math.PI / 2; // Right (swapped)
         } else if (dx < 0) {
-            this.mesh.rotation.y = Math.PI / 2;
+            this.mesh.rotation.y = -Math.PI / 2; // Left (swapped)
         }
         
         // Jump animation with TWEEN
@@ -84,15 +94,20 @@ class Player {
             .start();
         
         // Main jump arc
-        new TWEEN.Tween(startPos)
-            .to(targetPos, this.jumpDuration)
+        new TWEEN.Tween(this.mesh.position)
+            .to({ x: targetX, z: targetZ }, this.jumpDuration)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate(() => {
-                this.mesh.position.x = startPos.x;
-                this.mesh.position.z = startPos.z;
-                
-                // Arc height
-                const progress = (startPos.z - this.mesh.position.z) / (targetZ - this.mesh.position.z);
+                // Arc height calculation
+                const totalDistance = Math.sqrt(
+                    Math.pow(targetX - startPos.x, 2) + 
+                    Math.pow(targetZ - startPos.z, 2)
+                );
+                const currentDistance = Math.sqrt(
+                    Math.pow(this.mesh.position.x - startPos.x, 2) + 
+                    Math.pow(this.mesh.position.z - startPos.z, 2)
+                );
+                const progress = currentDistance / totalDistance;
                 this.mesh.position.y = startPos.y + Math.sin(progress * Math.PI) * 0.8;
             })
             .onComplete(() => {

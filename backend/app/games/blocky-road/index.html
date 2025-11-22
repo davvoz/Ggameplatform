@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Blocky Road - Three.js</title>
     <style>
         * {
@@ -15,6 +17,9 @@
             background: #87CEEB;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         #game-canvas {
@@ -137,7 +142,7 @@
     <div id="startScreen">
         <h1>🚗 Blocky Road 🚗</h1>
         <p>Cross the road without getting hit!</p>
-        <p>🎮 Arrow Keys or WASD to move</p>
+        <p>🎮 Swipe or Arrow Keys to move</p>
         <p>🪙 Collect coins for bonus points</p>
         <button id="startButton">START GAME</button>
     </div>
@@ -160,6 +165,7 @@
     <script src="js/obstacles.js"></script>
     <script src="js/particles.js"></script>
     <script src="js/camera.js"></script>
+    <script src="js/touch-controls.js"></script>
     <script src="js/game.js"></script>
     <script src="js/main.js"></script>
 </body>

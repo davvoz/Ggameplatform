@@ -237,14 +237,18 @@ const Models = {
                 });
                 break;
             case 'road':
+                // Varied asphalt colors for visual interest
+                const roadColors = [0x555555, 0x4A4A4A, 0x606060];
                 material = new THREE.MeshLambertMaterial({ 
-                    color: 0x555555,
+                    color: roadColors[Math.floor(Math.random() * roadColors.length)],
                     flatShading: true
                 });
                 break;
             case 'water':
+                // Varied water blues
+                const waterColors = [0x2196F3, 0x42A5F5, 0x1E88E5];
                 material = new THREE.MeshLambertMaterial({ 
-                    color: 0x2196F3,
+                    color: waterColors[Math.floor(Math.random() * waterColors.length)],
                     flatShading: true,
                     transparent: true,
                     opacity: 0.9
@@ -257,8 +261,10 @@ const Models = {
                 });
                 break;
             default:
+                // Varied grass greens
+                const grassColors = [0x5FAD56, 0x6BB85D, 0x52A047, 0x5CB85C];
                 material = new THREE.MeshLambertMaterial({ 
-                    color: 0x5FAD56,
+                    color: grassColors[Math.floor(Math.random() * grassColors.length)],
                     flatShading: true
                 });
         }
@@ -343,13 +349,16 @@ const Models = {
         return group;
     },
     
-    // Create rock decoration
+    // Create rock decoration (bigger and more visible as obstacles)
     createRock: () => {
-        const sizes = [0.2, 0.25, 0.3];
+        const sizes = [0.35, 0.4, 0.45]; // Increased from 0.2-0.3
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
         const geometry = new THREE.BoxGeometry(size, size * 0.7, size);
-        const material = new THREE.MeshLambertMaterial({ color: 0x808080 });
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0x696969, // Darker gray for better visibility
+            flatShading: true 
+        });
         const rock = new THREE.Mesh(geometry, material);
         rock.position.y = 0.3;
         rock.rotation.y = Math.random() * Math.PI;

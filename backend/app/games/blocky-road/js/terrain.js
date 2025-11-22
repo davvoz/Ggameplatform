@@ -50,8 +50,9 @@ class TerrainGenerator {
             obstacles: []
         };
         
-        // Create tiles across the row
-        for (let x = -5; x <= 5; x++) {
+        // Create tiles across the row (wide visual coverage)
+        // Playable area is -5 to +5, but we generate -15 to +15 for visuals
+        for (let x = -15; x <= 15; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);
@@ -70,21 +71,56 @@ class TerrainGenerator {
     }
     
     addGrassDecorations(row) {
-        const decorationChance = 0.3;
+        const decorationChance = 0.4;
         
-        for (let x = -5; x <= 5; x++) {
-            if (Math.random() < decorationChance) {
+        for (let x = -15; x <= 15; x++) {
+            // Create natural borders with trees/rocks at edges
+            const isEdge = x === -6 || x === 6;
+            const isOutside = x < -6 || x > 6;
+            const isPlayable = x >= -5 && x <= 5;
+            
+            // Force obstacles at borders for visual boundary
+            if (isEdge && Math.random() < 0.7) {
+                const decoration = Math.random() < 0.5 ? Models.createTree() : Models.createRock();
+                decoration.userData.isObstacle = true;
+                decoration.userData.gridX = x;
+                decoration.userData.gridZ = row.z;
+                decoration.position.set(x, 0.2, row.z);
+                decoration.scale.multiplyScalar(1.2); // Slightly bigger at edges
+                this.scene.add(decoration);
+                row.decorations.push(decoration);
+            }
+            // Dense decorations outside playable area
+            else if (isOutside && Math.random() < 0.6) {
+                const rand = Math.random();
+                const decoration = rand < 0.5 ? Models.createTree() : 
+                                 rand < 0.8 ? Models.createRock() : Models.createFlower();
+                decoration.position.set(
+                    x + (Math.random() - 0.5) * 0.8,
+                    0.2,
+                    row.z + (Math.random() - 0.5) * 0.8
+                );
+                this.scene.add(decoration);
+                row.decorations.push(decoration);
+            }
+            // Normal decorations in playable area
+            else if (isPlayable && Math.random() < decorationChance) {
                 const rand = Math.random();
                 let decoration;
                 
-                if (rand < 0.4) {
-                    decoration = Models.createGrassTuft();
-                } else if (rand < 0.7) {
-                    decoration = Models.createFlower();
+                if (rand < 0.6) { // More grass/flowers
+                    decoration = rand < 0.3 ? Models.createGrassTuft() : Models.createFlower();
                 } else if (rand < 0.85) {
                     decoration = Models.createRock();
+                    decoration.userData.isObstacle = true;
+                    decoration.userData.gridX = x;
+                    decoration.userData.gridZ = row.z;
+                    decoration.scale.multiplyScalar(1.5); // Make rocks bigger!
                 } else {
                     decoration = Models.createTree();
+                    decoration.userData.isObstacle = true;
+                    decoration.userData.gridX = x;
+                    decoration.userData.gridZ = row.z;
                 }
                 
                 decoration.position.set(
@@ -101,7 +137,7 @@ class TerrainGenerator {
     
     addRailDecorations(row) {
         // Add rail tracks across the row
-        for (let x = -5; x <= 5; x++) {
+        for (let x = -15; x <= 15; x++) {
             const track = Models.createRailTrack();
             track.position.set(x, 0, row.z);
             this.scene.add(track);
@@ -160,6 +196,23 @@ class TerrainGenerator {
     isRoad(x, z) {
         const type = this.getTerrainTypeAt(x, z);
         return type === 'road' || type === 'rail';
+    }
+    
+    hasObstacle(gridX, gridZ) {
+        const row = this.getRowAt(gridZ);
+        if (!row) return false;
+        
+        // Check all decorations for obstacles at this grid position
+        for (const decoration of row.decorations) {
+            if (decoration.userData.isObstacle) {
+                const dx = Math.abs(decoration.userData.gridX - gridX);
+                const dz = Math.abs(decoration.userData.gridZ - gridZ);
+                if (dx < 0.5 && dz < 0.5) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     clear() {

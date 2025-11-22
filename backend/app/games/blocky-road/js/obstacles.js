@@ -114,10 +114,8 @@ class ObstacleManager {
         const car = Models.createCar(color);
         car.position.set(startX, 0.2, z);
         
-        // Face the direction of travel
-        if (direction < 0) {
-            car.rotation.y = Math.PI;
-        }
+        // Face the direction of travel (rotate 90° based on direction)
+        car.rotation.y = (Math.PI / 2) * direction;
         
         this.scene.add(car);
         
@@ -139,9 +137,8 @@ class ObstacleManager {
         const train = Models.createTrain(trainColor);
         train.position.set(startX, 0.2, z);
         
-        if (direction < 0) {
-            train.rotation.y = Math.PI;
-        }
+        // Face the direction of travel (rotate 90° based on direction)
+        train.rotation.y = (Math.PI / 2) * direction;
         
         this.scene.add(train);
         

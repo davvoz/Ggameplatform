@@ -3,15 +3,15 @@
 window.addEventListener('load', async () => {
     console.log('🚀 Starting Blocky Road...');
     
-    // Create and initialize game
-    game = new BlockyRoadGame();
-    await game.init();
+    // Create and initialize game (global for collision checks)
+    window.game = new BlockyRoadGame();
+    await window.game.init();
 });
 
 // Handle visibility changes
 document.addEventListener('visibilitychange', () => {
-    if (game) {
-        game.isPaused = document.hidden;
+    if (window.game) {
+        window.game.isPaused = document.hidden;
     }
 });
 

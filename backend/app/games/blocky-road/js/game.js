@@ -9,6 +9,7 @@ class BlockyRoadGame {
         this.terrain = null;
         this.obstacles = null;
         this.particles = null;
+        this.touchControls = null;
         
         this.score = 0;
         this.coins = 0;
@@ -21,6 +22,12 @@ class BlockyRoadGame {
         // Input
         this.keys = {};
         this.inputCooldown = 0;
+        
+        // Rising water/danger zone mechanic (like Crossy Road)
+        this.dangerZone = -15; // Start far behind player
+        this.dangerZoneSpeed = 0.003; // Slower, constant forward movement
+        this.dangerZoneActive = false; // Activate after first move
+        this.lastTime = null; // For delta time calculation
     }
     
     async init() {
@@ -46,6 +53,12 @@ class BlockyRoadGame {
         
         // Setup input
         this.setupInput();
+        
+        // Setup touch controls
+        this.touchControls = new TouchControls(this);
+        
+        // Create danger zone visual indicator
+        this.createDangerZone();
         
         // Setup UI
         this.setupUI();
@@ -113,6 +126,22 @@ class BlockyRoadGame {
         // Hemisphere light for better ambient
         const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x5FAD56, 0.5);
         this.scene.add(hemiLight);
+    }
+    
+    createDangerZone() {
+        // Create a red warning plane that moves forward when player is idle
+        const geometry = new THREE.PlaneGeometry(20, 2);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        this.dangerZonePlane = new THREE.Mesh(geometry, material);
+        this.dangerZonePlane.rotation.x = -Math.PI / 2;
+        this.dangerZonePlane.position.y = 0.01;
+        this.dangerZonePlane.visible = false; // Keep hidden for now
+        // DISABLED: this.scene.add(this.dangerZonePlane);
     }
     
     setupInput() {
@@ -303,7 +332,7 @@ class BlockyRoadGame {
         document.getElementById('coins').textContent = `🪙 ${this.coins}`;
     }
     
-    update() {
+    update(deltaTime = 16) {
         if (!this.isStarted || this.isGameOver || this.isPaused) return;
         
         // Handle input
@@ -316,6 +345,10 @@ class BlockyRoadGame {
         this.obstacles.update(playerPos.z);
         this.particles.update();
         
+        // Rising danger zone mechanic (like Crossy Road's water)
+        // DISABLED TEMPORARILY
+        // this.updateDangerZone(playerPos.z, deltaTime);
+        
         // Continuous collision checking
         if (!this.player.isMoving) {
             this.checkCollisions();
@@ -325,14 +358,54 @@ class BlockyRoadGame {
         this.camera.follow(this.player.mesh.position);
     }
     
+    updateDangerZone(playerZ, deltaTime) {
+        // Activate danger zone after player moves forward
+        if (!this.dangerZoneActive && playerZ > 2) {
+            this.dangerZoneActive = true;
+            this.dangerZone = playerZ - 12; // Start 12 units behind
+        }
+        
+        if (!this.dangerZoneActive) {
+            this.dangerZonePlane.visible = false;
+            return;
+        }
+        
+        // Danger zone always moves forward (like Crossy Road water)
+        this.dangerZone += this.dangerZoneSpeed * deltaTime;
+        
+        // Keep minimum distance behind player
+        const minDistance = 10;
+        if (this.dangerZone < playerZ - minDistance) {
+            this.dangerZone = playerZ - minDistance;
+        }
+        
+        // Update visual indicator
+        this.dangerZonePlane.visible = true;
+        this.dangerZonePlane.position.z = this.dangerZone;
+        
+        // Pulsating effect for urgency
+        const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 0.4;
+        this.dangerZonePlane.material.opacity = pulse;
+        
+        // Check if danger caught the player (with buffer)
+        if (this.dangerZone >= playerZ - 1.0) {
+            this.gameOver('⏱️ Too slow!');
+        }
+    }
+    
     animate() {
         requestAnimationFrame(() => this.animate());
+        
+        // Calculate delta time for smooth updates
+        const now = performance.now();
+        const deltaTime = this.lastTime ? now - this.lastTime : 16;
+        this.lastTime = now;
         
         // Update TWEEN animations
         TWEEN.update();
         
-        // Update game
-        this.update();
+        // Update game with delta time
+        this.update(deltaTime);
         
         // Render
         this.renderer.render(this.scene, this.camera.getCamera());

@@ -6,7 +6,9 @@
 export const PowerupTypes = {
     IMMORTALITY: 'immortality',
     FLIGHT: 'flight',
-    SUPER_JUMP: 'superJump'
+    SUPER_JUMP: 'superJump',
+    SPEED_BOOST: 'speedBoost',
+    TURBO: 'turbo'
 };
 
 export class Powerup {
@@ -49,6 +51,20 @@ export class Powerup {
                 this.duration = 6000; // 6 seconds
                 this.cooldown = 12000; // 12 seconds
                 break;
+            case PowerupTypes.SPEED_BOOST:
+                this.color = [1.0, 0.5, 0.0, 1.0]; // Orange
+                this.icon = '🚀';
+                this.glowColor = [1.0, 0.7, 0.3, 0.8];
+                this.duration = 5000; // 5 seconds
+                this.cooldown = 15000; // 15 seconds
+                break;
+            case PowerupTypes.TURBO:
+                this.color = [0.0, 1.0, 0.5, 1.0]; // Green
+                this.icon = '💨';
+                this.glowColor = [0.3, 1.0, 0.7, 0.8];
+                this.duration = 5000; // 5 seconds
+                this.cooldown = 15000; // 15 seconds
+                break;
         }
     }
     
@@ -81,6 +97,18 @@ export class PowerupSystem {
     activatePowerup(type, duration, cooldown) {
         const now = Date.now();
         
+        // Validate duration and cooldown - se undefined, usa valori default
+        if (duration === undefined || duration === null || isNaN(duration)) {
+            console.warn(`⚠️ Powerup ${type} has invalid duration:`, duration, '- using default 5000ms');
+            duration = 5000;
+        }
+        if (cooldown === undefined || cooldown === null || isNaN(cooldown)) {
+            console.warn(`⚠️ Powerup ${type} has invalid cooldown:`, cooldown, '- using default 15000ms');
+            cooldown = 15000;
+        }
+        
+        console.log(`✅ Activating powerup ${type} - duration: ${duration}ms, cooldown: ${cooldown}ms`);
+        
         // Check if on cooldown
         const timer = this.powerupTimers.get(type);
         if (!timer) {
@@ -94,6 +122,7 @@ export class PowerupSystem {
                 everActivated: false
             });
         } else if (timer.cooldown > 0) {
+            console.log(`❌ Powerup ${type} still on cooldown: ${timer.cooldown}ms remaining`);
             return false; // Still on cooldown
         }
         

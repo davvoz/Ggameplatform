@@ -2,6 +2,8 @@
  * SpawnManager - Unified spawn timing system for all entity types
  * Consolidates 10+ spawn timers and methods into a single configurable system
  */
+import { PowerupTypes, BonusTypes } from '../config/LevelGeneratorConfig.js';
+
 export class SpawnManager {
     constructor(levelGenerator, entityManager, canvasDimensions) {
         this.levelGenerator = levelGenerator;
@@ -232,32 +234,36 @@ export class SpawnManager {
         if (validPlatforms.length > 0) {
             const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
 
+            // Get powerup config from centralized PowerupTypes
+            const powerupEntry = Object.values(PowerupTypes).find(p => p.id === randomType);
+            
             // Get colors, duration, and cooldown based on powerup type
             let color, glowColor, duration, cooldown;
             switch (randomType) {
                 case 'immortality':
                     color = [1.0, 0.84, 0.0, 1.0]; // Gold
                     glowColor = [1.0, 0.95, 0.6, 0.8];
-                    duration = 5000; // 5 seconds
-                    cooldown = 15000; // 15 seconds
                     break;
                 case 'flight':
                     color = [0.4, 0.7, 1.0, 1.0]; // Light blue
                     glowColor = [0.6, 0.85, 1.0, 0.8];
-                    duration = 4000; // 4 seconds
-                    cooldown = 20000; // 20 seconds
                     break;
                 case 'superJump':
                     color = [1.0, 0.3, 0.5, 1.0]; // Pink
                     glowColor = [1.0, 0.5, 0.7, 0.8];
-                    duration = 6000; // 6 seconds
-                    cooldown = 12000; // 12 seconds
                     break;
                 default:
                     color = [1.0, 1.0, 1.0, 1.0];
                     glowColor = [1.0, 1.0, 1.0, 0.8];
-                    duration = 5000;
-                    cooldown = 15000;
+            }
+
+            // Use config values or fallback
+            if (powerupEntry && powerupEntry.duration && powerupEntry.cooldown) {
+                duration = powerupEntry.duration;
+                cooldown = powerupEntry.cooldown;
+            } else {
+                duration = 5000;
+                cooldown = 15000;
             }
 
             // Create powerup object with duration and cooldown
@@ -301,7 +307,8 @@ export class SpawnManager {
             color: [1.0, 0.0, 1.0, 1.0],
             glowColor: [1.0, 0.5, 1.0, 0.6],
             pulsePhase: 0,
-            radius: 17.5
+            radius: 17.5,
+            duration: BonusTypes.MAGNET.duration
         });
     }
 
@@ -325,7 +332,8 @@ export class SpawnManager {
             color: [1.0, 0.0, 1.0, 1.0],
             glowColor: [1.0, 0.5, 1.0, 0.6],
             pulsePhase: 0,
-            radius: 17.5
+            radius: 17.5,
+            duration: BonusTypes.MAGNET.duration
         });
         
         // Spawn coin rain very close horizontally (60-100 pixels behind)
@@ -389,7 +397,8 @@ export class SpawnManager {
             color: [0.0, 1.0, 0.5, 1.0],
             glowColor: [0.3, 1.0, 0.7, 0.6],
             pulsePhase: 0,
-            radius: 17.5
+            radius: 17.5,
+            duration: BonusTypes.SHIELD.duration
         });
     }
 

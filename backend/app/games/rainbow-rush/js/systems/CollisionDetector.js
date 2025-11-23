@@ -324,7 +324,7 @@ export class CollisionDetector {
                 
                 // Activate shield
                 this.player.hasShield = true;
-                this.player.shieldDuration = 15000; // 15 seconds
+                this.player.shieldDuration = shield.duration || 15000; // Usa duration dal collectible o fallback
                 this.player.shieldStartTime = Date.now();
                 
                 this.scoreSystem.addPoints(75);
@@ -364,7 +364,7 @@ export class CollisionDetector {
                 
                 // Activate magnet
                 this.player.hasMagnet = true;
-                this.player.magnetDuration = 10000; // 10 seconds
+                this.player.magnetDuration = magnet.duration || 10000; // Usa duration dal collectible o fallback
                 this.player.magnetStartTime = Date.now();
                 this.player.magnetRange = 200; // pixels
                 

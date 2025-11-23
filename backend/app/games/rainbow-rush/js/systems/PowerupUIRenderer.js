@@ -28,19 +28,36 @@ export class PowerupUIRenderer {
                 color: [1.0, 0.84, 0.0, 1.0], // Gold
                 glowColor: [1.0, 0.95, 0.6, 0.8],
                 bgColor: [0.3, 0.25, 0.1, 0.6],
-                name: '⭐ IMMORTALE'
+                name: 'IMMORTALE',
+                icon: '🛡️'
             },
             flight: {
                 color: [0.4, 0.7, 1.0, 1.0], // Light blue
                 glowColor: [0.6, 0.85, 1.0, 0.8],
                 bgColor: [0.1, 0.2, 0.3, 0.6],
-                name: '🪶 VOLO'
+                name: 'VOLO',
+                icon: '🪶'
             },
             superJump: {
                 color: [1.0, 0.3, 0.5, 1.0], // Pink
                 glowColor: [1.0, 0.5, 0.7, 0.8],
                 bgColor: [0.3, 0.1, 0.2, 0.6],
-                name: '⚡ SUPER SALTO'
+                name: 'SUPER SALTO',
+                icon: '⚡'
+            },
+            speedBoost: {
+                color: [1.0, 0.5, 0.0, 1.0], // Orange
+                glowColor: [1.0, 0.7, 0.3, 0.8],
+                bgColor: [0.3, 0.15, 0.05, 0.6],
+                name: 'VELOCITÀ',
+                icon: '🚀'
+            },
+            turbo: {
+                color: [0.0, 1.0, 0.5, 1.0], // Green
+                glowColor: [0.3, 1.0, 0.7, 0.8],
+                bgColor: [0.05, 0.3, 0.15, 0.6],
+                name: 'TURBO',
+                icon: '💨'
             }
         };
     }
@@ -52,6 +69,11 @@ export class PowerupUIRenderer {
     render(powerupTimers) {
         if (!powerupTimers) return;
         
+        // Renderizza i cuori SEMPRE (anche con popup)
+        if (this.playerHealth !== undefined && this.playerMaxHealth !== undefined) {
+            this.renderHearts(this.playerHealth, this.playerMaxHealth);
+        }
+        
         // Crea contesto 2D se non esiste
         if (!this.ctx2d && this.canvas) {
             // Crea un canvas 2D overlay temporaneo
@@ -59,9 +81,10 @@ export class PowerupUIRenderer {
             this.overlayCanvas.width = this.canvas.width;
             this.overlayCanvas.height = this.canvas.height;
             this.overlayCanvas.style.position = 'absolute';
-            this.overlayCanvas.style.top = this.canvas.offsetTop + 'px';
-            this.overlayCanvas.style.left = this.canvas.offsetLeft + 'px';
+            this.overlayCanvas.style.top = '0px';
+            this.overlayCanvas.style.left = '0px';
             this.overlayCanvas.style.pointerEvents = 'none';
+            this.overlayCanvas.style.zIndex = '10'; // Più basso del popup (che ha zIndex più alto)
             this.canvas.parentElement.appendChild(this.overlayCanvas);
             this.ctx2d = this.overlayCanvas.getContext('2d');
         }
@@ -72,7 +95,7 @@ export class PowerupUIRenderer {
         }
         
         let visibleIndex = 0;
-        const powerupTypes = ['immortality', 'flight', 'superJump'];
+        const powerupTypes = ['immortality', 'flight', 'superJump', 'speedBoost', 'turbo'];
         
         for (const type of powerupTypes) {
             const timer = powerupTimers[type];
@@ -92,11 +115,6 @@ export class PowerupUIRenderer {
             
             this.renderPowerupBar(type, timer, config, yPos);
             visibleIndex++;
-        }
-        
-        // Renderizza cuori del player (passati dall'esterno)
-        if (this.playerHealth !== undefined && this.playerMaxHealth !== undefined) {
-            this.renderHearts(this.playerHealth, this.playerMaxHealth);
         }
     }
     
@@ -175,51 +193,44 @@ export class PowerupUIRenderer {
         const isActive = timer.active;
         const isOnCooldown = timer.cooldown > 0;
         
-        // Calculate progress
-        let progress = 0;
-        let isCharging = false;
-        
-        if (isActive) {
-            progress = timer.duration / timer.maxDuration;
-            isCharging = false;
-        } else if (isOnCooldown) {
-            progress = 1.0 - (timer.cooldown / timer.maxCooldown);
-            isCharging = true;
-        } else {
-            progress = 1.0; // Ready
-            isCharging = false;
-        }
+        // Calculate progress separati per durata e cooldown
+        const durationProgress = isActive ? (timer.duration / timer.maxDuration) : 0;
+        const cooldownProgress = isOnCooldown ? (1.0 - (timer.cooldown / timer.maxCooldown)) : 1.0;
         
         // Animation effects
         const pulse = Math.sin(this.animationTime * 3) * 0.5 + 0.5;
         const shimmer = Math.sin(this.animationTime * 5 + yPos) * 0.5 + 0.5;
         
-        // Icon background circle
-        const iconX = x + this.iconSize / 2;
-        const iconY = yPos + this.iconSize / 2;
+        // CERCHIO COOLDOWN (a sinistra di tutto) - con icona del bonus dentro e progressbar CURVA
+        const cooldownCircleX = x + this.iconSize / 2;
+        const cooldownCircleY = yPos + this.iconSize / 2;
+        const circleRadius = this.iconSize / 2;
         
-        // Outer glow when active
-        if (isActive) {
-            const glowSize = this.iconSize * (0.7 + pulse * 0.3);
-            const glowColor = [...config.glowColor];
-            glowColor[3] = 0.4 * pulse;
-            this.renderer.drawCircle(iconX, iconY, glowSize, glowColor);
+        // Background cerchio cooldown
+        const cooldownBgColor = isOnCooldown ? [...config.bgColor] : [...config.color];
+        if (!isOnCooldown && !isActive) cooldownBgColor[3] = 0.9; // Ready
+        this.renderer.drawCircle(cooldownCircleX, cooldownCircleY, circleRadius, cooldownBgColor);
+        
+        // Border cerchio cooldown
+        const cooldownBorderColor = isOnCooldown ? [0.8, 0.4, 0.0, 0.9] : 
+                                    (!isActive ? [0.0, 1.0, 0.0, 0.9] : [0.5, 0.5, 0.5, 0.6]);
+        this.drawCircleOutline(cooldownCircleX, cooldownCircleY, circleRadius, cooldownBorderColor, 2);
+        
+        // Icona dentro cerchio cooldown
+        this.drawIconEmoji(cooldownCircleX, cooldownCircleY, config.icon, !isOnCooldown && !isActive, isOnCooldown);
+        
+        // PROGRESSBAR CURVA di cooldown sulla circonferenza del cerchio
+        if (isOnCooldown) {
+            this.drawCooldownArc(cooldownCircleX, cooldownCircleY, circleRadius, cooldownProgress, [0.8, 0.4, 0.0, 0.9]);
         }
         
-        // Icon background
-        const iconBgColor = isActive ? config.color : 
-                           isCharging ? [...config.bgColor] : config.bgColor;
-        if (isActive) {
-            iconBgColor[3] = 0.9;
+        // Ready indicator sul cerchio cooldown
+        if (!isActive && !isOnCooldown) {
+            const readyGlow = [0.0, 1.0, 0.0, 0.3 + pulse * 0.3];
+            this.renderer.drawCircle(cooldownCircleX, cooldownCircleY, circleRadius + 4, readyGlow);
         }
-        this.renderer.drawCircle(iconX, iconY, this.iconSize / 2, iconBgColor);
         
-        // Icon border
-        const borderColor = isActive ? [1.0, 1.0, 1.0, 0.9] : 
-                           !isOnCooldown ? config.color : [0.5, 0.5, 0.5, 0.6];
-        this.drawCircleOutline(iconX, iconY, this.iconSize / 2, borderColor, 2);
-        
-        // Progress bar background
+        // BARRA DURATA ORIZZONTALE (a destra del cerchio cooldown) - mostra solo la durata
         const barX = x + this.iconSize + 10;
         const barY = yPos + (this.iconSize - this.barHeight) / 2;
         
@@ -230,55 +241,39 @@ export class PowerupUIRenderer {
         // Border around bar
         this.drawRectOutline(barX, barY, this.barWidth, this.barHeight, [0.3, 0.3, 0.3, 0.8], 1);
         
-        // Progress fill
-        const fillWidth = this.barWidth * progress;
+        // Progress fill - SOLO per la durata quando è attivo
+        const fillWidth = this.barWidth * durationProgress;
         
-        if (fillWidth > 0) {
-            let fillColor;
-            
-            if (isActive) {
-                // Active: bright color with pulse
-                fillColor = [...config.color];
-                fillColor[3] = 0.9 + pulse * 0.1;
-            } else if (isCharging) {
-                // Charging: dim color
-                fillColor = [...config.color];
-                fillColor[3] = 0.5 + shimmer * 0.2;
-            } else {
-                // Ready: full bright
-                fillColor = [...config.color];
-                fillColor[3] = 1.0;
-            }
+        if (fillWidth > 0 && isActive) {
+            // Active: bright color with pulse
+            const fillColor = [...config.color];
+            fillColor[3] = 0.9 + pulse * 0.1;
             
             // Main fill
             this.renderer.drawRect(barX + 1, barY + 1, fillWidth - 2, this.barHeight - 2, fillColor);
             
             // Shimmer effect on top
-            if (isActive || progress >= 1.0) {
-                const shimmerWidth = 20;
-                const shimmerX = barX + (shimmer * (fillWidth - shimmerWidth));
-                const shimmerColor = [1.0, 1.0, 1.0, 0.3 * pulse];
-                
-                if (shimmerX + shimmerWidth <= barX + fillWidth) {
-                    this.renderer.drawRect(
-                        shimmerX,
-                        barY + 1,
-                        shimmerWidth,
-                        this.barHeight - 2,
-                        shimmerColor
-                    );
-                }
+            const shimmerWidth = 20;
+            const shimmerX = barX + (shimmer * (fillWidth - shimmerWidth));
+            const shimmerColor = [1.0, 1.0, 1.0, 0.3 * pulse];
+            
+            if (shimmerX + shimmerWidth <= barX + fillWidth) {
+                this.renderer.drawRect(
+                    shimmerX,
+                    barY + 1,
+                    shimmerWidth,
+                    this.barHeight - 2,
+                    shimmerColor
+                );
             }
             
             // Glow effect on bar when active
-            if (isActive) {
-                const topGlowColor = [...config.glowColor];
-                topGlowColor[3] = 0.5;
-                this.renderer.drawRect(barX + 1, barY, fillWidth - 2, 2, topGlowColor);
-            }
+            const topGlowColor = [...config.glowColor];
+            topGlowColor[3] = 0.5;
+            this.renderer.drawRect(barX + 1, barY, fillWidth - 2, 2, topGlowColor);
         }
         
-        // Ready indicator
+        // Ready indicator sulla barra quando non è attivo né in cooldown
         if (!isActive && !isOnCooldown) {
             // Pulsing ready glow
             const readyGlow = [...config.color];
@@ -290,20 +285,7 @@ export class PowerupUIRenderer {
             this.renderer.drawCircle(barX + this.barWidth + 8, yPos + this.iconSize / 2, 3, sparkleColor);
         }
         
-        // Cooldown overlay when charging
-        if (isCharging) {
-            const cooldownOverlay = [0.0, 0.0, 0.0, 0.3];
-            const overlayWidth = this.barWidth * (1.0 - progress);
-            this.renderer.drawRect(
-                barX + fillWidth,
-                barY,
-                overlayWidth,
-                this.barHeight,
-                cooldownOverlay
-            );
-        }
-        
-        // Time remaining text (draw using small rectangles to form numbers)
+        // Time remaining text quando attivo
         if (isActive) {
             const secondsLeft = Math.ceil(timer.duration / 1000);
             this.drawTimeDigit(barX + this.barWidth + 8, yPos + 8, secondsLeft, config.color);
@@ -319,6 +301,57 @@ export class PowerupUIRenderer {
         // Inner circle (black to create outline effect)
         const innerColor = [0.0, 0.0, 0.0, 0.0];
         this.renderer.drawCircle(x, y, radius - thickness / 2, innerColor);
+    }
+    
+    drawIconEmoji(x, y, emoji, isActive, isCharging) {
+        if (!this.ctx2d || !emoji) return;
+        
+        const alpha = isActive ? 1.0 : (isCharging ? 0.5 : 0.8);
+        
+        this.ctx2d.save();
+        this.ctx2d.font = '20px Arial';
+        this.ctx2d.textAlign = 'center';
+        this.ctx2d.textBaseline = 'middle';
+        this.ctx2d.globalAlpha = alpha;
+        this.ctx2d.fillText(emoji, x, y);
+        this.ctx2d.restore();
+    }
+    
+    drawCooldownArc(x, y, radius, progress, color) {
+        if (!this.ctx2d) {
+            console.warn('ctx2d not available for drawCooldownArc');
+            return;
+        }
+        
+        console.log('Drawing cooldown arc:', { x, y, radius, progress });
+        
+        // Convert color array to CSS rgba
+        const r = Math.floor(color[0] * 255);
+        const g = Math.floor(color[1] * 255);
+        const b = Math.floor(color[2] * 255);
+        const a = color[3] || 1.0;
+        
+        this.ctx2d.save();
+        
+        // Draw background arc (grigio scuro)
+        this.ctx2d.strokeStyle = 'rgba(50, 50, 50, 0.8)';
+        this.ctx2d.lineWidth = 5;
+        this.ctx2d.beginPath();
+        this.ctx2d.arc(x, y, radius + 3, 0, 2 * Math.PI);
+        this.ctx2d.stroke();
+        
+        // Draw progress arc (colorato)
+        this.ctx2d.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        this.ctx2d.lineWidth = 5;
+        this.ctx2d.lineCap = 'round';
+        this.ctx2d.beginPath();
+        // Arc from top (-90deg) clockwise based on progress
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + (2 * Math.PI * progress);
+        this.ctx2d.arc(x, y, radius + 3, startAngle, endAngle);
+        this.ctx2d.stroke();
+        
+        this.ctx2d.restore();
     }
     
     drawRectOutline(x, y, width, height, color, thickness) {

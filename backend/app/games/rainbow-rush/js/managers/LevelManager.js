@@ -288,7 +288,7 @@ export class LevelManager {
     createCollectible(data, index) {
         // Gestisci diversi tipi di collectible
         if (data.type === 'powerup') {
-            // Powerup (immortality, flight, superJump)
+            // Powerup (immortality, flight, superJump, speedBoost, turbo)
             const color = this.getPowerupColor(data.powerupType);
             return {
                 x: data.x,
@@ -296,6 +296,8 @@ export class LevelManager {
                 radius: 20,
                 type: 'powerup',
                 powerupType: data.powerupType,
+                duration: data.duration,  // ✅ Copia duration dal level data
+                cooldown: data.cooldown,  // ✅ Copia cooldown dal level data
                 color: color,
                 glowColor: color,
                 velocity: -this.baseSpeed,
@@ -304,7 +306,7 @@ export class LevelManager {
                 index: index
             };
         } else if (data.type === 'bonus') {
-            // Bonus (health, shield, ecc.)
+            // Bonus (health, shield, magnet)
             const color = this.getBonusColor(data.bonusType);
             // Usa bonusType come type per il rendering corretto
             return {
@@ -314,6 +316,7 @@ export class LevelManager {
                 type: data.bonusType, // 'health', 'shield', 'magnet'
                 bonusType: data.bonusType,
                 value: data.value || 1,
+                duration: data.duration,  // ✅ Copia duration dal level data (per shield/magnet)
                 color: color,
                 glowColor: color,
                 velocity: -this.baseSpeed,

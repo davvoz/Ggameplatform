@@ -153,6 +153,9 @@ export class GameController {
         // Setup powerup listeners
         this.setupPowerupListeners();
 
+        // Setup visibility change handler per evitare lag quando si cambia tab
+        this.setupVisibilityHandler();
+
         // Setup state listeners
         this.setupStateListeners();
 
@@ -257,6 +260,25 @@ export class GameController {
 
         this.powerupSystem.addEventListener('ready', (type) => {
             this.audioManager.playSound('powerup_ready');
+        });
+    }
+
+    setupVisibilityHandler() {
+        // Metti in pausa automatica quando la tab perde il focus
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Tab nascosta - auto pausa
+                if (this.gameState.isPlaying()) {
+                    this.pause();
+                    this.autoPaused = true;
+                }
+            } else {
+                // Tab di nuovo visibile - riprendi solo se era auto-pausa
+                if (this.autoPaused && this.gameState.isPaused()) {
+                    this.resume();
+                    this.autoPaused = false;
+                }
+            }
         });
     }
 

@@ -228,6 +228,7 @@ class CollectibleSpawner {
         const shieldCount = Math.floor(platforms.length * config.shieldFrequency);
         const step = Math.max(1, Math.floor(platforms.length / (shieldCount + 1)));
         
+        
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
             collectibles.push(new Collectible('shield', platform.getCenterX(), platform.y - 80, {
@@ -247,6 +248,7 @@ class CollectibleSpawner {
         const magnetCount = Math.floor(platforms.length * config.magnetFrequency);
         const step = Math.max(1, Math.floor(platforms.length / (magnetCount + 1)));
         
+        
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
             collectibles.push(new Collectible('magnet', platform.getCenterX(), platform.y - 80, {
@@ -263,19 +265,32 @@ class CollectibleSpawner {
      */
     static spawnHealth(platforms, config) {
         const collectibles = [];
+        
+        // Calcola quanti cuori spawnare
         const healthCount = Math.floor(
             config.healthPerLevel.min + 
-            Math.random() * (config.healthPerLevel.max - config.healthPerLevel.min)
+            Math.random() * (config.healthPerLevel.max - config.healthPerLevel.min + 1)
         );
         
-        const step = Math.max(1, Math.floor(platforms.length / (healthCount + 1)));
+        if (platforms.length === 0 || healthCount <= 0) {
+            return collectibles;
+        }
         
-        for (let i = step, count = 0; i < platforms.length && count < healthCount; i += step, count++) {
-            const platform = platforms[i];
+        // Distribuisci i cuori uniformemente attraverso il livello
+        const step = Math.max(2, Math.floor(platforms.length / (healthCount + 1)));
+        
+        for (let count = 0; count < healthCount; count++) {
+            const platformIndex = Math.min(
+                step * (count + 1), 
+                platforms.length - 1
+            );
+            
+            const platform = platforms[platformIndex];
             collectibles.push(new Collectible('health', platform.getCenterX(), platform.y - 80, {
                 value: 1
             }));
         }
+        
         
         return collectibles;
     }
@@ -407,11 +422,17 @@ export class LevelGenerator {
         shields.forEach(c => level.addCollectible(c));
         magnets.forEach(c => level.addCollectible(c));
         
-        // Spawna health se richiesto
-        if (Math.random() < config.healthFrequency) {
-            const health = CollectibleSpawner.spawnHealth(platforms, config);
-            health.forEach(c => level.addCollectible(c));
-        }
+        // Spawna health - SEMPRE garantito almeno 1 cuore per livello
+        const guaranteedHealthThreshold = 30;
+        const shouldSpawnHealth = platformCount >= guaranteedHealthThreshold || 
+                                 Math.random() < config.healthFrequency ||
+                                 platformCount >= 10;
+        
+        
+        // FORZA almeno 1 cuore in OGNI livello
+        const health = CollectibleSpawner.spawnHealth(platforms, config);
+
+        health.forEach(c => level.addCollectible(c));
         
         // Spawna monete
         const coins = CollectibleSpawner.spawnCoins(platforms, config);

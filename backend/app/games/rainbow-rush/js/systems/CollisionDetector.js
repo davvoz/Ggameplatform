@@ -25,13 +25,11 @@ export class CollisionDetector {
         if (safetyPlatformSystem.isActive()) {
             const safetyPlatform = safetyPlatformSystem.getPlatform();
             const onSafety = this.player.checkPlatformCollision(safetyPlatform, 80);
-           // console.log('Safety check:', { onSafety, velocityY: this.player.velocityY, prevVelY: this.player.previousVelocityY });
             if (onSafety) {
                 playerOnSafetyPlatform = true;
                 
                 // Suono negativo quando atterriamo (usa previousVelocityY perché velocityY potrebbe essere già azzerata)
                 if (this.player.previousVelocityY > 50 && !this.player.wasOnSafetyPlatform) {
-                    console.log('🔊 PLAYING SAFETY LAND SOUND! prevVel:', this.player.previousVelocityY);
                     this.audioManager.playSound('safety_land');
                     this.player.wasOnSafetyPlatform = true;
                 }
@@ -102,7 +100,6 @@ export class CollisionDetector {
                     this.achievementSystem.checkAchievements();
                     // Track platform reached for level progress - SOLO per piattaforme del livello (con index)
                     if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
-                        console.log(`🎯 Landing on platform index: ${platform.index}`);
                         this.levelManager.recordPlatformReached(platform.index);
                     }
                 }
@@ -144,8 +141,12 @@ export class CollisionDetector {
                 }
             }
             
+            // Controlla collisione con nemico/ostacolo
             if (this.player.checkObstacleCollision(obstacle)) {
-                if (this.player.alive) {
+                // Usa un flag sull'ostacolo per evitare di processare la collisione ripetutamente
+                if (!obstacle.hasHitPlayer && this.player.alive) {
+                    obstacle.hasHitPlayer = true; // Segna che questo ostacolo ha già colpito
+                    
                     this.audioManager.playSound('hit');
                     
                     // Floating text per il danno
@@ -180,14 +181,18 @@ export class CollisionDetector {
                             type: 'damage-particle'
                         });
                     }
+                    
+                    this.achievementSystem.recordDamage();
+                    
+                    // Combo break notification
+                    if (this.scoreSystem.combo > 3) {
+                        this.audioManager.playSound('combo_break');
+                        this.achievementSystem.addNotification('💔 Combo Perso!', `Hai perso la combo x${this.scoreSystem.combo}`, 'warning');
+                    }
                 }
-                this.achievementSystem.recordDamage();
-                
-                // Combo break notification
-                if (this.scoreSystem.combo > 3) {
-                    this.audioManager.playSound('combo_break');
-                    this.achievementSystem.addNotification('💔 Combo Perso!', `Hai perso la combo x${this.scoreSystem.combo}`, 'warning');
-                }
+            } else {
+                // Reset flag quando non c'è più collisione
+                obstacle.hasHitPlayer = false;
             }
         }
     }
@@ -346,7 +351,6 @@ export class CollisionDetector {
                     type: 'floatingText'
                 });
                 
-                console.log('🛡️ Shield activated!');
             }
         }
     }
@@ -387,7 +391,6 @@ export class CollisionDetector {
                     type: 'floatingText'
                 });
                 
-                console.log('🧲 Magnet activated!');
             }
         }
     }

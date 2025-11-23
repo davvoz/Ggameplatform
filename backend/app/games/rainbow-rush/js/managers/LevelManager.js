@@ -163,21 +163,7 @@ export class LevelManager {
             entities.obstacles.push(obstacle);
         });
         
-        console.log(`📦 Generated: ${entities.platforms.length} platforms, ${entities.enemies.length} enemies, ${entities.collectibles.length} coins, ${entities.powerups.length} powerups, ${entities.hearts.length} hearts, ${entities.shieldBonuses.length} shields, ${entities.magnetBonuses.length} magnets, goal flag: ${entities.goalFlag ? 'YES' : 'NO'}`);
         
-        // Debug dettagliato
-        if (entities.powerups.length > 0) {
-            entities.powerups.forEach(p => console.log(`  🎁 Powerup: ${p.powerupType} at (${Math.round(p.x)}, ${Math.round(p.y)})`));
-        }
-        if (entities.hearts.length > 0) {
-            entities.hearts.forEach(h => console.log(`  ❤️ Heart at (${Math.round(h.x)}, ${Math.round(h.y)})`));
-        }
-        if (entities.shieldBonuses.length > 0) {
-            entities.shieldBonuses.forEach(s => console.log(`  🛡️ Shield at (${Math.round(s.x)}, ${Math.round(s.y)})`));
-        }
-        if (entities.magnetBonuses.length > 0) {
-            entities.magnetBonuses.forEach(m => console.log(`  🧲 Magnet at (${Math.round(m.x)}, ${Math.round(m.y)})`));
-        }
         
         return entities;
     }
@@ -247,7 +233,6 @@ export class LevelManager {
     createEnemy(data, index) {
         const enemyConfig = getEnemyConfig(data.type);
         if (!enemyConfig) {
-            console.warn(`Enemy type ${data.type} not found!`);
             return null;
         }
         
@@ -305,10 +290,55 @@ export class LevelManager {
                 rotationAngle: 0,
                 index: index
             };
+        } else if (data.type === 'health') {
+            // Health hearts
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 18,
+                type: 'health',
+                value: data.value || 1,
+                color: [1.0, 0.1, 0.3, 1.0], // Red
+                glowColor: [1.0, 0.5, 0.7, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                index: index
+            };
+        } else if (data.type === 'shield') {
+            // Shield bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 18,
+                type: 'shield',
+                value: data.value || 1,
+                duration: data.duration,
+                color: [0.0, 1.0, 0.5, 1.0], // Green
+                glowColor: [0.5, 1.0, 0.8, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                rotation: 0,
+                index: index
+            };
+        } else if (data.type === 'magnet') {
+            // Magnet bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 18,
+                type: 'magnet',
+                value: data.value || 1,
+                duration: data.duration,
+                color: [0.5, 0.5, 1.0, 1.0], // Blue
+                glowColor: [0.7, 0.7, 1.0, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                rotation: 0,
+                index: index
+            };
         } else if (data.type === 'bonus') {
-            // Bonus (health, shield, magnet)
+            // Bonus (legacy format with bonusType)
             const color = this.getBonusColor(data.bonusType);
-            // Usa bonusType come type per il rendering corretto
             return {
                 x: data.x,
                 y: data.y,
@@ -316,7 +346,7 @@ export class LevelManager {
                 type: data.bonusType, // 'health', 'shield', 'magnet'
                 bonusType: data.bonusType,
                 value: data.value || 1,
-                duration: data.duration,  // ✅ Copia duration dal level data (per shield/magnet)
+                duration: data.duration,
                 color: color,
                 glowColor: color,
                 velocity: -this.baseSpeed,
@@ -407,7 +437,6 @@ export class LevelManager {
         if (!this.platformsReachedSet.has(platformIndex)) {
             this.platformsReachedSet.add(platformIndex);
             this.platformsReached = this.platformsReachedSet.size;
-            console.log(`🎯 Platform ${platformIndex} reached! Total: ${this.platformsReached}/${this.currentLevel.platforms.length}`);
         }
     }
     
@@ -415,13 +444,11 @@ export class LevelManager {
         if (!this.platformsPassedSet.has(platformIndex)) {
             this.platformsPassedSet.add(platformIndex);
             this.platformsPassed = this.platformsPassedSet.size;
-            console.log(`✅ Platform ${platformIndex} exited! Passed: ${this.platformsPassed}/${this.currentLevel.platforms.length}`);
         }
     }
     
     recordEnemyKilled() {
         this.enemiesKilled++;
-        console.log(`💀 Enemy killed! ${this.enemiesKilled}/${this.totalEnemies}`);
     }
     
     recordCoinCollected() {
@@ -449,7 +476,6 @@ export class LevelManager {
         
         // Il livello finisce quando TUTTE le piattaforme sono uscite
         if (this.platformsPassed >= totalPlatforms) {
-            console.log(`🎉 Level ${this.currentLevelId} completed! All ${totalPlatforms} platforms passed.`);
             this.completeLevel();
             return true;
         }

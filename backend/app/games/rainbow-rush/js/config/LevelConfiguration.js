@@ -9,6 +9,7 @@ import { LevelGenerator } from './LevelGenerator.js';
 /**
  * GENERAZIONE LIVELLI 1-200
  * Usa il nuovo sistema OOP con LevelGenerator
+ * FORCE RELOAD: v2024-11-23-01
  */
 export const Levels = LevelGenerator.generateAllLevels();
 

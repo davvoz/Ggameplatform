@@ -63,8 +63,8 @@ export class LevelProgressBar {
         // Sposta più a sinistra per evitare sovrapposizioni
         this.x = 10;
         
-        // Posizione Y più in basso per non sovrapporsi all'HUD
-        const topMargin = 90;
+        // Posizione Y più in basso per non sovrapporsi all'HUD e powerup
+        const topMargin = 150;
         this.y = topMargin;
     }
     

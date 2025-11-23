@@ -15,14 +15,18 @@ export const DifficultyConfig = {
         platformSpacing: { min: 150, max: 180 },
         enemyCount: { min: 0, max: 3 },
         enemySafetyZone: 3,
-        powerupFrequency: 0.4,
-        shieldFrequency: 0.2,
-        magnetFrequency: 0.2,
-        healthFrequency: 0.5,
+
+        powerupFrequency: 0.05,
+        shieldFrequency: 0.03,
+        magnetFrequency: 0.03,
+        healthFrequency: 0.10,
+
         healthPerLevel: { min: 1, max: 2 },
-        coinFrequency: 0.5,
+        coinFrequency: 0.26,
+
         parTime: { threeStars: 12, twoStars: 18, oneStar: 30 }
     },
+
     EASY: {
         tier: 'easy',
         platformCount: { min: 25, max: 40 },
@@ -30,14 +34,18 @@ export const DifficultyConfig = {
         platformSpacing: { min: 110, max: 140 },
         enemyCount: { min: 5, max: 12 },
         enemySafetyZone: 3,
-        powerupFrequency: 0.35,
-        shieldFrequency: 0.25,
-        magnetFrequency: 0.25,
-        healthFrequency: 0.8,
+
+        powerupFrequency: 0.045,
+        shieldFrequency: 0.035,
+        magnetFrequency: 0.035,
+        healthFrequency: 0.14,
+
         healthPerLevel: { min: 2, max: 4 },
-        coinFrequency: 0.6,
+        coinFrequency: 0.32,
+
         parTime: { threeStars: 35, twoStars: 50, oneStar: 75 }
     },
+
     NORMAL: {
         tier: 'normal',
         platformCount: { min: 40, max: 60 },
@@ -45,14 +53,18 @@ export const DifficultyConfig = {
         platformSpacing: { min: 100, max: 130 },
         enemyCount: { min: 15, max: 25 },
         enemySafetyZone: 3,
-        powerupFrequency: 0.30,
-        shieldFrequency: 0.30,
-        magnetFrequency: 0.30,
-        healthFrequency: 0.75,
+
+        powerupFrequency: 0.04,
+        shieldFrequency: 0.04,
+        magnetFrequency: 0.04,
+        healthFrequency: 0.12,
+
         healthPerLevel: { min: 3, max: 5 },
-        coinFrequency: 0.5,
+        coinFrequency: 0.26,
+
         parTime: { threeStars: 40, twoStars: 60, oneStar: 90 }
     },
+
     HARD: {
         tier: 'hard',
         platformCount: { min: 60, max: 85 },
@@ -60,14 +72,18 @@ export const DifficultyConfig = {
         platformSpacing: { min: 70, max: 100 },
         enemyCount: { min: 25, max: 40 },
         enemySafetyZone: 3,
-        powerupFrequency: 0.25,
-        shieldFrequency: 0.35,
-        magnetFrequency: 0.25,
-        healthFrequency: 0.9,
+
+        powerupFrequency: 0.035,
+        shieldFrequency: 0.05,
+        magnetFrequency: 0.035,
+        healthFrequency: 0.15,
+
         healthPerLevel: { min: 4, max: 6 },
-        coinFrequency: 0.4,
+        coinFrequency: 0.21,
+
         parTime: { threeStars: 30, twoStars: 50, oneStar: 75 }
     },
+
     EXPERT: {
         tier: 'expert',
         platformCount: { min: 80, max: 120 },
@@ -75,14 +91,18 @@ export const DifficultyConfig = {
         platformSpacing: { min: 60, max: 90 },
         enemyCount: { min: 40, max: 60 },
         enemySafetyZone: 2,
-        powerupFrequency: 0.22,
-        shieldFrequency: 0.40,
-        magnetFrequency: 0.30,
-        healthFrequency: 1.0,
+
+        powerupFrequency: 0.03,
+        shieldFrequency: 0.055,
+        magnetFrequency: 0.04,
+        healthFrequency: 0.16,
+
         healthPerLevel: { min: 5, max: 8 },
-        coinFrequency: 0.35,
+        coinFrequency: 0.18,
+
         parTime: { threeStars: 35, twoStars: 55, oneStar: 85 }
     },
+
     MASTER: {
         tier: 'master',
         platformCount: { min: 100, max: 150 },
@@ -90,14 +110,19 @@ export const DifficultyConfig = {
         platformSpacing: { min: 50, max: 80 },
         enemyCount: { min: 60, max: 90 },
         enemySafetyZone: 3,
-        powerupFrequency: 0.20,
-        shieldFrequency: 0.45,
-        magnetFrequency: 0.35,
-        healthFrequency: 1.0,
+
+        powerupFrequency: 0.025,
+        shieldFrequency: 0.06,
+        magnetFrequency: 0.045,
+        healthFrequency: 0.17,
+
         healthPerLevel: { min: 6, max: 10 },
-        coinFrequency: 0.30,
+        coinFrequency: 0.16,
+
         parTime: { threeStars: 40, twoStars: 65, oneStar: 100 }
     }
+
+
 };
 
 /**

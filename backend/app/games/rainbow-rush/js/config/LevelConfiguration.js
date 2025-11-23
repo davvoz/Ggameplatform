@@ -210,12 +210,12 @@ for (let i = 1; i <= 3; i++) {
     
     level.platforms.forEach((p, idx) => p.index = idx);
     
-    // Livello 2 e 3 hanno più nemici per insegnare subito
-    if (i >= 2 && level.platforms.length > 5) {
+    // Livello 2 e 3 hanno nemici, ma MAI nelle prime 3 piattaforme
+    if (i >= 2 && level.platforms.length > 6) {
         const enemies = [
-            placeEnemyOnPlatform(level.platforms[2], EnemyTypes.SLUG.id),
-            placeEnemyOnPlatform(level.platforms[4], EnemyTypes.SLUG.id),
-            placeEnemyOnPlatform(level.platforms[6], EnemyTypes.SLUG.id)
+            placeEnemyOnPlatform(level.platforms[3], EnemyTypes.SLUG.id),
+            placeEnemyOnPlatform(level.platforms[5], EnemyTypes.SLUG.id),
+            placeEnemyOnPlatform(level.platforms[7], EnemyTypes.SLUG.id)
         ];
         level.enemies = enemies.filter(e => e !== null);
     }
@@ -314,7 +314,8 @@ for (let i = 4; i <= 15; i++) {
     level.enemies = [];
     for (let e = 0; e < enemyCount; e++) {
         const platformIdx = Math.floor((e + 1) * (level.platforms.length / (enemyCount + 1)));
-        if (platformIdx < level.platforms.length) {
+        // MAI nemici nelle prime 3 piattaforme
+        if (platformIdx >= 3 && platformIdx < level.platforms.length) {
             let enemyType = EnemyTypes.SLUG.id;
             if (i >= 6 && e % 3 === 0) enemyType = EnemyTypes.SPIKE_BALL.id;
             if (i >= 8 && e % 4 === 0) enemyType = EnemyTypes.FLY.id;
@@ -433,7 +434,8 @@ for (let i = 16; i <= 40; i++) {
     
     for (let e = 0; e < enemyCount; e++) {
         const platformIdx = Math.floor((e + 1) * (level.platforms.length / (enemyCount + 1)));
-        if (platformIdx < level.platforms.length && level.platforms[platformIdx]) {
+        // MAI nemici nelle prime 3 piattaforme
+        if (platformIdx >= 3 && platformIdx < level.platforms.length && level.platforms[platformIdx]) {
             const enemyType = enemyTypes[e % enemyTypes.length];
             const enemy = placeEnemyOnPlatform(level.platforms[platformIdx], enemyType);
             if (enemy) level.enemies.push(enemy);
@@ -565,7 +567,8 @@ for (let i = 26; i <= 60; i++) {
     level.enemies = [];
     for (let e = 0; e < enemyCount; e++) {
         const platformIdx = Math.floor((e + 1) * (level.platforms.length / (enemyCount + 1)));
-        if (platformIdx < level.platforms.length) {
+        // MAI nemici nelle prime 3 piattaforme
+        if (platformIdx >= 3 && platformIdx < level.platforms.length) {
             const enemyType = enemyTypes[e % enemyTypes.length];
             const enemy = placeEnemyOnPlatform(level.platforms[platformIdx], enemyType);
             if (enemy) level.enemies.push(enemy);
@@ -658,7 +661,8 @@ for (let i = 61; i <= 120; i++) {
     level.enemies = [];
     for (let e = 0; e < enemyCount; e++) {
         const platformIdx = Math.floor((e + 1) * (level.platforms.length / (enemyCount + 1)));
-        if (platformIdx < level.platforms.length) {
+        // MAI nemici nelle prime 3 piattaforme
+        if (platformIdx >= 3 && platformIdx < level.platforms.length) {
             const enemyType = enemyTypes[e % enemyTypes.length];
             const enemy = placeEnemyOnPlatform(level.platforms[platformIdx], enemyType);
             if (enemy) level.enemies.push(enemy);
@@ -747,7 +751,8 @@ for (let i = 121; i <= 170; i++) {
     level.enemies = [];
     for (let e = 0; e < 12; e++) {
         const platformIdx = e + 1;
-        if (platformIdx < level.platforms.length) {
+        // MAI nemici nelle prime 3 piattaforme (e + 1 deve essere >= 3, quindi e >= 2)
+        if (e >= 2 && platformIdx < level.platforms.length) {
             const enemyType = enemyTypes[e % enemyTypes.length];
             const enemy = placeEnemyOnPlatform(level.platforms[platformIdx], enemyType);
             if (enemy) level.enemies.push(enemy);
@@ -831,7 +836,8 @@ for (let i = 181; i <= 200; i++) {
     const allEnemies = Object.values(EnemyTypes).filter(e => e.unlockLevel <= i);
     level.enemies = [];
     for (let e = 0; e < Math.min(15, level.platforms.length); e++) {
-        if (e < level.platforms.length) {
+        // MAI nemici nelle prime 3 piattaforme
+        if (e >= 3 && e < level.platforms.length) {
             const randomEnemy = allEnemies[Math.floor(Math.random() * allEnemies.length)];
             const enemy = placeEnemyOnPlatform(level.platforms[e], randomEnemy.id);
             if (enemy) level.enemies.push(enemy);

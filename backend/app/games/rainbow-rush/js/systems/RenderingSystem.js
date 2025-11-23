@@ -52,6 +52,10 @@ export class RenderingSystem {
         this.currentScore = 0;
         this.currentLevel = 1;
         this.isPaused = false;
+        
+        // UI Screens
+        this.levelSummaryScreen = null;
+        this.levelSelectScreen = null;
     }
 
     // Setter methods for game state
@@ -112,6 +116,14 @@ export class RenderingSystem {
         this.levelProgressBar = progressBar;
     }
     
+    setLevelSummaryScreen(screen) {
+        this.levelSummaryScreen = screen;
+    }
+    
+    setLevelSelectScreen(screen) {
+        this.levelSelectScreen = screen;
+    }
+    
     setScore(score) {
         this.currentScore = score;
     }
@@ -144,7 +156,31 @@ export class RenderingSystem {
 
         const context = this._buildRenderContext(gameState);
         
-        // Rendering order (back to front):
+        // Se la schermata di selezione livelli è visibile, renderizza SOLO quella
+        if (this.levelSelectScreen && this.levelSelectScreen.visible) {
+            // Pulisci lo schermo con un colore di sfondo
+            gl.clearColor(0.53, 0.81, 0.92, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            // Renderizza SOLO la schermata di selezione
+            this.levelSelectScreen.render(this.textCtx, this.canvasWidth, this.canvasHeight);
+            return; // Non renderizzare altro
+        }
+        
+        // Se la schermata sommario livello è visibile, renderizza SOLO quella
+        if (this.levelSummaryScreen && this.levelSummaryScreen.visible) {
+            // Renderizza il gioco sotto (congelato)
+            this.backgroundRenderer.backgroundLayers = this.backgroundLayers || [];
+            this.backgroundRenderer.backgroundParticles = this.backgroundParticles || [];
+            this.backgroundRenderer.render(context.time);
+            this._renderEntities(gameState, context);
+            
+            // Renderizza la schermata sommario sopra
+            this.levelSummaryScreen.render(this.textCtx, this.canvasWidth, this.canvasHeight);
+            return;
+        }
+        
+        // Rendering normale del gioco
         // 1. Background (layers, particles, ambient)
         if (this.backgroundLayers || this.backgroundParticles) {
             this.backgroundRenderer.backgroundLayers = this.backgroundLayers || [];
@@ -205,6 +241,9 @@ export class RenderingSystem {
             // Categorize by type
             if (entity.type === 'player') {
                 player = entity;
+            } else if (entity.type === 'goalFlag') {
+                // Goal flag sempre visibile e renderizzato con le piattaforme
+                platforms.push(entity);
             } else if (entity.type.includes('particle') || entity.type.includes('Particle') || 
                        entity.type === 'sparkle' || entity.type === 'trail') {
                 // All particle types (kebab-case, camelCase, and special particle types)

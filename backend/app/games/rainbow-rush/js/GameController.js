@@ -5,7 +5,7 @@
 import { GameEngine } from './core/GameEngine.js';
 import { GameState, GameStates } from './core/GameState.js';
 import { Player } from './entities/Player.js';
-import { ProceduralLevelGenerator } from './systems/ProceduralLevelGenerator.js';
+import { LevelManager } from './managers/LevelManager.js';
 import { RenderingSystem } from './systems/RenderingSystem.js';
 import { ScoreSystem } from './systems/ScoreSystem.js';
 import { PowerupSystem } from './systems/PowerupSystem.js';
@@ -17,12 +17,13 @@ import { PlatformSDKManager } from './managers/PlatformSDKManager.js';
 import { TurboButtonUI } from './systems/TurboButtonUI.js';
 import { FlightButtonUI } from './systems/FlightButtonUI.js';
 import { EntityManager } from './managers/EntityManager.js';
-import { SpawnManager } from './managers/SpawnManager.js';
 import { SafetyPlatformSystem } from './systems/SafetyPlatformSystem.js';
 import { CollisionDetector } from './systems/CollisionDetector.js';
 import { AnimationController } from './controllers/AnimationController.js';
 import { ParticleSystem } from './effects/ParticleSystem.js';
 import { LevelProgressBar } from './systems/LevelProgressBar.js';
+import { LevelSummaryScreen } from './ui/LevelSummaryScreen.js';
+import { LevelSelectScreen } from './ui/LevelSelectScreen.js';
 
 export class GameController {
     constructor(canvas) {
@@ -43,7 +44,7 @@ export class GameController {
 
         // Game entities
         this.player = null;
-        this.levelGenerator = null;
+        this.levelManager = null; // NEW: Gestisce livelli predefiniti
         this.backgroundSystem = null;
         this.renderingSystem = null;
         this.turboButtonUI = null;
@@ -51,12 +52,15 @@ export class GameController {
 
         // NEW: Specialized managers and systems
         this.entityManager = new EntityManager();
-        this.spawnManager = null; // Initialized after getting dimensions
         this.safetyPlatformSystem = null; // Initialized after getting dimensions
         this.collisionDetector = null; // Initialized after creating player
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
         this.levelProgressBar = null; // Initialized after getting dimensions
+        
+        // NEW: UI Screens
+        this.levelSummaryScreen = null;
+        this.levelSelectScreen = null;
         
         // Performance optimization - cleanup timer
         this.cleanupTimer = 0;
@@ -71,6 +75,18 @@ export class GameController {
         this.coinRainDuration = 0;
         this.coinRainSpawnTimer = 0;
         this.coinRainSpawnInterval = 0.3; // Spawn coin ogni 0.3 secondi
+
+        // Visual effects
+        this.screenFlash = {
+            alpha: 0,
+            color: [1.0, 1.0, 1.0]
+        };
+        
+        // Animations
+        this.levelUpAnimation = null;
+        this.comboAnimation = null;
+        this.levelTransition = null;
+        this.isInLevelTransition = false;
 
         this.initialize();
     }
@@ -89,8 +105,8 @@ export class GameController {
         this.player = new Player(100, dims.height / 2, dims.height);
         this.player.type = 'player';
 
-        // Create level generator
-        this.levelGenerator = new ProceduralLevelGenerator(dims.width, dims.height);
+        // Create level manager (sostituisce ProceduralLevelGenerator)
+        this.levelManager = new LevelManager(dims.width, dims.height);
 
         // Create background system
         this.backgroundSystem = new BackgroundSystem(dims.width, dims.height);
@@ -100,9 +116,12 @@ export class GameController {
         this.flightButtonUI = new FlightButtonUI(dims.width, dims.height);
 
         // NEW: Initialize specialized systems
-        this.spawnManager = new SpawnManager(this.levelGenerator, this.entityManager, dims);
         this.safetyPlatformSystem = new SafetyPlatformSystem(dims, this.audioManager);
         this.levelProgressBar = new LevelProgressBar(dims.width, dims.height);
+        
+        // NEW: Initialize UI screens
+        this.levelSummaryScreen = new LevelSummaryScreen(dims.width, dims.height);
+        this.levelSelectScreen = new LevelSelectScreen(dims.width, dims.height);
         this.collisionDetector = new CollisionDetector(
             this.player,
             this.audioManager,
@@ -112,8 +131,9 @@ export class GameController {
             this.animationController
         );
         
-        // Pass safetyPlatformSystem reference to collisionDetector after initialization
+        // Pass references
         this.collisionDetector.safetyPlatformSystem = this.safetyPlatformSystem;
+        this.collisionDetector.levelManager = this.levelManager;
 
         // Setup initial platforms
         this.setupInitialPlatforms();
@@ -136,25 +156,66 @@ export class GameController {
         // Setup state listeners
         this.setupStateListeners();
 
-        // Show menu
-        this.showMenu();
+        // Pass UI screens to rendering system PRIMA di mostrarle
+        this.renderingSystem.setLevelSummaryScreen(this.levelSummaryScreen);
+        this.renderingSystem.setLevelSelectScreen(this.levelSelectScreen);
+
+        // NON nascondere il menu HTML - lascia che l'utente clicchi START
+        // La schermata di selezione livelli apparirà quando l'utente clicca START
     }
 
     setupInitialPlatforms() {
-        const dims = this.engine.getCanvasDimensions();
-
-        // Starting platform - più grande e accogliente
-        const startPlatform = this.levelGenerator.generatePlatform(0);
-        startPlatform.x = 50;
-        startPlatform.y = dims.height * 0.7;
-        startPlatform.width = 250; // Più larga per partenza comoda
-        this.entityManager.addEntity('platforms', startPlatform);
-
-        // Genera piattaforme iniziali con spaziatura ottimale
-        for (let i = 0; i < 6; i++) {
-            const platform = this.levelGenerator.generatePlatform();
-            this.entityManager.addEntity('platforms', platform);
+        // NON caricare alcun livello all'inizio
+        // Il livello verrà caricato quando l'utente sceglie dalla schermata di selezione
+        
+        // Collega levelManager a entityManager per tracking
+        this.entityManager.setLevelManager(this.levelManager);
+        
+        // Assicura che non ci siano entità residue
+        this.entityManager.platforms = [];
+        this.entityManager.obstacles = [];
+        this.entityManager.collectibles = [];
+        this.entityManager.powerups = [];
+        this.entityManager.floatingTexts = [];
+        
+        console.log(`🎮 Waiting for user to select a level...`);
+    }
+    
+    loadSelectedLevel(levelId) {
+        // Carica il livello scelto dall'utente
+        console.log(`🎮 Loading level ${levelId}`);
+        this.levelManager.loadLevel(levelId);
+        
+        // Genera entità del livello
+        const entities = this.levelManager.generateLevelEntities();
+        
+        // Aggiungi entità all'EntityManager
+        entities.platforms.forEach(p => this.entityManager.addEntity('platforms', p));
+        entities.enemies.forEach(e => this.entityManager.addEntity('obstacles', e));
+        entities.collectibles.forEach(c => this.entityManager.addEntity('collectibles', c));
+        entities.powerups.forEach(p => this.entityManager.addEntity('powerups', p));
+        entities.hearts.forEach(h => this.entityManager.addEntity('hearts', h));
+        entities.shieldBonuses.forEach(s => this.entityManager.addEntity('shieldBonuses', s));
+        entities.magnetBonuses.forEach(m => this.entityManager.addEntity('magnetBonuses', m));
+        entities.obstacles.forEach(o => this.entityManager.addEntity('obstacles', o));
+        
+        // Aggiungi goal flag come entità speciale
+        if (entities.goalFlag) {
+            this.entityManager.addEntity('collectibles', entities.goalFlag);
+            this.goalFlag = entities.goalFlag;
         }
+    }
+    
+    findLastUnlockedLevel(progress) {
+        let lastUnlocked = 1;
+        for (let i = 1; i <= 200; i++) {
+            if (progress[i] && progress[i].completed) {
+                lastUnlocked = i + 1;
+            } else {
+                break;
+            }
+        }
+        return Math.min(lastUnlocked, 200);
     }
 
     setupSystems() {
@@ -207,9 +268,8 @@ export class GameController {
                     this.audioManager.playSound('jump');
                     this.achievementSystem.recordJump();
                 }
-            } else if (this.gameState.isMenu()) {
-                this.startGame();
             }
+            // Non permettere di startare il gioco dal menu - ora si usa la schermata di selezione livelli
         });
 
         this.inputManager.addEventListener('jumpRelease', (duration) => {
@@ -266,6 +326,42 @@ export class GameController {
         // Turbo e Flight button click handler (mouse/touch)
         this.inputManager.addEventListener('click', (data) => {
             const dims = this.engine.getCanvasDimensions();
+
+            // Check level summary screen
+            if (this.levelSummaryScreen && this.levelSummaryScreen.isVisible()) {
+                const action = this.levelSummaryScreen.checkClick(data.x, data.y);
+                if (action === 'next') {
+                    this.levelSummaryScreen.hide();
+                    const nextLevelId = this.levelManager.currentLevelId + 1;
+                    this.loadLevel(nextLevelId);
+                    this.gameState.setState(GameStates.PLAYING);
+                    this.engine.start();
+                } else if (action === 'retry') {
+                    this.levelSummaryScreen.hide();
+                    this.resetGame();
+                } else if (action === 'menu') {
+                    this.levelSummaryScreen.hide();
+                    this.showLevelSelect();
+                }
+                return;
+            }
+            
+            // Check level select screen
+            if (this.levelSelectScreen && this.levelSelectScreen.isVisible()) {
+                const result = this.levelSelectScreen.checkClick(data.x, data.y);
+                if (result) {
+                    if (result.action === 'back') {
+                        this.levelSelectScreen.hide();
+                        this.showMenu();
+                    } else if (result.action === 'play' || result.action === 'select') {
+                        // Carica e avvia il livello selezionato
+                        this.levelSelectScreen.hide();
+                        this.loadLevel(result.levelId);
+                        this.gameState.setState(GameStates.PLAYING);
+                    }
+                }
+                return;
+            }
 
             // Check pause button (sempre disponibile durante il gioco)
             if (this.renderingSystem && this.renderingSystem.hudRenderer) {
@@ -340,24 +436,7 @@ export class GameController {
     }
 
     setupScoreListeners() {
-        this.scoreSystem.onLevelUp((level, bonus) => {
-            this.levelGenerator.setDifficulty(level);
-            this.backgroundSystem.setLevel(level);
-            this.audioManager.playSound('score');
-
-            // Show "LEVEL UP!" message
-            const dims = this.engine.getCanvasDimensions();
-            this.animationController.showLevelUp(level, dims.width / 2, dims.height / 3);
-            
-            // Show epic time bonus with floating text
-            if (bonus && bonus.points > 0) {
-                this.showLevelTimeBonus(bonus, dims);
-            }
-            
-            // Update HUD
-            this.emitGameUpdate();
-        });
-        
+        // Score change listener
         this.scoreSystem.onScoreChange(() => {
             // Update HUD when score changes
             this.emitGameUpdate();
@@ -437,6 +516,11 @@ export class GameController {
     }
 
     updateGame(deltaTime) {
+        // NON aggiornare nulla se la schermata di selezione livelli è visibile
+        if (this.levelSelectScreen && this.levelSelectScreen.isVisible()) {
+            return;
+        }
+        
         // Update animations (including death animation)
         this.animationController.update(deltaTime);
         
@@ -486,14 +570,28 @@ export class GameController {
             this.flightButtonUI.update(deltaTime, this.player);
         }
         
-        // Update level progress bar
-        if (this.levelProgressBar) {
-            this.levelProgressBar.update(
-                deltaTime,
-                this.spawnManager.platformCounter,
-                this.spawnManager.platformsPerLevel,
-                this.scoreSystem.level
-            );
+        // Update level manager
+        if (this.levelManager) {
+            this.levelManager.update(deltaTime);
+            
+            // Update level progress bar
+            const currentLevel = this.levelManager.getCurrentLevel();
+            if (this.levelProgressBar && currentLevel) {
+                const totalPlatforms = currentLevel.platforms.length;
+                // Usa platformsPassed invece di platformsReached per progress accurato
+                const passedPlatforms = this.levelManager.platformsPassed;
+                this.levelProgressBar.update(
+                    deltaTime,
+                    passedPlatforms,
+                    totalPlatforms,
+                    this.levelManager.currentLevelId
+                );
+            }
+            
+            // Check level completion
+            if (this.levelManager.checkLevelCompletion()) {
+                this.onLevelComplete();
+            }
         }
 
         // Check for ice brake effect
@@ -518,6 +616,12 @@ export class GameController {
 
         // Update safety platform system with collision state
         this.safetyPlatformSystem.update(deltaTime, playerOnSafetyPlatform, this.entityManager, this.scoreSystem);
+        
+        // Track enemy kills for level manager
+        const enemiesKilled = this.entityManager.obstacles.filter(e => e.type === 'enemy' && !e.alive).length;
+        if (enemiesKilled > this.levelManager.enemiesKilled) {
+            this.levelManager.recordEnemyKilled();
+        }
 
         // Handle special bonus effects (coin rain, rainbow)
         const bonusEffect = this.collisionDetector.checkBonusCollisions(this.entityManager);
@@ -555,9 +659,6 @@ export class GameController {
         if (this.player.hasJustLanded()) {
             this.audioManager.playSound('land');
         }
-
-        // Spawn new entities via SpawnManager
-        this.spawnManager.update(deltaTime, this.scoreSystem);
 
         // Periodic cleanup of offscreen entities (every 1 second, più frequente durante coin rain)
         this.cleanupTimer += deltaTime;
@@ -632,9 +733,13 @@ export class GameController {
         // Pass level progress bar to rendering system
         this.renderingSystem.setLevelProgressBar(this.levelProgressBar);
         
+        // Pass UI screens to rendering system
+        this.renderingSystem.setLevelSummaryScreen(this.levelSummaryScreen);
+        this.renderingSystem.setLevelSelectScreen(this.levelSelectScreen);
+        
         // Pass HUD data to rendering system
-        this.renderingSystem.setScore(this.scoreSystem.getScore());
-        this.renderingSystem.setLevel(this.scoreSystem.getLevel());
+        this.renderingSystem.setScore(this.scoreSystem.getTotalScore());
+        this.renderingSystem.setLevel(this.levelManager.currentLevelId || 1);
         this.renderingSystem.setIsPaused(this.gameState.isPaused());
 
         // Get entities from EntityManager
@@ -851,10 +956,50 @@ export class GameController {
     }
 
     startGame() {
-        this.resetGame();
+        // Verifica che il gioco sia inizializzato
+        if (!this.levelManager || !this.levelSelectScreen) {
+            console.warn('⚠️ Game not yet initialized, waiting...');
+            setTimeout(() => this.startGame(), 100);
+            return;
+        }
+        
+        // Invece di resettare il gioco, mostra la schermata di selezione livelli
+        this.showLevelSelect();
+    }
+    
+    showLevelSelect() {
+        // Verifica che i sistemi siano inizializzati
+        if (!this.levelManager || !this.levelSelectScreen) {
+            console.warn('⚠️ Systems not initialized yet');
+            return;
+        }
+        
+        // Nascondi il menu HTML
+        const menuScreen = document.getElementById('menu-screen');
+        if (menuScreen) {
+            menuScreen.classList.remove('active');
+        }
+        
+        // Carica il progresso
+        const progress = this.levelManager.loadProgress();
+        
+        // Mostra la schermata di selezione livelli
+        this.levelSelectScreen.show(progress);
+        this.gameState.setState(GameStates.PAUSED);
+        
+        // Avvia il game loop se non è già partito
+        if (!this.engine.running) {
+            this.engine.start();
+        }
     }
 
     resetGame() {
+        // Verifica che ci sia un livello caricato
+        if (!this.levelManager || !this.levelManager.currentLevelId) {
+            console.warn('⚠️ Cannot reset game: no level loaded');
+            return;
+        }
+        
         // Clear all entities from EntityManager
         this.entityManager.platforms = [];
         this.entityManager.obstacles = [];
@@ -897,36 +1042,29 @@ export class GameController {
         this.targetCameraOffsetX = 0;
         this.scoreSystem.reset();
         this.powerupSystem.reset();
-        this.spawnTimer = 0;
-        this.powerupSpawnTimer = 0;
-        this.platformCounter = 0;
         this.levelUpAnimation = null;
         this.deathAnimation = null;
         this.isShowingDeathAnimation = false;
-        this.cleanupTimer = 0; // Reset cleanup timer
+        this.cleanupTimer = 0;
 
         // Reset player
         const dims = this.engine.getCanvasDimensions();
         this.player.reset(100, dims.height / 2);
 
-        // Reset level generator
-        this.levelGenerator.lastPlatformX = 0;
-        this.levelGenerator.lastPlatformY = 0;
-        this.levelGenerator.setDifficulty(1);
-        this.levelGenerator.resetPlatformCount();
+        // Reload current level
+        this.levelManager.reloadLevel();
 
         // Reset background
-        this.backgroundSystem.setLevel(1);
+        this.backgroundSystem.setLevel(this.levelManager.currentLevelId);
         const bgColor = this.backgroundSystem.getBackgroundColor();
         this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
 
-        // Setup initial platforms
-        this.setupInitialPlatforms();
+        // Carica le entità del livello corrente
+        this.loadSelectedLevel(this.levelManager.currentLevelId);
 
         // Update dimensions and reset all systems
         this.safetyPlatformSystem.updateDimensions(dims.width, dims.height);
         this.safetyPlatformSystem.reset();
-        this.spawnManager.reset();
         this.animationController.reset();
         if (this.levelProgressBar) {
             this.levelProgressBar.reset();
@@ -939,6 +1077,98 @@ export class GameController {
 
         const event = new CustomEvent('gameStart');
         window.dispatchEvent(event);
+    }
+    
+    /**
+     * NEW: Livello completato - mostra schermata riepilogativa
+     */
+    onLevelComplete() {
+        console.log('🎉 Level Complete!');
+        
+        // Pausa il gioco
+        this.gameState.setState(GameStates.PAUSED);
+        this.engine.stop();
+        
+        // Reset tutti i cooldown e gli effetti attivi
+        this.powerupSystem.reset();
+        
+        // Reset powerup del player manualmente
+        this.player.isTurboActive = false;
+        this.player.turboTimeRemaining = 0;
+        this.player.turboCooldownRemaining = 0;
+        this.player.isFlightActive = false;
+        this.player.flightTimeRemaining = 0;
+        this.player.flightCooldownRemaining = 0;
+        this.player.instantFlightActive = false;
+        this.player.instantFlightDuration = 0;
+        this.player.boostActive = false;
+        this.player.boostTimer = 0;
+        this.player.shieldActive = false;
+        this.player.shieldDuration = 0;
+        this.player.powerups = {
+            immortality: false,
+            flight: false,
+            superJump: false
+        };
+        
+        // Reset effetti visivi
+        this.screenFlash = {
+            alpha: 0,
+            color: [1.0, 1.0, 1.0]
+        };
+        
+        // Reset effetti speciali
+        this.coinRainActive = false;
+        this.coinRainTimer = 0;
+        this.timeScale = 1.0;
+        
+        // Ottieni riepilogo dal LevelManager
+        const summary = this.levelManager.getLevelSummary();
+        
+        // Aggiungi score al riepilogo
+        summary.score = this.scoreSystem.getScore();
+        
+        // Mostra schermata riepilogativa
+        this.levelSummaryScreen.show(summary);
+        
+        // Play sound
+        if (summary.stars === 3) {
+            this.audioManager.playSound('level_complete');
+        } else {
+            this.audioManager.playSound('score');
+        }
+    }
+    
+    /**
+     * NEW: Carica livello specifico
+     */
+    loadLevel(levelId) {
+        // Clear entities
+        this.entityManager.platforms = [];
+        this.entityManager.obstacles = [];
+        this.entityManager.collectibles = [];
+        this.entityManager.floatingTexts = [];
+        
+        // Reset player
+        const dims = this.engine.getCanvasDimensions();
+        this.player.reset(100, dims.height / 2);
+        
+        // Carica il livello selezionato e genera entità
+        this.loadSelectedLevel(levelId);
+        
+        // Reset systems
+        this.scoreSystem.reset();
+        this.powerupSystem.reset();
+        this.safetyPlatformSystem.reset();
+        this.animationController.reset();
+        if (this.levelProgressBar) {
+            this.levelProgressBar.reset();
+        }
+        
+        // Update background
+        this.backgroundSystem.setLevel(levelId);
+        
+        console.log(`🎮 Level ${levelId} loaded!`);
     }
 
     startDeathSequence() {
@@ -977,7 +1207,14 @@ export class GameController {
 
         // Submit score to platform
         const stats = this.scoreSystem.getGameStats();
+        
+        // Add correct level from LevelManager
+        stats.level = this.levelManager.currentLevelId || 1;
+        
         await this.sdkManager.submitScore(stats.score);
+
+        // Reset total score after game over
+        this.scoreSystem.fullReset();
 
         const event = new CustomEvent('gameOver', { detail: stats });
         window.dispatchEvent(event);
@@ -1021,9 +1258,20 @@ export class GameController {
 
     handleResize() {
         const dims = this.engine.getCanvasDimensions();
+        
+        // Verifica che i sistemi siano inizializzati
+        if (!this.player || !this.levelManager || !this.backgroundSystem) {
+            return;
+        }
+        
         this.player.updateCanvasHeight(dims.height);
-        this.levelGenerator.updateDimensions(dims.width, dims.height);
+        this.levelManager.updateDimensions(dims.width, dims.height);
         this.backgroundSystem.updateDimensions(dims.width, dims.height);
+        
+        // Update tutti i sistemi UI in modo coordinato
+        if (this.safetyPlatformSystem) {
+            this.safetyPlatformSystem.updateDimensions(dims.width, dims.height);
+        }
         if (this.renderingSystem) {
             this.renderingSystem.updateDimensions(dims.width, dims.height);
         }
@@ -1032,6 +1280,12 @@ export class GameController {
         }
         if (this.flightButtonUI) {
             this.flightButtonUI.resize(dims.width, dims.height);
+        }
+        if (this.levelSummaryScreen) {
+            this.levelSummaryScreen.resize(dims.width, dims.height);
+        }
+        if (this.levelSelectScreen) {
+            this.levelSelectScreen.resize(dims.width, dims.height);
         }
     }
 

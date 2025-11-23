@@ -19,11 +19,13 @@ export class HUDRenderer {
         this.pauseHover = false;
         this.pausePressed = false;
         
-        // Score/Level display configuration - affiancati sulla sinistra
-        this.scoreX = 150; // Subito dopo il bottone pause
+        // Score/Level display configuration - TUTTI allineati a sinistra
+        this.scoreX = 110; // Dopo il bottone pause
         this.scoreY = 35;
-        this.levelX = 320; // Accanto allo score
+        this.levelX = 240; // Dopo lo score
         this.levelY = 35;
+        this.heartsStartX = 360; // Dopo il level, più vicino
+        this.heartsY = 35;
         
         // Animation effects
         this.scoreGlow = 0;
@@ -357,8 +359,16 @@ export class HUDRenderer {
     updateDimensions(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
-        // Mantieni le posizioni fisse sulla sinistra
-        this.scoreX = 150;
-        this.levelX = 320;
+        // Posizioni fisse allineate a sinistra
+        this.scoreX = 110;
+        this.levelX = 240;
+        this.heartsStartX = 360;
+    }
+    
+    getHeartsPosition() {
+        return {
+            startX: this.heartsStartX,
+            y: this.heartsY
+        };
     }
 }

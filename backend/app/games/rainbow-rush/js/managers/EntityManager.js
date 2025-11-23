@@ -5,7 +5,7 @@
  */
 export class EntityManager {
     constructor() {
-        // Entity collections organized by type
+        // Entity arrays
         this.platforms = [];
         this.obstacles = [];
         this.collectibles = [];
@@ -20,6 +20,9 @@ export class EntityManager {
         this.flightBonuses = [];
         this.rechargeBonuses = [];
         this.heartRechargeBonuses = [];
+        
+        // Level manager reference
+        this.levelManager = null;
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -54,6 +57,13 @@ export class EntityManager {
         collection.push(entity);
     }
 
+    /**
+     * Set level manager reference
+     */
+    setLevelManager(levelManager) {
+        this.levelManager = levelManager;
+    }
+    
     /**
      * Get all entities of a specific type
      */
@@ -190,6 +200,10 @@ export class EntityManager {
         if (platform.isCrumbling) {
             platform.crumbleTimer += deltaTime;
             if (platform.crumbleTimer >= platform.crumbleDuration) {
+                // Notifica levelManager prima di rimuovere
+                if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
+                    this.levelManager.platformExited(platform.index);
+                }
                 return false; // Remove crumbled platform
             }
         }
@@ -209,7 +223,13 @@ export class EntityManager {
             platform.icyShimmer += deltaTime * 5;
         }
 
-        return platform.x + platform.width > -100;
+        // Check if platform exited screen
+        const stillVisible = platform.x + platform.width > -100;
+        if (!stillVisible && this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
+            this.levelManager.platformExited(platform.index);
+        }
+        
+        return stillVisible;
     }
 
     /**

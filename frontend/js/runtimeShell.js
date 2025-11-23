@@ -732,7 +732,7 @@ export default class RuntimeShell {
      */
     log(...args) {
         if (this.config.debug) {
-            console.log('[RuntimeShell]', ...args);
+            //console.log('[RuntimeShell]', ...args);
         }
     }
 }

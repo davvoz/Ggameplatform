@@ -10,8 +10,8 @@ export class LevelProgressBar {
         // Posizione e dimensioni - verticale a sinistra (inizializzate, poi aggiornate da updateDimensions)
         this.width = 8;
         this.height = 200;
-        this.x = 20;
-        this.y = 150;
+        this.x = 10;
+        this.y = 90;
         
         // Aggiorna subito con le dimensioni corrette
         this.updateDimensions(canvasWidth, canvasHeight);
@@ -60,10 +60,11 @@ export class LevelProgressBar {
         const availableHeight = height - 200;
         this.height = Math.min(300, Math.max(150, availableHeight * 0.4));
         
-        this.x = 20;
+        // Sposta più a sinistra per evitare sovrapposizioni
+        this.x = 10;
         
-        // Posizione Y che si adatta alla dimensione dello schermo
-        const topMargin = 150;
+        // Posizione Y più in basso per non sovrapporsi all'HUD
+        const topMargin = 90;
         this.y = topMargin;
     }
     

@@ -128,8 +128,8 @@ export class BackgroundSystem {
             [0.6, 0.85, 1.0, 1.0]  // Celeste vivace (era 0.68, 0.85, 0.90)
         ];
         
-        // Floating clouds with varied shapes - RIDOTTE
-        for (let i = 0; i < 5; i++) { // Ridotto da 8 a 5
+        // Floating clouds with varied shapes - RIDOTTE 50%
+        for (let i = 0; i < 3; i++) { // Ridotto del 50% da 5 a 3
             const baseSize = 40 + Math.random() * 40;
             const numPuffs = 3 + Math.floor(Math.random() * 3); // 3-5 puffs per cloud
             const puffs = [];
@@ -153,8 +153,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Flying birds
-        for (let i = 0; i < 5; i++) {
+        // Flying birds - RIDOTTE 50%
+        for (let i = 0; i < 3; i++) { // Ridotto del 50% da 5 a 3
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight * 0.4,
@@ -199,8 +199,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Bubbles
-        for (let i = 0; i < 25; i++) {
+        // Bubbles - RIDOTTE 50%
+        for (let i = 0; i < 13; i++) { // Ridotto del 50% da 25 a 13
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.5,
@@ -212,8 +212,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Fish swimming
-        for (let i = 0; i < 4; i++) {
+        // Fish swimming - RIDOTTE 50%
+        for (let i = 0; i < 2; i++) { // Ridotto del 50% da 4 a 2
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3,
@@ -260,8 +260,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Sand particles
-        for (let i = 0; i < 30; i++) {
+        // Sand particles - RIDOTTE 50%
+        for (let i = 0; i < 15; i++) { // Ridotto del 50% da 30 a 15
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
@@ -316,8 +316,8 @@ export class BackgroundSystem {
             speed: 15
         });
         
-        // Lava particles/embers
-        for (let i = 0; i < 25; i++) {
+        // Lava particles/embers - RIDOTTE 50%
+        for (let i = 0; i < 13; i++) { // Ridotto del 50% da 25 a 13
             this.particles.push({
                 x: this.canvasWidth * 0.6 + Math.random() * 100 - 50,
                 y: this.canvasHeight * 0.5 + Math.random() * 100,
@@ -335,8 +335,8 @@ export class BackgroundSystem {
             [0.15, 0.1, 0.4, 1.0]    // Viola più intenso (era 0.25)
         ];
         
-        // Stars
-        for (let i = 0; i < 100; i++) {
+        // Stars - RIDOTTE 50%
+        for (let i = 0; i < 50; i++) { // Ridotto del 50% da 100 a 50
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
@@ -389,8 +389,8 @@ export class BackgroundSystem {
             }
         }
         
-        // Fireflies
-        for (let i = 0; i < 18; i++) {
+        // Fireflies - RIDOTTE 50%
+        for (let i = 0; i < 9; i++) { // Ridotto del 50% da 18 a 9
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight * 0.8,
@@ -403,8 +403,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Falling leaves
-        for (let i = 0; i < 12; i++) {
+        // Falling leaves - RIDOTTE 50%
+        for (let i = 0; i < 6; i++) { // Ridotto del 50% da 12 a 6
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
@@ -450,8 +450,8 @@ export class BackgroundSystem {
             });
         }
         
-        // Snowflakes
-        for (let i = 0; i < 30; i++) {
+        // Snowflakes - RIDOTTE 50%
+        for (let i = 0; i < 15; i++) { // Ridotto del 50% da 30 a 15
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight,
@@ -480,8 +480,8 @@ export class BackgroundSystem {
             speed: 2 // Velocità parallasse molto lenta
         });
         
-        // Stars (more than space)
-        for (let i = 0; i < 80; i++) {
+        // Stars (more than space) - RIDOTTE 50%
+        for (let i = 0; i < 40; i++) { // Ridotto del 50% da 80 a 40
             this.particles.push({
                 x: Math.random() * this.canvasWidth,
                 y: Math.random() * this.canvasHeight * 0.7,

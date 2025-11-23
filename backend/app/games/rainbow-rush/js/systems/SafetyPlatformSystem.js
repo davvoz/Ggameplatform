@@ -2,6 +2,7 @@
  * SafetyPlatformSystem - Manages the emergency rescue platform with charge system
  * Uses State Pattern and clear configuration for maintainability
  */
+import { calculateUIPositions } from '../config/UIPositions.js';
 
 // Configuration object for easy tuning
 const SAFETY_CONFIG = {
@@ -70,18 +71,15 @@ export class SafetyPlatformSystem {
     }
 
     initialize() {
-        // Margini laterali: 20px su mobile, 40px su desktop
-        const sideMargin = this.dims.width < 600 ? 20 : 40;
-        const maxWidth = this.dims.width - (sideMargin * 2);
-        
-        // Larghezza piattaforma: min tra config e larghezza disponibile
-        const platformWidth = Math.min(this.config.PLATFORM_WIDTH, maxWidth);
+        // Usa posizioni centralizzate
+        const positions = calculateUIPositions(this.dims.width, this.dims.height);
+        const platformWidth = positions.safetyPlatform.width;
         
         this.platform = {
-            x: this.dims.width / 2 - platformWidth / 2,
-            y: this.dims.height - 60,
+            x: positions.safetyPlatform.getX(platformWidth),
+            y: positions.safetyPlatform.y,
             width: platformWidth,
-            height: this.config.PLATFORM_HEIGHT,
+            height: positions.safetyPlatform.height,
             color: [...this.config.COLOR_READY],
             type: 'safetyPlatform',
             velocity: 0,
@@ -508,15 +506,12 @@ export class SafetyPlatformSystem {
     updateDimensions(width, height) {
         this.dims = { width, height };
         if (this.platform) {
-            // Margini laterali: 20px su mobile, 40px su desktop
-            const sideMargin = width < 600 ? 20 : 40;
-            const maxWidth = width - (sideMargin * 2);
+            // Usa posizioni centralizzate (stesso sistema dell'initialize)
+            const positions = calculateUIPositions(width, height);
+            const platformWidth = positions.safetyPlatform.width;
             
-            // Larghezza piattaforma: min tra config e larghezza disponibile
-            const platformWidth = Math.min(this.config.PLATFORM_WIDTH, maxWidth);
-            
-            this.platform.x = width / 2 - platformWidth / 2;
-            this.platform.y = height - 60;
+            this.platform.x = positions.safetyPlatform.getX(platformWidth);
+            this.platform.y = positions.safetyPlatform.y;
             this.platform.width = platformWidth;
         }
     }

@@ -12,8 +12,8 @@ export class ParticleSystem {
      * Create boost particles explosion - Ultra minimal
      */
     createBoostExplosion(x, y, entityManager) {
-        // 6 particelle cyan minime (ridotto da 10)
-        for (let i = 0; i < 6; i++) {
+        // 3 particelle cyan minime (ridotto 50% da 6)
+        for (let i = 0; i < 3; i++) {
             const angle = (Math.PI * 2 * i) / 6;
             const speed = 80 + Math.random() * 40;
             
@@ -37,7 +37,7 @@ export class ParticleSystem {
      * Create powerup particles explosion
      */
     createPowerupExplosion(x, y, powerupType, entityManager) {
-        const particleCount = 15; // Ridotto drasticamente da 25
+        const particleCount = 8; // Ridotto 50% da 15
         
         // Get powerup-specific colors
         let particleColors = [];
@@ -103,14 +103,14 @@ export class ParticleSystem {
         }
         
         // Solo sparkles, no explosion ring per performance
-        this.createSparkles(x, y, ringColor, 5, entityManager); // Ridotto da 8 a 5
+        this.createSparkles(x, y, ringColor, 3, entityManager); // Ridotto 50% da 5 a 3
     }
 
     /**
      * Create explosion ring effect
      */
     createExplosionRing(x, y, color, maxRadius, entityManager) {
-        for (let i = 0; i < 10; i++) { // Ridotto da 15
+        for (let i = 0; i < 5; i++) { // Ridotto 50% da 10 a 5
             const angle = (Math.PI * 2 * i) / 10;
             const particle = {
                 x, y,
@@ -154,7 +154,7 @@ export class ParticleSystem {
      * Create bonus explosion (magnet, shield, etc.)
      */
     createBonusExplosion(x, y, color, count, entityManager) {
-        count = count || 18; // Ridotto drasticamente da 30
+        count = count || 9; // Ridotto 50% da 18 a 9
         
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count;
@@ -176,8 +176,8 @@ export class ParticleSystem {
         // Solo 1 explosion ring invece di 2
         this.createExplosionRing(x, y, color, 80, entityManager);
         
-        // Ridotte le sparkles da 12 a 6
-        this.createSparkles(x, y, color, 6, entityManager);
+        // Ridotte le sparkles del 50% da 6 a 3
+        this.createSparkles(x, y, color, 3, entityManager);
     }
 
     /**
@@ -185,7 +185,7 @@ export class ParticleSystem {
      */
     createDeathParticles(x, y, playerWidth, playerHeight) {
         const particles = [];
-        const particleCount = 12; // Ridotto drasticamente da 20
+        const particleCount = 6; // Ridotto 50% da 12 a 6
         
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;

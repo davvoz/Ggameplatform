@@ -19,6 +19,7 @@ export class CollectibleRenderer extends IEntityRenderer {
                 this.renderCollectible(entity, time);
                 break;
             case 'heart':
+            case 'health':
                 this.renderHeart(entity, time);
                 break;
             case 'boost':

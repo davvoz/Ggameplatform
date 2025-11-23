@@ -7,6 +7,7 @@ import { PlatformRenderer } from './PlatformRenderer.js';
 import { CollectibleRenderer } from './CollectibleRenderer.js';
 import { ObstacleRenderer } from './ObstacleRenderer.js';
 import { SafetyPlatformRenderer } from './SafetyPlatformRenderer.js';
+import { GoalFlagRenderer } from './GoalFlagRenderer.js';
 
 export class RendererFactory {
     constructor(renderer, textCtx = null) {
@@ -31,10 +32,16 @@ export class RendererFactory {
         this.renderers.set('safety-platform', safetyPlatformRenderer);
         this.renderers.set('safetyPlatform', safetyPlatformRenderer);
         
+        // Goal flag
+        const goalFlagRenderer = new GoalFlagRenderer(this.renderer);
+        goalFlagRenderer.renderer.textCtx = this.textCtx;
+        this.renderers.set('goalFlag', goalFlagRenderer);
+        
         // Collectibles
         const collectibleRenderer = new CollectibleRenderer(this.renderer, this.textCtx);
         this.renderers.set('collectible', collectibleRenderer);
         this.renderers.set('heart', collectibleRenderer);
+        this.renderers.set('health', collectibleRenderer); // Bonus vita
         this.renderers.set('boost', collectibleRenderer);
         this.renderers.set('powerup', collectibleRenderer);
         

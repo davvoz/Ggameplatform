@@ -25,6 +25,9 @@ export class InputManager {
             this.canvas.setAttribute('tabindex', '1');
             this.canvas.style.outline = 'none';
         }
+        
+        // Riferimento al textCanvas per gestire i click sulle UI
+        this.textCanvas = document.getElementById('textCanvas');
 
         this.setupEventListeners();
     }
@@ -34,9 +37,17 @@ export class InputManager {
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
         window.addEventListener('keyup', (e) => this.handleKeyUp(e));
 
-        // Mouse events
+        // Mouse events su entrambi i canvas
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        
+        if (this.textCanvas) {
+            this.textCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+            this.textCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+            this.textCanvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+            this.textCanvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+            this.textCanvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+        }
 
         // Touch events
         this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
@@ -111,8 +122,8 @@ export class InputManager {
     handleMouseDown(event) {
         event.preventDefault();
         
-        // Get click position
-        const rect = this.canvas.getBoundingClientRect();
+        // Get click position - usa event.target per gestire sia gameCanvas che textCanvas
+        const rect = event.target.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         

@@ -50,10 +50,10 @@ class RainbowRushApp {
             startButton.addEventListener('click', () => this.startGame());
         }
 
-        // Restart button
+        // Restart button - mostra selezione livelli invece di resettare direttamente
         const restartButton = document.getElementById('restart-button');
         if (restartButton) {
-            restartButton.addEventListener('click', () => this.startGame());
+            restartButton.addEventListener('click', () => this.showLevelSelect());
         }
 
         // Menu button
@@ -104,6 +104,32 @@ class RainbowRushApp {
             if (this.gameController) {
                 this.gameController.handleResize();
             }
+        });
+
+        // Handle fullscreen changes (entrata/uscita fullscreen)
+        const fullscreenEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+        fullscreenEvents.forEach(eventName => {
+            document.addEventListener(eventName, () => {
+                if (this.gameController) {
+                    const isFullscreen = !!(document.fullscreenElement || 
+                                           document.webkitFullscreenElement || 
+                                           document.mozFullScreenElement || 
+                                           document.msFullscreenElement);
+                    
+                    // Se utente esce dal fullscreen E il gioco non è già in pausa
+                    if (!isFullscreen && !this.gameController.gameState.isPaused() && 
+                        !this.gameController.gameState.isMenu()) {
+                        // Utente è uscito dal fullscreen mentre giocava - pausa forzata
+                        this.gameController.pauseGame();
+                        this.gameController.needsFullscreenRestore = true;
+                    }
+                    
+                    // Forza resize quando cambia lo stato fullscreen
+                    setTimeout(() => {
+                        this.gameController.handleResize();
+                    }, 100);
+                }
+            });
         });
 
         // Handle visibility change (pause when tab hidden, resume when visible)
@@ -198,6 +224,8 @@ class RainbowRushApp {
 
     startGame() {
         if (this.gameController) {
+            // Entra in fullscreen prima di iniziare
+            this.requestFullscreen();
             this.gameController.startGame();
         }
     }
@@ -205,6 +233,13 @@ class RainbowRushApp {
     showMenu() {
         if (this.gameController) {
             this.gameController.showMenu();
+        }
+    }
+
+    showLevelSelect() {
+        if (this.gameController) {
+            this.hideAllScreens();
+            this.gameController.showLevelSelect();
         }
     }
 
@@ -237,6 +272,12 @@ class RainbowRushApp {
     
     resumeGame() {
         if (this.gameController) {
+            // Se necessita di ripristinare fullscreen, lo fa prima di resumare
+            if (this.gameController.needsFullscreenRestore) {
+                this.requestFullscreen();
+                this.gameController.needsFullscreenRestore = false;
+            }
+            
             this.gameController.resumeGame();
             const pauseScreen = document.getElementById('pause-screen');
             if (pauseScreen) {
@@ -277,6 +318,22 @@ class RainbowRushApp {
                     <button class="game-button" onclick="location.reload()">Reload</button>
                 </div>
             `;
+        }
+    }
+
+    requestFullscreen() {
+        const elem = document.documentElement;
+        
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => {
+                console.warn('Fullscreen request failed:', err);
+            });
+        } else if (elem.webkitRequestFullscreen) { // Safari
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+            elem.msRequestFullscreen();
         }
     }
 }

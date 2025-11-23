@@ -2,15 +2,18 @@
  * FlightButtonUI - Bottone volo con controllo step verticale
  * Simile a TurboButtonUI ma sulla sinistra
  */
+import { calculateUIPositions } from '../config/UIPositions.js';
+
 export class FlightButtonUI {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         
-        // Posizione bottone (sinistra, STESSA altezza del turbo)
-        this.buttonRadius = 40; // Stesso raggio del turbo
-        this.buttonX = 60; // Sinistra, 60px dal bordo
-        this.buttonY = canvasHeight - 130; // STESSA Y del turbo: 130px dal bordo
+        // Posizione bottone - usa posizioni centralizzate
+        const positions = calculateUIPositions(canvasWidth, canvasHeight);
+        this.buttonRadius = positions.flightButton.radius;
+        this.buttonX = positions.flightButton.x;
+        this.buttonY = positions.flightButton.y;
         
         // Animazioni avanzate
         this.pulseTime = 0;
@@ -430,7 +433,11 @@ export class FlightButtonUI {
     resize(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
-        this.buttonX = 60; // Stesso del turbo ma a sinistra
-        this.buttonY = height - 130; // STESSA Y del turbo
+        
+        // Ricalcola posizioni usando il sistema centralizzato
+        const positions = calculateUIPositions(width, height);
+        this.buttonRadius = positions.flightButton.radius;
+        this.buttonX = positions.flightButton.x;
+        this.buttonY = positions.flightButton.y;
     }
 }

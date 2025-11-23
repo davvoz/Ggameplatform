@@ -108,7 +108,8 @@ export class PowerupUIRenderer {
     renderHearts(health, maxHealth) {
         const heartSize = 20;
         const spacing = 28;
-        const startX = this.canvasWidth - (maxHealth * spacing + 20);
+        // Posizione fissa allineata a sinistra (dopo level badge) - spostata più a sinistra
+        const startX = 310;
         const y = 35;  // Allineato con l'header HUD singola riga
         
         for (let i = 0; i < maxHealth; i++) {

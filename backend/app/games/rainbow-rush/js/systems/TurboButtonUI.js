@@ -1,15 +1,18 @@
 /**
  * TurboButtonUI - Renders turbo boost button with cooldown visualization
  */
+import { calculateUIPositions } from '../config/UIPositions.js';
+
 export class TurboButtonUI {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         
-        // Button properties
-        this.buttonRadius = 40; // Più grande e amichevole
-        this.buttonX = canvasWidth - 60; // Destra, 60px dal bordo
-        this.buttonY = canvasHeight - 130; // Basso, 130px dal bordo (più in basso)
+        // Button properties - usa posizioni centralizzate
+        const positions = calculateUIPositions(canvasWidth, canvasHeight);
+        this.buttonRadius = positions.turboButton.radius;
+        this.buttonX = positions.turboButton.x;
+        this.buttonY = positions.turboButton.y;
         
         // Animation
         this.pulseTime = 0;
@@ -378,7 +381,11 @@ export class TurboButtonUI {
     resize(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        this.buttonX = canvasWidth - 60;
-        this.buttonY = canvasHeight - 130;
+        
+        // Ricalcola posizioni usando il sistema centralizzato
+        const positions = calculateUIPositions(canvasWidth, canvasHeight);
+        this.buttonRadius = positions.turboButton.radius;
+        this.buttonX = positions.turboButton.x;
+        this.buttonY = positions.turboButton.y;
     }
 }

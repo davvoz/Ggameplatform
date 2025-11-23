@@ -5,6 +5,7 @@
 export class ScoreSystem {
     constructor() {
         this.score = 0;
+        this.totalScore = 0; // Punteggio totale cumulativo
         this.highScore = this.loadHighScore();
         this.distance = 0;
         this.level = 1;
@@ -35,7 +36,31 @@ export class ScoreSystem {
     }
 
     reset() {
+        // Aggiungi lo score del livello al totale prima di resettare
+        this.totalScore += this.score;
         this.score = 0;
+        this.distance = 0;
+        this.level = 1;
+        this.collectibles = 0;
+        this.multiplier = 1;
+        this.combo = 0;
+        this.comboTimer = 0;
+        this.comboMultiplier = 1.0;
+        this.maxCombo = 0;
+        this.bonusMultiplier = 1.0;
+        this.bonusMultiplierDuration = 0;
+        this.speedMultiplier = 1.0;
+        this.currentSpeed = 0;
+        this.levelStartTime = Date.now();
+        this.levelTimeBonus = [];
+    }
+    
+    /**
+     * Full reset - resetta tutto incluso il punteggio totale (per game over)
+     */
+    fullReset() {
+        this.score = 0;
+        this.totalScore = 0;
         this.distance = 0;
         this.level = 1;
         this.collectibles = 0;
@@ -304,6 +329,10 @@ export class ScoreSystem {
 
     getScore() {
         return Math.floor(this.score);
+    }
+    
+    getTotalScore() {
+        return Math.floor(this.totalScore + this.score);
     }
 
     getHighScore() {

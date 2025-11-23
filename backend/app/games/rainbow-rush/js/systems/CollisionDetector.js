@@ -10,6 +10,7 @@ export class CollisionDetector {
         this.scoreSystem = scoreSystem;
         this.particleSystem = particleSystem;
         this.animationController = animationController;
+        this.levelManager = null; // Will be set from GameController
     }
 
     /**
@@ -58,6 +59,12 @@ export class CollisionDetector {
         // Heart collisions
         this.checkHeartCollisions(entityManager);
 
+        // Shield collisions
+        this.checkShieldCollisions(entityManager);
+
+        // Magnet collisions
+        this.checkMagnetCollisions(entityManager);
+
         // Boost collisions
         this.checkBoostCollisions(entityManager);
 
@@ -93,6 +100,11 @@ export class CollisionDetector {
                 if (!wasGrounded) {
                     this.achievementSystem.recordNormalLanding();
                     this.achievementSystem.checkAchievements();
+                    // Track platform reached for level progress - SOLO per piattaforme del livello (con index)
+                    if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
+                        console.log(`🎯 Landing on platform index: ${platform.index}`);
+                        this.levelManager.recordPlatformReached(platform.index);
+                    }
                 }
                 // Stop checking other platforms once we've landed on one
                 break;
@@ -187,11 +199,31 @@ export class CollisionDetector {
         const collectibles = entityManager.getEntities('collectibles');
         
         for (let i = collectibles.length - 1; i >= 0; i--) {
-            if (this.player.checkCollectibleCollision(collectibles[i])) {
-                const collectible = collectibles[i];
+            const collectible = collectibles[i];
+            
+            // Apply magnet effect if player has magnet powerup
+            if (this.player.hasMagnet && collectible.type === 'collectible') {
+                const dx = this.player.x + this.player.width / 2 - collectible.x;
+                const dy = this.player.y + this.player.height / 2 - collectible.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < this.player.magnetRange && distance > 0) {
+                    // Attract collectible towards player
+                    const attractionSpeed = 8;
+                    collectible.x += (dx / distance) * attractionSpeed;
+                    collectible.y += (dy / distance) * attractionSpeed;
+                }
+            }
+            
+            if (this.player.checkCollectibleCollision(collectible)) {
                 collectibles.splice(i, 1);
                 const points = this.scoreSystem.addCollectible();
                 this.audioManager.playSound('collect');
+                
+                // Track coin collection for level manager
+                if (this.levelManager) {
+                    this.levelManager.recordCoinCollected();
+                }
                 
                 this.achievementSystem.recordCollectible();
                 this.achievementSystem.checkAchievements();
@@ -265,10 +297,97 @@ export class CollisionDetector {
         
         for (let i = hearts.length - 1; i >= 0; i--) {
             if (this.player.checkCollectibleCollision(hearts[i])) {
-                if (this.player.heal(1)) {
-                    hearts.splice(i, 1);
+                // Heal player (returns true if health increased)
+                const healed = this.player.heal(1);
+                
+                // Always remove heart, but only play sound if healed
+                hearts.splice(i, 1);
+                
+                if (healed) {
                     this.audioManager.playSound('powerup');
+                    this.scoreSystem.addPoints(25); // Bonus points for healing
                 }
+            }
+        }
+    }
+
+    /**
+     * Check shield bonus collisions
+     */
+    checkShieldCollisions(entityManager) {
+        const shields = entityManager.getEntities('shieldBonuses');
+        
+        for (let i = shields.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(shields[i])) {
+                const shield = shields[i];
+                shields.splice(i, 1);
+                
+                // Activate shield
+                this.player.hasShield = true;
+                this.player.shieldDuration = 15000; // 15 seconds
+                this.player.shieldStartTime = Date.now();
+                
+                this.scoreSystem.addPoints(75);
+                this.audioManager.playSound('powerup');
+                
+                // Create particles
+                this.particleSystem.createBonusExplosion(shield.x, shield.y, '#00BFFF', 8, entityManager);
+                
+                // Floating text
+                entityManager.addEntity('floatingTexts', {
+                    x: shield.x,
+                    y: shield.y - 30,
+                    text: 'SHIELD!',
+                    color: [0.0, 0.75, 1.0, 1.0],
+                    velocity: { x: 0, y: -50 },
+                    life: 1.0,
+                    maxLife: 1.0,
+                    fadeSpeed: 1.0,
+                    type: 'floatingText'
+                });
+                
+                console.log('🛡️ Shield activated!');
+            }
+        }
+    }
+
+    /**
+     * Check magnet bonus collisions
+     */
+    checkMagnetCollisions(entityManager) {
+        const magnets = entityManager.getEntities('magnetBonuses');
+        
+        for (let i = magnets.length - 1; i >= 0; i--) {
+            if (this.player.checkCollectibleCollision(magnets[i])) {
+                const magnet = magnets[i];
+                magnets.splice(i, 1);
+                
+                // Activate magnet
+                this.player.hasMagnet = true;
+                this.player.magnetDuration = 10000; // 10 seconds
+                this.player.magnetStartTime = Date.now();
+                this.player.magnetRange = 200; // pixels
+                
+                this.scoreSystem.addPoints(75);
+                this.audioManager.playSound('powerup');
+                
+                // Create particles
+                this.particleSystem.createBonusExplosion(magnet.x, magnet.y, '#FFA500', 8, entityManager);
+                
+                // Floating text
+                entityManager.addEntity('floatingTexts', {
+                    x: magnet.x,
+                    y: magnet.y - 30,
+                    text: 'COIN MAGNET!',
+                    color: [1.0, 0.65, 0.0, 1.0],
+                    velocity: { x: 0, y: -50 },
+                    life: 1.0,
+                    maxLife: 1.0,
+                    fadeSpeed: 1.0,
+                    type: 'floatingText'
+                });
+                
+                console.log('🧲 Magnet activated!');
             }
         }
     }

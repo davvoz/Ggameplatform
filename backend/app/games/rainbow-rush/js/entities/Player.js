@@ -35,6 +35,16 @@ export class Player {
         this.shieldDuration = 0;
         this.shieldRotation = 0;
         
+        // Shield and Magnet powerups
+        this.hasShield = false;
+        this.shieldDuration = 0;
+        this.shieldStartTime = 0;
+        
+        this.hasMagnet = false;
+        this.magnetDuration = 0;
+        this.magnetStartTime = 0;
+        this.magnetRange = 200;
+        
         // Boost system
         this.boostActive = false;
         this.boostTimer = 0;
@@ -112,9 +122,9 @@ export class Player {
         this.turboCooldownRemaining = 0;
         this.instantFlightActive = false;
         this.instantFlightDuration = 0;
-        this.turboCooldownDuration = 20; // 20 seconds cooldown
-        this.turboBaseDuration = 5; // Base 5 seconds + level
-        this.turboSpeedMultiplier = 2.5; // 2.5x speed - fast but manageable
+        this.turboCooldownDuration = 12; // 12 secondi cooldown (ridotto da 20)
+        this.turboBaseDuration = 3; // 3 secondi base (ridotto da 5) + level bonus
+        this.turboSpeedMultiplier = 2.0; // 2x speed (ridotto da 2.5x) - più controllabile
         this.turboTrailParticles = [];
         
         // Safety platform state
@@ -127,8 +137,8 @@ export class Player {
         this.flightTimeRemaining = 0;
         this.flightInitialDuration = 0; // Salva la durata totale iniziale
         this.flightCooldownRemaining = 0;
-        this.flightCooldownDuration = 15; // 15 seconds cooldown
-        this.flightBaseDuration = 6; // 6 seconds flight
+        this.flightCooldownDuration = 10; // 10 secondi cooldown (ridotto da 15)
+        this.flightBaseDuration = 4; // 4 secondi flight (ridotto da 6) + level bonus
         this.flightTargetY = 0; // Target Y position per smooth movement
         this.flightStep = 100; // Pixel per step su/giù
         this.flightTrailParticles = [];
@@ -445,6 +455,24 @@ export class Player {
             }
         }
         
+        // Update shield powerup
+        if (this.hasShield) {
+            const elapsed = Date.now() - this.shieldStartTime;
+            if (elapsed >= this.shieldDuration) {
+                this.hasShield = false;
+                console.log('🛡️ Shield expired');
+            }
+        }
+        
+        // Update magnet powerup
+        if (this.hasMagnet) {
+            const elapsed = Date.now() - this.magnetStartTime;
+            if (elapsed >= this.magnetDuration) {
+                this.hasMagnet = false;
+                console.log('🧲 Magnet expired');
+            }
+        }
+        
         // Gestione instant flight bonus - IDENTICO al volo normale
         if (this.instantFlightActive) {
             this.instantFlightDuration -= deltaTime;
@@ -591,6 +619,16 @@ export class Player {
     }
     
     takeDamage(amount = 1) {
+        // Check if player has shield bonus
+        if (this.hasShield) {
+            console.log('🛡️ Shield absorbed damage!');
+            this.hasShield = false;
+            // Visual feedback
+            this.invulnerable = true;
+            this.invulnerabilityTimer = 1.0; // Brief invincibility after shield breaks
+            return false;
+        }
+        
         // Scudo blocca TUTTI i danni
         if (this.shieldActive) return false;
         
@@ -811,7 +849,8 @@ export class Player {
         this.boostComboSpeedBonus = 0;
         this.boostDecelerationTime = 0;
         this.boostPeakVelocity = 0;
-        this.health = this.maxHealth;
+        // NON resettare la salute - i cuori persi restano persi tra i livelli
+        // this.health = this.maxHealth;
         this.invulnerable = false;
         this.invulnerabilityTimer = 0;
         this.damageFlash = 0;

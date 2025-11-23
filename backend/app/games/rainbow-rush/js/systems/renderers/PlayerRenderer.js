@@ -13,9 +13,21 @@ export class PlayerRenderer extends IEntityRenderer {
 
     render(player, context) {
         const { time } = context;
-        const centerX = player.x + player.width / 2;
-        const idleOffset = player.getIdleOffset ? player.getIdleOffset() : 0;
-        const centerY = player.y + player.height / 2 + idleOffset;
+        
+        // Support for victory animation - use animated position if available
+        let centerX, centerY, animScale;
+        if (player.animatedX !== undefined && player.animatedY !== undefined) {
+            // Victory animation mode
+            centerX = player.animatedX;
+            centerY = player.animatedY;
+            animScale = player.animatedScale || 1.0;
+        } else {
+            // Normal gameplay mode
+            const idleOffset = player.getIdleOffset ? player.getIdleOffset() : 0;
+            centerX = player.x + player.width / 2;
+            centerY = player.y + player.height / 2 + idleOffset;
+            animScale = 1.0;
+        }
         
         const squashStretch = player.getSquashStretch ? player.getSquashStretch() : { squash: 0, stretch: 0 };
         const cameraShake = player.getCameraShake ? player.getCameraShake() : { x: 0, y: 0 };
@@ -23,16 +35,15 @@ export class PlayerRenderer extends IEntityRenderer {
         const shakenX = centerX + cameraShake.x;
         const shakenY = centerY + cameraShake.y;
         
-        const baseRadius = player.width / 2;
+        const baseRadius = (player.width / 2) * animScale;
         const radiusX = baseRadius * (1 + squashStretch.squash * 0.1 - squashStretch.stretch * 0.05);
         const radiusY = baseRadius * (1 - squashStretch.squash * 0.1 + squashStretch.stretch * 0.05);
         const avgRadius = (radiusX + radiusY) / 2;
 
-        // Render trail and particles first
-        this.renderTrailParticles(player, cameraShake);
-        this.renderBoostParticles(player, cameraShake);
-        this.renderTurboParticles(player, cameraShake);
-        this.renderFlightParticles(player, cameraShake);
+        // BATCHING: Raccolgo tutte le particelle da renderizzare
+        const particleBatch = this.collectParticleBatch(player, cameraShake);
+        // Render in un unico batch
+        this.renderParticleBatch(particleBatch);
 
         // Damage flash
         if (player.damageFlash && player.damageFlash > 0) {
@@ -69,6 +80,137 @@ export class PlayerRenderer extends IEntityRenderer {
         // Shield
         if (player.shieldActive) {
             this.renderShield(player, time, centerX, centerY, avgRadius);
+        }
+        
+        // Shield bonus effect
+        if (player.hasShield) {
+            this.renderShieldBonus(player, time, centerX, centerY, avgRadius);
+        }
+        
+        // Magnet bonus effect
+        if (player.hasMagnet) {
+            this.renderMagnetBonus(player, time, centerX, centerY);
+        }
+    }
+
+    // BATCHING: Raccolta particelle
+    collectParticleBatch(player, cameraShake) {
+        const batch = [];
+        
+        // Trail particles
+        const trailParticles = player.getTrailParticles ? player.getTrailParticles() : [];
+        for (const particle of trailParticles) {
+            const alpha = particle.life / particle.maxLife;
+            const particleColor = [...particle.color];
+            particleColor[3] = alpha * 0.4;
+            batch.push({
+                x: particle.x + cameraShake.x,
+                y: particle.y + cameraShake.y,
+                radius: 8,
+                color: particleColor,
+                type: 'trail'
+            });
+        }
+        
+        // Boost particles
+        if (player.boostActive && player.getBoostParticles) {
+            const boostParticles = player.getBoostParticles();
+            for (const particle of boostParticles) {
+                const alpha = particle.life / particle.maxLife;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.6;
+                
+                const glowColor = [...particle.color];
+                glowColor[3] = alpha * 0.15;
+                
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: particle.size * 1.5,
+                    color: glowColor,
+                    type: 'boost_glow'
+                });
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: particle.size,
+                    color: particleColor,
+                    type: 'boost'
+                });
+            }
+        }
+        
+        // Turbo particles
+        if (player.isTurboActive && player.getTurboTrailParticles) {
+            const turboParticles = player.getTurboTrailParticles();
+            for (const particle of turboParticles) {
+                const alpha = particle.life;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.5;
+                
+                const glowColor = [1.0, 0.9, 0.3, alpha * 0.2];
+                
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: 10,
+                    color: glowColor,
+                    type: 'turbo_glow'
+                });
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: 6,
+                    color: particleColor,
+                    type: 'turbo'
+                });
+            }
+        }
+        
+        // Flight particles
+        if (player.isFlightActive && player.getFlightTrailParticles) {
+            const flightParticles = player.getFlightTrailParticles();
+            for (const particle of flightParticles) {
+                const alpha = particle.life;
+                const particleColor = [...particle.color];
+                particleColor[3] = alpha * 0.5;
+                
+                const glowColor = [0.3, 0.8, 1.0, alpha * 0.15];
+                
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: 8,
+                    color: glowColor,
+                    type: 'flight_glow'
+                });
+                batch.push({
+                    x: particle.x + cameraShake.x,
+                    y: particle.y + cameraShake.y,
+                    radius: 5,
+                    color: particleColor,
+                    type: 'flight'
+                });
+            }
+        }
+        
+        return batch;
+    }
+    
+    // BATCHING: Rendering batch unico
+    renderParticleBatch(batch) {
+        // Raggruppo per tipo e renderizzo in batch
+        const glowParticles = batch.filter(p => p.type.includes('glow'));
+        const solidParticles = batch.filter(p => !p.type.includes('glow'));
+        
+        // Prima i glow (background)
+        for (const p of glowParticles) {
+            this.renderer.drawCircle(p.x, p.y, p.radius, p.color);
+        }
+        
+        // Poi le particelle solide
+        for (const p of solidParticles) {
+            this.renderer.drawCircle(p.x, p.y, p.radius, p.color);
         }
     }
 
@@ -325,7 +467,7 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderBody(player, x, y, radius) {
-        let bodyColor = this.getBodyColor(player);
+        let bodyColor = [...this.getBodyColor(player)]; // Create a copy to avoid modifying original
         
         if (player.invulnerable) {
             const flicker = Math.floor(Date.now() / 100) % 2;
@@ -362,20 +504,24 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderEyes(player, x, y, radiusY) {
-        const expression = player.getExpression ? player.getExpression() : 'happy';
+        // Get emotion from player (for victory animation)
+        const emotion = player.emotion || 'happy';
+        const emotionIntensity = player.emotionIntensity || 0;
+        
+        const expression = player.getExpression ? player.getExpression() : emotion;
         const isBlinking = player.isEyeBlinking ? player.isEyeBlinking() : false;
         
         const eyeY = y - radiusY * 0.2;
-        const eyeConfig = this.getEyeConfig(expression);
+        const eyeConfig = this.getEyeConfig(expression, emotionIntensity);
 
         if (!isBlinking) {
-            this.renderOpenEyes(x, eyeY, eyeConfig);
+            this.renderOpenEyes(x, eyeY, eyeConfig, emotionIntensity);
         } else {
             this.renderClosedEyes(x, eyeY);
         }
     }
 
-    getEyeConfig(expression) {
+    getEyeConfig(expression, intensity = 0) {
         const configs = {
             'worried': { eyeSize: 7, pupilSize: 4, pupilOffsetX: 0, pupilOffsetY: 2 },
             'excited': { eyeSize: 8, pupilSize: 4, pupilOffsetX: 0, pupilOffsetY: 0 },
@@ -383,28 +529,46 @@ export class PlayerRenderer extends IEntityRenderer {
             'determined': { eyeSize: 5, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -1 },
             'running': { eyeSize: 4, pupilSize: 2, pupilOffsetX: 0, pupilOffsetY: 0 },
             'lookingUp': { eyeSize: 7, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -3 },
-            'happy': { eyeSize: 6, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: 0 }
+            'happy': { 
+                eyeSize: 6 + intensity * 2, // Eyes get bigger with happiness
+                pupilSize: 3 + intensity, 
+                pupilOffsetX: 0, 
+                pupilOffsetY: -intensity * 2 // Eyes look up when very happy
+            }
         };
         return configs[expression] || configs['happy'];
     }
 
-    renderOpenEyes(x, eyeY, config) {
+    renderOpenEyes(x, eyeY, config, intensity = 0) {
         const eyeWhite = [1.0, 1.0, 1.0, 1.0];
         const eyeOutline = [0.0, 0.0, 0.0, 0.4];
         const pupilColor = [0.0, 0.0, 0.0, 1.0];
-        const glintColor = [1.0, 1.0, 1.0, 0.8];
+        
+        // Sparkle effect increases with emotion intensity
+        const glintSize = 1.5 + intensity * 1.5;
+        const glintColor = [1.0, 1.0, 1.0, 0.8 + intensity * 0.2];
 
         // Left eye
         this.renderer.drawCircle(x - 7, eyeY, config.eyeSize + 1, eyeOutline);
         this.renderer.drawCircle(x - 7, eyeY, config.eyeSize, eyeWhite);
         this.renderer.drawCircle(x - 7 + config.pupilOffsetX, eyeY + config.pupilOffsetY, config.pupilSize, pupilColor);
-        this.renderer.drawCircle(x - 8, eyeY - 1, 1.5, glintColor);
+        this.renderer.drawCircle(x - 8, eyeY - 1, glintSize, glintColor);
+        
+        // Extra sparkles when very happy
+        if (intensity > 0.5) {
+            this.renderer.drawCircle(x - 6, eyeY + 1, glintSize * 0.6, glintColor);
+        }
 
         // Right eye
         this.renderer.drawCircle(x + 7, eyeY, config.eyeSize + 1, eyeOutline);
         this.renderer.drawCircle(x + 7, eyeY, config.eyeSize, eyeWhite);
         this.renderer.drawCircle(x + 7 + config.pupilOffsetX, eyeY + config.pupilOffsetY, config.pupilSize, pupilColor);
-        this.renderer.drawCircle(x + 6, eyeY - 1, 1.5, glintColor);
+        this.renderer.drawCircle(x + 6, eyeY - 1, glintSize, glintColor);
+        
+        // Extra sparkles when very happy
+        if (intensity > 0.5) {
+            this.renderer.drawCircle(x + 8, eyeY + 1, glintSize * 0.6, glintColor);
+        }
     }
 
     renderClosedEyes(x, eyeY) {
@@ -416,7 +580,10 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderMouth(player, x, y, radiusY) {
-        const expression = player.getExpression ? player.getExpression() : 'happy';
+        const emotion = player.emotion || 'happy';
+        const emotionIntensity = player.emotionIntensity || 0;
+        
+        const expression = player.getExpression ? player.getExpression() : emotion;
         const mouthY = y + radiusY * 0.4;
         const mouthColor = [0.0, 0.0, 0.0, 0.7];
 
@@ -440,18 +607,23 @@ export class PlayerRenderer extends IEntityRenderer {
                 this.renderLookingUpMouth(x, mouthY, mouthColor);
                 break;
             default:
-                this.renderHappyMouth(x, mouthY, mouthColor);
+                this.renderHappyMouth(x, mouthY, mouthColor, emotionIntensity);
         }
     }
 
-    renderHappyMouth(x, y, color) {
-        for (let i = 0; i < 7; i++) {
-            const t = i / 6;
+    renderHappyMouth(x, y, color, intensity = 0) {
+        // Bigger, more curved smile with higher intensity
+        const points = 7 + Math.floor(intensity * 3); // More points = smoother smile
+        const smileRadius = 8 + intensity * 4; // Wider smile
+        const curvature = 0.6 + intensity * 0.3; // More pronounced curve
+        const pointSize = 1.5 + intensity * 0.5; // Bigger dots
+        
+        for (let i = 0; i < points; i++) {
+            const t = i / (points - 1);
             const angle = Math.PI * 0.2 + (t * Math.PI * 0.6);
-            const smileRadius = 8;
             const sx = x + Math.cos(angle) * smileRadius;
-            const sy = y + Math.sin(angle) * smileRadius * 0.6;
-            this.renderer.drawCircle(sx, sy, 1.5, color);
+            const sy = y + Math.sin(angle) * smileRadius * curvature;
+            this.renderer.drawCircle(sx, sy, pointSize, color);
         }
     }
 
@@ -655,4 +827,40 @@ export class PlayerRenderer extends IEntityRenderer {
             this.renderer.drawCircle(sx, sy, 2.5, [1.0, 1.0, 1.0, 0.7 * shieldPulse]); // Ridotto size e opacità
         }
     }
+    
+    renderShieldBonus(player, time, x, y, avgRadius) {
+        const shieldAlpha = 0.3 + Math.sin(time * 5) * 0.2;
+        const shieldRadius = avgRadius + 8;
+        
+        // Outer glow
+        this.renderer.drawCircle(x, y, shieldRadius + 4, [0.0, 0.75, 1.0, shieldAlpha * 0.3]);
+        
+        // Shield circle
+        this.renderer.drawCircle(x, y, shieldRadius, [0.0, 0.75, 1.0, shieldAlpha]);
+        
+        // Inner highlight
+        this.renderer.drawCircle(x, y, shieldRadius - 2, [0.5, 0.9, 1.0, shieldAlpha * 0.5]);
+    }
+    
+    renderMagnetBonus(player, time, x, y) {
+        const magnetAlpha = 0.2 + Math.sin(time * 4) * 0.15;
+        const range = player.magnetRange || 200;
+        
+        // Attraction range visualization
+        for (let i = 0; i < 3; i++) {
+            const radius = range * (1 - i * 0.3);
+            const alpha = magnetAlpha * (1 - i * 0.3);
+            this.renderer.drawCircle(x, y, radius, [1.0, 0.65, 0.0, alpha]);
+        }
+        
+        // Rotating sparkles
+        for (let i = 0; i < 6; i++) {
+            const angle = (time * 2 + i * Math.PI / 3);
+            const dist = range * 0.8;
+            const sx = x + Math.cos(angle) * dist;
+            const sy = y + Math.sin(angle) * dist;
+            this.renderer.drawCircle(sx, sy, 4, [1.0, 0.8, 0.0, magnetAlpha * 2]);
+        }
+    }
 }
+

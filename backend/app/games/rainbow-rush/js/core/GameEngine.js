@@ -45,19 +45,32 @@ export class GameEngine {
     }
 
     resizeCanvas() {
-        // Mobile-like aspect ratio on desktop, full screen on mobile
+        // Uniform responsive sizing with aspect ratio preservation
         const isMobile = window.innerWidth <= 768;
+        const TARGET_ASPECT_RATIO = 9 / 16; // Portrait aspect ratio (width/height)
         
         let targetWidth, targetHeight;
         
         if (isMobile) {
-            // Full screen on mobile
+            // Full screen on mobile, respecting aspect ratio
             targetWidth = window.innerWidth;
             targetHeight = window.innerHeight;
         } else {
-            // Fixed mobile-like dimensions on desktop
-            targetWidth = Math.min(450, window.innerWidth);
-            targetHeight = Math.min(800, window.innerHeight);
+            // Desktop: maintain consistent aspect ratio with flexible sizing
+            // Use a comfortable portrait size that scales with window
+            const maxWidth = Math.min(500, window.innerWidth * 0.9);
+            const maxHeight = Math.min(900, window.innerHeight * 0.95);
+            
+            // Calculate dimensions maintaining aspect ratio
+            if (maxWidth / maxHeight > TARGET_ASPECT_RATIO) {
+                // Height is limiting factor
+                targetHeight = maxHeight;
+                targetWidth = targetHeight * TARGET_ASPECT_RATIO;
+            } else {
+                // Width is limiting factor
+                targetWidth = maxWidth;
+                targetHeight = targetWidth / TARGET_ASPECT_RATIO;
+            }
         }
         
         // DON'T use DPR for canvas dimensions - use logical pixels only

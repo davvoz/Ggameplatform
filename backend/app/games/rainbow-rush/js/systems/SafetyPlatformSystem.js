@@ -71,16 +71,17 @@ export class SafetyPlatformSystem {
     }
 
     initialize(canvasDimensions) {
-
+        // Use centralized UI positioning to ensure consistency
+        const positions = calculateUIPositions(canvasDimensions.width, canvasDimensions.height);
+        const platformWidth = positions.safetyPlatform.width;
         
         this.platform = {
-            x: 20 ,
-            y: canvasDimensions.height ,
-            width: this.config.PLATFORM_WIDTH/2,
+            x: positions.safetyPlatform.getX(platformWidth),
+            y: positions.safetyPlatform.y,
+            width: platformWidth,
             height: this.config.PLATFORM_HEIGHT,
             color: [...this.config.COLOR_READY],
             type: 'safety-platform'
-
         };
     }
 
@@ -533,6 +534,6 @@ export class SafetyPlatformSystem {
         this.isRecharging = false;
         this.rechargeAnimProgress = 0;
         this.chargesBeforeRecharge = 0;
-        this.initialize();
+        this.initialize(this.dims);
     }
 }

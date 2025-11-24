@@ -49,6 +49,17 @@ export class WebGLRenderer {
             throw new Error('Shader program failed to link: ' + gl.getProgramInfoLog(program));
         }
         
+        // OPTIMIZATION: Cache attribute and uniform locations
+        this.locations = {
+            position: gl.getAttribLocation(program, 'aPosition'),
+            color: gl.getAttribLocation(program, 'aColor'),
+            resolution: gl.getUniformLocation(program, 'uResolution')
+        };
+        
+        // Enable program and set resolution once
+        gl.useProgram(program);
+        gl.uniform2f(this.locations.resolution, gl.canvas.width, gl.canvas.height);
+        
         return program;
     }
 
@@ -63,6 +74,15 @@ export class WebGLRenderer {
         }
         
         return shader;
+    }
+
+    /**
+     * Update resolution uniform when canvas size changes
+     */
+    updateResolution() {
+        const gl = this.gl;
+        gl.useProgram(this.shaderProgram);
+        gl.uniform2f(this.locations.resolution, gl.canvas.width, gl.canvas.height);
     }
 
     drawRect(x, y, width, height, color) {
@@ -85,14 +105,17 @@ export class WebGLRenderer {
         this.draw(positions, colors, gl.TRIANGLES);
     }
 
-    drawCircle(x, y, radius, color, segments = 32) {
+    drawCircle(x, y, radius, color, segments = 16) { // Ridotto da 32 a 16 per performance
         const gl = this.gl;
         const positions = [];
         const colors = [];
         
-        for (let i = 0; i < segments; i++) {
-            const angle1 = (i / segments) * Math.PI * 2;
-            const angle2 = ((i + 1) / segments) * Math.PI * 2;
+        // OPTIMIZATION: Usa meno segmenti per cerchi piccoli
+        const actualSegments = radius < 10 ? Math.max(8, segments / 2) : segments;
+        
+        for (let i = 0; i < actualSegments; i++) {
+            const angle1 = (i / actualSegments) * Math.PI * 2;
+            const angle2 = ((i + 1) / actualSegments) * Math.PI * 2;
             
             positions.push(x, y);
             positions.push(x + Math.cos(angle1) * radius, y + Math.sin(angle1) * radius);
@@ -138,27 +161,23 @@ export class WebGLRenderer {
     draw(positions, colors, mode) {
         const gl = this.gl;
         
+        // CRITICAL: Must enable program for each draw to ensure correct state
         gl.useProgram(this.shaderProgram);
         
-        // Position buffer
+        // Position buffer - OPTIMIZED: Use cached location
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
         gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(this.locations.position);
+        gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
         
-        const positionLocation = gl.getAttribLocation(this.shaderProgram, 'aPosition');
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-        
-        // Color buffer
+        // Color buffer - OPTIMIZED: Use cached location
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.color);
         gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(this.locations.color);
+        gl.vertexAttribPointer(this.locations.color, 4, gl.FLOAT, false, 0, 0);
         
-        const colorLocation = gl.getAttribLocation(this.shaderProgram, 'aColor');
-        gl.enableVertexAttribArray(colorLocation);
-        gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
-        
-        // Resolution uniform
-        const resolutionLocation = gl.getUniformLocation(this.shaderProgram, 'uResolution');
-        gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+        // CRITICAL: Update resolution uniform every draw to handle canvas resize
+        gl.uniform2f(this.locations.resolution, gl.canvas.width, gl.canvas.height);
         
         gl.drawArrays(mode, 0, positions.length / 2);
     }

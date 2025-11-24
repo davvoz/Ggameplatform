@@ -55,12 +55,23 @@ export class PlayerRenderer extends IEntityRenderer {
             return;
         }
 
-        // Power-up effects
+        // LAYER 1: Effetti bonus SOTTO il player (shield, magnet)
+        if (player.shieldActive) {
+            this.renderShield(player, time, centerX, centerY, avgRadius);
+        }
+        if (player.hasShield) {
+            this.renderShieldBonus(player, time, centerX, centerY, avgRadius);
+        }
+        if (player.hasMagnet) {
+            this.renderMagnetBonus(player, time, centerX, centerY);
+        }
+        
+        // LAYER 2: Power-up effects sotto il player
         this.renderTurboEffects(player, time, shakenX, shakenY, avgRadius);
         this.renderPowerupEffects(player, time, shakenX, shakenY, avgRadius);
         this.renderBoostEffect(player, time, shakenX, shakenY, avgRadius);
 
-        // Player body
+        // LAYER 3: Player body (SEMPRE VISIBILE SOPRA)
         this.renderBody(player, shakenX, shakenY, avgRadius);
         
         // Face
@@ -75,21 +86,6 @@ export class PlayerRenderer extends IEntityRenderer {
         // Circular progress bar per instant flight
         if (player.instantFlightActive && player.instantFlightDuration > 0) {
             this.renderInstantFlightProgress(player, centerX, centerY, avgRadius);
-        }
-
-        // Shield
-        if (player.shieldActive) {
-            this.renderShield(player, time, centerX, centerY, avgRadius);
-        }
-        
-        // Shield bonus effect
-        if (player.hasShield) {
-            this.renderShieldBonus(player, time, centerX, centerY, avgRadius);
-        }
-        
-        // Magnet bonus effect
-        if (player.hasMagnet) {
-            this.renderMagnetBonus(player, time, centerX, centerY);
         }
     }
 
@@ -473,7 +469,11 @@ export class PlayerRenderer extends IEntityRenderer {
             const flicker = Math.floor(Date.now() / 100) % 2;
             if (flicker === 0) {
                 bodyColor[3] = 0.4;
+            } else {
+                bodyColor[3] = 1.0; // Ripristina opacità completa
             }
+        } else {
+            bodyColor[3] = 1.0; // Assicura opacità completa quando non invulnerabile
         }
 
         const size = player.width;
@@ -785,18 +785,19 @@ export class PlayerRenderer extends IEntityRenderer {
     }
 
     renderShield(player, time, x, y, radius) {
-        const shieldRadius = radius * 1.7; // Ridotto da 2
-        const shieldPulse = Math.sin(player.animationTime * 8) * 0.1 + 0.9; // Ridotto range
-        const sides = 8;
+        const shieldRadius = radius * 1.7;
+        const shieldPulse = Math.sin(player.animationTime * 4) * 0.12 + 0.88; // Rallentato
+        const electricPulse = Math.sin(time * 10) * 0.5 + 0.5; // Rallentato da 15 a 10
+        const sides = 6;
         
-        // Outer auras - RIDOTTE drasticamente
-        for (let i = 0; i < 2; i++) { // Solo 2 invece di 3
-            const auraRadius = shieldRadius * (1.2 + i * 0.2) * shieldPulse; // Ridotto
-            const auraColor = [0.0, 1.0, 0.5, (0.15 - i * 0.05) * shieldPulse]; // Ridotto opacità
-            this.renderer.drawCircle(x, y, auraRadius, auraColor);
+        // Alone esterno RIDOTTO (solo 2 cerchi invece di 3)
+        for (let i = 0; i < 2; i++) {
+            const auraRadius = shieldRadius * (1.2 + i * 0.2) * shieldPulse;
+            const auraAlpha = (0.15 - i * 0.05) * shieldPulse;
+            this.renderer.drawCircle(x, y, auraRadius, [0.0, 0.9, 1.0, auraAlpha]);
         }
         
-        // Hexagon - più definito
+        // Hexagon SEMPLIFICATO (meno dettagli)
         for (let i = 0; i < sides; i++) {
             const angle1 = (Math.PI * 2 * i) / sides + player.shieldRotation;
             const angle2 = (Math.PI * 2 * (i + 1)) / sides + player.shieldRotation;
@@ -806,26 +807,35 @@ export class PlayerRenderer extends IEntityRenderer {
             const x2 = x + Math.cos(angle2) * shieldRadius * shieldPulse;
             const y2 = y + Math.sin(angle2) * shieldRadius * shieldPulse;
             
-            const shieldColor = [0.0, 1.0, 0.7, 0.65]; // Ridotto opacità da 0.8
-            this.renderer.drawCircle(x1, y1, 3.5, shieldColor); // Ridotto da 4
+            // Vertici elettrici
+            const electricColor = [0.3 + electricPulse * 0.5, 1.0, 1.0, 0.7];
+            this.renderer.drawCircle(x1, y1, 3.5, electricColor);
             
-            const steps = 4; // Ridotto da 5
+            // Linee RIDOTTE (3 punti invece di 6)
+            const steps = 3;
             for (let s = 0; s <= steps; s++) {
                 const t = s / steps;
                 const px = x1 + (x2 - x1) * t;
                 const py = y1 + (y2 - y1) * t;
-                this.renderer.drawCircle(px, py, 1.8, shieldColor); // Ridotto da 2
+                this.renderer.drawCircle(px, py, 2, [0.0, 0.85, 1.0, 0.6]);
             }
         }
         
-        // Sparkles - RIDOTTE
-        for (let i = 0; i < 8; i++) { // Ridotto da 12 a 8
-            const sparkAngle = (Math.PI * 2 * i) / 8 + player.shieldRotation * 2;
+        // Fulmini RIDOTTI (solo su 3 vertici alternati invece di 6)
+        for (let i = 0; i < sides; i += 2) {
+            const sparkAngle = (Math.PI * 2 * i) / sides + player.shieldRotation * 1.5;
             const sparkDist = shieldRadius * shieldPulse;
             const sx = x + Math.cos(sparkAngle) * sparkDist;
             const sy = y + Math.sin(sparkAngle) * sparkDist;
-            this.renderer.drawCircle(sx, sy, 2.5, [1.0, 1.0, 1.0, 0.7 * shieldPulse]); // Ridotto size e opacità
+            
+            if (electricPulse > 0.75) {
+                this.renderer.drawCircle(sx, sy, 3, [1.0, 1.0, 1.0, electricPulse * 0.8]);
+            }
         }
+        
+        // Centro SEMPLIFICATO (2 cerchi invece di 3)
+        this.renderer.drawCircle(x, y, radius * 0.5, [0.0, 0.85, 1.0, 0.5]);
+        this.renderer.drawCircle(x, y, radius * 0.3, [0.5, 1.0, 1.0, 0.7]);
     }
     
     renderShieldBonus(player, time, x, y, avgRadius) {
@@ -843,23 +853,39 @@ export class PlayerRenderer extends IEntityRenderer {
     }
     
     renderMagnetBonus(player, time, x, y) {
-        const magnetAlpha = 0.2 + Math.sin(time * 4) * 0.15;
+        const magnetAlpha = 0.2 + Math.sin(time * 2.5) * 0.12; // Rallentato
         const range = player.magnetRange || 200;
+        const rotationSpeed = time * 1.2; // Rallentato
         
-        // Attraction range visualization
+        // Cerchi concentrici RIDOTTI (3 invece di 4)
         for (let i = 0; i < 3; i++) {
-            const radius = range * (1 - i * 0.3);
-            const alpha = magnetAlpha * (1 - i * 0.3);
-            this.renderer.drawCircle(x, y, radius, [1.0, 0.65, 0.0, alpha]);
+            const radius = range * (1 - i * 0.33);
+            const alpha = magnetAlpha * (1 - i * 0.33);
+            const pulseOffset = Math.sin(time * 3 - i * 0.6) * 0.08;
+            this.renderer.drawCircle(x, y, radius * (1 + pulseOffset), [1.0, 0.5, 0.0, alpha]);
         }
         
-        // Rotating sparkles
+        // Particelle orbitanti RIDOTTE (6 invece di 8)
         for (let i = 0; i < 6; i++) {
-            const angle = (time * 2 + i * Math.PI / 3);
-            const dist = range * 0.8;
-            const sx = x + Math.cos(angle) * dist;
-            const sy = y + Math.sin(angle) * dist;
-            this.renderer.drawCircle(sx, sy, 4, [1.0, 0.8, 0.0, magnetAlpha * 2]);
+            const angle = (rotationSpeed + i * Math.PI / 3);
+            const orbitRadius = range * 0.7 + Math.sin(time * 4 + i) * 12;
+            const sx = x + Math.cos(angle) * orbitRadius;
+            const sy = y + Math.sin(angle) * orbitRadius;
+            const size = 3 + Math.sin(time * 5 + i) * 1;
+            this.renderer.drawCircle(sx, sy, size, [1.0, 0.8, 0.2, magnetAlpha * 2]);
+        }
+        
+        // Frecce RIDOTTE (4 invece di 8)
+        for (let i = 0; i < 4; i++) {
+            const arrowAngle = (Math.PI * 2 * i) / 4;
+            const arrowDist = range * 0.85;
+            const ax = x + Math.cos(arrowAngle) * arrowDist;
+            const ay = y + Math.sin(arrowAngle) * arrowDist;
+            
+            const arrowSize = 5;
+            const tipX = ax + Math.cos(arrowAngle + Math.PI) * arrowSize;
+            const tipY = ay + Math.sin(arrowAngle + Math.PI) * arrowSize;
+            this.renderer.drawCircle(tipX, tipY, 2.5, [1.0, 0.9, 0.3, magnetAlpha * 1.3]);
         }
     }
 }

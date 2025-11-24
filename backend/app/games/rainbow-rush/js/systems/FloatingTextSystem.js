@@ -199,25 +199,14 @@ export class FloatingTextSystem {
     }
     
     renderCooldownNumber(number, x, y, color, pulse) {
-        // Piccolo badge elegante con il numero
-        const size = 18; // Molto più piccolo!
+        // Semplificato - solo cerchio singolo con numero
+        const size = 16;
         const radius = size * pulse;
         
-        // Sfondo scuro
-        const bgColor = [0.1, 0.1, 0.15, 0.85];
-        this.renderer.drawCircle(x, y, radius * 1.4, bgColor);
-        
-        // Cerchio colorato
+        // Singolo cerchio colorato
         const mainColor = [...color];
-        mainColor[3] = 0.9;
+        mainColor[3] = 0.85;
         this.renderer.drawCircle(x, y, radius, mainColor);
-        
-        // Centro bianco
-        const innerColor = [1.0, 1.0, 1.0, 0.95];
-        this.renderer.drawCircle(x, y, radius * 0.55, innerColor);
-        
-        // Numero rappresentato con pallini (molto più piccoli)
-        this.renderNumberBars(number, x, y, color, radius * 0.7);
     }
     
     renderNumberBars(number, x, y, color, size) {
@@ -236,58 +225,9 @@ export class FloatingTextSystem {
     }
     
     renderText(text, x, y, color, fontSize, scale = 1.0) {
-        const scaledSize = fontSize * scale;
-        
-        // Badge GIGANTE per il floating text
-        const width = scaledSize * 2;
-        const height = scaledSize * 1.5;
-        const startX = x - width / 2;
-        const startY = y - height / 2;
-        
-        //console.log('RENDERING FLOATING TEXT:', text, 'at', startX, startY, 'size:', width, 'x', height);
-        
-        // Sfondo NERO SOLIDO molto visibile
-        const bgColor = [0.0, 0.0, 0.0, 0.95 * color[3]];
-        const padding = 20;
-        this.renderer.drawRect(startX - padding, startY - padding, width + padding * 2, height + padding * 2, bgColor);
-        
-        // Bordo ENORME colorato brillante
-        const borderColor = [...color];
-        borderColor[3] = 1.0;
-        const borderW = 8;
-        
-        // Bordi spessi
-        this.renderer.drawRect(startX - padding, startY - padding, width + padding * 2, borderW, borderColor);
-        this.renderer.drawRect(startX - padding, startY + height + padding - borderW, width + padding * 2, borderW, borderColor);
-        this.renderer.drawRect(startX - padding, startY - padding, borderW, height + padding * 2, borderColor);
-        this.renderer.drawRect(startX + width + padding - borderW, startY - padding, borderW, height + padding * 2, borderColor);
-        
-        // Riempimento colorato BRILLANTE
-        const fillColor = [...color];
-        fillColor[3] = 1.0;
-        this.renderer.drawRect(startX, startY, width, height, fillColor);
-        
-        // Highlight bianco
-        const highlightColor = [1.0, 1.0, 1.0, 0.6 * color[3]];
-        this.renderer.drawRect(startX, startY, width, height * 0.3, highlightColor);
-        
-        // Icone ENORMI
-        const iconRadius = height * 0.4;
-        const iconY = startY + height * 0.5;
-        
-        if (text.includes('⭐') || text.includes('IMMORTALE')) {
-            const iconColor = [1.0, 0.9, 0.2, 1.0];
-            this.renderer.drawCircle(startX - padding - iconRadius, iconY, iconRadius, iconColor);
-            this.renderer.drawCircle(startX + width + padding + iconRadius, iconY, iconRadius, iconColor);
-        } else if (text.includes('🪶') || text.includes('VOLO')) {
-            const iconColor = [0.5, 0.9, 1.0, 1.0];
-            this.renderer.drawCircle(startX - padding - iconRadius, iconY, iconRadius, iconColor);
-            this.renderer.drawCircle(startX + width + padding + iconRadius, iconY, iconRadius, iconColor);
-        } else if (text.includes('⚡') || text.includes('SUPER')) {
-            const iconColor = [1.0, 0.4, 0.7, 1.0];
-            this.renderer.drawCircle(startX - padding - iconRadius, iconY, iconRadius, iconColor);
-            this.renderer.drawCircle(startX + width + padding + iconRadius, iconY, iconRadius, iconColor);
-        }
+        // DISABLED - testi flottanti completamente disabilitati per performance
+        // Vengono gestiti solo i badge power-up essenziali tramite Canvas 2D
+        return;
     }
     
     addFloatingText(text, x, y, color, duration = 2.0) {

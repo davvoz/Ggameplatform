@@ -323,7 +323,6 @@ export class PowerupUIRenderer {
             return;
         }
         
-        console.log('Drawing cooldown arc:', { x, y, radius, progress });
         
         // Convert color array to CSS rgba
         const r = Math.floor(color[0] * 255);

@@ -28,9 +28,12 @@ export class LevelProgressBar {
     
     update(deltaTime, platformCounter, platformsPerLevel, currentLevel) {
         // Aggiorna livelli
-        if (currentLevel !== undefined) {
+        if (currentLevel !== undefined && currentLevel !== this.currentLevel) {
+            // Nuovo livello - reset animProgress
             this.currentLevel = currentLevel;
             this.nextLevel = currentLevel + 1;
+            this.animProgress = 0;
+            this.targetProgress = 0;
         }
         
         // Calcola progresso target (0.0 a 1.0)

@@ -27,12 +27,12 @@ export class EntityManager {
         this.boostParticles = [];
         this.floatingTexts = [];
         
-        // Performance limits - Aggressive optimization
-        this.MAX_POWERUP_PARTICLES = 80; // Ridotto da 150
-        this.MAX_BOOST_PARTICLES = 50;   // Ridotto da 100
-        this.MAX_FLOATING_TEXTS = 10;    // Ridotto da 20
-        this.MAX_RAINBOW_PARTICLES = 10; // Nuovo limite per rainbow trails
-        this.MAX_BOOST_TRAIL = 6;        // Nuovo limite per boost trails
+        // Performance limits - ULTRA aggressive optimization
+        this.MAX_POWERUP_PARTICLES = 30; // Ridotto drasticamente
+        this.MAX_BOOST_PARTICLES = 20;   // Ridotto drasticamente
+        this.MAX_FLOATING_TEXTS = 3;     // Ridotto drasticamente
+        this.MAX_RAINBOW_PARTICLES = 5;  // Ridotto per rainbow trails
+        this.MAX_BOOST_TRAIL = 3;        // Ridotto per boost trails
     }
 
     /**
@@ -107,9 +107,17 @@ export class EntityManager {
      * Update all entities based on their type
      */
     updateAll(deltaTime, cameraSpeed, player) {
-        // Aggressive particle cleanup - remove nearly dead particles
-        this.powerupParticles = this.powerupParticles.filter(p => p.life > 0.05);
-        this.boostParticles = this.boostParticles.filter(p => p.life > 0.05);
+        // ULTRA aggressive particle cleanup - remove particles early
+        this.powerupParticles = this.powerupParticles.filter(p => p.life > 0.15);
+        this.boostParticles = this.boostParticles.filter(p => p.life > 0.15);
+        
+        // Hard cap enforcement
+        if (this.powerupParticles.length > this.MAX_POWERUP_PARTICLES) {
+            this.powerupParticles.splice(0, this.powerupParticles.length - this.MAX_POWERUP_PARTICLES);
+        }
+        if (this.boostParticles.length > this.MAX_BOOST_PARTICLES) {
+            this.boostParticles.splice(0, this.boostParticles.length - this.MAX_BOOST_PARTICLES);
+        }
         
         // Update platforms with special logic for crumbling, spring, icy types
         this.platforms = this.platforms.filter(platform => 

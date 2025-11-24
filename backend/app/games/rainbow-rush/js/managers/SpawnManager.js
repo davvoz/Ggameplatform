@@ -55,6 +55,7 @@ export class SpawnManager {
 
     /**
      * Update platform spawning logic
+     * OPTIMIZED: Reduced visibility check frequency
      */
     updatePlatformSpawning(deltaTime, scoreSystem) {
         this.platformTimer += deltaTime;
@@ -64,8 +65,8 @@ export class SpawnManager {
             this.spawnPlatform(scoreSystem);
             this.platformTimer = 0;
         } else {
-            // Emergency check to ensure minimum 3 platforms (only every 0.5s)
-            if (this.platformTimer % 0.5 < deltaTime) {
+            // OPTIMIZED: Emergency check less frequently (only every 1s instead of 0.5s)
+            if (this.platformTimer % 1.0 < deltaTime) {
                 const visibleCount = this.entityManager.getVisiblePlatformCount(this.dims.width);
 
                 // Emergency spawn if less than 3 visible platforms

@@ -21,6 +21,10 @@ export class LevelSelectScreen {
         this.cellSize = 70;
         this.cellSpacing = 10;
         
+        // Layout constants
+        this.topBarHeight = 100;
+        this.navButtonsHeight = 75;
+        
         // Scrolling
         this.scrollOffset = 0;
         this.targetScrollOffset = 0;
@@ -85,56 +89,39 @@ export class LevelSelectScreen {
     }
     
     /**
-     * Crea pulsanti
+     * Crea pulsanti - SAME LOGIC AS LevelSummaryScreen
      */
     createButtons() {
-        const margin = 20;
-        
-        // Pulsante Back
+        // Buttons will be positioned in render() based on panel coordinates
+        // This just initializes the button structure
         this.buttons.back = {
-            x: margin,
-            y: margin,
-            width: 80,
-            height: 40,
             label: '← Back',
             color: [0.6, 0.6, 0.7, 1.0],
             hoverColor: [0.7, 0.7, 0.8, 1.0]
         };
         
-        // Pulsanti paginazione
         this.buttons.pageUp = {
-            x: margin,
-            y: this.canvasHeight - margin - 40,
-            width: 120,
-            height: 40,
-            label: '⬆ Previous',
+            label: '⬅ Previous',
             color: [0.5, 0.5, 0.6, 1.0],
             hoverColor: [0.6, 0.6, 0.7, 1.0],
             enabled: this.currentPage > 0
         };
         
         this.buttons.pageDown = {
-            x: this.canvasWidth - margin - 120,
-            y: this.canvasHeight - margin - 40,
-            width: 120,
-            height: 40,
-            label: 'Next ⬇',
+            label: 'Next ➡',
             color: [0.5, 0.5, 0.6, 1.0],
             hoverColor: [0.6, 0.6, 0.7, 1.0],
             enabled: this.currentPage < this.totalPages - 1
         };
         
-        // Pulsante Play (solo se livello selezionato)
         if (this.selectedLevel) {
             this.buttons.play = {
-                x: this.canvasWidth / 2 - 100,
-                y: this.canvasHeight - margin - 60,
-                width: 200,
-                height: 50,
                 label: '▶ Play Level ' + this.selectedLevel,
                 color: [0.2, 0.8, 0.3, 1.0],
                 hoverColor: [0.3, 0.9, 0.4, 1.0]
             };
+        } else {
+            this.buttons.play = null;
         }
     }
     
@@ -189,18 +176,31 @@ export class LevelSelectScreen {
     }
     
     /**
-     * Calcola posizione cella
+     * Calcola posizione cella - uses panel coordinates
      */
     getCellPosition(levelIndex) {
         const row = Math.floor(levelIndex / this.levelsPerRow);
         const col = levelIndex % this.levelsPerRow;
         
-        const startX = (this.canvasWidth - (this.levelsPerRow * (this.cellSize + this.cellSpacing))) / 2;
-        const startY = 140; // Aumentato margine superiore
+        // Use stored panel coordinates if available
+        if (!this.panelX || !this.panelWidth) {
+            const totalGridWidth = this.levelsPerRow * (this.cellSize + this.cellSpacing) - this.cellSpacing;
+            const startX = (this.canvasWidth - totalGridWidth) / 2;
+            const startY = 100;
+            return {
+                x: startX + col * (this.cellSize + this.cellSpacing),
+                y: startY + row * (this.cellSize + this.cellSpacing)
+            };
+        }
+        
+        // Calculate positions within panel
+        const totalGridWidth = this.levelsPerRow * (this.cellSize + this.cellSpacing) - this.cellSpacing;
+        const gridX = this.panelX + (this.panelWidth - totalGridWidth) / 2;
+        const gridStartY = this.panelY + 100;
         
         return {
-            x: startX + col * (this.cellSize + this.cellSpacing),
-            y: startY + row * (this.cellSize + this.cellSpacing) + this.scrollOffset
+            x: gridX + col * (this.cellSize + this.cellSpacing),
+            y: gridStartY + row * (this.cellSize + this.cellSpacing) + this.scrollOffset
         };
     }
     
@@ -293,48 +293,96 @@ export class LevelSelectScreen {
             return;
         }
         
-        // Background overlay with gradient
-        const bgGradient = ctx.createRadialGradient(canvasWidth / 2, canvasHeight / 2, 0, canvasWidth / 2, canvasHeight / 2, canvasWidth);
-        bgGradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
-        bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-        ctx.fillStyle = bgGradient;
+        // Dark overlay with gradient - SAME AS LevelSummaryScreen
+        const gradient = ctx.createRadialGradient(canvasWidth / 2, canvasHeight / 2, 0, canvasWidth / 2, canvasHeight / 2, canvasWidth);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.85)');
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         
-        // Top bar with gradient
-        const topBarHeight = 100;
-        const topBarGradient = ctx.createLinearGradient(0, 0, 0, topBarHeight);
-        topBarGradient.addColorStop(0, 'rgba(102, 126, 234, 0.95)');
-        topBarGradient.addColorStop(1, 'rgba(118, 75, 162, 0.95)');
+        // Panel with shadow and gradient
+        const panelWidth = Math.min(420, canvasWidth * 0.85);
+        const panelHeight = canvasHeight * 0.85;
+        const panelX = (canvasWidth - panelWidth) / 2;
+        const panelY = (canvasHeight - panelHeight) / 2;
+        
+        // Store panel coordinates for click detection
+        this.panelX = panelX;
+        this.panelY = panelY;
+        this.panelWidth = panelWidth;
+        this.panelHeight = panelHeight;
+        
+        // Panel gradient background (NO outer glow to avoid overflow)
+        ctx.shadowBlur = 0;
+        const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
+        panelGradient.addColorStop(0, '#ffffff');
+        panelGradient.addColorStop(1, '#f0f8ff');
+        ctx.fillStyle = panelGradient;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
+        ctx.fill();
+        
+        // Border accent with gradient
+        const borderGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + panelHeight);
+        borderGradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+        borderGradient.addColorStop(0.5, 'rgba(118, 75, 162, 0.4)');
+        borderGradient.addColorStop(1, 'rgba(102, 126, 234, 0.4)');
+        ctx.strokeStyle = borderGradient;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
+        ctx.stroke();
+        
+        // Decorative top bar
+        const topBarGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + 80);
+        topBarGradient.addColorStop(0, 'rgba(102, 126, 234, 0.25)');
+        topBarGradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
         ctx.fillStyle = topBarGradient;
-        ctx.fillRect(0, 0, canvasWidth, topBarHeight);
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, 80, [30, 30, 0, 0]);
+        ctx.fill();
         
-        // Top bar shine effect
-        const shineGradient = ctx.createLinearGradient(0, 0, 0, topBarHeight / 2);
-        shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-        shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = shineGradient;
-        ctx.fillRect(0, 0, canvasWidth, topBarHeight / 2);
-        
-        // Title with rainbow gradient and shadow
+        // Title with rainbow gradient
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 3;
-        
-        const titleGradient = ctx.createLinearGradient(0, 50, canvasWidth, 50);
-        titleGradient.addColorStop(0, '#FFD700');
-        titleGradient.addColorStop(0.5, '#FFA500');
-        titleGradient.addColorStop(1, '#FFD700');
+        const titleGradient = ctx.createLinearGradient(panelX, panelY + 40, panelX + panelWidth, panelY + 40);
+        titleGradient.addColorStop(0, '#ff0080');
+        titleGradient.addColorStop(0.2, '#ff7f00');
+        titleGradient.addColorStop(0.4, '#ffff00');
+        titleGradient.addColorStop(0.6, '#00ff00');
+        titleGradient.addColorStop(0.8, '#0080ff');
+        titleGradient.addColorStop(1, '#8000ff');
         ctx.fillStyle = titleGradient;
         ctx.font = 'bold 32px Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('🎮 Select Level', canvasWidth / 2, 55);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText('🎮 Select Level', canvasWidth / 2, panelY + 45);
         ctx.restore();
         
-        // Level grid with enhanced styling
+        // Subtitle
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 14px Arial';
+        ctx.shadowColor = 'transparent';
+        ctx.fillText(`Page ${this.currentPage + 1} / ${this.totalPages}`, canvasWidth / 2, panelY + 70);
+        
+        // Level grid area
+        const gridStartY = panelY + 100;
+        const gridHeight = panelHeight - 230; // Reserve space for buttons at bottom
+        
         const levels = this.getLevelsForCurrentPage();
         levels.forEach((levelId, index) => {
-            const pos = this.getCellPosition(index);
+            const row = Math.floor(index / this.levelsPerRow);
+            const col = index % this.levelsPerRow;
+            
+            // Center grid in panel
+            const totalGridWidth = this.levelsPerRow * (this.cellSize + this.cellSpacing) - this.cellSpacing;
+            const gridX = panelX + (panelWidth - totalGridWidth) / 2;
+            
+            const posX = gridX + col * (this.cellSize + this.cellSpacing);
+            const posY = gridStartY + row * (this.cellSize + this.cellSpacing);
+            
             const unlocked = this.isLevelUnlocked(levelId);
             const stars = this.getLevelStars(levelId);
             const isSelected = levelId === this.selectedLevel;
@@ -342,48 +390,48 @@ export class LevelSelectScreen {
             
             // Cell shadow for depth
             if (unlocked) {
-                ctx.shadowColor = isHovered ? 'rgba(102, 126, 234, 0.6)' : 'rgba(0, 0, 0, 0.3)';
-                ctx.shadowBlur = isHovered ? 20 : 10;
-                ctx.shadowOffsetY = isHovered ? 6 : 4;
+                ctx.shadowColor = isHovered ? 'rgba(102, 126, 234, 0.6)' : 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = isHovered ? 15 : 8;
+                ctx.shadowOffsetY = isHovered ? 4 : 2;
             }
             
             // Cell background gradient
             let cellGradient;
             if (!unlocked) {
-                cellGradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + this.cellSize);
-                cellGradient.addColorStop(0, 'rgba(80, 80, 80, 0.6)');
-                cellGradient.addColorStop(1, 'rgba(60, 60, 60, 0.8)');
+                cellGradient = ctx.createLinearGradient(posX, posY, posX, posY + this.cellSize);
+                cellGradient.addColorStop(0, 'rgba(200, 200, 200, 0.4)');
+                cellGradient.addColorStop(1, 'rgba(180, 180, 180, 0.6)');
             } else if (isSelected) {
-                cellGradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + this.cellSize);
-                cellGradient.addColorStop(0, 'rgba(255, 215, 0, 0.95)');
-                cellGradient.addColorStop(1, 'rgba(255, 165, 0, 0.95)');
+                cellGradient = ctx.createLinearGradient(posX, posY, posX, posY + this.cellSize);
+                cellGradient.addColorStop(0, '#FFD700');
+                cellGradient.addColorStop(1, '#FFA500');
             } else if (isHovered) {
-                cellGradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + this.cellSize);
-                cellGradient.addColorStop(0, 'rgba(102, 200, 255, 0.95)');
-                cellGradient.addColorStop(1, 'rgba(102, 126, 234, 0.95)');
+                cellGradient = ctx.createLinearGradient(posX, posY, posX, posY + this.cellSize);
+                cellGradient.addColorStop(0, 'rgba(102, 200, 255, 0.9)');
+                cellGradient.addColorStop(1, 'rgba(102, 126, 234, 0.9)');
             } else {
-                cellGradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + this.cellSize);
-                cellGradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-                cellGradient.addColorStop(1, 'rgba(240, 248, 255, 0.95)');
+                cellGradient = ctx.createLinearGradient(posX, posY, posX, posY + this.cellSize);
+                cellGradient.addColorStop(0, '#ffffff');
+                cellGradient.addColorStop(1, '#f5f5f5');
             }
             
             ctx.fillStyle = cellGradient;
             ctx.beginPath();
-            ctx.roundRect(pos.x, pos.y, this.cellSize, this.cellSize, 12);
+            ctx.roundRect(posX, posY, this.cellSize, this.cellSize, 12);
             ctx.fill();
             
             // Cell border
             if (unlocked) {
-                ctx.strokeStyle = isSelected ? 'rgba(255, 215, 0, 0.8)' : 
-                                isHovered ? 'rgba(102, 126, 234, 0.8)' : 
-                                'rgba(200, 200, 200, 0.5)';
-                ctx.lineWidth = isSelected ? 4 : isHovered ? 3 : 2;
+                ctx.strokeStyle = isSelected ? '#FFD700' : 
+                                isHovered ? '#667eea' : 
+                                'rgba(200, 200, 200, 0.6)';
+                ctx.lineWidth = isSelected ? 3 : isHovered ? 2.5 : 2;
             } else {
-                ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+                ctx.strokeStyle = 'rgba(180, 180, 180, 0.5)';
                 ctx.lineWidth = 2;
             }
             ctx.beginPath();
-            ctx.roundRect(pos.x, pos.y, this.cellSize, this.cellSize, 12);
+            ctx.roundRect(posX, posY, this.cellSize, this.cellSize, 12);
             ctx.stroke();
             
             // Reset shadow
@@ -391,14 +439,14 @@ export class LevelSelectScreen {
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
             
-            // Level number with color coding
+            // Level number
             if (unlocked) {
                 if (isSelected) {
                     ctx.fillStyle = 'white';
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                     ctx.shadowBlur = 4;
                 } else {
-                    const numGradient = ctx.createLinearGradient(pos.x, pos.y, pos.x + this.cellSize, pos.y + this.cellSize);
+                    const numGradient = ctx.createLinearGradient(posX, posY, posX + this.cellSize, posY + this.cellSize);
                     numGradient.addColorStop(0, '#667eea');
                     numGradient.addColorStop(1, '#764ba2');
                     ctx.fillStyle = numGradient;
@@ -407,175 +455,140 @@ export class LevelSelectScreen {
                 ctx.fillStyle = '#999';
             }
             
-            ctx.font = 'bold 28px Arial';
+            ctx.font = 'bold 26px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(levelId.toString(), pos.x + this.cellSize / 2, pos.y + this.cellSize / 2 - 8);
+            ctx.fillText(levelId.toString(), posX + this.cellSize / 2, posY + this.cellSize / 2 - 6);
             
             ctx.shadowBlur = 0;
             
             // Stars display
             if (stars > 0) {
-                ctx.font = '18px Arial';
+                ctx.font = '16px Arial';
                 ctx.textBaseline = 'bottom';
-                
-                // Star background
-                const starBgWidth = stars * 20;
-                const starBgX = pos.x + (this.cellSize - starBgWidth) / 2;
-                const starBgY = pos.y + this.cellSize - 25;
-                
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-                ctx.beginPath();
-                ctx.roundRect(starBgX - 4, starBgY - 2, starBgWidth + 8, 24, 12);
-                ctx.fill();
-                
-                // Stars
                 const starText = '⭐'.repeat(stars);
-                const starGradient = ctx.createLinearGradient(
-                    pos.x, 
-                    pos.y + this.cellSize - 15, 
-                    pos.x + this.cellSize, 
-                    pos.y + this.cellSize - 15
-                );
+                const starGradient = ctx.createLinearGradient(posX, posY + this.cellSize - 12, posX + this.cellSize, posY + this.cellSize - 12);
                 starGradient.addColorStop(0, '#FFD700');
-                starGradient.addColorStop(0.5, '#FFA500');
-                starGradient.addColorStop(1, '#FFD700');
+                starGradient.addColorStop(1, '#FFA500');
                 ctx.fillStyle = starGradient;
-                ctx.shadowColor = 'rgba(255, 165, 0, 0.5)';
-                ctx.shadowBlur = 4;
-                ctx.fillText(starText, pos.x + this.cellSize / 2, pos.y + this.cellSize - 8);
+                ctx.shadowColor = 'rgba(255, 165, 0, 0.4)';
+                ctx.shadowBlur = 3;
+                ctx.fillText(starText, posX + this.cellSize / 2, posY + this.cellSize - 6);
                 ctx.shadowBlur = 0;
             }
             
-            // Lock icon for locked levels
+            // Lock icon
             if (!unlocked) {
-                ctx.font = '24px Arial';
-                ctx.fillStyle = 'rgba(150, 150, 150, 0.8)';
+                ctx.font = '22px Arial';
+                ctx.fillStyle = 'rgba(120, 120, 120, 0.8)';
                 ctx.textBaseline = 'bottom';
-                ctx.fillText('🔒', pos.x + this.cellSize / 2, pos.y + this.cellSize - 8);
+                ctx.fillText('🔒', posX + this.cellSize / 2, posY + this.cellSize - 6);
             }
         });
         
         ctx.textBaseline = 'alphabetic';
+        ctx.shadowBlur = 0;
         
-        // Page indicator with modern design
-        const pageIndicatorY = canvasHeight - 60;
-        const pageText = `Page ${this.currentPage + 1} / ${this.totalPages}`;
+        // Buttons at bottom of panel - same style as LevelSummaryScreen
+        this.renderButtons(ctx, canvasWidth, canvasHeight, panelX, panelY, panelWidth, panelHeight);
+    }
+    
+    /**
+     * Render buttons at bottom of panel - calculates and STORES positions
+     */
+    renderButtons(ctx, canvasWidth, canvasHeight, panelX, panelY, panelWidth, panelHeight) {
+        const isMobile = canvasWidth < 600;
+        const buttonWidth = isMobile ? Math.min(140, panelWidth * 0.4) : 150;
+        const buttonHeight = isMobile ? 45 : 50;
+        const spacing = isMobile ? 10 : 15;
         
-        // Background for page indicator
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // Buttons at bottom of panel (like LevelSummaryScreen)
+        const buttonY = panelY + panelHeight - buttonHeight - 25;
+        
+        // Previous button (left side)
+        this.buttons.pageUp.x = panelX + (panelWidth / 2) - buttonWidth - spacing / 2;
+        this.buttons.pageUp.y = buttonY;
+        this.buttons.pageUp.width = buttonWidth;
+        this.buttons.pageUp.height = buttonHeight;
+        
+        // Next button (right side)
+        this.buttons.pageDown.x = panelX + (panelWidth / 2) + spacing / 2;
+        this.buttons.pageDown.y = buttonY;
+        this.buttons.pageDown.width = buttonWidth;
+        this.buttons.pageDown.height = buttonHeight;
+        
+        // Play button (above navigation if level selected)
+        if (this.selectedLevel && this.buttons.play) {
+            const playButtonWidth = Math.min(200, panelWidth * 0.7);
+            const playButtonHeight = buttonHeight + 10;
+            const playButtonY = buttonY - playButtonHeight - 15;
+            
+            this.buttons.play.x = panelX + (panelWidth - playButtonWidth) / 2;
+            this.buttons.play.y = playButtonY;
+            this.buttons.play.width = playButtonWidth;
+            this.buttons.play.height = playButtonHeight;
+            
+            this.drawButton(ctx, this.buttons.play, this.buttons.play.color, this.buttons.play.hoverColor);
+        }
+        
+        // Back button (top left of panel)
+        this.buttons.back.x = panelX + 15;
+        this.buttons.back.y = panelY + 15;
+        this.buttons.back.width = 80;
+        this.buttons.back.height = 40;
+        
+        // Draw all buttons
+        this.drawButton(ctx, this.buttons.back, this.buttons.back.color, this.buttons.back.hoverColor);
+        
+        const prevEnabled = this.buttons.pageUp.enabled;
+        const prevColor = prevEnabled ? this.buttons.pageUp.color : [0.5, 0.5, 0.5, 0.5];
+        const prevHover = prevEnabled ? this.buttons.pageUp.hoverColor : [0.5, 0.5, 0.5, 0.5];
+        this.drawButton(ctx, this.buttons.pageUp, prevColor, prevHover);
+        
+        const nextEnabled = this.buttons.pageDown.enabled;
+        const nextColor = nextEnabled ? this.buttons.pageDown.color : [0.5, 0.5, 0.5, 0.5];
+        const nextHover = nextEnabled ? this.buttons.pageDown.hoverColor : [0.5, 0.5, 0.5, 0.5];
+        this.drawButton(ctx, this.buttons.pageDown, nextColor, nextHover);
+    }
+    
+    /**
+     * Draw button with LevelSummaryScreen style
+     */
+    drawButton(ctx, button, color, hoverColor) {
+        const isHovered = false; // TODO: Add hover detection
+        const btnColor = isHovered ? hoverColor : color;
+        
+        // Button shadow
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+        
+        // Button gradient background
+        const gradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+        gradient.addColorStop(0, `rgba(${btnColor[0] * 255}, ${btnColor[1] * 255}, ${btnColor[2] * 255}, ${btnColor[3]})`);
+        gradient.addColorStop(1, `rgba(${btnColor[0] * 200}, ${btnColor[1] * 200}, ${btnColor[2] * 200}, ${btnColor[3]})`);
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.roundRect(canvasWidth / 2 - 80, pageIndicatorY - 20, 160, 40, 20);
+        ctx.roundRect(button.x, button.y, button.width, button.height, button.height / 4);
         ctx.fill();
         
+        // Button border
+        ctx.strokeStyle = `rgba(${btnColor[0] * 255}, ${btnColor[1] * 255}, ${btnColor[2] * 255}, 0.8)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+        
+        // Button text
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = `bold ${Math.floor(button.height * 0.35)}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText(pageText, canvasWidth / 2, pageIndicatorY + 5);
-        
-        // Render back button with modern style
-        if (this.buttons.back) {
-            const btn = this.buttons.back;
-            
-            // Button background
-            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
-            btnGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-            btnGradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
-            ctx.fillStyle = btnGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 20);
-            ctx.fill();
-            
-            // Button border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Button text
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5);
-        }
-        
-        // Render pagination buttons
-        if (this.buttons.pageUp) {
-            const btn = this.buttons.pageUp;
-            const enabled = btn.enabled;
-            
-            // Button background
-            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
-            btnGradient.addColorStop(0, enabled ? 'rgba(102, 126, 234, 0.8)' : 'rgba(100, 100, 100, 0.5)');
-            btnGradient.addColorStop(1, enabled ? 'rgba(118, 75, 162, 0.8)' : 'rgba(80, 80, 80, 0.5)');
-            ctx.fillStyle = btnGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 20);
-            ctx.fill();
-            
-            // Button border
-            ctx.strokeStyle = enabled ? 'rgba(255, 255, 255, 0.6)' : 'rgba(150, 150, 150, 0.4)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Button text
-            ctx.fillStyle = enabled ? 'white' : 'rgba(200, 200, 200, 0.6)';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5);
-        }
-        
-        if (this.buttons.pageDown) {
-            const btn = this.buttons.pageDown;
-            const enabled = btn.enabled;
-            
-            // Button background
-            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
-            btnGradient.addColorStop(0, enabled ? 'rgba(102, 126, 234, 0.8)' : 'rgba(100, 100, 100, 0.5)');
-            btnGradient.addColorStop(1, enabled ? 'rgba(118, 75, 162, 0.8)' : 'rgba(80, 80, 80, 0.5)');
-            ctx.fillStyle = btnGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 20);
-            ctx.fill();
-            
-            // Button border
-            ctx.strokeStyle = enabled ? 'rgba(255, 255, 255, 0.6)' : 'rgba(150, 150, 150, 0.4)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Button text
-            ctx.fillStyle = enabled ? 'white' : 'rgba(200, 200, 200, 0.6)';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5);
-        }
-        
-        // Render play button if level selected
-        if (this.buttons.play && this.selectedLevel) {
-            const btn = this.buttons.play;
-            
-            // Button background
-            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
-            btnGradient.addColorStop(0, 'rgba(46, 213, 115, 0.95)');
-            btnGradient.addColorStop(1, 'rgba(39, 174, 96, 0.95)');
-            ctx.fillStyle = btnGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 25);
-            ctx.fill();
-            
-            // Button border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // Button text
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'center';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 4;
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6);
-            ctx.shadowBlur = 0;
-        }
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 3;
+        ctx.fillText(button.label, button.x + button.width / 2, button.y + button.height / 2);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
     
     /**

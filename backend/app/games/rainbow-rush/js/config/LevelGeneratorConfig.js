@@ -29,97 +29,102 @@ export const DifficultyConfig = {
 
     EASY: {
         tier: 'easy',
-        platformCount: { min: 25, max: 40 },
-        platformWidth: { min: 220, max: 260 },
-        platformSpacing: { min: 110, max: 140 },
-        enemyCount: { min: 5, max: 12 },
+        platformCount: { min: 50, max: 80 },        // Più del doppio!
+        platformWidth: { min: 200, max: 280 },
+        platformSpacing: { min: 90, max: 130 },     // Più ravvicinati
+        enemyCount: { min: 8, max: 18 },
         enemySafetyZone: 3,
 
-        powerupFrequency: 0.045,
-        shieldFrequency: 0.035,
-        magnetFrequency: 0.035,
-        healthFrequency: 0.14,
+        powerupFrequency: 0.05,                      // Più powerup
+        shieldFrequency: 0.04,
+        magnetFrequency: 0.04,
+        healthFrequency: 0.15,
+        boostFrequency: 0.06,                        // Più boost per dinamismo
 
-        healthPerLevel: { min: 2, max: 4 },
-        coinFrequency: 0.32,
+        healthPerLevel: { min: 3, max: 5 },
+        coinFrequency: 0.35,                         // Più monete
 
-        parTime: { threeStars: 35, twoStars: 50, oneStar: 75 }
+        parTime: { threeStars: 50, twoStars: 75, oneStar: 110 }
     },
 
     NORMAL: {
         tier: 'normal',
-        platformCount: { min: 40, max: 60 },
-        platformWidth: { min: 180, max: 220 },
-        platformSpacing: { min: 100, max: 130 },
-        enemyCount: { min: 15, max: 25 },
+        platformCount: { min: 80, max: 120 },       // Triplo!
+        platformWidth: { min: 160, max: 240 },
+        platformSpacing: { min: 80, max: 120 },
+        enemyCount: { min: 20, max: 35 },
         enemySafetyZone: 3,
 
-        powerupFrequency: 0.04,
-        shieldFrequency: 0.04,
-        magnetFrequency: 0.04,
-        healthFrequency: 0.12,
+        powerupFrequency: 0.045,
+        shieldFrequency: 0.045,
+        magnetFrequency: 0.045,
+        healthFrequency: 0.13,
+        boostFrequency: 0.07,
 
-        healthPerLevel: { min: 3, max: 5 },
-        coinFrequency: 0.26,
+        healthPerLevel: { min: 4, max: 6 },
+        coinFrequency: 0.30,
 
-        parTime: { threeStars: 40, twoStars: 60, oneStar: 90 }
+        parTime: { threeStars: 60, twoStars: 90, oneStar: 130 }
     },
 
     HARD: {
         tier: 'hard',
-        platformCount: { min: 60, max: 85 },
-        platformWidth: { min: 150, max: 200 },
-        platformSpacing: { min: 70, max: 100 },
-        enemyCount: { min: 25, max: 40 },
+        platformCount: { min: 120, max: 180 },      // Molto più lungo!
+        platformWidth: { min: 140, max: 210 },
+        platformSpacing: { min: 70, max: 110 },
+        enemyCount: { min: 35, max: 55 },
         enemySafetyZone: 3,
 
-        powerupFrequency: 0.035,
-        shieldFrequency: 0.05,
-        magnetFrequency: 0.035,
-        healthFrequency: 0.15,
+        powerupFrequency: 0.04,
+        shieldFrequency: 0.055,
+        magnetFrequency: 0.04,
+        healthFrequency: 0.16,
+        boostFrequency: 0.065,
 
-        healthPerLevel: { min: 4, max: 6 },
-        coinFrequency: 0.21,
+        healthPerLevel: { min: 5, max: 8 },
+        coinFrequency: 0.25,
 
-        parTime: { threeStars: 30, twoStars: 50, oneStar: 75 }
+        parTime: { threeStars: 70, twoStars: 105, oneStar: 150 }
     },
 
     EXPERT: {
         tier: 'expert',
-        platformCount: { min: 80, max: 120 },
-        platformWidth: { min: 120, max: 180 },
-        platformSpacing: { min: 60, max: 90 },
-        enemyCount: { min: 40, max: 60 },
+        platformCount: { min: 180, max: 250 },      // Livelli epici!
+        platformWidth: { min: 120, max: 190 },
+        platformSpacing: { min: 60, max: 100 },
+        enemyCount: { min: 50, max: 80 },
         enemySafetyZone: 2,
 
-        powerupFrequency: 0.03,
-        shieldFrequency: 0.055,
-        magnetFrequency: 0.04,
-        healthFrequency: 0.16,
+        powerupFrequency: 0.035,
+        shieldFrequency: 0.06,
+        magnetFrequency: 0.045,
+        healthFrequency: 0.17,
+        boostFrequency: 0.06,
 
-        healthPerLevel: { min: 5, max: 8 },
-        coinFrequency: 0.18,
+        healthPerLevel: { min: 6, max: 10 },
+        coinFrequency: 0.22,
 
-        parTime: { threeStars: 35, twoStars: 55, oneStar: 85 }
+        parTime: { threeStars: 85, twoStars: 125, oneStar: 180 }
     },
 
     MASTER: {
         tier: 'master',
-        platformCount: { min: 100, max: 150 },
-        platformWidth: { min: 100, max: 160 },
-        platformSpacing: { min: 50, max: 80 },
-        enemyCount: { min: 60, max: 90 },
+        platformCount: { min: 250, max: 350 },      // Livelli MASTODONTICI!
+        platformWidth: { min: 100, max: 170 },
+        platformSpacing: { min: 50, max: 90 },
+        enemyCount: { min: 80, max: 120 },
         enemySafetyZone: 3,
 
-        powerupFrequency: 0.025,
-        shieldFrequency: 0.06,
-        magnetFrequency: 0.045,
-        healthFrequency: 0.17,
+        powerupFrequency: 0.03,
+        shieldFrequency: 0.065,
+        magnetFrequency: 0.05,
+        healthFrequency: 0.18,
+        boostFrequency: 0.055,
 
-        healthPerLevel: { min: 6, max: 10 },
-        coinFrequency: 0.16,
+        healthPerLevel: { min: 8, max: 12 },
+        coinFrequency: 0.20,
 
-        parTime: { threeStars: 40, twoStars: 65, oneStar: 100 }
+        parTime: { threeStars: 100, twoStars: 150, oneStar: 220 }
     }
 
 
@@ -158,7 +163,17 @@ export const PlatformPatterns = {
     NARROW: 'narrow',
     BOUNCY: 'bouncy',
     ICY: 'icy',
-    CRUMBLING: 'crumbling'
+    CRUMBLING: 'crumbling',
+    WAVE: 'wave',              // Onda sinusoidale
+    SPIRAL_UP: 'spiral_up',    // Spirale verso l'alto
+    SPIRAL_DOWN: 'spiral_down',// Spirale verso il basso
+    PLATFORM_MAZE: 'maze',     // Labirinto di piattaforme
+    VERTICAL_TOWER: 'tower',   // Torre verticale
+    SNAKE: 'snake',            // Serpente
+    DOUBLE_HELIX: 'helix',     // Doppia elica
+    SCATTERED: 'scattered',    // Piattaforme sparse
+    BRIDGE: 'bridge',          // Ponte lungo
+    PYRAMID: 'pyramid'         // Piramide
 };
 
 /**

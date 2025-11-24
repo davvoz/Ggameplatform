@@ -77,81 +77,83 @@ export class LevelSummaryScreen {
      * Crea pulsanti interattivi
      */
     createButtons() {
-        const centerX = this.canvasWidth / 2;
-        const isMobile = this.canvasWidth < 600;
+        // Initialize button structure with labels and colors only
+        // Positions will be calculated in updateButtonPositions()
+        this.buttons = {
+            nextLevel: null,
+            retry: {
+                label: 'Retry',
+                color: [0.9, 0.6, 0.2, 1.0],
+                hoverColor: [1.0, 0.7, 0.3, 1.0],
+                action: 'retry',
+                x: 0, y: 0, width: 0, height: 0  // Initialize with default values
+            },
+            menu: {
+                label: 'Menu',
+                color: [0.6, 0.6, 0.7, 1.0],
+                hoverColor: [0.7, 0.7, 0.8, 1.0],
+                action: 'menu',
+                x: 0, y: 0, width: 0, height: 0  // Initialize with default values
+            }
+        };
         
-        // Dimensioni responsive
-        const buttonWidth = isMobile ? Math.min(160, this.canvasWidth * 0.35) : 180;
-        const buttonHeight = isMobile ? 45 : 50;
-        const spacing = isMobile ? 15 : 20;
-        
-        // Posizione Y responsive - più in basso su mobile
-        const buttonY = isMobile ? this.canvasHeight * 0.72 : this.canvasHeight * 0.75;
-        
-        // Pulsante Next Level (solo se non è l'ultimo)
+        // Add Next Level button if available
         if (this.summary.nextLevelId) {
             this.buttons.nextLevel = {
-                x: centerX - buttonWidth / 2,
-                y: buttonY,
-                width: buttonWidth,
-                height: buttonHeight,
                 label: 'Next Level',
                 color: [0.2, 0.8, 0.3, 1.0],
                 hoverColor: [0.3, 0.9, 0.4, 1.0],
-                action: 'next'
+                action: 'next',
+                x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             };
+        }
+        
+        // Calculate initial positions
+        this.updateButtonPositions(this.canvasWidth, this.canvasHeight);
+    }
+
+    /**
+     * Update button positions based on canvas dimensions
+     */
+    updateButtonPositions(canvasWidth, canvasHeight) {
+        const centerX = canvasWidth / 2;
+        const isMobile = canvasWidth < 600;
+        const buttonWidth = isMobile ? Math.min(160, canvasWidth * 0.35) : 180;
+        const buttonHeight = isMobile ? 45 : 50;
+        const spacing = isMobile ? 15 : 20;
+        const buttonY = isMobile ? canvasHeight * 0.72 : canvasHeight * 0.75;
+
+        // Update button positions based on layout
+        if (this.buttons.nextLevel) {
+            // Next Level button centered at top
+            this.buttons.nextLevel.x = centerX - buttonWidth / 2;
+            this.buttons.nextLevel.y = buttonY;
+            this.buttons.nextLevel.width = buttonWidth;
+            this.buttons.nextLevel.height = buttonHeight;
             
-            // Quando c'è Next Level, Retry e Menu vanno sotto in riga
+            // Retry and Menu buttons below in a row
             const smallButtonWidth = (buttonWidth * 2 + spacing) / 2;
             
-            this.buttons.retry = {
-                x: centerX - smallButtonWidth - spacing / 2,
-                y: buttonY + buttonHeight + spacing,
-                width: smallButtonWidth,
-                height: buttonHeight * 0.8,
-                label: 'Retry',
-                color: [0.9, 0.6, 0.2, 1.0],
-                hoverColor: [1.0, 0.7, 0.3, 1.0],
-                action: 'retry'
-            };
+            this.buttons.retry.x = centerX - smallButtonWidth - spacing / 2;
+            this.buttons.retry.y = buttonY + buttonHeight + spacing;
+            this.buttons.retry.width = smallButtonWidth;
+            this.buttons.retry.height = buttonHeight * 0.8;
             
-            this.buttons.menu = {
-                x: centerX + spacing / 2,
-                y: buttonY + buttonHeight + spacing,
-                width: smallButtonWidth,
-                height: buttonHeight * 0.8,
-                label: 'Menu',
-                color: [0.6, 0.6, 0.7, 1.0],
-                hoverColor: [0.7, 0.7, 0.8, 1.0],
-                action: 'menu'
-            };
+            this.buttons.menu.x = centerX + spacing / 2;
+            this.buttons.menu.y = buttonY + buttonHeight + spacing;
+            this.buttons.menu.width = smallButtonWidth;
+            this.buttons.menu.height = buttonHeight * 0.8;
         } else {
-            // Nessun Next Level - Retry e Menu affiancati
-            this.buttons.nextLevel = null;
+            // No Next Level - Retry and Menu side by side
+            this.buttons.retry.x = centerX - buttonWidth - spacing / 2;
+            this.buttons.retry.y = buttonY;
+            this.buttons.retry.width = buttonWidth;
+            this.buttons.retry.height = buttonHeight;
             
-            const buttonHalfWidth = buttonWidth;
-            
-            this.buttons.retry = {
-                x: centerX - buttonHalfWidth - spacing / 2,
-                y: buttonY,
-                width: buttonHalfWidth,
-                height: buttonHeight,
-                label: 'Retry',
-                color: [0.9, 0.6, 0.2, 1.0],
-                hoverColor: [1.0, 0.7, 0.3, 1.0],
-                action: 'retry'
-            };
-            
-            this.buttons.menu = {
-                x: centerX + spacing / 2,
-                y: buttonY,
-                width: buttonHalfWidth,
-                height: buttonHeight,
-                label: 'Menu',
-                color: [0.6, 0.6, 0.7, 1.0],
-                hoverColor: [0.7, 0.7, 0.8, 1.0],
-                action: 'menu'
-            };
+            this.buttons.menu.x = centerX + spacing / 2;
+            this.buttons.menu.y = buttonY;
+            this.buttons.menu.width = buttonWidth;
+            this.buttons.menu.height = buttonHeight;
         }
     }
     
@@ -305,8 +307,8 @@ export class LevelSummaryScreen {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         
         // Panel with shadow and gradient
-        const panelWidth = Math.min(500, canvasWidth * 0.9);
-        const panelHeight = Math.min(700, canvasHeight * 0.85);
+        const panelWidth = Math.min(420, canvasWidth * 0.85);
+        const panelHeight = canvasHeight * 0.85;
         const panelX = (canvasWidth - panelWidth) / 2;
         const panelY = (canvasHeight - panelHeight) / 2;
         
@@ -543,6 +545,9 @@ export class LevelSummaryScreen {
             ctx.fillText(stat.value, cardX + iconSize + 28, cardY + 58);
         });
         
+        // Update button positions with current canvas dimensions
+        this.updateButtonPositions(canvasWidth, canvasHeight);
+
         // Buttons with enhanced design
         const buttonsStartY = panelY + panelHeight - 150;
         

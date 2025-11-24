@@ -111,6 +111,7 @@ export class CollisionDetector {
 
     /**
      * Check obstacle collisions with near-miss detection
+     * OPTIMIZED: Spatial early exit
      */
     checkObstacleCollisions(entityManager) {
         const obstacles = entityManager.getEntities('obstacles');
@@ -122,6 +123,11 @@ export class CollisionDetector {
             const obstacleLeft = obstacle.x;
             const obstacleTop = obstacle.y;
             const obstacleBottom = obstacle.y + obstacle.height;
+            
+            // Early rejection - skip if too far horizontally
+            if (obstacle.x > playerRight + 100 || obstacle.x + obstacle.width < this.player.x - 50) {
+                continue;
+            }
             
             // Near miss if passes within 15px of obstacle
             if (playerRight > obstacleLeft - 15 && 
@@ -199,12 +205,20 @@ export class CollisionDetector {
 
     /**
      * Check collectible collisions
+     * OPTIMIZED: Early exit se troppo distanti
      */
     checkCollectibleCollisions(entityManager) {
         const collectibles = entityManager.getEntities('collectibles');
+        const playerCenterX = this.player.x + this.player.width / 2;
+        const playerCenterY = this.player.y + this.player.height / 2;
         
         for (let i = collectibles.length - 1; i >= 0; i--) {
             const collectible = collectibles[i];
+            
+            // Early rejection - skip if too far away (Manhattan distance)
+            const dx = Math.abs(collectible.x - playerCenterX);
+            const dy = Math.abs(collectible.y - playerCenterY);
+            if (dx > 150 || dy > 150) continue;
             
             // Apply magnet effect if player has magnet powerup
             if (this.player.hasMagnet && collectible.type === 'collectible') {

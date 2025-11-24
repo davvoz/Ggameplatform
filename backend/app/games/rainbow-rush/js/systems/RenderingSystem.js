@@ -23,14 +23,19 @@ export class RenderingSystem {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         
-        // Canvas 2D per testo
+        // Canvas 2D per testo - deve avere le STESSE dimensioni del gameCanvas
         this.textCanvas = document.getElementById('textCanvas');
-        if (this.textCanvas) {
-            this.textCanvas.width = canvasWidth;
-            this.textCanvas.height = canvasHeight;
+        const gameCanvas = document.getElementById('gameCanvas');
+        
+        if (this.textCanvas && gameCanvas) {
+            // Copia le stesse dimensioni del gameCanvas (sia internal che CSS)
+            this.textCanvas.width = gameCanvas.width;
+            this.textCanvas.height = gameCanvas.height;
+            this.textCanvas.style.width = gameCanvas.style.width;
+            this.textCanvas.style.height = gameCanvas.style.height;
             this.textCtx = this.textCanvas.getContext('2d');
         } else {
-            console.error('RenderingSystem: textCanvas not found!');
+            console.error('RenderingSystem: textCanvas or gameCanvas not found!');
         }
         
         // Debug log
@@ -52,16 +57,15 @@ export class RenderingSystem {
         this.currentScore = 0;
         this.currentLevel = 1;
         this.isPaused = false;
-        
-        // UI Screens
-        this.levelSummaryScreen = null;
-        this.levelSelectScreen = null;
     }
 
     // Setter methods for game state
-    setBackground(layers, particles) {
+    setBackground(layers, particles, backgroundColor) {
         this.backgroundLayers = layers;
         this.backgroundParticles = particles;
+        if (backgroundColor && this.backgroundRenderer) {
+            this.backgroundRenderer.setBackgroundColor(backgroundColor);
+        }
     }
 
     setPowerupTimers(timers) {
@@ -116,14 +120,6 @@ export class RenderingSystem {
         this.levelProgressBar = progressBar;
     }
     
-    setLevelSummaryScreen(screen) {
-        this.levelSummaryScreen = screen;
-    }
-    
-    setLevelSelectScreen(screen) {
-        this.levelSelectScreen = screen;
-    }
-    
     setScore(score) {
         this.currentScore = score;
     }
@@ -155,30 +151,6 @@ export class RenderingSystem {
         };
 
         const context = this._buildRenderContext(gameState);
-        
-        // Se la schermata di selezione livelli è visibile, renderizza SOLO quella
-        if (this.levelSelectScreen && this.levelSelectScreen.visible) {
-            // Pulisci lo schermo con un colore di sfondo
-            gl.clearColor(0.53, 0.81, 0.92, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            
-            // Renderizza SOLO la schermata di selezione
-            this.levelSelectScreen.render(this.textCtx, this.canvasWidth, this.canvasHeight);
-            return; // Non renderizzare altro
-        }
-        
-        // Se la schermata sommario livello è visibile, renderizza SOLO quella
-        if (this.levelSummaryScreen && this.levelSummaryScreen.visible) {
-            // Renderizza il gioco sotto (congelato)
-            this.backgroundRenderer.backgroundLayers = this.backgroundLayers || [];
-            this.backgroundRenderer.backgroundParticles = this.backgroundParticles || [];
-            this.backgroundRenderer.render(context.time);
-            this._renderEntities(gameState, context);
-            
-            // Renderizza la schermata sommario sopra
-            this.levelSummaryScreen.render(this.textCtx, this.canvasWidth, this.canvasHeight);
-            return;
-        }
         
         // Rendering normale del gioco
         // 1. Background (layers, particles, ambient)
@@ -224,18 +196,26 @@ export class RenderingSystem {
         const particles = [];
         let player = null;
         
-        // Viewport culling bounds
-        const leftBound = -100;
-        const rightBound = this.canvasWidth + 100;
+        // AGGRESSIVE viewport culling bounds - più stretti
+        const leftBound = -50;
+        const rightBound = this.canvasWidth + 50;
+        const topBound = -50;
+        const bottomBound = this.canvasHeight + 50;
         
         entities.forEach(entity => {
             if (!entity || !entity.type) return;
             
             // Skip offscreen entities for performance (except player)
             const x = entity.x || 0;
-            const width = entity.width || entity.radius * 2 || 0;
-            if (entity.type !== 'player' && (x + width < leftBound || x > rightBound)) {
-                return;
+            const y = entity.y || 0;
+            const width = entity.width || (entity.radius ? entity.radius * 2 : 0);
+            const height = entity.height || (entity.radius ? entity.radius * 2 : 0);
+            
+            if (entity.type !== 'player') {
+                if (x + width < leftBound || x > rightBound || 
+                    y + height < topBound || y > bottomBound) {
+                    return;
+                }
             }
             
             // Categorize by type
@@ -264,30 +244,32 @@ export class RenderingSystem {
             this.factory.render(entity, context);
         });
         
-        // Render particles with batching optimization
+        // OPTIMIZED: Batch render particles by type to reduce context switches
+        const powerupParticles = [];
+        const boostParticles = [];
+        const otherParticles = [];
+        
         particles.forEach(p => {
             if (p.type === 'powerup-particle') {
-                this.particleRenderer.renderPowerupParticle(p);
-            } else if (p.type === 'boost-particle') {
-                this.particleRenderer.renderBoostParticle(p);
-            } else if (p.type === 'bonusParticle') {
-                // Render bonus particles (from bonus collection effects)
-                const color = p.color || [1.0, 0.8, 0.0, 1.0];
-                const alpha = (p.life / p.maxLife) || 0.5;
-                const finalColor = [...color];
-                finalColor[3] = alpha;
-                this.renderer.drawCircle(p.x, p.y, p.size || 3, finalColor);
-            } else if (p.type === 'boostParticle') {
-                // Render boost particles (from player boost effect)
-                this.particleRenderer.renderBoostParticle(p);
-            } else if (p.type === 'sparkle' || p.type === 'trail') {
-                // Render sparkle/trail particles with color and fade
-                const color = p.color || [1.0, 1.0, 1.0, 1.0];
-                const alpha = p.alpha || ((p.life / p.maxLife) || 0.5);
-                const finalColor = [...color];
-                finalColor[3] = alpha;
-                this.renderer.drawCircle(p.x, p.y, p.size || 2, finalColor);
+                powerupParticles.push(p);
+            } else if (p.type === 'boost-particle' || p.type === 'boostParticle') {
+                boostParticles.push(p);
+            } else {
+                otherParticles.push(p);
             }
+        });
+        
+        // Batch render each type
+        powerupParticles.forEach(p => this.particleRenderer.renderPowerupParticle(p));
+        boostParticles.forEach(p => this.particleRenderer.renderBoostParticle(p));
+        
+        // Render other particles in single pass
+        otherParticles.forEach(p => {
+            const color = p.color || [1.0, 0.8, 0.0, 1.0];
+            const alpha = p.alpha || ((p.life / p.maxLife) || 0.5);
+            const finalColor = [...color];
+            finalColor[3] = alpha;
+            this.renderer.drawCircle(p.x, p.y, p.size || 2, finalColor);
         });
         
         // Player always rendered last (on top)
@@ -408,18 +390,21 @@ export class RenderingSystem {
         this.canvasWidth = width;
         this.canvasHeight = height;
         
-        // Update textCanvas dimensions
-        if (this.textCanvas) {
-            this.textCanvas.width = width;
-            this.textCanvas.height = height;
+        // Update textCanvas to match gameCanvas EXACTLY (no DPR)
+        const gameCanvas = document.getElementById('gameCanvas');
+        if (this.textCanvas && gameCanvas) {
+            // Copy exact dimensions from gameCanvas
+            this.textCanvas.width = gameCanvas.width;
+            this.textCanvas.height = gameCanvas.height;
+            this.textCanvas.style.width = gameCanvas.style.width;
+            this.textCanvas.style.height = gameCanvas.style.height;
         }
         
-        this.backgroundRenderer.canvasWidth = width;
+        this.backgroundRenderer.updateDimensions(width, height);
         
         if (this.hudRenderer) {
             this.hudRenderer.updateDimensions(width, height);
         }
-        this.backgroundRenderer.canvasHeight = height;
         this.animationRenderer.updateDimensions(width, height);
         this.uiRenderer.updateDimensions(width, height);
         
@@ -427,5 +412,14 @@ export class RenderingSystem {
         if (this.levelProgressBar) {
             this.levelProgressBar.updateDimensions(width, height);
         }
+    }
+
+    /**
+     * Resize handler called by GameEngine
+     */
+    resize(canvasWidth, canvasHeight) {
+        // canvasWidth/canvasHeight are now LOGICAL pixels (no DPR)
+        this.updateDimensions(canvasWidth, canvasHeight);
+        console.log(`📐 RenderingSystem resized: ${canvasWidth}x${canvasHeight}px`);
     }
 }

@@ -205,21 +205,34 @@ export class Player {
     }
 
     releaseJump(pressDuration) {
-        if (this.isJumping && this.velocityY < 0) {
-            // Modulate jump based on hold time
-            const shortTapThreshold = 100; // 100ms
-            const longTapThreshold = 200; // 200ms
+        // Modulate jump ONLY if moving upward (negative velocity)
+        if (this.velocityY < 0) {
+            // Soglie alte per dare tempo al giocatore
+            const shortTapThreshold = 300; // 300ms per tap brevi
+            const longTapThreshold = 600; // 600ms per tap medi
+            
+            let modifier = 1.0;
+            let jumpType = "FULL";
+            let emoji = "🚀";
             
             if (pressDuration < shortTapThreshold) {
-                // Very short tap: minimal jump (50% power)
-                this.velocityY = this.velocityY * 0.5;
+                // Very short tap: minimal jump (35% power)
+                modifier = 0.35;
+                jumpType = "SHORT";
+                emoji = "🐰";
             } else if (pressDuration < longTapThreshold) {
-                // Medium tap: partial jump (70% power)
-                this.velocityY = this.velocityY * 0.7;
+                // Medium tap: partial jump (65% power)
+                modifier = 0.65;
+                jumpType = "MEDIUM";
+                emoji = "🦘";
             }
-            // Long hold (>200ms): full jump - no reduction
             
-            this.isJumping = false;
+            const oldVelocity = this.velocityY;
+            this.velocityY *= modifier;
+            
+            console.log(`${emoji} ${jumpType} JUMP! Duration: ${pressDuration.toFixed(0)}ms → Modifier: ${(modifier * 100).toFixed(0)}% → Velocity: ${oldVelocity.toFixed(1)} → ${this.velocityY.toFixed(1)}`);
+        } else {
+            console.log(`❌ releaseJump called but velocityY = ${this.velocityY.toFixed(1)} (not jumping up)`);
         }
     }
 
@@ -776,6 +789,9 @@ export class Player {
         
         // Immortality powerup makes player invincible
         if (this.powerups.immortality) return false;
+        
+        // Temporary invulnerability after taking damage
+        if (this.invulnerable) return false;
 
         const playerRight = this.x + this.width;
         const playerBottom = this.y + this.height;
@@ -872,6 +888,43 @@ export class Player {
         this.slideVelocityX = 0;
         this.slideDecelerationTime = 0;
         this.isSliding = false;
+        
+        // Reset turbo boost
+        this.isTurboActive = false;
+        this.turboTimeRemaining = 0;
+        this.turboInitialDuration = 0;
+        this.turboCooldownRemaining = 0;
+        this.turboTrailParticles = [];
+        
+        // Reset flight mode
+        this.isFlightActive = false;
+        this.flightTimeRemaining = 0;
+        this.flightInitialDuration = 0;
+        this.flightCooldownRemaining = 0;
+        this.flightTargetY = this.y;
+        this.flightTrailParticles = [];
+        this.flightFloatPhase = 0;
+        this.wingFlapPhase = 0;
+        
+        // Reset instant flight bonus
+        this.instantFlightActive = false;
+        this.instantFlightDuration = 0;
+        
+        // Reset shield and magnet powerups
+        this.hasShield = false;
+        this.shieldStartTime = 0;
+        this.hasMagnet = false;
+        this.magnetStartTime = 0;
+        
+        // Reset shield bonus
+        this.shieldActive = false;
+        this.shieldDuration = 0;
+        this.shieldRotation = 0;
+        
+        // Reset safety platform state
+        this.onSafetyPlatform = false;
+        this.wasOnSafetyPlatform = false;
+        this.previousVelocityY = 0;
     }
     
     activatePowerup(type) {
@@ -903,6 +956,11 @@ export class Player {
     }
     
     activateTurbo(currentLevel = 1) {
+        // Check if already active
+        if (this.isTurboActive) {
+            return false;
+        }
+        
         // Check if cooldown is ready
         if (this.turboCooldownRemaining > 0) {
             return false; // Still on cooldown
@@ -1099,6 +1157,11 @@ export class Player {
     // ============================================
     
     activateFlight() {
+        // Check if already active
+        if (this.isFlightActive) {
+            return false;
+        }
+        
         if (!this.isFlightCooldownReady()) return false;
         
         this.isFlightActive = true;

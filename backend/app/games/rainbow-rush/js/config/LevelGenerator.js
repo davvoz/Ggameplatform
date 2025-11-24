@@ -114,8 +114,8 @@ class Level {
  * PlatformGenerator - Genera piattaforme con pattern
  */
 class PlatformGenerator {
-    static MIN_Y = 100;
-    static MAX_Y = 650;
+    static MIN_Y = 200;  // Abbassato da 100 - niente piattaforme troppo in alto
+    static MAX_Y = 600;  // Ridotto da 650 - range più stretto e controllato
     
     static clampY(y) {
         return Math.max(this.MIN_Y, Math.min(this.MAX_Y, y));
@@ -134,28 +134,152 @@ class PlatformGenerator {
             
             switch (pattern) {
                 case PlatformPatterns.STRAIGHT:
+                    // STRAIGHT con GAP ampio periodico
                     x = startX + i * spacing;
-                    y = startY;
+                    // Ogni 4-5 piattaforme, crea un GAP AMPIO
+                    if (i > 0 && i % 5 === 2) {
+                        x += spacing * 2.5; // GAP LARGO extra
+                    }
+                    if (i % 4 === 3) {
+                        y = startY + (Math.random() - 0.5) * 60;
+                    }
                     break;
                     
                 case PlatformPatterns.STAIRS_UP:
                     x = startX + i * spacing;
-                    y = startY - i * 50;
+                    // GAP AMPIO a metà della scala
+                    if (i > 0 && i === Math.floor(count / 2)) {
+                        x += spacing * 2.8; // GAP LARGO
+                    }
+                    y = startY - i * 45;
                     break;
                     
                 case PlatformPatterns.STAIRS_DOWN:
                     x = startX + i * spacing;
-                    y = startY + i * 50;
+                    // GAP AMPIO a metà della scala
+                    if (i > 0 && i === Math.floor(count / 2)) {
+                        x += spacing * 2.8; // GAP LARGO
+                    }
+                    y = startY + i * 45;
                     break;
                     
                 case PlatformPatterns.ZIGZAG:
                     x = startX + i * spacing;
-                    y = startY + ((i % 2 === 0) ? 0 : -60);
+                    // GAP AMPIO dopo ogni ciclo completo di zigzag
+                    if (i > 0 && i % 6 === 3) {
+                        x += spacing * 2.5; // GAP LARGO
+                    }
+                    const zigLevel = i % 3;
+                    y = startY + (zigLevel === 0 ? 0 : zigLevel === 1 ? -50 : -25);
                     break;
                     
                 case PlatformPatterns.GAPS:
-                    x = startX + i * spacing * 2;
-                    y = startY;
+                    // Gaps con variazione verticale + GAP EXTRA LARGO
+                    x = startX + i * spacing * 1.8;
+                    // Ogni 4 piattaforme, GAP EXTRA LARGO
+                    if (i > 0 && i % 4 === 2) {
+                        x += spacing * 2.0; // GAP MOLTO LARGO
+                    }
+                    y = startY + (i % 2 === 0 ? 0 : -40);
+                    break;
+                    
+                case PlatformPatterns.WAVE:
+                    // Onda sinusoidale con GAP al picco
+                    x = startX + i * spacing;
+                    // GAP AMPIO al picco dell'onda
+                    if (i > 0 && Math.abs(Math.sin(i * 0.6)) > 0.9) {
+                        x += spacing * 2.2; // GAP LARGO al picco
+                    }
+                    y = startY + Math.sin(i * 0.6) * 70;
+                    break;
+                    
+                case PlatformPatterns.SPIRAL_UP:
+                    // Spirale ascendente con GAP
+                    x = startX + i * spacing;
+                    // GAP AMPIO a metà spirale
+                    if (i > 0 && i === Math.floor(count / 2)) {
+                        x += spacing * 2.6; // GAP LARGO
+                    }
+                    y = startY - i * 25 + Math.sin(i * 0.9) * 50;
+                    break;
+                    
+                case PlatformPatterns.SPIRAL_DOWN:
+                    // Spirale discendente con GAP
+                    x = startX + i * spacing;
+                    // GAP AMPIO a metà spirale
+                    if (i > 0 && i === Math.floor(count / 2)) {
+                        x += spacing * 2.6; // GAP LARGO
+                    }
+                    y = startY + i * 25 + Math.sin(i * 0.9) * 50;
+                    break;
+                    
+                case PlatformPatterns.SNAKE:
+                    // Serpente S con GAP al cambio direzione
+                    x = startX + i * spacing;
+                    // GAP AMPIO al cambio direzione del serpente
+                    const snakePhase = Math.sin(i * 0.45);
+                    if (i > 0 && Math.abs(snakePhase) < 0.1) {
+                        x += spacing * 2.3; // GAP LARGO al cambio direzione
+                    }
+                    y = startY + snakePhase * 80;
+                    break;
+                    
+                case PlatformPatterns.DOUBLE_HELIX:
+                    // Doppia elica con GAP al crossover
+                    x = startX + i * spacing;
+                    const helixAngle = i * 0.5;
+                    // GAP AMPIO quando le eliche si incrociano
+                    if (i > 0 && i % 4 === 2) {
+                        x += spacing * 2.4; // GAP LARGO al crossover
+                    }
+                    if (i % 2 === 0) {
+                        y = startY + Math.sin(helixAngle) * 60;
+                    } else {
+                        y = startY - Math.sin(helixAngle) * 60;
+                    }
+                    break;
+                    
+                case PlatformPatterns.VERTICAL_TOWER:
+                    // Torre verticale con GAP intermedio
+                    const towerCol = i % 2;
+                    x = startX + towerCol * 140;
+                    // GAP AMPIO dopo ogni 3 livelli verticali
+                    if (i > 0 && i % 6 === 3) {
+                        x += spacing * 2.5; // GAP LARGO verticale
+                    }
+                    y = startY - Math.floor(i / 2) * 55;
+                    break;
+                    
+                case PlatformPatterns.SCATTERED:
+                    // Piattaforme sparse con GAP EXTRA casuali
+                    x = startX + i * spacing + (Math.random() - 0.5) * 60;
+                    // Ogni 4-5 piattaforme, GAP EXTRA LARGO casuale
+                    if (i > 0 && Math.random() < 0.3) {
+                        x += spacing * (2.0 + Math.random() * 1.5); // GAP MOLTO LARGO casuale
+                    }
+                    y = startY + (Math.random() - 0.5) * 90;
+                    break;
+                    
+                case PlatformPatterns.PYRAMID:
+                    // Piramide con GAP tra righe
+                    const row = Math.floor(Math.sqrt(i * 2));
+                    const col = i - (row * (row + 1)) / 2;
+                    x = startX + col * (spacing * 0.9) - row * (spacing * 0.45);
+                    // GAP AMPIO tra una riga e l'altra
+                    if (col === 0 && row > 0) {
+                        x += spacing * 1.8; // GAP LARGO tra righe
+                    }
+                    y = startY - row * 60;
+                    break;
+                    
+                case PlatformPatterns.BRIDGE:
+                    // Ponte con ondulazioni e GAP centrale
+                    x = startX + i * (spacing * 0.7);
+                    // GAP AMPIO al centro del ponte
+                    if (i > 0 && i === Math.floor(count / 2)) {
+                        x += spacing * 2.5; // GAP LARGO centrale
+                    }
+                    y = startY + Math.sin(i * 0.25) * 35;
                     break;
                     
                 default:
@@ -319,7 +443,7 @@ class CollectibleSpawner {
  */
 class EnemySpawner {
     /**
-     * Spawna nemici su piattaforme
+     * Spawna nemici su piattaforme con varietà e distribuzione intelligente
      */
     static spawn(platforms, config, levelId) {
         const enemies = [];
@@ -331,24 +455,63 @@ class EnemySpawner {
         
         if (availableEnemies.length === 0) return enemies;
         
+        // Separa nemici per categoria per distribuzione bilanciata
+        const groundEnemies = availableEnemies.filter(e => e.category === 'ground');
+        const flyingEnemies = availableEnemies.filter(e => e.category === 'flying');
+        const chaserEnemies = availableEnemies.filter(e => e.category === 'chaser');
+        const specialEnemies = availableEnemies.filter(e => 
+            e.category === 'jumper' || e.category === 'turret'
+        );
+        
         const enemyCount = Math.floor(
             config.enemyCount.min + 
             Math.random() * (config.enemyCount.max - config.enemyCount.min)
         );
         
         const validPlatforms = platforms.filter((p, idx) => idx >= safetyZone);
-        const step = Math.max(1, Math.floor(validPlatforms.length / (enemyCount + 1)));
         
-        for (let i = 0, count = 0; i < validPlatforms.length && count < enemyCount; i += step, count++) {
-            const platform = validPlatforms[i];
-            const randomEnemy = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+        // Distribuzione più dinamica: nemici sparsi in gruppi
+        const enemiesPerGroup = 2 + Math.floor(Math.random() * 3); // 2-4 nemici per gruppo
+        const numGroups = Math.ceil(enemyCount / enemiesPerGroup);
+        const groupSpacing = Math.floor(validPlatforms.length / numGroups);
+        
+        let count = 0;
+        for (let g = 0; g < numGroups && count < enemyCount; g++) {
+            const groupStartIdx = g * groupSpacing;
+            const groupSize = Math.min(enemiesPerGroup, enemyCount - count);
             
-            enemies.push(new Enemy(
-                randomEnemy.id,
-                platform.getCenterX(),
-                platform.y - 30,
-                platform.index
-            ));
+            for (let e = 0; e < groupSize && count < enemyCount; e++) {
+                const platformIdx = Math.min(
+                    groupStartIdx + Math.floor(Math.random() * Math.min(groupSpacing, 5)),
+                    validPlatforms.length - 1
+                );
+                const platform = validPlatforms[platformIdx];
+                
+                // Scegli tipo nemico con varietà
+                let enemyPool = availableEnemies;
+                const rand = Math.random();
+                
+                if (rand < 0.4 && groundEnemies.length > 0) {
+                    enemyPool = groundEnemies;
+                } else if (rand < 0.6 && flyingEnemies.length > 0) {
+                    enemyPool = flyingEnemies;
+                } else if (rand < 0.75 && chaserEnemies.length > 0) {
+                    enemyPool = chaserEnemies;
+                } else if (specialEnemies.length > 0) {
+                    enemyPool = specialEnemies;
+                }
+                
+                const randomEnemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
+                
+                enemies.push(new Enemy(
+                    randomEnemy.id,
+                    platform.getCenterX(),
+                    platform.y - 30,
+                    platform.index
+                ));
+                
+                count++;
+            }
         }
         
         return enemies;
@@ -386,27 +549,13 @@ export class LevelGenerator {
             theme
         );
         
-        // Genera piattaforme
+        // Genera piattaforme CON SEZIONI MULTIPLE per varietà
         const platformCount = Math.floor(
             config.platformCount.min + 
             Math.random() * (config.platformCount.max - config.platformCount.min)
         );
         
-        const pattern = this.choosePattern(levelId, tier);
-        const spacing = Math.floor(
-            config.platformSpacing.min + 
-            Math.random() * (config.platformSpacing.max - config.platformSpacing.min)
-        );
-        const width = Math.floor(
-            config.platformWidth.min + 
-            Math.random() * (config.platformWidth.max - config.platformWidth.min)
-        );
-        
-        const platforms = PlatformGenerator.generate(pattern, 50, 450, platformCount, {
-            spacing,
-            width
-        });
-        
+        const platforms = this.generateMultiSectionPlatforms(levelId, tier, platformCount, config);
         platforms.forEach(p => level.addPlatform(p));
         
         // Spawna nemici
@@ -466,6 +615,143 @@ export class LevelGenerator {
         }
         
         return level.toJSON();
+    }
+    
+    /**
+     * Genera piattaforme divise in MOLTE SEZIONI CORTE per massimo dinamismo
+     */
+    static generateMultiSectionPlatforms(levelId, tier, totalCount, config) {
+        const allPlatforms = [];
+        let currentX = 50;
+        let currentY = 400; // Partenza più bassa
+        
+        // MOLTE sezioni corte (5-12 piattaforme per sezione) per massima varietà
+        const platformsPerSection = tier === 'TUTORIAL' ? 8 : 
+                                   tier === 'EASY' ? 10 : 
+                                   tier === 'NORMAL' ? 12 : 
+                                   tier === 'HARD' ? 10 : 
+                                   tier === 'EXPERT' ? 12 : 15;
+        
+        const numSections = Math.ceil(totalCount / platformsPerSection);
+        const availablePatterns = this.getAvailablePatterns(tier);
+        
+        for (let section = 0; section < numSections; section++) {
+            const sectionPlatformCount = section === numSections - 1 
+                ? totalCount - allPlatforms.length  // Ultima sezione prende il resto
+                : platformsPerSection;
+            
+            // Scegli pattern casuale per questa sezione
+            const pattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+            
+            const spacing = Math.floor(
+                config.platformSpacing.min + 
+                Math.random() * (config.platformSpacing.max - config.platformSpacing.min)
+            );
+            const width = Math.floor(
+                config.platformWidth.min + 
+                Math.random() * (config.platformWidth.max - config.platformWidth.min)
+            );
+            
+            const sectionPlatforms = PlatformGenerator.generate(
+                pattern, 
+                currentX, 
+                currentY, 
+                sectionPlatformCount, 
+                { spacing, width }
+            );
+            
+            // Aggiorna indici globali
+            sectionPlatforms.forEach((p, idx) => {
+                p.index = allPlatforms.length + idx;
+                allPlatforms.push(p);
+            });
+            
+            // Aggiorna posizione iniziale per la prossima sezione
+            if (sectionPlatforms.length > 0) {
+                const lastPlatform = sectionPlatforms[sectionPlatforms.length - 1];
+                currentX = lastPlatform.x + spacing;
+                currentY = lastPlatform.y + (Math.random() - 0.5) * 100; // Varia leggermente l'altezza
+            }
+        }
+        
+        return allPlatforms;
+    }
+    
+    /**
+     * Ottieni pattern disponibili per tier - favorisce pattern dinamici
+     */
+    static getAvailablePatterns(tier) {
+        // Pattern dinamici (usati più spesso)
+        const dynamicPatterns = [
+            PlatformPatterns.ZIGZAG,
+            PlatformPatterns.WAVE,
+            PlatformPatterns.STAIRS_UP,
+            PlatformPatterns.STAIRS_DOWN,
+            PlatformPatterns.SNAKE
+        ];
+        
+        // Pattern intermedi
+        const intermediatePatterns = [
+            PlatformPatterns.GAPS,
+            PlatformPatterns.BRIDGE,
+            PlatformPatterns.SPIRAL_UP,
+            PlatformPatterns.SPIRAL_DOWN
+        ];
+        
+        // Pattern avanzati
+        const advancedPatterns = [
+            PlatformPatterns.DOUBLE_HELIX,
+            PlatformPatterns.SCATTERED,
+            PlatformPatterns.VERTICAL_TOWER,
+            PlatformPatterns.PYRAMID
+        ];
+        
+        // Pattern statici (usati raramente)
+        const staticPatterns = [
+            PlatformPatterns.STRAIGHT
+        ];
+        
+        switch(tier) {
+            case 'TUTORIAL':
+                // Tutorial: mix di facile e dinamico
+                return [
+                    PlatformPatterns.STRAIGHT,
+                    PlatformPatterns.ZIGZAG,
+                    PlatformPatterns.STAIRS_UP
+                ];
+            case 'EASY':
+                // Easy: principalmente dinamici con un po' di straight
+                return [
+                    ...dynamicPatterns,
+                    PlatformPatterns.STRAIGHT,
+                    ...intermediatePatterns.slice(0, 2)
+                ];
+            case 'NORMAL':
+                // Normal: molto dinamico
+                return [
+                    ...dynamicPatterns,
+                    ...intermediatePatterns,
+                    ...advancedPatterns.slice(0, 2)
+                ];
+            case 'HARD':
+                // Hard: tutti i pattern dinamici e avanzati
+                return [
+                    ...dynamicPatterns,
+                    ...intermediatePatterns,
+                    ...advancedPatterns.slice(0, 4)
+                ];
+            case 'EXPERT':
+            case 'MASTER':
+                // Expert/Master: tutti i pattern, meno straight
+                return [
+                    ...dynamicPatterns,
+                    ...intermediatePatterns,
+                    ...advancedPatterns,
+                    PlatformPatterns.STRAIGHT // Solo uno
+                ];
+            default:
+                return dynamicPatterns;
+        }
     }
     
     /**

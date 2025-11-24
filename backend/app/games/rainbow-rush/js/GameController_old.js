@@ -24,6 +24,7 @@ import { ParticleSystem } from './effects/ParticleSystem.js';
 import { LevelProgressBar } from './systems/LevelProgressBar.js';
 import { LevelSummaryScreen } from './ui/LevelSummaryScreen.js';
 import { LevelSelectScreen } from './ui/LevelSelectScreen.js';
+import { AbilityUnlockAnimation } from './systems/AbilityUnlockAnimation.js';
 
 export class GameController {
     constructor(canvas) {
@@ -61,6 +62,15 @@ export class GameController {
         // NEW: UI Screens
         this.levelSummaryScreen = null;
         this.levelSelectScreen = null;
+        
+        // Ability unlock system
+        this.abilityUnlockAnimation = new AbilityUnlockAnimation();
+        this.unlockedAbilities = {
+            flight: false,
+            turbo: false
+        };
+        this.FLIGHT_UNLOCK_LEVEL = 10;
+        this.TURBO_UNLOCK_LEVEL = 20;
         
         // Performance optimization - cleanup timer
         this.cleanupTimer = 0;
@@ -187,6 +197,21 @@ export class GameController {
     loadSelectedLevel(levelId) {
         // Carica il livello scelto dall'utente
         console.log(`🎮 Loading level ${levelId}`);
+        
+        // SBLOCCO SILENZIOSO: Se carichi un livello >= 10 o >= 20, sblocca le abilità (SENZA animazione)
+        if (levelId >= this.FLIGHT_UNLOCK_LEVEL) {
+            this.unlockedAbilities.flight = true;
+            if (this.flightButtonUI) {
+                this.flightButtonUI.setUnlocked(true);
+            }
+        }
+        if (levelId >= this.TURBO_UNLOCK_LEVEL) {
+            this.unlockedAbilities.turbo = true;
+            if (this.turboButtonUI) {
+                this.turboButtonUI.setUnlocked(true);
+            }
+        }
+        
         this.levelManager.loadLevel(levelId);
         
         // Genera entità del livello
@@ -206,6 +231,18 @@ export class GameController {
         if (entities.goalFlag) {
             this.entityManager.addEntity('collectibles', entities.goalFlag);
             this.goalFlag = entities.goalFlag;
+        }
+        
+        // POSIZIONA IL PLAYER SULLA PRIMA PIATTAFORMA
+        if (entities.platforms && entities.platforms.length > 0) {
+            const firstPlatform = entities.platforms[0];
+            const playerX = firstPlatform.x + firstPlatform.width / 2 - this.player.width / 2;
+            const playerY = firstPlatform.y - this.player.height - 5; // 5px sopra la piattaforma
+            this.player.x = playerX;
+            this.player.y = playerY;
+            this.player.velocityY = 0;
+            this.player.velocityX = 0;
+            console.log(`👤 Player positioned on first platform at (${playerX.toFixed(0)}, ${playerY.toFixed(0)})`);
         }
     }
     
@@ -304,6 +341,12 @@ export class GameController {
         this.inputManager.addEventListener('turbo', () => {
             if (!this.gameState.isPlaying()) return;
             
+            // CONTROLLO SBLOCCO: Turbo disponibile solo dal livello 20
+            if (!this.unlockedAbilities.turbo) {
+                console.log('🔒 Turbo bloccato! Sbloccabile al livello 20');
+                return;
+            }
+            
             const level = this.scoreSystem.getLevel();
             const activated = this.player.activateTurbo(level);
             if (activated) {
@@ -316,6 +359,12 @@ export class GameController {
         // Flight activation with 'D' key
         this.inputManager.addEventListener('flight', () => {
             if (!this.gameState.isPlaying()) return;
+            
+            // CONTROLLO SBLOCCO: Flight disponibile solo dal livello 10
+            if (!this.unlockedAbilities.flight) {
+                console.log('🔒 Flight bloccato! Sbloccabile al livello 10');
+                return;
+            }
             
             const activated = this.player.activateFlight();
             if (activated) {
@@ -404,6 +453,12 @@ export class GameController {
             if (this.turboButtonUI) {
                 const shouldActivateTurbo = this.turboButtonUI.checkClick(data.x, data.y, this.player);
                 if (shouldActivateTurbo) {
+                    // CONTROLLO SBLOCCO: Turbo disponibile solo dal livello 20
+                    if (!this.unlockedAbilities.turbo) {
+                        console.log('🔒 Turbo bloccato! Sbloccabile al livello 20');
+                        return;
+                    }
+                    
                     const level = this.scoreSystem.getLevel();
                     const activated = this.player.activateTurbo(level);
                     if (activated) {
@@ -419,6 +474,12 @@ export class GameController {
             if (this.flightButtonUI) {
                 const shouldActivateFlight = this.flightButtonUI.checkClick(data.x, data.y, this.player);
                 if (shouldActivateFlight) {
+                    // CONTROLLO SBLOCCO: Flight disponibile solo dal livello 10
+                    if (!this.unlockedAbilities.flight) {
+                        console.log('🔒 Flight bloccato! Sbloccabile al livello 10');
+                        return;
+                    }
+                    
                     const activated = this.player.activateFlight();
                     if (activated) {
                         this.audioManager.playSound('flight');
@@ -1069,9 +1130,9 @@ export class GameController {
         this.isShowingDeathAnimation = false;
         this.cleanupTimer = 0;
 
-        // Reset player
+        // Reset player (posizione sarà impostata da loadSelectedLevel)
         const dims = this.engine.getCanvasDimensions();
-        this.player.reset(100, dims.height / 2);
+        this.player.reset(100, dims.height / 2); // Posizione temporanea
 
         // Reload current level
         this.levelManager.reloadLevel();
@@ -1081,7 +1142,7 @@ export class GameController {
         const bgColor = this.backgroundSystem.getBackgroundColor();
         this.engine.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
 
-        // Carica le entità del livello corrente
+        // Carica le entità del livello corrente (questo posizionerà il player sulla prima piattaforma)
         this.loadSelectedLevel(this.levelManager.currentLevelId);
 
         // Update dimensions and reset all systems
@@ -1107,6 +1168,18 @@ export class GameController {
     onLevelComplete() {
         console.log('🎉 Level Complete!');
         
+        // Controlla sblocco nuove abilità (animazione mostrata durante il gioco)
+        const currentLevel = this.levelManager.currentLevelId;
+        this.checkAbilityUnlock(currentLevel);
+        
+        // Mostra subito la schermata riepilogativa
+        this.showLevelSummary();
+    }
+    
+    /**
+     * Mostra la schermata riepilogativa del livello
+     */
+    showLevelSummary() {
         // Pausa il gioco
         this.gameState.setState(GameStates.PAUSED);
         this.engine.stop();
@@ -1171,11 +1244,21 @@ export class GameController {
         this.entityManager.collectibles = [];
         this.entityManager.floatingTexts = [];
         
-        // Reset player
-        const dims = this.engine.getCanvasDimensions();
-        this.player.reset(100, dims.height / 2);
+        console.log(`📋 Caricamento livello ${levelId} - Abilità: Flight=${this.unlockedAbilities.flight}, Turbo=${this.unlockedAbilities.turbo}`);
         
-        // Carica il livello selezionato e genera entità
+        // Aggiorna stato UI bottoni in base allo stato CORRENTE delle abilità
+        if (this.flightButtonUI) {
+            this.flightButtonUI.setUnlocked(this.unlockedAbilities.flight);
+        }
+        if (this.turboButtonUI) {
+            this.turboButtonUI.setUnlocked(this.unlockedAbilities.turbo);
+        }
+        
+        // Reset player (posizione sarà impostata da loadSelectedLevel)
+        const dims = this.engine.getCanvasDimensions();
+        this.player.reset(100, dims.height / 2); // Posizione temporanea
+        
+        // Carica il livello selezionato e genera entità (questo posizionerà il player sulla prima piattaforma)
         this.loadSelectedLevel(levelId);
         
         // Reset systems
@@ -1192,7 +1275,56 @@ export class GameController {
         
         console.log(`🎮 Level ${levelId} loaded!`);
     }
+    
+    /**
+     * Controlla se il giocatore ha sbloccato nuove abilità
+     * @returns {boolean} true se un'abilità è stata sbloccata
+     */
+    checkAbilityUnlock(completedLevel) {
+        let unlocked = false;
+        
+        // Animazione Flight SOLO se hai completato il livello 9
+        if (completedLevel === (this.FLIGHT_UNLOCK_LEVEL - 1) && !this.unlockedAbilities.flight) {
+            this.unlockedAbilities.flight = true;
+            
+            // Aggiorna IMMEDIATAMENTE il bottone UI
+            if (this.flightButtonUI) {
+                this.flightButtonUI.setUnlocked(true);
+            }
+            
+            console.log('✈️ Flight ability unlocked with animation!');
+            
+            // Avvia animazione SUBITO
+            this.abilityUnlockAnimation.start('flight');
+            this.audioManager.playSound('powerup');
+            unlocked = true;
+        }
+        
+        // Animazione Turbo SOLO se hai completato il livello 19
+        if (completedLevel === (this.TURBO_UNLOCK_LEVEL - 1) && !this.unlockedAbilities.turbo) {
+            this.unlockedAbilities.turbo = true;
+            
+            // Aggiorna IMMEDIATAMENTE il bottone UI
+            if (this.turboButtonUI) {
+                this.turboButtonUI.setUnlocked(true);
+            }
+            
+            console.log('🚀 Turbo ability unlocked with animation!');
+            
+            // Avvia animazione SUBITO
+            this.abilityUnlockAnimation.start('turbo');
+            this.audioManager.playSound('powerup');
+            unlocked = true;
+        }
+        
+        return unlocked;
+    }
+    
 
+    
+    /**
+     * Carica lo stato delle abilità sbloccate da localStorage
+     */
     startDeathSequence() {
         if (this.isShowingDeathAnimation) return;
         this.isShowingDeathAnimation = true;

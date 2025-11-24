@@ -20,6 +20,13 @@ export class InputManager {
             flightDown: []
         };
 
+        // Swipe detection for mobile flight control
+        this.touchStartY = 0;
+        this.touchStartX = 0;
+        this.touchMoveY = 0;
+        this.swipeThreshold = 20; // Minimo movimento per considerarlo swipe
+        this.isSwipingVertical = false;
+
         // Assicura che il canvas possa ricevere il focus della tastiera
         if (this.canvas) {
             this.canvas.setAttribute('tabindex', '1');
@@ -46,15 +53,13 @@ export class InputManager {
             this.textCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
             this.textCanvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
             this.textCanvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-            this.textCanvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            this.textCanvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         }
 
         // Touch events
         this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-        
-        // Prevent default touch behaviors
-        this.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
     }
 
     handleKeyDown(event) {
@@ -63,35 +68,28 @@ export class InputManager {
         if (!this.keys.has(key)) {
             this.keys.add(key);
             
-            // Turbo activation with 'A' key
+            // Turbo activation with 'D' key
             if (key === 'd') {
                 event.preventDefault();
                 this.notifyListeners('turbo');
             }
             
-            // Flight activation with 'D' key
+            // Flight activation with 'A' key
             if (key === 'a') {
                 event.preventDefault();
                 this.notifyListeners('flight');
             }
             
-            // Flight up with 'W' or Arrow Up
-            if (key === 'w' || key === 'arrowup') {
+            // Arrow Up / W - Jump AND flight control
+            if (key === 'arrowup' || key === 'w') {
                 event.preventDefault();
-                this.notifyListeners('flightUp');
                 
-                // Also trigger jump if not in flight mode
+                // Trigger jump
                 if (!this.jumpPressed) {
                     this.jumpPressed = true;
                     this.jumpPressTime = performance.now();
                     this.triggerJump();
                 }
-            }
-            
-            // Flight down with 'S' or Arrow Down
-            if (key === 's' || key === 'arrowdown') {
-                event.preventDefault();
-                this.notifyListeners('flightDown');
             }
             
             // Jump with Space
@@ -104,12 +102,24 @@ export class InputManager {
                 }
             }
         }
+        
+        // Continuous flight control with arrow keys (check every frame)
+        if (key === 'arrowup' || key === 'w') {
+            event.preventDefault();
+            this.notifyListeners('flightUp');
+        }
+        
+        if (key === 'arrowdown' || key === 's') {
+            event.preventDefault();
+            this.notifyListeners('flightDown');
+        }
     }
 
     handleKeyUp(event) {
         const key = event.key.toLowerCase();
         this.keys.delete(key);
         
+        // Jump release per Space, Arrow Up e W
         if (key === ' ' || key === 'arrowup' || key === 'w') {
             if (this.jumpPressed) {
                 const pressDuration = performance.now() - this.jumpPressTime;
@@ -152,9 +162,15 @@ export class InputManager {
         
         // Get touch position
         if (event.touches.length > 0) {
-            const rect = this.canvas.getBoundingClientRect();
+            const rect = event.target.getBoundingClientRect();
             const x = event.touches[0].clientX - rect.left;
             const y = event.touches[0].clientY - rect.top;
+            
+            // Store initial touch position for swipe detection
+            this.touchStartX = x;
+            this.touchStartY = y;
+            this.touchMoveY = y;
+            this.isSwipingVertical = false;
             
             // Notify click listeners
             this.notifyListeners('click', { x, y });
@@ -168,8 +184,42 @@ export class InputManager {
         }
     }
 
+    handleTouchMove(event) {
+        event.preventDefault();
+        
+        if (event.touches.length > 0) {
+            const rect = event.target.getBoundingClientRect();
+            const y = event.touches[0].clientY - rect.left;
+            
+            // Calculate swipe distance
+            const deltaY = y - this.touchStartY;
+            const deltaX = Math.abs(event.touches[0].clientX - rect.left - this.touchStartX);
+            
+            // Detect vertical swipe (more vertical than horizontal)
+            if (Math.abs(deltaY) > this.swipeThreshold && Math.abs(deltaY) > deltaX) {
+                this.isSwipingVertical = true;
+                
+                // Continuous flight control while swiping
+                if (deltaY < 0) {
+                    // Swipe up - move up
+                    this.notifyListeners('flightUp');
+                } else {
+                    // Swipe down - move down
+                    this.notifyListeners('flightDown');
+                }
+                
+                // Update current position for continuous movement
+                this.touchMoveY = y;
+            }
+        }
+    }
+
     handleTouchEnd(event) {
         event.preventDefault();
+        
+        // Reset swipe state
+        this.isSwipingVertical = false;
+        
         if (this.touchActive) {
             const pressDuration = performance.now() - this.jumpPressTime;
             this.touchActive = false;

@@ -12,12 +12,24 @@ export class BackgroundRenderer {
         this.backgroundLayers = [];
         this.backgroundParticles = [];
         this.ambientParticles = [];
+        this.backgroundColor = [0.4, 0.7, 1.0, 1.0]; // Default sky blue
         this.initAmbientParticles();
     }
 
     setBackground(layers, particles) {
         this.backgroundLayers = layers;
         this.backgroundParticles = particles;
+    }
+
+    setBackgroundColor(color) {
+        this.backgroundColor = color;
+    }
+
+    updateDimensions(width, height) {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        // Reinitialize ambient particles with new canvas dimensions
+        this.initAmbientParticles();
     }
 
     initAmbientParticles() {
@@ -100,6 +112,9 @@ export class BackgroundRenderer {
     }
 
     render(time) {
+        // Draw base background color to cover entire canvas
+        this.renderer.drawRect(0, 0, this.canvasWidth, this.canvasHeight, this.backgroundColor);
+        
         this.renderBackgroundLayers();
         this.renderBackgroundParticles();
         this.renderAmbientParticles(time);

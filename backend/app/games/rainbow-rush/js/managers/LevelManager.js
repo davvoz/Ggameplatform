@@ -444,7 +444,7 @@ export class LevelManager {
         if (!this.platformsPassedSet.has(platformIndex)) {
             this.platformsPassedSet.add(platformIndex);
             this.platformsPassed = this.platformsPassedSet.size;
-        }
+        } 
     }
     
     recordEnemyKilled() {

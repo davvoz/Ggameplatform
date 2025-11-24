@@ -19,18 +19,110 @@
 
         <!-- Menu Screen -->
         <div id="menu-screen" class="screen active">
-            <div class="menu-content">
-                <h1 class="game-title rainbow-text">🌈 Rainbow Rush</h1>
-                <p class="game-subtitle">Jump and collect through colorful platforms!</p>
+            <div class="screen-content">
+                <div class="decorative-top-bar"></div>
+                <h1 class="screen-title rainbow-text">🌈 Rainbow Rush</h1>
+                <p class="screen-subtitle">✨ Colorful Platform Adventure ✨</p>
                 <div class="high-score">
-                    High Score: <span id="menu-high-score">0</span>
+                    👑 High Score: <span id="menu-high-score">0</span>
                 </div>
-                <button id="start-button" class="game-button">
-                    Start Game
+                <button id="start-button" class="game-button primary">
+                    🎮 Start Game
                 </button>
                 <div class="controls-info">
                     <p>🖱️ Click/Tap to Jump</p>
                     <p>⌨️ Space/W/↑ to Jump</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select Screen -->
+        <div id="level-select-screen" class="screen">
+            <div class="screen-content">
+                <div class="decorative-top-bar"></div>
+                <h2 class="screen-title rainbow-text">🎮 Select Level</h2>
+                <p class="screen-subtitle" id="level-page-info">Page 1 / 10</p>
+                
+                <div class="levels-grid" id="levels-grid">
+                    <!-- Levels will be generated dynamically -->
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button id="prev-page-btn" class="game-button navigation" disabled>
+                        ⬅ Previous
+                    </button>
+                    <button id="next-page-btn" class="game-button navigation">
+                        Next ➡
+                    </button>
+                </div>
+                
+                <button id="level-select-back-btn" class="game-button secondary back-button">
+                    ← Back to Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Summary Screen -->
+        <div id="level-summary-screen" class="screen">
+            <div class="screen-content">
+                <div class="decorative-top-bar"></div>
+                <h2 class="screen-title rainbow-text" id="summary-level-name">Level 1</h2>
+                <p class="screen-subtitle">✨ Level Complete! ✨</p>
+                
+                <div class="stars-display">
+                    <div class="star" id="star-1">⭐</div>
+                    <div class="star" id="star-2">☆</div>
+                    <div class="star" id="star-3">☆</div>
+                </div>
+                
+                <div class="rank-badge" id="rank-badge">
+                    <span class="rank-icon">🏆</span>
+                    <span class="rank-text">PERFECT!</span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Time</span>
+                            <span class="stat-value" id="summary-time">0.0s</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🪙</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Coins</span>
+                            <span class="stat-value" id="summary-coins">0/0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💀</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Enemies</span>
+                            <span class="stat-value" id="summary-enemies">0/0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💔</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Damage</span>
+                            <span class="stat-value" id="summary-damage">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="summary-buttons">
+                    <button id="next-level-btn" class="game-button primary">
+                        ▶ Next Level
+                    </button>
+                    <div class="secondary-buttons">
+                        <button id="retry-level-btn" class="game-button secondary">
+                            🔄 Retry
+                        </button>
+                        <button id="summary-menu-btn" class="game-button secondary">
+                            📋 Menu
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,8 +135,11 @@
 
         <!-- Pause Screen -->
         <div id="pause-screen" class="screen">
-            <div class="pause-content">
-                <h2 class="pause-title">⏸️ Paused</h2>
+            <div class="screen-content">
+                <div class="decorative-top-bar"></div>
+                <h2 class="screen-title gradient-text">⏸️ Paused</h2>
+                <p class="screen-subtitle">🎮 Game Paused 🎮</p>
+                
                 <div class="volume-controls">
                     <div class="volume-item">
                         <label for="sfx-volume" class="volume-label">
@@ -52,55 +147,60 @@
                         </label>
                         <div class="volume-slider-container">
                             <input type="range" id="sfx-volume" class="volume-slider" min="0" max="100" value="50">
-                            <span class="volume-value">50%</span>
+                            <span class="volume-value" id="sfx-volume-value">50%</span>
                         </div>
                     </div>
                     <div class="volume-item">
                         <label for="music-volume" class="volume-label">
-                            🎵 Background Music
+                            🎵 Music
                         </label>
                         <div class="volume-slider-container">
                             <input type="range" id="music-volume" class="volume-slider" min="0" max="100" value="30">
-                            <span class="volume-value">30%</span>
+                            <span class="volume-value" id="music-volume-value">30%</span>
                         </div>
                     </div>
                 </div>
-                <button id="resume-button" class="game-button">
-                    ▶️ Resume Game
+                
+                <button id="resume-button" class="game-button primary">
+                    ▶️ Resume
                 </button>
                 <button id="pause-menu-button" class="game-button secondary">
-                    Main Menu
+                    🏠 Menu
                 </button>
             </div>
         </div>
 
         <!-- Game Over Screen -->
         <div id="gameover-screen" class="screen">
-            <div class="gameover-content">
-                <h2 class="gameover-title">Game Over!</h2>
+            <div class="screen-content gameover">
+                <div class="decorative-top-bar gameover"></div>
+                <h2 class="screen-title gameover-text">💀 Game Over!</h2>
+                <p class="screen-subtitle">😢 Try again! 😢</p>
+                
                 <div class="stats-container">
                     <div class="stat-item">
-                        <span class="stat-label">Final Score</span>
+                        <span class="stat-label">Score</span>
                         <span id="final-score" class="stat-value">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Level Reached</span>
+                        <span class="stat-label">Level</span>
                         <span id="final-level" class="stat-value">1</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Collectibles</span>
+                        <span class="stat-label">Coins</span>
                         <span id="final-collectibles" class="stat-value">0</span>
                     </div>
                     <div class="stat-item highlight">
-                        <span class="stat-label">High Score</span>
+                        <span class="stat-label">⭐ Best</span>
                         <span id="final-high-score" class="stat-value">0</span>
                     </div>
                 </div>
-                <button id="restart-button" class="game-button">
-                    Play Again
+                
+                <button id="restart-button" class="game-button primary">
+                    🔄 Play Again
                 </button>
                 <button id="menu-button" class="game-button secondary">
-                    Main Menu
+                    🏠 Menu
                 </button>
             </div>
         </div>
@@ -109,7 +209,11 @@
         <div id="loading-screen" class="screen active">
             <div class="loading-content">
                 <div class="spinner"></div>
-                <p>Loading Rainbow Rush...</p>
+                <h2 class="rainbow-text loading-title">🌈 Rainbow Rush</h2>
+                <p class="loading-text">Loading amazing adventure...</p>
+                <div class="loading-bar">
+                    <div class="loading-progress" id="loading-progress"></div>
+                </div>
             </div>
         </div>
     </div>

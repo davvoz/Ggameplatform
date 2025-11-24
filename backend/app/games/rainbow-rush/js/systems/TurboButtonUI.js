@@ -7,6 +7,7 @@ export class TurboButtonUI {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        this.isUnlocked = false; // Abilità inizialmente bloccata
         
         // Button properties - usa posizioni centralizzate
         const positions = calculateUIPositions(canvasWidth, canvasHeight);
@@ -25,6 +26,10 @@ export class TurboButtonUI {
         
         // Touch/click state
         this.isPressed = false;
+    }
+    
+    setUnlocked(unlocked) {
+        this.isUnlocked = unlocked;
     }
     
     update(deltaTime, player) {
@@ -50,6 +55,12 @@ export class TurboButtonUI {
     render(gl, renderer, player) {
         const ctx = renderer.textCtx; // Use the 2D text canvas context
         if (!ctx) return;
+        
+        // Se non è sbloccato, mostra lucchetto
+        if (!this.isUnlocked) {
+            this.renderLocked(ctx);
+            return;
+        }
         
         ctx.save();
         
@@ -363,7 +374,34 @@ export class TurboButtonUI {
         ctx.restore();
     }
     
+    renderLocked(ctx) {
+        ctx.save();
+        
+        // Bottone grigio bloccato
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#444444';
+        ctx.beginPath();
+        ctx.arc(this.buttonX, this.buttonY, this.buttonRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Lucchetto
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔒', this.buttonX, this.buttonY);
+        
+        // Testo "Level 20"
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Lvl 20', this.buttonX, this.buttonY + 35);
+        
+        ctx.restore();
+    }
+    
     checkClick(x, y, player) {
+        if (!this.isUnlocked) return false; // Bloccato
+        
         const dx = x - this.buttonX;
         const dy = y - this.buttonY;
         const distance = Math.sqrt(dx * dx + dy * dy);

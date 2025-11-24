@@ -4,8 +4,10 @@
  */
 export const GameStates = {
     MENU: 'menu',
+    LEVEL_SELECT: 'levelSelect',
     PLAYING: 'playing',
     PAUSED: 'paused',
+    LEVEL_SUMMARY: 'levelSummary',
     GAME_OVER: 'gameOver'
 };
 

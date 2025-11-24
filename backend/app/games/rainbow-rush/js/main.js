@@ -2,11 +2,13 @@
  * Main entry point for Rainbow Rush
  * Initializes the game and manages UI interactions
  */
-import { GameController } from './GameController.js';
+import { createGameController } from './GameControllerBuilder.js';
+import { ScreenManager } from './ui/ScreenManager.js';
 
 class RainbowRushApp {
     constructor() {
         this.gameController = null;
+        this.screenManager = null;
         this.initialized = false;
     }
 
@@ -14,17 +16,24 @@ class RainbowRushApp {
         if (this.initialized) return;
 
         try {
+            // Initialize Screen Manager first
+            this.screenManager = new ScreenManager();
+            console.log('✅ ScreenManager initialized');
+            
             // Get canvas element
             const canvas = document.getElementById('gameCanvas');
             if (!canvas) {
                 throw new Error('Canvas element not found');
             }
 
-            // Create game controller
-            this.gameController = new GameController(canvas);
+            // Create game controller with builder pattern (DI)
+            this.gameController = createGameController(canvas).build();
+            
+            // Initialize async components
+            await this.gameController.initialize();
 
-            // Setup UI event listeners
-            this.setupUIListeners();
+            // Setup Screen Manager event listeners
+            this.setupScreenManagerListeners();
 
             // Setup game event listeners
             this.setupGameListeners();
@@ -32,70 +41,131 @@ class RainbowRushApp {
             // Setup window listeners
             this.setupWindowListeners();
 
-            // Hide loading screen
+            // Hide loading screen and show menu
             this.hideLoadingScreen();
 
             this.initialized = true;
-            console.log('Rainbow Rush initialized successfully!');
+            console.log('✅ Rainbow Rush initialized successfully!');
         } catch (error) {
-            console.error('Failed to initialize game:', error);
+            console.error('❌ Failed to initialize game:', error);
             this.showError(error.message);
         }
     }
 
-    setupUIListeners() {
-        // Start button
-        const startButton = document.getElementById('start-button');
-        if (startButton) {
-            startButton.addEventListener('click', () => this.startGame());
-        }
-
-        // Restart button - mostra selezione livelli invece di resettare direttamente
-        const restartButton = document.getElementById('restart-button');
-        if (restartButton) {
-            restartButton.addEventListener('click', () => this.showLevelSelect());
-        }
-
-        // Menu button
-        const menuButton = document.getElementById('menu-button');
-        if (menuButton) {
-            menuButton.addEventListener('click', () => this.showMenu());
-        }
-
-        // Pause button is now rendered via HUDRenderer and handled in GameController
-        // No need for HTML event listener
+    setupScreenManagerListeners() {
+        // Start game from menu
+        this.screenManager.on('startGame', () => {
+            this.gameController.audioManager?.playSound('click');
+            this.requestFullscreen();
+            this.gameController.startGame();
+        });
         
-        // Resume button
-        const resumeButton = document.getElementById('resume-button');
-        if (resumeButton) {
-            resumeButton.addEventListener('click', () => this.resumeGame());
-        }
+        // Level select from level select screen
+        this.screenManager.on('levelSelect', ({ levelId }) => {
+            this.gameController.audioManager?.playSound('click');
+            this.screenManager.hideAllScreens();
+            this.requestFullscreen();
+            // Load specific level
+            const dims = this.gameController.engine.getCanvasDimensions();
+            this.gameController.levelOrchestrator.loadLevel(levelId, dims);
+            this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
+        });
         
-        // Pause menu button
-        const pauseMenuButton = document.getElementById('pause-menu-button');
-        if (pauseMenuButton) {
-            pauseMenuButton.addEventListener('click', () => this.showMenu());
-        }
+        // Play level from summary or retry
+        this.screenManager.on('playLevel', ({ levelId }) => {
+            this.gameController.audioManager?.playSound('click');
+            this.screenManager.hideAllScreens();
+            this.requestFullscreen();
+            // Load specific level
+            const dims = this.gameController.engine.getCanvasDimensions();
+            this.gameController.levelOrchestrator.loadLevel(levelId, dims);
+            this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
+        });
         
-        // Volume sliders
-        const sfxSlider = document.getElementById('sfx-volume');
-        const musicSlider = document.getElementById('music-volume');
+        // Resume from pause
+        this.screenManager.on('resume', () => {
+            this.gameController.audioManager?.playSound('resume');
+            // Se necessita di ripristinare fullscreen, lo fa prima di resumare
+            if (this.gameController.needsFullscreenRestore) {
+                this.requestFullscreen();
+                this.gameController.needsFullscreenRestore = false;
+            }
+            this.gameController.resumeGame();
+            this.screenManager.hideAllScreens();
+        });
         
-        if (sfxSlider) {
-            sfxSlider.addEventListener('input', (e) => this.updateSFXVolume(e.target.value));
-        }
+        // Pause menu - return to main menu
+        this.screenManager.on('pauseMenu', () => {
+            this.gameController.audioManager?.playSound('click');
+            this.screenManager.showMenu();
+        });
         
-        if (musicSlider) {
-            musicSlider.addEventListener('input', (e) => this.updateMusicVolume(e.target.value));
-        }
+        // Restart game
+        this.screenManager.on('restart', () => {
+            this.gameController.audioManager?.playSound('click');
+            this.screenManager.showLevelSelect(this.getLevelProgress());
+        });
+        
+        // Volume changes
+        this.screenManager.on('sfxVolumeChange', ({ volume }) => {
+            if (this.gameController?.audioManager) {
+                this.gameController.audioManager.setVolume(volume);
+            }
+        });
+        
+        this.screenManager.on('musicVolumeChange', ({ volume }) => {
+            if (this.gameController?.audioManager) {
+                this.gameController.audioManager.setMusicVolume(volume);
+            }
+        });
+    }
+    
+    getLevelProgress() {
+        // TODO: Load from localStorage
+        return {};
     }
 
     setupGameListeners() {
         // Listen for game events
-        window.addEventListener('gameUpdate', (e) => this.updateHUD(e.detail));
-        window.addEventListener('gameOver', (e) => this.showGameOver(e.detail));
-        window.addEventListener('gameStart', () => this.showGameHUD());
-        window.addEventListener('showMenu', (e) => this.showMenuScreen(e.detail));
+        window.addEventListener('gameUpdate', (e) => {
+            if (this.screenManager) {
+                this.screenManager.updateHighScore(e.detail.highScore);
+            }
+        });
+        
+        window.addEventListener('gameOver', (e) => {
+            if (this.screenManager) {
+                this.screenManager.showGameOver(e.detail);
+            }
+        });
+        
+        window.addEventListener('gameStart', () => {
+            if (this.screenManager) {
+                this.screenManager.hideAllScreens();
+            }
+        });
+        
+        window.addEventListener('showMenu', (e) => {
+            if (this.screenManager) {
+                this.screenManager.showMenu();
+                if (e.detail?.highScore) {
+                    this.screenManager.updateHighScore(e.detail.highScore);
+                }
+            }
+        });
+        
+        window.addEventListener('showLevelSelect', () => {
+            if (this.screenManager && this.gameController) {
+                const progress = this.gameController.levelManager.loadProgress();
+                this.screenManager.showLevelSelect(progress);
+            }
+        });
+        
+        window.addEventListener('showLevelSummary', (e) => {
+            if (this.screenManager) {
+                this.screenManager.showLevelSummary(e.detail);
+            }
+        });
     }
 
     setupWindowListeners() {
@@ -116,12 +186,13 @@ class RainbowRushApp {
                                            document.mozFullScreenElement || 
                                            document.msFullscreenElement);
                     
-                    // Se utente esce dal fullscreen E il gioco non è già in pausa
-                    if (!isFullscreen && !this.gameController.gameState.isPaused() && 
-                        !this.gameController.gameState.isMenu()) {
-                        // Utente è uscito dal fullscreen mentre giocava - pausa forzata
+                    // Se utente esce dal fullscreen E il gioco sta giocando (non già in pausa)
+                    if (!isFullscreen && this.gameController.stateMachine.isPlaying()) {
+                        // Utente è uscito dal fullscreen mentre giocava - pausa automatica
+                        console.log('🔒 Fullscreen exited - auto pause');
                         this.gameController.pauseGame();
                         this.gameController.needsFullscreenRestore = true;
+                        this.gameController.autoPausedFullscreen = true;
                     }
                     
                     // Forza resize quando cambia lo stato fullscreen
@@ -138,14 +209,14 @@ class RainbowRushApp {
             
             if (document.hidden) {
                 // Tab nascosta - metti in pausa solo se sta giocando
-                if (this.gameController.gameState.isPlaying()) {
+                if (this.gameController.stateMachine.isPlaying()) {
                     this.gameController.pauseGame();
                     // Segna che è stata messa in pausa automaticamente
                     this.gameController.autoPaused = true;
                 }
             } else {
                 // Tab visibile - riprendi solo se era stata pausata automaticamente
-                if (this.gameController.gameState.isPaused() && this.gameController.autoPaused) {
+                if (this.gameController.stateMachine.isPaused() && this.gameController.autoPaused) {
                     this.gameController.resumeGame();
                     this.gameController.autoPaused = false;
                 }
@@ -162,66 +233,6 @@ class RainbowRushApp {
         }
     }
 
-    showMenuScreen(data) {
-        this.hideAllScreens();
-        const menuScreen = document.getElementById('menu-screen');
-        if (menuScreen) {
-            menuScreen.classList.add('active');
-        }
-
-        // Update high score
-        const highScoreElement = document.getElementById('menu-high-score');
-        if (highScoreElement && data) {
-            highScoreElement.textContent = data.highScore || 0;
-        }
-    }
-
-    showGameHUD() {
-        this.hideAllScreens();
-        const gameHUD = document.getElementById('game-hud');
-        if (gameHUD) {
-            gameHUD.classList.add('active');
-        }
-        
-        // Assicura che il canvas abbia il focus per ricevere eventi tastiera
-        const canvas = document.getElementById('gameCanvas');
-        if (canvas) {
-            canvas.focus();
-        }
-    }
-
-    showGameOver(stats) {
-        this.hideAllScreens();
-        const gameOverScreen = document.getElementById('gameover-screen');
-        if (gameOverScreen) {
-            gameOverScreen.classList.add('active');
-        }
-
-        // Update stats
-        this.updateElement('final-score', stats.score);
-        this.updateElement('final-level', stats.level);
-        this.updateElement('final-collectibles', stats.collectibles);
-        this.updateElement('final-high-score', stats.highScore);
-    }
-
-    updateHUD(stats) {
-        // Score and level are now rendered via HUDRenderer, no need to update HTML elements
-        // Only update collectibles if needed
-        this.updateElement('collectibles-display', stats.collectibles);
-    }
-
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    }
-
-    hideAllScreens() {
-        const screens = document.querySelectorAll('.screen');
-        screens.forEach(screen => screen.classList.remove('active'));
-    }
-
     startGame() {
         if (this.gameController) {
             // Entra in fullscreen prima di iniziare
@@ -230,29 +241,16 @@ class RainbowRushApp {
         }
     }
 
-    showMenu() {
-        if (this.gameController) {
-            this.gameController.showMenu();
-        }
-    }
-
-    showLevelSelect() {
-        if (this.gameController) {
-            this.hideAllScreens();
-            this.gameController.showLevelSelect();
-        }
-    }
-
     togglePause() {
         if (!this.gameController) return;
 
         const pauseButton = document.getElementById('pause-button');
-        if (this.gameController.gameState.isPaused()) {
+        if (this.gameController.stateMachine.isPaused()) {
             this.gameController.resumeGame();
             if (pauseButton) {
                 pauseButton.textContent = '⏸️';
             }
-        } else if (this.gameController.gameState.isPlaying()) {
+        } else if (this.gameController.stateMachine.isPlaying()) {
             this.gameController.pauseGame();
             if (pauseButton) {
                 pauseButton.textContent = '▶️';
@@ -261,7 +259,7 @@ class RainbowRushApp {
     }
     
     showPauseMenu() {
-        if (this.gameController && this.gameController.gameState.isPlaying()) {
+        if (this.gameController && this.gameController.stateMachine.isPlaying()) {
             this.gameController.pauseGame();
             const pauseScreen = document.getElementById('pause-screen');
             if (pauseScreen) {
@@ -276,6 +274,7 @@ class RainbowRushApp {
             if (this.gameController.needsFullscreenRestore) {
                 this.requestFullscreen();
                 this.gameController.needsFullscreenRestore = false;
+                this.gameController.autoPausedFullscreen = false;
             }
             
             this.gameController.resumeGame();

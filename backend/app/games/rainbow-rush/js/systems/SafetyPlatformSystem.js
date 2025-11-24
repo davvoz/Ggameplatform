@@ -19,8 +19,8 @@ const SAFETY_CONFIG = {
     RESCUE_SPAWN_INTERVAL: 2.0, // seconds between rescue platform spawns
     
     // Platform properties
-    PLATFORM_WIDTH: 400,
-    PLATFORM_HEIGHT: 20,
+    PLATFORM_WIDTH: 800,
+    PLATFORM_HEIGHT: 15,
     COLOR_READY: [0.2, 0.8, 0.4, 1.0], // Green when ready
     COLOR_DEPLETED: [0.5, 0.5, 0.5, 0.3], // Gray when no charges
 };
@@ -67,23 +67,20 @@ export class SafetyPlatformSystem {
         // Platform entity
         this.platform = null;
         
-        this.initialize();
+        this.initialize(canvasDimensions);
     }
 
-    initialize() {
-        // Usa posizioni centralizzate
-        const positions = calculateUIPositions(this.dims.width, this.dims.height);
-        const platformWidth = positions.safetyPlatform.width;
+    initialize(canvasDimensions) {
+
         
         this.platform = {
-            x: positions.safetyPlatform.getX(platformWidth),
-            y: positions.safetyPlatform.y,
-            width: platformWidth,
-            height: positions.safetyPlatform.height,
+            x: 20 ,
+            y: canvasDimensions.height ,
+            width: this.config.PLATFORM_WIDTH/2,
+            height: this.config.PLATFORM_HEIGHT,
             color: [...this.config.COLOR_READY],
-            type: 'safetyPlatform',
-            velocity: 0,
-            platformType: 'safety'
+            type: 'safety-platform'
+
         };
     }
 
@@ -501,6 +498,9 @@ export class SafetyPlatformSystem {
     get useTimes() { 
         // Per compatibilità rendering: ritorna array vuoto o con lastUseTime
         return this.lastUseTime ? [this.lastUseTime] : [];
+    }
+    get currentTime() {
+        return Date.now() / 1000;
     }
 
     updateDimensions(width, height) {

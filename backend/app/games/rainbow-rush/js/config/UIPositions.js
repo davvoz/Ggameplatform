@@ -5,7 +5,6 @@
 
 /**
  * UIPositions - Configurazione centralizzata per le posizioni degli elementi UI
- * Tutte le posizioni sono relative e si adattano al resize/fullscreen
  * Base reference dimensions: 450x800 (used for ratio calculations)
  */
 

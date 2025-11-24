@@ -498,6 +498,8 @@ export class GameController {
         this.player.updateCanvasHeight(dims.height);
         this.uiManager.resize(dims.width, dims.height);
         this.systemOrchestrator.resize(dims.width, dims.height);
+        // Update safety platform position on resize
+        this.safetyPlatformSystem.updateDimensions(dims.width, dims.height);
     }
 
     // === PRIVATE HELPERS ===

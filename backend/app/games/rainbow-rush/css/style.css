@@ -85,12 +85,12 @@ body {
 }
 
 /* Desktop: ensure screens match canvas size proportionally */
+/* Canvas sizing is handled by GameEngine.js with 9:16 aspect ratio */
 @media (min-width: 769px) {
     .screen {
-        max-width: 500px;
-        max-height: 900px;
-        width: 90vw;
-        height: 95vh;
+        /* Let screens size naturally based on content and canvas dimensions */
+        max-width: 90vw;
+        max-height: 95vh;
     }
 }
 

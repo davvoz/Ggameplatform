@@ -47,7 +47,8 @@ export class GameEngine {
     resizeCanvas() {
         // Uniform responsive sizing with aspect ratio preservation
         const isMobile = window.innerWidth <= 768;
-        const TARGET_ASPECT_RATIO = 9 / 16; // Portrait aspect ratio (width/height)
+        // Portrait aspect ratio: 9:16 (width:height) = 0.5625
+        const TARGET_ASPECT_RATIO = 9 / 16; // Portrait mode: narrower width relative to height
         
         let targetWidth, targetHeight;
         

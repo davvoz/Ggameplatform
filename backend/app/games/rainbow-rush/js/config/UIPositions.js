@@ -3,20 +3,29 @@
  * Tutte le posizioni sono relative e si adattano al resize/fullscreen
  */
 
+/**
+ * UIPositions - Configurazione centralizzata per le posizioni degli elementi UI
+ * Tutte le posizioni sono relative e si adattano al resize/fullscreen
+ */
+
+// Base reference dimensions used for ratio calculations
+const REFERENCE_WIDTH = 450;
+const REFERENCE_HEIGHT = 800;
+
 export const UI_LAYOUT = {
     // Bottoni flight e turbo (stessa altezza in basso) - valori relativi
     BUTTONS: {
-        RADIUS_RATIO: 0.089, // 40px su 450px width = ~0.089
-        MARGIN_FROM_EDGE_RATIO: 0.133, // 60px su 450px = ~0.133
-        MARGIN_FROM_BOTTOM_RATIO: 0.1625, // 130px su 800px = ~0.1625
+        RADIUS_RATIO: 40 / REFERENCE_WIDTH, // 0.0889
+        MARGIN_FROM_EDGE_RATIO: 60 / REFERENCE_WIDTH, // 0.1333
+        MARGIN_FROM_BOTTOM_RATIO: 130 / REFERENCE_HEIGHT, // 0.1625
     },
     
     // Safety platform (sotto i bottoni) - valori relativi
     SAFETY_PLATFORM: {
-        WIDTH_RATIO: 0.889, // 400px su 450px = ~0.889
+        WIDTH_RATIO: 400 / REFERENCE_WIDTH, // 0.8889
         HEIGHT: 20,
-        MARGIN_FROM_BOTTOM_RATIO: 0.0625, // 50px su 800px = ~0.0625
-        SIDE_MARGIN_RATIO: 0.044, // 20px su 450px mobile, 40px su 450px desktop
+        MARGIN_FROM_BOTTOM_RATIO: 50 / REFERENCE_HEIGHT, // 0.0625
+        SIDE_MARGIN_RATIO: 20 / REFERENCE_WIDTH, // 0.0444
     },
     
     // HUD (in alto)

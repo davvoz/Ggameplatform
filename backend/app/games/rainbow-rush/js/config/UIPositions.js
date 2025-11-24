@@ -3,21 +3,28 @@
  * Tutte le posizioni sono relative e si adattano al resize/fullscreen
  */
 
+/**
+ * UIPositions - Configurazione centralizzata per le posizioni degli elementi UI
+ * Base reference dimensions: 450x800 (used for ratio calculations)
+ */
+
+const REFERENCE_WIDTH = 450;
+const REFERENCE_HEIGHT = 800;
+
 export const UI_LAYOUT = {
     // Bottoni flight e turbo (stessa altezza in basso)
     BUTTONS: {
-        RADIUS: 40,
-        MARGIN_FROM_EDGE: 60, // Distanza dal bordo laterale
-        MARGIN_FROM_BOTTOM: 130, // Distanza dal bordo inferiore
+        RADIUS_RATIO: 40 / REFERENCE_WIDTH,
+        MARGIN_FROM_EDGE_RATIO: 60 / REFERENCE_WIDTH,
+        MARGIN_FROM_BOTTOM_RATIO: 130 / REFERENCE_HEIGHT,
     },
     
     // Safety platform (sotto i bottoni)
     SAFETY_PLATFORM: {
-        WIDTH: 400,
+        WIDTH_RATIO: 400 / REFERENCE_WIDTH,
         HEIGHT: 20,
-        MARGIN_FROM_BOTTOM: 50, // Distanza dal bordo inferiore (sotto i bottoni)
-        SIDE_MARGIN_MOBILE: 20,
-        SIDE_MARGIN_DESKTOP: 40,
+        MARGIN_FROM_BOTTOM_RATIO: 50 / REFERENCE_HEIGHT,
+        SIDE_MARGIN_RATIO: 20 / REFERENCE_WIDTH,
     },
     
     // HUD (in alto)
@@ -38,31 +45,41 @@ export const UI_LAYOUT = {
 
 /**
  * Calcola le posizioni effettive degli elementi UI in base alle dimensioni del canvas
+ * Usa valori proporzionali per garantire uniformità tra mobile e desktop
  */
 export function calculateUIPositions(canvasWidth, canvasHeight) {
     const isMobile = canvasWidth < 600;
     
+    // Calcola dimensioni proporzionali basate sulla larghezza del canvas
+    const buttonRadius = Math.round(canvasWidth * UI_LAYOUT.BUTTONS.RADIUS_RATIO);
+    const marginFromEdge = Math.round(canvasWidth * UI_LAYOUT.BUTTONS.MARGIN_FROM_EDGE_RATIO);
+    const marginFromBottom = Math.round(canvasHeight * UI_LAYOUT.BUTTONS.MARGIN_FROM_BOTTOM_RATIO);
+    
+    const platformWidth = Math.round(canvasWidth * UI_LAYOUT.SAFETY_PLATFORM.WIDTH_RATIO);
+    const platformMarginFromBottom = Math.round(canvasHeight * UI_LAYOUT.SAFETY_PLATFORM.MARGIN_FROM_BOTTOM_RATIO);
+    const platformSideMargin = Math.round(canvasWidth * UI_LAYOUT.SAFETY_PLATFORM.SIDE_MARGIN_RATIO);
+    
     return {
         // Bottone turbo (destra)
         turboButton: {
-            x: canvasWidth - UI_LAYOUT.BUTTONS.MARGIN_FROM_EDGE,
-            y: canvasHeight - UI_LAYOUT.BUTTONS.MARGIN_FROM_BOTTOM,
-            radius: UI_LAYOUT.BUTTONS.RADIUS
+            x: canvasWidth - marginFromEdge,
+            y: canvasHeight - marginFromBottom,
+            radius: buttonRadius
         },
         
         // Bottone flight (sinistra, stessa Y)
         flightButton: {
-            x: UI_LAYOUT.BUTTONS.MARGIN_FROM_EDGE,
-            y: canvasHeight - UI_LAYOUT.BUTTONS.MARGIN_FROM_BOTTOM,
-            radius: UI_LAYOUT.BUTTONS.RADIUS
+            x: marginFromEdge,
+            y: canvasHeight - marginFromBottom,
+            radius: buttonRadius
         },
         
         // Safety platform (centrata, sotto i bottoni)
         safetyPlatform: {
-            y: canvasHeight - UI_LAYOUT.SAFETY_PLATFORM.MARGIN_FROM_BOTTOM,
+            y: canvasHeight - platformMarginFromBottom,
             width: Math.min(
-                UI_LAYOUT.SAFETY_PLATFORM.WIDTH,
-                canvasWidth - (isMobile ? UI_LAYOUT.SAFETY_PLATFORM.SIDE_MARGIN_MOBILE : UI_LAYOUT.SAFETY_PLATFORM.SIDE_MARGIN_DESKTOP) * 2
+                platformWidth,
+                canvasWidth - platformSideMargin * 2
             ),
             height: UI_LAYOUT.SAFETY_PLATFORM.HEIGHT,
             getX: function(width) {

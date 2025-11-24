@@ -53,10 +53,10 @@ body {
 }
 
 /* Canvas dimensions are managed by GameEngine.resizeCanvas() */
-/* Desktop and Mobile: no fixed dimensions, let JS handle it */
+/* Responsive design with uniform aspect ratio */
 @media (min-width: 769px) {
     #game-container {
-        /* Container auto-sizes to canvas */
+        /* Container auto-sizes to canvas with consistent aspect ratio */
     }
 }
 
@@ -66,7 +66,7 @@ body {
     }
     
     #game-container {
-        /* Container auto-sizes to canvas */
+        /* Container auto-sizes to canvas for fullscreen mobile */
     }
 }
 
@@ -84,11 +84,13 @@ body {
     z-index: 200;
 }
 
-/* Desktop: limit screen size to match canvas */
+/* Desktop: ensure screens match canvas size proportionally */
+/* Canvas sizing is handled by GameEngine.js with 9:16 aspect ratio */
 @media (min-width: 769px) {
     .screen {
-        width: 450px;
-        height: 800px;
+        /* Let screens size naturally based on content and canvas dimensions */
+        max-width: 90vw;
+        max-height: 95vh;
     }
 }
 

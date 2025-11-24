@@ -306,118 +306,75 @@ export class FlightButtonUI {
             ctx.fill();
         }
         
-        // === INDICATORI ZONE DI VOLO ===
-        // Quando il volo è attivo, mostra zone cliccabili su/giù
+        // === INDICATORI ZONE DI VOLO - VERSIONE RIDOTTA E PROFESSIONALE ===
+        // Quando il volo è attivo, mostra indicatori discreti ai lati
         if (isActive) {
-            const midY = this.canvasHeight / 2;
             const pulse = Math.sin(this.pulseTime * 4) * 0.15 + 0.85;
-            const arrowBounce = Math.sin(this.pulseTime * 5) * 8;
+            const arrowBounce = Math.sin(this.pulseTime * 5) * 3;
             
-            // === ZONA SUPERIORE (CLICK PER SALIRE) ===
-            // Zona semitrasparente superiore
-            const topGradient = ctx.createLinearGradient(0, 0, 0, midY);
-            topGradient.addColorStop(0, `rgba(100, 255, 150, ${0.15 * pulse})`);
-            topGradient.addColorStop(1, `rgba(100, 255, 150, 0)`);
-            ctx.fillStyle = topGradient;
-            ctx.fillRect(0, 0, this.canvasWidth, midY);
+            // === INDICATORE SUPERIORE (LATO DESTRO) ===
+            const arrowUpX = this.canvasWidth - 45;
+            const arrowUpY = 100 - arrowBounce;
             
-            // Freccia SU con ombra
-            const arrowUpY = 80 - arrowBounce;
             ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetY = 3;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
             
-            // Sfondo freccia
-            ctx.fillStyle = `rgba(100, 255, 150, ${0.25 * pulse})`;
+            // Sfondo freccia compatto
+            ctx.fillStyle = `rgba(100, 255, 150, ${0.20 * pulse})`;
             ctx.beginPath();
-            ctx.arc(this.canvasWidth / 2, arrowUpY, 35, 0, Math.PI * 2);
+            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
             ctx.fill();
             
             // Bordo freccia
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * pulse})`;
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(this.canvasWidth / 2, arrowUpY, 35, 0, Math.PI * 2);
+            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
             ctx.stroke();
             
             ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
             
             // Icona freccia SU
             ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-            ctx.font = 'bold 40px Arial';
+            ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⬆️', this.canvasWidth / 2, arrowUpY);
-            
-            // Testo "CLICK TO GO UP"
-            ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * pulse})`;
-            ctx.font = 'bold 18px Arial';
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.lineWidth = 4;
-            ctx.strokeText('CLICK TO GO UP', this.canvasWidth / 2, arrowUpY + 55);
-            ctx.fillText('CLICK TO GO UP', this.canvasWidth / 2, arrowUpY + 55);
+            ctx.fillText('⬆️', arrowUpX, arrowUpY);
             
             ctx.restore();
             
-            // === ZONA INFERIORE (CLICK PER SCENDERE) ===
-            // Zona semitrasparente inferiore
-            const bottomGradient = ctx.createLinearGradient(0, midY, 0, this.canvasHeight);
-            bottomGradient.addColorStop(0, `rgba(255, 150, 100, 0)`);
-            bottomGradient.addColorStop(1, `rgba(255, 150, 100, ${0.15 * pulse})`);
-            ctx.fillStyle = bottomGradient;
-            ctx.fillRect(0, midY, this.canvasWidth, this.canvasHeight - midY);
-            
-            // Freccia GIÙ con ombra
+            // === INDICATORE INFERIORE (LATO DESTRO) ===
+            const arrowDownX = this.canvasWidth - 45;
             const arrowDownY = this.canvasHeight - 180 + arrowBounce;
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetY = 3;
             
-            // Sfondo freccia
-            ctx.fillStyle = `rgba(255, 150, 100, ${0.25 * pulse})`;
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+            
+            // Sfondo freccia compatto
+            ctx.fillStyle = `rgba(255, 150, 100, ${0.20 * pulse})`;
             ctx.beginPath();
-            ctx.arc(this.canvasWidth / 2, arrowDownY, 35, 0, Math.PI * 2);
+            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
             ctx.fill();
             
             // Bordo freccia
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * pulse})`;
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(this.canvasWidth / 2, arrowDownY, 35, 0, Math.PI * 2);
+            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
             ctx.stroke();
             
             ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
             
             // Icona freccia GIÙ
             ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-            ctx.font = 'bold 40px Arial';
+            ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⬇️', this.canvasWidth / 2, arrowDownY);
-            
-            // Testo "CLICK TO GO DOWN"
-            ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * pulse})`;
-            ctx.font = 'bold 18px Arial';
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.lineWidth = 4;
-            ctx.strokeText('CLICK TO GO DOWN', this.canvasWidth / 2, arrowDownY + 55);
-            ctx.fillText('CLICK TO GO DOWN', this.canvasWidth / 2, arrowDownY + 55);
+            ctx.fillText('⬇️', arrowDownX, arrowDownY);
             
             ctx.restore();
-            
-            // Linea divisoria centrale (opzionale, sottile)
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * pulse})`;
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 10]);
-            ctx.beginPath();
-            ctx.moveTo(0, midY);
-            ctx.lineTo(this.canvasWidth, midY);
-            ctx.stroke();
-            ctx.setLineDash([]);
         }
         
         ctx.restore();

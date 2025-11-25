@@ -171,9 +171,7 @@ class RainbowRushApp {
     setupWindowListeners() {
         // Handle window resize
         window.addEventListener('resize', () => {
-            if (this.gameController) {
-                this.gameController.handleResize();
-            }
+           
         });
 
         // Handle fullscreen changes (entrata/uscita fullscreen)

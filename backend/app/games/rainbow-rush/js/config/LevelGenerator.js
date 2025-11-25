@@ -92,10 +92,21 @@ class Level {
             twoStars: { time: 30, coins: 0.8, enemies: 0.7 },
             oneStar: { time: 45, coins: 0.5 }
         };
+        this.length = 0; // Lunghezza totale del livello in pixel (calcolata dopo aver aggiunto le piattaforme)
     }
 
     addPlatform(platform) {
         this.platforms.push(platform);
+        // Aggiorna la lunghezza del livello
+        this.updateLength();
+    }
+
+    updateLength() {
+        if (this.platforms.length > 0) {
+            // La lunghezza è la X della piattaforma più lontana + la sua larghezza
+            const lastPlatform = this.platforms[this.platforms.length - 1];
+            this.length = lastPlatform.x + lastPlatform.width;
+        }
     }
 
     addEnemy(enemy) {
@@ -118,7 +129,8 @@ class Level {
             obstacles: this.obstacles,
             objectives: this.objectives,
             parTime: this.parTime,
-            starRequirements: this.starRequirements
+            starRequirements: this.starRequirements,
+            length: this.length
         };
     }
 }

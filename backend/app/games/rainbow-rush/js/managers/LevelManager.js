@@ -118,19 +118,22 @@ export class LevelManager {
         });
         
         // Genera bandierina del traguardo alla fine del livello
-        if (entities.platforms.length > 0) {
-            const lastPlatform = entities.platforms[entities.platforms.length - 1];
-            // Posiziona la bandiera esattamente dove il popup apparirà
-            // Il popup appare quando l'ultima piattaforma esce completamente (x + width < 0)
-            // Quindi la bandiera deve stare a x = -width/2 quando l'ultima piattaforma esce
-            // Distanza dalla fine dell'ultima piattaforma = (lastPlatform.width + width della bandiera)
+        if (entities.platforms.length > 0 && this.currentLevel.length) {
+            // La bandiera deve essere DOPO l'ultima piattaforma ma prima che esca dallo schermo
+            // Il livello finisce quando platformsPassed == totalPlatforms (ultima piattaforma esce a x + width < 0)
+            // Quindi mettiamo la bandiera poco prima che l'ultima piattaforma esca
+            const goalX = this.currentLevel.length + 100; // 100px DOPO la fine dell'ultima piattaforma
+            
+            // Trova una piattaforma vicina per la Y (usa l'ultima o la penultima)
+            const referencePlatform = entities.platforms[entities.platforms.length - 1];
+            
             entities.goalFlag = {
-                x: lastPlatform.x + lastPlatform.width + 20, // Subito dopo l'ultima piattaforma
-                y: this.canvasHeight - 150,
+                x: goalX,
+                y: referencePlatform.y - 60, // Altezza relativa alla piattaforma di riferimento
                 width: 40,
                 height: 60,
                 type: 'goalFlag',
-                velocity: lastPlatform.velocity,
+                velocity: -this.baseSpeed,
                 animationTime: 0,
                 reached: false
             };

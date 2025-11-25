@@ -352,13 +352,13 @@ export class ScreenManager {
     
     _onNextLevel() {
         if (this.currentLevelSummary?.nextLevelId) {
-            this._dispatchEvent('playLevel', { levelId: this.currentLevelSummary.nextLevelId });
+            this._dispatchEvent('nextLevel', { levelId: this.currentLevelSummary.nextLevelId });
         }
     }
     
     _onRetryLevel() {
         if (this.currentLevelSummary?.levelId) {
-            this._dispatchEvent('playLevel', { levelId: this.currentLevelSummary.levelId });
+            this._dispatchEvent('retryLevel', { levelId: this.currentLevelSummary.levelId });
         }
     }
     

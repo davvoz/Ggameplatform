@@ -60,25 +60,36 @@ class RainbowRushApp {
             this.gameController.startGame();
         });
         
-        // Level select from level select screen
+        // Level select from level select screen (reset health)
         this.screenManager.on('levelSelect', ({ levelId }) => {
             this.gameController.audioManager?.playSound('click');
             this.screenManager.hideAllScreens();
             this.requestFullscreen();
-            // Load specific level
+            // Load specific level WITH health reset (from level list)
             const dims = this.gameController.engine.getCanvasDimensions();
-            this.gameController.levelOrchestrator.loadLevel(levelId, dims);
+            this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
             this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
         });
         
-        // Play level from summary or retry
-        this.screenManager.on('playLevel', ({ levelId }) => {
+        // Next level from summary (keep health)
+        this.screenManager.on('nextLevel', ({ levelId }) => {
             this.gameController.audioManager?.playSound('click');
             this.screenManager.hideAllScreens();
             this.requestFullscreen();
-            // Load specific level
+            // Load next level WITHOUT health reset (keep hearts)
             const dims = this.gameController.engine.getCanvasDimensions();
-            this.gameController.levelOrchestrator.loadLevel(levelId, dims);
+            this.gameController.levelOrchestrator.loadLevel(levelId, dims, false);
+            this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
+        });
+        
+        // Retry level from summary (reset health)
+        this.screenManager.on('retryLevel', ({ levelId }) => {
+            this.gameController.audioManager?.playSound('click');
+            this.screenManager.hideAllScreens();
+            this.requestFullscreen();
+            // Load retry level WITH health reset
+            const dims = this.gameController.engine.getCanvasDimensions();
+            this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
             this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
         });
         

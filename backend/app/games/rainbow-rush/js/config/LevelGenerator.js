@@ -811,17 +811,25 @@ export class LevelGenerator {
         // Imposta par time
         level.parTime = config.parTime;
 
-        // NUOVO: Imposta fineLivello in base alla difficoltà
-        // Tutorial: 2500px, Easy: 3000px, Normal: 4000px, Hard: 5000px, Expert: 6000px, Master: 7000px
-        const fineLivelloPerTier = {
-            TUTORIAL: 2500,
-            EASY: 3000,
-            NORMAL: 4000,
-            HARD: 5000,
-            EXPERT: 6000,
-            MASTER: 7000
+        // NUOVO: Imposta fineLivello in base alla difficoltà CON VARIAZIONE
+        // Base length + variazione progressiva basata sul levelId per rendere ogni livello unico
+        const baseLengthPerTier = {
+            TUTORIAL: { base: 2500, variation: 200 },
+            EASY: { base: 3000, variation: 400 },
+            NORMAL: { base: 4000, variation: 600 },
+            HARD: { base: 5000, variation: 800 },
+            EXPERT: { base: 6000, variation: 1000 },
+            MASTER: { base: 7000, variation: 1200 }
         };
-        level.fineLivello = fineLivelloPerTier[tier] || 3000;
+        
+        const tierConfig = baseLengthPerTier[tier] || { base: 3000, variation: 400 };
+        // Variazione progressiva: cresce con il livello all'interno del tier
+        const progressiveIncrease = (levelId % 40) * (tierConfig.variation / 40);
+        // Variazione casuale deterministica basata su levelId
+        const seed = levelId * 12345 % 100;
+        const randomVariation = (seed / 100) * tierConfig.variation - (tierConfig.variation / 2);
+        
+        level.fineLivello = Math.floor(tierConfig.base + progressiveIncrease + randomVariation);
 
         // Imposta star requirements basati su parTime
         level.starRequirements = {

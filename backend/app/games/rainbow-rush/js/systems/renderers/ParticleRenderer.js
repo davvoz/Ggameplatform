@@ -45,4 +45,27 @@ export class ParticleRenderer {
         this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
         this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.4, [1.0, 1.0, 1.0, alpha * 0.8]);
     }
+
+    renderProjectileHit(particle) {
+        const alpha = particle.life / particle.maxLife;
+        const color = [...particle.color];
+        color[3] *= alpha;
+        
+        // Simple projectile hit particle - small explosion effect
+        this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1.0, 1.0, 1.0, alpha * 0.6]);
+    }
+
+    /**
+     * Main render method called by RendererFactory
+     */
+    render(entity, context) {
+        if (entity.type === 'projectile-hit') {
+            this.renderProjectileHit(entity);
+        } else if (entity.type === 'boostParticle') {
+            this.renderBoostParticle(entity);
+        } else if (entity.type === 'powerupParticle') {
+            this.renderPowerupParticle(entity);
+        }
+    }
 }

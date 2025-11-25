@@ -866,7 +866,7 @@ export class Player {
         return distance < (this.width / 2 + collectible.radius);
     }
 
-    reset(x, y) {
+    reset(x, y, resetHealth = true) {
         this.x = x;
         this.y = y;
         this.velocityY = 0;
@@ -889,8 +889,11 @@ export class Player {
         this.boostComboSpeedBonus = 0;
         this.boostDecelerationTime = 0;
         this.boostPeakVelocity = 0;
-        // Resetta la salute al massimo quando si fa reset (game over o restart)
-        this.health = this.maxHealth;
+        // Resetta la salute SOLO se richiesto (dalla lista livelli o game over)
+        // Non resetta se si passa da un livello all'altro
+        if (resetHealth) {
+            this.health = this.maxHealth;
+        }
         this.invulnerable = false;
         this.invulnerabilityTimer = 0;
         this.damageFlash = 0;

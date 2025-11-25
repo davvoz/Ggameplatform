@@ -9,6 +9,31 @@ export class ParticleSystem {
     }
 
     /**
+     * Create projectile hit explosion
+     */
+    createProjectileHitExplosion(x, y, projectileColor, entityManager) {
+        // 8 particles in radial pattern
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8;
+            const speed = 80 + Math.random() * 60;
+            
+            const particle = {
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.4,
+                maxLife: 0.4,
+                size: 3 + Math.random() * 2,
+                color: [...projectileColor],
+                gravity: 150,
+                type: 'projectile-hit'
+            };
+            
+            entityManager.addEntity('powerupParticles', particle);
+        }
+    }
+
+    /**
      * Create boost particles explosion - Ultra minimal
      */
     createBoostExplosion(x, y, entityManager) {

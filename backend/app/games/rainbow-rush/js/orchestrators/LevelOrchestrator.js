@@ -55,9 +55,10 @@ export class LevelOrchestrator {
      * Load specific level
      * @param {number} levelId - Level ID to load
      * @param {Object} dims - Canvas dimensions {width, height}
+     * @param {boolean} resetHealth - Se true, resetta la salute del player (default: true per lista livelli)
      */
-    loadLevel(levelId, dims) {
-        console.log(`📋 Loading level ${levelId}`);
+    loadLevel(levelId, dims, resetHealth = true) {
+        console.log(`📋 Loading level ${levelId} (resetHealth: ${resetHealth})`);
         
         // Reset death animation state
         if (this.animationController) {
@@ -80,7 +81,7 @@ export class LevelOrchestrator {
         this._addEntitiesToManager(entities);
         
         // Position player on first platform
-        this._positionPlayerOnFirstPlatform(entities.platforms, dims);
+        this._positionPlayerOnFirstPlatform(entities.platforms, dims, resetHealth);
         
         // Update background for level
         if (this.backgroundSystem) {
@@ -96,7 +97,8 @@ export class LevelOrchestrator {
      */
     loadNextLevel(dims) {
         const nextLevelId = this.levelManager.currentLevelId + 1;
-        this.loadLevel(nextLevelId, dims);
+        // NON resetta la salute quando si passa al livello successivo
+        this.loadLevel(nextLevelId, dims, false);
     }
 
     /**
@@ -106,7 +108,8 @@ export class LevelOrchestrator {
     retryLevel(dims) {
         const currentLevelId = this.levelManager.currentLevelId;
         this.levelManager.reloadLevel();
-        this.loadLevel(currentLevelId, dims);
+        // Resetta la salute quando si fa retry del livello
+        this.loadLevel(currentLevelId, dims, true);
     }
 
     /**
@@ -289,14 +292,15 @@ export class LevelOrchestrator {
      * Position player on first platform
      * @private
      */
-    _positionPlayerOnFirstPlatform(platforms, dims) {
+    _positionPlayerOnFirstPlatform(platforms, dims, resetHealth = true) {
         if (platforms && platforms.length > 0) {
             const firstPlatform = platforms[0];
             const playerX = firstPlatform.x + firstPlatform.width / 2 - this.player.width / 2;
             const playerY = firstPlatform.y - this.player.height - 5;
             
             // Reset player state (alive, velocities, powerups, etc.)
-            this.player.reset(playerX, playerY);
+            // resetHealth controlla se resettare anche la salute
+            this.player.reset(playerX, playerY, resetHealth);
             
             console.log(`👤 Player positioned on first platform at (${playerX.toFixed(0)}, ${playerY.toFixed(0)})`);
         }

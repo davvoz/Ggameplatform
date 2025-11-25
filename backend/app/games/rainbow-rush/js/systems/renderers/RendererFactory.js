@@ -9,6 +9,7 @@ import { ObstacleRenderer } from './ObstacleRenderer.js';
 import { SafetyPlatformRenderer } from './SafetyPlatformRenderer.js';
 import { GoalFlagRenderer } from './GoalFlagRenderer.js';
 import { EnemyRenderer } from './EnemyRenderer.js'; // NEW
+import { ParticleRenderer } from './ParticleRenderer.js';
 
 export class RendererFactory {
     constructor(renderer, textCtx = null) {
@@ -77,6 +78,10 @@ export class RendererFactory {
         const enemyRenderer = new EnemyRenderer();
         enemyRenderer.textCtx = this.textCtx; // Set textCtx manually
         this.renderers.set('enemy', enemyRenderer);
+        
+        // Particles
+        const particleRenderer = new ParticleRenderer(this.renderer);
+        this.renderers.set('projectile-hit', particleRenderer);
     }
 
     /**

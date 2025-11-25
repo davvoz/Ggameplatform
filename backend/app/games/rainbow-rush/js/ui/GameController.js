@@ -89,6 +89,10 @@ export class GameController {
         await this.audioManager.initialize();
         console.log('🔊 AudioManager initialized');
         
+        // Initialize Platform SDK
+        await this.sdkManager.initialize();
+        console.log('🎮 Platform SDK initialized');
+        
         // Setup rendering system update hook
         this.renderingSystem.update = (deltaTime, entities) => {
             this.updateGame(deltaTime);

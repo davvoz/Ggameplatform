@@ -889,8 +889,8 @@ export class Player {
         this.boostComboSpeedBonus = 0;
         this.boostDecelerationTime = 0;
         this.boostPeakVelocity = 0;
-        // NON resettare la salute - i cuori persi restano persi tra i livelli
-        // this.health = this.maxHealth;
+        // Resetta la salute al massimo quando si fa reset (game over o restart)
+        this.health = this.maxHealth;
         this.invulnerable = false;
         this.invulnerabilityTimer = 0;
         this.damageFlash = 0;

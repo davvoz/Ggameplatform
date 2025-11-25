@@ -121,7 +121,10 @@ class RainbowRushApp {
     }
     
     getLevelProgress() {
-        // TODO: Load from localStorage
+        // Carica il progresso dal localStorage usando il LevelManager
+        if (this.gameController && this.gameController.levelManager) {
+            return this.gameController.levelManager.loadProgress();
+        }
         return {};
     }
 

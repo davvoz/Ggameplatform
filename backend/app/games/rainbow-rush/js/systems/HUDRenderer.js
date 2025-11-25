@@ -60,9 +60,9 @@ export class HUDRenderer {
         this.renderLevel(level);
         
         // DEBUG: Distance traveled
-        if (distanceTraveled !== null) {
-            this.renderDebugPosition(distanceTraveled, levelLength);
-        }
+        //if (distanceTraveled !== null) {
+          //  this.renderDebugPosition(distanceTraveled, levelLength);
+       // }
     }
     
     renderDebugPosition(distanceTraveled, levelLength) {

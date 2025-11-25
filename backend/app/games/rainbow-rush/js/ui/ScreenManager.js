@@ -107,6 +107,7 @@ export class ScreenManager {
      */
     showLevelSelect(progress = {}) {
         this.levelProgress = progress;
+        this.currentPage = 0; // Reset alla prima pagina
         this._showScreen('levelSelect');
         this._renderLevelSelect();
     }

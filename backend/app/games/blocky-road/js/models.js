@@ -59,52 +59,268 @@ const Models = {
         return group;
     },
     
-    // Create car/vehicle
+    // Create car - Cute Crossy Road style
     createCar: (color = 0xFF4444) => {
         const group = new THREE.Group();
         
-        // Car body
-        const bodyGeometry = new THREE.BoxGeometry(0.8, 0.4, 1.6);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: color });
+        // Main body
+        const bodyGeometry = new THREE.BoxGeometry(0.9, 0.5, 1.6);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ 
+            color: color,
+            flatShading: true
+        });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.3;
         body.castShadow = true;
         body.receiveShadow = true;
         group.add(body);
         
-        // Car roof/cabin
-        const roofGeometry = new THREE.BoxGeometry(0.7, 0.35, 0.9);
-        const roofMaterial = new THREE.MeshLambertMaterial({ color: color });
-        const roof = new THREE.Mesh(roofGeometry, roofMaterial);
-        roof.position.y = 0.65;
-        roof.position.z = -0.2;
-        roof.castShadow = true;
-        group.add(roof);
+        // Windshield/cabin
+        const cabinGeometry = new THREE.BoxGeometry(0.75, 0.4, 0.7);
+        const cabinMaterial = new THREE.MeshLambertMaterial({ 
+            color: new THREE.Color(color).multiplyScalar(0.7),
+            flatShading: true
+        });
+        const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
+        cabin.position.set(0, 0.65, 0.1);
+        cabin.castShadow = true;
+        group.add(cabin);
         
-        // Windows
-        const windowGeometry = new THREE.BoxGeometry(0.71, 0.25, 0.4);
-        const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x4DD0E1 });
-        const frontWindow = new THREE.Mesh(windowGeometry, windowMaterial);
-        frontWindow.position.set(0, 0.65, 0.25);
-        group.add(frontWindow);
+        // Cute eyes on windshield
+        const eyeGeometry = new THREE.BoxGeometry(0.15, 0.12, 0.1);
+        const eyeMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0xffffff,
+            flatShading: true
+        });
         
-        // Wheels
-        const wheelGeometry = new THREE.BoxGeometry(0.2, 0.25, 0.25);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x2C3E50 });
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.2, 0.7, 0.45);
+        group.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.2, 0.7, 0.45);
+        group.add(rightEye);
+        
+        // Pupils
+        const pupilGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+        const pupilMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        
+        const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        leftPupil.position.set(-0.2, 0.7, 0.5);
+        group.add(leftPupil);
+        
+        const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        rightPupil.position.set(0.2, 0.7, 0.5);
+        group.add(rightPupil);
+        
+        // Front grill/smile
+        const grillGeometry = new THREE.BoxGeometry(0.5, 0.15, 0.1);
+        const grillMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x222222,
+            flatShading: true
+        });
+        const grill = new THREE.Mesh(grillGeometry, grillMaterial);
+        grill.position.set(0, 0.25, 0.85);
+        group.add(grill);
+        
+        // Front bumper
+        const bumperGeometry = new THREE.BoxGeometry(1.0, 0.15, 0.2);
+        const bumperMaterial = new THREE.MeshLambertMaterial({ 
+            color: new THREE.Color(color).multiplyScalar(0.8),
+            flatShading: true
+        });
+        const bumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
+        bumper.position.set(0, 0.15, 0.9);
+        group.add(bumper);
+        
+        // Wheels with rims
+        const wheelGeometry = new THREE.BoxGeometry(0.25, 0.35, 0.35);
+        const wheelMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x1a1a1a,
+            flatShading: true
+        });
+        
+        const rimGeometry = new THREE.BoxGeometry(0.28, 0.2, 0.2);
+        const rimMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x666666,
+            flatShading: true
+        });
         
         const wheels = [
-            { x: -0.35, z: 0.6 },
-            { x: 0.35, z: 0.6 },
-            { x: -0.35, z: -0.6 },
-            { x: 0.35, z: -0.6 }
+            { x: -0.5, z: 0.6 },
+            { x: 0.5, z: 0.6 },
+            { x: -0.5, z: -0.6 },
+            { x: 0.5, z: -0.6 }
         ];
         
         wheels.forEach(pos => {
             const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-            wheel.position.set(pos.x, 0.1, pos.z);
+            wheel.position.set(pos.x, 0.12, pos.z);
             wheel.castShadow = true;
+            wheel.userData.isWheel = true;
             group.add(wheel);
         });
+        
+        return group;
+    },
+    
+    // Create truck - Detailed blocky style
+    createTruck: (color = 0x3366FF) => {
+        const group = new THREE.Group();
+        
+        // Truck cab (front part)
+        const cabGeometry = new THREE.BoxGeometry(0.95, 0.7, 0.9);
+        const cabMaterial = new THREE.MeshLambertMaterial({ 
+            color: color,
+            flatShading: true
+        });
+        const cab = new THREE.Mesh(cabGeometry, cabMaterial);
+        cab.position.set(0, 0.45, 0.6);
+        cab.castShadow = true;
+        cab.receiveShadow = true;
+        group.add(cab);
+        
+        // Cargo area (back part)
+        const cargoGeometry = new THREE.BoxGeometry(0.95, 0.8, 1.2);
+        const cargoMaterial = new THREE.MeshLambertMaterial({ 
+            color: new THREE.Color(color).multiplyScalar(0.85),
+            flatShading: true
+        });
+        const cargo = new THREE.Mesh(cargoGeometry, cargoMaterial);
+        cargo.position.set(0, 0.5, -0.5);
+        cargo.castShadow = true;
+        group.add(cargo);
+        
+        // Windshield
+        const windshieldGeometry = new THREE.BoxGeometry(0.8, 0.45, 0.15);
+        const windshieldMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x87CEEB,
+            flatShading: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const windshield = new THREE.Mesh(windshieldGeometry, windshieldMaterial);
+        windshield.position.set(0, 0.6, 1.0);
+        group.add(windshield);
+        
+        // Headlights
+        const lightGeometry = new THREE.BoxGeometry(0.2, 0.15, 0.1);
+        const lightMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0xFFFF99,
+            flatShading: true
+        });
+        
+        const leftLight = new THREE.Mesh(lightGeometry, lightMaterial);
+        leftLight.position.set(-0.3, 0.3, 1.1);
+        group.add(leftLight);
+        
+        const rightLight = new THREE.Mesh(lightGeometry, lightMaterial);
+        rightLight.position.set(0.3, 0.3, 1.1);
+        group.add(rightLight);
+        
+        // Door line detail on cab
+        const doorGeometry = new THREE.BoxGeometry(0.05, 0.5, 0.6);
+        const doorMaterial = new THREE.MeshLambertMaterial({ 
+            color: new THREE.Color(color).multiplyScalar(0.6),
+            flatShading: true
+        });
+        const door = new THREE.Mesh(doorGeometry, doorMaterial);
+        door.position.set(0.5, 0.45, 0.6);
+        group.add(door);
+        
+        // Wheels with rims
+        const wheelGeometry = new THREE.BoxGeometry(0.28, 0.4, 0.4);
+        const wheelMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x1a1a1a,
+            flatShading: true
+        });
+        
+        const rimGeometry = new THREE.BoxGeometry(0.3, 0.25, 0.25);
+        const rimMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x666666,
+            flatShading: true
+        });
+        
+        // Front fenders
+        const fenderGeometry = new THREE.BoxGeometry(0.15, 0.25, 0.5);
+        const fenderMaterial = new THREE.MeshLambertMaterial({ 
+            color: new THREE.Color(color).multiplyScalar(0.7),
+            flatShading: true
+        });
+        
+        const wheels = [
+            { x: -0.55, z: 0.7 },
+            { x: 0.55, z: 0.7 },
+            { x: -0.55, z: -0.8 },
+            { x: 0.55, z: -0.8 }
+        ];
+        
+        wheels.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            wheel.position.set(pos.x, 0.15, pos.z);
+            wheel.castShadow = true;
+            wheel.userData.isWheel = true;
+            group.add(wheel);
+            
+            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+            rim.position.set(pos.x, 0.15, pos.z);
+            group.add(rim);
+            
+            // Fenders above front wheels
+            if (pos.z > 0) {
+                const fender = new THREE.Mesh(fenderGeometry, fenderMaterial);
+                fender.position.set(pos.x, 0.35, pos.z);
+                group.add(fender);
+            }
+        });
+        
+        return group;
+    },
+    
+    // Create motorcycle - Simple small blocky bike
+    createMotorcycle: (color = 0x1E88E5) => {
+        const group = new THREE.Group();
+        
+        // Simple small body
+        const bodyGeometry = new THREE.BoxGeometry(0.5, 0.4, 1.0);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ 
+            color: color,
+            flatShading: true
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.3;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        group.add(body);
+        
+        // Simple handlebars
+        const handleGeometry = new THREE.BoxGeometry(0.6, 0.1, 0.1);
+        const handleMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x333333,
+            flatShading: true
+        });
+        const handles = new THREE.Mesh(handleGeometry, handleMaterial);
+        handles.position.set(0, 0.5, 0.4);
+        group.add(handles);
+        
+        // Simple small wheels
+        const wheelGeometry = new THREE.BoxGeometry(0.15, 0.25, 0.25);
+        const wheelMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x1a1a1a,
+            flatShading: true
+        });
+        
+        const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        frontWheel.position.set(0, 0.12, 0.5);
+        frontWheel.castShadow = true;
+        frontWheel.userData.isWheel = true;
+        group.add(frontWheel);
+        
+        const backWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        backWheel.position.set(0, 0.12, -0.5);
+        backWheel.castShadow = true;
+        backWheel.userData.isWheel = true;
+        group.add(backWheel);
         
         return group;
     },
@@ -163,12 +379,12 @@ const Models = {
         return group;
     },
     
-    // Create log (floating platform on water)
+    // Create log (floating platform on water) - grid-aligned
     createLog: (length = 3) => {
         const group = new THREE.Group();
         
-        // Main log body
-        const logGeometry = new THREE.BoxGeometry(length, 0.4, 0.8);
+        // Main log body - simple box, no caps
+        const logGeometry = new THREE.BoxGeometry(length, 0.4, 0.9);
         const logMaterial = new THREE.MeshLambertMaterial({ 
             color: 0x8B4513,
             flatShading: true
@@ -178,24 +394,15 @@ const Models = {
         log.receiveShadow = true;
         group.add(log);
         
-        // End caps (darker)
-        const capMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
-        
-        const leftCap = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.4, 0.4, 0.8, 8),
-            capMaterial
-        );
-        leftCap.rotation.z = Math.PI / 2;
-        leftCap.position.x = -length / 2;
-        group.add(leftCap);
-        
-        const rightCap = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.4, 0.4, 0.8, 8),
-            capMaterial
-        );
-        rightCap.rotation.z = Math.PI / 2;
-        rightCap.position.x = length / 2;
-        group.add(rightCap);
+        // Darker stripes for texture
+        const stripeGeometry = new THREE.BoxGeometry(length * 0.9, 0.41, 0.15);
+        const stripeMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x654321,
+            flatShading: true
+        });
+        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+        stripe.position.y = 0.01;
+        group.add(stripe);
         
         return group;
     },
@@ -277,34 +484,95 @@ const Models = {
         return block;
     },
     
-    // Create rail track decoration
+    // Add road stripe decoration (runs left-right along X axis)
+    createRoadStripe: (z, type = 'center') => {
+        const geometry = new THREE.PlaneGeometry(30, type === 'center' ? 0.15 : 0.1);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0xFFFFFF,
+            side: THREE.DoubleSide
+        });
+        const stripe = new THREE.Mesh(geometry, material);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(0, 0.26, type === 'center' ? 0 : z);
+        return stripe;
+    },
+    
+    // Create rail track decoration (runs left-right along X axis)
     createRailTrack: () => {
         const group = new THREE.Group();
         
-        // Rails
-        const railGeometry = new THREE.BoxGeometry(0.1, 0.05, 1);
-        const railMaterial = new THREE.MeshLambertMaterial({ color: 0x708090 });
+        // Rails (shiny metal) - extend along X axis (left to right)
+        const railGeometry = new THREE.BoxGeometry(30, 0.1, 0.1);
+        const railMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xA8A8A8,
+            shininess: 80,
+            flatShading: true
+        });
         
         const leftRail = new THREE.Mesh(railGeometry, railMaterial);
-        leftRail.position.set(-0.3, 0.21, 0);
+        leftRail.position.set(0, 0.28, -0.32);
+        leftRail.castShadow = true;
         group.add(leftRail);
         
         const rightRail = new THREE.Mesh(railGeometry, railMaterial);
-        rightRail.position.set(0.3, 0.21, 0);
+        rightRail.position.set(0, 0.28, 0.32);
+        rightRail.castShadow = true;
         group.add(rightRail);
         
-        // Sleepers
-        const sleeperGeometry = new THREE.BoxGeometry(0.8, 0.05, 0.15);
-        const sleeperMaterial = new THREE.MeshLambertMaterial({ color: 0x5D4E37 });
+        // Wooden sleepers (perpendicular to rails - run along Z)
+        const sleeperGeometry = new THREE.BoxGeometry(0.15, 0.12, 0.85);
+        const sleeperMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x6B4423,
+            flatShading: true
+        });
         
-        for (let i = -0.4; i <= 0.4; i += 0.3) {
+        for (let x = -15; x <= 15; x += 0.5) {
             const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
-            sleeper.position.set(0, 0.205, i);
+            sleeper.position.set(x, 0.26, 0);
+            sleeper.castShadow = true;
+            sleeper.receiveShadow = true;
             group.add(sleeper);
         }
         
         return group;
     },
+    
+    // Create permanent train warning light
+    createTrainWarningLight: () => {
+        const group = new THREE.Group();
+        
+        // Pole
+        const poleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8);
+        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+        pole.position.y = 0.35;
+        pole.castShadow = true;
+        group.add(pole);
+        
+        // Light box
+        const boxGeometry = new THREE.BoxGeometry(0.12, 0.18, 0.08);
+        const boxMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        const box = new THREE.Mesh(boxGeometry, boxMaterial);
+        box.position.y = 0.75;
+        box.castShadow = true;
+        group.add(box);
+        
+        // Red light (will flash when train comes)
+        const lightGeometry = new THREE.CircleGeometry(0.05, 8);
+        const lightMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.2
+        });
+        const light = new THREE.Mesh(lightGeometry, lightMaterial);
+        light.position.set(0, 0.75, 0.05);
+        light.userData.isWarningLight = true;
+        group.add(light);
+        
+        return group;
+    },
+    
+
     
     // Create grass tuft decoration
     createGrassTuft: () => {

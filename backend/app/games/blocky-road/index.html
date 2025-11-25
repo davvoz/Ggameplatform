@@ -39,6 +39,28 @@
             z-index: 100;
             pointer-events: none;
         }
+        
+        #muteButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid white;
+            border-radius: 10px;
+            color: white;
+            font-size: 28px;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            z-index: 100;
+            pointer-events: all;
+            transition: all 0.3s ease;
+        }
+        
+        #muteButton:hover {
+            background: rgba(0,0,0,0.8);
+            transform: scale(1.1);
+        }
 
         #score {
             font-size: 48px;
@@ -56,24 +78,28 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 40px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.95);
+            padding: 30px 50px;
+            border-radius: 15px;
             text-align: center;
             display: none;
             z-index: 200;
             pointer-events: all;
+            max-width: 90%;
+            max-height: 80vh;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
         #gameOver h1 {
             color: #ff4444;
-            font-size: 64px;
-            margin: 0 0 20px 0;
+            font-size: 42px;
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
         }
 
         #gameOver p {
             color: white;
-            font-size: 32px;
+            font-size: 22px;
             margin: 10px 0;
         }
 
@@ -81,15 +107,20 @@
             background: #4CAF50;
             color: white;
             border: none;
-            padding: 20px 40px;
-            font-size: 24px;
-            border-radius: 10px;
+            padding: 15px 35px;
+            font-size: 20px;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
 
         #gameOver button:hover {
             background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
         }
 
         #startScreen {
@@ -97,39 +128,83 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 40px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.95);
+            padding: 30px 50px;
+            border-radius: 15px;
             text-align: center;
             z-index: 200;
             pointer-events: all;
+            max-width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
         #startScreen h1 {
             color: #4CAF50;
-            font-size: 64px;
-            margin: 0 0 20px 0;
+            font-size: 42px;
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
         }
 
         #startScreen p {
             color: white;
-            font-size: 24px;
-            margin: 20px 0;
+            font-size: 18px;
+            margin: 10px 0;
+            line-height: 1.5;
         }
 
         #startScreen button {
             background: #4CAF50;
             color: white;
             border: none;
-            padding: 20px 40px;
-            font-size: 24px;
-            border-radius: 10px;
+            padding: 15px 35px;
+            font-size: 20px;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
 
         #startScreen button:hover {
             background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            color: white;
+        }
+        
+        #loadingScreen h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        #loadingBar {
+            width: 300px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #loadingProgress {
+            width: 0%;
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -138,9 +213,19 @@
         <div id="score">0</div>
         <div id="coins">🪙 0</div>
     </div>
+    
+    <button id="muteButton" title="Toggle sound">🔊</button>
 
-    <div id="startScreen">
-        <h1>🚗 Blocky Road 🚗</h1>
+    <div id="loadingScreen">
+        <h2>🎮 Loading...</h2>
+        <div id="loadingBar">
+            <div id="loadingProgress"></div>
+        </div>
+        <p style="margin-top: 20px;">Generating terrain...</p>
+    </div>
+
+    <div id="startScreen" style="display: none;">
+        <h1>Blocky Road</h1>
         <p>Cross the road without getting hit!</p>
         <p>🎮 Swipe or Arrow Keys to move</p>
         <p>🪙 Collect coins for bonus points</p>
@@ -148,7 +233,7 @@
     </div>
 
     <div id="gameOver">
-        <h1>💀 GAME OVER 💀</h1>
+        <h1>GAME OVER</h1>
         <p id="finalScore">Score: 0</p>
         <p id="finalCoins">Coins: 0</p>
         <button id="restartButton">PLAY AGAIN</button>
@@ -158,6 +243,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
     <script src="/sdk/platformsdk.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/audio.js"></script>
     <script src="js/models.js"></script>
     <script src="js/materials.js"></script>
     <script src="js/player.js"></script>

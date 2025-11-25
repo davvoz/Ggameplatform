@@ -71,8 +71,11 @@ class TouchControls {
         const absDeltaX = Math.abs(deltaX);
         const absDeltaY = Math.abs(deltaY);
         
-        // Determine swipe direction
-        if (Math.max(absDeltaX, absDeltaY) > this.minSwipeDistance) {
+        // Determine if it's a swipe or a tap
+        const isSwipe = Math.max(absDeltaX, absDeltaY) > this.minSwipeDistance;
+        
+        if (isSwipe) {
+            // Handle swipe gesture
             if (absDeltaX > absDeltaY) {
                 // Horizontal swipe
                 if (deltaX > 0) {
@@ -88,6 +91,9 @@ class TouchControls {
                     this.handleSwipe('up');
                 }
             }
+        } else {
+            // Single tap - always move forward
+            this.handleSwipe('up');
         }
         
         // Reset

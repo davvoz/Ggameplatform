@@ -10,6 +10,7 @@ class BlockyRoadGame {
         this.obstacles = null;
         this.particles = null;
         this.touchControls = null;
+        this.audio = null;
         
         this.score = 0;
         this.coins = 0;
@@ -33,11 +34,19 @@ class BlockyRoadGame {
     async init() {
         console.log('🎮 Initializing Blocky Road Three.js');
         
+        const loadingProgress = document.getElementById('loadingProgress');
+        const updateProgress = (percent) => {
+            if (loadingProgress) loadingProgress.style.width = percent + '%';
+        };
+        
         // Setup Three.js scene
+        updateProgress(10);
         this.setupScene();
         this.setupLights();
         
         // Create game systems
+        updateProgress(30);
+        this.audio = new AudioManager();
         this.particles = new ParticleSystem(this.scene);
         this.terrain = new TerrainGenerator(this.scene);
         this.obstacles = new ObstacleManager(this.scene, this.terrain);
@@ -45,6 +54,7 @@ class BlockyRoadGame {
         this.camera = new CrossyCamera(this.scene, this.renderer);
         
         // Generate initial terrain
+        updateProgress(50);
         this.terrain.generateInitialTerrain();
         
         console.log('🌍 Terrain generated, rows:', this.terrain.rows.length);
@@ -52,6 +62,7 @@ class BlockyRoadGame {
         console.log('🎥 Scene children:', this.scene.children.length);
         
         // Setup input
+        updateProgress(70);
         this.setupInput();
         
         // Setup touch controls
@@ -61,6 +72,7 @@ class BlockyRoadGame {
         this.createDangerZone();
         
         // Setup UI
+        updateProgress(85);
         this.setupUI();
         
         // Initialize SDK
@@ -68,6 +80,13 @@ class BlockyRoadGame {
         
         // Start animation loop
         this.animate();
+        
+        // Hide loading, show start screen
+        updateProgress(100);
+        setTimeout(() => {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }, 500);
         
         console.log('✅ Game initialized');
     }
@@ -142,6 +161,38 @@ class BlockyRoadGame {
         this.dangerZonePlane.position.y = 0.01;
         this.dangerZonePlane.visible = false; // Keep hidden for now
         // DISABLED: this.scene.add(this.dangerZonePlane);
+        
+        // Create boundary shadows (left and right)
+        this.createBoundaryShadows();
+    }
+    
+    createBoundaryShadows() {
+        // Create boundary shadows from edge of playable area outward
+        const shadowGeometry = new THREE.PlaneGeometry(10, 200); // Wide shadow
+        const shadowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.35,
+            side: THREE.DoubleSide,
+            depthWrite: false // Don't write to depth buffer so it's always visible
+        });
+        
+        // Left boundary shadow (from x=-7 extending left)
+        const leftShadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+        leftShadow.rotation.x = -Math.PI / 2;
+        leftShadow.position.set(-12, 0.5, 0); // Wider area (covers -17 to -7)
+        leftShadow.renderOrder = 999; // Render last, on top of everything
+        this.scene.add(leftShadow);
+        
+        // Right boundary shadow (from x=+7 extending right)
+        const rightShadow = new THREE.Mesh(shadowGeometry, shadowMaterial.clone());
+        rightShadow.rotation.x = -Math.PI / 2;
+        rightShadow.position.set(12, 0.5, 0); // Wider area (covers +7 to +17)
+        rightShadow.renderOrder = 999; // Render last, on top of everything
+        this.scene.add(rightShadow);
+        
+        // Store references to update position with camera
+        this.boundaryShadows = [leftShadow, rightShadow];
     }
     
     setupInput() {
@@ -168,6 +219,15 @@ class BlockyRoadGame {
         document.getElementById('restartButton').addEventListener('click', () => {
             this.restartGame();
         });
+        
+        // Mute button
+        const muteButton = document.getElementById('muteButton');
+        if (muteButton) {
+            muteButton.addEventListener('click', () => {
+                const isMuted = this.audio.toggleMute();
+                muteButton.textContent = isMuted ? '🔇' : '🔊';
+            });
+        }
     }
     
     async initSDK() {
@@ -184,6 +244,9 @@ class BlockyRoadGame {
         
         this.isStarted = true;
         document.getElementById('startScreen').style.display = 'none';
+        
+        // Initialize audio (requires user interaction)
+        this.audio.init();
         
         console.log('🎮 Game started!');
     }
@@ -258,19 +321,31 @@ class BlockyRoadGame {
             const platforms = this.obstacles.getPlatformsAt(playerPos.z);
             
             let onPlatform = false;
+            let bestPlatform = null;
+            let bestDistance = Infinity;
+            
+            // Find closest platform that player is on
             for (const platform of platforms) {
-                // Check if player is on this log
                 const logLeft = platform.mesh.position.x - (platform.length / 2);
                 const logRight = platform.mesh.position.x + (platform.length / 2);
                 
                 if (playerPos.worldX >= logLeft - 0.4 && playerPos.worldX <= logRight + 0.4) {
-                    this.player.attachToPlatform(platform);
+                    // Calculate distance to platform center
+                    const distance = Math.abs(playerPos.worldX - platform.mesh.position.x);
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestPlatform = platform;
+                    }
                     onPlatform = true;
-                    break;
                 }
             }
             
-            if (!onPlatform) {
+            if (onPlatform && bestPlatform) {
+                // Attach to closest platform, preserving lateral position
+                if (this.player.currentPlatform !== bestPlatform) {
+                    this.player.attachToPlatform(bestPlatform);
+                }
+            } else {
                 this.player.detachFromPlatform();
                 this.gameOver('💧 Drowned!');
                 return;
@@ -291,6 +366,7 @@ class BlockyRoadGame {
             this.score += 10;
             this.updateUI();
             this.particles.createCoinParticles(coin.mesh.position);
+            this.audio.play('coin');
             
             if (typeof PlatformSDK !== 'undefined') {
                 PlatformSDK.sendScore(this.score);
@@ -304,7 +380,12 @@ class BlockyRoadGame {
         console.log('💀 Game Over:', reason);
         this.isGameOver = true;
         
-        this.player.die();
+        // Determine death type based on reason
+        const inWater = reason.includes('Drowned') || reason.includes('💧');
+        this.player.die(inWater);
+        
+        // Play death sound
+        this.audio.play('death');
         
         // Update high score
         if (this.score > this.highScore) {
@@ -356,6 +437,13 @@ class BlockyRoadGame {
         
         // Update camera
         this.camera.follow(this.player.mesh.position);
+        
+        // Update boundary shadows to follow camera
+        if (this.boundaryShadows) {
+            this.boundaryShadows.forEach(shadow => {
+                shadow.position.z = playerPos.z;
+            });
+        }
     }
     
     updateDangerZone(playerZ, deltaTime) {

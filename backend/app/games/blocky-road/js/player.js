@@ -40,19 +40,47 @@ class Player {
         const targetX = this.gridX + dx;
         const targetZ = this.gridZ + dz;
         
-        // Check for obstacles (trees, rocks) before moving
-        if (window.game && window.game.terrain && window.game.terrain.hasObstacle(targetX, targetZ)) {
-            return false; // Can't move - obstacle blocking
+        // Allow lateral movement on platforms (logs)
+        if (this.isOnPlatform && dx !== 0 && dz === 0) {
+            // Check if still on platform after lateral move
+            const platform = this.currentPlatform;
+            const logLeft = platform.mesh.position.x - (platform.length / 2);
+            const logRight = platform.mesh.position.x + (platform.length / 2);
+            
+            // Allow movement if still within log bounds
+            if (targetX >= logLeft - 0.4 && targetX <= logRight + 0.4) {
+                this.isMoving = true;
+                this.gridX = targetX;
+                // Update platform offset for lateral position
+                this.platformOffset = targetX - platform.mesh.position.x;
+            } else {
+                return false; // Would fall off log
+            }
+        } else {
+            // Normal movement (forward/backward or off platform)
+            
+            // Check for obstacles (trees, rocks) before moving
+            if (window.game && window.game.terrain && window.game.terrain.hasObstacle(targetX, targetZ)) {
+                return false; // Can't move - obstacle blocking
+            }
+            
+            // Check boundaries - limit horizontal movement (±7 playable area)
+            // Allow moves from -7 to +7 inclusive
+            if (targetX < -7 || targetX > 7) {
+                console.log('⛔ Out of bounds:', targetX);
+                return false; // Out of playable area
+            }
+            
+            // Block backward movement beyond spawn point (z=-2)
+            if (targetZ < -2) {
+                console.log('⛔ Cannot move backward past spawn point');
+                return false; // Blocked by spawn barrier
+            }
+            
+            this.isMoving = true;
+            this.gridX = targetX;
+            this.gridZ = targetZ;
         }
-        
-        // Check boundaries - limit horizontal movement
-        if (targetX < -5 || targetX > 5) {
-            return false; // Out of playable area
-        }
-        
-        this.isMoving = true;
-        this.gridX = targetX;
-        this.gridZ = targetZ;
         
         // Determine jump direction for rotation
         if (dz > 0) {
@@ -70,6 +98,11 @@ class Player {
         
         // Create jump particles
         this.particleSystem.createJumpParticles(this.mesh.position);
+        
+        // Play jump sound
+        if (window.game && window.game.audio) {
+            window.game.audio.play('jump');
+        }
         
         return true;
     }
@@ -132,47 +165,105 @@ class Player {
             .start();
     }
     
-    die() {
+    die(inWater = false) {
         if (!this.isAlive) return;
         
         this.isAlive = false;
         
-        // Death particles
-        this.particleSystem.createDeathParticles(this.mesh.position);
-        
-        // Death animation - fall and spin
-        new TWEEN.Tween(this.mesh.position)
-            .to({ y: -2 }, 500)
-            .easing(TWEEN.Easing.Quadratic.In)
-            .start();
-        
-        new TWEEN.Tween(this.mesh.rotation)
-            .to({ x: Math.PI * 2, z: Math.PI }, 500)
-            .easing(TWEEN.Easing.Quadratic.In)
-            .start();
+        if (inWater) {
+            // Drowning animation - sink underwater with bubbles
+            this.particleSystem.createWaterSplash(this.mesh.position);
+            
+            // Sink down and spin slowly
+            new TWEEN.Tween(this.mesh.position)
+                .to({ y: -2 }, 1000)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .start();
+            
+            new TWEEN.Tween(this.mesh.rotation)
+                .to({ x: Math.PI, y: this.mesh.rotation.y, z: 0 }, 1000)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .start();
+            
+            // Scale down slightly as sinking
+            new TWEEN.Tween(this.mesh.scale)
+                .to({ x: 0.8, y: 0.8, z: 0.8 }, 1000)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .start();
+        } else {
+            // Death particles
+            this.particleSystem.createDeathParticles(this.mesh.position);
+            
+            // Death animation - fall and spin
+            new TWEEN.Tween(this.mesh.position)
+                .to({ y: -2 }, 500)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .start();
+            
+            new TWEEN.Tween(this.mesh.rotation)
+                .to({ x: Math.PI * 2, z: Math.PI }, 500)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .start();
+        }
     }
     
     attachToPlatform(platform) {
         this.isOnPlatform = true;
         this.currentPlatform = platform;
+        // Store offset from platform center for lateral movement
+        this.platformOffset = this.mesh.position.x - platform.mesh.position.x;
     }
     
     detachFromPlatform() {
         this.isOnPlatform = false;
         this.currentPlatform = null;
+        this.platformOffset = 0;
     }
     
     update() {
-        // Move with platform
+        // Move with platform while maintaining lateral offset
         if (this.isOnPlatform && this.currentPlatform && !this.isMoving) {
-            this.mesh.position.x = this.currentPlatform.mesh.position.x;
+            // Keep player on platform with their offset position
+            this.mesh.position.x = this.currentPlatform.mesh.position.x + this.platformOffset;
             this.gridX = Math.round(this.mesh.position.x);
+            
+            // Check if reached waterfall edges while on platform
+            // Waterfalls are at ±7.5, check with small margin
+            if (this.mesh.position.x <= -7.3 || this.mesh.position.x >= 7.3) {
+                // Player went too far on the log and reached the waterfall!
+                console.log('🌊 Player reached waterfall at x:', this.mesh.position.x);
+                this.fallInWaterfall();
+            }
         }
         
         // Head bob animation when idle
         if (!this.isMoving && this.isAlive) {
             this.head.position.y = 1.0 + Math.sin(Date.now() * 0.003) * 0.05;
         }
+    }
+    
+    fallInWaterfall() {
+        if (!this.isAlive) return;
+        
+        this.isAlive = false;
+        this.detachFromPlatform();
+        
+        // Waterfall death animation - swept away and spin
+        this.particleSystem.createWaterSplash(this.mesh.position);
+        
+        new TWEEN.Tween(this.mesh.position)
+            .to({ 
+                x: this.mesh.position.x < 0 ? -8 : 8, // Swept to the side
+                y: -1.5,
+                z: this.mesh.position.z + 2 
+            }, 800)
+            .easing(TWEEN.Easing.Quadratic.In)
+            .start();
+        
+        new TWEEN.Tween(this.mesh.rotation)
+            .to({ x: Math.PI * 3, z: Math.PI * 2 }, 800)
+            .easing(TWEEN.Easing.Quadratic.In)
+            .start();
     }
     
     getPosition() {
@@ -189,6 +280,7 @@ class Player {
         this.gridZ = z;
         this.mesh.position.set(x, 0.2, z);
         this.mesh.rotation.set(0, 0, 0);
+        this.mesh.scale.set(1, 1, 1);
         this.body.scale.set(1, 1, 1);
         this.isMoving = false;
         this.isAlive = true;

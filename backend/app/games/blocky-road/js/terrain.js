@@ -5,40 +5,65 @@ class TerrainGenerator {
         this.scene = scene;
         this.rows = [];
         this.currentMaxZ = 0;
+        this.currentZone = null;
+        this.zoneRowsRemaining = 0;
         
-        // Terrain types
-        this.terrainTypes = ['grass', 'road', 'rail', 'water'];
-        this.weights = {
-            grass: 0.3,
-            road: 0.35,
-            rail: 0.15,
-            water: 0.2
-        };
+        // Terrain zone definitions (like Crossy Road)
+        this.zoneTypes = [
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'road', minRows: 4, maxRows: 6 },
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'water', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'road', minRows: 3, maxRows: 5 },
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'rail', minRows: 1, maxRows: 2 } // Fewer rails!
+        ];
     }
     
     generateInitialTerrain() {
-        // Start with safe grass rows
-        for (let z = -5; z <= 25; z++) {
-            if (z < 3) {
-                this.createRow(z, 'grass');
-            } else {
-                const type = this.getRandomTerrainType();
-                this.createRow(z, type);
+        // Generate terrain behind spawn point (with dense obstacles to block backward movement)
+        // Extended to -15 to ensure full visual coverage behind player
+        for (let z = -15; z < -2; z++) {
+            const row = this.createRow(z, 'grass');
+            // Mark as barrier zone - will add extra dense decorations
+            row.isBarrier = true;
+        }
+        
+        // Start with safe grass zone at spawn point
+        for (let z = -2; z < 3; z++) {
+            this.createRow(z, 'grass');
+        }
+        
+        // Generate zones ahead
+        let z = 3;
+        while (z <= 30) {
+            const zone = this.getNextZone();
+            const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
+            
+            for (let i = 0; i < numRows && z <= 30; i++, z++) {
+                this.createRow(z, zone.type);
             }
         }
-        this.currentMaxZ = 25;
+        
+        this.currentMaxZ = 30;
     }
     
-    getRandomTerrainType() {
-        const rand = Math.random();
-        let sum = 0;
+    getNextZone() {
+        // Cycle through zone types for variety but realism
+        const availableZones = [...this.zoneTypes];
         
-        for (const [type, weight] of Object.entries(this.weights)) {
-            sum += weight;
-            if (rand < sum) return type;
+        // Don't repeat same zone type
+        if (this.currentZone) {
+            const filtered = availableZones.filter(z => z.type !== this.currentZone.type);
+            if (filtered.length > 0) {
+                this.currentZone = filtered[Math.floor(Math.random() * filtered.length)];
+                return this.currentZone;
+            }
         }
         
-        return 'grass';
+        this.currentZone = availableZones[Math.floor(Math.random() * availableZones.length)];
+        return this.currentZone;
     }
     
     createRow(z, type) {
@@ -51,8 +76,8 @@ class TerrainGenerator {
         };
         
         // Create tiles across the row (wide visual coverage)
-        // Playable area is -5 to +5, but we generate -15 to +15 for visuals
-        for (let x = -15; x <= 15; x++) {
+        // Playable area is -7 to +7, but we generate -25 to +25 for full visual coverage
+        for (let x = -25; x <= 25; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);
@@ -64,20 +89,40 @@ class TerrainGenerator {
             this.addGrassDecorations(row);
         } else if (type === 'rail') {
             this.addRailDecorations(row);
+        } else if (type === 'water') {
+            this.addWaterDecorations(row);
         }
         
         this.rows.push(row);
         return row;
     }
     
+    addRoadMarkings(row) {
+        // TODO: Add road markings later
+    }
+    
     addGrassDecorations(row) {
         const decorationChance = 0.4;
+        const isBarrier = row.isBarrier; // Dense obstacles behind spawn
         
-        for (let x = -15; x <= 15; x++) {
+        for (let x = -25; x <= 25; x++) {
             // Create natural borders with trees/rocks at edges
-            const isEdge = x === -6 || x === 6;
-            const isOutside = x < -6 || x > 6;
-            const isPlayable = x >= -5 && x <= 5;
+            const isEdge = x === -8 || x === 8;
+            const isOutside = x < -8 || x > 8;
+            const isPlayable = x >= -7 && x <= 7;
+            
+            // DENSE OBSTACLES IN BARRIER ZONE (behind spawn point)
+            if (isBarrier && isPlayable && Math.random() < 0.8) {
+                const decoration = Math.random() < 0.7 ? Models.createTree() : Models.createRock();
+                decoration.userData.isObstacle = true;
+                decoration.userData.gridX = x;
+                decoration.userData.gridZ = row.z;
+                decoration.position.set(x, 0.2, row.z);
+                decoration.scale.multiplyScalar(1.3);
+                this.scene.add(decoration);
+                row.decorations.push(decoration);
+                continue;
+            }
             
             // Force obstacles at borders for visual boundary
             if (isEdge && Math.random() < 0.7) {
@@ -136,22 +181,108 @@ class TerrainGenerator {
     }
     
     addRailDecorations(row) {
-        // Add rail tracks across the row
-        for (let x = -15; x <= 15; x++) {
-            const track = Models.createRailTrack();
-            track.position.set(x, 0, row.z);
-            this.scene.add(track);
-            row.decorations.push(track);
+        // Add one rail track centered (it extends along Z axis)
+        const track = Models.createRailTrack();
+        track.position.set(0, 0.2, row.z);
+        this.scene.add(track);
+        row.decorations.push(track);
+        
+        // Add permanent warning lights at edges
+        const leftLight = Models.createTrainWarningLight();
+        leftLight.position.set(-5.8, 0.2, row.z);
+        this.scene.add(leftLight);
+        row.decorations.push(leftLight);
+        
+        const rightLight = Models.createTrainWarningLight();
+        rightLight.position.set(5.8, 0.2, row.z);
+        this.scene.add(rightLight);
+        row.decorations.push(rightLight);
+        
+        // Store lights for flashing when train comes
+        row.warningLights = [leftLight, rightLight];
+    }
+    
+    addWaterDecorations(row) {
+        // Add waterfalls at the edges (±7.5 is edge of playable area)
+        // Left waterfall
+        const leftWaterfall = this.createWaterfall();
+        leftWaterfall.position.set(-7.5, 0.3, row.z);
+        this.scene.add(leftWaterfall);
+        row.decorations.push(leftWaterfall);
+        row.leftWaterfall = leftWaterfall;
+        
+        // Right waterfall
+        const rightWaterfall = this.createWaterfall();
+        rightWaterfall.position.set(7.5, 0.3, row.z);
+        this.scene.add(rightWaterfall);
+        row.decorations.push(rightWaterfall);
+        row.rightWaterfall = rightWaterfall;
+    }
+    
+    createWaterfall() {
+        // Create a waterfall effect - horizontal flowing water
+        const waterfallGroup = new THREE.Group();
+        
+        // Main waterfall plane - horizontal on ground
+        const geometry = new THREE.PlaneGeometry(2, 1); // Long along Z, narrow along X
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xaaddff, // Light blue-white
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+        
+        const waterfall = new THREE.Mesh(geometry, material);
+        waterfall.rotation.x = -Math.PI / 2; // Flat on ground
+        waterfall.position.y = 0.1; // Slightly above water
+        waterfallGroup.add(waterfall);
+        
+        // Add foam particles that flow horizontally
+        const foamGeometry = new THREE.BoxGeometry(0.3, 0.2, 0.3);
+        const foamMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        waterfallGroup.userData.foamParticles = [];
+        waterfallGroup.userData.direction = 0; // Will be set based on position
+        
+        for (let i = 0; i < 6; i++) {
+            const foam = new THREE.Mesh(foamGeometry, foamMaterial);
+            foam.position.set(
+                0, // Will move along X
+                0.15,
+                (Math.random() - 0.5) * 0.8 // Random Z position
+            );
+            foam.userData.animOffset = Math.random() * Math.PI * 2;
+            foam.userData.flowSpeed = 0.03 + Math.random() * 0.04;
+            foam.userData.startX = (Math.random() - 0.5) * 1.5;
+            waterfallGroup.add(foam);
+            waterfallGroup.userData.foamParticles.push(foam);
         }
+        
+        waterfallGroup.userData.isWaterfall = true;
+        return waterfallGroup;
     }
     
     update(playerZ) {
-        // Generate new rows ahead
-        const generationDistance = 20;
+        // Animate waterfalls
+        this.rows.forEach(row => {
+            if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
+            if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+        });
+        
+        // Generate new zones ahead (realistic environment)
+        const generationDistance = 30;
         while (this.currentMaxZ < playerZ + generationDistance) {
-            this.currentMaxZ++;
-            const type = this.getRandomTerrainType();
-            this.createRow(this.currentMaxZ, type);
+            const zone = this.getNextZone();
+            const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
+            
+            for (let i = 0; i < numRows; i++) {
+                this.currentMaxZ++;
+                this.createRow(this.currentMaxZ, zone.type);
+            }
         }
         
         // Cleanup old rows
@@ -178,6 +309,33 @@ class TerrainGenerator {
             }
             return true;
         });
+    }
+    
+    animateWaterfall(waterfall) {
+        if (!waterfall.userData.foamParticles) return;
+        
+        // Determine flow direction based on waterfall position (left = flow left, right = flow right)
+        const isLeftSide = waterfall.position.x < 0;
+        const flowDirection = isLeftSide ? -1 : 1; // Left side flows left (negative X), right side flows right (positive X)
+        
+        // Animate foam particles flowing horizontally
+        waterfall.userData.foamParticles.forEach(foam => {
+            foam.position.x += foam.userData.flowSpeed * flowDirection;
+            foam.rotation.y += 0.08; // Spin horizontally
+            foam.rotation.z += 0.03;
+            
+            // Reset when flowing too far
+            if ((isLeftSide && foam.position.x < -1.5) || (!isLeftSide && foam.position.x > 1.5)) {
+                foam.position.x = foam.userData.startX;
+                foam.position.z = (Math.random() - 0.5) * 0.8;
+            }
+        });
+        
+        // Pulse the main waterfall opacity
+        if (waterfall.children[0]) {
+            const time = Date.now() * 0.002;
+            waterfall.children[0].material.opacity = 0.6 + Math.sin(time) * 0.15;
+        }
     }
     
     getRowAt(z) {

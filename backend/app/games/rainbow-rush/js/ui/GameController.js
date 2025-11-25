@@ -57,6 +57,7 @@ export class GameController {
         this.animationController = dependencies.animationController;
         this.particleSystem = dependencies.particleSystem;
         this.levelManager = dependencies.levelManager;
+        this.enemySystem = dependencies.enemySystem; // NEW: Enemy system
         
         // UI Components
         this.turboButtonUI = dependencies.turboButtonUI;
@@ -168,25 +169,34 @@ export class GameController {
             this.player.isTurboActive ? this.player.velocityX : 0;
         this.backgroundSystem.update(deltaTime, cameraSpeed * 0.3);
 
-        // Update level manager
+        // Update level manager con velocità BASE costante
         this.levelManager.update(deltaTime);
         
-        // Update level progress bar
-        const currentLevel = this.levelManager.getCurrentLevel();
+        // Check if goal should spawn
+        const goalToSpawn = this.levelManager.shouldSpawnGoal();
+        if (goalToSpawn) {
+            this.entityManager.addEntity('collectibles', goalToSpawn);
+            console.log('✅ Goal added to game!');
+        }
         
-        if (this.levelProgressBar && currentLevel) {
-            const totalPlatforms = currentLevel.platforms.length;
-            const passedPlatforms = this.levelManager.platformsPassed;
+        // Update level progress bar basata su DISTANZA
+        if (this.levelProgressBar) {
+            const progress = this.levelManager.getProgress();
             this.levelProgressBar.update(
                 deltaTime,
-                passedPlatforms,
-                totalPlatforms,
+                progress * 100, // Converti a percentuale
+                100, // Totale sempre 100%
                 this.levelManager.currentLevelId
             );
         }
 
         // Update entities
         this.entityManager.updateAll(deltaTime, cameraSpeed, this.player);
+        
+        // NEW: Update enemies (AI, movement, projectiles)
+        if (this.enemySystem) {
+            this.enemySystem.update(deltaTime);
+        }
 
         // Check collisions
         const playerOnSafetyPlatform = this.collisionDetector.checkAll(
@@ -278,6 +288,8 @@ export class GameController {
         this.renderingSystem.setCombo(this.scoreSystem.getCombo());
         this.renderingSystem.setScore(this.scoreSystem.getTotalScore());
         this.renderingSystem.setLevel(this.levelManager.currentLevelId || 1);
+        this.renderingSystem.setLevelLength(this.levelManager.levelLength || 3000);
+        this.renderingSystem.setDistanceTraveled(this.levelManager.distanceTraveled || 0);
         this.renderingSystem.setIsPaused(this.stateMachine.isPaused());
         this.renderingSystem.setDeathAnimation(this.animationController.getAnimations().deathAnimation);
 
@@ -294,6 +306,7 @@ export class GameController {
         const entities = [
             ...this.entityManager.platforms,
             ...this.entityManager.obstacles,
+            ...this.entityManager.enemies,
             ...this.entityManager.collectibles,
             ...this.entityManager.powerups,
             ...this.entityManager.hearts,
@@ -310,6 +323,7 @@ export class GameController {
             ...this.entityManager.boostParticles
         ];
 
+  
         // Add safety platform
         const safetyPlatform = this.safetyPlatformSystem.getPlatform();
         if (safetyPlatform) {

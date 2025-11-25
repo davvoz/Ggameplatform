@@ -11,7 +11,13 @@ export const BackgroundThemes = {
     SPACE: 'space',
     FOREST: 'forest',
     ICE: 'ice',
-    NIGHT: 'night'
+    NIGHT: 'night',
+    // New mixed themes
+    SUNSET_OCEAN: 'sunset_ocean',      // Ocean + Sky sunset colors
+    CRYSTAL_CAVE: 'crystal_cave',      // Ice crystals + dark cave
+    MUSHROOM_FOREST: 'mushroom_forest', // Forest + glowing mushrooms
+    AURORA_NIGHT: 'aurora_night',      // Night + colorful aurora
+    DESERT_STORM: 'desert_storm'       // Pyramids + sandstorm effects
 };
 
 export class BackgroundSystem {
@@ -34,11 +40,15 @@ export class BackgroundSystem {
         
         this.themeSequence = [
             BackgroundThemes.SKY,
-            BackgroundThemes.OCEAN,
+            BackgroundThemes.SUNSET_OCEAN,
             BackgroundThemes.PYRAMIDS,
+            BackgroundThemes.DESERT_STORM,
             BackgroundThemes.VOLCANO,
-            BackgroundThemes.SPACE,
+            BackgroundThemes.CRYSTAL_CAVE,
             BackgroundThemes.FOREST,
+            BackgroundThemes.MUSHROOM_FOREST,
+            BackgroundThemes.SPACE,
+            BackgroundThemes.AURORA_NIGHT,
             BackgroundThemes.ICE,
             BackgroundThemes.NIGHT
         ];
@@ -97,20 +107,35 @@ export class BackgroundSystem {
             case BackgroundThemes.SKY:
                 this.initSky();
                 break;
+            case BackgroundThemes.SUNSET_OCEAN:
+                this.initSunsetOcean();
+                break;
             case BackgroundThemes.OCEAN:
                 this.initOcean();
                 break;
             case BackgroundThemes.PYRAMIDS:
                 this.initPyramids();
                 break;
+            case BackgroundThemes.DESERT_STORM:
+                this.initDesertStorm();
+                break;
             case BackgroundThemes.VOLCANO:
                 this.initVolcano();
+                break;
+            case BackgroundThemes.CRYSTAL_CAVE:
+                this.initCrystalCave();
                 break;
             case BackgroundThemes.SPACE:
                 this.initSpace();
                 break;
             case BackgroundThemes.FOREST:
                 this.initForest();
+                break;
+            case BackgroundThemes.MUSHROOM_FOREST:
+                this.initMushroomForest();
+                break;
+            case BackgroundThemes.AURORA_NIGHT:
+                this.initAuroraNight();
                 break;
             case BackgroundThemes.ICE:
                 this.initIce();
@@ -301,30 +326,97 @@ export class BackgroundSystem {
     
     initVolcano() {
         this.baseColors = [
-            [0.5, 0.1, 0.0, 1.0],  // Rosso scuro più intenso (era 0.3, 0.1, 0.1)
-            [0.8, 0.3, 0.1, 1.0]   // Rosso-marrone più saturo (era 0.5, 0.2, 0.1)
+            [0.6, 0.1, 0.0, 1.0],  // Rosso lava intenso (sfumatura terra)
+            [0.9, 0.35, 0.1, 1.0]  // Arancione lava (sfumatura cielo)
         ];
         
-        // Volcano in background
+        // Sky gradient layer
         this.layers.push({
-            x: this.canvasWidth * 0.6,
-            y: this.canvasHeight * 0.5,
-            width: 200,
-            height: 250,
-            color: [0.2, 0.1, 0.1, 1.0],
-            type: 'volcano',
-            speed: 15
+            y: 0,
+            height: this.canvasHeight * 0.7,
+            color: [0.4, 0.15, 0.1, 1.0], // Dark red-orange sky
+            type: 'sky_gradient',
+            speed: 0
         });
         
-        // Lava particles/embers - RIDOTTE 50%
-        for (let i = 0; i < 13; i++) { // Ridotto del 50% da 25 a 13
+        // Ground/terrain layer
+        const groundY = this.canvasHeight * 0.85;
+        this.layers.push({
+            y: groundY,
+            height: this.canvasHeight - groundY,
+            color: [0.2, 0.08, 0.04, 1.0], // Dark volcanic ground
+            type: 'ground',
+            speed: 0
+        });
+        
+        // Main volcano - positioned on ground
+        const mainVolcanoHeight = 350;
+        this.layers.push({
+            x: this.canvasWidth * 0.65,
+            y: groundY - mainVolcanoHeight,
+            width: 350,
+            height: mainVolcanoHeight,
+            color: [0.15, 0.08, 0.05, 1.0], // Dark volcanic rock
+            type: 'volcano',
+            speed: 12,
+            craterWidth: 80,
+            craterDepth: 60
+        });
+        
+        // Secondary smaller volcano (background) - also on ground
+        const secondaryVolcanoHeight = 220;
+        this.layers.push({
+            x: this.canvasWidth * 0.25,
+            y: groundY - secondaryVolcanoHeight,
+            width: 200,
+            height: secondaryVolcanoHeight,
+            color: [0.12, 0.06, 0.04, 0.85],
+            type: 'volcano',
+            speed: 8,
+            craterWidth: 50,
+            craterDepth: 40
+        });
+        
+        // NO lava flows - removed
+        
+        // Smoke clouds from crater
+        for (let i = 0; i < 5; i++) {
             this.particles.push({
-                x: this.canvasWidth * 0.6 + Math.random() * 100 - 50,
-                y: this.canvasHeight * 0.5 + Math.random() * 100,
-                radius: 2 + Math.random() * 4,
-                speed: -50 - Math.random() * 80,
-                color: [1.0, 0.3 + Math.random() * 0.3, 0.0, 0.9],
-                type: 'ember'
+                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60,
+                y: this.canvasHeight * 0.35 - 20 - i * 25,
+                radius: 15 + Math.random() * 20,
+                speed: -15 - Math.random() * 25,
+                color: [0.2, 0.15, 0.12, 0.4 - i * 0.06],
+                type: 'smoke',
+                expansion: 1 + i * 0.15,
+                drift: (Math.random() - 0.5) * 10
+            });
+        }
+        
+        // Lava particles/embers - bright and numerous
+        for (let i = 0; i < 25; i++) {
+            this.particles.push({
+                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 70,
+                y: this.canvasHeight * 0.35 + Math.random() * 100,
+                radius: 2 + Math.random() * 5,
+                speed: -60 - Math.random() * 120,
+                color: [1.0, 0.4 + Math.random() * 0.4, 0.0, 0.95],
+                type: 'ember',
+                sparkle: Math.random() * Math.PI * 2,
+                horizontalDrift: (Math.random() - 0.5) * 40
+            });
+        }
+        
+        // Lava glow particles (slower, larger)
+        for (let i = 0; i < 10; i++) {
+            this.particles.push({
+                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 100,
+                y: this.canvasHeight * 0.35 + Math.random() * 200,
+                radius: 8 + Math.random() * 12,
+                speed: -20 - Math.random() * 40,
+                color: [1.0, 0.5, 0.0, 0.3 + Math.random() * 0.3],
+                type: 'lava_glow',
+                pulse: Math.random() * Math.PI * 2
             });
         }
     }
@@ -401,8 +493,7 @@ export class BackgroundSystem {
                 color: [1.0, 1.0, 0.5, 0.8],
                 type: 'firefly'
             });
-        }
-        
+        }       
         // Falling leaves - RIDOTTE 50%
         for (let i = 0; i < 6; i++) { // Ridotto del 50% da 12 a 6
             this.particles.push({
@@ -505,6 +596,327 @@ export class BackgroundSystem {
         }
     }
     
+    // ===== MIXED THEMES =====
+    
+    initSunsetOcean() {
+        // Sunset gradient (orange/pink sky)
+        this.baseColors = [
+            [1.0, 0.5, 0.2, 1.0],  // Deep orange
+            [1.0, 0.7, 0.3, 1.0]   // Light orange/yellow
+        ];
+        
+        // Glowing sun on horizon
+        this.layers.push({
+            x: this.canvasWidth * 0.15,
+            y: this.canvasHeight * 0.25,
+            radius: 60,
+            color: [1.0, 0.6, 0.2, 0.9],
+            type: 'sun',
+            speed: 1,
+            glow: true
+        });
+        
+        // Ocean waves (from OCEAN theme)
+        for (let i = 0; i < 4; i++) {
+            this.layers.push({
+                y: this.canvasHeight * (0.6 + i * 0.08),
+                amplitude: 15 + i * 5,
+                frequency: 0.003 - i * 0.0005,
+                speed: 30 - i * 8,
+                color: [0.1 + i * 0.05, 0.3 + i * 0.1, 0.6 + i * 0.05, 0.6 - i * 0.1],
+                type: 'wave',
+                layer: i
+            });
+        }
+        
+        // Seagulls (fewer than ocean)
+        for (let i = 0; i < 3; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.4,
+                speed: 40 + Math.random() * 20,
+                wingPhase: Math.random() * Math.PI * 2,
+                color: [0.2, 0.2, 0.2, 0.7],
+                type: 'bird'
+            });
+        }
+        
+        // Glowing sparkles on water
+        for (let i = 0; i < 15; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * (0.6 + Math.random() * 0.3),
+                radius: 2 + Math.random(),
+                speed: 5 + Math.random() * 10,
+                twinkle: Math.random() * Math.PI * 2,
+                color: [1.0, 0.8, 0.4, 0.7],
+                type: 'star' // Reuse star twinkle effect
+            });
+        }
+    }
+    
+    initCrystalCave() {
+        // Dark cave gradient
+        this.baseColors = [
+            [0.15, 0.1, 0.25, 1.0],  // Deep purple/dark
+            [0.25, 0.2, 0.35, 1.0]   // Lighter purple
+        ];
+        
+        // Glowing crystals (stalactites from ceiling)
+        const crystalColors = [
+            [0.4, 0.7, 1.0, 0.8],   // Ice blue
+            [0.7, 0.4, 1.0, 0.8],   // Purple
+            [0.4, 1.0, 0.7, 0.8]    // Cyan
+        ];
+        
+        for (let i = 0; i < 8; i++) {
+            const color = crystalColors[i % 3];
+            this.layers.push({
+                x: (this.canvasWidth / 8) * i + Math.random() * 50,
+                y: this.canvasHeight * 0.1,
+                height: 30 + Math.random() * 40,
+                width: 10 + Math.random() * 15,
+                color: [...color],
+                type: 'crystal_hanging',
+                speed: 2 + i,
+                glowPhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Floor crystals
+        for (let i = 0; i < 6; i++) {
+            const color = crystalColors[i % 3];
+            this.layers.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.85,
+                height: 20 + Math.random() * 30,
+                width: 8 + Math.random() * 12,
+                color: [...color],
+                type: 'crystal_floor',
+                speed: 8 + i * 2,
+                glowPhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Glowing particles (mineral dust)
+        for (let i = 0; i < 20; i++) {
+            const color = crystalColors[i % 3];
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                radius: 1 + Math.random() * 2,
+                speed: 3 + Math.random() * 5,
+                drift: (Math.random() - 0.5) * 10,
+                color: [...color],
+                type: 'glowdust',
+                floatPhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+    
+    initMushroomForest() {
+        // Forest base colors
+        this.baseColors = [
+            [0.2, 0.5, 0.3, 1.0],
+            [0.25, 0.6, 0.35, 1.0]
+        ];
+        
+        // Background trees (from FOREST)
+        for (let layer = 0; layer < 2; layer++) {
+            const treeCount = 4 - layer;
+            for (let i = 0; i < treeCount; i++) {
+                this.layers.push({
+                    x: (this.canvasWidth / treeCount) * i + Math.random() * 50,
+                    y: this.canvasHeight * (0.5 + layer * 0.15),
+                    width: 35 - layer * 8,
+                    height: 70 - layer * 15,
+                    color: [0.1 + layer * 0.1, 0.3 + layer * 0.1, 0.15, 0.7 - layer * 0.15],
+                    type: 'tree',
+                    layer: layer,
+                    speed: 8 + layer * 4
+                });
+            }
+        }
+        
+        // Giant glowing mushrooms
+        const mushroomColors = [
+            [0.9, 0.3, 0.5, 0.8],   // Pink
+            [0.5, 0.3, 0.9, 0.8],   // Purple
+            [0.3, 0.8, 0.9, 0.8]    // Cyan
+        ];
+        
+        for (let i = 0; i < 6; i++) {
+            const color = mushroomColors[i % 3];
+            this.layers.push({
+                x: (this.canvasWidth / 6) * i + Math.random() * 40,
+                y: this.canvasHeight * 0.75,
+                size: 15 + Math.random() * 15,
+                stemHeight: 20 + Math.random() * 20,
+                color: [...color],
+                type: 'giant_mushroom',
+                speed: 12 + i * 2,
+                glowPhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Glowing spores
+        for (let i = 0; i < 25; i++) {
+            const color = mushroomColors[i % 3];
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                radius: 1.5 + Math.random(),
+                speed: 8 + Math.random() * 10,
+                drift: (Math.random() - 0.5) * 15,
+                color: [...color],
+                type: 'spore',
+                floatPhase: Math.random() * Math.PI * 2,
+                glowPhase: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Fireflies (from FOREST)
+        for (let i = 0; i < 6; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.8,
+                radius: 2,
+                speed: 15 + Math.random() * 10,
+                floatY: Math.random() * Math.PI * 2,
+                glowPhase: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 0.5, 0.8],
+                type: 'firefly'
+            });
+        }
+    }
+    
+    initAuroraNight() {
+        // Night sky gradient
+        this.baseColors = [
+            [0.05, 0.1, 0.2, 1.0],
+            [0.15, 0.1, 0.3, 1.0]
+        ];
+        
+        // Moon (from NIGHT)
+        this.layers.push({
+            x: this.canvasWidth * 0.8,
+            y: this.canvasHeight * 0.15,
+            radius: 35,
+            color: [0.9, 0.9, 0.8, 0.85],
+            type: 'moon',
+            speed: 2
+        });
+        
+        // Aurora borealis waves (colorful wavy layers)
+        const auroraColors = [
+            [0.2, 0.8, 0.5, 0.4],   // Green
+            [0.3, 0.5, 1.0, 0.35],  // Blue
+            [0.8, 0.3, 0.8, 0.3]    // Purple
+        ];
+        
+        for (let i = 0; i < 3; i++) {
+            this.layers.push({
+                y: this.canvasHeight * (0.2 + i * 0.12),
+                amplitude: 40 + i * 10,
+                frequency: 0.004 - i * 0.0008,
+                speed: 15 - i * 3,
+                color: auroraColors[i],
+                type: 'aurora_wave',
+                layer: i,
+                phaseOffset: i * Math.PI * 0.6
+            });
+        }
+        
+        // Stars (from NIGHT)
+        for (let i = 0; i < 35; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.7,
+                radius: 1 + Math.random() * 1.5,
+                twinkle: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 0.95, 0.85],
+                type: 'star'
+            });
+        }
+        
+        // Aurora particles (shimmering lights)
+        for (let i = 0; i < 20; i++) {
+            const color = auroraColors[i % 3];
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.5,
+                radius: 2 + Math.random() * 2,
+                speed: 5 + Math.random() * 8,
+                drift: (Math.random() - 0.5) * 20,
+                color: [...color],
+                type: 'aurora_particle',
+                shimmer: Math.random() * Math.PI * 2,
+                floatPhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+    
+    initDesertStorm() {
+        // Desert/sand gradient (warm brown/orange)
+        this.baseColors = [
+            [0.8, 0.6, 0.3, 1.0],  // Sand yellow
+            [0.9, 0.7, 0.4, 1.0]   // Light sand
+        ];
+        
+        // Pyramids (from PYRAMIDS theme)
+        for (let i = 0; i < 2; i++) {
+            this.layers.push({
+                x: this.canvasWidth * (0.2 + i * 0.5),
+                y: this.canvasHeight * 0.55,
+                size: 80 - i * 20,
+                color: [0.7 - i * 0.15, 0.5 - i * 0.1, 0.2, 0.8],
+                type: 'pyramid',
+                speed: 5 + i * 3
+            });
+        }
+        
+        // Sand dunes (background hills)
+        for (let i = 0; i < 3; i++) {
+            this.layers.push({
+                y: this.canvasHeight * (0.6 + i * 0.08),
+                amplitude: 30 + i * 10,
+                frequency: 0.005 - i * 0.001,
+                speed: 20 - i * 6,
+                color: [0.75 - i * 0.1, 0.55 - i * 0.1, 0.25 - i * 0.05, 0.5 - i * 0.1],
+                type: 'dune',
+                layer: i
+            });
+        }
+        
+        // Sandstorm particles (heavy sand wind)
+        for (let i = 0; i < 40; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * (0.3 + Math.random() * 0.6),
+                size: 1 + Math.random() * 3,
+                speed: 80 + Math.random() * 60,
+                drift: (Math.random() - 0.3) * 20,
+                color: [0.85, 0.65, 0.35, 0.3 + Math.random() * 0.3],
+                type: 'sand'
+            });
+        }
+        
+        // Heat wave effect particles (shimmering air)
+        for (let i = 0; i < 15; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * (0.5 + Math.random() * 0.3),
+                radius: 3 + Math.random() * 4,
+                speed: 10 + Math.random() * 15,
+                drift: (Math.random() - 0.5) * 30,
+                color: [1.0, 0.9, 0.7, 0.15],
+                type: 'heatwave',
+                shimmer: Math.random() * Math.PI * 2,
+                floatPhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+    
     update(deltaTime, cameraSpeed = 0) {
         this.animationTime += deltaTime;
         
@@ -584,10 +996,42 @@ export class BackgroundSystem {
                     p.x -= (p.speed + cameraSpeed) * deltaTime;
                     if (p.type === 'ember') {
                         p.y -= p.speed * deltaTime * 0.5; // Rise up
+                        // Horizontal drift for embers
+                        if (p.horizontalDrift) {
+                            p.x += p.horizontalDrift * deltaTime * 0.3;
+                        }
                     }
                     if (p.x < 0 || (p.type === 'ember' && p.y < 0)) {
                         p.x = this.canvasWidth;
                         p.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
+                    }
+                    break;
+                
+                case 'lava_glow':
+                    p.y -= p.speed * deltaTime; // Rise up slowly
+                    p.x -= cameraSpeed * deltaTime;
+                    p.pulse += deltaTime * 2;
+                    if (p.y < 0 || p.x < 0) {
+                        p.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 100;
+                        p.y = this.canvasHeight * 0.35 + Math.random() * 200;
+                        p.pulse = Math.random() * Math.PI * 2;
+                    }
+                    break;
+                
+                case 'smoke':
+                    p.y -= p.speed * deltaTime; // Rise up
+                    p.x += (p.drift || 0) * deltaTime; // Drift sideways
+                    p.x -= cameraSpeed * deltaTime;
+                    p.expansion = (p.expansion || 1) + deltaTime * 0.5; // Expand as it rises
+                    p.color[3] = Math.max(0, p.color[3] - deltaTime * 0.3); // Fade out
+                    
+                    // Remove when faded or off screen
+                    if (p.color[3] <= 0 || p.y < 0 || p.x < 0) {
+                        // Respawn at crater
+                        p.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
+                        p.y = this.canvasHeight * 0.35 - 20;
+                        p.expansion = 1;
+                        p.color[3] = 0.4;
                     }
                     break;
                     
@@ -626,6 +1070,57 @@ export class BackgroundSystem {
                         this.particles.splice(i, 1);
                     }
                     break;
+                    
+                // MIXED THEME PARTICLE UPDATES
+                case 'glowdust':
+                    // Crystal cave glowing dust - float and drift
+                    p.y -= p.speed * deltaTime;
+                    p.x += p.drift * deltaTime;
+                    p.x -= cameraSpeed * deltaTime;
+                    p.floatPhase += deltaTime * 2;
+                    if (p.y < 0 || p.x < 0) {
+                        p.x = Math.random() * this.canvasWidth;
+                        p.y = this.canvasHeight;
+                    }
+                    break;
+                    
+                case 'spore':
+                    // Mushroom spores - float up with drift
+                    p.y -= p.speed * deltaTime;
+                    p.x += p.drift * deltaTime;
+                    p.x -= cameraSpeed * deltaTime;
+                    p.floatPhase += deltaTime * 2;
+                    p.glowPhase += deltaTime * 3;
+                    if (p.y < 0 || p.x < 0) {
+                        p.x = Math.random() * this.canvasWidth;
+                        p.y = this.canvasHeight;
+                    }
+                    break;
+                    
+                case 'aurora_particle':
+                    // Aurora particles - drift and shimmer
+                    p.y -= p.speed * deltaTime * 0.5;
+                    p.x += p.drift * deltaTime;
+                    p.x -= cameraSpeed * deltaTime;
+                    p.shimmer += deltaTime * 3;
+                    p.floatPhase += deltaTime * 2;
+                    if (p.y < 0 || p.x < 0) {
+                        p.x = Math.random() * this.canvasWidth;
+                        p.y = this.canvasHeight * 0.5;
+                    }
+                    break;
+                    
+                case 'heatwave':
+                    // Desert heat wave - drift and shimmer
+                    p.x -= (p.speed + cameraSpeed) * deltaTime;
+                    p.y += p.drift * deltaTime * 0.3;
+                    p.shimmer += deltaTime * 4;
+                    p.floatPhase += deltaTime * 3;
+                    if (p.x < 0) {
+                        p.x = this.canvasWidth;
+                        p.y = this.canvasHeight * (0.5 + Math.random() * 0.3);
+                    }
+                    break;
             }
         }
         
@@ -638,7 +1133,7 @@ export class BackgroundSystem {
             
             // Layers che si muovono orizzontalmente con parallasse
             if (layer.type === 'pyramid' || layer.type === 'volcano' || layer.type === 'dune' || 
-                layer.type === 'tree' || layer.type === 'mushroom') {
+                layer.type === 'tree' || layer.type === 'mushroom' || layer.type === 'giant_mushroom') {
                 const layerSpeed = layer.speed || 10; // Default speed se non definito
                 layer.x -= (layerSpeed + cameraSpeed * 0.3) * deltaTime;
                 
@@ -647,6 +1142,35 @@ export class BackgroundSystem {
                 if (layer.x + layerWidth < 0) {
                     layer.x = this.canvasWidth + Math.random() * 100;
                 }
+            }
+            
+            // MIXED THEME LAYER UPDATES
+            
+            // Sun movement (sunset ocean)
+            if (layer.type === 'sun') {
+                const sunSpeed = layer.speed || 1;
+                layer.x -= (sunSpeed + cameraSpeed * 0.1) * deltaTime;
+                if (layer.x + layer.radius < 0) {
+                    layer.x = this.canvasWidth + layer.radius;
+                }
+            }
+            
+            // Crystal layers (cave) - pulsing glow
+            if (layer.type === 'crystal_hanging' || layer.type === 'crystal_floor') {
+                const crystalSpeed = layer.speed || 5;
+                layer.x -= (crystalSpeed + cameraSpeed * 0.2) * deltaTime;
+                layer.glowPhase += deltaTime * 1.5;
+                
+                const layerWidth = layer.width || 20;
+                if (layer.x + layerWidth < 0) {
+                    layer.x = this.canvasWidth + Math.random() * 50;
+                }
+            }
+            
+            // Aurora waves (night) - animate phase
+            if (layer.type === 'aurora_wave') {
+                // Aurora doesn't scroll, just animates
+                layer.phaseOffset = (layer.phaseOffset || 0) + deltaTime * 0.5;
             }
             
             // Seaweed oscillazione

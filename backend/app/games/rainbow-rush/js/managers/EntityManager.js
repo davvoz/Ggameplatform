@@ -20,6 +20,7 @@ export class EntityManager {
         this.flightBonuses = [];
         this.rechargeBonuses = [];
         this.heartRechargeBonuses = [];
+        this.enemies = []; // NEW: Array nemici
         
         // Level manager reference
         this.levelManager = null;
@@ -98,6 +99,7 @@ export class EntityManager {
         this.flightBonuses = [];
         this.rechargeBonuses = [];
         this.heartRechargeBonuses = [];
+        this.enemies = []; // NEW: Clear enemies
         this.powerupParticles = [];
         this.boostParticles = [];
         this.floatingTexts = [];
@@ -208,10 +210,6 @@ export class EntityManager {
         if (platform.isCrumbling) {
             platform.crumbleTimer += deltaTime;
             if (platform.crumbleTimer >= platform.crumbleDuration) {
-                // Notifica levelManager prima di rimuovere
-                if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
-                    this.levelManager.platformExited(platform.index);
-                }
                 return false; // Remove crumbled platform
             }
         }
@@ -223,9 +221,6 @@ export class EntityManager {
                 platform.dissolveAlpha = Math.max(0, 1.0 - (platform.dissolveTimer / platform.dissolveDuration));
                 
                 if (platform.dissolveTimer >= platform.dissolveDuration) {
-                    if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
-                        this.levelManager.platformExited(platform.index);
-                    }
                     return false; // Remove dissolved platform
                 }
             }
@@ -274,12 +269,7 @@ export class EntityManager {
         }
 
         // Check if platform exited screen
-        const stillVisible = platform.x + platform.width > -100;
-        if (!stillVisible && this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
-            this.levelManager.platformExited(platform.index);
-        }
-        
-        return stillVisible;
+        return platform.x + platform.width > -100;
     }
 
     /**
@@ -604,6 +594,7 @@ export class EntityManager {
             flightBonuses: this.flightBonuses,
             rechargeBonuses: this.rechargeBonuses,
             heartRechargeBonuses: this.heartRechargeBonuses,
+            enemies: this.enemies, // NEW: Include enemies
             powerupParticles: this.powerupParticles,
             boostParticles: this.boostParticles,
             floatingTexts: this.floatingTexts

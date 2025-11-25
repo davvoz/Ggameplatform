@@ -100,6 +100,14 @@ export class RenderingSystem {
         this.currentCombo = combo || 0;
     }
     
+    setLevelLength(levelLength) {
+        this.levelLength = levelLength;
+    }
+    
+    setDistanceTraveled(distance) {
+        this.distanceTraveled = distance;
+    }
+    
     setLevelTransition(transition) {
         this.levelTransition = transition;
     }
@@ -160,6 +168,9 @@ export class RenderingSystem {
             this.backgroundRenderer.render(context.time);
         }
         
+        // 1.5. Goal zone (rendered BEFORE platforms so it's behind everything)
+        this._renderGoalZone(gameState, context);
+        
         // 2. Entities (platforms, collectibles, obstacles, player)
         this._renderEntities(gameState, context);
         
@@ -192,6 +203,7 @@ export class RenderingSystem {
         
         // Separate entities by type for proper rendering order
         const platforms = [];
+        const enemies = []; // NEW: Array separato per nemici
         const collectiblesAndPowerups = [];
         const particles = [];
         let player = null;
@@ -222,25 +234,33 @@ export class RenderingSystem {
             if (entity.type === 'player') {
                 player = entity;
             } else if (entity.type === 'goalFlag') {
-                // Goal flag sempre visibile e renderizzato con le piattaforme
-                platforms.push(entity);
+                // Goal flag handled separately in _renderGoalZone (skip here)
+                return;
+            } else if (entity.type === 'enemy') {
+                // NEW: Enemies in separate array
+                enemies.push(entity);
             } else if (entity.type.includes('particle') || entity.type.includes('Particle') || 
                        entity.type === 'sparkle' || entity.type === 'trail') {
                 // All particle types (kebab-case, camelCase, and special particle types)
                 particles.push(entity);
-            } else if (entity.type.includes('platform') || entity.type === 'spike' || entity.type === 'enemy') {
+            } else if (entity.type.includes('platform') || entity.type === 'spike') {
                 platforms.push(entity);
             } else {
                 collectiblesAndPowerups.push(entity);
             }
         });
         
-        // Render in correct order: platforms first, then collectibles, then particles
+        // Render in correct order: platforms first, then collectibles, then enemies, then particles
         platforms.forEach(entity => {
             this.factory.render(entity, context);
         });
         
         collectiblesAndPowerups.forEach(entity => {
+            this.factory.render(entity, context);
+        });
+        
+        // NEW: Render enemies (after collectibles, before player)
+        enemies.forEach(entity => {
             this.factory.render(entity, context);
         });
         
@@ -335,7 +355,7 @@ export class RenderingSystem {
         
         // HUD (pause button, score, level)
         if (this.hudRenderer) {
-            this.hudRenderer.render(this.currentScore, this.currentLevel, this.isPaused);
+            this.hudRenderer.render(this.currentScore, this.currentLevel, this.isPaused, this.distanceTraveled, this.levelLength);
         }
     }
 
@@ -367,6 +387,22 @@ export class RenderingSystem {
     _isVisible(entity, context) {
         // Render all entities - visibility culling disabled for now to match original behavior
         return true;
+    }
+    
+    /**
+     * Render goal zone BEFORE platforms (so it's a background layer)
+     * @private
+     */
+    _renderGoalZone(gameState, context) {
+        const entities = gameState.entities || [];
+        
+        // Find the goal flag entity
+        const goalFlag = entities.find(e => e && e.type === 'goalFlag');
+        
+        if (goalFlag) {
+            // Render using the goal flag renderer
+            this.factory.render(goalFlag, context);
+        }
     }
 
     /**

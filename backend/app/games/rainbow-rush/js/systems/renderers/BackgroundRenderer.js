@@ -125,6 +125,47 @@ export class BackgroundRenderer {
         
         for (const layer of this.backgroundLayers) {
             switch (layer.type) {
+                case 'sky_gradient':
+                    // Draw sky with gradient effect
+                    const skyTopColor = [0.5, 0.2, 0.15, 1.0]; // Lighter red at top
+                    const skyBottomColor = layer.color; // Darker at horizon
+                    
+                    // Simple gradient using horizontal bands
+                    const bands = 20;
+                    for (let i = 0; i < bands; i++) {
+                        const t = i / bands;
+                        const bandY = layer.y + (layer.height * t);
+                        const bandHeight = layer.height / bands + 1;
+                        const color = [
+                            skyTopColor[0] + (skyBottomColor[0] - skyTopColor[0]) * t,
+                            skyTopColor[1] + (skyBottomColor[1] - skyTopColor[1]) * t,
+                            skyTopColor[2] + (skyBottomColor[2] - skyTopColor[2]) * t,
+                            1.0
+                        ];
+                        this.renderer.drawRect(0, bandY, this.canvasWidth * 10, bandHeight, color);
+                    }
+                    break;
+                    
+                case 'ground':
+                    // Draw volcanic ground
+                    this.renderer.drawRect(0, layer.y, this.canvasWidth * 10, layer.height, layer.color);
+                    
+                    // Add some ground texture details
+                    const numRocks = 15;
+                    for (let i = 0; i < numRocks; i++) {
+                        const rockX = (this.canvasWidth / numRocks) * i + Math.sin(i * 2.5) * 30;
+                        const rockY = layer.y + 10 + Math.random() * 20;
+                        const rockSize = 5 + Math.random() * 8;
+                        const rockColor = [
+                            layer.color[0] * (0.7 + Math.random() * 0.3),
+                            layer.color[1] * (0.7 + Math.random() * 0.3),
+                            layer.color[2] * (0.7 + Math.random() * 0.3),
+                            0.6
+                        ];
+                        this.renderer.drawCircle(rockX, rockY, rockSize, rockColor);
+                    }
+                    break;
+                    
                 case 'wave':
                     this.renderer.drawRect(0, layer.y, 10000, 50, layer.color);
                     break;
@@ -132,7 +173,10 @@ export class BackgroundRenderer {
                     this.renderer.drawRect(layer.x, layer.y, layer.width, layer.height, layer.color);
                     break;
                 case 'volcano':
-                    this.renderer.drawRect(layer.x - layer.width / 2, layer.y, layer.width, layer.height, layer.color);
+                    this.renderVolcano(layer, time);
+                    break;
+                case 'lava_flow':
+                    this.renderLavaFlow(layer, time);
                     break;
                 case 'planet':
                     this.renderer.drawCircle(layer.x, layer.y, layer.radius, layer.color);
@@ -176,6 +220,56 @@ export class BackgroundRenderer {
                     this.renderer.drawRect(layer.x + layer.size * 0.3, layer.y, layer.size * 0.4, layer.size * 0.5, [0.9, 0.9, 0.85, 0.7]);
                     this.renderer.drawCircle(layer.x + layer.size / 2, layer.y, layer.size * 0.6, layer.color);
                     break;
+                // MIXED THEME LAYERS
+                case 'sun':
+                    // Sunset ocean - glowing sun
+                    const sunGlow = layer.glow ? Math.sin(time * 2) * 0.2 + 0.8 : 1.0;
+                    this.renderer.drawCircle(layer.x, layer.y, layer.radius * 1.5 * sunGlow, [...layer.color.slice(0, 3), layer.color[3] * 0.3]);
+                    this.renderer.drawCircle(layer.x, layer.y, layer.radius * sunGlow, layer.color);
+                    break;
+                case 'crystal_hanging':
+                    // Crystal cave - hanging crystals (stalactites)
+                    const hangGlow = Math.sin(time * 1.5 + layer.glowPhase) * 0.3 + 0.7;
+                    const hangColor = [...layer.color.slice(0, 3), layer.color[3] * hangGlow];
+                    // Glow
+                    this.renderer.drawCircle(layer.x, layer.y + layer.height / 2, layer.width * 1.5, [...layer.color.slice(0, 3), hangColor[3] * 0.2]);
+                    // Crystal body (triangle pointing down)
+                    this.renderer.drawRect(layer.x - layer.width / 2, layer.y, layer.width, layer.height, hangColor);
+                    break;
+                case 'crystal_floor':
+                    // Crystal cave - floor crystals (stalagmites)
+                    const floorGlow = Math.sin(time * 1.5 + layer.glowPhase) * 0.3 + 0.7;
+                    const floorColor = [...layer.color.slice(0, 3), layer.color[3] * floorGlow];
+                    // Glow
+                    this.renderer.drawCircle(layer.x, layer.y - layer.height / 2, layer.width * 1.5, [...layer.color.slice(0, 3), floorColor[3] * 0.2]);
+                    // Crystal body (triangle pointing up)
+                    this.renderer.drawRect(layer.x - layer.width / 2, layer.y - layer.height, layer.width, layer.height, floorColor);
+                    break;
+                case 'giant_mushroom':
+                    // Mushroom forest - giant glowing mushrooms
+                    const mushroomGlow = Math.sin(time * 2 + layer.glowPhase) * 0.3 + 0.7;
+                    const stemColor = [0.85, 0.8, 0.75, 0.8];
+                    // Glow around cap
+                    this.renderer.drawCircle(layer.x, layer.y - layer.stemHeight, layer.size * 1.4, [...layer.color.slice(0, 3), layer.color[3] * 0.3 * mushroomGlow]);
+                    // Stem
+                    this.renderer.drawRect(layer.x - layer.size * 0.15, layer.y, layer.size * 0.3, layer.stemHeight, stemColor);
+                    // Cap
+                    const capColor = [...layer.color.slice(0, 3), layer.color[3] * mushroomGlow];
+                    this.renderer.drawCircle(layer.x, layer.y - layer.stemHeight, layer.size, capColor);
+                    break;
+                case 'aurora_wave':
+                    // Aurora night - colorful wave patterns
+                    const numPoints = 50;
+                    const wavePhase = time * layer.speed / 10 + (layer.phaseOffset || 0);
+                    for (let i = 0; i < numPoints - 1; i++) {
+                        const x1 = (this.canvasWidth / numPoints) * i;
+                        const x2 = (this.canvasWidth / numPoints) * (i + 1);
+                        const y1 = layer.y + Math.sin((x1 * layer.frequency) + wavePhase) * layer.amplitude;
+                        const y2 = layer.y + Math.sin((x2 * layer.frequency) + wavePhase) * layer.amplitude;
+                        // Draw thick wave segments
+                        this.renderer.drawRect(x1, y1 - 3, x2 - x1 + 1, 6, layer.color);
+                    }
+                    break;
             }
         }
     }
@@ -187,6 +281,8 @@ export class BackgroundRenderer {
     }
 
     renderBackgroundParticles() {
+        const time = Date.now() / 1000;
+        
         for (const particle of this.backgroundParticles) {
             switch (particle.type) {
                 case 'cloud':
@@ -211,11 +307,46 @@ export class BackgroundRenderer {
                 case 'ember':
                     this.renderer.drawCircle(particle.x, particle.y, particle.radius, particle.color);
                     if (particle.type === 'ember') {
-                        this.renderer.drawCircle(particle.x, particle.y, particle.radius * 2, [1.0, 0.5, 0.0, 0.3]);
+                        // Enhanced ember glow with sparkle
+                        const sparkle = particle.sparkle ? Math.sin(time * 8 + particle.sparkle) * 0.3 + 0.7 : 1.0;
+                        this.renderer.drawCircle(particle.x, particle.y, particle.radius * 2.5 * sparkle, [1.0, 0.5, 0.0, 0.2]);
+                        this.renderer.drawCircle(particle.x, particle.y, particle.radius * 1.5 * sparkle, [1.0, 0.7, 0.0, 0.4]);
                     }
+                    break;
+                case 'lava_glow':
+                    const glowPulse = Math.sin(time * 2 + (particle.pulse || 0)) * 0.3 + 0.7;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * glowPulse, particle.color);
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * 0.5 * glowPulse, [1.0, 0.8, 0.3, 0.6]);
+                    break;
+                case 'smoke':
+                    const smokeExpansion = particle.expansion || 1;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * smokeExpansion, particle.color);
                     break;
                 case 'shootingStar':
                     this.renderShootingStar(particle);
+                    break;
+                // MIXED THEME PARTICLES
+                case 'glowdust':
+                    // Crystal cave glowing dust
+                    const dustGlow = Math.sin(time * 3 + particle.floatPhase) * 0.3 + 0.7;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * 1.5 * dustGlow, [...particle.color.slice(0, 3), particle.color[3] * 0.3]);
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * dustGlow, particle.color);
+                    break;
+                case 'spore':
+                    // Mushroom forest spores
+                    const sporeGlow = Math.sin(time * 2 + particle.glowPhase) * 0.4 + 0.6;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * 2 * sporeGlow, [...particle.color.slice(0, 3), particle.color[3] * 0.2]);
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * sporeGlow, particle.color);
+                    break;
+                case 'aurora_particle':
+                    // Aurora night shimmering particles
+                    const shimmer = Math.sin(time * 4 + particle.shimmer) * 0.5 + 0.5;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * (1 + shimmer * 0.5), [...particle.color.slice(0, 3), particle.color[3] * shimmer]);
+                    break;
+                case 'heatwave':
+                    // Desert storm heat waves
+                    const heatShimmer = Math.sin(time * 5 + particle.shimmer) * 0.6 + 0.4;
+                    this.renderer.drawCircle(particle.x, particle.y, particle.radius * heatShimmer, particle.color);
                     break;
             }
         }
@@ -293,14 +424,213 @@ export class BackgroundRenderer {
                 const alpha = (p.life / p.maxLife) * 0.3; // Ridotto da 0.5
                 const color = [...p.color, alpha];
                 
-                this.renderer.drawCircle(p.x, p.y, p.size * 1.5, [...p.color, alpha * 0.15]); // Ridotto alone
-                this.renderer.drawCircle(p.x, p.y, p.size, color);
+                this.renderer.drawCircle(p.x, p.y, p.size * 1.5, color);
+                this.renderer.drawCircle(p.x, p.y, p.size, [...p.color, alpha * 1.5]);
             }
         });
+    }
+    
+    /**
+     * Render professional volcano with realistic shape
+     */
+    renderVolcano(volcano, time) {
+        const baseX = volcano.x;
+        const baseY = volcano.y + volcano.height;
+        const width = volcano.width;
+        const height = volcano.height;
+        const craterWidth = volcano.craterWidth || 60;
+        const craterDepth = volcano.craterDepth || 50;
+        
+        // Volcano body - triangular mountain shape with perspective
+        const leftBase = baseX - width / 2;
+        const rightBase = baseX + width / 2;
+        const peak = volcano.y;
+        
+        // Dark rock gradient - darker at edges, lighter in center
+        const baseColor = volcano.color;
+        const lightColor = [baseColor[0] * 1.3, baseColor[1] * 1.3, baseColor[2] * 1.3, baseColor[3]];
+        const darkColor = [baseColor[0] * 0.7, baseColor[1] * 0.7, baseColor[2] * 0.7, baseColor[3]];
+        
+        // Left slope (darker)
+        this.renderer.drawTriangle(
+            leftBase, baseY,
+            baseX - craterWidth / 2, peak,
+            baseX, baseY,
+            darkColor
+        );
+        
+        // Right slope (lighter - lit by sun)
+        this.renderer.drawTriangle(
+            baseX, baseY,
+            baseX + craterWidth / 2, peak,
+            rightBase, baseY,
+            lightColor
+        );
+        
+        // Crater interior - glowing lava
+        const craterLeftX = baseX - craterWidth / 2;
+        const craterRightX = baseX + craterWidth / 2;
+        const craterBottomY = peak + craterDepth;
+        
+        // Inner crater walls (very dark)
+        this.renderer.drawTriangle(
+            craterLeftX, peak,
+            craterLeftX + 5, craterBottomY,
+            baseX, craterBottomY,
+            [0.08, 0.04, 0.02, 1.0]
+        );
+        this.renderer.drawTriangle(
+            baseX, craterBottomY,
+            craterRightX - 5, craterBottomY,
+            craterRightX, peak,
+            [0.1, 0.05, 0.03, 1.0]
+        );
+        
+        // Lava pool at bottom of crater (animated glow)
+        const lavaGlow = Math.sin(time * 2) * 0.15 + 0.85;
+        const lavaY = craterBottomY - 5;
+        this.renderer.drawRect(
+            craterLeftX + 8,
+            lavaY,
+            craterWidth - 16,
+            15,
+            [1.0 * lavaGlow, 0.4 * lavaGlow, 0.0, 0.95]
+        );
+        
+        // Bright lava center
+        this.renderer.drawRect(
+            baseX - craterWidth / 4,
+            lavaY + 3,
+            craterWidth / 2,
+            8,
+            [1.0, 0.7 * lavaGlow, 0.2 * lavaGlow, 1.0]
+        );
+        
+        // Lava glow emanating from crater
+        for (let i = 0; i < 3; i++) {
+            const glowAlpha = (0.3 - i * 0.08) * lavaGlow;
+            const glowSize = (i + 1) * 15;
+            this.renderer.drawCircle(
+                baseX,
+                peak + craterDepth / 2,
+                craterWidth / 2 + glowSize,
+                [1.0, 0.4, 0.0, glowAlpha]
+            );
+        }
+        
+        // Rock texture details on slopes
+        const numRocks = 8;
+        for (let i = 0; i < numRocks; i++) {
+            const t = (i + 0.5) / numRocks;
+            const y = peak + height * t * 0.7;
+            const xOffset = (i % 2 === 0 ? -1 : 1) * (width / 4 + Math.sin(i * 2.5) * width / 8);
+            const rockSize = 6 + Math.sin(i * 3) * 4;
+            
+            this.renderer.drawCircle(
+                baseX + xOffset,
+                y,
+                rockSize,
+                [baseColor[0] * 0.6, baseColor[1] * 0.6, baseColor[2] * 0.6, 0.8]
+            );
+        }
+    }
+    
+    /**
+     * Render lava flow with animation - professional organic look
+     */
+    renderLavaFlow(flow, time) {
+        const flowWave = Math.sin(time * 3 + flow.flowPhase) * 4;
+        const glowPulse = Math.sin(time * 4 + flow.flowPhase) * 0.2 + 0.8;
+        
+        // Draw lava flow as series of organic segments
+        const segments = 12;
+        const segmentHeight = flow.height / segments;
+        
+        for (let i = 0; i < segments; i++) {
+            const t = i / segments;
+            const y = flow.y + i * segmentHeight;
+            
+            // Width variation - narrower at top, wider at bottom with waves
+            const widthFactor = 0.6 + t * 0.4 + Math.sin(time * 5 + flow.flowPhase + i * 0.5) * 0.15;
+            const segmentWidth = flow.width * widthFactor;
+            
+            // Horizontal wave movement
+            const wave = Math.sin(time * 4 + flow.flowPhase + i * 0.3) * 5;
+            const x = flow.x - segmentWidth / 2 + wave;
+            
+            // Color gradient - brighter at edges, darker in center for depth
+            const brightness = glowPulse * (0.8 + Math.sin(time * 6 + i * 0.4) * 0.2);
+            const edgeColor = [1.0 * brightness, 0.35 * brightness, 0.0, flow.color[3]];
+            const coreColor = [0.7 * brightness, 0.2 * brightness, 0.0, flow.color[3] * 0.9];
+            
+            // Main lava segment with rounded edges
+            this.renderer.drawRect(x, y, segmentWidth, segmentHeight + 2, edgeColor);
+            
+            // Inner darker core for depth
+            this.renderer.drawRect(
+                x + segmentWidth * 0.25,
+                y + 1,
+                segmentWidth * 0.5,
+                segmentHeight,
+                coreColor
+            );
+            
+            // Bright flowing center line
+            if (i % 2 === 0) {
+                this.renderer.drawRect(
+                    flow.x - flow.width * 0.15 + wave * 0.5,
+                    y,
+                    flow.width * 0.3,
+                    segmentHeight,
+                    [1.0, 0.6 * brightness, 0.1 * brightness, 0.7]
+                );
+            }
+        }
+        
+        // Lava drips falling from flow
+        const numDrips = 3;
+        for (let i = 0; i < numDrips; i++) {
+            const dripPhase = (time * 2 + flow.flowPhase + i * 2) % 4;
+            if (dripPhase < 3) {
+                const dripY = flow.y + flow.height * 0.3 + dripPhase * 50;
+                const dripX = flow.x + Math.sin(flow.flowPhase + i) * flow.width * 0.3;
+                const dripSize = 4 - dripPhase * 0.8;
+                
+                // Drip glow
+                this.renderer.drawCircle(dripX, dripY, dripSize * 2, [1.0, 0.4, 0.0, 0.3]);
+                // Drip core
+                this.renderer.drawCircle(dripX, dripY, dripSize, [1.0, 0.5, 0.0, 0.9]);
+            }
+        }
+        
+        // Ambient glow around entire lava flow
+        const glowWidth = flow.width * 4;
+        this.renderer.drawRect(
+            flow.x - glowWidth / 2,
+            flow.y,
+            glowWidth,
+            flow.height,
+            [1.0, 0.25, 0.0, 0.06 * glowPulse]
+        );
+        
+        // Stronger glow near top (crater source)
+        this.renderer.drawCircle(
+            flow.x,
+            flow.y + 30,
+            flow.width * 2,
+            [1.0, 0.4, 0.0, 0.2 * glowPulse]
+        );
+    }
+    
+    drawTriangle(x1, y1, x2, y2, x3, y3, color) {
+        // Helper for BackgroundRenderer if not in WebGLRenderer
+                this.renderer.drawCircle(p.x, p.y, p.size * 1.5, [...p.color, alpha * 0.15]); // Ridotto alone
+                this.renderer.drawCircle(p.x, p.y, p.size, color);
+        this.renderer.drawTriangle(x1, y1, x2, y2, x3, y3, color);
     }
 
     updateDimensions(width, height) {
         this.canvasWidth = width;
-        this.canvasHeight = height;
+        this.canvasHeight = height; 
     }
 }

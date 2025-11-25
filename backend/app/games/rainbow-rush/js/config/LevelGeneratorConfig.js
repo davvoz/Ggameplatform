@@ -13,7 +13,7 @@ export const DifficultyConfig = {
         platformCount: { min: 8, max: 12 },
         platformWidth: { min: 280, max: 320 },
         platformSpacing: { min: 150, max: 180 },
-        enemyCount: { min: 0, max: 3 },
+        enemyCount: { min: 2, max: 5 },
         enemySafetyZone: 3,
 
         powerupFrequency: 0.05,
@@ -38,7 +38,7 @@ export const DifficultyConfig = {
         platformCount: { min: 50, max: 80 },        // Più del doppio!
         platformWidth: { min: 200, max: 280 },
         platformSpacing: { min: 90, max: 130 },     // Più ravvicinati
-        enemyCount: { min: 8, max: 18 },
+        enemyCount: { min: 15, max: 30 },
         enemySafetyZone: 3,
 
         powerupFrequency: 0.05,                      // Più powerup
@@ -64,7 +64,7 @@ export const DifficultyConfig = {
         platformCount: { min: 80, max: 120 },       // Triplo!
         platformWidth: { min: 160, max: 240 },
         platformSpacing: { min: 80, max: 120 },
-        enemyCount: { min: 20, max: 35 },
+        enemyCount: { min: 35, max: 55 },
         enemySafetyZone: 3,
 
         powerupFrequency: 0.045,
@@ -90,7 +90,7 @@ export const DifficultyConfig = {
         platformCount: { min: 120, max: 180 },      // Molto più lungo!
         platformWidth: { min: 140, max: 210 },
         platformSpacing: { min: 70, max: 110 },
-        enemyCount: { min: 35, max: 55 },
+        enemyCount: { min: 55, max: 85 },
         enemySafetyZone: 3,
 
         powerupFrequency: 0.04,
@@ -116,7 +116,7 @@ export const DifficultyConfig = {
         platformCount: { min: 180, max: 250 },      // Livelli epici!
         platformWidth: { min: 120, max: 190 },
         platformSpacing: { min: 60, max: 100 },
-        enemyCount: { min: 50, max: 80 },
+        enemyCount: { min: 80, max: 120 },
         enemySafetyZone: 2,
 
         powerupFrequency: 0.035,
@@ -142,7 +142,7 @@ export const DifficultyConfig = {
         platformCount: { min: 250, max: 350 },      // Livelli MASTODONTICI!
         platformWidth: { min: 100, max: 170 },
         platformSpacing: { min: 50, max: 90 },
-        enemyCount: { min: 80, max: 120 },
+        enemyCount: { min: 120, max: 180 },
         enemySafetyZone: 3,
 
         powerupFrequency: 0.03,
@@ -159,7 +159,7 @@ export const DifficultyConfig = {
 
         healthPerLevel: { min: 8, max: 12 },
         coinFrequency: 0.20,
-
+        
         parTime: { threeStars: 100, twoStars: 150, oneStar: 220 }
     }
 

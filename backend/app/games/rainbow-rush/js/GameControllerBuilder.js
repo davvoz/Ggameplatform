@@ -22,6 +22,7 @@ import { SafetyPlatformSystem } from './systems/SafetyPlatformSystem.js';
 import { CollisionDetector } from './systems/CollisionDetector.js';
 import { AnimationController } from './controllers/AnimationController.js';
 import { ParticleSystem } from './effects/ParticleSystem.js';
+import { EnemySystem } from './systems/EnemySystem.js';
 import { TurboButtonUI } from './systems/TurboButtonUI.js';
 import { FlightButtonUI } from './systems/FlightButtonUI.js';
 import { LevelProgressBar } from './systems/LevelProgressBar.js';
@@ -58,6 +59,7 @@ export class GameControllerBuilder {
         this.collisionDetector = null;
         this.animationController = null;
         this.particleSystem = null;
+        this.enemySystem = null;
         this.turboButtonUI = null;
         this.flightButtonUI = null;
         this.levelProgressBar = null;
@@ -106,6 +108,7 @@ export class GameControllerBuilder {
         this.safetyPlatformSystem = new SafetyPlatformSystem(dims, this.audioManager);
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
+        this.enemySystem = new EnemySystem(this.entityManager, dims);
         
         // UI Components
         this.turboButtonUI = new TurboButtonUI(width, height);
@@ -154,8 +157,15 @@ export class GameControllerBuilder {
             backgroundSystem: this.backgroundSystem
         });
         
+        // Set EnemySystem in LevelOrchestrator
+        this.levelOrchestrator.setEnemySystem(this.enemySystem);
+        
         // Link EntityManager to LevelManager
         this.entityManager.setLevelManager(this.levelManager);
+        
+        // Configure EnemySystem
+        this.enemySystem.setPlayer(this.player);
+        this.enemySystem.setLevelManager(this.levelManager);
         
         return this;
     }
@@ -217,6 +227,7 @@ export class GameControllerBuilder {
             collisionDetector: this.collisionDetector,
             animationController: this.animationController,
             particleSystem: this.particleSystem,
+            enemySystem: this.enemySystem,
             turboButtonUI: this.turboButtonUI,
             flightButtonUI: this.flightButtonUI,
             levelProgressBar: this.levelProgressBar,

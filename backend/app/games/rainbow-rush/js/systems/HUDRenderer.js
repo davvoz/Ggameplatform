@@ -52,12 +52,45 @@ export class HUDRenderer {
         this.levelPulse = Math.max(0, this.levelPulse - deltaTime * 2);
     }
     
-    render(score, level, isPaused) {
+    render(score, level, isPaused, distanceTraveled = null, levelLength = null) {
         if (!this.textCtx) return;
         
         this.renderPauseButton(isPaused);
         this.renderScore(score);
         this.renderLevel(level);
+        
+        // DEBUG: Distance traveled
+        if (distanceTraveled !== null) {
+            this.renderDebugPosition(distanceTraveled, levelLength);
+        }
+    }
+    
+    renderDebugPosition(distanceTraveled, levelLength) {
+        const ctx = this.textCtx;
+        ctx.save();
+        
+        const debugY = this.canvasHeight - 30;
+        const debugX = 20;
+        
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(debugX - 5, debugY - 20, 350, 25);
+        
+        // Text
+        ctx.fillStyle = '#00FF00';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        
+        let text = `Distance: ${Math.floor(distanceTraveled)}px`;
+        if (levelLength !== null) {
+            const percent = Math.floor((distanceTraveled / levelLength) * 100);
+            text += ` / ${levelLength}px (${percent}%)`;
+        }
+        
+        ctx.fillText(text, debugX, debugY - 15);
+        
+        ctx.restore();
     }
     
     renderPauseButton(isPaused) {

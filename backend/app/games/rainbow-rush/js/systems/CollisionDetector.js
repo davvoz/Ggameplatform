@@ -50,6 +50,9 @@ export class CollisionDetector {
 
         // Obstacle collisions
         this.checkObstacleCollisions(entityManager);
+        
+        // NEW: Enemy collisions
+        this.checkEnemyCollisions(entityManager);
 
         // Collectible collisions
         this.checkCollectibleCollisions(entityManager);
@@ -98,10 +101,6 @@ export class CollisionDetector {
                 if (!wasGrounded) {
                     this.achievementSystem.recordNormalLanding();
                     this.achievementSystem.checkAchievements();
-                    // Track platform reached for level progress - SOLO per piattaforme del livello (con index)
-                    if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
-                        this.levelManager.recordPlatformReached(platform.index);
-                    }
                 }
                 // Stop checking other platforms once we've landed on one
                 break;
@@ -792,6 +791,123 @@ export class CollisionDetector {
                     powerups.splice(i, 1);
                     this.achievementSystem.recordPowerup();
                     this.achievementSystem.checkAchievements();
+                }
+            }
+        }
+    }
+
+    /**
+     * NEW: Check enemy collisions with player
+     */
+    checkEnemyCollisions(entityManager) {
+        const enemies = entityManager.getEntities('enemies');
+        
+        for (const enemy of enemies) {
+            if (!enemy.alive) continue;
+            
+            // Check player collision with enemy
+            if (this.player.checkObstacleCollision(enemy)) {
+                if (!enemy.hasHitPlayer && this.player.alive) {
+                    enemy.hasHitPlayer = true;
+                    
+                    // Player takes damage
+                    this.audioManager.playSound('hit');
+                    
+                    // Floating text
+                    this.animationController.createFloatingText(
+                        `💥 -${enemy.damage} ❤️`, 
+                        this.player.x + this.player.width / 2, 
+                        this.player.y - 20, 
+                        [1.0, 0.2, 0.2, 1.0], 
+                        entityManager
+                    );
+                    
+                    // Camera shake
+                    this.player.addCameraShake(15, 0.5);
+                    
+                    // Screen flash
+                    this.animationController.triggerScreenFlash(0.4, [1.0, 0.2, 0.2]);
+                    
+                    // Damage particles
+                    for (let j = 0; j < 12; j++) {
+                        const angle = (Math.PI * 2 * j) / 12;
+                        const speed = 100 + Math.random() * 80;
+                        entityManager.addEntity('powerupParticles', {
+                            x: this.player.x + this.player.width / 2,
+                            y: this.player.y + this.player.height / 2,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed - 50,
+                            life: 0.6,
+                            maxLife: 0.6,
+                            size: 4 + Math.random() * 3,
+                            color: [1.0, 0.2, 0.2, 1.0],
+                            gravity: 200,
+                            type: 'damage-particle'
+                        });
+                    }
+                    
+                    this.achievementSystem.recordDamage();
+                    
+                    // Combo break
+                    if (this.scoreSystem.combo > 3) {
+                        this.audioManager.playSound('combo_break');
+                        this.achievementSystem.addNotification('💔 Combo Perso!', `Hai perso la combo x${this.scoreSystem.combo}`, 'warning');
+                    }
+                }
+            } else {
+                enemy.hasHitPlayer = false;
+            }
+            
+            // Check projectile collisions
+            if (enemy.projectiles && enemy.projectiles.length > 0) {
+                for (let i = enemy.projectiles.length - 1; i >= 0; i--) {
+                    const proj = enemy.projectiles[i];
+                    
+                    // Check if projectile hits player
+                    const playerCenterX = this.player.x + this.player.width / 2;
+                    const playerCenterY = this.player.y + this.player.height / 2;
+                    const dx = proj.x - playerCenterX;
+                    const dy = proj.y - playerCenterY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < (proj.radius + Math.max(this.player.width, this.player.height) / 2)) {
+                        // Remove projectile
+                        enemy.projectiles.splice(i, 1);
+                        
+                        // Player takes damage
+                        if (this.player.alive) {
+                            this.audioManager.playSound('hit');
+                            
+                            this.animationController.createFloatingText(
+                                `💥 -${proj.damage} ❤️`, 
+                                proj.x, 
+                                proj.y, 
+                                [1.0, 0.2, 0.2, 1.0], 
+                                entityManager
+                            );
+                            
+                            this.player.addCameraShake(10, 0.3);
+                            this.achievementSystem.recordDamage();
+                            
+                            // Projectile hit particles
+                            for (let j = 0; j < 8; j++) {
+                                const angle = (Math.PI * 2 * j) / 8;
+                                const speed = 80 + Math.random() * 60;
+                                entityManager.addEntity('powerupParticles', {
+                                    x: proj.x,
+                                    y: proj.y,
+                                    vx: Math.cos(angle) * speed,
+                                    vy: Math.sin(angle) * speed,
+                                    life: 0.4,
+                                    maxLife: 0.4,
+                                    size: 3 + Math.random() * 2,
+                                    color: [...proj.color],
+                                    gravity: 150,
+                                    type: 'projectile-hit'
+                                });
+                            }
+                        }
+                    }
                 }
             }
         }

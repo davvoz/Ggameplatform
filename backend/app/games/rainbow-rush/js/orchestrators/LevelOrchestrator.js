@@ -12,6 +12,12 @@ export class LevelOrchestrator {
         this.player = player;
         this.audioManager = audioManager;
         this.animationController = animationController;
+        this.enemySystem = null; // Will be set externally
+        
+        // Registra callback per spawn goal dinamico
+        this.levelManager.onSpawnGoal = (goalFlag) => {
+            this.entityManager.addEntity('collectibles', goalFlag);
+        };
         
         // Ability unlock configuration
         this.FLIGHT_UNLOCK_LEVEL = 10;
@@ -36,6 +42,13 @@ export class LevelOrchestrator {
         this.flightButtonUI = components.flightButtonUI;
         this.turboButtonUI = components.turboButtonUI;
         this.backgroundSystem = components.backgroundSystem;
+    }
+    
+    /**
+     * Set enemy system for loading enemies
+     */
+    setEnemySystem(enemySystem) {
+        this.enemySystem = enemySystem;
     }
 
     /**
@@ -236,6 +249,7 @@ export class LevelOrchestrator {
         this.entityManager.heartRechargeBonuses = [];
         this.entityManager.flightBonuses = [];
         this.entityManager.rechargeBonuses = [];
+        this.entityManager.enemies = []; // NEW: Clear enemies
         this.entityManager.powerupParticles = [];
         this.entityManager.boostParticles = [];
         this.entityManager.floatingTexts = [];
@@ -247,7 +261,11 @@ export class LevelOrchestrator {
      */
     _addEntitiesToManager(entities) {
         entities.platforms.forEach(p => this.entityManager.addEntity('platforms', p));
-        entities.enemies.forEach(e => this.entityManager.addEntity('obstacles', e));
+        
+        // Use EnemySystem to load enemies if available
+        if (this.enemySystem && entities.enemies && entities.enemies.length > 0) {
+            this.enemySystem.loadEnemiesFromLevel({ enemies: entities.enemies });
+        }
         entities.collectibles.forEach(c => this.entityManager.addEntity('collectibles', c));
         entities.powerups.forEach(p => this.entityManager.addEntity('powerups', p));
         entities.hearts.forEach(h => this.entityManager.addEntity('hearts', h));

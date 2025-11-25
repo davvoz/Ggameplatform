@@ -52,8 +52,8 @@ class Platform {
  * Classe Enemy - Rappresenta un nemico
  */
 class Enemy {
-    constructor(type, x, y, platformIndex = 0) {
-        this.type = type;
+    constructor(enemyId, x, y, platformIndex = 0) {
+        this.enemyId = enemyId; // Changed from 'type' to avoid conflict with entity type
         this.x = x;
         this.y = y;
         this.platformIndex = platformIndex;
@@ -93,6 +93,7 @@ class Level {
             oneStar: { time: 45, coins: 0.5 }
         };
         this.length = 0; // Lunghezza totale del livello in pixel (calcolata dopo aver aggiunto le piattaforme)
+        this.fineLivello = 3000; // NUOVO: Lunghezza fissa del livello in pixel (configurabile per ogni livello)
     }
 
     addPlatform(platform) {
@@ -130,7 +131,8 @@ class Level {
             objectives: this.objectives,
             parTime: this.parTime,
             starRequirements: this.starRequirements,
-            length: this.length
+            length: this.length,
+            fineLivello: this.fineLivello
         };
     }
 }
@@ -652,9 +654,8 @@ class EnemySpawner {
         const groundEnemies = availableEnemies.filter(e => e.category === 'ground');
         const flyingEnemies = availableEnemies.filter(e => e.category === 'flying');
         const chaserEnemies = availableEnemies.filter(e => e.category === 'chaser');
-        const specialEnemies = availableEnemies.filter(e =>
-            e.category === 'jumper' || e.category === 'turret'
-        );
+        const shooterEnemies = availableEnemies.filter(e => e.category === 'turret');
+        const jumperEnemies = availableEnemies.filter(e => e.category === 'jumper');
 
         const enemyCount = Math.floor(
             config.enemyCount.min +
@@ -662,49 +663,62 @@ class EnemySpawner {
         );
 
         const validPlatforms = platforms.filter((p, idx) => idx >= safetyZone);
+        if (validPlatforms.length === 0) return enemies;
 
-        // Distribuzione più dinamica: nemici sparsi in gruppi
-        const enemiesPerGroup = 2 + Math.floor(Math.random() * 3); // 2-4 nemici per gruppo
-        const numGroups = Math.ceil(enemyCount / enemiesPerGroup);
-        const groupSpacing = Math.floor(validPlatforms.length / numGroups);
-
+        // DISTRIBUZIONE MIGLIORATA: mix di singoli e gruppi
         let count = 0;
-        for (let g = 0; g < numGroups && count < enemyCount; g++) {
-            const groupStartIdx = g * groupSpacing;
-            const groupSize = Math.min(enemiesPerGroup, enemyCount - count);
+        const platformsPerEnemy = Math.max(1, Math.floor(validPlatforms.length / enemyCount));
 
-            for (let e = 0; e < groupSize && count < enemyCount; e++) {
-                const platformIdx = Math.min(
-                    groupStartIdx + Math.floor(Math.random() * Math.min(groupSpacing, 5)),
-                    validPlatforms.length - 1
-                );
-                const platform = validPlatforms[platformIdx];
+        for (let i = 0; i < enemyCount; i++) {
+            // Distribuisci uniformemente ma con variazione casuale
+            const baseIdx = Math.floor(i * platformsPerEnemy);
+            const variation = Math.floor(Math.random() * Math.min(platformsPerEnemy, 3));
+            const platformIdx = Math.min(baseIdx + variation, validPlatforms.length - 1);
+            const platform = validPlatforms[platformIdx];
 
-                // Scegli tipo nemico con varietà
-                let enemyPool = availableEnemies;
-                const rand = Math.random();
+            // Selezione INTELLIGENTE del tipo nemico basata su posizione e contesto
+            let enemyPool = availableEnemies;
+            const rand = Math.random();
+            const isHighPlatform = platform.y < 300;
+            const isLowPlatform = platform.y > 500;
 
-                if (rand < 0.4 && groundEnemies.length > 0) {
-                    enemyPool = groundEnemies;
-                } else if (rand < 0.6 && flyingEnemies.length > 0) {
-                    enemyPool = flyingEnemies;
-                } else if (rand < 0.75 && chaserEnemies.length > 0) {
-                    enemyPool = chaserEnemies;
-                } else if (specialEnemies.length > 0) {
-                    enemyPool = specialEnemies;
-                }
-
-                const randomEnemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
-
-                enemies.push(new Enemy(
-                    randomEnemy.id,
-                    platform.getCenterX(),
-                    platform.y - 30,
-                    platform.index
-                ));
-
-                count++;
+            // Flying enemies preferiti in alto
+            if (isHighPlatform && flyingEnemies.length > 0 && rand < 0.5) {
+                enemyPool = flyingEnemies;
             }
+            // Ground enemies in basso
+            else if (isLowPlatform && groundEnemies.length > 0 && rand < 0.4) {
+                enemyPool = groundEnemies;
+            }
+            // Chasers sparsi
+            else if (rand < 0.25 && chaserEnemies.length > 0) {
+                enemyPool = chaserEnemies;
+            }
+            // Shooters per varietà
+            else if (rand < 0.35 && shooterEnemies.length > 0) {
+                enemyPool = shooterEnemies;
+            }
+            // Jumpers per dinamismo
+            else if (rand < 0.45 && jumperEnemies.length > 0) {
+                enemyPool = jumperEnemies;
+            }
+
+            const randomEnemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
+
+            // Variazione verticale per flying enemies
+            let yOffset = -30;
+            if (randomEnemy.category === 'flying') {
+                yOffset = -50 - Math.random() * 80; // Volano più in alto
+            }
+
+            enemies.push(new Enemy(
+                randomEnemy.id,
+                platform.getCenterX() + (Math.random() - 0.5) * 40, // Variazione orizzontale
+                platform.y + yOffset,
+                platform.index
+            ));
+
+            count++;
         }
 
         return enemies;
@@ -796,6 +810,18 @@ export class LevelGenerator {
 
         // Imposta par time
         level.parTime = config.parTime;
+
+        // NUOVO: Imposta fineLivello in base alla difficoltà
+        // Tutorial: 2500px, Easy: 3000px, Normal: 4000px, Hard: 5000px, Expert: 6000px, Master: 7000px
+        const fineLivelloPerTier = {
+            TUTORIAL: 2500,
+            EASY: 3000,
+            NORMAL: 4000,
+            HARD: 5000,
+            EXPERT: 6000,
+            MASTER: 7000
+        };
+        level.fineLivello = fineLivelloPerTier[tier] || 3000;
 
         // Imposta star requirements basati su parTime
         level.starRequirements = {

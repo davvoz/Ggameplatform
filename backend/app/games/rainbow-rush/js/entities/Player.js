@@ -230,10 +230,7 @@ export class Player {
             const oldVelocity = this.velocityY;
             this.velocityY *= modifier;
             
-            console.log(`${emoji} ${jumpType} JUMP! Duration: ${pressDuration.toFixed(0)}ms → Modifier: ${(modifier * 100).toFixed(0)}% → Velocity: ${oldVelocity.toFixed(1)} → ${this.velocityY.toFixed(1)}`);
-        } else {
-            console.log(`❌ releaseJump called but velocityY = ${this.velocityY.toFixed(1)} (not jumping up)`);
-        }
+        } 
     }
 
     update(deltaTime) {
@@ -310,7 +307,6 @@ export class Player {
                 this.turboTimeRemaining = 0;
                 // Inizia il cooldown SOLO quando il turbo finisce
                 this.turboCooldownRemaining = this.turboCooldownDuration;
-                console.log(`⏱️ Turbo finito! Cooldown di ${this.turboCooldownDuration}s iniziato`);
             }
             
             // Genera particelle turbo trail
@@ -329,7 +325,6 @@ export class Player {
             this.turboCooldownRemaining -= deltaTime;
             if (this.turboCooldownRemaining < 0) {
                 this.turboCooldownRemaining = 0;
-                console.log(`✅ Cooldown turbo completato! Turbo pronto`);
             }
         }
         
@@ -473,7 +468,6 @@ export class Player {
             const elapsed = Date.now() - this.shieldStartTime;
             if (elapsed >= this.shieldDuration) {
                 this.hasShield = false;
-                console.log('🛡️ Shield expired');
             }
         }
         
@@ -482,7 +476,6 @@ export class Player {
             const elapsed = Date.now() - this.magnetStartTime;
             if (elapsed >= this.magnetDuration) {
                 this.hasMagnet = false;
-                console.log('🧲 Magnet expired');
             }
         }
         
@@ -634,7 +627,6 @@ export class Player {
     takeDamage(amount = 1) {
         // Check if player has shield bonus
         if (this.hasShield) {
-            console.log('🛡️ Shield absorbed damage!');
             this.hasShield = false;
             // Visual feedback
             this.invulnerable = true;
@@ -1005,7 +997,6 @@ export class Player {
         // NON iniziare il cooldown qui - inizierà quando il turbo finisce
         this.expression = 'excited';
         
-        console.log(`🚀 Turbo attivato! Durata: ${this.turboInitialDuration}s, Cooldown partirà tra ${this.turboInitialDuration}s`);
         
         return true; // Successfully activated
     }

@@ -157,6 +157,22 @@ export class WebGLRenderer {
         
         this.draw(positions, colors, gl.TRIANGLES);
     }
+    
+    drawTriangle(x1, y1, x2, y2, x3, y3, color) {
+        const gl = this.gl;
+        
+        const positions = new Float32Array([
+            x1, y1,
+            x2, y2,
+            x3, y3
+        ]);
+        
+        const colors = new Float32Array([
+            ...color, ...color, ...color
+        ]);
+        
+        this.draw(positions, colors, gl.TRIANGLES);
+    }
 
     draw(positions, colors, mode) {
         const gl = this.gl;

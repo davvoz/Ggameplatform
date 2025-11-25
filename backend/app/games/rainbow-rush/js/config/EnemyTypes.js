@@ -19,9 +19,9 @@ export const EnemyTypes = {
     
     SLUG: {
         id: 'slug',
-        name: 'Lumaca',
+        name: 'Riccio Spinato',
         category: EnemyCategory.GROUND,
-        icon: '🐌',
+        icon: '🦔',
         hp: 1,
         damage: 1,
         speed: 80,
@@ -31,24 +31,24 @@ export const EnemyTypes = {
         points: 10,
         pattern: 'patrol', // Cammina avanti/indietro
         patrolDistance: 120,
-        description: 'Lumaca lenta che pattuglia la piattaforma',
+        description: 'Riccio spinato che pattuglia la piattaforma',
         unlockLevel: 1
     },
     
     SPIKE_BALL: {
         id: 'spikeball',
-        name: 'Palla Chiodata',
+        name: 'Cespuglio Spinato',
         category: EnemyCategory.GROUND,
-        icon: '🔴',
+        icon: '🌵',
         hp: 1,
         damage: 1,
         speed: 150,
         width: 25,
         height: 25,
-        color: [0.9, 0.2, 0.2, 1.0],
+        color: [0.2, 0.7, 0.2, 1.0],
         points: 15,
         pattern: 'roll', // Rotola velocemente
-        description: 'Palla chiodata che rotola pericolosamente',
+        description: 'Cespuglio spinato che rotola pericolosamente',
         unlockLevel: 3
     },
     

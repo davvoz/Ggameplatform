@@ -9,12 +9,14 @@ export class SpawnManager {
         this.levelGenerator = levelGenerator;
         this.entityManager = entityManager;
         this.dims = canvasDimensions;
+        this.levelManager = null; // Riferimento al LevelManager
 
         // Spawn timers
         this.platformTimer = 0;
         this.platformInterval = 0.75; // Spawn ancora più frequente
         this.platformCounter = 0;
         this.platformsPerLevel = 20; // Più piattaforme per livello = progressione più lenta
+        this.totalPlatformsSpawned = 0; // Track totale piattaforme generate (non resetta mai)
 
         this.powerupTimer = 0;
         this.powerupInterval = 8;
@@ -43,6 +45,13 @@ export class SpawnManager {
         this.heartRechargeBonusTimer = 0;
         this.heartRechargeBonusInterval = 35; // Ogni 35 secondi
     }
+    
+    /**
+     * Imposta il riferimento al LevelManager
+     */
+    setLevelManager(levelManager) {
+        this.levelManager = levelManager;
+    }
 
     /**
      * Update all spawn timers
@@ -56,8 +65,14 @@ export class SpawnManager {
     /**
      * Update platform spawning logic
      * OPTIMIZED: Reduced visibility check frequency
+     * STOP spawning quando raggiungiamo la fine del livello
      */
     updatePlatformSpawning(deltaTime, scoreSystem) {
+        // Verifica se abbiamo raggiunto la fine del livello
+        if (this.hasReachedLevelEnd()) {
+            return; // Stop spawning
+        }
+        
         this.platformTimer += deltaTime;
 
         // Normal spawn every interval
@@ -77,6 +92,25 @@ export class SpawnManager {
             }
         }
     }
+    
+    /**
+     * Controlla se abbiamo raggiunto la fine del livello
+     */
+    hasReachedLevelEnd() {
+        if (!this.levelManager || !this.levelManager.levelLength) return false;
+        
+        // Trova la piattaforma più a destra
+        const platforms = this.entityManager.getEntities('platforms');
+        if (platforms.length === 0) return false;
+        
+        const rightmostPlatform = platforms.reduce((max, p) => 
+            (p.x + p.width) > (max.x + max.width) ? p : max
+        , platforms[0]);
+        
+        // Se l'ultima piattaforma è oltre la fine del livello, stop spawning
+        return (rightmostPlatform.x + rightmostPlatform.width) >= this.levelManager.levelLength;
+    }
+
 
     /**
      * Update powerup spawning
@@ -177,11 +211,13 @@ export class SpawnManager {
         const platform = this.levelGenerator.generatePlatform();
         this.entityManager.addEntity('platforms', platform);
         this.platformCounter++;
+        this.totalPlatformsSpawned++; // Incrementa anche il contatore totale
 
         // Level up based on platform count
         if (this.platformCounter >= this.platformsPerLevel) {
             scoreSystem.levelUp();
-            this.platformCounter = 0;
+            this.platformCounter = 0; // Reset solo il counter per il livello corrente
+            // totalPlatformsSpawned continua a crescere!
         }
 
         // Maybe spawn obstacle (but not on bouncy platforms)
@@ -519,6 +555,7 @@ export class SpawnManager {
     reset() {
         this.platformTimer = 0;
         this.platformCounter = 0;
+        this.totalPlatformsSpawned = 0; // Reset anche il totale
         this.powerupTimer = 0;
         this.magnetTimer = 0;
         this.coinRainTimer = 0;

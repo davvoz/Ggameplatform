@@ -18,10 +18,6 @@ export class LevelManager {
         // Stato del livello
         this.levelStartTime = 0;
         this.levelElapsedTime = 0;
-        this.platformsReached = 0;
-        this.platformsReachedSet = new Set(); // Track unique platforms reached
-        this.platformsPassed = 0; // Track platforms that exited screen
-        this.platformsPassedSet = new Set(); // Track unique platforms that exited
         this.enemiesKilled = 0;
         this.coinsCollected = 0;
         this.totalCoins = 0;
@@ -29,7 +25,9 @@ export class LevelManager {
         this.damagesTaken = 0;
         this.maxCombo = 0;
         
-        // Progressione
+        // NUOVO SISTEMA: Progressione basata su DISTANZA
+        this.distanceTraveled = 0;      // Distanza percorsa dal player
+        this.levelLength = 0;            // Lunghezza totale del livello (calcolata)
         this.levelCompleted = false;
         this.levelStars = 0;
         
@@ -69,14 +67,14 @@ export class LevelManager {
         // Reset stato livello
         this.levelStartTime = Date.now();
         this.levelElapsedTime = 0;
-        this.platformsReached = 0;
-        this.platformsReachedSet = new Set(); // Reset unique platforms
-        this.platformsPassed = 0; // Reset platforms exited
-        this.platformsPassedSet = new Set(); // Reset unique platforms exited
         this.enemiesKilled = 0;
         this.coinsCollected = 0;
         this.damagesTaken = 0;
         this.maxCombo = 0;
+        
+        // Reset distanza percorsa
+        this.distanceTraveled = 0;
+        this.levelLength = 0;
         this.levelCompleted = false;
         this.levelStars = 0;
         
@@ -91,6 +89,7 @@ export class LevelManager {
      * Genera le entità del livello corrente
      */
     generateLevelEntities() {
+        console.log('Generating level entities...');
         if (!this.currentLevel) return { platforms: [], enemies: [], collectibles: [], obstacles: [], goalFlag: null };
         
         const entities = {
@@ -111,80 +110,110 @@ export class LevelManager {
             goalFlag: null
         };
         
-        // Genera piattaforme
+        // STEP 1: Genera il pattern base una volta
+        const basePlatforms = [];
+        const baseEnemies = [];
+        const baseCollectibles = [];
+        const baseObstacles = [];
+        
+        let baseMaxX = 0;
+        
         this.currentLevel.platforms.forEach((platformData, index) => {
             const platform = this.createPlatform(platformData, index);
-            entities.platforms.push(platform);
+            basePlatforms.push(platform);
+            
+            const platformEnd = platform.x + platform.width;
+            if (platformEnd > baseMaxX) baseMaxX = platformEnd;
         });
         
-        // Genera bandierina del traguardo alla fine del livello
-        if (entities.platforms.length > 0 && this.currentLevel.length) {
-            // La bandiera deve essere DOPO l'ultima piattaforma ma prima che esca dallo schermo
-            // Il livello finisce quando platformsPassed == totalPlatforms (ultima piattaforma esce a x + width < 0)
-            // Quindi mettiamo la bandiera poco prima che l'ultima piattaforma esca
-            const goalX = this.currentLevel.length + 100; // 100px DOPO la fine dell'ultima piattaforma
+        // Salva enemies, collectibles, obstacles base
+        this.currentLevel.enemies.forEach((enemyData) => {
+            baseEnemies.push(enemyData);
+        });
+        
+        this.currentLevel.collectibles.forEach((collectibleData, index) => {
+            baseCollectibles.push(this.createCollectible(collectibleData, index));
+        });
+        
+        this.currentLevel.obstacles.forEach((obstacleData, index) => {
+            baseObstacles.push(this.createObstacle(obstacleData, index));
+        });
+        
+        // STEP 2: Calcola quanti loop servono per raggiungere fineLivello
+        const targetLength = this.currentLevel.fineLivello || 3000;
+        const loopCount = Math.max(1, Math.ceil(targetLength / baseMaxX));
+        
+        console.log(`🔄 Will loop pattern ${loopCount} times to reach target ${targetLength}px (pattern length: ${baseMaxX}px)`);
+        
+        // STEP 3: Replica il pattern per raggiungere la lunghezza target
+        let currentOffset = 0;
+        
+        for (let loop = 0; loop < loopCount; loop++) {
+            basePlatforms.forEach((basePlatform) => {
+                entities.platforms.push({
+                    ...basePlatform,
+                    x: basePlatform.x + currentOffset,
+                    index: entities.platforms.length
+                });
+            });
             
-            // Trova una piattaforma vicina per la Y (usa l'ultima o la penultima)
-            const referencePlatform = entities.platforms[entities.platforms.length - 1];
+            baseEnemies.forEach((baseEnemy) => {
+                entities.enemies.push({
+                    ...baseEnemy,
+                    x: baseEnemy.x + currentOffset
+                });
+            });
             
-            entities.goalFlag = {
-                x: goalX,
-                y: referencePlatform.y - 60, // Altezza relativa alla piattaforma di riferimento
-                width: 40,
-                height: 60,
-                type: 'goalFlag',
-                velocity: -this.baseSpeed,
-                animationTime: 0,
-                reached: false
-            };
+            baseCollectibles.forEach((baseCollectible) => {
+                const collectible = {
+                    ...baseCollectible,
+                    x: baseCollectible.x + currentOffset
+                };
+                
+                if (collectible.type === 'powerup') {
+                    entities.powerups.push(collectible);
+                } else if (collectible.type === 'health') {
+                    entities.hearts.push(collectible);
+                } else if (collectible.type === 'shield') {
+                    entities.shieldBonuses.push(collectible);
+                } else if (collectible.type === 'magnet') {
+                    entities.magnetBonuses.push(collectible);
+                } else if (collectible.type === 'coinRain') {
+                    entities.coinRainBonuses.push(collectible);
+                } else if (collectible.type === 'multiplier') {
+                    entities.multiplierBonuses.push(collectible);
+                } else if (collectible.type === 'rainbow') {
+                    entities.rainbowBonuses.push(collectible);
+                } else if (collectible.type === 'flightBonus') {
+                    entities.flightBonuses.push(collectible);
+                } else if (collectible.type === 'rechargeBonus') {
+                    entities.rechargeBonuses.push(collectible);
+                } else if (collectible.type === 'heartRechargeBonus') {
+                    entities.heartRechargeBonuses.push(collectible);
+                } else {
+                    entities.collectibles.push(collectible);
+                }
+            });
+            
+            baseObstacles.forEach((baseObstacle) => {
+                entities.obstacles.push({
+                    ...baseObstacle,
+                    x: baseObstacle.x + currentOffset
+                });
+            });
+            
+            currentOffset += baseMaxX;
         }
         
-        // Genera nemici
-        this.currentLevel.enemies.forEach((enemyData, index) => {
-            const enemy = this.createEnemy(enemyData, index);
-            if (enemy) {
-                entities.enemies.push(enemy);
-            }
-        });
+        // STEP 4: La lunghezza effettiva del livello
+        // Usa fineLivello come target, non currentOffset
+        this.levelLength = targetLength;
+        this.goalSpawned = false;
         
-        // Genera collectibles (monete, powerup, bonus)
-        this.currentLevel.collectibles.forEach((collectibleData, index) => {
-            const collectible = this.createCollectible(collectibleData, index);
-            
-            // Smista in base al tipo
-            if (collectible.type === 'powerup') {
-                entities.powerups.push(collectible);
-            } else if (collectible.type === 'health') {
-                entities.hearts.push(collectible);
-            } else if (collectible.type === 'shield') {
-                entities.shieldBonuses.push(collectible);
-            } else if (collectible.type === 'magnet') {
-                entities.magnetBonuses.push(collectible);
-            } else if (collectible.type === 'coinRain') {
-                entities.coinRainBonuses.push(collectible);
-            } else if (collectible.type === 'multiplier') {
-                entities.multiplierBonuses.push(collectible);
-            } else if (collectible.type === 'rainbow') {
-                entities.rainbowBonuses.push(collectible);
-            } else if (collectible.type === 'flightBonus') {
-                entities.flightBonuses.push(collectible);
-            } else if (collectible.type === 'rechargeBonus') {
-                entities.rechargeBonuses.push(collectible);
-            } else if (collectible.type === 'heartRechargeBonus') {
-                entities.heartRechargeBonuses.push(collectible);
-            } else {
-                // Coins and other collectibles
-                entities.collectibles.push(collectible);
-            }
-        });
+        console.log(`📏 Level length set to ${this.levelLength} pixels (target from config).`);
         
-        // Genera ostacoli
-        this.currentLevel.obstacles.forEach((obstacleData, index) => {
-            const obstacle = this.createObstacle(obstacleData, index);
-            entities.obstacles.push(obstacle);
-        });
-        
-        
+        // Il goal NON viene creato qui, verrà spawned dinamicamente
+        entities.goalFlag = null;
         
         return entities;
     }
@@ -225,6 +254,15 @@ export class LevelManager {
             case 'icy':
                 color = [0.7, 0.9, 1.0, 0.9];
                 break;
+            case 'rotating':
+                color = [1.0, 0.6, 0.2, 1.0]; // Orange for rotating platforms
+                break;
+            case 'dissolving':
+                color = [baseColor[0] * 0.9, baseColor[1] * 0.8, baseColor[2] * 1.1, 0.85]; // Slightly transparent purple tint
+                break;
+            case 'bouncing':
+                color = [baseColor[0] * 1.1, baseColor[1], baseColor[2] * 1.2, 1.0]; // Blue-ish tint
+                break;
         }
         
         return {
@@ -264,16 +302,47 @@ export class LevelManager {
      * Crea un nemico
      */
     createEnemy(data, index) {
-        const enemyConfig = getEnemyConfig(data.type);
+        const enemyConfig = getEnemyConfig(data.enemyId || data.type); // Support both field names
         if (!enemyConfig) {
+            console.warn('Enemy config not found for:', data);
             return null;
+        }
+        
+        // Variazione altezza per cactus (spikeball)
+        let width = enemyConfig.width;
+        let height = enemyConfig.height;
+        let sizeCategory = 'medium'; // default
+        
+        if (enemyConfig.id === 'spikeball') {
+            const heightVariation = Math.random();
+            
+            if (heightVariation < 0.33) {
+                // Piccolo (60% dell'altezza base)
+                const scale = 0.6 + Math.random() * 0.15;
+                width = enemyConfig.width * scale;
+                height = enemyConfig.height * scale;
+                sizeCategory = 'small';
+            } else if (heightVariation < 0.66) {
+                // Medio (100% dell'altezza base con piccola variazione)
+                const scale = 0.9 + Math.random() * 0.2;
+                width = enemyConfig.width * scale;
+                height = enemyConfig.height * scale;
+                sizeCategory = 'medium';
+            } else {
+                // Grande (140% dell'altezza base)
+                const scale = 1.4 + Math.random() * 0.3;
+                width = enemyConfig.width * scale;
+                height = enemyConfig.height * scale;
+                sizeCategory = 'large';
+            }
         }
         
         return {
             x: data.x,
             y: data.y,
-            width: enemyConfig.width,
-            height: enemyConfig.height,
+            width: width,
+            height: height,
+            sizeCategory: sizeCategory,
             type: 'enemy',
             enemyType: enemyConfig.id,
             enemyConfig: enemyConfig,
@@ -554,26 +623,49 @@ export class LevelManager {
         if (!this.currentLevel || this.levelCompleted) return;
         
         this.levelElapsedTime = (Date.now() - this.levelStartTime) / 1000;
+        
+        // Distanza basata SOLO su baseSpeed costante (turbo non influenza)
+        this.distanceTraveled += this.baseSpeed * deltaTime;
+    }
+    
+    /**
+     * Controlla se è il momento di spawnare il goal
+     * @returns {Object|null} Il goal se deve essere spawned, altrimenti null
+     */
+    shouldSpawnGoal() {
+        if (!this.currentLevel || this.levelCompleted || this.goalSpawned) return null;
+        
+        // Spawna il goal quando siamo a 90% del livello
+        const spawnThreshold = this.levelLength * 0.9;
+        
+        if (this.distanceTraveled >= spawnThreshold) {
+            this.goalSpawned = true;
+            
+            // Il goal appare davanti al player
+            const playerX = 100;  // Posizione fissa del player
+            const distanceAhead = this.levelLength - this.distanceTraveled;
+            const goalX = playerX + distanceAhead;
+            
+            console.log(`🏁 Goal spawned at ${goalX}px (distance: ${this.distanceTraveled.toFixed(0)}/${this.levelLength})`);
+            
+            return {
+                x: goalX,
+                y: this.canvasHeight * 0.5,
+                width: 4000000,
+                height: 60,
+                type: 'goalFlag',
+                velocity: -this.baseSpeed,  // Si muove con le piattaforme
+                animationTime: 0,
+                reached: false
+            };
+        }
+        
+        return null;
     }
     
     /**
      * Registra eventi di gioco
      */
-    recordPlatformReached(platformIndex) {
-        // Only count each platform once
-        if (!this.platformsReachedSet.has(platformIndex)) {
-            this.platformsReachedSet.add(platformIndex);
-            this.platformsReached = this.platformsReachedSet.size;
-        }
-    }
-    
-    platformExited(platformIndex) {
-        if (!this.platformsPassedSet.has(platformIndex)) {
-            this.platformsPassedSet.add(platformIndex);
-            this.platformsPassed = this.platformsPassedSet.size;
-        } 
-    }
-    
     recordEnemyKilled() {
         this.enemiesKilled++;
     }
@@ -593,16 +685,22 @@ export class LevelManager {
     }
     
     /**
-     * Controlla se il livello è completato
-     * Il livello è completato quando tutte le piattaforme sono uscite dallo schermo
+     * Ottiene il progresso del livello (0.0 - 1.0)
      */
-    checkLevelCompletion() {
+    getProgress() {
+        if (!this.levelLength || this.levelLength === 0) return 0;
+        return Math.min(1.0, this.distanceTraveled / this.levelLength);
+    }
+    
+    /**
+     * Controlla se il livello è completato
+     * Il livello è completato quando il player raggiunge il goal
+     */
+    checkLevelCompletion(playerX) {
         if (!this.currentLevel || this.levelCompleted) return false;
         
-        const totalPlatforms = this.currentLevel.platforms.length;
-        
-        // Il livello finisce quando TUTTE le piattaforme sono uscite
-        if (this.platformsPassed >= totalPlatforms) {
+        // Il livello finisce quando la distanza percorsa raggiunge la lunghezza
+        if (this.distanceTraveled >= this.levelLength) {
             this.completeLevel();
             return true;
         }

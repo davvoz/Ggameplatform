@@ -8,6 +8,7 @@ import { CollectibleRenderer } from './CollectibleRenderer.js';
 import { ObstacleRenderer } from './ObstacleRenderer.js';
 import { SafetyPlatformRenderer } from './SafetyPlatformRenderer.js';
 import { GoalFlagRenderer } from './GoalFlagRenderer.js';
+import { EnemyRenderer } from './EnemyRenderer.js'; // NEW
 
 export class RendererFactory {
     constructor(renderer, textCtx = null) {
@@ -70,7 +71,12 @@ export class RendererFactory {
         // Obstacles
         const obstacleRenderer = new ObstacleRenderer(this.renderer);
         this.renderers.set('spike', obstacleRenderer);
-        this.renderers.set('enemy', obstacleRenderer);
+        this.renderers.set('obstacle', obstacleRenderer); // Generic obstacle
+        
+        // NEW: Enemies (need textCtx for emoji rendering)
+        const enemyRenderer = new EnemyRenderer();
+        enemyRenderer.textCtx = this.textCtx; // Set textCtx manually
+        this.renderers.set('enemy', enemyRenderer);
     }
 
     /**

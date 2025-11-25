@@ -49,6 +49,7 @@ export class RendererFactory {
         this.renderers.set('magnet', collectibleRenderer);
         this.renderers.set('magnet-bonus', collectibleRenderer);
         this.renderers.set('coinrain', collectibleRenderer);
+        this.renderers.set('coinRain', collectibleRenderer);
         this.renderers.set('coinrain-bonus', collectibleRenderer);
         this.renderers.set('shield', collectibleRenderer);
         this.renderers.set('shield-bonus', collectibleRenderer);
@@ -57,10 +58,13 @@ export class RendererFactory {
         this.renderers.set('rainbow', collectibleRenderer);
         this.renderers.set('rainbow-bonus', collectibleRenderer);
         this.renderers.set('instantflight', collectibleRenderer);
+        this.renderers.set('flightBonus', collectibleRenderer);
         this.renderers.set('flight-bonus', collectibleRenderer);
         this.renderers.set('recharge', collectibleRenderer);
+        this.renderers.set('rechargeBonus', collectibleRenderer);
         this.renderers.set('recharge-bonus', collectibleRenderer);
         this.renderers.set('heartrecharge', collectibleRenderer);
+        this.renderers.set('heartRechargeBonus', collectibleRenderer);
         this.renderers.set('heartrecharge-bonus', collectibleRenderer);
         
         // Obstacles

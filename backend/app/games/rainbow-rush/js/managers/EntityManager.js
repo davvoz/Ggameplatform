@@ -216,6 +216,48 @@ export class EntityManager {
             }
         }
 
+        // Handle dissolving platforms
+        if (platform.platformType === 'DISSOLVING' || platform.platformType === 'dissolving') {
+            if (platform.isDissolving) {
+                platform.dissolveTimer = (platform.dissolveTimer || 0) + deltaTime;
+                platform.dissolveAlpha = Math.max(0, 1.0 - (platform.dissolveTimer / platform.dissolveDuration));
+                
+                if (platform.dissolveTimer >= platform.dissolveDuration) {
+                    if (this.levelManager && platform.index !== undefined && platform.platformType !== 'safety') {
+                        this.levelManager.platformExited(platform.index);
+                    }
+                    return false; // Remove dissolved platform
+                }
+            }
+        }
+
+        // Handle bouncing platforms
+        if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
+            if (platform.isBouncing) {
+                platform.bounceSpeed = (platform.bounceSpeed || 0) + deltaTime * 8;
+                platform.bounceOffset = Math.sin(platform.bounceSpeed) * platform.bounceAmplitude;
+            } else {
+                // Decelera quando il player non è sopra
+                if (platform.bounceOffset && Math.abs(platform.bounceOffset) > 0.5) {
+                    platform.bounceOffset *= 0.95;
+                }
+            }
+        }
+
+        // Handle rotating platforms
+        if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
+            if (platform.isRotating) {
+                platform.rotationSpeed = (platform.rotationSpeed || 0) + deltaTime * 2;
+                platform.rotationAngle = (platform.rotationAngle || 0) + platform.rotationSpeed * deltaTime;
+            } else {
+                // Decelerate rotation when player not on platform
+                if (platform.rotationSpeed && platform.rotationSpeed > 0) {
+                    platform.rotationSpeed = Math.max(0, platform.rotationSpeed - deltaTime * 1.5);
+                    platform.rotationAngle = (platform.rotationAngle || 0) + platform.rotationSpeed * deltaTime;
+                }
+            }
+        }
+
         // Handle spring animation
         if (platform.platformType === 'SPRING') {
             platform.springAnimationTime += deltaTime;

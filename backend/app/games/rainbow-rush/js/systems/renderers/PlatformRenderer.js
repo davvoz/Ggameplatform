@@ -27,6 +27,12 @@ export class PlatformRenderer extends IEntityRenderer {
             baseY += (Math.random() - 0.5) * crumbleProgress * 8;
         }
         
+        // Dissolving effect - applica alpha
+        if (platform.isDissolving && platform.dissolveAlpha !== undefined) {
+            renderColor = [...renderColor];
+            renderColor[3] = platform.dissolveAlpha;
+        }
+        
         // Combo color boost
         const comboBoost = Math.min(currentCombo / 50, 1.0);
         if (comboBoost > 0) {
@@ -99,6 +105,18 @@ export class PlatformRenderer extends IEntityRenderer {
                 break;
             case PlatformTypes.SPRING:
                 this.renderSpringEffect(platform, x, y, time);
+                break;
+            case PlatformTypes.DISSOLVING:
+            case 'dissolving':
+                this.renderDissolvingEffect(platform, x, y, time);
+                break;
+            case PlatformTypes.BOUNCING:
+            case 'bouncing':
+                this.renderBouncingEffect(platform, x, y, time);
+                break;
+            case PlatformTypes.ROTATING:
+            case 'rotating':
+                this.renderRotatingEffect(platform, x, y, time);
                 break;
             case 'RESCUE':
                 this.renderRescueEffect(platform, x, y, time);
@@ -349,4 +367,122 @@ export class PlatformRenderer extends IEntityRenderer {
         // Clean up dead particles
         platform.particleTrail = platform.particleTrail.filter(p => p.life > 0);
     }
+    
+    renderDissolvingEffect(platform, x, y, time) {
+        // Effetto particelle che cadono e dissolvenza
+        if (platform.isDissolving) {
+            const dissolveProgress = platform.dissolveTimer / platform.dissolveDuration;
+            
+            // Particelle che cadono dal bordo
+            for (let i = 0; i < 8; i++) {
+                const particleX = x + (platform.width / 8) * i + Math.random() * 10;
+                const particleY = y + platform.height + dissolveProgress * 40;
+                const particleSize = 2 + Math.random() * 2;
+                const alpha = (1 - dissolveProgress) * 0.8;
+                this.renderer.drawCircle(particleX, particleY, particleSize, [1.0, 0.8, 0.3, alpha]);
+            }
+            
+            // Bordo che pulsa
+            const pulse = Math.sin(time * 15 + dissolveProgress * 10) * 0.5 + 0.5;
+            this.renderer.drawRect(x, y, platform.width, 2, [1.0, 0.5, 0.0, pulse * (1 - dissolveProgress)]);
+            this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1.0, 0.5, 0.0, pulse * (1 - dissolveProgress)]);
+        } else {
+            // Animazione idle - bordo dorato pulsante
+            const pulse = Math.sin(time * 4) * 0.3 + 0.6;
+            this.renderer.drawRect(x, y, platform.width, 2, [1.0, 0.8, 0.2, pulse]);
+            this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1.0, 0.8, 0.2, pulse]);
+            
+            // Sparkle effect
+            const sparklePhase = (time * 3) % 1;
+            if (sparklePhase < 0.3) {
+                const sparkleX = x + Math.random() * platform.width;
+                const sparkleY = y + Math.random() * platform.height;
+                this.renderer.drawCircle(sparkleX, sparkleY, 2, [1.0, 1.0, 0.8, sparklePhase * 3]);
+            }
+        }
+    }
+    
+    renderBouncingEffect(platform, x, y, time) {
+        // Effetto piattaforma che rimbalza
+        const bounceOffset = platform.bounceOffset || 0;
+        const isBouncing = platform.isBouncing;
+        
+        if (isBouncing) {
+            // Onde concentriche quando rimbalza
+            const numWaves = 3;
+            for (let i = 0; i < numWaves; i++) {
+                const wavePhase = (time * 4 + i * 0.3) % 1;
+                const waveY = y + platform.height + wavePhase * 25;
+                const waveAlpha = (1 - wavePhase) * 0.6;
+                this.renderer.drawRect(x - 5, waveY, platform.width + 10, 2, [0.5, 0.3, 1.0, waveAlpha]);
+            }
+            
+            // Linee di movimento verticale
+            for (let i = 0; i < 4; i++) {
+                const lineX = x + (platform.width / 4) * i + platform.width / 8;
+                const lineOffset = Math.sin(time * 8 + i) * 5;
+                const lineAlpha = 0.4 + Math.sin(time * 6 + i) * 0.3;
+                this.renderer.drawRect(lineX, y + lineOffset, 2, platform.height - Math.abs(lineOffset * 2), [0.6, 0.4, 1.0, lineAlpha]);
+            }
+        } else {
+            // Idle: bordo viola pulsante
+            const pulse = Math.sin(time * 3) * 0.3 + 0.5;
+            this.renderer.drawRect(x, y, platform.width, 2, [0.5, 0.3, 1.0, pulse]);
+            this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [0.5, 0.3, 1.0, pulse]);
+        }
+        
+        // Indicatori di rimbalzo ai lati
+        const indicatorSize = 4;
+        const indicatorPulse = Math.sin(time * 5) * 0.4 + 0.6;
+        this.renderer.drawCircle(x + indicatorSize, y + platform.height / 2, indicatorSize, [0.7, 0.5, 1.0, indicatorPulse]);
+        this.renderer.drawCircle(x + platform.width - indicatorSize, y + platform.height / 2, indicatorSize, [0.7, 0.5, 1.0, indicatorPulse]);
+    }
+    
+    renderRotatingEffect(platform, x, y, time) {
+        // Effetto rotazione visibile
+        const rotationAngle = platform.rotationAngle || 0;
+        const isRotating = platform.isRotating;
+        
+        // Indicatori di rotazione ai lati
+        const centerX = x + platform.width / 2;
+        const centerY = y + platform.height / 2;
+        
+        if (isRotating) {
+            // Cerchi rotanti quando in movimento
+            const numCircles = 6;
+            for (let i = 0; i < numCircles; i++) {
+                const angle = rotationAngle + (i / numCircles) * Math.PI * 2;
+                const radius = platform.width / 2.5;
+                const circleX = centerX + Math.cos(angle) * radius;
+                const circleY = centerY + Math.sin(angle) * (platform.height / 2);
+                const alpha = 0.6 + Math.sin(time * 10 + i) * 0.3;
+                this.renderer.drawCircle(circleX, circleY, 3, [1.0, 0.5, 0.0, alpha]);
+            }
+            
+            // Linee di movimento
+            for (let i = 0; i < 3; i++) {
+                const linePhase = (time * 4 + i * 0.3) % 1;
+                const lineX = x + linePhase * platform.width;
+                const lineAlpha = Math.sin(linePhase * Math.PI) * 0.7;
+                this.renderer.drawRect(lineX, y, 2, platform.height, [1.0, 0.6, 0.2, lineAlpha]);
+            }
+        } else {
+            // Idle: bordo arancione pulsante
+            const pulse = Math.sin(time * 3) * 0.3 + 0.5;
+            this.renderer.drawRect(x, y, platform.width, 2, [1.0, 0.5, 0.0, pulse]);
+            this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1.0, 0.5, 0.0, pulse]);
+            
+            // Frecce circolari statiche che indicano la rotazione
+            const arrowSize = 4;
+            const arrowX1 = x + arrowSize;
+            const arrowX2 = x + platform.width - arrowSize;
+            const arrowY = centerY;
+            
+            // Freccia sinistra (ruota senso antiorario)
+            this.renderer.drawCircle(arrowX1, arrowY, arrowSize, [1.0, 0.6, 0.2, pulse]);
+            // Freccia destra (ruota senso orario)
+            this.renderer.drawCircle(arrowX2, arrowY, arrowSize, [1.0, 0.6, 0.2, pulse]);
+        }
+    }
 }
+

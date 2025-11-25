@@ -738,8 +738,10 @@ export class Player {
         const onPlatform = (crossedPlatform || nearPlatform) && horizontalOverlap;
 
         if (onPlatform) {
-            // Snap precisely to platform top
-            this.y = platformTop - this.height;
+            // Snap precisely to platform top (con offset se bouncing)
+            const yOffset = (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') 
+                ? (platform.bounceOffset || 0) : 0;
+            this.y = platformTop - this.height + yOffset;
             
             // Apply bounce multiplier for bouncy platforms
             if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {
@@ -755,6 +757,26 @@ export class Player {
             
             this.isGrounded = true;
             this.currentPlatform = platform;
+            
+            // Handle BOUNCING platform - inizia a oscillare quando il player ci sale
+            if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
+                platform.isBouncing = true;
+            }
+            
+            // Handle DISSOLVING platform - inizia a dissolversi quando il player ci sale
+            if (platform.platformType === 'DISSOLVING' || platform.platformType === 'dissolving') {
+                if (!platform.isDissolving) {
+                    platform.isDissolving = true;
+                    platform.dissolveTimer = 0;
+                    platform.dissolveDuration = 0.8; // Tempo di dissoluzione (secondi)
+                    platform.dissolveAlpha = 1.0;
+                }
+            }
+            
+            // Handle ROTATING platform - inizia a ruotare quando il player ci sale
+            if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
+                platform.isRotating = true;
+            }
             
             // Handle icy platform
             if (platform.platformType === 'icy') {
@@ -778,6 +800,16 @@ export class Player {
             if (this.currentPlatform === platform) {
                 this.currentPlatform = null;
                 this.isOnIcyPlatform = false;
+                
+                // Stop bouncing when player leaves
+                if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
+                    platform.isBouncing = false;
+                }
+                
+                // Stop rotating when player leaves
+                if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
+                    platform.isRotating = false;
+                }
             }
         }
 

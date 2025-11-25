@@ -253,6 +253,12 @@ export class LevelOrchestrator {
         entities.hearts.forEach(h => this.entityManager.addEntity('hearts', h));
         entities.shieldBonuses.forEach(s => this.entityManager.addEntity('shieldBonuses', s));
         entities.magnetBonuses.forEach(m => this.entityManager.addEntity('magnetBonuses', m));
+        entities.coinRainBonuses.forEach(c => this.entityManager.addEntity('coinRainBonuses', c));
+        entities.multiplierBonuses.forEach(m => this.entityManager.addEntity('multiplierBonuses', m));
+        entities.rainbowBonuses.forEach(r => this.entityManager.addEntity('rainbowBonuses', r));
+        entities.flightBonuses.forEach(f => this.entityManager.addEntity('flightBonuses', f));
+        entities.rechargeBonuses.forEach(r => this.entityManager.addEntity('rechargeBonuses', r));
+        entities.heartRechargeBonuses.forEach(h => this.entityManager.addEntity('heartRechargeBonuses', h));
         entities.obstacles.forEach(o => this.entityManager.addEntity('obstacles', o));
         
         // Add goal flag as special entity

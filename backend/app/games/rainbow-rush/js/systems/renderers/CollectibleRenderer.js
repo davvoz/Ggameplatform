@@ -29,6 +29,7 @@ export class CollectibleRenderer extends IEntityRenderer {
                 this.renderMagnetBonus(entity, time);
                 break;
             case 'coinrain':
+            case 'coinRain':
                 this.renderCoinRainBonus(entity, time);
                 break;
             case 'shield':
@@ -41,12 +42,15 @@ export class CollectibleRenderer extends IEntityRenderer {
                 this.renderRainbowBonus(entity, time);
                 break;
             case 'instantflight':
+            case 'flightBonus':
                 this.renderFlightBonus(entity, time);
                 break;
             case 'recharge':
+            case 'rechargeBonus':
                 this.renderRechargeBonus(entity, time);
                 break;
             case 'heartrecharge':
+            case 'heartRechargeBonus':
                 this.renderHeartRechargeBonus(entity, time);
                 break;
             case 'powerup':

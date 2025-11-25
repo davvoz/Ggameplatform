@@ -101,6 +101,12 @@ export class LevelManager {
             hearts: [],
             shieldBonuses: [],
             magnetBonuses: [],
+            coinRainBonuses: [],
+            multiplierBonuses: [],
+            rainbowBonuses: [],
+            flightBonuses: [],
+            rechargeBonuses: [],
+            heartRechargeBonuses: [],
             obstacles: [],
             goalFlag: null
         };
@@ -151,6 +157,18 @@ export class LevelManager {
                 entities.shieldBonuses.push(collectible);
             } else if (collectible.type === 'magnet') {
                 entities.magnetBonuses.push(collectible);
+            } else if (collectible.type === 'coinRain') {
+                entities.coinRainBonuses.push(collectible);
+            } else if (collectible.type === 'multiplier') {
+                entities.multiplierBonuses.push(collectible);
+            } else if (collectible.type === 'rainbow') {
+                entities.rainbowBonuses.push(collectible);
+            } else if (collectible.type === 'flightBonus') {
+                entities.flightBonuses.push(collectible);
+            } else if (collectible.type === 'rechargeBonus') {
+                entities.rechargeBonuses.push(collectible);
+            } else if (collectible.type === 'heartRechargeBonus') {
+                entities.heartRechargeBonuses.push(collectible);
             } else {
                 // Coins and other collectibles
                 entities.collectibles.push(collectible);
@@ -223,6 +241,18 @@ export class LevelManager {
             springCompression: 0,
             springAnimationTime: 0,
             icyShimmer: 0,
+            // Nuove proprietà per i nuovi tipi di piattaforma
+            isDissolving: false,
+            dissolveTimer: 0,
+            dissolveDuration: 0.8,
+            dissolveAlpha: 1.0,
+            isRotating: false,
+            rotationAngle: 0,
+            rotationSpeed: 0,
+            isBouncing: false,
+            bounceOffset: 0,
+            bounceSpeed: 0,
+            bounceAmplitude: 30,
             index: index
         };
     }
@@ -334,6 +364,100 @@ export class LevelManager {
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 rotation: 0,
+                index: index
+            };
+        } else if (data.type === 'coinRain') {
+            // Coin Rain bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 20,
+                type: 'coinRain',
+                value: data.value || 1,
+                color: [1.0, 0.84, 0.0, 1.0], // Gold
+                glowColor: [1.0, 0.95, 0.5, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                coinOrbitPhase: 0,
+                sparklePhase: 0,
+                index: index
+            };
+        } else if (data.type === 'multiplier') {
+            // Multiplier bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 20,
+                type: 'multiplier',
+                multiplier: data.multiplier || 2,
+                duration: data.duration || 15000,
+                color: [1.0, 0.9, 0.3, 1.0], // Yellow-gold
+                glowColor: [1.0, 0.95, 0.6, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                rotation: 0,
+                index: index
+            };
+        } else if (data.type === 'rainbow') {
+            // Rainbow bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 22,
+                type: 'rainbow',
+                value: data.value || 1,
+                color: [1.0, 1.0, 1.0, 1.0], // White (changes in renderer)
+                glowColor: [1.0, 0.5, 1.0, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                rainbowPhase: 0,
+                index: index
+            };
+        } else if (data.type === 'flightBonus') {
+            // Flight bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 20,
+                type: 'flightBonus',
+                duration: data.duration || 8000,
+                color: [0.4, 0.8, 1.0, 1.0], // Sky blue
+                glowColor: [0.6, 0.9, 1.0, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                wingPhase: 0,
+                index: index
+            };
+        } else if (data.type === 'rechargeBonus') {
+            // Recharge bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 20,
+                type: 'rechargeBonus',
+                rechargeAmount: data.rechargeAmount || 50,
+                color: [0.3, 1.0, 0.4, 1.0], // Electric green
+                glowColor: [0.5, 1.0, 0.6, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                energyPhase: 0,
+                orbitPhase: 0,
+                index: index
+            };
+        } else if (data.type === 'heartRechargeBonus') {
+            // Heart Recharge bonus
+            return {
+                x: data.x,
+                y: data.y,
+                radius: 22,
+                type: 'heartRechargeBonus',
+                hearts: data.hearts || 1,
+                color: [1.0, 0.2, 0.5, 1.0], // Pink-red
+                glowColor: [1.0, 0.4, 0.7, 1.0],
+                velocity: -this.baseSpeed,
+                pulsePhase: Math.random() * Math.PI * 2,
+                heartPhase: 0,
+                glowPhase: 0,
                 index: index
             };
         } else if (data.type === 'bonus') {

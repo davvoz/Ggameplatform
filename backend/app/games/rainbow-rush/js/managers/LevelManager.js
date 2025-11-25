@@ -10,11 +10,11 @@ export class LevelManager {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        
+
         // Livello corrente - inizializzato a null fino a quando l'utente sceglie
         this.currentLevelId = null;
         this.currentLevel = null;
-        
+
         // Stato del livello
         this.levelStartTime = 0;
         this.levelElapsedTime = 0;
@@ -24,20 +24,20 @@ export class LevelManager {
         this.totalEnemies = 0;
         this.damagesTaken = 0;
         this.maxCombo = 0;
-        
+
         // NUOVO SISTEMA: Progressione basata su DISTANZA
         this.distanceTraveled = 0;      // Distanza percorsa dal player
         this.levelLength = 0;            // Lunghezza totale del livello (calcolata)
         this.levelCompleted = false;
         this.levelStars = 0;
-        
+
         // Colori arcobaleno per piattaforme
         this.rainbowColors = this.generateRainbowColors();
-        
+
         // Velocità base dello scorrimento
         this.baseSpeed = 180;
     }
-    
+
     generateRainbowColors() {
         return [
             [1.0, 0.2, 0.2, 1.0],  // Red
@@ -49,21 +49,21 @@ export class LevelManager {
             [1.0, 0.2, 0.8, 1.0]   // Pink
         ];
     }
-    
+
     /**
      * Carica un livello specifico
      */
     loadLevel(levelId) {
         this.currentLevelId = levelId;
         this.currentLevel = getLevel(levelId);
-        
+
         if (!this.currentLevel) {
             console.error(`Level ${levelId} not found!`);
             return null;
         }
-        
+
         console.log(`🎮 Loading Level ${levelId}: ${this.currentLevel.name}`);
-        
+
         // Reset stato livello
         this.levelStartTime = Date.now();
         this.levelElapsedTime = 0;
@@ -71,27 +71,27 @@ export class LevelManager {
         this.coinsCollected = 0;
         this.damagesTaken = 0;
         this.maxCombo = 0;
-        
+
         // Reset distanza percorsa
         this.distanceTraveled = 0;
         this.levelLength = 0;
         this.levelCompleted = false;
         this.levelStars = 0;
-        
+
         // Conta totali
         this.totalCoins = this.currentLevel.collectibles.filter(c => c.type === 'coin').length;
         this.totalEnemies = this.currentLevel.enemies.length;
-        
+
         return this.currentLevel;
     }
-    
+
     /**
      * Genera le entità del livello corrente
      */
     generateLevelEntities() {
         console.log('Generating level entities...');
         if (!this.currentLevel) return { platforms: [], enemies: [], collectibles: [], obstacles: [], goalFlag: null };
-        
+
         const entities = {
             platforms: [],
             enemies: [],
@@ -109,45 +109,45 @@ export class LevelManager {
             obstacles: [],
             goalFlag: null
         };
-        
+
         // STEP 1: Genera il pattern base una volta
         const basePlatforms = [];
         const baseEnemies = [];
         const baseCollectibles = [];
         const baseObstacles = [];
-        
+
         let baseMaxX = 0;
-        
+
         this.currentLevel.platforms.forEach((platformData, index) => {
             const platform = this.createPlatform(platformData, index);
             basePlatforms.push(platform);
-            
+
             const platformEnd = platform.x + platform.width;
             if (platformEnd > baseMaxX) baseMaxX = platformEnd;
         });
-        
+
         // Salva enemies, collectibles, obstacles base
         this.currentLevel.enemies.forEach((enemyData) => {
             baseEnemies.push(enemyData);
         });
-        
+
         this.currentLevel.collectibles.forEach((collectibleData, index) => {
             baseCollectibles.push(this.createCollectible(collectibleData, index));
         });
-        
+
         this.currentLevel.obstacles.forEach((obstacleData, index) => {
             baseObstacles.push(this.createObstacle(obstacleData, index));
         });
-        
+
         // STEP 2: Calcola quanti loop servono per raggiungere fineLivello
         const targetLength = this.currentLevel.fineLivello || 3000;
         const loopCount = Math.max(1, Math.ceil(targetLength / baseMaxX));
-        
+
         console.log(`🔄 Will loop pattern ${loopCount} times to reach target ${targetLength}px (pattern length: ${baseMaxX}px)`);
-        
+
         // STEP 3: Replica il pattern per raggiungere la lunghezza target
         let currentOffset = 0;
-        
+
         for (let loop = 0; loop < loopCount; loop++) {
             basePlatforms.forEach((basePlatform) => {
                 entities.platforms.push({
@@ -156,20 +156,20 @@ export class LevelManager {
                     index: entities.platforms.length
                 });
             });
-            
+
             baseEnemies.forEach((baseEnemy) => {
                 entities.enemies.push({
                     ...baseEnemy,
                     x: baseEnemy.x + currentOffset
                 });
             });
-            
+
             baseCollectibles.forEach((baseCollectible) => {
                 const collectible = {
                     ...baseCollectible,
                     x: baseCollectible.x + currentOffset
                 };
-                
+
                 if (collectible.type === 'powerup') {
                     entities.powerups.push(collectible);
                 } else if (collectible.type === 'health') {
@@ -194,43 +194,43 @@ export class LevelManager {
                     entities.collectibles.push(collectible);
                 }
             });
-            
+
             baseObstacles.forEach((baseObstacle) => {
                 entities.obstacles.push({
                     ...baseObstacle,
                     x: baseObstacle.x + currentOffset
                 });
             });
-            
+
             currentOffset += baseMaxX;
         }
-        
+
         // STEP 4: La lunghezza effettiva del livello
         // Usa fineLivello come target, non currentOffset
         this.levelLength = targetLength;
         this.goalSpawned = false;
-        
+
         console.log(`📏 Level length set to ${this.levelLength} pixels (target from config).`);
-        
+
         // Il goal NON viene creato qui, verrà spawned dinamicamente
         entities.goalFlag = null;
-        
+
         return entities;
     }
-    
+
     /**
      * Crea una piattaforma
      */
     createPlatform(data, index) {
         const colorIndex = index % this.rainbowColors.length;
         const baseColor = this.rainbowColors[colorIndex];
-        
+
         // Determina tipo piattaforma
         let platformType = data.type || 'normal';
         let velocity = -this.baseSpeed;
         let color = baseColor;
         let bounceMultiplier = 1.0;
-        
+
         switch (platformType) {
             case 'fast':
                 velocity = -this.baseSpeed * 1.6;
@@ -264,7 +264,7 @@ export class LevelManager {
                 color = [baseColor[0] * 1.1, baseColor[1], baseColor[2] * 1.2, 1.0]; // Blue-ish tint
                 break;
         }
-        
+
         return {
             x: data.x,
             y: data.y,
@@ -297,7 +297,7 @@ export class LevelManager {
             index: index
         };
     }
-    
+
     /**
      * Crea un nemico
      */
@@ -307,15 +307,15 @@ export class LevelManager {
             console.warn('Enemy config not found for:', data);
             return null;
         }
-        
+
         // Variazione altezza per cactus (spikeball)
         let width = enemyConfig.width;
         let height = enemyConfig.height;
         let sizeCategory = 'medium'; // default
-        
+
         if (enemyConfig.id === 'spikeball') {
             const heightVariation = Math.random();
-            
+
             if (heightVariation < 0.33) {
                 // Piccolo (60% dell'altezza base)
                 const scale = 0.6 + Math.random() * 0.15;
@@ -336,7 +336,7 @@ export class LevelManager {
                 sizeCategory = 'large';
             }
         }
-        
+
         return {
             x: data.x,
             y: data.y,
@@ -368,7 +368,7 @@ export class LevelManager {
             index: index
         };
     }
-    
+
     /**
      * Crea un collectible
      */
@@ -565,7 +565,7 @@ export class LevelManager {
             };
         }
     }
-    
+
     /**
      * Ottieni colore per tipo di powerup
      */
@@ -581,7 +581,7 @@ export class LevelManager {
                 return [0.8, 0.8, 0.8, 1.0]; // Gray
         }
     }
-    
+
     /**
      * Ottieni colore per tipo di bonus
      */
@@ -597,7 +597,7 @@ export class LevelManager {
                 return [1.0, 1.0, 1.0, 1.0]; // White
         }
     }
-    
+
     /**
      * Crea un ostacolo
      */
@@ -615,75 +615,73 @@ export class LevelManager {
             index: index
         };
     }
-    
+
     /**
      * Aggiorna stato del livello
      */
     update(deltaTime) {
         if (!this.currentLevel || this.levelCompleted) return;
-        
+
         this.levelElapsedTime = (Date.now() - this.levelStartTime) / 1000;
-        
+
         // Distanza basata SOLO su baseSpeed costante (turbo non influenza)
         this.distanceTraveled += this.baseSpeed * deltaTime;
     }
-    
+
     /**
      * Controlla se è il momento di spawnare il goal
      * @returns {Object|null} Il goal se deve essere spawned, altrimenti null
      */
     shouldSpawnGoal() {
         if (!this.currentLevel || this.levelCompleted || this.goalSpawned) return null;
-        
+
         // Spawna il goal quando siamo a 90% del livello
         const spawnThreshold = this.levelLength * 0.9;
-        
+
         if (this.distanceTraveled >= spawnThreshold) {
             this.goalSpawned = true;
-            
-            // Il goal appare davanti al player
-            const playerX = 100;  // Posizione fissa del player
-            const distanceAhead = this.levelLength - this.distanceTraveled;
-            const goalX = playerX + distanceAhead;
-            
-            console.log(`🏁 Goal spawned at ${goalX}px (distance: ${this.distanceTraveled.toFixed(0)}/${this.levelLength})`);
-            
+
+            const canvasWidth = this.canvasWidth || 800;
+            const goalX = canvasWidth + 100; // Fuori schermo a destra
+
+            console.log(`🏁 Goal spawned OFF-SCREEN at ${goalX}px (distance: ${this.distanceTraveled.toFixed(0)}/${this.levelLength})`);
+
             return {
                 x: goalX,
                 y: this.canvasHeight * 0.5,
                 width: 4000000,
                 height: 60,
                 type: 'goalFlag',
-                velocity: -this.baseSpeed,  // Si muove con le piattaforme
+                velocity: -this.baseSpeed,  // Si muove con le piattaforme verso sinistra
                 animationTime: 0,
                 reached: false
             };
         }
-        
+
         return null;
     }
-    
+
     /**
      * Registra eventi di gioco
      */
     recordEnemyKilled() {
         this.enemiesKilled++;
     }
-    
+
     recordCoinCollected() {
         this.coinsCollected++;
     }
-    
+
     recordDamageTaken() {
         this.damagesTaken++;
     }
-    
+
     recordCombo(combo) {
         if (combo > this.maxCombo) {
             this.maxCombo = combo;
         }
     }
-    
+
     /**
      * Ottiene il progresso del livello (0.0 - 1.0)
      */
@@ -691,44 +689,44 @@ export class LevelManager {
         if (!this.levelLength || this.levelLength === 0) return 0;
         return Math.min(1.0, this.distanceTraveled / this.levelLength);
     }
-    
+
     /**
      * Controlla se il livello è completato
      * Il livello è completato quando il player raggiunge il goal
      */
     checkLevelCompletion(playerX) {
         if (!this.currentLevel || this.levelCompleted) return false;
-        
+
         // Il livello finisce quando la distanza percorsa raggiunge la lunghezza
         if (this.distanceTraveled >= this.levelLength) {
             this.completeLevel();
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Completa il livello e calcola le stelle
      */
     completeLevel() {
         if (this.levelCompleted) return;
-        
+
         this.levelCompleted = true;
         this.levelStars = this.calculateStars();
-        
+
         console.log(`🎉 LEVEL ${this.currentLevelId} COMPLETED!`);
         console.log(`⭐ Stars: ${this.levelStars}/3`);
         console.log(`⏱️ Time: ${this.levelElapsedTime.toFixed(2)}s`);
         console.log(`💀 Enemies: ${this.enemiesKilled}/${this.totalEnemies}`);
         console.log(`🪙 Coins: ${this.coinsCollected}/${this.totalCoins}`);
-        
+
         // Salva progresso
         this.saveProgress();
     }
-    
+
     /**
-     * Calcola stelle in base a performance
+     * Calcola stelle in base a performance - VERSIONE BILANCIATA
      */
     calculateStars() {
         const req = this.currentLevel.starRequirements;
@@ -738,31 +736,38 @@ export class LevelManager {
         const enemyPercent = this.totalEnemies > 0 ? this.enemiesKilled / this.totalEnemies : 1;
         const noDamage = this.damagesTaken === 0;
         
-        // 3 stelle: tempo ottimo, tutte monete, tutti nemici, nessun danno
+        console.log(`⭐ Star calculation:
+            Time: ${this.levelElapsedTime.toFixed(1)}s / ${req.threeStars.time}s
+            Coins: ${(coinPercent * 100).toFixed(0)}% (${this.coinsCollected}/${this.totalCoins})
+            Enemies: ${(enemyPercent * 100).toFixed(0)}% (${this.enemiesKilled}/${this.totalEnemies})
+            Damage: ${this.damagesTaken}
+        `);
+        
+        // 🌟🌟🌟 3 STELLE: Perfect run
         if (this.levelElapsedTime <= req.threeStars.time &&
-            coinPercent >= req.threeStars.coins &&
-            enemyPercent >= req.threeStars.enemies &&
-            (!req.threeStars.noDamage || noDamage)) {
+            coinPercent >= req.threeStars.coins &&  // 90% monete
+            enemyPercent >= req.threeStars.enemies && // 80% nemici
+            noDamage) {            // Nessun danno
             return 3;
         }
         
-        // 2 stelle: tempo buono, 80% monete, 70% nemici
+        // 🌟🌟 2 STELLE: Good run
         if (this.levelElapsedTime <= req.twoStars.time &&
-            coinPercent >= req.twoStars.coins &&
-            enemyPercent >= req.twoStars.enemies) {
+            coinPercent >= req.twoStars.coins &&  // 70% monete
+            enemyPercent >= req.twoStars.enemies) { // 60% nemici
             return 2;
         }
         
-        // 1 stella: tempo accettabile, 50% monete
+        // 🌟 1 STELLA: Completed
         if (this.levelElapsedTime <= req.oneStar.time &&
-            coinPercent >= req.oneStar.coins) {
+            coinPercent >= req.oneStar.coins) {  // 40% monete
             return 1;
         }
         
-        // Nessuna stella - ma livello completato comunque
+        // ✅ 0 STELLE: Livello completato ma performance scarsa
         return 0;
     }
-    
+
     /**
      * Salva progresso in localStorage
      */
@@ -770,7 +775,7 @@ export class LevelManager {
         try {
             const progressKey = 'rainbowRush_levelProgress';
             let progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
-            
+
             // Aggiorna progresso del livello
             if (!progress[this.currentLevelId] || progress[this.currentLevelId].stars < this.levelStars) {
                 progress[this.currentLevelId] = {
@@ -785,14 +790,14 @@ export class LevelManager {
                     progress[this.currentLevelId].bestTime = this.levelElapsedTime;
                 }
             }
-            
+
             localStorage.setItem(progressKey, JSON.stringify(progress));
             console.log('💾 Progress saved!');
         } catch (error) {
             console.warn('Failed to save progress:', error);
         }
     }
-    
+
     /**
      * Carica progresso salvato
      */
@@ -806,7 +811,7 @@ export class LevelManager {
             return {};
         }
     }
-    
+
     /**
      * Ottieni riepilogo livello completato
      */
@@ -826,7 +831,7 @@ export class LevelManager {
             nextLevelId: this.currentLevelId < getTotalLevels() ? this.currentLevelId + 1 : null
         };
     }
-    
+
     /**
      * Passa al livello successivo
      */
@@ -836,28 +841,28 @@ export class LevelManager {
         }
         return null;
     }
-    
+
     /**
      * Ricarica livello corrente
      */
     reloadLevel() {
         return this.loadLevel(this.currentLevelId);
     }
-    
+
     /**
      * Ottieni livello corrente
      */
     getCurrentLevel() {
         return this.currentLevel;
     }
-    
+
     /**
      * È l'ultimo livello?
      */
     isLastLevel() {
         return this.currentLevelId >= getTotalLevels();
     }
-    
+
     /**
      * Aggiorna dimensioni canvas
      */

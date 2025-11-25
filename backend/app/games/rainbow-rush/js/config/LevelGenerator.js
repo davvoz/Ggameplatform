@@ -488,21 +488,63 @@ class CollectibleSpawner {
     }
 
     /**
-     * Spawna monete
+     * Spawna monete - VERSIONE DETERMINISTICA
+     * Numero fisso di monete basato sul tier del livello
      */
-    static spawnCoins(platforms, config) {
+    static spawnCoins(platforms, config, levelId) {
         const collectibles = [];
-
-        for (let i = 0; i < platforms.length; i++) {
-            if (Math.random() < config.coinFrequency) {
-                const platform = platforms[i];
-                collectibles.push(new Collectible('coin', platform.getCenterX(), platform.y - 60, {
-                    value: 10
-                }));
-            }
+        
+        // 🎯 BUDGET MONETE FISSO PER TIER
+        const coinBudget = this.getCoinBudgetForLevel(levelId, config);
+        
+        if (platforms.length === 0 || coinBudget <= 0) {
+            return collectibles;
         }
-
+        
+        // Distribuisci monete uniformemente
+        const step = Math.max(1, Math.floor(platforms.length / (coinBudget + 1)));
+        
+        for (let i = 0; i < coinBudget; i++) {
+            const platformIndex = Math.min(
+                step * (i + 1),
+                platforms.length - 1
+            );
+            const platform = platforms[platformIndex];
+            
+            collectibles.push(new Collectible('coin', 
+                platform.getCenterX(), 
+                platform.y - 60, 
+                { value: 10 }
+            ));
+        }
+        
+        console.log(`💰 Level ${levelId}: ${coinBudget} coins spawned`);
         return collectibles;
+    }
+    
+    /**
+     * Calcola budget monete per livello
+     */
+    static getCoinBudgetForLevel(levelId, config) {
+        const tier = LevelGenerator.getDifficultyTier(levelId);
+        
+        // Budget base per tier
+        const budgetByTier = {
+            TUTORIAL: { min: 3, max: 5 },      // Tutorial: 3-5 monete
+            EASY: { min: 8, max: 12 },         // Easy: 8-12 monete
+            NORMAL: { min: 15, max: 20 },      // Normal: 15-20 monete
+            HARD: { min: 20, max: 30 },        // Hard: 20-30 monete
+            EXPERT: { min: 30, max: 40 },      // Expert: 30-40 monete
+            MASTER: { min: 40, max: 50 }       // Master: 40-50 monete
+        };
+        
+        const budget = budgetByTier[tier] || { min: 5, max: 10 };
+        
+        // Variazione progressiva: cresce con il livello all'interno del tier
+        const range = LevelRanges[tier];
+        const progress = (levelId - range.start) / (range.end - range.start);
+        
+        return Math.floor(budget.min + (budget.max - budget.min) * progress);
     }
     
     /**
@@ -804,8 +846,8 @@ export class LevelGenerator {
 
         health.forEach(c => level.addCollectible(c));
 
-        // Spawna monete
-        const coins = CollectibleSpawner.spawnCoins(platforms, config);
+        // Spawna monete con budget fisso
+        const coins = CollectibleSpawner.spawnCoins(platforms, config, levelId);
         coins.forEach(c => level.addCollectible(c));
 
         // Imposta par time
@@ -831,22 +873,22 @@ export class LevelGenerator {
         
         level.fineLivello = Math.floor(tierConfig.base + progressiveIncrease + randomVariation);
 
-        // Imposta star requirements basati su parTime
+        // Imposta star requirements basati su parTime - VERSIONE BILANCIATA
         level.starRequirements = {
             threeStars: {
                 time: config.parTime.threeStars,
-                coins: 1.0,
-                enemies: 1.0,
+                coins: 0.9,  // ✅ 90% monete (era 100%)
+                enemies: 0.8, // ✅ 80% nemici (era 100%)
                 noDamage: true
             },
             twoStars: {
                 time: config.parTime.twoStars,
-                coins: 0.8,
-                enemies: 0.7
+                coins: 0.7,  // ✅ 70% monete (era 80%)
+                enemies: 0.6 // ✅ 60% nemici (era 70%)
             },
             oneStar: {
                 time: config.parTime.oneStar,
-                coins: 0.5
+                coins: 0.4   // ✅ 40% monete (era 50%)
             }
         };
 

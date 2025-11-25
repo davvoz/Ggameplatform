@@ -485,10 +485,8 @@ export class LevelSummaryScreen {
         const statSpacing = 20;
         
         const stats = [
-            { icon: '⏱️', label: 'Time', value: `${this.summary.time.toFixed(1)}s`, color: '#667eea', bgColor: 'rgba(102, 126, 234, 0.1)' },
-            { icon: '🪙', label: 'Coins', value: `${this.summary.coinsCollected}/${this.summary.totalCoins}`, color: '#FFD700', bgColor: 'rgba(255, 215, 0, 0.1)' },
-            { icon: '💀', label: 'Enemies', value: `${this.summary.enemiesKilled}/${this.summary.totalEnemies}`, color: '#ff6b6b', bgColor: 'rgba(255, 107, 107, 0.1)' },
-            { icon: '💔', label: 'Damage', value: `${this.summary.damagesTaken}`, color: '#ea4335', bgColor: 'rgba(234, 67, 53, 0.1)' }
+            { icon: '⏱️', label: 'Time diocan', value: `${this.summary.time.toFixed(1)}s`, color: '#667eea', bgColor: 'rgba(102, 126, 234, 0.1)' },
+            { icon: '🪙', label: 'Coins', value: `${this.summary.coinsCollected}/${this.summary.totalCoins}`, color: '#FFD700', bgColor: 'rgba(255, 215, 0, 0.1)' }
         ];
         
         stats.forEach((stat, index) => {

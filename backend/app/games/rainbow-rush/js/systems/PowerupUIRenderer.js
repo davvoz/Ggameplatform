@@ -124,11 +124,45 @@ export class PowerupUIRenderer {
     }
     
     renderHearts(health, maxHealth) {
-        const heartSize = 20;
-        const spacing = 28;
-        // Posizione fissa allineata a sinistra (dopo level badge) - spostata più a sinistra
-        const startX = 310;
-        const y = 35;  // Allineato con l'header HUD singola riga
+        const isMobile = this.canvasWidth < 450;
+        const isVerySmall = this.canvasWidth < 380;
+        
+        // Dimensioni e spaziatura responsive - coordinate con HUDRenderer
+        let baseHeartSize, baseSpacing, startX, y;
+        
+        if (isVerySmall) {
+            // Schermo molto piccolo
+            baseHeartSize = 14;
+            baseSpacing = 18;
+            startX = 215;
+            y = 28;
+        } else if (isMobile) {
+            // Mobile standard
+            baseHeartSize = 16;
+            baseSpacing = 22;
+            startX = 250;
+            y = 32;
+        } else {
+            // Desktop
+            baseHeartSize = 20;
+            baseSpacing = 28;
+            startX = 330;
+            y = 35;
+        }
+        
+        // Calcola lo spazio disponibile e adatta dimensioni se necessario
+        const availableWidth = this.canvasWidth - startX - 10;
+        const requiredWidth = maxHealth * baseSpacing;
+        
+        // Scala verso il basso se ancora non entra
+        let heartSize = baseHeartSize;
+        let spacing = baseSpacing;
+        
+        if (requiredWidth > availableWidth) {
+            const scale = Math.max(0.5, availableWidth / requiredWidth);
+            heartSize = baseHeartSize * scale;
+            spacing = baseSpacing * scale;
+        }
         
         for (let i = 0; i < maxHealth; i++) {
             const x = startX + i * spacing;

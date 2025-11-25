@@ -408,6 +408,11 @@ export class RenderingSystem {
         this.animationRenderer.updateDimensions(width, height);
         this.uiRenderer.updateDimensions(width, height);
         
+        // Update powerup UI renderer dimensions
+        if (this.powerupUIRenderer) {
+            this.powerupUIRenderer.updateDimensions(width, height);
+        }
+        
         // Update level progress bar dimensions
         if (this.levelProgressBar) {
             this.levelProgressBar.updateDimensions(width, height);

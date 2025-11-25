@@ -9,23 +9,10 @@ export class HUDRenderer {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         
-        // Pause button configuration
-        this.pauseButtonRadius = 25;
-        this.pauseButtonX = 35;
-        this.pauseButtonY = 35;
-        
         // Animation
         this.pulseTime = 0;
         this.pauseHover = false;
         this.pausePressed = false;
-        
-        // Score/Level display configuration - TUTTI allineati a sinistra
-        this.scoreX = 110; // Dopo il bottone pause
-        this.scoreY = 35;
-        this.levelX = 240; // Dopo lo score
-        this.levelY = 35;
-        this.heartsStartX = 360; // Dopo il level, più vicino
-        this.heartsY = 35;
         
         // Animation effects
         this.scoreGlow = 0;
@@ -36,6 +23,9 @@ export class HUDRenderer {
         // Last values for change detection
         this.lastScore = 0;
         this.lastLevel = 1;
+        
+        // Layout will be calculated in updateLayout()
+        this.updateLayout(canvasWidth, canvasHeight);
     }
     
     update(deltaTime, score, level) {
@@ -157,14 +147,15 @@ export class HUDRenderer {
         const scale = 1 + pulse;
         const baseY = this.scoreY;
         
-        // Background pill/badge
+        // Background pill/badge - dimensioni responsive
         const text = score.toString();
-        ctx.font = 'bold 24px Arial';
+        const fontSize = this.scoreFontSize || 24;
+        ctx.font = `bold ${fontSize}px Arial`;
         const textWidth = ctx.measureText(text).width;
-        const paddingX = 25;
-        const paddingY = 12;
+        const paddingX = this.scorePaddingX || 25;
+        const paddingY = this.scorePaddingY || 12;
         const badgeWidth = textWidth + paddingX * 2;
-        const badgeHeight = 30 + paddingY;
+        const badgeHeight = fontSize * 1.25 + paddingY;
         const badgeX = this.scoreX - badgeWidth / 2;
         const badgeY = baseY - badgeHeight / 2;
         const borderRadius = badgeHeight / 2;
@@ -217,12 +208,13 @@ export class HUDRenderer {
         this.drawRoundedRect(ctx, badgeX + 2, badgeY + 2, badgeWidth - 4, badgeHeight - 4, borderRadius - 2);
         ctx.stroke();
         
-        // Icon
+        // Icon - responsive size
+        const iconSize = this.scoreIconSize || 20;
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 20px Arial';
+        ctx.font = `bold ${iconSize}px Arial`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('⭐', badgeX + 12, baseY);
+        ctx.fillText('⭐', badgeX + Math.max(8, paddingX * 0.4), baseY);
         
         // Score text with shadow
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -231,9 +223,9 @@ export class HUDRenderer {
         ctx.shadowOffsetY = 2;
         
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText(text, this.scoreX + 8, baseY);
+        ctx.fillText(text, this.scoreX + (iconSize * 0.4), baseY);
         
         ctx.restore();
     }
@@ -246,14 +238,15 @@ export class HUDRenderer {
         const scale = 1 + pulse;
         const baseY = this.levelY;
         
-        // Background badge
+        // Background badge - dimensioni responsive
         const text = `LV ${level}`;
-        ctx.font = 'bold 20px Arial';
+        const fontSize = this.levelFontSize || 20;
+        ctx.font = `bold ${fontSize}px Arial`;
         const textWidth = ctx.measureText(text).width;
-        const paddingX = 20;
-        const paddingY = 10;
+        const paddingX = this.levelPaddingX || 20;
+        const paddingY = this.levelPaddingY || 10;
         const badgeWidth = textWidth + paddingX * 2;
-        const badgeHeight = 26 + paddingY;
+        const badgeHeight = fontSize * 1.3 + paddingY;
         const badgeX = this.levelX - badgeWidth / 2;
         const badgeY = baseY - badgeHeight / 2;
         const borderRadius = badgeHeight / 2;
@@ -306,12 +299,13 @@ export class HUDRenderer {
         this.drawRoundedRect(ctx, badgeX + 2, badgeY + 2, badgeWidth - 4, badgeHeight - 4, borderRadius - 2);
         ctx.stroke();
         
-        // Icon
+        // Icon - responsive size
+        const iconSize = this.levelIconSize || 18;
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = `bold ${iconSize}px Arial`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🏆', badgeX + 10, baseY);
+        ctx.fillText('🏆', badgeX + Math.max(6, paddingX * 0.35), baseY);
         
         // Level text with shadow
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -320,9 +314,9 @@ export class HUDRenderer {
         ctx.shadowOffsetY = 2;
         
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 20px Arial';
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText(text, this.levelX + 8, baseY);
+        ctx.fillText(text, this.levelX + (iconSize * 0.4), baseY);
         
         ctx.restore();
     }
@@ -359,10 +353,89 @@ export class HUDRenderer {
     updateDimensions(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
-        // Posizioni fisse allineate a sinistra
-        this.scoreX = 110;
-        this.levelX = 240;
-        this.heartsStartX = 360;
+        this.updateLayout(width, height);
+    }
+    
+    /**
+     * Calcola il layout responsive per tutti gli elementi HUD
+     * Ottimizza lo spazio su mobile evitando sovrapposizioni
+     */
+    updateLayout(width, height) {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+        
+        const isMobile = width < 450;
+        const isVerySmall = width < 380;
+        
+        if (isVerySmall) {
+            // Schermo molto piccolo: layout super compatto
+            this.pauseButtonRadius = 18;
+            this.pauseButtonX = 25;
+            this.pauseButtonY = 28;
+            
+            this.scoreX = 70;
+            this.scoreY = 28;
+            this.scoreFontSize = 18;
+            this.scoreIconSize = 16;
+            this.scorePaddingX = 18;
+            this.scorePaddingY = 8;
+            
+            this.levelX = 150;
+            this.levelY = 28;
+            this.levelFontSize = 16;
+            this.levelIconSize = 14;
+            this.levelPaddingX = 15;
+            this.levelPaddingY = 7;
+            
+            this.heartsStartX = 215;
+            this.heartsY = 28;
+            
+        } else if (isMobile) {
+            // Mobile standard: layout compatto
+            this.pauseButtonRadius = 22;
+            this.pauseButtonX = 30;
+            this.pauseButtonY = 32;
+            
+            this.scoreX = 85;
+            this.scoreY = 32;
+            this.scoreFontSize = 20;
+            this.scoreIconSize = 18;
+            this.scorePaddingX = 20;
+            this.scorePaddingY = 10;
+            
+            this.levelX = 175;
+            this.levelY = 32;
+            this.levelFontSize = 18;
+            this.levelIconSize = 16;
+            this.levelPaddingX = 16;
+            this.levelPaddingY = 8;
+            
+            this.heartsStartX = 250;
+            this.heartsY = 32;
+            
+        } else {
+            // Desktop: layout normale con più spazio
+            this.pauseButtonRadius = 25;
+            this.pauseButtonX = 35;
+            this.pauseButtonY = 35;
+            
+            this.scoreX = 110;
+            this.scoreY = 35;
+            this.scoreFontSize = 24;
+            this.scoreIconSize = 20;
+            this.scorePaddingX = 25;
+            this.scorePaddingY = 12;
+            
+            this.levelX = 230;
+            this.levelY = 35;
+            this.levelFontSize = 20;
+            this.levelIconSize = 18;
+            this.levelPaddingX = 20;
+            this.levelPaddingY = 10;
+            
+            this.heartsStartX = 330;
+            this.heartsY = 35;
+        }
     }
     
     getHeartsPosition() {

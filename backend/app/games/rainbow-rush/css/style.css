@@ -437,11 +437,8 @@ body {
 .levels-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
     margin: 1rem 0;
-    padding: 0.8rem;
     background: rgba(255, 255, 255, 0.6);
-    border-radius: 20px;
     position: relative;
     z-index: 1;
     max-height: none;

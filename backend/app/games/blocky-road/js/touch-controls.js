@@ -108,7 +108,7 @@ class TouchControls {
     
     handleSwipe(direction) {
         if (!this.game.isStarted || this.game.isGameOver || this.game.isPaused) return;
-        // Removed isMoving check to allow queued movements for ultra-fast tapping
+        if (this.game.player.isMoving || this.game.inputCooldown > 0) return;
         
         let dx = 0, dz = 0;
         

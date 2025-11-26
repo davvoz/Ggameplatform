@@ -294,7 +294,10 @@ class BlockyRoadGame {
     }
     
     handleInput() {
-        // No cooldown system - process input immediately for zero lag
+        if (this.inputCooldown > 0) {
+            this.inputCooldown--;
+            return;
+        }
         
         let dx = 0, dz = 0;
         
@@ -320,7 +323,7 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            // No cooldown - instant response for zero input lag
+            this.inputCooldown = 1;  // 1 frame cooldown for reliable fast input
             
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {

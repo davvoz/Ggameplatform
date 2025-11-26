@@ -382,7 +382,7 @@ class ObstacleManager {
                 
                 const flashInterval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
-                    if (elapsed > 3000) { // 3 seconds
+                    if (elapsed > 2000) { // 2 seconds
                         clearInterval(flashInterval);
                         lightMesh.material.opacity = 0.1;
                         lightMesh.material.emissive.setHex(0x000000);

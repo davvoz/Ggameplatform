@@ -339,7 +339,10 @@ class BlockyRoadGame {
             
             // Score only when reaching new furthest position (prevent farming by going back/forward)
             if (dz > 0) {
-                const newZ = Math.floor(this.player.getPosition().z);
+                const playerPos = this.player.getPosition();
+                const newZ = Math.floor(playerPos.z);
+                console.log(`📊 Score check: newZ=${newZ}, maxZ=${this.maxZ}, will increment=${newZ > this.maxZ}`);
+                
                 if (newZ > this.maxZ) {
                     this.maxZ = newZ;
                     this.score++;

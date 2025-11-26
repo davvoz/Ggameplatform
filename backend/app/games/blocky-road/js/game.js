@@ -292,19 +292,7 @@ class BlockyRoadGame {
     }
     
     handleInput() {
-        // Process cooldown
-        if (this.inputCooldown > 0) {
-            this.inputCooldown--;
-            
-            // Queue input during cooldown for instant response
-            if (this.inputCooldown === 0 && this.queuedInput) {
-                const {dx, dz} = this.queuedInput;
-                this.queuedInput = null;
-                this.processMove(dx, dz);
-                return;
-            }
-            return;
-        }
+        // No cooldown system - process input immediately for zero lag
         
         let dx = 0, dz = 0;
         
@@ -319,12 +307,8 @@ class BlockyRoadGame {
         }
         
         if (dx !== 0 || dz !== 0) {
-            // Queue input if in cooldown, otherwise process immediately
-            if (this.inputCooldown > 0) {
-                this.queuedInput = {dx, dz};
-            } else {
-                this.processMove(dx, dz);
-            }
+            // Process immediately - no queuing needed
+            this.processMove(dx, dz);
         }
     }
     
@@ -334,7 +318,7 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            this.inputCooldown = 1;  // Ultra-fast response - 1 frame only
+            // No cooldown - instant response for zero input lag
             
             // Score tracking using gridZ - prevents farming by tracking actual grid position
             // Score is simply the furthest gridZ reached (same as Crossy Road)

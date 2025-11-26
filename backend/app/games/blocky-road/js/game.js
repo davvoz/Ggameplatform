@@ -16,7 +16,6 @@ class BlockyRoadGame {
         this.score = 0;
         this.coins = 0;
         this.highScore = 0;
-        this.maxZ = 0;  // Track furthest position reached to prevent score farming
         
         this.isGameOver = false;
         this.isPaused = false;
@@ -289,7 +288,7 @@ class BlockyRoadGame {
         this.terrain.generateInitialTerrain();
         this.player.reset(0, 0);
         
-        console.log('🔄 Game restarted');
+        console.log('🔄 Game restarted (not first game)');
     }
     
     handleInput() {
@@ -335,17 +334,14 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            this.inputCooldown = 4;  // Reduced from 10 to 4 for faster input
+            this.inputCooldown = 2;  // Very fast response for rapid tapping
             
-            // Score only when reaching new furthest position (prevent farming by going back/forward)
+            // Score tracking using gridZ - prevents farming by tracking actual grid position
+            // Score is simply the furthest gridZ reached (same as Crossy Road)
             if (dz > 0) {
-                const playerPos = this.player.getPosition();
-                const newZ = Math.floor(playerPos.z);
-                console.log(`📊 Score check: newZ=${newZ}, maxZ=${this.maxZ}, will increment=${newZ > this.maxZ}`);
-                
-                if (newZ > this.maxZ) {
-                    this.maxZ = newZ;
-                    this.score++;
+                const currentGridZ = this.player.gridZ;
+                if (currentGridZ > this.score) {
+                    this.score = currentGridZ;
                     this.updateUI();
                     
                     if (typeof PlatformSDK !== 'undefined') {
@@ -442,7 +438,7 @@ class BlockyRoadGame {
             document.getElementById('gameOver').style.display = 'block';
         }, 500);
         
-        // Send to SDK - ensure it's always called to track XP
+        // Send to SDK - grant XP every game
         if (typeof PlatformSDK !== 'undefined') {
             try {
                 PlatformSDK.gameOver(this.score, {
@@ -450,7 +446,7 @@ class BlockyRoadGame {
                     reason: reason,
                     timestamp: Date.now()
                 });
-                console.log('📡 Game over sent to SDK:', this.score);
+                console.log(`📡 Game over sent to SDK: score=${this.score}`);
             } catch (e) {
                 console.error('⚠️ Failed to send game over to SDK:', e);
             }
@@ -460,17 +456,6 @@ class BlockyRoadGame {
     updateUI() {
         document.getElementById('score').textContent = this.score;
         document.getElementById('coins').textContent = `🪙 ${this.coins}`;
-        
-        // Debug info - remove after testing
-        const currentZ = this.player ? Math.floor(this.player.getPosition().z) : 0;
-        const debugInfo = `Z: ${currentZ} | MaxZ: ${this.maxZ} | Score: ${this.score}`;
-        if (!document.getElementById('debugInfo')) {
-            const debugDiv = document.createElement('div');
-            debugDiv.id = 'debugInfo';
-            debugDiv.style.cssText = 'position:fixed;top:100px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-family:monospace;z-index:9999;font-size:14px;';
-            document.body.appendChild(debugDiv);
-        }
-        document.getElementById('debugInfo').textContent = debugInfo;
     }
     
     update(deltaTime = 16) {

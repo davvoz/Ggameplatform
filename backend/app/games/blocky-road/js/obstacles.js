@@ -562,5 +562,8 @@ class ObstacleManager {
         this.platforms = [];
         this.coins = [];
         this.spawnTimer = 0;
+        
+        // Reset coin spawn tracking for next game
+        this.furthestCoinZ = undefined;
     }
 }

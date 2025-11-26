@@ -11,18 +11,25 @@ class ObstacleManager {
         // Vehicle spawn settings
         this.spawnTimer = 0;
         this.spawnInterval = 10; // Check very frequently for continuous spawning
+        
+        // Train system - simple and clear
+        this.trainTimers = {}; // Track per rail row: {z: {nextSpawn: frameCount, warned: bool}}
+        this.frameCount = 0; // Global frame counter
     }
     
     update(playerZ) {
         this.spawnTimer++;
+        this.frameCount++; // Increment global frame counter
         
         // Spawn new vehicles on road rows
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnTimer = 0;
             this.trySpawnVehicles(playerZ);
-            this.trySpawnTrains(playerZ);
             this.trySpawnPlatforms(playerZ);
         }
+        
+        // Check trains every frame (time-based spawning)
+        this.updateTrains(playerZ);
         
         // Spawn coins
         this.trySpawnCoins(playerZ);
@@ -103,6 +110,7 @@ class ObstacleManager {
         
         // Update vehicles
         this.obstacles.forEach((obstacle, index) => {
+            const oldX = obstacle.mesh.position.x;
             obstacle.mesh.position.x += obstacle.velocity;
             
             // Rotate wheels for effect
@@ -130,33 +138,46 @@ class ObstacleManager {
                 });
             }
             
-            // Wrap around when reaching offset (Crossy Road style)
-            if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
-                obstacle.mesh.position.x = -12;
-                // Reset opacity when wrapping
-                obstacle.mesh.traverse(child => {
-                    if (child.material && child.userData.originalOpacity) {
-                        child.material.opacity = child.userData.originalOpacity;
-                    }
-                });
-            } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
-                obstacle.mesh.position.x = 12;
-                // Reset opacity when wrapping
-                obstacle.mesh.traverse(child => {
-                    if (child.material && child.userData.originalOpacity) {
-                        child.material.opacity = child.userData.originalOpacity;
-                    }
-                });
-            }
-            
-            // Remove if too far (safety)
-            if (Math.abs(obstacle.mesh.position.x) > 15) {
-                this.scene.remove(obstacle.mesh);
-                obstacle.mesh.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
-                });
-                this.obstacles.splice(index, 1);
+            // Different behavior for trains vs vehicles
+            if (obstacle.type === 'train') {
+                // Trains don't wrap - they pass through once and get removed far outside visibility
+                if (Math.abs(obstacle.mesh.position.x) > 50) {
+                    this.scene.remove(obstacle.mesh);
+                    obstacle.mesh.traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                    this.obstacles.splice(index, 1);
+                }
+            } else {
+                // Vehicles wrap around (Crossy Road style)
+                if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
+                    obstacle.mesh.position.x = -12;
+                    // Reset opacity when wrapping
+                    obstacle.mesh.traverse(child => {
+                        if (child.material && child.userData.originalOpacity) {
+                            child.material.opacity = child.userData.originalOpacity;
+                        }
+                    });
+                } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
+                    obstacle.mesh.position.x = 12;
+                    // Reset opacity when wrapping
+                    obstacle.mesh.traverse(child => {
+                        if (child.material && child.userData.originalOpacity) {
+                            child.material.opacity = child.userData.originalOpacity;
+                        }
+                    });
+                }
+                
+                // Remove vehicles if too far (safety)
+                if (Math.abs(obstacle.mesh.position.x) > 15) {
+                    this.scene.remove(obstacle.mesh);
+                    obstacle.mesh.traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                    this.obstacles.splice(index, 1);
+                }
             }
         });
         
@@ -193,23 +214,50 @@ class ObstacleManager {
         }
     }
     
-    trySpawnTrains(playerZ) {
-        // Check rail rows ahead of player
-        for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
+    updateTrains(playerZ) {
+        // Check each rail row ahead of player
+        const minZ = Math.floor(playerZ) - 5;
+        const maxZ = Math.floor(playerZ) + 25;
+        
+        for (let z = minZ; z < maxZ; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row || row.type !== 'rail') continue;
             
-            // Count existing trains on this row
-            const existingTrains = this.obstacles.filter(obs => 
-                obs.type === 'train' && Math.abs(obs.z - z) < 0.5
-            ).length;
+            // Initialize timer for this row if new
+            if (!this.trainTimers[z]) {
+                // First train spawns after 5-10 seconds
+                const initialDelay = 300 + Math.floor(Math.random() * 300); // 5-10 sec
+                this.trainTimers[z] = {
+                    nextSpawn: this.frameCount + initialDelay,
+                    warned: false,
+                    direction: Math.random() < 0.5 ? 1 : -1
+                };
+            }
             
-            // Keep spawning trains continuously (1-2 trains per row)
-            if (existingTrains < 1) {
-                this.spawnTrain(z);
+            const timer = this.trainTimers[z];
+            const framesUntilTrain = timer.nextSpawn - this.frameCount;
+            
+            // Warning 1 second before (60 frames)
+            if (!timer.warned && framesUntilTrain <= 60 && framesUntilTrain > 0) {
+                timer.warned = true;
                 if (row.warningLights) {
-                    this.flashWarningLights(row.warningLights);
+                    this.startWarningLights(row.warningLights);
                 }
+            }
+            
+            // Spawn train
+            if (framesUntilTrain <= 0 && !timer.spawned) {
+                this.spawnCompleteTrain(row, timer.direction);
+                timer.spawned = true;
+                
+                // Schedule next train (10-15 seconds)
+                const nextDelay = 600 + Math.floor(Math.random() * 300); // 10-15 sec
+                this.trainTimers[z] = {
+                    nextSpawn: this.frameCount + nextDelay,
+                    warned: false,
+                    spawned: false,
+                    direction: Math.random() < 0.5 ? 1 : -1
+                };
             }
         }
     }
@@ -282,47 +330,83 @@ class ObstacleManager {
         });
     }
     
-    spawnTrain(z) {
-        const direction = Math.random() < 0.5 ? 1 : -1;
-        const startX = direction > 0 ? -25 : 25; // Start even further
-        const speed = 0.18 * direction; // Even faster!
-        
+    spawnCompleteTrain(row, direction) {
+        const speed = 0.9 * direction; // SUPER FAST - 3x vehicles speed!
+        const startX = direction > 0 ? -35 : 35; // Spawn far outside
         const trainColor = Math.random() < 0.5 ? 0x9C27B0 : 0xE91E63;
-        const train = Models.createTrain(trainColor);
-        train.position.set(startX, 0.2, z);
+        const railZ = row.z; // Use actual row Z position!
         
-        // Face the direction of travel
-        train.rotation.y = (Math.PI / 2) * direction;
+        // Locomotive + 13 cars trailing behind (doubled length!)
+        const totalCars = 30;
+        const carSpacing = 1.5; // Tighter spacing - cars are 1.2 wide, so 0.3 gap between them
         
-        this.scene.add(train);
-        
-        this.obstacles.push({
-            mesh: train,
-            velocity: speed,
-            z: z,
-            type: 'train',
-            boundingBox: new THREE.Box3().setFromObject(train)
-        });
+        for (let i = 0; i < totalCars; i++) {
+            const isEngine = (i === 0);
+            const trainPart = isEngine ? Models.createTrain(trainColor) : Models.createTrainCar(trainColor);
+            
+            if (!trainPart) {
+                console.error(`❌ Train part ${i} is null!`);
+                continue;
+            }
+            
+            // Cars trail BEHIND the locomotive (opposite to movement direction)
+            // If moving right (+), cars are to the LEFT (negative offset)
+            // If moving left (-), cars are to the RIGHT (positive offset)
+            const xOffset = i * carSpacing * (-direction);
+            const finalX = startX + xOffset;
+            trainPart.position.set(finalX, 0.2, railZ);
+            trainPart.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+            
+            this.scene.add(trainPart);
+            
+            this.obstacles.push({
+                mesh: trainPart,
+                velocity: speed,
+                z: railZ,
+                type: 'train',
+                boundingBox: new THREE.Box3().setFromObject(trainPart)
+            });
+        }
     }
     
 
     
-    flashWarningLights(lights) {
+    startWarningLights(lights) {
+        console.log('🚨 WARNING LIGHTS ACTIVATED!');
         lights.forEach(lightGroup => {
             const lightMesh = lightGroup.children.find(c => c.userData.isWarningLight);
+            const pointLight = lightGroup.children.find(c => c.userData.isWarningPointLight);
+            
             if (lightMesh) {
-                // Flash for 3 seconds before train arrives
                 const startTime = Date.now();
+                
                 const flashInterval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
-                    if (elapsed > 3000) {
+                    if (elapsed > 3000) { // 3 seconds
                         clearInterval(flashInterval);
-                        lightMesh.material.opacity = 0.2; // Reset to dim
+                        lightMesh.material.opacity = 0.1;
+                        lightMesh.material.emissive.setHex(0x000000);
+                        lightMesh.material.emissiveIntensity = 0;
+                        if (pointLight) pointLight.intensity = 0;
                         return;
                     }
-                    // Flash bright red
-                    lightMesh.material.opacity = Math.sin(elapsed * 0.015) * 0.4 + 0.5;
-                }, 50);
+                    // Fast dramatic flash - on/off
+                    const flashCycle = Math.floor(elapsed / 150) % 2;
+                    const isOn = flashCycle === 0;
+                    if (isOn) {
+                        // ON - bright red glow
+                        lightMesh.material.opacity = 0.8;
+                        lightMesh.material.emissive.setHex(0xff0000);
+                        lightMesh.material.emissiveIntensity = 1.0;
+                        if (pointLight) pointLight.intensity = 10.0;
+                    } else {
+                        // OFF - transparent
+                        lightMesh.material.opacity = 0.1;
+                        lightMesh.material.emissive.setHex(0x000000);
+                        lightMesh.material.emissiveIntensity = 0;
+                        if (pointLight) pointLight.intensity = 0;
+                    }
+                }, 75); // Update faster for clear on/off effect
             }
         });
     }
@@ -562,6 +646,10 @@ class ObstacleManager {
         this.platforms = [];
         this.coins = [];
         this.spawnTimer = 0;
+        
+        // Reset train system
+        this.trainTimers = {};
+        this.frameCount = 0;
         
         // Reset coin spawn tracking for next game
         this.furthestCoinZ = undefined;

@@ -71,6 +71,12 @@ class BlockyRoadGame {
         // Setup touch controls
         this.touchControls = new TouchControls(this);
         
+        // Death line system (chases player from behind)
+        this.deathLineZ = -7; // Starts at minimum distance from spawn (player at 0, distance 7)
+        this.deathLineSpeed = 1.0 / 60; // 1 block per second (divided by 60fps)
+        this.deathLineMinDistance = 7; // Minimum distance behind player (safe buffer)
+        this.deathLineEnabled = false; // Enable after player moves
+        
         // Create danger zone visual indicator
         this.createDangerZone();
         
@@ -98,28 +104,22 @@ class BlockyRoadGame {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
-        this.scene.fog = new THREE.Fog(0x87CEEB, 30, 60);
         
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ 
             antialias: true,
-            alpha: false
+            alpha: false,
+            powerPreference: 'high-performance',
+            precision: 'highp'
         });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
         
         console.log('🎨 Renderer created:', window.innerWidth, 'x', window.innerHeight);
-        
-        // Add grid helper for debugging
-        const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x888888);
-        this.scene.add(gridHelper);
-        
-        // Add axes helper for debugging
-        const axesHelper = new THREE.AxesHelper(5);
-        this.scene.add(axesHelper);
     }
     
     setupLights() {
@@ -132,16 +132,18 @@ class BlockyRoadGame {
         dirLight.position.set(10, 20, 10);
         dirLight.castShadow = true;
         
-        // Shadow camera settings
-        dirLight.shadow.camera.left = -20;
-        dirLight.shadow.camera.right = 20;
-        dirLight.shadow.camera.top = 20;
-        dirLight.shadow.camera.bottom = -20;
-        dirLight.shadow.camera.near = 0.1;
-        dirLight.shadow.camera.far = 100;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.bias = -0.0001;
+        // Shadow camera settings - increased area and better bias
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 150;
+        dirLight.shadow.mapSize.width = 4096;
+        dirLight.shadow.mapSize.height = 4096;
+        dirLight.shadow.bias = -0.001;
+        dirLight.shadow.normalBias = 0.02;
+        dirLight.shadow.radius = 1;
         
         this.scene.add(dirLight);
         
@@ -151,19 +153,8 @@ class BlockyRoadGame {
     }
     
     createDangerZone() {
-        // Create a red warning plane that moves forward when player is idle
-        const geometry = new THREE.PlaneGeometry(20, 2);
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0xff0000,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.DoubleSide
-        });
-        this.dangerZonePlane = new THREE.Mesh(geometry, material);
-        this.dangerZonePlane.rotation.x = -Math.PI / 2;
-        this.dangerZonePlane.position.y = 0.01;
-        this.dangerZonePlane.visible = false; // Keep hidden for now
-        // DISABLED: this.scene.add(this.dangerZonePlane);
+        // No visual fire wall - death line is invisible
+        // Camera will follow the death line advancement instead
         
         // Create boundary shadows (left and right)
         this.createBoundaryShadows();
@@ -273,7 +264,7 @@ class BlockyRoadGame {
         // Hide game over screen
         document.getElementById('gameOver').style.display = 'none';
         
-        // Reset score
+        // Reset score (will trigger session creation in RuntimeShell)
         this.score = 0;
         this.baseScore = 0;
         this.coins = 0;
@@ -290,7 +281,16 @@ class BlockyRoadGame {
         this.terrain.generateInitialTerrain();
         this.player.reset(0, 0);
         
-        console.log('🔄 Game restarted (not first game)');
+        // Reset death line (invisible)
+        this.deathLineZ = -7; // Player spawns at 0, so death line at -7 maintains correct distance
+        this.deathLineEnabled = false;
+        
+        console.log('🔄 Game restarted');
+        
+        // Send score=0 to trigger session restart detection
+        if (typeof PlatformSDK !== 'undefined') {
+            PlatformSDK.sendScore(0);
+        }
     }
     
     handleInput() {
@@ -470,8 +470,48 @@ class BlockyRoadGame {
             this.checkCollisions();
         }
         
-        // Update camera
-        this.camera.follow(this.player.mesh.position);
+        // Enable death line when player moves forward past Z=2
+        if (!this.deathLineEnabled && playerPos.z > 2) {
+            this.deathLineEnabled = true;
+            console.log('💀 Death line activated!');
+        }
+        
+        // Update death line (chases player from behind)
+        if (this.deathLineEnabled) {
+            // Death line ALWAYS advances at 1 block per second
+            this.deathLineZ += this.deathLineSpeed;
+            
+            // Calculate distance from player
+            const distanceFromPlayer = playerPos.z - this.deathLineZ;
+            
+            // If player advanced and distance exceeds minimum, jump death line to maintain minimum distance
+            // This only happens when player moves FORWARD, not backward or sideways
+            const targetDeathLineZ = playerPos.z - this.deathLineMinDistance;
+            if (targetDeathLineZ > this.deathLineZ) {
+                // Player moved forward beyond safe distance, death line catches up
+                this.deathLineZ = targetDeathLineZ;
+            }
+            
+            // Check if death line caught the player
+            if (playerPos.z < this.deathLineZ) {
+                console.log(`💀 Death! Player Z=${playerPos.z.toFixed(2)}, Death Line Z=${this.deathLineZ.toFixed(2)}`);
+                this.gameOver('Troppo lento! Sei stato raggiunto!');
+            }
+        }
+        
+        // Update camera to follow death line advancement (Crossy Road style)
+        // Camera ALWAYS advances with death line, never stops
+        // Death line is 2 blocks behind camera center (closer to bottom edge)
+        const cameraTargetZ = this.deathLineZ + 8;
+        
+        // Create target that uses player's actual position for smooth X following
+        // but uses death-line-driven Z for constant forward pressure
+        const cameraTarget = {
+            x: playerPos.x,
+            y: playerPos.y,
+            z: cameraTargetZ
+        };
+        this.camera.follow(cameraTarget);
         
         // Update boundary shadows to follow camera
         if (this.boundaryShadows) {
@@ -485,7 +525,7 @@ class BlockyRoadGame {
         // Activate danger zone after player moves forward
         if (!this.dangerZoneActive && playerZ > 2) {
             this.dangerZoneActive = true;
-            this.dangerZone = playerZ - 12; // Start 12 units behind
+            this.dangerZone = playerZ - 10; // Start 8 units behind
         }
         
         if (!this.dangerZoneActive) {

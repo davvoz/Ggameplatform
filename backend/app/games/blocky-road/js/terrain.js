@@ -187,14 +187,16 @@ class TerrainGenerator {
         this.scene.add(track);
         row.decorations.push(track);
         
-        // Add permanent warning lights at edges
+        // Add permanent warning lights symmetrically on sides, slightly before rails
         const leftLight = Models.createTrainWarningLight();
-        leftLight.position.set(-5.8, 0.2, row.z);
+        leftLight.position.set(-6, 0, row.z - 0.6); // Left side, slightly before rails
+        leftLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(leftLight);
         row.decorations.push(leftLight);
         
         const rightLight = Models.createTrainWarningLight();
-        rightLight.position.set(5.8, 0.2, row.z);
+        rightLight.position.set(6, 0, row.z - 0.6); // Right side, slightly before rails
+        rightLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(rightLight);
         row.decorations.push(rightLight);
         

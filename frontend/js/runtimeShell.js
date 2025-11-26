@@ -77,7 +77,7 @@ export default class RuntimeShell {
         };
         
         // Session restart flag
-        this.needsNewSession = false;
+        this.needsNewSession = true; // Start true so first game creates session
         
         // Event handlers registry
         this.eventHandlers = new Map();
@@ -225,12 +225,21 @@ export default class RuntimeShell {
      */
     handleScoreUpdate(payload) {
         if (payload && typeof payload.score === 'number') {
-            // If we need a new session (after game over + restart), start one now
-            if (this.needsNewSession && !this.sessionId) {
-                this.log('🔄 Restarting session after game over...');
-                this.needsNewSession = false;
-                this.state.isGameOver = false;
-                this.startGameSession();
+            // Check if this is a restart (game was over and score=0)
+            const isRestart = this.state.isGameOver && payload.score === 0;
+            
+            if (isRestart) {
+                this.log('🎮 Game restarted detected (score=0 after game over)');
+                
+                // Create new session immediately on restart
+                if (this.needsNewSession && !this.sessionId) {
+                    this.log('✅ Creating new session for restart...');
+                    this.needsNewSession = false;
+                    this.state.isGameOver = false; // Reset flag before creating session
+                    this.startGameSession();
+                } else {
+                    this.state.isGameOver = false;
+                }
             }
             
             this.state.score = payload.score;
@@ -243,8 +252,6 @@ export default class RuntimeShell {
      * @param {Object} payload - The payload containing final score
      */
     handleGameOver(payload) {
-        this.state.isGameOver = true;
-        
         // Log the received payload for debugging
         this.log('GameOver payload received:', payload);
         this.log('Current state.score before update:', this.state.score);
@@ -257,7 +264,7 @@ export default class RuntimeShell {
         this.log('Game Over! Final score:', this.state.score);
         this.showGameOverOverlay(this.state.score);
         
-        // End game session and save score (prevent double-ending by clearing sessionId first)
+        // End game session and save score ONLY if session exists
         if (this.sessionId) {
             this.log('✅ SessionId exists, ending session...');
             const sessionToEnd = this.sessionId;
@@ -265,12 +272,18 @@ export default class RuntimeShell {
             this.sessionId = null; // Clear immediately to prevent double-ending
             this.sessionStartTime = null;
             this.endGameSessionById(sessionToEnd, this.state.score, startTime, false);
+            
+            // Mark game over AFTER ending session
+            this.state.isGameOver = true;
+            // Mark that we need a new session on next game
+            this.needsNewSession = true;
         } else {
-            this.log('❌ No sessionId found - session was not started or already ended');
+            this.log('⚠️ No sessionId - game ended before session was created');
+            // Still mark game over
+            this.state.isGameOver = true;
+            // Keep needsNewSession true (should already be true from init)
+            this.needsNewSession = true;
         }
-        
-        // Mark that we need a new session on next score update (for restart)
-        this.needsNewSession = true;
     }
     
     /**

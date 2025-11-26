@@ -76,6 +76,9 @@ export default class RuntimeShell {
             isGameOver: false
         };
         
+        // Session restart flag
+        this.needsNewSession = false;
+        
         // Event handlers registry
         this.eventHandlers = new Map();
         
@@ -222,6 +225,14 @@ export default class RuntimeShell {
      */
     handleScoreUpdate(payload) {
         if (payload && typeof payload.score === 'number') {
+            // If we need a new session (after game over + restart), start one now
+            if (this.needsNewSession && !this.sessionId) {
+                this.log('🔄 Restarting session after game over...');
+                this.needsNewSession = false;
+                this.state.isGameOver = false;
+                this.startGameSession();
+            }
+            
             this.state.score = payload.score;
             this.updateScoreDisplay(payload.score);
         }
@@ -257,6 +268,9 @@ export default class RuntimeShell {
         } else {
             this.log('❌ No sessionId found - session was not started or already ended');
         }
+        
+        // Mark that we need a new session on next score update (for restart)
+        this.needsNewSession = true;
     }
     
     /**

@@ -41,6 +41,9 @@ class TouchControls {
             const touch = e.touches[0];
             this.touchStartX = touch.clientX;
             this.touchStartY = touch.clientY;
+            // Initialize touchEnd to same position to prevent false swipe detection
+            this.touchEndX = touch.clientX;
+            this.touchEndY = touch.clientY;
             this.isTouching = true;
             
             // Start game on first touch

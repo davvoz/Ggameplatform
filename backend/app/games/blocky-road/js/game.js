@@ -14,6 +14,7 @@ class BlockyRoadGame {
         this.audio = null;
         
         this.score = 0;
+        this.baseScore = 0;  // Track max gridZ separately from total score
         this.coins = 0;
         this.highScore = 0;
         
@@ -274,6 +275,7 @@ class BlockyRoadGame {
         
         // Reset score
         this.score = 0;
+        this.baseScore = 0;
         this.coins = 0;
         this.updateUI();
         
@@ -320,12 +322,12 @@ class BlockyRoadGame {
         if (moved) {
             // No cooldown - instant response for zero input lag
             
-            // Score tracking using gridZ - prevents farming by tracking actual grid position
-            // Score is simply the furthest gridZ reached (same as Crossy Road)
+            // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
                 const currentGridZ = this.player.gridZ;
-                if (currentGridZ > this.score) {
-                    this.score = currentGridZ;
+                if (currentGridZ > this.baseScore) {
+                    this.baseScore = currentGridZ;
+                    this.score++;  // Simply increment by 1 for forward movement
                     this.updateUI();
                     
                     if (typeof PlatformSDK !== 'undefined') {
@@ -386,7 +388,8 @@ class BlockyRoadGame {
         // Check coin collection
         const coin = this.obstacles.checkCoinCollision(playerPos, (coin) => {
             this.coins++;
-            this.score += 10;
+            // Add +5 bonus points for coin
+            this.score += 5;
             this.updateUI();
             this.particles.createCoinParticles(coin.mesh.position);
             this.audio.play('coin');

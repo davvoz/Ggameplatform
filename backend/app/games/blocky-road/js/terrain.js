@@ -35,18 +35,18 @@ class TerrainGenerator {
             this.createRow(z, 'grass');
         }
         
-        // Generate zones ahead
+        // Generate zones ahead (more initial terrain to reduce runtime generation)
         let z = 3;
-        while (z <= 30) {
+        while (z <= 50) {
             const zone = this.getNextZone();
             const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             
-            for (let i = 0; i < numRows && z <= 30; i++, z++) {
+            for (let i = 0; i < numRows && z <= 50; i++, z++) {
                 this.createRow(z, zone.type);
             }
         }
         
-        this.currentMaxZ = 30;
+        this.currentMaxZ = 50;
     }
     
     getNextZone() {
@@ -189,13 +189,13 @@ class TerrainGenerator {
         
         // Add permanent warning lights symmetrically on sides, slightly before rails
         const leftLight = Models.createTrainWarningLight();
-        leftLight.position.set(-6, 0, row.z - 0.6); // Left side, slightly before rails
+        leftLight.position.set(-4, 0, row.z - 0.6); // Left side, 2 blocks closer
         leftLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(leftLight);
         row.decorations.push(leftLight);
         
         const rightLight = Models.createTrainWarningLight();
-        rightLight.position.set(6, 0, row.z - 0.6); // Right side, slightly before rails
+        rightLight.position.set(4, 0, row.z - 0.6); // Right side, 2 blocks closer
         rightLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(rightLight);
         row.decorations.push(rightLight);
@@ -269,26 +269,36 @@ class TerrainGenerator {
     }
     
     update(playerZ) {
-        // Animate waterfalls
+        // Animate only waterfalls near player (optimization)
+        const animationDistance = 20;
         this.rows.forEach(row => {
-            if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-            if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+            if (Math.abs(row.z - playerZ) < animationDistance) {
+                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
+                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+            }
         });
         
-        // Generate new zones ahead (realistic environment)
-        const generationDistance = 30;
-        while (this.currentMaxZ < playerZ + generationDistance) {
-            const zone = this.getNextZone();
-            const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
-            
-            for (let i = 0; i < numRows; i++) {
-                this.currentMaxZ++;
-                this.createRow(this.currentMaxZ, zone.type);
+        // Generate new zones ahead in larger batches (less frequent generation)
+        const generationDistance = 40;
+        if (this.currentMaxZ < playerZ + generationDistance) {
+            // Generate 10 rows at once instead of per-frame
+            for (let batch = 0; batch < 10; batch++) {
+                const zone = this.getNextZone();
+                const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
+                
+                for (let i = 0; i < numRows; i++) {
+                    this.currentMaxZ++;
+                    this.createRow(this.currentMaxZ, zone.type);
+                }
             }
         }
         
-        // Cleanup old rows
-        const cleanupDistance = 15;
+        // Cleanup old rows less frequently (every 5th frame)
+        if (!this.cleanupCounter) this.cleanupCounter = 0;
+        this.cleanupCounter++;
+        if (this.cleanupCounter % 5 !== 0) return;
+        
+        const cleanupDistance = 20;
         this.rows = this.rows.filter(row => {
             if (row.z < playerZ - cleanupDistance) {
                 // Remove all meshes

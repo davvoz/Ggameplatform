@@ -460,6 +460,17 @@ class BlockyRoadGame {
     updateUI() {
         document.getElementById('score').textContent = this.score;
         document.getElementById('coins').textContent = `🪙 ${this.coins}`;
+        
+        // Debug info - remove after testing
+        const currentZ = this.player ? Math.floor(this.player.getPosition().z) : 0;
+        const debugInfo = `Z: ${currentZ} | MaxZ: ${this.maxZ} | Score: ${this.score}`;
+        if (!document.getElementById('debugInfo')) {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'debugInfo';
+            debugDiv.style.cssText = 'position:fixed;top:100px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-family:monospace;z-index:9999;font-size:14px;';
+            document.body.appendChild(debugDiv);
+        }
+        document.getElementById('debugInfo').textContent = debugInfo;
     }
     
     update(deltaTime = 16) {

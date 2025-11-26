@@ -35,18 +35,18 @@ class TerrainGenerator {
             this.createRow(z, 'grass');
         }
         
-        // Generate zones ahead (more initial terrain to reduce runtime generation)
+        // Generate zones ahead
         let z = 3;
-        while (z <= 50) {
+        while (z <= 35) {
             const zone = this.getNextZone();
             const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             
-            for (let i = 0; i < numRows && z <= 50; i++, z++) {
+            for (let i = 0; i < numRows && z <= 35; i++, z++) {
                 this.createRow(z, zone.type);
             }
         }
         
-        this.currentMaxZ = 50;
+        this.currentMaxZ = 35;
     }
     
     getNextZone() {
@@ -278,25 +278,24 @@ class TerrainGenerator {
             }
         });
         
-        // Generate new zones ahead in larger batches (less frequent generation)
-        const generationDistance = 40;
+        // Generate new terrain ahead gradually (1 row at a time when needed)
+        const generationDistance = 35;
         if (this.currentMaxZ < playerZ + generationDistance) {
-            // Generate 10 rows at once instead of per-frame
-            for (let batch = 0; batch < 10; batch++) {
+            // Generate only 1 row per frame to avoid lag spikes
+            if (!this.currentZoneRows || this.currentZoneRows <= 0) {
                 const zone = this.getNextZone();
-                const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
-                
-                for (let i = 0; i < numRows; i++) {
-                    this.currentMaxZ++;
-                    this.createRow(this.currentMaxZ, zone.type);
-                }
+                this.currentZoneRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             }
+            
+            this.currentMaxZ++;
+            this.createRow(this.currentMaxZ, this.currentZone.type);
+            this.currentZoneRows--;
         }
         
-        // Cleanup old rows less frequently (every 5th frame)
+        // Cleanup old rows less frequently (every 10th frame)
         if (!this.cleanupCounter) this.cleanupCounter = 0;
         this.cleanupCounter++;
-        if (this.cleanupCounter % 5 !== 0) return;
+        if (this.cleanupCounter % 10 !== 0) return;
         
         const cleanupDistance = 20;
         this.rows = this.rows.filter(row => {

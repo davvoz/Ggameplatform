@@ -94,10 +94,7 @@ class ObstacleManager {
                 if (platform.submergeProgress >= 1) {
                     // Log fully submerged - remove it
                     this.scene.remove(platform.mesh);
-                    platform.mesh.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) child.material.dispose();
-                    });
+                    // Don't dispose shared geometries/materials
                     this.platforms.splice(index, 1);
                     return;
                 }
@@ -113,28 +110,35 @@ class ObstacleManager {
             const oldX = obstacle.mesh.position.x;
             obstacle.mesh.position.x += obstacle.velocity;
             
-            // Rotate wheels for effect
-            obstacle.mesh.children.forEach(child => {
-                if (child.userData.isWheel) {
-                    child.rotation.x += obstacle.velocity * 0.5;
-                }
-            });
+            // Rotate wheels for effect (only if has wheels cached)
+            if (obstacle.wheels) {
+                obstacle.wheels.forEach(wheel => {
+                    wheel.rotation.x += obstacle.velocity * 0.5;
+                });
+            }
             
             // Fade-out animation when approaching edge (beyond ±8)
             const distanceFromCenter = Math.abs(obstacle.mesh.position.x);
             if (distanceFromCenter > 8) {
                 // Start fading at x > 8, fully transparent at x > 12
-                const fadeProgress = (distanceFromCenter - 8) / 4; // 0 to 1 over 4 units
+                const fadeProgress = (distanceFromCenter - 8) / 4;
                 const opacity = Math.max(0, 1 - fadeProgress);
                 
-                obstacle.mesh.traverse(child => {
-                    if (child.material) {
-                        if (!child.userData.originalOpacity) {
+                // Cache materials on first fade to avoid repeated traverse
+                if (!obstacle.cachedMaterials) {
+                    obstacle.cachedMaterials = [];
+                    obstacle.mesh.traverse(child => {
+                        if (child.material) {
                             child.userData.originalOpacity = child.material.opacity || 1;
                             child.material.transparent = true;
+                            obstacle.cachedMaterials.push(child.material);
                         }
-                        child.material.opacity = child.userData.originalOpacity * opacity;
-                    }
+                    });
+                }
+                
+                // Fast opacity update without traverse
+                obstacle.cachedMaterials.forEach((mat, i) => {
+                    mat.opacity = mat.userData?.originalOpacity * opacity || opacity;
                 });
             }
             
@@ -143,30 +147,27 @@ class ObstacleManager {
                 // Trains don't wrap - they pass through once and get removed far outside visibility
                 if (Math.abs(obstacle.mesh.position.x) > 50) {
                     this.scene.remove(obstacle.mesh);
-                    obstacle.mesh.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) child.material.dispose();
-                    });
+                    // Fast dispose without traverse (geometries/materials are shared, don't dispose)
                     this.obstacles.splice(index, 1);
                 }
             } else {
                 // Vehicles wrap around (Crossy Road style)
                 if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
                     obstacle.mesh.position.x = -12;
-                    // Reset opacity when wrapping
-                    obstacle.mesh.traverse(child => {
-                        if (child.material && child.userData.originalOpacity) {
-                            child.material.opacity = child.userData.originalOpacity;
-                        }
-                    });
+                    // Reset opacity using cached materials
+                    if (obstacle.cachedMaterials) {
+                        obstacle.cachedMaterials.forEach(mat => {
+                            mat.opacity = mat.userData?.originalOpacity || 1;
+                        });
+                    }
                 } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
                     obstacle.mesh.position.x = 12;
-                    // Reset opacity when wrapping
-                    obstacle.mesh.traverse(child => {
-                        if (child.material && child.userData.originalOpacity) {
-                            child.material.opacity = child.userData.originalOpacity;
-                        }
-                    });
+                    // Reset opacity using cached materials
+                    if (obstacle.cachedMaterials) {
+                        obstacle.cachedMaterials.forEach(mat => {
+                            mat.opacity = mat.userData?.originalOpacity || 1;
+                        });
+                    }
                 }
                 
                 // Remove vehicles if too far (safety)
@@ -181,17 +182,19 @@ class ObstacleManager {
             }
         });
         
-        // Update coins (rotation)
+        // Update coins (rotation) - update every other frame for performance
+        if (!this.coinUpdateCounter) this.coinUpdateCounter = 0;
+        this.coinUpdateCounter++;
+        const updateCoins = this.coinUpdateCounter % 2 === 0;
+        
         this.coins.forEach((coin, index) => {
-            coin.mesh.rotation.y += coin.rotationSpeed;
+            if (updateCoins) {
+                coin.mesh.rotation.y += coin.rotationSpeed * 2; // Compensate for skipped frames
+            }
             
-            // Remove if collected or too far
+            // Remove if collected or too far (don't dispose shared geometries/materials)
             if (coin.collected || coin.z < playerZ - 15) {
                 this.scene.remove(coin.mesh);
-                coin.mesh.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
-                });
                 this.coins.splice(index, 1);
             }
         });

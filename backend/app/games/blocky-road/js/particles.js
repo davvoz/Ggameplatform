@@ -179,23 +179,32 @@ class ParticleSystem {
     }
     
     update() {
+        // Update particles every other frame for performance
+        if (!this.updateCounter) this.updateCounter = 0;
+        this.updateCounter++;
+        const skipUpdate = this.updateCounter % 2 === 0;
+        
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
-            const positions = particle.system.geometry.attributes.position.array;
             
-            // Update particle positions
-            for (let j = 0; j < positions.length; j += 3) {
-                positions[j] += particle.velocities[j];         // x
-                positions[j + 1] += particle.velocities[j + 1]; // y
-                positions[j + 2] += particle.velocities[j + 2]; // z
+            // Skip physics update every other frame
+            if (!skipUpdate) {
+                const positions = particle.system.geometry.attributes.position.array;
                 
-                // Gravity
-                particle.velocities[j + 1] -= 0.01;
+                // Update particle positions
+                for (let j = 0; j < positions.length; j += 3) {
+                    positions[j] += particle.velocities[j];         // x
+                    positions[j + 1] += particle.velocities[j + 1]; // y
+                    positions[j + 2] += particle.velocities[j + 2]; // z
+                    
+                    // Gravity
+                    particle.velocities[j + 1] -= 0.01;
+                }
+                
+                particle.system.geometry.attributes.position.needsUpdate = true;
             }
             
-            particle.system.geometry.attributes.position.needsUpdate = true;
-            
-            // Fade out
+            // Fade out (always update)
             particle.life--;
             particle.system.material.opacity = particle.life / particle.maxLife;
             

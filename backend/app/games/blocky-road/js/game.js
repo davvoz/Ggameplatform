@@ -465,9 +465,15 @@ class BlockyRoadGame {
         // DISABLED TEMPORARILY
         // this.updateDangerZone(playerPos.z, deltaTime);
         
-        // Continuous collision checking
+        // Continuous collision checking (only when player stopped or every 3rd frame while moving)
         if (!this.player.isMoving) {
             this.checkCollisions();
+        } else {
+            if (!this.collisionCheckCounter) this.collisionCheckCounter = 0;
+            this.collisionCheckCounter++;
+            if (this.collisionCheckCounter % 3 === 0) {
+                this.checkCollisions();
+            }
         }
         
         // Enable death line when player moves forward past Z=2

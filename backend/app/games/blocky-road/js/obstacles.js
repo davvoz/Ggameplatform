@@ -29,29 +29,60 @@ class ObstacleManager {
         
         // Update platforms (logs)
         this.platforms.forEach((platform, index) => {
-            // Emerge animation from waterfall
+            // Emerge animation from waterfall - rise up from below
+            // Take into account log length - first block should be usable as soon as it enters playable area
             if (platform.isEmerging) {
-                platform.emergeProgress += 0.02;
-                platform.mesh.position.y = THREE.MathUtils.lerp(-0.5, platform.targetY, platform.emergeProgress);
+                const logHalfLength = platform.length / 2;
+                // Complete emerge when leading edge is at -5/+5 (2 units inside playable area)
+                // This ensures the front blocks are immediately usable
+                const enterEdge = platform.velocity > 0 ? -5 : 5;
                 
-                if (platform.emergeProgress >= 1) {
+                // Calculate the leading edge of the log (front end)
+                const leadingEdge = platform.velocity > 0 
+                    ? platform.mesh.position.x + logHalfLength  // Moving right: front is right side
+                    : platform.mesh.position.x - logHalfLength; // Moving left: front is left side
+                
+                // Check if leading edge has entered playable area enough
+                const hasReachedThreshold = platform.velocity > 0 
+                    ? leadingEdge >= enterEdge  // Moving right: front edge past -5
+                    : leadingEdge <= enterEdge; // Moving left: front edge past +5
+                
+                // Continue emerging animation
+                platform.emergeProgress += 0.04; // Faster emerge for smoother appearance
+                const startY = platform.startY || -0.8;
+                platform.mesh.position.y = THREE.MathUtils.lerp(startY, platform.targetY, platform.emergeProgress);
+                
+                // Stop emerging when fully risen AND reached threshold
+                if (platform.emergeProgress >= 1 && hasReachedThreshold) {
                     platform.isEmerging = false;
                     platform.mesh.position.y = platform.targetY;
                 }
             }
             
-            // Submerge animation when approaching opposite waterfall
-            const oppositeWaterfall = platform.velocity > 0 ? 7.5 : -7.5;
-            const distanceToWaterfall = Math.abs(platform.mesh.position.x - oppositeWaterfall);
+            // Submerge animation when exiting playable area - sink down outside play zone
+            // Take into account log length - last block should be outside playable area when submerging starts
+            // Log center is at mesh.position.x, log extends length/2 in each direction
+            const logHalfLength = platform.length / 2;
+            const exitEdge = platform.velocity > 0 ? 7 : -7; // Original threshold
             
-            if (distanceToWaterfall < 1 && !platform.isSubmerging && !platform.isEmerging) {
+            // Calculate the trailing edge of the log (back end)
+            const trailingEdge = platform.velocity > 0 
+                ? platform.mesh.position.x - logHalfLength  // Moving right: back is left side
+                : platform.mesh.position.x + logHalfLength; // Moving left: back is right side
+            
+            // Start submerging when the TRAILING edge exits playable area
+            const hasExitedPlayArea = platform.velocity > 0 
+                ? trailingEdge >= exitEdge  // Moving right: back edge past +7
+                : trailingEdge <= exitEdge; // Moving left: back edge past -7
+            
+            if (hasExitedPlayArea && !platform.isSubmerging && !platform.isEmerging) {
                 platform.isSubmerging = true;
                 platform.submergeProgress = 0;
             }
             
             if (platform.isSubmerging) {
-                platform.submergeProgress += 0.02;
-                platform.mesh.position.y = THREE.MathUtils.lerp(platform.targetY, -0.5, platform.submergeProgress);
+                platform.submergeProgress += 0.04; // Match emerge speed
+                platform.mesh.position.y = THREE.MathUtils.lerp(platform.targetY, -0.8, platform.submergeProgress);
                 
                 if (platform.submergeProgress >= 1) {
                     // Log fully submerged - remove it
@@ -65,7 +96,7 @@ class ObstacleManager {
                 }
             }
             
-            // Normal horizontal movement
+            // Normal horizontal movement - move even while emerging/submerging
             platform.mesh.position.x += platform.velocity;
             platform.x = platform.mesh.position.x;
         });
@@ -81,11 +112,41 @@ class ObstacleManager {
                 }
             });
             
+            // Fade-out animation when approaching edge (beyond ±8)
+            const distanceFromCenter = Math.abs(obstacle.mesh.position.x);
+            if (distanceFromCenter > 8) {
+                // Start fading at x > 8, fully transparent at x > 12
+                const fadeProgress = (distanceFromCenter - 8) / 4; // 0 to 1 over 4 units
+                const opacity = Math.max(0, 1 - fadeProgress);
+                
+                obstacle.mesh.traverse(child => {
+                    if (child.material) {
+                        if (!child.userData.originalOpacity) {
+                            child.userData.originalOpacity = child.material.opacity || 1;
+                            child.material.transparent = true;
+                        }
+                        child.material.opacity = child.userData.originalOpacity * opacity;
+                    }
+                });
+            }
+            
             // Wrap around when reaching offset (Crossy Road style)
             if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
                 obstacle.mesh.position.x = -12;
+                // Reset opacity when wrapping
+                obstacle.mesh.traverse(child => {
+                    if (child.material && child.userData.originalOpacity) {
+                        child.material.opacity = child.userData.originalOpacity;
+                    }
+                });
             } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
                 obstacle.mesh.position.x = 12;
+                // Reset opacity when wrapping
+                obstacle.mesh.traverse(child => {
+                    if (child.material && child.userData.originalOpacity) {
+                        child.material.opacity = child.userData.originalOpacity;
+                    }
+                });
             }
             
             // Remove if too far (safety)
@@ -267,8 +328,16 @@ class ObstacleManager {
     }
     
     trySpawnCoins(playerZ) {
-        // Spawn coins on safe terrain
-        for (let z = Math.floor(playerZ) + 5; z < playerZ + 15; z++) {
+        // Spawn coins on safe terrain - only ahead of player, never behind
+        // Only spawn coins at least 3 rows ahead to prevent spawning at current position
+        const minSpawnDistance = 5;  // Increased from 3 to 5
+        const maxSpawnDistance = 20;
+        
+        // Track furthest spawned position to prevent backward spawning
+        if (!this.furthestCoinZ) this.furthestCoinZ = playerZ;
+        const startZ = Math.max(Math.floor(playerZ) + minSpawnDistance, this.furthestCoinZ);
+        
+        for (let z = startZ; z < playerZ + maxSpawnDistance; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row) continue;
             
@@ -279,9 +348,10 @@ class ObstacleManager {
             const hasCoin = this.coins.some(coin => Math.abs(coin.z - z) < 0.5);
             if (hasCoin) continue;
             
-            // Random spawn
-            if (Math.random() < 0.15) {
+            // Spawn rate: 8%
+            if (Math.random() < 0.08) {
                 this.spawnCoin(z);
+                this.furthestCoinZ = Math.max(this.furthestCoinZ, z);
             }
         }
     }
@@ -437,8 +507,9 @@ class ObstacleManager {
         const logLength = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
         const log = Models.createLog(logLength);
         
-        // Start submerged at waterfall, will emerge with animation
-        log.position.set(waterfallX, -0.5, z);
+        // Start at waterfall position, below water surface, will emerge before entering play area
+        // Waterfall is at ±7.5, log emerges outside playable area (±7)
+        log.position.set(waterfallX, -0.8, z);
         
         this.scene.add(log);
         
@@ -451,6 +522,7 @@ class ObstacleManager {
             type: 'log',
             isEmerging: true,
             emergeProgress: 0,
+            startY: -0.8,
             targetY: 0.25,
             spawnSide: spawnFromLeft ? 'left' : 'right'
         };

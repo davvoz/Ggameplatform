@@ -15,14 +15,16 @@ class BlockyRoadGame {
         this.score = 0;
         this.coins = 0;
         this.highScore = 0;
+        this.maxZ = 0;  // Track furthest position reached to prevent score farming
         
         this.isGameOver = false;
         this.isPaused = false;
         this.isStarted = false;
         
-        // Input
+        // Input - optimized for fast gameplay
         this.keys = {};
         this.inputCooldown = 0;
+        this.queuedInput = null;  // Queue one input while in cooldown
         
         // Rising water/danger zone mechanic (like Crossy Road)
         this.dangerZone = -15; // Start far behind player
@@ -167,28 +169,31 @@ class BlockyRoadGame {
     }
     
     createBoundaryShadows() {
-        // Create boundary shadows from edge of playable area outward
-        const shadowGeometry = new THREE.PlaneGeometry(10, 200); // Wide shadow
+        // Create boundary shadows covering area OUTSIDE playable zone
+        // Playable area: -7 to +7, Map extends to -25 to +25
+        // Shadows should cover from -25 to -7 (left) and +7 to +25 (right)
+        const shadowWidth = 18; // Width of shadow area (from edge to playable boundary)
+        const shadowGeometry = new THREE.PlaneGeometry(shadowWidth, 200);
         const shadowMaterial = new THREE.MeshBasicMaterial({
             color: 0x000000,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.4,
             side: THREE.DoubleSide,
-            depthWrite: false // Don't write to depth buffer so it's always visible
+            depthWrite: false
         });
         
-        // Left boundary shadow (from x=-7 extending left)
+        // Left boundary shadow: covers x=-25 to x=-7 (center at -16)
         const leftShadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
         leftShadow.rotation.x = -Math.PI / 2;
-        leftShadow.position.set(-12, 0.5, 0); // Wider area (covers -17 to -7)
-        leftShadow.renderOrder = 999; // Render last, on top of everything
+        leftShadow.position.set(-16, 0.5, 0); // -25 + 9 = -16 (center of -25 to -7)
+        leftShadow.renderOrder = 999;
         this.scene.add(leftShadow);
         
-        // Right boundary shadow (from x=+7 extending right)
+        // Right boundary shadow: covers x=+7 to x=+25 (center at +16)
         const rightShadow = new THREE.Mesh(shadowGeometry, shadowMaterial.clone());
         rightShadow.rotation.x = -Math.PI / 2;
-        rightShadow.position.set(12, 0.5, 0); // Wider area (covers +7 to +17)
-        rightShadow.renderOrder = 999; // Render last, on top of everything
+        rightShadow.position.set(16, 0.5, 0); // 7 + 9 = 16 (center of +7 to +25)
+        rightShadow.renderOrder = 999;
         this.scene.add(rightShadow);
         
         // Store references to update position with camera
@@ -197,10 +202,22 @@ class BlockyRoadGame {
     
     setupInput() {
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            
+            // Prevent double-triggering from key repeat
+            if (this.keys[key]) return;
+            
+            this.keys[key] = true;
             
             if (!this.isStarted) {
                 this.startGame();
+                return;
+            }
+            
+            // Instant input queuing for arrow keys/WASD
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+                // Trigger handleInput immediately for responsive feel
+                this.handleInput();
             }
         });
         
@@ -275,8 +292,17 @@ class BlockyRoadGame {
     }
     
     handleInput() {
+        // Process cooldown
         if (this.inputCooldown > 0) {
             this.inputCooldown--;
+            
+            // Queue input during cooldown for instant response
+            if (this.inputCooldown === 0 && this.queuedInput) {
+                const {dx, dz} = this.queuedInput;
+                this.queuedInput = null;
+                this.processMove(dx, dz);
+                return;
+            }
             return;
         }
         
@@ -293,15 +319,28 @@ class BlockyRoadGame {
         }
         
         if (dx !== 0 || dz !== 0) {
-            const moved = this.player.move(dx, dz, () => {
-                this.checkCollisions();
-            });
+            // Queue input if in cooldown, otherwise process immediately
+            if (this.inputCooldown > 0) {
+                this.queuedInput = {dx, dz};
+            } else {
+                this.processMove(dx, dz);
+            }
+        }
+    }
+    
+    processMove(dx, dz) {
+        const moved = this.player.move(dx, dz, () => {
+            this.checkCollisions();
+        });
+        
+        if (moved) {
+            this.inputCooldown = 4;  // Reduced from 10 to 4 for faster input
             
-            if (moved) {
-                this.inputCooldown = 10;
-                
-                // Score for moving forward
-                if (dz > 0) {
+            // Score only when reaching new furthest position (prevent farming by going back/forward)
+            if (dz > 0) {
+                const newZ = Math.floor(this.player.getPosition().z);
+                if (newZ > this.maxZ) {
+                    this.maxZ = newZ;
                     this.score++;
                     this.updateUI();
                     
@@ -399,12 +438,18 @@ class BlockyRoadGame {
             document.getElementById('gameOver').style.display = 'block';
         }, 500);
         
-        // Send to SDK
+        // Send to SDK - ensure it's always called to track XP
         if (typeof PlatformSDK !== 'undefined') {
-            PlatformSDK.gameOver(this.score, {
-                coins: this.coins,
-                reason: reason
-            });
+            try {
+                PlatformSDK.gameOver(this.score, {
+                    coins: this.coins,
+                    reason: reason,
+                    timestamp: Date.now()
+                });
+                console.log('📡 Game over sent to SDK:', this.score);
+            } catch (e) {
+                console.error('⚠️ Failed to send game over to SDK:', e);
+            }
         }
     }
     

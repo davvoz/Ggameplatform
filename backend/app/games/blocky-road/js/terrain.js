@@ -23,8 +23,8 @@ class TerrainGenerator {
     
     generateInitialTerrain() {
         // Generate terrain behind spawn point (with dense obstacles to block backward movement)
-        // Extended to -15 to ensure full visual coverage behind player
-        for (let z = -15; z < -2; z++) {
+        // Extended to -20 to ensure full visual coverage behind player
+        for (let z = -20; z < -2; z++) {
             const row = this.createRow(z, 'grass');
             // Mark as barrier zone - will add extra dense decorations
             row.isBarrier = true;

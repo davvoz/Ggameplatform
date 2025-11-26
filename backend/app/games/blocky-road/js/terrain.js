@@ -1,8 +1,9 @@
 // terrain.js - Three.js terrain generation
 
 class TerrainGenerator {
-    constructor(scene) {
+    constructor(scene, isMobile = false) {
         this.scene = scene;
+        this.isMobile = isMobile;
         this.rows = [];
         this.currentMaxZ = 0;
         this.currentZone = null;
@@ -205,6 +206,9 @@ class TerrainGenerator {
     }
     
     addWaterDecorations(row) {
+        // Skip waterfalls on mobile (expensive animation)
+        if (this.isMobile) return;
+        
         // Add waterfalls at the edges (±7.5 is edge of playable area)
         // Left waterfall
         const leftWaterfall = this.createWaterfall();
@@ -269,14 +273,16 @@ class TerrainGenerator {
     }
     
     update(playerZ) {
-        // Animate only waterfalls near player (optimization)
-        const animationDistance = 20;
-        this.rows.forEach(row => {
-            if (Math.abs(row.z - playerZ) < animationDistance) {
-                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
-            }
-        });
+        // Animate only waterfalls near player (skip on mobile - waterfalls disabled)
+        if (!this.isMobile) {
+            const animationDistance = 20;
+            this.rows.forEach(row => {
+                if (Math.abs(row.z - playerZ) < animationDistance) {
+                    if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
+                    if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+                }
+            });
+        }
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
         const generationDistance = 35;

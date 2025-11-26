@@ -13,6 +13,10 @@ class BlockyRoadGame {
         this.touchControls = null;
         this.audio = null;
         
+        // Mobile detection and optimization
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        console.log('📱 Mobile device:', this.isMobile);
+        
         this.score = 0;
         this.baseScore = 0;  // Track max gridZ separately from total score
         this.coins = 0;
@@ -50,9 +54,9 @@ class BlockyRoadGame {
         // Create game systems
         updateProgress(30);
         this.audio = new AudioManager();
-        this.particles = new ParticleSystem(this.scene);
-        this.terrain = new TerrainGenerator(this.scene);
-        this.obstacles = new ObstacleManager(this.scene, this.terrain);
+        this.particles = new ParticleSystem(this.scene, this.isMobile);
+        this.terrain = new TerrainGenerator(this.scene, this.isMobile);
+        this.obstacles = new ObstacleManager(this.scene, this.terrain, this.isMobile);
         this.player = new Player(this.scene, this.particles);
         this.camera = new CrossyCamera(this.scene, this.renderer);
         
@@ -105,17 +109,25 @@ class BlockyRoadGame {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
         
-        // Renderer
+        // Renderer - mobile optimizations
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.isMobile = isMobile;
+        console.log('📱 Mobile device detected:', isMobile);
+        
         this.renderer = new THREE.WebGLRenderer({ 
-            antialias: true,
+            antialias: !isMobile, // Disable on mobile
             alpha: false,
             powerPreference: 'high-performance',
-            precision: 'highp'
+            precision: isMobile ? 'mediump' : 'highp' // Lower precision on mobile
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight, false);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        // Limit pixel ratio on mobile (huge performance boost)
+        this.renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 1.5) : window.devicePixelRatio);
+        // Disable shadows on mobile (very expensive)
+        if (!isMobile) {
+            this.renderer.shadowMap.enabled = true;
+            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        }
         this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
         
@@ -465,13 +477,14 @@ class BlockyRoadGame {
         // DISABLED TEMPORARILY
         // this.updateDangerZone(playerPos.z, deltaTime);
         
-        // Continuous collision checking (only when player stopped or every 3rd frame while moving)
+        // Continuous collision checking (throttled more on mobile)
+        const collisionThrottle = this.isMobile ? 5 : 3;
         if (!this.player.isMoving) {
             this.checkCollisions();
         } else {
             if (!this.collisionCheckCounter) this.collisionCheckCounter = 0;
             this.collisionCheckCounter++;
-            if (this.collisionCheckCounter % 3 === 0) {
+            if (this.collisionCheckCounter % collisionThrottle === 0) {
                 this.checkCollisions();
             }
         }

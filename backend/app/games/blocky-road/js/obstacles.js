@@ -1,16 +1,17 @@
 // obstacles.js - Three.js vehicles and obstacles
 
 class ObstacleManager {
-    constructor(scene, terrain) {
+    constructor(scene, terrain, isMobile = false) {
         this.scene = scene;
         this.terrain = terrain;
+        this.isMobile = isMobile;
         this.obstacles = []; // Cars and trains
         this.platforms = []; // Logs and lily pads on water
         this.coins = [];
         
-        // Vehicle spawn settings
+        // Vehicle spawn settings (reduced on mobile)
         this.spawnTimer = 0;
-        this.spawnInterval = 10; // Check very frequently for continuous spawning
+        this.spawnInterval = isMobile ? 15 : 10; // Less frequent spawning on mobile
         
         // Train system - simple and clear
         this.trainTimers = {}; // Track per rail row: {z: {nextSpawn: frameCount, warned: bool}}
@@ -339,8 +340,8 @@ class ObstacleManager {
         const trainColor = Math.random() < 0.5 ? 0x9C27B0 : 0xE91E63;
         const railZ = row.z; // Use actual row Z position!
         
-        // Locomotive + 13 cars trailing behind (doubled length!)
-        const totalCars = 30;
+        // Locomotive + cars (reduced on mobile for performance)
+        const totalCars = this.isMobile ? 15 : 30;
         const carSpacing = 1.5; // Tighter spacing - cars are 1.2 wide, so 0.3 gap between them
         
         for (let i = 0; i < totalCars; i++) {

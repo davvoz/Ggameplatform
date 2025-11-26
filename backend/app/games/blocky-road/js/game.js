@@ -334,7 +334,7 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            this.inputCooldown = 2;  // Very fast response for rapid tapping
+            this.inputCooldown = 1;  // Ultra-fast response - 1 frame only
             
             // Score tracking using gridZ - prevents farming by tracking actual grid position
             // Score is simply the furthest gridZ reached (same as Crossy Road)

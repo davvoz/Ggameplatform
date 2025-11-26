@@ -2,6 +2,7 @@
 
 class BlockyRoadGame {
     constructor() {
+        console.log('🎮 Blocky Road v2.1 - maxZ score fix loaded');
         this.scene = null;
         this.renderer = null;
         this.camera = null;

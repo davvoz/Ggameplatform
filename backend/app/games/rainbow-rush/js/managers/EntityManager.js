@@ -203,8 +203,37 @@ export class EntityManager {
      * Update platform entity
      */
     updatePlatform(platform, deltaTime, cameraSpeed) {
-        const totalVelocity = platform.velocity - cameraSpeed;
-        platform.x += totalVelocity * deltaTime;
+        // Handle rotating platforms PRIMA - hanno il loro movimento speciale
+        if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
+            // Inizializza centro di rotazione al primo frame DI ROTAZIONE
+            if (platform.isRotating && !platform.rotationCenterX) {
+                platform.rotationCenterX = platform.x + platform.width / 2;
+                platform.rotationCenterY = platform.y;
+                platform.rotationRadius = 30; // Raggio ridotto per orbita più piccola
+            }
+            
+            if (platform.isRotating) {
+                // Ruota l'angolo continuamente
+                const rotSpeed = platform.rotationSpeed || 1.0;
+                platform.rotationAngle = (platform.rotationAngle || 0) + rotSpeed * deltaTime;
+                
+                // Muovi il centro con la velocity della piattaforma MENO la camera
+                const totalVelocity = platform.velocity - cameraSpeed;
+                platform.rotationCenterX += totalVelocity * deltaTime;
+                
+                // Calcola nuova posizione orbitale attorno al centro
+                platform.x = platform.rotationCenterX + Math.cos(platform.rotationAngle) * platform.rotationRadius - platform.width / 2;
+                platform.y = platform.rotationCenterY + Math.sin(platform.rotationAngle) * platform.rotationRadius;
+            } else {
+                // Movimento normale quando non sta ruotando
+                const totalVelocity = platform.velocity - cameraSpeed;
+                platform.x += totalVelocity * deltaTime;
+            }
+        } else {
+            // Movimento normale per tutte le altre piattaforme
+            const totalVelocity = platform.velocity - cameraSpeed;
+            platform.x += totalVelocity * deltaTime;
+        }
 
         // Handle crumbling platforms
         if (platform.isCrumbling) {
@@ -235,20 +264,6 @@ export class EntityManager {
                 // Decelera quando il player non è sopra
                 if (platform.bounceOffset && Math.abs(platform.bounceOffset) > 0.5) {
                     platform.bounceOffset *= 0.95;
-                }
-            }
-        }
-
-        // Handle rotating platforms
-        if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
-            if (platform.isRotating) {
-                platform.rotationSpeed = (platform.rotationSpeed || 0) + deltaTime * 2;
-                platform.rotationAngle = (platform.rotationAngle || 0) + platform.rotationSpeed * deltaTime;
-            } else {
-                // Decelerate rotation when player not on platform
-                if (platform.rotationSpeed && platform.rotationSpeed > 0) {
-                    platform.rotationSpeed = Math.max(0, platform.rotationSpeed - deltaTime * 1.5);
-                    platform.rotationAngle = (platform.rotationAngle || 0) + platform.rotationSpeed * deltaTime;
                 }
             }
         }

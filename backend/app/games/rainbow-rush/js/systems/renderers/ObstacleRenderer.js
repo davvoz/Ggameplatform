@@ -4,10 +4,16 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class ObstacleRenderer extends IEntityRenderer {
     constructor(renderer) {
         super(renderer);
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(obstacle, context) {
@@ -29,8 +35,10 @@ export class ObstacleRenderer extends IEntityRenderer {
         const centerX = spike.x + spike.width / 2;
         const centerY = spike.y + spike.height / 2;
         
-        // Render label
-        this.renderObstacleLabel(centerX, spike.y - 8, 'SPIKE');
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderObstacleLabel(spike, centerX, spike.y);
+        }
 
         // Shadow sotto lo spike
         RenderingUtils.drawShadow(this.renderer, spike.x, spike.y, spike.width, spike.height);
@@ -188,35 +196,5 @@ export class ObstacleRenderer extends IEntityRenderer {
             const toothX = mouthX + (mouthWidth / 4) * i + mouthWidth / 8;
             this.renderer.drawRect(toothX - 1, mouthY - 3, 2, 3, [1.0, 1.0, 1.0, 0.9]);
         }
-    }
-    
-    renderObstacleLabel(x, y, text) {
-        if (!this.renderer.textCtx) return;
-        
-        const ctx = this.renderer.textCtx;
-        ctx.save();
-        ctx.font = 'bold 9px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        
-        // Background
-        const metrics = ctx.measureText(text);
-        const padding = 3;
-        const bgWidth = metrics.width + padding * 2;
-        const bgHeight = 12;
-        
-        ctx.fillStyle = 'rgba(80, 0, 0, 0.8)';
-        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Border
-        ctx.strokeStyle = 'rgba(255, 50, 50, 0.9)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Text
-        ctx.fillStyle = '#ff3333';
-        ctx.fillText(text, x, y);
-        
-        ctx.restore();
     }
 }

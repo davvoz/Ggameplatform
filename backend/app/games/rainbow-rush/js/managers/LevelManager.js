@@ -285,18 +285,21 @@ export class LevelManager {
             springCompression: 0,
             springAnimationTime: 0,
             icyShimmer: 0,
-            // Nuove proprietà per i nuovi tipi di piattaforma
-            isDissolving: false,
+            // Nuove proprietà per i nuovi tipi di piattaforma - PRESERVA VALORI DA DATA
+            isDissolving: data.isDissolving || false,
             dissolveTimer: 0,
-            dissolveDuration: 0.8,
-            dissolveAlpha: 1.0,
-            isRotating: false,
-            rotationAngle: 0,
-            rotationSpeed: 0,
-            isBouncing: false,
+            dissolveDuration: data.dissolveDuration || 0.8,
+            dissolveAlpha: data.dissolveAlpha || 1.0,
+            isRotating: data.isRotating || false, // ✅ PRESERVA dal LevelGenerator
+            rotationAngle: data.rotationAngle || 0,
+            rotationSpeed: data.rotationSpeed || 0,
+            rotationCenterX: data.rotationCenterX,
+            rotationCenterY: data.rotationCenterY,
+            rotationRadius: data.rotationRadius,
+            isBouncing: data.isBouncing || false,
             bounceOffset: 0,
-            bounceSpeed: 0,
-            bounceAmplitude: 30,
+            bounceSpeed: data.bounceSpeed || 0,
+            bounceAmplitude: data.bounceAmplitude || 30,
             index: index
         };
     }

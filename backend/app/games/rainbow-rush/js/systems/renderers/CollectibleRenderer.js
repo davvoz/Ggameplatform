@@ -4,19 +4,27 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class CollectibleRenderer extends IEntityRenderer {
     constructor(renderer, textCtx = null) {
         super(renderer);
         this.textCtx = textCtx;
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(entity, context) {
         const { time } = context;
         
-        // Render label
-        const labelY = entity.y - (entity.radius || entity.height / 2) - 8;
-        this.renderCollectibleLabel(entity, entity.x, labelY);
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            const labelY = entity.y - (entity.radius || entity.height / 2);
+            this.labelRenderer.renderCollectibleLabel(entity, entity.x, labelY);
+        }
         
         switch(entity.entityType || entity.type) {
             case 'collectible':
@@ -765,45 +773,5 @@ export class CollectibleRenderer extends IEntityRenderer {
             
             this.textCtx.restore();
         }
-    }
-    
-    renderCollectibleLabel(entity, x, y) {
-        if (!this.renderer || !this.renderer.textCtx) return;
-        
-        const ctx = this.renderer.textCtx;
-        let label = (entity.entityType || entity.type || 'ITEM').toUpperCase();
-        
-        // Shorten some labels
-        if (label === 'INSTANTFLIGHT') label = 'FLIGHT';
-        if (label === 'HEARTRECHARGE') label = 'HEART+';
-        if (label === 'COINRAIN') label = 'COIN RAIN';
-        if (label === 'FLIGHTBONUS') label = 'FLIGHT';
-        if (label === 'RECHARGEBONUS') label = 'RECHARGE';
-        if (label === 'HEARTRECHARGEBONUS') label = 'HEART+';
-        
-        ctx.save();
-        ctx.font = 'bold 8px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        
-        // Background
-        const metrics = ctx.measureText(label);
-        const padding = 3;
-        const bgWidth = metrics.width + padding * 2;
-        const bgHeight = 11;
-        
-        ctx.fillStyle = 'rgba(100, 50, 0, 0.7)';
-        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Border
-        ctx.strokeStyle = 'rgba(255, 200, 100, 0.8)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Text
-        ctx.fillStyle = '#ffcc66';
-        ctx.fillText(label, x, y);
-        
-        ctx.restore();
     }
 }

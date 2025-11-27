@@ -23,6 +23,7 @@ class Platform {
         this.width = width;
         this.height = height;
         this.type = type;
+        this.platformType = type; // Alias per compatibilità
         this.index = index;
         
         // Proprietà per i nuovi tipi di piattaforma
@@ -329,33 +330,50 @@ class PlatformGenerator {
             if (platformType === 'normal' && i > 2) { // Non sui primi 3
                 const rand = Math.random();
                 
+                // Rotating dal livello 5 - AUMENTATO AL 12%
+                if (level >= 5 && rand < 0.12) {
+                    specificType = 'rotating';
+                }
                 // Dissolving dal livello 3
-                if (level >= 3 && rand < 0.06) {
+                else if (level >= 3 && rand < 0.18) {
                     specificType = 'dissolving';
                 }
                 // Bouncing dal livello 4  
-                else if (level >= 4 && rand < 0.11) {
+                else if (level >= 4 && rand < 0.24) {
                     specificType = 'bouncing';
                 }
-                // Rotating dal livello 6
-                else if (level >= 6 && rand < 0.16) {
-                    specificType = 'rotating';
-                }
                 // Bouncy normale
-                else if (rand < 0.25) {
+                else if (rand < 0.34) {
                     specificType = 'bouncy';
                 }
                 // Spring
-                else if (rand < 0.32) {
+                else if (rand < 0.42) {
                     specificType = 'spring';
                 }
                 // Icy dal livello 5
-                else if (level >= 5 && rand < 0.40) {
+                else if (level >= 5 && rand < 0.52) {
                     specificType = 'icy';
                 }
             }
             
-            platforms.push(new Platform(x, this.clampY(y), width, height, specificType, i));
+            const platform = new Platform(x, this.clampY(y), width, height, specificType, i);
+            
+            // Inizializza proprietà speciali per tipi dinamici
+            if (specificType === 'rotating') {
+                platform.isRotating = false; // Inizia ferma, si attiva quando il player ci atterra
+                platform.rotationSpeed = 0.3 + Math.random() * 0.5; // Velocità ridotta 0.3-0.8 per rotazione lenta
+                platform.rotationAngle = Math.random() * Math.PI * 2; // Angolo iniziale casuale
+            } else if (specificType === 'bouncing') {
+                platform.isBouncing = true;
+                platform.bounceSpeed = 1.5 + Math.random() * 1.0; // Velocità casuale
+                platform.bounceAmplitude = 20 + Math.random() * 20; // Ampiezza casuale 20-40
+            } else if (specificType === 'dissolving') {
+                platform.isDissolving = false; // Inizialmente non sta dissolvendo
+                platform.dissolveDuration = 0.8;
+                platform.dissolveAlpha = 1.0;
+            }
+            
+            platforms.push(platform);
         }
 
         return platforms;

@@ -766,7 +766,7 @@ export class Player {
                 }
             }
             
-            // Handle ROTATING platform - inizia a ruotare quando il player ci sale
+            // Handle ROTATING platform - inizia a ruotare quando il player ci atterra
             if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
                 platform.isRotating = true;
             }

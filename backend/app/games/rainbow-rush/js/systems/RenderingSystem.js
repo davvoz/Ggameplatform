@@ -16,6 +16,7 @@ import { UIRenderer } from './renderers/UIRenderer.js';
 import { PowerupUIRenderer } from './PowerupUIRenderer.js';
 import { LevelProgressBarRenderer } from './renderers/LevelProgressBarRenderer.js';
 import { HUDRenderer } from './HUDRenderer.js';
+import { EntityLabelRenderer } from './renderers/EntityLabelRenderer.js';
 
 export class RenderingSystem {
     constructor(gl, canvasWidth, canvasHeight) {
@@ -43,8 +44,17 @@ export class RenderingSystem {
             console.error('RenderingSystem: textCtx is null! UI buttons will not render.');
         }
         
+        // Initialize centralized label renderer
+        this.labelRenderer = this.textCtx ? new EntityLabelRenderer(this.textCtx) : null;
+        
         // Initialize specialized renderers
         this.factory = new RendererFactory(this.renderer, this.textCtx);
+        
+        // Inject label renderer into all entity renderers
+        if (this.labelRenderer) {
+            this.factory.injectLabelRenderer(this.labelRenderer);
+        }
+        
         this.backgroundRenderer = new BackgroundRenderer(this.renderer, canvasWidth, canvasHeight);
         this.animationRenderer = new AnimationRenderer(this.renderer, this.textCtx, canvasWidth, canvasHeight);
         this.particleRenderer = new ParticleRenderer(this.renderer);

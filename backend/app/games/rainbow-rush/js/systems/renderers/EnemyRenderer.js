@@ -3,12 +3,18 @@
  * Implementa IEntityRenderer per consistenza con altri renderer
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class EnemyRenderer extends IEntityRenderer {
     constructor() {
         super();
         this.textCanvas = document.getElementById('textCanvas');
         this.textCtx = this.textCanvas ? this.textCanvas.getContext('2d') : null;
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     /**
@@ -138,8 +144,10 @@ export class EnemyRenderer extends IEntityRenderer {
             enemy.height * 1.6 * scale
         );
 
-        // Render label above enemy
-        this.renderEnemyLabel(enemy, enemyCenterX, enemyCenterY - enemy.height / 2 - 20);
+        // Render label above enemy using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderEnemyLabel(enemy, enemyCenterX, enemyCenterY - enemy.height / 2 - 20);
+        }
         
         // Render custom graphics or emoji icon with animation
         ctx.save();
@@ -714,41 +722,6 @@ export class EnemyRenderer extends IEntityRenderer {
         ctx.restore();
     }
 
-    /**
-     * Render label above enemy
-     */
-    renderEnemyLabel(enemy, x, y) {
-        const ctx = this.textCtx;
-        if (!ctx) return;
-        
-        const label = enemy.id ? enemy.id.toUpperCase() : enemy.category ? enemy.category.toUpperCase() : 'ENEMY';
-        
-        ctx.save();
-        ctx.font = 'bold 9px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        
-        // Background
-        const metrics = ctx.measureText(label);
-        const padding = 3;
-        const bgWidth = metrics.width + padding * 2;
-        const bgHeight = 12;
-        
-        ctx.fillStyle = 'rgba(100, 0, 0, 0.7)';
-        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Border
-        ctx.strokeStyle = 'rgba(255, 100, 100, 0.8)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
-        
-        // Text
-        ctx.fillStyle = '#ff6666';
-        ctx.fillText(label, x, y);
-        
-        ctx.restore();
-    }
-    
     /**
      * Resize handler
      */

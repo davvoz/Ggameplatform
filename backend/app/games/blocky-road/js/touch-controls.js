@@ -41,6 +41,9 @@ class TouchControls {
             const touch = e.touches[0];
             this.touchStartX = touch.clientX;
             this.touchStartY = touch.clientY;
+            // Initialize touchEnd to same position to prevent false swipe detection
+            this.touchEndX = touch.clientX;
+            this.touchEndY = touch.clientY;
             this.isTouching = true;
             
             // Start game on first touch
@@ -71,20 +74,20 @@ class TouchControls {
         const absDeltaX = Math.abs(deltaX);
         const absDeltaY = Math.abs(deltaY);
         
-        // Determine if it's a swipe or a tap
+        // Determine if it's a swipe or a tap (increased threshold for more reliable tap detection)
         const isSwipe = Math.max(absDeltaX, absDeltaY) > this.minSwipeDistance;
         
         if (isSwipe) {
-            // Handle swipe gesture
+            // Handle swipe gesture - check which direction is dominant
             if (absDeltaX > absDeltaY) {
-                // Horizontal swipe
+                // Horizontal swipe dominates
                 if (deltaX > 0) {
                     this.handleSwipe('right');
                 } else {
                     this.handleSwipe('left');
                 }
             } else {
-                // Vertical swipe
+                // Vertical swipe dominates
                 if (deltaY > 0) {
                     this.handleSwipe('down');
                 } else {
@@ -92,7 +95,7 @@ class TouchControls {
                 }
             }
         } else {
-            // Single tap - always move forward
+            // Tap anywhere = move forward (most common action)
             this.handleSwipe('up');
         }
         
@@ -107,8 +110,6 @@ class TouchControls {
         if (!this.game.isStarted || this.game.isGameOver || this.game.isPaused) return;
         if (this.game.player.isMoving || this.game.inputCooldown > 0) return;
         
-        console.log('👆 Swipe:', direction);
-        
         let dx = 0, dz = 0;
         
         switch(direction) {
@@ -119,22 +120,15 @@ class TouchControls {
                 dz = -1; // Move backward
                 break;
             case 'left':
-                dx = 1; // Move left (swapped)
+                dx = 1; // Move left (swapped for camera)
                 break;
             case 'right':
-                dx = -1; // Move right (swapped)
+                dx = -1; // Move right (swapped for camera)
                 break;
         }
         
-        if (this.game.player.move(dx, dz, () => {
-            this.game.inputCooldown = 0;
-        })) {
-            if (dz > 0) {
-                this.game.score++;
-                this.game.updateUI();
-            }
-            this.game.inputCooldown = 10;
-        }
+        // Use game's processMove method for consistent score tracking
+        this.game.processMove(dx, dz);
     }
     
     createVirtualButtons() {

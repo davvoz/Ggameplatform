@@ -11,111 +11,235 @@ class ObstacleManager {
         // Vehicle spawn settings
         this.spawnTimer = 0;
         this.spawnInterval = 10; // Check very frequently for continuous spawning
+        
+        // Train system - simple and clear
+        this.trainTimers = {}; // Track per rail row: {z: {nextSpawn: frameCount, warned: bool}}
+        this.frameCount = 0; // Global frame counter
+        
+        // Difficulty progression system
+        this.currentScore = 0;
+    }
+    
+    // Calculate difficulty multipliers based on score (0-100)
+    getDifficultySettings() {
+        const score = this.currentScore;
+        
+        // Easy start (score 0-20): 30-50% of full difficulty
+        // Medium (score 20-50): 50-80% of full difficulty  
+        // Hard (score 50+): 80-100% of full difficulty
+        
+        let difficulty = 0.3; // Start at 30%
+        
+        if (score <= 20) {
+            // Linear progression from 30% to 50%
+            difficulty = 0.3 + (score / 20) * 0.2;
+        } else if (score <= 50) {
+            // Linear progression from 50% to 80%
+            difficulty = 0.5 + ((score - 20) / 30) * 0.3;
+        } else {
+            // Linear progression from 80% to 100%
+            difficulty = 0.8 + Math.min((score - 50) / 50, 0.2);
+        }
+        
+        return {
+            vehicleDensity: difficulty,      // How many vehicles per road
+            trainFrequency: difficulty,      // How often trains spawn
+            platformDensity: difficulty,     // How many logs per water row
+            coinSpawnRate: Math.min(difficulty * 1.5, 1.0), // Coins spawn more at higher difficulty
+            difficulty: difficulty           // Overall multiplier
+        };
+    }
+    
+    updateScore(score) {
+        this.currentScore = score;
     }
     
     update(playerZ) {
         this.spawnTimer++;
+        this.frameCount++; // Increment global frame counter
         
         // Spawn new vehicles on road rows
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnTimer = 0;
             this.trySpawnVehicles(playerZ);
-            this.trySpawnTrains(playerZ);
             this.trySpawnPlatforms(playerZ);
         }
+        
+        // Check trains every frame (time-based spawning)
+        this.updateTrains(playerZ);
         
         // Spawn coins
         this.trySpawnCoins(playerZ);
         
         // Update platforms (logs)
         this.platforms.forEach((platform, index) => {
-            // Emerge animation from waterfall
+            // Emerge animation from waterfall - rise up from below
+            // Take into account log length - first block should be usable as soon as it enters playable area
             if (platform.isEmerging) {
-                platform.emergeProgress += 0.02;
-                platform.mesh.position.y = THREE.MathUtils.lerp(-0.5, platform.targetY, platform.emergeProgress);
+                const logHalfLength = platform.length / 2;
+                // Complete emerge when leading edge is at -5/+5 (2 units inside playable area)
+                // This ensures the front blocks are immediately usable
+                const enterEdge = platform.velocity > 0 ? -5 : 5;
                 
-                if (platform.emergeProgress >= 1) {
+                // Calculate the leading edge of the log (front end)
+                const leadingEdge = platform.velocity > 0 
+                    ? platform.mesh.position.x + logHalfLength  // Moving right: front is right side
+                    : platform.mesh.position.x - logHalfLength; // Moving left: front is left side
+                
+                // Check if leading edge has entered playable area enough
+                const hasReachedThreshold = platform.velocity > 0 
+                    ? leadingEdge >= enterEdge  // Moving right: front edge past -5
+                    : leadingEdge <= enterEdge; // Moving left: front edge past +5
+                
+                // Continue emerging animation
+                platform.emergeProgress += 0.04; // Faster emerge for smoother appearance
+                const startY = platform.startY || -0.8;
+                platform.mesh.position.y = THREE.MathUtils.lerp(startY, platform.targetY, platform.emergeProgress);
+                
+                // Stop emerging when fully risen AND reached threshold
+                if (platform.emergeProgress >= 1 && hasReachedThreshold) {
                     platform.isEmerging = false;
                     platform.mesh.position.y = platform.targetY;
                 }
             }
             
-            // Submerge animation when approaching opposite waterfall
-            const oppositeWaterfall = platform.velocity > 0 ? 7.5 : -7.5;
-            const distanceToWaterfall = Math.abs(platform.mesh.position.x - oppositeWaterfall);
+            // Submerge animation when exiting playable area - sink down outside play zone
+            // Take into account log length - last block should be outside playable area when submerging starts
+            // Log center is at mesh.position.x, log extends length/2 in each direction
+            const logHalfLength = platform.length / 2;
+            const exitEdge = platform.velocity > 0 ? 7 : -7; // Original threshold
             
-            if (distanceToWaterfall < 1 && !platform.isSubmerging && !platform.isEmerging) {
+            // Calculate the trailing edge of the log (back end)
+            const trailingEdge = platform.velocity > 0 
+                ? platform.mesh.position.x - logHalfLength  // Moving right: back is left side
+                : platform.mesh.position.x + logHalfLength; // Moving left: back is right side
+            
+            // Start submerging when the TRAILING edge exits playable area
+            const hasExitedPlayArea = platform.velocity > 0 
+                ? trailingEdge >= exitEdge  // Moving right: back edge past +7
+                : trailingEdge <= exitEdge; // Moving left: back edge past -7
+            
+            if (hasExitedPlayArea && !platform.isSubmerging && !platform.isEmerging) {
                 platform.isSubmerging = true;
                 platform.submergeProgress = 0;
             }
             
             if (platform.isSubmerging) {
-                platform.submergeProgress += 0.02;
-                platform.mesh.position.y = THREE.MathUtils.lerp(platform.targetY, -0.5, platform.submergeProgress);
+                platform.submergeProgress += 0.04; // Match emerge speed
+                platform.mesh.position.y = THREE.MathUtils.lerp(platform.targetY, -0.8, platform.submergeProgress);
                 
                 if (platform.submergeProgress >= 1) {
                     // Log fully submerged - remove it
                     this.scene.remove(platform.mesh);
-                    platform.mesh.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) child.material.dispose();
-                    });
+                    // Don't dispose shared geometries/materials
                     this.platforms.splice(index, 1);
                     return;
                 }
             }
             
-            // Normal horizontal movement
+            // Normal horizontal movement - move even while emerging/submerging
             platform.mesh.position.x += platform.velocity;
             platform.x = platform.mesh.position.x;
         });
         
         // Update vehicles
         this.obstacles.forEach((obstacle, index) => {
+            const oldX = obstacle.mesh.position.x;
             obstacle.mesh.position.x += obstacle.velocity;
             
-            // Rotate wheels for effect
-            obstacle.mesh.children.forEach(child => {
-                if (child.userData.isWheel) {
-                    child.rotation.x += obstacle.velocity * 0.5;
-                }
-            });
-            
-            // Wrap around when reaching offset (Crossy Road style)
-            if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
-                obstacle.mesh.position.x = -12;
-            } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
-                obstacle.mesh.position.x = 12;
+            // Rotate wheels for effect (only if has wheels cached)
+            if (obstacle.wheels) {
+                obstacle.wheels.forEach(wheel => {
+                    wheel.rotation.x += obstacle.velocity * 0.5;
+                });
             }
             
-            // Remove if too far (safety)
-            if (Math.abs(obstacle.mesh.position.x) > 15) {
-                this.scene.remove(obstacle.mesh);
-                obstacle.mesh.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
+            // Fade-out animation when approaching edge (beyond ±8)
+            const distanceFromCenter = Math.abs(obstacle.mesh.position.x);
+            if (distanceFromCenter > 8) {
+                // Start fading at x > 8, fully transparent at x > 12
+                const fadeProgress = (distanceFromCenter - 8) / 4;
+                const opacity = Math.max(0, 1 - fadeProgress);
+                
+                // Cache materials on first fade to avoid repeated traverse
+                if (!obstacle.cachedMaterials) {
+                    obstacle.cachedMaterials = [];
+                    obstacle.mesh.traverse(child => {
+                        if (child.material) {
+                            child.userData.originalOpacity = child.material.opacity || 1;
+                            child.material.transparent = true;
+                            obstacle.cachedMaterials.push(child.material);
+                        }
+                    });
+                }
+                
+                // Fast opacity update without traverse
+                obstacle.cachedMaterials.forEach((mat, i) => {
+                    mat.opacity = mat.userData?.originalOpacity * opacity || opacity;
                 });
-                this.obstacles.splice(index, 1);
+            }
+            
+            // Different behavior for trains vs vehicles
+            if (obstacle.type === 'train') {
+                // Trains don't wrap - they pass through once and get removed far outside visibility
+                if (Math.abs(obstacle.mesh.position.x) > 50) {
+                    this.scene.remove(obstacle.mesh);
+                    // Fast dispose without traverse (geometries/materials are shared, don't dispose)
+                    this.obstacles.splice(index, 1);
+                }
+            } else {
+                // Vehicles wrap around (Crossy Road style)
+                if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
+                    obstacle.mesh.position.x = -12;
+                    // Reset opacity using cached materials
+                    if (obstacle.cachedMaterials) {
+                        obstacle.cachedMaterials.forEach(mat => {
+                            mat.opacity = mat.userData?.originalOpacity || 1;
+                        });
+                    }
+                } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
+                    obstacle.mesh.position.x = 12;
+                    // Reset opacity using cached materials
+                    if (obstacle.cachedMaterials) {
+                        obstacle.cachedMaterials.forEach(mat => {
+                            mat.opacity = mat.userData?.originalOpacity || 1;
+                        });
+                    }
+                }
+                
+                // Remove vehicles if too far (safety)
+                if (Math.abs(obstacle.mesh.position.x) > 15) {
+                    this.scene.remove(obstacle.mesh);
+                    obstacle.mesh.traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                    this.obstacles.splice(index, 1);
+                }
             }
         });
         
-        // Update coins (rotation)
+        // Update coins (rotation) - update every other frame for performance
+        if (!this.coinUpdateCounter) this.coinUpdateCounter = 0;
+        this.coinUpdateCounter++;
+        const updateCoins = this.coinUpdateCounter % 2 === 0;
+        
         this.coins.forEach((coin, index) => {
-            coin.mesh.rotation.y += coin.rotationSpeed;
+            if (updateCoins) {
+                coin.mesh.rotation.y += coin.rotationSpeed * 2; // Compensate for skipped frames
+            }
             
-            // Remove if collected or too far
+            // Remove if collected or too far (don't dispose shared geometries/materials)
             if (coin.collected || coin.z < playerZ - 15) {
                 this.scene.remove(coin.mesh);
-                coin.mesh.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
-                });
                 this.coins.splice(index, 1);
             }
         });
     }
     
     trySpawnVehicles(playerZ) {
+        const settings = this.getDifficultySettings();
+        
         // Check rows ahead of player for roads
         for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
             const row = this.terrain.getRowAt(z);
@@ -124,31 +248,73 @@ class ObstacleManager {
             // Check if already has vehicles currently
             const vehicleCount = this.obstacles.filter(obs => Math.abs(obs.z - z) < 0.5).length;
             
-            // Crossy Road: 1-2 vehicles per row
-            const maxVehicles = Math.floor(Math.random() * 2) + 1; // 1 or 2
+            // Progressive difficulty: 0-2 vehicles based on difficulty
+            // At 30% difficulty: 0-1 vehicles (easy start)
+            // At 100% difficulty: 1-2 vehicles (full game)
+            const maxVehicles = settings.vehicleDensity < 0.5 
+                ? (Math.random() < settings.vehicleDensity * 2 ? 1 : 0)
+                : Math.floor(Math.random() * 2) + 1;
+            
             if (vehicleCount < maxVehicles) {
                 this.spawnVehicle(z);
             }
         }
     }
     
-    trySpawnTrains(playerZ) {
-        // Check rail rows ahead of player
-        for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
+    updateTrains(playerZ) {
+        // Check each rail row ahead of player
+        const minZ = Math.floor(playerZ) - 5;
+        const maxZ = Math.floor(playerZ) + 25;
+        
+        for (let z = minZ; z < maxZ; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row || row.type !== 'rail') continue;
             
-            // Count existing trains on this row
-            const existingTrains = this.obstacles.filter(obs => 
-                obs.type === 'train' && Math.abs(obs.z - z) < 0.5
-            ).length;
+            // Initialize timer for this row if new
+            if (!this.trainTimers[z]) {
+                const settings = this.getDifficultySettings();
+                
+                // Progressive train frequency - LESS trains for performance:
+                // Low difficulty (30%): 15-20 seconds between trains
+                // High difficulty (100%): 8-12 seconds between trains
+                const minDelay = Math.floor(480 - (settings.trainFrequency * 240)); // 480->240 (8->4 sec)
+                const maxDelay = Math.floor(1200 - (settings.trainFrequency * 480)); // 1200->720 (20->12 sec)
+                const initialDelay = minDelay + Math.floor(Math.random() * (maxDelay - minDelay));
+                
+                this.trainTimers[z] = {
+                    nextSpawn: this.frameCount + initialDelay,
+                    warned: false,
+                    direction: Math.random() < 0.5 ? 1 : -1
+                };
+            }
             
-            // Keep spawning trains continuously (1-2 trains per row)
-            if (existingTrains < 1) {
-                this.spawnTrain(z);
+            const timer = this.trainTimers[z];
+            const framesUntilTrain = timer.nextSpawn - this.frameCount;
+            
+            // Warning 0.75 seconds before (45 frames) - reduced for snappier feel
+            if (!timer.warned && framesUntilTrain <= 45 && framesUntilTrain > 0) {
+                timer.warned = true;
                 if (row.warningLights) {
-                    this.flashWarningLights(row.warningLights);
+                    this.startWarningLights(row.warningLights);
                 }
+            }
+            
+            // Spawn train
+            if (framesUntilTrain <= 0 && !timer.spawned) {
+                this.spawnCompleteTrain(row, timer.direction);
+                timer.spawned = true;
+                
+                // Schedule next train with progressive difficulty
+                const settings = this.getDifficultySettings();
+                const minNext = Math.floor(480 - (settings.trainFrequency * 240));
+                const maxNext = Math.floor(1200 - (settings.trainFrequency * 480));
+                const nextDelay = minNext + Math.floor(Math.random() * (maxNext - minNext));
+                this.trainTimers[z] = {
+                    nextSpawn: this.frameCount + nextDelay,
+                    warned: false,
+                    spawned: false,
+                    direction: Math.random() < 0.5 ? 1 : -1
+                };
             }
         }
     }
@@ -221,54 +387,103 @@ class ObstacleManager {
         });
     }
     
-    spawnTrain(z) {
-        const direction = Math.random() < 0.5 ? 1 : -1;
-        const startX = direction > 0 ? -25 : 25; // Start even further
-        const speed = 0.18 * direction; // Even faster!
-        
+    spawnCompleteTrain(row, direction) {
+        const startTime = performance.now();
+        const speed = 0.6 * direction; // Fast but not excessive - reduced for performance
+        const startX = direction > 0 ? -35 : 35; // Spawn far outside
         const trainColor = Math.random() < 0.5 ? 0x9C27B0 : 0xE91E63;
-        const train = Models.createTrain(trainColor);
-        train.position.set(startX, 0.2, z);
+        const railZ = row.z; // Use actual row Z position!
+        console.log(`🚂 Starting train spawn at Z=${railZ}...`);
         
-        // Face the direction of travel
-        train.rotation.y = (Math.PI / 2) * direction;
+        // Locomotive + 11 cars
+        const totalCars = 12; // Standard train length
+        const carSpacing = 1.5; // Tighter spacing - cars are 1.2 wide, so 0.3 gap between them
         
-        this.scene.add(train);
+        for (let i = 0; i < totalCars; i++) {
+            const isEngine = (i === 0);
+            const trainPart = isEngine ? Models.createTrain(trainColor) : Models.createTrainCar(trainColor);
+            
+            if (!trainPart) {
+                console.error(`❌ Train part ${i} is null!`);
+                continue;
+            }
+            
+            // Cars trail BEHIND the locomotive (opposite to movement direction)
+            // If moving right (+), cars are to the LEFT (negative offset)
+            // If moving left (-), cars are to the RIGHT (positive offset)
+            const xOffset = i * carSpacing * (-direction);
+            const finalX = startX + xOffset;
+            trainPart.position.set(finalX, 0.2, railZ);
+            trainPart.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+            
+            this.scene.add(trainPart);
+            
+            this.obstacles.push({
+                mesh: trainPart,
+                velocity: speed,
+                z: railZ,
+                type: 'train',
+                boundingBox: new THREE.Box3().setFromObject(trainPart)
+            });
+        }
         
-        this.obstacles.push({
-            mesh: train,
-            velocity: speed,
-            z: z,
-            type: 'train',
-            boundingBox: new THREE.Box3().setFromObject(train)
-        });
+        const elapsed = performance.now() - startTime;
+        console.log(`🚂 Train spawn completed in ${elapsed.toFixed(2)}ms (${totalCars} cars)`);
     }
     
 
     
-    flashWarningLights(lights) {
+    startWarningLights(lights) {
+        console.log('🚨 WARNING LIGHTS ACTIVATED!');
         lights.forEach(lightGroup => {
             const lightMesh = lightGroup.children.find(c => c.userData.isWarningLight);
+            const pointLight = lightGroup.children.find(c => c.userData.isWarningPointLight);
+            
             if (lightMesh) {
-                // Flash for 3 seconds before train arrives
                 const startTime = Date.now();
+                
                 const flashInterval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
-                    if (elapsed > 3000) {
+                    if (elapsed > 2000) { // 2 seconds
                         clearInterval(flashInterval);
-                        lightMesh.material.opacity = 0.2; // Reset to dim
+                        lightMesh.material.opacity = 0.1;
+                        lightMesh.material.emissive.setHex(0x000000);
+                        lightMesh.material.emissiveIntensity = 0;
+                        if (pointLight) pointLight.intensity = 0;
                         return;
                     }
-                    // Flash bright red
-                    lightMesh.material.opacity = Math.sin(elapsed * 0.015) * 0.4 + 0.5;
-                }, 50);
+                    // Fast dramatic flash - on/off
+                    const flashCycle = Math.floor(elapsed / 150) % 2;
+                    const isOn = flashCycle === 0;
+                    if (isOn) {
+                        // ON - bright red glow
+                        lightMesh.material.opacity = 0.8;
+                        lightMesh.material.emissive.setHex(0xff0000);
+                        lightMesh.material.emissiveIntensity = 1.0;
+                        if (pointLight) pointLight.intensity = 10.0;
+                    } else {
+                        // OFF - transparent
+                        lightMesh.material.opacity = 0.1;
+                        lightMesh.material.emissive.setHex(0x000000);
+                        lightMesh.material.emissiveIntensity = 0;
+                        if (pointLight) pointLight.intensity = 0;
+                    }
+                }, 75); // Update faster for clear on/off effect
             }
         });
     }
     
     trySpawnCoins(playerZ) {
-        // Spawn coins on safe terrain
-        for (let z = Math.floor(playerZ) + 5; z < playerZ + 15; z++) {
+        // Spawn coins on safe terrain - only ahead of player, never behind
+        // Only spawn coins at least 3 rows ahead to prevent spawning at current position
+        const minSpawnDistance = 5;  // Increased from 3 to 5
+        const maxSpawnDistance = 20;
+        
+        // Track furthest spawned position to prevent backward spawning
+        if (!this.furthestCoinZ) this.furthestCoinZ = playerZ;
+        const startZ = Math.max(Math.floor(playerZ) + minSpawnDistance, this.furthestCoinZ);
+        
+        for (let z = startZ; z < playerZ + maxSpawnDistance; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row) continue;
             
@@ -279,9 +494,15 @@ class ObstacleManager {
             const hasCoin = this.coins.some(coin => Math.abs(coin.z - z) < 0.5);
             if (hasCoin) continue;
             
-            // Random spawn
-            if (Math.random() < 0.15) {
+            // Progressive coin spawn rate:
+            // Low difficulty: 4% (fewer distractions)
+            // High difficulty: 12% (more coins to collect)
+            const settings = this.getDifficultySettings();
+            const spawnRate = 0.04 + (settings.coinSpawnRate * 0.08); // 4% to 12%
+            
+            if (Math.random() < spawnRate) {
                 this.spawnCoin(z);
+                this.furthestCoinZ = Math.max(this.furthestCoinZ, z);
             }
         }
     }
@@ -369,8 +590,14 @@ class ObstacleManager {
                 Math.abs(plat.z - z) < 0.5
             ).length;
             
-            // Keep spawning until we have 3-4 logs (increased from 3)
-            const desiredLogs = 4; // Target 4 logs per row for faster rhythm
+            // Progressive platform density:
+            // Low difficulty: 4-5 logs (easy crossings)
+            // High difficulty: 3-4 logs (harder rhythm)
+            const settings = this.getDifficultySettings();
+            const desiredLogs = settings.platformDensity < 0.5 
+                ? Math.floor(4 + Math.random() * 2) // 4-5 logs (easy)
+                : Math.floor(3 + Math.random() * 2); // 3-4 logs (hard)
+            
             if (currentLogs < desiredLogs) {
                 // Spawn one log at a time
                 this.spawnLogRow(z);
@@ -379,9 +606,13 @@ class ObstacleManager {
     }
     
     spawnLogRow(z) {
+        const startTime = performance.now();
         // Get the row to check/set consistent direction
         const row = this.terrain.getRowAt(z);
         if (!row) return;
+        
+        const elapsedCheck = performance.now() - startTime;
+        if (elapsedCheck > 2) console.log(`🪵 Platform spawn prep took ${elapsedCheck.toFixed(2)}ms`);
         
         // Check if this row already has a direction set
         // If not, assign one randomly and keep it for all logs in this row
@@ -437,8 +668,9 @@ class ObstacleManager {
         const logLength = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
         const log = Models.createLog(logLength);
         
-        // Start submerged at waterfall, will emerge with animation
-        log.position.set(waterfallX, -0.5, z);
+        // Start at waterfall position, below water surface, will emerge before entering play area
+        // Waterfall is at ±7.5, log emerges outside playable area (±7)
+        log.position.set(waterfallX, -0.8, z);
         
         this.scene.add(log);
         
@@ -451,6 +683,7 @@ class ObstacleManager {
             type: 'log',
             isEmerging: true,
             emergeProgress: 0,
+            startY: -0.8,
             targetY: 0.25,
             spawnSide: spawnFromLeft ? 'left' : 'right'
         };
@@ -490,5 +723,12 @@ class ObstacleManager {
         this.platforms = [];
         this.coins = [];
         this.spawnTimer = 0;
+        
+        // Reset train system
+        this.trainTimers = {};
+        this.frameCount = 0;
+        
+        // Reset coin spawn tracking for next game
+        this.furthestCoinZ = undefined;
     }
 }

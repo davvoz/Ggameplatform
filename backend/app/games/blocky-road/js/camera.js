@@ -7,7 +7,7 @@ class CrossyCamera {
         
         // Orthographic camera for isometric view
         const aspect = window.innerWidth / window.innerHeight;
-        const frustumSize = 8; // Smaller = more zoom
+        const frustumSize = 8; // Normal zoom
         
         this.camera = new THREE.OrthographicCamera(
             -frustumSize * aspect, // left
@@ -15,12 +15,16 @@ class CrossyCamera {
             frustumSize,           // top
             -frustumSize,          // bottom
             0.1,                   // near
-            100                    // far
+            300                    // far
         );
         
         // Crossy Road camera position (isometric angle)
-        this.camera.position.set(-5, 7, -5);
+        this.camera.position.set(-5, 8, -5);
         this.camera.lookAt(0, 0, 0);
+        
+        // Store the rotation for consistent viewing angle
+        this.fixedRotation = this.camera.rotation.clone();
+        
         this.camera.updateProjectionMatrix();
         
         // Target for smooth following
@@ -32,23 +36,28 @@ class CrossyCamera {
     }
     
     follow(target) {
-        // Smoothly follow target position
-        this.target.x = target.x;
-        this.target.z = target.z;
+        // Different easing for X (smooth player following) and Z (constant advancement)
+        // X: Heavy smoothing to avoid jitter on moving platforms
+        this.target.x += (target.x - this.target.x) * 0.08;
         
-        // Move camera to follow player, maintaining isometric angle
-        const targetCamX = this.target.x - 5;
+        // Z: Light smoothing for responsive forward movement (death line driven)
+        this.target.z += (target.z - this.target.z) * 0.15;
+        
+        // Camera follows smoothed target
         const targetCamZ = this.target.z - 5;
+        const targetCamX = this.target.x - 5;
         
-        this.camera.position.x += (targetCamX - this.camera.position.x) * this.easing;
-        this.camera.position.z += (targetCamZ - this.camera.position.z) * this.easing;
+        // Apply camera easing
+        this.camera.position.x += (targetCamX - this.camera.position.x) * 0.08;
+        this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.15;
         
-        this.camera.lookAt(this.target.x, 0, this.target.z);
+        // Keep fixed rotation instead of continuous lookAt
+        this.camera.rotation.copy(this.fixedRotation);
     }
     
     onResize() {
         const aspect = window.innerWidth / window.innerHeight;
-        const frustumSize = 8;
+        const frustumSize = 8; // Match constructor
         
         this.camera.left = -frustumSize * aspect;
         this.camera.right = frustumSize * aspect;

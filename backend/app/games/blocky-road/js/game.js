@@ -2,6 +2,7 @@
 
 class BlockyRoadGame {
     constructor() {
+        console.log('🎮 Blocky Road v2.1 - maxZ score fix loaded');
         this.scene = null;
         this.renderer = null;
         this.camera = null;
@@ -13,6 +14,7 @@ class BlockyRoadGame {
         this.audio = null;
         
         this.score = 0;
+        this.baseScore = 0;  // Track max gridZ separately from total score
         this.coins = 0;
         this.highScore = 0;
         
@@ -20,9 +22,10 @@ class BlockyRoadGame {
         this.isPaused = false;
         this.isStarted = false;
         
-        // Input
+        // Input - optimized for fast gameplay
         this.keys = {};
         this.inputCooldown = 0;
+        this.queuedInput = null;  // Queue one input while in cooldown
         
         // Rising water/danger zone mechanic (like Crossy Road)
         this.dangerZone = -15; // Start far behind player
@@ -68,6 +71,12 @@ class BlockyRoadGame {
         // Setup touch controls
         this.touchControls = new TouchControls(this);
         
+        // Death line system (chases player from behind)
+        this.deathLineZ = -7; // Starts at minimum distance from spawn (player at 0, distance 7)
+        this.deathLineSpeed = 1.0 / 60; // 1 block per second (divided by 60fps)
+        this.deathLineMinDistance = 7; // Minimum distance behind player (safe buffer)
+        this.deathLineEnabled = false; // Enable after player moves
+        
         // Create danger zone visual indicator
         this.createDangerZone();
         
@@ -95,28 +104,22 @@ class BlockyRoadGame {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
-        this.scene.fog = new THREE.Fog(0x87CEEB, 30, 60);
         
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ 
             antialias: true,
-            alpha: false
+            alpha: false,
+            powerPreference: 'high-performance',
+            precision: 'highp'
         });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
         
         console.log('🎨 Renderer created:', window.innerWidth, 'x', window.innerHeight);
-        
-        // Add grid helper for debugging
-        const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x888888);
-        this.scene.add(gridHelper);
-        
-        // Add axes helper for debugging
-        const axesHelper = new THREE.AxesHelper(5);
-        this.scene.add(axesHelper);
     }
     
     setupLights() {
@@ -129,16 +132,18 @@ class BlockyRoadGame {
         dirLight.position.set(10, 20, 10);
         dirLight.castShadow = true;
         
-        // Shadow camera settings
-        dirLight.shadow.camera.left = -20;
-        dirLight.shadow.camera.right = 20;
-        dirLight.shadow.camera.top = 20;
-        dirLight.shadow.camera.bottom = -20;
-        dirLight.shadow.camera.near = 0.1;
-        dirLight.shadow.camera.far = 100;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.bias = -0.0001;
+        // Shadow camera settings - increased area and better bias
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 150;
+        dirLight.shadow.mapSize.width = 4096;
+        dirLight.shadow.mapSize.height = 4096;
+        dirLight.shadow.bias = -0.001;
+        dirLight.shadow.normalBias = 0.02;
+        dirLight.shadow.radius = 1;
         
         this.scene.add(dirLight);
         
@@ -148,47 +153,39 @@ class BlockyRoadGame {
     }
     
     createDangerZone() {
-        // Create a red warning plane that moves forward when player is idle
-        const geometry = new THREE.PlaneGeometry(20, 2);
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0xff0000,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.DoubleSide
-        });
-        this.dangerZonePlane = new THREE.Mesh(geometry, material);
-        this.dangerZonePlane.rotation.x = -Math.PI / 2;
-        this.dangerZonePlane.position.y = 0.01;
-        this.dangerZonePlane.visible = false; // Keep hidden for now
-        // DISABLED: this.scene.add(this.dangerZonePlane);
+        // No visual fire wall - death line is invisible
+        // Camera will follow the death line advancement instead
         
         // Create boundary shadows (left and right)
         this.createBoundaryShadows();
     }
     
     createBoundaryShadows() {
-        // Create boundary shadows from edge of playable area outward
-        const shadowGeometry = new THREE.PlaneGeometry(10, 200); // Wide shadow
+        // Create boundary shadows covering area OUTSIDE playable zone
+        // Playable area: -7 to +7, Map extends to -25 to +25
+        // Shadows should cover from -25 to -7 (left) and +7 to +25 (right)
+        const shadowWidth = 18; // Width of shadow area (from edge to playable boundary)
+        const shadowGeometry = new THREE.PlaneGeometry(shadowWidth, 200);
         const shadowMaterial = new THREE.MeshBasicMaterial({
             color: 0x000000,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.4,
             side: THREE.DoubleSide,
-            depthWrite: false // Don't write to depth buffer so it's always visible
+            depthWrite: false
         });
         
-        // Left boundary shadow (from x=-7 extending left)
+        // Left boundary shadow: covers x=-25 to x=-7 (center at -16)
         const leftShadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
         leftShadow.rotation.x = -Math.PI / 2;
-        leftShadow.position.set(-12, 0.5, 0); // Wider area (covers -17 to -7)
-        leftShadow.renderOrder = 999; // Render last, on top of everything
+        leftShadow.position.set(-16, 0.5, 0); // -25 + 9 = -16 (center of -25 to -7)
+        leftShadow.renderOrder = 999;
         this.scene.add(leftShadow);
         
-        // Right boundary shadow (from x=+7 extending right)
+        // Right boundary shadow: covers x=+7 to x=+25 (center at +16)
         const rightShadow = new THREE.Mesh(shadowGeometry, shadowMaterial.clone());
         rightShadow.rotation.x = -Math.PI / 2;
-        rightShadow.position.set(12, 0.5, 0); // Wider area (covers +7 to +17)
-        rightShadow.renderOrder = 999; // Render last, on top of everything
+        rightShadow.position.set(16, 0.5, 0); // 7 + 9 = 16 (center of +7 to +25)
+        rightShadow.renderOrder = 999;
         this.scene.add(rightShadow);
         
         // Store references to update position with camera
@@ -197,10 +194,22 @@ class BlockyRoadGame {
     
     setupInput() {
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            
+            // Prevent double-triggering from key repeat
+            if (this.keys[key]) return;
+            
+            this.keys[key] = true;
             
             if (!this.isStarted) {
                 this.startGame();
+                return;
+            }
+            
+            // Instant input queuing for arrow keys/WASD
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+                // Trigger handleInput immediately for responsive feel
+                this.handleInput();
             }
         });
         
@@ -255,8 +264,9 @@ class BlockyRoadGame {
         // Hide game over screen
         document.getElementById('gameOver').style.display = 'none';
         
-        // Reset score
+        // Reset score (will trigger session creation in RuntimeShell)
         this.score = 0;
+        this.baseScore = 0;
         this.coins = 0;
         this.updateUI();
         
@@ -268,10 +278,23 @@ class BlockyRoadGame {
         this.obstacles.clear();
         this.particles.clear();
         
+        // Reset difficulty to easy
+        this.terrain.updateScore(0);
+        this.obstacles.updateScore(0);
+        
         this.terrain.generateInitialTerrain();
         this.player.reset(0, 0);
         
+        // Reset death line (invisible)
+        this.deathLineZ = -7; // Player spawns at 0, so death line at -7 maintains correct distance
+        this.deathLineEnabled = false;
+        
         console.log('🔄 Game restarted');
+        
+        // Send score=0 to trigger session restart detection
+        if (typeof PlatformSDK !== 'undefined') {
+            PlatformSDK.sendScore(0);
+        }
     }
     
     handleInput() {
@@ -293,21 +316,26 @@ class BlockyRoadGame {
         }
         
         if (dx !== 0 || dz !== 0) {
-            const moved = this.player.move(dx, dz, () => {
-                this.checkCollisions();
-            });
+            // Process immediately - no queuing needed
+            this.processMove(dx, dz);
+        }
+    }
+    
+    processMove(dx, dz) {
+        const moved = this.player.move(dx, dz, () => {
+            this.checkCollisions();
+        });
+        
+        if (moved) {
+            this.inputCooldown = 1;  // 1 frame cooldown for reliable fast input
             
-            if (moved) {
-                this.inputCooldown = 10;
-                
-                // Score for moving forward
-                if (dz > 0) {
-                    this.score++;
+            // Score tracking: increment by 1 for each forward step
+            if (dz > 0) {
+                const currentGridZ = this.player.gridZ;
+                if (currentGridZ > this.baseScore) {
+                    this.baseScore = currentGridZ;
+                    this.score++;  // Simply increment by 1 for forward movement
                     this.updateUI();
-                    
-                    if (typeof PlatformSDK !== 'undefined') {
-                        PlatformSDK.sendScore(this.score);
-                    }
                 }
             }
         }
@@ -363,14 +391,11 @@ class BlockyRoadGame {
         // Check coin collection
         const coin = this.obstacles.checkCoinCollision(playerPos, (coin) => {
             this.coins++;
-            this.score += 10;
+            // Add +5 bonus points for coin
+            this.score += 5;
             this.updateUI();
             this.particles.createCoinParticles(coin.mesh.position);
             this.audio.play('coin');
-            
-            if (typeof PlatformSDK !== 'undefined') {
-                PlatformSDK.sendScore(this.score);
-            }
         });
     }
     
@@ -379,6 +404,11 @@ class BlockyRoadGame {
         
         console.log('💀 Game Over:', reason);
         this.isGameOver = true;
+        
+        // Send final score only at game over
+        if (typeof PlatformSDK !== 'undefined') {
+            PlatformSDK.sendScore(this.score);
+        }
         
         // Determine death type based on reason
         const inWater = reason.includes('Drowned') || reason.includes('💧');
@@ -399,12 +429,18 @@ class BlockyRoadGame {
             document.getElementById('gameOver').style.display = 'block';
         }, 500);
         
-        // Send to SDK
+        // Send to SDK - grant XP every game
         if (typeof PlatformSDK !== 'undefined') {
-            PlatformSDK.gameOver(this.score, {
-                coins: this.coins,
-                reason: reason
-            });
+            try {
+                PlatformSDK.gameOver(this.score, {
+                    coins: this.coins,
+                    reason: reason,
+                    timestamp: Date.now()
+                });
+                console.log(`📡 Game over sent to SDK: score=${this.score}`);
+            } catch (e) {
+                console.error('⚠️ Failed to send game over to SDK:', e);
+            }
         }
     }
     
@@ -416,27 +452,79 @@ class BlockyRoadGame {
     update(deltaTime = 16) {
         if (!this.isStarted || this.isGameOver || this.isPaused) return;
         
+        const frameStart = performance.now();
+        
         // Handle input
         this.handleInput();
         
         // Update game systems
         const playerPos = this.player.getPosition();
         this.player.update();
-        this.terrain.update(playerPos.z);
+        this.terrain.update(playerPos.z, this.score);
+        
+        // Update obstacles with current score for difficulty progression
+        this.obstacles.updateScore(this.score);
         this.obstacles.update(playerPos.z);
+        
         this.particles.update();
         
         // Rising danger zone mechanic (like Crossy Road's water)
         // DISABLED TEMPORARILY
         // this.updateDangerZone(playerPos.z, deltaTime);
         
-        // Continuous collision checking
+        // Continuous collision checking (only when player stopped or every 3rd frame while moving)
         if (!this.player.isMoving) {
             this.checkCollisions();
+        } else {
+            if (!this.collisionCheckCounter) this.collisionCheckCounter = 0;
+            this.collisionCheckCounter++;
+            if (this.collisionCheckCounter % 3 === 0) {
+                this.checkCollisions();
+            }
         }
         
-        // Update camera
-        this.camera.follow(this.player.mesh.position);
+        // Enable death line when player moves forward past Z=2
+        if (!this.deathLineEnabled && playerPos.z > 2) {
+            this.deathLineEnabled = true;
+            console.log('💀 Death line activated!');
+        }
+        
+        // Update death line (chases player from behind)
+        if (this.deathLineEnabled) {
+            // Death line ALWAYS advances at 1 block per second
+            this.deathLineZ += this.deathLineSpeed;
+            
+            // Calculate distance from player
+            const distanceFromPlayer = playerPos.z - this.deathLineZ;
+            
+            // If player advanced and distance exceeds minimum, jump death line to maintain minimum distance
+            // This only happens when player moves FORWARD, not backward or sideways
+            const targetDeathLineZ = playerPos.z - this.deathLineMinDistance;
+            if (targetDeathLineZ > this.deathLineZ) {
+                // Player moved forward beyond safe distance, death line catches up
+                this.deathLineZ = targetDeathLineZ;
+            }
+            
+            // Check if death line caught the player
+            if (playerPos.z < this.deathLineZ) {
+                console.log(`💀 Death! Player Z=${playerPos.z.toFixed(2)}, Death Line Z=${this.deathLineZ.toFixed(2)}`);
+                this.gameOver('Troppo lento! Sei stato raggiunto!');
+            }
+        }
+        
+        // Update camera to follow death line advancement (Crossy Road style)
+        // Camera ALWAYS advances with death line, never stops
+        // Death line is 2 blocks behind camera center (closer to bottom edge)
+        const cameraTargetZ = this.deathLineZ + 8;
+        
+        // Create target that uses player's actual position for smooth X following
+        // but uses death-line-driven Z for constant forward pressure
+        const cameraTarget = {
+            x: playerPos.x,
+            y: playerPos.y,
+            z: cameraTargetZ
+        };
+        this.camera.follow(cameraTarget);
         
         // Update boundary shadows to follow camera
         if (this.boundaryShadows) {
@@ -444,13 +532,28 @@ class BlockyRoadGame {
                 shadow.position.z = playerPos.z;
             });
         }
+        
+        // Log slow frames with object counts
+        const frameTime = performance.now() - frameStart;
+        if (frameTime > 16.67) { // Slower than 60fps
+            const obstacleCount = this.obstacles.obstacles.length;
+            const platformCount = this.obstacles.platforms.length;
+            const coinCount = this.obstacles.coins.length;
+            const particleCount = this.particles.particles.length;
+            const terrainRowCount = this.terrain.rows.length;
+            
+            console.warn(`⏱️ Slow frame: ${frameTime.toFixed(2)}ms | Obstacles:${obstacleCount} Platforms:${platformCount} Coins:${coinCount} Particles:${particleCount} TerrainRows:${terrainRowCount}`);
+        }
+        if (frameTime > 33) { // Slower than 30fps
+            console.error(`🔴 VERY SLOW frame: ${frameTime.toFixed(2)}ms`);
+        }
     }
     
     updateDangerZone(playerZ, deltaTime) {
         // Activate danger zone after player moves forward
         if (!this.dangerZoneActive && playerZ > 2) {
             this.dangerZoneActive = true;
-            this.dangerZone = playerZ - 12; // Start 12 units behind
+            this.dangerZone = playerZ - 10; // Start 8 units behind
         }
         
         if (!this.dangerZoneActive) {

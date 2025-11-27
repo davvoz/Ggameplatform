@@ -7,24 +7,53 @@ class TerrainGenerator {
         this.currentMaxZ = 0;
         this.currentZone = null;
         this.zoneRowsRemaining = 0;
+        this.currentScore = 0; // Track score for progressive difficulty
         
-        // Terrain zone definitions (like Crossy Road)
-        this.zoneTypes = [
+        // Terrain zone definitions - EASY START (lots of grass, very rare trains)
+        this.easyZones = [
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'road', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'water', minRows: 1, maxRows: 2 },
+            { type: 'grass', minRows: 4, maxRows: 6 },
+            { type: 'road', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 4 },
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'rail', minRows: 1, maxRows: 1 } // Very rare - 1/10 chance
+        ];
+        
+        // Terrain zone definitions - MEDIUM (balanced, rare trains)
+        this.mediumZones = [
             { type: 'grass', minRows: 2, maxRows: 3 },
-            { type: 'road', minRows: 4, maxRows: 6 },
-            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'road', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
             { type: 'water', minRows: 2, maxRows: 3 },
             { type: 'grass', minRows: 2, maxRows: 3 },
-            { type: 'road', minRows: 3, maxRows: 5 },
+            { type: 'road', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'rail', minRows: 1, maxRows: 1 } // Very rare - 1/10 chance
+        ];
+        
+        // Terrain zone definitions - HARD (current level)
+        this.hardZones = [
+            { type: 'grass', minRows: 1, maxRows: 2 }, // Less grass
+            { type: 'road', minRows: 4, maxRows: 6 },  // Longer roads
             { type: 'grass', minRows: 1, maxRows: 2 },
-            { type: 'rail', minRows: 1, maxRows: 2 } // Fewer rails!
+            { type: 'water', minRows: 3, maxRows: 4 }, // Wide rivers
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'road', minRows: 4, maxRows: 5 },
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'rail', minRows: 1, maxRows: 2 }   // Double rails
         ];
     }
     
     generateInitialTerrain() {
         // Generate terrain behind spawn point (with dense obstacles to block backward movement)
-        // Extended to -15 to ensure full visual coverage behind player
-        for (let z = -15; z < -2; z++) {
+        // Extended to -20 to ensure full visual coverage behind player
+        for (let z = -20; z < -2; z++) {
             const row = this.createRow(z, 'grass');
             // Mark as barrier zone - will add extra dense decorations
             row.isBarrier = true;
@@ -37,21 +66,36 @@ class TerrainGenerator {
         
         // Generate zones ahead
         let z = 3;
-        while (z <= 30) {
+        while (z <= 35) {
             const zone = this.getNextZone();
             const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             
-            for (let i = 0; i < numRows && z <= 30; i++, z++) {
+            for (let i = 0; i < numRows && z <= 35; i++, z++) {
                 this.createRow(z, zone.type);
             }
         }
         
-        this.currentMaxZ = 30;
+        this.currentMaxZ = 35;
+    }
+    
+    getZoneTypes() {
+        // Progressive difficulty based on score
+        if (this.currentScore < 50) {
+            return this.easyZones;  // 🟢 Easy
+        } else if (this.currentScore < 150) {
+            return this.mediumZones; // 🟡 Medium
+        } else {
+            return this.hardZones;   // 🟠 Hard/Extreme
+        }
+    }
+    
+    updateScore(score) {
+        this.currentScore = score;
     }
     
     getNextZone() {
         // Cycle through zone types for variety but realism
-        const availableZones = [...this.zoneTypes];
+        const availableZones = [...this.getZoneTypes()];
         
         // Don't repeat same zone type
         if (this.currentZone) {
@@ -187,14 +231,16 @@ class TerrainGenerator {
         this.scene.add(track);
         row.decorations.push(track);
         
-        // Add permanent warning lights at edges
+        // Add permanent warning lights symmetrically on sides, slightly before rails
         const leftLight = Models.createTrainWarningLight();
-        leftLight.position.set(-5.8, 0.2, row.z);
+        leftLight.position.set(-4, 0, row.z - 0.6); // Left side, 2 blocks closer
+        leftLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(leftLight);
         row.decorations.push(leftLight);
         
         const rightLight = Models.createTrainWarningLight();
-        rightLight.position.set(5.8, 0.2, row.z);
+        rightLight.position.set(4, 0, row.z - 0.6); // Right side, 2 blocks closer
+        rightLight.rotation.y = Math.PI; // Rotate 180° to face rails
         this.scene.add(rightLight);
         row.decorations.push(rightLight);
         
@@ -266,27 +312,44 @@ class TerrainGenerator {
         return waterfallGroup;
     }
     
-    update(playerZ) {
-        // Animate waterfalls
-        this.rows.forEach(row => {
-            if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-            if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
-        });
-        
-        // Generate new zones ahead (realistic environment)
-        const generationDistance = 30;
-        while (this.currentMaxZ < playerZ + generationDistance) {
-            const zone = this.getNextZone();
-            const numRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
-            
-            for (let i = 0; i < numRows; i++) {
-                this.currentMaxZ++;
-                this.createRow(this.currentMaxZ, zone.type);
-            }
+    update(playerZ, currentScore) {
+        // Update score for progressive terrain difficulty
+        if (currentScore !== undefined) {
+            this.currentScore = currentScore;
         }
         
-        // Cleanup old rows
-        const cleanupDistance = 15;
+        // Animate only waterfalls near player (optimization)
+        const animationDistance = 20;
+        this.rows.forEach(row => {
+            if (Math.abs(row.z - playerZ) < animationDistance) {
+                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
+                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+            }
+        });
+        
+        // Generate new terrain ahead gradually (1 row at a time when needed)
+        const generationDistance = 35;
+        if (this.currentMaxZ < playerZ + generationDistance) {
+            // Generate only 1 row per frame to avoid lag spikes
+            if (!this.currentZoneRows || this.currentZoneRows <= 0) {
+                const zone = this.getNextZone();
+                this.currentZoneRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
+            }
+            
+            const startTime = performance.now();
+            this.currentMaxZ++;
+            this.createRow(this.currentMaxZ, this.currentZone.type);
+            this.currentZoneRows--;
+            const elapsed = performance.now() - startTime;
+            if (elapsed > 5) console.log(`⚠️ Terrain row ${this.currentMaxZ} took ${elapsed.toFixed(2)}ms`);
+        }
+        
+        // Cleanup old rows less frequently (every 10th frame)
+        if (!this.cleanupCounter) this.cleanupCounter = 0;
+        this.cleanupCounter++;
+        if (this.cleanupCounter % 10 !== 0) return;
+        
+        const cleanupDistance = 20;
         this.rows = this.rows.filter(row => {
             if (row.z < playerZ - cleanupDistance) {
                 // Remove all meshes

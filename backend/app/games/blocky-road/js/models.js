@@ -479,7 +479,7 @@ const Models = {
         const block = new THREE.Mesh(geometry, material);
         block.receiveShadow = true;
         block.castShadow = false;
-        block.position.y = 0;
+        block.position.y = -0.25; // Half of block height (0.5/2) to sit on ground
         
         return block;
     },
@@ -502,7 +502,7 @@ const Models = {
         const group = new THREE.Group();
         
         // Rails (shiny metal) - extend along X axis (left to right)
-        const railGeometry = new THREE.BoxGeometry(30, 0.1, 0.1);
+        const railGeometry = new THREE.BoxGeometry(60, 0.1, 0.1);
         const railMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xA8A8A8,
             shininess: 80,
@@ -526,7 +526,7 @@ const Models = {
             flatShading: true
         });
         
-        for (let x = -15; x <= 15; x += 0.5) {
+        for (let x = -30; x <= 30; x += 0.5) {
             const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
             sleeper.position.set(x, 0.26, 0);
             sleeper.castShadow = true;
@@ -541,33 +541,57 @@ const Models = {
     createTrainWarningLight: () => {
         const group = new THREE.Group();
         
-        // Pole
-        const poleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8);
-        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        // Base - concrete base
+        const baseGeometry = new THREE.CylinderGeometry(0.15, 0.18, 0.15, 8);
+        const baseMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.position.y = 0.075;
+        base.castShadow = true;
+        group.add(base);
+        
+        // Pole - metal pole
+        const poleGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8);
+        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
         const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-        pole.position.y = 0.35;
+        pole.position.y = 0.85;
         pole.castShadow = true;
         group.add(pole);
         
-        // Light box
-        const boxGeometry = new THREE.BoxGeometry(0.12, 0.18, 0.08);
-        const boxMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
-        const box = new THREE.Mesh(boxGeometry, boxMaterial);
-        box.position.y = 0.75;
-        box.castShadow = true;
-        group.add(box);
+        // Light housing - black box with stripe
+        const housingGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.2);
+        const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        const housing = new THREE.Mesh(housingGeometry, housingMaterial);
+        housing.position.y = 1.65;
+        housing.castShadow = true;
+        group.add(housing);
         
-        // Red light (will flash when train comes)
-        const lightGeometry = new THREE.CircleGeometry(0.05, 8);
-        const lightMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xff0000,
+        // Yellow stripe on housing
+        const stripeGeometry = new THREE.BoxGeometry(0.31, 0.08, 0.21);
+        const stripeMaterial = new THREE.MeshLambertMaterial({ color: 0xffdd00 });
+        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+        stripe.position.y = 1.5;
+        group.add(stripe);
+        
+        // Light lens - glass sphere (transparent when off)
+        const lensGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+        const lensMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xffffff,
             transparent: true,
-            opacity: 0.2
+            opacity: 0.1,
+            emissive: 0x000000,
+            emissiveIntensity: 0,
+            shininess: 100
         });
-        const light = new THREE.Mesh(lightGeometry, lightMaterial);
-        light.position.set(0, 0.75, 0.05);
-        light.userData.isWarningLight = true;
-        group.add(light);
+        const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+        lens.position.set(0, 1.65, 0.12);
+        lens.userData.isWarningLight = true;
+        group.add(lens);
+        
+        // Add red point light for glow effect - MUCH BRIGHTER
+        const pointLight = new THREE.PointLight(0xff0000, 0, 8);
+        pointLight.position.set(0, 1.65, 0.2);
+        pointLight.userData.isWarningPointLight = true;
+        group.add(pointLight);
         
         return group;
     },
@@ -688,6 +712,54 @@ const Models = {
             { x: 0.5, z: -0.2 },
             { x: -0.5, z: -1.0 },
             { x: 0.5, z: -1.0 }
+        ];
+        
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(pos.x, 0.2, pos.z);
+            wheel.castShadow = true;
+            wheel.userData.isWheel = true;
+            group.add(wheel);
+        });
+        
+        return group;
+    },
+    
+    createTrainCar: (color = 0x9C27B0) => {
+        const group = new THREE.Group();
+        
+        // Main car body - cargo container style
+        const bodyGeometry = new THREE.BoxGeometry(1.2, 0.7, 2.0);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ 
+            color: color,
+            flatShading: true
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.5;
+        body.castShadow = true;
+        group.add(body);
+        
+        // Roof
+        const roofGeometry = new THREE.BoxGeometry(1.3, 0.1, 2.1);
+        const roofMaterial = new THREE.MeshLambertMaterial({ 
+            color: THREE.MathUtils.lerp(color, 0x000000, 0.3), // Darker roof
+            flatShading: true
+        });
+        const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+        roof.position.y = 0.9;
+        roof.castShadow = true;
+        group.add(roof);
+        
+        // Wheels (4 wheels)
+        const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 8);
+        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x2C3E50 });
+        
+        const wheelPositions = [
+            { x: -0.5, z: 0.7 },
+            { x: 0.5, z: 0.7 },
+            { x: -0.5, z: -0.7 },
+            { x: 0.5, z: -0.7 }
         ];
         
         wheelPositions.forEach(pos => {

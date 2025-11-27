@@ -189,7 +189,7 @@ export class InputManager {
         
         if (event.touches.length > 0) {
             const rect = event.target.getBoundingClientRect();
-            const y = event.touches[0].clientY - rect.left;
+            const y = event.touches[0].clientY - rect.top;
             
             // Calculate swipe distance
             const deltaY = y - this.touchStartY;

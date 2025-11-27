@@ -21,8 +21,6 @@ export class AnimationRenderer {
         if (!animation || !animation.active) return;
 
         const progress = animation.progress;
-        const level = animation.level;
-        const easedProgress = RenderingUtils.easeInOut(progress);
 
         const baseWidth = 200;
         const baseHeight = 60;

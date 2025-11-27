@@ -35,6 +35,38 @@ class UIClickHandler extends IClickHandler {
 }
 
 /**
+ * Turbo button click handler
+ */
+class TurboButtonClickHandler extends UIClickHandler {
+    _handle(x, y, context) {
+        if (!context.turboButtonUI) return false;
+        
+        const clicked = context.turboButtonUI.checkClick(x, y, context.player);
+        if (clicked) {
+            // Activate turbo via command mapper
+            return context.gameController.inputCommandMapper.executeCommand('turbo', context);
+        }
+        return false;
+    }
+}
+
+/**
+ * Flight button click handler
+ */
+class FlightButtonClickHandler extends UIClickHandler {
+    _handle(x, y, context) {
+        if (!context.flightButtonUI) return false;
+        
+        const clicked = context.flightButtonUI.checkClick(x, y, context.player);
+        if (clicked) {
+            // Activate flight via command mapper
+            return context.gameController.inputCommandMapper.executeCommand('flight', context);
+        }
+        return false;
+    }
+}
+
+/**
  * UIManager - Coordinates all UI components
  */
 export class UIManager {
@@ -44,7 +76,21 @@ export class UIManager {
         this.levelProgressBar = null;
         
         // Chain of Responsibility for click handling
-       // this.clickHandlerChain = this._buildClickHandlerChain();
+        this.clickHandlerChain = this._buildClickHandlerChain();
+    }
+
+    /**
+     * Build click handler chain
+     * @private
+     */
+    _buildClickHandlerChain() {
+        const turboHandler = new TurboButtonClickHandler();
+        const flightHandler = new FlightButtonClickHandler();
+        
+        // Chain: Turbo -> Flight
+        turboHandler.nextHandler = flightHandler;
+        
+        return turboHandler;
     }
 
     /**

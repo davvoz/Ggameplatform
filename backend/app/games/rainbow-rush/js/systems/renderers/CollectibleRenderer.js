@@ -60,43 +60,64 @@ export class CollectibleRenderer extends IEntityRenderer {
     }
 
     renderCollectible(collectible, time) {
-        const offset = collectible.pulsePhase || 0;
-        const pulseRadius = collectible.radius + Math.sin(time * 4 + offset) * 2;
-        const rotation = time * 3 + offset;
-
-        // Halos
-        this.renderer.drawCircle(collectible.x, collectible.y, pulseRadius * 1.8, [...collectible.color, 0.3]);
-        this.renderer.drawCircle(collectible.x, collectible.y, pulseRadius * 1.3, [...collectible.color, 0.5]);
-
-        // Rainbow ring
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2 + rotation;
-            const arcX = collectible.x + Math.cos(angle) * pulseRadius * 1.8;
-            const arcY = collectible.y + Math.sin(angle) * pulseRadius * 1.8;
-            const hue = (i / 8);
-            const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.6);
-            this.renderer.drawCircle(arcX, arcY, 2.5, [...rgb, 0.9]);
+        // Rotazione 3D semplice (effetto flip)
+        const rotation = (time * 3 + (collectible.pulsePhase || 0)) % (Math.PI * 2);
+        const scaleX = Math.abs(Math.cos(rotation)); // Effetto 3D flip (da 0 a 1)
+        const radiusX = collectible.radius * Math.max(0.2, scaleX); // Larghezza (minimo 0.2 per visibilità)
+        const radiusY = collectible.radius; // Altezza costante
+        
+        // Leggero bounce verticale
+        const bounce = Math.sin(time * 4 + (collectible.pulsePhase || 0)) * 2;
+        const y = collectible.y + bounce;
+        
+        // Glow esterno dorato semplice
+        const glowSize = collectible.radius * 1.8;
+        this.renderer.drawCircle(collectible.x, y, glowSize, [1.0, 0.84, 0.0, 0.2]);
+        
+        // Moneta - disegnata con ellissi (cerchi schiacciati orizzontalmente)
+        // Bordo esterno scuro (metallo)
+        this.renderEllipse(collectible.x, y, radiusX, radiusY, [0.8, 0.6, 0.0, 1.0]);
+        
+        // Interno dorato
+        const innerRadiusX = radiusX * 0.85;
+        const innerRadiusY = radiusY * 0.85;
+        this.renderEllipse(collectible.x, y, innerRadiusX, innerRadiusY, [1.0, 0.84, 0.0, 1.0]);
+        
+        // Riflesso luminoso (quando la moneta è di fronte)
+        if (scaleX > 0.5) {
+            const highlightRadiusX = radiusX * 0.4;
+            const highlightRadiusY = radiusY * 0.35;
+            this.renderEllipse(
+                collectible.x - radiusX * 0.15,
+                y - radiusY * 0.25,
+                highlightRadiusX,
+                highlightRadiusY,
+                [1.0, 1.0, 0.9, 0.5 * scaleX]
+            );
         }
-
-        // Body layers
-        for (let i = 0; i < 5; i++) {
-            const layerRadius = pulseRadius * (1 - i * 0.2);
-            const layerAlpha = 1.0 - i * 0.15;
-            const layerColor = [...collectible.color];
-            layerColor[0] = Math.min(layerColor[0] * (1 + i * 0.2), 1.0);
-            layerColor[1] = Math.min(layerColor[1] * (1 + i * 0.2), 1.0);
-            layerColor[2] = Math.min(layerColor[2] * (1 + i * 0.2), 1.0);
-            layerColor[3] = layerAlpha;
-            this.renderer.drawCircle(collectible.x, collectible.y, layerRadius, layerColor);
+        
+        // Simbolo centrale (solo quando visibile di fronte)
+        if (scaleX > 0.3) {
+            const symbolRadiusX = radiusX * 0.5;
+            const symbolRadiusY = radiusY * 0.5;
+            // Cerchio centrale come simbolo della moneta
+            this.renderEllipse(collectible.x, y, symbolRadiusX, symbolRadiusY, [1.0, 0.95, 0.4, 1.0]);
+            // Punto centrale
+            this.renderEllipse(collectible.x, y, symbolRadiusX * 0.3, symbolRadiusY * 0.3, [1.0, 1.0, 1.0, 0.9]);
         }
-
-        // Star
-        this.renderStar(collectible.x, collectible.y, pulseRadius, time + offset);
-
-        // Highlight
-        const sparkleSize = pulseRadius * 0.35;
-        this.renderer.drawCircle(collectible.x - sparkleSize * 0.2, collectible.y - sparkleSize * 0.2, 
-                                sparkleSize, [1.0, 1.0, 1.0, 0.95 + Math.sin(time * 8) * 0.05]);
+    }
+    
+    // Helper per disegnare ellissi (cerchi schiacciati)
+    renderEllipse(x, y, radiusX, radiusY, color) {
+        // Approssima ellisse con più cerchi
+        const steps = 8;
+        for (let i = 0; i < steps; i++) {
+            const offset = (i - steps / 2) * (radiusY * 2 / steps);
+            const width = radiusX * Math.sqrt(1 - Math.pow(offset / radiusY, 2));
+            if (width > 0) {
+                this.renderer.drawCircle(x, y + offset, width, color);
+            }
+        }
     }
 
     renderStar(x, y, radius, time) {

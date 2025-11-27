@@ -299,6 +299,7 @@ export class GameController {
 
         // Collect all entities for rendering
         const entities = this._collectRenderEntities();
+        const obstacles = entities.filter(e => e.type === 'obstacle');
         this.engine.entities = entities;
     }
 
@@ -307,6 +308,7 @@ export class GameController {
      * @private
      */
     _collectRenderEntities() {
+        
         const entities = [
             ...this.entityManager.platforms,
             ...this.entityManager.obstacles,

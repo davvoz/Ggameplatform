@@ -219,12 +219,13 @@ export class SpawnManager {
             this.platformCounter = 0; // Reset solo il counter per il livello corrente
             // totalPlatformsSpawned continua a crescere!
         }
-
+        console.log('📊 Total Platforms Spawned:', this.totalPlatformsSpawned);
         // Maybe spawn obstacle (but not on bouncy platforms)
         if (platform.platformType !== 'BOUNCY' && this.levelGenerator.shouldGenerateObstacle()) {
             const obstacle = this.levelGenerator.generateObstacle(
                 platform.x, platform.y, platform.width, platform.velocity
             );
+            console.log('🔴 SPAWNING OBSTACLE:', obstacle);
             this.entityManager.addEntity('obstacles', obstacle);
         }
 

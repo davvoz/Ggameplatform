@@ -56,6 +56,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         }
 
         // Timer indicator AL CENTRO DELLO SCHERMO - GRANDE E VISIBILE
+        // RENDERIZZATO QUI per essere sopra la piattaforma ma sotto l'UI
         if (platform.playerOnPlatform && platform.timeOnPlatform !== undefined && platform.maxTimeOnPlatform) {
             const centerX = canvasWidth / 2;
             const centerY = canvasHeight / 2;

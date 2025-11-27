@@ -811,6 +811,25 @@ export class LevelGenerator {
         const enemies = EnemySpawner.spawn(platforms, config, levelId);
         enemies.forEach(e => level.addEnemy(e));
 
+        // Spawna ostacoli (palle rosse con spuntoni)
+        const obstacleCount = Math.floor(platforms.length * 0.15); // 15% delle piattaforme
+        const safetyZone = 3; // Non spawna ostacoli nelle prime 3 piattaforme
+        for (let i = 0; i < obstacleCount; i++) {
+            const platformIndex = safetyZone + Math.floor(Math.random() * (platforms.length - safetyZone));
+            const platform = platforms[platformIndex];
+            if (platform && platform.type !== 'BOUNCY') { // Non su piattaforme bouncy
+                level.obstacles.push({
+                    x: platform.getCenterX() - 20,
+                    y: platform.y - 60,
+                    width: 40,
+                    height: 40,
+                    type: 'obstacle',
+                    obstacleType: 'spike',
+                    platformIndex: platformIndex
+                });
+            }
+        }
+
         // Spawna powerup e bonus
         const powerups = CollectibleSpawner.spawnPowerups(platforms, config, levelId);
         const shields = CollectibleSpawner.spawnShields(platforms, config);
@@ -1107,5 +1126,29 @@ export class LevelGenerator {
             levels.push(this.generateLevel(i));
         }
         return levels;
+    }
+
+    /**
+     * Decide se generare un ostacolo
+     */
+    static shouldGenerateObstacle() {
+        return Math.random() < 0.15; // 15% chance di spawn ostacolo
+    }
+
+    /**
+     * Genera un ostacolo
+     */
+    static generateObstacle(platformX, platformY, platformWidth, velocity) {
+        return {
+            x: platformX + platformWidth / 2 - 6,
+            y: platformY - 40,
+            width: 12,
+            height: 20,
+            type: 'obstacle',
+            obstacleType: 'spike',
+            color: [0.8, 0.1, 0.1, 1.0],
+            velocity: velocity,
+            animationOffset: Math.random() * Math.PI * 2
+        };
     }
 }

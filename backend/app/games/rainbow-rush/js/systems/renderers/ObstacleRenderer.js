@@ -12,8 +12,8 @@ export class ObstacleRenderer extends IEntityRenderer {
 
     render(obstacle, context) {
         const { time } = context;
-        
-        if (obstacle.type === 'spike' || obstacle.entityType === 'spike') {
+        // Gli ostacoli possono avere type: 'obstacle', 'spike', o entityType: 'spike'
+        if (obstacle.type === 'obstacle' || obstacle.type === 'spike' || obstacle.entityType === 'spike' || obstacle.obstacleType === 'spike') {
             this.renderSpike(obstacle, time);
         } else if (obstacle.type === 'enemy' || obstacle.entityType === 'enemy') {
             this.renderEnemy(obstacle, time);
@@ -22,61 +22,90 @@ export class ObstacleRenderer extends IEntityRenderer {
 
     renderSpike(spike, time) {
         const offset = spike.animationOffset || 0;
-        const wobble = Math.sin(time * 4 + offset) * 2;
-        const pulse = Math.sin(time * 6 + offset) * 0.15 + 0.85;
+        const pulse = Math.sin(time * 3 + offset) * 0.2 + 0.8;
+        const glow = Math.sin(time * 5 + offset) * 0.5 + 0.5;
 
-        // Shadow
-        RenderingUtils.drawShadow(this.renderer, spike.x + wobble, spike.y, spike.width, spike.height);
+        // Shadow sotto lo spike
+        RenderingUtils.drawShadow(this.renderer, spike.x, spike.y, spike.width, spike.height);
 
-        // Danger glow
-        for (let i = 0; i < 4; i++) {
-            this.renderer.drawRect(
-                spike.x + wobble - i * 2,
-                spike.y - i * 2,
-                spike.width + i * 4,
-                spike.height + i * 4,
-                [1.0, 0.2, 0.2, pulse * 0.15 / (i + 1)]
-            );
-        }
+        // Glow di pericolo rosso-arancione (lava style)
+        const glowRadius = spike.width * 0.7;
+        this.renderer.drawCircle(
+            spike.x + spike.width / 2,
+            spike.y + spike.height / 2,
+            glowRadius * (1 + glow * 0.3),
+            [1.0, 0.3, 0.0, 0.3 * glow]
+        );
 
-        // Body gradient
-        const topColor = [0.6 * pulse, 0.1, 0.1, 1.0];
-        const bottomColor = [1.0 * pulse, 0.3, 0.2, 1.0];
-        this.renderer.drawRect(spike.x + wobble, spike.y, spike.width, spike.height * 0.5, topColor);
-        this.renderer.drawRect(spike.x + wobble, spike.y + spike.height * 0.5, spike.width, spike.height * 0.5, bottomColor);
+        // Corpo centrale - sfera rossa metallica
+        const radius = Math.min(spike.width, spike.height) / 2;
+        const centerX = spike.x + spike.width / 2;
+        const centerY = spike.y + spike.height / 2;
 
-        // Spikes on top
-        this.renderSpikePoints(spike, time, wobble, offset);
+        // Cerchio esterno scuro (bordo)
+        this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1.0]);
 
-        // Highlights
-        const shimmer = Math.sin(time * 10 + offset) * 0.4 + 0.6;
-        this.renderer.drawRect(spike.x + wobble, spike.y, 2, spike.height, [1.0, 0.5, 0.4, shimmer]);
-        this.renderer.drawRect(spike.x + wobble + spike.width - 2, spike.y, 2, spike.height, [1.0, 0.5, 0.4, shimmer]);
-        
-        // Sparkles
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2 + time * 3 + offset;
-            const radius = 12 + Math.sin(time * 5 + i) * 3;
-            const px = spike.x + wobble + spike.width / 2 + Math.cos(angle) * radius;
-            const py = spike.y + spike.height / 2 + Math.sin(angle) * radius;
-            const sparkleSize = 1.5 + Math.sin(time * 12 + i) * 0.8;
-            this.renderer.drawCircle(px, py, sparkleSize, [1.0, 0.3, 0.2, 0.7]);
-        }
-    }
+        // Cerchio principale rosso
+        this.renderer.drawCircle(centerX, centerY, radius * 0.9 * pulse, [1.0, 0.2, 0.1, 1.0]);
 
-    renderSpikePoints(spike, time, wobble, offset) {
-        const numSpikes = 5;
+        // Cerchio interno rosso brillante
+        this.renderer.drawCircle(centerX, centerY, radius * 0.7 * pulse, [1.0, 0.4, 0.2, 1.0]);
+
+        // Riflesso metallico (highlight)
+        const highlightX = centerX - radius * 0.3;
+        const highlightY = centerY - radius * 0.3;
+        this.renderer.drawCircle(highlightX, highlightY, radius * 0.4, [1.0, 0.9, 0.7, 0.6]);
+        this.renderer.drawCircle(highlightX, highlightY, radius * 0.25, [1.0, 1.0, 1.0, 0.8]);
+
+        // Spuntoni metallici intorno (8 spine)
+        const numSpikes = 8;
         for (let i = 0; i < numSpikes; i++) {
-            const spikeX = spike.x + wobble + (spike.width / numSpikes) * i + spike.width / (numSpikes * 2);
-            const spikeHeight = 8 + Math.sin(time * 8 + offset + i) * 2;
-            const spikeY = spike.y - spikeHeight;
-            const spikeWidth = 4;
-            
-            this.renderer.drawRect(spikeX - spikeWidth/2, spikeY + spikeHeight * 0.7, spikeWidth, spikeHeight * 0.3, [1.0, 0.4, 0.3, 1.0]);
-            this.renderer.drawRect(spikeX - spikeWidth * 0.3, spikeY + spikeHeight * 0.4, spikeWidth * 0.6, spikeHeight * 0.3, [1.0, 0.6, 0.4, 1.0]);
-            this.renderer.drawRect(spikeX - 1, spikeY, 2, spikeHeight * 0.4, [1.0, 0.8, 0.6, 1.0]);
+            const angle = (i / numSpikes) * Math.PI * 2 + time * 0.5;
+            const spikeLength = radius * (1.4 + Math.sin(time * 4 + i) * 0.1);
+            const spikeWidth = 3;
+
+            // Punta dello spuntone
+            const tipX = centerX + Math.cos(angle) * spikeLength;
+            const tipY = centerY + Math.sin(angle) * spikeLength;
+
+            // Base dello spuntone
+            const baseX = centerX + Math.cos(angle) * radius * 0.8;
+            const baseY = centerY + Math.sin(angle) * radius * 0.8;
+
+            // Disegna spuntone come triangolo (usando cerchi sovrapposti)
+            for (let j = 0; j < 5; j++) {
+                const t = j / 5;
+                const sx = baseX + (tipX - baseX) * t;
+                const sy = baseY + (tipY - baseY) * t;
+                const sw = spikeWidth * (1 - t * 0.7);
+
+                // Gradiente dal rosso scuro alla punta metallica
+                const r = 0.8 + t * 0.2;
+                const g = 0.3 * (1 - t);
+                const b = 0.1;
+
+                this.renderer.drawCircle(sx, sy, sw, [r, g, b, 1.0]);
+            }
+
+            // Punta brillante
+            this.renderer.drawCircle(tipX, tipY, 1.5, [1.0, 0.9, 0.7, 0.9]);
+        }
+
+        // Particelle di calore/energia che si irradiano
+        if (Math.random() < 0.3) {
+            for (let i = 0; i < 3; i++) {
+                const particleAngle = Math.random() * Math.PI * 2;
+                const particleDistance = radius * (1.5 + Math.random() * 0.5);
+                const px = centerX + Math.cos(particleAngle) * particleDistance;
+                const py = centerY + Math.sin(particleAngle) * particleDistance;
+                const pSize = 1 + Math.random() * 1.5;
+
+                this.renderer.drawCircle(px, py, pSize, [1.0, 0.5, 0.0, 0.6 + Math.random() * 0.4]);
+            }
         }
     }
+
+    // renderSpikePoints ora non serve più - spine integrate in renderSpike()
 
     renderEnemy(enemy, time) {
         const offset = enemy.animationOffset || 0;
@@ -95,8 +124,8 @@ export class ObstacleRenderer extends IEntityRenderer {
 
         // Glow
         const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
-        RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width/2, enemy.y + bounce + enemy.height * squish / 2,
-                               enemy.width/2, [0.6, 0.3, 1.0, 1.0], 3, glowPulse * 0.2, 0.07);
+        RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
+            enemy.width / 2, [0.6, 0.3, 1.0, 1.0], 3, glowPulse * 0.2, 0.07);
 
         // Body
         const bodyTopColor = [0.5, 0.2, 0.8, 1.0];
@@ -112,7 +141,7 @@ export class ObstacleRenderer extends IEntityRenderer {
         // Face
         this.renderEnemyEyes(enemy, time, offset, bounce, squish);
         this.renderEnemyMouth(enemy, bounce, squish);
-        
+
         // Evil particles
         for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2 + time * 4 + offset;
@@ -127,17 +156,17 @@ export class ObstacleRenderer extends IEntityRenderer {
     renderEnemyEyes(enemy, time, offset, bounce, squish) {
         const eyeScale = 1.0 + Math.sin(time * 10 + offset) * 0.2;
         const eyeY = enemy.y + bounce + enemy.height * squish * 0.35;
-        
+
         // Eyes
         this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
         this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
-        
+
         // Pupils
         const pupilOffsetX = Math.sin(time * 2 + offset) * 1.5;
         const pupilOffsetY = Math.cos(time * 3 + offset) * 1;
         this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
         this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
-        
+
         // Highlights
         this.renderer.drawCircle(enemy.x + enemy.width * 0.3 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
         this.renderer.drawCircle(enemy.x + enemy.width * 0.7 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
@@ -148,7 +177,7 @@ export class ObstacleRenderer extends IEntityRenderer {
         const mouthWidth = enemy.width * 0.5;
         const mouthX = enemy.x + (enemy.width - mouthWidth) / 2;
         this.renderer.drawRect(mouthX, mouthY, mouthWidth, 2, [0.2, 0.0, 0.0, 1.0]);
-        
+
         // Teeth
         for (let i = 0; i < 4; i++) {
             const toothX = mouthX + (mouthWidth / 4) * i + mouthWidth / 8;

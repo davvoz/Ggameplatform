@@ -36,6 +36,9 @@ export class LevelManager {
 
         // Velocità base dello scorrimento
         this.baseSpeed = 180;
+        
+        // Carica progresso salvato
+        this.savedProgress = this.loadProgress();
     }
 
     generateRainbowColors() {
@@ -767,6 +770,15 @@ export class LevelManager {
         // ✅ 0 STELLE: Livello completato ma performance scarsa
         return 0;
     }
+    
+    /**
+     * Calcola e salva le stelle per il livello corrente
+     */
+    calculateAndSaveStars() {
+        this.levelStars = this.calculateStars();
+        this.saveProgress(); // Salva automaticamente
+        return this.levelStars;
+    }
 
     /**
      * Salva progresso in localStorage
@@ -792,7 +804,8 @@ export class LevelManager {
             }
 
             localStorage.setItem(progressKey, JSON.stringify(progress));
-            console.log('💾 Progress saved!');
+            this.savedProgress = progress; // Aggiorna cache locale
+            console.log('💾 Progress saved for level', this.currentLevelId);
         } catch (error) {
             console.warn('Failed to save progress:', error);
         }
@@ -805,11 +818,20 @@ export class LevelManager {
         try {
             const progressKey = 'rainbowRush_levelProgress';
             const progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
+            this.savedProgress = progress; // Aggiorna cache
+            console.log('📂 Progress loaded:', Object.keys(progress).length, 'levels');
             return progress;
         } catch (error) {
             console.warn('Failed to load progress:', error);
             return {};
         }
+    }
+    
+    /**
+     * Ottieni progresso salvato (usa cache se disponibile)
+     */
+    getSavedProgress() {
+        return this.savedProgress || this.loadProgress();
     }
 
     /**

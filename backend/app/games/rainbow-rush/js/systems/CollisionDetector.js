@@ -876,18 +876,29 @@ export class CollisionDetector {
                         
                         // Player takes damage
                         if (this.player.alive) {
-                            this.audioManager.playSound('hit');
+                            // FIXED: Applica danno al player
+                            const damageTaken = this.player.takeDamage(proj.damage || 1);
                             
-                            this.animationController.createFloatingText(
-                                `💥 -${proj.damage} ❤️`, 
-                                proj.x, 
-                                proj.y, 
-                                [1.0, 0.2, 0.2, 1.0], 
-                                entityManager
-                            );
-                            
-                            this.player.addCameraShake(10, 0.3);
-                            this.achievementSystem.recordDamage();
+                            if (damageTaken) {
+                                this.audioManager.playSound('hit');
+                                
+                                this.animationController.createFloatingText(
+                                    `💥 -${proj.damage || 1} ❤️`, 
+                                    proj.x, 
+                                    proj.y, 
+                                    [1.0, 0.2, 0.2, 1.0], 
+                                    entityManager
+                                );
+                                
+                                this.player.addCameraShake(10, 0.3);
+                                this.achievementSystem.recordDamage();
+                                
+                                // Combo break
+                                if (this.scoreSystem.combo > 3) {
+                                    this.audioManager.playSound('combo_break');
+                                    this.achievementSystem.addNotification('💔 Combo Perso!', `Hai perso la combo x${this.scoreSystem.combo}`, 'warning');
+                                }
+                            }
                             
                             // Projectile hit particles
                             for (let j = 0; j < 8; j++) {

@@ -185,10 +185,10 @@ export class GameController {
         
         // Update level progress bar basata su DISTANZA
         if (this.levelProgressBar) {
-            const progress = this.levelManager.getProgress();
+            const levelProgress = this.levelManager.getProgress(); // 0.0-1.0
             this.levelProgressBar.update(
                 deltaTime,
-                progress * 100, // Converti a percentuale
+                levelProgress * 100, // Converti a percentuale
                 100, // Totale sempre 100%
                 this.levelManager.currentLevelId
             );

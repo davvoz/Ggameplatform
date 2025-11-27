@@ -132,9 +132,9 @@ class RainbowRushApp {
     }
     
     getLevelProgress() {
-        // Carica il progresso dal localStorage usando il LevelManager
+        // Usa il metodo getSavedProgress() che usa la cache
         if (this.gameController && this.gameController.levelManager) {
-            return this.gameController.levelManager.loadProgress();
+            return this.gameController.levelManager.getSavedProgress();
         }
         return {};
     }
@@ -170,7 +170,7 @@ class RainbowRushApp {
         
         window.addEventListener('showLevelSelect', () => {
             if (this.screenManager && this.gameController) {
-                const progress = this.gameController.levelManager.loadProgress();
+                const progress = this.gameController.levelManager.getSavedProgress();
                 this.screenManager.showLevelSelect(progress);
             }
         });

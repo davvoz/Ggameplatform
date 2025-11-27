@@ -640,6 +640,7 @@ export class Player {
         // Turbo mode blocks all damage
         if (this.invulnerable || this.powerups.immortality || this.isTurboActive) return false;
         
+        // Applica il danno corretto usando amount
         this.health = Math.max(0, this.health - amount);
         this.invulnerable = true;
         this.invulnerabilityTimer = this.invulnerabilityDuration;
@@ -826,7 +827,9 @@ export class Player {
             playerRight > obstacle.x &&
             this.y < obstacleBottom &&
             playerBottom > obstacle.y) {
-            return this.takeDamage(1); // Usa sistema cuori
+            // Usa il danno dell'ostacolo/nemico (default 1 se non specificato)
+            const damage = obstacle.damage || 1;
+            return this.takeDamage(damage);
         }
 
         return false;

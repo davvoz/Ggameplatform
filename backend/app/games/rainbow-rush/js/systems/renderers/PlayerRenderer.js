@@ -29,6 +29,9 @@ export class PlayerRenderer extends IEntityRenderer {
             animScale = 1.0;
         }
         
+        // Render label
+        this.renderLabel(centerX, centerY - player.height, 'PLAYER');
+        
         const squashStretch = player.getSquashStretch ? player.getSquashStretch() : { squash: 0, stretch: 0 };
         const cameraShake = player.getCameraShake ? player.getCameraShake() : { x: 0, y: 0 };
         
@@ -710,6 +713,32 @@ export class PlayerRenderer extends IEntityRenderer {
         }
     }
 
+    renderLabel(x, y, text) {
+        // Render text label above entity
+        if (!this.renderer.textCtx) return;
+        
+        const ctx = this.renderer.textCtx;
+        ctx.save();
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Background
+        const metrics = ctx.measureText(text);
+        const padding = 4;
+        const bgWidth = metrics.width + padding * 2;
+        const bgHeight = 14;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
+        
+        // Text
+        ctx.fillStyle = '#00ff00';
+        ctx.fillText(text, x, y);
+        
+        ctx.restore();
+    }
+    
     renderInstantFlightProgress(player, x, y, radius) {
         // Progress bar circolare per mostrare la durata del volo istantaneo
         const progress = player.instantFlightDuration / player.instantFlightMaxDuration;

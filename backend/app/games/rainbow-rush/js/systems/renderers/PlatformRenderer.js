@@ -16,6 +16,9 @@ export class PlatformRenderer extends IEntityRenderer {
         let renderColor = platform.color;
         let baseX = platform.x;
         let baseY = platform.y;
+        
+        // Render label
+        this.renderPlatformLabel(platform, baseX + platform.width / 2, baseY - 5);
 
         // Crumbling effect
         if (platform.isCrumbling && platform.crumbleTimer) {
@@ -483,6 +486,44 @@ export class PlatformRenderer extends IEntityRenderer {
             // Freccia destra (ruota senso orario)
             this.renderer.drawCircle(arrowX2, arrowY, arrowSize, [1.0, 0.6, 0.2, pulse]);
         }
+    }
+    
+    renderPlatformLabel(platform, x, y) {
+        if (!this.renderer.textCtx) return;
+        
+        const ctx = this.renderer.textCtx;
+        let label = 'PLATFORM';
+        
+        if (platform.platformType) {
+            label = platform.platformType.toUpperCase();
+        } else if (platform.shape === 'RESCUE') {
+            label = 'RESCUE';
+        }
+        
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Background
+        const metrics = ctx.measureText(label);
+        const padding = 3;
+        const bgWidth = metrics.width + padding * 2;
+        const bgHeight = 11;
+        
+        ctx.fillStyle = 'rgba(0, 50, 100, 0.7)';
+        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
+        
+        // Border
+        ctx.strokeStyle = 'rgba(100, 150, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
+        
+        // Text
+        ctx.fillStyle = '#66aaff';
+        ctx.fillText(label, x, y);
+        
+        ctx.restore();
     }
 }
 

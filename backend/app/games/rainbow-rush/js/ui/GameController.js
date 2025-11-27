@@ -198,8 +198,10 @@ export class GameController {
         this.entityManager.updateAll(deltaTime, cameraSpeed, this.player);
         
         // NEW: Update enemies (AI, movement, projectiles)
+        // I nemici si muovono SOLO con la velocità base, NON con il turbo
+        const enemyScrollSpeed = this.player.boostActive ? this.player.velocityX : 0;
         if (this.enemySystem) {
-            this.enemySystem.update(deltaTime);
+            this.enemySystem.update(deltaTime, enemyScrollSpeed);
         }
 
         // Check collisions

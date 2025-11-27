@@ -154,9 +154,10 @@ export class CollisionDetector {
                     
                     this.audioManager.playSound('hit');
                     
-                    // Floating text per il danno
+                    // Floating text per il danno (usa il danno dell'ostacolo)
+                    const damage = obstacle.damage || 1;
                     this.animationController.createFloatingText(
-                        '💥 -1 ❤️', 
+                        `💥 -${damage} ❤️`, 
                         this.player.x + this.player.width / 2, 
                         this.player.y - 20, 
                         [1.0, 0.2, 0.2, 1.0], 

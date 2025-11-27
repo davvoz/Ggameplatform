@@ -24,6 +24,13 @@ export class ObstacleRenderer extends IEntityRenderer {
         const offset = spike.animationOffset || 0;
         const pulse = Math.sin(time * 3 + offset) * 0.2 + 0.8;
         const glow = Math.sin(time * 5 + offset) * 0.5 + 0.5;
+        
+        // Calculate center position
+        const centerX = spike.x + spike.width / 2;
+        const centerY = spike.y + spike.height / 2;
+        
+        // Render label
+        this.renderObstacleLabel(centerX, spike.y - 8, 'SPIKE');
 
         // Shadow sotto lo spike
         RenderingUtils.drawShadow(this.renderer, spike.x, spike.y, spike.width, spike.height);
@@ -31,16 +38,14 @@ export class ObstacleRenderer extends IEntityRenderer {
         // Glow di pericolo rosso-arancione (lava style)
         const glowRadius = spike.width * 0.7;
         this.renderer.drawCircle(
-            spike.x + spike.width / 2,
-            spike.y + spike.height / 2,
+            centerX,
+            centerY,
             glowRadius * (1 + glow * 0.3),
             [1.0, 0.3, 0.0, 0.3 * glow]
         );
 
         // Corpo centrale - sfera rossa metallica
         const radius = Math.min(spike.width, spike.height) / 2;
-        const centerX = spike.x + spike.width / 2;
-        const centerY = spike.y + spike.height / 2;
 
         // Cerchio esterno scuro (bordo)
         this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1.0]);
@@ -183,5 +188,35 @@ export class ObstacleRenderer extends IEntityRenderer {
             const toothX = mouthX + (mouthWidth / 4) * i + mouthWidth / 8;
             this.renderer.drawRect(toothX - 1, mouthY - 3, 2, 3, [1.0, 1.0, 1.0, 0.9]);
         }
+    }
+    
+    renderObstacleLabel(x, y, text) {
+        if (!this.renderer.textCtx) return;
+        
+        const ctx = this.renderer.textCtx;
+        ctx.save();
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Background
+        const metrics = ctx.measureText(text);
+        const padding = 3;
+        const bgWidth = metrics.width + padding * 2;
+        const bgHeight = 12;
+        
+        ctx.fillStyle = 'rgba(80, 0, 0, 0.8)';
+        ctx.fillRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
+        
+        // Border
+        ctx.strokeStyle = 'rgba(255, 50, 50, 0.9)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - bgWidth / 2, y - bgHeight, bgWidth, bgHeight);
+        
+        // Text
+        ctx.fillStyle = '#ff3333';
+        ctx.fillText(text, x, y);
+        
+        ctx.restore();
     }
 }

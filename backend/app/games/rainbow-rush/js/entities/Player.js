@@ -738,11 +738,14 @@ export class Player {
             
             // Apply bounce multiplier for bouncy platforms
             if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {
-                this.velocityY = -Math.abs(this.velocityY) * platform.bounceMultiplier;
-                
-                // Comprimi la molla se è una spring platform
+                // SPRING platforms = CATAPULTA ORIZZONTALE! 🚀
                 if (platform.platformType === 'spring') {
                     platform.springCompression = 1.0; // Compressione massima
+                    this.velocityX = 1200; // BOOST ORIZZONTALE MEGA!
+                    this.velocityY = -200; // Piccolo sollevamento
+                } else {
+                    // Bouncy normal = bounce verticale
+                    this.velocityY = -Math.abs(this.velocityY) * platform.bounceMultiplier;
                 }
             } else {
                 this.velocityY = 0;

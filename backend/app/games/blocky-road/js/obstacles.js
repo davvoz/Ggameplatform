@@ -1,21 +1,57 @@
 // obstacles.js - Three.js vehicles and obstacles
 
 class ObstacleManager {
-    constructor(scene, terrain, isMobile = false) {
+    constructor(scene, terrain) {
         this.scene = scene;
         this.terrain = terrain;
-        this.isMobile = isMobile;
         this.obstacles = []; // Cars and trains
         this.platforms = []; // Logs and lily pads on water
         this.coins = [];
         
-        // Vehicle spawn settings (reduced on mobile)
+        // Vehicle spawn settings
         this.spawnTimer = 0;
-        this.spawnInterval = isMobile ? 15 : 10; // Less frequent spawning on mobile
+        this.spawnInterval = 10; // Check very frequently for continuous spawning
         
         // Train system - simple and clear
         this.trainTimers = {}; // Track per rail row: {z: {nextSpawn: frameCount, warned: bool}}
         this.frameCount = 0; // Global frame counter
+        
+        // Difficulty progression system
+        this.currentScore = 0;
+    }
+    
+    // Calculate difficulty multipliers based on score (0-100)
+    getDifficultySettings() {
+        const score = this.currentScore;
+        
+        // Easy start (score 0-20): 30-50% of full difficulty
+        // Medium (score 20-50): 50-80% of full difficulty  
+        // Hard (score 50+): 80-100% of full difficulty
+        
+        let difficulty = 0.3; // Start at 30%
+        
+        if (score <= 20) {
+            // Linear progression from 30% to 50%
+            difficulty = 0.3 + (score / 20) * 0.2;
+        } else if (score <= 50) {
+            // Linear progression from 50% to 80%
+            difficulty = 0.5 + ((score - 20) / 30) * 0.3;
+        } else {
+            // Linear progression from 80% to 100%
+            difficulty = 0.8 + Math.min((score - 50) / 50, 0.2);
+        }
+        
+        return {
+            vehicleDensity: difficulty,      // How many vehicles per road
+            trainFrequency: difficulty,      // How often trains spawn
+            platformDensity: difficulty,     // How many logs per water row
+            coinSpawnRate: Math.min(difficulty * 1.5, 1.0), // Coins spawn more at higher difficulty
+            difficulty: difficulty           // Overall multiplier
+        };
+    }
+    
+    updateScore(score) {
+        this.currentScore = score;
     }
     
     update(playerZ) {
@@ -202,6 +238,8 @@ class ObstacleManager {
     }
     
     trySpawnVehicles(playerZ) {
+        const settings = this.getDifficultySettings();
+        
         // Check rows ahead of player for roads
         for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
             const row = this.terrain.getRowAt(z);
@@ -210,8 +248,13 @@ class ObstacleManager {
             // Check if already has vehicles currently
             const vehicleCount = this.obstacles.filter(obs => Math.abs(obs.z - z) < 0.5).length;
             
-            // Crossy Road: 1-2 vehicles per row
-            const maxVehicles = Math.floor(Math.random() * 2) + 1; // 1 or 2
+            // Progressive difficulty: 0-2 vehicles based on difficulty
+            // At 30% difficulty: 0-1 vehicles (easy start)
+            // At 100% difficulty: 1-2 vehicles (full game)
+            const maxVehicles = settings.vehicleDensity < 0.5 
+                ? (Math.random() < settings.vehicleDensity * 2 ? 1 : 0)
+                : Math.floor(Math.random() * 2) + 1;
+            
             if (vehicleCount < maxVehicles) {
                 this.spawnVehicle(z);
             }
@@ -229,8 +272,15 @@ class ObstacleManager {
             
             // Initialize timer for this row if new
             if (!this.trainTimers[z]) {
-                // First train spawns after 5-10 seconds
-                const initialDelay = 300 + Math.floor(Math.random() * 300); // 5-10 sec
+                const settings = this.getDifficultySettings();
+                
+                // Progressive train frequency - LESS trains for performance:
+                // Low difficulty (30%): 15-20 seconds between trains
+                // High difficulty (100%): 8-12 seconds between trains
+                const minDelay = Math.floor(480 - (settings.trainFrequency * 240)); // 480->240 (8->4 sec)
+                const maxDelay = Math.floor(1200 - (settings.trainFrequency * 480)); // 1200->720 (20->12 sec)
+                const initialDelay = minDelay + Math.floor(Math.random() * (maxDelay - minDelay));
+                
                 this.trainTimers[z] = {
                     nextSpawn: this.frameCount + initialDelay,
                     warned: false,
@@ -241,8 +291,8 @@ class ObstacleManager {
             const timer = this.trainTimers[z];
             const framesUntilTrain = timer.nextSpawn - this.frameCount;
             
-            // Warning 1 second before (60 frames)
-            if (!timer.warned && framesUntilTrain <= 60 && framesUntilTrain > 0) {
+            // Warning 0.75 seconds before (45 frames) - reduced for snappier feel
+            if (!timer.warned && framesUntilTrain <= 45 && framesUntilTrain > 0) {
                 timer.warned = true;
                 if (row.warningLights) {
                     this.startWarningLights(row.warningLights);
@@ -254,8 +304,11 @@ class ObstacleManager {
                 this.spawnCompleteTrain(row, timer.direction);
                 timer.spawned = true;
                 
-                // Schedule next train (10-15 seconds)
-                const nextDelay = 600 + Math.floor(Math.random() * 300); // 10-15 sec
+                // Schedule next train with progressive difficulty
+                const settings = this.getDifficultySettings();
+                const minNext = Math.floor(480 - (settings.trainFrequency * 240));
+                const maxNext = Math.floor(1200 - (settings.trainFrequency * 480));
+                const nextDelay = minNext + Math.floor(Math.random() * (maxNext - minNext));
                 this.trainTimers[z] = {
                     nextSpawn: this.frameCount + nextDelay,
                     warned: false,
@@ -335,13 +388,15 @@ class ObstacleManager {
     }
     
     spawnCompleteTrain(row, direction) {
-        const speed = 0.9 * direction; // SUPER FAST - 3x vehicles speed!
+        const startTime = performance.now();
+        const speed = 0.6 * direction; // Fast but not excessive - reduced for performance
         const startX = direction > 0 ? -35 : 35; // Spawn far outside
         const trainColor = Math.random() < 0.5 ? 0x9C27B0 : 0xE91E63;
         const railZ = row.z; // Use actual row Z position!
+        console.log(`🚂 Starting train spawn at Z=${railZ}...`);
         
-        // Locomotive + cars (reduced on mobile for performance)
-        const totalCars = this.isMobile ? 15 : 30;
+        // Locomotive + 11 cars
+        const totalCars = 12; // Standard train length
         const carSpacing = 1.5; // Tighter spacing - cars are 1.2 wide, so 0.3 gap between them
         
         for (let i = 0; i < totalCars; i++) {
@@ -371,6 +426,9 @@ class ObstacleManager {
                 boundingBox: new THREE.Box3().setFromObject(trainPart)
             });
         }
+        
+        const elapsed = performance.now() - startTime;
+        console.log(`🚂 Train spawn completed in ${elapsed.toFixed(2)}ms (${totalCars} cars)`);
     }
     
 
@@ -436,8 +494,13 @@ class ObstacleManager {
             const hasCoin = this.coins.some(coin => Math.abs(coin.z - z) < 0.5);
             if (hasCoin) continue;
             
-            // Spawn rate: 8%
-            if (Math.random() < 0.08) {
+            // Progressive coin spawn rate:
+            // Low difficulty: 4% (fewer distractions)
+            // High difficulty: 12% (more coins to collect)
+            const settings = this.getDifficultySettings();
+            const spawnRate = 0.04 + (settings.coinSpawnRate * 0.08); // 4% to 12%
+            
+            if (Math.random() < spawnRate) {
                 this.spawnCoin(z);
                 this.furthestCoinZ = Math.max(this.furthestCoinZ, z);
             }
@@ -527,8 +590,14 @@ class ObstacleManager {
                 Math.abs(plat.z - z) < 0.5
             ).length;
             
-            // Keep spawning until we have 3-4 logs (increased from 3)
-            const desiredLogs = 4; // Target 4 logs per row for faster rhythm
+            // Progressive platform density:
+            // Low difficulty: 4-5 logs (easy crossings)
+            // High difficulty: 3-4 logs (harder rhythm)
+            const settings = this.getDifficultySettings();
+            const desiredLogs = settings.platformDensity < 0.5 
+                ? Math.floor(4 + Math.random() * 2) // 4-5 logs (easy)
+                : Math.floor(3 + Math.random() * 2); // 3-4 logs (hard)
+            
             if (currentLogs < desiredLogs) {
                 // Spawn one log at a time
                 this.spawnLogRow(z);
@@ -537,9 +606,13 @@ class ObstacleManager {
     }
     
     spawnLogRow(z) {
+        const startTime = performance.now();
         // Get the row to check/set consistent direction
         const row = this.terrain.getRowAt(z);
         if (!row) return;
+        
+        const elapsedCheck = performance.now() - startTime;
+        if (elapsedCheck > 2) console.log(`🪵 Platform spawn prep took ${elapsedCheck.toFixed(2)}ms`);
         
         // Check if this row already has a direction set
         // If not, assign one randomly and keep it for all logs in this row

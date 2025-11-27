@@ -13,10 +13,6 @@ class BlockyRoadGame {
         this.touchControls = null;
         this.audio = null;
         
-        // Mobile detection and optimization
-        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        console.log('📱 Mobile device:', this.isMobile);
-        
         this.score = 0;
         this.baseScore = 0;  // Track max gridZ separately from total score
         this.coins = 0;
@@ -54,9 +50,9 @@ class BlockyRoadGame {
         // Create game systems
         updateProgress(30);
         this.audio = new AudioManager();
-        this.particles = new ParticleSystem(this.scene, this.isMobile);
-        this.terrain = new TerrainGenerator(this.scene, this.isMobile);
-        this.obstacles = new ObstacleManager(this.scene, this.terrain, this.isMobile);
+        this.particles = new ParticleSystem(this.scene);
+        this.terrain = new TerrainGenerator(this.scene);
+        this.obstacles = new ObstacleManager(this.scene, this.terrain);
         this.player = new Player(this.scene, this.particles);
         this.camera = new CrossyCamera(this.scene, this.renderer);
         
@@ -109,25 +105,17 @@ class BlockyRoadGame {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
         
-        // Renderer - mobile optimizations
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        this.isMobile = isMobile;
-        console.log('📱 Mobile device detected:', isMobile);
-        
+        // Renderer
         this.renderer = new THREE.WebGLRenderer({ 
-            antialias: !isMobile, // Disable on mobile
+            antialias: true,
             alpha: false,
             powerPreference: 'high-performance',
-            precision: isMobile ? 'mediump' : 'highp' // Lower precision on mobile
+            precision: 'highp'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight, false);
-        // Limit pixel ratio on mobile (huge performance boost)
-        this.renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 1.5) : window.devicePixelRatio);
-        // Disable shadows on mobile (very expensive)
-        if (!isMobile) {
-            this.renderer.shadowMap.enabled = true;
-            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        }
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
         
@@ -290,6 +278,10 @@ class BlockyRoadGame {
         this.obstacles.clear();
         this.particles.clear();
         
+        // Reset difficulty to easy
+        this.terrain.updateScore(0);
+        this.obstacles.updateScore(0);
+        
         this.terrain.generateInitialTerrain();
         this.player.reset(0, 0);
         
@@ -344,10 +336,6 @@ class BlockyRoadGame {
                     this.baseScore = currentGridZ;
                     this.score++;  // Simply increment by 1 for forward movement
                     this.updateUI();
-                    
-                    if (typeof PlatformSDK !== 'undefined') {
-                        PlatformSDK.sendScore(this.score);
-                    }
                 }
             }
         }
@@ -408,10 +396,6 @@ class BlockyRoadGame {
             this.updateUI();
             this.particles.createCoinParticles(coin.mesh.position);
             this.audio.play('coin');
-            
-            if (typeof PlatformSDK !== 'undefined') {
-                PlatformSDK.sendScore(this.score);
-            }
         });
     }
     
@@ -420,6 +404,11 @@ class BlockyRoadGame {
         
         console.log('💀 Game Over:', reason);
         this.isGameOver = true;
+        
+        // Send final score only at game over
+        if (typeof PlatformSDK !== 'undefined') {
+            PlatformSDK.sendScore(this.score);
+        }
         
         // Determine death type based on reason
         const inWater = reason.includes('Drowned') || reason.includes('💧');
@@ -463,28 +452,33 @@ class BlockyRoadGame {
     update(deltaTime = 16) {
         if (!this.isStarted || this.isGameOver || this.isPaused) return;
         
+        const frameStart = performance.now();
+        
         // Handle input
         this.handleInput();
         
         // Update game systems
         const playerPos = this.player.getPosition();
         this.player.update();
-        this.terrain.update(playerPos.z);
+        this.terrain.update(playerPos.z, this.score);
+        
+        // Update obstacles with current score for difficulty progression
+        this.obstacles.updateScore(this.score);
         this.obstacles.update(playerPos.z);
+        
         this.particles.update();
         
         // Rising danger zone mechanic (like Crossy Road's water)
         // DISABLED TEMPORARILY
         // this.updateDangerZone(playerPos.z, deltaTime);
         
-        // Continuous collision checking (throttled more on mobile)
-        const collisionThrottle = this.isMobile ? 5 : 3;
+        // Continuous collision checking (only when player stopped or every 3rd frame while moving)
         if (!this.player.isMoving) {
             this.checkCollisions();
         } else {
             if (!this.collisionCheckCounter) this.collisionCheckCounter = 0;
             this.collisionCheckCounter++;
-            if (this.collisionCheckCounter % collisionThrottle === 0) {
+            if (this.collisionCheckCounter % 3 === 0) {
                 this.checkCollisions();
             }
         }
@@ -537,6 +531,21 @@ class BlockyRoadGame {
             this.boundaryShadows.forEach(shadow => {
                 shadow.position.z = playerPos.z;
             });
+        }
+        
+        // Log slow frames with object counts
+        const frameTime = performance.now() - frameStart;
+        if (frameTime > 16.67) { // Slower than 60fps
+            const obstacleCount = this.obstacles.obstacles.length;
+            const platformCount = this.obstacles.platforms.length;
+            const coinCount = this.obstacles.coins.length;
+            const particleCount = this.particles.particles.length;
+            const terrainRowCount = this.terrain.rows.length;
+            
+            console.warn(`⏱️ Slow frame: ${frameTime.toFixed(2)}ms | Obstacles:${obstacleCount} Platforms:${platformCount} Coins:${coinCount} Particles:${particleCount} TerrainRows:${terrainRowCount}`);
+        }
+        if (frameTime > 33) { // Slower than 30fps
+            console.error(`🔴 VERY SLOW frame: ${frameTime.toFixed(2)}ms`);
         }
     }
     

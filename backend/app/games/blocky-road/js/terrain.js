@@ -1,24 +1,52 @@
 // terrain.js - Three.js terrain generation
 
 class TerrainGenerator {
-    constructor(scene, isMobile = false) {
+    constructor(scene) {
         this.scene = scene;
-        this.isMobile = isMobile;
         this.rows = [];
         this.currentMaxZ = 0;
         this.currentZone = null;
         this.zoneRowsRemaining = 0;
+        this.currentScore = 0; // Track score for progressive difficulty
         
-        // Terrain zone definitions (like Crossy Road)
-        this.zoneTypes = [
+        // Terrain zone definitions - EASY START (lots of grass, very rare trains)
+        this.easyZones = [
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'road', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'water', minRows: 1, maxRows: 2 },
+            { type: 'grass', minRows: 4, maxRows: 6 },
+            { type: 'road', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 4 },
+            { type: 'grass', minRows: 3, maxRows: 5 },
+            { type: 'rail', minRows: 1, maxRows: 1 } // Very rare - 1/10 chance
+        ];
+        
+        // Terrain zone definitions - MEDIUM (balanced, rare trains)
+        this.mediumZones = [
             { type: 'grass', minRows: 2, maxRows: 3 },
-            { type: 'road', minRows: 4, maxRows: 6 },
-            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'road', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
             { type: 'water', minRows: 2, maxRows: 3 },
             { type: 'grass', minRows: 2, maxRows: 3 },
-            { type: 'road', minRows: 3, maxRows: 5 },
+            { type: 'road', minRows: 3, maxRows: 4 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'grass', minRows: 2, maxRows: 3 },
+            { type: 'rail', minRows: 1, maxRows: 1 } // Very rare - 1/10 chance
+        ];
+        
+        // Terrain zone definitions - HARD (current level)
+        this.hardZones = [
+            { type: 'grass', minRows: 1, maxRows: 2 }, // Less grass
+            { type: 'road', minRows: 4, maxRows: 6 },  // Longer roads
             { type: 'grass', minRows: 1, maxRows: 2 },
-            { type: 'rail', minRows: 1, maxRows: 2 } // Fewer rails!
+            { type: 'water', minRows: 3, maxRows: 4 }, // Wide rivers
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'road', minRows: 4, maxRows: 5 },
+            { type: 'grass', minRows: 1, maxRows: 2 },
+            { type: 'rail', minRows: 1, maxRows: 2 }   // Double rails
         ];
     }
     
@@ -50,9 +78,24 @@ class TerrainGenerator {
         this.currentMaxZ = 35;
     }
     
+    getZoneTypes() {
+        // Progressive difficulty based on score
+        if (this.currentScore < 50) {
+            return this.easyZones;  // 🟢 Easy
+        } else if (this.currentScore < 150) {
+            return this.mediumZones; // 🟡 Medium
+        } else {
+            return this.hardZones;   // 🟠 Hard/Extreme
+        }
+    }
+    
+    updateScore(score) {
+        this.currentScore = score;
+    }
+    
     getNextZone() {
         // Cycle through zone types for variety but realism
-        const availableZones = [...this.zoneTypes];
+        const availableZones = [...this.getZoneTypes()];
         
         // Don't repeat same zone type
         if (this.currentZone) {
@@ -206,9 +249,6 @@ class TerrainGenerator {
     }
     
     addWaterDecorations(row) {
-        // Skip waterfalls on mobile (expensive animation)
-        if (this.isMobile) return;
-        
         // Add waterfalls at the edges (±7.5 is edge of playable area)
         // Left waterfall
         const leftWaterfall = this.createWaterfall();
@@ -272,17 +312,20 @@ class TerrainGenerator {
         return waterfallGroup;
     }
     
-    update(playerZ) {
-        // Animate only waterfalls near player (skip on mobile - waterfalls disabled)
-        if (!this.isMobile) {
-            const animationDistance = 20;
-            this.rows.forEach(row => {
-                if (Math.abs(row.z - playerZ) < animationDistance) {
-                    if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-                    if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
-                }
-            });
+    update(playerZ, currentScore) {
+        // Update score for progressive terrain difficulty
+        if (currentScore !== undefined) {
+            this.currentScore = currentScore;
         }
+        
+        // Animate only waterfalls near player (optimization)
+        const animationDistance = 20;
+        this.rows.forEach(row => {
+            if (Math.abs(row.z - playerZ) < animationDistance) {
+                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
+                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+            }
+        });
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
         const generationDistance = 35;
@@ -293,9 +336,12 @@ class TerrainGenerator {
                 this.currentZoneRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             }
             
+            const startTime = performance.now();
             this.currentMaxZ++;
             this.createRow(this.currentMaxZ, this.currentZone.type);
             this.currentZoneRows--;
+            const elapsed = performance.now() - startTime;
+            if (elapsed > 5) console.log(`⚠️ Terrain row ${this.currentMaxZ} took ${elapsed.toFixed(2)}ms`);
         }
         
         // Cleanup old rows less frequently (every 10th frame)

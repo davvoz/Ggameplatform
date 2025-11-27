@@ -1,17 +1,13 @@
 // particles.js - Particle effects system
 
 class ParticleSystem {
-    constructor(scene, isMobile = false) {
+    constructor(scene) {
         this.scene = scene;
         this.particles = [];
-        this.isMobile = isMobile;
-        // Disable particles completely on mobile for max performance
-        this.enabled = !isMobile;
     }
     
     // Jump particles
     createJumpParticles(position) {
-        if (!this.enabled) return; // Skip on mobile
         const particleCount = 8;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
@@ -55,7 +51,6 @@ class ParticleSystem {
     
     // Death particles (explosion)
     createDeathParticles(position) {
-        if (!this.enabled) return; // Skip on mobile
         const particleCount = 20;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
@@ -99,7 +94,6 @@ class ParticleSystem {
     
     // Water splash particles (for drowning)
     createWaterSplash(position) {
-        if (!this.enabled) return; // Skip on mobile
         const particleCount = 15;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
@@ -143,7 +137,6 @@ class ParticleSystem {
     
     // Coin collect particles
     createCoinParticles(position) {
-        if (!this.enabled) return; // Skip on mobile
         const particleCount = 12;
         const geometry = new THREE.BufferGeometry();
         const positions = [];

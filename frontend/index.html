@@ -155,8 +155,10 @@
             <div class="player-container">
                 <iframe id="game-iframe" 
                     sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups" 
+                    allow="gamepad; fullscreen; xr-spatial-tracking; autoplay"
                     allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    style="will-change: transform; border: 0;"></iframe>
             </div>
             <div class="player-footer">
                 <div class="score-display">Score: <span id="current-score">0</span></div>

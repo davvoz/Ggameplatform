@@ -128,24 +128,24 @@ class BlockyRoadGame {
         this.scene.add(ambientLight);
         
         // Directional light (sun) with shadows
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        dirLight.position.set(10, 20, 10);
-        dirLight.castShadow = true;
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        this.dirLight.position.set(10, 20, 10);
+        this.dirLight.castShadow = true;
         
-        // Shadow camera settings - increased area and better bias
-        dirLight.shadow.camera.left = -50;
-        dirLight.shadow.camera.right = 50;
-        dirLight.shadow.camera.top = 50;
-        dirLight.shadow.camera.bottom = -50;
-        dirLight.shadow.camera.near = 1;
-        dirLight.shadow.camera.far = 150;
-        dirLight.shadow.mapSize.width = 4096;
-        dirLight.shadow.mapSize.height = 4096;
-        dirLight.shadow.bias = -0.001;
-        dirLight.shadow.normalBias = 0.02;
-        dirLight.shadow.radius = 1;
+        // Shadow camera settings - only playable area for better performance
+        this.dirLight.shadow.camera.left = -10;   // Slightly wider than playable area (-7 to 7)
+        this.dirLight.shadow.camera.right = 10;
+        this.dirLight.shadow.camera.top = 25;     // Forward visibility
+        this.dirLight.shadow.camera.bottom = -15; // Behind player
+        this.dirLight.shadow.camera.near = 1;
+        this.dirLight.shadow.camera.far = 50;     // Reduced from 150
+        this.dirLight.shadow.mapSize.width = 2048; // Reduced from 4096 for softer edges
+        this.dirLight.shadow.mapSize.height = 2048;
+        this.dirLight.shadow.bias = -0.0005; // Less bias for softer shadows
+        this.dirLight.shadow.normalBias = 0.05; // Higher for smoother edges
+        this.dirLight.shadow.radius = 8; // Very soft blur
         
-        this.scene.add(dirLight);
+        this.scene.add(this.dirLight);
         
         // Hemisphere light for better ambient
         const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x5FAD56, 0.5);
@@ -461,6 +461,11 @@ class BlockyRoadGame {
         const playerPos = this.player.getPosition();
         this.player.update();
         this.terrain.update(playerPos.z, this.score);
+        
+        // Update shadow camera to follow player
+        this.dirLight.target.position.set(playerPos.worldX, 0, playerPos.worldZ);
+        this.dirLight.position.set(playerPos.worldX + 10, 20, playerPos.worldZ + 10);
+        this.dirLight.target.updateMatrixWorld();
         
         // Update obstacles with current score for difficulty progression
         this.obstacles.updateScore(this.score);

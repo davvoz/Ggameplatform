@@ -9,6 +9,11 @@ class TerrainGenerator {
         this.zoneRowsRemaining = 0;
         this.currentScore = 0; // Track score for progressive difficulty
         
+        // Pre-cache pool for expensive objects (eliminates lag)
+        this.railTrackPool = [];
+        this.warningLightPool = [];
+        this.initObjectPools();
+        
         // Terrain zone definitions - EASY START (lots of grass, very rare trains)
         this.easyZones = [
             { type: 'grass', minRows: 3, maxRows: 5 },
@@ -48,6 +53,28 @@ class TerrainGenerator {
             { type: 'grass', minRows: 1, maxRows: 2 },
             { type: 'rail', minRows: 1, maxRows: 2 }   // Double rails
         ];
+    }
+    
+    initObjectPools() {
+        console.log('🔧 Pre-caching rail tracks and warning lights...');
+        
+        // Pre-generate 10 rail tracks (enough for most games)
+        for (let i = 0; i < 10; i++) {
+            const track = Models.createRailTrack();
+            track.visible = false; // Hide until needed
+            this.scene.add(track);
+            this.railTrackPool.push(track);
+        }
+        
+        // Pre-generate 20 warning lights (2 per rail)
+        for (let i = 0; i < 20; i++) {
+            const light = Models.createTrainWarningLight();
+            light.visible = false; // Hide until needed
+            this.scene.add(light);
+            this.warningLightPool.push(light);
+        }
+        
+        console.log(`✅ Pre-cached ${this.railTrackPool.length} rail tracks and ${this.warningLightPool.length} warning lights`);
     }
     
     generateInitialTerrain() {
@@ -119,9 +146,9 @@ class TerrainGenerator {
             obstacles: []
         };
         
-        // Create tiles across the row (wide visual coverage)
-        // Playable area is -7 to +7, but we generate -25 to +25 for full visual coverage
-        for (let x = -25; x <= 25; x++) {
+        // Create tiles across the row (optimized coverage)
+        // Playable area is -7 to +7, generate -12 to +12 for visual coverage with zoom
+        for (let x = -18; x <= 18; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);
@@ -149,7 +176,7 @@ class TerrainGenerator {
         const decorationChance = 0.4;
         const isBarrier = row.isBarrier; // Dense obstacles behind spawn
         
-        for (let x = -25; x <= 25; x++) {
+        for (let x = -12; x <= 12; x++) {
             // Create natural borders with trees/rocks at edges
             const isEdge = x === -8 || x === 8;
             const isOutside = x < -8 || x > 8;
@@ -179,8 +206,8 @@ class TerrainGenerator {
                 this.scene.add(decoration);
                 row.decorations.push(decoration);
             }
-            // Dense decorations outside playable area
-            else if (isOutside && Math.random() < 0.6) {
+            // Sparse decorations outside playable area (reduced from 60% to 25%)
+            else if (isOutside && Math.random() < 0.25) {
                 const rand = Math.random();
                 const decoration = rand < 0.5 ? Models.createTree() : 
                                  rand < 0.8 ? Models.createRock() : Models.createFlower();
@@ -225,23 +252,43 @@ class TerrainGenerator {
     }
     
     addRailDecorations(row) {
-        // Add one rail track centered (it extends along Z axis)
-        const track = Models.createRailTrack();
+        // Get pre-cached rail track from pool (or create if pool exhausted)
+        let track;
+        if (this.railTrackPool.length > 0) {
+            track = this.railTrackPool.pop();
+            track.visible = true;
+        } else {
+            console.warn('⚠️ Rail pool exhausted, creating new track');
+            track = Models.createRailTrack();
+            this.scene.add(track);
+        }
         track.position.set(0, 0.2, row.z);
-        this.scene.add(track);
+        track.userData.isRailTrack = true;
         row.decorations.push(track);
         
-        // Add permanent warning lights symmetrically on sides, slightly before rails
-        const leftLight = Models.createTrainWarningLight();
-        leftLight.position.set(-4, 0, row.z - 0.6); // Left side, 2 blocks closer
-        leftLight.rotation.y = Math.PI; // Rotate 180° to face rails
-        this.scene.add(leftLight);
+        // Get pre-cached warning lights from pool
+        let leftLight, rightLight;
+        if (this.warningLightPool.length >= 2) {
+            leftLight = this.warningLightPool.pop();
+            rightLight = this.warningLightPool.pop();
+            leftLight.visible = true;
+            rightLight.visible = true;
+        } else {
+            console.warn('⚠️ Warning light pool exhausted, creating new lights');
+            leftLight = Models.createTrainWarningLight();
+            rightLight = Models.createTrainWarningLight();
+            this.scene.add(leftLight);
+            this.scene.add(rightLight);
+        }
+        
+        leftLight.position.set(-4, 0, row.z - 0.6);
+        leftLight.rotation.y = Math.PI;
+        leftLight.userData.isWarningLight = true;
         row.decorations.push(leftLight);
         
-        const rightLight = Models.createTrainWarningLight();
-        rightLight.position.set(4, 0, row.z - 0.6); // Right side, 2 blocks closer
-        rightLight.rotation.y = Math.PI; // Rotate 180° to face rails
-        this.scene.add(rightLight);
+        rightLight.position.set(4, 0, row.z - 0.6);
+        rightLight.rotation.y = Math.PI;
+        rightLight.userData.isWarningLight = true;
         row.decorations.push(rightLight);
         
         // Store lights for flashing when train comes
@@ -328,7 +375,7 @@ class TerrainGenerator {
         });
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
-        const generationDistance = 35;
+        const generationDistance = 25; // Reduced from 35 - less rows pre-generated
         if (this.currentMaxZ < playerZ + generationDistance) {
             // Generate only 1 row per frame to avoid lag spikes
             if (!this.currentZoneRows || this.currentZoneRows <= 0) {
@@ -359,14 +406,26 @@ class TerrainGenerator {
                     tile.material.dispose();
                 });
                 row.decorations.forEach(dec => {
-                    this.scene.remove(dec);
-                    if (dec.geometry) dec.geometry.dispose();
-                    if (dec.material) dec.material.dispose();
-                    // Handle groups
-                    dec.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) child.material.dispose();
-                    });
+                    // Return pooled objects for reuse
+                    if (dec.userData.isRailTrack) {
+                        dec.visible = false;
+                        dec.position.set(0, 0, 0);
+                        this.railTrackPool.push(dec);
+                    } else if (dec.userData.isWarningLight) {
+                        dec.visible = false;
+                        dec.position.set(0, 0, 0);
+                        dec.rotation.y = 0;
+                        this.warningLightPool.push(dec);
+                    } else {
+                        // Normal disposal for non-pooled objects
+                        this.scene.remove(dec);
+                        if (dec.geometry) dec.geometry.dispose();
+                        if (dec.material) dec.material.dispose();
+                        dec.traverse(child => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) child.material.dispose();
+                        });
+                    }
                 });
                 return false;
             }

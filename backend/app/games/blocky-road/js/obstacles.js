@@ -495,7 +495,7 @@ class ObstacleManager {
             if (hasCoin) continue;
             
             // Fixed coin spawn rate (not progressive)
-            const spawnRate = 0.03; // 3% constant
+            const spawnRate = 0.015; // 1.5% constant - very rare
             
             if (Math.random() < spawnRate) {
                 this.spawnCoin(z);

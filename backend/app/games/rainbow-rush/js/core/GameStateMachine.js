@@ -128,7 +128,7 @@ class PlayingState extends BaseGameState {
             context.stateMachine.transitionTo(GameStates.PAUSED, context);
             return true;
         } else if (action === 'playerDied') {
-            context.audioManager?.playSound('death');
+            // Death sound già suonato in _startDeathSequence
             context.stateMachine.transitionTo(GameStates.GAME_OVER, context);
             return true;
         } else if (action === 'levelComplete') {

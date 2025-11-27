@@ -5,7 +5,6 @@
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
 import { PlatformTypes } from '../ProceduralLevelGenerator.js';
-import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class PlatformRenderer extends IEntityRenderer {
     constructor(renderer) {

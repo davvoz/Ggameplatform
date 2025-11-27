@@ -527,6 +527,7 @@ export class GameController {
     // === PRIVATE HELPERS ===
 
     _startDeathSequence() {
+        console.log('💀 Player died, starting death sequence');
         this.animationController.isShowingDeathAnimation = true;
         this.animationController.startDeathSequence(
             this.player.x, this.player.y,

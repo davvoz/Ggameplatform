@@ -107,7 +107,21 @@ export class ScreenManager {
      */
     showLevelSelect(progress = {}) {
         this.levelProgress = progress;
-        this.currentPage = 0; // Reset alla prima pagina
+        
+        // Trova l'ultimo livello sbloccato
+        let lastUnlocked = 1;
+        for (let i = 1; i <= 200; i++) {
+            if (this._isLevelUnlocked(i)) {
+                lastUnlocked = i;
+            } else {
+                break;
+            }
+        }
+        
+        // Vai alla pagina che contiene l'ultimo livello sbloccato
+        // Questo mostra i livelli più alti disponibili
+        this.currentPage = Math.floor((lastUnlocked - 1) / this.levelsPerPage);
+        
         this._showScreen('levelSelect');
         this._renderLevelSelect();
     }

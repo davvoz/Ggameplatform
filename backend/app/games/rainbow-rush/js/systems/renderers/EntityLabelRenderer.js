@@ -41,7 +41,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         borderColor: 'rgba(0, 255, 0, 0.8)',
         textColor: '#00ff00',
-        fontSize: 12,
+        fontSize: 18,
         padding: 4,
         verticalOffset: 15
     },
@@ -49,7 +49,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(100, 0, 0, 0.7)',
         borderColor: 'rgba(255, 100, 100, 0.8)',
         textColor: '#ff6666',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 20
     },
@@ -57,7 +57,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(0, 50, 100, 0.7)',
         borderColor: 'rgba(100, 150, 255, 0.8)',
         textColor: '#66aaff',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 5
     },
@@ -65,7 +65,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(100, 50, 0, 0.7)',
         borderColor: 'rgba(255, 200, 100, 0.8)',
         textColor: '#ffcc66',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 8
     },
@@ -73,7 +73,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(80, 0, 0, 0.8)',
         borderColor: 'rgba(255, 50, 50, 0.9)',
         textColor: '#ff3333',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 8
     },
@@ -81,7 +81,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(80, 0, 80, 0.7)',
         borderColor: 'rgba(200, 100, 200, 0.8)',
         textColor: '#cc88cc',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 10
     },
@@ -89,7 +89,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(100, 50, 0, 0.7)',
         borderColor: 'rgba(255, 200, 100, 0.8)',
         textColor: '#ffcc66',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 8
     },
@@ -97,7 +97,7 @@ const LABEL_STYLES = Object.freeze({
         backgroundColor: 'rgba(50, 50, 50, 0.7)',
         borderColor: 'rgba(150, 150, 150, 0.8)',
         textColor: '#999999',
-        fontSize: 12,
+        fontSize: 18,
         padding: 3,
         verticalOffset: 10
     }

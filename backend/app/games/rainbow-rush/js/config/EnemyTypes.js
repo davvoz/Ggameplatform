@@ -424,29 +424,3 @@ export function getEnemyConfig(enemyId) {
     return null;
 }
 
-/**
- * Get all enemies available at a specific level
- */
-export function getAvailableEnemies(level) {
-    const available = [];
-    for (const key in EnemyTypes) {
-        const enemy = EnemyTypes[key];
-        if (enemy.unlockLevel <= level) {
-            available.push(enemy);
-        }
-    }
-    return available;
-}
-
-/**
- * Get enemies by category
- */
-export function getEnemiesByCategory(category) {
-    const enemies = [];
-    for (const key in EnemyTypes) {
-        if (EnemyTypes[key].category === category) {
-            enemies.push(EnemyTypes[key]);
-        }
-    }
-    return enemies;
-}

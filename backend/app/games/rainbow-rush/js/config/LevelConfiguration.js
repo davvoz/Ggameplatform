@@ -49,13 +49,6 @@ export function getLevel(levelId) {
 }
 
 /**
- * Get levels by difficulty
- */
-export function getLevelsByDifficulty(difficulty) {
-    return Levels.filter(l => l.difficulty === difficulty);
-}
-
-/**
  * Get total level count
  */
 export function getTotalLevels() {

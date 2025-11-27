@@ -4,7 +4,25 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
-import { PlatformTypes } from '../ProceduralLevelGenerator.js';
+
+export const PlatformTypes = {
+    NORMAL: 'normal',
+    FAST: 'fast',
+    SLOW: 'slow',
+    BOUNCY: 'bouncy',
+    CRUMBLING: 'crumbling',
+    SPRING: 'spring',
+    ICY: 'icy',
+    DISSOLVING: 'dissolving',     // Si dissolve quando il player ci sale
+    BOUNCING: 'bouncing',          // Oscilla su e giù quando il player ci sale
+    ROTATING: 'rotating'            // Ruota quando il player ci sale
+};
+
+// Bonus types for collectibles
+export const BonusTypes = {
+    BOOST: 'boost',
+    MAGNET: 'magnet'
+};
 
 export class PlatformRenderer extends IEntityRenderer {
     constructor(renderer) {

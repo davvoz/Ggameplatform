@@ -24,7 +24,8 @@ const GAME_MESSAGE_TYPES = {
     LEVEL_COMPLETED: 'levelCompleted',
     REQUEST_FULLSCREEN: 'requestFullScreen',
     LOG: 'log',
-    READY: 'ready'
+    READY: 'ready',
+    RESET_SESSION: 'resetSession'
 };
 
 // Allowed platform message types (Platform → Game)
@@ -158,6 +159,13 @@ export default class RuntimeShell {
                 this.handleLog(message.payload);
                 break;
             
+            case GAME_MESSAGE_TYPES.RESET_SESSION:
+                // Handle async reset session
+                this.resetSession().then(() => {
+                    this.log('✅ Session reset complete');
+                });
+                break;
+            
             default:
                 this.log('Unknown message type:', message.type);
         }
@@ -253,20 +261,21 @@ export default class RuntimeShell {
      */
     handleGameOver(payload) {
         // Log the received payload for debugging
-        this.log('GameOver payload received:', payload);
-        this.log('Current state.score before update:', this.state.score);
-        this.log('Current sessionId:', this.sessionId);
+        this.log('🎯 GameOver payload received:', payload);
+        this.log('📊 Current state.score before update:', this.state.score);
+        this.log('🆔 Current sessionId:', this.sessionId);
+        this.log('⏰ Session start time:', this.sessionStartTime);
         
         // Get score from payload, fallback to current state
         const finalScore = payload?.score ?? this.state.score ?? 0;
         this.state.score = finalScore;
         
-        this.log('Game Over! Final score:', this.state.score);
+        this.log('💀 Game Over! Final score:', this.state.score);
         this.showGameOverOverlay(this.state.score);
         
         // End game session and save score ONLY if session exists
         if (this.sessionId) {
-            this.log('✅ SessionId exists, ending session...');
+            this.log('✅ SessionId exists, ending session:', this.sessionId);
             const sessionToEnd = this.sessionId;
             const startTime = this.sessionStartTime; // Save before clearing
             this.sessionId = null; // Clear immediately to prevent double-ending
@@ -558,11 +567,53 @@ export default class RuntimeShell {
     }
     
     /**
+     * Reset session for game restart
+     * This should be called when the user explicitly restarts the game
+     * Note: The previous session should already be ended by handleGameOver
+     */
+    async resetSession() {
+        this.log('🔄 Resetting session for restart...');
+        
+        // The session should already be ended by handleGameOver
+        // Just log if there's still an active session (shouldn't happen)
+        if (this.sessionId) {
+            this.log('⚠️ Warning: Session still active during restart. Ending it now:', this.sessionId);
+            const sessionToEnd = this.sessionId;
+            const finalScore = this.state.score;
+            const startTime = this.sessionStartTime;
+            
+            // Clear session immediately to prevent double-ending
+            this.sessionId = null;
+            this.sessionStartTime = null;
+            
+            // End session and save XP
+            await this.endGameSessionById(sessionToEnd, finalScore, startTime, false);
+        } else {
+            this.log('✅ No active session (already ended by Game Over)');
+        }
+        
+        // Reset state
+        this.state.score = 0;
+        this.state.isGameOver = false;
+        this.needsNewSession = false;
+        
+        // Start new session immediately
+        this.log('🎮 Starting new session for restart...');
+        await this.startGameSession();
+    }
+    
+    /**
      * Start game session tracking
      */
     async startGameSession() {
         this.log('🎮 startGameSession() called');
         try {
+            // Check if config is available
+            if (typeof config === 'undefined' || !config.API_URL) {
+                this.log('❌ Config or API_URL not available');
+                return;
+            }
+            
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             this.log('Current user from localStorage:', currentUser ? currentUser.user_id : 'null');
             
@@ -571,7 +622,7 @@ export default class RuntimeShell {
                 return;
             }
             
-            this.log('📡 Sending session start request to backend...');
+            this.log('📡 Sending session start request to backend...', config.API_URL);
             const response = await fetch(`${config.API_URL}/users/sessions/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -669,10 +720,7 @@ export default class RuntimeShell {
                     window.authManager.updateCur8(data.session.xp_earned);
                 }
                 
-                // Show XP earned notification (only for normal end, not beacon)
-                if (!useBeacon) {
-                    this.showCur8Notification(data.session.xp_earned);
-                }
+               this.showCur8Notification(data.session.xp_earned);
             }
         } catch (error) {
             this.log('Failed to end game session:', error);
@@ -691,7 +739,6 @@ export default class RuntimeShell {
                 <span class="xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
         `;
-        
         // Add styles
         const style = document.createElement('style');
         style.textContent = `
@@ -699,7 +746,7 @@ export default class RuntimeShell {
                 position: fixed;
                 top: 70px;
                 right: 20px;
-                z-index: 10000;
+                z-index: 99999999;
                 animation: slideInRight 0.5s ease, fadeOut 0.5s ease 3.5s;
             }
             .xp-badge {
@@ -759,7 +806,7 @@ export default class RuntimeShell {
      */
     log(...args) {
         if (this.config.debug) {
-            //console.log('[RuntimeShell]', ...args);
+            console.log('[RuntimeShell]', ...args);
         }
     }
 }

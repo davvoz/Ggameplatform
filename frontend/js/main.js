@@ -285,8 +285,8 @@ function setupPlayerControls(gameId, iframe) {
 
     runtime.on('gameOver', (data) => {
         console.log('Game over:', data);
-        // Session will be automatically ended by RuntimeShell
-        // The game's own UI will handle the restart
+        // Optionally navigate back to game detail or show a summary
+        
     });
 
     runtime.on('levelCompleted', (data) => {

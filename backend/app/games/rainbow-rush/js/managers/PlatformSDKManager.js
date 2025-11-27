@@ -41,6 +41,20 @@ export class PlatformSDKManager {
         }
     }
 
+    async gameOver(score, details) {
+
+        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
+            console.warn('SDK not initialized, game over not reported');
+            return;
+        }
+        try {
+            window.PlatformSDK.gameOver(score, details);
+            console.log('Game over reported:', score, details);
+        } catch (error) {
+            console.error('Failed to report game over:', error);
+        }
+    }
+
     async getLeaderboard(limit = 10) {
         // The platform handles leaderboard display
         // This is just a placeholder for compatibility

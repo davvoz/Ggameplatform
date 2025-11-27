@@ -58,7 +58,7 @@ class MenuState extends BaseGameState {
         }
         return false;
     }
-    
+
     exit(context) {
         super.exit(context);
         context.audioManager?.stopBackgroundMusic();
@@ -75,10 +75,10 @@ class LevelSelectState extends BaseGameState {
 
     enter(context) {
         super.enter(context);
-        
+
         // Stop engine - we're in HTML screen mode
         context.engine.stop();
-        
+
         // Show HTML level select screen
         const event = new CustomEvent('showLevelSelect');
         window.dispatchEvent(event);
@@ -111,7 +111,7 @@ class PlayingState extends BaseGameState {
         context.engine.start();
         context.audioManager?.playBackgroundMusic();
         context.audioManager?.resume();
-        
+
         // Emit game start event
         const event = new CustomEvent('gameStart');
         window.dispatchEvent(event);
@@ -157,7 +157,7 @@ class PausedState extends BaseGameState {
         super.enter(context);
         context.engine.stop();
         context.audioManager?.pause();
-        
+
         // Show pause screen
         const pauseScreen = document.getElementById('pause-screen');
         if (pauseScreen) {
@@ -181,7 +181,7 @@ class PausedState extends BaseGameState {
     exit(context) {
         super.exit(context);
         context.audioManager?.resume();
-        
+
         // Hide pause screen
         const pauseScreen = document.getElementById('pause-screen');
         if (pauseScreen) {
@@ -201,19 +201,19 @@ class LevelSummaryState extends BaseGameState {
     enter(context) {
         super.enter(context);
         context.engine.stop();
-        
+
         // Reset all active effects
         context.powerupSystem.reset();
         context.levelController.resetPlayerEffects();
-        
+
         // Get summary data
         const summary = context.levelManager.getLevelSummary();
         summary.score = context.scoreSystem.getScore();
-        
+
         // Show HTML level summary screen
         const event = new CustomEvent('showLevelSummary', { detail: summary });
         window.dispatchEvent(event);
-        
+
         // Play sound based on stars
         if (summary.stars === 3) {
             context.audioManager?.playSound('score');
@@ -251,18 +251,39 @@ class GameOverState extends BaseGameState {
 
     async enter(context) {
         super.enter(context);
-        
+
         // Stop audio
         context.audioManager.stopBackgroundMusic();
-        
+
         // Submit score
         const stats = context.scoreSystem.getGameStats();
         stats.level = context.levelManager.currentLevelId || 1;
-        await context.sdkManager.submitScore(stats.score);
-        
+        await context.sdkManager.submitScore(stats.score).then(() => {
+            console.log('Score submitted successfully');
+        }).catch((error) => {
+            console.error('Error submitting score:', error);
+        }).then(() => {
+            // Send to SDK - grant XP every game
+            if (typeof PlatformSDK !== 'undefined') {
+                try {
+                    context.sdkManager.gameOver(stats.score, {
+                        level: stats.level,
+                        coins: stats.coins,
+                        score: stats.score,
+                        time: Date.now() 
+                    });
+                    console.log(`📡 Game over sent to SDK: score=${stats.score}`);
+
+                } catch (e) {
+                    console.error('⚠️ Failed to send game over to SDK:', e);
+                }
+            }
+        });
+
+
         // Reset total score
         context.scoreSystem.fullReset();
-        
+
         // Emit game over event
         const event = new CustomEvent('gameOver', { detail: stats });
         window.dispatchEvent(event);
@@ -289,13 +310,13 @@ export class GameStateMachine {
     constructor() {
         /** @type {Map<string, IGameState>} */
         this.states = new Map();
-        
+
         /** @type {IGameState} */
         this.currentState = null;
-        
+
         /** @type {string} */
         this.currentStateName = null;
-        
+
         this._registerStates();
     }
 
@@ -327,7 +348,7 @@ export class GameStateMachine {
      */
     transitionTo(stateName, context) {
         const newState = this.states.get(stateName);
-        
+
         if (!newState) {
             console.error(`State '${stateName}' not found`);
             return;

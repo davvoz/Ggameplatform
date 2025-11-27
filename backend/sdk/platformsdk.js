@@ -394,6 +394,7 @@
             if (window.parent && window.parent !== window.self) {
                 window.parent.postMessage(message, '*');
             }
+            console.log('[PlatformSDK] Sent message to platform:', message);
         }
         
         /**
@@ -423,6 +424,25 @@
         }
         
         /**
+         * Reset session for game restart
+         * Notifies the platform that the game is restarting
+         * Returns a promise that resolves when the reset is complete
+         */
+        async resetSession() {
+            this.log('Resetting session for restart');
+            
+            // Send reset message to platform
+            this.sendToPlatform('resetSession', {
+                timestamp: Date.now()
+            });
+            
+            // Wait for the platform to process (give it time to end session and start new one)
+            return new Promise(resolve => {
+                setTimeout(resolve, 1000);
+            });
+        }
+        
+        /**
          * Cleanup SDK resources
          */
         cleanup() {
@@ -445,6 +465,7 @@
         gameOver: (finalScore, metadata) => sdk.gameOver(finalScore, metadata),
         levelCompleted: (level, metadata) => sdk.levelCompleted(level, metadata),
         requestFullScreen: () => sdk.requestFullScreen(),
+        resetSession: () => sdk.resetSession(),
         on: (eventType, callback) => sdk.on(eventType, callback),
         off: (eventType, callback) => sdk.off(eventType, callback),
         getState: () => sdk.getState(),

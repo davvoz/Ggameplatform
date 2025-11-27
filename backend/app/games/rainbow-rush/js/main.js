@@ -112,8 +112,15 @@ class RainbowRushApp {
         });
         
         // Restart game
-        this.screenManager.on('restart', () => {
+        this.screenManager.on('restart', async () => {
             this.gameController.audioManager?.playSound('click');
+            
+            // Reset platform session before showing level select
+            if (typeof window.PlatformSDK !== 'undefined') {
+                // Wait for the reset to complete (includes ending old session and starting new one)
+                await window.PlatformSDK.resetSession();
+            }
+            
             this.screenManager.showLevelSelect(this.getLevelProgress());
         });
         

@@ -502,37 +502,41 @@ const Models = {
         const group = new THREE.Group();
         
         // Rails (shiny metal) - extend along X axis (left to right)
-        const railGeometry = new THREE.BoxGeometry(60, 0.1, 0.1);
-        const railMaterial = new THREE.MeshPhongMaterial({ 
+        const railGeometry = new THREE.BoxGeometry(30, 0.1, 0.1);
+        const railMaterial = new THREE.MeshLambertMaterial({ 
             color: 0xA8A8A8,
-            shininess: 80,
             flatShading: true
         });
         
         const leftRail = new THREE.Mesh(railGeometry, railMaterial);
         leftRail.position.set(0, 0.28, -0.32);
-        leftRail.castShadow = true;
         group.add(leftRail);
         
         const rightRail = new THREE.Mesh(railGeometry, railMaterial);
         rightRail.position.set(0, 0.28, 0.32);
-        rightRail.castShadow = true;
         group.add(rightRail);
         
-        // Wooden sleepers (perpendicular to rails - run along Z)
+        // Wooden sleepers using InstancedMesh (1 draw call instead of 50!)
         const sleeperGeometry = new THREE.BoxGeometry(0.15, 0.12, 0.85);
         const sleeperMaterial = new THREE.MeshLambertMaterial({ 
             color: 0x6B4423,
             flatShading: true
         });
         
-        for (let x = -30; x <= 30; x += 0.5) {
-            const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
-            sleeper.position.set(x, 0.26, 0);
-            sleeper.castShadow = true;
-            sleeper.receiveShadow = true;
-            group.add(sleeper);
+        const sleeperCount = 50;
+        const sleepers = new THREE.InstancedMesh(sleeperGeometry, sleeperMaterial, sleeperCount);
+        
+        const matrix = new THREE.Matrix4();
+        let index = 0;
+        for (let x = -12; x <= 12; x += 0.5) {
+            if (index >= sleeperCount) break;
+            matrix.setPosition(x, 0.26, 0);
+            sleepers.setMatrixAt(index, matrix);
+            index++;
         }
+        sleepers.instanceMatrix.needsUpdate = true;
+        
+        group.add(sleepers);
         
         return group;
     },
@@ -541,16 +545,16 @@ const Models = {
     createTrainWarningLight: () => {
         const group = new THREE.Group();
         
-        // Base - concrete base
-        const baseGeometry = new THREE.CylinderGeometry(0.15, 0.18, 0.15, 8);
+        // Base - concrete base (simplified)
+        const baseGeometry = new THREE.CylinderGeometry(0.15, 0.18, 0.15, 6); // 8 -> 6 segments
         const baseMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
         const base = new THREE.Mesh(baseGeometry, baseMaterial);
         base.position.y = 0.075;
         base.castShadow = true;
         group.add(base);
         
-        // Pole - metal pole
-        const poleGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8);
+        // Pole - metal pole (simplified)
+        const poleGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 6); // 8 -> 6 segments
         const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
         const pole = new THREE.Mesh(poleGeometry, poleMaterial);
         pole.position.y = 0.85;
@@ -572,8 +576,8 @@ const Models = {
         stripe.position.y = 1.5;
         group.add(stripe);
         
-        // Light lens - glass sphere (transparent when off)
-        const lensGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+        // Light lens - glass sphere (transparent when off) - simplified
+        const lensGeometry = new THREE.SphereGeometry(0.12, 8, 8); // 16x16 -> 8x8
         const lensMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             transparent: true,
@@ -654,7 +658,7 @@ const Models = {
         const rock = new THREE.Mesh(geometry, material);
         rock.position.y = 0.3;
         rock.rotation.y = Math.random() * Math.PI;
-        rock.castShadow = true;
+        rock.castShadow = false; // No shadows for small rocks
         rock.receiveShadow = true;
         
         return rock;

@@ -494,11 +494,8 @@ class ObstacleManager {
             const hasCoin = this.coins.some(coin => Math.abs(coin.z - z) < 0.5);
             if (hasCoin) continue;
             
-            // Progressive coin spawn rate:
-            // Low difficulty: 4% (fewer distractions)
-            // High difficulty: 12% (more coins to collect)
-            const settings = this.getDifficultySettings();
-            const spawnRate = 0.04 + (settings.coinSpawnRate * 0.08); // 4% to 12%
+            // Fixed coin spawn rate (not progressive)
+            const spawnRate = 0.03; // 3% constant
             
             if (Math.random() < spawnRate) {
                 this.spawnCoin(z);

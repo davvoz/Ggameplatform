@@ -3,12 +3,18 @@
  * Implementa IEntityRenderer per consistenza con altri renderer
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class EnemyRenderer extends IEntityRenderer {
     constructor() {
         super();
         this.textCanvas = document.getElementById('textCanvas');
         this.textCtx = this.textCanvas ? this.textCanvas.getContext('2d') : null;
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     /**
@@ -138,6 +144,11 @@ export class EnemyRenderer extends IEntityRenderer {
             enemy.height * 1.6 * scale
         );
 
+        // Render label above enemy using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderEnemyLabel(enemy, enemyCenterX, enemyCenterY - enemy.height / 2 - 20);
+        }
+        
         // Render custom graphics or emoji icon with animation
         ctx.save();
         ctx.translate(enemyCenterX, enemyCenterY);

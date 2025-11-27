@@ -16,7 +16,23 @@ export class RendererFactory {
         this.renderer = renderer;
         this.textCtx = textCtx;
         this.renderers = new Map();
+        this.labelRenderer = null; // Will be injected by RenderingSystem
         this._initRenderers();
+    }
+
+    /**
+     * Inject label renderer into all entity renderers
+     * @param {EntityLabelRenderer} labelRenderer - Centralized label renderer
+     */
+    injectLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
+        
+        // Inject into all existing renderers that support it
+        for (const [key, renderer] of this.renderers.entries()) {
+            if (renderer && typeof renderer.setLabelRenderer === 'function') {
+                renderer.setLabelRenderer(labelRenderer);
+            }
+        }
     }
 
     _initRenderers() {

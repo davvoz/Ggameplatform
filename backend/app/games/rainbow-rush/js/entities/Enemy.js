@@ -237,8 +237,9 @@ export class Enemy {
             this.velocityY += 600 * deltaTime; // Gravity
         }
 
-        // Update position (includes base velocity for scrolling with platforms)
-        this.x += (this.velocityX + (this.velocity || 0)) * deltaTime;
+        // Update position - SOLO velocityX/Y del nemico (movimento AI)
+        // La velocità di scrolling (velocity) viene applicata dall'EntityManager
+        this.x += this.velocityX * deltaTime;
         this.y += this.velocityY * deltaTime;
     }
 

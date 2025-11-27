@@ -413,9 +413,9 @@ export class SafetyPlatformSystem {
         // Level-based selection
         const pattern = patterns[level % patterns.length];
         const palette = colorPalettes[level % colorPalettes.length];
-        const platformCount = 4 + (level % 6); // 4-9 piattaforme
+        const platformCount = 4 + (level % 4); // 4-7 piattaforme
         const platformWidth = 90 + (level % 4) * 20; // Varietà di larghezze
-        const spacing = 90 + (level % 5) * 25; // Spacing variabile
+        const spacing = 200; // Spacing variabile
         const baseY = this.dims.height - 160 - (level % 4) * 25;
         const startX = this.dims.width + 50;
         const minVerticalGap = 35; // Spazio minimo verticale tra piattaforme

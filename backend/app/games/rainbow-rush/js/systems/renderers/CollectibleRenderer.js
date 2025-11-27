@@ -4,15 +4,27 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class CollectibleRenderer extends IEntityRenderer {
     constructor(renderer, textCtx = null) {
         super(renderer);
         this.textCtx = textCtx;
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(entity, context) {
         const { time } = context;
+        
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            const labelY = entity.y - (entity.radius || entity.height / 2);
+            this.labelRenderer.renderCollectibleLabel(entity, entity.x, labelY);
+        }
         
         switch(entity.entityType || entity.type) {
             case 'collectible':

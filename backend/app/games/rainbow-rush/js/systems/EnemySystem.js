@@ -117,7 +117,7 @@ export class EnemySystem {
     /**
      * Main update - chiamato ogni frame
      */
-    update(deltaTime) {
+    update(deltaTime, scrollSpeed = 0) {
         if (!this.player) return;
 
         const enemies = this.entityManager.getEntities('enemies');
@@ -128,6 +128,10 @@ export class EnemySystem {
             
             // Update enemy logic
             enemy.update(deltaTime, this.player, this.dims);
+            
+            // Apply scrolling (piattaforme che si muovono) - ma SOLO baseSpeed, non turbo
+            const totalVelocity = enemy.velocity - scrollSpeed;
+            enemy.x += totalVelocity * deltaTime;
             
             // Handle platform collisions for grounded enemies
             if (enemy.category === 'ground' || enemy.category === 'jumper') {

@@ -5,10 +5,16 @@
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
 import { RenderingConfig } from './RenderingConfig.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class PlayerRenderer extends IEntityRenderer {
     constructor(renderer) {
         super(renderer);
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(player, context) {
@@ -27,6 +33,11 @@ export class PlayerRenderer extends IEntityRenderer {
             centerX = player.x + player.width / 2;
             centerY = player.y + player.height / 2 + idleOffset;
             animScale = 1.0;
+        }
+        
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderPlayerLabel(player, centerX, centerY - player.height / 2);
         }
         
         const squashStretch = player.getSquashStretch ? player.getSquashStretch() : { squash: 0, stretch: 0 };

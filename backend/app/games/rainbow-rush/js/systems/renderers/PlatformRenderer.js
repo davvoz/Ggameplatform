@@ -5,10 +5,16 @@
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
 import { PlatformTypes } from '../ProceduralLevelGenerator.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class PlatformRenderer extends IEntityRenderer {
     constructor(renderer) {
         super(renderer);
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(platform, context) {
@@ -16,6 +22,11 @@ export class PlatformRenderer extends IEntityRenderer {
         let renderColor = platform.color;
         let baseX = platform.x;
         let baseY = platform.y;
+        
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderPlatformLabel(platform, baseX + platform.width / 2, baseY);
+        }
 
         // Crumbling effect
         if (platform.isCrumbling && platform.crumbleTimer) {

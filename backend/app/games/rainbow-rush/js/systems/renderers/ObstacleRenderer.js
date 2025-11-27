@@ -4,10 +4,16 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
+import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class ObstacleRenderer extends IEntityRenderer {
     constructor(renderer) {
         super(renderer);
+        this.labelRenderer = null; // Will be set by RenderingSystem
+    }
+    
+    setLabelRenderer(labelRenderer) {
+        this.labelRenderer = labelRenderer;
     }
 
     render(obstacle, context) {
@@ -24,6 +30,15 @@ export class ObstacleRenderer extends IEntityRenderer {
         const offset = spike.animationOffset || 0;
         const pulse = Math.sin(time * 3 + offset) * 0.2 + 0.8;
         const glow = Math.sin(time * 5 + offset) * 0.5 + 0.5;
+        
+        // Calculate center position
+        const centerX = spike.x + spike.width / 2;
+        const centerY = spike.y + spike.height / 2;
+        
+        // Render label using centralized system
+        if (this.labelRenderer) {
+            this.labelRenderer.renderObstacleLabel(spike, centerX, spike.y);
+        }
 
         // Shadow sotto lo spike
         RenderingUtils.drawShadow(this.renderer, spike.x, spike.y, spike.width, spike.height);
@@ -31,16 +46,14 @@ export class ObstacleRenderer extends IEntityRenderer {
         // Glow di pericolo rosso-arancione (lava style)
         const glowRadius = spike.width * 0.7;
         this.renderer.drawCircle(
-            spike.x + spike.width / 2,
-            spike.y + spike.height / 2,
+            centerX,
+            centerY,
             glowRadius * (1 + glow * 0.3),
             [1.0, 0.3, 0.0, 0.3 * glow]
         );
 
         // Corpo centrale - sfera rossa metallica
         const radius = Math.min(spike.width, spike.height) / 2;
-        const centerX = spike.x + spike.width / 2;
-        const centerY = spike.y + spike.height / 2;
 
         // Cerchio esterno scuro (bordo)
         this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1.0]);

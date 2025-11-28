@@ -146,7 +146,8 @@ export class GameControllerBuilder {
         this.uiManager.setComponents({
             turboButtonUI: this.turboButtonUI,
             flightButtonUI: this.flightButtonUI,
-            levelProgressBar: this.levelProgressBar
+            levelProgressBar: this.levelProgressBar,
+            hudRenderer: this.renderingSystem.hudRenderer
         });
         
         // Configure Level Orchestrator

@@ -137,10 +137,11 @@ export class InputManager {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         
-        // Notify click listeners
-        this.notifyListeners('click', { x, y });
+        // Notify click listeners - they will return true if handled
+        const handled = this.notifyListeners('click', { x, y });
         
-        if (!this.mouseDown) {
+        // Only trigger jump if click was NOT handled by UI elements
+        if (!handled && !this.mouseDown) {
             this.mouseDown = true;
             this.jumpPressed = true;
             this.jumpPressTime = performance.now();
@@ -172,15 +173,16 @@ export class InputManager {
             this.touchMoveY = y;
             this.isSwipingVertical = false;
             
-            // Notify click listeners
-            this.notifyListeners('click', { x, y });
-        }
-        
-        if (!this.touchActive) {
-            this.touchActive = true;
-            this.jumpPressed = true;
-            this.jumpPressTime = performance.now();
-            this.triggerJump();
+            // Notify click listeners - they will return true if handled
+            const handled = this.notifyListeners('click', { x, y });
+            
+            // Only trigger jump if touch was NOT handled by UI elements
+            if (!handled && !this.touchActive) {
+                this.touchActive = true;
+                this.jumpPressed = true;
+                this.jumpPressTime = performance.now();
+                this.triggerJump();
+            }
         }
     }
 
@@ -244,8 +246,19 @@ export class InputManager {
 
     notifyListeners(event, data) {
         if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
+            // For 'click' events, return true if any listener handled it
+            if (event === 'click') {
+                for (const callback of this.listeners[event]) {
+                    const handled = callback(data);
+                    if (handled) return true;
+                }
+                return false;
+            } else {
+                // For other events, just notify
+                this.listeners[event].forEach(callback => callback(data));
+            }
         }
+        return false;
     }
 
     isKeyPressed(key) {

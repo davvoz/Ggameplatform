@@ -20,11 +20,11 @@ class UIClickHandler extends IClickHandler {
         if (handled) {
             return true;
         }
-        
+
         if (this.nextHandler) {
             return this.nextHandler.handleClick(x, y, context);
         }
-        
+
         return false;
     }
 
@@ -40,7 +40,7 @@ class UIClickHandler extends IClickHandler {
 class TurboButtonClickHandler extends UIClickHandler {
     _handle(x, y, context) {
         if (!context.turboButtonUI) return false;
-        
+
         const clicked = context.turboButtonUI.checkClick(x, y, context.player);
         if (clicked) {
             // Activate turbo via command mapper
@@ -56,7 +56,7 @@ class TurboButtonClickHandler extends UIClickHandler {
 class FlightButtonClickHandler extends UIClickHandler {
     _handle(x, y, context) {
         if (!context.flightButtonUI) return false;
-        
+
         const clicked = context.flightButtonUI.checkClick(x, y, context.player);
         if (clicked) {
             // Activate flight via command mapper
@@ -67,14 +67,36 @@ class FlightButtonClickHandler extends UIClickHandler {
 }
 
 /**
- * UIManager - Coordinates all UI components
+ * Pause button click handler
+ */
+class PauseButtonClickHandler extends UIClickHandler {
+    _handle(x, y, context) {
+        if (!context.hudRenderer) return false;
+
+        const clicked = context.hudRenderer.checkPauseClick(x, y);
+        if (clicked) {
+            // Toggle pause
+            if (context.gameController.stateMachine.isPaused()) {
+                context.gameController.resumeGame();
+            } else if (context.gameController.stateMachine.isPlaying()) {
+                context.gameController.pauseGame();
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+/**
+ * UIManager - Main class
  */
 export class UIManager {
     constructor() {
         this.turboButtonUI = null;
         this.flightButtonUI = null;
         this.levelProgressBar = null;
-        
+        this.hudRenderer = null;
+
         // Chain of Responsibility for click handling
         this.clickHandlerChain = this._buildClickHandlerChain();
     }
@@ -84,15 +106,16 @@ export class UIManager {
      * @private
      */
     _buildClickHandlerChain() {
+        const pauseHandler = new PauseButtonClickHandler();
         const turboHandler = new TurboButtonClickHandler();
         const flightHandler = new FlightButtonClickHandler();
-        
-        // Chain: Turbo -> Flight
-        turboHandler.nextHandler = flightHandler;
-        
-        return turboHandler;
-    }
 
+        // Chain: Pause -> Turbo -> Flight
+        pauseHandler.nextHandler = turboHandler;
+        turboHandler.nextHandler = flightHandler;
+
+        return pauseHandler;
+    }
     /**
      * Set UI components
      */
@@ -100,8 +123,8 @@ export class UIManager {
         this.turboButtonUI = components.turboButtonUI;
         this.flightButtonUI = components.flightButtonUI;
         this.levelProgressBar = components.levelProgressBar;
+        this.hudRenderer = components.hudRenderer;
     }
-
     /**
      * Handle click event through chain of responsibility
      * @param {number} x - Click X coordinate
@@ -114,7 +137,8 @@ export class UIManager {
             ...context,
             uiManager: this,
             turboButtonUI: this.turboButtonUI,
-            flightButtonUI: this.flightButtonUI
+            flightButtonUI: this.flightButtonUI,
+            hudRenderer: this.hudRenderer
         });
     }
 

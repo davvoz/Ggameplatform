@@ -8,7 +8,7 @@ from pathlib import Path
 from datetime import datetime
 
 # Path del database
-DATABASE_PATH = Path(__file__).parent.parent / "app" / "game_platform.db"
+DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
 BACKUP_DIR = Path(__file__).parent.parent / "backups"
 
 def backup_games_quests_xp():

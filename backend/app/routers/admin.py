@@ -35,6 +35,46 @@ def get_db():
     with get_db_session() as session:
         yield session
 
+
+@router.get("/form-options")
+async def get_form_options(db: Session = Depends(get_db)):
+    """
+    Get all available options for foreign key fields in forms.
+    Returns lists of valid IDs for user_id, game_id, quest_id, etc.
+    Following SRP: single endpoint to provide all form options.
+    """
+    try:
+        # Get all users
+        user_repo = RepositoryFactory.create_user_repository(db)
+        users = user_repo.get_all()
+        
+        # Get all games
+        game_repo = RepositoryFactory.create_game_repository(db)
+        games = game_repo.get_all()
+        
+        # Get all quests
+        quest_repo = RepositoryFactory.create_quest_repository(db)
+        quests = quest_repo.get_all()
+        
+        # Get all sessions (for leaderboard entry_id)
+        session_repo = RepositoryFactory.create_session_repository(db)
+        sessions = session_repo.get_all()
+        
+        return {
+            "success": True,
+            "data": {
+                "user_ids": [{"value": u.user_id, "label": f"{u.username} ({u.user_id})"} for u in users],
+                "game_ids": [{"value": g.game_id, "label": f"{g.title} ({g.game_id})"} for g in games],
+                "quest_ids": [{"value": q.quest_id, "label": f"{q.title} (ID: {q.quest_id})"} for q in quests],
+                "session_ids": [{"value": s.session_id, "label": f"{s.session_id} - {s.game_id}"} for s in sessions[:100]],  # Limit for performance
+                "categories": list(set([g.category for g in games if g.category])),
+                "quest_types": ["daily", "weekly", "achievement", "milestone"],
+                "rule_types": ["score_threshold", "time_played", "games_completed", "streak", "achievement"]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Admin API key from environment
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
 
@@ -95,18 +135,9 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         total_leaderboard_count = session.query(Leaderboard).count()
         total_user_quests_count = session.query(UserQuest).count()
         
-        print(f"[DEBUG] Total sessions in DB: {total_sessions_count}")
-        print(f"[DEBUG] Total leaderboard in DB: {total_leaderboard_count}")
-        print(f"[DEBUG] Total user quests in DB: {total_user_quests_count}")
-        
         # Get game sessions (all records for display)
         sessions_query = session.query(GameSession).order_by(desc(GameSession.started_at)).all()
         sessions = [s.to_dict() for s in sessions_query]
-        
-        # DEBUG: Check if score is in the dict
-        if sessions:
-            print(f"[DEBUG] First session from db-stats: {sessions[0]}")
-            print(f"[DEBUG] First session score: {sessions[0].get('score')}")
         
         # Get all leaderboard entries
         leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
@@ -123,11 +154,6 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         # Get user quest progress
         user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
         user_quests = [uq.to_dict() for uq in user_quests_query]
-        
-        # DEBUG: Check if user quest 6 has updated data
-        uq6 = next((uq for uq in user_quests if uq.get('id') == 6), None)
-        if uq6:
-            print(f"[DEBUG] UserQuest 6 data in db-stats: {uq6}")
     
     data = {
         "total_games": len(games),

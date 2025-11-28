@@ -87,23 +87,17 @@ class BaseRepository(IRepository[ModelType]):
         try:
             obj = self.get_by_id(id_value)
             if not obj:
-                print(f"[Repository] Record not found for update: {self.model.__name__} with id={id_value}")
                 return None
-            
-            print(f"[Repository] Updating {self.model.__name__} id={id_value} with data: {data}")
             
             for key, value in data.items():
                 if hasattr(obj, key):
                     setattr(obj, key, value)
-                    print(f"[Repository] Set {key}={value}")
             
             self.db_session.commit()
             self.db_session.refresh(obj)
-            print(f"[Repository] Update committed successfully")
             return obj
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            print(f"[Repository] Update failed: {str(e)}")
             raise Exception(f"Error updating {self.model.__name__}: {str(e)}")
     
     def delete(self, id_value: Any) -> bool:

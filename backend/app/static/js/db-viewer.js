@@ -508,19 +508,11 @@ class DBViewerController {
                 this.updateStats(this.model.getStats());
                 
                 // Pre-render ALL views on first load so data is ready for all tabs
-                console.log('Pre-rendering all views with fresh data...');
                 this.registry.getTableKeys().forEach(tableKey => {
                     const view = this.views[tableKey];
                     const tableDef = this.registry.getTable(tableKey);
                     if (view && tableDef) {
                         const viewData = this.model.getData(tableDef.dataKey);
-                        console.log(`Rendering ${tableKey} with ${viewData.length} items`);
-                        if (tableKey === 'user-quests' && viewData.length > 0) {
-                            const uq6 = viewData.find(uq => uq.id === 6);
-                            if (uq6) {
-                                console.log('UserQuest 6 in frontend after refresh:', uq6);
-                            }
-                        }
                         view.render(viewData);
                     }
                 });

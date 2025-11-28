@@ -7,6 +7,34 @@
 class CRUDManager {
     constructor(apiBase) {
         this.apiBase = apiBase;
+        this.formOptions = null;
+        this.loadFormOptions();
+    }
+
+    /**
+     * Load form options from backend (foreign key relationships)
+     * Following Dependency Inversion: depends on API contract, not implementation
+     */
+    async loadFormOptions() {
+        try {
+            const response = await fetch(`${this.apiBase}/form-options`);
+            if (response.ok) {
+                const result = await response.json();
+                this.formOptions = result.data;
+                console.log('Form options loaded:', this.formOptions);
+            }
+        } catch (error) {
+            console.error('Error loading form options:', error);
+            this.formOptions = {
+                user_ids: [],
+                game_ids: [],
+                quest_ids: [],
+                session_ids: [],
+                categories: [],
+                quest_types: [],
+                rule_types: []
+            };
+        }
     }
 
     /**
@@ -147,7 +175,7 @@ class CRUDManager {
                 { key: 'version', label: 'Versione', type: 'text' },
                 { key: 'thumbnail', label: 'Thumbnail URL', type: 'text' },
                 { key: 'entry_point', label: 'Entry Point', type: 'text', required: true },
-                { key: 'category', label: 'Categoria', type: 'text' }
+                { key: 'category', label: 'Categoria', type: 'select', foreignKey: 'categories', allowCustom: true }
             ],
             'users': [
                 { key: 'user_id', label: 'User ID', type: 'text', readonly: true },
@@ -161,8 +189,8 @@ class CRUDManager {
             ],
             'sessions': [
                 { key: 'session_id', label: 'Session ID', type: 'text', readonly: true },
-                { key: 'user_id', label: 'User ID', type: 'text', required: true },
-                { key: 'game_id', label: 'Game ID', type: 'text', required: true },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'game_id', label: 'Game ID', type: 'select', required: true, foreignKey: 'game_ids' },
                 { key: 'score', label: 'Score', type: 'number', min: '0' },
                 { key: 'xp_earned', label: 'XP Guadagnato', type: 'number', step: '0.01', min: '0' },
                 { key: 'duration_seconds', label: 'Durata (secondi)', type: 'number', min: '0' },
@@ -170,17 +198,17 @@ class CRUDManager {
             ],
             'xp-rules': [
                 { key: 'rule_id', label: 'Rule ID', type: 'text', readonly: true },
-                { key: 'game_id', label: 'Game ID', type: 'text', required: true },
+                { key: 'game_id', label: 'Game ID', type: 'select', required: true, foreignKey: 'game_ids' },
                 { key: 'rule_name', label: 'Nome', type: 'text', required: true },
-                { key: 'rule_type', label: 'Tipo', type: 'select', options: ['score_multiplier', 'time_bonus', 'threshold', 'achievement'], required: true },
+                { key: 'rule_type', label: 'Tipo', type: 'select', required: true, foreignKey: 'rule_types' },
                 { key: 'priority', label: 'Priorità', type: 'number', min: '0' },
                 { key: 'is_active', label: 'Attivo', type: 'checkbox' },
                 { key: 'parameters', label: 'Parametri (JSON)', type: 'textarea', isJSON: true }
             ],
             'leaderboard': [
                 { key: 'entry_id', label: 'Entry ID', type: 'text', readonly: true },
-                { key: 'user_id', label: 'User ID', type: 'text', required: true },
-                { key: 'game_id', label: 'Game ID', type: 'text', required: true },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'game_id', label: 'Game ID', type: 'select', required: true, foreignKey: 'game_ids' },
                 { key: 'score', label: 'Score', type: 'number', min: '0', required: true },
                 { key: 'rank', label: 'Rank', type: 'number', min: '1' }
             ],
@@ -188,7 +216,7 @@ class CRUDManager {
                 { key: 'quest_id', label: 'Quest ID', type: 'number', readonly: true },
                 { key: 'title', label: 'Titolo', type: 'text', required: true },
                 { key: 'description', label: 'Descrizione', type: 'textarea' },
-                { key: 'quest_type', label: 'Tipo', type: 'select', options: ['play_games', 'play_time', 'login', 'score', 'level', 'xp', 'complete_quests'], required: true },
+                { key: 'quest_type', label: 'Tipo', type: 'select', required: true, foreignKey: 'quest_types' },
                 { key: 'target_value', label: 'Target', type: 'number', min: '0', required: true },
                 { key: 'xp_reward', label: 'Ricompensa XP', type: 'number', min: '0', required: true },
                 { key: 'sats_reward', label: 'Ricompensa Sats', type: 'number', min: '0' },
@@ -196,8 +224,8 @@ class CRUDManager {
             ],
             'user-quests': [
                 { key: 'id', label: 'ID', type: 'number', readonly: true },
-                { key: 'user_id', label: 'User ID', type: 'text', required: true },
-                { key: 'quest_id', label: 'Quest ID', type: 'number', required: true },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'quest_id', label: 'Quest ID', type: 'select', required: true, foreignKey: 'quest_ids' },
                 { key: 'current_progress', label: 'Progresso', type: 'number', min: '0' },
                 { key: 'is_completed', label: 'Completato', type: 'checkbox' },
                 { key: 'is_claimed', label: 'Reclamato', type: 'checkbox' },
@@ -237,13 +265,38 @@ class CRUDManager {
                     break;
 
                 case 'select':
-                    const options = field.options || [];
-                    inputHTML = `
-                        <select name="${field.key}" ${required} ${disabled}>
-                            <option value="">-- Select --</option>
-                            ${options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('')}
-                        </select>
-                    `;
+                    // Check if this is a foreign key field
+                    if (field.foreignKey && this.formOptions && this.formOptions[field.foreignKey]) {
+                        const options = this.formOptions[field.foreignKey];
+                        
+                        // For array of strings (like categories)
+                        if (options.length > 0 && typeof options[0] === 'string') {
+                            inputHTML = `
+                                <select name="${field.key}" ${required} ${disabled}>
+                                    <option value="">-- Select --</option>
+                                    ${options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                                    ${field.allowCustom ? '<option value="__custom__">+ Custom...</option>' : ''}
+                                </select>
+                            `;
+                        } else {
+                            // For array of objects with value and label
+                            inputHTML = `
+                                <select name="${field.key}" ${required} ${disabled}>
+                                    <option value="">-- Select --</option>
+                                    ${options.map(opt => `<option value="${opt.value}" ${value === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                                </select>
+                            `;
+                        }
+                    } else {
+                        // Fallback to static options
+                        const options = field.options || [];
+                        inputHTML = `
+                            <select name="${field.key}" ${required} ${disabled}>
+                                <option value="">-- Select --</option>
+                                ${options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                        `;
+                    }
                     break;
 
                 case 'datetime-local':

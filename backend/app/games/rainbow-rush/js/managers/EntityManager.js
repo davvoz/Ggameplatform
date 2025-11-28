@@ -9,6 +9,7 @@ export class EntityManager {
         this.platforms = [];
         this.obstacles = [];
         this.collectibles = [];
+        this.goals = []; // Goal flag entities
         this.powerups = [];
         this.hearts = [];
         this.boosts = [];
@@ -88,6 +89,7 @@ export class EntityManager {
         this.platforms = [];
         this.obstacles = [];
         this.collectibles = [];
+        this.goals = [];
         this.powerups = [];
         this.hearts = [];
         this.boosts = [];
@@ -182,6 +184,11 @@ export class EntityManager {
         
         this.heartRechargeBonuses = this.heartRechargeBonuses.filter(bonus => 
             this.updateHeartRechargeBonus(bonus, deltaTime, cameraSpeed)
+        );
+
+        // Update goal flags (move them with platform speed)
+        this.goals = this.goals.filter(goal => 
+            this.updateGoal(goal, deltaTime, cameraSpeed)
         );
 
         // Update particles
@@ -439,6 +446,19 @@ export class EntityManager {
         bonus.pulsePhase += deltaTime * 6;
         bonus.rotation += deltaTime * 2.5;
         return bonus.x + bonus.radius > -50;
+    }
+
+    /**
+     * Update goal flag - moves with platform speed
+     */
+    updateGoal(goal, deltaTime, cameraSpeed) {
+        const totalVelocity = goal.velocity - cameraSpeed;
+        goal.x += totalVelocity * deltaTime;
+        goal.animationTime += deltaTime;
+        
+        // Don't remove goal even if off-screen left (player might have reached it)
+        // Only remove if way off screen to the right (never reached)
+        return goal.x < 3000;
     }
 
     /**

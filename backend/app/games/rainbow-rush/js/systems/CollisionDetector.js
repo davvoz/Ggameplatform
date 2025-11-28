@@ -14,9 +14,31 @@ export class CollisionDetector {
     }
 
     /**
-     * Check all collisions
+     * Check goal collision - player touches/crosses goal flag
+     * @param {Object} goalEntity - The goal flag entity
+     * @returns {boolean} - True if player has reached the goal
      */
-    checkAll(entityManager, safetyPlatformSystem, powerupSystem) {
+    checkGoalCollision(goalEntity) {
+        if (!goalEntity || goalEntity.reached) return false;
+
+        // Check if player's right edge has crossed the goal's left edge
+        const playerRightEdge = this.player.x + this.player.width;
+        const goalLeftEdge = goalEntity.x;
+
+        if (playerRightEdge >= goalLeftEdge) {
+            console.log(`🏁 GOAL REACHED! Player X: ${playerRightEdge.toFixed(0)} >= Goal X: ${goalLeftEdge.toFixed(0)}`);
+            goalEntity.reached = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check all collisions
+     * @param {boolean} goalReached - If true, skip damage/bonus processing
+     */
+    checkAll(entityManager, safetyPlatformSystem, powerupSystem, goalReached = false) {
         // Reset grounded state
         this.player.isGrounded = false;
         let playerOnSafetyPlatform = false;
@@ -48,32 +70,42 @@ export class CollisionDetector {
         // Platform collisions
         this.checkPlatformCollisions(entityManager);
 
-        // Obstacle collisions
-        this.checkObstacleCollisions(entityManager);
+        // Obstacle collisions (skip damage if goal reached)
+        this.checkObstacleCollisions(entityManager, goalReached);
         
-        // NEW: Enemy collisions
-        this.checkEnemyCollisions(entityManager);
+        // NEW: Enemy collisions (skip damage if goal reached)
+        this.checkEnemyCollisions(entityManager, goalReached);
 
-        // Collectible collisions
+        // Collectible collisions (always active)
         this.checkCollectibleCollisions(entityManager);
 
-        // Heart collisions
-        this.checkHeartCollisions(entityManager);
+        // Heart collisions (skip if goal reached)
+        if (!goalReached) {
+            this.checkHeartCollisions(entityManager);
+        }
 
-        // Shield collisions
-        this.checkShieldCollisions(entityManager);
+        // Shield collisions (skip if goal reached)
+        if (!goalReached) {
+            this.checkShieldCollisions(entityManager);
+        }
 
-        // Magnet collisions
-        this.checkMagnetCollisions(entityManager);
+        // Magnet collisions (skip if goal reached)
+        if (!goalReached) {
+            this.checkMagnetCollisions(entityManager);
+        }
 
-        // Boost collisions
-        this.checkBoostCollisions(entityManager);
+        // Boost collisions (skip if goal reached)
+        if (!goalReached) {
+            this.checkBoostCollisions(entityManager);
+        }
 
         // Bonus collisions - REMOVED: now called separately in GameController to get return value
         // this.checkBonusCollisions(entityManager);
 
-        // Powerup collisions
-        this.checkPowerupCollisions(entityManager, powerupSystem);
+        // Powerup collisions (skip if goal reached)
+        if (!goalReached) {
+            this.checkPowerupCollisions(entityManager, powerupSystem);
+        }
 
         return playerOnSafetyPlatform;
     }
@@ -799,12 +831,19 @@ export class CollisionDetector {
 
     /**
      * NEW: Check enemy collisions with player
+     * @param {boolean} goalReached - If true, skip damage processing
      */
-    checkEnemyCollisions(entityManager) {
+    checkEnemyCollisions(entityManager, goalReached = false) {
         const enemies = entityManager.getEntities('enemies');
         
         for (const enemy of enemies) {
             if (!enemy.alive) continue;
+            
+            // SKIP damage processing if goal was reached
+            if (goalReached) {
+                enemy.hasHitPlayer = false;
+                continue;
+            }
             
             // Check player collision with enemy
             if (this.player.checkObstacleCollision(enemy)) {

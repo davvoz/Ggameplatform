@@ -76,6 +76,11 @@ export class GameController {
         this.cleanupTimer = 0;
         this.cleanupInterval = 1.0;
         
+        // Goal reached state
+        this.goalReached = false;
+        this.goalFadeProgress = 0;
+        this.victoryZoom = null;
+        
         // Auto-pause state
         this.autoPaused = false;
     }
@@ -179,8 +184,8 @@ export class GameController {
         // Check if goal should spawn
         const goalToSpawn = this.levelManager.shouldSpawnGoal();
         if (goalToSpawn) {
-            this.entityManager.addEntity('collectibles', goalToSpawn);
-            console.log('✅ Goal added to game!');
+            this.entityManager.addEntity('goals', goalToSpawn);
+            console.log('✅ Goal flag added to game!');
         }
         
         // Update level progress bar basata su DISTANZA
@@ -204,11 +209,12 @@ export class GameController {
             this.enemySystem.update(deltaTime, enemyScrollSpeed);
         }
 
-        // Check collisions
+        // Check collisions (pass goalReached flag)
         const playerOnSafetyPlatform = this.collisionDetector.checkAll(
             this.entityManager,
             this.safetyPlatformSystem,
-            this.powerupSystem
+            this.powerupSystem,
+            this.goalReached
         );
         this.player.onSafetyPlatform = playerOnSafetyPlatform;
         this.safetyPlatformSystem.update(deltaTime, playerOnSafetyPlatform, this.entityManager, this.scoreSystem);
@@ -291,6 +297,8 @@ export class GameController {
         this.renderingSystem.setFloatingTexts(this.entityManager.floatingTexts);
         this.renderingSystem.setAchievementNotifications(this.achievementSystem.getNotifications());
         this.renderingSystem.setScreenFlash(this.screenFlash);
+        this.renderingSystem.setGoalFadeProgress(this.goalFadeProgress); // Add goal fade overlay
+        this.renderingSystem.setVictoryZoom(this.victoryZoom); // Add victory zoom and wink
         this.renderingSystem.setCombo(this.scoreSystem.getCombo());
         this.renderingSystem.setScore(this.scoreSystem.getTotalScore());
         this.renderingSystem.setLevel(this.levelManager.currentLevelId || 1);
@@ -316,6 +324,7 @@ export class GameController {
             ...this.entityManager.obstacles,
             ...this.entityManager.enemies,
             ...this.entityManager.collectibles,
+            ...this.entityManager.goals,
             ...this.entityManager.powerups,
             ...this.entityManager.hearts,
             ...this.entityManager.boosts,
@@ -379,13 +388,30 @@ export class GameController {
      * @private
      */
     _checkGameConditions(context) {
-        // Check level completion
-        if (this.levelManager.checkLevelCompletion()) {
-            this.stateMachine.handleInput('levelComplete', null, context);
+        // Check goal collision
+        const goalEntities = this.entityManager.getEntities('goals');
+        if (goalEntities.length > 0 && !context.goalReached) {
+            const goalEntity = goalEntities[0];
+            const goalReached = this.collisionDetector.checkGoalCollision(goalEntity);
+            
+            if (goalReached) {
+                // Transition to GOAL_REACHED state for animation
+                this.stateMachine.transitionTo(GameStates.GOAL_REACHED, context);
+                return; // Skip other checks during goal animation
+            }
         }
 
-        // Check player death
-        if (!this.player.alive && !this.animationController.isShowingDeathAnimation) {
+        // Check level completion (after goal animation completes)
+        if (context.goalReached) {
+            const goalEntity = goalEntities.length > 0 ? goalEntities[0] : null;
+            if (this.levelManager.checkLevelCompletion(goalEntity, true)) {
+                // This is handled by GoalReachedState's update method
+                return;
+            }
+        }
+
+        // Check player death (skip if goal was reached)
+        if (!context.goalReached && !this.player.alive && !this.animationController.isShowingDeathAnimation) {
             this._startDeathSequence();
         }
     }
@@ -487,7 +513,10 @@ export class GameController {
             unlockedAbilities: this.levelOrchestrator.getUnlockedAbilities(),
             screenFlash: this.screenFlash,
             sdkManager: this.sdkManager,
-            animationController: this.animationController
+            animationController: this.animationController,
+            goalReached: this.goalReached,
+            goalFadeProgress: this.goalFadeProgress,
+            victoryZoom: this.victoryZoom
         };
     }
 

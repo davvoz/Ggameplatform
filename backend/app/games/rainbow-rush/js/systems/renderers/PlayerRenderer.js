@@ -58,45 +58,45 @@ export class PlayerRenderer extends IEntityRenderer {
 
         // Damage flash
         if (player.damageFlash && player.damageFlash > 0) {
-            this.renderDamageFlash(centerX, centerY, avgRadius, player.damageFlash);
+            this.renderDamageFlash(centerX, centerY, avgRadius * animScale, player.damageFlash);
         }
 
         if (!player.alive) {
-            this.renderDeadState(centerX, centerY, avgRadius, player.color);
+            this.renderDeadState(centerX, centerY, avgRadius * animScale, player.color);
             return;
         }
 
         // LAYER 1: Effetti bonus SOTTO il player (shield, magnet)
         if (player.shieldActive) {
-            this.renderShield(player, time, centerX, centerY, avgRadius);
+            this.renderShield(player, time, centerX, centerY, avgRadius * animScale);
         }
         if (player.hasShield) {
-            this.renderShieldBonus(player, time, centerX, centerY, avgRadius);
+            this.renderShieldBonus(player, time, centerX, centerY, avgRadius * animScale);
         }
         if (player.hasMagnet) {
-            this.renderMagnetBonus(player, time, centerX, centerY);
+            this.renderMagnetBonus(player, time, centerX, centerY, animScale);
         }
         
         // LAYER 2: Power-up effects sotto il player
-        this.renderTurboEffects(player, time, shakenX, shakenY, avgRadius);
-        this.renderPowerupEffects(player, time, shakenX, shakenY, avgRadius);
-        this.renderBoostEffect(player, time, shakenX, shakenY, avgRadius);
+        this.renderTurboEffects(player, time, shakenX, shakenY, avgRadius * animScale);
+        this.renderPowerupEffects(player, time, shakenX, shakenY, avgRadius * animScale);
+        this.renderBoostEffect(player, time, shakenX, shakenY, avgRadius * animScale);
 
-        // LAYER 3: Player body (SEMPRE VISIBILE SOPRA)
-        this.renderBody(player, shakenX, shakenY, avgRadius);
+        // LAYER 3: Player body (SEMPRE VISIBILE SOPRA) - SCALE ALL PARTS
+        this.renderBody(player, shakenX, shakenY, avgRadius, animScale);
         
-        // Face
-        this.renderEyes(player, shakenX, shakenY, radiusY);
-        this.renderMouth(player, shakenX, shakenY, radiusY);
+        // Face - scale eye and mouth positions
+        this.renderEyes(player, shakenX, shakenY, radiusY, animScale);
+        this.renderMouth(player, shakenX, shakenY, radiusY, animScale);
 
         // Wings if flying (flight button o instant flight)
         if (player.isFlightActive || player.instantFlightActive) {
-            this.renderWings(player, time, centerX, centerY);
+            this.renderWings(player, time, centerX, centerY, animScale);
         }
 
         // Circular progress bar per instant flight
         if (player.instantFlightActive && player.instantFlightDuration > 0) {
-            this.renderInstantFlightProgress(player, centerX, centerY, avgRadius);
+            this.renderInstantFlightProgress(player, centerX, centerY, avgRadius * animScale);
         }
     }
 
@@ -473,7 +473,7 @@ export class PlayerRenderer extends IEntityRenderer {
         this.renderer.drawCircle(x, y, radius * 1.15, [0.0, 1.0, 0.9, 0.2 * boostPulse]); // Ridotto da *1.3 e 0.3
     }
 
-    renderBody(player, x, y, radius) {
+    renderBody(player, x, y, radius, scale = 1.0) {
         let bodyColor = [...this.getBodyColor(player)]; // Create a copy to avoid modifying original
         
         if (player.invulnerable) {
@@ -487,16 +487,16 @@ export class PlayerRenderer extends IEntityRenderer {
             bodyColor[3] = 1.0; // Assicura opacità completa quando non invulnerabile
         }
 
-        const size = player.width;
+        const size = player.width * scale;
         const rectX = x - size / 2;
         const rectY = y - size / 2;
 
         // Ombra più pronunciata
-        RenderingUtils.drawShadow(this.renderer, rectX, rectY - 3, size, size);
+        RenderingUtils.drawShadow(this.renderer, rectX, rectY - 3 * scale, size, size);
         
         // Bordo scuro per contrasto SBAM
         const borderColor = [0.0, 0.0, 0.0, 0.6];
-        this.renderer.drawRect(rectX - 2, rectY - 2, size + 4, size + 4, borderColor);
+        this.renderer.drawRect(rectX - 2 * scale, rectY - 2 * scale, size + 4 * scale, size + 4 * scale, borderColor);
         
         // Corpo principale con colore brillante
         this.renderer.drawRect(rectX, rectY, size, size, bodyColor);
@@ -514,11 +514,13 @@ export class PlayerRenderer extends IEntityRenderer {
         return RenderingConfig.COLORS.PLAYER_DEFAULT;
     }
 
-    renderEyes(player, x, y, radiusY) {
+    renderEyes(player, x, y, radiusY, scale = 1.0) {
         // Get emotion from player (for victory animation)
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
+        const winkProgress = player.winkProgress || 0; // 0 = no wink, 1 = full wink
         
+        // Use player's normal expression from gameplay
         const expression = player.getExpression ? player.getExpression() : emotion;
         const isBlinking = player.isEyeBlinking ? player.isEyeBlinking() : false;
         
@@ -526,9 +528,9 @@ export class PlayerRenderer extends IEntityRenderer {
         const eyeConfig = this.getEyeConfig(expression, emotionIntensity);
 
         if (!isBlinking) {
-            this.renderOpenEyes(x, eyeY, eyeConfig, emotionIntensity);
+            this.renderOpenEyes(x, eyeY, eyeConfig, emotionIntensity, winkProgress, scale);
         } else {
-            this.renderClosedEyes(x, eyeY);
+            this.renderClosedEyes(x, eyeY, scale);
         }
     }
 
@@ -550,84 +552,107 @@ export class PlayerRenderer extends IEntityRenderer {
         return configs[expression] || configs['happy'];
     }
 
-    renderOpenEyes(x, eyeY, config, intensity = 0) {
+    renderOpenEyes(x, eyeY, config, intensity = 0, winkProgress = 0, scale = 1.0) {
         const eyeWhite = [1.0, 1.0, 1.0, 1.0];
         const eyeOutline = [0.0, 0.0, 0.0, 0.4];
         const pupilColor = [0.0, 0.0, 0.0, 1.0];
         
         // Sparkle effect increases with emotion intensity
-        const glintSize = 1.5 + intensity * 1.5;
+        const glintSize = (1.5 + intensity * 1.5) * scale;
         const glintColor = [1.0, 1.0, 1.0, 0.8 + intensity * 0.2];
 
-        // Left eye
-        this.renderer.drawCircle(x - 7, eyeY, config.eyeSize + 1, eyeOutline);
-        this.renderer.drawCircle(x - 7, eyeY, config.eyeSize, eyeWhite);
-        this.renderer.drawCircle(x - 7 + config.pupilOffsetX, eyeY + config.pupilOffsetY, config.pupilSize, pupilColor);
-        this.renderer.drawCircle(x - 8, eyeY - 1, glintSize, glintColor);
+        // Left eye (normale)
+        this.renderer.drawCircle(x - 7 * scale, eyeY, (config.eyeSize + 1) * scale, eyeOutline);
+        this.renderer.drawCircle(x - 7 * scale, eyeY, config.eyeSize * scale, eyeWhite);
+        this.renderer.drawCircle(x - 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * scale, pupilColor);
+        this.renderer.drawCircle(x - 8 * scale, eyeY - 1 * scale, glintSize, glintColor);
         
         // Extra sparkles when very happy
         if (intensity > 0.5) {
-            this.renderer.drawCircle(x - 6, eyeY + 1, glintSize * 0.6, glintColor);
+            this.renderer.drawCircle(x - 6 * scale, eyeY + 1 * scale, glintSize * 0.6, glintColor);
         }
 
-        // Right eye
-        this.renderer.drawCircle(x + 7, eyeY, config.eyeSize + 1, eyeOutline);
-        this.renderer.drawCircle(x + 7, eyeY, config.eyeSize, eyeWhite);
-        this.renderer.drawCircle(x + 7 + config.pupilOffsetX, eyeY + config.pupilOffsetY, config.pupilSize, pupilColor);
-        this.renderer.drawCircle(x + 6, eyeY - 1, glintSize, glintColor);
-        
-        // Extra sparkles when very happy
-        if (intensity > 0.5) {
-            this.renderer.drawCircle(x + 8, eyeY + 1, glintSize * 0.6, glintColor);
+        // Right eye (with wink)
+        if (winkProgress > 0) {
+            // Winking eye - transition from open circle to closed line
+            const winkEyeSize = config.eyeSize * (1 - winkProgress) * scale;
+            const winkHeight = config.eyeSize * 2 * (1 - winkProgress) * scale; // Occhio si schiaccia verso l'alto
+            
+            if (winkProgress < 0.95) {
+                // Still partially open - draw squeezed circle
+                this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize + 1 * scale, eyeOutline);
+                this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize, eyeWhite);
+                if (winkProgress < 0.5) {
+                    // Pupil still visible
+                    this.renderer.drawCircle(x + 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * (1 - winkProgress * 2) * scale, pupilColor);
+                }
+            } else {
+                // Fully closed - draw line like blinking
+                const blinkColor = [0.0, 0.0, 0.0, 0.8];
+                this.renderer.drawRect(x + 4 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
+                this.renderer.drawCircle(x + 7 * scale, eyeY, 3 * scale, blinkColor);
+            }
+        } else {
+            // Normal open eye
+            this.renderer.drawCircle(x + 7 * scale, eyeY, (config.eyeSize + 1) * scale, eyeOutline);
+            this.renderer.drawCircle(x + 7 * scale, eyeY, config.eyeSize * scale, eyeWhite);
+            this.renderer.drawCircle(x + 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * scale, pupilColor);
+            this.renderer.drawCircle(x + 6 * scale, eyeY - 1 * scale, glintSize, glintColor);
+            
+            // Extra sparkles when very happy
+            if (intensity > 0.5) {
+                this.renderer.drawCircle(x + 8 * scale, eyeY + 1 * scale, glintSize * 0.6, glintColor);
+            }
         }
     }
 
-    renderClosedEyes(x, eyeY) {
+    renderClosedEyes(x, eyeY, scale = 1.0) {
         const blinkColor = [0.0, 0.0, 0.0, 0.8];
-        this.renderer.drawRect(x - 10, eyeY, 6, 2, blinkColor);
-        this.renderer.drawCircle(x - 7, eyeY, 3, blinkColor);
-        this.renderer.drawRect(x + 4, eyeY, 6, 2, blinkColor);
-        this.renderer.drawCircle(x + 7, eyeY, 3, blinkColor);
+        this.renderer.drawRect(x - 10 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
+        this.renderer.drawCircle(x - 7 * scale, eyeY, 3 * scale, blinkColor);
+        this.renderer.drawRect(x + 4 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
+        this.renderer.drawCircle(x + 7 * scale, eyeY, 3 * scale, blinkColor);
     }
 
-    renderMouth(player, x, y, radiusY) {
+    renderMouth(player, x, y, radiusY, scale = 1.0) {
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
         
+        // Use player's normal expression from gameplay
         const expression = player.getExpression ? player.getExpression() : emotion;
         const mouthY = y + radiusY * 0.4;
         const mouthColor = [0.0, 0.0, 0.0, 0.7];
 
         switch(expression) {
             case 'worried':
-                this.renderWorriedMouth(x, mouthY, mouthColor);
+                this.renderWorriedMouth(x, mouthY, mouthColor, scale);
                 break;
             case 'excited':
-                this.renderExcitedMouth(x, mouthY, mouthColor);
+                this.renderExcitedMouth(x, mouthY, mouthColor, scale);
                 break;
             case 'surprised':
-                this.renderSurprisedMouth(x, mouthY, mouthColor);
+                this.renderSurprisedMouth(x, mouthY, mouthColor, scale);
                 break;
             case 'determined':
-                this.renderDeterminedMouth(x, mouthY, mouthColor);
+                this.renderDeterminedMouth(x, mouthY, mouthColor, scale);
                 break;
             case 'running':
-                this.renderRunningMouth(x, mouthY, mouthColor);
+                this.renderRunningMouth(x, mouthY, mouthColor, scale);
                 break;
             case 'lookingUp':
-                this.renderLookingUpMouth(x, mouthY, mouthColor);
+                this.renderLookingUpMouth(x, mouthY, mouthColor, scale);
                 break;
             default:
-                this.renderHappyMouth(x, mouthY, mouthColor, emotionIntensity);
+                this.renderHappyMouth(x, mouthY, mouthColor, emotionIntensity, scale);
         }
     }
 
-    renderHappyMouth(x, y, color, intensity = 0) {
+    renderHappyMouth(x, y, color, intensity = 0, scale = 1.0) {
         // Bigger, more curved smile with higher intensity
         const points = 7 + Math.floor(intensity * 3); // More points = smoother smile
-        const smileRadius = 8 + intensity * 4; // Wider smile
+        const smileRadius = (8 + intensity * 4) * scale; // Wider smile
         const curvature = 0.6 + intensity * 0.3; // More pronounced curve
-        const pointSize = 1.5 + intensity * 0.5; // Bigger dots
+        const pointSize = (1.5 + intensity * 0.5) * scale; // Bigger dots
         
         for (let i = 0; i < points; i++) {
             const t = i / (points - 1);
@@ -649,14 +674,14 @@ export class PlayerRenderer extends IEntityRenderer {
         }
     }
 
-    renderExcitedMouth(x, y, color) {
+    renderExcitedMouth(x, y, color, scale = 1.0) {
         for (let i = 0; i < 9; i++) {
             const t = i / 8;
             const angle = Math.PI * 0.15 + (t * Math.PI * 0.7);
-            const smileRadius = 10;
+            const smileRadius = 10 * scale;
             const sx = x + Math.cos(angle) * smileRadius;
             const sy = y + Math.sin(angle) * smileRadius * 0.7;
-            this.renderer.drawCircle(sx, sy, 2, color);
+            this.renderer.drawCircle(sx, sy, 2 * scale, color);
         }
     }
 

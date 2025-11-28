@@ -209,7 +209,7 @@ export class GameControllerBuilder {
         // Validate required dependencies
         this._validate();
         
-        return new GameController({
+        const gameController = new GameController({
             canvas: this.canvas,
             engine: this.engine,
             gameState: this.gameState,
@@ -239,6 +239,11 @@ export class GameControllerBuilder {
             inputCommandMapper: this.inputCommandMapper,
             levelOrchestrator: this.levelOrchestrator
         });
+        
+        // Set gameController reference in levelOrchestrator for accessing shared state
+        this.levelOrchestrator.setGameController(gameController);
+        
+        return gameController;
     }
 
     /**

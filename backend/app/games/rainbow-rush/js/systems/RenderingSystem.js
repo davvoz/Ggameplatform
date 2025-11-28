@@ -84,6 +84,38 @@ export class RenderingSystem {
 
     setPlayer(player) {
         this.player = player;
+        
+        // Apply victory zoom effect if active
+        if (this.victoryZoom && player) {
+            const canvasCenterX = this.canvasWidth / 2;
+            const canvasCenterY = this.canvasHeight / 2;
+            
+            // Store original position for zoom calculation
+            if (!player.originalX) {
+                player.originalX = player.x;
+                player.originalY = player.y;
+            }
+            
+            // Zoom towards canvas center
+            const scale = this.victoryZoom.scale;
+            const targetX = canvasCenterX - player.width / 2;
+            const targetY = canvasCenterY - player.height / 2;
+            
+            // Interpolate player position towards center
+            const lerpFactor = Math.min(1, (scale - 1) / 1.5); // 0 to 1 as scale goes 1 to 2.5
+            player.animatedX = player.x + (targetX - player.x) * lerpFactor;
+            player.animatedY = player.y + (targetY - player.y) * lerpFactor;
+            player.animatedScale = scale;
+            player.winkProgress = this.victoryZoom.winkProgress;
+        } else if (player) {
+            // Reset animation properties
+            player.animatedX = undefined;
+            player.animatedY = undefined;
+            player.animatedScale = undefined;
+            player.winkProgress = 0;
+            player.originalX = undefined;
+            player.originalY = undefined;
+        }
     }
 
     setLevelUpAnimation(animation) {
@@ -104,6 +136,14 @@ export class RenderingSystem {
     
     setScreenFlash(flash) {
         this.screenFlash = flash;
+    }
+    
+    setGoalFadeProgress(fadeProgress) {
+        this.goalFadeProgress = fadeProgress || 0;
+    }
+    
+    setVictoryZoom(victoryZoom) {
+        this.victoryZoom = victoryZoom;
     }
     
     setCombo(combo) {
@@ -334,6 +374,14 @@ export class RenderingSystem {
         
         if (this.screenFlash) {
             this.animationRenderer.renderScreenFlash(this.screenFlash);
+        }
+        
+        // Render goal fade overlay (white fade when goal is reached)
+        if (this.goalFadeProgress > 0) {
+            this.animationRenderer.renderScreenFlash({
+                alpha: this.goalFadeProgress * 0.8, // Max 80% opacity
+                color: [1.0, 1.0, 1.0] // White fade
+            });
         }
     }
 

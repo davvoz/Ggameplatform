@@ -13,6 +13,7 @@ export class LevelOrchestrator {
         this.audioManager = audioManager;
         this.animationController = animationController;
         this.enemySystem = null; // Will be set externally
+        this.gameController = null; // Will be set externally
         
         // Registra callback per spawn goal dinamico
         this.levelManager.onSpawnGoal = (goalFlag) => {
@@ -52,6 +53,13 @@ export class LevelOrchestrator {
     }
 
     /**
+     * Set game controller reference for accessing shared state
+     */
+    setGameController(gameController) {
+        this.gameController = gameController;
+    }
+
+    /**
      * Load specific level
      * @param {number} levelId - Level ID to load
      * @param {Object} dims - Canvas dimensions {width, height}
@@ -63,6 +71,12 @@ export class LevelOrchestrator {
         // Reset death animation state
         if (this.animationController) {
             this.animationController.reset();
+        }
+        
+        // Reset goal reached flag for new level
+        if (this.gameController) {
+            this.gameController.goalReached = false;
+            this.gameController.goalFadeProgress = 0;
         }
         
         // Silent unlock: Unlock abilities if loading level >= unlock threshold
@@ -241,6 +255,7 @@ export class LevelOrchestrator {
         this.entityManager.platforms = [];
         this.entityManager.obstacles = [];
         this.entityManager.collectibles = [];
+        this.entityManager.goals = []; // Clear goal flags
         this.entityManager.powerups = [];
         this.entityManager.hearts = [];
         this.entityManager.boosts = [];

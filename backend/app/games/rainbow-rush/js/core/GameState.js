@@ -7,6 +7,7 @@ export const GameStates = {
     LEVEL_SELECT: 'levelSelect',
     PLAYING: 'playing',
     PAUSED: 'paused',
+    GOAL_REACHED: 'goalReached',
     LEVEL_SUMMARY: 'levelSummary',
     GAME_OVER: 'gameOver'
 };

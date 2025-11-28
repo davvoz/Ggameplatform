@@ -80,6 +80,7 @@ export class LevelManager {
         this.levelLength = 0;
         this.levelCompleted = false;
         this.levelStars = 0;
+        this.goalSpawned = false; // Reset goal spawn flag
 
         // Conta totali
         this.totalCoins = this.currentLevel.collectibles.filter(c => c.type === 'coin').length;
@@ -641,21 +642,21 @@ export class LevelManager {
     shouldSpawnGoal() {
         if (!this.currentLevel || this.levelCompleted || this.goalSpawned) return null;
 
-        // Spawna il goal quando siamo a 90% del livello
-        const spawnThreshold = this.levelLength * 0.9;
+        // Spawna il goal quando siamo a 70% del livello (più presto per dare tempo di vederlo)
+        const spawnThreshold = this.levelLength * 0.7;
 
         if (this.distanceTraveled >= spawnThreshold) {
             this.goalSpawned = true;
 
             const canvasWidth = this.canvasWidth || 800;
-            const goalX = canvasWidth + 100; // Fuori schermo a destra
+            const goalX = canvasWidth + 1500; // Più lontano per dare tempo di scorrere nella visuale
 
             console.log(`🏁 Goal spawned OFF-SCREEN at ${goalX}px (distance: ${this.distanceTraveled.toFixed(0)}/${this.levelLength})`);
 
             return {
                 x: goalX,
                 y: this.canvasHeight * 0.5,
-                width: 4000000,
+                width: 60,
                 height: 60,
                 type: 'goalFlag',
                 velocity: -this.baseSpeed,  // Si muove con le piattaforme verso sinistra
@@ -693,18 +694,28 @@ export class LevelManager {
      */
     getProgress() {
         if (!this.levelLength || this.levelLength === 0) return 0;
-        return Math.min(1.0, this.distanceTraveled / this.levelLength);
+        
+        // Cap progress at 99% until goal is actually reached (goal spawns beyond levelLength)
+        const rawProgress = this.distanceTraveled / this.levelLength;
+        
+        // If level is completed (goal reached), return 100%
+        if (this.levelCompleted) return 1.0;
+        
+        // Otherwise, cap at 99% to avoid showing 100% before reaching goal
+        return Math.min(0.99, rawProgress);
     }
 
     /**
      * Controlla se il livello è completato
      * Il livello è completato quando il player raggiunge il goal
+     * @param {Object} goalEntity - The goal flag entity (optional, for collision-based detection)
+     * @param {boolean} goalReached - Whether player has touched the goal
      */
-    checkLevelCompletion(playerX) {
+    checkLevelCompletion(goalEntity = null, goalReached = false) {
         if (!this.currentLevel || this.levelCompleted) return false;
 
-        // Il livello finisce quando la distanza percorsa raggiunge la lunghezza
-        if (this.distanceTraveled >= this.levelLength) {
+        // Il livello finisce quando il player tocca il goal
+        if (goalReached && goalEntity && goalEntity.reached) {
             this.completeLevel();
             return true;
         }

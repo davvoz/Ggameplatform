@@ -886,7 +886,7 @@ async function showOpenSessions() {
 }
 
 async function closeAllOpenSessions() {
-    
+
     try {
         const response = await fetch(`${CONFIG.API_BASE}/sessions/close-all`, {
             method: 'POST'
@@ -895,23 +895,27 @@ async function closeAllOpenSessions() {
         const data = await response.json();
         
         if (data.success) {
-            alert(`✅ ${data.closed_count} sessioni chiuse con successo!`);
             closeModal();
+            if (crudManager) {
+                crudManager.showToast(`${data.closed_count} sessioni chiuse con successo`, 'success');
+            }
             await app?.updateOpenSessionsButton();
             await app?.loadData();
         } else {
-            alert('Errore nella chiusura delle sessioni');
+            if (crudManager) {
+                crudManager.showToast('Errore nella chiusura delle sessioni', 'error');
+            }
         }
     } catch (error) {
         console.error('Error closing sessions:', error);
-        alert('Errore: ' + error.message);
+        if (crudManager) {
+            crudManager.showToast('Errore: ' + error.message, 'error');
+        }
     }
 }
 
 async function closeSingleSession(sessionId) {
-    if (!confirm('Chiudere questa sessione?')) {
-        return;
-    }
+
     
     try {
         const response = await fetch(`${CONFIG.API_BASE}/sessions/${sessionId}/close`, {
@@ -921,7 +925,6 @@ async function closeSingleSession(sessionId) {
         const data = await response.json();
         
         if (data.success) {
-            alert('✅ Sessione chiusa!');
             await showOpenSessions();
             await app?.updateOpenSessionsButton();
             await app?.loadData();

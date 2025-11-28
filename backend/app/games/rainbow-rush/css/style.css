@@ -31,7 +31,8 @@ body {
 
 #game-container {
     position: relative;
-    display: inline-block; /* Auto-size to canvas */
+    display: inline-block;
+    /* Auto-size to canvas */
 }
 
 #gameCanvas {
@@ -64,7 +65,7 @@ body {
     body {
         display: block;
     }
-    
+
     #game-container {
         /* Container auto-sizes to canvas for fullscreen mobile */
     }
@@ -180,7 +181,9 @@ body {
 }
 
 @keyframes rainbow {
-    to { background-position: 300% center; }
+    to {
+        background-position: 300% center;
+    }
 }
 
 /* ==================== HIGH SCORE & BADGES ==================== */
@@ -413,9 +416,11 @@ body {
         transform: scale(0) rotate(0deg);
         opacity: 0;
     }
+
     60% {
         transform: scale(1.15) rotate(180deg);
     }
+
     100% {
         transform: scale(1) rotate(360deg);
         opacity: 1;
@@ -502,14 +507,24 @@ body {
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.05);
     }
@@ -520,12 +535,15 @@ body {
         transform: translateY(100vh) rotate(0deg);
         opacity: 0;
     }
+
     10% {
         opacity: 1;
     }
+
     90% {
         opacity: 1;
     }
+
     100% {
         transform: translateY(-100px) rotate(360deg);
         opacity: 0;
@@ -588,7 +606,7 @@ body {
     background: linear-gradient(135deg, #6bb7ff 0%, #c589ff 100%);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
+    box-shadow:
         0 2px 6px rgba(107, 183, 255, 0.3),
         0 0 0 2px white;
 }
@@ -606,7 +624,7 @@ body {
 
 .volume-slider::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 
+    box-shadow:
         0 3px 10px rgba(107, 183, 255, 0.4),
         0 0 0 2px white;
 }
@@ -688,14 +706,22 @@ body {
 
 /* ==================== LOADING SCREEN ==================== */
 #loading-screen {
-    background: url("../thumbnail2.png") 
-        center center / cover no-repeat;
+    background: url("../thumbnail2.png") center center / cover no-repeat;
     backdrop-filter: blur(8px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+   
+    align-items: center;
+    justify-content: center;
 }
 
 .loading-content {
     text-align: center;
     color: white;
+    min-width: 300px;
 }
 
 .loading-title {
@@ -755,7 +781,7 @@ body {
         padding: 2rem 1.5rem;
         width: 95%;
     }
-    
+
     .screen-title {
         font-size: 2.2rem;
     }
@@ -768,62 +794,62 @@ body {
         font-size: 0.95rem;
         padding: 0.75rem 1.8rem;
     }
-    
+
     .game-button.secondary {
         font-size: 0.85rem;
         padding: 0.65rem 1.5rem;
     }
-    
+
     .high-score {
         font-size: 1.05rem;
         padding: 0.7rem 1.1rem;
     }
-    
+
     .levels-grid {
         gap: 0.4rem;
         padding: 0.6rem;
     }
-    
+
     .level-number {
         font-size: 1.3rem;
     }
-    
+
     .star {
         font-size: 3rem;
     }
-    
+
     .stats-grid,
     .stats-container {
         gap: 0.5rem;
     }
-    
+
     .stat-card,
     .stat-item {
         padding: 0.7rem 0.6rem;
     }
-    
+
     .stat-icon {
         font-size: 1.6rem;
         width: 42px;
         height: 42px;
     }
-    
+
     .stat-value {
         font-size: 1.5rem;
     }
-    
+
     .volume-controls {
         padding: 1rem;
     }
-    
+
     .volume-item {
         margin-bottom: 1rem;
     }
-    
+
     .controls-info {
         padding: 0.7rem 0.8rem;
     }
-    
+
     .controls-info p {
         font-size: 0.82rem;
         margin: 0.25rem 0;
@@ -834,20 +860,20 @@ body {
     .screen-content {
         padding: 1.5rem 1.2rem;
     }
-    
+
     .screen-title {
         font-size: 2rem;
     }
-    
+
     .game-button {
         font-size: 0.9rem;
         padding: 0.7rem 1.5rem;
     }
-    
+
     .stat-value {
         font-size: 1.3rem;
     }
-    
+
     .stat-icon {
         font-size: 1.4rem;
         width: 38px;
@@ -857,6 +883,7 @@ body {
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -864,7 +891,7 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-    
+
     .speed-multiplier {
         animation: none;
     }

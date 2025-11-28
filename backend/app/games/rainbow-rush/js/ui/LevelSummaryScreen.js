@@ -477,6 +477,69 @@ export class LevelSummaryScreen {
         ctx.fillText(`${rankInfo.emoji} ${rankInfo.text}`, canvasWidth / 2, badgeY + 10);
         ctx.shadowBlur = 0;
         
+        // Star Requirements Section - MOVED HIGHER AND MORE COMPACT
+        if (this.summary.starRequirements) {
+            const reqY = starsY + 100; // Moved up from statsStartY
+            const reqWidth = Math.min(panelWidth - 60, 380);
+            const reqX = centerX - reqWidth / 2;
+            
+            // Title
+            ctx.fillStyle = '#666';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎯 STAR REQUIREMENTS', centerX, reqY);
+            
+            // Requirements boxes - MORE COMPACT
+            const req = this.summary.starRequirements;
+            const coinsFor3 = Math.ceil(this.summary.totalCoins * req.threeStars.coins);
+            const coinsFor2 = Math.ceil(this.summary.totalCoins * req.twoStars.coins);
+            const coinsFor1 = Math.ceil(this.summary.totalCoins * req.oneStar.coins);
+            
+            const requirements = [
+                { stars: 3, time: req.threeStars.time, coins: coinsFor3, color: '#FFD700' },
+                { stars: 2, time: req.twoStars.time, coins: coinsFor2, color: '#C0C0C0' },
+                { stars: 1, time: req.oneStar.time, coins: coinsFor1, color: '#CD7F32' }
+            ];
+            
+            const reqBoxHeight = 28; // Reduced from 35
+            const reqBoxSpacing = 5; // Reduced from 8
+            
+            requirements.forEach((r, index) => {
+                const boxY = reqY + 12 + (reqBoxHeight + reqBoxSpacing) * index;
+                
+                // Box background
+                ctx.fillStyle = this.summary.stars >= r.stars ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.roundRect(reqX, boxY, reqWidth, reqBoxHeight, 6);
+                ctx.fill();
+                
+                // Border
+                ctx.strokeStyle = this.summary.stars >= r.stars ? '#22c55e' : 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Stars icon
+                ctx.fillStyle = r.color;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('⭐'.repeat(r.stars), reqX + 8, boxY + 19);
+                
+                // Requirements text - MORE COMPACT
+                ctx.fillStyle = '#555';
+                ctx.font = '11px Arial';
+                const coinsPercent = (req[r.stars === 3 ? 'threeStars' : r.stars === 2 ? 'twoStars' : 'oneStar'].coins * 100).toFixed(0);
+                ctx.fillText(`Time ≤${r.time}s  |  Coins ≥${r.coins} (${coinsPercent}%)`, reqX + 70, boxY + 19);
+                
+                // Checkmark if achieved
+                if (this.summary.stars >= r.stars) {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('✓', reqX + reqWidth - 10, boxY + 20);
+                }
+            });
+        }
+        
         // Stats section with modern card design
         const statsStartY = panelY + 300;
         const statsX = panelX + 30;

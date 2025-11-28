@@ -512,6 +512,9 @@ class LevelSummaryState extends BaseGameState {
         context.powerupSystem.reset();
         context.levelController.resetPlayerEffects();
 
+        // Complete level and calculate stars BEFORE getting summary
+        context.levelManager.completeLevel();
+
         // Get summary data
         const summary = context.levelManager.getLevelSummary();
         summary.score = context.scoreSystem.getScore();

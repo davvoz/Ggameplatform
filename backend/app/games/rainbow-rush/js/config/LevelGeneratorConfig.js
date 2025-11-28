@@ -30,7 +30,7 @@ export const DifficultyConfig = {
         healthPerLevel: { min: 1, max: 2 },
         coinFrequency: 0.26,
 
-        parTime: { threeStars: 12, twoStars: 18, oneStar: 30 }
+        parTime: { threeStars: 25, twoStars: 35, oneStar: 50 }  // Più generoso per tutorial
     },
 
     EASY: {

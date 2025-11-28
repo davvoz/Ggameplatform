@@ -876,6 +876,7 @@ export class LevelManager {
             damagesTaken: this.damagesTaken,
             maxCombo: this.maxCombo,
             objectives: this.currentLevel.objectives,
+            starRequirements: this.currentLevel.starRequirements,
             nextLevelId: this.currentLevelId < getTotalLevels() ? this.currentLevelId + 1 : null
         };
     }

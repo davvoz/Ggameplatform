@@ -194,7 +194,6 @@ class AuthManager {
      */
     async refreshUserData() {
         if (!this.currentUser || !this.currentUser.user_id) {
-            console.log('No current user to refresh');
             return null;
         }
 
@@ -219,10 +218,8 @@ class AuthManager {
                 this.saveToStorage();
                 this.showUserBanner(); // Aggiorna la navbar con dati freschi
                 
-                console.log('✅ User data refreshed from server. XP:', freshUser.total_xp_earned);
                 return this.currentUser;
             } else {
-                console.error('Failed to refresh user data:', response.status);
                 return null;
             }
         } catch (error) {

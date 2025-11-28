@@ -61,6 +61,7 @@ class ProfileRenderer {
             const response = await fetch(`${config.API_URL}/users/users/${cachedUser.user_id}`);
             if (response.ok) {
                 const userData = await response.json();
+                console.log('✅ Fetched fresh user data from server.');
                 return userData.user;
             }
             console.error('Failed to fetch user data:', response.status, response.statusText);

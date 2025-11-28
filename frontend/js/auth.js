@@ -9,7 +9,6 @@ const AuthManager = {
     },
     
     init() {
-        console.log('AuthManager: inizializzazione...');
         // Pulisci eventuali banner residui da vecchie sessioni
         document.querySelectorAll('.auth-banner').forEach(el => el.remove());
         document.body.classList.remove('has-auth-banner');
@@ -18,11 +17,9 @@ const AuthManager = {
         this.attachEventListeners();
         this.updateUI();
         
-        console.log('AuthManager: inizializzato, utente corrente:', this.currentUser);
         
         // Force UI update after a short delay to ensure DOM is ready
         setTimeout(() => {
-            console.log('AuthManager: force UI update');
             this.updateUI();
         }, 100);
     },
@@ -244,9 +241,7 @@ const AuthManager = {
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
         
-        console.log('AuthManager: setUser chiamato, userData:', userData);
-        console.log('AuthManager: is_anonymous:', userData.is_anonymous);
-        
+       
         this.updateUI();
         
         // Dispatch custom event
@@ -259,11 +254,9 @@ const AuthManager = {
         if (!stored) {
             stored = localStorage.getItem('currentUser');
         }
-        console.log('AuthManager: caricamento da localStorage:', stored);
         if (stored) {
             try {
                 this.currentUser = JSON.parse(stored);
-                console.log('AuthManager: utente caricato:', this.currentUser);
             } catch (e) {
                 console.error('Failed to parse stored user:', e);
                 localStorage.removeItem('gameplatform_user');
@@ -275,7 +268,6 @@ const AuthManager = {
     },
     
     logout() {
-        console.log('AuthManager: logout chiamato');
         this.currentUser = null;
         localStorage.removeItem('gameplatform_user');
         localStorage.removeItem('currentUser');
@@ -286,7 +278,6 @@ const AuthManager = {
         window.dispatchEvent(new Event('userLogout'));
         
         // Redirect to auth page
-        console.log('AuthManager: redirect a auth.html');
         window.location.href = '/auth.html';
     },
     
@@ -297,22 +288,13 @@ const AuthManager = {
         const profileLink = document.getElementById('profileLink');
         const questsLink = document.getElementById('questsLink');
         
-        console.log('AuthManager: updateUI chiamato');
-        console.log('AuthManager: elementi trovati -', {
-            userInfo: !!userInfo,
-            userName: !!userName,
-            userCur8: !!userCur8,
-            profileLink: !!profileLink,
-            questsLink: !!questsLink
-        });
+
         
         // Verifica che gli elementi esistano (potrebbero non essere presenti in tutte le pagine)
         if (!userInfo || !userName || !userCur8) {
-            console.log('AuthManager: elementi UI principali non trovati');
             return;
         }
         
-        console.log('AuthManager: aggiornamento UI, utente:', this.currentUser);
         
         if (this.currentUser) {
             // User logged in
@@ -322,20 +304,16 @@ const AuthManager = {
             if (profileLink) {
                 profileLink.classList.remove('auth-required');
                 profileLink.style.display = 'inline-block';
-                console.log('AuthManager: link profilo mostrato');
             }
             
             // Show Quests link only for non-anonymous users
             if (questsLink) {
-                console.log('AuthManager: questsLink trovato, is_anonymous:', this.currentUser.is_anonymous);
                 if (this.currentUser.is_anonymous) {
                     questsLink.classList.add('auth-required');
                     questsLink.style.display = 'none';
-                    console.log('AuthManager: link quests NASCOSTO per utente anonimo');
                 } else {
                     questsLink.classList.remove('auth-required');
                     questsLink.style.display = 'inline-block';
-                    console.log('AuthManager: link quests MOSTRATO per utente autenticato');
                 }
             } else {
                 console.log('AuthManager: questsLink NON trovato nel DOM');
@@ -360,7 +338,6 @@ const AuthManager = {
             const multiplier = this.currentUser.cur8_multiplier || 1.0;
             userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
             
-            console.log('AuthManager: UI aggiornata -', displayName, multiplier, cur8Total);
         } else {
             // User not logged in
             userInfo.style.display = 'none';
@@ -372,16 +349,13 @@ const AuthManager = {
                 questsLink.classList.add('auth-required');
                 questsLink.style.display = 'none';
             }
-            console.log('AuthManager: nessun utente loggato, tutti i link nascosti');
         }
     },
     
     updateCur8(amount) {
-        console.log('🎁 AuthManager.updateCur8 chiamato con amount:', amount);
         if (this.currentUser) {
             const oldTotal = this.currentUser.total_xp_earned || 0;
             this.currentUser.total_xp_earned = oldTotal + amount;
-            console.log('🎁 XP aggiornato:', oldTotal, '->', this.currentUser.total_xp_earned);
             
             // Salva in localStorage
             localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
@@ -421,7 +395,6 @@ if (document.readyState === 'loading') {
 
 // Listen for login event and update UI
 window.addEventListener('userLogin', () => {
-    console.log('AuthManager: evento userLogin ricevuto, aggiornamento UI');
     AuthManager.updateUI();
 });
 

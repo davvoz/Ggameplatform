@@ -117,13 +117,20 @@ export default class RuntimeShell {
      * @param {MessageEvent} event - The message event
      */
     handleMessage(event) {
+        // Ignore MetaMask messages
+        const message = event.data;
+        if (message && typeof message === 'object' && 
+            (message.target === 'metamask-inpage' || 
+             message.target === 'metamask-provider' ||
+             message.name === 'metamask-provider')) {
+            return; // Silently ignore MetaMask messages
+        }
+
         // Validate origin
         if (!this.isValidOrigin(event.origin)) {
             this.log('Rejected message from invalid origin:', event.origin);
             return;
         }
-
-        const message = event.data;
 
         // Validate message format
         if (!this.isValidMessage(message)) {

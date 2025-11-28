@@ -105,6 +105,10 @@ async function handleClaimReward(questId, userId) {
         // Wait for animation to complete, then reload quests
         setTimeout(async () => {
             await reloadQuests(userId);
+            // Update quest badge in navigation
+            if (window.refreshQuestBadge) {
+                window.refreshQuestBadge();
+            }
         }, 2000);
 
     } catch (error) {

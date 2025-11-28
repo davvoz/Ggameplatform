@@ -175,6 +175,9 @@ class AuthManager {
                 isAuthenticated: this.isAuthenticated()
             }
         }));
+        
+        // Dispatch also auth-state-changed for quest badge
+        window.dispatchEvent(new Event('auth-state-changed'));
     }
 
     /**

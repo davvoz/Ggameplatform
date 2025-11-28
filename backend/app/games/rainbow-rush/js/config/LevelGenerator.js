@@ -89,9 +89,9 @@ class Level {
         this.objectives = ['reach_end'];
         this.parTime = { threeStars: 20, twoStars: 30, oneStar: 45 };
         this.starRequirements = {
-            threeStars: { time: 20, coins: 1.0, enemies: 1.0, noDamage: true },
-            twoStars: { time: 30, coins: 0.8, enemies: 0.7 },
-            oneStar: { time: 45, coins: 0.5 }
+            threeStars: { time: 20, coins: 0.70, maxDamage: 1 },
+            twoStars: { time: 30, coins: 0.50, maxDamage: 3 },
+            oneStar: { time: 45, coins: 0.30 }
         };
         this.length = 0; // Lunghezza totale del livello in pixel (calcolata dopo aver aggiunto le piattaforme)
         this.fineLivello = 3000; // NUOVO: Lunghezza fissa del livello in pixel (configurabile per ogni livello)
@@ -914,18 +914,17 @@ export class LevelGenerator {
         level.starRequirements = {
             threeStars: {
                 time: config.parTime.threeStars,
-                coins: 0.9,  // ✅ 90% monete (era 100%)
-                enemies: 0.8, // ✅ 80% nemici (era 100%)
-                noDamage: true
+                coins: 0.70,  // ✅ 70% monete
+                maxDamage: 1  // ✅ Max 1 danno
             },
             twoStars: {
                 time: config.parTime.twoStars,
-                coins: 0.7,  // ✅ 70% monete (era 80%)
-                enemies: 0.6 // ✅ 60% nemici (era 70%)
+                coins: 0.50,  // ✅ 50% monete
+                maxDamage: 3  // ✅ Max 3 danni
             },
             oneStar: {
                 time: config.parTime.oneStar,
-                coins: 0.4   // ✅ 40% monete (era 50%)
+                coins: 0.30   // ✅ 30% monete
             }
         };
 

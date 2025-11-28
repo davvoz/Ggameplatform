@@ -20,18 +20,17 @@
         <!-- Menu Screen -->
         <div id="menu-screen" class="screen active">
             <div class="screen-content">
-                <div class="decorative-top-bar"></div>
-                <h1 class="screen-title rainbow-text">🌈 Rainbow Rush</h1>
-                <p class="screen-subtitle">✨ Colorful Platform Adventure ✨</p>
+                <h1 class="screen-title rainbow-text">Rainbow Rush</h1>
+                <p class="screen-subtitle">Colorful Platform Adventure</p>
                 <div class="high-score">
-                    👑 High Score: <span id="menu-high-score">0</span>
+                    High Score: <span id="menu-high-score">0</span>
                 </div>
                 <button id="start-button" class="game-button primary">
-                    🎮 Start Game
+                    Start Game
                 </button>
                 <div class="controls-info">
-                    <p>🖱️ Click/Tap to Jump</p>
-                    <p>⌨️ Space/W/↑ to Jump</p>
+                    <p>Click or Tap to Jump</p>
+                    <p>Space / W / ↑ to Jump</p>
                 </div>
             </div>
         </div>
@@ -39,8 +38,7 @@
         <!-- Level Select Screen -->
         <div id="level-select-screen" class="screen">
             <div class="screen-content">
-                <div class="decorative-top-bar"></div>
-                <h2 class="screen-title rainbow-text">🎮 Select Level</h2>
+                <h2 class="screen-title rainbow-text">Select Level</h2>
                 <p class="screen-subtitle" id="level-page-info">Page 1 / 10</p>
                 
                 <div class="levels-grid" id="levels-grid">
@@ -49,15 +47,15 @@
                 
                 <div class="navigation-buttons">
                     <button id="prev-page-btn" class="game-button navigation" disabled>
-                        ⬅ Previous
+                        ← Previous
                     </button>
                     <button id="next-page-btn" class="game-button navigation">
-                        Next ➡
+                        Next →
                     </button>
                 </div>
                 
                 <button id="level-select-back-btn" class="game-button secondary back-button">
-                    ← Back to Menu
+                    Back to Menu
                 </button>
             </div>
         </div>
@@ -65,9 +63,8 @@
         <!-- Level Summary Screen -->
         <div id="level-summary-screen" class="screen">
             <div class="screen-content">
-                <div class="decorative-top-bar"></div>
                 <h2 class="screen-title rainbow-text" id="summary-level-name">Level 1</h2>
-                <p class="screen-subtitle">✨ Level Complete! ✨</p>
+                <p class="screen-subtitle">Level Complete!</p>
                 
                 <div class="stars-display">
                     <div class="star" id="star-1">⭐</div>
@@ -100,14 +97,14 @@
                 
                 <div class="summary-buttons">
                     <button id="next-level-btn" class="game-button primary">
-                        ▶ Next Level
+                        Next Level
                     </button>
                     <div class="secondary-buttons">
                         <button id="retry-level-btn" class="game-button secondary">
-                            🔄 Retry
+                            Retry
                         </button>
                         <button id="summary-menu-btn" class="game-button secondary">
-                            📋 Menu
+                            Menu
                         </button>
                     </div>
                 </div>
@@ -123,14 +120,13 @@
         <!-- Pause Screen -->
         <div id="pause-screen" class="screen">
             <div class="screen-content">
-                <div class="decorative-top-bar"></div>
-                <h2 class="screen-title gradient-text">⏸️ Paused</h2>
-                <p class="screen-subtitle">🎮 Game Paused 🎮</p>
+                <h2 class="screen-title gradient-text">Paused</h2>
+                <p class="screen-subtitle">Game Paused</p>
                 
                 <div class="volume-controls">
                     <div class="volume-item">
                         <label for="sfx-volume" class="volume-label">
-                            🔊 Sound Effects
+                            Sound Effects
                         </label>
                         <div class="volume-slider-container">
                             <input type="range" id="sfx-volume" class="volume-slider" min="0" max="100" value="50">
@@ -139,7 +135,7 @@
                     </div>
                     <div class="volume-item">
                         <label for="music-volume" class="volume-label">
-                            🎵 Music
+                            Music
                         </label>
                         <div class="volume-slider-container">
                             <input type="range" id="music-volume" class="volume-slider" min="0" max="100" value="30">
@@ -149,10 +145,10 @@
                 </div>
                 
                 <button id="resume-button" class="game-button primary">
-                    ▶️ Resume
+                    Resume
                 </button>
                 <button id="pause-menu-button" class="game-button secondary">
-                    🏠 Menu
+                    Menu
                 </button>
             </div>
         </div>

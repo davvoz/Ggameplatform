@@ -737,38 +737,42 @@ export class LevelManager {
     calculateStars() {
         const req = this.currentLevel.starRequirements;
         
-        // Percentuali
-        const coinPercent = this.totalCoins > 0 ? this.coinsCollected / this.totalCoins : 1;
-        const enemyPercent = this.totalEnemies > 0 ? this.enemiesKilled / this.totalEnemies : 1;
-        const noDamage = this.damagesTaken === 0;
+        // Calcola requisiti monete in base al totale del livello
+        const coinsFor3Stars = Math.ceil(this.totalCoins * req.threeStars.coins);
+        const coinsFor2Stars = Math.ceil(this.totalCoins * req.twoStars.coins);
+        const coinsFor1Star = Math.ceil(this.totalCoins * req.oneStar.coins);
         
         console.log(`⭐ Star calculation:
-            Time: ${this.levelElapsedTime.toFixed(1)}s / ${req.threeStars.time}s
-            Coins: ${(coinPercent * 100).toFixed(0)}% (${this.coinsCollected}/${this.totalCoins})
-            Enemies: ${(enemyPercent * 100).toFixed(0)}% (${this.enemiesKilled}/${this.totalEnemies})
-            Damage: ${this.damagesTaken}
+            Time: ${this.levelElapsedTime.toFixed(1)}s / ${req.threeStars.time}s (2⭐: ${req.twoStars.time}s, 1⭐: ${req.oneStar.time}s)
+            Coins: ${this.coinsCollected} (includes bonus coins!) - Need: 3⭐≥${coinsFor3Stars}, 2⭐≥${coinsFor2Stars}, 1⭐≥${coinsFor1Star}
+            Base coins in level: ${this.totalCoins}
+            Damage: ${this.damagesTaken} - Max for 3⭐: ${req.threeStars.maxDamage || 0}, 2⭐: ${req.twoStars.maxDamage || 999}
         `);
         
-        // 🌟🌟🌟 3 STELLE: Perfect run
+        // 🌟🌟🌟 3 STELLE: Perfect run - fast time, most coins, minimal damage
         if (this.levelElapsedTime <= req.threeStars.time &&
-            coinPercent >= req.threeStars.coins &&  // 90% monete
-            enemyPercent >= req.threeStars.enemies && // 80% nemici
-            noDamage) {            // Nessun danno
+            this.coinsCollected >= coinsFor3Stars &&
+            this.damagesTaken <= (req.threeStars.maxDamage || 0)) {
+            console.log('✅ 3 STARS achieved!');
             return 3;
         }
         
-        // 🌟🌟 2 STELLE: Good run
+        // 🌟🌟 2 STELLE: Good run - decent time, half coins, some damage ok
         if (this.levelElapsedTime <= req.twoStars.time &&
-            coinPercent >= req.twoStars.coins &&  // 70% monete
-            enemyPercent >= req.twoStars.enemies) { // 60% nemici
+            this.coinsCollected >= coinsFor2Stars &&
+            this.damagesTaken <= (req.twoStars.maxDamage || 999)) {
+            console.log('✅ 2 STARS achieved!');
             return 2;
         }
         
-        // 🌟 1 STELLA: Completed
+        // 🌟 1 STELLA: Completed - just finish with some coins
         if (this.levelElapsedTime <= req.oneStar.time &&
-            coinPercent >= req.oneStar.coins) {  // 40% monete
+            this.coinsCollected >= coinsFor1Star) {
+            console.log('✅ 1 STAR achieved!');
             return 1;
         }
+        
+        console.log('❌ 0 STARS - Requirements not met');
         
         // ✅ 0 STELLE: Livello completato ma performance scarsa
         return 0;

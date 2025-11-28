@@ -25,10 +25,11 @@
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="🔍 Cerca per qualsiasi campo...">
             </div>
-            <button onclick="refreshData()">↻ Aggiorna</button>
-            <button id="openSessionsBtn" onclick="showOpenSessions()" style="background: #e67700; border-color: #e67700; display: none;">⚠️ Sessioni Aperte</button>
-            <button onclick="exportData()">💾 JSON</button>
-            <button onclick="exportCSV()">📊 CSV</button>
+            <button id="createBtn" onclick="handleCreateClick()">+ New</button>
+            <button onclick="refreshData()">Refresh</button>
+            <button id="openSessionsBtn" onclick="showOpenSessions()" style="background: #e67700; border-color: #e67700; display: none;">Open Sessions</button>
+            <button onclick="exportData()">Export JSON</button>
+            <button onclick="exportCSV()">Export CSV</button>
         </div>
         
         <!-- Table Container -->
@@ -66,9 +67,15 @@
         <div class="modal-content"></div>
     </div>
 
+    <!-- CRUD Modal -->
+    <div id="crudModal" class="modal">
+        <div class="modal-content"></div>
+    </div>
+
     <!-- Scripts - Load in order -->
     <script src="/static/js/db-viewer-config.js"></script>
     <script src="/static/js/db-viewer-templates.js"></script>
+    <script src="/static/js/db-viewer-crud.js"></script>
     <script src="/static/js/db-viewer.js"></script>
 </body>
 </html>

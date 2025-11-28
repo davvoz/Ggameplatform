@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, Request, Header
+from fastapi import APIRouter, HTTPException, Response, Request, Header, Depends
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from typing import Dict, List, Any, Optional
 from pathlib import Path
@@ -9,12 +9,31 @@ from app.database import (
     force_close_session
 )
 from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
+from app.repositories import RepositoryFactory
+from app.services import ServiceFactory, ValidationError
+from app.schemas import (
+    GameRegister, GameUpdate,
+    UserCreate, UserUpdate,
+    GameSessionCreate, GameSessionUpdate,
+    LeaderboardCreate, LeaderboardUpdate,
+    XPRuleCreate, XPRuleUpdate,
+    QuestCreate, QuestUpdate,
+    UserQuestCreate, UserQuestUpdate
+)
 from sqlalchemy import desc
+from sqlalchemy.orm import Session
 import json
 import os
 from datetime import datetime
 
 router = APIRouter()
+
+
+# Dependency to get DB session
+def get_db():
+    """Get database session as dependency"""
+    with get_db_session() as session:
+        yield session
 
 # Admin API key from environment
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
@@ -104,6 +123,11 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         # Get user quest progress
         user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
         user_quests = [uq.to_dict() for uq in user_quests_query]
+        
+        # DEBUG: Check if user quest 6 has updated data
+        uq6 = next((uq for uq in user_quests if uq.get('id') == 6), None)
+        if uq6:
+            print(f"[DEBUG] UserQuest 6 data in db-stats: {uq6}")
     
     data = {
         "total_games": len(games),
@@ -226,6 +250,511 @@ async def force_close_single_session(session_id: str):
             "success": True,
             "message": f"Session {session_id} closed successfully"
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== GAMES CRUD ENDPOINTS ==========
+
+@router.post("/games", status_code=201)
+async def create_game(game_data: GameRegister, db: Session = Depends(get_db)):
+    """Create a new game"""
+    try:
+        repo = RepositoryFactory.create_game_repository(db)
+        service = ServiceFactory.create_game_service(repo)
+        
+        game = service.create(game_data.dict())
+        return {"success": True, "data": game}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/games/{game_id}")
+async def get_game(game_id: str, db: Session = Depends(get_db)):
+    """Get a game by ID"""
+    try:
+        repo = RepositoryFactory.create_game_repository(db)
+        service = ServiceFactory.create_game_service(repo)
+        
+        game = service.get(game_id)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+        return {"success": True, "data": game}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/games/{game_id}")
+async def update_game(game_id: str, game_data: GameUpdate, db: Session = Depends(get_db)):
+    """Update a game"""
+    try:
+        repo = RepositoryFactory.create_game_repository(db)
+        service = ServiceFactory.create_game_service(repo)
+        
+        # Remove None values
+        update_data = {k: v for k, v in game_data.dict().items() if v is not None}
+        
+        game = service.update(game_id, update_data)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+        return {"success": True, "data": game}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/games/{game_id}")
+async def delete_game(game_id: str, db: Session = Depends(get_db)):
+    """Delete a game"""
+    try:
+        repo = RepositoryFactory.create_game_repository(db)
+        service = ServiceFactory.create_game_service(repo)
+        
+        success = service.delete(game_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Game not found")
+        return {"success": True, "message": "Game deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== USERS CRUD ENDPOINTS ==========
+
+@router.post("/users", status_code=201)
+async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    """Create a new user"""
+    try:
+        repo = RepositoryFactory.create_user_repository(db)
+        service = ServiceFactory.create_user_service(repo)
+        
+        user = service.create(user_data.dict())
+        return {"success": True, "data": user}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/users/{user_id}")
+async def get_user(user_id: str, db: Session = Depends(get_db)):
+    """Get a user by ID"""
+    try:
+        repo = RepositoryFactory.create_user_repository(db)
+        service = ServiceFactory.create_user_service(repo)
+        
+        user = service.get(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"success": True, "data": user}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/users/{user_id}")
+async def update_user(user_id: str, user_data: UserUpdate, db: Session = Depends(get_db)):
+    """Update a user"""
+    try:
+        repo = RepositoryFactory.create_user_repository(db)
+        service = ServiceFactory.create_user_service(repo)
+        
+        update_data = {k: v for k, v in user_data.dict().items() if v is not None}
+        
+        user = service.update(user_id, update_data)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"success": True, "data": user}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str, db: Session = Depends(get_db)):
+    """Delete a user"""
+    try:
+        repo = RepositoryFactory.create_user_repository(db)
+        service = ServiceFactory.create_user_service(repo)
+        
+        success = service.delete(user_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"success": True, "message": "User deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== GAME SESSIONS CRUD ENDPOINTS ==========
+
+@router.post("/game-sessions", status_code=201)
+async def create_session(session_data: GameSessionCreate, db: Session = Depends(get_db)):
+    """Create a new game session"""
+    try:
+        repo = RepositoryFactory.create_session_repository(db)
+        service = ServiceFactory.create_session_service(repo)
+        
+        session = service.create(session_data.dict())
+        return {"success": True, "data": session}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/game-sessions/{session_id}")
+async def get_session(session_id: str, db: Session = Depends(get_db)):
+    """Get a game session by ID"""
+    try:
+        repo = RepositoryFactory.create_session_repository(db)
+        service = ServiceFactory.create_session_service(repo)
+        
+        session = service.get(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"success": True, "data": session}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/game-sessions/{session_id}")
+async def update_session(session_id: str, session_data: GameSessionUpdate, db: Session = Depends(get_db)):
+    """Update a game session"""
+    try:
+        repo = RepositoryFactory.create_session_repository(db)
+        service = ServiceFactory.create_session_service(repo)
+        
+        update_data = {k: v for k, v in session_data.dict().items() if v is not None}
+        
+        session = service.update(session_id, update_data)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"success": True, "data": session}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/game-sessions/{session_id}")
+async def delete_session(session_id: str, db: Session = Depends(get_db)):
+    """Delete a game session"""
+    try:
+        repo = RepositoryFactory.create_session_repository(db)
+        service = ServiceFactory.create_session_service(repo)
+        
+        success = service.delete(session_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"success": True, "message": "Session deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== LEADERBOARD CRUD ENDPOINTS ==========
+
+@router.post("/leaderboard-entries", status_code=201)
+async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: Session = Depends(get_db)):
+    """Create a new leaderboard entry"""
+    try:
+        repo = RepositoryFactory.create_leaderboard_repository(db)
+        service = ServiceFactory.create_leaderboard_service(repo)
+        
+        entry = service.create(entry_data.dict())
+        return {"success": True, "data": entry}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/leaderboard-entries/{entry_id}")
+async def get_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+    """Get a leaderboard entry by ID"""
+    try:
+        repo = RepositoryFactory.create_leaderboard_repository(db)
+        service = ServiceFactory.create_leaderboard_service(repo)
+        
+        entry = service.get(entry_id)
+        if not entry:
+            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+        return {"success": True, "data": entry}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/leaderboard-entries/{entry_id}")
+async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate, db: Session = Depends(get_db)):
+    """Update a leaderboard entry"""
+    try:
+        repo = RepositoryFactory.create_leaderboard_repository(db)
+        service = ServiceFactory.create_leaderboard_service(repo)
+        
+        update_data = {k: v for k, v in entry_data.dict().items() if v is not None}
+        
+        entry = service.update(entry_id, update_data)
+        if not entry:
+            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+        return {"success": True, "data": entry}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/leaderboard-entries/{entry_id}")
+async def delete_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+    """Delete a leaderboard entry"""
+    try:
+        repo = RepositoryFactory.create_leaderboard_repository(db)
+        service = ServiceFactory.create_leaderboard_service(repo)
+        
+        success = service.delete(entry_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+        return {"success": True, "message": "Leaderboard entry deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== XP RULES CRUD ENDPOINTS ==========
+
+@router.post("/xp-rules", status_code=201)
+async def create_xp_rule(rule_data: XPRuleCreate, db: Session = Depends(get_db)):
+    """Create a new XP rule"""
+    try:
+        repo = RepositoryFactory.create_xprule_repository(db)
+        service = ServiceFactory.create_xprule_service(repo)
+        
+        rule = service.create(rule_data.dict())
+        return {"success": True, "data": rule}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/xp-rules/{rule_id}")
+async def get_xp_rule(rule_id: str, db: Session = Depends(get_db)):
+    """Get an XP rule by ID"""
+    try:
+        repo = RepositoryFactory.create_xprule_repository(db)
+        service = ServiceFactory.create_xprule_service(repo)
+        
+        rule = service.get(rule_id)
+        if not rule:
+            raise HTTPException(status_code=404, detail="XP rule not found")
+        return {"success": True, "data": rule}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/xp-rules/{rule_id}")
+async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: Session = Depends(get_db)):
+    """Update an XP rule"""
+    try:
+        repo = RepositoryFactory.create_xprule_repository(db)
+        service = ServiceFactory.create_xprule_service(repo)
+        
+        update_data = {k: v for k, v in rule_data.dict().items() if v is not None}
+        
+        rule = service.update(rule_id, update_data)
+        if not rule:
+            raise HTTPException(status_code=404, detail="XP rule not found")
+        return {"success": True, "data": rule}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/xp-rules/{rule_id}")
+async def delete_xp_rule(rule_id: str, db: Session = Depends(get_db)):
+    """Delete an XP rule"""
+    try:
+        repo = RepositoryFactory.create_xprule_repository(db)
+        service = ServiceFactory.create_xprule_service(repo)
+        
+        success = service.delete(rule_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="XP rule not found")
+        return {"success": True, "message": "XP rule deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== QUESTS CRUD ENDPOINTS ==========
+
+@router.post("/quests-crud", status_code=201)
+async def create_quest(quest_data: QuestCreate, db: Session = Depends(get_db)):
+    """Create a new quest"""
+    try:
+        repo = RepositoryFactory.create_quest_repository(db)
+        service = ServiceFactory.create_quest_service(repo)
+        
+        quest = service.create(quest_data.dict())
+        return {"success": True, "data": quest}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/quests-crud/{quest_id}")
+async def get_quest(quest_id: int, db: Session = Depends(get_db)):
+    """Get a quest by ID"""
+    try:
+        repo = RepositoryFactory.create_quest_repository(db)
+        service = ServiceFactory.create_quest_service(repo)
+        
+        quest = service.get(quest_id)
+        if not quest:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        return {"success": True, "data": quest}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/quests-crud/{quest_id}")
+async def update_quest(quest_id: int, quest_data: QuestUpdate, db: Session = Depends(get_db)):
+    """Update a quest"""
+    try:
+        repo = RepositoryFactory.create_quest_repository(db)
+        service = ServiceFactory.create_quest_service(repo)
+        
+        update_data = {k: v for k, v in quest_data.dict().items() if v is not None}
+        
+        quest = service.update(quest_id, update_data)
+        if not quest:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        return {"success": True, "data": quest}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/quests-crud/{quest_id}")
+async def delete_quest(quest_id: int, db: Session = Depends(get_db)):
+    """Delete a quest"""
+    try:
+        repo = RepositoryFactory.create_quest_repository(db)
+        service = ServiceFactory.create_quest_service(repo)
+        
+        success = service.delete(quest_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        return {"success": True, "message": "Quest deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== USER QUESTS CRUD ENDPOINTS ==========
+
+@router.post("/user-quests-crud", status_code=201)
+async def create_user_quest(user_quest_data: UserQuestCreate, db: Session = Depends(get_db)):
+    """Create a new user quest progress"""
+    try:
+        repo = RepositoryFactory.create_userquest_repository(db)
+        service = ServiceFactory.create_userquest_service(repo)
+        
+        user_quest = service.create(user_quest_data.dict())
+        return {"success": True, "data": user_quest}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/user-quests-crud/{user_quest_id}")
+async def get_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
+    """Get a user quest by ID"""
+    try:
+        repo = RepositoryFactory.create_userquest_repository(db)
+        service = ServiceFactory.create_userquest_service(repo)
+        
+        user_quest = service.get(user_quest_id)
+        if not user_quest:
+            raise HTTPException(status_code=404, detail="User quest not found")
+        return {"success": True, "data": user_quest}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/user-quests-crud/{user_quest_id}")
+async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate, db: Session = Depends(get_db)):
+    """Update a user quest progress"""
+    try:
+        repo = RepositoryFactory.create_userquest_repository(db)
+        service = ServiceFactory.create_userquest_service(repo)
+        
+        update_data = {k: v for k, v in user_quest_data.dict().items() if v is not None}
+        
+        user_quest = service.update(user_quest_id, update_data)
+        if not user_quest:
+            raise HTTPException(status_code=404, detail="User quest not found")
+        return {"success": True, "data": user_quest}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/user-quests-crud/{user_quest_id}")
+async def delete_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
+    """Delete a user quest progress"""
+    try:
+        repo = RepositoryFactory.create_userquest_repository(db)
+        service = ServiceFactory.create_userquest_service(repo)
+        
+        success = service.delete(user_quest_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="User quest not found")
+        return {"success": True, "message": "User quest deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

@@ -182,3 +182,134 @@ class UserQuestProgress(BaseModel):
 class QuestWithProgress(QuestResponse):
     """Schema for quest with user progress."""
     progress: Optional[UserQuestProgress] = None
+
+
+# ========== CRUD SCHEMAS ==========
+
+# Game CRUD Schemas
+class GameUpdate(BaseModel):
+    """Schema for updating a game."""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    author: Optional[str] = None
+    version: Optional[str] = None
+    thumbnail: Optional[str] = None
+    entry_point: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+# User CRUD Schemas
+class UserCreate(BaseModel):
+    """Schema for creating a new user."""
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password_hash: Optional[str] = None
+    steem_username: Optional[str] = None
+    is_anonymous: bool = False
+    cur8_multiplier: float = 1.0
+    total_xp_earned: float = 0.0
+    avatar: Optional[str] = None
+    
+    @validator('email')
+    def validate_email(cls, v):
+        """Basic email validation."""
+        if v and '@' not in v:
+            raise ValueError('Invalid email format')
+        return v
+
+
+class UserUpdate(BaseModel):
+    """Schema for updating a user."""
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password_hash: Optional[str] = None
+    steem_username: Optional[str] = None
+    cur8_multiplier: Optional[float] = None
+    total_xp_earned: Optional[float] = None
+    avatar: Optional[str] = None
+
+
+# GameSession CRUD Schemas
+class GameSessionCreate(BaseModel):
+    """Schema for creating a game session."""
+    user_id: str
+    game_id: str
+    score: int = 0
+    xp_earned: float = 0.0
+    duration_seconds: int = 0
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class GameSessionUpdate(BaseModel):
+    """Schema for updating a game session."""
+    score: Optional[int] = None
+    xp_earned: Optional[float] = None
+    duration_seconds: Optional[int] = None
+    ended_at: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+# Leaderboard CRUD Schemas
+class LeaderboardCreate(BaseModel):
+    """Schema for creating a leaderboard entry."""
+    user_id: str
+    game_id: str
+    score: int
+    rank: Optional[int] = None
+
+
+class LeaderboardUpdate(BaseModel):
+    """Schema for updating a leaderboard entry."""
+    score: Optional[int] = None
+    rank: Optional[int] = None
+
+
+# XPRule CRUD Schemas
+class XPRuleCreate(BaseModel):
+    """Schema for creating an XP rule."""
+    game_id: str
+    rule_name: str
+    rule_type: str
+    parameters: Optional[Dict[str, Any]] = None
+    priority: int = 0
+    is_active: bool = True
+
+
+class XPRuleUpdate(BaseModel):
+    """Schema for updating an XP rule."""
+    rule_name: Optional[str] = None
+    rule_type: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+    priority: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+# Quest CRUD Schemas
+class QuestUpdate(BaseModel):
+    """Schema for updating a quest."""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    quest_type: Optional[str] = None
+    target_value: Optional[int] = None
+    xp_reward: Optional[int] = None
+    sats_reward: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+# UserQuest CRUD Schemas
+class UserQuestCreate(BaseModel):
+    """Schema for creating user quest progress."""
+    user_id: str
+    quest_id: int
+    current_progress: int = 0
+
+
+class UserQuestUpdate(BaseModel):
+    """Schema for updating user quest progress."""
+    current_progress: Optional[int] = None
+    is_completed: Optional[bool] = None
+    is_claimed: Optional[bool] = None
+    completed_at: Optional[str] = None
+    claimed_at: Optional[str] = None

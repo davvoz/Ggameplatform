@@ -107,10 +107,11 @@ class TemplateEngine {
                 break;
 
             case 'actions':
-                const btn = document.createElement('button');
-                btn.textContent = 'Dettagli';
-                btn.className = 'btn-small btn-view';
-                btn.onclick = () => {
+                const btnView = document.createElement('button');
+                btnView.textContent = 'View';
+                btnView.className = 'btn-small btn-view';
+                btnView.title = 'View details';
+                btnView.onclick = () => {
                     const tableDef = cell.tableDef || { label: 'Item' };
                     if (column.customAction === 'showQuestDetails') {
                         app.showQuestDetails(item);
@@ -118,7 +119,28 @@ class TemplateEngine {
                         app.showDetails(tableDef.label, item);
                     }
                 };
-                cell.appendChild(btn);
+                
+                const btnEdit = document.createElement('button');
+                btnEdit.textContent = 'Edit';
+                btnEdit.className = 'btn-small btn-edit';
+                btnEdit.title = 'Edit record';
+                btnEdit.onclick = () => {
+                    const tableKey = app.currentView;
+                    showEditModal(tableKey, item);
+                };
+                
+                const btnDelete = document.createElement('button');
+                btnDelete.textContent = 'Delete';
+                btnDelete.className = 'btn-small btn-delete';
+                btnDelete.title = 'Delete record';
+                btnDelete.onclick = () => {
+                    const tableKey = app.currentView;
+                    showDeleteModal(tableKey, item);
+                };
+                
+                cell.appendChild(btnView);
+                cell.appendChild(btnEdit);
+                cell.appendChild(btnDelete);
                 break;
 
             case 'custom':

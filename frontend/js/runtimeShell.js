@@ -47,7 +47,7 @@ export default class RuntimeShell {
     constructor(iframeElement, gameId, config = {}) {
         this.iframe = iframeElement;
         this.gameId = gameId;
-        
+
         // Get allowed origins from config, fallback to current origin and API URL
         const apiUrl = window.ENV?.API_URL || window.location.origin;
         const defaultOrigins = [
@@ -56,18 +56,18 @@ export default class RuntimeShell {
             'http://localhost:8000',
             'http://localhost:3000'
         ];
-        
+
         this.config = {
             allowedOrigins: config.allowedOrigins || defaultOrigins,
             debug: config.debug || false,
             timeout: config.timeout || 30000
         };
-        
+
         // Game session tracking
         this.sessionId = null;
         this.sessionStartTime = null;
         this.currentScore = 0;
-        
+
         // State management
         this.state = {
             isReady: false,
@@ -76,42 +76,42 @@ export default class RuntimeShell {
             level: 1,
             isGameOver: false
         };
-        
+
         // Session restart flag
         this.needsNewSession = true; // Start true so first game creates session
-        
+
         // Event handlers registry
         this.eventHandlers = new Map();
-        
+
         // Message queue for messages sent before game is ready
         this.messageQueue = [];
-        
+
         // Bound message handler for cleanup
         this.boundMessageHandler = this.handleMessage.bind(this);
-        
+
         this.log('RuntimeShell initialized for game:', gameId);
     }
-    
+
     /**
      * Initialize the runtime shell
      */
     init() {
         // Listen for messages from the game
         window.addEventListener('message', this.boundMessageHandler);
-        
+
         // Wait for iframe to load
         this.iframe.addEventListener('load', () => {
             this.log('Iframe loaded, waiting for game ready signal...');
-            
+
             // Send initial config after a short delay
             setTimeout(() => {
                 this.sendConfig();
             }, 500);
         });
-        
+
         this.log('RuntimeShell initialized and listening for messages');
     }
-    
+
     /**
      * Handle incoming messages from the game
      * @param {MessageEvent} event - The message event
@@ -122,58 +122,58 @@ export default class RuntimeShell {
             this.log('Rejected message from invalid origin:', event.origin);
             return;
         }
-        
+
         const message = event.data;
-        
+
         // Validate message format
         if (!this.isValidMessage(message)) {
             this.log('Rejected invalid message format:', message);
             return;
         }
-        
+
         this.log('Received message:', message);
-        
+
         // Handle the message based on type
         switch (message.type) {
             case GAME_MESSAGE_TYPES.READY:
                 this.handleReady(message.payload);
                 break;
-            
+
             case GAME_MESSAGE_TYPES.SCORE_UPDATE:
                 this.handleScoreUpdate(message.payload);
                 break;
-            
+
             case GAME_MESSAGE_TYPES.GAME_OVER:
                 this.handleGameOver(message.payload);
                 break;
-            
+
             case GAME_MESSAGE_TYPES.LEVEL_COMPLETED:
                 this.handleLevelCompleted(message.payload);
                 break;
-            
+
             case GAME_MESSAGE_TYPES.REQUEST_FULLSCREEN:
                 this.handleFullscreenRequest();
                 break;
-            
+
             case GAME_MESSAGE_TYPES.LOG:
                 this.handleLog(message.payload);
                 break;
-            
+
             case GAME_MESSAGE_TYPES.RESET_SESSION:
                 // Handle async reset session
                 this.resetSession().then(() => {
                     this.log('✅ Session reset complete');
                 });
                 break;
-            
+
             default:
                 this.log('Unknown message type:', message.type);
         }
-        
+
         // Emit event for external listeners
         this.emit(message.type, message.payload);
     }
-    
+
     /**
      * Validate message origin
      * @param {string} origin - The origin to validate
@@ -185,30 +185,30 @@ export default class RuntimeShell {
             console.warn('⚠️ Wildcard origin (*) is allowed - this is insecure!');
             return true;
         }
-        
+
         // Check if origin is in whitelist
         const isAllowed = this.config.allowedOrigins.includes(origin);
-        
+
         if (!isAllowed) {
             console.warn('🔒 Rejected message from unauthorized origin:', origin);
             console.log('Allowed origins:', this.config.allowedOrigins);
         }
-        
+
         return isAllowed;
     }
-    
+
     /**
      * Validate message format
      * @param {Object} message - The message to validate
      * @returns {boolean} Whether the message is valid
      */
     isValidMessage(message) {
-        return message && 
-               typeof message === 'object' && 
-               typeof message.type === 'string' &&
-               message.protocolVersion === PROTOCOL_VERSION;
+        return message &&
+            typeof message === 'object' &&
+            typeof message.type === 'string' &&
+            message.protocolVersion === PROTOCOL_VERSION;
     }
-    
+
     /**
      * Handle game ready event
      * @param {Object} payload - The payload data
@@ -216,17 +216,17 @@ export default class RuntimeShell {
     handleReady(payload) {
         this.state.isReady = true;
         this.log('Game is ready:', payload);
-        
+
         // Start game session tracking
         this.startGameSession();
-        
+
         // Process queued messages
         this.processMessageQueue();
-        
+
         // Send start signal
         this.start();
     }
-    
+
     /**
      * Handle score update event
      * @param {Object} payload - The payload containing score data
@@ -235,10 +235,10 @@ export default class RuntimeShell {
         if (payload && typeof payload.score === 'number') {
             // Check if this is a restart (game was over and score=0)
             const isRestart = this.state.isGameOver && payload.score === 0;
-            
+
             if (isRestart) {
                 this.log('🎮 Game restarted detected (score=0 after game over)');
-                
+
                 // Create new session immediately on restart
                 if (this.needsNewSession && !this.sessionId) {
                     this.log('✅ Creating new session for restart...');
@@ -249,12 +249,12 @@ export default class RuntimeShell {
                     this.state.isGameOver = false;
                 }
             }
-            
+
             this.state.score = payload.score;
             this.updateScoreDisplay(payload.score);
         }
     }
-    
+
     /**
      * Handle game over event
      * @param {Object} payload - The payload containing final score
@@ -265,14 +265,14 @@ export default class RuntimeShell {
         this.log('📊 Current state.score before update:', this.state.score);
         this.log('🆔 Current sessionId:', this.sessionId);
         this.log('⏰ Session start time:', this.sessionStartTime);
-        
+
         // Get score from payload, fallback to current state
         const finalScore = payload?.score ?? this.state.score ?? 0;
         this.state.score = finalScore;
-        
+
         this.log('💀 Game Over! Final score:', this.state.score);
         this.showGameOverOverlay(this.state.score);
-        
+
         // End game session and save score ONLY if session exists
         if (this.sessionId) {
             this.log('✅ SessionId exists, ending session:', this.sessionId);
@@ -281,7 +281,7 @@ export default class RuntimeShell {
             this.sessionId = null; // Clear immediately to prevent double-ending
             this.sessionStartTime = null;
             this.endGameSessionById(sessionToEnd, this.state.score, startTime, false);
-            
+
             // Mark game over AFTER ending session
             this.state.isGameOver = true;
             // Mark that we need a new session on next game
@@ -294,7 +294,7 @@ export default class RuntimeShell {
             this.needsNewSession = true;
         }
     }
-    
+
     /**
      * Handle level completed event
      * @param {Object} payload - The payload containing level data
@@ -306,13 +306,13 @@ export default class RuntimeShell {
             this.showLevelCompleteOverlay(payload.level);
         }
     }
-    
+
     /**
      * Handle fullscreen request
      */
     handleFullscreenRequest() {
         const container = this.iframe.parentElement;
-        
+
         if (container.requestFullscreen) {
             container.requestFullscreen();
         } else if (container.webkitRequestFullscreen) {
@@ -321,7 +321,7 @@ export default class RuntimeShell {
             container.msRequestFullscreen();
         }
     }
-    
+
     /**
      * Handle log message from game
      * @param {Object} payload - The log payload
@@ -331,7 +331,7 @@ export default class RuntimeShell {
             console.log(`[Game ${this.gameId}]:`, payload.message, payload.data || '');
         }
     }
-    
+
     /**
      * Send a message to the game
      * @param {string} type - Message type
@@ -342,7 +342,7 @@ export default class RuntimeShell {
             this.log('Cannot send message: iframe contentWindow not available');
             return;
         }
-        
+
         const message = {
             type,
             payload,
@@ -350,30 +350,30 @@ export default class RuntimeShell {
             protocolVersion: PROTOCOL_VERSION,
             gameId: this.gameId
         };
-        
+
         // Queue message if game is not ready
         if (!this.state.isReady && type !== PLATFORM_MESSAGE_TYPES.CONFIG) {
             this.log('Game not ready, queuing message:', type);
             this.messageQueue.push(message);
             return;
         }
-        
+
         this.log('Sending message to game:', message);
         this.iframe.contentWindow.postMessage(message, '*');
     }
-    
+
     /**
      * Process queued messages
      */
     processMessageQueue() {
         this.log('Processing message queue:', this.messageQueue.length, 'messages');
-        
+
         while (this.messageQueue.length > 0) {
             const message = this.messageQueue.shift();
             this.iframe.contentWindow.postMessage(message, '*');
         }
     }
-    
+
     /**
      * Send configuration to the game
      */
@@ -388,7 +388,7 @@ export default class RuntimeShell {
             }
         });
     }
-    
+
     /**
      * Start the game
      */
@@ -398,37 +398,37 @@ export default class RuntimeShell {
             timestamp: Date.now()
         });
     }
-    
+
     /**
      * Pause the game
      */
     pause() {
         if (this.state.isPaused) return;
-        
+
         this.state.isPaused = true;
         this.log('Pausing game');
         this.sendMessage(PLATFORM_MESSAGE_TYPES.PAUSE, {
             timestamp: Date.now()
         });
-        
+
         this.showPauseOverlay();
     }
-    
+
     /**
      * Resume the game
      */
     resume() {
         if (!this.state.isPaused) return;
-        
+
         this.state.isPaused = false;
         this.log('Resuming game');
         this.sendMessage(PLATFORM_MESSAGE_TYPES.RESUME, {
             timestamp: Date.now()
         });
-        
+
         this.hidePauseOverlay();
     }
-    
+
     /**
      * Exit the game
      */
@@ -438,13 +438,13 @@ export default class RuntimeShell {
         this.sendMessage(PLATFORM_MESSAGE_TYPES.EXIT, {
             timestamp: Date.now()
         });
-        
+
         console.warn('🚪 Calling cleanup(false, true) - skipSessionEnd=true');
         // Pass skipSessionEnd=true to prevent XP distribution on exit
         this.cleanup(false, true);
         console.warn('🚪 Exit completed');
     }
-    
+
     /**
      * Register an event handler
      * @param {string} eventType - The event type to listen for
@@ -454,10 +454,10 @@ export default class RuntimeShell {
         if (!this.eventHandlers.has(eventType)) {
             this.eventHandlers.set(eventType, []);
         }
-        
+
         this.eventHandlers.get(eventType).push(handler);
     }
-    
+
     /**
      * Unregister an event handler
      * @param {string} eventType - The event type
@@ -465,15 +465,15 @@ export default class RuntimeShell {
      */
     off(eventType, handler) {
         if (!this.eventHandlers.has(eventType)) return;
-        
+
         const handlers = this.eventHandlers.get(eventType);
         const index = handlers.indexOf(handler);
-        
+
         if (index !== -1) {
             handlers.splice(index, 1);
         }
     }
-    
+
     /**
      * Emit an event to all registered handlers
      * @param {string} eventType - The event type
@@ -481,7 +481,7 @@ export default class RuntimeShell {
      */
     emit(eventType, data) {
         if (!this.eventHandlers.has(eventType)) return;
-        
+
         const handlers = this.eventHandlers.get(eventType);
         handlers.forEach(handler => {
             try {
@@ -491,7 +491,7 @@ export default class RuntimeShell {
             }
         });
     }
-    
+
     /**
      * Update score display in UI
      * @param {number} score - The current score
@@ -502,7 +502,7 @@ export default class RuntimeShell {
             scoreElement.textContent = score;
         }
     }
-    
+
     /**
      * Show pause overlay
      */
@@ -514,7 +514,7 @@ export default class RuntimeShell {
             statusElement.style.color = 'var(--warning)';
         }
     }
-    
+
     /**
      * Hide pause overlay
      */
@@ -525,7 +525,7 @@ export default class RuntimeShell {
             statusElement.style.color = 'var(--success)';
         }
     }
-    
+
     /**
      * Show game over overlay
      * @param {number} finalScore - The final score
@@ -537,7 +537,7 @@ export default class RuntimeShell {
             statusElement.style.color = 'var(--error)';
         }
     }
-    
+
     /**
      * Show level complete overlay
      * @param {number} level - The completed level
@@ -547,14 +547,14 @@ export default class RuntimeShell {
         if (statusElement) {
             statusElement.textContent = `Level ${level} Complete!`;
             statusElement.style.color = 'var(--success)';
-            
+
             // Clear message after 3 seconds
             setTimeout(() => {
                 statusElement.textContent = 'Playing';
             }, 3000);
         }
     }
-    
+
     /**
      * Clean up resources
      * @param {boolean} useBeacon - Whether to use sendBeacon API for session end
@@ -576,13 +576,13 @@ export default class RuntimeShell {
         } else {
             console.warn('🧹 Branch 3: No session or already cleared');
         }
-        
+
         window.removeEventListener('message', this.boundMessageHandler);
         this.eventHandlers.clear();
         this.messageQueue = [];
         this.log('RuntimeShell cleaned up');
     }
-    
+
     /**
      * Reset session for game restart
      * This should be called when the user explicitly restarts the game
@@ -590,7 +590,7 @@ export default class RuntimeShell {
      */
     async resetSession() {
         this.log('🔄 Resetting session for restart...');
-        
+
         // The session should already be ended by handleGameOver
         // Just log if there's still an active session (shouldn't happen)
         if (this.sessionId) {
@@ -598,27 +598,27 @@ export default class RuntimeShell {
             const sessionToEnd = this.sessionId;
             const finalScore = this.state.score;
             const startTime = this.sessionStartTime;
-            
+
             // Clear session immediately to prevent double-ending
             this.sessionId = null;
             this.sessionStartTime = null;
-            
+
             // End session and save XP
             await this.endGameSessionById(sessionToEnd, finalScore, startTime, false);
         } else {
             this.log('✅ No active session (already ended by Game Over)');
         }
-        
+
         // Reset state
         this.state.score = 0;
         this.state.isGameOver = false;
         this.needsNewSession = false;
-        
+
         // Start new session immediately
         this.log('🎮 Starting new session for restart...');
         await this.startGameSession();
     }
-    
+
     /**
      * Start game session tracking
      */
@@ -630,15 +630,15 @@ export default class RuntimeShell {
                 this.log('❌ Config or API_URL not available');
                 return;
             }
-            
+
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             this.log('Current user from localStorage:', currentUser ? currentUser.user_id : 'null');
-            
+
             if (!currentUser) {
                 this.log('❌ No user logged in, skipping session tracking');
                 return;
             }
-            
+
             this.log('📡 Sending session start request to backend...', config.API_URL);
             const response = await fetch(`${config.API_URL}/users/sessions/start`, {
                 method: 'POST',
@@ -648,11 +648,11 @@ export default class RuntimeShell {
                     game_id: this.gameId
                 })
             });
-            
+
             this.log('Response status:', response.status);
             const data = await response.json();
             this.log('Response data:', data);
-            
+
             if (data.success) {
                 this.sessionId = data.session.session_id;
                 this.sessionStartTime = Date.now();
@@ -664,7 +664,7 @@ export default class RuntimeShell {
             this.log('❌ Exception in startGameSession:', error);
         }
     }
-    
+
     /**
      * End game session and send stats
      */
@@ -674,20 +674,20 @@ export default class RuntimeShell {
             console.warn('🔴 endGameSession: No sessionId, returning');
             return;
         }
-        
+
         const sessionToEnd = this.sessionId;
         const finalScore = this.state.score;
         const startTime = this.sessionStartTime; // Save before clearing
-        
+
         console.warn('🔴 endGameSession: Will end session', sessionToEnd, 'score:', finalScore);
-        
+
         // Clear session immediately to prevent double-ending
         this.sessionId = null;
         this.sessionStartTime = null;
-        
+
         await this.endGameSessionById(sessionToEnd, finalScore, startTime, useBeacon);
     }
-    
+
     /**
      * End a specific game session by ID
      */
@@ -695,23 +695,23 @@ export default class RuntimeShell {
         if (!sessionId) {
             return;
         }
-        
+
         try {
             const durationSeconds = Math.floor((Date.now() - startTime) / 1000) || 0;
-            
+
             // Ensure score is a valid number
             const finalScore = typeof score === 'number' ? Math.floor(score) : 0;
-            
+
             this.log('Ending session - Session ID:', sessionId, 'Score:', finalScore, 'Duration:', durationSeconds);
-            
+
             const payload = {
                 session_id: sessionId,
                 score: finalScore,
                 duration_seconds: durationSeconds
             };
-            
+
             this.log('Payload to send to backend:', JSON.stringify(payload));
-            
+
             // Use sendBeacon for page unload (more reliable)
             if (useBeacon && navigator.sendBeacon) {
                 const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
@@ -719,41 +719,41 @@ export default class RuntimeShell {
                 this.log('Game session ended via beacon');
                 return;
             }
-            
+
             // Regular fetch for normal game end
             const response = await fetch(`${config.API_URL}/users/sessions/end`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            
+
             this.log('Backend response status:', response.status);
-            
+
             const data = await response.json();
-            
+
             this.log('Backend response data:', data);
-            
+
             if (data.success) {
                 this.log('Game session ended:', data.session);
-                
+
                 // Update user's XP in AuthManager (note: capital A)
                 if (window.AuthManager) {
                     window.AuthManager.updateCur8(data.session.xp_earned);
-                    
+
                     // Refresh dati utente dal server per sincronizzare XP
                     // (ritardo di 500ms per dare tempo al backend di processare)
-                    setTimeout(async () => {
-                        await window.AuthManager.refreshUserData();
-                    }, 500);
+                    // setTimeout(async () => {
+                    //     await window.AuthManager.refreshUserData();
+                    // }, 500);
                 }
-                
-               this.showCur8Notification(data.session.xp_earned);
+
+                this.showCur8Notification(data.session.xp_earned);
             }
         } catch (error) {
             this.log('Failed to end game session:', error);
         }
     }
-    
+
     /**
      * Show XP earned notification
      */
@@ -810,16 +810,16 @@ export default class RuntimeShell {
             }
         `;
         document.head.appendChild(style);
-        
+
         document.body.appendChild(notification);
-        
+
         // Remove after animation
         setTimeout(() => {
             notification.remove();
             style.remove();
         }, 4000);
     }
-    
+
     /**
      * Get current state
      * @returns {Object} Current state
@@ -827,7 +827,7 @@ export default class RuntimeShell {
     getState() {
         return { ...this.state };
     }
-    
+
     /**
      * Log messages if debug is enabled
      * @param {...*} args - Arguments to log

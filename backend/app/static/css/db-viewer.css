@@ -929,3 +929,442 @@ tbody tr:last-child td {
     }
 }
 
+/* ============ MOBILE RESPONSIVE STYLES ============ */
+
+@media (max-width: 768px) {
+    /* Header adjustments */
+    .header {
+        padding: 20px 16px;
+    }
+    
+    h1 {
+        font-size: 1.25rem;
+    }
+    
+    .subtitle {
+        font-size: 0.8125rem;
+    }
+    
+    /* Stats grid - 2 columns on mobile */
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    /* Tabs - make scrollable horizontally */
+    .tabs {
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+    }
+    
+    .tabs::-webkit-scrollbar {
+        display: none; /* Chrome, Safari */
+    }
+    
+    .tab-btn {
+        padding: 12px 16px;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Controls - stack vertically */
+    .controls {
+        padding: 16px;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .search-box {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .controls button {
+        width: 100%;
+        padding: 12px 16px;
+    }
+    
+    /* Table container */
+    .table-container {
+        margin: 16px;
+        border-radius: 6px;
+    }
+    
+    /* Tables - make scrollable horizontally with card layout */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 100%;
+        width: max-content;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    tbody {
+        display: table-row-group;
+    }
+    
+    tr {
+        display: table-row;
+    }
+    
+    th, td {
+        display: table-cell;
+        padding: 10px 8px;
+        font-size: 0.75rem;
+        min-width: 100px;
+        vertical-align: middle;
+    }
+    
+    th {
+        font-size: 0.6875rem;
+        white-space: nowrap;
+    }
+    
+    /* First column (thumbnail/id) sticky */
+    th:first-child,
+    td:first-child {
+        position: sticky;
+        left: 0;
+        background: #fafafa;
+        z-index: 10;
+        min-width: 80px;
+    }
+    
+    tbody tr:hover td:first-child {
+        background: #fafafa;
+    }
+    
+    thead th:first-child {
+        background: #fafafa;
+        z-index: 11;
+    }
+    
+    /* Thumbnails smaller on mobile */
+    .thumbnail {
+        width: 36px;
+        height: 36px;
+    }
+    
+    /* Badges and tags */
+    .badge, .tag {
+        font-size: 0.6875rem;
+        padding: 3px 8px;
+    }
+    
+    /* Action buttons - keep horizontal but smaller */
+    .actions {
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+    
+    .btn-small {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+    
+    /* Last column (actions) also sticky on right */
+    tbody tr td:last-child {
+        position: sticky;
+        right: 0;
+        background: #ffffff;
+        z-index: 10;
+        box-shadow: -2px 0 4px rgba(0,0,0,0.05);
+    }
+    
+    tbody tr:hover td:last-child {
+        background: #fafafa;
+    }
+    
+    thead th:last-child {
+        position: sticky;
+        right: 0;
+        background: #fafafa;
+        z-index: 11;
+        box-shadow: -2px 0 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Modal adjustments */
+    .modal {
+        padding: 8px;
+        align-items: flex-start;
+    }
+    
+    .modal-content {
+        width: calc(100% - 16px);
+        max-width: 100%;
+        border-radius: 6px;
+        margin-top: 8px;
+        max-height: calc(100vh - 16px);
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 14px 12px;
+    }
+    
+    .modal-header h2 {
+        font-size: 1rem;
+    }
+    
+    .modal-body {
+        padding: 14px 12px;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    /* Pagination controls - stack vertically */
+    .pagination-controls {
+        padding: 16px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .pagination-info {
+        text-align: center;
+        order: 1;
+    }
+    
+    .pagination-buttons {
+        order: 2;
+        flex-wrap: wrap;
+        margin: 12px 0;
+    }
+    
+    .pagination-btn {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        flex: 1;
+        min-width: 60px;
+    }
+    
+    .pagination-page {
+        padding: 0 8px;
+        font-size: 0.8125rem;
+        width: 100%;
+        text-align: center;
+        margin: 8px 0;
+    }
+    
+    .pagination-size {
+        order: 3;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    /* ER Diagram */
+    #erDiagramCanvas {
+        height: 500px;
+    }
+    
+    .er-controls {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+    }
+    
+    .er-controls button {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+    }
+    
+    /* Form grid - single column */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-group label {
+        font-size: 0.8125rem;
+        margin-bottom: 5px;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="number"],
+    .form-group input[type="datetime-local"],
+    .form-group select,
+    .form-group textarea {
+        padding: 10px 12px;
+        font-size: 0.875rem;
+    }
+    
+    .form-group textarea {
+        min-height: 80px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-danger {
+        width: 100%;
+    }
+    
+    /* Toast notifications */
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens - 1 column stats */
+    .stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 16px 20px;
+    }
+    
+    /* Even smaller text */
+    th {
+        font-size: 0.625rem;
+        padding: 8px 6px;
+        min-width: 80px;
+    }
+    
+    td {
+        font-size: 0.7rem;
+        padding: 8px 6px;
+        min-width: 80px;
+    }
+    
+    /* Actions column narrower */
+    th:last-child,
+    td:last-child {
+        min-width: 120px;
+    }
+    
+    .btn-small {
+        font-size: 0.65rem;
+        padding: 5px 8px;
+    }
+    
+    /* Smaller modal */
+    .modal {
+        padding: 4px;
+    }
+    
+    .modal-content {
+        width: calc(100% - 8px);
+        margin-top: 4px;
+        max-height: calc(100vh - 8px);
+        border-radius: 4px;
+    }
+    
+    .modal-header {
+        padding: 12px 10px;
+    }
+    
+    .modal-header h2 {
+        font-size: 0.9375rem;
+    }
+    
+    .modal-body {
+        padding: 12px 10px;
+    }
+    
+    .form-grid {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .form-group label {
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 9px 10px;
+        font-size: 0.8125rem;
+    }
+    
+    .form-group textarea {
+        min-height: 70px;
+    }
+    
+    .form-actions {
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 11px 18px;
+        font-size: 0.875rem;
+    }
+    
+    /* Compact pagination */
+    .pagination-btn {
+        font-size: 0.6875rem;
+        padding: 6px 8px;
+    }
+}
+

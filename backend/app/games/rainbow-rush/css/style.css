@@ -128,7 +128,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgb(251 229 159);
     border-radius: 12px;
     z-index: -1;
 }

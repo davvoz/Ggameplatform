@@ -21,6 +21,9 @@ export class CollisionDetector {
     checkGoalCollision(goalEntity) {
         if (!goalEntity || goalEntity.reached) return false;
 
+        // Don't allow goal completion if player is dead
+        if (!this.player.alive) return false;
+
         // Check if player's right edge has crossed the goal's left edge
         const playerRightEdge = this.player.x + this.player.width;
         const goalLeftEdge = goalEntity.x;
@@ -274,6 +277,10 @@ export class CollisionDetector {
                 // Track coin collection for level manager
                 if (this.levelManager) {
                     this.levelManager.recordCoinCollected();
+                    // Log per debug monete piovute
+                    if (collectible.fromCoinRain) {
+                        console.log(`🪙 BONUS COIN from rain collected! Total: ${this.levelManager.coinsCollected}/${this.levelManager.totalCoins}`);
+                    }
                 }
                 
                 this.achievementSystem.recordCollectible();

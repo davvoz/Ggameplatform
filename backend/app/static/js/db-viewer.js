@@ -13,6 +13,7 @@ class DataModel {
         this.data = {};
         this.originalData = {};
         this.listeners = [];
+        this.activeFilters = {}; // Store active filters per table
     }
 
     async fetchData() {
@@ -30,6 +31,10 @@ class DataModel {
             
             this.data = await response.json();
             this.originalData = JSON.parse(JSON.stringify(this.data));
+            
+            // Reapply active filters after fetching new data
+            this.reapplyFilters();
+            
             this.notifyListeners('dataLoaded', this.data);
             return this.data;
         } catch (error) {
@@ -59,6 +64,13 @@ class DataModel {
     }
 
     filterData(key, searchTerm) {
+        // Store the active filter
+        if (searchTerm) {
+            this.activeFilters[key] = searchTerm;
+        } else {
+            delete this.activeFilters[key];
+        }
+        
         if (!searchTerm) {
             this.data[key] = JSON.parse(JSON.stringify(this.originalData[key]));
         } else {
@@ -68,6 +80,29 @@ class DataModel {
             );
         }
         this.notifyListeners('dataFiltered', { key, searchTerm });
+    }
+    
+    /**
+     * Reapply all active filters after data refresh
+     * Following OCP: extensible filtering system
+     */
+    reapplyFilters() {
+        Object.keys(this.activeFilters).forEach(key => {
+            const searchTerm = this.activeFilters[key];
+            if (searchTerm) {
+                const original = this.originalData[key] || [];
+                this.data[key] = original.filter(item => 
+                    JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            }
+        });
+    }
+    
+    /**
+     * Get active filter for a table
+     */
+    getActiveFilter(key) {
+        return this.activeFilters[key] || '';
     }
 }
 
@@ -560,9 +595,17 @@ class DBViewerController {
     switchTab(tab) {
         this.currentView = tab;
         
-        // Clear search
+        // Update search input to show active filter for this tab
         const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = '';
+        if (searchInput) {
+            const tableDef = this.registry.getTable(tab);
+            if (tableDef && tableDef.dataKey) {
+                const activeFilter = this.model.getActiveFilter(tableDef.dataKey);
+                searchInput.value = activeFilter || '';
+            } else {
+                searchInput.value = '';
+            }
+        }
 
         // Update UI
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));

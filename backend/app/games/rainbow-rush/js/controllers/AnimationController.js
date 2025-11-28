@@ -36,44 +36,33 @@ export class AnimationController {
     }
     
     /**
-     * Update floating texts con animazioni EPICHE
+     * Update floating texts con animazioni ottimizzate
      */
     updateFloatingTexts(floatingTexts, deltaTime) {
-        
+        if (!floatingTexts || floatingTexts.length === 0) return;
         
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
             const text = floatingTexts[i];
             
             text.life -= deltaTime;
             
-            // Animazione di scala: ESPLODE all'inizio, poi si stabilizza
+            // Animazione di scala SEMPLIFICATA: solo esplosione iniziale
             const lifeProgress = 1 - (text.life / text.maxLife);
-            if (lifeProgress < 0.15) {
-                // ESPLOSIONE iniziale (0.1 -> 1.3)
-                text.scale = 0.1 + (lifeProgress / 0.15) * 1.2;
-            } else if (lifeProgress < 0.3) {
-                // Rimbalzo (1.3 -> 1.0)
-                const bounceProgress = (lifeProgress - 0.15) / 0.15;
-                text.scale = 1.3 - (bounceProgress * 0.3);
+            if (lifeProgress < 0.2) {
+                // Esplosione rapida (0.5 -> 1.2)
+                text.scale = 0.5 + (lifeProgress / 0.2) * 0.7;
             } else {
-                // Stabile con leggero pulse
-                text.scale = 1.0 + Math.sin(text.pulsePhase) * 0.05;
+                // Stabile - NO pulse per performance
+                text.scale = 1.0;
             }
             
-            // Movimento verso l'alto CON DECELERAZIONE
-            const speedMultiplier = Math.max(0.3, 1.0 - lifeProgress); // Rallenta gradualmente
-            text.y += text.velocityY * deltaTime * speedMultiplier;
+            // Movimento verso l'alto COSTANTE - no decelerazione
+            text.y += text.velocityY * deltaTime;
             
-            // NIENTE oscillazione laterale per bonus livello - testo dritto!
-            // text.x += Math.sin(text.pulsePhase * 2) * 15 * deltaTime;
+            // Pulse phase ridotto
+            text.pulsePhase += deltaTime * 2;
             
-            // NIENTE rotazione - testo dritto!
-            // text.rotation += deltaTime * 0.5;
-            
-            // Pulse phase per effetti pulsanti
-            text.pulsePhase += deltaTime * 4;
-            
-            // Fade out negli ultimi istanti
+            // Fade out semplificato
             if (text.life < 0.5) {
                 text.alpha = text.life / 0.5;
                 text.glowIntensity = text.alpha;

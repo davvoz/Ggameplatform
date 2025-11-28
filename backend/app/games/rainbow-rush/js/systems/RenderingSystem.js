@@ -34,7 +34,10 @@ export class RenderingSystem {
             this.textCanvas.height = gameCanvas.height;
             this.textCanvas.style.width = gameCanvas.style.width;
             this.textCanvas.style.height = gameCanvas.style.height;
-            this.textCtx = this.textCanvas.getContext('2d');
+            this.textCtx = this.textCanvas.getContext('2d', { 
+                alpha: true,
+                willReadFrequently: false // Ottimizzazione per write-only canvas
+            });
         } else {
             console.error('RenderingSystem: textCanvas or gameCanvas not found!');
         }
@@ -196,7 +199,7 @@ export class RenderingSystem {
      * @param {Array} entities - Flat array of all entities
      */
     render(gl, entities) {
-        // Pulisci text canvas a ogni frame
+        // Clear canvas 2D SEMPRE - le entity labels devono essere pulite!
         if (this.textCtx) {
             this.textCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
         }

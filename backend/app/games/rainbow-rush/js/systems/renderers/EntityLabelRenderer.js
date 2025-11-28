@@ -305,7 +305,7 @@ export class EntityLabelRenderer {
         const bgWidth = metrics.width + style.padding * 2;
         const bgHeight = style.fontSize + style.padding;
 
-        // Render background
+        // Render background - semplificato, no glow
         ctx.fillStyle = style.backgroundColor;
         ctx.fillRect(
             x - bgWidth / 2,
@@ -314,7 +314,7 @@ export class EntityLabelRenderer {
             bgHeight
         );
 
-        // Render border
+        // Render border - semplificato
         ctx.strokeStyle = style.borderColor;
         ctx.lineWidth = 1;
         ctx.strokeRect(
@@ -324,7 +324,7 @@ export class EntityLabelRenderer {
             bgHeight
         );
 
-        // Render text
+        // Render text - NO shadow, NO glow per performance
         ctx.fillStyle = style.textColor;
         ctx.fillText(text, x, y);
 

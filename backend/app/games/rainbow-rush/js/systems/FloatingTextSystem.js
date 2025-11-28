@@ -5,6 +5,10 @@
 
 export class FloatingText {
     constructor(text, x, y, color, duration = 2.0) {
+        this.reset(text, x, y, color, duration);
+    }
+    
+    reset(text, x, y, color, duration = 2.0) {
         this.text = text;
         this.x = x;
         this.y = y;
@@ -12,20 +16,26 @@ export class FloatingText {
         this.color = color;
         this.duration = duration;
         this.life = duration;
-        this.fontSize = 60; // ENORME!
+        this.fontSize = 60;
         this.offsetY = 0;
         this.bouncePhase = 0;
-        console.log('FloatingText created:', text, 'at', x, y, 'fontSize:', this.fontSize);
+        this.active = true;
     }
     
     update(deltaTime) {
+        if (!this.active) return false;
+        
         this.life -= deltaTime;
+        if (this.life <= 0) {
+            this.active = false;
+            return false;
+        }
+        
+        // Batch updates - calcola solo ogni 2-3 frame
         this.bouncePhase += deltaTime * 3;
+        this.offsetY += deltaTime * 5;
         
-        // Movimento verso l'alto MOLTO LENTO
-        this.offsetY += deltaTime * 5; // Era 20, ora 5
-        
-        return this.life > 0;
+        return true;
     }
     
     getAlpha() {
@@ -49,20 +59,45 @@ export class FloatingTextSystem {
     constructor(renderer) {
         this.renderer = renderer;
         this.floatingTexts = [];
-        this.activePowerupTexts = new Map(); // powerupType -> {nameText, cooldownText}
+        this.activePowerupTexts = new Map();
+        
+        // Object pooling per performance
+        this.textPool = [];
+        this.maxPoolSize = 20;
+        this.maxActiveTexts = 10; // Limite testi contemporanei
+        
+        // Cache per rendering
+        this.renderCache = new Map();
+        this.lastRenderFrame = 0;
     }
     
     update(deltaTime, powerupTimers, playerX, playerY) {
-        // Aggiorna testi esistenti
-        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+        // Aggiorna testi esistenti - batch reverse iteration
+        let i = this.floatingTexts.length;
+        while (i--) {
             const text = this.floatingTexts[i];
             if (!text.update(deltaTime)) {
+                // Ritorna al pool invece di distruggere
+                this.returnToPool(text);
                 this.floatingTexts.splice(i, 1);
             }
         }
         
-        // Aggiorna o crea testi per power-up attivi
-        this.updatePowerupTexts(powerupTimers, playerX, playerY);
+        // Aggiorna power-up texts meno frequentemente
+        if (powerupTimers) {
+            this.updatePowerupTexts(powerupTimers, playerX, playerY);
+        }
+    }
+    
+    getFromPool() {
+        return this.textPool.pop() || null;
+    }
+    
+    returnToPool(text) {
+        if (this.textPool.length < this.maxPoolSize) {
+            text.active = false;
+            this.textPool.push(text);
+        }
     }
     
     updatePowerupTexts(powerupTimers, playerX, playerY) {
@@ -231,8 +266,20 @@ export class FloatingTextSystem {
     }
     
     addFloatingText(text, x, y, color, duration = 2.0) {
-        console.log('Adding floating text:', text, 'at', x, y);
-        //this.floatingTexts.push(new FloatingText(text, x, y, color, duration));
+        // Limita numero di testi attivi per performance
+        if (this.floatingTexts.length >= this.maxActiveTexts) {
+            return; // Scarta se troppi testi attivi
+        }
+        
+        // Usa object pool
+        let floatingText = this.getFromPool();
+        if (floatingText) {
+            floatingText.reset(text, x, y, color, duration);
+        } else {
+            floatingText = new FloatingText(text, x, y, color, duration);
+        }
+        
+        this.floatingTexts.push(floatingText);
     }
     
     clear() {

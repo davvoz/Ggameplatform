@@ -82,9 +82,9 @@ export class CollectibleRenderer extends IEntityRenderer {
         const bounce = Math.sin(time * 4 + (collectible.pulsePhase || 0)) * 2;
         const y = collectible.y + bounce;
         
-        // Glow esterno dorato semplice
-        const glowSize = collectible.radius * 1.8;
-        this.renderer.drawCircle(collectible.x, y, glowSize, [1.0, 0.84, 0.0, 0.2]);
+        // Glow esterno ridotto per performance
+        const glowSize = collectible.radius * 1.4;
+        this.renderer.drawCircle(collectible.x, y, glowSize, [1.0, 0.84, 0.0, 0.15]);
         
         // Moneta - disegnata con ellissi (cerchi schiacciati orizzontalmente)
         // Bordo esterno scuro (metallo)
@@ -162,8 +162,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(offset + time * 4) * 0.25 + 1.0;
         const size = heart.radius * pulse;
 
-        // Glows
-        RenderingUtils.drawGlow(this.renderer, heart.x, floatY, size * 3, heart.color, 3, 0.35 * pulse, 0.1);
+        // Glow ridotto per performance
+        RenderingUtils.drawGlow(this.renderer, heart.x, floatY, size * 2, heart.color, 1, 0.2 * pulse, 0.1);
 
         // Heart shape
         const lobeRadius = size * 0.55;
@@ -324,8 +324,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.3 + 1.0;
         const size = bonus.radius * pulse;
         
-        // Glow dorato esterno
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.5, bonus.glowColor, 6, 0.5 * pulse, 0.1);
+        // Glow ridotto per performance
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 2, 0.3 * pulse, 0.1);
         
         // Cerchio principale oro
         this.renderer.drawCircle(bonus.x, bonus.y, size, bonus.color);
@@ -364,7 +364,7 @@ export class CollectibleRenderer extends IEntityRenderer {
         const pulse = Math.sin(bonus.pulsePhase) * 0.25 + 1.0;
         const size = bonus.radius * pulse;
         
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 4, 0.4 * pulse, 0.08);
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 1.5, bonus.glowColor, 1, 0.25 * pulse, 0.1);
         
         // Hexagon
         const sides = 6;
@@ -465,8 +465,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const size = bonus.radius * pulse;
         const wingPhase = Math.sin(bonus.wingPhase);
         
-        // Glow esterno azzurro - ridotto
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.0, bonus.glowColor, 4, 0.4 * pulse, 0.08);
+        // Glow ridotto drasticamente per performance
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 1.5, bonus.glowColor, 1, 0.25 * pulse, 0.1);
         
         // Cerchio principale
         this.renderer.drawCircle(bonus.x, bonus.y, size * 1.5, [...bonus.color, 0.4]);
@@ -528,8 +528,8 @@ export class CollectibleRenderer extends IEntityRenderer {
         const size = bonus.radius * pulse;
         const energyPhase = bonus.energyPhase;
         
-        // Glow esterno verde elettrico pulsante - ridotto
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.2, bonus.glowColor, 5, 0.5 * pulse, 0.08);
+        // Glow esterno ridotto drasticamente per performance
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 1.8, bonus.glowColor, 2, 0.3 * pulse, 0.1);
         
         // Anelli energetici espandenti
         for (let i = 0; i < 3; i++) {
@@ -646,7 +646,7 @@ export class CollectibleRenderer extends IEntityRenderer {
         const glowPhase = bonus.glowPhase;
         
         // Glow esterno rosa/rosso pulsante molto intenso
-        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 5, bonus.glowColor, 10, 0.9 * pulse, 0.15);
+        RenderingUtils.drawGlow(this.renderer, bonus.x, bonus.y, size * 2.5, bonus.glowColor, 2, 0.4 * pulse, 0.15);
         
         // Anelli concentrici rosa che pulsano
         for (let i = 0; i < 4; i++) {

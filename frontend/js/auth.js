@@ -376,6 +376,24 @@ const AuthManager = {
         }
     },
     
+    updateCur8(amount) {
+        console.log('🎁 AuthManager.updateCur8 chiamato con amount:', amount);
+        if (this.currentUser) {
+            const oldTotal = this.currentUser.total_xp_earned || 0;
+            this.currentUser.total_xp_earned = oldTotal + amount;
+            console.log('🎁 XP aggiornato:', oldTotal, '->', this.currentUser.total_xp_earned);
+            
+            // Salva in localStorage
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+            localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
+            
+            // Aggiorna UI immediatamente
+            this.updateUI();
+        } else {
+            console.warn('⚠️ updateCur8: Nessun utente loggato');
+        }
+    },
+    
     getUser() {
         return this.currentUser;
     },

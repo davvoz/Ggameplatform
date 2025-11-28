@@ -433,12 +433,16 @@ export default class RuntimeShell {
      * Exit the game
      */
     exit() {
-        this.log('Exiting game');
+        console.warn('🚪 EXIT BUTTON PRESSED - Stack trace:', new Error().stack);
+        this.log('Exiting game - no XP will be awarded');
         this.sendMessage(PLATFORM_MESSAGE_TYPES.EXIT, {
             timestamp: Date.now()
         });
         
-        this.cleanup();
+        console.warn('🚪 Calling cleanup(false, true) - skipSessionEnd=true');
+        // Pass skipSessionEnd=true to prevent XP distribution on exit
+        this.cleanup(false, true);
+        console.warn('🚪 Exit completed');
     }
     
     /**
@@ -553,11 +557,24 @@ export default class RuntimeShell {
     
     /**
      * Clean up resources
+     * @param {boolean} useBeacon - Whether to use sendBeacon API for session end
+     * @param {boolean} skipSessionEnd - If true, don't end session (used for Exit button)
      */
-    cleanup(useBeacon = false) {
-        // End game session if active
-        if (this.sessionId) {
+    cleanup(useBeacon = false, skipSessionEnd = false) {
+        console.warn('🧹 CLEANUP CALLED - useBeacon:', useBeacon, 'skipSessionEnd:', skipSessionEnd, 'sessionId:', this.sessionId);
+        // End game session if active (unless skipSessionEnd is true for Exit)
+        if (this.sessionId && !skipSessionEnd) {
+            console.warn('🧹 Branch 1: Will call endGameSession');
+            this.log('Cleanup: Ending active session');
             this.endGameSession(useBeacon);
+        } else if (this.sessionId && skipSessionEnd) {
+            console.warn('🧹 Branch 2: Skipping session end - clearing session locally');
+            this.log('Cleanup: Skipping session end (Exit button pressed - no XP awarded)');
+            // Just clear the session without saving
+            this.sessionId = null;
+            this.sessionStartTime = null;
+        } else {
+            console.warn('🧹 Branch 3: No session or already cleared');
         }
         
         window.removeEventListener('message', this.boundMessageHandler);
@@ -652,13 +669,17 @@ export default class RuntimeShell {
      * End game session and send stats
      */
     async endGameSession(useBeacon = false) {
+        console.warn('🔴 endGameSession CALLED - Stack trace:', new Error().stack);
         if (!this.sessionId) {
+            console.warn('🔴 endGameSession: No sessionId, returning');
             return;
         }
         
         const sessionToEnd = this.sessionId;
         const finalScore = this.state.score;
         const startTime = this.sessionStartTime; // Save before clearing
+        
+        console.warn('🔴 endGameSession: Will end session', sessionToEnd, 'score:', finalScore);
         
         // Clear session immediately to prevent double-ending
         this.sessionId = null;
@@ -715,9 +736,15 @@ export default class RuntimeShell {
             if (data.success) {
                 this.log('Game session ended:', data.session);
                 
-                // Update user's XP in authManager
-                if (window.authManager) {
-                    window.authManager.updateCur8(data.session.xp_earned);
+                // Update user's XP in AuthManager (note: capital A)
+                if (window.AuthManager) {
+                    window.AuthManager.updateCur8(data.session.xp_earned);
+                    
+                    // Refresh dati utente dal server per sincronizzare XP
+                    // (ritardo di 500ms per dare tempo al backend di processare)
+                    setTimeout(async () => {
+                        await window.AuthManager.refreshUserData();
+                    }, 500);
                 }
                 
                this.showCur8Notification(data.session.xp_earned);
@@ -731,6 +758,7 @@ export default class RuntimeShell {
      * Show XP earned notification
      */
     showCur8Notification(xpAmount) {
+        console.warn('🎁 SHOWING XP NOTIFICATION:', xpAmount, '- Stack trace:', new Error().stack);
         const notification = document.createElement('div');
         notification.className = 'xp-notification';
         notification.innerHTML = `

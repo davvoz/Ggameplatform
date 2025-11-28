@@ -451,21 +451,29 @@ def create_game_session(user_id: str, game_id: str) -> dict:
 
 def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict:
     """End a game session and calculate XP earned using the rules system."""
+    print(f"[DB] end_game_session called - session_id: {session_id}, score: {score}, duration: {duration_seconds}")
+    
     with get_db_session() as session:
         game_session = session.query(GameSession).filter(
             GameSession.session_id == session_id
         ).first()
         
         if not game_session:
+            print(f"[DB ERROR] Session not found: {session_id}")
             return None
+        
+        print(f"[DB] Found session for user: {game_session.user_id}, game: {game_session.game_id}")
         
         user = session.query(User).filter(User.user_id == game_session.user_id).first()
         
         if not user:
+            print(f"[DB ERROR] User not found: {game_session.user_id}")
             return None
         
         multiplier = user.cur8_multiplier
         game_id = game_session.game_id
+        
+        print(f"[DB] User multiplier: {multiplier}, current total_xp: {user.total_xp_earned}")
                 
         # Parse current game scores
         game_scores = json.loads(user.game_scores) if user.game_scores else {}
@@ -478,8 +486,10 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             is_new_high_score = True
             game_scores[game_id] = score
             user.game_scores = json.dumps(game_scores)
+            print(f"[DB] New high score! {previous_high_score} -> {score}")
         
         # Calculate XP using the new rules system
+        print(f"[DB] Calculating XP...")
         xp_result = calculate_session_xp(
             game_id=game_id,
             score=score,
@@ -490,6 +500,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         )
         
         xp_earned = xp_result['total_xp']
+        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)})")
         
         # Update session
         now = datetime.utcnow().isoformat()
@@ -506,12 +517,17 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         game_session.extra_data = json.dumps(extra_data)
         
         # Update user's total XP
+        old_total_xp = user.total_xp_earned
         user.total_xp_earned += xp_earned
+        print(f"[DB] Updating user total_xp: {old_total_xp} -> {user.total_xp_earned} (+{xp_earned})")
+        
         session.flush()
+        print(f"[DB] Session flushed to database")
         
         result = game_session.to_dict()
         
         # Track quest progress
+        print(f"[DB] Tracking quest progress...")
         track_quest_progress_for_session(session, {
             'user_id': game_session.user_id,
             'game_id': game_session.game_id,
@@ -520,9 +536,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             'xp_earned': xp_earned
         })
         
+        print(f"[DB] Quest progress tracked")
+        
     # Note: Leaderboard is automatically updated by the trigger system
     # No need to manually recalculate ranks here
     
+    print(f"[DB] end_game_session completed successfully - XP earned: {xp_earned}")
     return result
 
 def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:

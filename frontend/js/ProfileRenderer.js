@@ -20,6 +20,9 @@ class ProfileRenderer {
             return;
         }
 
+        // Refresh user data dal server prima di caricare il profilo
+        await this.authManager.refreshUserData();
+        
         const user = await this.loadUserData();
         const sessions = await this.loadUserSessions(user.user_id);
         const stats = this.calculateStats(sessions);

@@ -225,7 +225,8 @@ export async function renderGamePlayer(params) {
 
     // Cleanup previous game runtime if exists
     if (window.currentGameRuntime) {
-        window.currentGameRuntime.cleanup();
+        // Skip session end when loading new game - no XP awarded for previous game
+        window.currentGameRuntime.cleanup(false, true);
         window.currentGameRuntime = null;
     }
 
@@ -254,7 +255,8 @@ export async function renderGamePlayer(params) {
         const exitBtn = document.querySelector('.exit-btn');
         exitBtn.addEventListener('click', () => {
             if (window.currentGameRuntime) {
-                window.currentGameRuntime.cleanup();
+                // Use exit() instead of cleanup() to prevent XP distribution
+                window.currentGameRuntime.exit();
                 window.currentGameRuntime = null;
             }
             navigateTo(`/game/${gameId}`);

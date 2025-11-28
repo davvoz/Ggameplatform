@@ -1,15 +1,15 @@
 """
-Script to clean up database - empties sessions, leaderboard, and user quests tables.
-Keeps games, users, xp_rules, and quests intact.
+Script to clean up database - empties sessions, leaderboard, user quests, and users tables.
+Keeps games, xp_rules, and quests intact.
 """
 from app.database import get_db_session
-from app.models import GameSession, Leaderboard, UserQuest
+from app.models import GameSession, Leaderboard, UserQuest, User
 
 def cleanup_database():
-    """Empty sessions, leaderboard, and user quests tables."""
+    """Empty sessions, leaderboard, user quests, and users tables."""
     print("🧹 Starting database cleanup...")
-    print("📌 Cleaning: Sessions, Leaderboard, User Quests")
-    print("📦 Keeping: Games, Users, XP Rules, Quests\n")
+    print("📌 Cleaning: Sessions, Leaderboard, User Quests, Users")
+    print("📦 Keeping: Games, XP Rules, Quests\n")
     
     with get_db_session() as session:
         # Delete all user quests
@@ -27,11 +27,16 @@ def cleanup_database():
         session.query(GameSession).delete()
         print(f"✅ Deleted {sessions_count} game sessions")
         
+        # Delete all users
+        users_count = session.query(User).count()
+        session.query(User).delete()
+        print(f"✅ Deleted {users_count} users")
+        
         session.commit()
     
     print("\n✨ Database cleanup completed!")
-    print("📦 Games, Users, XP Rules, and Quests tables remain intact")
-    print("🔄 All user progress has been reset")
+    print("📦 Games, XP Rules, and Quests tables remain intact")
+    print("🔄 All users and their progress have been reset")
 
 if __name__ == "__main__":
     cleanup_database()

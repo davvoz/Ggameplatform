@@ -41,7 +41,8 @@ function handleRoute() {
     
     // Cleanup previous game runtime when navigating away from player
     if (!hash.startsWith('/play/') && window.currentGameRuntime) {
-        window.currentGameRuntime.cleanup();
+        // Skip session end when navigating away - no XP awarded
+        window.currentGameRuntime.cleanup(false, true);
         window.currentGameRuntime = null;
     }
     

@@ -187,6 +187,49 @@ class AuthManager {
             this.showUserBanner(); // Aggiorna banner
         }
     }
+
+    /**
+     * Aggiorna i dati utente dal server e sincronizza la navbar
+     * @returns {Promise<Object|null>} Dati utente aggiornati o null
+     */
+    async refreshUserData() {
+        if (!this.currentUser || !this.currentUser.user_id) {
+            console.log('No current user to refresh');
+            return null;
+        }
+
+        try {
+            // Importa config dinamicamente per evitare dipendenze circolari
+            const { config } = await import('./config.js');
+            
+            const response = await fetch(`${config.API_URL}/users/users/${this.currentUser.user_id}`);
+            
+            if (response.ok) {
+                const userData = await response.json();
+                const freshUser = userData.user;
+                
+                // Aggiorna i dati utente mantenendo il metodo di autenticazione
+                this.currentUser = {
+                    ...this.currentUser,
+                    total_xp_earned: freshUser.total_xp_earned,
+                    cur8_multiplier: freshUser.cur8_multiplier,
+                    game_scores_enriched: freshUser.game_scores_enriched
+                };
+                
+                this.saveToStorage();
+                this.showUserBanner(); // Aggiorna la navbar con dati freschi
+                
+                console.log('✅ User data refreshed from server. XP:', freshUser.total_xp_earned);
+                return this.currentUser;
+            } else {
+                console.error('Failed to refresh user data:', response.status);
+                return null;
+            }
+        } catch (error) {
+            console.error('Error refreshing user data:', error);
+            return null;
+        }
+    }
 }
 
 // Istanza globale

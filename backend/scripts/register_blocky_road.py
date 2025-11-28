@@ -84,76 +84,59 @@ def register_blocky_road():
         
         xp_rules = [
             {
-                'rule_id': 'blocky_road_move_forward',
+                'rule_id': 'blocky_road_score_multiplier',
                 'game_id': 'blocky-road',
-                'rule_name': 'Move forward one step',
-                'rule_type': 'score',
+                'rule_name': 'Score Multiplier',
+                'rule_type': 'score_multiplier',
                 'parameters': json.dumps({
-                    'event_type': 'score',
-                    'xp_reward': 1,
-                    'condition': {'min_score': 1}
+                    'multiplier': 0.01,
+                    'max_xp': 50.0
                 }),
-                'priority': 0,
+                'priority': 10,
                 'is_active': 1,
                 'created_at': now,
                 'updated_at': now
             },
             {
-                'rule_id': 'blocky_road_collect_coin',
+                'rule_id': 'blocky_road_time_bonus',
                 'game_id': 'blocky-road',
-                'rule_name': 'Collect a coin',
-                'rule_type': 'coin',
+                'rule_name': 'Time Played Bonus',
+                'rule_type': 'time_bonus',
                 'parameters': json.dumps({
-                    'event_type': 'coin',
-                    'xp_reward': 5,
-                    'condition': {}
+                    'xp_per_minute': 0.1,
+                    'max_minutes': 5.0
                 }),
-                'priority': 0,
+                'priority': 5,
                 'is_active': 1,
                 'created_at': now,
                 'updated_at': now
             },
             {
-                'rule_id': 'blocky_road_reach_25',
+                'rule_id': 'blocky_road_high_score_bonus',
                 'game_id': 'blocky-road',
-                'rule_name': 'Reach score 25',
-                'rule_type': 'milestone',
+                'rule_name': 'High Score Bonus',
+                'rule_type': 'high_score_bonus',
                 'parameters': json.dumps({
-                    'event_type': 'milestone',
-                    'xp_reward': 25,
-                    'condition': {'min_score': 25}
+                    'bonus_xp': 15.0
                 }),
-                'priority': 0,
+                'priority': 15,
                 'is_active': 1,
                 'created_at': now,
                 'updated_at': now
             },
             {
-                'rule_id': 'blocky_road_reach_50',
+                'rule_id': 'blocky_road_milestones',
                 'game_id': 'blocky-road',
-                'rule_name': 'Reach score 50',
-                'rule_type': 'milestone',
+                'rule_name': 'Score Milestones',
+                'rule_type': 'threshold',
                 'parameters': json.dumps({
-                    'event_type': 'milestone',
-                    'xp_reward': 50,
-                    'condition': {'min_score': 50}
+                    'thresholds': [
+                        {'score': 100, 'xp': 25},
+                        {'score': 50, 'xp': 15},
+                        {'score': 25, 'xp': 10}
+                    ]
                 }),
-                'priority': 0,
-                'is_active': 1,
-                'created_at': now,
-                'updated_at': now
-            },
-            {
-                'rule_id': 'blocky_road_reach_100',
-                'game_id': 'blocky-road',
-                'rule_name': 'Reach score 100',
-                'rule_type': 'milestone',
-                'parameters': json.dumps({
-                    'event_type': 'milestone',
-                    'xp_reward': 100,
-                    'condition': {'min_score': 100}
-                }),
-                'priority': 0,
+                'priority': 20,
                 'is_active': 1,
                 'created_at': now,
                 'updated_at': now
@@ -173,9 +156,32 @@ def register_blocky_road():
         
         for rule_data in xp_rules:
             params = json.loads(rule_data['parameters'])
+            
+            # Calculate XP preview based on rule type
+            if rule_data['rule_type'] == 'score_multiplier':
+                multiplier = params.get('multiplier', 0.01)
+                max_xp = params.get('max_xp', 'unlimited')
+                xp_preview = f"{multiplier}x score (max {max_xp})"
+            elif rule_data['rule_type'] == 'time_bonus':
+                xp_per_min = params.get('xp_per_minute', 0.1)
+                max_min = params.get('max_minutes', 10)
+                xp_preview = f"{xp_per_min} XP/min (max {max_min}min)"
+            elif rule_data['rule_type'] == 'high_score_bonus':
+                bonus = params.get('bonus_xp', 10.0)
+                xp_preview = f"+{bonus} XP"
+            elif rule_data['rule_type'] == 'threshold':
+                thresholds = params.get('thresholds', [])
+                if thresholds:
+                    highest = max(thresholds, key=lambda x: x.get('score', 0))
+                    xp_preview = f"up to +{highest.get('xp', 0)} XP"
+                else:
+                    xp_preview = "thresholds"
+            else:
+                xp_preview = "custom"
+            
             xp_rule = XPRule(**rule_data)
             db.add(xp_rule)
-            print(f"✅ XP Rule: {rule_data['rule_name']} (+{params['xp_reward']} XP)")
+            print(f"✅ XP Rule: {rule_data['rule_name']} ({xp_preview})")
         
         db.commit()
         

@@ -14,13 +14,20 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from datetime import datetime
-from app.database import create_game, create_xp_rule, get_game_xp_rules, get_db_session
+from app.database import create_game, create_xp_rule, get_game_xp_rules, get_db_session, init_db
 from app.models import Quest, Game
 import json
 
 print("=" * 80)
 print("🎮 GAME PLATFORM - DATABASE POPULATION SCRIPT")
 print("=" * 80)
+print()
+
+# Initialize database tables first
+print("🔧 INITIALIZING DATABASE TABLES...")
+print("-" * 80)
+init_db()
+print("✅ Database tables initialized!")
 print()
 
 # ============================================================================
@@ -130,6 +137,28 @@ games_to_register = [
             'max_players': 1,
             'min_age': 6,
             'featured': False
+        }
+    },
+    {
+        'gameId': 'blocky-road',
+        'title': 'Blocky Road',
+        'description': 'Cross the blockchain! Navigate through a procedurally generated world filled with crypto vehicles, floating platforms, and blockchain trains. Collect Bitcoin coins and avoid obstacles in this addictive infinite runner inspired by Crossy Road!',
+        'author': 'Ggameplatform',
+        'version': '1.0.0',
+        'entryPoint': 'index.html',
+        'category': 'arcade',
+        'tags': ['arcade', 'infinite-runner', 'blockchain', 'crossy-road', 'voxel', 'casual', 'mobile'],
+        'thumbnail': 'thumbnail.png',
+        'metadata': {
+            'difficulty': 'medium',
+            'max_players': 1,
+            'min_age': 7,
+            'featured': True,
+            'gameplay': 'infinite-runner',
+            'theme': 'blockchain',
+            'graphics': 'voxel',
+            'controls': ['keyboard', 'touch'],
+            'playTime': 'quick-session'
         }
     }
 ]
@@ -336,6 +365,59 @@ xp_rules_config = {
             'rule_type': 'high_score_bonus',
             'parameters': {'bonus_xp': 10.0},
             'priority': 15
+        }
+    ],
+    'blocky-road': [
+        {
+            'rule_name': 'Distance Traveled',
+            'rule_type': 'score_multiplier',
+            'parameters': {'multiplier': 0.02, 'max_xp': 150.0},
+            'priority': 10
+        },
+        {
+            'rule_name': 'Survival Time Bonus',
+            'rule_type': 'time_bonus',
+            'parameters': {'xp_per_minute': 0.2, 'max_minutes': 15},
+            'priority': 8
+        },
+        {
+            'rule_name': 'New Record Bonus',
+            'rule_type': 'high_score_bonus',
+            'parameters': {'bonus_xp': 15.0},
+            'priority': 15
+        },
+        {
+            'rule_name': 'Distance Milestones',
+            'rule_type': 'threshold',
+            'parameters': {
+                'thresholds': [
+                    {'score': 500, 'xp': 200},
+                    {'score': 300, 'xp': 100},
+                    {'score': 200, 'xp': 60},
+                    {'score': 100, 'xp': 30},
+                    {'score': 50, 'xp': 15},
+                    {'score': 20, 'xp': 5}
+                ]
+            },
+            'priority': 20
+        },
+        {
+            'rule_name': 'Speed Runner Bonus',
+            'rule_type': 'combo',
+            'parameters': {'min_score': 100, 'min_duration': 120, 'bonus_xp': 25.0},
+            'priority': 18
+        },
+        {
+            'rule_name': 'Endurance Master',
+            'rule_type': 'combo',
+            'parameters': {'min_score': 200, 'min_duration': 300, 'bonus_xp': 50.0},
+            'priority': 19
+        },
+        {
+            'rule_name': 'Personal Best Improvement',
+            'rule_type': 'percentile_improvement',
+            'parameters': {'xp_per_percent': 0.8, 'max_xp': 80.0},
+            'priority': 12
         }
     ]
 }

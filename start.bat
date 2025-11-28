@@ -8,25 +8,25 @@ echo ========================================
 echo.
 
 REM Check if Python is installed
-python --version >nul 2>&1
+py -3.11 --version >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Python is not installed or not in PATH
-    echo Please install Python 3.9+ from https://www.python.org/
+    echo ERROR: Python 3.11 is not installed
+    echo Please install Python 3.11 from https://www.python.org/
     pause
     exit /b 1
 )
 
 echo [1/4] Checking Python installation...
-python --version
+py -3.11 --version
 echo.
 
 REM Navigate to backend directory
 cd /d "%~dp0backend"
 
-REM Check if virtual environment exists
+REM Create virtual environment
 if not exist "venv\" (
     echo [2/4] Creating virtual environment...
-    python -m venv venv
+    py -3.11 -m venv venv
     echo Virtual environment created.
     echo.
 ) else (
@@ -51,7 +51,7 @@ timeout /t 3 /nobreak >nul
 
 REM Start frontend server in a new window
 cd /d "%~dp0frontend"
-start "Game Platform - Frontend" cmd /k "cd /d "%~dp0frontend" && echo Frontend server starting on http://localhost:3000 && echo. && python -m http.server 3000"
+start "Game Platform - Frontend" cmd /k "cd /d "%~dp0frontend" && echo Frontend server starting on http://localhost:3000 && echo. && py -3.11 -m http.server 3000"
 
 REM Wait a moment for frontend to start
 timeout /t 2 /nobreak >nul

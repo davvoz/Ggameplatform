@@ -90,17 +90,10 @@ async function loadGames(filters = {}) {
             return;
         }
 
-        // Sort games by status priority
-        const statusOrder = {
-            'developed': 1,
-            'in_development': 2,
-            'experimental': 3,
-            'deprecated': 4
-        };
-
+        // Sort games by status display_order (ordine field from game_statuses table)
         games.sort((a, b) => {
-            const aOrder = a.status?.status_code ? statusOrder[a.status.status_code] || 5 : 5;
-            const bOrder = b.status?.status_code ? statusOrder[b.status.status_code] || 5 : 5;
+            const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
+            const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
             return aOrder - bOrder;
         });
 

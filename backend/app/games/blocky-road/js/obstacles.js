@@ -474,65 +474,81 @@ class ObstacleManager {
     }
     
     trySpawnCoins(playerZ) {
-        // Spawn coins on safe terrain - only ahead of player, never behind
-        // Only spawn coins at least 3 rows ahead to prevent spawning at current position
-        const minSpawnDistance = 5;  // Increased from 3 to 5
+        // Nuova logica: spawn per zona di grass consecutiva
+        const minSpawnDistance = 5;
         const maxSpawnDistance = 20;
-        
-        // Track furthest spawned position to prevent backward spawning
         if (!this.furthestCoinZ) this.furthestCoinZ = playerZ;
         const startZ = Math.max(Math.floor(playerZ) + minSpawnDistance, this.furthestCoinZ);
-        
+
+        // Rileva zone di grass consecutive
+        let zone = [];
         for (let z = startZ; z < playerZ + maxSpawnDistance; z++) {
             const row = this.terrain.getRowAt(z);
-            if (!row) continue;
-            
-            // Only on grass or safe areas
-            if (row.type !== 'grass') continue;
-            
-            // Check if already has coin
-            const hasCoin = this.coins.some(coin => Math.abs(coin.z - z) < 0.5);
-            if (hasCoin) continue;
-            
-            // Fixed coin spawn rate (not progressive)
-            const spawnRate = 0.015; // 1.5% constant - very rare
-            
-            if (Math.random() < spawnRate) {
-                this.spawnCoin(z);
-                this.furthestCoinZ = Math.max(this.furthestCoinZ, z);
+            if (row && row.type === 'grass') {
+                zone.push(z);
+            } else {
+                if (zone.length > 0) {
+                    this.spawnCoinsInGrassZone(zone);
+                    zone = [];
+                }
             }
+        }
+        // Se la zona arriva fino in fondo
+        if (zone.length > 0) {
+            this.spawnCoinsInGrassZone(zone);
+        }
+        this.furthestCoinZ = playerZ + maxSpawnDistance;
+    }
+
+    // Spawna monete in una zona di grass consecutiva
+    spawnCoinsInGrassZone(zone) {
+        if (zone.length === 0) return;
+        // Solo probabilità di una moneta singola nella zona
+        const spawnRate = 0.18; // 18% di spawn zona
+        if (Math.random() < spawnRate) {
+            const z = zone[Math.floor(Math.random() * zone.length)];
+            this.spawnCoin(z);
         }
     }
     
     spawnCoin(z) {
-        // Try multiple positions to avoid obstacles
-        let attempts = 0;
-        let x, validPosition = false;
-        
-        while (!validPosition && attempts < 10) {
-            x = Math.floor(Math.random() * 13) - 6; // -6 to 6
-            
-            // Check if this position has an obstacle
-            if (!this.terrain.hasObstacle(x, z)) {
-                validPosition = true;
+        // Supporta anche spawnCoin(z, x) per eventi speciali
+        let x;
+        if (arguments.length > 1) {
+            x = arguments[1];
+        } else {
+            let attempts = 0;
+            let validPosition = false;
+            while (!validPosition && attempts < 10) {
+                x = Math.floor(Math.random() * 13) - 6; // -6 to 6
+                // Check if this position has an obstacle or another coin troppo vicino
+                const tooClose = this.coins.some(coin => coin.z === z && Math.abs(coin.x - x) < 2);
+                if (!this.terrain.hasObstacle(x, z) && !tooClose) {
+                    validPosition = true;
+                }
+                attempts++;
             }
-            attempts++;
+            if (!validPosition) return;
         }
-        
-        // If no valid position found, don't spawn coin
-        if (!validPosition) return;
-        
-        const coin = Models.createCoin();
+
+        // Determina la rarità della moneta
+        // STEEM: 95%, Bitcoin: 5%
+        let coinType = 'steem';
+        const rand = Math.random();
+        if (rand < 0.05) {
+            coinType = 'bitcoin';
+        }
+
+        const coin = Models.createCoin(coinType);
         coin.position.set(x, 0.8, z);
-        
         this.scene.add(coin);
-        
         this.coins.push({
             mesh: coin,
             x: x,
             z: z,
             collected: false,
-            rotationSpeed: 0.05
+            rotationSpeed: 0.05,
+            coinType: coinType
         });
     }
     
@@ -692,27 +708,34 @@ class ObstacleManager {
     }
     
     clear() {
+        const disposeMaterial = (mat) => {
+            if (Array.isArray(mat)) {
+                mat.forEach(m => m && typeof m.dispose === 'function' && m.dispose());
+            } else if (mat && typeof mat.dispose === 'function') {
+                mat.dispose();
+            }
+        };
         this.obstacles.forEach(obs => {
             this.scene.remove(obs.mesh);
             obs.mesh.traverse(child => {
                 if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
+                if (child.material) disposeMaterial(child.material);
             });
         });
-        
+
         this.platforms.forEach(plat => {
             this.scene.remove(plat.mesh);
             plat.mesh.traverse(child => {
                 if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
+                if (child.material) disposeMaterial(child.material);
             });
         });
-        
+
         this.coins.forEach(coin => {
             this.scene.remove(coin.mesh);
             coin.mesh.traverse(child => {
                 if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
+                if (child.material) disposeMaterial(child.material);
             });
         });
         

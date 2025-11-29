@@ -595,6 +595,7 @@ const TABLE_DEFINITIONS = {
         dataKey: 'game_statuses',
         icon: '🏷️',
         color: '#9C27B0',
+        detailTemplate: 'renderGameStatusDetails',
         erDiagram: {
             x: 450,
             y: 50,

@@ -232,6 +232,15 @@ class CRUDManager {
                 { key: 'is_claimed', label: 'Reclamato', type: 'checkbox' },
                 { key: 'completed_at', label: 'Data Completamento', type: 'datetime-local' },
                 { key: 'claimed_at', label: 'Data Reclamo', type: 'datetime-local' }
+            ],
+            'game_statuses': [
+                { key: 'status_id', label: 'Status ID', type: 'number', readonly: true },
+                { key: 'status_name', label: 'Nome', type: 'text', required: true },
+                { key: 'status_code', label: 'Codice', type: 'text', required: true },
+                { key: 'description', label: 'Descrizione', type: 'textarea' },
+                { key: 'color', label: 'Colore', type: 'text' },
+                { key: 'display_order', label: 'Ordine Visualizzazione', type: 'number', min: '0' },
+                { key: 'is_active', label: 'Attivo', type: 'checkbox' }
             ]
         };
 
@@ -353,7 +362,8 @@ class CRUDManager {
             'leaderboard': 'entry_id',
             'xp-rules': 'rule_id',
             'quests': 'quest_id',
-            'user-quests': 'id'
+            'user-quests': 'id',
+            'game_statuses': 'status_id'
         };
         return idFields[tableKey] || 'id';
     }
@@ -370,7 +380,8 @@ class CRUDManager {
             'leaderboard': `Score ${item.score} - ${item.game_id}`,
             'xp-rules': item.rule_name || item.rule_id,
             'quests': item.title || `Quest #${item.quest_id}`,
-            'user-quests': `User Quest #${item.id}`
+            'user-quests': `User Quest #${item.id}`,
+            'game_statuses': item.status_name || `Status #${item.status_id}`
         };
         return displayFields[tableKey] || String(item[idField] || 'Record');
     }
@@ -386,7 +397,8 @@ class CRUDManager {
             'leaderboard': '/admin/leaderboard-entries',
             'xp-rules': '/admin/xp-rules',
             'quests': '/admin/quests-crud',
-            'user-quests': '/admin/user-quests-crud'
+            'user-quests': '/admin/user-quests-crud',
+            'game_statuses': '/admin/game-statuses'
         };
         return endpoints[tableKey];
     }
@@ -429,12 +441,6 @@ class CRUDManager {
             }
         }
 
-        // Convert snake_case to camelCase for API compatibility (games endpoint)
-        if ('status_id' in data) {
-            data['statusId'] = data['status_id'];
-            delete data['status_id'];
-        }
-
         return data;
     }
 
@@ -444,6 +450,13 @@ class CRUDManager {
     async handleCreate(tableKey) {
         try {
             const data = this.collectFormData();
+            
+            // Convert snake_case to camelCase ONLY for games table
+            if (tableKey === 'games' && 'status_id' in data) {
+                data['statusId'] = data['status_id'];
+                delete data['status_id'];
+            }
+            
             const endpoint = this.getAPIEndpoint(tableKey);
 
             const response = await fetch(endpoint, {
@@ -475,6 +488,13 @@ class CRUDManager {
     async handleUpdate(tableKey, idValue) {
         try {
             const data = this.collectFormData();
+            
+            // Convert snake_case to camelCase ONLY for games table
+            if (tableKey === 'games' && 'status_id' in data) {
+                data['statusId'] = data['status_id'];
+                delete data['status_id'];
+            }
+            
             const endpoint = this.getAPIEndpoint(tableKey);
 
             const response = await fetch(`${endpoint}/${idValue}`, {

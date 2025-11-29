@@ -684,6 +684,10 @@ class DBViewerController {
                 title = `📋 User Quest #${item.id}`;
                 content = TemplateEngine.renderUserQuestDetails(item);
                 break;
+            case 'Stati Giochi':
+                title = `🏷️ ${item.status_name || 'Stato'}`;
+                content = TemplateEngine.renderGameStatusDetails(item);
+                break;
             default:
                 content = TemplateEngine.renderJSONDetails(item);
         }

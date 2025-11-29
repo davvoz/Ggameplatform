@@ -354,6 +354,38 @@ class TemplateEngine {
         `;
     }
 
+    static renderGameStatusDetails(status) {
+        const colors = {
+            'developed': '#28a745',
+            'in_development': '#ffc107',
+            'deprecated': '#dc3545',
+            'experimental': '#17a2b8'
+        };
+        const color = colors[status.status_code] || '#6c757d';
+        
+        return `
+            <div style="line-height:1.8">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
+                    <div><strong style="color:#6c757d">Status ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${status.status_id}</code></div>
+                    <div><strong style="color:#6c757d">Nome:</strong><br><span style="font-size:1.1em;font-weight:600;color:#1a1a1a">${Utils.escapeHtml(status.status_name)}</span></div>
+                    <div><strong style="color:#6c757d">Codice:</strong><br><code style="background:#e0e7ff;color:#4338ca;padding:4px 12px;border-radius:6px;font-weight:600">${status.status_code}</code></div>
+                    <div><strong style="color:#6c757d">Colore:</strong><br>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <div style="width:24px;height:24px;background:${color};border-radius:4px;border:1px solid #ccc"></div>
+                            <code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${color}</code>
+                        </div>
+                    </div>
+                    <div><strong style="color:#6c757d">Ordine Visualizzazione:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${status.display_order || 0}</span></div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br><span style="color:${status.is_active ? '#28a745' : '#dc3545'};font-weight:600;font-size:1.1em">${status.is_active ? '✓ Attivo' : '✗ Inattivo'}</span></div>
+                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Anteprima Badge:</strong><br>
+                        <span class="badge" style="background:${color};color:#fff;padding:6px 16px;border-radius:6px;font-size:0.95rem;display:inline-block;margin-top:8px">${Utils.escapeHtml(status.status_name)}</span>
+                    </div>
+                </div>
+                ${status.description ? `<div style="margin-top:16px"><strong style="color:#6c757d">Descrizione:</strong><p style="background:#f9fafb;padding:16px;border-radius:8px;border-left:4px solid ${color};color:#404040;line-height:1.6">${Utils.escapeHtml(status.description)}</p></div>` : ''}
+            </div>
+        `;
+    }
+
     static renderJSONDetails(item) {
         return `<pre style="background:#f5f5f5;padding:16px;border-radius:4px;overflow:auto;max-height:400px;">${JSON.stringify(item, null, 2)}</pre>`;
     }

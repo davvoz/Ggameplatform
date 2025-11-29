@@ -1251,6 +1251,40 @@ main:has(.quests) {
     animation: bounce-rotate 0.6s ease-out;
 }
 
+/* Highlight for Ready filter when there are unclaimed rewards */
+.quest-filter-btn[data-filter="ready"].has-unclaimed {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
+    border-color: #FFD700;
+    color: var(--text-primary);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3),
+                0 4px 12px rgba(255, 215, 0, 0.2);
+    animation: ready-pulse-subtle 3s ease-in-out infinite;
+}
+
+.quest-filter-btn[data-filter="ready"].has-unclaimed .filter-icon {
+    animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+@keyframes ready-pulse-subtle {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3),
+                    0 4px 12px rgba(255, 215, 0, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.5),
+                    0 6px 16px rgba(255, 215, 0, 0.3);
+    }
+}
+
+@keyframes gentle-bounce {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-3px) scale(1.05);
+    }
+}
+
 @keyframes bounce-rotate {
     0% {
         transform: scale(1) rotate(0deg);

@@ -1,4 +1,38 @@
 /**
+ * Highlight the "Da Claimare" filter button when there are unclaimed rewards
+ */
+function highlightReadyFilter(quests) {
+    const readyFilterBtn = document.querySelector('.quest-filter-btn[data-filter="ready"]');
+    console.log('🎁 highlightReadyFilter called - Button found:', !!readyFilterBtn);
+    
+    if (!readyFilterBtn) {
+        console.warn('Ready filter button not found!');
+        return;
+    }
+    
+    // Count quests ready to claim (completed but not claimed)
+    const unclaimedCount = quests.filter(quest => {
+        const progress = quest.progress || {};
+        const isReady = progress.is_completed === true && 
+               (progress.is_claimed === false || progress.is_claimed === 0);
+        if (isReady) {
+            console.log('🎯 Quest ready to claim:', quest.title);
+        }
+        return isReady;
+    }).length;
+    
+    console.log('🎁 Unclaimed quests count:', unclaimedCount);
+    
+    if (unclaimedCount > 0) {
+        console.log('✅ Adding has-unclaimed class');
+        readyFilterBtn.classList.add('has-unclaimed');
+    } else {
+        console.log('❌ Removing has-unclaimed class');
+        readyFilterBtn.classList.remove('has-unclaimed');
+    }
+}
+
+/**
  * Create reward claim animation
  */
 function createRewardAnimation(questCard, xpReward, satsReward) {
@@ -155,6 +189,9 @@ async function reloadQuests(userId) {
         if (questsList) {
             applyFilter(currentFilter, questsList);
         }
+        
+        // Update highlight on ready filter
+        highlightReadyFilter(quests);
     } catch (error) {
         console.error('Error reloading quests:', error);
     }
@@ -177,6 +214,11 @@ function setupQuestFilters(quests) {
 
     // Automatically show all quests on initial load
     applyFilter('all', questsList);
+    
+    // Highlight "Da Claimare" filter if there are unclaimed rewards
+    console.log('🔥 CALLING highlightReadyFilter with quests:', quests);
+    highlightReadyFilter(quests);
+    console.log('🔥 CALLED highlightReadyFilter');
 }
 
 function applyFilter(filter, questsList) {
@@ -334,7 +376,9 @@ export class QuestRenderer {
             const questList = new QuestList(quests, this.user.user_id);
             questList.render();
 
+            console.log('🚀 ABOUT TO CALL setupQuestFilters');
             setupQuestFilters(quests);
+            console.log('🚀 FINISHED setupQuestFilters');
         } catch (error) {
             this.handleError(error);
         }

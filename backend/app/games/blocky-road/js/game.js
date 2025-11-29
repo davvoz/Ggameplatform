@@ -390,9 +390,22 @@ class BlockyRoadGame {
         
         // Check coin collection
         const coin = this.obstacles.checkCoinCollision(playerPos, (coin) => {
+            if (!this.coinTypes) {
+                this.coinTypes = { steem: 0, bitcoin: 0 };
+            }
             this.coins++;
-            // Add +5 bonus points for coin
-            this.score += 5;
+            // Conta per tipo
+            if (coin.coinType && this.coinTypes.hasOwnProperty(coin.coinType)) {
+                this.coinTypes[coin.coinType]++;
+            } else {
+                this.coinTypes['steem']++;
+            }
+            // Score: STEEM = 1, Bitcoin = 5
+            if (coin.coinType === 'bitcoin') {
+                this.score += 5;
+            } else {
+                this.score += 1;
+            }
             this.updateUI();
             this.particles.createCoinParticles(coin.mesh.position);
             this.audio.play('coin');
@@ -425,7 +438,7 @@ class BlockyRoadGame {
         // Show game over screen
         setTimeout(() => {
             document.getElementById('finalScore').textContent = `Score: ${this.score}`;
-            document.getElementById('finalCoins').textContent = `Coins: ${this.coins}`;
+            document.getElementById('finalCoins').textContent = '';
             document.getElementById('gameOver').style.display = 'block';
         }, 500);
         

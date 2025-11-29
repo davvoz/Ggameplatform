@@ -8,7 +8,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -18,10 +18,11 @@ from app.schemas import (
     LeaderboardCreate, LeaderboardUpdate,
     XPRuleCreate, XPRuleUpdate,
     QuestCreate, QuestUpdate,
-    UserQuestCreate, UserQuestUpdate
+    UserQuestCreate, UserQuestUpdate,
+    GameStatusCreate, GameStatusUpdate
 )
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import json
 import os
 from datetime import datetime
@@ -56,6 +57,10 @@ async def get_form_options(db: Session = Depends(get_db)):
         quest_repo = RepositoryFactory.create_quest_repository(db)
         quests = quest_repo.get_all()
         
+        # Get all game statuses
+        status_repo = RepositoryFactory.create_gamestatus_repository(db)
+        statuses = status_repo.get_all()
+        
         # Get all sessions (for leaderboard entry_id)
         session_repo = RepositoryFactory.create_session_repository(db)
         sessions = session_repo.get_all()
@@ -66,6 +71,7 @@ async def get_form_options(db: Session = Depends(get_db)):
                 "user_ids": [{"value": u.user_id, "label": f"{u.username} ({u.user_id})"} for u in users],
                 "game_ids": [{"value": g.game_id, "label": f"{g.title} ({g.game_id})"} for g in games],
                 "quest_ids": [{"value": q.quest_id, "label": f"{q.title} (ID: {q.quest_id})"} for q in quests],
+                "status_ids": [{"value": s.status_id, "label": f"{s.status_name} ({s.status_code})"} for s in statuses],
                 "session_ids": [{"value": s.session_id, "label": f"{s.session_id} - {s.game_id}"} for s in sessions[:100]],  # Limit for performance
                 "categories": list(set([g.category for g in games if g.category])),
                 "quest_types": ["daily", "weekly", "achievement", "milestone"],
@@ -111,8 +117,8 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
     """Get database statistics and all data from all tables"""
     verify_admin(x_api_key, request)
     with get_db_session() as session:
-        # Get all games using ORM
-        games_query = session.query(Game).order_by(desc(Game.created_at)).all()
+        # Get all games using ORM with eager loading of status
+        games_query = session.query(Game).options(joinedload(Game.status)).order_by(desc(Game.created_at)).all()
         
         games = []
         categories = set()
@@ -154,6 +160,10 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         # Get user quest progress
         user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
         user_quests = [uq.to_dict() for uq in user_quests_query]
+        
+        # Get all game statuses
+        statuses_query = session.query(GameStatus).order_by(GameStatus.display_order).all()
+        statuses = [status.to_dict() for status in statuses_query]
     
     data = {
         "total_games": len(games),
@@ -163,6 +173,7 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         "total_xp_rules": len(xp_rules),
         "total_quests": len(quests),
         "total_user_quests": total_user_quests_count,
+        "total_game_statuses": len(statuses),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -172,6 +183,7 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         "xp_rules": xp_rules,
         "quests": quests,
         "user_quests": user_quests,
+        "game_statuses": statuses,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -217,6 +229,10 @@ async def export_database():
         # Export user quests using ORM
         user_quests_query = session.query(UserQuest).order_by(desc(UserQuest.started_at)).all()
         user_quests = [uq.to_dict() for uq in user_quests_query]
+        
+        # Export game statuses using ORM
+        statuses_query = session.query(GameStatus).order_by(GameStatus.display_order).all()
+        statuses = [status.to_dict() for status in statuses_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -227,13 +243,15 @@ async def export_database():
         "total_xp_rules": len(xp_rules),
         "total_quests": len(quests),
         "total_user_quests": len(user_quests),
+        "total_game_statuses": len(statuses),
         "games": games,
         "users": users,
         "sessions": sessions,
         "leaderboard": leaderboard,
         "xp_rules": xp_rules,
         "quests": quests,
-        "user_quests": user_quests
+        "user_quests": user_quests,
+        "game_statuses": statuses
     }
 
 @router.get("/sessions/open")
@@ -781,6 +799,78 @@ async def delete_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
         if not success:
             raise HTTPException(status_code=404, detail="User quest not found")
         return {"success": True, "message": "User quest deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== GAME STATUSES CRUD ENDPOINTS ==========
+
+@router.post("/game-statuses", status_code=201)
+async def create_game_status(status_data: GameStatusCreate, db: Session = Depends(get_db)):
+    """Create a new game status"""
+    try:
+        repo = RepositoryFactory.create_gamestatus_repository(db)
+        service = ServiceFactory.create_gamestatus_service(repo)
+        
+        status = service.create(status_data.dict())
+        return {"success": True, "data": status}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/game-statuses/{status_id}")
+async def get_game_status(status_id: int, db: Session = Depends(get_db)):
+    """Get a game status by ID"""
+    try:
+        repo = RepositoryFactory.create_gamestatus_repository(db)
+        service = ServiceFactory.create_gamestatus_service(repo)
+        
+        status = service.get(status_id)
+        if not status:
+            raise HTTPException(status_code=404, detail="Game status not found")
+        return {"success": True, "data": status}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/game-statuses/{status_id}")
+async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: Session = Depends(get_db)):
+    """Update a game status"""
+    try:
+        repo = RepositoryFactory.create_gamestatus_repository(db)
+        service = ServiceFactory.create_gamestatus_service(repo)
+        
+        update_data = {k: v for k, v in status_data.dict().items() if v is not None}
+        
+        status = service.update(status_id, update_data)
+        if not status:
+            raise HTTPException(status_code=404, detail="Game status not found")
+        return {"success": True, "data": status}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/game-statuses/{status_id}")
+async def delete_game_status(status_id: int, db: Session = Depends(get_db)):
+    """Delete a game status"""
+    try:
+        repo = RepositoryFactory.create_gamestatus_repository(db)
+        service = ServiceFactory.create_gamestatus_service(repo)
+        
+        success = service.delete(status_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Game status not found")
+        return {"success": True, "message": "Game status deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

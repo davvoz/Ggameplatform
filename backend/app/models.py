@@ -7,6 +7,39 @@ import json
 
 Base = declarative_base()
 
+class GameStatus(Base):
+    """Game status model for configurable game states."""
+    __tablename__ = 'game_statuses'
+    
+    status_id = Column(Integer, primary_key=True, autoincrement=True)
+    status_name = Column(String(50), unique=True, nullable=False)
+    status_code = Column(String(30), unique=True, nullable=False)  # developed, in_development, deprecated, experimental
+    description = Column(Text, nullable=True)
+    display_order = Column(Integer, default=0)
+    is_active = Column(Integer, default=1)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    
+    # Relationships
+    games = relationship("Game", back_populates="status")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert game status instance to dictionary."""
+        return {
+            "status_id": self.status_id,
+            "status_name": self.status_name,
+            "status_code": self.status_code,
+            "description": self.description,
+            "display_order": self.display_order,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<GameStatus {self.status_code}: {self.status_name}>"
+
+
 class Game(Base):
     """Game model using SQLAlchemy ORM."""
     __tablename__ = 'games'
@@ -20,17 +53,28 @@ class Game(Base):
     entry_point = Column(String, nullable=False)
     category = Column(String, default='uncategorized')
     tags = Column(Text, default='[]')  # JSON string
+    status_id = Column(Integer, ForeignKey('game_statuses.status_id'), nullable=True)  # New status column
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=False)
     extra_data = Column(Text, default='{}')  # Renamed from 'metadata' to avoid SQLAlchemy conflict
     
     # Relationships
+    status = relationship("GameStatus", back_populates="games")
     sessions = relationship("GameSession", back_populates="game", cascade="all, delete-orphan")
     leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade="all, delete-orphan")
     xp_rules = relationship("XPRule", back_populates="game", cascade="all, delete-orphan")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert game instance to dictionary."""
+        # Safely get status object if loaded
+        status_dict = None
+        try:
+            if self.status:
+                status_dict = self.status.to_dict()
+        except:
+            # Status not loaded or error accessing it
+            pass
+        
         return {
             "game_id": self.game_id,
             "title": self.title,
@@ -41,6 +85,8 @@ class Game(Base):
             "entry_point": self.entry_point,
             "category": self.category,
             "tags": json.loads(self.tags) if self.tags else [],
+            "status_id": self.status_id,
+            "status": status_dict,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "metadata": json.loads(self.extra_data) if self.extra_data else {}

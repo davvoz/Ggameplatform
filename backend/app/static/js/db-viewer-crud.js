@@ -175,7 +175,8 @@ class CRUDManager {
                 { key: 'version', label: 'Versione', type: 'text' },
                 { key: 'thumbnail', label: 'Thumbnail URL', type: 'text' },
                 { key: 'entry_point', label: 'Entry Point', type: 'text', required: true },
-                { key: 'category', label: 'Categoria', type: 'select', foreignKey: 'categories', allowCustom: true }
+                { key: 'category', label: 'Categoria', type: 'select', foreignKey: 'categories', allowCustom: true },
+                { key: 'status_id', label: 'Stato', type: 'select', foreignKey: 'status_ids' }
             ],
             'users': [
                 { key: 'user_id', label: 'User ID', type: 'text', readonly: true },
@@ -413,6 +414,9 @@ class CRUDManager {
                 continue;
             } else if (input.type === 'number') {
                 data[key] = value ? parseFloat(value) : 0;
+            } else if (input.type === 'select-one' && key === 'status_id') {
+                // Convert status_id to integer
+                data[key] = value ? parseInt(value) : null;
             } else if (input.dataset.json || key === 'parameters') {
                 // Parse JSON fields
                 try {
@@ -423,6 +427,12 @@ class CRUDManager {
             } else {
                 data[key] = value;
             }
+        }
+
+        // Convert snake_case to camelCase for API compatibility (games endpoint)
+        if ('status_id' in data) {
+            data['statusId'] = data['status_id'];
+            delete data['status_id'];
         }
 
         return data;

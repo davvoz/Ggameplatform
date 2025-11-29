@@ -70,6 +70,26 @@ const TABLE_DEFINITIONS = {
                 searchable: true
             },
             {
+                key: 'status',
+                label: 'Stato',
+                type: 'custom',
+                render: (value, item) => {
+                    const statusObj = value || item?.status;
+                    if (!statusObj) return { type: 'text', text: '-', style: 'color: #999;' };
+                    const colors = {
+                        'developed': '#28a745',
+                        'in_development': '#ffc107',
+                        'deprecated': '#dc3545',
+                        'experimental': '#17a2b8'
+                    };
+                    return {
+                        type: 'badge',
+                        text: statusObj.status_name,
+                        color: colors[statusObj.status_code] || '#6c757d'
+                    };
+                }
+            },
+            {
                 key: 'metadata',
                 label: 'Play Count',
                 type: 'custom',
@@ -96,6 +116,7 @@ const TABLE_DEFINITIONS = {
             { name: 'author', type: 'STRING' },
             { name: 'version', type: 'STRING' },
             { name: 'category', type: 'STRING' },
+            { name: 'status_id', type: 'INTEGER', fk: { table: 'game_statuses', column: 'status_id' } },
             { name: 'thumbnail', type: 'STRING' },
             { name: 'metadata', type: 'JSON' },
             { name: 'created_at', type: 'DATETIME' }
@@ -565,6 +586,100 @@ const TABLE_DEFINITIONS = {
             { name: 'completed_at', type: 'DATETIME' },
             { name: 'claimed_at', type: 'DATETIME' }
         ]
+    },
+
+    game_statuses: {
+        name: 'game_statuses',
+        label: 'Stati Giochi',
+        apiEndpoint: 'game-statuses',
+        dataKey: 'game_statuses',
+        icon: '🏷️',
+        color: '#9C27B0',
+        erDiagram: {
+            x: 450,
+            y: 50,
+            color: '#9C27B0'
+        },
+        columns: [
+            {
+                key: 'status_id',
+                label: 'ID',
+                type: 'text',
+                searchable: true
+            },
+            {
+                key: 'status_name',
+                label: 'Nome',
+                type: 'text',
+                searchable: true,
+                render: (value, row) => ({
+                    type: 'custom',
+                    html: `<strong>${value}</strong>`
+                })
+            },
+            {
+                key: 'status_code',
+                label: 'Codice',
+                type: 'badge',
+                searchable: true,
+                render: (value) => ({
+                    type: 'badge',
+                    text: value,
+                    color: {
+                        'developed': '#28a745',
+                        'in_development': '#ffc107',
+                        'deprecated': '#dc3545',
+                        'experimental': '#17a2b8'
+                    }[value] || '#6c757d'
+                })
+            },
+            {
+                key: 'description',
+                label: 'Descrizione',
+                type: 'text',
+                searchable: true
+            },
+            {
+                key: 'display_order',
+                label: 'Ordine',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: value,
+                    style: 'text-align: center; font-weight: 500;'
+                })
+            },
+            {
+                key: 'is_active',
+                label: 'Attivo',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: value ? '✅ Sì' : '❌ No',
+                    style: `color: ${value ? '#4caf50' : '#f44336'}; font-weight: 500;`
+                })
+            },
+            {
+                key: 'created_at',
+                label: 'Data Creazione',
+                type: 'date'
+            },
+            {
+                key: 'actions',
+                label: 'Azioni',
+                type: 'actions'
+            }
+        ],
+        fields: [
+            { name: 'status_id', type: 'INTEGER', pk: true },
+            { name: 'status_name', type: 'STRING' },
+            { name: 'status_code', type: 'STRING' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'display_order', type: 'INTEGER' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
     }
 };
 
@@ -575,7 +690,8 @@ const STATS_CONFIG = [
     { key: 'total_sessions', label: 'Sessioni', icon: '🎯' },
     { key: 'total_leaderboard_entries', label: 'Leaderboard', icon: '🥇' },
     { key: 'total_xp_rules', label: 'XP Rules', icon: '⭐' },
-    { key: 'total_quests', label: 'Quests', icon: '🏆' }
+    { key: 'total_quests', label: 'Quests', icon: '🏆' },
+    { key: 'total_game_statuses', label: 'Stati', icon: '🏷️' }
 ];
 
 // Global configuration

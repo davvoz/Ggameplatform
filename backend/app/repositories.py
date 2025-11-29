@@ -8,7 +8,7 @@ from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from abc import ABC, abstractmethod
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
 
 # Generic type for models
 ModelType = TypeVar("ModelType", bound=Base)
@@ -277,6 +277,36 @@ class UserQuestRepository(BaseRepository[UserQuest]):
             raise Exception(f"Error fetching unclaimed quests: {str(e)}")
 
 
+class GameStatusRepository(BaseRepository[GameStatus]):
+    """Repository for GameStatus entities"""
+    
+    def __init__(self, db_session: Session):
+        super().__init__(GameStatus, db_session, id_field="status_id")
+    
+    def get_by_code(self, status_code: str) -> Optional[GameStatus]:
+        """Get game status by code"""
+        statuses = self.filter_by(status_code=status_code)
+        return statuses[0] if statuses else None
+    
+    def get_active_statuses(self) -> List[GameStatus]:
+        """Get all active statuses"""
+        try:
+            return self.db_session.query(GameStatus).filter(
+                GameStatus.is_active == 1
+            ).order_by(GameStatus.display_order).all()
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching active statuses: {str(e)}")
+    
+    def get_all_ordered(self) -> List[GameStatus]:
+        """Get all statuses ordered by display_order"""
+        try:
+            return self.db_session.query(GameStatus).order_by(
+                GameStatus.display_order
+            ).all()
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching ordered statuses: {str(e)}")
+
+
 class RepositoryFactory:
     """
     Factory Pattern for creating repositories
@@ -310,3 +340,7 @@ class RepositoryFactory:
     @staticmethod
     def create_userquest_repository(db_session: Session) -> UserQuestRepository:
         return UserQuestRepository(db_session)
+    
+    @staticmethod
+    def create_gamestatus_repository(db_session: Session) -> GameStatusRepository:
+        return GameStatusRepository(db_session)

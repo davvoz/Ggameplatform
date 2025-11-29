@@ -157,6 +157,8 @@ async def list_games(
                 entry_point=game['entry_point'],
                 category=game['category'],
                 tags=game['tags'],
+                status_id=game.get('status_id'),
+                status=game.get('status'),
                 created_at=game['created_at'],
                 updated_at=game['updated_at'],
                 metadata=game['metadata']
@@ -209,6 +211,8 @@ async def get_game_metadata(gameId: str):
             entry_point=game['entry_point'],
             category=game['category'],
             tags=game['tags'],
+            status_id=game.get('status_id'),
+            status=game.get('status'),
             created_at=game['created_at'],
             updated_at=game['updated_at'],
             metadata=game['metadata']

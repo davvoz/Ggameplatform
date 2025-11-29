@@ -6,6 +6,7 @@ from app.routers import games
 from app.routers import admin
 from app.routers import users
 from app.routers import quests
+from app.routers import game_statuses
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
@@ -148,6 +149,7 @@ app.include_router(games.router, prefix="/games", tags=["games"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(quests.router, prefix="/quests", tags=["quests"])
+app.include_router(game_statuses.router, prefix="/game-statuses", tags=["game-statuses"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 
 # Static files serving

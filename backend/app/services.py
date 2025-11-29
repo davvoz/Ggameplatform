@@ -18,9 +18,10 @@ from app.repositories import (
     LeaderboardRepository,
     XPRuleRepository,
     QuestRepository,
-    UserQuestRepository
+    UserQuestRepository,
+    GameStatusRepository
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
 
 
 class ValidationError(Exception):
@@ -116,6 +117,10 @@ class GameService(BaseService):
         data['created_at'] = now
         data['updated_at'] = now
         
+        # Convert camelCase to snake_case for status
+        if 'statusId' in data:
+            data['status_id'] = data.pop('statusId')
+        
         # Convert lists and dicts to JSON strings
         if 'tags' in data and isinstance(data['tags'], list):
             data['tags'] = json.dumps(data['tags'])
@@ -132,6 +137,10 @@ class GameService(BaseService):
         """Update game with validation"""
         # Update timestamp
         data['updated_at'] = datetime.utcnow().isoformat()
+        
+        # Convert camelCase to snake_case for status
+        if 'statusId' in data:
+            data['status_id'] = data.pop('statusId')
         
         # Convert lists and dicts to JSON strings
         if 'tags' in data and isinstance(data['tags'], list):
@@ -391,6 +400,51 @@ class UserQuestService(BaseService):
         return updated.to_dict() if updated else None
 
 
+class GameStatusService(BaseService):
+    """Service for GameStatus business logic"""
+    
+    def __init__(self, repository: GameStatusRepository):
+        super().__init__(repository)
+        self.repository: GameStatusRepository = repository
+    
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new game status"""
+        # Validate required fields
+        if 'status_name' not in data or not data['status_name']:
+            raise ValidationError("status_name is required")
+        if 'status_code' not in data or not data['status_code']:
+            raise ValidationError("status_code is required")
+        
+        # Set timestamps
+        now = datetime.utcnow().isoformat()
+        data['created_at'] = now
+        data['updated_at'] = now
+        
+        # Set defaults
+        if 'display_order' not in data:
+            data['display_order'] = 0
+        if 'is_active' not in data:
+            data['is_active'] = 1
+        else:
+            data['is_active'] = 1 if data['is_active'] else 0
+        
+        status = GameStatus(**data)
+        created = self.repository.create(status)
+        return created.to_dict()
+    
+    def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update a game status"""
+        # Update timestamp
+        data['updated_at'] = datetime.utcnow().isoformat()
+        
+        # Convert boolean to int for is_active if present
+        if 'is_active' in data:
+            data['is_active'] = 1 if data['is_active'] else 0
+        
+        updated = self.repository.update(id_value, data)
+        return updated.to_dict() if updated else None
+
+
 class ServiceFactory:
     """
     Factory Pattern for creating services
@@ -424,3 +478,7 @@ class ServiceFactory:
     @staticmethod
     def create_userquest_service(repository: UserQuestRepository) -> UserQuestService:
         return UserQuestService(repository)
+    
+    @staticmethod
+    def create_gamestatus_service(repository: GameStatusRepository) -> GameStatusService:
+        return GameStatusService(repository)

@@ -2,6 +2,60 @@ from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+# ========== GAME STATUS SCHEMAS ==========
+
+class GameStatusBase(BaseModel):
+    """Base schema for game status."""
+    status_name: str = Field(..., min_length=1, max_length=50, description="Status name (e.g., 'Sviluppato', 'In Sviluppo')")
+    status_code: str = Field(..., min_length=1, max_length=30, description="Status code (e.g., 'developed', 'in_development')")
+    description: Optional[str] = Field(None, description="Status description")
+    display_order: int = Field(0, description="Display order for sorting")
+    is_active: bool = Field(True, description="Whether this status is active")
+
+
+class GameStatusCreate(GameStatusBase):
+    """Schema for creating a new game status."""
+    pass
+
+
+class GameStatusResponse(BaseModel):
+    """Schema for game status response."""
+    status_id: int
+    status_name: str
+    status_code: str
+    description: Optional[str]
+    display_order: int
+    is_active: bool
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "status_id": 1,
+                "status_name": "Sviluppato",
+                "status_code": "developed",
+                "description": "Gioco completamente sviluppato e pronto per la produzione",
+                "display_order": 1,
+                "is_active": True,
+                "created_at": "2025-11-29T10:00:00",
+                "updated_at": "2025-11-29T10:00:00"
+            }
+        }
+
+
+class GameStatusUpdate(BaseModel):
+    """Schema for updating a game status."""
+    status_name: Optional[str] = None
+    status_code: Optional[str] = None
+    description: Optional[str] = None
+    display_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+# ========== GAME SCHEMAS ==========
+
 class GameMetadata(BaseModel):
     """Additional metadata for games."""
     minPlayers: Optional[int] = Field(None, ge=1, description="Minimum number of players")
@@ -35,6 +89,7 @@ class GameRegister(BaseModel):
     entryPoint: str = Field(..., description="Relative path to game entry HTML file")
     category: Optional[str] = Field("uncategorized", max_length=50, description="Game category")
     tags: Optional[List[str]] = Field(default_factory=list, description="Game tags")
+    statusId: Optional[int] = Field(None, description="Game status ID (FK to game_statuses)")
     metadata: Optional[GameMetadata] = Field(default_factory=GameMetadata, description="Additional game metadata")
 
     @validator('gameId')
@@ -84,6 +139,8 @@ class GameResponse(BaseModel):
     entry_point: str
     category: str
     tags: List[str]
+    status_id: Optional[int]
+    status: Optional[GameStatusResponse]
     created_at: str
     updated_at: str
     metadata: Dict[str, Any]
@@ -197,6 +254,7 @@ class GameUpdate(BaseModel):
     entry_point: Optional[str] = None
     category: Optional[str] = None
     tags: Optional[List[str]] = None
+    statusId: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 

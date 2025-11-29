@@ -149,6 +149,12 @@ class TemplateEngine {
                     if (rendered.type === 'text') {
                         cell.textContent = rendered.text;
                         if (rendered.style) cell.style.cssText = rendered.style;
+                    } else if (rendered.type === 'badge') {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge';
+                        badge.textContent = rendered.text;
+                        badge.style.cssText = `background: ${rendered.color}; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 0.875rem;`;
+                        cell.appendChild(badge);
                     } else if (rendered.type === 'html') {
                         cell.innerHTML = rendered.html;
                     }
@@ -208,6 +214,29 @@ class TemplateEngine {
     }
 
     static renderGameDetails(game) {
+        // Prepare status badge HTML
+        let statusBadgeHtml = '-';
+        if (game.status) {
+            const colors = {
+                'developed': '#28a745',
+                'in_development': '#ffc107',
+                'deprecated': '#dc3545',
+                'experimental': '#17a2b8'
+            };
+            const color = colors[game.status.status_code] || '#6c757d';
+            statusBadgeHtml = `<span class="badge" style="background:${color};color:#fff;padding:4px 12px;border-radius:6px;font-size:0.875rem">${Utils.escapeHtml(game.status.status_name)}</span>`;
+        }
+        
+        // Prepare thumbnail URL
+        let thumbnailUrl = 'https://via.placeholder.com/300x200?text=No+Image';
+        if (game.thumbnail) {
+            if (game.thumbnail.startsWith('http')) {
+                thumbnailUrl = game.thumbnail;
+            } else {
+                thumbnailUrl = `/games/${game.game_id}/${game.thumbnail}`;
+            }
+        }
+        
         return `
             <div style="line-height:1.8">
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px">
@@ -216,8 +245,9 @@ class TemplateEngine {
                     <div><strong style="color:#6c757d">Autore:</strong><br>${Utils.escapeHtml(game.author || '-')}</div>
                     <div><strong style="color:#6c757d">Versione:</strong><br><span style="color:#2563eb">${game.version}</span></div>
                     <div><strong style="color:#6c757d">Categoria:</strong><br><span class="badge" style="background:#e0f2fe;color:#0284c7;padding:4px 12px;border-radius:6px;font-size:0.875rem">${game.category}</span></div>
+                    <div><strong style="color:#6c757d">Stato:</strong><br>${statusBadgeHtml}</div>
                     <div><strong style="color:#6c757d">Play Count:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#2563eb">${game.metadata?.playCount || 0}</span></div>
-                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Thumbnail:</strong><br><img src="${game.thumbnail || 'https://via.placeholder.com/300x200'}" style="max-width:300px;border-radius:8px;border:1px solid #e5e5e5;margin-top:8px" alt="Game thumbnail"></div>
+                    <div style="grid-column:1/-1"><strong style="color:#6c757d">Thumbnail:</strong><br><img src="${thumbnailUrl}" style="max-width:300px;border-radius:8px;border:1px solid #e5e5e5;margin-top:8px" alt="Game thumbnail"></div>
                 </div>
                 ${game.description ? `<div style="margin-top:16px"><strong style="color:#6c757d">Descrizione:</strong><p style="background:#f9fafb;padding:16px;border-radius:8px;border-left:4px solid #4CAF50;color:#404040;line-height:1.6">${Utils.escapeHtml(game.description)}</p></div>` : ''}
                 ${game.metadata ? `<div style="margin-top:16px"><strong style="color:#6c757d">Metadata:</strong><pre style="background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;max-height:200px;font-size:0.875rem">${JSON.stringify(game.metadata, null, 2)}</pre></div>` : ''}

@@ -4,13 +4,13 @@ import uuid
 import json
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, desc
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, joinedload
 from contextlib import contextmanager
 import bcrypt
 from jose import JWTError, jwt
 import secrets
 
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
@@ -70,6 +70,7 @@ def create_game(game_data: dict) -> dict:
             entry_point=game_data['entryPoint'],
             category=game_data.get('category', 'uncategorized'),
             tags=json.dumps(game_data.get('tags', [])),
+            status_id=game_data.get('statusId', None),
             created_at=now,
             updated_at=now,
             extra_data=json.dumps(game_data.get('metadata', {}))
@@ -83,13 +84,13 @@ def create_game(game_data: dict) -> dict:
 def get_all_games() -> List[dict]:
     """Retrieve all games from the database."""
     with get_db_session() as session:
-        games = session.query(Game).order_by(desc(Game.created_at)).all()
+        games = session.query(Game).options(joinedload(Game.status)).order_by(desc(Game.created_at)).all()
         return [game.to_dict() for game in games]
 
 def get_game_by_id(game_id: str) -> Optional[dict]:
     """Retrieve a specific game by ID."""
     with get_db_session() as session:
-        game = session.query(Game).filter(Game.game_id == game_id).first()
+        game = session.query(Game).options(joinedload(Game.status)).filter(Game.game_id == game_id).first()
         return game.to_dict() if game else None
 
 def update_game(game_id: str, game_data: dict) -> Optional[dict]:
@@ -110,6 +111,8 @@ def update_game(game_id: str, game_data: dict) -> Optional[dict]:
         game.entry_point = game_data.get('entryPoint', game.entry_point)
         game.category = game_data.get('category', game.category)
         game.tags = json.dumps(game_data.get('tags', json.loads(game.tags)))
+        if 'statusId' in game_data:
+            game.status_id = game_data['statusId']
         game.updated_at = now
         game.extra_data = json.dumps(game_data.get('metadata', json.loads(game.extra_data)))
         
@@ -656,3 +659,115 @@ def get_db_connection():
 def migrate_add_game_scores():
     """Migration function - no longer needed with ORM."""
     pass
+
+
+# ============ GAME STATUS MANAGEMENT ============
+
+def create_game_status(status_data: dict) -> dict:
+    """Create a new game status."""
+    with get_db_session() as session:
+        now = datetime.utcnow().isoformat()
+        
+        # Check if status_code already exists
+        existing = session.query(GameStatus).filter(
+            GameStatus.status_code == status_data['status_code']
+        ).first()
+        if existing:
+            raise ValueError(f"Status code '{status_data['status_code']}' already exists")
+        
+        status = GameStatus(
+            status_name=status_data['status_name'],
+            status_code=status_data['status_code'],
+            description=status_data.get('description', ''),
+            display_order=status_data.get('display_order', 0),
+            is_active=1 if status_data.get('is_active', True) else 0,
+            created_at=now,
+            updated_at=now
+        )
+        
+        session.add(status)
+        session.flush()
+        
+        return status.to_dict()
+
+
+def get_all_game_statuses() -> List[dict]:
+    """Retrieve all game statuses ordered by display_order."""
+    with get_db_session() as session:
+        statuses = session.query(GameStatus).order_by(GameStatus.display_order).all()
+        return [status.to_dict() for status in statuses]
+
+
+def get_game_status_by_id(status_id: int) -> Optional[dict]:
+    """Retrieve a specific game status by ID."""
+    with get_db_session() as session:
+        status = session.query(GameStatus).filter(GameStatus.status_id == status_id).first()
+        return status.to_dict() if status else None
+
+
+def get_game_status_by_code(status_code: str) -> Optional[dict]:
+    """Retrieve a specific game status by code."""
+    with get_db_session() as session:
+        status = session.query(GameStatus).filter(GameStatus.status_code == status_code).first()
+        return status.to_dict() if status else None
+
+
+def update_game_status(status_id: int, status_data: dict) -> Optional[dict]:
+    """Update an existing game status."""
+    with get_db_session() as session:
+        status = session.query(GameStatus).filter(GameStatus.status_id == status_id).first()
+        
+        if not status:
+            return None
+        
+        now = datetime.utcnow().isoformat()
+        
+        if 'status_name' in status_data:
+            status.status_name = status_data['status_name']
+        if 'status_code' in status_data:
+            # Check for conflicts
+            existing = session.query(GameStatus).filter(
+                GameStatus.status_code == status_data['status_code'],
+                GameStatus.status_id != status_id
+            ).first()
+            if existing:
+                raise ValueError(f"Status code '{status_data['status_code']}' already exists")
+            status.status_code = status_data['status_code']
+        if 'description' in status_data:
+            status.description = status_data['description']
+        if 'display_order' in status_data:
+            status.display_order = status_data['display_order']
+        if 'is_active' in status_data:
+            status.is_active = 1 if status_data['is_active'] else 0
+        
+        status.updated_at = now
+        session.flush()
+        
+        return status.to_dict()
+
+
+def delete_game_status(status_id: int) -> bool:
+    """Delete a game status from the database."""
+    with get_db_session() as session:
+        status = session.query(GameStatus).filter(GameStatus.status_id == status_id).first()
+        
+        if not status:
+            return False
+        
+        # Check if any games are using this status
+        games_using_status = session.query(Game).filter(Game.status_id == status_id).count()
+        if games_using_status > 0:
+            raise ValueError(f"Cannot delete status: {games_using_status} game(s) are using it")
+        
+        session.delete(status)
+        return True
+
+
+def get_active_game_statuses() -> List[dict]:
+    """Retrieve all active game statuses."""
+    with get_db_session() as session:
+        statuses = session.query(GameStatus).filter(
+            GameStatus.is_active == 1
+        ).order_by(GameStatus.display_order).all()
+        return [status.to_dict() for status in statuses]
+

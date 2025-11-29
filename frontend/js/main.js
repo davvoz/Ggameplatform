@@ -90,6 +90,20 @@ async function loadGames(filters = {}) {
             return;
         }
 
+        // Sort games by status priority
+        const statusOrder = {
+            'developed': 1,
+            'in_development': 2,
+            'experimental': 3,
+            'deprecated': 4
+        };
+
+        games.sort((a, b) => {
+            const aOrder = a.status?.status_code ? statusOrder[a.status.status_code] || 5 : 5;
+            const bOrder = b.status?.status_code ? statusOrder[b.status.status_code] || 5 : 5;
+            return aOrder - bOrder;
+        });
+
         games.forEach(game => {
             const gameCard = createGameCard(game);
             gameGrid.appendChild(gameCard);
@@ -117,6 +131,30 @@ function createGameCard(game) {
         : 'https://via.placeholder.com/400x300?text=No+Image';
     img.src = thumbnailUrl;
     img.alt = game.title;
+
+    // Add status ribbon if game has a status
+    console.log('Game:', game.game_id, 'Status:', game.status, 'Status ID:', game.status_id);
+    if (game.status) {
+        const ribbonContainer = card.querySelector('.game-thumbnail');
+        const ribbon = document.createElement('div');
+        ribbon.className = 'status-ribbon';
+        
+        const statusConfig = {
+            'developed': { text: 'Sviluppato', color: '#28a745' },
+            'in_development': { text: 'In Sviluppo', color: '#ffc107' },
+            'deprecated': { text: 'Deprecato', color: '#dc3545' },
+            'experimental': { text: 'Sperimentale', color: '#17a2b8' }
+        };
+        
+        const config = statusConfig[game.status.status_code] || { text: game.status.status_name, color: '#6c757d' };
+        ribbon.textContent = config.text;
+        ribbon.style.setProperty('--ribbon-color', config.color);
+        
+        ribbonContainer.appendChild(ribbon);
+        console.log('Added ribbon:', config.text, 'Color:', config.color);
+    } else {
+        console.log('No status found for game:', game.game_id);
+    }
 
     // Set game info
     card.querySelector('.game-title').textContent = game.title;

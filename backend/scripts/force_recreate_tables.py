@@ -2,7 +2,7 @@
 Force SQLAlchemy to recreate table metadata and include new columns
 """
 from app.database import engine, Base
-from app.models import UserQuest, Quest, User, Game, GameSession, Leaderboard, XPRule
+from app.models import UserQuest, Quest, User, Game, GameSession, Leaderboard, XPRule, GameStatus
 import sqlite3
 
 print("Dropping and recreating all tables with new schema...")

@@ -1,15 +1,20 @@
 /**
  * LevelManager - Gestisce il caricamento, progressione e completamento dei livelli
  * Sostituisce il sistema procedurale con livelli predefiniti
+ * Integrato con RainbowRushSDK per persistenza sicura
  */
 
 import { Levels, getLevel, getTotalLevels } from '../config/LevelConfiguration.js';
 import { getEnemyConfig } from '../config/EnemyTypes.js';
 
 export class LevelManager {
-    constructor(canvasWidth, canvasHeight) {
+    constructor(canvasWidth, canvasHeight, sdk = null) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        
+        // Rainbow Rush SDK per persistenza
+        this.sdk = sdk;
+        this.sdkEnabled = sdk !== null;
 
         // Livello corrente - inizializzato a null fino a quando l'utente sceglie
         this.currentLevelId = null;
@@ -37,8 +42,9 @@ export class LevelManager {
         // Velocità base dello scorrimento
         this.baseSpeed = 180;
         
-        // Carica progresso salvato
-        this.savedProgress = this.loadProgress();
+        // Carica progresso salvato (da SDK se disponibile, altrimenti localStorage)
+        this.savedProgress = null;
+        this.progressLoaded = false;
     }
 
     generateRainbowColors() {
@@ -807,9 +813,41 @@ export class LevelManager {
     }
 
     /**
-     * Salva progresso in localStorage
+     * Salva progresso in localStorage o SDK
      */
-    saveProgress() {
+    async saveProgress() {
+        this.levelStars = this.calculateStars();
+        
+        if (this.sdkEnabled && this.sdk) {
+            // Usa SDK per salvare in modo sicuro
+            try {
+                const levelData = {
+                    stars: this.levelStars,
+                    best_time: this.levelElapsedTime,
+                    completed: true,
+                    coins: this.coinsCollected
+                };
+                
+                await this.sdk.saveLevelProgress(this.currentLevelId, levelData);
+                console.log('💾 Progress saved via SDK for level', this.currentLevelId);
+                
+                // Aggiorna cache locale
+                this.savedProgress = await this.sdk.getProgress();
+            } catch (error) {
+                console.warn('Failed to save via SDK, falling back to localStorage:', error);
+                this.saveProgressLocal();
+            }
+        } else {
+            // Fallback a localStorage
+            this.saveProgressLocal();
+        }
+    }
+    
+    /**
+     * Salva progresso in localStorage (fallback)
+     * @private
+     */
+    saveProgressLocal() {
         try {
             const progressKey = 'rainbowRush_levelProgress';
             let progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
@@ -830,25 +868,54 @@ export class LevelManager {
             }
 
             localStorage.setItem(progressKey, JSON.stringify(progress));
-            this.savedProgress = progress; // Aggiorna cache locale
-            console.log('💾 Progress saved for level', this.currentLevelId);
+            this.savedProgress = progress;
+            console.log('💾 Progress saved locally for level', this.currentLevelId);
         } catch (error) {
-            console.warn('Failed to save progress:', error);
+            console.warn('Failed to save progress locally:', error);
         }
     }
 
     /**
-     * Carica progresso salvato
+     * Carica progresso salvato da SDK o localStorage
+     * @param {boolean} forceReload - Force reload from backend (ignore cache)
      */
-    loadProgress() {
+    async loadProgress(forceReload = false) {
+        if (this.progressLoaded && !forceReload) {
+            return this.savedProgress;
+        }
+        
+        if (this.sdkEnabled && this.sdk) {
+            // Carica da SDK
+            try {
+                const progress = await this.sdk.getProgress();
+                this.savedProgress = progress.level_completions || {};
+                this.progressLoaded = true;
+                console.log('📂 Progress loaded via SDK:', Object.keys(this.savedProgress).length, 'levels');
+                return this.savedProgress;
+            } catch (error) {
+                console.warn('Failed to load via SDK, falling back to localStorage:', error);
+                return this.loadProgressLocal();
+            }
+        } else {
+            // Fallback a localStorage
+            return this.loadProgressLocal();
+        }
+    }
+    
+    /**
+     * Carica progresso da localStorage (fallback)
+     * @private
+     */
+    loadProgressLocal() {
         try {
             const progressKey = 'rainbowRush_levelProgress';
             const progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
-            this.savedProgress = progress; // Aggiorna cache
-            console.log('📂 Progress loaded:', Object.keys(progress).length, 'levels');
+            this.savedProgress = progress;
+            this.progressLoaded = true;
+            console.log('📂 Progress loaded locally:', Object.keys(progress).length, 'levels');
             return progress;
         } catch (error) {
-            console.warn('Failed to load progress:', error);
+            console.warn('Failed to load progress locally:', error);
             return {};
         }
     }
@@ -856,8 +923,11 @@ export class LevelManager {
     /**
      * Ottieni progresso salvato (usa cache se disponibile)
      */
-    getSavedProgress() {
-        return this.savedProgress || this.loadProgress();
+    async getSavedProgress() {
+        if (!this.progressLoaded || !this.savedProgress) {
+            return await this.loadProgress();
+        }
+        return this.savedProgress;
     }
 
     /**

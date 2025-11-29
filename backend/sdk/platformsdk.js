@@ -182,6 +182,9 @@
             this.isPlatformReady = true;
             this.log('Platform ready with config:', config);
             
+            // Store config globally for RainbowRushSDK access
+            window.platformConfig = config;
+            
             // Process queued messages
             this.processMessageQueue();
         }

@@ -32,6 +32,9 @@ export class GameController {
         this.engine = dependencies.engine;
         this.gameState = dependencies.gameState;
         
+        // Rainbow Rush SDK
+        this.rainbowRushSDK = dependencies.rainbowRushSDK;
+        
         // Entities
         this.player = dependencies.player;
         
@@ -94,11 +97,41 @@ export class GameController {
         await this.audioManager.initialize();
         console.log('🔊 AudioManager initialized');
         
-        // Initialize Platform SDK
+        // Initialize Platform SDK BEFORE RainbowRushSDK to get userId
         await this.sdkManager.initialize();
         console.log('🎮 Platform SDK initialized');
         
-        // Setup rendering system update hook
+        // NOW wait for platform config with userId (max 3 seconds)
+        const maxWait = 3000;
+        const startWait = Date.now();
+        while (!window.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // If we got userId from platform, update SDK
+        if (window.platformConfig?.userId && this.rainbowRushSDK) {
+            console.log('[GameController] ✅ Got platform userId:', window.platformConfig.userId);
+            this.rainbowRushSDK.userId = window.platformConfig.userId;
+        } else {
+            console.warn('[GameController] ⚠️ No platform userId available, SDK will use fallback');
+        }
+        
+        // NOW initialize Rainbow Rush SDK with correct userId
+        if (this.rainbowRushSDK) {
+            try {
+                await this.rainbowRushSDK.init();
+                console.log('🔒 Rainbow Rush SDK initialized - Secure backend enabled');
+            } catch (error) {
+                console.warn('⚠️ Rainbow Rush SDK initialization failed, using localStorage fallback:', error);
+            }
+        }
+        
+        // Load progress asynchronously
+        if (this.levelManager) {
+            await this.levelManager.loadProgress();
+        }
+        
+                // Setup rendering system update hook
         this.renderingSystem.update = (deltaTime, entities) => {
             this.updateGame(deltaTime);
             this.renderingSystem.setPowerupTimers(this.powerupSystem.getAllTimers());

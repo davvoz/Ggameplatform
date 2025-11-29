@@ -27,9 +27,10 @@ class RainbowRushApp {
             }
 
             // Create game controller with builder pattern (DI)
+            // Create game controller with builder pattern (DI)
             this.gameController = createGameController(canvas).build();
             
-            // Initialize async components
+            // Initialize async components (includes SDK initialization)
             await this.gameController.initialize();
 
             // Setup Screen Manager event listeners
@@ -46,6 +47,7 @@ class RainbowRushApp {
 
             this.initialized = true;
             console.log('✅ Rainbow Rush initialized successfully!');
+            console.log('🔒 Backend integration:', this.gameController.rainbowRushSDK ? 'ENABLED (Secure)' : 'DISABLED (LocalStorage)');
         } catch (error) {
             console.error('❌ Failed to initialize game:', error);
             this.showError(error.message);
@@ -121,7 +123,9 @@ class RainbowRushApp {
                 await window.PlatformSDK.resetSession();
             }
             
-            this.screenManager.showLevelSelect(this.getLevelProgress());
+            // Force reload progress from backend to show updated levels
+            const progress = await this.gameController.levelManager.loadProgress(true);
+            this.screenManager.showLevelSelect(progress);
         });
         
         // Volume changes
@@ -175,9 +179,10 @@ class RainbowRushApp {
             }
         });
         
-        window.addEventListener('showLevelSelect', () => {
+        window.addEventListener('showLevelSelect', async () => {
             if (this.screenManager && this.gameController) {
-                const progress = this.gameController.levelManager.getSavedProgress();
+                // Force reload progress from backend to show updated levels
+                const progress = await this.gameController.levelManager.loadProgress(true);
                 this.screenManager.showLevelSelect(progress);
             }
         });

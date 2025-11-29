@@ -385,9 +385,17 @@ export default class RuntimeShell {
      * Send configuration to the game
      */
     sendConfig() {
+        // Get current user from AuthManager
+        let userId = null;
+        if (window.AuthManager && window.AuthManager.isLoggedIn()) {
+            const user = window.AuthManager.getUser();
+            userId = user?.user_id || null;
+        }
+        
         this.sendMessage(PLATFORM_MESSAGE_TYPES.CONFIG, {
             gameId: this.gameId,
             platformVersion: PROTOCOL_VERSION,
+            userId: userId,  // Pass user ID to game
             features: {
                 scoreTracking: true,
                 levelTracking: true,

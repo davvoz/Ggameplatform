@@ -33,6 +33,7 @@ import { UIManager } from './managers/UIManager.js';
 import { InputCommandMapper } from './input/InputCommandMapper.js';
 import { LevelOrchestrator } from './orchestrators/LevelOrchestrator.js';
 import { GameController } from './ui/GameController.js';
+import RainbowRushSDK from './sdk/RainbowRushSDK.js';
 
 /**
  * GameControllerBuilder - Fluent API for building GameController
@@ -40,6 +41,9 @@ import { GameController } from './ui/GameController.js';
 export class GameControllerBuilder {
     constructor(canvas) {
         this.canvas = canvas;
+        
+        // Rainbow Rush SDK for secure backend communication
+        this.rainbowRushSDK = null;
         
         // Dependencies to inject
         this.engine = null;
@@ -78,6 +82,19 @@ export class GameControllerBuilder {
      * Creates all components with standard configuration
      */
     withDefaults() {
+        // Get userId from platform config if available
+        let userId = null;
+        if (window.platformConfig && window.platformConfig.userId) {
+            userId = window.platformConfig.userId;
+            console.log('[GameControllerBuilder] Using platform userId:', userId);
+        }
+        
+        // Initialize Rainbow Rush SDK with userId from platform
+        this.rainbowRushSDK = new RainbowRushSDK({
+            apiBaseUrl: window.location.origin,
+            userId: userId
+        });
+        
         // Core systems - create engine first
         this.engine = new GameEngine(this.canvas);
         
@@ -92,16 +109,16 @@ export class GameControllerBuilder {
         this.player = new Player(100, height / 2, height);
         this.player.type = 'player';
         
-        // Managers
-        this.levelManager = new LevelManager(width, height);
+        // Managers (inject SDK into LevelManager and ScoreSystem)
+        this.levelManager = new LevelManager(width, height, this.rainbowRushSDK);
         this.audioManager = new AudioManager();
         this.inputManager = new InputManager(this.canvas);
         this.sdkManager = new PlatformSDKManager();
         this.entityManager = new EntityManager();
         
-        // Systems
+        // Systems (inject SDK into ScoreSystem)
         this.renderingSystem = new RenderingSystem(this.engine.gl, width, height);
-        this.scoreSystem = new ScoreSystem();
+        this.scoreSystem = new ScoreSystem(this.rainbowRushSDK);
         this.powerupSystem = new PowerupSystem();
         this.backgroundSystem = new BackgroundSystem(width, height);
         this.achievementSystem = new AchievementSystem();
@@ -213,6 +230,7 @@ export class GameControllerBuilder {
             canvas: this.canvas,
             engine: this.engine,
             gameState: this.gameState,
+            rainbowRushSDK: this.rainbowRushSDK,
             player: this.player,
             levelManager: this.levelManager,
             renderingSystem: this.renderingSystem,

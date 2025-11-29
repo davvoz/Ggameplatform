@@ -1,18 +1,24 @@
 /**
  * ScoreSystem - Manages scoring, levels, and progression
  * Follows Single Responsibility Principle
+ * Integrato con RainbowRushSDK per high score sicuro
  */
 export class ScoreSystem {
-    constructor() {
+    constructor(sdk = null) {
         this.score = 0;
         this.totalScore = 0; // Punteggio totale cumulativo
-        this.highScore = this.loadHighScore();
+        this.highScore = 0; // Inizializzato a 0, caricato in modo asincrono
         this.distance = 0;
         this.level = 1;
         this.collectibles = 0;
         this.multiplier = 1;
         this.scoreListeners = [];
         this.levelListeners = [];
+        
+        // Rainbow Rush SDK per persistenza sicura
+        this.sdk = sdk;
+        this.sdkEnabled = sdk !== null;
+        this.highScoreLoaded = false;
         
         // Sistema combo
         this.combo = 0;
@@ -33,6 +39,18 @@ export class ScoreSystem {
         // Level time tracking for speed bonus
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
+        
+        // Carica high score in modo asincrono
+        this.initHighScore();
+    }
+    
+    /**
+     * Inizializza high score da SDK o localStorage
+     * @private
+     */
+    async initHighScore() {
+        this.highScore = await this.loadHighScore();
+        this.highScoreLoaded = true;
     }
 
     reset() {
@@ -351,7 +369,28 @@ export class ScoreSystem {
         return Math.floor(this.distance);
     }
 
-    loadHighScore() {
+    /**
+     * Carica high score da SDK o localStorage
+     */
+    async loadHighScore() {
+        if (this.sdkEnabled && this.sdk) {
+            try {
+                const progress = await this.sdk.getProgress();
+                return progress.high_score || 0;
+            } catch (error) {
+                console.warn('Failed to load high score from SDK:', error);
+                return this.loadHighScoreLocal();
+            }
+        } else {
+            return this.loadHighScoreLocal();
+        }
+    }
+    
+    /**
+     * Carica high score da localStorage (fallback)
+     * @private
+     */
+    loadHighScoreLocal() {
         try {
             const saved = localStorage.getItem('rainbowRush_highScore');
             return saved ? parseInt(saved, 10) : 0;
@@ -360,11 +399,28 @@ export class ScoreSystem {
         }
     }
 
-    saveHighScore() {
+    /**
+     * Salva high score su SDK o localStorage
+     */
+    async saveHighScore() {
+        if (this.sdkEnabled && this.sdk) {
+            // SDK gestisce automaticamente l'aggiornamento del high score
+            // quando si salva il progresso del livello
+            console.log('💾 High score managed by SDK:', this.highScore);
+        } else {
+            this.saveHighScoreLocal();
+        }
+    }
+    
+    /**
+     * Salva high score su localStorage (fallback)
+     * @private
+     */
+    saveHighScoreLocal() {
         try {
             localStorage.setItem('rainbowRush_highScore', this.highScore.toString());
         } catch (error) {
-            console.warn('Failed to save high score:', error);
+            console.warn('Failed to save high score locally:', error);
         }
     }
 

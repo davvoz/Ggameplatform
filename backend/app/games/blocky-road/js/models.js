@@ -4,63 +4,131 @@ const Models = {
     // Create player character (chicken/character voxel style)
     createPlayer: () => {
         const group = new THREE.Group();
-        
-        // Body (bright orange)
-        const bodyGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xFF6B35,
-            flatShading: true
-        });
+        // Corpo (più piccolo, bianco)
+        const bodyGeometry = new THREE.BoxGeometry(0.6, 0.7, 0.6);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xF8F8FF, flatShading: true });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 0.6;
+        body.position.y = 0.5;
         body.castShadow = true;
         body.receiveShadow = true;
         group.add(body);
-        
-        // Head (lighter orange)
-        const headGeometry = new THREE.BoxGeometry(0.7, 0.7, 0.7);
-        const headMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xFFB84D,
-            flatShading: true
-        });
+
+        // Testa (più grande, bianco)
+        const headGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        const headMaterial = new THREE.MeshLambertMaterial({ color: 0xF8F8FF, flatShading: true });
         const head = new THREE.Mesh(headGeometry, headMaterial);
-        head.position.y = 1.3;
+        head.position.y = 1.1;
         head.castShadow = true;
         head.receiveShadow = true;
         group.add(head);
-        
-        // Eyes (black)
-        const eyeGeometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
-        
+
+        // Orecchie lunghe e inclinate (figlie della testa)
+        const earGeometry = new THREE.BoxGeometry(0.15, 0.6, 0.15);
+        const earMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE4E1, flatShading: true });
+        const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+        leftEar.position.set(-0.22, 0.5, 0.08); // relative to head
+        leftEar.rotation.z = -0.25;
+        leftEar.castShadow = true;
+        head.add(leftEar);
+        const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+        rightEar.position.set(0.22, 0.5, 0.08);
+        rightEar.rotation.z = 0.25;
+        rightEar.castShadow = true;
+        head.add(rightEar);
+
+        // Occhi grandi e lucidi (figli della testa)
+        const eyeGeometry = new THREE.BoxGeometry(0.16, 0.16, 0.12);
+        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.2, 1.4, 0.36);
-        group.add(leftEye);
-        
+        leftEye.position.set(-0.18, 0.08, 0.38);
+        head.add(leftEye);
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.2, 1.4, 0.36);
-        group.add(rightEye);
-        
-        // Beak (dark orange)
-        const beakGeometry = new THREE.BoxGeometry(0.25, 0.2, 0.2);
-        const beakMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xE55812,
-            flatShading: true
-        });
-        const beak = new THREE.Mesh(beakGeometry, beakMaterial);
-        beak.position.set(0, 1.25, 0.5);
-        beak.castShadow = true;
-        group.add(beak);
-        
-        // Store references for animations
+        rightEye.position.set(0.18, 0.08, 0.38);
+        head.add(rightEye);
+        // Lucentezza occhi
+        const shineGeometry = new THREE.BoxGeometry(0.05, 0.05, 0.02);
+        const shineMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+        const leftShine = new THREE.Mesh(shineGeometry, shineMaterial);
+        leftShine.position.set(-0.19, 0.13, 0.44);
+        head.add(leftShine);
+        const rightShine = new THREE.Mesh(shineGeometry, shineMaterial);
+        rightShine.position.set(0.19, 0.13, 0.44);
+        head.add(rightShine);
+
+        // Naso a triangolo rosa (figlio della testa)
+        const noseGeometry = new THREE.ConeGeometry(0.07, 0.09, 3);
+        const noseMaterial = new THREE.MeshLambertMaterial({ color: 0xFFC0CB });
+        const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+        nose.position.set(0, -0.02, 0.44);
+        nose.rotation.x = Math.PI / 2;
+        head.add(nose);
+
+        // Bocca (piccola linea nera sotto il naso, figlia della testa)
+        const mouthGeometry = new THREE.BoxGeometry(0.09, 0.02, 0.02);
+        const mouthMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+        const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+        mouth.position.set(0, -0.08, 0.44);
+        head.add(mouth);
+
+        // Coda soffice (sfera bianca)
+        const tailGeometry = new THREE.SphereGeometry(0.13, 8, 8);
+        const tailMaterial = new THREE.MeshLambertMaterial({ color: 0xF8F8FF });
+        const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+        tail.position.set(0, 0.5, -0.32);
+        group.add(tail);
+
+        // Zampe anteriori (piccole parallelepipedi bianchi)
+        const pawGeometry = new THREE.BoxGeometry(0.11, 0.15, 0.11);
+        const pawMaterial = new THREE.MeshLambertMaterial({ color: 0xF8F8FF });
+        const leftPaw = new THREE.Mesh(pawGeometry, pawMaterial);
+        leftPaw.position.set(-0.15, 0.18, 0.18);
+        group.add(leftPaw);
+        const rightPaw = new THREE.Mesh(pawGeometry, pawMaterial);
+        rightPaw.position.set(0.15, 0.18, 0.18);
+        group.add(rightPaw);
+
+        // Zampe posteriori (piccole parallelepipedi bianchi)
+        const leftBackPaw = new THREE.Mesh(pawGeometry, pawMaterial);
+        leftBackPaw.position.set(-0.15, 0.18, -0.18);
+        group.add(leftBackPaw);
+        const rightBackPaw = new THREE.Mesh(pawGeometry, pawMaterial);
+        rightBackPaw.position.set(0.15, 0.18, -0.18);
+        group.add(rightBackPaw);
+
+        // Store references per animazioni
         group.userData.body = body;
         group.userData.head = head;
-        
+        group.userData.ears = [leftEar, rightEar];
+        group.userData.nose = nose;
+        group.userData.mouth = mouth;
+        group.userData.tail = tail;
+        group.userData.paws = [leftPaw, rightPaw, leftBackPaw, rightBackPaw];
+
         return group;
     },
     
     // Create car - Cute Crossy Road style
     createCar: (color = 0xFF4444) => {
+        // Palette colori realistici
+        const realisticColors = [
+            0xFFFFFF, // bianco
+            0xC0C0C0, // argento
+            0x1E88E5, // blu
+            0xB71C1C, // rosso scuro
+            0x388E3C, // verde scuro
+            0xFFD600, // giallo
+            0x757575, // grigio
+            0xF5F5DC, // beige
+            0x003366, // blu navy
+            0x808000, // verde oliva
+            0xFF0000, // rosso vivo
+            0xFF9900, // arancione
+            0xA0522D, // marrone chiaro
+            0x444444, // grigio scuro
+            0x87CEEB, // azzurro
+            0x20B2AA  // verde acqua
+        ];
+        color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
         // Main body
@@ -141,6 +209,22 @@ const Models = {
     
     // Create truck - Detailed blocky style
     createTruck: (color = 0x3366FF) => {
+        // Palette colori realistici
+        const realisticColors = [
+            0xFFFFFF, // bianco
+            0xC0C0C0, // argento
+            0x1E88E5, // blu
+            0xB71C1C, // rosso scuro
+            0xFFD600, // giallo
+            0x757575, // grigio
+            0xF5F5DC, // beige
+            0x003366, // blu navy
+            0xFF0000, // rosso vivo
+            0xFF9900, // arancione
+            0xA0522D, // marrone chiaro
+            0x444444, // grigio scuro
+        ];
+        color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
         // Truck cab (front part)
@@ -254,6 +338,26 @@ const Models = {
     
     // Create motorcycle - Simple small blocky bike
     createMotorcycle: (color = 0x1E88E5) => {
+        // Palette colori realistici
+        const realisticColors = [
+            0xFFFFFF, // bianco
+            0xC0C0C0, // argento
+            0x1E88E5, // blu
+            0xB71C1C, // rosso scuro
+            0x388E3C, // verde scuro
+            0xFFD600, // giallo
+            0x757575, // grigio
+            0xF5F5DC, // beige
+            0x003366, // blu navy
+            0x808000, // verde oliva
+            0xFF0000, // rosso vivo
+            0xFF9900, // arancione
+            0xA0522D, // marrone chiaro
+            0x444444, // grigio scuro
+            0x87CEEB, // azzurro
+            0x20B2AA  // verde acqua
+        ];
+        color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
 
         // Corpo principale
@@ -697,8 +801,30 @@ const Models = {
     
     // Create train (long vehicle for rail tracks)
     createTrain: (color = 0x9C27B0) => {
+        // Palette colori realistici treno
+        const realisticTrainColors = [
+            0xB71C1C, // rosso scuro
+            0x1E88E5, // blu
+            0x757575, // grigio
+            0xFFD600, // giallo
+            0xC0C0C0, // argento
+            0x8D6E63, // marrone
+            0xF5F5DC, // beige
+            0x003366, // blu navy
+            0xFF0000, // rosso vivo
+            0xFF9900, // arancione
+            0xA0522D, // marrone chiaro
+            0x444444, // grigio scuro
+            0x87CEEB // azzurro
+
+        ];
+        // Scegli colore locomotiva
+        color = realisticTrainColors[Math.floor(Math.random() * realisticTrainColors.length)];
+        // Scegli colore carrozze diverso dalla locomotiva
+        let carColor = realisticTrainColors.filter(c => c !== color)[Math.floor(Math.random() * (realisticTrainColors.length - 1))];
         const group = new THREE.Group();
-        
+        group.userData.trainColor = color;
+        group.userData.trainCarColor = carColor;
         // Engine front
         const engineGeometry = new THREE.BoxGeometry(1.2, 0.8, 1.8);
         const engineMaterial = new THREE.MeshLambertMaterial({ 
@@ -762,8 +888,26 @@ const Models = {
     },
     
     createTrainCar: (color = 0x9C27B0) => {
+        // Palette colori realistici treno
+        const realisticTrainColors = [
+            0xB71C1C, // rosso scuro
+            0x1E88E5, // blu
+            0x757575, // grigio
+            0xFFD600, // giallo
+            0xC0C0C0, // argento
+            0x8D6E63, // marrone
+            0xF5F5DC, // beige
+            0xFF0000, // rosso vivo
+            0xFF9900, // arancione
+            0xA0522D, // marrone chiaro
+            0x444444, // grigio scuro
+            0x87CEEB, // azzurro
+        ];
+        // Se il colore carrozza è passato dalla locomotiva, usa quello
+        if (typeof this !== 'undefined' && this.userData && this.userData.trainCarColor) {
+            color = this.userData.trainCarColor;
+        }
         const group = new THREE.Group();
-        
         // Main car body - cargo container style
         const bodyGeometry = new THREE.BoxGeometry(1.2, 0.7, 2.0);
         const bodyMaterial = new THREE.MeshLambertMaterial({ 

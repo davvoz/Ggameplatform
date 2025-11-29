@@ -5,16 +5,36 @@ class Player {
         this.scene = scene;
         this.particleSystem = particleSystem;
         
+        // Trova posizione di spawn libera da ostacoli
+        let spawnX = 0, spawnZ = 0;
+        if (window.game && window.game.terrain && window.game.terrain.hasObstacle(spawnX, spawnZ)) {
+            // Cerca posizione libera nelle vicinanze (spirale)
+            let found = false;
+            for (let r = 1; r <= 3 && !found; r++) {
+                for (let dx = -r; dx <= r && !found; dx++) {
+                    for (let dz = -r; dz <= r && !found; dz++) {
+                        if (Math.abs(dx) === r || Math.abs(dz) === r) {
+                            if (!window.game.terrain.hasObstacle(spawnX + dx, spawnZ + dz)) {
+                                spawnX += dx;
+                                spawnZ += dz;
+                                found = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         // Create player mesh
         this.mesh = Models.createPlayer();
-        this.mesh.position.set(0, 0.3, 0);
+        this.mesh.position.set(spawnX, 0.3, spawnZ);
+        this.mesh.visible = true; // Fix invisibility bug
         this.scene.add(this.mesh);
-        
-        console.log('🐔 Player created at:', this.mesh.position);
-        
+
+        console.log('🐰 Player spawned at:', this.mesh.position);
+
         // Grid position (logical)
-        this.gridX = 0;
-        this.gridZ = 0;
+        this.gridX = spawnX;
+        this.gridZ = spawnZ;
         
         // Movement state
         this.isMoving = false;

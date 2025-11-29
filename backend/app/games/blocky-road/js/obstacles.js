@@ -401,7 +401,14 @@ class ObstacleManager {
         
         for (let i = 0; i < totalCars; i++) {
             const isEngine = (i === 0);
-            const trainPart = isEngine ? Models.createTrain(trainColor) : Models.createTrainCar(trainColor);
+            let trainPart;
+            if (isEngine) {
+                trainPart = Models.createTrain(trainColor);
+                // Salva il colore delle carrozze scelto dalla locomotiva
+                this.lastTrainCarColor = trainPart.userData.trainCarColor;
+            } else {
+                trainPart = Models.createTrainCar(this.lastTrainCarColor);
+            }
             
             if (!trainPart) {
                 console.error(`❌ Train part ${i} is null!`);

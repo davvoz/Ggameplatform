@@ -2,14 +2,19 @@
 Database Migration Script - Rainbow Rush Tables
 Creates tables for Rainbow Rush game-specific data
 Run this script to add Rainbow Rush tables to the database
+
+Usage:
+  Local:  python -m app.games.rainbow_rush_be.scripts.create_rainbow_rush_tables
+  Docker: docker exec gameplatform_backend python -m app.games.rainbow_rush_be.scripts.create_rainbow_rush_tables
 """
 
 import sys
 import os
 from pathlib import Path
 
-# Add parent directory to path to import app modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from sqlalchemy import create_engine
 from app.games.rainbow_rush_be.database import get_rainbow_rush_db_url, rainbow_rush_engine

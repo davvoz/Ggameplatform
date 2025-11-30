@@ -211,8 +211,8 @@ export class GameController {
             this.player.isTurboActive ? this.player.velocityX : 0;
         this.backgroundSystem.update(deltaTime, cameraSpeed * 0.3);
 
-        // Update level manager con velocità BASE costante
-        this.levelManager.update(deltaTime);
+        // Update level manager con velocità effettiva (include turbo/boost)
+        this.levelManager.update(deltaTime, cameraSpeed);
         
         // Check if goal should spawn
         const goalToSpawn = this.levelManager.shouldSpawnGoal();

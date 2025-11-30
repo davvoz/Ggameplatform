@@ -890,25 +890,18 @@ export class LevelGenerator {
         // Imposta par time
         level.parTime = config.parTime;
 
-        // NUOVO: Imposta fineLivello in base alla difficoltà CON VARIAZIONE
-        // Base length + variazione progressiva basata sul levelId per rendere ogni livello unico
-        const baseLengthPerTier = {
-            TUTORIAL: { base: 2500, variation: 200 },
-            EASY: { base: 3000, variation: 400 },
-            NORMAL: { base: 4000, variation: 600 },
-            HARD: { base: 5000, variation: 800 },
-            EXPERT: { base: 6000, variation: 1000 },
-            MASTER: { base: 7000, variation: 1200 }
-        };
+        // NUOVO: Imposta fineLivello in base alla difficoltà CON CRESCITA PROGRESSIVA
+        // Ogni livello cresce di ~1 secondo (baseSpeed = 180px/s → +180px per livello)
+        // Formula: baseLength + (levelId * incrementPerLevel)
+        const baseSpeed = 180; // px/s dalla velocità base del gioco
+        const secondsPerLevelGrowth = 1.0; // Crescita di 1 secondo per livello
+        const incrementPerLevel = baseSpeed * secondsPerLevelGrowth; // 180 px per livello
         
-        const tierConfig = baseLengthPerTier[tier] || { base: 3000, variation: 400 };
-        // Variazione progressiva: cresce con il livello all'interno del tier
-        const progressiveIncrease = (levelId % 40) * (tierConfig.variation / 40);
-        // Variazione casuale deterministica basata su levelId
-        const seed = levelId * 12345 % 100;
-        const randomVariation = (seed / 100) * tierConfig.variation - (tierConfig.variation / 2);
+        // Lunghezza base del primo livello (circa 15 secondi)
+        const baseLengthFirstLevel = 2700;
         
-        level.fineLivello = Math.floor(tierConfig.base + progressiveIncrease + randomVariation);
+        // Calcola la lunghezza per questo livello
+        level.fineLivello = baseLengthFirstLevel + (levelId - 1) * incrementPerLevel;
 
         // Imposta star requirements basati su parTime - VERSIONE BILANCIATA
         level.starRequirements = {

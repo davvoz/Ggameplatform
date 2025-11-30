@@ -88,9 +88,11 @@ export class LevelManager {
         this.levelStars = 0;
         this.goalSpawned = false; // Reset goal spawn flag
 
-        // Conta totali
-        this.totalCoins = this.currentLevel.collectibles.filter(c => c.type === 'coin').length;
+        // Conta totali enemies dal pattern base (verrà moltiplicato dai loop)
         this.totalEnemies = this.currentLevel.enemies.length;
+        
+        // totalCoins verrà calcolato DOPO la generazione delle entità con i loop
+        this.totalCoins = 0;
 
         return this.currentLevel;
     }
@@ -221,6 +223,15 @@ export class LevelManager {
         this.goalSpawned = false;
 
         console.log(`📏 Level length set to ${this.levelLength} pixels (target from config).`);
+
+        // STEP 5: Aggiorna il conteggio totale delle monete DOPO aver generato tutte le entità
+        // Conta SOLO le monete che sono PRIMA della fine del livello (quelle effettivamente raggiungibili)
+        // Le monete sono in entities.collectibles con type='collectible'
+        this.totalCoins = entities.collectibles.filter(coin => coin.x < this.levelLength).length;
+        console.log(`🪙 Total coins in level (reachable before goal at ${this.levelLength}px): ${this.totalCoins}`);
+        
+        // Rimuovi le monete irraggiungibili (oltre la fine del livello) per non confondere il player
+        entities.collectibles = entities.collectibles.filter(coin => coin.x < this.levelLength);
 
         // Il goal NON viene creato qui, verrà spawned dinamicamente
         entities.goalFlag = null;
@@ -631,14 +642,18 @@ export class LevelManager {
 
     /**
      * Aggiorna stato del livello
+     * @param {number} deltaTime - Tempo trascorso dall'ultimo frame
+     * @param {number} cameraSpeed - Velocità effettiva della camera (include turbo/boost)
      */
-    update(deltaTime) {
+    update(deltaTime, cameraSpeed = 0) {
         if (!this.currentLevel || this.levelCompleted) return;
 
         this.levelElapsedTime = (Date.now() - this.levelStartTime) / 1000;
 
-        // Distanza basata SOLO su baseSpeed costante (turbo non influenza)
-        this.distanceTraveled += this.baseSpeed * deltaTime;
+        // Distanza basata su baseSpeed + velocità extra (turbo/boost)
+        // La camera si muove con baseSpeed + eventuali bonus di velocità
+        const effectiveSpeed = this.baseSpeed + Math.abs(cameraSpeed);
+        this.distanceTraveled += effectiveSpeed * deltaTime;
     }
 
     /**

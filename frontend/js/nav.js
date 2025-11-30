@@ -90,21 +90,31 @@ function removeQuestBadge() {
  * Initialize quest notification checker
  */
 function initQuestNotifications() {
-    // Check immediately
-    checkUnclaimedQuests();
+    // Check when auth state changes (login/logout)
+    window.addEventListener('auth-state-changed', () => {
+        checkUnclaimedQuests();
+    });
     
-    // Check every 30 seconds
-    setInterval(checkUnclaimedQuests, 30000);
-    
-    // Check when user logs in/out
-    window.addEventListener('auth-state-changed', checkUnclaimedQuests);
-    
-    // Check when returning to quests page
+    // Check when navigating to quests page
     window.addEventListener('hashchange', () => {
         if (window.location.hash.includes('quest')) {
-            setTimeout(checkUnclaimedQuests, 1000);
+            checkUnclaimedQuests();
         }
     });
+    
+    // Check when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            checkUnclaimedQuests();
+        }
+    });
+    
+    // Initial check when DOM is ready
+    if (document.readyState === 'complete') {
+        checkUnclaimedQuests();
+    } else {
+        window.addEventListener('load', () => checkUnclaimedQuests());
+    }
 }
 
 /**

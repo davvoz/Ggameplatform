@@ -8,7 +8,7 @@ This script performs a FULL platform initialization:
    - Game statuses
    - Level milestones
    - Quests
-   - Games with XP rules.
+   - Games with XP rules
    - Leaderboard rewards
 
 WARNING: This will DELETE all existing data!

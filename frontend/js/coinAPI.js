@@ -5,7 +5,7 @@
 
 class CoinAPI {
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || window.API_BASE_URL || 'http://localhost:8000';
+        this.baseUrl = baseUrl || window.ENV?.API_URL || 'http://localhost:8000';
     }
 
     /**

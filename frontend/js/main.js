@@ -285,6 +285,20 @@ export async function renderGamePlayer(params) {
         // Exit button
         const exitBtn = document.querySelector('.exit-btn');
         exitBtn.addEventListener('click', () => {
+            // Exit fullscreen if active
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else if (document.webkitFullscreenElement) {
+                document.webkitExitFullscreen();
+            }
+            
+            // Clean up iOS fullscreen
+            const playerContainer = document.querySelector('.player-container');
+            if (playerContainer && playerContainer.classList.contains('ios-fullscreen')) {
+                playerContainer.classList.remove('ios-fullscreen');
+                document.body.style.overflow = '';
+            }
+            
             if (window.currentGameRuntime) {
                 // Use exit() instead of cleanup() to prevent XP distribution
                 window.currentGameRuntime.exit();
@@ -343,14 +357,64 @@ function setupPlayerControls(gameId, iframe) {
     // Fullscreen button
     fullscreenBtn.addEventListener('click', () => {
         const playerContainer = document.querySelector('.player-container');
-        if (playerContainer.requestFullscreen) {
-            playerContainer.requestFullscreen();
-        } else if (playerContainer.webkitRequestFullscreen) {
-            playerContainer.webkitRequestFullscreen();
-        } else if (playerContainer.msRequestFullscreen) {
-            playerContainer.msRequestFullscreen();
+        const gameFrame = playerContainer.querySelector('iframe');
+        
+        // iOS Safari detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // iOS Safari doesn't support standard fullscreen API
+            // Use toggle for iOS fullscreen fallback
+            toggleIOSFullscreen(playerContainer);
+        } else {
+            // Standard browsers - check if already in fullscreen
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            } else {
+                // Enter fullscreen
+                if (playerContainer.requestFullscreen) {
+                    playerContainer.requestFullscreen();
+                } else if (playerContainer.webkitRequestFullscreen) {
+                    playerContainer.webkitRequestFullscreen();
+                } else if (playerContainer.msRequestFullscreen) {
+                    playerContainer.msRequestFullscreen();
+                }
+            }
         }
     });
+    
+    // iOS fullscreen fallback helper
+    function toggleIOSFullscreen(container) {
+        if (container.classList.contains('ios-fullscreen')) {
+            container.classList.remove('ios-fullscreen');
+            document.body.style.overflow = '';
+        } else {
+            container.classList.add('ios-fullscreen');
+            document.body.style.overflow = 'hidden';
+            // Scroll to hide address bar
+            setTimeout(() => window.scrollTo(0, 1), 100);
+        }
+    }
+
+    // Handle fullscreen exit (ESC key or native exit)
+    const handleFullscreenChange = () => {
+        const playerContainer = document.querySelector('.player-container');
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // User exited fullscreen, ensure iOS class is removed
+            if (playerContainer && playerContainer.classList.contains('ios-fullscreen')) {
+                playerContainer.classList.remove('ios-fullscreen');
+                document.body.style.overflow = '';
+            }
+        }
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
     // Store runtime instance for cleanup
     window.currentGameRuntime = runtime;

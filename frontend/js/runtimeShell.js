@@ -320,12 +320,50 @@ export default class RuntimeShell {
     handleFullscreenRequest() {
         const container = this.iframe.parentElement;
 
-        if (container.requestFullscreen) {
-            container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) {
-            container.msRequestFullscreen();
+        // iOS Safari detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // iOS Safari doesn't support standard fullscreen API
+            // Try webkit fullscreen on iframe itself
+            if (this.iframe.webkitEnterFullscreen) {
+                try {
+                    this.iframe.webkitEnterFullscreen();
+                } catch (e) {
+                    this.log('iOS fullscreen not supported:', e);
+                    // Fallback: expand to viewport with fixed positioning
+                    this.enableIOSFullscreenFallback(container);
+                }
+            } else {
+                this.enableIOSFullscreenFallback(container);
+            }
+        } else {
+            // Standard browsers
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
+            }
+        }
+    }
+
+    /**
+     * iOS fullscreen fallback using CSS
+     */
+    enableIOSFullscreenFallback(container) {
+        if (container.classList.contains('ios-fullscreen')) {
+            // Exit fullscreen
+            container.classList.remove('ios-fullscreen');
+            document.body.style.overflow = '';
+        } else {
+            // Enter fullscreen
+            container.classList.add('ios-fullscreen');
+            document.body.style.overflow = 'hidden';
+            
+            // Scroll to top to hide address bar
+            window.scrollTo(0, 1);
         }
     }
 
@@ -453,6 +491,13 @@ export default class RuntimeShell {
         this.sendMessage(PLATFORM_MESSAGE_TYPES.EXIT, {
             timestamp: Date.now()
         });
+
+        // Clean up iOS fullscreen if active
+        const container = this.iframe.parentElement;
+        if (container && container.classList.contains('ios-fullscreen')) {
+            container.classList.remove('ios-fullscreen');
+            document.body.style.overflow = '';
+        }
 
         console.warn('🚪 Calling cleanup(false, true) - skipSessionEnd=true');
         // Pass skipSessionEnd=true to prevent XP distribution on exit
@@ -590,6 +635,13 @@ export default class RuntimeShell {
             this.sessionStartTime = null;
         } else {
             console.warn('🧹 Branch 3: No session or already cleared');
+        }
+
+        // Clean up iOS fullscreen if active
+        const container = this.iframe?.parentElement;
+        if (container && container.classList.contains('ios-fullscreen')) {
+            container.classList.remove('ios-fullscreen');
+            document.body.style.overflow = '';
         }
 
         window.removeEventListener('message', this.boundMessageHandler);

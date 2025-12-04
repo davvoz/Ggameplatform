@@ -119,6 +119,64 @@
     color: var(--text-secondary);
 }
 
+/* iOS Fullscreen Fallback */
+.ios-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    background: var(--background) !important;
+}
+
+.ios-fullscreen .player-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background: var(--background-light);
+}
+
+/* Ensure controls are always visible in iOS fullscreen */
+.ios-fullscreen .player-controls,
+.ios-fullscreen .exit-btn {
+    position: relative;
+    z-index: 10001;
+    pointer-events: auto;
+}
+
+.ios-fullscreen .player-container {
+    position: fixed !important;
+    top: 60px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: calc(100vh - 60px) !important;
+}
+
+.ios-fullscreen iframe {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.ios-fullscreen .player-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+}
+
+/* XP notification should appear above fullscreen */
+.xp-notification {
+    z-index: 99999 !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .player-header {

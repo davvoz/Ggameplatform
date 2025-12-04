@@ -402,6 +402,8 @@
     border-radius: var(--radius-xl);
     width: 90%;
     max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: var(--shadow-xl);
     animation: slideDown 0.3s ease;
 }
@@ -647,8 +649,9 @@
     
     .modal-content {
         width: 95%;
-        margin: 10% auto;
+        margin: 5% auto;
         padding: var(--spacing-lg);
+        max-height: 95vh;
     }
     
     .user-info {

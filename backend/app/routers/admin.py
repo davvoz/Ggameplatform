@@ -8,7 +8,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -19,7 +19,14 @@ from app.schemas import (
     XPRuleCreate, XPRuleUpdate,
     QuestCreate, QuestUpdate,
     UserQuestCreate, UserQuestUpdate,
-    GameStatusCreate, GameStatusUpdate
+    GameStatusCreate, GameStatusUpdate,
+    UserCoinsCreate, UserCoinsUpdate,
+    CoinTransactionCreate, CoinTransactionUpdate,
+    LevelMilestoneCreate, LevelMilestoneUpdate,
+    LevelRewardCreate, LevelRewardUpdate,
+    WeeklyLeaderboardCreate, WeeklyLeaderboardUpdate,
+    LeaderboardRewardCreate, LeaderboardRewardUpdate,
+    WeeklyWinnerCreate, WeeklyWinnerUpdate
 )
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
@@ -74,7 +81,23 @@ async def get_form_options(db: Session = Depends(get_db)):
                 "status_ids": [{"value": s.status_id, "label": f"{s.status_name} ({s.status_code})"} for s in statuses],
                 "session_ids": [{"value": s.session_id, "label": f"{s.session_id} - {s.game_id}"} for s in sessions[:100]],  # Limit for performance
                 "categories": list(set([g.category for g in games if g.category])),
-                "quest_types": ["daily", "weekly", "achievement", "milestone"],
+                "quest_types": [
+                    "play_games",
+                    "play_games_weekly", 
+                    "play_time",
+                    "play_time_daily",
+                    "play_time_cumulative",
+                    "play_same_game",
+                    "score_threshold_per_game",
+                    "score_ends_with",
+                    "login_after_24h",
+                    "login_streak",
+                    "leaderboard_top",
+                    "reach_level",
+                    "xp_daily",
+                    "xp_weekly",
+                    "complete_quests"
+                ],
                 "rule_types": ["score_threshold", "time_played", "games_completed", "streak", "achievement"]
             }
         }
@@ -164,6 +187,35 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         # Get all game statuses
         statuses_query = session.query(GameStatus).order_by(GameStatus.display_order).all()
         statuses = [status.to_dict() for status in statuses_query]
+        
+        # Get coin system data
+        user_coins_query = session.query(UserCoins).order_by(desc(UserCoins.balance)).all()
+        user_coins = [uc.to_dict() for uc in user_coins_query]
+        
+        coin_transactions_query = session.query(CoinTransaction).order_by(desc(CoinTransaction.created_at)).all()
+        coin_transactions = [ct.to_dict() for ct in coin_transactions_query]
+        
+        # Get level system data
+        from app.models import LevelMilestone, LevelReward
+        level_milestones_query = session.query(LevelMilestone).order_by(LevelMilestone.level).all()
+        level_milestones = [lm.to_dict() for lm in level_milestones_query]
+        
+        level_rewards_query = session.query(LevelReward).order_by(LevelReward.level).all()
+        level_rewards = [lr.to_dict() for lr in level_rewards_query]
+        
+        # Get weekly leaderboard data
+        from app.models import WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
+        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        weekly_leaderboards = [wl.to_dict() for wl in weekly_leaderboards_query]
+        
+        leaderboard_rewards_query = session.query(LeaderboardReward).order_by(LeaderboardReward.rank_start).all()
+        leaderboard_rewards = [lr.to_dict() for lr in leaderboard_rewards_query]
+        
+        weekly_winners_query = session.query(WeeklyWinner).order_by(desc(WeeklyWinner.week_start), WeeklyWinner.rank).all()
+        weekly_winners = [ww.to_dict() for ww in weekly_winners_query]
+        
+        # Calculate total coins in circulation
+        total_coins_circulation = sum([uc.balance for uc in user_coins_query])
     
     data = {
         "total_games": len(games),
@@ -174,6 +226,12 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         "total_quests": len(quests),
         "total_user_quests": total_user_quests_count,
         "total_game_statuses": len(statuses),
+        "total_coins_circulation": total_coins_circulation,
+        "total_level_milestones": len(level_milestones),
+        "total_level_rewards": len(level_rewards),
+        "total_weekly_leaderboard_entries": len(weekly_leaderboards),
+        "total_leaderboard_rewards": len(leaderboard_rewards),
+        "total_weekly_winners": len(weekly_winners),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -184,6 +242,13 @@ async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)
         "quests": quests,
         "user_quests": user_quests,
         "game_statuses": statuses,
+        "user_coins": user_coins,
+        "transactions": coin_transactions,
+        "milestones": level_milestones,
+        "level_rewards": level_rewards,
+        "weekly_leaderboards": weekly_leaderboards,
+        "leaderboard_rewards": leaderboard_rewards,
+        "weekly_winners": weekly_winners,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -233,6 +298,32 @@ async def export_database():
         # Export game statuses using ORM
         statuses_query = session.query(GameStatus).order_by(GameStatus.display_order).all()
         statuses = [status.to_dict() for status in statuses_query]
+        
+        # Export coin system data
+        user_coins_query = session.query(UserCoins).order_by(desc(UserCoins.balance)).all()
+        user_coins = [uc.to_dict() for uc in user_coins_query]
+        
+        coin_transactions_query = session.query(CoinTransaction).order_by(desc(CoinTransaction.created_at)).all()
+        coin_transactions = [ct.to_dict() for ct in coin_transactions_query]
+        
+        # Export level system data
+        from app.models import LevelMilestone, LevelReward
+        level_milestones_query = session.query(LevelMilestone).order_by(LevelMilestone.level).all()
+        level_milestones = [lm.to_dict() for lm in level_milestones_query]
+        
+        level_rewards_query = session.query(LevelReward).order_by(LevelReward.level).all()
+        level_rewards = [lr.to_dict() for lr in level_rewards_query]
+        
+        # Export weekly leaderboard data
+        from app.models import WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
+        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        weekly_leaderboards = [wl.to_dict() for wl in weekly_leaderboards_query]
+        
+        leaderboard_rewards_query = session.query(LeaderboardReward).order_by(LeaderboardReward.rank_start).all()
+        leaderboard_rewards = [lr.to_dict() for lr in leaderboard_rewards_query]
+        
+        weekly_winners_query = session.query(WeeklyWinner).order_by(desc(WeeklyWinner.week_start), WeeklyWinner.rank).all()
+        weekly_winners = [ww.to_dict() for ww in weekly_winners_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -244,6 +335,13 @@ async def export_database():
         "total_quests": len(quests),
         "total_user_quests": len(user_quests),
         "total_game_statuses": len(statuses),
+        "total_user_coins": len(user_coins),
+        "total_coin_transactions": len(coin_transactions),
+        "total_level_milestones": len(level_milestones),
+        "total_level_rewards": len(level_rewards),
+        "total_weekly_leaderboard_entries": len(weekly_leaderboards),
+        "total_leaderboard_rewards": len(leaderboard_rewards),
+        "total_weekly_winners": len(weekly_winners),
         "games": games,
         "users": users,
         "sessions": sessions,
@@ -251,7 +349,14 @@ async def export_database():
         "xp_rules": xp_rules,
         "quests": quests,
         "user_quests": user_quests,
-        "game_statuses": statuses
+        "game_statuses": statuses,
+        "user_coins": user_coins,
+        "coin_transactions": coin_transactions,
+        "level_milestones": level_milestones,
+        "level_rewards": level_rewards,
+        "weekly_leaderboards": weekly_leaderboards,
+        "leaderboard_rewards": leaderboard_rewards,
+        "weekly_winners": weekly_winners
     }
 
 @router.get("/sessions/open")
@@ -874,4 +979,608 @@ async def delete_game_status(status_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== USER COINS CRUD ENDPOINTS ==========
+
+@router.post("/user-coins", status_code=201)
+async def create_user_coins(coins_data: UserCoinsCreate, db: Session = Depends(get_db)):
+    """Create a new user coins record"""
+    try:
+        repo = RepositoryFactory.create_usercoins_repository(db)
+        coins = repo.get_or_create(coins_data.user_id)
+        return {"success": True, "data": coins.to_dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/user-coins/{user_id}")
+async def get_user_coins(user_id: str, db: Session = Depends(get_db)):
+    """Get user coins by user ID"""
+    try:
+        repo = RepositoryFactory.create_usercoins_repository(db)
+        coins = repo.get_by_id(user_id)
+        if not coins:
+            raise HTTPException(status_code=404, detail="User coins not found")
+        return {"success": True, "data": coins.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/user-coins/{user_id}")
+async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: Session = Depends(get_db)):
+    """Update user coins"""
+    try:
+        repo = RepositoryFactory.create_usercoins_repository(db)
+        coins = repo.get_by_id(user_id)
+        if not coins:
+            raise HTTPException(status_code=404, detail="User coins not found")
+        
+        update_data = {k: v for k, v in coins_data.dict().items() if v is not None}
+        for key, value in update_data.items():
+            setattr(coins, key, value)
+        
+        coins.last_updated = datetime.utcnow().isoformat()
+        db.commit()
+        db.refresh(coins)
+        
+        return {"success": True, "data": coins.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/user-coins/{user_id}")
+async def delete_user_coins(user_id: str, db: Session = Depends(get_db)):
+    """Delete user coins record"""
+    try:
+        repo = RepositoryFactory.create_usercoins_repository(db)
+        coins = repo.get_by_id(user_id)
+        if not coins:
+            raise HTTPException(status_code=404, detail="User coins not found")
+        
+        db.delete(coins)
+        db.commit()
+        return {"success": True, "message": "User coins deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== COIN TRANSACTIONS CRUD ENDPOINTS ==========
+
+@router.get("/coin-transactions/{transaction_id}")
+async def get_coin_transaction(transaction_id: str, db: Session = Depends(get_db)):
+    """Get coin transaction by ID"""
+    try:
+        repo = RepositoryFactory.create_cointransaction_repository(db)
+        transaction = repo.get_by_id(transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        return {"success": True, "data": transaction.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/coin-transactions/{transaction_id}")
+async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionUpdate, db: Session = Depends(get_db)):
+    """Update coin transaction (description only)"""
+    try:
+        repo = RepositoryFactory.create_cointransaction_repository(db)
+        transaction = repo.get_by_id(transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        if tx_data.description is not None:
+            transaction.description = tx_data.description
+            db.commit()
+            db.refresh(transaction)
+        
+        return {"success": True, "data": transaction.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/coin-transactions/{transaction_id}")
+async def delete_coin_transaction(transaction_id: str, db: Session = Depends(get_db)):
+    """Delete coin transaction (use with caution - will affect balance calculations)"""
+    try:
+        repo = RepositoryFactory.create_cointransaction_repository(db)
+        transaction = repo.get_by_id(transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        db.delete(transaction)
+        db.commit()
+        return {"success": True, "message": "Transaction deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============ LEVEL MILESTONES ENDPOINTS ============
+
+@router.get("/level-milestones")
+async def get_level_milestones(db: Session = Depends(get_db)):
+    """Get all level milestones"""
+    try:
+        from app.models import LevelMilestone
+        milestones = db.query(LevelMilestone).order_by(LevelMilestone.level).all()
+        return {"success": True, "milestones": [m.to_dict() for m in milestones]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/level-milestones")
+async def create_level_milestone(milestone_data: dict, db: Session = Depends(get_db)):
+    """Create new level milestone"""
+    try:
+        from app.models import LevelMilestone
+        
+        # Check if level already exists
+        existing = db.query(LevelMilestone).filter(LevelMilestone.level == milestone_data.get('level')).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Milestone for this level already exists")
+        
+        now = datetime.utcnow().isoformat()
+        milestone = LevelMilestone(
+            level=milestone_data['level'],
+            title=milestone_data['title'],
+            badge=milestone_data['badge'],
+            color=milestone_data['color'],
+            description=milestone_data.get('description', ''),
+            is_active=milestone_data.get('is_active', 1),
+            created_at=now,
+            updated_at=now
+        )
+        
+        db.add(milestone)
+        db.commit()
+        db.refresh(milestone)
+        
+        return {"success": True, "data": milestone.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/level-milestones/{level}")
+async def get_level_milestone(level: int, db: Session = Depends(get_db)):
+    """Get level milestone by level"""
+    try:
+        from app.models import LevelMilestone
+        milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
+        if not milestone:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+        return {"success": True, "data": milestone.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/level-milestones/{level}")
+async def update_level_milestone(level: int, milestone_data: dict, db: Session = Depends(get_db)):
+    """Update level milestone"""
+    try:
+        from app.models import LevelMilestone
+        milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
+        if not milestone:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+        
+        # Update fields
+        if 'title' in milestone_data:
+            milestone.title = milestone_data['title']
+        if 'badge' in milestone_data:
+            milestone.badge = milestone_data['badge']
+        if 'color' in milestone_data:
+            milestone.color = milestone_data['color']
+        if 'description' in milestone_data:
+            milestone.description = milestone_data['description']
+        if 'is_active' in milestone_data:
+            milestone.is_active = milestone_data['is_active']
+        
+        milestone.updated_at = datetime.utcnow().isoformat()
+        db.commit()
+        db.refresh(milestone)
+        
+        return {"success": True, "data": milestone.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/level-milestones/{level}")
+async def delete_level_milestone(level: int, db: Session = Depends(get_db)):
+    """Delete level milestone"""
+    try:
+        from app.models import LevelMilestone
+        milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
+        if not milestone:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+        
+        db.delete(milestone)
+        db.commit()
+        return {"success": True, "message": "Milestone deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ LEVEL REWARDS ENDPOINTS ============
+
+@router.get("/level-rewards")
+async def get_level_rewards(db: Session = Depends(get_db)):
+    """Get all level rewards"""
+    try:
+        from app.models import LevelReward
+        rewards = db.query(LevelReward).order_by(LevelReward.level).all()
+        return {"success": True, "level_rewards": [r.to_dict() for r in rewards]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/level-rewards")
+async def create_level_reward(reward_data: dict, db: Session = Depends(get_db)):
+    """Create new level reward"""
+    try:
+        from app.models import LevelReward
+        import uuid
+        
+        now = datetime.utcnow().isoformat()
+        reward_id = reward_data.get('reward_id') or f"reward_{uuid.uuid4().hex[:16]}"
+        
+        reward = LevelReward(
+            reward_id=reward_id,
+            level=reward_data['level'],
+            reward_type=reward_data['reward_type'],
+            reward_amount=reward_data['reward_amount'],
+            description=reward_data.get('description', ''),
+            is_active=reward_data.get('is_active', 1),
+            created_at=now,
+            updated_at=now
+        )
+        
+        db.add(reward)
+        db.commit()
+        db.refresh(reward)
+        
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/level-rewards/{reward_id}")
+async def get_level_reward(reward_id: str, db: Session = Depends(get_db)):
+    """Get level reward by ID"""
+    try:
+        from app.models import LevelReward
+        reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/level-rewards/{reward_id}")
+async def update_level_reward(reward_id: str, reward_data: dict, db: Session = Depends(get_db)):
+    """Update level reward"""
+    try:
+        from app.models import LevelReward
+        reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        
+        # Update fields
+        if 'level' in reward_data:
+            reward.level = reward_data['level']
+        if 'reward_type' in reward_data:
+            reward.reward_type = reward_data['reward_type']
+        if 'reward_amount' in reward_data:
+            reward.reward_amount = reward_data['reward_amount']
+        if 'description' in reward_data:
+            reward.description = reward_data['description']
+        if 'is_active' in reward_data:
+            reward.is_active = reward_data['is_active']
+        
+        reward.updated_at = datetime.utcnow().isoformat()
+        db.commit()
+        db.refresh(reward)
+        
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/level-rewards/{reward_id}")
+async def delete_level_reward(reward_id: str, db: Session = Depends(get_db)):
+    """Delete level reward"""
+    try:
+        from app.models import LevelReward
+        reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        
+        db.delete(reward)
+        db.commit()
+        return {"success": True, "message": "Reward deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ WEEKLY LEADERBOARDS ENDPOINTS ============
+
+@router.get("/weekly-leaderboards")
+async def get_weekly_leaderboards(db: Session = Depends(get_db)):
+    """Get all weekly leaderboard entries"""
+    try:
+        from app.models import WeeklyLeaderboard
+        entries = db.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        return {"success": True, "weekly_leaderboards": [e.to_dict() for e in entries]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weekly-leaderboards/{entry_id}")
+async def get_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+    """Get weekly leaderboard entry by ID"""
+    try:
+        from app.models import WeeklyLeaderboard
+        entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
+        if not entry:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        return {"success": True, "data": entry.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/weekly-leaderboards/{entry_id}")
+async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: Session = Depends(get_db)):
+    """Update weekly leaderboard entry"""
+    try:
+        from app.models import WeeklyLeaderboard
+        entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
+        if not entry:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        
+        if 'score' in entry_data:
+            entry.score = entry_data['score']
+        
+        db.commit()
+        db.refresh(entry)
+        return {"success": True, "data": entry.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/weekly-leaderboards/{entry_id}")
+async def delete_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+    """Delete weekly leaderboard entry"""
+    try:
+        from app.models import WeeklyLeaderboard
+        entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
+        if not entry:
+            raise HTTPException(status_code=404, detail="Entry not found")
+        
+        db.delete(entry)
+        db.commit()
+        return {"success": True, "message": "Entry deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ LEADERBOARD REWARDS ENDPOINTS ============
+
+@router.get("/leaderboard-rewards")
+async def get_leaderboard_rewards(db: Session = Depends(get_db)):
+    """Get all leaderboard rewards"""
+    try:
+        from app.models import LeaderboardReward
+        rewards = db.query(LeaderboardReward).order_by(LeaderboardReward.rank_start).all()
+        return {"success": True, "leaderboard_rewards": [r.to_dict() for r in rewards]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/leaderboard-rewards")
+async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get_db)):
+    """Create new leaderboard reward"""
+    try:
+        from app.models import LeaderboardReward
+        
+        reward = LeaderboardReward(
+            rank_start=reward_data['rank_start'],
+            rank_end=reward_data.get('rank_end', reward_data['rank_start']),
+            steem_reward=reward_data['steem_reward'],
+            coin_reward=reward_data['coin_reward'],
+            game_id=reward_data.get('game_id')
+        )
+        
+        db.add(reward)
+        db.commit()
+        db.refresh(reward)
+        
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/leaderboard-rewards/{reward_id}")
+async def get_leaderboard_reward(reward_id: int, db: Session = Depends(get_db)):
+    """Get leaderboard reward by ID"""
+    try:
+        from app.models import LeaderboardReward
+        reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/leaderboard-rewards/{reward_id}")
+async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: Session = Depends(get_db)):
+    """Update leaderboard reward"""
+    try:
+        from app.models import LeaderboardReward
+        reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        
+        if 'rank_start' in reward_data:
+            reward.rank_start = reward_data['rank_start']
+        if 'rank_end' in reward_data:
+            reward.rank_end = reward_data['rank_end']
+        if 'steem_reward' in reward_data:
+            reward.steem_reward = reward_data['steem_reward']
+        if 'coin_reward' in reward_data:
+            reward.coin_reward = reward_data['coin_reward']
+        if 'game_id' in reward_data:
+            reward.game_id = reward_data['game_id']
+        
+        db.commit()
+        db.refresh(reward)
+        
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/leaderboard-rewards/{reward_id}")
+async def delete_leaderboard_reward(reward_id: str, db: Session = Depends(get_db)):
+    """Delete leaderboard reward"""
+    try:
+        from app.models import LeaderboardReward
+        reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        
+        db.delete(reward)
+        db.commit()
+        return {"success": True, "message": "Reward deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ WEEKLY WINNERS ENDPOINTS ============
+
+@router.get("/weekly-winners")
+async def get_weekly_winners(db: Session = Depends(get_db)):
+    """Get all weekly winners"""
+    try:
+        from app.models import WeeklyWinner
+        winners = db.query(WeeklyWinner).order_by(desc(WeeklyWinner.week_start), WeeklyWinner.rank).all()
+        return {"success": True, "weekly_winners": [w.to_dict() for w in winners]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weekly-winners/{winner_id}")
+async def get_weekly_winner(winner_id: int, db: Session = Depends(get_db)):
+    """Get weekly winner by ID"""
+    try:
+        from app.models import WeeklyWinner
+        winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
+        if not winner:
+            raise HTTPException(status_code=404, detail="Winner not found")
+        return {"success": True, "data": winner.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/weekly-winners/{winner_id}")
+async def update_weekly_winner(winner_id: str, winner_data: dict, db: Session = Depends(get_db)):
+    """Update weekly winner (mainly for marking reward_sent)"""
+    try:
+        from app.models import WeeklyWinner
+        winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
+        if not winner:
+            raise HTTPException(status_code=404, detail="Winner not found")
+        
+        if 'reward_sent' in winner_data:
+            winner.reward_sent = winner_data['reward_sent']
+        if 'steem_tx_id' in winner_data:
+            winner.steem_tx_id = winner_data['steem_tx_id']
+        
+        db.commit()
+        db.refresh(winner)
+        
+        return {"success": True, "data": winner.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/weekly-winners/{winner_id}")
+async def delete_weekly_winner(winner_id: str, db: Session = Depends(get_db)):
+    """Delete weekly winner"""
+    try:
+        from app.models import WeeklyWinner
+        winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
+        if not winner:
+            raise HTTPException(status_code=404, detail="Winner not found")
+        
+        db.delete(winner)
+        db.commit()
+        return {"success": True, "message": "Winner deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

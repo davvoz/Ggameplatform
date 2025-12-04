@@ -763,6 +763,14 @@ export default class RuntimeShell {
                 }
 
                 this.showCur8Notification(data.session.xp_earned);
+                
+                // Check for level up
+                if (data.session.level_up) {
+                    this.showLevelUpNotification(data.session.level_up);
+                }
+
+                // Note: Leaderboard (both weekly and all-time) is now automatically
+                // updated by the backend trigger system when session ends
             }
         } catch (error) {
             this.log('Failed to end game session:', error);
@@ -833,6 +841,70 @@ export default class RuntimeShell {
             notification.remove();
             style.remove();
         }, 4000);
+    }
+
+    /**
+     * Show level-up notification
+     */
+    showLevelUpNotification(levelUpData) {
+        const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
+
+        const modal = document.createElement('div');
+        modal.className = 'level-up-modal';
+        modal.innerHTML = `
+            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+                <div class="level-up-animation">
+                    <div class="level-up-rays"></div>
+                    <div class="level-up-badge-container">
+                        <span class="level-up-badge">${badge}</span>
+                    </div>
+                </div>
+                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+                <div class="level-up-levels">
+                    <span class="old-level">${old_level}</span>
+                    <span class="level-arrow">→</span>
+                    <span class="new-level">${new_level}</span>
+                </div>
+                <div class="level-up-new-title">${title}</div>
+                ${is_milestone ? '<div class="level-up-milestone-badge">✨ TRAGUARDO ✨</div>' : ''}
+                ${coins_awarded > 0 ? `
+                    <div class="level-up-reward">
+                        <span class="reward-icon">🪙</span>
+                        <span class="reward-amount">+${coins_awarded} Coins</span>
+                    </div>
+                ` : ''}
+                <button class="level-up-close">Continua</button>
+            </div>
+        `;
+
+        // Load level-up styles if not already loaded
+        if (!document.querySelector('#level-up-styles')) {
+            const link = document.createElement('link');
+            link.id = 'level-up-styles';
+            link.rel = 'stylesheet';
+            link.href = '/css/level-widget.css';
+            document.head.appendChild(link);
+        }
+
+        document.body.appendChild(modal);
+
+        // Trigger animation
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // Close handler
+        const closeBtn = modal.querySelector('.level-up-close');
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+
+        // Auto-close after 6 seconds
+        setTimeout(() => {
+            if (modal.parentElement) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }, 6000);
     }
 
     /**

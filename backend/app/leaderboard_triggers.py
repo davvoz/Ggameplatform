@@ -1,23 +1,24 @@
 """
 Leaderboard Trigger System
 Automatically updates leaderboard when game sessions are completed
+AGGIORNATO: Ora gestisce sia weekly che all-time leaderboard
 """
 import uuid
 from datetime import datetime
 from sqlalchemy import event, desc
 from sqlalchemy.orm import Session
-from app.models import GameSession, Leaderboard, User
+from app.models import GameSession, Leaderboard, User, WeeklyLeaderboard
 
 
 def update_leaderboard_for_session(session: Session, game_session: GameSession):
     """
     Update leaderboard when a game session is completed.
     
-    REGOLA FONDAMENTALE:
-    - UN solo record per utente per gioco
-    - Il record contiene sempre il punteggio MIGLIORE (massimo)
-    - Se l'utente non ha un record: crea nuovo
-    - Se l'utente ha già un record: aggiorna SOLO se il nuovo score è maggiore
+    AGGIORNATO: Ora gestisce ENTRAMBE le leaderboard:
+    - All-time: UN solo record per utente per gioco con il punteggio MIGLIORE
+    - Weekly: UN solo record per utente per gioco PER SETTIMANA con il punteggio MIGLIORE della settimana
+    
+    IMPORTANTE: Esclude gli utenti anonimi dalle leaderboard (is_anonymous = 1)
     """
     if not game_session.ended_at:
         # Session not yet ended, skip
@@ -26,7 +27,19 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
     game_id = game_session.game_id
     user_id = game_session.user_id
     score = game_session.score
+    now = datetime.utcnow().isoformat()
     
+    # Check if user is anonymous - skip leaderboard update for anonymous users
+    user = session.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        print(f"⚠️  User {user_id} not found, skipping leaderboard update")
+        return
+    
+    if user.is_anonymous:
+        print(f"👤 User {user_id} is anonymous, skipping leaderboard update")
+        return
+    
+    # ========== ALL-TIME LEADERBOARD ==========
     # Check if user already has an entry for this game (deve essercene max 1 per via del constraint UNIQUE)
     existing_entry = session.query(Leaderboard).filter(
         Leaderboard.game_id == game_id,
@@ -37,29 +50,64 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
         # L'utente ha già un record per questo gioco
         if score > existing_entry.score:
             # Nuovo punteggio migliore! Aggiorna il record esistente
-            print(f"🏆 New high score for user {user_id} in game {game_id}: {score} (was {existing_entry.score})")
+            print(f"🏆 [ALL-TIME] New high score for user {user_id} in game {game_id}: {score} (was {existing_entry.score})")
             existing_entry.score = score
-            existing_entry.created_at = datetime.utcnow().isoformat()
+            existing_entry.created_at = now
             # Il rank verrà ricalcolato dopo
         else:
             # Non è un punteggio migliore, nessun aggiornamento necessario
-            print(f"📊 Score {score} for user {user_id} in game {game_id} is not better than current best {existing_entry.score}")
-            return
+            print(f"📊 [ALL-TIME] Score {score} for user {user_id} in game {game_id} is not better than current best {existing_entry.score}")
     else:
         # L'utente non ha ancora un record per questo gioco, creane uno nuovo
-        print(f"🎯 New leaderboard entry for user {user_id} in game {game_id}: {score}")
+        print(f"🎯 [ALL-TIME] New leaderboard entry for user {user_id} in game {game_id}: {score}")
         new_entry = Leaderboard(
             entry_id=f"lb_{uuid.uuid4().hex[:16]}",
             user_id=user_id,
             game_id=game_id,
             score=score,
             rank=None,  # Will be calculated below
-            created_at=datetime.utcnow().isoformat()
+            created_at=now
         )
         session.add(new_entry)
     
     # Ricalcola i rank per questo gioco (ordina per score DESC)
     recalculate_ranks_for_game(session, game_id)
+    
+    # ========== WEEKLY LEADERBOARD ==========
+    from app.leaderboard_repository import LeaderboardRepository
+    
+    lb_repo = LeaderboardRepository(session)
+    week_start, week_end = lb_repo.get_current_week()
+    
+    # Check if user has a weekly entry for this game in current week
+    weekly_entry = session.query(WeeklyLeaderboard).filter(
+        WeeklyLeaderboard.user_id == user_id,
+        WeeklyLeaderboard.game_id == game_id,
+        WeeklyLeaderboard.week_start == week_start
+    ).first()
+    
+    if weekly_entry:
+        # Update only if new score is better
+        if score > weekly_entry.score:
+            print(f"📅 [WEEKLY] New weekly high score for user {user_id} in game {game_id}: {score} (was {weekly_entry.score})")
+            weekly_entry.score = score
+            weekly_entry.updated_at = now
+        else:
+            print(f"📅 [WEEKLY] Score {score} not better than weekly best {weekly_entry.score}")
+    else:
+        # Create new weekly entry
+        print(f"🆕 [WEEKLY] New weekly entry for user {user_id} in game {game_id}: {score}")
+        weekly_entry = WeeklyLeaderboard(
+            entry_id=f"wkly_{uuid.uuid4().hex[:16]}",
+            week_start=week_start,
+            week_end=week_end,
+            user_id=user_id,
+            game_id=game_id,
+            score=score,
+            created_at=now,
+            updated_at=now
+        )
+        session.add(weekly_entry)
 
 
 def recalculate_ranks_for_game(session: Session, game_id: str):

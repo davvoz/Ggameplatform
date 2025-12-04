@@ -127,6 +127,14 @@ function renderGameCard(game) {
         `;
     }
     
+    // Add STEEM rewards badge if enabled
+    let steemBadgeHTML = '';
+    console.log('Game:', game.title, 'steem_rewards_enabled:', game.steem_rewards_enabled);
+    if (game.steem_rewards_enabled) {
+        steemBadgeHTML = `<span class="steem-rewards-badge" title="This game offers STEEM rewards">💰 STEEM</span>`;
+        console.log('Adding STEEM badge for', game.title);
+    }
+    
     card.innerHTML = `
         <div class="game-thumbnail">
             <img src="${game.thumbnail || '/static/default-thumbnail.png'}" 
@@ -134,6 +142,7 @@ function renderGameCard(game) {
             ${statusHTML}
         </div>
         <div class="game-info">
+            ${steemBadgeHTML}
             <h3>${game.title}</h3>
             <p>${game.description}</p>
             <div class="game-meta">

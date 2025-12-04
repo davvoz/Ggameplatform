@@ -132,7 +132,7 @@ class AuthManager {
     /**
      * Aggiorna le informazioni utente nella navbar
      */
-    showUserBanner() {
+    async showUserBanner() {
         if (!this.isAuthenticated()) {
             // Nascondi userInfo se non autenticato
             const userInfo = document.getElementById('userInfo');
@@ -159,7 +159,28 @@ class AuthManager {
             }
             
             userName.textContent = methodBadge + displayName;
-            userCur8.textContent = `⭐ ${this.getTotalCur8().toFixed(2)} XP`;
+            
+            // Fetch level info and show compact level display
+            try {
+                const API_URL = window.ENV?.API_URL || window.config?.API_URL || window.location.origin;
+                const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
+                if (response.ok) {
+                    const levelInfo = await response.json();
+                    userCur8.innerHTML = `
+                        <span style="font-size: 18px; margin-right: 4px;">${levelInfo.badge}</span>
+                        <span style="font-weight: 600;">Lv${levelInfo.current_level}</span>
+                        <span style="font-size: 11px; opacity: 0.7; margin-left: 4px;">(${levelInfo.progress_percent.toFixed(0)}%)</span>
+                    `;
+                    userCur8.title = `${levelInfo.title} - ${levelInfo.current_xp.toFixed(0)} XP`;
+                } else {
+                    // Fallback to XP display
+                    userCur8.textContent = `⭐ ${this.getTotalCur8().toFixed(2)} XP`;
+                }
+            } catch (error) {
+                console.error('Failed to load level for navbar:', error);
+                userCur8.textContent = `⭐ ${this.getTotalCur8().toFixed(2)} XP`;
+            }
+            
             userInfo.style.display = 'flex';
         }
     }

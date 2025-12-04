@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Database Viewer Configuration
  * Centralised configuration for all tables and their definitions
  * To add a new table: simply add a new entry to TABLE_DEFINITIONS
@@ -90,6 +90,19 @@ const TABLE_DEFINITIONS = {
                 }
             },
             {
+                key: 'steem_rewards_enabled',
+                label: 'STEEM Rewards',
+                type: 'custom',
+                render: (value) => {
+                    const enabled = Boolean(value);
+                    return {
+                        type: 'badge',
+                        text: enabled ? 'ENABLED' : 'DISABLED',
+                        color: enabled ? '#28a745' : '#6c757d'
+                    };
+                }
+            },
+            {
                 key: 'metadata',
                 label: 'Play Count',
                 type: 'custom',
@@ -99,8 +112,30 @@ const TABLE_DEFINITIONS = {
                 })
             },
             {
+                key: 'entry_point',
+                label: 'Entry Point',
+                type: 'text'
+            },
+            {
+                key: 'tags',
+                label: 'Tags',
+                type: 'json-preview',
+                maxLength: 30
+            },
+            {
+                key: 'extra_data',
+                label: 'Extra Data',
+                type: 'json-preview',
+                maxLength: 30
+            },
+            {
                 key: 'created_at',
                 label: 'Data Creazione',
+                type: 'date'
+            },
+            {
+                key: 'updated_at',
+                label: 'Data Modifica',
                 type: 'date'
             },
             {
@@ -115,11 +150,15 @@ const TABLE_DEFINITIONS = {
             { name: 'description', type: 'TEXT' },
             { name: 'author', type: 'STRING' },
             { name: 'version', type: 'STRING' },
-            { name: 'category', type: 'STRING' },
-            { name: 'status_id', type: 'INTEGER', fk: { table: 'game_statuses', column: 'status_id' } },
             { name: 'thumbnail', type: 'STRING' },
-            { name: 'metadata', type: 'JSON' },
-            { name: 'created_at', type: 'DATETIME' }
+            { name: 'entry_point', type: 'STRING' },
+            { name: 'category', type: 'STRING' },
+            { name: 'tags', type: 'JSON' },
+            { name: 'status_id', type: 'INTEGER', fk: { table: 'game_statuses', column: 'status_id' } },
+            { name: 'steem_rewards_enabled', type: 'BOOLEAN' },
+            { name: 'extra_data', type: 'JSON' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
         ]
     },
 
@@ -177,13 +216,81 @@ const TABLE_DEFINITIONS = {
             },
             {
                 key: 'cur8_multiplier',
-                label: 'Moltiplicatore',
+                label: 'Multiplier',
                 type: 'custom',
                 render: (value) => ({
                     type: 'text',
-                    text: (value || 1.0).toFixed(1) + 'x',
+                    text: (value || 1.0).toFixed(2) + 'x',
                     style: 'font-weight: 600; color: #9c27b0;'
                 })
+            },
+            {
+                key: 'votes_cur8_witness',
+                label: 'Witness',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: value ? '✅' : '⬜',
+                    style: `font-size: 16px;`
+                })
+            },
+            {
+                key: 'delegation_amount',
+                label: 'Delegation',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: (value || 0).toFixed(3) + ' SP',
+                    style: 'font-weight: 500; color: #2196f3;'
+                })
+            },
+            {
+                key: 'last_multiplier_check',
+                label: 'Last Check',
+                type: 'custom',
+                render: (value) => {
+                    if (!value) return { type: 'text', text: 'Never', style: 'color: #999;' };
+                    const date = new Date(value);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    if (diffMins < 1) return { type: 'text', text: 'Just now', style: 'color: #4caf50;' };
+                    if (diffMins < 60) return { type: 'text', text: `${diffMins}m ago`, style: 'color: #4caf50;' };
+                    const diffHours = Math.floor(diffMins / 60);
+                    return { type: 'text', text: `${diffHours}h ago`, style: 'color: #ff9800;' };
+                }
+            },
+            {
+                key: 'password_hash',
+                label: 'Password Hash',
+                type: 'custom',
+                render: (value) => ({
+                    type: 'text',
+                    text: value ? '••••••••' : '-',
+                    style: 'color: #999; font-family: monospace;'
+                })
+            },
+            {
+                key: 'game_scores',
+                label: 'Game Scores',
+                type: 'json-preview',
+                maxLength: 30
+            },
+            {
+                key: 'avatar',
+                label: 'Avatar',
+                type: 'text'
+            },
+            {
+                key: 'last_login',
+                label: 'Ultimo Login',
+                type: 'date'
+            },
+            {
+                key: 'extra_data',
+                label: 'Extra Data',
+                type: 'json-preview',
+                maxLength: 30
             },
             {
                 key: 'created_at',
@@ -197,14 +304,22 @@ const TABLE_DEFINITIONS = {
             }
         ],
         fields: [
-            { name: 'user_id', type: 'STRING', pk: true },
-            { name: 'username', type: 'STRING' },
-            { name: 'email', type: 'STRING' },
-            { name: 'steem_username', type: 'STRING' },
-            { name: 'is_anonymous', type: 'BOOLEAN' },
-            { name: 'total_xp_earned', type: 'FLOAT' },
-            { name: 'cur8_multiplier', type: 'FLOAT' },
-            { name: 'created_at', type: 'DATETIME' }
+            { name: 'user_id', type: 'STRING', pk: true, label: 'User ID' },
+            { name: 'username', type: 'STRING', label: 'Username' },
+            { name: 'email', type: 'STRING', label: 'Email' },
+            { name: 'password_hash', type: 'STRING', label: 'Password Hash' },
+            { name: 'steem_username', type: 'STRING', label: 'Steem Username' },
+            { name: 'is_anonymous', type: 'BOOLEAN', label: 'Is Anonymous' },
+            { name: 'cur8_multiplier', type: 'FLOAT', label: 'CUR8 Multiplier' },
+            { name: 'votes_cur8_witness', type: 'BOOLEAN', label: 'Votes CUR8 Witness' },
+            { name: 'delegation_amount', type: 'FLOAT', label: 'Delegation Amount (STEEM)' },
+            { name: 'last_multiplier_check', type: 'STRING', label: 'Last Multiplier Check', readonly: true },
+            { name: 'total_xp_earned', type: 'FLOAT', label: 'Total XP Earned' },
+            { name: 'game_scores', type: 'JSON', label: 'Game Scores' },
+            { name: 'avatar', type: 'STRING', label: 'Avatar' },
+            { name: 'last_login', type: 'DATETIME', label: 'Last Login' },
+            { name: 'extra_data', type: 'JSON', label: 'Extra Data' },
+            { name: 'created_at', type: 'DATETIME', label: 'Created At', readonly: true }
         ]
     },
 
@@ -272,6 +387,12 @@ const TABLE_DEFINITIONS = {
                 })
             },
             {
+                key: 'extra_data',
+                label: 'Extra Data',
+                type: 'json-preview',
+                maxLength: 30
+            },
+            {
                 key: 'actions',
                 label: 'Azioni',
                 type: 'actions'
@@ -285,7 +406,8 @@ const TABLE_DEFINITIONS = {
             { name: 'xp_earned', type: 'FLOAT' },
             { name: 'duration_seconds', type: 'INTEGER' },
             { name: 'started_at', type: 'DATETIME' },
-            { name: 'ended_at', type: 'DATETIME' }
+            { name: 'ended_at', type: 'DATETIME' },
+            { name: 'extra_data', type: 'JSON' }
         ]
     },
 
@@ -351,6 +473,11 @@ const TABLE_DEFINITIONS = {
                 type: 'date'
             },
             {
+                key: 'updated_at',
+                label: 'Data Modifica',
+                type: 'date'
+            },
+            {
                 key: 'actions',
                 label: 'Azioni',
                 type: 'actions'
@@ -361,10 +488,11 @@ const TABLE_DEFINITIONS = {
             { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
             { name: 'rule_name', type: 'STRING' },
             { name: 'rule_type', type: 'STRING' },
+            { name: 'parameters', type: 'JSON' },
             { name: 'priority', type: 'INTEGER' },
             { name: 'is_active', type: 'BOOLEAN' },
-            { name: 'parameters', type: 'JSON' },
-            { name: 'created_at', type: 'DATETIME' }
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
         ]
     },
 
@@ -409,14 +537,20 @@ const TABLE_DEFINITIONS = {
                 style: 'font-weight: bold; color: #28a745;'
             },
             {
-                key: 'sats_reward',
-                label: 'Sats',
+                key: 'reward_coins',
+                label: '🪙 Coins',
                 type: 'custom',
                 render: (value) => ({
                     type: 'text',
-                    text: value,
-                    style: value > 0 ? 'font-weight: bold; color: #ffc107;' : ''
+                    text: value || 0,
+                    style: value > 0 ? 'font-weight: bold; color: #FFD700;' : 'color: #999;'
                 })
+            },
+            {
+                key: 'description',
+                label: 'Descrizione',
+                type: 'text',
+                searchable: true
             },
             {
                 key: 'is_active',
@@ -426,6 +560,11 @@ const TABLE_DEFINITIONS = {
                 falseText: '✗ Inattivo',
                 trueColor: '#28a745',
                 falseColor: '#dc3545'
+            },
+            {
+                key: 'created_at',
+                label: 'Data Creazione',
+                type: 'date'
             },
             {
                 key: 'actions',
@@ -441,9 +580,9 @@ const TABLE_DEFINITIONS = {
             { name: 'quest_type', type: 'STRING' },
             { name: 'target_value', type: 'INTEGER' },
             { name: 'xp_reward', type: 'INTEGER' },
-            { name: 'sats_reward', type: 'INTEGER' },
-            { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
-            { name: 'is_active', type: 'BOOLEAN' }
+            { name: 'reward_coins', type: 'INTEGER' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' }
         ]
     },
 
@@ -460,6 +599,12 @@ const TABLE_DEFINITIONS = {
             color: '#FF5722'
         },
         columns: [
+            {
+                key: 'entry_id',
+                label: 'Entry ID',
+                type: 'text',
+                searchable: true
+            },
             {
                 key: 'rank',
                 label: 'Posizione',
@@ -499,6 +644,7 @@ const TABLE_DEFINITIONS = {
             { name: 'user_id', type: 'STRING', fk: 'users.user_id' },
             { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
             { name: 'score', type: 'INTEGER' },
+            { name: 'rank', type: 'INTEGER' },
             { name: 'created_at', type: 'DATETIME' }
         ]
     },
@@ -571,6 +717,11 @@ const TABLE_DEFINITIONS = {
                 })
             },
             {
+                key: 'started_at',
+                label: 'Data Inizio',
+                type: 'date'
+            },
+            {
                 key: 'actions',
                 label: 'Azioni',
                 type: 'actions'
@@ -584,7 +735,8 @@ const TABLE_DEFINITIONS = {
             { name: 'is_completed', type: 'BOOLEAN' },
             { name: 'is_claimed', type: 'BOOLEAN' },
             { name: 'completed_at', type: 'DATETIME' },
-            { name: 'claimed_at', type: 'DATETIME' }
+            { name: 'claimed_at', type: 'DATETIME' },
+            { name: 'started_at', type: 'DATETIME' }
         ]
     },
 
@@ -666,6 +818,11 @@ const TABLE_DEFINITIONS = {
                 type: 'date'
             },
             {
+                key: 'updated_at',
+                label: 'Data Modifica',
+                type: 'date'
+            },
+            {
                 key: 'actions',
                 label: 'Azioni',
                 type: 'actions'
@@ -681,6 +838,482 @@ const TABLE_DEFINITIONS = {
             { name: 'created_at', type: 'DATETIME' },
             { name: 'updated_at', type: 'DATETIME' }
         ]
+    },
+    user_coins: {
+        name: 'user_coins',
+        label: 'Monete Utenti',
+        apiEndpoint: 'admin/user_coins',
+        dataKey: 'user_coins',
+        icon: '🪙',
+        color: '#FFD700',
+        erDiagram: {
+            x: 50,
+            y: 500,
+            color: '#FFD700'
+        },
+        columns: [
+            { key: 'user_id', label: 'User ID', type: 'text', searchable: true },
+            { key: 'balance', label: 'Balance', type: 'number', sortable: true },
+            { key: 'total_earned', label: 'Total Earned', type: 'number', sortable: true },
+            { key: 'total_spent', label: 'Total Spent', type: 'number', sortable: true },
+            { key: 'last_updated', label: 'Last Updated', type: 'datetime', sortable: true },
+            { key: 'created_at', label: 'Created', type: 'datetime', sortable: true },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'user_id', type: 'STRING', pk: true, fk: { table: 'users', field: 'user_id' } },
+            { name: 'balance', type: 'INTEGER' },
+            { name: 'total_earned', type: 'INTEGER' },
+            { name: 'total_spent', type: 'INTEGER' },
+            { name: 'last_updated', type: 'DATETIME' },
+            { name: 'created_at', type: 'DATETIME' }
+        ]
+    },
+    coin_transactions: {
+        name: 'coin_transactions',
+        label: 'Transazioni Monete',
+        apiEndpoint: 'admin/coin_transactions',
+        dataKey: 'transactions',
+        icon: '💸',
+        color: '#FF9800',
+        erDiagram: {
+            x: 350,
+            y: 500,
+            color: '#FF9800'
+        },
+        columns: [
+            { key: 'transaction_id', label: 'ID', type: 'text', searchable: true },
+            { key: 'user_id', label: 'User', type: 'text', searchable: true },
+            { 
+                key: 'amount', 
+                label: 'Amount', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => {
+                    const color = value > 0 ? '#28a745' : '#dc3545';
+                    return {
+                        type: 'html',
+                        content: `<span style="color: ${color}; font-weight: bold;">${value > 0 ? '+' : ''}${value}</span>`
+                    };
+                }
+            },
+            { key: 'transaction_type', label: 'Type', type: 'badge', searchable: true },
+            { key: 'source_id', label: 'Source', type: 'text' },
+            { key: 'description', label: 'Description', type: 'text', searchable: true },
+            { key: 'balance_after', label: 'Balance After', type: 'number' },
+            { key: 'created_at', label: 'Date', type: 'datetime', sortable: true },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'transaction_id', type: 'STRING', pk: true },
+            { name: 'user_id', type: 'STRING', fk: { table: 'users', field: 'user_id' } },
+            { name: 'amount', type: 'INTEGER' },
+            { name: 'transaction_type', type: 'STRING' },
+            { name: 'source_id', type: 'STRING' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'balance_after', type: 'INTEGER' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'extra_data', type: 'JSON' }
+        ]
+    },
+
+    level_milestones: {
+        name: 'level_milestones',
+        label: 'Livelli Milestone',
+        apiEndpoint: 'admin/level-milestones',
+        dataKey: 'milestones',
+        icon: '🏆',
+        color: '#6366f1',
+        erDiagram: {
+            x: 850,
+            y: 350,
+            color: '#6366f1'
+        },
+        columns: [
+            { 
+                key: 'level', 
+                label: 'Livello', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="font-size: 16px; color: #6366f1;">Lv ${value}</strong>`
+                })
+            },
+            { 
+                key: 'badge', 
+                label: 'Badge', 
+                type: 'text',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<span style="font-size: 32px;">${value}</span>`
+                })
+            },
+            { key: 'title', label: 'Titolo', type: 'text', searchable: true },
+            { 
+                key: 'color', 
+                label: 'Colore', 
+                type: 'text',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<span style="display: inline-block; width: 40px; height: 20px; background: ${value}; border-radius: 4px; border: 1px solid #333;"></span> <code>${value}</code>`
+                })
+            },
+            { key: 'description', label: 'Descrizione', type: 'text', searchable: true },
+            { 
+                key: 'is_active', 
+                label: 'Attivo', 
+                type: 'boolean',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
+                })
+            },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'level', type: 'INTEGER', pk: true },
+            { name: 'title', type: 'STRING' },
+            { name: 'badge', type: 'STRING' },
+            { name: 'color', type: 'STRING' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
+    },
+
+    level_rewards: {
+        name: 'level_rewards',
+        label: 'Ricompense Livello',
+        apiEndpoint: 'admin/level-rewards',
+        dataKey: 'level_rewards',
+        icon: '🎁',
+        color: '#8b5cf6',
+        erDiagram: {
+            x: 1050,
+            y: 350,
+            color: '#8b5cf6'
+        },
+        columns: [
+            { key: 'reward_id', label: 'ID', type: 'text', searchable: true },
+            { 
+                key: 'level', 
+                label: 'Livello', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #6366f1;">Lv ${value}</strong>`
+                })
+            },
+            { key: 'reward_type', label: 'Tipo', type: 'badge', searchable: true },
+            { 
+                key: 'reward_amount', 
+                label: 'Quantità', 
+                type: 'number', 
+                sortable: true,
+                render: (value, row) => ({
+                    type: 'html',
+                    content: row.reward_type === 'coins' ? `🪙 ${value}` : value
+                })
+            },
+            { key: 'description', label: 'Descrizione', type: 'text', searchable: true },
+            { 
+                key: 'is_active', 
+                label: 'Attivo', 
+                type: 'boolean',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
+                })
+            },
+            {
+                key: 'created_at',
+                label: 'Data Creazione',
+                type: 'date'
+            },
+            {
+                key: 'updated_at',
+                label: 'Data Modifica',
+                type: 'date'
+            },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'reward_id', type: 'STRING', pk: true },
+            { name: 'level', type: 'INTEGER', fk: 'level_milestones.level' },
+            { name: 'reward_type', type: 'STRING' },
+            { name: 'reward_amount', type: 'INTEGER' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
+    },
+
+    weekly_leaderboards: {
+        name: 'weekly_leaderboards',
+        label: 'Leaderboard Settimanale',
+        apiEndpoint: 'admin/weekly-leaderboards',
+        dataKey: 'weekly_leaderboards',
+        icon: '📅',
+        color: '#10b981',
+        erDiagram: {
+            x: 1050,
+            y: 500,
+            color: '#10b981'
+        },
+        columns: [
+            { key: 'entry_id', label: 'ID', type: 'text', searchable: true },
+            { 
+                key: 'week_start', 
+                label: 'Settimana Inizio', 
+                type: 'date',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #10b981;">${Utils.formatDate(value)}</strong>`
+                })
+            },
+            { key: 'week_end', label: 'Settimana Fine', type: 'date' },
+            { key: 'user_id', label: 'User ID', type: 'text', searchable: true },
+            { key: 'game_id', label: 'Game ID', type: 'text', searchable: true },
+            { 
+                key: 'score', 
+                label: 'Score', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="font-size: 1.1em; color: #fbbf24;">${value}</strong>`
+                })
+            },
+            {
+                key: 'rank',
+                label: 'Rank',
+                type: 'number'
+            },
+            { key: 'created_at', label: 'Data Creazione', type: 'date' },
+            { key: 'updated_at', label: 'Data Modifica', type: 'date' },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'entry_id', type: 'STRING', pk: true },
+            { name: 'week_start', type: 'DATE' },
+            { name: 'week_end', type: 'DATE' },
+            { name: 'user_id', type: 'STRING', fk: 'users.user_id' },
+            { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
+            { name: 'score', type: 'INTEGER' },
+            { name: 'rank', type: 'INTEGER' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
+    },
+
+    leaderboard_rewards: {
+        name: 'leaderboard_rewards',
+        label: 'Ricompense Leaderboard',
+        apiEndpoint: 'admin/leaderboard-rewards',
+        dataKey: 'leaderboard_rewards',
+        icon: '🏅',
+        color: '#f59e0b',
+        erDiagram: {
+            x: 1250,
+            y: 500,
+            color: '#f59e0b'
+        },
+        columns: [
+            { key: 'reward_id', label: 'ID', type: 'text' },
+            { 
+                key: 'rank_start', 
+                label: 'Rank Inizio', 
+                type: 'number',
+                render: (value, row) => {
+                    const medal = value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅';
+                    return {
+                        type: 'html',
+                        content: `${medal} <strong>${value}${row.rank_end && row.rank_end !== value ? ` - ${row.rank_end}` : ''}</strong>`
+                    };
+                }
+            },
+            { key: 'rank_end', label: 'Rank Fine', type: 'number' },
+            { 
+                key: 'steem_reward', 
+                label: 'STEEM', 
+                type: 'number',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #3b82f6; font-size: 1.1em;">${value} STEEM</strong>`
+                })
+            },
+            { 
+                key: 'coin_reward', 
+                label: 'Coins', 
+                type: 'number',
+                render: (value) => ({
+                    type: 'html',
+                    content: `🪙 <strong style="color: #fbbf24;">${value}</strong>`
+                })
+            },
+            { 
+                key: 'game_id', 
+                label: 'Game ID', 
+                type: 'text',
+                render: (value) => ({
+                    type: 'html',
+                    content: value || '<span style="color: #10b981;">🌐 Globale</span>'
+                })
+            },
+            {
+                key: 'description',
+                label: 'Descrizione',
+                type: 'text'
+            },
+            {
+                key: 'is_active',
+                label: 'Attivo',
+                type: 'boolean',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
+                })
+            },
+            {
+                key: 'created_at',
+                label: 'Data Creazione',
+                type: 'date'
+            },
+            {
+                key: 'updated_at',
+                label: 'Data Modifica',
+                type: 'date'
+            },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'reward_id', type: 'STRING', pk: true },
+            { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
+            { name: 'rank_start', type: 'INTEGER' },
+            { name: 'rank_end', type: 'INTEGER' },
+            { name: 'steem_reward', type: 'FLOAT' },
+            { name: 'coin_reward', type: 'INTEGER' },
+            { name: 'description', type: 'TEXT' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
+    },
+
+    weekly_winners: {
+        name: 'weekly_winners',
+        label: 'Vincitori Settimanali',
+        apiEndpoint: 'admin/weekly-winners',
+        dataKey: 'weekly_winners',
+        icon: '🏆',
+        color: '#ef4444',
+        erDiagram: {
+            x: 1450,
+            y: 500,
+            color: '#ef4444'
+        },
+        columns: [
+            { key: 'winner_id', label: 'ID', type: 'number' },
+            { 
+                key: 'week_start', 
+                label: 'Settimana', 
+                type: 'date',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #ef4444;">${Utils.formatDate(value)}</strong>`
+                })
+            },
+            { key: 'user_id', label: 'User ID', type: 'text', searchable: true },
+            { key: 'game_id', label: 'Game ID', type: 'text', searchable: true },
+            { 
+                key: 'rank', 
+                label: 'Posizione', 
+                type: 'number',
+                render: (value) => {
+                    const medal = value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅';
+                    return {
+                        type: 'html',
+                        content: `${medal} <strong>${value}°</strong>`
+                    };
+                }
+            },
+            { 
+                key: 'score', 
+                label: 'Score', 
+                type: 'number',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="font-size: 1.1em;">${value}</strong>`
+                })
+            },
+            { 
+                key: 'steem_reward', 
+                label: 'STEEM', 
+                type: 'number',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<span style="color: #3b82f6; font-weight: bold;">${value} STEEM</span>`
+                })
+            },
+            { 
+                key: 'coin_reward', 
+                label: 'Coins', 
+                type: 'number',
+                render: (value) => ({
+                    type: 'html',
+                    content: `🪙 ${value}`
+                })
+            },
+            { 
+                key: 'reward_sent', 
+                label: 'Inviato', 
+                type: 'boolean',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? '<span style="color: #10b981;">✓ Sì</span>' : '<span style="color: #fbbf24;">⏳ In sospeso</span>'
+                })
+            },
+            { 
+                key: 'steem_tx_id', 
+                label: 'TX ID', 
+                type: 'text',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? `<code style="font-size: 0.8em;">${value.substring(0, 8)}...</code>` : '-'
+                })
+            },
+            {
+                key: 'reward_sent_at',
+                label: 'Data Invio',
+                type: 'date'
+            },
+            {
+                key: 'week_end',
+                label: 'Fine Settimana',
+                type: 'date'
+            },
+            { key: 'created_at', label: 'Data', type: 'date' },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'winner_id', type: 'STRING', pk: true },
+            { name: 'week_start', type: 'DATE' },
+            { name: 'week_end', type: 'DATE' },
+            { name: 'game_id', type: 'STRING', fk: 'games.game_id' },
+            { name: 'user_id', type: 'STRING', fk: 'users.user_id' },
+            { name: 'rank', type: 'INTEGER' },
+            { name: 'score', type: 'INTEGER' },
+            { name: 'steem_reward', type: 'FLOAT' },
+            { name: 'coin_reward', type: 'INTEGER' },
+            { name: 'steem_tx_id', type: 'STRING' },
+            { name: 'reward_sent', type: 'BOOLEAN' },
+            { name: 'reward_sent_at', type: 'DATETIME' },
+            { name: 'created_at', type: 'DATETIME' }
+        ]
     }
 };
 
@@ -692,7 +1325,13 @@ const STATS_CONFIG = [
     { key: 'total_leaderboard_entries', label: 'Leaderboard', icon: '🥇' },
     { key: 'total_xp_rules', label: 'XP Rules', icon: '⭐' },
     { key: 'total_quests', label: 'Quests', icon: '🏆' },
-    { key: 'total_game_statuses', label: 'Stati', icon: '🏷️' }
+    { key: 'total_game_statuses', label: 'Stati', icon: '🏷️' },
+    { key: 'total_coins_circulation', label: 'Coins', icon: '🪙' },
+    { key: 'total_level_milestones', label: 'Milestone', icon: '🏆' },
+    { key: 'total_level_rewards', label: 'Ricompense', icon: '🎁' },
+    { key: 'total_weekly_leaderboard_entries', label: 'Leaderboard Weekly', icon: '📅' },
+    { key: 'total_leaderboard_rewards', label: 'Premi LB', icon: '🏅' },
+    { key: 'total_weekly_winners', label: 'Vincitori', icon: '🏆' }
 ];
 
 // Global configuration

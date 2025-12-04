@@ -19,9 +19,12 @@ from app.repositories import (
     XPRuleRepository,
     QuestRepository,
     UserQuestRepository,
-    GameStatusRepository
+    GameStatusRepository,
+    UserCoinsRepository,
+    CoinTransactionRepository,
+
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction
 
 
 class ValidationError(Exception):
@@ -283,6 +286,14 @@ class LeaderboardService(BaseService):
             if field not in data:
                 raise ValidationError(f"Missing required field: {field}")
         
+        # Check if user is anonymous - prevent leaderboard entry for anonymous users
+        from app.models import User
+        user = self.repository.db.query(User).filter(User.user_id == data['user_id']).first()
+        if not user:
+            raise ValidationError(f"User {data['user_id']} not found")
+        if user.is_anonymous:
+            raise ValidationError(f"Cannot create leaderboard entry for anonymous user {data['user_id']}")
+        
         # Set timestamp
         if 'created_at' not in data:
             data['created_at'] = datetime.utcnow().isoformat()
@@ -445,6 +456,195 @@ class GameStatusService(BaseService):
         return updated.to_dict() if updated else None
 
 
+class CoinService:
+    """
+    Service for coin-related business logic
+    Handles coin rewards, transactions, and balance management
+    """
+    
+    def __init__(
+        self,
+        coins_repository: UserCoinsRepository,
+        transaction_repository: CoinTransactionRepository
+    ):
+        self.coins_repo = coins_repository
+        self.transaction_repo = transaction_repository
+    
+    def get_user_balance(self, user_id: str) -> Dict[str, Any]:
+        """Get user's current coin balance"""
+        user_coins = self.coins_repo.get_or_create(user_id)
+        return user_coins.to_dict()
+    
+    def award_coins(
+        self,
+        user_id: str,
+        amount: int,
+        transaction_type: str,
+        source_id: Optional[str] = None,
+        description: Optional[str] = None,
+        extra_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Award coins to a user and create transaction record
+        
+        Args:
+            user_id: User identifier
+            amount: Positive number of coins to award
+            transaction_type: Type of transaction (quest_reward, leaderboard_reward, etc.)
+            source_id: Optional ID of source (quest_id, leaderboard_rank, etc.)
+            description: Optional description
+            extra_data: Optional additional metadata
+        
+        Returns:
+            Transaction record as dict
+        """
+        if amount <= 0:
+            raise ValidationError("Amount must be positive")
+        
+        # Add coins to user balance
+        user_coins = self.coins_repo.add_coins(user_id, amount)
+        
+        # Create transaction record
+        transaction_id = f"tx_{uuid.uuid4().hex[:16]}"
+        now = datetime.utcnow().isoformat()
+        
+        transaction = CoinTransaction(
+            transaction_id=transaction_id,
+            user_id=user_id,
+            amount=amount,
+            transaction_type=transaction_type,
+            source_id=source_id,
+            description=description or f"Earned {amount} coins",
+            balance_after=user_coins.balance,
+            created_at=now,
+            extra_data=json.dumps(extra_data) if extra_data else '{}'
+        )
+        
+        created = self.transaction_repo.create(transaction)
+        return created.to_dict()
+    
+    def spend_coins(
+        self,
+        user_id: str,
+        amount: int,
+        transaction_type: str,
+        source_id: Optional[str] = None,
+        description: Optional[str] = None,
+        extra_data: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Spend coins from user balance
+        
+        Returns:
+            Transaction record as dict, or None if insufficient balance
+        """
+        if amount <= 0:
+            raise ValidationError("Amount must be positive")
+        
+        # Try to remove coins
+        user_coins = self.coins_repo.remove_coins(user_id, amount)
+        if not user_coins:
+            return None  # Insufficient balance
+        
+        # Create transaction record (negative amount)
+        transaction_id = f"tx_{uuid.uuid4().hex[:16]}"
+        now = datetime.utcnow().isoformat()
+        
+        transaction = CoinTransaction(
+            transaction_id=transaction_id,
+            user_id=user_id,
+            amount=-amount,  # Negative for spending
+            transaction_type=transaction_type,
+            source_id=source_id,
+            description=description or f"Spent {amount} coins",
+            balance_after=user_coins.balance,
+            created_at=now,
+            extra_data=json.dumps(extra_data) if extra_data else '{}'
+        )
+        
+        created = self.transaction_repo.create(transaction)
+        return created.to_dict()
+    
+    def get_user_transactions(
+        self,
+        user_id: str,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get user's transaction history"""
+        transactions = self.transaction_repo.get_by_user(user_id, limit)
+        return [tx.to_dict() for tx in transactions]
+    
+
+    
+    def award_quest_reward(self, user_id: str, quest_id: int, quest_title: str, quest_sats_reward: int = 0) -> Optional[Dict[str, Any]]:
+        """Award coins for quest completion
+        
+        Uses reward_coins value from quest definition only.
+        No defaults or overrides - if quest.reward_coins is 0, no coins awarded.
+        """
+        # Only use the reward_coins from the quest itself
+        if not quest_sats_reward or quest_sats_reward <= 0:
+            print(f"⚠️ Quest {quest_id} has no coin reward (reward_coins = {quest_sats_reward})")
+            return None
+        
+        print(f"💰 Awarding {quest_sats_reward} coins for quest {quest_id}: {quest_title}")
+        
+        return self.award_coins(
+            user_id=user_id,
+            amount=quest_sats_reward,
+            transaction_type="quest_reward",
+            source_id=str(quest_id),
+            description=f"Completed quest: {quest_title}",
+            extra_data={"quest_id": quest_id, "quest_title": quest_title}
+        )
+    
+    def award_leaderboard_reward(
+        self,
+        user_id: str,
+        game_id: str,
+        rank: int,
+        score: int
+    ) -> Optional[Dict[str, Any]]:
+        """Award coins for leaderboard position"""
+        # Check if there's a reward for this rank
+        reward_config = self.get_reward_config("leaderboard_rank", str(rank))
+        
+        if not reward_config:
+            # Try rank ranges (e.g., "top_10", "top_100")
+            if rank <= 3:
+                reward_config = self.get_reward_config("leaderboard_rank", "top_3")
+            elif rank <= 10:
+                reward_config = self.get_reward_config("leaderboard_rank", "top_10")
+            elif rank <= 100:
+                reward_config = self.get_reward_config("leaderboard_rank", "top_100")
+        
+        if reward_config:
+            return self.award_coins(
+                user_id=user_id,
+                amount=reward_config['coin_amount'],
+                transaction_type="leaderboard_reward",
+                source_id=f"{game_id}_rank_{rank}",
+                description=f"Rank #{rank} in {game_id}",
+                extra_data={"game_id": game_id, "rank": rank, "score": score}
+            )
+        
+        return None
+    
+    def award_daily_login(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Award coins for daily login"""
+        reward_config = self.get_reward_config("daily_login")
+        
+        if reward_config:
+            return self.award_coins(
+                user_id=user_id,
+                amount=reward_config['coin_amount'],
+                transaction_type="daily_login",
+                description="Daily login bonus"
+            )
+        
+        return None
+
+
 class ServiceFactory:
     """
     Factory Pattern for creating services
@@ -482,3 +682,10 @@ class ServiceFactory:
     @staticmethod
     def create_gamestatus_service(repository: GameStatusRepository) -> GameStatusService:
         return GameStatusService(repository)
+    
+    @staticmethod
+    def create_coin_service(
+        coins_repository: UserCoinsRepository,
+        transaction_repository: CoinTransactionRepository
+    ) -> CoinService:
+        return CoinService(coins_repository, transaction_repository)

@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-DATABASE_PATH = Path(__file__).parent / "app" / "game_platform.db"
-BACKUP_DIR = Path(__file__).parent / "backups"
+DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
+BACKUP_DIR = Path(__file__).parent.parent / "backups"
 
 def backup_database():
     """Crea un backup completo del database"""

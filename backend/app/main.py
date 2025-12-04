@@ -7,6 +7,9 @@ from app.routers import admin
 from app.routers import users
 from app.routers import quests
 from app.routers import game_statuses
+from app.routers import coins
+from app.routers import levels
+from app.routers import leaderboard
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
@@ -150,7 +153,15 @@ app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(quests.router, prefix="/quests", tags=["quests"])
 app.include_router(game_statuses.router, prefix="/game-statuses", tags=["game-statuses"])
+app.include_router(coins.router, tags=["coins"])
+app.include_router(levels.router, tags=["levels"])
+app.include_router(leaderboard.router, tags=["leaderboard"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
+
+# Start weekly leaderboard scheduler
+from app.weekly_scheduler import start_scheduler
+start_scheduler()
+print("✅ Weekly leaderboard scheduler started")
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

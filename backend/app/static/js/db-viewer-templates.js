@@ -92,9 +92,20 @@ class TemplateEngine {
                 break;
 
             case 'json-preview':
-                const preview = JSON.stringify(value).substring(0, column.maxLength || 50);
-                cell.textContent = preview + (preview.length === (column.maxLength || 50) ? '...' : '');
-                cell.title = JSON.stringify(value, null, 2);
+                if (value === undefined || value === null) {
+                    cell.textContent = '-';
+                    cell.style.color = '#999';
+                } else {
+                    try {
+                        const jsonStr = typeof value === 'string' ? value : JSON.stringify(value);
+                        const preview = jsonStr.substring(0, column.maxLength || 50);
+                        cell.textContent = preview + (preview.length === (column.maxLength || 50) ? '...' : '');
+                        cell.title = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+                    } catch (e) {
+                        cell.textContent = String(value || '-');
+                        cell.style.color = '#999';
+                    }
+                }
                 break;
 
             case 'rank':
@@ -199,11 +210,11 @@ class TemplateEngine {
                             <div style="font-size:1.8em;font-weight:bold;color:#28a745">${quest.xp_reward}</div>
                             <div style="color:#6c757d;font-size:0.9em;margin-top:4px">XP Points</div>
                         </div>
-                        ${quest.sats_reward > 0 ? `
+                        ${quest.reward_coins > 0 ? `
                         <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;border:2px solid #ffc107">
-                            <div style="font-size:2.5em;margin-bottom:8px">💰</div>
-                            <div style="font-size:1.8em;font-weight:bold;color:#ffc107">${quest.sats_reward}</div>
-                            <div style="color:#6c757d;font-size:0.9em;margin-top:4px">Satoshi</div>
+                            <div style="font-size:2.5em;margin-bottom:8px">🪙</div>
+                            <div style="font-size:1.8em;font-weight:bold;color:#ffc107">${quest.reward_coins}</div>
+                            <div style="color:#6c757d;font-size:0.9em;margin-top:4px">Coins</div>
                         </div>
                         ` : ''}
                     </div>

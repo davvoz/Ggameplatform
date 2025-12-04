@@ -469,7 +469,7 @@ with get_db_session() as db:
             "quest_type": "play_games",
             "target_value": 10,
             "xp_reward": 150,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Gioca 50 partite",
@@ -477,7 +477,7 @@ with get_db_session() as db:
             "quest_type": "play_games",
             "target_value": 50,
             "xp_reward": 250,
-            "sats_reward": 3
+            "reward_coins": 3
         },
         {
             "title": "Gioca 100 partite",
@@ -485,7 +485,7 @@ with get_db_session() as db:
             "quest_type": "play_games",
             "target_value": 100,
             "xp_reward": 350,
-            "sats_reward": 5
+            "reward_coins": 5
         },
         {
             "title": "Gioca 10 minuti",
@@ -493,7 +493,7 @@ with get_db_session() as db:
             "quest_type": "play_time",
             "target_value": 600,
             "xp_reward": 100,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Gioca 60 minuti totali",
@@ -501,7 +501,7 @@ with get_db_session() as db:
             "quest_type": "play_time",
             "target_value": 3600,
             "xp_reward": 200,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Gioca 24 ore totali (cumulative)",
@@ -509,7 +509,7 @@ with get_db_session() as db:
             "quest_type": "play_time_cumulative",
             "target_value": 86400,
             "xp_reward": 500,
-            "sats_reward": 10
+            "reward_coins": 10
         },
         {
             "title": "Completa 5 partite di un gioco con punteggio ≥ X",
@@ -517,7 +517,7 @@ with get_db_session() as db:
             "quest_type": "score_threshold_per_game",
             "target_value": 5,
             "xp_reward": 200,
-            "sats_reward": 3
+            "reward_coins": 3
         },
         {
             "title": "Login dopo 24h",
@@ -525,7 +525,7 @@ with get_db_session() as db:
             "quest_type": "login_after_24h",
             "target_value": 1,
             "xp_reward": 50,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Login 7 giorni consecutivi",
@@ -533,7 +533,7 @@ with get_db_session() as db:
             "quest_type": "login_streak",
             "target_value": 7,
             "xp_reward": 200,
-            "sats_reward": 10
+            "reward_coins": 10
         },
         {
             "title": "Gioca 5 partite dello stesso gioco",
@@ -541,7 +541,7 @@ with get_db_session() as db:
             "quest_type": "play_same_game",
             "target_value": 5,
             "xp_reward": 150,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Ottieni un punteggio che termina con 0",
@@ -549,7 +549,7 @@ with get_db_session() as db:
             "quest_type": "score_ends_with",
             "target_value": 0,
             "xp_reward": 100,
-            "sats_reward": 0
+            "reward_coins": 0
         },
         {
             "title": "Entra nella Top 5 della leaderboard settimanale",
@@ -557,7 +557,7 @@ with get_db_session() as db:
             "quest_type": "leaderboard_top",
             "target_value": 5,
             "xp_reward": 400,
-            "sats_reward": 10
+            "reward_coins": 10
         },
         {
             "title": "Completa 50 partite in una settimana",
@@ -565,7 +565,7 @@ with get_db_session() as db:
             "quest_type": "play_games_weekly",
             "target_value": 50,
             "xp_reward": 350,
-            "sats_reward": 7
+            "reward_coins": 7
         },
         {
             "title": "Gioca 30 minuti totali in un giorno",
@@ -573,7 +573,7 @@ with get_db_session() as db:
             "quest_type": "play_time_daily",
             "target_value": 1800,
             "xp_reward": 200,
-            "sats_reward": 3
+            "reward_coins": 3
         },
         {
             "title": "Raggiungi livello 10",
@@ -581,7 +581,7 @@ with get_db_session() as db:
             "quest_type": "reach_level",
             "target_value": 10,
             "xp_reward": 200,
-            "sats_reward": 3
+            "reward_coins": 3
         },
         {
             "title": "Guadagna 500 XP in un giorno",
@@ -589,7 +589,7 @@ with get_db_session() as db:
             "quest_type": "xp_daily",
             "target_value": 500,
             "xp_reward": 200,
-            "sats_reward": 5
+            "reward_coins": 5
         },
         {
             "title": "Guadagna 2000 XP in una settimana",
@@ -597,7 +597,7 @@ with get_db_session() as db:
             "quest_type": "xp_weekly",
             "target_value": 2000,
             "xp_reward": 250,
-            "sats_reward": 5
+            "reward_coins": 5
         },
         {
             "title": "Raggiungi livello 30",
@@ -605,7 +605,7 @@ with get_db_session() as db:
             "quest_type": "reach_level",
             "target_value": 30,
             "xp_reward": 350,
-            "sats_reward": 7
+            "reward_coins": 7
         },
         {
             "title": "Raggiungi livello 50",
@@ -613,7 +613,7 @@ with get_db_session() as db:
             "quest_type": "reach_level",
             "target_value": 50,
             "xp_reward": 500,
-            "sats_reward": 10
+            "reward_coins": 10
         },
         {
             "title": "Completa 10 quest totali",
@@ -621,7 +621,7 @@ with get_db_session() as db:
             "quest_type": "complete_quests",
             "target_value": 10,
             "xp_reward": 500,
-            "sats_reward": 10
+            "reward_coins": 10
         }
     ]
     
@@ -636,7 +636,7 @@ with get_db_session() as db:
                 quest_type=quest_data["quest_type"],
                 target_value=quest_data["target_value"],
                 xp_reward=quest_data["xp_reward"],
-                sats_reward=quest_data["sats_reward"],
+                reward_coins=quest_data["reward_coins"],
                 is_active=1,
                 created_at=now
             )

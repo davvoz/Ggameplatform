@@ -149,6 +149,17 @@ function createGameCard(game) {
         console.log('No status found for game:', game.game_id);
     }
 
+    // Add STEEM rewards badge if enabled
+    if (game.steem_rewards_enabled) {
+        const gameInfo = card.querySelector('.game-info');
+        const steemBadge = document.createElement('span');
+        steemBadge.className = 'steem-rewards-badge';
+        steemBadge.title = 'This game offers STEEM rewards';
+        steemBadge.textContent = '💰 STEEM';
+        gameInfo.insertBefore(steemBadge, gameInfo.firstChild);
+        console.log('Added STEEM badge for', game.title);
+    }
+
     // Set game info
     card.querySelector('.game-title').textContent = game.title;
     card.querySelector('.game-description').textContent = game.description || 'No description available.';
@@ -377,6 +388,55 @@ export async function renderQuests() {
     await questRenderer.render();
 }
 
+
+/**
+ * Render wallet page
+ */
+export async function renderWallet() {
+    const appContainer = document.getElementById('app');
+    
+    // Check if user is logged in
+    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+        appContainer.innerHTML = `
+            <div class="error text-center">
+                <h2>Please Log In</h2>
+                <p>You need to be logged in to view your wallet.</p>
+                <button class="play-game-btn" onclick="window.location.href='/auth.html'">Go to Login</button>
+            </div>
+        `;
+        return;
+    }
+
+    appContainer.innerHTML = '<div class="loading">Loading wallet...</div>';
+
+    try {
+        const user = window.AuthManager.getUser();
+        if (!user || !user.user_id) {
+            throw new Error('User not found');
+        }
+        
+        const userId = user.user_id;
+        
+        // Initialize CoinAPI and WalletRenderer if not already done
+        if (!window.coinAPI) {
+            window.coinAPI = new window.CoinAPI();
+        }
+        if (!window.walletRenderer) {
+            window.walletRenderer = new window.WalletRenderer(window.coinAPI);
+        }
+
+        const walletHTML = await window.walletRenderer.render(userId);
+        appContainer.innerHTML = walletHTML;
+    } catch (error) {
+        console.error('Error rendering wallet:', error);
+        appContainer.innerHTML = `
+            <div class="error text-center">
+                <h2>Error Loading Wallet</h2>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
 
 /**
  * Render a 404 not found page

@@ -1,4 +1,4 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404 } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404, renderWallet } from './main.js';
 import { renderLeaderboard } from './LeaderboardRenderer.js';
 import { renderProfile } from './ProfileRenderer.js';
 
@@ -9,6 +9,7 @@ const routes = {
     '/': renderCatalog,
     '/about': renderAbout,
     '/profile': renderProfile,
+    '/wallet': renderWallet,
     '/leaderboard': renderLeaderboard,
     '/quests': renderQuests,
     '/game/:id': renderGameDetail,

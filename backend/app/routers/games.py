@@ -153,6 +153,7 @@ async def list_games(
                 description=game['description'],
                 author=game['author'],
                 version=game['version'],
+                steem_rewards_enabled=game.get('steem_rewards_enabled', False),
                 thumbnail=game['thumbnail'],
                 entry_point=game['entry_point'],
                 category=game['category'],

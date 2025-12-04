@@ -15,12 +15,12 @@ const AuthManager = {
         
         this.loadUserFromStorage();
         this.attachEventListeners();
-        this.updateUI();
+        this.updateUI().catch(err => console.error('Failed to update UI:', err));
         
         
         // Force UI update after a short delay to ensure DOM is ready
         setTimeout(() => {
-            this.updateUI();
+            this.updateUI().catch(err => console.error('Failed to update UI:', err));
         }, 100);
     },
     
@@ -242,7 +242,7 @@ const AuthManager = {
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
         
        
-        this.updateUI();
+        this.updateUI().catch(err => console.error('Failed to update UI:', err));
         
         // Dispatch custom event
         window.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
@@ -272,7 +272,7 @@ const AuthManager = {
         localStorage.removeItem('gameplatform_user');
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authMethod');
-        this.updateUI();
+        this.updateUI().catch(err => console.error('Failed to update UI:', err));
         
         // Dispatch custom event
         window.dispatchEvent(new Event('userLogout'));
@@ -281,7 +281,7 @@ const AuthManager = {
         window.location.href = '/auth.html';
     },
     
-    updateUI() {
+    async updateUI() {
         const userInfo = document.getElementById('userInfo');
         const userName = document.getElementById('userName');
         const userCur8 = document.getElementById('userCur8');
@@ -334,9 +334,40 @@ const AuthManager = {
             
             userName.textContent = badge + displayName;
             
-            const cur8Total = this.currentUser.total_xp_earned || 0;
-            const multiplier = this.currentUser.cur8_multiplier || 1.0;
-            userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+            // Carica info livello
+            try {
+                const API_URL = window.ENV?.API_URL || window.location.origin;
+                const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
+                if (response.ok) {
+                    const levelInfo = await response.json();
+                    userCur8.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}22, ${levelInfo.color || '#6366f1'}11); border-radius: 8px; border: 1px solid ${levelInfo.color || '#6366f1'}44;">
+                            <span style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${levelInfo.badge}</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 700; font-size: 13px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 2px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
+                                    Lv${levelInfo.current_level} · ${levelInfo.title}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                                    <div style="flex: 1; height: 5px; background: rgba(0,0,0,0.2); border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);">
+                                        <div style="height: 100%; background: linear-gradient(90deg, ${levelInfo.color || '#6366f1'}, #8b5cf6); width: ${levelInfo.progress_percent}%; box-shadow: 0 0 6px ${levelInfo.color || '#6366f1'}88;"></div>
+                                    </div>
+                                    <span style="font-size: 10px; font-weight: 600; color: ${levelInfo.color || '#6366f1'}; min-width: 32px; text-align: right;">${levelInfo.progress_percent.toFixed(0)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Fallback se API non risponde
+                    const cur8Total = this.currentUser.total_xp_earned || 0;
+                    const multiplier = this.currentUser.cur8_multiplier || 1.0;
+                    userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+                }
+            } catch (error) {
+                console.error('Failed to load level info:', error);
+                const cur8Total = this.currentUser.total_xp_earned || 0;
+                const multiplier = this.currentUser.cur8_multiplier || 1.0;
+                userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+            }
             
         } else {
             // User not logged in
@@ -362,7 +393,7 @@ const AuthManager = {
             localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
             
             // Aggiorna UI immediatamente
-            this.updateUI();
+            this.updateUI().catch(err => console.error('Failed to update UI:', err));
         } else {
             console.warn('⚠️ updateCur8: Nessun utente loggato');
         }

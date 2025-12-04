@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/game-player.css">
     <link rel="stylesheet" href="/css/leaderboard.css">
     <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/wallet.css">
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/quest-hero.css">
     <link rel="stylesheet" href="/css/auth.css">
@@ -37,6 +38,7 @@
                 <a href="#/" class="nav-link active" data-route="/">Games</a>
                 <a href="#/leaderboard" class="nav-link" data-route="/leaderboard">🏆 Leaderboard</a>
                 <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">🎯 Quests</a>
+                <a href="#/wallet" class="nav-link auth-required" data-route="/wallet" id="walletLink">🪙 Wallet</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
                 <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">👤 Profile</a>
                 <a href="#" class="nav-link" id="dbViewerLink">🗄️ DB Viewer</a>
@@ -266,6 +268,10 @@
                             <span class="stat-label">XP</span>
                             <span class="stat-value total-cur8"></span>
                         </div>
+                        <div class="stat-badge" id="coinsQuickBadge" style="cursor: pointer; transition: all 0.3s;">
+                            <span class="stat-label">🪙 Coins</span>
+                            <span class="stat-value" id="coinBalanceHeader" style="color: #eab308; font-weight: 700;">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -276,21 +282,21 @@
                     <div class="stat-card">
                         <div class="stat-icon">🎮</div>
                         <div class="stat-info">
-                            <span class="stat-number" id="gamesPlayed">0</span>
+                            <span class="stat-number" id="gamesPlayed" data-stat="games-played">0</span>
                             <span class="stat-text">Games Played</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">⏱️</div>
                         <div class="stat-info">
-                            <span class="stat-number" id="totalPlayTime">0h</span>
+                            <span class="stat-number" id="totalPlayTime" data-stat="play-time">0h</span>
                             <span class="stat-text">Total Play Time</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-info">
-                            <span class="stat-number" id="cur8Earned"></span>
+                            <span class="stat-number" id="cur8Earned" data-stat="total-xp"></span>
                             <span class="stat-text">XP</span>
                         </div>
                     </div>
@@ -298,12 +304,16 @@
 
                 <h3>🏆 High Scores by Game</h3>
                 <div class="high-scores-list" id="highScoresList">
-                    <p class="text-muted">No high scores yet. Start playing to set records!</p>
+                    <div id="highScoresContainer">
+                        <p class="text-muted">No high scores yet. Start playing to set records!</p>
+                    </div>
                 </div>
 
                 <h3>🎯 Recent Activity</h3>
                 <div class="activity-list" id="recentActivity">
-                    <p class="text-muted">No recent activity</p>
+                    <div id="recentActivityContainer">
+                        <p class="text-muted">No recent activity</p>
+                    </div>
                 </div>
 
                 <h3>⚙️ Account Settings</h3>
@@ -393,11 +403,60 @@
         </div>
     </div>
 
+    <!-- Wallet Modal -->
+    <div id="walletModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="document.getElementById('walletModal').style.display='none'">&times;</span>
+            <h2>🪙 Your Wallet</h2>
+            <div id="walletModalContainer">
+                <p class="text-muted">Loading wallet...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <!-- Load environment config first -->
     <script src="/env.js"></script>
     <script src="./js/nav.js"></script>
     <script src="./js/auth.js"></script>
+    <script src="./js/coinAPI.js"></script>
+    <script src="./js/CoinBalanceWidget.js"></script>
+    <script src="./js/WalletRenderer.js"></script>
+    <script src="./js/WalletProfileWidget.js"></script>
+    <script src="./js/LeaderboardAPI.js"></script>
     <script type="module" src="./js/main.js"></script>
+    
+    <!-- Initialize Coin Balance Widget on login -->
+    <script>
+        // Initialize coin widget when user logs in
+        if (window.AuthManager) {
+            const originalLogin = window.AuthManager.login;
+            window.AuthManager.login = function(...args) {
+                const result = originalLogin.apply(this, args);
+                if (result && window.AuthManager.isLoggedIn()) {
+                    // Initialize coin widget
+                    const user = window.AuthManager.getUser();
+                    if (user && user.user_id) {
+                        if (!window.coinBalanceWidget) {
+                            window.coinAPI = new window.CoinAPI();
+                            window.coinBalanceWidget = new window.CoinBalanceWidget(window.coinAPI);
+                        }
+                        window.coinBalanceWidget.init(user.user_id);
+                    }
+                }
+                return result;
+            };
+
+            // Initialize on page load if already logged in
+            if (window.AuthManager.isLoggedIn()) {
+                const user = window.AuthManager.getUser();
+                if (user && user.user_id) {
+                    window.coinAPI = new window.CoinAPI();
+                    window.coinBalanceWidget = new window.CoinBalanceWidget(window.coinAPI);
+                    window.coinBalanceWidget.init(user.user_id);
+                }
+            }
+        }
+    </script>
 </body>
 </html>

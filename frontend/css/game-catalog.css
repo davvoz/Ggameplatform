@@ -129,6 +129,61 @@
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
+/* Game Status Badge */
+.game-status {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+}
+
+.game-status .status-icon {
+    font-size: 1rem;
+}
+
+.game-status .badge {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-weight: 600;
+}
+
+/* STEEM Rewards Badge - Top right of game-info */
+.steem-rewards-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff4444 0%, #ff8844 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+    z-index: 5;
+    animation: pulse-steem 2s ease-in-out infinite;
+}
+
+@keyframes pulse-steem {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 68, 68, 0.8);
+    }
+}
+
 .game-overlay {
     position: absolute;
     top: 0;
@@ -167,6 +222,7 @@
 
 .game-info {
     padding: var(--spacing-md);
+    position: relative;
 }
 
 .game-title {

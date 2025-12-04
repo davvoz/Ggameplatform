@@ -10,7 +10,7 @@ import bcrypt
 from jose import JWTError, jwt
 import secrets
 
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus, UserCoins
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
@@ -205,6 +205,18 @@ def create_user(username: Optional[str] = None, email: Optional[str] = None,
         )
         
         session.add(user)
+        session.flush()
+        
+        # Initialize user coins with zero balance
+        user_coins = UserCoins(
+            user_id=user_id,
+            balance=0,
+            total_earned=0,
+            total_spent=0,
+            last_updated=now,
+            created_at=now
+        )
+        session.add(user_coins)
         session.flush()
         
         return user.to_dict()
@@ -519,15 +531,66 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         extra_data['base_xp'] = xp_result['base_xp']
         game_session.extra_data = json.dumps(extra_data)
         
-        # Update user's total XP
+        # Update user's total XP and check for level up
         old_total_xp = user.total_xp_earned
         user.total_xp_earned += xp_earned
-        print(f"[DB] Updating user total_xp: {old_total_xp} -> {user.total_xp_earned} (+{xp_earned})")
+        new_total_xp = user.total_xp_earned
+        print(f"[DB] Updating user total_xp: {old_total_xp} -> {new_total_xp} (+{xp_earned})")
+        
+        # Check for level up and award rewards
+        from app.level_system import LevelSystem
+        level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
+        
+        if level_up_info['leveled_up']:
+            print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
+            
+            # Award level-up coins if any
+            coins_awarded = level_up_info.get('coins_awarded', 0)
+            if coins_awarded > 0:
+                from app.repositories import RepositoryFactory
+                from app.services import ServiceFactory
+                
+                coin_repo = RepositoryFactory.create_usercoins_repository(session)
+                transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
+                
+                coin_service = ServiceFactory.create_coin_service(
+                    coin_repo, transaction_repo
+                )
+                
+                coin_service.award_coins(
+                    user_id=user.user_id,
+                    amount=coins_awarded,
+                    transaction_type='level_milestone',
+                    source_id=f"level_{level_up_info['new_level']}",
+                    description=f"Level {level_up_info['new_level']} reached!"
+                )
+                print(f"[DB] 🪙 Awarded {coins_awarded} coins for reaching level {level_up_info['new_level']}")
+            
+            # Store level-up info in session extra_data for frontend
+            extra_data['level_up'] = {
+                'old_level': level_up_info['old_level'],
+                'new_level': level_up_info['new_level'],
+                'title': level_up_info.get('title'),
+                'badge': level_up_info.get('badge'),
+                'coins_awarded': coins_awarded,
+                'is_milestone': level_up_info.get('is_milestone', False)
+            }
         
         session.flush()
         print(f"[DB] Session flushed to database")
         
         result = game_session.to_dict()
+        
+        # Add level-up info to response if it happened
+        if level_up_info['leveled_up']:
+            result['level_up'] = {
+                'old_level': level_up_info['old_level'],
+                'new_level': level_up_info['new_level'],
+                'title': level_up_info.get('title'),
+                'badge': level_up_info.get('badge'),
+                'coins_awarded': level_up_info.get('coins_awarded', 0),
+                'is_milestone': level_up_info.get('is_milestone', False)
+            }
         
         # Track quest progress
         print(f"[DB] Tracking quest progress...")

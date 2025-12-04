@@ -80,7 +80,7 @@ def import_data(json_file):
                         quest_type=quest_data.get('quest_type', ''),
                         target_value=quest_data.get('target_value', 0),
                         xp_reward=quest_data.get('xp_reward', 0),
-                        sats_reward=quest_data.get('sats_reward', 0),
+                        reward_coins=quest_data.get('reward_coins', quest_data.get('sats_reward', 0)),
                         is_active=quest_data.get('is_active', 1),
                         created_at=quest_data.get('created_at', datetime.utcnow().isoformat())
                     )

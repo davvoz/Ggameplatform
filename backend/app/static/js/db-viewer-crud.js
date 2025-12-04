@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CRUD Operations for Database Viewer
  * Handles Create, Update, Delete operations for all tables
  * Following OOP principles and modular design
@@ -31,7 +31,23 @@ class CRUDManager {
                 quest_ids: [],
                 session_ids: [],
                 categories: [],
-                quest_types: [],
+                quest_types: [
+                    'play_games',
+                    'play_games_weekly',
+                    'play_time',
+                    'play_time_daily',
+                    'play_time_cumulative',
+                    'play_same_game',
+                    'score_threshold_per_game',
+                    'score_ends_with',
+                    'login_after_24h',
+                    'login_streak',
+                    'leaderboard_top',
+                    'reach_level',
+                    'xp_daily',
+                    'xp_weekly',
+                    'complete_quests'
+                ],
                 rule_types: []
             };
         }
@@ -176,7 +192,8 @@ class CRUDManager {
                 { key: 'thumbnail', label: 'Thumbnail URL', type: 'text' },
                 { key: 'entry_point', label: 'Entry Point', type: 'text', required: true },
                 { key: 'category', label: 'Categoria', type: 'select', foreignKey: 'categories', allowCustom: true },
-                { key: 'status_id', label: 'Stato', type: 'select', foreignKey: 'status_ids' }
+                { key: 'status_id', label: 'Stato', type: 'select', foreignKey: 'status_ids' },
+                { key: 'steem_rewards_enabled', label: 'STEEM Rewards Enabled', type: 'checkbox' }
             ],
             'users': [
                 { key: 'user_id', label: 'User ID', type: 'text', readonly: true },
@@ -184,7 +201,10 @@ class CRUDManager {
                 { key: 'email', label: 'Email', type: 'email' },
                 { key: 'steem_username', label: 'Steem Username', type: 'text' },
                 { key: 'is_anonymous', label: 'Anonimo', type: 'checkbox' },
-                { key: 'cur8_multiplier', label: 'Moltiplicatore CUR8', type: 'number', step: '0.1', min: '0' },
+                { key: 'cur8_multiplier', label: 'CUR8 Multiplier', type: 'number', step: '0.01', min: '1', max: '4' },
+                { key: 'votes_cur8_witness', label: 'Votes CUR8 Witness', type: 'checkbox' },
+                { key: 'delegation_amount', label: 'Delegation Amount (STEEM)', type: 'number', step: '0.001', min: '0' },
+                { key: 'last_multiplier_check', label: 'Last Multiplier Check', type: 'text', readonly: true },
                 { key: 'total_xp_earned', label: 'XP Totale', type: 'number', step: '0.01', min: '0' },
                 { key: 'avatar', label: 'Avatar URL', type: 'text' }
             ],
@@ -220,7 +240,7 @@ class CRUDManager {
                 { key: 'quest_type', label: 'Tipo', type: 'select', required: true, foreignKey: 'quest_types' },
                 { key: 'target_value', label: 'Target', type: 'number', min: '0', required: true },
                 { key: 'xp_reward', label: 'Ricompensa XP', type: 'number', min: '0', required: true },
-                { key: 'sats_reward', label: 'Ricompensa Sats', type: 'number', min: '0' },
+                { key: 'reward_coins', label: 'Ricompensa 🪙 Coins', type: 'number', min: '0' },
                 { key: 'is_active', label: 'Attivo', type: 'checkbox' }
             ],
             'user-quests': [
@@ -241,6 +261,70 @@ class CRUDManager {
                 { key: 'color', label: 'Colore', type: 'text' },
                 { key: 'display_order', label: 'Ordine Visualizzazione', type: 'number', min: '0' },
                 { key: 'is_active', label: 'Attivo', type: 'checkbox' }
+            ],
+            'user_coins': [
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids', readonly: true },
+                { key: 'balance', label: 'Saldo', type: 'number', min: '0', required: true },
+                { key: 'total_earned', label: 'Totale Guadagnato', type: 'number', min: '0', required: true },
+                { key: 'total_spent', label: 'Totale Speso', type: 'number', min: '0', required: true }
+            ],
+            'coin_transactions': [
+                { key: 'transaction_id', label: 'Transaction ID', type: 'text', readonly: true },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'amount', label: 'Importo', type: 'number', required: true },
+                { key: 'transaction_type', label: 'Tipo Transazione', type: 'select', required: true, options: ['quest_reward', 'leaderboard_reward', 'level_milestone', 'daily_login', 'shop_purchase', 'admin_adjustment'] },
+                { key: 'source_id', label: 'Source ID', type: 'text' },
+                { key: 'description', label: 'Descrizione', type: 'textarea' },
+                { key: 'balance_after', label: 'Saldo Dopo', type: 'number', min: '0', required: true }
+            ],
+            'level_milestones': [
+                { key: 'level', label: 'Livello', type: 'number', min: '1', required: true, readonly: false },
+                { key: 'title', label: 'Titolo', type: 'text', required: true },
+                { key: 'badge', label: 'Badge (emoji)', type: 'text', required: true },
+                { key: 'color', label: 'Colore', type: 'text', required: true },
+                { key: 'description', label: 'Descrizione', type: 'textarea' },
+                { key: 'is_active', label: 'Attivo', type: 'checkbox' }
+            ],
+            'level_rewards': [
+                { key: 'reward_id', label: 'Reward ID', type: 'text', readonly: true },
+                { key: 'level', label: 'Livello', type: 'number', min: '1', required: true },
+                { key: 'reward_type', label: 'Tipo Ricompensa', type: 'select', required: true, options: ['coins', 'item', 'badge', 'multiplier'] },
+                { key: 'reward_amount', label: 'Quantità', type: 'number', min: '0', required: true },
+                { key: 'description', label: 'Descrizione', type: 'textarea' },
+                { key: 'is_active', label: 'Attivo', type: 'checkbox' }
+            ],
+            'weekly_leaderboards': [
+                { key: 'entry_id', label: 'Entry ID', type: 'text', readonly: true },
+                { key: 'week_start', label: 'Inizio Settimana', type: 'date', required: true },
+                { key: 'week_end', label: 'Fine Settimana', type: 'date', required: true },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'game_id', label: 'Game ID', type: 'select', required: true, foreignKey: 'game_ids' },
+                { key: 'score', label: 'Score', type: 'number', min: '0', required: true },
+                { key: 'rank', label: 'Rank', type: 'number', min: '1' }
+            ],
+            'leaderboard_rewards': [
+                { key: 'reward_id', label: 'Reward ID', type: 'text', readonly: true },
+                { key: 'game_id', label: 'Game ID', type: 'select', foreignKey: 'game_ids' },
+                { key: 'rank_start', label: 'Rank Start', type: 'number', min: '1', required: true },
+                { key: 'rank_end', label: 'Rank End', type: 'number', min: '1', required: true },
+                { key: 'steem_reward', label: 'Ricompensa STEEM', type: 'number', step: '0.001', min: '0' },
+                { key: 'coin_reward', label: 'Ricompensa Coins', type: 'number', min: '0' },
+                { key: 'description', label: 'Descrizione', type: 'textarea' },
+                { key: 'is_active', label: 'Attivo', type: 'checkbox' }
+            ],
+            'weekly_winners': [
+                { key: 'winner_id', label: 'Winner ID', type: 'text', readonly: true },
+                { key: 'week_start', label: 'Inizio Settimana', type: 'date', required: true },
+                { key: 'week_end', label: 'Fine Settimana', type: 'date', required: true },
+                { key: 'game_id', label: 'Game ID', type: 'select', required: true, foreignKey: 'game_ids' },
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids' },
+                { key: 'rank', label: 'Rank', type: 'number', min: '1', required: true },
+                { key: 'score', label: 'Score', type: 'number', min: '0', required: true },
+                { key: 'steem_reward', label: 'Ricompensa STEEM', type: 'number', step: '0.001', min: '0' },
+                { key: 'coin_reward', label: 'Ricompensa Coins', type: 'number', min: '0' },
+                { key: 'steem_tx_id', label: 'STEEM Transaction ID', type: 'text' },
+                { key: 'reward_sent', label: 'Ricompensa Inviata', type: 'checkbox' },
+                { key: 'reward_sent_at', label: 'Data Invio Ricompensa', type: 'datetime-local' }
             ]
         };
 
@@ -363,7 +447,14 @@ class CRUDManager {
             'xp-rules': 'rule_id',
             'quests': 'quest_id',
             'user-quests': 'id',
-            'game_statuses': 'status_id'
+            'game_statuses': 'status_id',
+            'user_coins': 'user_id',
+            'coin_transactions': 'transaction_id',
+            'level_milestones': 'level',
+            'level_rewards': 'reward_id',
+            'weekly_leaderboards': 'entry_id',
+            'leaderboard_rewards': 'reward_id',
+            'weekly_winners': 'winner_id'
         };
         return idFields[tableKey] || 'id';
     }
@@ -381,7 +472,14 @@ class CRUDManager {
             'xp-rules': item.rule_name || item.rule_id,
             'quests': item.title || `Quest #${item.quest_id}`,
             'user-quests': `User Quest #${item.id}`,
-            'game_statuses': item.status_name || `Status #${item.status_id}`
+            'game_statuses': item.status_name || `Status #${item.status_id}`,
+            'user_coins': `User ${item.user_id} - Balance: ${item.balance}`,
+            'coin_transactions': `Transaction ${item.transaction_id ? item.transaction_id.substring(0, 12) : 'N/A'}... - ${item.amount > 0 ? '+' : ''}${item.amount} coins`,
+            'level_milestones': `Level ${item.level} - ${item.title}`,
+            'level_rewards': `Reward for Level ${item.level} - ${item.reward_type}`,
+            'weekly_leaderboards': `Week ${item.week_start} - ${item.game_id} - Score: ${item.score}`,
+            'leaderboard_rewards': `Rank ${item.rank_start}-${item.rank_end} - ${item.steem_reward || 0} STEEM`,
+            'weekly_winners': `Winner ${item.winner_id} - Week ${item.week_start} - Rank ${item.rank}`
         };
         return displayFields[tableKey] || String(item[idField] || 'Record');
     }
@@ -398,7 +496,14 @@ class CRUDManager {
             'xp-rules': '/admin/xp-rules',
             'quests': '/admin/quests-crud',
             'user-quests': '/admin/user-quests-crud',
-            'game_statuses': '/admin/game-statuses'
+            'game_statuses': '/admin/game-statuses',
+            'user_coins': '/admin/user-coins',
+            'coin_transactions': '/admin/coin-transactions',
+            'level_milestones': '/admin/level-milestones',
+            'level_rewards': '/admin/level-rewards',
+            'weekly_leaderboards': '/admin/weekly-leaderboards',
+            'leaderboard_rewards': '/admin/leaderboard-rewards',
+            'weekly_winners': '/admin/weekly-winners'
         };
         return endpoints[tableKey];
     }
@@ -414,12 +519,20 @@ class CRUDManager {
         // First, handle all checkboxes explicitly (FormData skips unchecked ones)
         const checkboxes = form.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
-            data[checkbox.name] = checkbox.checked;
+            // Skip readonly/disabled checkboxes
+            if (!checkbox.disabled && !checkbox.readOnly) {
+                data[checkbox.name] = checkbox.checked;
+            }
         });
 
         // Then handle all other fields
         for (let [key, value] of formData.entries()) {
             const input = form.elements[key];
+            
+            // Skip readonly/disabled fields (primary keys, etc.)
+            if (input.readOnly || input.disabled) {
+                continue;
+            }
             
             if (input.type === 'checkbox') {
                 // Already handled above
@@ -452,9 +565,15 @@ class CRUDManager {
             const data = this.collectFormData();
             
             // Convert snake_case to camelCase ONLY for games table
-            if (tableKey === 'games' && 'status_id' in data) {
-                data['statusId'] = data['status_id'];
-                delete data['status_id'];
+            if (tableKey === 'games') {
+                if ('status_id' in data) {
+                    data['statusId'] = data['status_id'];
+                    delete data['status_id'];
+                }
+                // Convert boolean to integer for steem_rewards_enabled
+                if ('steem_rewards_enabled' in data) {
+                    data['steem_rewards_enabled'] = data['steem_rewards_enabled'] ? 1 : 0;
+                }
             }
             
             const endpoint = this.getAPIEndpoint(tableKey);
@@ -490,9 +609,15 @@ class CRUDManager {
             const data = this.collectFormData();
             
             // Convert snake_case to camelCase ONLY for games table
-            if (tableKey === 'games' && 'status_id' in data) {
-                data['statusId'] = data['status_id'];
-                delete data['status_id'];
+            if (tableKey === 'games') {
+                if ('status_id' in data) {
+                    data['statusId'] = data['status_id'];
+                    delete data['status_id'];
+                }
+                // Convert boolean to integer for steem_rewards_enabled
+                if ('steem_rewards_enabled' in data) {
+                    data['steem_rewards_enabled'] = data['steem_rewards_enabled'] ? 1 : 0;
+                }
             }
             
             const endpoint = this.getAPIEndpoint(tableKey);
@@ -512,7 +637,20 @@ class CRUDManager {
                 this.showToast('Record updated successfully', 'success');
                 await refreshData();
             } else {
-                throw new Error(result.detail || result.error || 'Unknown error');
+                // Better error handling for validation errors
+                let errorMsg = 'Unknown error';
+                if (result.detail) {
+                    if (Array.isArray(result.detail)) {
+                        errorMsg = result.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+                    } else if (typeof result.detail === 'string') {
+                        errorMsg = result.detail;
+                    } else {
+                        errorMsg = JSON.stringify(result.detail);
+                    }
+                } else if (result.error) {
+                    errorMsg = result.error;
+                }
+                throw new Error(errorMsg);
             }
         } catch (error) {
             console.error('Update error:', error);
@@ -538,7 +676,20 @@ class CRUDManager {
                 this.showToast('Record deleted successfully', 'success');
                 await refreshData();
             } else {
-                throw new Error(result.detail || result.error || 'Unknown error');
+                // Better error handling for validation errors
+                let errorMsg = 'Unknown error';
+                if (result.detail) {
+                    if (Array.isArray(result.detail)) {
+                        errorMsg = result.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+                    } else if (typeof result.detail === 'string') {
+                        errorMsg = result.detail;
+                    } else {
+                        errorMsg = JSON.stringify(result.detail);
+                    }
+                } else if (result.error) {
+                    errorMsg = result.error;
+                }
+                throw new Error(errorMsg);
             }
         } catch (error) {
             console.error('Delete error:', error);

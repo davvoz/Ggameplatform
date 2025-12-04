@@ -2,15 +2,18 @@
 Quests router for managing platform quests.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request, Header
+from fastapi import APIRouter, HTTPException, Depends, Request, Header, Query
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 import os
 
 from app.database import get_db
-from app.models import Quest, UserQuest, User
+from app.models import Quest, UserQuest, User, LevelMilestone
 from app.schemas import QuestResponse, QuestCreate, QuestWithProgress, UserQuestProgress
+from app.repositories import RepositoryFactory
+from app.services import ServiceFactory
+from app.level_system import LevelSystem
 
 router = APIRouter()
 
@@ -210,7 +213,7 @@ async def get_quests_stats(
 @router.post("/claim/{quest_id}")
 async def claim_quest_reward(
     quest_id: int,
-    user_id: str,
+    user_id: str = Query(..., description="User ID"),
     db: Session = Depends(get_db)
 ):
     """Claim reward for a completed quest."""
@@ -247,18 +250,76 @@ async def claim_quest_reward(
     progress.is_claimed = 1
     progress.claimed_at = now
     
-    # Add rewards to user
+    # Calculate level BEFORE adding XP
+    old_level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
+    
+    # Add XP rewards to user
     user.total_xp_earned += quest.xp_reward
+    
+    # Calculate level AFTER adding XP
+    new_level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
+    
+    # Check if level up occurred
+    level_up = new_level > old_level
+    level_milestone = None
+    
+    if level_up:
+        # Get milestone info for new level
+        milestone = db.query(LevelMilestone).filter(
+            LevelMilestone.level == new_level,
+            LevelMilestone.is_active == 1
+        ).first()
+        
+        if milestone:
+            level_milestone = {
+                "level": milestone.level,
+                "title": milestone.title,
+                "badge": milestone.badge,
+                "color": milestone.color,
+                "description": milestone.description
+            }
+            print(f"🎉 Level up! {user_id} reached level {new_level}: {milestone.title}")
+    
+    # Award coin rewards (if any)
+    coins_awarded = 0
+    if quest.reward_coins and quest.reward_coins > 0:
+        # Create all required repositories for CoinService
+        coins_repo = RepositoryFactory.create_usercoins_repository(db)
+        transaction_repo = RepositoryFactory.create_cointransaction_repository(db)
+        
+        coin_service = ServiceFactory.create_coin_service(
+            coins_repo, 
+            transaction_repo
+        )
+        
+        coin_result = coin_service.award_quest_reward(
+            user_id=user_id,
+            quest_id=quest_id,
+            quest_title=quest.title,
+            quest_sats_reward=quest.reward_coins
+        )
+        
+        if coin_result:
+            coins_awarded = coin_result.get('amount', 0)
+            print(f"✅ Awarded {coins_awarded} coins to {user_id} for quest {quest_id}")
     
     db.commit()
     db.refresh(progress)
     db.refresh(user)
     
-    return {
+    response = {
         "success": True,
         "quest_id": quest_id,
         "xp_reward": quest.xp_reward,
-        "sats_reward": quest.sats_reward,
+        "reward_coins": coins_awarded,
         "total_xp": user.total_xp_earned,
-        "claimed_at": now
+        "claimed_at": now,
+        "level_up": level_up,
+        "old_level": old_level,
+        "new_level": new_level
     }
+    
+    if level_milestone:
+        response["level_milestone"] = level_milestone
+    
+    return response

@@ -1049,7 +1049,7 @@ main:has(.quests) {
     text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
 }
 
-.sats-particle {
+.coins-particle {
     color: #FFD700;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
 }

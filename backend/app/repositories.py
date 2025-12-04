@@ -8,7 +8,7 @@ from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from abc import ABC, abstractmethod
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction
 
 # Generic type for models
 ModelType = TypeVar("ModelType", bound=Base)
@@ -307,6 +307,98 @@ class GameStatusRepository(BaseRepository[GameStatus]):
             raise Exception(f"Error fetching ordered statuses: {str(e)}")
 
 
+class UserCoinsRepository(BaseRepository[UserCoins]):
+    """Repository for UserCoins entities"""
+    
+    def __init__(self, db_session: Session):
+        super().__init__(UserCoins, db_session, id_field="user_id")
+    
+    def get_or_create(self, user_id: str) -> UserCoins:
+        """Get user coins or create if doesn't exist"""
+        user_coins = self.get_by_id(user_id)
+        if not user_coins:
+            from datetime import datetime
+            now = datetime.utcnow().isoformat()
+            user_coins = UserCoins(
+                user_id=user_id,
+                balance=0,
+                total_earned=0,
+                total_spent=0,
+                last_updated=now,
+                created_at=now
+            )
+            user_coins = self.create(user_coins)
+        return user_coins
+    
+    def add_coins(self, user_id: str, amount: int) -> UserCoins:
+        """Add coins to user balance"""
+        from datetime import datetime
+        user_coins = self.get_or_create(user_id)
+        user_coins.balance += amount
+        user_coins.total_earned += amount
+        user_coins.last_updated = datetime.utcnow().isoformat()
+        self.db_session.commit()
+        self.db_session.refresh(user_coins)
+        return user_coins
+    
+    def remove_coins(self, user_id: str, amount: int) -> Optional[UserCoins]:
+        """Remove coins from user balance (returns None if insufficient balance)"""
+        from datetime import datetime
+        user_coins = self.get_or_create(user_id)
+        if user_coins.balance < amount:
+            return None
+        user_coins.balance -= amount
+        user_coins.total_spent += amount
+        user_coins.last_updated = datetime.utcnow().isoformat()
+        self.db_session.commit()
+        self.db_session.refresh(user_coins)
+        return user_coins
+
+
+class CoinTransactionRepository(BaseRepository[CoinTransaction]):
+    """Repository for CoinTransaction entities"""
+    
+    def __init__(self, db_session: Session):
+        super().__init__(CoinTransaction, db_session, id_field="transaction_id")
+    
+    def get_by_user(self, user_id: str, limit: int = 100) -> List[CoinTransaction]:
+        """Get transactions for a specific user"""
+        try:
+            return self.db_session.query(CoinTransaction).filter(
+                CoinTransaction.user_id == user_id
+            ).order_by(CoinTransaction.created_at.desc()).limit(limit).all()
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching transactions: {str(e)}")
+    
+    def get_by_type(self, transaction_type: str) -> List[CoinTransaction]:
+        """Get transactions by type"""
+        return self.filter_by(transaction_type=transaction_type)
+    
+    def get_user_earnings(self, user_id: str) -> int:
+        """Get total earnings for a user"""
+        try:
+            from sqlalchemy import func
+            result = self.db_session.query(func.sum(CoinTransaction.amount)).filter(
+                CoinTransaction.user_id == user_id,
+                CoinTransaction.amount > 0
+            ).scalar()
+            return result or 0
+        except SQLAlchemyError as e:
+            raise Exception(f"Error calculating earnings: {str(e)}")
+    
+    def get_user_spendings(self, user_id: str) -> int:
+        """Get total spendings for a user"""
+        try:
+            from sqlalchemy import func
+            result = self.db_session.query(func.sum(CoinTransaction.amount)).filter(
+                CoinTransaction.user_id == user_id,
+                CoinTransaction.amount < 0
+            ).scalar()
+            return abs(result) if result else 0
+        except SQLAlchemyError as e:
+            raise Exception(f"Error calculating spendings: {str(e)}")
+
+
 class RepositoryFactory:
     """
     Factory Pattern for creating repositories
@@ -344,3 +436,11 @@ class RepositoryFactory:
     @staticmethod
     def create_gamestatus_repository(db_session: Session) -> GameStatusRepository:
         return GameStatusRepository(db_session)
+    
+    @staticmethod
+    def create_usercoins_repository(db_session: Session) -> UserCoinsRepository:
+        return UserCoinsRepository(db_session)
+    
+    @staticmethod
+    def create_cointransaction_repository(db_session: Session) -> CoinTransactionRepository:
+        return CoinTransactionRepository(db_session)

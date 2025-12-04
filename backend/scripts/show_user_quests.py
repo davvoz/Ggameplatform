@@ -57,7 +57,7 @@ def show_user_quests(username: str):
                 progress_pct = 0.0
             
             print(f"{quest.quest_id:2d}. {quest.title:45s} [{progress_bar}] {progress_pct:5.1f}%")
-            print(f"    {status:25s} Reward: {quest.xp_reward} XP, {quest.sats_reward} sats")
+            print(f"    {status:25s} Reward: {quest.xp_reward} XP, {quest.reward_coins} coins")
             print(f"    {quest.description}")
             print()
         

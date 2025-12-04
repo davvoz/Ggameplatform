@@ -11,6 +11,8 @@ erDiagram
     USERS ||--o{ GAME_SESSIONS : "plays"
     USERS ||--o{ USER_ACHIEVEMENTS : "earns"
     USERS ||--o{ LEADERBOARD : "competes"
+    USERS ||--o| USER_COINS : "owns"
+    USERS ||--o{ COIN_TRANSACTIONS : "performs"
 
     GAMES {
         string game_id PK "Unique identifier"
@@ -85,6 +87,39 @@ erDiagram
         integer is_active "Active flag (0 or 1)"
         string created_at "Creation timestamp"
         string updated_at "Last update timestamp"
+    }
+
+    USER_COINS {
+        string user_id PK_FK "References USERS"
+        integer balance "Current coin balance"
+        integer total_earned "Total coins earned"
+        integer total_spent "Total coins spent"
+        string last_updated "Last balance update"
+        string created_at "Account creation timestamp"
+    }
+
+    COIN_TRANSACTIONS {
+        string transaction_id PK "Unique identifier"
+        string user_id FK "References USERS"
+        integer amount "Coin amount (+ earn, - spend)"
+        string transaction_type "Type of transaction"
+        string source_id "Source identifier"
+        text description "Transaction description"
+        integer balance_after "Balance after transaction"
+        string created_at "Transaction timestamp"
+        text extra_data "JSON additional metadata"
+    }
+
+    COIN_REWARDS {
+        integer reward_id PK "Unique identifier"
+        string reward_type "Type of reward"
+        string reward_key "Specific reward identifier"
+        integer coin_amount "Amount of coins"
+        text description "Reward description"
+        integer is_active "Active flag (0 or 1)"
+        string created_at "Creation timestamp"
+        string updated_at "Last update timestamp"
+        text extra_data "JSON additional metadata"
     }
 ```
 
@@ -483,11 +518,16 @@ CREATE INDEX idx_leaderboard_ranking ON leaderboard(game_id, score DESC);
 ```
 
 ### **File Principali**
-- `backend/app/models.py` - Definizioni SQLAlchemy (incluso XPRule)
+- `backend/app/models.py` - Definizioni SQLAlchemy (incluso XPRule, UserCoins, CoinTransaction, CoinReward)
 - `backend/app/database.py` - Funzioni CRUD e calcolo XP
 - `backend/app/xp_calculator.py` - Sistema Strategy Pattern per calcolo XP
 - `backend/app/leaderboard_triggers.py` - Setup trigger automatici
+- `backend/app/services.py` - CoinService per logica business monete
+- `backend/app/repositories.py` - Repository pattern per accesso dati monete
+- `backend/app/coin_rewards.py` - CoinRewardManager per distribuzione automatica
+- `backend/app/routers/coins.py` - API endpoints per gestione monete
 - `backend/migrate_xp_rules.py` - Script migrazione regole XP
+- `backend/scripts/create_coin_system.py` - Script migrazione sistema monete
 
 ---
 

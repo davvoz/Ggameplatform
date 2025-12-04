@@ -32,7 +32,7 @@ class SteemKeychainAuth(BaseModel):
     username: str
     signature: str
     message: str
-    cur8_multiplier: Optional[float] = 2.0  # Moltiplicatore maggiorato per utenti Steem
+    cur8_multiplier: Optional[float] = 1.0  # Base multiplier (will be calculated based on witness vote & delegation)
 
 class SessionStart(BaseModel):
     user_id: str
@@ -65,13 +65,29 @@ async def register_user(request: Request, user_data: UserRegister):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/login")
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def login_user(request: Request, credentials: UserLogin):
     """Login with username and password."""
     user = authenticate_user(credentials.username, credentials.password)
     
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Check Steem multiplier at login if user has steem_username
+    if user.get('steem_username'):
+        from app.steem_checker import update_user_multiplier
+        from app.database import get_db_session
+        try:
+            with get_db_session() as session:
+                update_user_multiplier(user['user_id'], user['steem_username'], session, force=True)
+                session.commit()
+                # Reload user data
+                from app.models import User
+                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
+                if db_user:
+                    user = db_user.to_dict()
+        except Exception as e:
+            print(f"[LOGIN] Could not update multiplier from Steem: {e}")
     
     return {
         "success": True,
@@ -144,6 +160,15 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
             from app.models import User
             import json
             
+            # Update Steem multiplier at Keychain login
+            from app.steem_checker import update_user_multiplier
+            try:
+                with get_db_session() as session:
+                    update_user_multiplier(user['user_id'], auth_data.username, session, force=True)
+                    session.commit()
+            except Exception as e:
+                print(f"[STEEM AUTH] Could not update multiplier: {e}")
+            
             with get_db_session() as session:
                 db_user = session.query(User).filter(User.user_id == user['user_id']).first()
                 if db_user:
@@ -172,7 +197,7 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Steem authentication failed: {str(e)}")
 
-@router.get("/users")
+@router.get("/")
 async def list_users():
     """Get all registered users (admin endpoint)."""
     users = get_all_users()
@@ -182,7 +207,7 @@ async def list_users():
         "users": users
     }
 
-@router.get("/users/{user_id}")
+@router.get("/{user_id}")
 async def get_user(user_id: str):
     """Get user details by ID."""
     user = get_user_by_id(user_id)
@@ -362,3 +387,96 @@ async def get_game_leaderboard(game_id: str, limit: int = 10):
         "count": len(leaderboard),
         "leaderboard": leaderboard
     }
+
+
+@router.post("/check-steem-multiplier/{user_id}")
+async def check_steem_multiplier(user_id: str):
+    """
+    Check and update Steem multiplier from blockchain.
+    Uses 10-minute cache - only queries Steem API if needed.
+    """
+    from app.database import get_db_session
+    from app.models import User
+    from app.steem_checker import update_user_multiplier
+    
+    with get_db_session() as session:
+        user = session.query(User).filter(User.user_id == user_id).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if not user.steem_username:
+            raise HTTPException(status_code=400, detail="User has no Steem account")
+        
+        # Check multiplier (respects 10-minute cache)
+        updated = update_user_multiplier(user_id, user.steem_username, session, force=False)
+        session.commit()
+        session.refresh(user)
+        
+        return {
+            "success": True,
+            "user_id": user_id,
+            "steem_username": user.steem_username,
+            "votes_cur8_witness": bool(user.votes_cur8_witness),
+            "delegation_amount": user.delegation_amount,
+            "cur8_multiplier": user.cur8_multiplier,
+            "updated": updated,
+            "last_check": user.last_multiplier_check
+        }
+
+
+@router.post("/update-steem-data/{user_id}")
+async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount: float):
+    """Update user's Steem witness vote and delegation data, recalculate multiplier."""
+    from app.database import get_db_session
+    from app.models import User
+    from app.cur8_multiplier import calculate_cur8_multiplier
+    
+    with get_db_session() as session:
+        user = session.query(User).filter(User.user_id == user_id).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update Steem data
+        user.votes_cur8_witness = 1 if votes_witness else 0
+        user.delegation_amount = max(0.0, delegation_amount)
+        
+        # Recalculate multiplier
+        user.cur8_multiplier = calculate_cur8_multiplier(votes_witness, delegation_amount)
+        
+        session.commit()
+        session.refresh(user)
+        
+        return {
+            "success": True,
+            "user_id": user_id,
+            "votes_cur8_witness": bool(user.votes_cur8_witness),
+            "delegation_amount": user.delegation_amount,
+            "cur8_multiplier": user.cur8_multiplier
+        }
+
+
+@router.get("/multiplier-breakdown/{user_id}")
+async def get_multiplier_breakdown(user_id: str):
+    """Get detailed breakdown of user's CUR8 multiplier calculation."""
+    from app.database import get_db_session
+    from app.models import User
+    from app.cur8_multiplier import get_multiplier_breakdown
+    
+    with get_db_session() as session:
+        user = session.query(User).filter(User.user_id == user_id).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        breakdown = get_multiplier_breakdown(
+            bool(user.votes_cur8_witness),
+            user.delegation_amount
+        )
+        
+        return {
+            "success": True,
+            "user_id": user_id,
+            "breakdown": breakdown
+        }

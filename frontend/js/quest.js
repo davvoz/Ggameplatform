@@ -35,7 +35,7 @@ function highlightReadyFilter(quests) {
 /**
  * Create reward claim animation
  */
-function createRewardAnimation(questCard, xpReward, satsReward) {
+function createRewardAnimation(questCard, xpReward, coinsReward) {
     const rewards = [];
     
     // Create XP particles
@@ -49,12 +49,12 @@ function createRewardAnimation(questCard, xpReward, satsReward) {
         rewards.push(particle);
     }
     
-    // Create Sats particles if applicable
-    if (satsReward) {
+    // Create Coins particles if applicable
+    if (coinsReward) {
         for (let i = 0; i < 5; i++) {
             const particle = document.createElement('div');
-            particle.className = 'reward-particle sats-particle';
-            particle.textContent = `+${Math.floor(satsReward / 5)} Sats`;
+            particle.className = 'reward-particle coins-particle';
+            particle.textContent = `+${Math.floor(coinsReward / 5)} Coins`;
             particle.style.left = `${Math.random() * 100}%`;
             particle.style.animationDelay = `${i * 0.15}s`;
             questCard.appendChild(particle);
@@ -71,7 +71,7 @@ function createRewardAnimation(questCard, xpReward, satsReward) {
             <div class="celebration-text">Quest Completed!</div>
             <div class="celebration-rewards">
                 <div class="celebration-reward-item">⭐ +${xpReward} XP</div>
-                ${satsReward ? `<div class="celebration-reward-item">💰 +${satsReward} Sats</div>` : ''}
+                ${coinsReward ? `<div class="celebration-reward-item">🪙 +${coinsReward} Coins</div>` : ''}
             </div>
         </div>
     `;
@@ -121,7 +121,7 @@ async function handleClaimReward(questId, userId) {
         btn.innerHTML = '<span class="checkmark">✓</span><span>Claimed!</span>';
 
         // Create reward animation
-        createRewardAnimation(questCard, result.xp_reward, result.sats_reward);
+        createRewardAnimation(questCard, result.xp_reward, result.reward_coins);
 
         // Update user XP in header and AuthManager
         if (window.AuthManager) {
@@ -133,6 +133,28 @@ async function handleClaimReward(questId, userId) {
             const userCur8Element = document.getElementById('userCur8');
             if (userCur8Element) {
                 userCur8Element.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
+            }
+        }
+
+        // Check for level up and show animation
+        if (result.level_up && result.level_milestone) {
+            // Import RuntimeShell to show level up modal
+            const { default: RuntimeShell } = await import('./runtimeShell.js');
+            
+            // Prepare level up data
+            const levelUpData = {
+                old_level: result.old_level,
+                new_level: result.new_level,
+                title: result.level_milestone.title,
+                badge: result.level_milestone.badge,
+                coins_awarded: 0, // Quest rewards are separate
+                is_milestone: true
+            };
+            
+            // Show level up modal using RuntimeShell method
+            if (RuntimeShell && RuntimeShell.prototype.showLevelUpNotification) {
+                const shell = new RuntimeShell();
+                shell.showLevelUpNotification(levelUpData);
             }
         }
 
@@ -271,10 +293,10 @@ async function applyFilter(filter, questsList) {
             filter === 'ready' ? '🎁' :
             filter === 'claimed' ? '✅' : '🎮';
 
-        const emptyText = filter === 'active' ? 'Nessuna quest attiva al momento' :
-            filter === 'ready' ? 'Nessuna ricompensa da claimare' :
-            filter === 'claimed' ? 'Nessuna quest completata ancora' :
-            'Nessuna quest disponibile';
+        const emptyText = filter === 'active' ? 'No active quests at the moment' :
+            filter === 'ready' ? 'No rewards to claim' :
+            filter === 'claimed' ? 'No completed quests yet' :
+            'No quests available';
 
         emptyMsg.innerHTML = `
             <div class="empty-icon">${emptyIcon}</div>
@@ -599,10 +621,10 @@ class QuestCard {
     }
 
     renderRewards() {
-        const satsReward = this.quest.sats_reward
+        const coinsReward = this.quest.reward_coins && this.quest.reward_coins > 0
             ? `<div class="reward-item">
-                <span class="reward-icon">💰</span>
-                <span class="reward-value">${this.quest.sats_reward} Sats</span>
+                <span class="reward-icon">🪙</span>
+                <span class="reward-value">${this.quest.reward_coins} Coins</span>
             </div>`
             : '';
 
@@ -612,7 +634,7 @@ class QuestCard {
                     <span class="reward-icon">⭐</span>
                     <span class="reward-value">${this.quest.xp_reward} XP</span>
                 </div>
-                ${satsReward}
+                ${coinsReward}
             </div>
         `;
     }

@@ -8,13 +8,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models import Quest, UserQuest, User, GameSession
+from app.repositories import UserCoinsRepository, CoinTransactionRepository
+from app.services import CoinService
 
 
 class QuestTracker:
     """Tracks and updates user quest progress automatically."""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, coin_service: Optional[CoinService] = None):
         self.db = db
+        self.coin_service = coin_service
     
     def get_or_create_user_quest(self, user_id: str, quest_id: int) -> UserQuest:
         """Get existing user quest progress or create new one."""
@@ -56,11 +59,22 @@ class QuestTracker:
             user_quest.is_completed = 1
             user_quest.completed_at = datetime.utcnow().isoformat()
             
-            # Award XP and sats
+            # Award XP
             user = self.db.query(User).filter(User.user_id == user_id).first()
             if user:
                 user.total_xp_earned += quest.xp_reward
-                # TODO: Add sats to user when sats system is implemented
+            
+            # Award coins if coin service is available
+            if self.coin_service:
+                try:
+                    self.coin_service.award_quest_reward(
+                        user_id=user_id,
+                        quest_id=quest.quest_id,
+                        quest_title=quest.title,
+                        quest_sats_reward=quest.reward_coins if hasattr(quest, 'reward_coins') else 0
+                    )
+                except Exception as e:
+                    print(f"⚠️ Failed to award coins for quest {quest.quest_id}: {e}")
             
             print(f"✅ Quest completed! User {user_id} completed quest {quest.quest_id}: {quest.title}")
     
@@ -164,25 +178,27 @@ class QuestTracker:
         self.db.commit()
 
 
-def track_quest_progress_for_session(db: Session, session_data: Dict):
+def track_quest_progress_for_session(db: Session, session_data: Dict, coin_service: Optional[CoinService] = None):
     """
     Convenience function to track quest progress after a game session.
     
     Args:
         db: Database session
         session_data: Dictionary with session information (user_id, game_id, score, duration_seconds, xp_earned)
+        coin_service: Optional CoinService instance for awarding coins
     """
-    tracker = QuestTracker(db)
+    tracker = QuestTracker(db, coin_service)
     tracker.track_session_end(session_data)
 
 
-def track_quest_progress_for_login(db: Session, user_id: str):
+def track_quest_progress_for_login(db: Session, user_id: str, coin_service: Optional[CoinService] = None):
     """
     Convenience function to track quest progress on login.
     
     Args:
         db: Database session
         user_id: User identifier
+        coin_service: Optional CoinService instance for awarding coins
     """
-    tracker = QuestTracker(db)
+    tracker = QuestTracker(db, coin_service)
     tracker.track_login(user_id)

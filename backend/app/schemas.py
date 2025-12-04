@@ -141,6 +141,7 @@ class GameResponse(BaseModel):
     tags: List[str]
     status_id: Optional[int]
     status: Optional[GameStatusResponse]
+    steem_rewards_enabled: bool = False
     created_at: str
     updated_at: str
     metadata: Dict[str, Any]
@@ -195,7 +196,7 @@ class QuestBase(BaseModel):
     quest_type: str = Field(..., description="Type of quest: play_games, play_time, login, score, level, xp, complete_quests")
     target_value: int = Field(..., ge=0, description="Target value to complete the quest")
     xp_reward: int = Field(..., ge=0, description="XP reward for completing the quest")
-    sats_reward: int = Field(0, ge=0, description="Sats reward for completing the quest")
+    reward_coins: int = Field(0, ge=0, description="Coin reward for completing the quest")
     is_active: bool = Field(True, description="Whether the quest is active")
 
 
@@ -212,7 +213,7 @@ class QuestResponse(BaseModel):
     quest_type: str
     target_value: int
     xp_reward: int
-    sats_reward: int
+    reward_coins: int
     is_active: bool
     created_at: str
     
@@ -255,6 +256,7 @@ class GameUpdate(BaseModel):
     category: Optional[str] = None
     tags: Optional[List[str]] = None
     statusId: Optional[int] = None
+    steem_rewards_enabled: Optional[bool] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -352,7 +354,7 @@ class QuestUpdate(BaseModel):
     quest_type: Optional[str] = None
     target_value: Optional[int] = None
     xp_reward: Optional[int] = None
-    sats_reward: Optional[int] = None
+    reward_coins: Optional[int] = None
     is_active: Optional[bool] = None
 
 
@@ -371,3 +373,291 @@ class UserQuestUpdate(BaseModel):
     is_claimed: Optional[bool] = None
     completed_at: Optional[str] = None
     claimed_at: Optional[str] = None
+
+
+# ========== COIN SYSTEM SCHEMAS ==========
+
+class UserCoinsBase(BaseModel):
+    """Base schema for user coins."""
+    user_id: str = Field(..., description="User ID reference")
+    balance: int = Field(0, ge=0, description="Current coin balance")
+    total_earned: int = Field(0, ge=0, description="Total coins earned")
+    total_spent: int = Field(0, ge=0, description="Total coins spent")
+
+
+class UserCoinsCreate(UserCoinsBase):
+    """Schema for creating user coins record."""
+    pass
+
+
+class UserCoinsUpdate(BaseModel):
+    """Schema for updating user coins."""
+    balance: Optional[int] = Field(None, ge=0)
+    total_earned: Optional[int] = Field(None, ge=0)
+    total_spent: Optional[int] = Field(None, ge=0)
+
+
+class UserCoinsResponse(BaseModel):
+    """Schema for user coins response."""
+    user_id: str
+    balance: int
+    total_earned: int
+    total_spent: int
+    last_updated: str
+    created_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+class CoinTransactionBase(BaseModel):
+    """Base schema for coin transaction."""
+    user_id: str = Field(..., description="User ID reference")
+    amount: int = Field(..., description="Amount (positive for earn, negative for spend)")
+    transaction_type: str = Field(..., description="Type of transaction")
+    source_id: Optional[str] = Field(None, description="Source ID (quest_id, rank, etc.)")
+    description: Optional[str] = Field(None, description="Transaction description")
+    balance_after: int = Field(..., ge=0, description="Balance after transaction")
+
+
+class CoinTransactionCreate(CoinTransactionBase):
+    """Schema for creating coin transaction."""
+    pass
+
+
+class CoinTransactionUpdate(BaseModel):
+    """Schema for updating coin transaction (minimal, transactions are immutable)."""
+    description: Optional[str] = None
+
+
+class CoinTransactionResponse(BaseModel):
+    """Schema for coin transaction response."""
+    transaction_id: str
+    user_id: str
+    amount: int
+    transaction_type: str
+    source_id: Optional[str]
+    description: Optional[str]
+    balance_after: int
+    created_at: str
+    extra_data: Optional[str]
+    
+    class Config:
+        orm_mode = True
+
+
+# ========== LEVEL MILESTONES SCHEMAS ==========
+
+class LevelMilestoneBase(BaseModel):
+    """Base schema for level milestone."""
+    title: str = Field(..., description="Milestone title")
+    badge: str = Field(..., description="Badge emoji")
+    color: str = Field(..., description="Color hex code")
+    description: Optional[str] = Field(None, description="Milestone description")
+    is_active: bool = Field(True, description="Whether milestone is active")
+
+
+class LevelMilestoneCreate(LevelMilestoneBase):
+    """Schema for creating level milestone."""
+    level: int = Field(..., ge=1, description="Level number")
+
+
+class LevelMilestoneUpdate(BaseModel):
+    """Schema for updating level milestone."""
+    title: Optional[str] = None
+    badge: Optional[str] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class LevelMilestoneResponse(BaseModel):
+    """Schema for level milestone response."""
+    level: int
+    title: str
+    badge: str
+    color: str
+    description: Optional[str]
+    is_active: bool
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+# ========== LEVEL REWARDS SCHEMAS ==========
+
+class LevelRewardBase(BaseModel):
+    """Base schema for level reward."""
+    level: int = Field(..., ge=1, description="Level number")
+    reward_type: str = Field(..., description="Type of reward (coins, item, badge, multiplier)")
+    reward_amount: int = Field(..., ge=0, description="Reward amount")
+    description: Optional[str] = Field(None, description="Reward description")
+    is_active: bool = Field(True, description="Whether reward is active")
+
+
+class LevelRewardCreate(LevelRewardBase):
+    """Schema for creating level reward."""
+    pass
+
+
+class LevelRewardUpdate(BaseModel):
+    """Schema for updating level reward."""
+    level: Optional[int] = Field(None, ge=1)
+    reward_type: Optional[str] = None
+    reward_amount: Optional[int] = Field(None, ge=0)
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class LevelRewardResponse(BaseModel):
+    """Schema for level reward response."""
+    reward_id: str
+    level: int
+    reward_type: str
+    reward_amount: int
+    description: Optional[str]
+    is_active: bool
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+# ========== WEEKLY LEADERBOARD SCHEMAS ==========
+
+class WeeklyLeaderboardBase(BaseModel):
+    """Base schema for weekly leaderboard."""
+    week_start: str = Field(..., description="Week start date")
+    week_end: str = Field(..., description="Week end date")
+    user_id: str = Field(..., description="User ID")
+    game_id: str = Field(..., description="Game ID")
+    score: int = Field(..., ge=0, description="Score")
+    rank: Optional[int] = Field(None, ge=1, description="Rank in leaderboard")
+
+
+class WeeklyLeaderboardCreate(WeeklyLeaderboardBase):
+    """Schema for creating weekly leaderboard entry."""
+    pass
+
+
+class WeeklyLeaderboardUpdate(BaseModel):
+    """Schema for updating weekly leaderboard."""
+    score: Optional[int] = Field(None, ge=0)
+    rank: Optional[int] = Field(None, ge=1)
+
+
+class WeeklyLeaderboardResponse(BaseModel):
+    """Schema for weekly leaderboard response."""
+    entry_id: str
+    week_start: str
+    week_end: str
+    user_id: str
+    game_id: str
+    score: int
+    rank: Optional[int]
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+# ========== LEADERBOARD REWARDS SCHEMAS ==========
+
+class LeaderboardRewardBase(BaseModel):
+    """Base schema for leaderboard reward."""
+    game_id: Optional[str] = Field(None, description="Game ID (null for global)")
+    rank_start: int = Field(..., ge=1, description="Start rank")
+    rank_end: int = Field(..., ge=1, description="End rank")
+    steem_reward: Optional[float] = Field(None, ge=0, description="STEEM reward amount")
+    coin_reward: Optional[int] = Field(None, ge=0, description="Coin reward amount")
+    description: Optional[str] = Field(None, description="Reward description")
+    is_active: bool = Field(True, description="Whether reward is active")
+
+
+class LeaderboardRewardCreate(LeaderboardRewardBase):
+    """Schema for creating leaderboard reward."""
+    pass
+
+
+class LeaderboardRewardUpdate(BaseModel):
+    """Schema for updating leaderboard reward."""
+    game_id: Optional[str] = None
+    rank_start: Optional[int] = Field(None, ge=1)
+    rank_end: Optional[int] = Field(None, ge=1)
+    steem_reward: Optional[float] = Field(None, ge=0)
+    coin_reward: Optional[int] = Field(None, ge=0)
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class LeaderboardRewardResponse(BaseModel):
+    """Schema for leaderboard reward response."""
+    reward_id: str
+    game_id: Optional[str]
+    rank_start: int
+    rank_end: int
+    steem_reward: Optional[float]
+    coin_reward: Optional[int]
+    description: Optional[str]
+    is_active: bool
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True
+
+
+# ========== WEEKLY WINNERS SCHEMAS ==========
+
+class WeeklyWinnerBase(BaseModel):
+    """Base schema for weekly winner."""
+    week_start: str = Field(..., description="Week start date")
+    week_end: str = Field(..., description="Week end date")
+    game_id: str = Field(..., description="Game ID")
+    user_id: str = Field(..., description="User ID")
+    rank: int = Field(..., ge=1, description="Winner rank")
+    score: int = Field(..., ge=0, description="Winner score")
+    steem_reward: Optional[float] = Field(None, ge=0, description="STEEM reward")
+    coin_reward: Optional[int] = Field(None, ge=0, description="Coin reward")
+    steem_tx_id: Optional[str] = Field(None, description="STEEM transaction ID")
+    reward_sent: bool = Field(False, description="Whether reward was sent")
+    reward_sent_at: Optional[str] = Field(None, description="Reward sent timestamp")
+
+
+class WeeklyWinnerCreate(WeeklyWinnerBase):
+    """Schema for creating weekly winner."""
+    pass
+
+
+class WeeklyWinnerUpdate(BaseModel):
+    """Schema for updating weekly winner."""
+    steem_reward: Optional[float] = Field(None, ge=0)
+    coin_reward: Optional[int] = Field(None, ge=0)
+    steem_tx_id: Optional[str] = None
+    reward_sent: Optional[bool] = None
+    reward_sent_at: Optional[str] = None
+
+
+class WeeklyWinnerResponse(BaseModel):
+    """Schema for weekly winner response."""
+    winner_id: str
+    week_start: str
+    week_end: str
+    game_id: str
+    user_id: str
+    rank: int
+    score: int
+    steem_reward: Optional[float]
+    coin_reward: Optional[int]
+    steem_tx_id: Optional[str]
+    reward_sent: bool
+    reward_sent_at: Optional[str]
+    created_at: str
+    
+    class Config:
+        orm_mode = True
+

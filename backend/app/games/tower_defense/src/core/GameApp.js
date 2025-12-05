@@ -8,14 +8,19 @@ import { World } from "../game/World.js";
 import { AudioManager } from "../audio/core/AudioManager.js";
 import { SoundLibrary } from "../audio/SoundLibrary.js";
 import { GameOverScreen } from "../ui/screens/GameOverScreen.js";
+import { PerformanceProfileFactory } from "./PerformanceProfile.js";
 
 export class GameApp {
   constructor({ rootElement, config }) {
     this.rootElement = rootElement;
     this.config = config;
 
+    // Performance profile - auto-detect ottimale
+    this.performanceProfile = PerformanceProfileFactory.createOptimal();
+    console.log('[Performance] Profile:', this.performanceProfile);
+
     this.clock = new THREE.Clock();
-    this.sceneManager = new SceneManager(config.rendering);
+    this.sceneManager = new SceneManager(config.rendering, this.performanceProfile);
     this.uiManager = new UIManager(rootElement, config);
     this.inputManager = new InputManager(this.sceneManager.camera, rootElement);
     this.levelManager = new LevelManager(config.levels, config.gameplay);
@@ -47,6 +52,8 @@ export class GameApp {
 
     this.animationFrameId = null;
     this.lastTime = performance.now();
+    this.lastFrameTime = 0;
+    this.frameDelay = 1000 / this.performanceProfile.targetFPS;
 
     // placement + interaction state
     this._raycaster = new THREE.Raycaster();
@@ -604,6 +611,16 @@ export class GameApp {
 
   loop() {
     this.animationFrameId = requestAnimationFrame(() => this.loop());
+    
+    // Frame rate limiting per mobile (30 FPS target)
+    const currentTime = performance.now();
+    const elapsed = currentTime - this.lastFrameTime;
+    
+    if (elapsed < this.frameDelay) {
+      return; // Skip frame per mantenere target FPS
+    }
+    
+    this.lastFrameTime = currentTime - (elapsed % this.frameDelay);
     
     // Skip update if paused
     if (this.isPaused) {

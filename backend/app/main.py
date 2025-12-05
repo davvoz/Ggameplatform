@@ -85,7 +85,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "img-src 'self' data: https:; "
-                "connect-src 'self' https://api.steemit.com https://sds.steemworld.org; "
+                "connect-src 'self' https://esm.sh https://api.steemit.com https://sds.steemworld.org; "
                 "frame-src 'self'; "
                 "font-src 'self' data:;"
             )

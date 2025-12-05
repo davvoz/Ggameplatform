@@ -1,5 +1,5 @@
-const CACHE_NAME = 'cur8-games-v1';
-const RUNTIME_CACHE = 'runtime-cache-v1';
+const CACHE_NAME = 'cur8-games-v2';
+const RUNTIME_CACHE = 'runtime-cache-v2';
 
 // Files to cache immediately on install
 const PRECACHE_URLS = [

@@ -1440,6 +1440,7 @@ async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get
             steem_reward=reward_data['steem_reward'],
             coin_reward=reward_data['coin_reward'],
             game_id=reward_data.get('game_id'),
+            description=reward_data.get('description'),
             created_at=now,
             updated_at=now
         )

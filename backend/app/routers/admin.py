@@ -1428,13 +1428,20 @@ async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get
     """Create new leaderboard reward"""
     try:
         from app.models import LeaderboardReward
+        import uuid
+        from datetime import datetime
+        
+        now = datetime.utcnow().isoformat()
         
         reward = LeaderboardReward(
+            reward_id=str(uuid.uuid4()),
             rank_start=reward_data['rank_start'],
             rank_end=reward_data.get('rank_end', reward_data['rank_start']),
             steem_reward=reward_data['steem_reward'],
             coin_reward=reward_data['coin_reward'],
-            game_id=reward_data.get('game_id')
+            game_id=reward_data.get('game_id'),
+            created_at=now,
+            updated_at=now
         )
         
         db.add(reward)

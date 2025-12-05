@@ -892,10 +892,10 @@ export default class RuntimeShell {
         document.body.appendChild(notification);
 
         // Remove after animation
-        setTimeout(() => {
-            notification.remove();
-            style.remove();
-        }, 4000);
+        // setTimeout(() => {
+        //     notification.remove();
+        //     style.remove();
+        // }, 4000);
     }
 
     /**

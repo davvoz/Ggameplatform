@@ -294,29 +294,29 @@ export async function renderGamePlayer(params) {
         setupPlayerControls(gameId, iframe);
 
         // Exit button
-        const exitBtn = document.querySelector('.exit-btn');
-        exitBtn.addEventListener('click', () => {
-            // Exit fullscreen if active
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else if (document.webkitFullscreenElement) {
-                document.webkitExitFullscreen();
-            }
+        // const exitBtn = document.querySelector('.exit-btn');
+        // exitBtn.addEventListener('click', () => {
+        //     // Exit fullscreen if active
+        //     if (document.fullscreenElement) {
+        //         document.exitFullscreen();
+        //     } else if (document.webkitFullscreenElement) {
+        //         document.webkitExitFullscreen();
+        //     }
             
-            // Clean up iOS fullscreen
-            const playerContainer = document.querySelector('.player-container');
-            if (playerContainer && playerContainer.classList.contains('ios-fullscreen')) {
-                playerContainer.classList.remove('ios-fullscreen');
-                document.body.style.overflow = '';
-            }
+        //     // Clean up iOS fullscreen
+        //     const playerContainer = document.querySelector('.player-container');
+        //     if (playerContainer && playerContainer.classList.contains('ios-fullscreen')) {
+        //         playerContainer.classList.remove('ios-fullscreen');
+        //         document.body.style.overflow = '';
+        //     }
             
-            if (window.currentGameRuntime) {
-                // Use exit() instead of cleanup() to prevent XP distribution
-                window.currentGameRuntime.exit();
-                window.currentGameRuntime = null;
-            }
-            navigateTo(`/game/${gameId}`);
-        });
+        //     if (window.currentGameRuntime) {
+        //         // Use exit() instead of cleanup() to prevent XP distribution
+        //         window.currentGameRuntime.exit();
+        //         window.currentGameRuntime = null;
+        //     }
+        //     navigateTo(`/game/${gameId}`);
+        // });
 
     } catch (error) {
         appContainer.innerHTML = '<div class="error-message">Failed to load game.</div>';
@@ -351,66 +351,66 @@ function setupPlayerControls(gameId, iframe) {
         console.log('Level completed:', data);
     });
 
-    // Pause button
-    pauseBtn.addEventListener('click', () => {
-        pauseBtn.style.display = 'none';
-        resumeBtn.style.display = 'inline-block';
-        runtime.pause();
-    });
+    // // Pause button
+    // pauseBtn.addEventListener('click', () => {
+    //     pauseBtn.style.display = 'none';
+    //     resumeBtn.style.display = 'inline-block';
+    //     runtime.pause();
+    // });
 
-    // Resume button
-    resumeBtn.addEventListener('click', () => {
-        resumeBtn.style.display = 'none';
-        pauseBtn.style.display = 'inline-block';
-        runtime.resume();
-    });
+    // // Resume button
+    // resumeBtn.addEventListener('click', () => {
+    //     resumeBtn.style.display = 'none';
+    //     pauseBtn.style.display = 'inline-block';
+    //     runtime.resume();
+    // });
 
-    // Fullscreen button
-    fullscreenBtn.addEventListener('click', () => {
-        const playerContainer = document.querySelector('.player-container');
-        const gameFrame = playerContainer.querySelector('iframe');
+    // // Fullscreen button
+    // fullscreenBtn.addEventListener('click', () => {
+    //     const playerContainer = document.querySelector('.player-container');
+    //     const gameFrame = playerContainer.querySelector('iframe');
         
-        // iOS Safari detection
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    //     // iOS Safari detection
+    //     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
-        if (isIOS) {
-            // iOS Safari doesn't support standard fullscreen API
-            // Use toggle for iOS fullscreen fallback
-            toggleIOSFullscreen(playerContainer);
-        } else {
-            // Standard browsers - check if already in fullscreen
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                // Exit fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            } else {
-                // Enter fullscreen
-                if (playerContainer.requestFullscreen) {
-                    playerContainer.requestFullscreen();
-                } else if (playerContainer.webkitRequestFullscreen) {
-                    playerContainer.webkitRequestFullscreen();
-                } else if (playerContainer.msRequestFullscreen) {
-                    playerContainer.msRequestFullscreen();
-                }
-            }
-        }
-    });
+    //     if (isIOS) {
+    //         // iOS Safari doesn't support standard fullscreen API
+    //         // Use toggle for iOS fullscreen fallback
+    //         toggleIOSFullscreen(playerContainer);
+    //     } else {
+    //         // Standard browsers - check if already in fullscreen
+    //         if (document.fullscreenElement || document.webkitFullscreenElement) {
+    //             // Exit fullscreen
+    //             if (document.exitFullscreen) {
+    //                 document.exitFullscreen();
+    //             } else if (document.webkitExitFullscreen) {
+    //                 document.webkitExitFullscreen();
+    //             }
+    //         } else {
+    //             // Enter fullscreen
+    //             if (playerContainer.requestFullscreen) {
+    //                 playerContainer.requestFullscreen();
+    //             } else if (playerContainer.webkitRequestFullscreen) {
+    //                 playerContainer.webkitRequestFullscreen();
+    //             } else if (playerContainer.msRequestFullscreen) {
+    //                 playerContainer.msRequestFullscreen();
+    //             }
+    //         }
+    //     }
+    // });
     
     // iOS fullscreen fallback helper
-    function toggleIOSFullscreen(container) {
-        if (container.classList.contains('ios-fullscreen')) {
-            container.classList.remove('ios-fullscreen');
-            document.body.style.overflow = '';
-        } else {
-            container.classList.add('ios-fullscreen');
-            document.body.style.overflow = 'hidden';
-            // Scroll to hide address bar
-            setTimeout(() => window.scrollTo(0, 1), 100);
-        }
-    }
+    // function toggleIOSFullscreen(container) {
+    //     if (container.classList.contains('ios-fullscreen')) {
+    //         container.classList.remove('ios-fullscreen');
+    //         document.body.style.overflow = '';
+    //     } else {
+    //         container.classList.add('ios-fullscreen');
+    //         document.body.style.overflow = 'hidden';
+    //         // Scroll to hide address bar
+    //         setTimeout(() => window.scrollTo(0, 1), 100);
+    //     }
+    // }
 
     // Handle fullscreen exit (ESC key or native exit)
     const handleFullscreenChange = () => {

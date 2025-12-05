@@ -767,7 +767,7 @@ export class LevelManager {
      * Calcola stelle in base a performance - VERSIONE BILANCIATA
      */
     calculateStars() {
-        console.log('🌟🌟🌟 calculateStars() called - VERSION 2024-11-28 NO DAMAGE');
+       // console.log('🌟🌟🌟 calculateStars() called - VERSION 2024-11-28 NO DAMAGE');
         const req = this.currentLevel.starRequirements;
         
         // Calcola requisiti monete in base al totale del livello
@@ -775,44 +775,44 @@ export class LevelManager {
         const coinsFor2Stars = Math.ceil(this.totalCoins * req.twoStars.coins);
         const coinsFor1Star = Math.ceil(this.totalCoins * req.oneStar.coins);
         
-        console.log(`⭐ Star calculation:
-            Time: ${this.levelElapsedTime.toFixed(1)}s / ${req.threeStars.time}s (2⭐: ${req.twoStars.time}s, 1⭐: ${req.oneStar.time}s)
-            Coins: ${this.coinsCollected} (includes bonus coins!) - Need: 3⭐≥${coinsFor3Stars}, 2⭐≥${coinsFor2Stars}, 1⭐≥${coinsFor1Star}
-            Base coins in level: ${this.totalCoins}
-            Damage: ${this.damagesTaken} (not used in star calculation)
-        `);
+        // console.log(`⭐ Star calculation:
+        //     Time: ${this.levelElapsedTime.toFixed(1)}s / ${req.threeStars.time}s (2⭐: ${req.twoStars.time}s, 1⭐: ${req.oneStar.time}s)
+        //     Coins: ${this.coinsCollected} (includes bonus coins!) - Need: 3⭐≥${coinsFor3Stars}, 2⭐≥${coinsFor2Stars}, 1⭐≥${coinsFor1Star}
+        //     Base coins in level: ${this.totalCoins}
+        //     Damage: ${this.damagesTaken} (not used in star calculation)
+        // `);
         
         // Debug dettagliato
-        console.log('🔍 Detailed check:');
-        console.log(`  3⭐ time check: ${this.levelElapsedTime} <= ${req.threeStars.time} = ${this.levelElapsedTime <= req.threeStars.time}`);
-        console.log(`  3⭐ coins check: ${this.coinsCollected} >= ${coinsFor3Stars} = ${this.coinsCollected >= coinsFor3Stars}`);
-        console.log(`  2⭐ time check: ${this.levelElapsedTime} <= ${req.twoStars.time} = ${this.levelElapsedTime <= req.twoStars.time}`);
-        console.log(`  2⭐ coins check: ${this.coinsCollected} >= ${coinsFor2Stars} = ${this.coinsCollected >= coinsFor2Stars}`);
-        console.log(`  1⭐ time check: ${this.levelElapsedTime} <= ${req.oneStar.time} = ${this.levelElapsedTime <= req.oneStar.time}`);
-        console.log(`  1⭐ coins check: ${this.coinsCollected} >= ${coinsFor1Star} = ${this.coinsCollected >= coinsFor1Star}`);
+        // console.log('🔍 Detailed check:');
+        // console.log(`  3⭐ time check: ${this.levelElapsedTime} <= ${req.threeStars.time} = ${this.levelElapsedTime <= req.threeStars.time}`);
+        // console.log(`  3⭐ coins check: ${this.coinsCollected} >= ${coinsFor3Stars} = ${this.coinsCollected >= coinsFor3Stars}`);
+        // console.log(`  2⭐ time check: ${this.levelElapsedTime} <= ${req.twoStars.time} = ${this.levelElapsedTime <= req.twoStars.time}`);
+        // console.log(`  2⭐ coins check: ${this.coinsCollected} >= ${coinsFor2Stars} = ${this.coinsCollected >= coinsFor2Stars}`);
+        // console.log(`  1⭐ time check: ${this.levelElapsedTime} <= ${req.oneStar.time} = ${this.levelElapsedTime <= req.oneStar.time}`);
+        // console.log(`  1⭐ coins check: ${this.coinsCollected} >= ${coinsFor1Star} = ${this.coinsCollected >= coinsFor1Star}`);
         
         // 🌟🌟🌟 3 STELLE: Perfect run - fast time, most coins
         if (this.levelElapsedTime <= req.threeStars.time &&
             this.coinsCollected >= coinsFor3Stars) {
-            console.log('✅ 3 STARS achieved!');
+         //   console.log('✅ 3 STARS achieved!');
             return 3;
         }
         
         // 🌟🌟 2 STELLE: Good run - decent time, half coins
         if (this.levelElapsedTime <= req.twoStars.time &&
             this.coinsCollected >= coinsFor2Stars) {
-            console.log('✅ 2 STARS achieved!');
+            // console.log('✅ 2 STARS achieved!');
             return 2;
         }
         
         // 🌟 1 STELLA: Completed - just finish with some coins
         if (this.levelElapsedTime <= req.oneStar.time &&
             this.coinsCollected >= coinsFor1Star) {
-            console.log('✅ 1 STAR achieved!');
+            // console.log('✅ 1 STAR achieved!');
             return 1;
         }
         
-        console.log('❌ 0 STARS - Requirements not met');
+        // console.log('❌ 0 STARS - Requirements not met');
         
         // ✅ 0 STELLE: Livello completato ma performance scarsa
         return 0;

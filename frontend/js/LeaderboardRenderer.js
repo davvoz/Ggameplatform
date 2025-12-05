@@ -26,7 +26,17 @@ class LeaderboardRenderer {
 
         try {
             // Fetch initial data
-            const games = await fetchGames();
+            let games = await fetchGames();
+            
+            // Sort games: STEEM rewards first, then alphabetically
+            games = games.sort((a, b) => {
+                // First priority: STEEM rewards enabled
+                if (a.steem_rewards_enabled !== b.steem_rewards_enabled) {
+                    return b.steem_rewards_enabled - a.steem_rewards_enabled;
+                }
+                // Second priority: alphabetical order
+                return a.title.localeCompare(b.title);
+            });
             
             // Set first game as default
             if (games.length > 0) {

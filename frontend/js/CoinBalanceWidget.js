@@ -170,8 +170,10 @@ class CoinBalanceWidget {
 }
 
 // Add CSS for animations
-const style = document.createElement('style');
-style.textContent = `
+if (!document.getElementById('coin-widget-style')) {
+    const style = document.createElement('style');
+    style.id = 'coin-widget-style';
+    style.textContent = `
     @keyframes slideInRight {
         from {
             transform: translateX(400px);
@@ -216,6 +218,7 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+}
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {

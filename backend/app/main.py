@@ -67,13 +67,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "font-src 'self' data:;"
             )
         elif request.url.path.startswith('/games/'):
-            # Very permissive CSP for game iframes - allow CDN scripts
+            # Very permissive CSP for game iframes - allow CDN scripts and source maps
             csp = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https:; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh https:; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https:; "
                 "img-src 'self' data: https: http:; "
-                "connect-src 'self' http://localhost:3000 http://localhost:8000; "
+                "connect-src 'self' https://esm.sh http://localhost:3000 http://localhost:8000; "
                 "frame-src 'self'; "
                 "font-src 'self' data:; "
                 "media-src 'self' data: blob:;"

@@ -611,8 +611,10 @@
         });
 
         // Add slideDown animation
-        const style = document.createElement('style');
-        style.textContent = `
+        if (!document.getElementById('pwa-install-style')) {
+            const style = document.createElement('style');
+            style.id = 'pwa-install-style';
+            style.textContent = `
             @keyframes slideDown {
                 from {
                     transform: translate(-50%, -100%);
@@ -659,6 +661,7 @@
             }
         `;
         document.head.appendChild(style);
+        }
     </script>
 </body>
 </html>

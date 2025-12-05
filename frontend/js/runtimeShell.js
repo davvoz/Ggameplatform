@@ -843,8 +843,10 @@ export default class RuntimeShell {
             </div>
         `;
         // Add styles
-        const style = document.createElement('style');
-        style.textContent = `
+        if (!document.getElementById('xp-notification-style')) {
+            const style = document.createElement('style');
+            style.id = 'xp-notification-style';
+            style.textContent = `
             .xp-notification {
                 position: fixed;
                 top: 70px;
@@ -885,6 +887,7 @@ export default class RuntimeShell {
             }
         `;
         document.head.appendChild(style);
+        }
 
         document.body.appendChild(notification);
 

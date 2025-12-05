@@ -1491,6 +1491,11 @@ async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: Sessi
             reward.coin_reward = reward_data['coin_reward']
         if 'game_id' in reward_data:
             reward.game_id = reward_data['game_id']
+        if 'description' in reward_data:
+            reward.description = reward_data['description']
+        
+        from datetime import datetime
+        reward.updated_at = datetime.utcnow().isoformat()
         
         db.commit()
         db.refresh(reward)

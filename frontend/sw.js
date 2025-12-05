@@ -97,6 +97,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Skip CDN requests - let browser handle them directly (CSP will manage)
+  if (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'esm.sh') {
+    return;
+  }
+
   // Network-only for API calls (always fetch fresh data)
   if (url.pathname.startsWith('/api/') || 
       url.pathname.startsWith('/users/') ||

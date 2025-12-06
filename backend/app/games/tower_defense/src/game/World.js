@@ -60,6 +60,47 @@ export class World {
     this.scoreCallback = callback;
   }
 
+  /**
+   * Generate multi-lane path system
+   * Creates 2 parallel lanes for enemies to avoid crowding
+   * Follows Single Responsibility Principle
+   */
+  _generateMultiLanePath(half, tileSize) {
+    const laneCount = 3;
+    const laneOffsets = [-1, 0, 1]; // Three lanes at positions -1, 0, +1
+    
+    // Generate lanes
+    for (let lane = 0; lane < laneCount; lane++) {
+      const offset = laneOffsets[lane];
+      const lanePoints = [];
+      
+      // HORIZONTAL RECTANGLE: 3 rows x all columns (left to right)
+      // Parte da sinistra, va verso destra
+      for (let i = -half; i <= half - 3; i += 1) {
+        lanePoints.push(new THREE.Vector3(
+          i * tileSize,
+          0,
+          (-half + 1 + offset) * tileSize
+        ));
+      }
+      
+      // VERTICAL RECTANGLE: all rows x 3 columns (bottom to top)
+      // Parte dal basso, va verso l'alto
+      for (let j = -half; j <= half; j += 1) {
+        lanePoints.push(new THREE.Vector3(
+          (half - 1 + offset) * tileSize,
+          0,
+          j * tileSize
+        ));
+      }
+      
+      this.pathLanes.push(lanePoints);
+    }
+    
+    // Set default path to middle lane for backward compatibility
+    this.pathPoints = this.pathLanes[0];
+  }
+
   _buildStaticWorld() {
     this.groundGroup.clear();
     const gridSize = this.worldConfig.gridSize;
@@ -108,7 +149,7 @@ export class World {
     // Merge all tiles into ONE mesh
     const mergedTileGeo = BufferGeometryUtils.mergeGeometries(tileGeometries);
     const groundMesh = new THREE.Mesh(mergedTileGeo, groundMat);
-    // groundMesh.receiveShadow = true; // DISABLED for performance
+    groundMesh.receiveShadow = false; // Disabled for performance
     this.groundGroup.add(groundMesh);
 
     // Merge all edges into ONE mesh
@@ -125,46 +166,67 @@ export class World {
     edgeGeometries.forEach(g => g.dispose());
 
     this.pathPoints = [];
-    const mid = 0;
-    for (let i = -half; i <= half; i += 1) {
-      this.pathPoints.push(new THREE.Vector3(i * tileSize, 0, -half * tileSize));
-    }
-    for (let j = -half + 1; j <= half; j += 1) {
-      this.pathPoints.push(new THREE.Vector3(half * tileSize, 0, j * tileSize));
-    }
+    this.pathLanes = []; // Array of lane paths for multi-lane system
+    this._generateMultiLanePath(half, tileSize);
 
+    // Create path positions set for quick lookup
+    const pathPositions = new Set();
+    this.pathLanes.forEach((lanePoints) => {
+      lanePoints.forEach((p) => {
+        const key = `${Math.round(p.x * 100)},${Math.round(p.z * 100)}`;
+        pathPositions.add(key);
+      });
+    });
+
+    // Material for enemy lane tiles (rusty worn effect, delicate)
     const pathMat = new THREE.MeshStandardMaterial({
-      color: 0x0f202b,
-      emissive: 0x6cf3c5,
-      emissiveIntensity: 0.5,
-      metalness: 0.5,
-      roughness: 0.3
+      color: 0x2a3a3a,
+      emissive: 0x1a2828,
+      emissiveIntensity: 0.3,
+      roughness: 0.85,
+      metalness: 0.15
     });
 
-    // OPTIMIZED: Merge all path tiles into single mesh
-    const pathGeometries = [];
-    const pathGeo = new THREE.BoxGeometry(
-      tileSize * 0.9,
-      this.worldConfig.pathHeight,
-      tileSize * 0.9
-    );
+    // Single merged geometry for all path tiles
+    const pathTileGeometries = [];
+    const pathEdgeGeometries = [];
 
-    this.pathPoints.forEach((p) => {
-      const pathClone = pathGeo.clone();
-      pathClone.translate(p.x, -0.02, p.z);
-      pathGeometries.push(pathClone);
+    // Create simple rusty path tiles
+    this.pathLanes.forEach((lanePoints) => {
+      lanePoints.forEach((p) => {
+        // Base tile with rusty look
+        const pathTileClone = new THREE.BoxGeometry(tileSize * 0.98, 0.08, tileSize * 0.98);
+        pathTileClone.translate(p.x, -0.07, p.z);
+        pathTileGeometries.push(pathTileClone);
+
+        // Subtle edge for definition
+        const edgeClone = new THREE.PlaneGeometry(tileSize, tileSize);
+        edgeClone.rotateX(-Math.PI / 2);
+        edgeClone.translate(p.x, 0.002, p.z);
+        pathEdgeGeometries.push(edgeClone);
+      });
     });
 
-    // Merge all path tiles into ONE mesh
-    const mergedPathGeo = BufferGeometryUtils.mergeGeometries(pathGeometries);
+    // Merge path tiles
+    const mergedPathGeo = BufferGeometryUtils.mergeGeometries(pathTileGeometries);
     const pathMesh = new THREE.Mesh(mergedPathGeo, pathMat);
-    // pathMesh.receiveShadow = true; // DISABLED for performance
-    // pathMesh.castShadow = false;
+    pathMesh.receiveShadow = false;
+    pathMesh.castShadow = false;
     this.groundGroup.add(pathMesh);
 
+    // Subtle rusty edge lines
+    const edgeMat = new THREE.MeshBasicMaterial({
+      color: 0x5a4a3a,
+      transparent: true,
+      opacity: 0.2
+    });
+    const mergedPathEdgeGeo = BufferGeometryUtils.mergeGeometries(pathEdgeGeometries);
+    const pathEdgeMesh = new THREE.Mesh(mergedPathEdgeGeo, edgeMat);
+    this.groundGroup.add(pathEdgeMesh);
+
     // Dispose temporary geometries
-    pathGeo.dispose();
-    pathGeometries.forEach(g => g.dispose());
+    pathTileGeometries.forEach(g => g.dispose());
+    pathEdgeGeometries.forEach(g => g.dispose());
 
     // Removed center accent so no default tower-like object appears in the middle
     // this._spawnCenterAccent();
@@ -196,8 +258,8 @@ export class World {
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.08;
-    ring.castShadow = true;
+    ring.position.y = 0.15;
+    ring.castShadow = false; // Disabled - decorative only
     group.add(ring);
 
     const crystalGeo = new THREE.OctahedronGeometry(0.35, 0);
@@ -213,7 +275,7 @@ export class World {
     });
     const crystal = new THREE.Mesh(crystalGeo, crystalMat);
     crystal.position.y = 0.5;
-    crystal.castShadow = true;
+    crystal.castShadow = false; // Disabled - decorative only
     group.add(crystal);
 
     group.position.set(0, 0, 0);
@@ -237,7 +299,8 @@ export class World {
     this.projectiles.length = 0;
     this.floatingTexts.length = 0;
 
-    this.enemySpawner.reset(this.pathPoints);
+    // Reset spawner with first lane (backward compatibility)
+    this.enemySpawner.reset(this.pathLanes.length > 0 ? this.pathLanes[0] : this.pathPoints);
     this.combatSystem.reset();
   }
 
@@ -260,15 +323,31 @@ export class World {
     
     if (hasTower) return true;
     
-    // Check if position is on the enemy path
+    // Check if position is on any enemy lane
+    return this._isPositionOnLanes(position);
+  }
+
+  /**
+   * Check if a position is on any enemy lane
+   * Follows Single Responsibility Principle - dedicated lane validation
+   * @param {THREE.Vector3} position - Position to check
+   * @returns {boolean} True if position is on any lane
+   */
+  _isPositionOnLanes(position) {
     const pathTolerance = 0.5; // Half tile size
-    const isOnPath = this.pathPoints.some(pathPoint => {
-      const dx = Math.abs(pathPoint.x - position.x);
-      const dz = Math.abs(pathPoint.z - position.z);
-      return dx < pathTolerance && dz < pathTolerance;
-    });
     
-    return isOnPath;
+    // Check all lanes for overlap
+    for (const lanePoints of this.pathLanes) {
+      const isOnThisLane = lanePoints.some(pathPoint => {
+        const dx = Math.abs(pathPoint.x - position.x);
+        const dz = Math.abs(pathPoint.z - position.z);
+        return dx < pathTolerance && dz < pathTolerance;
+      });
+      
+      if (isOnThisLane) return true;
+    }
+    
+    return false;
   }
 
   placeTowerAt(position, towerConfig) {
@@ -335,11 +414,53 @@ export class World {
   }
 
   spawnEnemyFromWave(waveConfig) {
-    const enemy = new Enemy(this.pathPoints, waveConfig);
+    // Select random lane for this enemy
+    const laneIndex = Math.floor(Math.random() * this.pathLanes.length);
+    const lanePoints = this.pathLanes[laneIndex];
+    
+    // Apply progressive difficulty scaling based on current wave
+    const waveScaling = this._calculateWaveScaling();
+    const currentWaveNumber = (this.levelManager.currentWaveIndex || 0) + 1;
+    
+    console.log(`[SPAWN] Wave ${currentWaveNumber}: HP x${waveScaling.hpMultiplier.toFixed(2)}, Speed x${waveScaling.speedMultiplier.toFixed(2)}, Reward x${waveScaling.rewardMultiplier.toFixed(2)}`);
+    
+    const scaledConfig = {
+      ...waveConfig,
+      lane: laneIndex,
+      baseHp: Math.round(waveConfig.baseHp * waveScaling.hpMultiplier),
+      speed: waveConfig.speed * waveScaling.speedMultiplier,
+      reward: Math.round(waveConfig.reward * waveScaling.rewardMultiplier)
+    };
+    
+    console.log(`[SPAWN] ${waveConfig.type}: Base HP ${waveConfig.baseHp} -> Scaled HP ${scaledConfig.baseHp}, Base Speed ${waveConfig.speed.toFixed(2)} -> Scaled Speed ${scaledConfig.speed.toFixed(2)}`);
+    
+    const enemy = new Enemy(lanePoints, scaledConfig);
     enemy.levelManager = this.levelManager;
+    enemy.pathLanes = this.pathLanes; // Give enemy access to all lanes for switching
     enemy.addToScene(this.scene);
     this.enemies.push(enemy);
     this.levelManager.registerEnemySpawn();
+  }
+
+  /**
+   * Calculate progressive difficulty scaling based on current wave
+   * Follows Open/Closed Principle - can extend scaling without modifying
+   * @returns {Object} Multipliers for enemy stats
+   */
+  _calculateWaveScaling() {
+    // currentWaveIndex is 0-based, so add 1 for actual wave number
+    const currentWave = (this.levelManager.currentWaveIndex || 0) + 1;
+    
+    // Aggressive progressive scaling: much harder each wave
+    const hpMultiplier = 1 + (currentWave - 1) * 0.35; // +35% HP per wave (was 15%)
+    const speedMultiplier = Math.min(1 + (currentWave - 1) * 0.12, 2.0); // +12% speed, max 200% (was 5%, max 150%)
+    const rewardMultiplier = 1 + (currentWave - 1) * 0.20; // +20% reward per wave (was 10%)
+    
+    return {
+      hpMultiplier,
+      speedMultiplier,
+      rewardMultiplier
+    };
   }
 
   update(deltaTime, levelManager) {
@@ -363,7 +484,8 @@ export class World {
 
     this.enemySpawner.update(deltaTime, this);
 
-    this.enemies.forEach((enemy) => enemy.update(deltaTime, levelManager, this.soundLibrary));
+    // Update enemies with collision avoidance
+    this.enemies.forEach((enemy) => enemy.update(deltaTime, levelManager, this.soundLibrary, this.enemies));
     // Remove disposed enemies in-place so shared references stay valid
     for (let i = this.enemies.length - 1; i >= 0; i -= 1) {
       if (this.enemies[i].isDisposed) {

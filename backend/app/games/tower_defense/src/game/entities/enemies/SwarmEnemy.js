@@ -35,16 +35,43 @@ export class SwarmEnemy extends BaseEnemy {
 
   _buildGeometry(group) {
     // Body
-    this._addBody(group);
-    
-    // Head with eyes
-    this._addHead(group);
-    
-    // Wings
-    this._addWings(group);
-    
-    // Energy ring
-    this._addEnergyRing(group);
+    const bodyGeo = new THREE.SphereGeometry(0.2, 8, 8);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x001a33,
+      emissive: 0x00ffff,
+      emissiveIntensity: 1.8,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.35;
+    body.castShadow = false; // Disabled for performance
+    group.add(body);
+
+    // Body edges
+    const bodyEdges = new THREE.EdgesGeometry(bodyGeo, 25);
+    const bodyLines = new THREE.LineSegments(bodyEdges, new THREE.LineBasicMaterial({ 
+      color: 0x000000, 
+      linewidth: 2,
+      opacity: 0.7,
+      transparent: true
+    }));
+    bodyLines.position.y = 0.35;
+    group.add(bodyLines);
+
+    // Head (smaller, no edges for performance)
+    const headGeo = new THREE.SphereGeometry(0.1, 6, 6);
+    const headMat = new THREE.MeshStandardMaterial({
+      color: 0x003366,
+      emissive: 0x0099ff,
+      emissiveIntensity: 1.8,
+      metalness: 0.8,
+      roughness: 0.3
+    });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 0.42;
+    head.position.z = 0.22;
+    group.add(head);
   }
 
   _addBody(group) {

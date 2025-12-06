@@ -32,7 +32,7 @@ export class PerformanceProfile {
     }
     
     // Ottimizzazioni generali
-    renderer.info.autoReset = false;
+    renderer.info.autoReset = true; // Reset stats each frame
     renderer.sortObjects = false; // Risparmia sorting
   }
 

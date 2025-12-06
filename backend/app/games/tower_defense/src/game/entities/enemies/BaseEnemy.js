@@ -19,6 +19,15 @@ export class BaseEnemy extends BaseEntity {
     this.progress = 0;
     this.hasReachedBase = false;
 
+    // Lane management for intelligent switching
+    this.currentLane = waveConfig.lane || 0;
+    this.laneChangeTimer = 0;
+    this.laneChangeDelay = 1.0;
+    this.pathLanes = null; // Will be set by World
+    this.isChangingLane = false;
+    this.targetLaneOffset = this.currentLane;
+    this.laneTransitionProgress = 0;
+
     // Damage resistances/weaknesses (1.0 = normal, >1.0 = resistant, <1.0 = weak)
     this.resistances = {
       laser: 1.0,
@@ -87,9 +96,9 @@ export class BaseEnemy extends BaseEntity {
 
     const bgGeo = new THREE.PlaneGeometry(0.5, 0.08);
     const bgMat = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
+      color: 0x000000,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.6,
       depthWrite: false
     });
     const bgBar = new THREE.Mesh(bgGeo, bgMat);
@@ -106,15 +115,7 @@ export class BaseEnemy extends BaseEntity {
     fgBar.position.z = 0.001;
     barContainer.add(fgBar);
 
-    const borderGeo = new THREE.EdgesGeometry(bgGeo);
-    const borderMat = new THREE.LineBasicMaterial({ 
-      color: 0xffffff, 
-      opacity: 0.8, 
-      transparent: true 
-    });
-    const border = new THREE.LineSegments(borderGeo, borderMat);
-    border.position.z = 0.002;
-    barContainer.add(border);
+    // Removed EdgeGeometry border - was causing massive draw calls!
 
     this.healthBar = {
       container: barContainer,
@@ -182,6 +183,13 @@ export class BaseEnemy extends BaseEntity {
   }
 
   /**
+   * Easing function for smooth lane transitions
+   */
+  _easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  /**
    * Update animation - can be overridden by subclasses
    */
   _updateAnimation(time, pathIndex) {
@@ -197,7 +205,7 @@ export class BaseEnemy extends BaseEntity {
     // Apply resistance modifier
     const resistance = this.resistances[damageType] || 1.0;
     const finalDamage = amount / resistance;
-    
+
     this.hp -= finalDamage;
     this._updateHealthBar();
     this.hitTimer = 0.25;
@@ -212,7 +220,7 @@ export class BaseEnemy extends BaseEntity {
       if (soundLibrary) {
         soundLibrary.enemyDestroy(this.type);
       }
-      
+
       this.dispose(this.mesh?.parent || null);
       levelManager.registerEnemyDefeat(this.reward);
     }
@@ -224,6 +232,8 @@ export class BaseEnemy extends BaseEntity {
   applySlow(slowAmount, duration = 2) {
     this.slowEffect = Math.max(this.slowEffect, slowAmount);
     this.slowTimer = Math.max(this.slowTimer, duration);
+
+    console.log(`[SLOW] Enemy slowed by ${(slowAmount * 100).toFixed(0)}% for ${duration}s (current: ${(this.slowEffect * 100).toFixed(0)}%)`);
 
     if (!this.freezeAura && this.slowEffect > 0) {
       this._createFreezeAura();
@@ -330,7 +340,7 @@ export class BaseEnemy extends BaseEntity {
   _addEdgeLines(geometry, position, parent, rotation = null) {
     const edges = new THREE.EdgesGeometry(geometry);
     const lines = new THREE.LineSegments(
-      edges, 
+      edges,
       new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.7, transparent: true })
     );
     lines.position.copy(position);
@@ -368,17 +378,17 @@ export class BaseEnemy extends BaseEntity {
         const angle = child.userData.angle + time * child.userData.speed;
         child.position.x = Math.cos(angle) * child.userData.radius;
         child.position.z = Math.sin(angle) * child.userData.radius;
-        
+
         // Vertical bobbing
         if (child.userData.verticalOffset !== undefined) {
           const verticalBob = Math.sin(time * 2 + child.userData.verticalOffset) * 0.15;
           child.position.y = 0.3 + verticalBob;
         }
-        
+
         child.rotation.y = time * 2;
         child.rotation.x = time * 1.5;
       }
-      
+
       // Pulse ice columns
       if (child.userData.iceColumn) {
         const pulse = Math.sin(time * 3 + child.userData.angle) * 0.5 + 1;
@@ -420,9 +430,255 @@ export class BaseEnemy extends BaseEntity {
   }
 
   /**
+   * Handle intelligent lane switching to avoid slower enemies
+   * SMART VERSION: Multiple fallback strategies if blocked
+   */
+  _handleLaneSwitching(allEnemies, deltaTime) {
+    // Can't switch lanes if on cooldown or no other enemies
+    if (this.laneChangeTimer > 0 || allEnemies.length <= 1) return;
+    if (!this.pathLanes || this.pathLanes.length < 2) return;
+
+    const myPosition = this.mesh.position;
+    const lookAheadDistance = 1.2; // Reduced for more responsive switching
+    const progressThreshold = 0.12; // Wider tolerance
+
+    // Check if there's a slower enemy blocking this lane ahead
+    let isBlocked = false;
+    let blockingEnemy = null;
+
+    for (const other of allEnemies) {
+      if (other === this || other.isDisposed) continue;
+      if (other.currentLane !== this.currentLane) continue;
+
+      // Check if enemy is ahead on the same path
+      const progressDiff = other.progress - this.progress;
+      if (progressDiff > 0 && progressDiff < progressThreshold) {
+        const distance = myPosition.distanceTo(other.mesh.position);
+        if (distance < lookAheadDistance) {
+          // Enemy ahead is blocking (slower or similar speed)
+          if (other.speed <= this.speed * 1.2) {
+            isBlocked = true;
+            blockingEnemy = other;
+            break;
+          }
+        }
+      }
+    }
+
+    // If blocked, intelligently find alternative route
+    if (isBlocked) {
+      const availableLanes = this._getAvailableLanes();
+      
+      // Strategy 1: Try safest lane first (least traffic)
+      const safestLane = this._findSafestLane(allEnemies, availableLanes);
+      if (safestLane !== null && safestLane !== this.currentLane) {
+        if (this._canSafelySwitchToLane(safestLane, allEnemies)) {
+          this._switchToLane(safestLane);
+          this.laneChangeTimer = this.laneChangeDelay;
+          return;
+        }
+      }
+      
+      // Strategy 2: If safest lane blocked, try ANY other lane
+      for (const lane of availableLanes) {
+        if (lane === this.currentLane) continue;
+        if (this._canSafelySwitchToLane(lane, allEnemies)) {
+          this._switchToLane(lane);
+          this.laneChangeTimer = this.laneChangeDelay * 1.5; // Longer cooldown for backup
+          return;
+        }
+      }
+      
+      // Strategy 3: All lanes blocked - slow down and wait (physics handles this)
+    }
+  }
+
+  /**
+   * Calculate physics-based slowdown to prevent enemy overlap
+   * Implements physical collision prevention via distance-based deceleration
+   * @param {Array} allEnemies - All enemies in the world
+   * @returns {number} Slowdown multiplier (0.0 to 1.0)
+   */
+  _calculatePhysicsSlowdown(allEnemies) {
+    if (!this.mesh || allEnemies.length <= 1) return 1.0;
+
+    const myPosition = this.mesh.position;
+    const minSafeDistance = 0.4; // Minimum safe distance between enemies
+    const slowdownDistance = 0.8; // Distance at which slowdown begins
+
+    let maxSlowdown = 1.0; // No slowdown by default
+
+    for (const other of allEnemies) {
+      if (other === this || other.isDisposed || !other.mesh) continue;
+
+      // Only check enemies in the same lane
+      if (other.currentLane !== this.currentLane) continue;
+
+      // Only care about enemies ahead of us
+      const progressDiff = other.progress - this.progress;
+      if (progressDiff <= 0) continue;
+
+      const distance = myPosition.distanceTo(other.mesh.position);
+
+      // Physics-based slowdown curve
+      if (distance < slowdownDistance) {
+        if (distance < minSafeDistance) {
+          // Critical zone - almost stopped
+          maxSlowdown = Math.min(maxSlowdown, 0.1);
+        } else {
+          // Gradual slowdown based on distance
+          const slowdownFactor = (distance - minSafeDistance) / (slowdownDistance - minSafeDistance);
+          maxSlowdown = Math.min(maxSlowdown, slowdownFactor);
+        }
+      }
+    }
+
+    return maxSlowdown;
+  }
+
+  /**
+   * Handle intelligent lane switching to avoid slower enemies
+   */
+  _handleLaneSwitching_OLD(allEnemies, deltaTime) {
+    // Can't switch lanes if on cooldown or no other enemies
+    if (this.laneChangeTimer > 0 || allEnemies.length <= 1) return;
+
+    const myPosition = this.mesh.position;
+    const lookAheadDistance = 2.0; // How far to look for blocking enemies
+    const progressThreshold = 0.05; // How much progress difference to check
+
+    // Check if there's a slower enemy blocking this lane ahead
+    let isBlocked = false;
+    for (const other of allEnemies) {
+      if (other === this || other.isDisposed) continue;
+      if (other.currentLane !== this.currentLane) continue;
+
+      // Check if enemy is ahead on the same path
+      const progressDiff = other.progress - this.progress;
+      if (progressDiff > 0 && progressDiff < progressThreshold) {
+        const distance = myPosition.distanceTo(other.mesh.position);
+        if (distance < lookAheadDistance) {
+          // Enemy ahead is slower, we're blocked
+          if (other.speed < this.speed) {
+            isBlocked = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // If blocked, try to switch to a better lane
+    if (isBlocked) {
+      const availableLanes = this._getAvailableLanes();
+      if (availableLanes.length > 1) {
+        const bestLane = this._findBestLane(allEnemies, availableLanes);
+        if (bestLane !== this.currentLane) {
+          this._switchToLane(bestLane);
+          this.laneChangeTimer = this.laneChangeDelay;
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if it's safe to switch to a new lane (no nearby enemies)
+   */
+  _canSafelySwitchToLane(newLaneIndex, allEnemies) {
+    if (!this.pathLanes || !this.pathLanes[newLaneIndex]) return false;
+
+    const safeDistance = 1.2; // Minimum distance from enemies in new lane
+    const progressTolerance = 0.15; // Check enemies within this progress range
+
+    for (const other of allEnemies) {
+      if (other === this || other.isDisposed) continue;
+      if (other.currentLane !== newLaneIndex) continue;
+
+      // Check if enemy is close in progress
+      const progressDiff = Math.abs(other.progress - this.progress);
+      if (progressDiff < progressTolerance) {
+        // Would be too close after switch
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Get all available lane indices from world
+   */
+  _getAvailableLanes() {
+    // World has 3 lanes (0, 1, and 2)
+    return [0, 1, 2];
+  }
+
+  /**
+   * Find the safest lane with least traffic ahead
+   */
+  _findSafestLane(allEnemies, availableLanes) {
+    const laneScores = {};
+    const lookAheadProgress = 0.1; // Check enemies within this progress range
+
+    // Initialize scores
+    availableLanes.forEach(lane => {
+      laneScores[lane] = 0;
+    });
+
+    // Count enemies in each lane that are ahead
+    for (const other of allEnemies) {
+      if (other === this || other.isDisposed) continue;
+
+      const progressDiff = other.progress - this.progress;
+      if (progressDiff > 0 && progressDiff < lookAheadProgress) {
+        if (availableLanes.includes(other.currentLane)) {
+          laneScores[other.currentLane] += 1;
+        }
+      }
+    }
+
+    // Find lane with lowest score (least traffic)
+    let safestLane = null;
+    let lowestScore = Infinity;
+    for (const lane of availableLanes) {
+      if (lane === this.currentLane) continue; // Don't count current lane
+      if (laneScores[lane] < lowestScore) {
+        lowestScore = laneScores[lane];
+        safestLane = lane;
+      }
+    }
+
+    return safestLane;
+  }
+
+  /**
+   * Switch enemy to a different lane
+   * SIMPLE: Just change the lane, enemy will naturally move there
+   */
+  _switchToLane(newLaneIndex) {
+    if (this.pathLanes && this.pathLanes[newLaneIndex]) {
+      // Simply switch to new lane path - keep current progress
+      this.pathPoints = this.pathLanes[newLaneIndex];
+      this.currentLane = newLaneIndex;
+      
+      // Enemy will naturally move to the new lane position at next update
+      // No complex progress calculation needed!
+    }
+  }
+
+  /**
+   * Animate smooth transition between lanes
+   */
+  _animateLaneTransition(targetLane) {
+    // Store target for smooth interpolation in _syncPosition
+    this.targetLaneOffset = targetLane;
+    this.isChangingLane = true;
+    this.laneTransitionProgress = 0;
+  }
+
+  /**
    * Main update loop
    */
-  update(deltaTime, levelManager, soundLibrary = null) {
+  update(deltaTime, levelManager, soundLibrary = null, allEnemies = []) {
     if (this.isDisposed) return;
 
     const pathLength = this.pathPoints.length;
@@ -439,9 +695,26 @@ export class BaseEnemy extends BaseEntity {
       }
     }
 
-    // Apply slow to movement speed
-    const effectiveSpeed = this.speed * (1 - this.slowEffect);
+    // Update lane change cooldown
+    if (this.laneChangeTimer > 0) {
+      this.laneChangeTimer -= deltaTime;
+    }
+
+    // INTELLIGENT LANE SWITCHING: Check for blocking enemies and switch lanes SAFELY
+    this._handleLaneSwitching(allEnemies, deltaTime);
+
+    // PHYSICS-BASED COLLISION PREVENTION: Slow down if too close to enemy ahead
+    const physicsSlowdown = this._calculatePhysicsSlowdown(allEnemies);
+
+    // Apply slow to movement speed (includes physics slowdown)
+    const effectiveSpeed = this.speed * (1 - this.slowEffect) * physicsSlowdown;
     const distancePerSecond = effectiveSpeed * 0.35;
+
+    // Debug slow effect
+    if (this.slowEffect > 0 && Math.random() < 0.01) {
+      console.log(`[MOVEMENT] Speed: ${this.speed.toFixed(2)} | SlowEffect: ${(this.slowEffect * 100).toFixed(0)}% | PhysicsSlowdown: ${physicsSlowdown.toFixed(2)} | Effective: ${effectiveSpeed.toFixed(2)}`);
+    }
+
     const pathWorldLength = (pathLength - 1) * 1;
     this.progress += (distancePerSecond * deltaTime) / pathWorldLength;
 
@@ -450,10 +723,10 @@ export class BaseEnemy extends BaseEntity {
       if (!this.hasReachedBase) {
         this.hasReachedBase = true;
         levelManager.damagePlayer(1);
-        
+
         // Registra come defeated per far avanzare la wave
         levelManager.registerEnemyDefeat(0); // 0 reward perché non è stato distrutto
-        
+
         // Play sound when enemy reaches base
         if (soundLibrary) {
           soundLibrary.enemyReachBase();
@@ -475,7 +748,7 @@ export class BaseEnemy extends BaseEntity {
     if (this.hitTimer > 0) {
       this.hitTimer = Math.max(0, this.hitTimer - deltaTime);
     }
-    
+
     if (this.mesh) {
       this.mesh.traverse((obj) => {
         if (

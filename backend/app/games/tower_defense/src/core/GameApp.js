@@ -90,7 +90,6 @@ export class GameApp {
     this.statsElement = document.createElement('div');
     this.statsElement.style.cssText = `
       position: fixed;
-      top: 10px;
       right: 10px;
       background: rgba(0, 0, 0, 0.8);
       color: #0f0;
@@ -102,6 +101,7 @@ export class GameApp {
       min-width: 200px;
       line-height: 1.4;
       border: 1px solid #0f0;
+      bottom: 100px;
     `;
     this.rootElement.appendChild(this.statsElement);
   }
@@ -215,7 +215,7 @@ export class GameApp {
 
   startGame() {
     this.levelManager.startLevel("level-1");
-    this.uiManager.showGameHud(this.levelManager, this.config.gameplay);
+    this.uiManager.showGameHud(this.levelManager, this.config.gameplay, this);
     
     // Reset game over flag and level state
     this.world.gameOver = false;

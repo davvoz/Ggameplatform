@@ -1,7 +1,8 @@
 export class HUDView {
-  constructor(root, levelManager) {
+  constructor(root, levelManager, gameApp = null) {
     this.root = root;
     this.levelManager = levelManager;
+    this.gameApp = gameApp;
 
     this.el = document.createElement("div");
     this.el.className = "hud-top";
@@ -29,6 +30,25 @@ export class HUDView {
     this.leftBox.appendChild(creditsLabel);
     this.leftBox.appendChild(this.creditsValue);
 
+    // Score box (center)
+    this.centerBox = document.createElement("div");
+    this.centerBox.className = "hud-box hud-box-center";
+
+    const scoreIcon = document.createElement("div");
+    scoreIcon.className = "hud-pill";
+    scoreIcon.textContent = "★";
+
+    const scoreLabel = document.createElement("div");
+    scoreLabel.className = "hud-label";
+    scoreLabel.textContent = "Score";
+
+    this.scoreValue = document.createElement("div");
+    this.scoreValue.className = "hud-value hud-value-score";
+
+    this.centerBox.appendChild(scoreIcon);
+    this.centerBox.appendChild(scoreLabel);
+    this.centerBox.appendChild(this.scoreValue);
+
     this.rightBox = document.createElement("div");
     this.rightBox.className = "hud-box";
 
@@ -52,6 +72,7 @@ export class HUDView {
     this.rightBox.appendChild(this.healthValue);
 
     this.el.appendChild(this.leftBox);
+    this.el.appendChild(this.centerBox);
     this.el.appendChild(this.rightBox);
 
     this.update();
@@ -71,6 +92,13 @@ export class HUDView {
     }
     
     this.healthValue.textContent = this.levelManager.health.toString();
+    
+    // Update score
+    if (this.gameApp) {
+      this.scoreValue.textContent = this.gameApp.gameScore.toLocaleString();
+    } else {
+      this.scoreValue.textContent = "0";
+    }
   }
 }
 

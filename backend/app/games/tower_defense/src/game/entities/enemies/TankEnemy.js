@@ -30,25 +30,65 @@ export class TankEnemy extends BaseEnemy {
   }
 
   _getHealthBarHeight() {
-    return 1.8;
+    return 1.3;
   }
 
   _buildGeometry(group) {
-    // Armored hull
-    this._addHull(group);
-    
-    // Turret
-    this._addTurret(group);
-    
-    // Energy shields
-    this._addEnergyShields(group);
-    
-    // Antenna
-    this._addAntenna(group);
+    // Hull - ridotto del 30%
+    const hullGeo = new THREE.BoxGeometry(0.7, 0.35, 0.7);
+    const hullMat = new THREE.MeshStandardMaterial({
+      color: 0x2d0a0a,
+      metalness: 0.95,
+      roughness: 0.3,
+      emissive: 0x5a0000,
+      emissiveIntensity: 0.3
+    });
+    const hull = new THREE.Mesh(hullGeo, hullMat);
+    hull.position.y = 0.22;
+    hull.castShadow = false; // Disabled for performance
+    hull.receiveShadow = true;
+    group.add(hull);
+
+    // Hull edges
+    const hullEdges = new THREE.EdgesGeometry(hullGeo, 15);
+    const hullLines = new THREE.LineSegments(hullEdges, new THREE.LineBasicMaterial({ 
+      color: 0x000000, 
+      linewidth: 2,
+      opacity: 0.9,
+      transparent: true
+    }));
+    hullLines.position.y = 0.22;
+    group.add(hullLines);
+
+    // Turret - ridotto del 30%
+    const turretGeo = new THREE.CylinderGeometry(0.25, 0.28, 0.42, 6);
+    const turretMat = new THREE.MeshStandardMaterial({
+      color: 0x3d1010,
+      emissive: 0xff4500,
+      emissiveIntensity: 1.0,
+      metalness: 1.0,
+      roughness: 0.2
+    });
+    const turret = new THREE.Mesh(turretGeo, turretMat);
+    turret.position.y = 0.6;
+    turret.castShadow = false; // Disabled for performance
+    turret.userData.turret = true;
+    group.add(turret);
+
+    // Turret edges
+    const turretEdges = new THREE.EdgesGeometry(turretGeo, 15);
+    const turretLines = new THREE.LineSegments(turretEdges, new THREE.LineBasicMaterial({ 
+      color: 0x000000, 
+      linewidth: 2,
+      opacity: 0.9,
+      transparent: true
+    }));
+    turretLines.position.y = 0.6;
+    group.add(turretLines);
   }
 
   _addHull(group) {
-    const hullGeo = new THREE.BoxGeometry(1.0, 0.5, 1.0);
+    const hullGeo = new THREE.BoxGeometry(0.7, 0.35, 0.7);
     const hullMat = new THREE.MeshStandardMaterial({
       color: 0x2d0a0a,
       metalness: 0.95,

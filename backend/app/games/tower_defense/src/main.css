@@ -75,7 +75,8 @@
      justify-content: space-between;
      align-items: center;
      gap: 0.6rem;
-     pointer-events: auto;
+     pointer-events: none;
+     z-index: 1000;
  }
 
  .hud-box {
@@ -90,6 +91,16 @@
      align-items: center;
      gap: 0.35rem;
      font-size: 0.8rem;
+     pointer-events: auto;
+ }
+
+ .hud-box-center {
+     flex: 0 0 auto;
+     min-width: 180px;
+     justify-content: center;
+     background: rgba(7, 10, 14, 0.95);
+     border: 1px solid rgba(255, 215, 0, 0.5);
+     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
  }
 
  .hud-pill {
@@ -113,6 +124,13 @@
  .hud-value {
      font-weight: 600;
      letter-spacing: 0.03em;
+ }
+
+ .hud-value-score {
+     font-size: 1.1rem;
+     font-weight: 700;
+     color: #ffd700;
+     text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
  }
 
  .bottom-bar {

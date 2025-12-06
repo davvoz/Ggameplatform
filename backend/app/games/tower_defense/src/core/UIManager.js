@@ -51,11 +51,11 @@ export class UIManager {
     });
   }
 
-  showGameHud(levelManager, gameplayConfig) {
+  showGameHud(levelManager, gameplayConfig, gameApp = null) {
     this.clearScreens();
     this.hudLayer.innerHTML = "";
 
-    this.hudView = new HUDView(this.hudLayer, levelManager);
+    this.hudView = new HUDView(this.hudLayer, levelManager, gameApp);
     this.bottomBarView = new BottomBarView(this.hudLayer, {
       towerTypes: gameplayConfig.towerTypes,
       onTowerSelected: (towerTypeId) => {

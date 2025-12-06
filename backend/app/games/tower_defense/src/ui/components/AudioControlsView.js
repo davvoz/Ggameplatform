@@ -13,8 +13,8 @@ export class AudioControlsView {
     this.el.className = "audio-controls";
     this.el.style.cssText = `
       position: absolute;
-      top: 0.6rem;
-      right: 220px;
+      bottom: 4.5rem;
+      left: 0.6rem;
       display: flex;
       gap: 0.4rem;
       align-items: center;

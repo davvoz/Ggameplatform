@@ -111,9 +111,6 @@ export class Tower extends BaseEntity {
   _createMesh() {
     const group = new THREE.Group();
 
-    // Shared base platform
-    this._createBasePlatform(group);
-
     // Turret group (rotates to track enemies)
     const turretGroup = new THREE.Group();
     turretGroup.userData.isTurret = true;
@@ -135,19 +132,6 @@ export class Tower extends BaseEntity {
   /**
    * Creates the shared base platform
    */
-  _createBasePlatform(group) {
-    const platformGeo = new THREE.CylinderGeometry(0.4, 0.5, 0.12, 20);
-    const platformMat = new THREE.MeshStandardMaterial({
-      color: 0x050a0f,
-      metalness: 0.7,
-      roughness: 0.35
-    });
-    const platform = new THREE.Mesh(platformGeo, platformMat);
-    platform.castShadow = true;
-    platform.receiveShadow = true;
-    group.add(platform);
-  }
-
   /**
    * Build tower-specific geometry
    * Must be overridden by subclasses

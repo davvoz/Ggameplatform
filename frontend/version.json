@@ -1,8 +1,17 @@
 {
-  "version": "1.1.0",
-  "timestamp": "2025-12-06T15:56:27.819Z",
-  "buildNumber": 2,
+  "version": "1.2.0",
+  "timestamp": "2025-12-06T16:29:30.443Z",
+  "buildNumber": 3,
   "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2025-12-06",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance about page with version info and improve layout styling",
+        "🔖 Bump version to 1.1.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.1.0",
       "date": "2025-12-06",

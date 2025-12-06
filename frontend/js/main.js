@@ -434,13 +434,43 @@ function setupPlayerControls(gameId, iframe) {
 /**
  * Render the about page
  */
-export function renderAbout() {
+export async function renderAbout() {
     const appContainer = document.getElementById('app');
     const template = document.getElementById('about-template');
     const aboutContent = template.content.cloneNode(true);
 
     appContainer.innerHTML = '';
     appContainer.appendChild(aboutContent);
+    
+    // Load and display version information
+    try {
+        const response = await fetch('/version.json');
+        if (response.ok) {
+            const versionData = await response.json();
+            const versionEl = document.getElementById('app-version');
+            const buildInfoEl = document.getElementById('app-build-info');
+            
+            if (versionEl) {
+                versionEl.textContent = `v${versionData.version}`;
+            }
+            
+            if (buildInfoEl && versionData.timestamp) {
+                const date = new Date(versionData.timestamp);
+                const formattedDate = date.toLocaleDateString('it-IT', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                buildInfoEl.textContent = `Build #${versionData.buildNumber || 'N/A'} • ${formattedDate}`;
+            }
+        }
+    } catch (error) {
+        console.warn('Could not load version info:', error);
+        const versionEl = document.getElementById('app-version');
+        if (versionEl) {
+            versionEl.textContent = 'v1.0.0';
+        }
+    }
 }
 
 /**

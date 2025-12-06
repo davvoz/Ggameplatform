@@ -162,13 +162,17 @@ jobs:
             fi
             echo "Updated frontend/manifest.json to version $NEW_VERSION"
           fi
+          
+          # Copy version.json to frontend directory
+          cp version.json frontend/version.json
+          echo "Copied version.json to frontend directory"
 
       - name: 📝 Commit version bump
         if: steps.bump.outputs.version_changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add version.json frontend/manifest.json
+          git add version.json frontend/manifest.json frontend/version.json
           git commit -m "🔖 Bump version to ${{ steps.bump.outputs.version }} [skip-version]" || echo "No changes to commit"
           git push || echo "Nothing to push"
 

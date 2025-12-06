@@ -194,18 +194,110 @@
     <!-- About Template -->
     <template id="about-template">
         <div class="about">
-            <h2>About This Platform</h2>
-            <p>Welcome to the HTML5 Game Platform - a modern, modular platform for playing browser-based games.</p>
-            <h3>Features</h3>
-            <ul>
-                <li>🎮 Extensive game catalog</li>
-                <li>📱 Mobile-first responsive design</li>
-                <li>🔒 Secure iframe sandboxing</li>
-                <li>💬 Real-time game communication</li>
-                <li>⚡ Fast and lightweight</li>
-            </ul>
-            <h3>Technology</h3>
-            <p>Built with Vanilla JavaScript, FastAPI backend, and modern web standards.</p>
+            <div class="about-header">
+                <h2>🎮 Cur8 Game Platform</h2>
+                <p class="subtitle">A complete platform to play, compete, and earn real rewards while enjoying your favorite browser games.</p>
+            </div>
+            
+            <div class="version-box">
+                <div class="version-label">Current Version</div>
+                <div id="app-version" class="version-number">Loading...</div>
+                <div id="app-build-info" class="version-meta"></div>
+            </div>
+            
+            <div class="about-section">
+                <h3>Key Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🎮</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Game Catalog</div>
+                            <div class="feature-desc">Wide collection of HTML5 games with filters and search</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🏆</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Weekly Leaderboards</div>
+                            <div class="feature-desc">Compete with other players to win STEEM and Coins</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-content">
+                            <div class="feature-title">XP & Level System</div>
+                            <div class="feature-desc">Earn experience and reach new levels (up to 100)</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Quest System</div>
+                            <div class="feature-desc">Complete daily and weekly challenges for extra rewards</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🪙</div>
+                        <div class="feature-content">
+                            <div class="feature-title">In-Game Economy</div>
+                            <div class="feature-desc">Earn and spend coins on the platform</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💎</div>
+                        <div class="feature-content">
+                            <div class="feature-title">STEEM Rewards</div>
+                            <div class="feature-desc">Win STEEM cryptocurrency in weekly leaderboards</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👤</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Integrated Profile</div>
+                            <div class="feature-desc">Statistics, progress, and Steem blockchain connection</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📱</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Mobile-First PWA</div>
+                            <div class="feature-desc">Installable as an app, works offline</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Secure Sandboxing</div>
+                            <div class="feature-desc">Games isolated in iframes for maximum security</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Auto-Update</div>
+                            <div class="feature-desc">Automatic notifications for new versions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="about-section">
+                <h3>Reward System</h3>
+                <ul class="reward-list">
+                    <li class="reward-item">
+                        <strong>XP Rewards</strong> - Each game earns you XP based on performance
+                    </li>
+                    <li class="reward-item">
+                        <strong>Level Milestones</strong> - Bonus Coins at levels 5, 10, 15, 20, 25, 30, 40, 50, 75, 100
+                    </li>
+                    <li class="reward-item">
+                        <strong>Quest Rewards</strong> - Complete objectives for XP and Coins
+                    </li>
+                    <li class="reward-item">
+                        <strong>Weekly Leaderboards</strong> - Top 10 win STEEM + Coins (1st place: 10 STEEM + 5000 Coins)
+                    </li>
+                </ul>
+            </div>
         </div>
     </template>
 

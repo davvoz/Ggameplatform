@@ -13,36 +13,32 @@ export class GoalFlagRenderer extends IEntityRenderer {
     }
 
     /**
-     * Render goal zone - finish line area
+     * Render goal zone - finish line area (OPTIMIZED)
      */
     render(flag, context) {
         if (!flag) return;
 
         const time = context.time || 0;
         const canvasHeight = context.canvasHeight || 800;
-        const canvasWidth = context.canvasWidth || 1200;
         
-        // Goal zone covers entire height and extends to the right edge of screen
-        const zoneX = flag.x - 75; // Start a bit before the flag position
-        const zoneWidth = 4000; // Extend far to the right (beyond visible area)
+        // Goal zone - much smaller and simpler
+        const zoneX = flag.x - 50;
         const zoneHeight = canvasHeight;
         const zoneY = 0;
         
-        // Animated checkered pattern background (classic finish line)
+        // Simple checkered pattern (5 columns max instead of 100)
         const checkerSize = 40;
-        const animOffset = (time * 100) % (checkerSize * 2);
+        const cols = 25; // Fixed number instead of calculated
+        const rows = Math.ceil(zoneHeight / checkerSize);
         
-        for (let row = 0; row < Math.ceil(zoneHeight / checkerSize); row++) {
-            for (let col = 0; col < Math.ceil(zoneWidth / checkerSize); col++) {
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
                 const isBlack = (row + col) % 2 === 0;
                 const color = isBlack ? [0.1, 0.1, 0.1, 0.8] : [1.0, 1.0, 1.0, 0.8];
                 
-                const x = zoneX + col * checkerSize;
-                const y = zoneY + row * checkerSize - animOffset;
-                
                 this.renderer.drawRect(
-                    x,
-                    y,
+                    zoneX + col * checkerSize,
+                    zoneY + row * checkerSize,
                     checkerSize,
                     checkerSize,
                     color
@@ -50,79 +46,43 @@ export class GoalFlagRenderer extends IEntityRenderer {
             }
         }
         
-        // Left border - bright yellow/gold stripe
+        // Single border (no animation)
         const borderWidth = 8;
-        const borderPulse = 0.8 + Math.sin(time * 4) * 0.2;
         this.renderer.drawRect(
             zoneX,
             zoneY,
             borderWidth,
             zoneHeight,
-            [1.0 * borderPulse, 0.8 * borderPulse, 0.0, 1.0]
+            [1.0, 0.8, 0.0, 1.0]
         );
         
-        // Right border - bright yellow/gold stripe
-        this.renderer.drawRect(
-            zoneX + zoneWidth - borderWidth,
-            zoneY,
-            borderWidth,
-            zoneHeight,
-            [1.0 * borderPulse, 0.8 * borderPulse, 0.0, 1.0]
-        );
-        
-        // Glow effect if not reached
+        // Simple glow (only 1 layer instead of 3)
         if (!flag.reached) {
-            const glowAlpha = 0.2 + Math.sin(time * 3) * 0.15;
-            
-            // Multiple glow layers for depth
-            for (let i = 3; i > 0; i--) {
-                const glowWidth = 30 * i;
-                const alpha = glowAlpha / i;
-                
-                this.renderer.drawRect(
-                    zoneX - glowWidth / 2,
-                    zoneY,
-                    glowWidth,
-                    zoneHeight,
-                    [1.0, 0.9, 0.2, alpha]
-                );
-                
-                this.renderer.drawRect(
-                    zoneX + zoneWidth - glowWidth / 2,
-                    zoneY,
-                    glowWidth,
-                    zoneHeight,
-                    [1.0, 0.9, 0.2, alpha]
-                );
-            }
-        }
-        
-        // Animated particles/confetti rising from bottom
-        const numParticles = 8;
-        for (let i = 0; i < numParticles; i++) {
-            const particlePhase = (time * 2 + i * 0.5) % 3;
-            const particleX = zoneX + (i / numParticles) * zoneWidth + Math.sin(time * 3 + i) * 15;
-            const particleY = zoneHeight - particlePhase * (zoneHeight / 3);
-            const particleSize = 4 + Math.sin(time * 5 + i) * 2;
-            const particleAlpha = 1 - (particlePhase / 3);
-            
-            // Rainbow colored particles
-            const hue = (i / numParticles + time * 0.2) % 1;
-            const color = this.hslToRgb(hue, 0.8, 0.6);
-            
-            this.renderer.drawCircle(
-                particleX,
-                particleY,
-                particleSize,
-                [...color, particleAlpha * 0.8]
+            const glowAlpha = 0.3;
+            this.renderer.drawRect(
+                zoneX - 20,
+                zoneY,
+                20,
+                zoneHeight,
+                [1.0, 0.9, 0.2, glowAlpha]
             );
         }
         
-        // "GOAL" text in center (using simple rectangles)
+        // Only 3 particles instead of 8 (no trigonometry)
         if (!flag.reached) {
-            const textY = zoneHeight / 2;
-            const textScale = 1 + Math.sin(time * 4) * 0.1;
-            this.drawGoalText(zoneX + zoneWidth / 2, textY, textScale);
+            const numParticles = 3;
+            for (let i = 0; i < numParticles; i++) {
+                const particlePhase = (time * 2 + i * 0.5) % 3;
+                const particleX = zoneX + (i * 60) + 30;
+                const particleY = zoneHeight - particlePhase * (zoneHeight / 3);
+                
+                this.renderer.drawCircle(
+                    particleX,
+                    particleY,
+                    5,
+                    [1.0, 0.8, 0.2, 1 - (particlePhase / 3)]
+                );
+            }
         }
     }
     

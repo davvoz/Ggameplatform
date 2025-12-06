@@ -1,7 +1,7 @@
 {
   "name": "Cur8 Game Platform",
   "short_name": "Cur8 Games",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Play amazing blockchain-integrated browser games and earn rewards",
   "start_url": "/",
   "scope": "/",
@@ -65,7 +65,11 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["games", "entertainment", "lifestyle"],
+  "categories": [
+    "games",
+    "entertainment",
+    "lifestyle"
+  ],
   "screenshots": [
     {
       "src": "/screenshots/home.png",
@@ -86,21 +90,36 @@
       "short_name": "Play",
       "description": "Browse and play available games",
       "url": "/",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Profile",
       "short_name": "Profile",
       "description": "View your profile and stats",
       "url": "/#profile",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Leaderboard",
       "short_name": "Rankings",
       "description": "Check the leaderboard",
       "url": "/#leaderboard",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

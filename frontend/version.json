@@ -1,8 +1,17 @@
 {
-  "version": "1.4.1",
-  "timestamp": "2025-12-06T16:59:50.673Z",
-  "buildNumber": 6,
+  "version": "1.4.2",
+  "timestamp": "2025-12-06T17:55:30.660Z",
+  "buildNumber": 7,
   "changelog": [
+    {
+      "version": "1.4.2",
+      "date": "2025-12-06",
+      "type": "patch",
+      "changes": [
+        "fix: Refactor CSS for improved layout and responsiveness; remove unused catalog header in HTML",
+        "🔖 Bump version to 1.4.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.4.1",
       "date": "2025-12-06",

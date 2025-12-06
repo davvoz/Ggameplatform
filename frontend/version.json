@@ -1,8 +1,17 @@
 {
-  "version": "1.4.2",
-  "timestamp": "2025-12-06T17:55:30.660Z",
-  "buildNumber": 7,
+  "version": "1.5.0",
+  "timestamp": "2025-12-06T22:36:52.945Z",
+  "buildNumber": 8,
   "changelog": [
+    {
+      "version": "1.5.0",
+      "date": "2025-12-06",
+      "type": "minor",
+      "changes": [
+        "feat:[RAINBOW-RUSH] Implement multi-lane path system for enemies and enhance lane switching logic",
+        "🔖 Bump version to 1.4.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.4.2",
       "date": "2025-12-06",

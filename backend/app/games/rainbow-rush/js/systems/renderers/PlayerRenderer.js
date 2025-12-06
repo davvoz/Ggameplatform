@@ -12,14 +12,14 @@ export class PlayerRenderer extends IEntityRenderer {
         super(renderer);
         this.labelRenderer = null; // Will be set by RenderingSystem
     }
-    
+
     setLabelRenderer(labelRenderer) {
         this.labelRenderer = labelRenderer;
     }
 
     render(player, context) {
         const { time } = context;
-        
+
         // Support for victory animation - use animated position if available
         let centerX, centerY, animScale;
         if (player.animatedX !== undefined && player.animatedY !== undefined) {
@@ -34,18 +34,18 @@ export class PlayerRenderer extends IEntityRenderer {
             centerY = player.y + player.height / 2 + idleOffset;
             animScale = 1.0;
         }
-        
+
         // Render label using centralized system
         if (this.labelRenderer) {
             this.labelRenderer.renderPlayerLabel(player, centerX, centerY - player.height / 2);
         }
-        
+
         const squashStretch = player.getSquashStretch ? player.getSquashStretch() : { squash: 0, stretch: 0 };
         const cameraShake = player.getCameraShake ? player.getCameraShake() : { x: 0, y: 0 };
-        
+
         const shakenX = centerX + cameraShake.x;
         const shakenY = centerY + cameraShake.y;
-        
+
         const baseRadius = (player.width / 2) * animScale;
         const radiusX = baseRadius * (1 + squashStretch.squash * 0.1 - squashStretch.stretch * 0.05);
         const radiusY = baseRadius * (1 - squashStretch.squash * 0.1 + squashStretch.stretch * 0.05);
@@ -76,7 +76,7 @@ export class PlayerRenderer extends IEntityRenderer {
         if (player.hasMagnet) {
             this.renderMagnetBonus(player, time, centerX, centerY, animScale);
         }
-        
+
         // LAYER 2: Power-up effects sotto il player
         this.renderTurboEffects(player, time, shakenX, shakenY, avgRadius * animScale);
         this.renderPowerupEffects(player, time, shakenX, shakenY, avgRadius * animScale);
@@ -84,7 +84,7 @@ export class PlayerRenderer extends IEntityRenderer {
 
         // LAYER 3: Player body (SEMPRE VISIBILE SOPRA) - SCALE ALL PARTS
         this.renderBody(player, shakenX, shakenY, avgRadius, animScale);
-        
+
         // Face - scale eye and mouth positions
         this.renderEyes(player, shakenX, shakenY, radiusY, animScale);
         this.renderMouth(player, shakenX, shakenY, radiusY, animScale);
@@ -100,43 +100,33 @@ export class PlayerRenderer extends IEntityRenderer {
         }
     }
 
-    // BATCHING: Raccolta particelle
+    // BATCHING: Raccolta particelle - SEMPLIFICATO
     collectParticleBatch(player, cameraShake) {
         const batch = [];
-        
-        // Trail particles
+
+        // Trail particles ridotte
         const trailParticles = player.getTrailParticles ? player.getTrailParticles() : [];
         for (const particle of trailParticles) {
             const alpha = particle.life / particle.maxLife;
             const particleColor = [...particle.color];
-            particleColor[3] = alpha * 0.4;
+            particleColor[3] = alpha * 0.3; // Ridotto per meno carico
             batch.push({
                 x: particle.x + cameraShake.x,
                 y: particle.y + cameraShake.y,
-                radius: 8,
+                radius: 6, // Ridotto da 8
                 color: particleColor,
                 type: 'trail'
             });
         }
-        
-        // Boost particles
+
+        // RIMOSSO: boost glow per performance
         if (player.boostActive && player.getBoostParticles) {
             const boostParticles = player.getBoostParticles();
             for (const particle of boostParticles) {
                 const alpha = particle.life / particle.maxLife;
                 const particleColor = [...particle.color];
-                particleColor[3] = alpha * 0.6;
-                
-                const glowColor = [...particle.color];
-                glowColor[3] = alpha * 0.15;
-                
-                batch.push({
-                    x: particle.x + cameraShake.x,
-                    y: particle.y + cameraShake.y,
-                    radius: particle.size * 1.5,
-                    color: glowColor,
-                    type: 'boost_glow'
-                });
+                particleColor[3] = alpha * 0.5;
+
                 batch.push({
                     x: particle.x + cameraShake.x,
                     y: particle.y + cameraShake.y,
@@ -146,17 +136,28 @@ export class PlayerRenderer extends IEntityRenderer {
                 });
             }
         }
-        
-        // Turbo particles
+
+        // RIMOSSO: turbo e flight glow per performance
+
+        return batch;
+    }
+
+    // BATCHING: Rendering batch unico SEMPLIFICATO
+    renderParticleBatch(batch) {
+        // Render diretto senza raggruppamento
+        for (const p of batch) {
+            this.renderer.drawCircle(p.x, p.y, p.radius, p.color);
+        }
+
         if (player.isTurboActive && player.getTurboTrailParticles) {
             const turboParticles = player.getTurboTrailParticles();
             for (const particle of turboParticles) {
                 const alpha = particle.life;
                 const particleColor = [...particle.color];
                 particleColor[3] = alpha * 0.5;
-                
+
                 const glowColor = [1.0, 0.9, 0.3, alpha * 0.2];
-                
+
                 batch.push({
                     x: particle.x + cameraShake.x,
                     y: particle.y + cameraShake.y,
@@ -173,7 +174,7 @@ export class PlayerRenderer extends IEntityRenderer {
                 });
             }
         }
-        
+
         // Flight particles
         if (player.isFlightActive && player.getFlightTrailParticles) {
             const flightParticles = player.getFlightTrailParticles();
@@ -181,9 +182,9 @@ export class PlayerRenderer extends IEntityRenderer {
                 const alpha = particle.life;
                 const particleColor = [...particle.color];
                 particleColor[3] = alpha * 0.5;
-                
+
                 const glowColor = [0.3, 0.8, 1.0, alpha * 0.15];
-                
+
                 batch.push({
                     x: particle.x + cameraShake.x,
                     y: particle.y + cameraShake.y,
@@ -200,21 +201,21 @@ export class PlayerRenderer extends IEntityRenderer {
                 });
             }
         }
-        
+
         return batch;
     }
-    
+
     // BATCHING: Rendering batch unico
     renderParticleBatch(batch) {
         // Raggruppo per tipo e renderizzo in batch
         const glowParticles = batch.filter(p => p.type.includes('glow'));
         const solidParticles = batch.filter(p => !p.type.includes('glow'));
-        
+
         // Prima i glow (background)
         for (const p of glowParticles) {
             this.renderer.drawCircle(p.x, p.y, p.radius, p.color);
         }
-        
+
         // Poi le particelle solide
         for (const p of solidParticles) {
             this.renderer.drawCircle(p.x, p.y, p.radius, p.color);
@@ -233,13 +234,13 @@ export class PlayerRenderer extends IEntityRenderer {
 
     renderBoostParticles(player, cameraShake) {
         if (!player.boostActive || !player.getBoostParticles) return;
-        
+
         const boostParticles = player.getBoostParticles();
         for (const particle of boostParticles) {
             const alpha = particle.life / particle.maxLife;
             const particleColor = [...particle.color];
             particleColor[3] = alpha * 0.6; // Ridotto da 0.9 per meno luminosità
-            
+
             const glowColor = [...particle.color];
             glowColor[3] = alpha * 0.15; // Ridotto da 0.3
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, particle.size * 1.5, glowColor); // Ridotto da *2
@@ -249,13 +250,13 @@ export class PlayerRenderer extends IEntityRenderer {
 
     renderTurboParticles(player, cameraShake) {
         if (!player.isTurboActive || !player.getTurboTrailParticles) return;
-        
+
         const turboParticles = player.getTurboTrailParticles();
         for (const particle of turboParticles) {
             const alpha = particle.life;
             const particleColor = [...particle.color];
             particleColor[3] = alpha * 0.5; // Ridotto da 0.8
-            
+
             const glowColor = [1.0, 0.9, 0.3, alpha * 0.2]; // Ridotto da 0.4
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 10, glowColor); // Ridotto da 15
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 6, particleColor); // Ridotto da 8
@@ -264,13 +265,13 @@ export class PlayerRenderer extends IEntityRenderer {
 
     renderFlightParticles(player, cameraShake) {
         if (!player.isFlightActive || !player.getFlightTrailParticles) return;
-        
+
         const flightParticles = player.getFlightTrailParticles();
         for (const particle of flightParticles) {
             const alpha = particle.life;
             const particleColor = [...particle.color];
             particleColor[3] = alpha * 0.5; // Ridotto da 0.7
-            
+
             const glowColor = [0.3, 0.8, 1.0, alpha * 0.15]; // Ridotto da 0.3
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 8, glowColor); // Ridotto da 12
             this.renderer.drawCircle(particle.x + cameraShake.x, particle.y + cameraShake.y, 5, particleColor); // Ridotto da 6
@@ -295,33 +296,13 @@ export class PlayerRenderer extends IEntityRenderer {
     renderTurboEffects(player, time, x, y, radius) {
         if (!player.isTurboActive) return;
 
-        const turboPulse = RenderingUtils.getPulse(time, 8, 0.5, 0.8); // Range ridotto
-        const turboFastPulse = RenderingUtils.getPulse(time, 12, 0.4, 0.7); // Range ridotto
-        const superFastPulse = RenderingUtils.getPulse(time, 20, 0.3, 0.6); // Range ridotto
-        
-        // Rainbow halos - RIDOTTI drasticamente
-        this.renderer.drawCircle(x, y, radius + 60 * turboPulse, [1.0, 0.3, 0.8, 0.2 * turboPulse]); // Ridotto radius e alpha
-        this.renderer.drawCircle(x, y, radius + 45 * turboFastPulse, [1.0, 0.6, 0.2, 0.25 * turboFastPulse]); // Ridotto
-        this.renderer.drawCircle(x, y, radius + 30 * superFastPulse, [1.0, 0.9, 0.3, 0.35 * superFastPulse]); // Ridotto
-        
-        // Speed lines - RIDOTTE
-        for (let i = 0; i < 10; i++) { // Ridotto da 16
-            const lineLength = 60 + i * 20; // Ridotto
-            const lineY = y + (i - 5) * 5; // Ridotto spacing
-            const lineAlpha = (1 - i / 10) * 0.5 * turboPulse; // Ridotto alpha
-            const lineColor = [1.0, 0.7 + Math.random() * 0.3, 0.2, lineAlpha];
-            
-            for (let j = 0; j < 6; j++) { // Ridotto da 8
-                const lx = x - lineLength + j * 3;
-                this.renderer.drawCircle(lx, lineY, 4 - j * 0.4, lineColor); // Ridotto size
-            }
-        }
+        // SEMPLIFICATO: solo un singolo alone pulsante
+        const turboPulse = 0.6 + Math.sin(time * 8) * 0.2;
 
-        // Energy rings
-        this.renderEnergyRings(player, time, x, y, radius);
-        
-        // Sparkles
-        this.renderSparkles(player, time, x, y, radius);
+        // Singolo alone giallo
+        this.renderer.drawCircle(x, y, radius + 30 * turboPulse, [1.0, 0.9, 0.3, 0.3 * turboPulse]);
+
+        // RIMOSSO: speed lines, energy rings, sparkles
     }
 
     renderEnergyRings(player, time, x, y, radius) {
@@ -329,12 +310,12 @@ export class PlayerRenderer extends IEntityRenderer {
             const ringRotation = player.animationTime * (5 + ring * 3);
             const ringRadius = 40 + ring * 15; // Ridotto spacing
             const numPoints = 12; // Ridotto da 16
-            
+
             for (let i = 0; i < numPoints; i++) {
                 const angle = ringRotation + (i * Math.PI * 2 / numPoints);
                 const px = x + Math.cos(angle) * ringRadius;
                 const py = y + Math.sin(angle) * ringRadius;
-                
+
                 let r, g, b;
                 if (ring % 3 === 0) {
                     r = 1.0; g = 0.3; b = 0.3;
@@ -343,7 +324,7 @@ export class PlayerRenderer extends IEntityRenderer {
                 } else {
                     r = 0.3; g = 1.0; b = 0.9;
                 }
-                
+
                 this.renderer.drawCircle(px, py, 8, [r, g, b, 0.45]); // Ridotto alpha da 0.6
                 this.renderer.drawCircle(px, py, 4, [1.0, 1.0, 1.0, 0.7]); // Ridotto da 5 e alpha da 0.9
             }
@@ -357,7 +338,7 @@ export class PlayerRenderer extends IEntityRenderer {
             const sx = x + Math.cos(starAngle) * starDist;
             const sy = y + Math.sin(starAngle) * starDist;
             const starSize = 6 + Math.sin(player.animationTime * 10 + i) * 3; // Ridotto da 8+4
-            
+
             const sparkleAlpha = 0.4 + Math.sin(time * 8 + i) * 0.3; // Ridotto da 0.6+0.4
             this.renderer.drawCircle(sx, sy, starSize, [1.0, 1.0, 0.8, sparkleAlpha]);
             this.renderer.drawCircle(sx, sy, starSize * 0.5, [1.0, 1.0, 1.0, 0.8]); // Ridotto alpha da 1.0
@@ -368,38 +349,22 @@ export class PlayerRenderer extends IEntityRenderer {
         const activePowerups = this.getActivePowerups(player);
         if (activePowerups.length === 0) return;
 
-        const pulse = Math.abs(Math.sin(player.animationTime * 5)) * 0.3 + 0.5; // Ridotto range
-        const fastPulse = Math.abs(Math.sin(player.animationTime * 8)) * 0.2 + 0.6; // Ridotto
+        const pulse = 0.6 + Math.sin(player.animationTime * 5) * 0.2;
 
         activePowerups.forEach((powerup, index) => {
-            const rotationOffset = player.animationTime * 3 + index * Math.PI * 2 / activePowerups.length;
+            // Solo alone semplice
+            const glowSize = 20 * pulse;
+            const glow = [...powerup.color];
+            glow[3] = 0.15 * pulse;
+            this.renderer.drawCircle(x, y, radius + glowSize, glow);
 
-            // 1. ALONE ESTERNO ridotto
-            const outerGlowSize = 25 * pulse; // Ridotto da 50
-            const outerGlow = [...powerup.color];
-            outerGlow[3] = 0.12 * pulse; // Ridotto da 0.25
-            this.renderer.drawCircle(x, y, radius + outerGlowSize, outerGlow);
-
-            // 2. ALONE MEDIO ridotto
-            const midGlowSize = 15 * fastPulse; // Ridotto da 30
-            const midGlow = [...powerup.color];
-            midGlow[3] = 0.2 * fastPulse; // Ridotto da 0.4
-            this.renderer.drawCircle(x, y, radius + midGlowSize, midGlow);
-
-            // 3. CONTORNO COLORATO più sottile
-            const borderThickness = 3; // Ridotto da 5
-            for (let i = 0; i < borderThickness; i++) {
-                const borderColor = [...powerup.color];
-                borderColor[3] = 0.7 - (i * 0.2); // Ridotto da 0.8
-                this.renderer.drawCircle(x, y, radius + 6 + i, borderColor); // Ridotto da 8
-            }
-
-            // 4. PARTICELLE ORBITANTI ridotte
-            this.renderOrbitingParticles(x, y, rotationOffset, powerup.color, index, pulse);
-            
-            // 5. RAGGI DI LUCE ridotti
-            this.renderLightRays(player, time, x, y, radius, rotationOffset, powerup.color, pulse);
+            // Contorno sottile
+            const borderColor = [...powerup.color];
+            borderColor[3] = 0.6;
+            this.renderer.drawCircle(x, y, radius + 3, borderColor);
         });
+
+        // RIMOSSO: particelle orbitanti, raggi di luce
     }
 
     getActivePowerups(player) {
@@ -454,28 +419,28 @@ export class PlayerRenderer extends IEntityRenderer {
         if (!player.boostActive) return;
 
         const boostPulse = Math.abs(Math.sin(player.animationTime * 10)) * 0.4 + 0.4; // Ridotto range
-        
+
         // Aloni cyan ridotti
         this.renderer.drawCircle(x, y, radius * 2.5, [0.0, 1.0, 0.9, boostPulse * 0.2]); // Ridotto da *4 e 0.4
         this.renderer.drawCircle(x, y, radius * 1.8, [0.0, 0.8, 1.0, boostPulse * 0.18]); // Ridotto da *2.5 e 0.3
-        
+
         // Strisce di velocità dietro (speed lines) - ridotte
         for (let i = 0; i < 4; i++) { // Ridotto da 5
             const lineX = x - radius - i * 12; // Ridotto spacing
             const lineLength = 15 + i * 4; // Ridotto da 20+5
             const lineAlpha = (1 - i * 0.2) * boostPulse;
             const lineColor = [0.0, 1.0, 0.9, lineAlpha];
-            
+
             this.renderer.drawRect(lineX - lineLength, y - 2, lineLength, 4, lineColor);
         }
-        
+
         // Tint cyan sul corpo del player - ridotto
         this.renderer.drawCircle(x, y, radius * 1.15, [0.0, 1.0, 0.9, 0.2 * boostPulse]); // Ridotto da *1.3 e 0.3
     }
 
     renderBody(player, x, y, radius, scale = 1.0) {
         let bodyColor = [...this.getBodyColor(player)]; // Create a copy to avoid modifying original
-        
+
         if (player.invulnerable) {
             const flicker = Math.floor(Date.now() / 100) % 2;
             if (flicker === 0) {
@@ -493,14 +458,14 @@ export class PlayerRenderer extends IEntityRenderer {
 
         // Ombra più pronunciata
         RenderingUtils.drawShadow(this.renderer, rectX, rectY - 3 * scale, size, size);
-        
+
         // Bordo scuro per contrasto SBAM
         const borderColor = [0.0, 0.0, 0.0, 0.6];
         this.renderer.drawRect(rectX - 2 * scale, rectY - 2 * scale, size + 4 * scale, size + 4 * scale, borderColor);
-        
+
         // Corpo principale con colore brillante
         this.renderer.drawRect(rectX, rectY, size, size, bodyColor);
-        
+
         // Highlight più intenso
         const highlightColor = [1.0, 1.0, 1.0, 0.7];
         this.renderer.drawCircle(x - size * 0.2, y - size * 0.2, size * 0.25, highlightColor);
@@ -519,11 +484,11 @@ export class PlayerRenderer extends IEntityRenderer {
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
         const winkProgress = player.winkProgress || 0; // 0 = no wink, 1 = full wink
-        
+
         // Use player's normal expression from gameplay
         const expression = player.getExpression ? player.getExpression() : emotion;
         const isBlinking = player.isEyeBlinking ? player.isEyeBlinking() : false;
-        
+
         const eyeY = y - radiusY * 0.2;
         const eyeConfig = this.getEyeConfig(expression, emotionIntensity);
 
@@ -542,10 +507,10 @@ export class PlayerRenderer extends IEntityRenderer {
             'determined': { eyeSize: 5, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -1 },
             'running': { eyeSize: 4, pupilSize: 2, pupilOffsetX: 0, pupilOffsetY: 0 },
             'lookingUp': { eyeSize: 7, pupilSize: 3, pupilOffsetX: 0, pupilOffsetY: -3 },
-            'happy': { 
+            'happy': {
                 eyeSize: 6 + intensity * 2, // Eyes get bigger with happiness
-                pupilSize: 3 + intensity, 
-                pupilOffsetX: 0, 
+                pupilSize: 3 + intensity,
+                pupilOffsetX: 0,
                 pupilOffsetY: -intensity * 2 // Eyes look up when very happy
             }
         };
@@ -556,7 +521,7 @@ export class PlayerRenderer extends IEntityRenderer {
         const eyeWhite = [1.0, 1.0, 1.0, 1.0];
         const eyeOutline = [0.0, 0.0, 0.0, 0.4];
         const pupilColor = [0.0, 0.0, 0.0, 1.0];
-        
+
         // Sparkle effect increases with emotion intensity
         const glintSize = (1.5 + intensity * 1.5) * scale;
         const glintColor = [1.0, 1.0, 1.0, 0.8 + intensity * 0.2];
@@ -566,7 +531,7 @@ export class PlayerRenderer extends IEntityRenderer {
         this.renderer.drawCircle(x - 7 * scale, eyeY, config.eyeSize * scale, eyeWhite);
         this.renderer.drawCircle(x - 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * scale, pupilColor);
         this.renderer.drawCircle(x - 8 * scale, eyeY - 1 * scale, glintSize, glintColor);
-        
+
         // Extra sparkles when very happy
         if (intensity > 0.5) {
             this.renderer.drawCircle(x - 6 * scale, eyeY + 1 * scale, glintSize * 0.6, glintColor);
@@ -577,7 +542,7 @@ export class PlayerRenderer extends IEntityRenderer {
             // Winking eye - transition from open circle to closed line
             const winkEyeSize = config.eyeSize * (1 - winkProgress) * scale;
             const winkHeight = config.eyeSize * 2 * (1 - winkProgress) * scale; // Occhio si schiaccia verso l'alto
-            
+
             if (winkProgress < 0.95) {
                 // Still partially open - draw squeezed circle
                 this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize + 1 * scale, eyeOutline);
@@ -598,7 +563,7 @@ export class PlayerRenderer extends IEntityRenderer {
             this.renderer.drawCircle(x + 7 * scale, eyeY, config.eyeSize * scale, eyeWhite);
             this.renderer.drawCircle(x + 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * scale, pupilColor);
             this.renderer.drawCircle(x + 6 * scale, eyeY - 1 * scale, glintSize, glintColor);
-            
+
             // Extra sparkles when very happy
             if (intensity > 0.5) {
                 this.renderer.drawCircle(x + 8 * scale, eyeY + 1 * scale, glintSize * 0.6, glintColor);
@@ -617,13 +582,13 @@ export class PlayerRenderer extends IEntityRenderer {
     renderMouth(player, x, y, radiusY, scale = 1.0) {
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
-        
+
         // Use player's normal expression from gameplay
         const expression = player.getExpression ? player.getExpression() : emotion;
         const mouthY = y + radiusY * 0.4;
         const mouthColor = [0.0, 0.0, 0.0, 0.7];
 
-        switch(expression) {
+        switch (expression) {
             case 'worried':
                 this.renderWorriedMouth(x, mouthY, mouthColor, scale);
                 break;
@@ -653,7 +618,7 @@ export class PlayerRenderer extends IEntityRenderer {
         const smileRadius = (8 + intensity * 4) * scale; // Wider smile
         const curvature = 0.6 + intensity * 0.3; // More pronounced curve
         const pointSize = (1.5 + intensity * 0.5) * scale; // Bigger dots
-        
+
         for (let i = 0; i < points; i++) {
             const t = i / (points - 1);
             const angle = Math.PI * 0.2 + (t * Math.PI * 0.6);
@@ -710,10 +675,10 @@ export class PlayerRenderer extends IEntityRenderer {
     renderWings(player, time, x, y) {
         const wingFlapPhase = player.wingFlapPhase || 0;
         const wingFlap = Math.sin(wingFlapPhase) * 0.5 + 0.5;
-        
+
         this.renderWing(x, y, wingFlap, -1, time); // Left wing
         this.renderWing(x, y, wingFlap, 1, time); // Right wing
-        
+
         const flightAura = Math.sin(player.flightFloatPhase || 0) * 0.2 + 0.5; // Ridotto range
         this.renderer.drawCircle(x, y, player.width, [0.4, 0.85, 1.0, 0.15 * flightAura]); // Ridotto alpha
         this.renderer.drawCircle(x, y, player.width * 0.75, [0.5, 0.9, 1.0, 0.2 * flightAura]); // Ridotto
@@ -724,7 +689,7 @@ export class PlayerRenderer extends IEntityRenderer {
         const wingAngle = baseAngle + (side * wingFlap * Math.PI / 4);
         const wingLength = 25 + wingFlap * 10;
         const xOffset = side < 0 ? -15 : 15;
-        
+
         for (let i = 0; i < 5; i++) {
             const featherOffset = i * 7;
             const featherAngle = wingAngle + (side * i * 0.15);
@@ -733,7 +698,7 @@ export class PlayerRenderer extends IEntityRenderer {
             const fy = y - 5 + Math.sin(featherAngle) * featherOffset;
             const featherEndX = fx + Math.cos(featherAngle) * featherLength;
             const featherEndY = fy + Math.sin(featherAngle) * featherLength;
-            
+
             const steps = 3 + i;
             for (let s = 0; s < steps; s++) {
                 const t = s / steps;
@@ -752,14 +717,14 @@ export class PlayerRenderer extends IEntityRenderer {
         const progressRadius = radius * 2.2; // Cerchio esterno
         const thickness = 4; // Spessore della barra
         const segments = 60; // Segmenti per smoothness
-        
+
         // Colore progressivo da cyan a blu
         const baseColor = [0.4, 0.85, 1.0]; // Cyan chiaro
-        
+
         // Alone esterno sottile
         const glowRadius = progressRadius + 3;
         this.renderer.drawCircle(x, y, glowRadius, [0.3, 0.7, 1.0, 0.15]);
-        
+
         // Disegna il cerchio di background (grigio scuro)
         for (let i = 0; i < segments; i++) {
             const angle = (Math.PI * 2 * i) / segments - Math.PI / 2; // Inizia dall'alto
@@ -767,7 +732,7 @@ export class PlayerRenderer extends IEntityRenderer {
             const py = y + Math.sin(angle) * progressRadius;
             this.renderer.drawCircle(px, py, thickness * 0.6, [0.2, 0.2, 0.3, 0.4]);
         }
-        
+
         // Disegna il progresso (parte piena)
         const filledSegments = Math.floor(segments * progress);
         for (let i = 0; i < filledSegments; i++) {
@@ -775,7 +740,7 @@ export class PlayerRenderer extends IEntityRenderer {
             const angle = (Math.PI * 2 * i) / segments - Math.PI / 2; // Inizia dall'alto
             const px = x + Math.cos(angle) * progressRadius;
             const py = y + Math.sin(angle) * progressRadius;
-            
+
             // Gradiente di colore basato su progresso
             const alpha = 0.6 + (1 - progress) * 0.3; // Più opaco quando sta finendo
             const color = [
@@ -784,28 +749,28 @@ export class PlayerRenderer extends IEntityRenderer {
                 baseColor[2], // Blu costante
                 alpha
             ];
-            
+
             // Particella principale
             this.renderer.drawCircle(px, py, thickness, color);
-            
+
             // Glow interno per dare profondità
             const glowColor = [...color];
             glowColor[3] = alpha * 0.3;
             this.renderer.drawCircle(px, py, thickness * 1.5, glowColor);
         }
-        
+
         // Effetto "testa" della progress bar (particella brillante all'inizio)
         if (filledSegments > 0) {
             const headAngle = (Math.PI * 2 * filledSegments) / segments - Math.PI / 2;
             const headX = x + Math.cos(headAngle) * progressRadius;
             const headY = y + Math.sin(headAngle) * progressRadius;
-            
+
             // Testa brillante che pulsa
             const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
             this.renderer.drawCircle(headX, headY, thickness * 1.8 * pulse, [1.0, 1.0, 1.0, 0.9 * pulse]);
             this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1.0, 1.0]);
         }
-        
+
         // Sparkles attorno al cerchio (opzionale, per rendere più carino)
         if (progress > 0.2) { // Solo se c'è abbastanza progresso
             const numSparkles = 6;
@@ -825,28 +790,28 @@ export class PlayerRenderer extends IEntityRenderer {
         const shieldPulse = Math.sin(player.animationTime * 4) * 0.12 + 0.88; // Rallentato
         const electricPulse = Math.sin(time * 10) * 0.5 + 0.5; // Rallentato da 15 a 10
         const sides = 6;
-        
+
         // Alone esterno RIDOTTO (solo 2 cerchi invece di 3)
         for (let i = 0; i < 2; i++) {
             const auraRadius = shieldRadius * (1.2 + i * 0.2) * shieldPulse;
             const auraAlpha = (0.15 - i * 0.05) * shieldPulse;
             this.renderer.drawCircle(x, y, auraRadius, [0.0, 0.9, 1.0, auraAlpha]);
         }
-        
+
         // Hexagon SEMPLIFICATO (meno dettagli)
         for (let i = 0; i < sides; i++) {
             const angle1 = (Math.PI * 2 * i) / sides + player.shieldRotation;
             const angle2 = (Math.PI * 2 * (i + 1)) / sides + player.shieldRotation;
-            
+
             const x1 = x + Math.cos(angle1) * shieldRadius * shieldPulse;
             const y1 = y + Math.sin(angle1) * shieldRadius * shieldPulse;
             const x2 = x + Math.cos(angle2) * shieldRadius * shieldPulse;
             const y2 = y + Math.sin(angle2) * shieldRadius * shieldPulse;
-            
+
             // Vertici elettrici
             const electricColor = [0.3 + electricPulse * 0.5, 1.0, 1.0, 0.7];
             this.renderer.drawCircle(x1, y1, 3.5, electricColor);
-            
+
             // Linee RIDOTTE (3 punti invece di 6)
             const steps = 3;
             for (let s = 0; s <= steps; s++) {
@@ -856,43 +821,43 @@ export class PlayerRenderer extends IEntityRenderer {
                 this.renderer.drawCircle(px, py, 2, [0.0, 0.85, 1.0, 0.6]);
             }
         }
-        
+
         // Fulmini RIDOTTI (solo su 3 vertici alternati invece di 6)
         for (let i = 0; i < sides; i += 2) {
             const sparkAngle = (Math.PI * 2 * i) / sides + player.shieldRotation * 1.5;
             const sparkDist = shieldRadius * shieldPulse;
             const sx = x + Math.cos(sparkAngle) * sparkDist;
             const sy = y + Math.sin(sparkAngle) * sparkDist;
-            
+
             if (electricPulse > 0.75) {
                 this.renderer.drawCircle(sx, sy, 3, [1.0, 1.0, 1.0, electricPulse * 0.8]);
             }
         }
-        
+
         // Centro SEMPLIFICATO (2 cerchi invece di 3)
         this.renderer.drawCircle(x, y, radius * 0.5, [0.0, 0.85, 1.0, 0.5]);
         this.renderer.drawCircle(x, y, radius * 0.3, [0.5, 1.0, 1.0, 0.7]);
     }
-    
+
     renderShieldBonus(player, time, x, y, avgRadius) {
         const shieldAlpha = 0.3 + Math.sin(time * 5) * 0.2;
         const shieldRadius = avgRadius + 8;
-        
+
         // Outer glow
         this.renderer.drawCircle(x, y, shieldRadius + 4, [0.0, 0.75, 1.0, shieldAlpha * 0.3]);
-        
+
         // Shield circle
         this.renderer.drawCircle(x, y, shieldRadius, [0.0, 0.75, 1.0, shieldAlpha]);
-        
+
         // Inner highlight
         this.renderer.drawCircle(x, y, shieldRadius - 2, [0.5, 0.9, 1.0, shieldAlpha * 0.5]);
     }
-    
+
     renderMagnetBonus(player, time, x, y) {
         const magnetAlpha = 0.2 + Math.sin(time * 2.5) * 0.12; // Rallentato
         const range = player.magnetRange || 200;
         const rotationSpeed = time * 1.2; // Rallentato
-        
+
         // Cerchi concentrici RIDOTTI (3 invece di 4)
         for (let i = 0; i < 3; i++) {
             const radius = range * (1 - i * 0.33);
@@ -900,7 +865,7 @@ export class PlayerRenderer extends IEntityRenderer {
             const pulseOffset = Math.sin(time * 3 - i * 0.6) * 0.08;
             this.renderer.drawCircle(x, y, radius * (1 + pulseOffset), [1.0, 0.5, 0.0, alpha]);
         }
-        
+
         // Particelle orbitanti RIDOTTE (6 invece di 8)
         for (let i = 0; i < 6; i++) {
             const angle = (rotationSpeed + i * Math.PI / 3);
@@ -910,14 +875,14 @@ export class PlayerRenderer extends IEntityRenderer {
             const size = 3 + Math.sin(time * 5 + i) * 1;
             this.renderer.drawCircle(sx, sy, size, [1.0, 0.8, 0.2, magnetAlpha * 2]);
         }
-        
+
         // Frecce RIDOTTE (4 invece di 8)
         for (let i = 0; i < 4; i++) {
             const arrowAngle = (Math.PI * 2 * i) / 4;
             const arrowDist = range * 0.85;
             const ax = x + Math.cos(arrowAngle) * arrowDist;
             const ay = y + Math.sin(arrowAngle) * arrowDist;
-            
+
             const arrowSize = 5;
             const tipX = ax + Math.cos(arrowAngle + Math.PI) * arrowSize;
             const tipY = ay + Math.sin(arrowAngle + Math.PI) * arrowSize;

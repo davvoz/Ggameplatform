@@ -36,7 +36,7 @@ export class AnimationController {
     }
     
     /**
-     * Update floating texts con animazioni ottimizzate
+     * Update floating texts con animazioni semplificate
      */
     updateFloatingTexts(floatingTexts, deltaTime) {
         if (!floatingTexts || floatingTexts.length === 0) return;
@@ -46,21 +46,20 @@ export class AnimationController {
             
             text.life -= deltaTime;
             
-            // Animazione di scala SEMPLIFICATA: solo esplosione iniziale
+            // Animazione SEMPLIFICATA: solo scala fissa
             const lifeProgress = 1 - (text.life / text.maxLife);
-            if (lifeProgress < 0.2) {
-                // Esplosione rapida (0.5 -> 1.2)
-                text.scale = 0.5 + (lifeProgress / 0.2) * 0.7;
+            if (lifeProgress < 0.1) {
+                // Esplosione rapida (0.5 -> 1.0)
+                text.scale = 0.5 + (lifeProgress / 0.1) * 0.5;
             } else {
-                // Stabile - NO pulse per performance
+                // Scala fissa - NO pulse
                 text.scale = 1.0;
             }
             
-            // Movimento verso l'alto COSTANTE - no decelerazione
+            // Movimento verso l'alto COSTANTE
             text.y += text.velocityY * deltaTime;
             
-            // Pulse phase ridotto
-            text.pulsePhase += deltaTime * 2;
+            // RIMOSSO: pulse phase
             
             // Fade out semplificato
             if (text.life < 0.5) {
@@ -68,8 +67,7 @@ export class AnimationController {
                 text.glowIntensity = text.alpha;
             } else {
                 text.alpha = 1.0;
-                // Glow pulsante
-                text.glowIntensity = 0.7 + Math.sin(text.pulsePhase * 3) * 0.3;
+                text.glowIntensity = 0.7; // Fisso, NO pulsazione
             }
             
             // Rimuovi se morto
@@ -80,25 +78,24 @@ export class AnimationController {
     }
 
     /**
-     * Update level up animation
+     * Update level up animation - SEMPLIFICATO
      */
     updateLevelUpAnimation(deltaTime) {
         if (!this.levelUpAnimation) return;
         
         this.levelUpAnimation.life -= deltaTime;
-        this.levelUpAnimation.pulsePhase += deltaTime * 5;
         
-        // Scale animation: grow quickly, then shrink slowly
+        // Scala semplice senza fronzoli
         const progress = 1 - (this.levelUpAnimation.life / this.levelUpAnimation.maxLife);
-        if (progress < 0.2) {
-            // Grow phase (0 to 1.2)
-            this.levelUpAnimation.scale = (progress / 0.2) * 1.2;
-        } else if (progress < 0.8) {
-            // Stable phase (1.2 to 1.0)
-            this.levelUpAnimation.scale = 1.2 - ((progress - 0.2) / 0.6) * 0.2;
+        if (progress < 0.15) {
+            // Grow rapido (0 to 1.0)
+            this.levelUpAnimation.scale = progress / 0.15;
+        } else if (progress < 0.85) {
+            // Stabile a 1.0 - NO oscillazioni
+            this.levelUpAnimation.scale = 1.0;
         } else {
-            // Shrink phase (1.0 to 0)
-            this.levelUpAnimation.scale = 1.0 - ((progress - 0.8) / 0.2);
+            // Shrink rapido (1.0 to 0)
+            this.levelUpAnimation.scale = 1.0 - ((progress - 0.85) / 0.15);
         }
         
         if (this.levelUpAnimation.life <= 0) {
@@ -107,21 +104,20 @@ export class AnimationController {
     }
 
     /**
-     * Update combo animation
+    /**
+     * Update combo animation - SEMPLIFICATO
      */
     updateComboAnimation(deltaTime) {
         if (!this.comboAnimation) return;
         
         this.comboAnimation.life -= deltaTime;
-        this.comboAnimation.pulsePhase += deltaTime * 8;
         this.comboAnimation.floatY -= deltaTime * 30; // Float upward
-        this.comboAnimation.scale = 1.0 + Math.sin(this.comboAnimation.pulsePhase) * 0.15;
+        // RIMOSSO: scale pulsante
         
         if (this.comboAnimation.life <= 0) {
             this.comboAnimation = null;
         }
     }
-
     /**
      * Update death animation
      */

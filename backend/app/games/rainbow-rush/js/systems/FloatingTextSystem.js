@@ -31,27 +31,25 @@ export class FloatingText {
             return false;
         }
         
-        // Batch updates - calcola solo ogni 2-3 frame
-        this.bouncePhase += deltaTime * 3;
+        // SEMPLIFICATO: movimento costante, no bounce
         this.offsetY += deltaTime * 5;
         
         return true;
     }
     
     getAlpha() {
-        // Fade in nei primi 0.3s, fade out negli ultimi 1.0s
-        if (this.life > this.duration - 0.3) {
-            return (this.duration - this.life) / 0.3;
-        } else if (this.life < 1.0) {
-            return this.life / 1.0;
+        // Fade semplificato
+        if (this.life > this.duration - 0.2) {
+            return (this.duration - this.life) / 0.2;
+        } else if (this.life < 0.5) {
+            return this.life / 0.5;
         }
-        return 1.0; // Completamente visibile per la maggior parte del tempo
+        return 1.0;
     }
     
     getCurrentY() {
-        // Movimento verso l'alto + piccolo rimbalzo
-        const bounce = Math.sin(this.bouncePhase * 2) * 3;
-        return this.startY - this.offsetY + bounce;
+        // Movimento semplice senza bounce
+        return this.startY - this.offsetY;
     }
 }
 
@@ -171,72 +169,54 @@ export class FloatingTextSystem {
     }
     
     render(powerupTimers) {
-        // Renderizza testi per power-up attivi
+        // Renderizza testi per power-up attivi - SEMPLIFICATO
         for (const [type, texts] of this.activePowerupTexts.entries()) {
             const timer = powerupTimers[type];
             if (!timer || !timer.active) continue;
             
-            const time = Date.now() / 1000;
-            const pulse = Math.abs(Math.sin(time * 4)) * 0.3 + 0.7;
-            const bounce = Math.sin(time * 3) * 5;
+            // RIMOSSO: pulse e bounce per performance
             
             const x = texts.baseX;
-            const y = texts.baseY + bounce;
+            const y = texts.baseY;
             
-            // Nome del power-up (più grande e brillante)
+            // Nome del power-up statico
             this.renderText(
                 texts.name,
                 x,
                 y,
                 texts.color,
-                20, // fontSize più piccolo e discreto
-                pulse
+                20,
+                1.0 // Scala fissa
             );
             
-            // Cooldown sotto il nome - PICCOLO E DISCRETO
+            // Cooldown - SEMPLIFICATO
             const secondsLeft = Math.ceil(timer.duration / 1000);
             const cooldownColor = [...texts.color];
             
-            // Colore diventa rosso quando sta per scadere
+            // Colore rosso quando sta per scadere
             if (secondsLeft <= 2) {
                 cooldownColor[0] = 1.0;
                 cooldownColor[1] = 0.2;
                 cooldownColor[2] = 0.2;
             }
             
-            // Renderizza un piccolo cerchio con il numero
+            // Renderizza numero fisso
             this.renderCooldownNumber(
                 secondsLeft,
                 x,
-                y + 20, // Più vicino al badge
+                y + 20,
                 cooldownColor,
-                pulse
+                1.0 // Scala fissa
             );
         }
         
-        // Renderizza testi flottanti normali
-        for (const text of this.floatingTexts) {
-            const alpha = text.getAlpha();
-            const color = [...text.color];
-            color[3] = alpha;
-            
-            //console.log('Rendering floating text:', text.text, 'life:', text.life, 'alpha:', alpha);
-            
-            this.renderText(
-                text.text,
-                text.x,
-                text.getCurrentY(),
-                color,
-                text.fontSize,
-                1.0
-            );
-        }
+        // RIMOSSO: testi flottanti normali per performance
     }
     
     renderCooldownNumber(number, x, y, color, pulse) {
-        // Semplificato - solo cerchio singolo con numero
+        // Semplificato - cerchio fisso con numero
         const size = 16;
-        const radius = size * pulse;
+        const radius = size;
         
         // Singolo cerchio colorato
         const mainColor = [...color];

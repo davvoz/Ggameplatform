@@ -208,7 +208,7 @@ main {
 /* Mobile Optimizations for About Page */
 @media (max-width: 768px) {
     .about {
-        padding: var(--spacing-md);
+        padding: 0;
         padding-top: calc(var(--spacing-lg) + 100px);
     }
 

@@ -852,7 +852,10 @@ export default class RuntimeShell {
                 top: 70px;
                 right: 20px;
                 z-index: 99999999;
-                animation: slideInRight 0.5s ease, fadeOut 0.5s ease 3.5s;
+                animation: slideInRight 0.5s ease;
+            }
+            .xp-notification.hiding {
+                animation: slideOutRight 0.5s ease forwards;
             }
             .xp-badge {
                 background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
@@ -881,9 +884,15 @@ export default class RuntimeShell {
                     opacity: 1;
                 }
             }
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
             }
         `;
         document.head.appendChild(style);
@@ -892,10 +901,12 @@ export default class RuntimeShell {
         document.body.appendChild(notification);
 
         // Remove after animation
-        // setTimeout(() => {
-        //     notification.remove();
-        //     style.remove();
-        // }, 4000);
+        setTimeout(() => {
+            notification.classList.add('hiding');
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 3500);
     }
 
     /**

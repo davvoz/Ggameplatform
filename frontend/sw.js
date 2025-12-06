@@ -1,8 +1,26 @@
+// App version - will be updated automatically by GitHub Actions
+let APP_VERSION = '1.0.0';
+
+// Fetch version from server on install
+async function fetchAppVersion() {
+  try {
+    const response = await fetch('/version.json');
+    if (response.ok) {
+      const data = await response.json();
+      APP_VERSION = data.version;
+      console.log('[Service Worker] Loaded version:', APP_VERSION);
+    }
+  } catch (error) {
+    console.warn('[Service Worker] Could not fetch version:', error);
+  }
+}
+
 const CACHE_NAME = 'cur8-games-v2';
 const RUNTIME_CACHE = 'runtime-cache-v2';
 
 // Files to cache immediately on install
 const PRECACHE_URLS = [
+  '/version.json',
   '/',
   '/index.html',
   '/auth.html',
@@ -45,7 +63,8 @@ const PRECACHE_URLS = [
 self.addEventListener('install', event => {
   console.log('[Service Worker] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    fetchAppVersion()
+      .then(() => caches.open(CACHE_NAME))
       .then(cache => {
         console.log('[Service Worker] Precaching app shell');
         return cache.addAll(PRECACHE_URLS);
@@ -210,7 +229,51 @@ self.addEventListener('message', event => {
         })
     );
   }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    console.log('[Service Worker] Version requested');
+    event.ports[0].postMessage({ 
+      type: 'VERSION_INFO', 
+      version: APP_VERSION 
+    });
+  }
 });
+
+// Check for version updates periodically
+async function checkForUpdates() {
+  try {
+    const response = await fetch('/version.json', { cache: 'no-cache' });
+    if (response.ok) {
+      const data = await response.json();
+      const newVersion = data.version;
+      
+      if (newVersion !== APP_VERSION) {
+        console.log(`[Service Worker] New version available: ${newVersion} (current: ${APP_VERSION})`);
+        
+        // Notify all clients about the new version
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'NEW_VERSION_AVAILABLE',
+            currentVersion: APP_VERSION,
+            newVersion: newVersion,
+            changelog: data.changelog && data.changelog[0] ? data.changelog[0] : null
+          });
+        });
+        
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn('[Service Worker] Version check failed:', error);
+  }
+  return false;
+}
+
+// Check for updates every 5 minutes
+setInterval(() => {
+  checkForUpdates();
+}, 5 * 60 * 1000);
 
 // Sync event for background sync (future feature)
 self.addEventListener('sync', event => {

@@ -1,0 +1,185 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    name: Automatic Version Bump
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      version_changed: ${{ steps.bump.outputs.version_changed }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper version detection
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🤖 Analyze commits and bump version
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read current version
+            const versionPath = 'version.json';
+            let versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+            const currentVersion = versionData.version;
+            
+            console.log(`Current version: ${currentVersion}`);
+            
+            // Get commit messages since last version bump
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              per_page: 10
+            });
+            
+            // Analyze commit messages to determine version bump type
+            let bumpType = 'patch'; // default
+            let hasBreakingChange = false;
+            let hasFeature = false;
+            let hasFix = false;
+            let changeLog = [];
+            
+            for (const commit of commits) {
+              const message = commit.commit.message.toLowerCase();
+              const fullMessage = commit.commit.message;
+              
+              // Check for breaking changes
+              if (message.includes('breaking') || message.includes('!:') || message.includes('major:')) {
+                hasBreakingChange = true;
+                changeLog.push(fullMessage.split('\n')[0]);
+              }
+              // Check for new features
+              else if (message.startsWith('feat:') || message.startsWith('feature:') || message.includes('add') || message.includes('new')) {
+                hasFeature = true;
+                changeLog.push(fullMessage.split('\n')[0]);
+              }
+              // Check for bug fixes
+              else if (message.startsWith('fix:') || message.includes('bug') || message.includes('hotfix')) {
+                hasFix = true;
+                changeLog.push(fullMessage.split('\n')[0]);
+              }
+              // Any other changes
+              else {
+                changeLog.push(fullMessage.split('\n')[0]);
+              }
+              
+              // Stop after finding version bump commit
+              if (message.includes('[skip-version]') || message.includes('bump version')) {
+                break;
+              }
+            }
+            
+            // Determine bump type based on conventional commits
+            if (hasBreakingChange) {
+              bumpType = 'major';
+            } else if (hasFeature) {
+              bumpType = 'minor';
+            } else if (hasFix) {
+              bumpType = 'patch';
+            }
+            
+            // Parse current version
+            const [major, minor, patch] = currentVersion.split('.').map(Number);
+            
+            // Calculate new version
+            let newVersion;
+            if (bumpType === 'major') {
+              newVersion = `${major + 1}.0.0`;
+            } else if (bumpType === 'minor') {
+              newVersion = `${major}.${minor + 1}.0`;
+            } else {
+              newVersion = `${major}.${minor}.${patch + 1}`;
+            }
+            
+            console.log(`Bump type: ${bumpType}`);
+            console.log(`New version: ${newVersion}`);
+            
+            // Update version.json
+            versionData.version = newVersion;
+            versionData.timestamp = new Date().toISOString();
+            versionData.buildNumber = (versionData.buildNumber || 0) + 1;
+            
+            // Add to changelog
+            const changelogEntry = {
+              version: newVersion,
+              date: new Date().toISOString().split('T')[0],
+              type: bumpType,
+              changes: changeLog.slice(0, 5) // Keep last 5 changes
+            };
+            
+            versionData.changelog = versionData.changelog || [];
+            versionData.changelog.unshift(changelogEntry);
+            
+            // Keep only last 10 changelog entries
+            if (versionData.changelog.length > 10) {
+              versionData.changelog = versionData.changelog.slice(0, 10);
+            }
+            
+            // Write updated version.json
+            fs.writeFileSync(versionPath, JSON.stringify(versionData, null, 2) + '\n');
+            
+            console.log('Version file updated successfully');
+            
+            // Set outputs
+            core.setOutput('version', newVersion);
+            core.setOutput('bump_type', bumpType);
+            core.setOutput('version_changed', currentVersion !== newVersion);
+            
+            return {
+              version: newVersion,
+              bumpType: bumpType,
+              changed: currentVersion !== newVersion
+            };
+
+      - name: 📝 Update manifest.json version
+        if: steps.bump.outputs.version_changed == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.version }}"
+          
+          # Update frontend manifest.json if it exists
+          if [ -f "frontend/manifest.json" ]; then
+            # Use jq to update version if available, otherwise use sed
+            if command -v jq &> /dev/null; then
+              jq --arg version "$NEW_VERSION" '.version = $version' frontend/manifest.json > frontend/manifest.json.tmp
+              mv frontend/manifest.json.tmp frontend/manifest.json
+            else
+              # Fallback to sed (less reliable but works)
+              sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" frontend/manifest.json || true
+            fi
+            echo "Updated frontend/manifest.json to version $NEW_VERSION"
+          fi
+
+      - name: 📝 Commit version bump
+        if: steps.bump.outputs.version_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add version.json frontend/manifest.json
+          git commit -m "🔖 Bump version to ${{ steps.bump.outputs.version }} [skip-version]" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: 📊 Version Summary
+        if: always()
+        run: |
+          echo "### 🔖 Version Bump Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version**: ${{ steps.bump.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bump Type**: ${{ steps.bump.outputs.bump_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Number**: Incremented" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📝 Version file and manifest updated successfully!" >> $GITHUB_STEP_SUMMARY

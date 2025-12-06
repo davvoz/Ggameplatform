@@ -8,6 +8,7 @@ sqlalchemy==2.0.23
 slowapi==0.1.9
 bcrypt==4.1.2
 python-jose[cryptography]==3.3.0
+PyJWT==2.8.0
 python-dotenv==1.0.0
 schedule==1.2.0
 beem==0.24.24

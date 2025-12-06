@@ -118,27 +118,9 @@ function initQuestNotifications() {
 }
 
 /**
- * Initialize DB Viewer link with dynamic URL
+ * DB Viewer link removed for security reasons
+ * Access db-viewer directly via protected endpoint: /admin/db-viewer
  */
-function initDbViewerLink() {
-    const dbViewerLink = document.getElementById('dbViewerLink');
-    if (dbViewerLink) {
-        // Get API URL from window.ENV (set by env.js)
-        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
-        const dbViewerUrl = `${apiUrl}/admin/db-viewer`;
-        
-        dbViewerLink.href = dbViewerUrl;
-        dbViewerLink.target = '_blank';
-        dbViewerLink.rel = 'noopener';
-        
-        // Prevent SPA router from intercepting
-        dbViewerLink.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Don't call window.open - href already handles it
-        });
-        
-    }
-}
 
 function initMobileNav() {
     
@@ -201,12 +183,10 @@ function initMobileNav() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         initMobileNav();
-        initDbViewerLink();
         initQuestNotifications();
     });
 } else {
     initMobileNav();
-    initDbViewerLink();
     initQuestNotifications();
 }
 
@@ -214,7 +194,6 @@ if (document.readyState === 'loading') {
 setTimeout(function() {
     if (document.getElementById('navToggle') && document.getElementById('navMenu')) {
         initMobileNav();
-        initDbViewerLink();
         initQuestNotifications();
     }
 }, 500);

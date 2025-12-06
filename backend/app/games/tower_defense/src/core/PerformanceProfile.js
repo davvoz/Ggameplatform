@@ -3,6 +3,8 @@
  * Factory Pattern + Strategy Pattern per gestire performance su mobile/desktop
  */
 
+import * as THREE from 'three';
+
 export class PerformanceProfile {
   constructor(settings) {
     this.pixelRatio = settings.pixelRatio;

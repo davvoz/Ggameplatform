@@ -1,70 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Cur8 Game Platform - Play amazing browser games and earn rewards">
-    
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#667eea">
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- iOS Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Cur8 Games">
     <meta name="mobile-web-app-capable" content="yes">
-    
+
     <!-- iOS Icons -->
     <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
     <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.png">
-    
+
     <title>Cur8 Games</title>
     <!-- CSS Modular Structure -->
-    <link rel="stylesheet" href="/css/variables.css">
-    <link rel="stylesheet" href="/css/layout.css">
-    <link rel="stylesheet" href="/css/navigation.css">
-    <link rel="stylesheet" href="/css/game-catalog.css">
-    <link rel="stylesheet" href="/css/game-player.css">
-    <link rel="stylesheet" href="/css/leaderboard.css">
-    <link rel="stylesheet" href="/css/profile.css">
-    <link rel="stylesheet" href="/css/wallet.css">
-    <link rel="stylesheet" href="/css/utilities.css">
-    <link rel="stylesheet" href="/css/quest-hero.css">
-    <link rel="stylesheet" href="/css/auth.css">
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/layout.css">
+    <link rel="stylesheet" href="./css/navigation.css">
+    <link rel="stylesheet" href="./css/game-catalog.css">
+    <link rel="stylesheet" href="./css/game-player.css">
+    <link rel="stylesheet" href="./css/leaderboard.css">
+    <link rel="stylesheet" href="./css/profile.css">
+    <link rel="stylesheet" href="./css/wallet.css">
+    <link rel="stylesheet" href="./css/utilities.css">
+    <link rel="stylesheet" href="./css/quest-hero.css">
+    <link rel="stylesheet" href="./css/auth.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-            </div>
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <div class="nav-menu" id="navMenu">
-                <div id="userInfo" class="user-info" style="display: none;">
-                    <span id="userName"></span>
-                    <span id="userCur8" class="cur8-badge"></span>
-                    <button id="logoutBtn" class="btn-logout">Logout</button>
+                <!--mettiamo il logo qui , C:\progetti\Ggameplatform\icon-72x72.png-->
+                <div class="logo-container">
+                    <img src="./icons/icon-72x72.png" alt="Cur8 Games Logo" width="72" height="72">
+                    <h1>Cur8 Games</h1>
                 </div>
+
+            </div>
+            <div class="nav-menu" id="navMenu">
+
+            <div id="userInfo" class="user-info" style="display: none;">
+                <span id="userName"></span>
+                <span id="userCur8" class="cur8-badge"></span>
+                <button id="logoutBtn" class="btn-logout">Logout</button>
+            </div>
                 <a href="#/" class="nav-link active" data-route="/">Games</a>
                 <a href="#/leaderboard" class="nav-link" data-route="/leaderboard">🏆 Leaderboard</a>
                 <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">🎯 Quests</a>
                 <a href="#/wallet" class="nav-link auth-required" data-route="/wallet" id="walletLink">🪙 Wallet</a>
                 <a href="#/about" class="nav-link" data-route="/about">About</a>
                 <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">👤 Profile</a>
-                <a href="#" class="nav-link" id="dbViewerLink">🗄️ DB Viewer</a>
             </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </nav>
 
@@ -75,13 +84,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer"> 
+    <footer class="footer">
         <div class="container">
         </div>
     </footer>
 
     <!-- Templates -->
-    
+
     <!-- Game Catalog Template -->
     <template id="catalog-template">
         <div class="catalog">
@@ -125,7 +134,7 @@
             </div>
         </div>
     </template>
-    
+
     <!-- Game Detail Template -->
     <template id="detail-template">
         <div class="game-detail">
@@ -167,12 +176,11 @@
     <!-- Game Player Template -->
     <template id="player-template">
         <div class="game-player">
-            
+
             <div class="player-container">
-                <iframe id="game-iframe" 
-                    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups" 
-                    allow="gamepad; fullscreen; xr-spatial-tracking; autoplay"
-                    allowfullscreen
+                <iframe id="game-iframe"
+                    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups"
+                    allow="gamepad; fullscreen; xr-spatial-tracking; autoplay" allowfullscreen
                     referrerpolicy="strict-origin-when-cross-origin"
                     style="will-change: transform; border: 0;"></iframe>
             </div>
@@ -236,7 +244,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="quest-filters">
                 <button class="quest-filter-btn active" data-filter="all">
                     <span class="filter-icon">🎮</span>
@@ -284,7 +292,8 @@
                         </div>
                         <div class="stat-badge" id="coinsQuickBadge" style="cursor: pointer; transition: all 0.3s;">
                             <span class="stat-label">🪙 Coins</span>
-                            <span class="stat-value" id="coinBalanceHeader" style="color: #eab308; font-weight: 700;">--</span>
+                            <span class="stat-value" id="coinBalanceHeader"
+                                style="color: #eab308; font-weight: 700;">--</span>
                         </div>
                     </div>
                 </div>
@@ -360,12 +369,12 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h2>Welcome to Game Platform</h2>
-            
+
             <div class="auth-tabs">
                 <button class="tab-btn active" data-tab="steem">Steem Keychain</button>
                 <button class="tab-btn" data-tab="anonymous">Play Anonymous</button>
             </div>
-            
+
             <!-- Steem Keychain Tab -->
             <div id="steem-tab" class="tab-content active">
                 <div class="auth-info">
@@ -377,25 +386,25 @@
                         <li>✅ Earn more CUR8 tokens</li>
                     </ul>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Steem Username</label>
                     <input type="text" id="steemUsername" placeholder="Enter your @username">
                 </div>
-                
+
                 <div class="form-group">
                     <label>CUR8 Multiplier (1.0 - 5.0)</label>
                     <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1">
                     <small>Higher multipliers = more XP per game!</small>
                 </div>
-                
+
                 <button id="keychainLoginBtn" class="btn-primary">
                     🔑 Login with Keychain
                 </button>
-                
+
                 <div id="keychainStatus" class="status-message"></div>
             </div>
-            
+
             <!-- Anonymous Tab -->
             <div id="anonymous-tab" class="tab-content">
                 <div class="auth-info">
@@ -407,11 +416,11 @@
                         <li>✅ Still earn basic CUR8</li>
                     </ul>
                 </div>
-                
+
                 <button id="anonymousBtn" class="btn-secondary">
                     🎮 Play as Anonymous
                 </button>
-                
+
                 <div id="anonymousStatus" class="status-message"></div>
             </div>
         </div>
@@ -420,7 +429,8 @@
     <!-- Wallet Modal -->
     <div id="walletModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
-            <span class="close-modal" onclick="document.getElementById('walletModal').style.display='none'">&times;</span>
+            <span class="close-modal"
+                onclick="document.getElementById('walletModal').style.display='none'">&times;</span>
             <h2>🪙 Your Wallet</h2>
             <div id="walletModalContainer">
                 <p class="text-muted">Loading wallet...</p>
@@ -439,13 +449,13 @@
     <script src="./js/WalletProfileWidget.js"></script>
     <script src="./js/LeaderboardAPI.js"></script>
     <script type="module" src="./js/main.js"></script>
-    
+
     <!-- Initialize Coin Balance Widget on login -->
     <script>
         // Initialize coin widget when user logs in
         if (window.AuthManager) {
             const originalLogin = window.AuthManager.login;
-            window.AuthManager.login = function(...args) {
+            window.AuthManager.login = function (...args) {
                 const result = originalLogin.apply(this, args);
                 if (result && window.AuthManager.isLoggedIn()) {
                     // Initialize coin widget
@@ -480,12 +490,12 @@
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('✅ Service Worker registered:', registration.scope);
-                        
+
                         // Check for updates every 60 seconds
                         setInterval(() => {
                             registration.update();
                         }, 60000);
-                        
+
                         // Handle updates
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
@@ -566,17 +576,17 @@
                 z-index: 9999;
                 transition: transform 0.2s, box-shadow 0.2s;
             `;
-            
+
             installBtn.addEventListener('mouseover', () => {
                 installBtn.style.transform = 'translateY(-2px)';
                 installBtn.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
             });
-            
+
             installBtn.addEventListener('mouseout', () => {
                 installBtn.style.transform = 'translateY(0)';
                 installBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
             });
-            
+
             installBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
@@ -586,9 +596,9 @@
                     installBtn.remove();
                 }
             });
-            
+
             document.body.appendChild(installBtn);
-            
+
             // Auto-hide after 10 seconds
             setTimeout(() => {
                 installBtn.style.opacity = '0';
@@ -652,8 +662,9 @@
                 opacity: 0.9;
             }
         `;
-        document.head.appendChild(style);
+            document.head.appendChild(style);
         }
     </script>
 </body>
+
 </html>

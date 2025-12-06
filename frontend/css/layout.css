@@ -83,3 +83,11 @@ main {
     color: var(--text-muted);
     margin-top: auto;
 }
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}

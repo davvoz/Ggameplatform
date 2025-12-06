@@ -1,14 +1,20 @@
-from fastapi import APIRouter, HTTPException, Response, Request, Header, Depends
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Response, Request, Header, Depends, Cookie
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Dict, List, Any, Optional
 from pathlib import Path
+from pydantic import BaseModel
+import secrets
+import bcrypt
+import jwt
+from datetime import datetime, timedelta
 from app.database import (
     get_db_session,
     get_open_sessions, 
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -36,12 +42,98 @@ from datetime import datetime
 
 router = APIRouter()
 
+# JWT Configuration
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-to-random-secret-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    token: str
+    username: str
 
 # Dependency to get DB session
 def get_db():
     """Get database session as dependency"""
     with get_db_session() as session:
         yield session
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    """Create JWT token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def verify_token_from_cookie(
+    admin_token: Optional[str] = Cookie(None),
+    db: Session = Depends(get_db)
+) -> str:
+    """Verify JWT token from cookie"""
+    if not admin_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        payload = jwt.decode(admin_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    admin = db.query(AdminUser).filter_by(username=username, is_active=1).first()
+    if not admin:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return username
+
+@router.get("/login", response_class=HTMLResponse)
+async def admin_login_page():
+    """Serve admin login page"""
+    html_file = Path(__file__).parent.parent / "static" / "admin-login.html"
+    return FileResponse(html_file)
+
+@router.post("/login")
+async def admin_login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+    """Admin login endpoint"""
+    admin = db.query(AdminUser).filter_by(username=login_data.username, is_active=1).first()
+    
+    if not admin:
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    
+    password_correct = bcrypt.checkpw(
+        login_data.password.encode('utf-8'),
+        admin.password_hash.encode('utf-8')
+    )
+    
+    if not password_correct:
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    
+    admin.last_login = datetime.now().isoformat()
+    admin.updated_at = datetime.now().isoformat()
+    db.commit()
+    
+    access_token = create_access_token(data={"sub": admin.username})
+    
+    # Set token in httponly cookie
+    response.set_cookie(
+        key="admin_token",
+        value=access_token,
+        httponly=True,
+        max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        samesite="lax"
+    )
+    
+    return {"success": True, "redirect": "/admin/db-viewer"}
 
 
 @router.get("/form-options")
@@ -129,16 +221,14 @@ def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = Non
     return True
 
 @router.get("/db-viewer", response_class=HTMLResponse)
-async def db_viewer(request: Request, x_api_key: Optional[str] = Header(None)):
-    """Database viewer interface"""
-    verify_admin(x_api_key, request)
+async def db_viewer(username: str = Depends(verify_token_from_cookie)):
+    """Database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 
 @router.get("/db-stats")
-async def get_db_stats(request: Request, x_api_key: Optional[str] = Header(None)):
-    """Get database statistics and all data from all tables"""
-    verify_admin(x_api_key, request)
+async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
+    """Get database statistics - Protected with JWT cookie"""
     with get_db_session() as session:
         # Get all games using ORM with eager loading of status
         games_query = session.query(Game).options(joinedload(Game.status)).order_by(desc(Game.created_at)).all()

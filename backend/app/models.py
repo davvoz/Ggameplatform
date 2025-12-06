@@ -607,3 +607,33 @@ class WeeklyWinner(Base):
     
     def __repr__(self) -> str:
         return f"<WeeklyWinner {self.week_start}: {self.user_id} - Rank {self.rank}>"
+
+
+class AdminUser(Base):
+    """Admin user model for DB Viewer and admin access."""
+    __tablename__ = 'admin_users'
+    
+    admin_id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)  # bcrypt hash
+    email = Column(String(255), nullable=True)
+    is_active = Column(Integer, default=1)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    last_login = Column(String, nullable=True)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert admin user instance to dictionary."""
+        return {
+            "admin_id": self.admin_id,
+            "username": self.username,
+            "email": self.email,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "last_login": self.last_login
+        }
+    
+    def __repr__(self) -> str:
+        return f"<AdminUser {self.username}>"
+

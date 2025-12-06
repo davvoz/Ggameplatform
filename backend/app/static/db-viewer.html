@@ -12,6 +12,7 @@
         <div class="header">
             <h1>🎮 Database Viewer</h1>
             <p class="subtitle">Sistema di gestione e visualizzazione database</p>
+            <button onclick="logout()" style="position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: #ff3d71; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 600;">Logout</button>
         </div>
         
         <!-- Stats Cards - Generated dynamically -->
@@ -77,5 +78,12 @@
     <script src="/static/js/db-viewer-templates.js"></script>
     <script src="/static/js/db-viewer-crud.js"></script>
     <script src="/static/js/db-viewer.js"></script>
+    <script>
+        function logout() {
+            // Clear cookie by setting it to expired
+            document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = '/admin/login';
+        }
+    </script>
 </body>
 </html>

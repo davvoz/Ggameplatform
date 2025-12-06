@@ -205,6 +205,80 @@ main {
     margin-right: var(--spacing-sm);
 }
 
+/* Mobile Optimizations for About Page */
+@media (max-width: 768px) {
+    .about {
+        padding: var(--spacing-md);
+    }
+
+    .about-header {
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .about-header h2 {
+        font-size: 1.75rem;
+    }
+
+    .about-header .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .version-box {
+        padding: var(--spacing-lg);
+        margin: var(--spacing-lg) 0;
+    }
+
+    .version-number {
+        font-size: 2rem;
+    }
+
+    .about-section {
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .about-section h3 {
+        font-size: 1.25rem;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .feature-item {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+
+    .feature-item:hover {
+        transform: none;
+    }
+
+    .feature-icon {
+        font-size: 1.25rem;
+    }
+
+    .feature-title {
+        font-size: 0.95rem;
+    }
+
+    .feature-desc {
+        font-size: 0.85rem;
+    }
+
+    .reward-item {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+    }
+
+    .reward-item::before {
+        font-size: 1.25rem;
+    }
+}
+
 /* ========================================
    Footer
    ======================================== */
@@ -226,5 +300,5 @@ main {
     margin-bottom: var(--spacing-md);
     /*elementi MAI a capo*/
     flex-wrap: nowrap;
-    
+
 }

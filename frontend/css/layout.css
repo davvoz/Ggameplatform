@@ -209,11 +209,13 @@ main {
 @media (max-width: 768px) {
     .about {
         padding: var(--spacing-md);
+        padding-top: calc(var(--spacing-lg) + 100px);
     }
 
     .about-header {
         padding: var(--spacing-lg);
         margin-bottom: var(--spacing-lg);
+        margin-top: var(--spacing-lg + 20px);
     }
 
     .about-header h2 {

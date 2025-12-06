@@ -1,8 +1,18 @@
 {
-  "version": "1.3.0",
-  "timestamp": "2025-12-06T16:44:31.192Z",
-  "buildNumber": 4,
+  "version": "1.4.0",
+  "timestamp": "2025-12-06T16:54:35.400Z",
+  "buildNumber": 5,
   "changelog": [
+    {
+      "version": "1.4.0",
+      "date": "2025-12-06",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Improve mobile layout for about page with enhanced padding and margins",
+        "🔖 Bump version to 1.3.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.3.0",
       "date": "2025-12-06",

@@ -1,8 +1,17 @@
 {
-  "version": "1.8.4",
-  "timestamp": "2025-12-07T23:05:01.656Z",
-  "buildNumber": 20,
+  "version": "1.8.5",
+  "timestamp": "2025-12-07T23:31:31.905Z",
+  "buildNumber": 21,
   "changelog": [
+    {
+      "version": "1.8.5",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: Update scrollbar styles for Webkit browsers and improve CSS caching strategy in nginx configuration",
+        "🔖 Bump version to 1.8.4 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.4",
       "date": "2025-12-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [ TOWER DEFENSE ] Comment out stats display creation in GameApp constructor",
         "🔖 Bump version to 1.7.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.1",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: Refine commit message checks for features and bug fixes in version bump workflow",
-        "🔖 Bump version to 1.7.0 [skip-version]"
       ]
     }
   ]

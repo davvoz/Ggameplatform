@@ -170,7 +170,7 @@ export class GameApp {
     this.gameScore += points;
     
     // Send score to platform
-    if (this.platformSDK && this.platformSDK.isInitialized) {
+    if (this.platformSDK && this.platformSDK._instance && this.platformSDK._instance.isInitialized) {
       this.platformSDK.sendScore(this.gameScore, {
         wave: this.levelManager.currentWaveIndex + 1,
         credits: this.levelManager.credits,
@@ -595,15 +595,21 @@ export class GameApp {
 
   _setupGameOverListener() {
     window.addEventListener('gameOver', (event) => {
-      console.log('[GAME APP] Game Over event received');
+      console.log('[Tower Defense] 💀 Game Over event received');
+      console.log('[Tower Defense] Final score:', this.gameScore);
+      console.log('[Tower Defense] Wave:', this.levelManager.currentWaveIndex + 1);
       
       // Send final score to platform
-      if (this.platformSDK && this.platformSDK.isInitialized) {
+      if (this.platformSDK && this.platformSDK._instance && this.platformSDK._instance.isInitialized) {
+        console.log('[Tower Defense] Sending gameOver to platform...');
         this.platformSDK.gameOver(this.gameScore, {
           wave: this.levelManager.currentWaveIndex + 1,
           credits: this.levelManager.credits,
           finalWave: this.levelManager.currentWaveIndex + 1
         });
+        console.log('[Tower Defense] ✅ gameOver sent to platform');
+      } else {
+        console.warn('[Tower Defense] Platform SDK not available for gameOver');
       }
       
       // Play game over sound
@@ -618,10 +624,32 @@ export class GameApp {
     });
   }
 
-  _restartGame() {
+  async _restartGame() {
+    console.log('[Tower Defense] 🔄 Restart Game requested');
+    
+    // Reset session on platform before restarting
+    if (this.platformSDK && this.platformSDK._instance && this.platformSDK._instance.isInitialized) {
+      console.log('[Tower Defense] Resetting session before restart...');
+      try {
+        await this.platformSDK.resetSession();
+        console.log('[Tower Defense] ✅ Session reset complete');
+      } catch (error) {
+        console.error('[Tower Defense] ❌ Failed to reset session:', error);
+      }
+    } else {
+      console.warn('[Tower Defense] Platform SDK not available for session reset');
+    }
+    
+    // Reset game score
+    this.gameScore = 0;
+    console.log('[Tower Defense] Score reset to 0');
+    
+    // Reset game state
     this.world.resetGame();
     this.levelManager.startLevel("level-1");
     this.uiManager.showGameHud(this.levelManager, this.config.gameplay);
+    
+    console.log('[Tower Defense] 🎮 Game restarted successfully');
   }
 
   loop() {

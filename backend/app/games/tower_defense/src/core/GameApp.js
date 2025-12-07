@@ -81,7 +81,7 @@ export class GameApp {
       renderTime: 0
     };
     this.statsElement = null;
-    this._createStatsDisplay();
+   // this._createStatsDisplay();
     
     // Platform SDK integration
     this.platformSDK = window.PlatformSDK;

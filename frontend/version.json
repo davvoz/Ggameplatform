@@ -1,8 +1,17 @@
 {
-  "version": "1.8.0",
-  "timestamp": "2025-12-07T10:42:11.160Z",
-  "buildNumber": 16,
+  "version": "1.8.1",
+  "timestamp": "2025-12-07T18:20:06.501Z",
+  "buildNumber": 17,
   "changelog": [
+    {
+      "version": "1.8.1",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: Simplify service worker for minimal PWA functionality on iOS fullscreen",
+        "🔖 Bump version to 1.8.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.0",
       "date": "2025-12-07",
@@ -82,15 +91,6 @@
       "changes": [
         "feat:[RAINBOW-RUSH] Implement multi-lane path system for enemies and enhance lane switching logic",
         "🔖 Bump version to 1.4.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.4.2",
-      "date": "2025-12-06",
-      "type": "patch",
-      "changes": [
-        "fix: Refactor CSS for improved layout and responsiveness; remove unused catalog header in HTML",
-        "🔖 Bump version to 1.4.1 [skip-version]"
       ]
     }
   ]

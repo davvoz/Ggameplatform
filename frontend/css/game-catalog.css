@@ -403,7 +403,7 @@
 }
 
 .catalog {
-    padding-top: calc(var(--spacing-lg) );
+    padding-top: calc(var(--spacing-lg) + 10px);
 }
 
 /* Responsive Design */

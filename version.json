@@ -1,8 +1,17 @@
 {
-  "version": "1.8.1",
-  "timestamp": "2025-12-07T18:20:06.501Z",
-  "buildNumber": 17,
+  "version": "1.8.2",
+  "timestamp": "2025-12-07T22:06:36.081Z",
+  "buildNumber": 18,
   "changelog": [
+    {
+      "version": "1.8.2",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: Update countdown timer logic to calculate days until next reset on Monday",
+        "🔖 Bump version to 1.8.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.1",
       "date": "2025-12-07",
@@ -82,15 +91,6 @@
       "changes": [
         "feat:[TOWER-DEFENSE]Refactor tower classes to streamline visual elements and targeting policies",
         "🔖 Bump version to 1.5.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.5.0",
-      "date": "2025-12-06",
-      "type": "minor",
-      "changes": [
-        "feat:[RAINBOW-RUSH] Implement multi-lane path system for enemies and enhance lane switching logic",
-        "🔖 Bump version to 1.4.2 [skip-version]"
       ]
     }
   ]

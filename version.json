@@ -1,8 +1,17 @@
 {
-  "version": "1.7.1",
-  "timestamp": "2025-12-07T02:30:09.676Z",
-  "buildNumber": 11,
+  "version": "1.7.2",
+  "timestamp": "2025-12-07T02:38:45.092Z",
+  "buildNumber": 12,
   "changelog": [
+    {
+      "version": "1.7.2",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: [ TOWER DEFENSE ] Comment out stats display creation in GameApp constructor",
+        "🔖 Bump version to 1.7.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.7.1",
       "date": "2025-12-07",
@@ -83,18 +92,6 @@
       "changes": [
         "feat: Enhance about page with version info and improve layout styling",
         "🔖 Bump version to 1.1.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.1.0",
-      "date": "2025-12-06",
-      "type": "minor",
-      "changes": [
-        "feat: Implement automatic versioning and update notifications for PWA",
-        "fix: Update notification animations for improved user experience",
-        "fix: Update Content-Security-Policy headers to include additional image sources",
-        "Refactor PlayerRenderer for performance improvements and visual simplifications",
-        "feat: Optimize goal zone rendering in GoalFlagRenderer for improved performance"
       ]
     }
   ]

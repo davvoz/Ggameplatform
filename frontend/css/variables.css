@@ -103,30 +103,30 @@ body::after {
 
 /* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(20, 24, 36, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 217, 255, 0.2);
-    border-radius: 10px;
+    background: rgba(255, 24, 24, 0.25);
+    border-radius: 12px;
     transition: var(--transition);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 217, 255, 0.4);
+    background: rgba(0, 217, 255, 0.45);
 }
 
 ::-webkit-scrollbar-thumb:active {
-    background: rgba(0, 217, 255, 0.6);
+    background: rgba(0, 217, 255, 0.65);
 }
 
 /* Firefox */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 217, 255, 0.2) transparent;
+    scrollbar-color: rgba(0, 217, 255, 0.25) rgba(20, 24, 36, 0.3);
 }

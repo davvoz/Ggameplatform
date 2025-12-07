@@ -395,11 +395,20 @@ export class World {
   }
 
   tryUpgradeTower(tower, levelManager) {
-    if (!tower || tower.level >= tower.maxLevel) return;
+    if (!tower || tower.level >= tower.maxLevel) {
+      console.log('[World] Cannot upgrade: tower missing or max level');
+      return false;
+    }
 
     const cost = tower.getUpgradeCost();
-    if (!Number.isFinite(cost)) return;
-    if (!levelManager.canAfford(cost)) return;
+    if (!Number.isFinite(cost)) {
+      console.log('[World] Cannot upgrade: invalid cost');
+      return false;
+    }
+    if (!levelManager.canAfford(cost)) {
+      console.log('[World] Cannot upgrade: insufficient funds');
+      return false;
+    }
 
     levelManager.spendCredits(cost);
     tower.upgrade();
@@ -412,6 +421,7 @@ export class World {
     this.floatingTexts.push(floatingText);
     
     console.log(`Tower upgraded to level ${tower.level} - particles: ${tower.upgradeParticles?.length || 0}`);
+    return true;
   }
 
   spawnEnemyFromWave(waveConfig) {

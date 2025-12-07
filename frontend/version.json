@@ -1,8 +1,17 @@
 {
-  "version": "1.7.2",
-  "timestamp": "2025-12-07T02:38:45.092Z",
-  "buildNumber": 12,
+  "version": "1.7.3",
+  "timestamp": "2025-12-07T02:52:07.150Z",
+  "buildNumber": 13,
   "changelog": [
+    {
+      "version": "1.7.3",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix:[ tower defense ] remove unused action button from BottomBarView",
+        "🔖 Bump version to 1.7.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.7.2",
       "date": "2025-12-07",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: Add mobile optimizations for the about page layout",
         "🔖 Bump version to 1.2.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.2.0",
-      "date": "2025-12-06",
-      "type": "minor",
-      "changes": [
-        "feat: Enhance about page with version info and improve layout styling",
-        "🔖 Bump version to 1.1.0 [skip-version]"
       ]
     }
   ]

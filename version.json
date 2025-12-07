@@ -1,8 +1,18 @@
 {
-  "version": "1.8.6",
-  "timestamp": "2025-12-07T23:42:09.031Z",
-  "buildNumber": 22,
+  "version": "1.9.0",
+  "timestamp": "2025-12-07T23:53:49.364Z",
+  "buildNumber": 23,
   "changelog": [
+    {
+      "version": "1.9.0",
+      "date": "2025-12-07",
+      "type": "minor",
+      "changes": [
+        "fix: Enhance tower upgrade logic with error logging and improve button styles; update scrollbar styles for better UX",
+        "feat: Enhance logging configuration, improve leaderboard and profile styles, and update wallet widget UI",
+        "🔖 Bump version to 1.8.6 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.6",
       "date": "2025-12-07",
@@ -83,15 +93,6 @@
       "changes": [
         "fix: [TOWER DEFENSE] Update platform SDK checks and enhance game over/restart logging",
         "🔖 Bump version to 1.7.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.3",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix:[ tower defense ] remove unused action button from BottomBarView",
-        "🔖 Bump version to 1.7.2 [skip-version]"
       ]
     }
   ]

@@ -90,12 +90,7 @@ export class BottomBarView {
       this.buttons.set(type.id, btn);
     });
 
-    const actionBtn = document.createElement("button");
-    actionBtn.className = "round-button clickable";
-    actionBtn.type = "button";
-    actionBtn.textContent = "▶";
-    this.el.appendChild(actionBtn);
-    this.actionBtn = actionBtn;
+   
 
     // Camera controls
     this._buildCameraControls();

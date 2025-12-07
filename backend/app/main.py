@@ -19,10 +19,18 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import time
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging with timestamp
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 class NoCacheMiddleware(BaseHTTPMiddleware):
     """Middleware to prevent caching of HTML, CSS, and JS files"""

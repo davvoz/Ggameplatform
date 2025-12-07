@@ -36,11 +36,6 @@ class WalletProfileWidget {
     generateWalletHTML(balance, transactions) {
         return `
             <div class="wallet-profile-section">
-                <div class="wallet-header">
-                    <h3>🪙 Wallet</h3>
-                    <a href="#/wallet" class="wallet-view-all">View Full Wallet →</a>
-                </div>
-                
                 <div class="wallet-balance-card">
                     <div class="balance-main">
                         <div class="balance-amount">${balance.balance}</div>
@@ -60,32 +55,8 @@ class WalletProfileWidget {
                     </div>
                 </div>
 
-                <div class="wallet-transactions-mini">
-                    <h4>Recent Transactions</h4>
-                    <div class="transactions-list-mini">
-                        ${transactions.length > 0 
-                            ? transactions.map(tx => this.generateTransactionHTML(tx)).join('')
-                            : '<p class="no-transactions">No transactions yet. Start earning coins!</p>'
-                        }
-                    </div>
-                </div>
-
-                <div class="wallet-earn-info">
-                    <h4>💡 How to Earn Coins</h4>
-                    <div class="earn-methods-grid">
-                        <div class="earn-method">
-                            <span class="earn-icon">🏆</span>
-                            <span class="earn-text">Complete Quests</span>
-                        </div>
-                        <div class="earn-method">
-                            <span class="earn-icon">🥇</span>
-                            <span class="earn-text">Leaderboard Rankings</span>
-                        </div>
-                        <div class="earn-method">
-                            <span class="earn-icon">⬆️</span>
-                            <span class="earn-text">Level Up</span>
-                        </div>
-                    </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="#/wallet" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 16px;">View Transactions →</a>
                 </div>
             </div>
         `;

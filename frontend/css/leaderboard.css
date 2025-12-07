@@ -5,6 +5,7 @@
 .leaderboard {
     max-width: 900px;
     margin: 0 auto;
+    padding-top: 0;
 }
 
 .leaderboard-header {
@@ -641,6 +642,10 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .leaderboard {
+        padding-top: 20px;
+    }
+    
     .leaderboard-header h2 {
         font-size: 2rem;
     }

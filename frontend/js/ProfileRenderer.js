@@ -490,9 +490,13 @@ class ProfileRenderer {
                         parentBadge.style.cursor = 'pointer';
                         parentBadge.style.transition = 'all 0.3s';
                         
+                        // Set permanent indigo background
+                        parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
+                        parentBadge.style.border = '1px solid rgba(99, 102, 241, 0.3)';
+                        
                         // Update the value
                         multiplierEl.textContent = `${breakdown.final_multiplier.toFixed(2)}x`;
-                        multiplierEl.style.color = '#6366f1';
+                        multiplierEl.style.color = '#818cf8';
                         multiplierEl.style.fontWeight = '700';
                         
                         // Add click handler
@@ -503,11 +507,11 @@ class ProfileRenderer {
                         // Add hover effect
                         parentBadge.onmouseenter = () => {
                             parentBadge.style.transform = 'scale(1.05)';
-                            parentBadge.style.background = 'rgba(99, 102, 241, 0.1)';
+                            parentBadge.style.background = 'rgba(99, 102, 241, 0.25)';
                         };
                         parentBadge.onmouseleave = () => {
                             parentBadge.style.transform = 'scale(1)';
-                            parentBadge.style.background = '';
+                            parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
                         };
                         
                         console.log('✅ Multiplier badge configured:', breakdown.final_multiplier.toFixed(2));
@@ -776,39 +780,82 @@ class ProfileRenderer {
      */
     openWalletModal(userId) {
         console.log('🪙 Opening wallet modal for user:', userId);
-        const modal = document.getElementById('walletModal');
-        const container = document.getElementById('walletModalContainer');
         
-        if (!modal || !container) {
-            console.error('❌ Wallet modal not found');
-            return;
-        }
+        // Create modal with same animation as multiplier
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease-out;
+        `;
 
-        // Show modal
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: var(--background-light);
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            animation: slideUp 0.3s ease-out;
+        `;
+
+        modalContent.innerHTML = `
+            <div style="padding: 24px; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary);">🪙 Wallet</h2>
+                    <button class="close-btn" style="background: none; border: none; font-size: 28px; color: var(--text-muted); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">×</button>
+                </div>
+            </div>
+            <div id="walletModalContainer" style="padding: 24px;">
+                <p class="text-muted">Loading wallet...</p>
+            </div>
+        `;
+
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
         
         // Load wallet widget
+        const container = modalContent.querySelector('#walletModalContainer');
+        
         if (!window.WalletProfileWidget) {
             container.innerHTML = '<p class="wallet-error">⚠️ Wallet widget not loaded</p>';
             return;
         }
-
-        container.innerHTML = '<p class="text-muted">Loading wallet...</p>';
         
         const walletWidget = new window.WalletProfileWidget(container, userId);
         walletWidget.render().then(() => {
             console.log('✅ Wallet modal rendered');
+            
+            // Add click handler to "View Full Wallet" link to close modal
+            const walletLink = container.querySelector('a[href="#/wallet"]');
+            if (walletLink) {
+                walletLink.addEventListener('click', () => {
+                    modal.remove();
+                });
+            }
         }).catch(error => {
             console.error('❌ Error rendering wallet modal:', error);
             container.innerHTML = '<p class="wallet-error">⚠️ Failed to load wallet</p>';
         });
 
-        // Close on background click
+        // Close handlers
+        const closeBtn = modalContent.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => modal.remove());
+        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.style.display = 'none';
+                modal.remove();
             }
         });
     }
@@ -833,67 +880,62 @@ class ProfileRenderer {
         `;
 
         modal.innerHTML = `
-            <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease-out;">
-                <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+            <div style="background: var(--background-light); border-radius: 16px; max-width: 450px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid var(--border); animation: slideUp 0.3s ease-out;">
+                <div style="padding: 16px; border-bottom: 1px solid var(--border);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #1f2937;">⚡ CUR8 Multiplier</h2>
-                        <button onclick="this.closest('[style*=fixed]').remove()" style="background: none; border: none; font-size: 28px; color: #9ca3af; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">×</button>
+                        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary);">⚡ CUR8 Multiplier</h2>
+                        <button onclick="this.closest('[style*=fixed]').remove()" style="background: none; border: none; font-size: 28px; color: var(--text-muted); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">×</button>
                     </div>
                 </div>
                 
-                <div style="padding: 24px;">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <div style="font-size: 48px; font-weight: 800; color: #6366f1; text-shadow: 0 2px 10px rgba(99,102,241,0.3);">${breakdown.final_multiplier.toFixed(2)}x</div>
-                        ${breakdown.is_capped ? '<div style="font-size: 14px; color: #f59e0b; font-weight: 600; margin-top: 8px;">🏆 MAXIMUM MULTIPLIER REACHED</div>' : ''}
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <span style="font-size: 14px; color: #6b7280; font-weight: 500;">Base Multiplier</span>
-                            <span style="font-weight: 700; font-size: 18px; color: #1f2937;">+${breakdown.base.toFixed(1)}x</span>
+                <div style="padding: 16px;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">Base Multiplier</span>
+                            <span style="font-weight: 700; font-size: 18px; color: var(--text-primary);">+${breakdown.base.toFixed(1)}x</span>
                         </div>
                         
-                        <div style="padding: 16px; background: ${breakdown.witness_bonus > 0 ? 'linear-gradient(135deg, #dcfce7, #bbf7d0)' : '#fff'}; border-radius: 12px; border: 2px solid ${breakdown.witness_bonus > 0 ? '#86efac' : '#e5e7eb'}; margin-bottom: 12px;">
+                        <div style="padding: 12px; background: ${breakdown.witness_bonus > 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border-radius: 10px; border: 2px solid ${breakdown.witness_bonus > 0 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 32px;">${breakdown.witness_bonus > 0 ? '✅' : '⬜'}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 28px;">${breakdown.witness_bonus > 0 ? '✅' : '⬜'}</span>
                                     <div>
-                                        <div style="font-size: 15px; color: #374151; font-weight: 600;">Witness Vote</div>
-                                        <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${breakdown.witness_bonus > 0 ? 'Voting for cur8.witness' : 'Not voting yet'}</div>
+                                        <div style="font-size: 15px; color: var(--text-primary); font-weight: 600;">Witness Vote</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${breakdown.witness_bonus > 0 ? 'Voting for cur8.witness' : 'Not voting yet'}</div>
                                     </div>
                                 </div>
-                                <span style="font-weight: 800; font-size: 20px; color: ${breakdown.witness_bonus > 0 ? '#16a34a' : '#9ca3af'};">+${breakdown.witness_bonus.toFixed(1)}x</span>
+                                <span style="font-weight: 800; font-size: 20px; color: ${breakdown.witness_bonus > 0 ? '#22c55e' : 'var(--text-muted)'};">+${breakdown.witness_bonus.toFixed(1)}x</span>
                             </div>
                         </div>
                         
-                        <div style="padding: 16px; background: ${breakdown.delegation_bonus > 0 ? 'linear-gradient(135deg, #dbeafe, #bfdbfe)' : '#fff'}; border-radius: 12px; border: 2px solid ${breakdown.delegation_bonus > 0 ? '#93c5fd' : '#e5e7eb'};">
+                        <div style="padding: 12px; background: ${breakdown.delegation_bonus > 0 ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border-radius: 10px; border: 2px solid ${breakdown.delegation_bonus > 0 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.1)'};">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-size: 15px; color: #374151; font-weight: 600;">Steem Delegation</div>
-                                    <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${breakdown.delegation_amount.toFixed(0)} STEEM delegated</div>
+                                    <div style="font-size: 15px; color: var(--text-primary); font-weight: 600;">Steem Delegation</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${breakdown.delegation_amount.toFixed(0)} STEEM delegated</div>
                                 </div>
-                                <span style="font-weight: 800; font-size: 20px; color: ${breakdown.delegation_bonus > 0 ? '#2563eb' : '#9ca3af'};">+${breakdown.delegation_bonus.toFixed(2)}x</span>
+                                <span style="font-weight: 800; font-size: 20px; color: ${breakdown.delegation_bonus > 0 ? '#3b82f6' : 'var(--text-muted)'};">+${breakdown.delegation_bonus.toFixed(2)}x</span>
                             </div>
                         </div>
                         
-                        <div style="height: 2px; background: linear-gradient(90deg, transparent, #d1d5db, transparent); margin: 20px 0;"></div>
+                        <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); margin: 12px 0;"></div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 16px; color: #1f2937; font-weight: 700;">Total Multiplier</span>
-                            <span style="font-weight: 800; font-size: 24px; color: #6366f1;">${breakdown.final_multiplier.toFixed(2)}x</span>
+                            <span style="font-size: 16px; color: var(--text-primary); font-weight: 700;">Total Multiplier</span>
+                            <span style="font-weight: 800; font-size: 24px; color: #818cf8;">${breakdown.final_multiplier.toFixed(2)}x</span>
                         </div>
                     </div>
                     
                     ${!breakdown.is_capped ? `
-                        <div style="padding: 20px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 16px; border: 2px solid #fbbf24;">
-                            <div style="font-size: 14px; color: #92400e; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 14px; background: rgba(251, 191, 36, 0.15); border-radius: 12px; border: 2px solid rgba(251, 191, 36, 0.4);">
+                            <div style="font-size: 14px; color: #fbbf24; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                                 <span>💡</span>
-                                <span>HOW TO BOOST YOUR MULTIPLIER</span>
+                                <span>HOW TO BOOST</span>
                             </div>
-                            ${breakdown.witness_bonus === 0 ? '<div style="font-size: 13px; color: #78350f; margin-bottom: 8px; padding-left: 28px;">• Vote for <strong>cur8.witness</strong> to get <strong>+0.5x</strong></div>' : ''}
-                            ${breakdown.delegation_amount < 1000 ? '<div style="font-size: 13px; color: #78350f; margin-bottom: 8px; padding-left: 28px;">• Delegate STEEM to <strong>@cur8</strong>: <strong>+0.1x per 1000 SP</strong></div>' : ''}
-                            <div style="font-size: 13px; color: #92400e; font-weight: 700; margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.5); border-radius: 8px; text-align: center;">
-                                Maximum Multiplier: ${breakdown.max_multiplier.toFixed(1)}x
+                            ${breakdown.witness_bonus === 0 ? '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 22px;">• Vote <strong>@cur8.witness</strong> → <strong>+0.5x</strong></div>' : ''}
+                            ${breakdown.delegation_amount < 1000 ? '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 22px;">• Delegate to <strong>@cur8</strong> → <strong>+0.1x/1000 SP</strong></div>' : ''}
+                            <div style="font-size: 13px; color: #fbbf24; font-weight: 700; margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; text-align: center;">
+                                Max: ${breakdown.max_multiplier.toFixed(1)}x
                             </div>
                         </div>
                     ` : ''}

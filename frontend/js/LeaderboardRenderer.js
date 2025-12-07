@@ -179,8 +179,17 @@ class LeaderboardRenderer {
             }
             
             const now = new Date();
-            const end = new Date(this.weekInfo.week_end);
-            const diff = end - now;
+            
+            // Calculate next Monday at 00:00 UTC (when reset happens)
+            const nextReset = new Date(now);
+            nextReset.setUTCHours(0, 0, 0, 0);
+            
+            // Get days until next Monday (1 = Monday, 0 = Sunday)
+            const currentDay = now.getUTCDay();
+            const daysUntilMonday = currentDay === 0 ? 1 : (8 - currentDay);
+            nextReset.setUTCDate(now.getUTCDate() + daysUntilMonday);
+            
+            const diff = nextReset - now;
             
             if (diff <= 0) {
                 timerElement.textContent = '⏰ Resetting...';

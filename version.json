@@ -1,8 +1,17 @@
 {
-  "version": "1.7.4",
-  "timestamp": "2025-12-07T03:23:39.870Z",
-  "buildNumber": 14,
+  "version": "1.7.5",
+  "timestamp": "2025-12-07T10:31:23.664Z",
+  "buildNumber": 15,
   "changelog": [
+    {
+      "version": "1.7.5",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: [TOWER DEFENSE] Enhance tower action buttons with descriptive text and improve mobile responsiveness",
+        "🔖 Bump version to 1.7.4 [skip-version]"
+      ]
+    },
     {
       "version": "1.7.4",
       "date": "2025-12-07",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: Remove push trigger from deploy workflow for cleaner execution",
         "🔖 Bump version to 1.4.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.4.0",
-      "date": "2025-12-06",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Improve mobile layout for about page with enhanced padding and margins",
-        "🔖 Bump version to 1.3.0 [skip-version]"
       ]
     }
   ]

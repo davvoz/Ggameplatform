@@ -63,12 +63,12 @@ jobs:
                 changeLog.push(fullMessage.split('\n')[0]);
               }
               // Check for new features
-              else if (message.startsWith('feat:') || message.startsWith('feature:') || message.includes('add') || message.includes('new')) {
+              else if (message.startsWith('feat:') || message.startsWith('feature:')) {
                 hasFeature = true;
                 changeLog.push(fullMessage.split('\n')[0]);
               }
               // Check for bug fixes
-              else if (message.startsWith('fix:') || message.includes('bug') || message.includes('hotfix')) {
+              else if (message.startsWith('fix:') || message.startsWith('hotfix:')) {
                 hasFix = true;
                 changeLog.push(fullMessage.split('\n')[0]);
               }

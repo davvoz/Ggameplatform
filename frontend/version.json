@@ -1,8 +1,17 @@
 {
-  "version": "1.8.3",
-  "timestamp": "2025-12-07T22:42:52.148Z",
-  "buildNumber": 19,
+  "version": "1.8.4",
+  "timestamp": "2025-12-07T23:05:01.656Z",
+  "buildNumber": 20,
   "changelog": [
+    {
+      "version": "1.8.4",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: Add custom scrollbar styles for Webkit and Firefox browsers",
+        "🔖 Bump version to 1.8.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.3",
       "date": "2025-12-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Refine commit message checks for features and bug fixes in version bump workflow",
         "🔖 Bump version to 1.7.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.0",
-      "date": "2025-12-07",
-      "type": "minor",
-      "changes": [
-        "fix: Adjust padding-top for catalog to improve layout spacing",
-        "🔖 Bump version to 1.6.0 [skip-version]"
       ]
     }
   ]

@@ -25,7 +25,8 @@ export class World {
       this.enemies,
       this.projectiles,
       this.floatingTexts,
-      levelManager
+      levelManager,
+      this // Pass world reference for targeting policies
     );
 
     this.pathPoints = [];

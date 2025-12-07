@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { BaseEntity } from "./BaseEntity.js";
 import { GeometryCache } from "./GeometryCache.js";
+import { MaterialCache } from "./MaterialCache.js";
+import { SkillColorSystem } from "../systems/SkillColorSystem.js";
+import { targetingPolicyFactory } from "../systems/TargetingPolicies.js";
 
 /**
  * Base abstract Tower class
@@ -23,6 +26,12 @@ export class Tower extends BaseEntity {
     this.waitingForSkillChoice = false;
     this.skillPoints = 0;
     this.unlockedSkills = new Set(); // Track unlocked skill IDs
+    
+    // Skill color system
+    this.skillColorSystem = new SkillColorSystem();
+    
+    // Targeting policy (Strategy Pattern)
+    this.targetingPolicy = targetingPolicyFactory.getPolicy('Nearest to Base');
     
     // Skill effects
     this.slowEffect = 0; // Slow effect amount (0-1)
@@ -105,6 +114,66 @@ export class Tower extends BaseEntity {
   }
 
   /**
+   * Set the targeting policy for this tower
+   * @param {string} policyName - Name of the policy (e.g., 'Weakest', 'Strongest', 'Closest')
+   */
+  setTargetingPolicy(policyName) {
+    const policy = targetingPolicyFactory.getPolicy(policyName);
+    if (policy) {
+      this.targetingPolicy = policy;
+      console.log(`[TOWER] Changed targeting policy to: ${policyName}`);
+    } else {
+      console.warn(`[TOWER] Unknown targeting policy: ${policyName}`);
+    }
+  }
+
+  /**
+   * Get all available targeting policy names
+   */
+  getAvailableTargetingPolicies() {
+    return targetingPolicyFactory.getPolicyNames();
+  }
+
+  /**
+   * Get enemies in range, ready for targeting
+   * @param {Array} allEnemies - All enemies in the game
+   * @returns {Array} Enemies within this tower's range
+   */
+  getEnemiesInRange(allEnemies) {
+    if (!allEnemies || allEnemies.length === 0) return [];
+
+    const inRange = [];
+    const rangeSq = this.range * this.range;
+
+    for (const enemy of allEnemies) {
+      if (enemy.isDisposed) continue;
+
+      const dx = this.position.x - enemy.mesh.position.x;
+      const dz = this.position.z - enemy.mesh.position.z;
+      const distSq = dx * dx + dz * dz;
+
+      if (distSq <= rangeSq) {
+        inRange.push(enemy);
+      }
+    }
+
+    return inRange;
+  }
+
+  /**
+   * Select best target using current targeting policy
+   * @param {Array} allEnemies - All enemies in the game
+   * @param {Object} gameWorld - Reference to game world
+   * @returns {Object|null} Selected target or null
+   */
+  selectTarget(allEnemies, gameWorld) {
+    const enemiesInRange = this.getEnemiesInRange(allEnemies);
+    if (enemiesInRange.length === 0) return null;
+
+    return this.targetingPolicy.selectTarget(enemiesInRange, this, gameWorld);
+  }
+
+  /**
    * Creates the 3D mesh for this tower
    * Should be overridden by subclasses
    */
@@ -121,6 +190,9 @@ export class Tower extends BaseEntity {
 
     // Build tower-specific geometry (override in subclasses)
     this._buildTowerGeometry(turretGroup);
+    
+    // Add skill decoration (all towers get this)
+    this._addSkillDecoration(turretGroup);
 
     // Cache emissive intensities for animations
     this._cacheEmissiveIntensities(group);
@@ -139,6 +211,82 @@ export class Tower extends BaseEntity {
   _buildTowerGeometry(turretGroup) {
     // Override in subclasses
     console.warn("_buildTowerGeometry should be overridden");
+  }
+  
+  /**
+   * Add skill decoration (standard for all towers)
+   * Creates a visible indicator that changes color based on skills
+   * Can be overridden by subclasses for custom decoration
+   * Initially hidden, shown on first upgrade
+   */
+  _addSkillDecoration(turretGroup) {
+    // Create a gear-like ring that floats above the tower
+    const ringGeo = new THREE.TorusGeometry(0.4, 0.05, 8, 16);
+    // Use BasicMaterial for flat cartoon look
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: false,
+      opacity: 1.0,
+    });
+    const skillRing = new THREE.Mesh(ringGeo, ringMat);
+    skillRing.rotation.x = Math.PI / 2;
+    skillRing.position.y = 0.9; // Float above tower
+    skillRing.userData.isDecoration = true;
+    skillRing.userData.updateColor = true;
+    skillRing.userData.isSkillRing = true;
+    skillRing.visible = false; // Hidden until first upgrade
+    turretGroup.add(skillRing);
+    
+    // Add black edges to ring for cartoon look
+    const ringEdges = new THREE.EdgesGeometry(ringGeo);
+    const ringLines = new THREE.LineSegments(ringEdges, new THREE.LineBasicMaterial({ 
+      color: 0x000000, 
+      opacity: 0.8, 
+      transparent: true,
+      linewidth: 2
+    }));
+    ringLines.rotation.x = Math.PI / 2;
+    ringLines.position.y = 0.9;
+    ringLines.visible = false;
+    ringLines.userData.isDecorationEdge = true;
+    turretGroup.add(ringLines);
+    
+    // Add gear teeth around the ring (12 teeth)
+    const toothGeo = new THREE.BoxGeometry(0.08, 0.03, 0.06);
+    const toothMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+    });
+    
+    for (let i = 0; i < 12; i++) {
+      const tooth = new THREE.Mesh(toothGeo, toothMat.clone());
+      const angle = (i / 12) * Math.PI * 2;
+      tooth.position.x = Math.cos(angle) * 0.4;
+      tooth.position.z = Math.sin(angle) * 0.4;
+      tooth.position.y = 0.9;
+      tooth.rotation.y = -angle;
+      tooth.userData.isDecoration = true;
+      tooth.userData.updateColor = true;
+      tooth.userData.isGearTooth = true;
+      tooth.userData.toothIndex = i;
+      tooth.visible = false; // Hidden until first upgrade
+      turretGroup.add(tooth);
+      
+      // Add black edges to each tooth for cartoon look
+      const toothEdges = new THREE.EdgesGeometry(toothGeo);
+      const toothLines = new THREE.LineSegments(toothEdges, new THREE.LineBasicMaterial({ 
+        color: 0x000000, 
+        opacity: 0.8, 
+        transparent: true,
+        linewidth: 2
+      }));
+      toothLines.position.x = Math.cos(angle) * 0.4;
+      toothLines.position.z = Math.sin(angle) * 0.4;
+      toothLines.position.y = 0.9;
+      toothLines.rotation.y = -angle;
+      toothLines.visible = false;
+      toothLines.userData.isDecorationEdge = true;
+      turretGroup.add(toothLines);
+    }
   }
 
   /**
@@ -641,6 +789,11 @@ export class Tower extends BaseEntity {
     if (this.level >= 2) {
       this.skillPoints += 1;
       console.log(`[TOWER] Gained 1 skill point! Total: ${this.skillPoints}`);
+      
+      // Show decorations on first upgrade (level 2)
+      if (this.level === 2) {
+        this._showDecorations();
+      }
     }
 
     // Apply major upgrade special effects and abilities
@@ -674,6 +827,9 @@ export class Tower extends BaseEntity {
     this.waitingForSkillChoice = false;
     
     console.log(`[TOWER] Skill branch chosen: ${branch}`);
+    
+    // Update decoration colors with branch color
+    this._updateDecorationColors();
     
     return true;
   }
@@ -834,6 +990,9 @@ export class Tower extends BaseEntity {
     console.log(`[TOWER] Unlocked skill: ${skillId}`);
     this._applySkillEffects(skillId);
     
+    // Update decoration colors based on new skill
+    this._updateDecorationColors();
+    
     return true;
   }
   
@@ -859,6 +1018,58 @@ export class Tower extends BaseEntity {
     
     if (effects[skillId]) {
       effects[skillId]();
+    }
+  }
+
+  /**
+   * Show decorations (called on first upgrade)
+   */
+  _showDecorations() {
+    if (!this.mesh) return;
+    
+    this.mesh.traverse((obj) => {
+      if (obj.userData.isDecoration || obj.userData.isDecorationEdge) {
+        obj.visible = true;
+      }
+    });
+    
+    // Update colors immediately
+    this._updateDecorationColors();
+  }
+
+  /**
+   * Update decoration colors based on unlocked skills
+   */
+  _updateDecorationColors() {
+    if (!this.mesh) return;
+    
+    console.log('[DECORATION] Updating colors:', {
+      unlockedSkills: Array.from(this.unlockedSkills),
+      skillsCount: this.unlockedSkills.size
+    });
+    
+    const emissiveData = this.skillColorSystem.getEmissiveColor(this.unlockedSkills);
+    const blendedColor = new THREE.Color(emissiveData.color);
+    
+    console.log('[DECORATION] Blended color:', blendedColor.getHexString(), 'from', emissiveData.color.toString(16));
+    
+    // Update all decorative elements with flat color (MeshBasicMaterial)
+    let decorationCount = 0;
+    this.mesh.traverse((obj) => {
+      if (obj.isMesh && obj.userData.isDecoration) {
+        if (obj.material.color) {
+          obj.material.color.copy(blendedColor);
+          decorationCount++;
+        }
+      }
+    });
+    
+    console.log('[DECORATION] Updated', decorationCount, 'decoration objects');
+    
+    // Update point light if present
+    if (this.pointLight) {
+      this.pointLight.color.copy(blendedColor);
+      this.pointLight.intensity = 1.0 + (this.unlockedSkills.size * 0.3);
     }
   }
 

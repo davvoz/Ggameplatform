@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { BaseEntity } from "../BaseEntity.js";
+import { LaneSwitchingStrategy } from "../../ai/LaneSwitchingStrategy.js";
 
 /**
  * Abstract base class for all enemy types
@@ -18,15 +19,27 @@ export class BaseEnemy extends BaseEntity {
     this.reward = waveConfig.reward || 5;
     this.progress = 0;
     this.hasReachedBase = false;
+    
+    // Targeting policy support
+    this.pathIndex = 0; // Current waypoint index
+    this.pathProgress = 0; // Progress within current segment (0-1)
+    this.spawnTime = performance.now(); // When this enemy was spawned
 
-    // Lane management for intelligent switching
+    // Lane management - now using Strategy Pattern
     this.currentLane = waveConfig.lane || 0;
     this.laneChangeTimer = 0;
-    this.laneChangeDelay = 1.0;
     this.pathLanes = null; // Will be set by World
-    this.isChangingLane = false;
-    this.targetLaneOffset = this.currentLane;
-    this.laneTransitionProgress = 0;
+    this.laneTransition = null; // Active transition state
+    
+    // AI Strategy for lane switching
+    this.laneSwitchingAI = new LaneSwitchingStrategy({
+      lookAheadDistance: 1.5,
+      blockDetectionRange: 0.15,
+      speedThreshold: 1.15,
+      minLaneClearance: 0.2,
+      transitionSpeed: 0.08,
+      switchCooldown: 1.0
+    });
 
     // Damage resistances/weaknesses (1.0 = normal, >1.0 = resistant, <1.0 = weak)
     this.resistances = {
@@ -166,6 +179,10 @@ export class BaseEnemy extends BaseEntity {
     const fIndex = clampedProg * totalSegments;
     const index = Math.floor(fIndex);
     const localT = fIndex - index;
+    
+    // Update targeting policy fields
+    this.pathIndex = index;
+    this.pathProgress = localT;
 
     const p0 = this.pathPoints[index];
     const p1 = this.pathPoints[Math.min(index + 1, this.pathPoints.length - 1)];
@@ -700,8 +717,29 @@ export class BaseEnemy extends BaseEntity {
       this.laneChangeTimer -= deltaTime;
     }
 
-    // INTELLIGENT LANE SWITCHING: Check for blocking enemies and switch lanes SAFELY
-    this._handleLaneSwitching(allEnemies, deltaTime);
+    // INTELLIGENT LANE SWITCHING using Strategy Pattern
+    if (this.laneTransition) {
+      // Currently transitioning between lanes
+      const transitionComplete = this.laneSwitchingAI.executeLaneSwitch(this, this.laneTransition.toLane, deltaTime);
+      if (!transitionComplete) {
+        // Still transitioning, skip normal position update
+        this._updateAnimation(performance.now() * 0.001, 0);
+        return;
+      }
+    } else {
+      // Not transitioning, evaluate if should switch
+      const targetLane = this.laneSwitchingAI.evaluateLaneSwitch(this, allEnemies);
+      if (targetLane !== null) {
+        // Initiate lane switch
+        this.laneTransition = {
+          fromLane: this.currentLane,
+          toLane: targetLane,
+          progress: 0,
+          startPosition: this.mesh.position.clone()
+        };
+        return; // Start transition next frame
+      }
+    }
 
     // PHYSICS-BASED COLLISION PREVENTION: Slow down if too close to enemy ahead
     const physicsSlowdown = this._calculatePhysicsSlowdown(allEnemies);

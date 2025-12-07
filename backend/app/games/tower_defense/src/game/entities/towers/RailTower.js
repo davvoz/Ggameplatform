@@ -56,22 +56,6 @@ export class RailTower extends Tower {
     coreLines.position.y = 0.55;
     turretGroup.add(coreLines);
 
-    // Single containment ring (reduced from 2)
-    const ringGeo = new THREE.TorusGeometry(0.26, 0.025, 4, 8);
-    const ringMat = MaterialCache.getMaterial("standard", {
-      color: 0xffff00,
-      emissive: 0xffff00,
-      emissiveIntensity: 4.0,
-      metalness: 1.0,
-      roughness: 0.05,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.45;
-    // ring.castShadow = true; // DISABLED for performance
-    ring.userData.isRotatingRing = true;
-    turretGroup.add(ring);
-
     // Simplified dual rail (single box geometry instead of 2)
     const railsGeo = new THREE.BoxGeometry(0.3, 0.06, 1.1);
     const railsMat = MaterialCache.getMaterial("standard", {
@@ -158,7 +142,7 @@ export class RailTower extends Tower {
         const turret = this.mesh.children.find(c => c.userData.isTurret);
         if (turret) {
           this.animatedObjects = {
-            ring: turret.children.find(c => c.userData.isRotatingRing),
+            skillRing: turret.children.find(c => c.userData.isSkillRing),
             muzzle: turret.children.find(c => c.userData.isMuzzle),
             barrel: turret.children.find(c => c.userData.isBarrel)
           };
@@ -178,9 +162,9 @@ export class RailTower extends Tower {
   _updateTurretAnimations(turretGroup, time, deltaTime) {
     if (!this.animatedObjects) return;
 
-    // Rotate single ring
-    if (this.animatedObjects.ring) {
-      this.animatedObjects.ring.rotation.z = time * this.ringRotationSpeed;
+    // Rotate skill ring (from base class)
+    if (this.animatedObjects.skillRing) {
+      this.animatedObjects.skillRing.rotation.z = time * this.ringRotationSpeed;
     }
 
     // Barrel recoil on fire
@@ -202,57 +186,12 @@ export class RailTower extends Tower {
 
     if (this.level === 6) {
       // LEVEL 6: Piercing Shot - i proiettili attraversano i nemici
-      // Visual: Aggiungi campo energetico pulsante
-      const fieldGeo = new THREE.SphereGeometry(0.45, 8, 8);
-      const fieldMat = MaterialCache.getMaterial("standard", {
-        color: 0x00ff00,
-        emissive: 0x00ff00,
-        emissiveIntensity: 3.0,
-        metalness: 0.5,
-        roughness: 0.3,
-        transparent: true,
-        opacity: 0.2,
-        wireframe: true,
-      });
-      const field = new THREE.Mesh(fieldGeo, fieldMat);
-      field.position.y = 0.5;
-      field.userData.isEnergyField = true;
-      turretGroup.add(field);
-      
-      // Abilità: piercing (colpisce fino a 3 nemici)
       this.hasPiercing = true;
       this.maxPiercingTargets = 3;
       this.piercingDamageDecay = 0.7; // 70% damage per target successivo
       
     } else if (this.level === 7) {
       // LEVEL 7: EMP Blast - colpo rallenta i nemici
-      // Visual: Aggiungi anelli elettrici rotanti
-      const empRingGeo = new THREE.TorusGeometry(0.5, 0.03, 6, 12);
-      const empRingMat = MaterialCache.getMaterial("standard", {
-        color: 0x0000ff,
-        emissive: 0x0000ff,
-        emissiveIntensity: 5.0,
-        metalness: 1.0,
-        roughness: 0.05,
-        transparent: true,
-        opacity: 0.7,
-      });
-      
-      const empRing1 = new THREE.Mesh(empRingGeo, empRingMat);
-      empRing1.rotation.x = Math.PI / 3;
-      empRing1.position.y = 0.5;
-      empRing1.userData.isEMPRing = true;
-      empRing1.userData.rotationSpeed = 2.0;
-      turretGroup.add(empRing1);
-      
-      const empRing2 = new THREE.Mesh(empRingGeo, empRingMat);
-      empRing2.rotation.x = -Math.PI / 3;
-      empRing2.position.y = 0.5;
-      empRing2.userData.isEMPRing = true;
-      empRing2.userData.rotationSpeed = -1.5;
-      turretGroup.add(empRing2);
-      
-      // Abilità: EMP slow
       this.hasEMPBlast = true;
       this.empSlowPercent = 0.5; // Rallenta del 50%
       this.empSlowDuration = 2.0; // 2 secondi

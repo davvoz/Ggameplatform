@@ -9,6 +9,7 @@ import { AudioManager } from "../audio/core/AudioManager.js";
 import { SoundLibrary } from "../audio/SoundLibrary.js";
 import { GameOverScreen } from "../ui/screens/GameOverScreen.js";
 import { PerformanceProfileFactory } from "./PerformanceProfile.js";
+import { TargetingPolicyUI } from "../ui/TargetingPolicyUI.js";
 
 export class GameApp {
   constructor({ rootElement, config }) {
@@ -40,6 +41,9 @@ export class GameApp {
       onMenu: () => this.navigation.showMainMenu(),
       soundLibrary: this.soundLibrary
     });
+    
+    // Targeting Policy UI
+    this.targetingPolicyUI = new TargetingPolicyUI(this);
     
     // Pass audio system to UI manager
     this.uiManager.setSoundLibrary(this.soundLibrary);
@@ -496,6 +500,15 @@ export class GameApp {
       }
     });
     
+    const targetingBtn = document.createElement('button');
+    targetingBtn.className = 'tower-action-btn';
+    targetingBtn.innerHTML = '<span>🎯</span> Target';
+    targetingBtn.addEventListener('click', () => {
+      if (this.selectedTower) {
+        this.targetingPolicyUI.show(this.selectedTower);
+      }
+    });
+    
     const sellBtn = document.createElement('button');
     sellBtn.className = 'tower-action-btn tower-sell-btn';
     sellBtn.innerHTML = '<span>💰</span> Vendi';
@@ -514,6 +527,7 @@ export class GameApp {
     
     this.towerActionPanel.appendChild(upgradeBtn);
     this.towerActionPanel.appendChild(skillsBtn);
+    this.towerActionPanel.appendChild(targetingBtn);
     this.towerActionPanel.appendChild(sellBtn);
     this.towerActionPanel.appendChild(closeBtn);
     this.rootElement.appendChild(this.towerActionPanel);
@@ -551,6 +565,7 @@ export class GameApp {
   _deselectTower() {
     this.selectedTower = null;
     this.towerActionPanel.style.display = 'none';
+    this.targetingPolicyUI.hide();
   }
 
   _getTowerSellValue(tower) {

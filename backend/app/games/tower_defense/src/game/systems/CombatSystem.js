@@ -2,12 +2,13 @@ import { Projectile } from "../entities/Projectile.js";
 import { FloatingText } from "../entities/FloatingText.js";
 
 export class CombatSystem {
-  constructor(towers, enemies, projectiles, floatingTexts, levelManager) {
+  constructor(towers, enemies, projectiles, floatingTexts, levelManager, world) {
     this.towers = towers;
     this.enemies = enemies;
     this.projectiles = projectiles;
     this.floatingTexts = floatingTexts;
     this.levelManager = levelManager;
+    this.world = world; // Reference to game world for targeting policies
     this.soundLibrary = null;
   }
 
@@ -26,8 +27,8 @@ export class CombatSystem {
     this.towers.forEach((tower) => {
       tower.update(deltaTime);
       
-      // Trova target anche se non può ancora sparare (per tracking)
-      const target = this._findTargetForTower(tower);
+      // Use tower's targeting policy to find target
+      const target = tower.selectTarget(this.enemies, this.world);
       tower.setTarget(target);
       
       if (!tower.canFire()) return;
@@ -55,23 +56,6 @@ export class CombatSystem {
       projectile.addToScene(tower.mesh.parent);
       this.projectiles.push(projectile);
     });
-  }
-
-  _findTargetForTower(tower) {
-    const origin = tower.mesh.position;
-    let closestEnemy = null;
-    let minDistance = Infinity;
-
-    this.enemies.forEach((enemy) => {
-      if (enemy.isDisposed) return;
-      const dist = origin.distanceTo(enemy.mesh.position);
-      if (dist <= tower.range && dist < minDistance) {
-        closestEnemy = enemy;
-        minDistance = dist;
-      }
-    });
-
-    return closestEnemy;
   }
 }
 

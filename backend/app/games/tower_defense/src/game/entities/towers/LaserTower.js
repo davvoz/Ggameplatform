@@ -68,25 +68,6 @@ export class LaserTower extends Tower {
     crystalLines.position.y = 0.5;
     turretGroup.add(crystalLines);
 
-    // Single rotating ring (reduced from 2)
-    const ringGeo = new THREE.TorusGeometry(0.26, 0.02, 4, 8);
-    const ringMat = MaterialCache.getMaterial("standard", {
-      color: 0x00ffff,
-      emissive: 0x00ffff,
-      emissiveIntensity: 4.5,
-      metalness: 1.0,
-      roughness: 0.1,
-      transparent: true,
-      opacity: 0.9,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.5;
-    // ring.castShadow = true; // DISABLED for performance
-    ring.userData.isRotatingRing = true;
-    ring.userData.ringIndex = 0;
-    turretGroup.add(ring);
-
     // Focusing lens (single mesh instead of housing + lenses)
     const lensGeo = new THREE.SphereGeometry(0.12, 6, 6);
     const lensMat = MaterialCache.getMaterial("physical", {
@@ -111,9 +92,9 @@ export class LaserTower extends Tower {
         const turret = this.mesh.getObjectByName("turret");
         if (turret) {
           this.animatedObjects = {
-            ring: turret.children.find(c => c.userData.isRotatingRing),
             crystal: turret.children.find(c => c.userData.isCrystal),
-            lens: turret.children.find(c => c.userData.isPulsating)
+            lens: turret.children.find(c => c.userData.isPulsating),
+            skillRing: turret.children.find(c => c.userData.isSkillRing) // Use base class decoration
           };
         }
       }
@@ -199,9 +180,9 @@ export class LaserTower extends Tower {
   _updateTurretAnimations(turretGroup, time, deltaTime) {
     if (!this.animatedObjects) return;
 
-    // Single rotating ring
-    if (this.animatedObjects.ring) {
-      this.animatedObjects.ring.rotation.z = time * this.ringRotationSpeed;
+    // Rotate skill ring (from base class)
+    if (this.animatedObjects.skillRing) {
+      this.animatedObjects.skillRing.rotation.z = time * this.ringRotationSpeed;
     }
 
     // Rotating crystal
@@ -232,55 +213,12 @@ export class LaserTower extends Tower {
 
     if (this.level === 6) {
       // LEVEL 6: Chain Lightning - laser può colpire nemici secondari
-      // Visual: Aggiungi anelli di energia extra
-      const extraRingGeo = new THREE.TorusGeometry(0.35, 0.025, 6, 12);
-      const extraRingMat = MaterialCache.getMaterial("standard", {
-        color: 0xffff00,
-        emissive: 0xffff00,
-        emissiveIntensity: 5.0,
-        metalness: 1.0,
-        roughness: 0.1,
-        transparent: true,
-        opacity: 0.8,
-      });
-      const extraRing = new THREE.Mesh(extraRingGeo, extraRingMat);
-      extraRing.rotation.x = Math.PI / 2;
-      extraRing.position.y = 0.65;
-      extraRing.userData.isExtraRing = true;
-      turretGroup.add(extraRing);
-      
-      // Abilità: chain lightning (damage a nemici vicini)
       this.hasChainLightning = true;
       this.chainLightningRange = 2.0;
       this.chainLightningDamagePercent = 0.5; // 50% damage
       
     } else if (this.level === 7) {
       // LEVEL 7: Triple Beam - spara 3 laser contemporaneamente
-      // Visual: Aggiungi 2 cristalli laterali
-      const sideCrystalGeo = new THREE.OctahedronGeometry(0.1, 0);
-      const sideCrystalMat = MaterialCache.getMaterial("physical", {
-        color: 0xff00ff,
-        emissive: 0xff00ff,
-        emissiveIntensity: 7.0,
-        metalness: 0,
-        roughness: 0,
-        transmission: 0.9,
-        transparent: true,
-        opacity: 0.95,
-        ior: 2.4,
-      });
-      
-      const leftCrystal = new THREE.Mesh(sideCrystalGeo, sideCrystalMat);
-      leftCrystal.position.set(-0.25, 0.5, 0);
-      leftCrystal.userData.isSideCrystal = true;
-      turretGroup.add(leftCrystal);
-      
-      const rightCrystal = new THREE.Mesh(sideCrystalGeo, sideCrystalMat);
-      rightCrystal.position.set(0.25, 0.5, 0);
-      rightCrystal.userData.isSideCrystal = true;
-      turretGroup.add(rightCrystal);
-      
-      // Abilità: triple beam
       this.hasTripleBeam = true;
       this.tripleDamageMultiplier = 2.0; // 2x damage totale
     }

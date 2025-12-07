@@ -1,8 +1,17 @@
 {
-  "version": "1.8.5",
-  "timestamp": "2025-12-07T23:31:31.905Z",
-  "buildNumber": 21,
+  "version": "1.8.6",
+  "timestamp": "2025-12-07T23:42:09.031Z",
+  "buildNumber": 22,
   "changelog": [
+    {
+      "version": "1.8.6",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: Update scrollbar colors for Webkit browsers and refine Firefox scrollbar styles",
+        "🔖 Bump version to 1.8.5 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.5",
       "date": "2025-12-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[ tower defense ] remove unused action button from BottomBarView",
         "🔖 Bump version to 1.7.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.2",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: [ TOWER DEFENSE ] Comment out stats display creation in GameApp constructor",
-        "🔖 Bump version to 1.7.1 [skip-version]"
       ]
     }
   ]

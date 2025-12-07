@@ -693,12 +693,24 @@
                 });
         }
 
-        // Update app
-        function updateApp() {
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+        // Update app - cancella cache automaticamente
+        async function updateApp() {
+            try {
+                // Cancella tutte le cache trasparentemente
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('🗑️ Cache cleared automatically');
+                
+                // Skip waiting del service worker
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                }
+            } catch (error) {
+                console.warn('Cache clear warning:', error);
             }
-            window.location.reload();
+            
+            // Hard reload
+            window.location.reload(true);
         }
 
         // PWA Install Prompt

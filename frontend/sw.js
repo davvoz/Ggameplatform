@@ -15,47 +15,13 @@ async function fetchAppVersion() {
   }
 }
 
-const CACHE_NAME = 'cur8-games-v2';
-const RUNTIME_CACHE = 'runtime-cache-v2';
+const CACHE_NAME = 'cur8-games-v3';
+const RUNTIME_CACHE = 'runtime-cache-v3';
 
-// Files to cache immediately on install
+// Precache SOLO i file essenziali - il resto verrà caricato on-demand
 const PRECACHE_URLS = [
-  '/version.json',
   '/',
   '/index.html',
-  '/auth.html',
-  '/css/variables.css',
-  '/css/layout.css',
-  '/css/navigation.css',
-  '/css/game-catalog.css',
-  '/css/game-player.css',
-  '/css/auth.css',
-  '/css/profile.css',
-  '/css/wallet.css',
-  '/css/leaderboard.css',
-  '/css/quest-hero.css',
-  '/css/level-widget.css',
-  '/css/utilities.css',
-  '/js/main.js',
-  '/js/router.js',
-  '/js/api.js',
-  '/js/auth.js',
-  '/js/authManager.js',
-  '/js/config.js',
-  '/js/nav.js',
-  '/js/runtimeShell.js',
-  '/js/coinAPI.js',
-  '/js/CoinBalanceWidget.js',
-  '/js/LeaderboardAPI.js',
-  '/js/LeaderboardRenderer.js',
-  '/js/level-widget.js',
-  '/js/ProfileRenderer.js',
-  '/js/quest.js',
-  '/js/SteemProfileService.js',
-  '/js/WalletProfileWidget.js',
-  '/js/WalletRenderer.js',
-  '/js/game-status-integration.js',
-  '/env.js',
   '/manifest.json'
 ];
 
@@ -121,14 +87,16 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-only for API calls (always fetch fresh data)
+  // Network-only for API calls, version.json e env.js (always fetch fresh data)
   if (url.pathname.startsWith('/api/') || 
       url.pathname.startsWith('/users/') ||
       url.pathname.includes('/games/list') ||
       url.pathname.includes('/leaderboard/') ||
-      url.pathname.includes('/quests/')) {
+      url.pathname.includes('/quests/') ||
+      url.pathname.includes('/version.json') ||
+      url.pathname.includes('/env.js')) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .catch(() => {
           // Return offline fallback for API errors
           return new Response(
@@ -166,8 +134,29 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first strategy for static assets (CSS, JS, images)
-  if (url.pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+  // Network-first per JS e HTML (sempre freschi), cache-first per immagini e font
+  if (url.pathname.match(/\.(js|html)$/)) {
+    event.respondWith(
+      fetch(request, { cache: 'no-cache' })
+        .then(response => {
+          // Cache la risposta solo se è valida
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE)
+              .then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback alla cache solo se network fallisce
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // Cache-first solo per assets pesanti (immagini, font)
+  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
     event.respondWith(
       caches.match(request)
         .then(response => {
@@ -177,7 +166,6 @@ self.addEventListener('fetch', event => {
           
           return fetch(request)
             .then(response => {
-              // Don't cache non-ok responses
               if (!response || response.status !== 200 || response.type === 'error') {
                 return response;
               }
@@ -189,6 +177,23 @@ self.addEventListener('fetch', event => {
               return response;
             });
         })
+    );
+    return;
+  }
+
+  // Network-first per CSS (garantire aggiornamenti)
+  if (url.pathname.match(/\.css$/)) {
+    event.respondWith(
+      fetch(request, { cache: 'no-cache' })
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE)
+              .then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
@@ -242,13 +247,22 @@ self.addEventListener('message', event => {
 // Check for version updates periodically
 async function checkForUpdates() {
   try {
-    const response = await fetch('/version.json', { cache: 'no-cache' });
+    const response = await fetch('/version.json', { 
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if (response.ok) {
       const data = await response.json();
       const newVersion = data.version;
       
       if (newVersion !== APP_VERSION) {
-        console.log(`[Service Worker] New version available: ${newVersion} (current: ${APP_VERSION})`);
+        console.log(`[Service Worker] 🎉 New version available: ${newVersion} (current: ${APP_VERSION})`);
+        
+        // Aggiorna la versione locale
+        APP_VERSION = newVersion;
         
         // Notify all clients about the new version
         const clients = await self.clients.matchAll();
@@ -261,6 +275,9 @@ async function checkForUpdates() {
           });
         });
         
+        // Forza il re-install del service worker
+        self.skipWaiting();
+        
         return true;
       }
     }
@@ -270,10 +287,13 @@ async function checkForUpdates() {
   return false;
 }
 
-// Check for updates every 5 minutes
+// Check for updates ogni 2 minuti (più aggressivo)
 setInterval(() => {
   checkForUpdates();
-}, 5 * 60 * 1000);
+}, 2 * 60 * 1000);
+
+// Check immediato all'attivazione
+checkForUpdates();
 
 // Sync event for background sync (future feature)
 self.addEventListener('sync', event => {

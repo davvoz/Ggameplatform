@@ -1,8 +1,17 @@
 {
-  "version": "1.7.3",
-  "timestamp": "2025-12-07T02:52:07.150Z",
-  "buildNumber": 13,
+  "version": "1.7.4",
+  "timestamp": "2025-12-07T03:23:39.870Z",
+  "buildNumber": 14,
   "changelog": [
+    {
+      "version": "1.7.4",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "fix: [TOWER DEFENSE] Update platform SDK checks and enhance game over/restart logging",
+        "🔖 Bump version to 1.7.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.7.3",
       "date": "2025-12-07",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Improve mobile layout for about page with enhanced padding and margins",
         "🔖 Bump version to 1.3.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.3.0",
-      "date": "2025-12-06",
-      "type": "minor",
-      "changes": [
-        "feat: Add mobile optimizations for the about page layout",
-        "🔖 Bump version to 1.2.0 [skip-version]"
       ]
     }
   ]

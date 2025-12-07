@@ -482,48 +482,58 @@ export class GameApp {
     this.towerActionPanel.style.display = 'none';
     
     const upgradeBtn = document.createElement('button');
-    upgradeBtn.className = 'tower-action-btn';
+    upgradeBtn.className = 'tower-action-btn upgrade-btn';
     upgradeBtn.innerHTML = '<span>⬆</span><span class="btn-text"> Upgrade</span>';
-    upgradeBtn.addEventListener('click', () => {
+    upgradeBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (this.selectedTower) {
         this.world.tryUpgradeTower(this.selectedTower, this.levelManager);
-        this._updateTowerActionPanel(); // Update instead of close
+        this._updateTowerActionPanel();
       }
-    });
+    };
     
     const skillsBtn = document.createElement('button');
-    skillsBtn.className = 'tower-action-btn';
+    skillsBtn.className = 'tower-action-btn skills-btn';
     skillsBtn.innerHTML = '<span>🌳</span><span class="btn-text"> Skills</span>';
-    skillsBtn.addEventListener('click', () => {
+    skillsBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (this.selectedTower) {
         this.selectedTower.showSkillTreePopup();
       }
-    });
+    };
     
     const targetingBtn = document.createElement('button');
-    targetingBtn.className = 'tower-action-btn';
+    targetingBtn.className = 'tower-action-btn targeting-btn';
     targetingBtn.innerHTML = '<span>🎯</span><span class="btn-text"> Target</span>';
-    targetingBtn.addEventListener('click', () => {
+    targetingBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (this.selectedTower) {
         this.targetingPolicyUI.show(this.selectedTower);
       }
-    });
+    };
     
     const sellBtn = document.createElement('button');
-    sellBtn.className = 'tower-action-btn tower-sell-btn';
+    sellBtn.className = 'tower-action-btn tower-sell-btn sell-btn';
     sellBtn.innerHTML = '<span>💰</span><span class="btn-text"> Vendi</span>';
-    sellBtn.addEventListener('click', () => {
+    sellBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (this.selectedTower) {
         this._sellTower(this.selectedTower);
       }
-    });
+    };
     
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'tower-action-btn tower-close-btn';
+    closeBtn.className = 'tower-action-btn tower-close-btn close-btn';
     closeBtn.innerHTML = '<span>✕</span>';
-    closeBtn.addEventListener('click', () => {
+    closeBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       this._deselectTower();
-    });
+    };
     
     this.towerActionPanel.appendChild(upgradeBtn);
     this.towerActionPanel.appendChild(skillsBtn);

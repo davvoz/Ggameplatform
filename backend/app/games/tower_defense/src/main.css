@@ -240,6 +240,7 @@
 
  .tower-action-btn span {
      font-size: 1.1rem;
+     pointer-events: none;
  }
 
  .tower-sell-btn {

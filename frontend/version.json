@@ -1,8 +1,18 @@
 {
-  "version": "1.8.2",
-  "timestamp": "2025-12-07T22:06:36.081Z",
-  "buildNumber": 18,
+  "version": "1.8.3",
+  "timestamp": "2025-12-07T22:42:52.148Z",
+  "buildNumber": 19,
   "changelog": [
+    {
+      "version": "1.8.3",
+      "date": "2025-12-07",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [ TOWER DEFENSE ] Enhance tower upgrade logic with error logging and improve button styles",
+        "🔖 Bump version to 1.8.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.8.2",
       "date": "2025-12-07",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: Adjust padding-top for catalog to improve layout spacing",
         "🔖 Bump version to 1.6.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.6.0",
-      "date": "2025-12-07",
-      "type": "minor",
-      "changes": [
-        "feat:[TOWER-DEFENSE]Refactor tower classes to streamline visual elements and targeting policies",
-        "🔖 Bump version to 1.5.0 [skip-version]"
       ]
     }
   ]

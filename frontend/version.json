@@ -1,8 +1,17 @@
 {
-  "version": "1.5.0",
-  "timestamp": "2025-12-06T22:36:52.945Z",
-  "buildNumber": 8,
+  "version": "1.6.0",
+  "timestamp": "2025-12-07T01:41:41.368Z",
+  "buildNumber": 9,
   "changelog": [
+    {
+      "version": "1.6.0",
+      "date": "2025-12-07",
+      "type": "minor",
+      "changes": [
+        "feat:[TOWER-DEFENSE]Refactor tower classes to streamline visual elements and targeting policies",
+        "🔖 Bump version to 1.5.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.5.0",
       "date": "2025-12-06",

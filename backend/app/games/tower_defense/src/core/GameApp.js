@@ -483,7 +483,7 @@ export class GameApp {
     
     const upgradeBtn = document.createElement('button');
     upgradeBtn.className = 'tower-action-btn';
-    upgradeBtn.innerHTML = '<span>⬆</span> Upgrade';
+    upgradeBtn.innerHTML = '<span>⬆</span><span class="btn-text"> Upgrade</span>';
     upgradeBtn.addEventListener('click', () => {
       if (this.selectedTower) {
         this.world.tryUpgradeTower(this.selectedTower, this.levelManager);
@@ -493,7 +493,7 @@ export class GameApp {
     
     const skillsBtn = document.createElement('button');
     skillsBtn.className = 'tower-action-btn';
-    skillsBtn.innerHTML = '<span>🌳</span> Skills';
+    skillsBtn.innerHTML = '<span>🌳</span><span class="btn-text"> Skills</span>';
     skillsBtn.addEventListener('click', () => {
       if (this.selectedTower) {
         this.selectedTower.showSkillTreePopup();
@@ -502,7 +502,7 @@ export class GameApp {
     
     const targetingBtn = document.createElement('button');
     targetingBtn.className = 'tower-action-btn';
-    targetingBtn.innerHTML = '<span>🎯</span> Target';
+    targetingBtn.innerHTML = '<span>🎯</span><span class="btn-text"> Target</span>';
     targetingBtn.addEventListener('click', () => {
       if (this.selectedTower) {
         this.targetingPolicyUI.show(this.selectedTower);
@@ -511,7 +511,7 @@ export class GameApp {
     
     const sellBtn = document.createElement('button');
     sellBtn.className = 'tower-action-btn tower-sell-btn';
-    sellBtn.innerHTML = '<span>💰</span> Vendi';
+    sellBtn.innerHTML = '<span>💰</span><span class="btn-text"> Vendi</span>';
     sellBtn.addEventListener('click', () => {
       if (this.selectedTower) {
         this._sellTower(this.selectedTower);
@@ -552,14 +552,14 @@ export class GameApp {
     
     if (isMaxLevel) {
       this.upgradeBtn.disabled = true;
-      this.upgradeBtn.innerHTML = '<span>✓</span> Max';
+      this.upgradeBtn.innerHTML = '<span>✓</span><span class="btn-text"> Max</span>';
     } else {
       this.upgradeBtn.disabled = !canAfford;
-      this.upgradeBtn.innerHTML = `<span>⬆</span> ${cost} Ξ`;
+      this.upgradeBtn.innerHTML = `<span>⬆</span><span class="btn-value"> ${cost} Ξ</span>`;
     }
     
     const sellValue = this._getTowerSellValue(tower);
-    this.sellBtn.innerHTML = `<span>💰</span> ${sellValue} Ξ`;
+    this.sellBtn.innerHTML = `<span>💰</span><span class="btn-value"> ${sellValue} Ξ</span>`;
   }
 
   _deselectTower() {

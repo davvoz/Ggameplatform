@@ -309,12 +309,10 @@ export class ScreenManager {
         const finalScore = document.getElementById('final-score');
         const finalLevel = document.getElementById('final-level');
         const finalCollectibles = document.getElementById('final-collectibles');
-        const finalHighScore = document.getElementById('final-high-score');
         
         if (finalScore) finalScore.textContent = stats.score || 0;
         if (finalLevel) finalLevel.textContent = stats.level || 1;
         if (finalCollectibles) finalCollectibles.textContent = stats.collectibles || 0;
-        if (finalHighScore) finalHighScore.textContent = stats.highScore || 0;
         
         this._dispatchEvent('gameOver', stats);
     }

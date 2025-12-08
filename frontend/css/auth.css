@@ -347,15 +347,6 @@
     font-size: 0.9rem;
 }
 
-.cur8-badge {
-    background: var(--primary-color);
-    color: var(--background);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-md);
-    font-size: 0.8rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
 
 .btn-logout {
     background: transparent;
@@ -661,11 +652,6 @@
     
     .user-info #userName {
         font-size: 0.85rem;
-    }
-    
-    .cur8-badge {
-        font-size: 0.75rem;
-        padding: var(--spacing-xs) var(--spacing-sm);
     }
     
     .btn-logout {

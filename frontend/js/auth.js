@@ -1,62 +1,62 @@
 // Authentication Manager
 const AuthManager = {
     currentUser: null,
-    
+
     // Get API base URL from window.ENV (set by env.js)
     get apiBase() {
         const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
         return `${apiUrl}/users`;
     },
-    
+
     init() {
         // Pulisci eventuali banner residui da vecchie sessioni
         document.querySelectorAll('.auth-banner').forEach(el => el.remove());
         document.body.classList.remove('has-auth-banner');
-        
+
         this.loadUserFromStorage();
         this.attachEventListeners();
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
-        
-        
+
+
         // Force UI update after a short delay to ensure DOM is ready
         setTimeout(() => {
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
         }, 100);
     },
-    
+
     attachEventListeners() {
         // Login button
         document.getElementById('loginBtn')?.addEventListener('click', () => {
             this.showAuthModal();
         });
-        
+
         // Logout button
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             this.logout();
         });
-        
+
         // Modal close
         document.querySelector('.close-modal')?.addEventListener('click', () => {
             this.hideAuthModal();
         });
-        
+
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.switchTab(e.target.dataset.tab);
             });
         });
-        
+
         // Keychain login
         document.getElementById('keychainLoginBtn')?.addEventListener('click', () => {
             this.loginWithKeychain();
         });
-        
+
         // Anonymous login
         document.getElementById('anonymousBtn')?.addEventListener('click', () => {
             this.loginAnonymous();
         });
-        
+
         // Close modal on outside click
         window.addEventListener('click', (e) => {
             const modal = document.getElementById('authModal');
@@ -65,65 +65,65 @@ const AuthManager = {
             }
         });
     },
-    
+
     switchTab(tabName) {
         // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
-        
+
         // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
         document.getElementById(`${tabName}-tab`)?.classList.add('active');
     },
-    
+
     showAuthModal() {
         document.getElementById('authModal').style.display = 'block';
     },
-    
+
     hideAuthModal() {
         document.getElementById('authModal').style.display = 'none';
         // Clear status messages
         document.getElementById('keychainStatus').textContent = '';
         document.getElementById('anonymousStatus').textContent = '';
     },
-    
+
     async loginWithKeychain() {
         const username = document.getElementById('steemUsername').value.trim();
         const multiplier = parseFloat(document.getElementById('steemMultiplier').value);
         const statusEl = document.getElementById('keychainStatus');
-        
+
         if (!username) {
             statusEl.textContent = '⚠️ Please enter your Steem username';
             statusEl.className = 'status-message error';
             return;
         }
-        
+
         // Remove @ if present
         const cleanUsername = username.replace('@', '');
-        
+
         statusEl.textContent = '🔄 Checking Steem Keychain...';
         statusEl.className = 'status-message info';
-        
+
         // Check if Keychain is installed
         if (!window.steem_keychain) {
             statusEl.textContent = '❌ Steem Keychain not found. Please install it first.';
             statusEl.className = 'status-message error';
-            
+
             setTimeout(() => {
                 window.open('https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm', '_blank');
             }, 2000);
             return;
         }
-        
+
         try {
             // Request Keychain signature for authentication
             statusEl.textContent = '🔐 Please sign with Keychain...';
-            
+
             const message = `Login to Game Platform - ${Date.now()}`;
-            
+
             window.steem_keychain.requestSignBuffer(
                 cleanUsername,
                 message,
@@ -132,7 +132,7 @@ const AuthManager = {
                     if (response.success) {
                         statusEl.textContent = '✅ Signature verified! Creating account...';
                         statusEl.className = 'status-message success';
-                        
+
                         // Register/Login user on backend
                         try {
                             const registerResponse = await fetch(`${this.apiBase}/register`, {
@@ -145,9 +145,9 @@ const AuthManager = {
                                     cur8_multiplier: multiplier
                                 })
                             });
-                            
+
                             let userData;
-                            
+
                             if (registerResponse.ok) {
                                 const data = await registerResponse.json();
                                 userData = data.user;
@@ -162,7 +162,7 @@ const AuthManager = {
                                         password: response.result
                                     })
                                 });
-                                
+
                                 if (loginResponse.ok) {
                                     const data = await loginResponse.json();
                                     userData = data.user;
@@ -173,15 +173,15 @@ const AuthManager = {
                             } else {
                                 throw new Error('Registration failed');
                             }
-                            
+
                             // Store user data
                             userData.steemUsername = cleanUsername;
                             this.setUser(userData);
-                            
+
                             setTimeout(() => {
                                 this.hideAuthModal();
                             }, 1500);
-                            
+
                         } catch (error) {
                             console.error('Backend error:', error);
                             statusEl.textContent = `❌ Error: ${error.message}`;
@@ -199,13 +199,13 @@ const AuthManager = {
             statusEl.className = 'status-message error';
         }
     },
-    
+
     async loginAnonymous() {
         const statusEl = document.getElementById('anonymousStatus');
-        
+
         statusEl.textContent = '🔄 Creating anonymous session...';
         statusEl.className = 'status-message info';
-        
+
         try {
             const response = await fetch(`${this.apiBase}/anonymous`, {
                 method: 'POST',
@@ -214,14 +214,14 @@ const AuthManager = {
                     cur8_multiplier: 1.0
                 })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 this.setUser(data.user);
-                
+
                 statusEl.textContent = '✅ Anonymous session created!';
                 statusEl.className = 'status-message success';
-                
+
                 setTimeout(() => {
                     this.hideAuthModal();
                 }, 1500);
@@ -234,20 +234,20 @@ const AuthManager = {
             statusEl.className = 'status-message error';
         }
     },
-    
+
     setUser(userData) {
         this.currentUser = userData;
         // Usa la stessa chiave usata da authManager.js per compatibilità
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
-        
-       
+
+
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
-        
+
         // Dispatch custom event
         window.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
     },
-    
+
     loadUserFromStorage() {
         // Prova prima con 'gameplatform_user', poi con 'currentUser' per compatibilità
         let stored = localStorage.getItem('gameplatform_user');
@@ -266,46 +266,46 @@ const AuthManager = {
             console.log('AuthManager: nessun utente salvato in localStorage');
         }
     },
-    
+
     logout() {
         this.currentUser = null;
         localStorage.removeItem('gameplatform_user');
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authMethod');
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
-        
+
         // Dispatch custom event
         window.dispatchEvent(new Event('userLogout'));
-        
+
         // Redirect to auth page
         window.location.href = '/auth.html';
     },
-    
+
     async updateUI() {
         const userInfo = document.getElementById('userInfo');
         const userName = document.getElementById('userName');
         const userCur8 = document.getElementById('userCur8');
         const profileLink = document.getElementById('profileLink');
         const questsLink = document.getElementById('questsLink');
-        
 
-        
+
+
         // Verifica che gli elementi esistano (potrebbero non essere presenti in tutte le pagine)
         if (!userInfo || !userName || !userCur8) {
             return;
         }
-        
-        
+
+
         if (this.currentUser) {
             // User logged in
             userInfo.style.display = 'flex';
-            
+
             // Show profile link
             if (profileLink) {
                 profileLink.classList.remove('auth-required');
                 profileLink.style.display = 'inline-block';
             }
-            
+
             // Show Quests link only for non-anonymous users
             if (questsLink) {
                 if (this.currentUser.is_anonymous) {
@@ -318,10 +318,10 @@ const AuthManager = {
             } else {
                 console.log('AuthManager: questsLink NON trovato nel DOM');
             }
-            
+
             let displayName = '';
             let badge = '';
-            
+
             if (this.currentUser.is_anonymous) {
                 badge = '👤 ';
                 displayName = `Guest #${this.currentUser.user_id.slice(-6)}`;
@@ -331,27 +331,31 @@ const AuthManager = {
             } else {
                 displayName = this.currentUser.username || 'User';
             }
-            
+
             userName.textContent = badge + displayName;
-            
+
             // Carica info livello
             try {
                 const API_URL = window.ENV?.API_URL || window.location.origin;
                 const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
                 if (response.ok) {
                     const levelInfo = await response.json();
+                    userCur8.style.backgroundColor = levelInfo.color;
+                    
                     userCur8.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}22, ${levelInfo.color || '#6366f1'}11); border-radius: 8px; border: 1px solid ${levelInfo.color || '#6366f1'}44;">
-                            <span style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${levelInfo.badge}</span>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 700; font-size: 13px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 2px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
-                                    Lv${levelInfo.current_level} · ${levelInfo.title}
+                        <div class="level-badge-container">
+                            <span class="level-badge-icon">${levelInfo.badge}</span>
+                            <div class="level-badge-info">
+                                <div class="level-badge-title">
+                                    <span class="level-badge-number">Lv${levelInfo.current_level}</span>
+                                    <span class="level-badge-separator">·</span>
+                                    <span>${levelInfo.title}</span>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-                                    <div style="flex: 1; height: 5px; background: rgba(0,0,0,0.2); border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);">
-                                        <div style="height: 100%; background: linear-gradient(90deg, ${levelInfo.color || '#6366f1'}, #8b5cf6); width: ${levelInfo.progress_percent}%; box-shadow: 0 0 6px ${levelInfo.color || '#6366f1'}88;"></div>
+                                <div class="level-badge-progress-container">
+                                    <div class="level-badge-progress-bar">
+                                        <div class="level-badge-progress-fill" style="width: ${levelInfo.progress_percent}%;"></div>
                                     </div>
-                                    <span style="font-size: 10px; font-weight: 600; color: ${levelInfo.color || '#6366f1'}; min-width: 32px; text-align: right;">${levelInfo.progress_percent.toFixed(0)}%</span>
+                                    <span class="level-badge-progress-text">${levelInfo.progress_percent.toFixed(0)}%</span>
                                 </div>
                             </div>
                         </div>
@@ -368,7 +372,7 @@ const AuthManager = {
                 const multiplier = this.currentUser.cur8_multiplier || 1.0;
                 userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
             }
-            
+
         } else {
             // User not logged in
             userInfo.style.display = 'none';
@@ -382,31 +386,31 @@ const AuthManager = {
             }
         }
     },
-    
+
     updateCur8(amount) {
         if (this.currentUser) {
             const oldTotal = this.currentUser.total_xp_earned || 0;
             this.currentUser.total_xp_earned = oldTotal + amount;
-            
+
             // Salva in localStorage
             localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
             localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
-            
+
             // Aggiorna UI immediatamente
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
         } else {
             console.warn('⚠️ updateCur8: Nessun utente loggato');
         }
     },
-    
+
     getUser() {
         return this.currentUser;
     },
-    
+
     isLoggedIn() {
         return this.currentUser !== null;
     },
-    
+
     requireAuth(callback) {
         if (!this.isLoggedIn()) {
             this.showAuthModal();

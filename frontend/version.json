@@ -1,8 +1,18 @@
 {
-  "version": "1.11.1",
-  "timestamp": "2025-12-08T16:42:20.108Z",
-  "buildNumber": 27,
+  "version": "1.11.2",
+  "timestamp": "2025-12-08T16:50:34.193Z",
+  "buildNumber": 28,
   "changelog": [
+    {
+      "version": "1.11.2",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:Remove obsolete documentation and assets related to deployment and database schema",
+        "🔖 Bump version to 1.11.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.1",
       "date": "2025-12-08",
@@ -84,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [ TOWER DEFENSE ] Enhance tower upgrade logic with error logging and improve button styles",
         "🔖 Bump version to 1.8.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.2",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: Update countdown timer logic to calculate days until next reset on Monday",
-        "🔖 Bump version to 1.8.1 [skip-version]"
       ]
     }
   ]

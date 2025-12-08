@@ -1,8 +1,17 @@
 {
-  "version": "1.10.0",
-  "timestamp": "2025-12-08T12:22:52.909Z",
-  "buildNumber": 24,
+  "version": "1.10.1",
+  "timestamp": "2025-12-08T13:10:00.591Z",
+  "buildNumber": 25,
   "changelog": [
+    {
+      "version": "1.10.1",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "fix: Update leaderboard rendering to conditionally display rewards and adjust layout for better UX",
+        "🔖 Bump version to 1.10.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.10.0",
       "date": "2025-12-08",
@@ -84,15 +93,6 @@
       "changes": [
         "feat: Improve PWA caching strategy and update service worker for better performance",
         "🔖 Bump version to 1.7.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.5",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: [TOWER DEFENSE] Enhance tower action buttons with descriptive text and improve mobile responsiveness",
-        "🔖 Bump version to 1.7.4 [skip-version]"
       ]
     }
   ]

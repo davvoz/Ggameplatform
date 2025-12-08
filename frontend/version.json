@@ -1,8 +1,17 @@
 {
-  "version": "1.9.0",
-  "timestamp": "2025-12-07T23:53:49.364Z",
-  "buildNumber": 23,
+  "version": "1.10.0",
+  "timestamp": "2025-12-08T12:22:52.909Z",
+  "buildNumber": 24,
   "changelog": [
+    {
+      "version": "1.10.0",
+      "date": "2025-12-08",
+      "type": "minor",
+      "changes": [
+        "feat:[RAINBOW RUSH] Implement background rendering system with layered and particle renderers",
+        "🔖 Bump version to 1.9.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.9.0",
       "date": "2025-12-07",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: [TOWER DEFENSE] Enhance tower action buttons with descriptive text and improve mobile responsiveness",
         "🔖 Bump version to 1.7.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.7.4",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: [TOWER DEFENSE] Update platform SDK checks and enhance game over/restart logging",
-        "🔖 Bump version to 1.7.3 [skip-version]"
       ]
     }
   ]

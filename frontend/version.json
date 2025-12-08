@@ -1,8 +1,18 @@
 {
-  "version": "1.11.4",
-  "timestamp": "2025-12-08T17:04:18.926Z",
-  "buildNumber": 30,
+  "version": "1.11.5",
+  "timestamp": "2025-12-08T17:49:39.066Z",
+  "buildNumber": 31,
   "changelog": [
+    {
+      "version": "1.11.5",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: remove obsolete badge styles and implement new level badge design",
+        "🔖 Bump version to 1.11.4 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.4",
       "date": "2025-12-08",
@@ -85,15 +95,6 @@
       "changes": [
         "fix: Update scrollbar colors for Webkit browsers and refine Firefox scrollbar styles",
         "🔖 Bump version to 1.8.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.5",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: Update scrollbar styles for Webkit browsers and improve CSS caching strategy in nginx configuration",
-        "🔖 Bump version to 1.8.4 [skip-version]"
       ]
     }
   ]

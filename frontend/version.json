@@ -1,8 +1,18 @@
 {
-  "version": "1.12.0",
-  "timestamp": "2025-12-08T22:56:15.502Z",
-  "buildNumber": 33,
+  "version": "1.12.1",
+  "timestamp": "2025-12-08T23:54:59.207Z",
+  "buildNumber": 34,
   "changelog": [
+    {
+      "version": "1.12.1",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [RAINBOW RUSH]remove unused powerup types and enhance UI rendering for active powerups",
+        "🔖 Bump version to 1.12.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.12.0",
       "date": "2025-12-08",
@@ -86,15 +96,6 @@
       "changes": [
         "fix: Update leaderboard rendering to conditionally display rewards and adjust layout for better UX",
         "🔖 Bump version to 1.10.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.10.0",
-      "date": "2025-12-08",
-      "type": "minor",
-      "changes": [
-        "feat:[RAINBOW RUSH] Implement background rendering system with layered and particle renderers",
-        "🔖 Bump version to 1.9.0 [skip-version]"
       ]
     }
   ]

@@ -19,7 +19,6 @@
     box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--border);
 }
 
 .profile-header::before {

@@ -71,24 +71,7 @@ export class TurboButtonUI {
         // Posizione con bounce
         const displayY = this.buttonY - this.bounceOffset;
         
-        // Outer glow stellare quando ready
-        if (isReady && this.glowIntensity > 0) {
-            const pulse = Math.sin(this.pulseTime * 5) * 0.4 + 0.6;
-            
-            // Raggiera di stelle
-            for (let i = 0; i < 8; i++) {
-                const angle = (i / 8) * Math.PI * 2 + this.pulseTime * 2;
-                const dist = this.buttonRadius + 25 * pulse;
-                const sx = this.buttonX + Math.cos(angle) * dist;
-                const sy = displayY + Math.sin(angle) * dist;
-                
-                ctx.fillStyle = `rgba(255, 200, 50, ${0.8 * this.glowIntensity * pulse})`;
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('⭐', sx, sy);
-            }
-        }
+        // Outer glow disabled for performance
         
         // Ombra cartoon - più marcata
         ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
@@ -230,38 +213,12 @@ export class TurboButtonUI {
             );
             ctx.stroke();
             
-            // Glow esterno sulla progress bar
-            ctx.shadowColor = '#FFD700';
-            ctx.shadowBlur = 15;
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-            ctx.lineWidth = pulseWidth + 2;
-            ctx.beginPath();
-            ctx.arc(
-                this.buttonX, displayY,
-                this.buttonRadius + 8,
-                -Math.PI / 2,
-                -Math.PI / 2 + (Math.PI * 2 * progress),
-                false
-            );
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-            
             // Pallino luminoso alla fine della progress bar (segnaposto)
             const endAngle = -Math.PI / 2 + (Math.PI * 2 * progress);
             const dotX = this.buttonX + Math.cos(endAngle) * (this.buttonRadius + 8);
             const dotY = displayY + Math.sin(endAngle) * (this.buttonRadius + 8);
             
-            // Glow del pallino
-            const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 12);
-            dotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-            dotGlow.addColorStop(0.5, 'rgba(255, 215, 0, 0.6)');
-            dotGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-            ctx.fillStyle = dotGlow;
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, 12, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Pallino solido
+            // Pallino solido senza glow
             ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
             ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);

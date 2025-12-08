@@ -1,9 +1,9 @@
 /**
- * EnemyRenderer - Renderizza nemici con emoji, effetti, barre HP, proiettili
+ * EnemyRenderer - Renderizza nemici con sprite professionali generati dinamicamente
  * Implementa IEntityRenderer per consistenza con altri renderer
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
-import { EntityLabelRenderer } from './EntityLabelRenderer.js';
+import { EnemySpriteGenerator } from './sprites/EnemySpriteGenerator.js';
 
 export class EnemyRenderer extends IEntityRenderer {
     constructor() {
@@ -11,6 +11,8 @@ export class EnemyRenderer extends IEntityRenderer {
         this.textCanvas = document.getElementById('textCanvas');
         this.textCtx = this.textCanvas ? this.textCanvas.getContext('2d') : null;
         this.labelRenderer = null; // Will be set by RenderingSystem
+        this.spriteGenerator = new EnemySpriteGenerator();
+        this.enemyAnimationTimers = new Map(); // Track animation for each enemy
     }
     
     setLabelRenderer(labelRenderer) {
@@ -83,33 +85,49 @@ export class EnemyRenderer extends IEntityRenderer {
         let scale = 1.0;
         let rotation = 0;
         
-        // Different animations based on enemy type
-        if (enemy.category === 'flying') {
-            // Flying enemies: smooth up/down float
-            yOffset = Math.sin(time * 3) * 8;
-            scale = 1.0 + Math.sin(time * 4) * 0.08; // Gentle pulsing
-        } else if (enemy.pattern === 'roll' || enemy.id === 'spikeball') {
-            // Spike ball: NO rotation, just subtle breathing
-            yOffset = Math.sin(time * 1.5) * 2;
-            scale = 1.0 + Math.sin(time * 2) * 0.03; // Very subtle pulsing
-        } else if (enemy.pattern === 'bounce' || enemy.pattern === 'jump') {
-            // Bouncing enemies: squash and stretch
+        // Animation configurations per enemy type
+        const animations = {
+            flying: () => ({
+            yOffset: Math.sin(time * 3) * 8,
+            scale: 1.0 + Math.sin(time * 4) * 0.08
+            }),
+            roll: () => ({
+            yOffset: Math.sin(time * 1.5) * 2,
+            scale: 1.0 + Math.sin(time * 2) * 0.03
+            }),
+            bounce: () => {
             const bouncePhase = Math.sin(time * 6);
-            scale = 1.0 + bouncePhase * 0.15;
-            yOffset = Math.abs(bouncePhase) * 5;
-        } else if (enemy.id === 'slug' || enemy.category === 'ground') {
-            // Ground enemies: gentle squirm/wiggle
-            yOffset = Math.sin(time * 2) * 2;
-            const wiggle = Math.sin(time * 8) * 0.05;
-            rotation = wiggle;
-        } else if (enemy.category === 'chaser') {
-            // Chasers: aggressive bobbing
-            yOffset = Math.sin(time * 5) * 4;
-            scale = 1.0 + Math.sin(time * 6) * 0.1;
-        } else {
-            // Default: subtle breathing
-            scale = 1.0 + Math.sin(time * 3) * 0.05;
-        }
+            return {
+                yOffset: Math.abs(bouncePhase) * 5,
+                scale: 1.0 + bouncePhase * 0.15
+            };
+            },
+            ground: () => ({
+            yOffset: Math.sin(time * 2) * 2,
+            rotation: Math.sin(time * 8) * 0.05
+            }),
+            chaser: () => ({
+            yOffset: Math.sin(time * 5) * 4,
+            scale: 1.0 + Math.sin(time * 6) * 0.1
+            }),
+            default: () => ({
+            scale: 1.0 + Math.sin(time * 3) * 0.05
+            })
+        };
+
+        // Determine animation type
+        const animType = 
+            enemy.category === 'flying' ? 'flying' :
+            enemy.pattern === 'roll' || enemy.id === 'spikeball' ? 'roll' :
+            enemy.pattern === 'bounce' || enemy.pattern === 'jump' ? 'bounce' :
+            enemy.id === 'slug' || enemy.category === 'ground' ? 'ground' :
+            enemy.category === 'chaser' ? 'chaser' : 'default';
+
+        // Apply animation
+        const anim = animations[animType]();
+        yOffset = anim.yOffset || 0;
+        scale = anim.scale || 1.0;
+        rotation = anim.rotation || 0;
 
         const enemyCenterX = enemy.x + enemy.width / 2;
         const enemyCenterY = enemy.y + enemy.height / 2 + yOffset;
@@ -126,50 +144,20 @@ export class EnemyRenderer extends IEntityRenderer {
         );
         ctx.fill();
 
-        // Enemy body glow (based on category)
-        const glowColor = this.getGlowColor(enemy);
-        const gradient = ctx.createRadialGradient(
-            enemyCenterX, enemyCenterY, 0,
-            enemyCenterX, enemyCenterY,
-            enemy.width * 0.8 * scale
-        );
-        gradient.addColorStop(0, `rgba(${glowColor[0]}, ${glowColor[1]}, ${glowColor[2]}, 0.4)`);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        // Enemy body glow disabled for performance
         
-        ctx.fillStyle = gradient;
-        ctx.fillRect(
-            enemyCenterX - enemy.width * 0.8 * scale,
-            enemyCenterY - enemy.height * 0.8 * scale,
-            enemy.width * 1.6 * scale,
-            enemy.height * 1.6 * scale
-        );
-
         // Render label above enemy using centralized system
         if (this.labelRenderer) {
             this.labelRenderer.renderEnemyLabel(enemy, enemyCenterX, enemyCenterY - enemy.height / 2 - 20);
         }
         
-        // Render custom graphics or emoji icon with animation
+        // Render professional sprite animation
         ctx.save();
         ctx.translate(enemyCenterX, enemyCenterY);
         ctx.rotate(rotation);
         ctx.scale(scale, scale);
         
-        // Custom drawn enemies
-        if (enemy.id === 'spikeball') {
-            // Use actual width/height for varied sizes
-            const radius = Math.max(enemy.width, enemy.height) / 2;
-            this.drawSpikeBall(ctx, 0, 0, radius, time);
-        } else if (enemy.id === 'slug') {
-            this.drawHedgehog(ctx, 0, 0, enemy.width / 2, time, enemy.direction);
-        } else {
-            // Standard emoji rendering
-            const fontSize = Math.max(enemy.width, enemy.height);
-            ctx.font = `${fontSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(enemy.icon, 0, 0);
-        }
+        this.drawEnemySprite(ctx, enemy, 0, 0, time);
         
         ctx.restore();
 
@@ -184,6 +172,35 @@ export class EnemyRenderer extends IEntityRenderer {
         }
 
         ctx.restore();
+    }
+
+    /**
+     * Draw enemy using generated sprite animation
+     */
+    drawEnemySprite(ctx, enemy, x, y, time) {
+        // Get sprite frames for this enemy type
+        const enemyConfig = {
+            id: enemy.id,
+            category: enemy.category,
+            color: enemy.color,
+            width: enemy.width,
+            height: enemy.height
+        };
+
+        const frames = this.spriteGenerator.getSpriteFrames(enemyConfig);
+        
+        // Calculate current frame based on animation time
+        const frameIndex = Math.floor((time * 8) % frames.length); // 8 fps animation
+        const spriteCanvas = frames[frameIndex];
+
+        // Draw sprite centered
+        ctx.drawImage(
+            spriteCanvas,
+            x - enemy.width / 2,
+            y - enemy.height / 2,
+            enemy.width,
+            enemy.height
+        );
     }
 
     /**
@@ -338,25 +355,12 @@ export class EnemyRenderer extends IEntityRenderer {
      */
     renderProjectile(projectile, cameraOffset) {
         const ctx = this.textCtx;
+        const color = projectile.color || [1.0, 0.0, 0.0]; // Default red if no color
         
         ctx.save();
 
-        // Glow effect
-        const gradient = ctx.createRadialGradient(
-            projectile.x, projectile.y, 0,
-            projectile.x, projectile.y, projectile.radius * 2
-        );
+        // Glow effect disabled for performance
         
-        const color = projectile.color;
-        gradient.addColorStop(0, `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 0.8)`);
-        gradient.addColorStop(0.5, `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 0.4)`);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(projectile.x, projectile.y, projectile.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
-
         // Core
         ctx.fillStyle = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 1.0)`;
         ctx.beginPath();

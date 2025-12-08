@@ -125,7 +125,7 @@ export class GameControllerBuilder {
         this.safetyPlatformSystem = new SafetyPlatformSystem(dims, this.audioManager);
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
-        this.enemySystem = new EnemySystem(this.entityManager, dims);
+        this.enemySystem = new EnemySystem(this.entityManager, dims, this.audioManager);
         
         // UI Components
         this.turboButtonUI = new TurboButtonUI(width, height);
@@ -143,7 +143,7 @@ export class GameControllerBuilder {
             this.animationController
         );
         this.collisionDetector.safetyPlatformSystem = this.safetyPlatformSystem;
-        this.collisionDetector.levelManager = this.levelManager;
+        this.collisionDetector.setLevelManager(this.levelManager);
         
         // New orchestrators
         this.systemOrchestrator = new SystemOrchestrator();

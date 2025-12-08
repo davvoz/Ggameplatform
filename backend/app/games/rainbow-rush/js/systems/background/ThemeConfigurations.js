@@ -17,7 +17,12 @@ export const THEME_NAMES = {
     CRYSTAL_CAVE: 'crystal_cave',
     MUSHROOM_FOREST: 'mushroom_forest',
     AURORA_NIGHT: 'aurora_night',
-    DESERT_STORM: 'desert_storm'
+    DESERT_STORM: 'desert_storm',
+    LAVA_OCEAN: 'lava_ocean',
+    FROZEN_VOLCANO: 'frozen_volcano',
+    SPACE_FOREST: 'space_forest',
+    TOXIC_SWAMP: 'toxic_swamp',
+    CYBER_CITY: 'cyber_city'
 };
 
 export const SKY_THEME_CONFIG = {
@@ -225,6 +230,62 @@ export const DESERT_STORM_CONFIG = {
     PYRAMID_COUNT: 2
 };
 
+export const LAVA_OCEAN_CONFIG = {
+    BASE_COLORS: [
+        [0.8, 0.2, 0.0, 1.0],
+        [0.3, 0.1, 0.5, 1.0]
+    ],
+    WAVE_COUNT: 4,
+    LAVA_BUBBLE_COUNT: 15,
+    EMBER_COUNT: 20,
+    SMOKE_COUNT: 5
+};
+
+export const FROZEN_VOLCANO_CONFIG = {
+    BASE_COLORS: [
+        [0.6, 0.7, 0.9, 1.0],
+        [0.4, 0.5, 0.7, 1.0]
+    ],
+    VOLCANO_COUNT: 2,
+    ICE_CRYSTAL_COUNT: 12,
+    SNOWFLAKE_COUNT: 20,
+    STEAM_COUNT: 6
+};
+
+export const SPACE_FOREST_CONFIG = {
+    BASE_COLORS: [
+        [0.1, 0.15, 0.25, 1.0],
+        [0.2, 0.3, 0.2, 1.0]
+    ],
+    TREE_COUNT: 6,
+    STAR_COUNT: 40,
+    NEBULA_COUNT: 2,
+    FIREFLY_COUNT: 15,
+    PLANET_COUNT: 2
+};
+
+export const TOXIC_SWAMP_CONFIG = {
+    BASE_COLORS: [
+        [0.3, 0.4, 0.2, 1.0],
+        [0.4, 0.5, 0.1, 1.0]
+    ],
+    BUBBLE_COUNT: 10,
+    MIST_COUNT: 8,
+    MUSHROOM_COUNT: 6,
+    TOXIC_PARTICLE_COUNT: 20
+};
+
+export const CYBER_CITY_CONFIG = {
+    BASE_COLORS: [
+        [0.1, 0.1, 0.2, 1.0],
+        [0.2, 0.0, 0.3, 1.0]
+    ],
+    BUILDING_COUNT: 8,
+    NEON_PARTICLE_COUNT: 25,
+    GRID_LINE_COUNT: 10,
+    FLYING_VEHICLE_COUNT: 4
+};
+
 export const TRANSITION_CONFIG = {
     DURATION: 2.5,
     EASING: 'easeInOutQuad'
@@ -236,11 +297,16 @@ export const DEFAULT_THEME_SEQUENCE = [
     THEME_NAMES.PYRAMIDS,
     THEME_NAMES.DESERT_STORM,
     THEME_NAMES.VOLCANO,
+    THEME_NAMES.LAVA_OCEAN,
+    THEME_NAMES.FROZEN_VOLCANO,
     THEME_NAMES.CRYSTAL_CAVE,
+    THEME_NAMES.ICE,
     THEME_NAMES.FOREST,
     THEME_NAMES.MUSHROOM_FOREST,
+    THEME_NAMES.TOXIC_SWAMP,
+    THEME_NAMES.SPACE_FOREST,
     THEME_NAMES.SPACE,
     THEME_NAMES.AURORA_NIGHT,
-    THEME_NAMES.ICE,
-    THEME_NAMES.NIGHT
+    THEME_NAMES.NIGHT,
+    THEME_NAMES.CYBER_CITY
 ];

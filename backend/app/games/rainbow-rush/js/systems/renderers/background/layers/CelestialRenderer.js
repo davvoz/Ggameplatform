@@ -12,11 +12,18 @@ export class CelestialRenderer extends BaseLayerRenderer {
             LAYER_TYPES.MOON,
             LAYER_TYPES.SUN,
             LAYER_TYPES.NEBULA,
-            LAYER_TYPES.SUNRAY
+            LAYER_TYPES.SUNRAY,
+            LAYER_TYPES.CELESTIAL
         ].includes(layerType);
     }
 
     doRender(layer, context) {
+        // Handle CELESTIAL type (generic celestial object)
+        if (layer.type === LAYER_TYPES.CELESTIAL) {
+            this.renderCelestial(layer);
+            return;
+        }
+
         const renderers = {
             [LAYER_TYPES.PLANET]: () => this.renderPlanet(layer),
             [LAYER_TYPES.MOON]: () => this.renderMoon(layer),
@@ -28,6 +35,16 @@ export class CelestialRenderer extends BaseLayerRenderer {
         const renderFunction = renderers[layer.type];
         if (renderFunction) {
             renderFunction();
+        }
+    }
+
+    renderCelestial(layer) {
+        // Render main celestial body
+        this.renderer.drawCircle(layer.x, layer.y, layer.radius, layer.color);
+        
+        // Render glow if present
+        if (layer.glowColor && layer.glowRadius) {
+            this.renderer.drawCircle(layer.x, layer.y, layer.glowRadius, layer.glowColor);
         }
     }
 

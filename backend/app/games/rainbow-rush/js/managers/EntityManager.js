@@ -29,12 +29,12 @@ export class EntityManager {
         this.boostParticles = [];
         this.floatingTexts = [];
         
-        // Performance limits - ULTRA aggressive optimization
-        this.MAX_POWERUP_PARTICLES = 30; // Ridotto drasticamente
-        this.MAX_BOOST_PARTICLES = 20;   // Ridotto drasticamente
-        this.MAX_FLOATING_TEXTS = 3;     // Ridotto drasticamente
-        this.MAX_RAINBOW_PARTICLES = 5;  // Ridotto per rainbow trails
-        this.MAX_BOOST_TRAIL = 3;        // Ridotto per boost trails
+        // Performance limits - EXTREME optimization
+        this.MAX_POWERUP_PARTICLES = 15; // Limite drastico
+        this.MAX_BOOST_PARTICLES = 10;   // Limite drastico
+        this.MAX_FLOATING_TEXTS = 2;     // Limite drastico
+        this.MAX_RAINBOW_PARTICLES = 3;  // Limite drastico
+        this.MAX_BOOST_TRAIL = 2;        // Limite drastico
     }
 
     /**
@@ -111,16 +111,18 @@ export class EntityManager {
      * Update all entities based on their type
      */
     updateAll(deltaTime, cameraSpeed, player) {
-        // ULTRA aggressive particle cleanup - remove particles early
-        this.powerupParticles = this.powerupParticles.filter(p => p.life > 0.15);
-        this.boostParticles = this.boostParticles.filter(p => p.life > 0.15);
+        // EXTREME aggressive particle cleanup - rimuovi particelle molto presto
+        this.powerupParticles = this.powerupParticles.filter(p => p.life > 0.1);
+        this.boostParticles = this.boostParticles.filter(p => p.life > 0.1);
         
-        // Hard cap enforcement
-        if (this.powerupParticles.length > this.MAX_POWERUP_PARTICLES) {
-            this.powerupParticles.splice(0, this.powerupParticles.length - this.MAX_POWERUP_PARTICLES);
+        // Hard cap enforcement - mantieni solo le più recenti
+        const powerupLen = this.powerupParticles.length;
+        if (powerupLen > this.MAX_POWERUP_PARTICLES) {
+            this.powerupParticles = this.powerupParticles.slice(powerupLen - this.MAX_POWERUP_PARTICLES);
         }
-        if (this.boostParticles.length > this.MAX_BOOST_PARTICLES) {
-            this.boostParticles.splice(0, this.boostParticles.length - this.MAX_BOOST_PARTICLES);
+        const boostLen = this.boostParticles.length;
+        if (boostLen > this.MAX_BOOST_PARTICLES) {
+            this.boostParticles = this.boostParticles.slice(boostLen - this.MAX_BOOST_PARTICLES);
         }
         
         // Update platforms with special logic for crumbling, spring, icy types

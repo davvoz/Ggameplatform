@@ -4,7 +4,6 @@
  */
 import { IEntityRenderer } from './IEntityRenderer.js';
 import { RenderingUtils } from './RenderingUtils.js';
-import { EntityLabelRenderer } from './EntityLabelRenderer.js';
 
 export class ObstacleRenderer extends IEntityRenderer {
     constructor(renderer) {
@@ -135,10 +134,10 @@ export class ObstacleRenderer extends IEntityRenderer {
             [0.0, 0.0, 0.0, 0.35]
         );
 
-        // Glow
-        const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
-        RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
-            enemy.width / 2, [0.6, 0.3, 1.0, 1.0], 3, glowPulse * 0.2, 0.07);
+        // Glow disabled for performance
+        // const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
+        // RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
+        //     enemy.width / 2, [0.6, 0.3, 1.0, 1.0], 3, glowPulse * 0.2, 0.07);
 
         // Body
         const bodyTopColor = [0.5, 0.2, 0.8, 1.0];

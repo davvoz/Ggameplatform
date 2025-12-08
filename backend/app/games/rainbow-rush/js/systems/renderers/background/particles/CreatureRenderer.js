@@ -7,7 +7,11 @@ import { PARTICLE_TYPES, BIRD_CONFIG, FISH_CONFIG } from '../BackgroundRendererC
  */
 export class CreatureRenderer extends BaseParticleRenderer {
     canHandle(particleType) {
-        return [PARTICLE_TYPES.BIRD, PARTICLE_TYPES.FISH].includes(particleType);
+        return [
+            PARTICLE_TYPES.BIRD, 
+            PARTICLE_TYPES.FISH,
+            PARTICLE_TYPES.CREATURE
+        ].includes(particleType);
     }
 
     doRender(particle, context) {
@@ -15,6 +19,8 @@ export class CreatureRenderer extends BaseParticleRenderer {
             this.renderBird(particle, context.time);
         } else if (particle.type === PARTICLE_TYPES.FISH) {
             this.renderFish(particle, context.time);
+        } else if (particle.type === PARTICLE_TYPES.CREATURE) {
+            this.renderCreature(particle);
         }
     }
 
@@ -61,5 +67,26 @@ export class CreatureRenderer extends BaseParticleRenderer {
             FISH_CONFIG.TAIL_HEIGHT,
             particle.color
         );
+    }
+
+    renderCreature(particle) {
+        // Generic creature (e.g., flying vehicle)
+        this.renderer.drawCircle(
+            particle.x,
+            particle.y,
+            particle.size / 2,
+            particle.color
+        );
+        
+        // Trail effect if present
+        if (particle.trailColor) {
+            this.renderer.drawRect(
+                particle.x - particle.size,
+                particle.y - 1,
+                particle.size * 0.8,
+                2,
+                particle.trailColor
+            );
+        }
     }
 }

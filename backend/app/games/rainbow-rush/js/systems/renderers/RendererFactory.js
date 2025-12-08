@@ -37,7 +37,7 @@ export class RendererFactory {
 
     _initRenderers() {
         // Player
-        this.renderers.set('player', new PlayerRenderer(this.renderer));
+        this.renderers.set('player', new PlayerRenderer(this.renderer, this.textCtx));
         
         // Platforms
         const platformRenderer = new PlatformRenderer(this.renderer);
@@ -102,10 +102,15 @@ export class RendererFactory {
 
     /**
      * Get appropriate renderer for entity
-     * @param {Object} entity - Entity to render
+     * @param {Object|string} entity - Entity to render or entity type string
      * @returns {IEntityRenderer} Specific renderer instance
      */
     getRenderer(entity) {
+        // Support both entity objects and type strings
+        if (typeof entity === 'string') {
+            return this.renderers.get(entity);
+        }
+        
         if (!entity || !entity.type) {
             console.warn('RendererFactory: Invalid entity', entity);
             return null;

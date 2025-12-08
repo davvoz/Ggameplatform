@@ -289,23 +289,7 @@ export class HUDRenderer {
         ctx.scale(scale, scale);
         ctx.translate(-this.levelX, -baseY);
         
-        // Outer glow when level changes
-        if (this.levelGlow > 0) {
-            const glowAlpha = this.levelGlow * 0.5;
-            const glowSize = 10 * this.levelGlow;
-            
-            ctx.shadowColor = `rgba(138, 43, 226, ${glowAlpha})`;
-            ctx.shadowBlur = glowSize;
-            
-            for (let i = 0; i < 3; i++) {
-                this.drawRoundedRect(ctx, badgeX - i * 2, badgeY - i * 2, 
-                    badgeWidth + i * 4, badgeHeight + i * 4, borderRadius + i * 2);
-                ctx.strokeStyle = `rgba(138, 43, 226, ${glowAlpha / (i + 1)})`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-            ctx.shadowBlur = 0;
-        }
+        // Outer glow disabled for performance
         
         // Badge background with gradient
         const badgeGradient = ctx.createLinearGradient(

@@ -9,7 +9,8 @@ export class AnimatedParticleRenderer extends BaseParticleRenderer {
     canHandle(particleType) {
         return [
             PARTICLE_TYPES.STAR,
-            PARTICLE_TYPES.FIREFLY
+            PARTICLE_TYPES.FIREFLY,
+            PARTICLE_TYPES.ANIMATED_PARTICLE
         ].includes(particleType);
     }
 

@@ -91,6 +91,7 @@ export class AudioManager {
         this.sounds.set('land', this.createLandSound.bind(this));
         this.sounds.set('collect', this.createCollectSound.bind(this));
         this.sounds.set('hit', this.createHitSound.bind(this));
+        this.sounds.set('damage', this.createDamageSound.bind(this));
         this.sounds.set('score', this.createScoreSound.bind(this));
         this.sounds.set('powerup', this.createPowerupSound.bind(this));
         this.sounds.set('powerup_end', this.createPowerupEndSound.bind(this));
@@ -109,6 +110,7 @@ export class AudioManager {
         this.sounds.set('boost', this.createBoostSound.bind(this));
         this.sounds.set('safety_land', this.createSafetyLandSound.bind(this));
         this.sounds.set('tick', this.createTickSound.bind(this));
+        this.sounds.set('teleport', this.createTeleportSound.bind(this));
         
         // Power-up specific sounds
         this.sounds.set('powerup_immortality', this.createImmortalitySound.bind(this));
@@ -235,6 +237,50 @@ export class AudioManager {
 
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.2);
+    }
+
+    createDamageSound() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        
+        // Suono impattante con due oscillatori per più corpo
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gainNode1 = ctx.createGain();
+        const gainNode2 = ctx.createGain();
+        const masterGain = ctx.createGain();
+
+        osc1.connect(gainNode1);
+        osc2.connect(gainNode2);
+        gainNode1.connect(masterGain);
+        gainNode2.connect(masterGain);
+        masterGain.connect(ctx.destination);
+
+        // Primo oscillatore - basso impattante
+        osc1.type = 'square';
+        osc1.frequency.setValueAtTime(150, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.25);
+        
+        // Secondo oscillatore - rumore metallico
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(280, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.25);
+
+        gainNode1.gain.setValueAtTime(this.masterVolume * 0.6, ctx.currentTime);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        
+        gainNode2.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        
+        masterGain.gain.setValueAtTime(1, ctx.currentTime);
+        masterGain.gain.setValueAtTime(0.7, ctx.currentTime + 0.05);
+        masterGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+
+        osc1.start(ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.25);
+        osc2.stop(ctx.currentTime + 0.25);
     }
 
     createScoreSound() {
@@ -606,6 +652,86 @@ export class AudioManager {
         
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.03);
+    }
+    
+    createTeleportSound() {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const ctx = this.audioContext;
+        
+        // Suono sci-fi di teletrasporto: sweep discendente + ascendente rapido
+        // Prima parte: "scomparsa" - frequenza che scende
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        const filter1 = ctx.createBiquadFilter();
+        
+        osc1.connect(filter1);
+        filter1.connect(gain1);
+        gain1.connect(ctx.destination);
+        
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(800, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.15);
+        
+        filter1.type = 'lowpass';
+        filter1.frequency.setValueAtTime(2000, ctx.currentTime);
+        filter1.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
+        
+        gain1.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.15);
+        
+        // Seconda parte: "ricomparsa" - frequenza che sale
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        const filter2 = ctx.createBiquadFilter();
+        
+        osc2.connect(filter2);
+        filter2.connect(gain2);
+        gain2.connect(ctx.destination);
+        
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(100, ctx.currentTime + 0.1);
+        osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
+        
+        filter2.type = 'highpass';
+        filter2.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
+        filter2.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.25);
+        
+        gain2.gain.setValueAtTime(0.01, ctx.currentTime + 0.1);
+        gain2.gain.linearRampToValueAtTime(this.masterVolume * 0.35, ctx.currentTime + 0.15);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        
+        osc2.start(ctx.currentTime + 0.1);
+        osc2.stop(ctx.currentTime + 0.25);
+        
+        // Effetto "energia": noise burst breve
+        const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+        const noiseData = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseData.length; i++) {
+            noiseData[i] = Math.random() * 2 - 1;
+        }
+        
+        const noiseSource = ctx.createBufferSource();
+        const noiseGain = ctx.createGain();
+        const noiseFilter = ctx.createBiquadFilter();
+        
+        noiseSource.buffer = noiseBuffer;
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = 1000;
+        noiseFilter.Q.value = 3;
+        
+        noiseGain.gain.setValueAtTime(this.masterVolume * 0.15, ctx.currentTime + 0.12);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+        
+        noiseSource.start(ctx.currentTime + 0.12);
+        noiseSource.stop(ctx.currentTime + 0.18);
     }
     
     createDeathSound() {

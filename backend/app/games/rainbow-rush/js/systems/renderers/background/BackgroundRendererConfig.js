@@ -155,7 +155,10 @@ export const PARTICLE_TYPES = {
     SPORE: 'spore',
     AURORA_PARTICLE: 'aurora_particle',
     HEATWAVE: 'heatwave',
-    ENERGY: 'energy'
+    ENERGY: 'energy',
+    SIMPLE_PARTICLE: 'simple_particle',
+    ANIMATED_PARTICLE: 'animated_particle',
+    CREATURE: 'creature'
 };
 
 export const LAYER_TYPES = {
@@ -179,5 +182,7 @@ export const LAYER_TYPES = {
     CRYSTAL_HANGING: 'crystal_hanging',
     CRYSTAL_FLOOR: 'crystal_floor',
     GIANT_MUSHROOM: 'giant_mushroom',
-    AURORA_WAVE: 'aurora_wave'
+    AURORA_WAVE: 'aurora_wave',
+    CELESTIAL: 'celestial',
+    SIMPLE_SHAPE: 'simple_shape'
 };

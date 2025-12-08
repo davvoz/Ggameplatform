@@ -814,23 +814,31 @@ export class Player {
 
     checkObstacleCollision(obstacle) {
         if (!this.alive) return false;
-        
-        // Immortality powerup makes player invincible
-        if (this.powerups.immortality) return false;
-        
-        // Temporary invulnerability after taking damage
-        if (this.invulnerable) return false;
 
         const playerRight = this.x + this.width;
         const playerBottom = this.y + this.height;
         const obstacleRight = obstacle.x + obstacle.width;
         const obstacleBottom = obstacle.y + obstacle.height;
 
-        if (this.x < obstacleRight &&
+        // Controlla SEMPRE la collisione fisica
+        const collision = this.x < obstacleRight &&
             playerRight > obstacle.x &&
             this.y < obstacleBottom &&
-            playerBottom > obstacle.y) {
-            // Usa il danno dell'ostacolo/nemico (default 1 se non specificato)
+            playerBottom > obstacle.y;
+
+        if (collision) {
+            // Immortality, invulnerability, or turbo make player invincible
+            // Ma la collisione è RILEVATA (ritorna true per effetti visivi/sonori)
+            if (this.powerups.immortality || this.invulnerable || this.isTurboActive) {
+                return true; // Collisione rilevata ma nessun danno
+            }
+            
+            // Scudo blocca il danno ma rileva la collisione
+            if (this.shieldActive) {
+                return true; // Collisione rilevata ma bloccata dallo scudo
+            }
+            
+            // Applica il danno
             const damage = obstacle.damage || 1;
             return this.takeDamage(damage);
         }

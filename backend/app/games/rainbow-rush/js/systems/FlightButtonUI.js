@@ -107,41 +107,7 @@ export class FlightButtonUI {
             ctx.stroke();
         }
         
-        // Outer glow elaborato quando ready
-        if (isReady && this.glowIntensity > 0) {
-            const pulse = Math.sin(this.pulseTime * 5) * 0.4 + 0.6;
-            
-            // Alone rotante con gradiente
-            for (let i = 0; i < 3; i++) {
-                const radius = this.buttonRadius + 15 + i * 10;
-                const alpha = (0.3 - i * 0.08) * this.glowIntensity * pulse;
-                const gradient = ctx.createRadialGradient(
-                    this.buttonX, displayY, radius * 0.8,
-                    this.buttonX, displayY, radius
-                );
-                gradient.addColorStop(0, `rgba(100, 200, 255, ${alpha})`);
-                gradient.addColorStop(1, `rgba(100, 200, 255, 0)`);
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(this.buttonX, displayY, radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Raggiera di piume rotante
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2 + this.rotationAngle;
-                const dist = this.buttonRadius + 22 * pulse;
-                const sx = this.buttonX + Math.cos(angle) * dist;
-                const sy = displayY + Math.sin(angle) * dist;
-                
-                const featherAlpha = 0.7 * this.glowIntensity * pulse;
-                ctx.fillStyle = `rgba(120, 220, 255, ${featherAlpha})`;
-                ctx.font = '14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🪶', sx, sy);
-            }
-        }
+        // Outer glow disabled for performance
         
         // Render sparkles
         for (const sparkle of this.sparkles) {

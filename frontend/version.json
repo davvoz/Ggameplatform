@@ -1,8 +1,17 @@
 {
-  "version": "1.11.5",
-  "timestamp": "2025-12-08T17:49:39.066Z",
-  "buildNumber": 31,
+  "version": "1.11.6",
+  "timestamp": "2025-12-08T17:53:40.145Z",
+  "buildNumber": 32,
   "changelog": [
+    {
+      "version": "1.11.6",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "fix: remove obsolete demo and registration scripts",
+        "🔖 Bump version to 1.11.5 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.5",
       "date": "2025-12-08",
@@ -86,15 +95,6 @@
         "fix: Enhance tower upgrade logic with error logging and improve button styles; update scrollbar styles for better UX",
         "feat: Enhance logging configuration, improve leaderboard and profile styles, and update wallet widget UI",
         "🔖 Bump version to 1.8.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.6",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: Update scrollbar colors for Webkit browsers and refine Firefox scrollbar styles",
-        "🔖 Bump version to 1.8.5 [skip-version]"
       ]
     }
   ]

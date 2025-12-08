@@ -1,8 +1,17 @@
 {
-  "version": "1.10.1",
-  "timestamp": "2025-12-08T13:10:00.591Z",
-  "buildNumber": 25,
+  "version": "1.11.0",
+  "timestamp": "2025-12-08T14:02:49.903Z",
+  "buildNumber": 26,
   "changelog": [
+    {
+      "version": "1.11.0",
+      "date": "2025-12-08",
+      "type": "minor",
+      "changes": [
+        "feat:[RAINBOW RUSH] Integrate backend leaderboard for high score management and update menu interactions",
+        "🔖 Bump version to 1.10.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.10.1",
       "date": "2025-12-08",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: Simplify service worker for minimal PWA functionality on iOS fullscreen",
         "🔖 Bump version to 1.8.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.0",
-      "date": "2025-12-07",
-      "type": "minor",
-      "changes": [
-        "feat: Improve PWA caching strategy and update service worker for better performance",
-        "🔖 Bump version to 1.7.5 [skip-version]"
       ]
     }
   ]

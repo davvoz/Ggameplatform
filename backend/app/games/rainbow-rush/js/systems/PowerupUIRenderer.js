@@ -44,20 +44,6 @@ export class PowerupUIRenderer {
                 bgColor: [0.3, 0.1, 0.2, 0.6],
                 name: 'SUPER SALTO',
                 icon: '⚡'
-            },
-            speedBoost: {
-                color: [1.0, 0.5, 0.0, 1.0], // Orange
-                glowColor: [1.0, 0.7, 0.3, 0.8],
-                bgColor: [0.3, 0.15, 0.05, 0.6],
-                name: 'VELOCITÀ',
-                icon: '🚀'
-            },
-            turbo: {
-                color: [0.0, 1.0, 0.5, 1.0], // Green
-                glowColor: [0.3, 1.0, 0.7, 0.8],
-                bgColor: [0.05, 0.3, 0.15, 0.6],
-                name: 'TURBO',
-                icon: '💨'
             }
         };
     }
@@ -95,19 +81,21 @@ export class PowerupUIRenderer {
         }
         
         let visibleIndex = 0;
-        const powerupTypes = ['immortality', 'flight', 'superJump', 'speedBoost', 'turbo'];
+        const powerupTypes = ['immortality', 'flight', 'superJump'];
         
         for (const type of powerupTypes) {
             const timer = powerupTimers[type];
             if (!timer) continue;
             
-            // Show ONLY if active OR in cooldown
-            // Hide if: never used OR ready (cooldown finished)
+            // Mostra SEMPRE tutti i powerup che sono stati raccolti almeno una volta
+            // Questo permette di vedere la barra di durata e cooldown in ogni momento
             const isActive = timer.active;
             const isInCooldown = timer.cooldown > 0;
+            const wasEverUsed = timer.everActivated;
             
-            if (!isActive && !isInCooldown) {
-                continue; // Skip - either never used or ready (cooldown finished)
+            // Mostra se: attivo, in cooldown, oppure è stato mai usato
+            if (!isActive && !isInCooldown && !wasEverUsed) {
+                continue; // Skip - mai usato
             }
             
             const config = this.powerupConfig[type];
@@ -235,98 +223,134 @@ export class PowerupUIRenderer {
         const pulse = Math.sin(this.animationTime * 3) * 0.5 + 0.5;
         const shimmer = Math.sin(this.animationTime * 5 + yPos) * 0.5 + 0.5;
         
-        // CERCHIO COOLDOWN (a sinistra di tutto) - con icona del bonus dentro e progressbar CURVA
-        const cooldownCircleX = x + this.iconSize / 2;
-        const cooldownCircleY = yPos + this.iconSize / 2;
+        // CERCHIO ICONA (a sinistra di tutto) - con icona del bonus dentro e progressbar CURVA
+        const iconCircleX = x + this.iconSize / 2;
+        const iconCircleY = yPos + this.iconSize / 2;
         const circleRadius = this.iconSize / 2;
         
-        // Background cerchio cooldown
-        const cooldownBgColor = isOnCooldown ? [...config.bgColor] : [...config.color];
-        if (!isOnCooldown && !isActive) cooldownBgColor[3] = 0.9; // Ready
-        this.renderer.drawCircle(cooldownCircleX, cooldownCircleY, circleRadius, cooldownBgColor);
+        // Background cerchio icona
+        const iconBgColor = isActive ? [...config.color] : (isOnCooldown ? [...config.bgColor] : [...config.color]);
+        if (!isOnCooldown && !isActive) iconBgColor[3] = 0.9; // Ready
+        this.renderer.drawCircle(iconCircleX, iconCircleY, circleRadius, iconBgColor);
         
-        // Border cerchio cooldown
-        const cooldownBorderColor = isOnCooldown ? [0.8, 0.4, 0.0, 0.9] : 
-                                    (!isActive ? [0.0, 1.0, 0.0, 0.9] : [0.5, 0.5, 0.5, 0.6]);
-        this.drawCircleOutline(cooldownCircleX, cooldownCircleY, circleRadius, cooldownBorderColor, 2);
+        // Border cerchio icona
+        const iconBorderColor = isActive ? [...config.color] :
+                               (isOnCooldown ? [0.8, 0.4, 0.0, 0.9] : [0.0, 1.0, 0.0, 0.9]);
+        this.drawCircleOutline(iconCircleX, iconCircleY, circleRadius, iconBorderColor, 2);
         
-        // Icona dentro cerchio cooldown
-        this.drawIconEmoji(cooldownCircleX, cooldownCircleY, config.icon, !isOnCooldown && !isActive, isOnCooldown);
+        // Icona dentro cerchio
+        this.drawIconEmoji(iconCircleX, iconCircleY, config.icon, !isOnCooldown && !isActive, isOnCooldown);
         
-        // PROGRESSBAR CURVA di cooldown sulla circonferenza del cerchio
-        if (isOnCooldown) {
-            this.drawCooldownArc(cooldownCircleX, cooldownCircleY, circleRadius, cooldownProgress, [0.8, 0.4, 0.0, 0.9]);
+        // PROGRESSBAR CURVA di cooldown sulla circonferenza del cerchio (SOLO se in cooldown)
+        if (isOnCooldown && !isActive) {
+            this.drawCooldownArc(iconCircleX, iconCircleY, circleRadius, cooldownProgress, [0.8, 0.4, 0.0, 0.9]);
         }
         
-        // Ready indicator sul cerchio cooldown
+        // PROGRESSBAR CURVA di durata sulla circonferenza del cerchio (SOLO se attivo)
+        if (isActive) {
+            this.drawCooldownArc(iconCircleX, iconCircleY, circleRadius, durationProgress, [...config.color, 1.0]);
+        }
+        
+        // Ready indicator sul cerchio quando pronto
         if (!isActive && !isOnCooldown) {
             const readyGlow = [0.0, 1.0, 0.0, 0.3 + pulse * 0.3];
-            this.renderer.drawCircle(cooldownCircleX, cooldownCircleY, circleRadius + 4, readyGlow);
+            this.renderer.drawCircle(iconCircleX, iconCircleY, circleRadius + 4, readyGlow);
         }
         
-        // BARRA DURATA ORIZZONTALE (a destra del cerchio cooldown) - mostra solo la durata
+        // BARRA DURATA ORIZZONTALE (a destra del cerchio) - SEMPRE VISIBILE
         const barX = x + this.iconSize + 10;
         const barY = yPos + (this.iconSize - this.barHeight) / 2;
         
+        // Altezza barra più grande per maggiore visibilità
+        const enhancedBarHeight = this.barHeight + 4;
+        const barYAdjusted = barY - 2;
+        
         // Bar background with border
         const barBgColor = [0.1, 0.1, 0.1, 0.7];
-        this.renderer.drawRect(barX, barY, this.barWidth, this.barHeight, barBgColor);
+        this.renderer.drawRect(barX, barYAdjusted, this.barWidth, enhancedBarHeight, barBgColor);
         
         // Border around bar
-        this.drawRectOutline(barX, barY, this.barWidth, this.barHeight, [0.3, 0.3, 0.3, 0.8], 1);
+        this.drawRectOutline(barX, barYAdjusted, this.barWidth, enhancedBarHeight, [0.3, 0.3, 0.3, 0.8], 2);
         
-        // Progress fill - SOLO per la durata quando è attivo
-        const fillWidth = this.barWidth * durationProgress;
+        // Progress fill - durata quando attivo, cooldown quando in ricarica
+        let fillWidth = 0;
+        let fillColor = [...config.color];
         
-        if (fillWidth > 0 && isActive) {
-            // Active: bright color with pulse
-            const fillColor = [...config.color];
+        if (isActive) {
+            // Barra di DURATA - si svuota da piena a vuota
+            fillWidth = this.barWidth * durationProgress;
             fillColor[3] = 0.9 + pulse * 0.1;
             
             // Main fill
-            this.renderer.drawRect(barX + 1, barY + 1, fillWidth - 2, this.barHeight - 2, fillColor);
+            this.renderer.drawRect(barX + 2, barYAdjusted + 2, fillWidth - 4, enhancedBarHeight - 4, fillColor);
             
             // Shimmer effect on top
-            const shimmerWidth = 20;
+            const shimmerWidth = 30;
             const shimmerX = barX + (shimmer * (fillWidth - shimmerWidth));
-            const shimmerColor = [1.0, 1.0, 1.0, 0.3 * pulse];
+            const shimmerColor = [1.0, 1.0, 1.0, 0.4 * pulse];
             
-            if (shimmerX + shimmerWidth <= barX + fillWidth) {
+            if (shimmerX + shimmerWidth <= barX + fillWidth && fillWidth > shimmerWidth) {
                 this.renderer.drawRect(
                     shimmerX,
-                    barY + 1,
+                    barYAdjusted + 2,
                     shimmerWidth,
-                    this.barHeight - 2,
+                    enhancedBarHeight - 4,
                     shimmerColor
                 );
             }
             
             // Glow effect on bar when active
             const topGlowColor = [...config.glowColor];
-            topGlowColor[3] = 0.5;
-            this.renderer.drawRect(barX + 1, barY, fillWidth - 2, 2, topGlowColor);
-        }
-        
-        // Ready indicator sulla barra quando non è attivo né in cooldown
-        if (!isActive && !isOnCooldown) {
-            // Pulsing ready glow
-            const readyGlow = [...config.color];
-            readyGlow[3] = 0.3 + pulse * 0.3;
-            this.renderer.drawRect(barX - 2, barY - 2, this.barWidth + 4, this.barHeight + 4, readyGlow);
+            topGlowColor[3] = 0.6;
+            this.renderer.drawRect(barX + 2, barYAdjusted, fillWidth - 4, 3, topGlowColor);
             
-            // "READY" sparkle
-            const sparkleColor = [1.0, 1.0, 1.0, 0.8 * pulse];
-            this.renderer.drawCircle(barX + this.barWidth + 8, yPos + this.iconSize / 2, 3, sparkleColor);
-        }
-        
-        // Time remaining text quando attivo
-        if (isActive) {
+            // Timer digitale sulla barra
             const secondsLeft = Math.ceil(timer.duration / 1000);
-            this.drawTimeDigit(barX + this.barWidth + 8, yPos + 8, secondsLeft, config.color);
+            const timeText = `${secondsLeft}s`;
+            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, timeText, [1.0, 1.0, 1.0, 1.0]);
+            
+        } else if (isOnCooldown) {
+            // Barra di COOLDOWN - si riempie da vuota a piena
+            fillWidth = this.barWidth * cooldownProgress;
+            const cooldownColor = [0.8, 0.4, 0.0, 0.7];
+            
+            // Main fill
+            this.renderer.drawRect(barX + 2, barYAdjusted + 2, fillWidth - 4, enhancedBarHeight - 4, cooldownColor);
+            
+            // Animated stripe pattern
+            const stripeWidth = 10;
+            const stripeOffset = (this.animationTime * 30) % (stripeWidth * 2);
+            for (let i = 0; i < fillWidth; i += stripeWidth * 2) {
+                const stripeX = barX + 2 + i - stripeOffset;
+                const actualStripeWidth = Math.min(stripeWidth, fillWidth - (stripeX - barX - 2));
+                if (actualStripeWidth > 0 && stripeX >= barX + 2) {
+                    this.renderer.drawRect(stripeX, barYAdjusted + 2, actualStripeWidth, enhancedBarHeight - 4, [0.9, 0.5, 0.1, 0.4]);
+                }
+            }
+            
+            // Timer digitale sulla barra
+            const secondsLeft = Math.ceil(timer.cooldown / 1000);
+            const timeText = `${secondsLeft}s`;
+            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, timeText, [0.9, 0.6, 0.2, 1.0]);
+            
+        } else {
+            // PRONTO - barra piena con colore verde
+            fillWidth = this.barWidth;
+            const readyColor = [0.0, 1.0, 0.0, 0.5 + pulse * 0.3];
+            this.renderer.drawRect(barX + 2, barYAdjusted + 2, fillWidth - 4, enhancedBarHeight - 4, readyColor);
+            
+            // Pulsing sparkle
+            const sparkleColor = [1.0, 1.0, 1.0, 0.8 * pulse];
+            this.renderer.drawCircle(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, 4, sparkleColor);
+            
+            // Testo "PRONTO"
+            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, "PRONTO", [1.0, 1.0, 1.0, 1.0]);
         }
         
         // Nome del powerup - grande e visibile accanto alla barra
-        this.drawPowerupName(barX + this.barWidth + 25, yPos + 5, config.name, config.color, isActive);
+        const statusText = isActive ? "ATTIVO" : (isOnCooldown ? "RICARICA" : "PRONTO");
+        this.drawPowerupName(barX + this.barWidth + 10, yPos + 5, config.name, config.color, isActive);
+        this.drawPowerupStatus(barX + this.barWidth + 10, yPos + 20, statusText, isActive, isOnCooldown);
     }
     
     drawCircleOutline(x, y, radius, color, thickness) {
@@ -418,6 +442,44 @@ export class PowerupUIRenderer {
                 this.renderer.drawCircle(dx + 1, y + d * 2, 0.5, digitColor);
             }
         }
+    }
+    
+    drawTimeText(x, y, text, color) {
+        if (!this.ctx2d) return;
+        
+        const r = Math.floor(color[0] * 255);
+        const g = Math.floor(color[1] * 255);
+        const b = Math.floor(color[2] * 255);
+        const alpha = color[3] || 1.0;
+        
+        this.ctx2d.save();
+        this.ctx2d.font = 'bold 11px Arial';
+        this.ctx2d.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        this.ctx2d.textAlign = 'center';
+        this.ctx2d.textBaseline = 'middle';
+        this.ctx2d.fillText(text, x, y);
+        this.ctx2d.restore();
+    }
+    
+    drawPowerupStatus(x, y, text, isActive, isOnCooldown) {
+        if (!this.ctx2d) return;
+        
+        let color;
+        if (isActive) {
+            color = 'rgba(100, 255, 100, 0.9)';
+        } else if (isOnCooldown) {
+            color = 'rgba(255, 150, 50, 0.9)';
+        } else {
+            color = 'rgba(150, 255, 150, 0.9)';
+        }
+        
+        this.ctx2d.save();
+        this.ctx2d.font = 'bold 10px Arial';
+        this.ctx2d.fillStyle = color;
+        this.ctx2d.textAlign = 'left';
+        this.ctx2d.textBaseline = 'top';
+        this.ctx2d.fillText(text, x, y);
+        this.ctx2d.restore();
     }
     
     drawPowerupName(x, y, text, color, isActive) {

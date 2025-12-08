@@ -1,8 +1,18 @@
 {
-  "version": "1.11.6",
-  "timestamp": "2025-12-08T17:53:40.145Z",
-  "buildNumber": 32,
+  "version": "1.12.0",
+  "timestamp": "2025-12-08T22:56:15.502Z",
+  "buildNumber": 33,
   "changelog": [
+    {
+      "version": "1.12.0",
+      "date": "2025-12-08",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat:[ RAINBOW RUSH] brk changes",
+        "🔖 Bump version to 1.11.6 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.6",
       "date": "2025-12-08",
@@ -85,16 +95,6 @@
       "changes": [
         "feat:[RAINBOW RUSH] Implement background rendering system with layered and particle renderers",
         "🔖 Bump version to 1.9.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.9.0",
-      "date": "2025-12-07",
-      "type": "minor",
-      "changes": [
-        "fix: Enhance tower upgrade logic with error logging and improve button styles; update scrollbar styles for better UX",
-        "feat: Enhance logging configuration, improve leaderboard and profile styles, and update wallet widget UI",
-        "🔖 Bump version to 1.8.6 [skip-version]"
       ]
     }
   ]

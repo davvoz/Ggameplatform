@@ -1,8 +1,18 @@
 {
-  "version": "1.11.2",
-  "timestamp": "2025-12-08T16:50:34.193Z",
-  "buildNumber": 28,
+  "version": "1.11.3",
+  "timestamp": "2025-12-08T16:56:23.771Z",
+  "buildNumber": 29,
   "changelog": [
+    {
+      "version": "1.11.3",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Remove obsolete files related to high score tracking and user XP display",
+        "🔖 Bump version to 1.11.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.2",
       "date": "2025-12-08",
@@ -84,16 +94,6 @@
       "changes": [
         "fix: Add custom scrollbar styles for Webkit and Firefox browsers",
         "🔖 Bump version to 1.8.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.3",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [ TOWER DEFENSE ] Enhance tower upgrade logic with error logging and improve button styles",
-        "🔖 Bump version to 1.8.2 [skip-version]"
       ]
     }
   ]

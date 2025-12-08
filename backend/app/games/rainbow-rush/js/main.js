@@ -16,6 +16,9 @@ class RainbowRushApp {
         if (this.initialized) return;
 
         try {
+            // ⚡ FAST: Signal game ready immediately to prevent timeout
+            this.signalGameReady();
+            
             // Initialize Screen Manager first
             this.screenManager = new ScreenManager();
             console.log('✅ ScreenManager initialized');
@@ -26,7 +29,6 @@ class RainbowRushApp {
                 throw new Error('Canvas element not found');
             }
 
-            // Create game controller with builder pattern (DI)
             // Create game controller with builder pattern (DI)
             this.gameController = createGameController(canvas).build();
             
@@ -51,6 +53,20 @@ class RainbowRushApp {
         } catch (error) {
             console.error('❌ Failed to initialize game:', error);
             this.showError(error.message);
+        }
+    }
+
+    /**
+     * Signal game ready to platform immediately to prevent timeout
+     */
+    signalGameReady() {
+        if (window.parent !== window) {
+            window.parent.postMessage({
+                type: 'gameReady',
+                gameId: 'rainbow-rush',
+                timestamp: Date.now()
+            }, '*');
+            console.log('⚡ Fast game ready signal sent');
         }
     }
 

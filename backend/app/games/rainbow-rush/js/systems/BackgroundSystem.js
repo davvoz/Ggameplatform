@@ -1,61 +1,63 @@
 /**
- * BackgroundSystem - Procedural animated backgrounds that change per level
- * Themes: Ocean, Sky, Pyramids, Volcano, Space, Forest, Ice, Night
+ * BackgroundSystem - Modern OOP implementation
+ * Follows SOLID principles and SonarQube best practices
+ * 
+ * Single Responsibility: Manages background themes and transitions
+ * Open/Closed: Easy to add new themes via factory
+ * Liskov Substitution: All generators follow base interface
+ * Interface Segregation: Clear separation of concerns
+ * Dependency Inversion: Depends on factory abstraction
  */
 
-export const BackgroundThemes = {
-    SKY: 'sky',
-    OCEAN: 'ocean',
-    PYRAMIDS: 'pyramids',
-    VOLCANO: 'volcano',
-    SPACE: 'space',
-    FOREST: 'forest',
-    ICE: 'ice',
-    NIGHT: 'night',
-    // New mixed themes
-    SUNSET_OCEAN: 'sunset_ocean',      // Ocean + Sky sunset colors
-    CRYSTAL_CAVE: 'crystal_cave',      // Ice crystals + dark cave
-    MUSHROOM_FOREST: 'mushroom_forest', // Forest + glowing mushrooms
-    AURORA_NIGHT: 'aurora_night',      // Night + colorful aurora
-    DESERT_STORM: 'desert_storm'       // Pyramids + sandstorm effects
-};
+import { ThemeGeneratorFactory } from './background/ThemeGeneratorFactory.js';
+import { THEME_NAMES, DEFAULT_THEME_SEQUENCE, TRANSITION_CONFIG } from './background/ThemeConfigurations.js';
+
+export { THEME_NAMES as BackgroundThemes };
 
 export class BackgroundSystem {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
-        this.currentTheme = BackgroundThemes.SKY;
+        
+        // Dependency Injection - inject factory
+        this.themeFactory = new ThemeGeneratorFactory(canvasWidth, canvasHeight);
+        
+        // Current state
+        this.currentTheme = THEME_NAMES.SKY;
         this.animationTime = 0;
         this.layers = [];
         this.particles = [];
+        this.baseColors = [];
         
-        // Transition system
-        this.isTransitioning = false;
-        this.transitionProgress = 0;
-        this.transitionDuration = 2.5; // 2.5 seconds for smooth transition
-        this.nextTheme = null;
-        this.oldLayers = [];
-        this.oldParticles = [];
-        this.oldBaseColors = null;
+        // Transition state
+        this.transitionState = this.createTransitionState();
         
-        this.themeSequence = [
-            BackgroundThemes.SKY,
-            BackgroundThemes.SUNSET_OCEAN,
-            BackgroundThemes.PYRAMIDS,
-            BackgroundThemes.DESERT_STORM,
-            BackgroundThemes.VOLCANO,
-            BackgroundThemes.CRYSTAL_CAVE,
-            BackgroundThemes.FOREST,
-            BackgroundThemes.MUSHROOM_FOREST,
-            BackgroundThemes.SPACE,
-            BackgroundThemes.AURORA_NIGHT,
-            BackgroundThemes.ICE,
-            BackgroundThemes.NIGHT
-        ];
+        // Theme sequence for level progression
+        this.themeSequence = [...DEFAULT_THEME_SEQUENCE];
         
-        this.initializeTheme();
+        // Initialize first theme (async but non-blocking)
+        this.initializeTheme().catch(err => console.error('Theme init error:', err));
     }
-    
+
+    createTransitionState() {
+        return {
+            isTransitioning: false,
+            progress: 0,
+            duration: TRANSITION_CONFIG.DURATION,
+            nextTheme: null,
+            oldLayers: [],
+            oldParticles: [],
+            oldBaseColors: null,
+            newLayers: [],
+            newParticles: [],
+            newBaseColors: null
+        };
+    }
+
+    /**
+     * Set level and trigger theme change if needed
+     * @param {number} level - Current level number
+     */
     setLevel(level) {
         const themeIndex = (level - 1) % this.themeSequence.length;
         const newTheme = this.themeSequence[themeIndex];
@@ -64,1252 +66,349 @@ export class BackgroundSystem {
             this.startTransition(newTheme);
         }
     }
-    
+
+    /**
+     * Start transition to new theme
+     * @param {string} newTheme - Name of new theme
+     */
     startTransition(newTheme) {
-        if (this.isTransitioning) return; // Avoid overlapping transitions
+        if (this.transitionState.isTransitioning) {
+            return; // Avoid overlapping transitions
+        }
         
-        this.isTransitioning = true;
-        this.transitionProgress = 0;
-        this.nextTheme = newTheme;
+        if (!this.themeFactory.hasTheme(newTheme)) {
+            console.warn(`Theme ${newTheme} not available`);
+            return;
+        }
+
+        this.transitionState.isTransitioning = true;
+        this.transitionState.progress = 0;
+        this.transitionState.nextTheme = newTheme;
         
-        // Save old theme data
-        this.oldLayers = [...this.layers];
-        this.oldParticles = [...this.particles];
-        this.oldBaseColors = [...this.baseColors];
+        // Save current state
+        this.saveCurrentState();
         
-        // Initialize new theme (but don't switch yet)
-        const tempTheme = this.currentTheme;
-        this.currentTheme = newTheme;
-        this.initializeTheme();
-        
-        // Store new theme data separately
-        const newLayers = [...this.layers];
-        const newParticles = [...this.particles];
-        const newBaseColors = [...this.baseColors];
-        
-        // Restore old theme temporarily
-        this.currentTheme = tempTheme;
-        this.layers = this.oldLayers;
-        this.particles = this.oldParticles;
-        this.baseColors = this.oldBaseColors;
-        
-        // Store new theme for transition
-        this.newLayers = newLayers;
-        this.newParticles = newParticles;
-        this.newBaseColors = newBaseColors;
+        // Generate new theme
+        this.generateNewThemeState(newTheme);
     }
-    
-    initializeTheme() {
-        this.layers = [];
-        this.particles = [];
+
+    saveCurrentState() {
+        this.transitionState.oldLayers = [...this.layers];
+        this.transitionState.oldParticles = [...this.particles];
+        this.transitionState.oldBaseColors = [...this.baseColors];
+    }
+
+    async generateNewThemeState(themeName) {
+        const themeData = await this.themeFactory.generateTheme(themeName);
         
-        switch (this.currentTheme) {
-            case BackgroundThemes.SKY:
-                this.initSky();
-                break;
-            case BackgroundThemes.SUNSET_OCEAN:
-                this.initSunsetOcean();
-                break;
-            case BackgroundThemes.OCEAN:
-                this.initOcean();
-                break;
-            case BackgroundThemes.PYRAMIDS:
-                this.initPyramids();
-                break;
-            case BackgroundThemes.DESERT_STORM:
-                this.initDesertStorm();
-                break;
-            case BackgroundThemes.VOLCANO:
-                this.initVolcano();
-                break;
-            case BackgroundThemes.CRYSTAL_CAVE:
-                this.initCrystalCave();
-                break;
-            case BackgroundThemes.SPACE:
-                this.initSpace();
-                break;
-            case BackgroundThemes.FOREST:
-                this.initForest();
-                break;
-            case BackgroundThemes.MUSHROOM_FOREST:
-                this.initMushroomForest();
-                break;
-            case BackgroundThemes.AURORA_NIGHT:
-                this.initAuroraNight();
-                break;
-            case BackgroundThemes.ICE:
-                this.initIce();
-                break;
-            case BackgroundThemes.NIGHT:
-                this.initNight();
-                break;
+        if (themeData) {
+            this.transitionState.newLayers = themeData.layers;
+            this.transitionState.newParticles = themeData.particles;
+            this.transitionState.newBaseColors = themeData.baseColors;
         }
     }
-    
-    initSky() {
-        // Sky gradient background - PIÙ BRILLANTE
-        this.baseColors = [
-            [0.4, 0.7, 1.0, 1.0], // Blu più brillante (era 0.53, 0.81, 0.92)
-            [0.6, 0.85, 1.0, 1.0]  // Celeste vivace (era 0.68, 0.85, 0.90)
-        ];
+
+    /**
+     * Initialize current theme (async)
+     */
+    async initializeTheme() {
+        const themeData = await this.themeFactory.generateTheme(this.currentTheme);
         
-        // Floating clouds with varied shapes - RIDOTTE 50%
-        for (let i = 0; i < 3; i++) { // Ridotto del 50% da 5 a 3
-            const baseSize = 40 + Math.random() * 40;
-            const numPuffs = 3 + Math.floor(Math.random() * 3); // 3-5 puffs per cloud
-            const puffs = [];
-            
-            for (let j = 0; j < numPuffs; j++) {
-                puffs.push({
-                    offsetX: (j - numPuffs / 2) * (baseSize * 0.5) + (Math.random() - 0.5) * 20,
-                    offsetY: (Math.random() - 0.5) * 15,
-                    radius: baseSize * (0.4 + Math.random() * 0.4)
-                });
-            }
-            
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.6,
-                baseSize: baseSize,
-                puffs: puffs,
-                speed: 10 + Math.random() * 20,
-                color: [0.95, 0.95, 0.98, 0.45 + Math.random() * 0.12], // Meno bianche e meno opache
-                type: 'cloud'
-            });
-        }
-        
-        // Flying birds - RIDOTTE 50%
-        for (let i = 0; i < 3; i++) { // Ridotto del 50% da 5 a 3
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.4,
-                speed: 40 + Math.random() * 30,
-                wingPhase: Math.random() * Math.PI * 2,
-                size: 4 + Math.random() * 3,
-                color: [0.2, 0.2, 0.2, 0.6],
-                type: 'bird'
-            });
-        }
-        
-        // Sun rays
-        for (let i = 0; i < 3; i++) {
-            this.layers.push({
-                x: this.canvasWidth * 0.8,
-                y: this.canvasHeight * 0.15,
-                angle: (i * Math.PI / 6) - Math.PI / 12,
-                length: 150 + i * 30,
-                width: 40,
-                color: [1.0, 0.95, 0.7, 0.15],
-                type: 'sunray',
-                speed: 1 + i * 0.3 // Rotazione lenta
-            });
+        if (themeData) {
+            this.layers = themeData.layers;
+            this.particles = themeData.particles;
+            this.baseColors = themeData.baseColors;
+        } else {
+            console.error(`Failed to initialize theme: ${this.currentTheme}`);
+            this.layers = [];
+            this.particles = [];
+            this.baseColors = [[0.4, 0.7, 1.0, 1.0], [0.6, 0.85, 1.0, 1.0]];
         }
     }
-    
-    initOcean() {
-        this.baseColors = [
-            [0.0, 0.5, 1.0, 1.0],  // Blu oceano più brillante (era 0.4, 0.8)
-            [0.1, 0.7, 1.0, 1.0]   // Azzurro oceano vivace (era 0.2, 0.6, 0.9)
-        ];
-        
-        // Waves
-        for (let i = 0; i < 5; i++) {
-            this.layers.push({
-                y: this.canvasHeight * (0.7 + i * 0.1),
-                amplitude: 20 + i * 5,
-                frequency: 0.01 - i * 0.001,
-                speed: 1 + i * 0.2,
-                color: [0.1 + i * 0.1, 0.5 + i * 0.1, 0.85 - i * 0.05, 0.6 - i * 0.1],
-                type: 'wave'
-            });
-        }
-        
-        // Bubbles - RIDOTTE 50%
-        for (let i = 0; i < 13; i++) { // Ridotto del 50% da 25 a 13
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.5,
-                radius: 2 + Math.random() * 4,
-                speed: 20 + Math.random() * 40,
-                wobble: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.4],
-                type: 'bubble'
-            });
-        }
-        
-        // Fish swimming - RIDOTTE 50%
-        for (let i = 0; i < 2; i++) { // Ridotto del 50% da 4 a 2
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3,
-                speed: 30 + Math.random() * 25,
-                size: 8 + Math.random() * 6,
-                swimPhase: Math.random() * Math.PI * 2,
-                color: [0.9, 0.5, 0.2, 0.7],
-                type: 'fish'
-            });
-        }
-        
-        // Seaweed/coral
-        for (let i = 0; i < 5; i++) {
-            this.layers.push({
-                x: (i + 0.5) * this.canvasWidth / 5,
-                y: this.canvasHeight * 0.8,
-                height: 60 + Math.random() * 40,
-                width: 8 + Math.random() * 6,
-                swayPhase: Math.random() * Math.PI * 2,
-                color: [0.1, 0.6 - i * 0.08, 0.4, 0.6],
-                type: 'seaweed',
-                speed: 0.5 + Math.random() * 0.5
-            });
-        }
-    }
-    
-    initPyramids() {
-        this.baseColors = [
-            [0.85, 0.7, 0.35, 1.0], // Giallo sabbia meno luminoso (ridotta luminosità)
-            [0.75, 0.6, 0.25, 1.0]   // Sabbia dorata più scura
-        ];
-        
-        // Pyramids in background
-        const pyramidCount = 3;
-        for (let i = 0; i < pyramidCount; i++) {
-            this.layers.push({
-                x: (this.canvasWidth / pyramidCount) * i + 50,
-                y: this.canvasHeight * 0.6,
-                width: 100 + Math.random() * 80,
-                height: 80 + Math.random() * 60,
-                color: [0.8 - i * 0.1, 0.65 - i * 0.1, 0.3, 1.0 - i * 0.2],
-                type: 'pyramid',
-                speed: 10 + i * 5 // Parallax effect
-            });
-        }
-        
-        // Sand particles - RIDOTTE 50%
-        for (let i = 0; i < 15; i++) { // Ridotto del 50% da 30 a 15
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 1 + Math.random() * 2,
-                speed: 30 + Math.random() * 40,
-                color: [0.9, 0.8, 0.5, 0.5],
-                type: 'sand'
-            });
-        }
-        
-        // Heat waves
-        for (let i = 0; i < 4; i++) {
-            this.layers.push({
-                y: this.canvasHeight * (0.4 + i * 0.1),
-                amplitude: 5 + i * 2,
-                frequency: 0.02 + i * 0.005,
-                speed: 2 + i * 0.5,
-                offset: 0,
-                color: [0.9, 0.8, 0.5, 0.08 - i * 0.02], // Ridotta opacità drasticamente
-                type: 'heatwave'
-            });
-        }
-        
-        // Sand dunes in background
-        for (let i = 0; i < 3; i++) {
-            this.layers.push({
-                x: i * this.canvasWidth / 2,
-                y: this.canvasHeight * 0.65,
-                width: 300 + Math.random() * 200,
-                height: 40 + Math.random() * 30,
-                color: [0.88 - i * 0.08, 0.73 - i * 0.08, 0.45, 0.4],
-                type: 'dune',
-                speed: 5 + i * 3
-            });
-        }
-    }
-    
-    initVolcano() {
-        this.baseColors = [
-            [0.6, 0.1, 0.0, 1.0],  // Rosso lava intenso (sfumatura terra)
-            [0.9, 0.35, 0.1, 1.0]  // Arancione lava (sfumatura cielo)
-        ];
-        
-        // Sky gradient layer
-        this.layers.push({
-            y: 0,
-            height: this.canvasHeight * 0.7,
-            color: [0.4, 0.15, 0.1, 1.0], // Dark red-orange sky
-            type: 'sky_gradient',
-            speed: 0
-        });
-        
-        // Ground/terrain layer
-        const groundY = this.canvasHeight * 0.85;
-        this.layers.push({
-            y: groundY,
-            height: this.canvasHeight - groundY,
-            color: [0.2, 0.08, 0.04, 1.0], // Dark volcanic ground
-            type: 'ground',
-            speed: 0
-        });
-        
-        // Main volcano - positioned on ground
-        const mainVolcanoHeight = 350;
-        this.layers.push({
-            x: this.canvasWidth * 0.65,
-            y: groundY - mainVolcanoHeight,
-            width: 350,
-            height: mainVolcanoHeight,
-            color: [0.15, 0.08, 0.05, 1.0], // Dark volcanic rock
-            type: 'volcano',
-            speed: 12,
-            craterWidth: 80,
-            craterDepth: 60
-        });
-        
-        // Secondary smaller volcano (background) - also on ground
-        const secondaryVolcanoHeight = 220;
-        this.layers.push({
-            x: this.canvasWidth * 0.25,
-            y: groundY - secondaryVolcanoHeight,
-            width: 200,
-            height: secondaryVolcanoHeight,
-            color: [0.12, 0.06, 0.04, 0.85],
-            type: 'volcano',
-            speed: 8,
-            craterWidth: 50,
-            craterDepth: 40
-        });
-        
-        // NO lava flows - removed
-        
-        // Smoke clouds from crater
-        for (let i = 0; i < 5; i++) {
-            this.particles.push({
-                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60,
-                y: this.canvasHeight * 0.35 - 20 - i * 25,
-                radius: 15 + Math.random() * 20,
-                speed: -15 - Math.random() * 25,
-                color: [0.2, 0.15, 0.12, 0.4 - i * 0.06],
-                type: 'smoke',
-                expansion: 1 + i * 0.15,
-                drift: (Math.random() - 0.5) * 10
-            });
-        }
-        
-        // Lava particles/embers - bright and numerous
-        for (let i = 0; i < 25; i++) {
-            this.particles.push({
-                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 70,
-                y: this.canvasHeight * 0.35 + Math.random() * 100,
-                radius: 2 + Math.random() * 5,
-                speed: -60 - Math.random() * 120,
-                color: [1.0, 0.4 + Math.random() * 0.4, 0.0, 0.95],
-                type: 'ember',
-                sparkle: Math.random() * Math.PI * 2,
-                horizontalDrift: (Math.random() - 0.5) * 40
-            });
-        }
-        
-        // Lava glow particles (slower, larger)
-        for (let i = 0; i < 10; i++) {
-            this.particles.push({
-                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 100,
-                y: this.canvasHeight * 0.35 + Math.random() * 200,
-                radius: 8 + Math.random() * 12,
-                speed: -20 - Math.random() * 40,
-                color: [1.0, 0.5, 0.0, 0.3 + Math.random() * 0.3],
-                type: 'lava_glow',
-                pulse: Math.random() * Math.PI * 2
-            });
-        }
-    }
-    
-    initSpace() {
-        this.baseColors = [
-            [0.05, 0.05, 0.2, 1.0], // Blu spazio scuro (ok)
-            [0.15, 0.1, 0.4, 1.0]    // Viola più intenso (era 0.25)
-        ];
-        
-        // Stars - RIDOTTE 50%
-        for (let i = 0; i < 50; i++) { // Ridotto del 50% da 100 a 50
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 1 + Math.random() * 2,
-                speed: 5 + Math.random() * 15,
-                twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.8],
-                type: 'star'
-            });
-        }
-        
-        // Planets
-        for (let i = 0; i < 3; i++) {
-            this.layers.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.5,
-                radius: 20 + Math.random() * 40,
-                color: [
-                    0.3 + Math.random() * 0.7,
-                    0.3 + Math.random() * 0.7,
-                    0.5 + Math.random() * 0.5,
-                    0.7
-                ],
-                type: 'planet',
-                speed: 2 + i // Velocità parallasse lenta
-            });
-        }
-    }
-    
-    initForest() {
-        this.baseColors = [
-            [0.2, 0.6, 0.3, 1.0],  // Verde bosco più brillante (era 0.4)
-            [0.3, 0.7, 0.4, 1.0]   // Verde foresta più vivace (era 0.5)
-        ];
-        
-        // Trees in background (multiple layers)
-        for (let layer = 0; layer < 3; layer++) {
-            const treeCount = 5 - layer;
-            for (let i = 0; i < treeCount; i++) {
-                this.layers.push({
-                    x: (this.canvasWidth / treeCount) * i + Math.random() * 50,
-                    y: this.canvasHeight * (0.5 + layer * 0.15),
-                    width: 40 - layer * 10,
-                    height: 80 - layer * 20,
-                    color: [0.1 + layer * 0.1, 0.3 + layer * 0.1, 0.15, 0.8 - layer * 0.2],
-                    type: 'tree',
-                    layer: layer,
-                    speed: 8 + layer * 4 // Parallasse: alberi lontani più lenti
-                });
-            }
-        }
-        
-        // Fireflies - RIDOTTE 50%
-        for (let i = 0; i < 9; i++) { // Ridotto del 50% da 18 a 9
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.8,
-                radius: 2,
-                speed: 15 + Math.random() * 15,
-                floatY: Math.random() * Math.PI * 2,
-                glowPhase: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.5, 0.8],
-                type: 'firefly'
-            });
-        }       
-        // Falling leaves - RIDOTTE 50%
-        for (let i = 0; i < 6; i++) { // Ridotto del 50% da 12 a 6
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                size: 3 + Math.random() * 4,
-                speed: 15 + Math.random() * 20,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 3,
-                drift: (Math.random() - 0.5) * 30,
-                color: [0.8, 0.4 + Math.random() * 0.3, 0.1, 0.6],
-                type: 'leaf'
-            });
-        }
-        
-        // Mushrooms on ground
-        for (let i = 0; i < 6; i++) {
-            this.layers.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.85,
-                size: 6 + Math.random() * 8,
-                color: i % 2 === 0 ? [0.9, 0.3, 0.3, 0.7] : [0.8, 0.6, 0.3, 0.7],
-                type: 'mushroom',
-                speed: 8 + i * 2
-            });
-        }
-    }
-    
-    initIce() {
-        this.baseColors = [
-            [0.4, 0.75, 0.95, 1.0], // Azzurro ghiaccio più scuro (ridotta luminosità)
-            [0.65, 0.85, 0.98, 1.0]    // Azzurro chiaro meno abbagliante
-        ];
-        
-        // Ice crystals in background
-        for (let i = 0; i < 6; i++) {
-            this.layers.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.6,
-                size: 30 + Math.random() * 40,
-                rotation: Math.random() * Math.PI * 2,
-                color: [0.6, 0.8, 0.95, 0.4], // Ridotta opacità da 0.6 a 0.4
-                type: 'crystal',
-                speed: 5 + i * 2 // Velocità parallasse
-            });
-        }
-        
-        // Snowflakes - RIDOTTE 50%
-        for (let i = 0; i < 15; i++) { // Ridotto del 50% da 30 a 15
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 2 + Math.random() * 3,
-                speed: 30 + Math.random() * 40,
-                drift: Math.random() * 20 - 10,
-                color: [0.9, 0.95, 1.0, 0.5], // Ridotta opacità e luminosità
-                type: 'snowflake'
-            });
-        }
-    }
-    
-    initNight() {
-        this.baseColors = [
-            [0.05, 0.1, 0.3, 1.0],  // Blu notte più visibile (era 0.05, 0.2)
-            [0.2, 0.15, 0.45, 1.0]    // Viola notte più vivace (era 0.15, 0.1, 0.3)
-        ];
-        
-        // Moon
-        this.layers.push({
-            x: this.canvasWidth * 0.8,
-            y: this.canvasHeight * 0.15,
-            radius: 40,
-            color: [0.95, 0.95, 0.85, 0.9],
-            type: 'moon',
-            speed: 2 // Velocità parallasse molto lenta
-        });
-        
-        // Stars (more than space) - RIDOTTE 50%
-        for (let i = 0; i < 40; i++) { // Ridotto del 50% da 80 a 40
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.7,
-                radius: 1 + Math.random() * 2,
-                twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.9, 0.9],
-                type: 'star'
-            });
-        }
-        
-        // Shooting stars occasionally
-        if (Math.random() > 0.5) {
-            this.particles.push({
-                x: this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.5,
-                length: 40,
-                speed: 300,
-                color: [1.0, 1.0, 1.0, 0.8],
-                type: 'shootingStar'
-            });
-        }
-    }
-    
-    // ===== MIXED THEMES =====
-    
-    initSunsetOcean() {
-        // Sunset gradient (orange/pink sky)
-        this.baseColors = [
-            [1.0, 0.5, 0.2, 1.0],  // Deep orange
-            [1.0, 0.7, 0.3, 1.0]   // Light orange/yellow
-        ];
-        
-        // Glowing sun on horizon
-        this.layers.push({
-            x: this.canvasWidth * 0.15,
-            y: this.canvasHeight * 0.25,
-            radius: 60,
-            color: [1.0, 0.6, 0.2, 0.9],
-            type: 'sun',
-            speed: 1,
-            glow: true
-        });
-        
-        // Ocean waves (from OCEAN theme)
-        for (let i = 0; i < 4; i++) {
-            this.layers.push({
-                y: this.canvasHeight * (0.6 + i * 0.08),
-                amplitude: 15 + i * 5,
-                frequency: 0.003 - i * 0.0005,
-                speed: 30 - i * 8,
-                color: [0.1 + i * 0.05, 0.3 + i * 0.1, 0.6 + i * 0.05, 0.6 - i * 0.1],
-                type: 'wave',
-                layer: i
-            });
-        }
-        
-        // Seagulls (fewer than ocean)
-        for (let i = 0; i < 3; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.4,
-                speed: 40 + Math.random() * 20,
-                wingPhase: Math.random() * Math.PI * 2,
-                color: [0.2, 0.2, 0.2, 0.7],
-                type: 'bird'
-            });
-        }
-        
-        // Glowing sparkles on water
-        for (let i = 0; i < 15; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * (0.6 + Math.random() * 0.3),
-                radius: 2 + Math.random(),
-                speed: 5 + Math.random() * 10,
-                twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 0.8, 0.4, 0.7],
-                type: 'star' // Reuse star twinkle effect
-            });
-        }
-    }
-    
-    initCrystalCave() {
-        // Dark cave gradient
-        this.baseColors = [
-            [0.15, 0.1, 0.25, 1.0],  // Deep purple/dark
-            [0.25, 0.2, 0.35, 1.0]   // Lighter purple
-        ];
-        
-        // Glowing crystals (stalactites from ceiling)
-        const crystalColors = [
-            [0.4, 0.7, 1.0, 0.8],   // Ice blue
-            [0.7, 0.4, 1.0, 0.8],   // Purple
-            [0.4, 1.0, 0.7, 0.8]    // Cyan
-        ];
-        
-        for (let i = 0; i < 8; i++) {
-            const color = crystalColors[i % 3];
-            this.layers.push({
-                x: (this.canvasWidth / 8) * i + Math.random() * 50,
-                y: this.canvasHeight * 0.1,
-                height: 30 + Math.random() * 40,
-                width: 10 + Math.random() * 15,
-                color: [...color],
-                type: 'crystal_hanging',
-                speed: 2 + i,
-                glowPhase: Math.random() * Math.PI * 2
-            });
-        }
-        
-        // Floor crystals
-        for (let i = 0; i < 6; i++) {
-            const color = crystalColors[i % 3];
-            this.layers.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.85,
-                height: 20 + Math.random() * 30,
-                width: 8 + Math.random() * 12,
-                color: [...color],
-                type: 'crystal_floor',
-                speed: 8 + i * 2,
-                glowPhase: Math.random() * Math.PI * 2
-            });
-        }
-        
-        // Glowing particles (mineral dust)
-        for (let i = 0; i < 20; i++) {
-            const color = crystalColors[i % 3];
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 1 + Math.random() * 2,
-                speed: 3 + Math.random() * 5,
-                drift: (Math.random() - 0.5) * 10,
-                color: [...color],
-                type: 'glowdust',
-                floatPhase: Math.random() * Math.PI * 2
-            });
-        }
-    }
-    
-    initMushroomForest() {
-        // Forest base colors
-        this.baseColors = [
-            [0.2, 0.5, 0.3, 1.0],
-            [0.25, 0.6, 0.35, 1.0]
-        ];
-        
-        // Background trees (from FOREST)
-        for (let layer = 0; layer < 2; layer++) {
-            const treeCount = 4 - layer;
-            for (let i = 0; i < treeCount; i++) {
-                this.layers.push({
-                    x: (this.canvasWidth / treeCount) * i + Math.random() * 50,
-                    y: this.canvasHeight * (0.5 + layer * 0.15),
-                    width: 35 - layer * 8,
-                    height: 70 - layer * 15,
-                    color: [0.1 + layer * 0.1, 0.3 + layer * 0.1, 0.15, 0.7 - layer * 0.15],
-                    type: 'tree',
-                    layer: layer,
-                    speed: 8 + layer * 4
-                });
-            }
-        }
-        
-        // Giant glowing mushrooms
-        const mushroomColors = [
-            [0.9, 0.3, 0.5, 0.8],   // Pink
-            [0.5, 0.3, 0.9, 0.8],   // Purple
-            [0.3, 0.8, 0.9, 0.8]    // Cyan
-        ];
-        
-        for (let i = 0; i < 6; i++) {
-            const color = mushroomColors[i % 3];
-            this.layers.push({
-                x: (this.canvasWidth / 6) * i + Math.random() * 40,
-                y: this.canvasHeight * 0.75,
-                size: 15 + Math.random() * 15,
-                stemHeight: 20 + Math.random() * 20,
-                color: [...color],
-                type: 'giant_mushroom',
-                speed: 12 + i * 2,
-                glowPhase: Math.random() * Math.PI * 2
-            });
-        }
-        
-        // Glowing spores
-        for (let i = 0; i < 25; i++) {
-            const color = mushroomColors[i % 3];
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 1.5 + Math.random(),
-                speed: 8 + Math.random() * 10,
-                drift: (Math.random() - 0.5) * 15,
-                color: [...color],
-                type: 'spore',
-                floatPhase: Math.random() * Math.PI * 2,
-                glowPhase: Math.random() * Math.PI * 2
-            });
-        }
-        
-        // Fireflies (from FOREST)
-        for (let i = 0; i < 6; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.8,
-                radius: 2,
-                speed: 15 + Math.random() * 10,
-                floatY: Math.random() * Math.PI * 2,
-                glowPhase: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.5, 0.8],
-                type: 'firefly'
-            });
-        }
-    }
-    
-    initAuroraNight() {
-        // Night sky gradient
-        this.baseColors = [
-            [0.05, 0.1, 0.2, 1.0],
-            [0.15, 0.1, 0.3, 1.0]
-        ];
-        
-        // Moon (from NIGHT)
-        this.layers.push({
-            x: this.canvasWidth * 0.8,
-            y: this.canvasHeight * 0.15,
-            radius: 35,
-            color: [0.9, 0.9, 0.8, 0.85],
-            type: 'moon',
-            speed: 2
-        });
-        
-        // Aurora borealis waves (colorful wavy layers)
-        const auroraColors = [
-            [0.2, 0.8, 0.5, 0.4],   // Green
-            [0.3, 0.5, 1.0, 0.35],  // Blue
-            [0.8, 0.3, 0.8, 0.3]    // Purple
-        ];
-        
-        for (let i = 0; i < 3; i++) {
-            this.layers.push({
-                y: this.canvasHeight * (0.2 + i * 0.12),
-                amplitude: 40 + i * 10,
-                frequency: 0.004 - i * 0.0008,
-                speed: 15 - i * 3,
-                color: auroraColors[i],
-                type: 'aurora_wave',
-                layer: i,
-                phaseOffset: i * Math.PI * 0.6
-            });
-        }
-        
-        // Stars (from NIGHT)
-        for (let i = 0; i < 35; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.7,
-                radius: 1 + Math.random() * 1.5,
-                twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.95, 0.85],
-                type: 'star'
-            });
-        }
-        
-        // Aurora particles (shimmering lights)
-        for (let i = 0; i < 20; i++) {
-            const color = auroraColors[i % 3];
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.5,
-                radius: 2 + Math.random() * 2,
-                speed: 5 + Math.random() * 8,
-                drift: (Math.random() - 0.5) * 20,
-                color: [...color],
-                type: 'aurora_particle',
-                shimmer: Math.random() * Math.PI * 2,
-                floatPhase: Math.random() * Math.PI * 2
-            });
-        }
-    }
-    
-    initDesertStorm() {
-        // Desert/sand gradient (warm brown/orange)
-        this.baseColors = [
-            [0.8, 0.6, 0.3, 1.0],  // Sand yellow
-            [0.9, 0.7, 0.4, 1.0]   // Light sand
-        ];
-        
-        // Pyramids (from PYRAMIDS theme)
-        for (let i = 0; i < 2; i++) {
-            this.layers.push({
-                x: this.canvasWidth * (0.2 + i * 0.5),
-                y: this.canvasHeight * 0.55,
-                size: 80 - i * 20,
-                color: [0.7 - i * 0.15, 0.5 - i * 0.1, 0.2, 0.8],
-                type: 'pyramid',
-                speed: 5 + i * 3
-            });
-        }
-        
-        // Sand dunes (background hills)
-        for (let i = 0; i < 3; i++) {
-            this.layers.push({
-                y: this.canvasHeight * (0.6 + i * 0.08),
-                amplitude: 30 + i * 10,
-                frequency: 0.005 - i * 0.001,
-                speed: 20 - i * 6,
-                color: [0.75 - i * 0.1, 0.55 - i * 0.1, 0.25 - i * 0.05, 0.5 - i * 0.1],
-                type: 'dune',
-                layer: i
-            });
-        }
-        
-        // Sandstorm particles (heavy sand wind)
-        for (let i = 0; i < 40; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * (0.3 + Math.random() * 0.6),
-                size: 1 + Math.random() * 3,
-                speed: 80 + Math.random() * 60,
-                drift: (Math.random() - 0.3) * 20,
-                color: [0.85, 0.65, 0.35, 0.3 + Math.random() * 0.3],
-                type: 'sand'
-            });
-        }
-        
-        // Heat wave effect particles (shimmering air)
-        for (let i = 0; i < 15; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * (0.5 + Math.random() * 0.3),
-                radius: 3 + Math.random() * 4,
-                speed: 10 + Math.random() * 15,
-                drift: (Math.random() - 0.5) * 30,
-                color: [1.0, 0.9, 0.7, 0.15],
-                type: 'heatwave',
-                shimmer: Math.random() * Math.PI * 2,
-                floatPhase: Math.random() * Math.PI * 2
-            });
-        }
-    }
-    
+
+    /**
+     * Update animation state
+     * @param {number} deltaTime - Time since last update in seconds
+     * @param {number} cameraSpeed - Camera scroll speed for parallax effect
+     */
     update(deltaTime, cameraSpeed = 0) {
         this.animationTime += deltaTime;
         
-        // Handle theme transition
-        if (this.isTransitioning) {
-            this.transitionProgress += deltaTime / this.transitionDuration;
-            
-            if (this.transitionProgress >= 1.0) {
-                // Transition complete
-                this.isTransitioning = false;
-                this.transitionProgress = 1.0;
-                this.currentTheme = this.nextTheme;
-                this.layers = this.newLayers;
-                this.particles = this.newParticles;
-                this.baseColors = this.newBaseColors;
-                this.oldLayers = [];
-                this.oldParticles = [];
-                this.oldBaseColors = null;
-            }
+        if (this.transitionState.isTransitioning) {
+            this.updateTransition(deltaTime);
         }
         
-        // Update particles (con effetto parallasse camera)
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            
-            switch (p.type) {
-                case 'cloud':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    if (p.x + (p.baseSize * 3) < 0) {
-                        p.x = this.canvasWidth;
-                        p.y = Math.random() * this.canvasHeight * 0.6;
-                    }
-                    break;
-                    
-                case 'bird':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.wingPhase += deltaTime * 5;
-                    if (p.x < -20) {
-                        p.x = this.canvasWidth + 20;
-                        p.y = Math.random() * this.canvasHeight * 0.4;
-                    }
-                    break;
-                    
-                case 'fish':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.swimPhase += deltaTime * 4;
-                    if (p.x < -20) {
-                        p.x = this.canvasWidth + 20;
-                        p.y = this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3;
-                    }
-                    break;
-                    
-                case 'bubble':
-                    p.y -= p.speed * deltaTime;
-                    p.wobble += deltaTime * 2;
-                    p.x += Math.sin(p.wobble) * 15 * deltaTime;
-                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
-                    if (p.y < this.canvasHeight * 0.3) {
-                        p.y = this.canvasHeight;
-                        p.x = Math.random() * this.canvasWidth;
-                    }
-                    break;
-                    
-                case 'leaf':
-                    p.y += p.speed * deltaTime;
-                    p.x += p.drift * deltaTime;
-                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
-                    p.rotation += p.rotationSpeed * deltaTime;
-                    if (p.y > this.canvasHeight) {
-                        p.y = -10;
-                        p.x = Math.random() * this.canvasWidth;
-                    }
-                    break;
-                    
-                case 'sand':
-                case 'ember':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    if (p.type === 'ember') {
-                        p.y -= p.speed * deltaTime * 0.5; // Rise up
-                        // Horizontal drift for embers
-                        if (p.horizontalDrift) {
-                            p.x += p.horizontalDrift * deltaTime * 0.3;
-                        }
-                    }
-                    if (p.x < 0 || (p.type === 'ember' && p.y < 0)) {
-                        p.x = this.canvasWidth;
-                        p.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
-                    }
-                    break;
-                
-                case 'lava_glow':
-                    p.y -= p.speed * deltaTime; // Rise up slowly
-                    p.x -= cameraSpeed * deltaTime;
-                    p.pulse += deltaTime * 2;
-                    if (p.y < 0 || p.x < 0) {
-                        p.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 100;
-                        p.y = this.canvasHeight * 0.35 + Math.random() * 200;
-                        p.pulse = Math.random() * Math.PI * 2;
-                    }
-                    break;
-                
-                case 'smoke':
-                    p.y -= p.speed * deltaTime; // Rise up
-                    p.x += (p.drift || 0) * deltaTime; // Drift sideways
-                    p.x -= cameraSpeed * deltaTime;
-                    p.expansion = (p.expansion || 1) + deltaTime * 0.5; // Expand as it rises
-                    p.color[3] = Math.max(0, p.color[3] - deltaTime * 0.3); // Fade out
-                    
-                    // Remove when faded or off screen
-                    if (p.color[3] <= 0 || p.y < 0 || p.x < 0) {
-                        // Respawn at crater
-                        p.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
-                        p.y = this.canvasHeight * 0.35 - 20;
-                        p.expansion = 1;
-                        p.color[3] = 0.4;
-                    }
-                    break;
-                    
-                case 'star':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.twinkle += deltaTime * 2;
-                    if (p.x < 0) {
-                        p.x = this.canvasWidth;
-                        p.y = Math.random() * this.canvasHeight;
-                    }
-                    break;
-                    
-                case 'firefly':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.y += Math.sin(this.animationTime * 2 + p.floatY) * 0.5;
-                    if (p.x < 0) {
-                        p.x = this.canvasWidth;
-                        p.y = Math.random() * this.canvasHeight * 0.8;
-                    }
-                    break;
-                    
-                case 'snowflake':
-                    p.y += p.speed * deltaTime;
-                    p.x += p.drift * deltaTime;
-                    p.x -= cameraSpeed * deltaTime; // Aggiungo effetto camera
-                    if (p.y > this.canvasHeight) {
-                        p.y = 0;
-                        p.x = Math.random() * this.canvasWidth;
-                    }
-                    break;
-                    
-                case 'shootingStar':
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.y += p.speed * deltaTime * 0.3;
-                    if (p.x < -p.length) {
-                        this.particles.splice(i, 1);
-                    }
-                    break;
-                    
-                // MIXED THEME PARTICLE UPDATES
-                case 'glowdust':
-                    // Crystal cave glowing dust - float and drift
-                    p.y -= p.speed * deltaTime;
-                    p.x += p.drift * deltaTime;
-                    p.x -= cameraSpeed * deltaTime;
-                    p.floatPhase += deltaTime * 2;
-                    if (p.y < 0 || p.x < 0) {
-                        p.x = Math.random() * this.canvasWidth;
-                        p.y = this.canvasHeight;
-                    }
-                    break;
-                    
-                case 'spore':
-                    // Mushroom spores - float up with drift
-                    p.y -= p.speed * deltaTime;
-                    p.x += p.drift * deltaTime;
-                    p.x -= cameraSpeed * deltaTime;
-                    p.floatPhase += deltaTime * 2;
-                    p.glowPhase += deltaTime * 3;
-                    if (p.y < 0 || p.x < 0) {
-                        p.x = Math.random() * this.canvasWidth;
-                        p.y = this.canvasHeight;
-                    }
-                    break;
-                    
-                case 'aurora_particle':
-                    // Aurora particles - drift and shimmer
-                    p.y -= p.speed * deltaTime * 0.5;
-                    p.x += p.drift * deltaTime;
-                    p.x -= cameraSpeed * deltaTime;
-                    p.shimmer += deltaTime * 3;
-                    p.floatPhase += deltaTime * 2;
-                    if (p.y < 0 || p.x < 0) {
-                        p.x = Math.random() * this.canvasWidth;
-                        p.y = this.canvasHeight * 0.5;
-                    }
-                    break;
-                    
-                case 'heatwave':
-                    // Desert heat wave - drift and shimmer
-                    p.x -= (p.speed + cameraSpeed) * deltaTime;
-                    p.y += p.drift * deltaTime * 0.3;
-                    p.shimmer += deltaTime * 4;
-                    p.floatPhase += deltaTime * 3;
-                    if (p.x < 0) {
-                        p.x = this.canvasWidth;
-                        p.y = this.canvasHeight * (0.5 + Math.random() * 0.3);
-                    }
-                    break;
-            }
-        }
-        
-        // Update ALL layers con parallasse (non solo wave/pyramid/volcano)
+        this.updateLayers(deltaTime, cameraSpeed);
+        this.updateParticles(deltaTime, cameraSpeed);
+    }
+
+    updateLayers(deltaTime, cameraSpeed) {
         this.layers.forEach(layer => {
-            // Wave layers (ocean)
-            if (layer.type === 'wave') {
-                layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.5) * deltaTime;
+            if (!layer.offset) {
+                layer.offset = 0;
             }
             
-            // Layers che si muovono orizzontalmente con parallasse
-            if (layer.type === 'pyramid' || layer.type === 'volcano' || layer.type === 'dune' || 
-                layer.type === 'tree' || layer.type === 'mushroom' || layer.type === 'giant_mushroom') {
-                const layerSpeed = layer.speed || 10; // Default speed se non definito
-                layer.x -= (layerSpeed + cameraSpeed * 0.3) * deltaTime;
-                
-                // Wrap around quando escono dallo schermo
-                const layerWidth = layer.width || 100;
-                if (layer.x + layerWidth < 0) {
-                    layer.x = this.canvasWidth + Math.random() * 100;
-                }
-            }
+            // Apply parallax effect based on layer speed
+            const layerSpeed = layer.speed || 0;
+            const parallaxFactor = layerSpeed * 0.1; // Adjust parallax strength
+            layer.offset += (cameraSpeed * parallaxFactor) * deltaTime;
             
-            // MIXED THEME LAYER UPDATES
-            
-            // Sun movement (sunset ocean)
-            if (layer.type === 'sun') {
-                const sunSpeed = layer.speed || 1;
-                layer.x -= (sunSpeed + cameraSpeed * 0.1) * deltaTime;
-                if (layer.x + layer.radius < 0) {
-                    layer.x = this.canvasWidth + layer.radius;
-                }
-            }
-            
-            // Crystal layers (cave) - pulsing glow
-            if (layer.type === 'crystal_hanging' || layer.type === 'crystal_floor') {
-                const crystalSpeed = layer.speed || 5;
-                layer.x -= (crystalSpeed + cameraSpeed * 0.2) * deltaTime;
-                layer.glowPhase += deltaTime * 1.5;
-                
-                const layerWidth = layer.width || 20;
-                if (layer.x + layerWidth < 0) {
-                    layer.x = this.canvasWidth + Math.random() * 50;
-                }
-            }
-            
-            // Aurora waves (night) - animate phase
-            if (layer.type === 'aurora_wave') {
-                // Aurora doesn't scroll, just animates
-                layer.phaseOffset = (layer.phaseOffset || 0) + deltaTime * 0.5;
-            }
-            
-            // Seaweed oscillazione
-            if (layer.type === 'seaweed') {
-                const layerSpeed = layer.speed || 0.5;
-                layer.swayPhase = (layer.swayPhase || 0) + layerSpeed * deltaTime;
-                // Anche il seaweed si muove leggermente con la camera
-                layer.x -= cameraSpeed * 0.2 * deltaTime;
-                if (layer.x < -50) {
-                    layer.x = this.canvasWidth + 50;
-                }
-            }
-            
-            // Heatwave movement
-            if (layer.type === 'heatwave') {
-                layer.offset = (layer.offset || 0) + (layer.speed + cameraSpeed * 0.3) * deltaTime;
-            }
-            
-            // Sunray rotation
-            if (layer.type === 'sunray') {
-                layer.angle = (layer.angle || 0) + deltaTime * 0.1;
-            }
-            
-            // Crystal rotation
-            if (layer.type === 'crystal') {
-                layer.rotation = (layer.rotation || 0) + deltaTime * 0.5;
-                // I cristalli si muovono anche loro
-                const crystalSpeed = layer.speed || 8;
-                layer.x -= (crystalSpeed + cameraSpeed * 0.25) * deltaTime;
-                if (layer.x < -100) {
-                    layer.x = this.canvasWidth + 100;
-                }
-            }
-            
-            // Planet movement (very slow parallax)
-            if (layer.type === 'planet') {
-                const planetSpeed = layer.speed || 3;
-                layer.x -= (planetSpeed + cameraSpeed * 0.15) * deltaTime;
-                if (layer.x + layer.radius < 0) {
-                    layer.x = this.canvasWidth + layer.radius;
-                }
-            }
-            
-            // Moon movement (very slow)
-            if (layer.type === 'moon') {
-                const moonSpeed = layer.speed || 2;
-                layer.x -= (moonSpeed + cameraSpeed * 0.1) * deltaTime;
-                if (layer.x + layer.radius < 0) {
-                    layer.x = this.canvasWidth + layer.radius;
-                }
+            // Wrap offset for seamless scrolling (optional, depends on layer type)
+            if (layer.offset > this.canvasWidth * 2) {
+                layer.offset = 0;
             }
         });
     }
-    
-    getBackgroundColor() {
-        if (!this.isTransitioning || !this.oldBaseColors || !this.newBaseColors) {
-            return this.baseColors[0];
+
+    updateTransition(deltaTime) {
+        this.transitionState.progress += deltaTime / this.transitionState.duration;
+        
+        if (this.transitionState.progress >= 1.0) {
+            this.completeTransition();
         }
-        
-        // Smooth easing function (ease-in-out)
-        const t = this.transitionProgress < 0.5 
-            ? 2 * this.transitionProgress * this.transitionProgress 
-            : 1 - Math.pow(-2 * this.transitionProgress + 2, 2) / 2;
-        
-        // Interpolate between old and new background colors
-        const oldColor = this.oldBaseColors[0];
-        const newColor = this.newBaseColors[0];
-        
-        return [
-            oldColor[0] + (newColor[0] - oldColor[0]) * t,
-            oldColor[1] + (newColor[1] - oldColor[1]) * t,
-            oldColor[2] + (newColor[2] - oldColor[2]) * t,
-            1.0
-        ];
     }
-    
+
+    completeTransition() {
+        this.currentTheme = this.transitionState.nextTheme;
+        this.layers = this.transitionState.newLayers;
+        this.particles = this.transitionState.newParticles;
+        this.baseColors = this.transitionState.newBaseColors;
+        
+        this.transitionState = this.createTransitionState();
+    }
+
+    updateParticles(deltaTime, cameraSpeed) {
+        this.particles.forEach(particle => {
+            this.updateParticlePosition(particle, deltaTime, cameraSpeed);
+        });
+    }
+
+    updateParticlePosition(particle, deltaTime, cameraSpeed) {
+        if (!particle.speed) return;
+
+        switch (particle.type) {
+            case 'cloud':
+            case 'bird':
+            case 'fish':
+                // Move left with speed + parallax camera effect
+                particle.x -= (particle.speed + cameraSpeed) * deltaTime;
+                if (particle.x < -100) {
+                    particle.x = this.canvasWidth + 100;
+                    particle.y = Math.random() * this.canvasHeight * (particle.type === 'fish' ? 0.8 : 0.6);
+                }
+                // Update animation phases
+                if (particle.type === 'bird') {
+                    particle.wingPhase = (particle.wingPhase || 0) + deltaTime * 5;
+                } else if (particle.type === 'fish') {
+                    particle.swimPhase = (particle.swimPhase || 0) + deltaTime * 4;
+                }
+                break;
+                
+            case 'bubble':
+                // Rise up with wobble
+                particle.y -= particle.speed * deltaTime;
+                particle.wobble = (particle.wobble || 0) + deltaTime * 2;
+                particle.x += Math.sin(particle.wobble) * 15 * deltaTime;
+                particle.x -= cameraSpeed * deltaTime; // Camera parallax
+                if (particle.y < this.canvasHeight * 0.3) {
+                    particle.y = this.canvasHeight;
+                    particle.x = Math.random() * this.canvasWidth;
+                }
+                break;
+                
+            case 'snowflake':
+                // Fall down with drift
+                particle.y += particle.speed * deltaTime;
+                particle.drift = particle.drift || (Math.random() - 0.5) * 20;
+                particle.x += particle.drift * deltaTime;
+                particle.x -= cameraSpeed * deltaTime; // Camera parallax
+                if (particle.y > this.canvasHeight + 20) {
+                    particle.y = -20;
+                    particle.x = Math.random() * this.canvasWidth;
+                }
+                break;
+                
+            case 'sand':
+            case 'ember':
+                particle.x -= (particle.speed + cameraSpeed) * deltaTime;
+                if (particle.type === 'ember') {
+                    particle.y -= particle.speed * deltaTime * 0.5; // Rise up
+                    // Horizontal drift for embers
+                    if (particle.horizontalDrift) {
+                        particle.x += particle.horizontalDrift * deltaTime * 0.3;
+                    }
+                }
+                if (particle.x < 0 || (particle.type === 'ember' && particle.y < 0)) {
+                    particle.x = this.canvasWidth;
+                    particle.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
+                }
+                break;
+                
+            case 'smoke':
+                particle.y -= particle.speed * deltaTime; // Rise up
+                particle.x += (particle.drift || 0) * deltaTime;
+                particle.x -= cameraSpeed * deltaTime; // Camera parallax
+                particle.expansion = (particle.expansion || 1) + deltaTime * 0.5;
+                particle.color[3] = Math.max(0, particle.color[3] - deltaTime * 0.3);
+                
+                if (particle.color[3] <= 0 || particle.y < 0) {
+                    // Respawn
+                    particle.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
+                    particle.y = this.canvasHeight * 0.35 - 20;
+                    particle.expansion = 1;
+                    particle.color[3] = 0.4;
+                }
+                break;
+                
+            case 'star':
+                particle.x -= (particle.speed || 10 + cameraSpeed) * deltaTime;
+                particle.twinkle = (particle.twinkle || 0) + deltaTime * 2;
+                if (particle.x < 0) {
+                    particle.x = this.canvasWidth;
+                    particle.y = Math.random() * this.canvasHeight;
+                }
+                break;
+                
+            case 'leaf':
+                particle.y += particle.speed * deltaTime;
+                particle.x += particle.drift * deltaTime;
+                particle.x -= cameraSpeed * deltaTime; // Camera parallax
+                particle.rotation = (particle.rotation || 0) + (particle.rotationSpeed || 1) * deltaTime;
+                if (particle.y > this.canvasHeight) {
+                    particle.y = -10;
+                    particle.x = Math.random() * this.canvasWidth;
+                }
+                break;
+        }
+    }
+
+    /**
+     * Get current layers for rendering
+     * @returns {Array} Current layers
+     */
     getLayers() {
-        if (!this.isTransitioning) {
-            return this.layers;
+        if (this.transitionState.isTransitioning) {
+            return this.interpolateLayers();
         }
-        
-        // During transition, blend old and new layers
-        const t = this.transitionProgress;
-        const fadeOutLayers = this.oldLayers.map(layer => {
-            const fadedLayer = { ...layer };
-            if (fadedLayer.color) {
-                fadedLayer.color = [...fadedLayer.color];
-                fadedLayer.color[3] *= (1 - t); // Fade out old layers
-            }
-            return fadedLayer;
-        });
-        
-        const fadeInLayers = this.newLayers.map(layer => {
-            const fadedLayer = { ...layer };
-            if (fadedLayer.color) {
-                fadedLayer.color = [...fadedLayer.color];
-                fadedLayer.color[3] *= t; // Fade in new layers
-            }
-            return fadedLayer;
-        });
-        
-        return [...fadeOutLayers, ...fadeInLayers];
+        return this.layers;
     }
-    
+
+    /**
+     * Get current particles for rendering
+     * @returns {Array} Current particles
+     */
     getParticles() {
-        if (!this.isTransitioning) {
-            return this.particles;
+        if (this.transitionState.isTransitioning) {
+            return this.interpolateParticles();
         }
-        
-        // During transition, blend old and new particles
-        const t = this.transitionProgress;
-        const fadeOutParticles = this.oldParticles.map(particle => {
-            const fadedParticle = { ...particle };
-            if (fadedParticle.color) {
-                fadedParticle.color = [...fadedParticle.color];
-                fadedParticle.color[3] *= (1 - t); // Fade out old particles
-            }
-            return fadedParticle;
-        });
-        
-        const fadeInParticles = this.newParticles.map(particle => {
-            const fadedParticle = { ...particle };
-            if (fadedParticle.color) {
-                fadedParticle.color = [...fadedParticle.color];
-                fadedParticle.color[3] *= t; // Fade in new particles
-            }
-            return fadedParticle;
-        });
-        
-        return [...fadeOutParticles, ...fadeInParticles];
+        return this.particles;
     }
-    
-    getCurrentTheme() {
-        return this.currentTheme;
+
+    /**
+     * Get current base colors
+     * @returns {Array} Base colors for gradient
+     */
+    getBaseColors() {
+        if (this.transitionState.isTransitioning) {
+            return this.interpolateColors(
+                this.transitionState.oldBaseColors,
+                this.transitionState.newBaseColors,
+                this.transitionState.progress
+            );
+        }
+        return this.baseColors;
     }
-    
+
+    /**
+     * Get background color (alias for compatibility)
+     * @returns {Array} First base color as RGBA array
+     */
+    getBackgroundColor() {
+        const colors = this.getBaseColors();
+        return colors && colors.length > 0 ? colors[0] : [0.4, 0.7, 1.0, 1.0];
+    }
+
+    interpolateLayers() {
+        // During transition, blend old and new layers based on progress
+        const progress = this.easeInOutQuad(this.transitionState.progress);
+        
+        // Simple approach: fade out old, fade in new
+        const oldLayersWithAlpha = this.transitionState.oldLayers.map(layer => ({
+            ...layer,
+            color: this.applyAlpha(layer.color, 1 - progress)
+        }));
+        
+        const newLayersWithAlpha = this.transitionState.newLayers.map(layer => ({
+            ...layer,
+            color: this.applyAlpha(layer.color, progress)
+        }));
+        
+        return [...oldLayersWithAlpha, ...newLayersWithAlpha];
+    }
+
+    interpolateParticles() {
+        const progress = this.easeInOutQuad(this.transitionState.progress);
+        
+        const oldParticlesWithAlpha = this.transitionState.oldParticles.map(p => ({
+            ...p,
+            color: this.applyAlpha(p.color, 1 - progress)
+        }));
+        
+        const newParticlesWithAlpha = this.transitionState.newParticles.map(p => ({
+            ...p,
+            color: this.applyAlpha(p.color, progress)
+        }));
+        
+        return [...oldParticlesWithAlpha, ...newParticlesWithAlpha];
+    }
+
+    interpolateColors(colors1, colors2, t) {
+        if (!colors1 || !colors2) return colors1 || colors2 || [];
+        
+        return colors1.map((color1, index) => {
+            const color2 = colors2[index] || color1;
+            return [
+                color1[0] + (color2[0] - color1[0]) * t,
+                color1[1] + (color2[1] - color1[1]) * t,
+                color1[2] + (color2[2] - color1[2]) * t,
+                color1[3] + (color2[3] - color1[3]) * t
+            ];
+        });
+    }
+
+    applyAlpha(color, alpha) {
+        return [...color.slice(0, 3), color[3] * alpha];
+    }
+
+    easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    /**
+     * Register custom theme generator
+     * @param {BaseThemeGenerator} generator - Custom generator
+     */
+    registerThemeGenerator(generator) {
+        this.themeFactory.registerGenerator(generator);
+    }
+
+    /**
+     * Update canvas dimensions
+     * @param {number} width - New width
+     * @param {number} height - New height
+     */
     updateDimensions(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
+        this.themeFactory.updateDimensions(width, height);
         this.initializeTheme();
+    }
+
+    /**
+     * Get available themes
+     * @returns {Array<string>} Array of theme names
+     */
+    getAvailableThemes() {
+        return this.themeFactory.getAvailableThemes();
     }
 }

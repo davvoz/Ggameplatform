@@ -1,0 +1,246 @@
+/**
+ * Theme Configuration Constants
+ * Centralizes all theme-specific configurations
+ * Eliminates magic numbers and improves maintainability
+ */
+
+export const THEME_NAMES = {
+    SKY: 'sky',
+    OCEAN: 'ocean',
+    PYRAMIDS: 'pyramids',
+    VOLCANO: 'volcano',
+    SPACE: 'space',
+    FOREST: 'forest',
+    ICE: 'ice',
+    NIGHT: 'night',
+    SUNSET_OCEAN: 'sunset_ocean',
+    CRYSTAL_CAVE: 'crystal_cave',
+    MUSHROOM_FOREST: 'mushroom_forest',
+    AURORA_NIGHT: 'aurora_night',
+    DESERT_STORM: 'desert_storm'
+};
+
+export const SKY_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.4, 0.7, 1.0, 1.0],
+        [0.6, 0.85, 1.0, 1.0]
+    ],
+    CLOUD_COUNT: 3,
+    CLOUD_MIN_SIZE: 40,
+    CLOUD_MAX_SIZE: 80,
+    CLOUD_MIN_PUFFS: 3,
+    CLOUD_MAX_PUFFS: 6,
+    CLOUD_MIN_SPEED: 10,
+    CLOUD_MAX_SPEED: 30,
+    BIRD_COUNT: 3,
+    BIRD_MIN_SPEED: 40,
+    BIRD_MAX_SPEED: 70,
+    BIRD_MIN_SIZE: 4,
+    BIRD_MAX_SIZE: 7,
+    SUNRAY_COUNT: 3,
+    SUNRAY_BASE_LENGTH: 150,
+    SUNRAY_LENGTH_INCREMENT: 30
+};
+
+export const OCEAN_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.0, 0.5, 1.0, 1.0],
+        [0.1, 0.7, 1.0, 1.0]
+    ],
+    WAVE_COUNT: 5,
+    WAVE_BASE_AMPLITUDE: 20,
+    WAVE_AMPLITUDE_INCREMENT: 5,
+    WAVE_BASE_FREQUENCY: 0.01,
+    WAVE_FREQUENCY_DECREMENT: 0.001,
+    WAVE_BASE_SPEED: 1,
+    WAVE_SPEED_INCREMENT: 0.2,
+    BUBBLE_COUNT: 13,
+    BUBBLE_MIN_RADIUS: 2,
+    BUBBLE_MAX_RADIUS: 6,
+    BUBBLE_MIN_SPEED: 20,
+    BUBBLE_MAX_SPEED: 60,
+    FISH_COUNT: 2,
+    FISH_MIN_SPEED: 30,
+    FISH_MAX_SPEED: 55,
+    FISH_MIN_SIZE: 8,
+    FISH_MAX_SIZE: 14,
+    SEAWEED_COUNT: 5
+};
+
+export const PYRAMID_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.85, 0.7, 0.35, 1.0],
+        [0.75, 0.6, 0.25, 1.0]
+    ],
+    PYRAMID_COUNT: 3,
+    PYRAMID_MIN_WIDTH: 100,
+    PYRAMID_MAX_WIDTH: 180,
+    PYRAMID_MIN_HEIGHT: 80,
+    PYRAMID_MAX_HEIGHT: 140,
+    SAND_PARTICLE_COUNT: 15,
+    SAND_MIN_RADIUS: 1,
+    SAND_MAX_RADIUS: 3,
+    SAND_MIN_SPEED: 30,
+    SAND_MAX_SPEED: 70,
+    HEATWAVE_COUNT: 4,
+    DUNE_COUNT: 3
+};
+
+export const VOLCANO_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.6, 0.1, 0.0, 1.0],
+        [0.9, 0.35, 0.1, 1.0]
+    ],
+    MAIN_VOLCANO_HEIGHT: 350,
+    MAIN_VOLCANO_WIDTH: 350,
+    MAIN_VOLCANO_CRATER_WIDTH: 80,
+    MAIN_VOLCANO_CRATER_DEPTH: 60,
+    SECONDARY_VOLCANO_HEIGHT: 220,
+    SECONDARY_VOLCANO_WIDTH: 200,
+    SECONDARY_VOLCANO_CRATER_WIDTH: 50,
+    SECONDARY_VOLCANO_CRATER_DEPTH: 40,
+    SMOKE_PARTICLE_COUNT: 5,
+    EMBER_PARTICLE_COUNT: 25,
+    EMBER_MIN_RADIUS: 2,
+    EMBER_MAX_RADIUS: 5,
+    EMBER_MIN_SPEED: -30,
+    EMBER_MAX_SPEED: -80
+};
+
+export const SPACE_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.05, 0.05, 0.15, 1.0],
+        [0.1, 0.1, 0.2, 1.0]
+    ],
+    STAR_COUNT: 50,
+    STAR_MIN_RADIUS: 1,
+    STAR_MAX_RADIUS: 3,
+    PLANET_COUNT: 3,
+    PLANET_MIN_RADIUS: 20,
+    PLANET_MAX_RADIUS: 50,
+    NEBULA_COUNT: 2,
+    SHOOTING_STAR_COUNT: 3,
+    SHOOTING_STAR_LENGTH: 40
+};
+
+export const FOREST_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.4, 0.6, 0.8, 1.0],
+        [0.3, 0.5, 0.3, 1.0]
+    ],
+    TREE_COUNT: 8,
+    TREE_MIN_WIDTH: 40,
+    TREE_MAX_WIDTH: 80,
+    TREE_MIN_HEIGHT: 80,
+    TREE_MAX_HEIGHT: 150,
+    FIREFLY_COUNT: 12,
+    FIREFLY_MIN_RADIUS: 2,
+    FIREFLY_MAX_RADIUS: 4,
+    LEAF_COUNT: 8
+};
+
+export const ICE_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.7, 0.85, 1.0, 1.0],
+        [0.85, 0.95, 1.0, 1.0]
+    ],
+    CRYSTAL_COUNT: 10,
+    CRYSTAL_MIN_SIZE: 15,
+    CRYSTAL_MAX_SIZE: 40,
+    SNOWFLAKE_COUNT: 25,
+    SNOWFLAKE_MIN_RADIUS: 2,
+    SNOWFLAKE_MAX_RADIUS: 5,
+    SNOWFLAKE_MIN_SPEED: 10,
+    SNOWFLAKE_MAX_SPEED: 40
+};
+
+export const NIGHT_THEME_CONFIG = {
+    BASE_COLORS: [
+        [0.1, 0.1, 0.2, 1.0],
+        [0.15, 0.15, 0.25, 1.0]
+    ],
+    MOON_RADIUS: 50,
+    STAR_COUNT: 30,
+    STAR_MIN_RADIUS: 1,
+    STAR_MAX_RADIUS: 3,
+    FIREFLY_COUNT: 8,
+    CLOUD_COUNT: 2
+};
+
+export const SUNSET_OCEAN_CONFIG = {
+    BASE_COLORS: [
+        [1.0, 0.4, 0.2, 1.0],
+        [0.3, 0.5, 0.8, 1.0]
+    ],
+    SUN_RADIUS: 60,
+    WAVE_COUNT: 4,
+    BIRD_COUNT: 2
+};
+
+export const CRYSTAL_CAVE_CONFIG = {
+    BASE_COLORS: [
+        [0.1, 0.1, 0.15, 1.0],
+        [0.2, 0.25, 0.35, 1.0]
+    ],
+    HANGING_CRYSTAL_COUNT: 6,
+    FLOOR_CRYSTAL_COUNT: 8,
+    GLOWDUST_COUNT: 20,
+    GLOWDUST_MIN_RADIUS: 2,
+    GLOWDUST_MAX_RADIUS: 4
+};
+
+export const MUSHROOM_FOREST_CONFIG = {
+    BASE_COLORS: [
+        [0.2, 0.3, 0.4, 1.0],
+        [0.3, 0.4, 0.3, 1.0]
+    ],
+    GIANT_MUSHROOM_COUNT: 5,
+    REGULAR_MUSHROOM_COUNT: 8,
+    SPORE_COUNT: 15,
+    SPORE_MIN_RADIUS: 2,
+    SPORE_MAX_RADIUS: 4,
+    FIREFLY_COUNT: 10
+};
+
+export const AURORA_NIGHT_CONFIG = {
+    BASE_COLORS: [
+        [0.05, 0.1, 0.2, 1.0],
+        [0.1, 0.15, 0.25, 1.0]
+    ],
+    AURORA_WAVE_COUNT: 3,
+    AURORA_MIN_AMPLITUDE: 30,
+    AURORA_MAX_AMPLITUDE: 60,
+    AURORA_PARTICLE_COUNT: 20,
+    STAR_COUNT: 25
+};
+
+export const DESERT_STORM_CONFIG = {
+    BASE_COLORS: [
+        [0.8, 0.6, 0.3, 1.0],
+        [0.7, 0.5, 0.2, 1.0]
+    ],
+    DUNE_COUNT: 4,
+    SAND_PARTICLE_COUNT: 30,
+    HEATWAVE_PARTICLE_COUNT: 15,
+    PYRAMID_COUNT: 2
+};
+
+export const TRANSITION_CONFIG = {
+    DURATION: 2.5,
+    EASING: 'easeInOutQuad'
+};
+
+export const DEFAULT_THEME_SEQUENCE = [
+    THEME_NAMES.SKY,
+    THEME_NAMES.SUNSET_OCEAN,
+    THEME_NAMES.PYRAMIDS,
+    THEME_NAMES.DESERT_STORM,
+    THEME_NAMES.VOLCANO,
+    THEME_NAMES.CRYSTAL_CAVE,
+    THEME_NAMES.FOREST,
+    THEME_NAMES.MUSHROOM_FOREST,
+    THEME_NAMES.SPACE,
+    THEME_NAMES.AURORA_NIGHT,
+    THEME_NAMES.ICE,
+    THEME_NAMES.NIGHT
+];

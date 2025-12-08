@@ -1,8 +1,17 @@
 {
-  "version": "1.11.3",
-  "timestamp": "2025-12-08T16:56:23.771Z",
-  "buildNumber": 29,
+  "version": "1.11.4",
+  "timestamp": "2025-12-08T17:04:18.926Z",
+  "buildNumber": 30,
   "changelog": [
+    {
+      "version": "1.11.4",
+      "date": "2025-12-08",
+      "type": "patch",
+      "changes": [
+        "fix: remove border from profile header for cleaner design",
+        "🔖 Bump version to 1.11.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.11.3",
       "date": "2025-12-08",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: Update scrollbar styles for Webkit browsers and improve CSS caching strategy in nginx configuration",
         "🔖 Bump version to 1.8.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.8.4",
-      "date": "2025-12-07",
-      "type": "patch",
-      "changes": [
-        "fix: Add custom scrollbar styles for Webkit and Firefox browsers",
-        "🔖 Bump version to 1.8.3 [skip-version]"
       ]
     }
   ]

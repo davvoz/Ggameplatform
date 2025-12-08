@@ -41,7 +41,7 @@ export class ScreenManager {
         
         if (prevPageBtn) prevPageBtn.addEventListener('click', () => this._onPrevPage());
         if (nextPageBtn) nextPageBtn.addEventListener('click', () => this._onNextPage());
-        if (levelSelectBackBtn) levelSelectBackBtn.addEventListener('click', () => this.showMenu());
+        if (levelSelectBackBtn) levelSelectBackBtn.addEventListener('click', () => this._dispatchEvent('backToMenu'));
         
         // Level Summary screen
         const nextLevelBtn = document.getElementById('next-level-btn');
@@ -50,7 +50,7 @@ export class ScreenManager {
         
         if (nextLevelBtn) nextLevelBtn.addEventListener('click', () => this._onNextLevel());
         if (retryLevelBtn) retryLevelBtn.addEventListener('click', () => this._onRetryLevel());
-        if (summaryMenuBtn) summaryMenuBtn.addEventListener('click', () => this.showMenu());
+        if (summaryMenuBtn) summaryMenuBtn.addEventListener('click', () => this._dispatchEvent('backToMenu'));
         
         // Pause screen
         const resumeBtn = document.getElementById('resume-button');
@@ -64,7 +64,7 @@ export class ScreenManager {
         const menuBtn = document.getElementById('menu-button');
         
         if (restartBtn) restartBtn.addEventListener('click', () => this._onRestart());
-        if (menuBtn) menuBtn.addEventListener('click', () => this.showMenu());
+        if (menuBtn) menuBtn.addEventListener('click', () => this._dispatchEvent('backToMenu'));
         
         // Volume controls
         const sfxSlider = document.getElementById('sfx-volume');
@@ -97,8 +97,19 @@ export class ScreenManager {
     /**
      * Mostra menu principale
      */
-    showMenu() {
+    async showMenu(scoreSystem = null) {
         this._showScreen('menu');
+        
+        // Se viene passato il ScoreSystem, carica l'high score dal backend
+        if (scoreSystem) {
+            try {
+                const highScore = await scoreSystem.loadHighScore();
+                this.updateHighScore(highScore);
+            } catch (error) {
+                console.warn('Failed to load high score for menu:', error);
+            }
+        }
+        
         this._dispatchEvent('showMenu');
     }
     

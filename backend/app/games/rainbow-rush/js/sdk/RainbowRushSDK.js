@@ -202,6 +202,39 @@ export class RainbowRushSDK {
         }
     }
     
+    // ==================== LEADERBOARD API ====================
+    
+    /**
+     * Get user's high score for Rainbow Rush from backend leaderboard
+     * This is the authoritative source for the user's max score
+     * @returns {Promise<number>} High score from backend or 0
+     */
+    async getUserHighScore() {
+        try {
+            // Rainbow Rush game ID (should match backend registration)
+            const gameId = 'rainbow-rush';
+            
+            // Get all-time leaderboard filtered by game
+            const response = await this.apiRequest('GET', `/api/leaderboard/all-time?game_id=${gameId}&limit=100`);
+            
+            if (response.success && response.leaderboard) {
+                // Find user's entry in the leaderboard
+                const userEntry = response.leaderboard.find(entry => entry.user_id === this.userId);
+                
+                if (userEntry) {
+                    console.log('[RainbowRushSDK] 🏆 High score from backend:', userEntry.score);
+                    return userEntry.score;
+                }
+            }
+            
+            console.log('[RainbowRushSDK] No high score found in leaderboard, returning 0');
+            return 0;
+        } catch (error) {
+            console.error('[RainbowRushSDK] Error fetching high score from leaderboard:', error);
+            return 0;
+        }
+    }
+    
     // ==================== SESSION API ====================
     
     /**

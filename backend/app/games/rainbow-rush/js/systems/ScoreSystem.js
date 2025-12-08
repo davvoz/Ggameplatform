@@ -375,10 +375,12 @@ export class ScoreSystem {
     async loadHighScore() {
         if (this.sdkEnabled && this.sdk) {
             try {
-                const progress = await this.sdk.getProgress();
-                return progress.high_score || 0;
+                // Usa il nuovo metodo getUserHighScore per ottenere il vero high score dal backend
+                const highScore = await this.sdk.getUserHighScore();
+                console.log('🏆 High score loaded from backend leaderboard:', highScore);
+                return highScore;
             } catch (error) {
-                console.warn('Failed to load high score from SDK:', error);
+                console.warn('Failed to load high score from SDK leaderboard:', error);
                 return this.loadHighScoreLocal();
             }
         } else {

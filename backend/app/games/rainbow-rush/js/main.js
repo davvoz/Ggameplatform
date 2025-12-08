@@ -46,6 +46,12 @@ class RainbowRushApp {
 
             // Hide loading screen and show menu
             this.hideLoadingScreen();
+            
+            // Load and display initial high score
+            if (this.gameController?.scoreSystem) {
+                const highScore = await this.gameController.scoreSystem.loadHighScore();
+                this.screenManager.updateHighScore(highScore);
+            }
 
             this.initialized = true;
             console.log('✅ Rainbow Rush initialized successfully!');
@@ -124,9 +130,9 @@ class RainbowRushApp {
         });
         
         // Pause menu - return to main menu
-        this.screenManager.on('pauseMenu', () => {
+        this.screenManager.on('pauseMenu', async () => {
             this.gameController.audioManager?.playSound('click');
-            this.screenManager.showMenu();
+            await this.screenManager.showMenu(this.gameController.scoreSystem);
         });
         
         // Restart game
@@ -155,6 +161,14 @@ class RainbowRushApp {
             if (this.gameController?.audioManager) {
                 this.gameController.audioManager.setMusicVolume(volume);
             }
+        });
+        
+        // Back to menu event (from various screens)
+        this.screenManager.on('backToMenu', async () => {
+            if (this.gameController?.audioManager) {
+                this.gameController.audioManager.playSound('click');
+            }
+            await this.screenManager.showMenu(this.gameController?.scoreSystem);
         });
     }
     
@@ -186,12 +200,10 @@ class RainbowRushApp {
             }
         });
         
-        window.addEventListener('showMenu', (e) => {
-            if (this.screenManager) {
-                this.screenManager.showMenu();
-                if (e.detail?.highScore) {
-                    this.screenManager.updateHighScore(e.detail.highScore);
-                }
+        window.addEventListener('showMenu', async (e) => {
+            if (this.screenManager && this.gameController) {
+                await this.screenManager.showMenu(this.gameController.scoreSystem);
+                // Non serve più updateHighScore manualmente, showMenu lo fa già
             }
         });
         

@@ -358,16 +358,21 @@ class LeaderboardRenderer {
      * Render leaderboard table
      */
     renderLeaderboardTable(entries) {
+        const hasGames = !this.currentGameId;
+        const showRewards = this.currentTab === 'weekly'; // Only show rewards in weekly tab
+        const headerClass = `${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
+        
         return `
             <div class="leaderboard-table">
-                <div class="table-header">
+                <div class="table-header ${headerClass}">
                     <div class="col-rank">Rank</div>
                     <div class="col-player">Player</div>
                     ${this.currentGameId ? '<div class="col-score">Score</div>' : '<div class="col-score">Total Score</div>'}
-                    ${!this.currentGameId ? '<div class="col-games">Games Played</div>' : ''}
+                    ${hasGames ? '<div class="col-games">Games Played</div>' : ''}
+                    ${showRewards ? '<div class="col-rewards">Rewards</div>' : ''}
                 </div>
                 <div class="table-body">
-                    ${entries.map(entry => this.renderLeaderboardRow(entry)).join('')}
+                    ${entries.map(entry => this.renderLeaderboardRow(entry, hasGames, showRewards)).join('')}
                 </div>
             </div>
         `;
@@ -376,16 +381,36 @@ class LeaderboardRenderer {
     /**
      * Render single leaderboard row
      */
-    renderLeaderboardRow(entry) {
+    renderLeaderboardRow(entry, hasGames = false, showRewards = true) {
         const rankClass = entry.rank <= 3 ? `top-${entry.rank}` : '';
         const medal = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : '';
+        const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
+
+        // Find reward for this rank (only if showing rewards)
+        let rewardContent = '';
+        
+        if (showRewards) {
+            const reward = this.rewards.find(r => {
+                return entry.rank >= r.rank_start && entry.rank <= r.rank_end;
+            });
+            
+            if (reward) {
+                const steemPart = reward.steem_reward > 0 ? `<span class="reward-steem">💎 ${reward.steem_reward} STEEM</span>` : '';
+                const coinPart = reward.coin_reward > 0 ? `<span class="reward-coins">🪙 ${reward.coin_reward}</span>` : '';
+                
+                if (steemPart || coinPart) {
+                    rewardContent = `${steemPart} ${coinPart}`;
+                }
+            }
+        }
 
         return `
-            <div class="table-row ${rankClass}">
+            <div class="table-row ${rowClass}">
                 <div class="col-rank">${medal} #${entry.rank}</div>
                 <div class="col-player">${entry.username || 'Anonymous'}</div>
                 <div class="col-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
-                ${!this.currentGameId ? `<div class="col-games">${entry.games_played || 0}</div>` : ''}
+                ${hasGames ? `<div class="col-games">${entry.games_played || 0}</div>` : ''}
+                ${showRewards ? `<div class="col-rewards">${rewardContent ? `<div class="inline-reward-badge">${rewardContent}</div>` : ''}</div>` : ''}
             </div>
         `;
     }

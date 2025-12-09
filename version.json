@@ -1,8 +1,17 @@
 {
-  "version": "1.20.5",
-  "timestamp": "2025-12-09T21:38:32.532Z",
-  "buildNumber": 59,
+  "version": "1.20.6",
+  "timestamp": "2025-12-09T23:14:19.002Z",
+  "buildNumber": 60,
   "changelog": [
+    {
+      "version": "1.20.6",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance game session management with detailed score tracking and submission",
+        "🔖 Bump version to 1.20.5 [skip-version]"
+      ]
+    },
     {
       "version": "1.20.5",
       "date": "2025-12-09",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Add scripts to check quest data and reset invalid claims",
         "🔖 Bump version to 1.17.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.17.1",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Add script to fix quest completion statuses based on progress",
-        "🔖 Bump version to 1.17.0 [skip-version]"
       ]
     }
   ]

@@ -117,7 +117,7 @@ def force_update_all_quests():
                             WeeklyLeaderboard.user_id == user.user_id,
                             WeeklyLeaderboard.week_start == week_start_str
                         ).first()
-                        new_progress = 1 if entry and entry.rank <= quest.target_value else 0
+                        new_progress = 1 if entry and entry.rank is not None and entry.rank <= quest.target_value else 0
                     
                     elif quest.quest_type == 'play_games_weekly':
                         count = db.query(func.count(GameSession.session_id)).filter(

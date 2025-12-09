@@ -1,8 +1,17 @@
 {
-  "version": "1.17.1",
-  "timestamp": "2025-12-09T15:07:10.387Z",
-  "buildNumber": 50,
+  "version": "1.18.0",
+  "timestamp": "2025-12-09T15:21:27.816Z",
+  "buildNumber": 51,
   "changelog": [
+    {
+      "version": "1.18.0",
+      "date": "2025-12-09",
+      "type": "minor",
+      "changes": [
+        "feat: Add scripts to check quest data and reset invalid claims",
+        "🔖 Bump version to 1.17.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.17.1",
       "date": "2025-12-09",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Ensure rank is not None before comparing in quest progress calculations",
         "🔖 Bump version to 1.15.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.4",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Correct rank reference in quest progress calculations",
-        "🔖 Bump version to 1.15.3 [skip-version]"
       ]
     }
   ]

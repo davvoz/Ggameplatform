@@ -1,8 +1,17 @@
 {
-  "version": "1.17.0",
-  "timestamp": "2025-12-09T14:29:20.643Z",
-  "buildNumber": 49,
+  "version": "1.17.1",
+  "timestamp": "2025-12-09T15:07:10.387Z",
+  "buildNumber": 50,
   "changelog": [
+    {
+      "version": "1.17.1",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Add script to fix quest completion statuses based on progress",
+        "🔖 Bump version to 1.17.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.17.0",
       "date": "2025-12-09",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: Correct rank reference in quest progress calculations",
         "🔖 Bump version to 1.15.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.3",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Update USER_ID for quest level correction script",
-        "🔖 Bump version to 1.15.2 [skip-version]"
       ]
     }
   ]

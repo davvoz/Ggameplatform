@@ -127,6 +127,37 @@ class User(Base):
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert user instance to dictionary."""
+        # Handle game_scores
+        try:
+            if self.game_scores:
+                if isinstance(self.game_scores, str):
+                    game_scores = json.loads(self.game_scores)
+                else:
+                    game_scores = self.game_scores
+            else:
+                game_scores = {}
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"⚠️ Error parsing game_scores: {e}")
+            game_scores = {}
+        
+        # Handle extra_data
+        try:
+            if self.extra_data:
+                if isinstance(self.extra_data, str):
+                    metadata = json.loads(self.extra_data)
+                else:
+                    metadata = self.extra_data
+            else:
+                metadata = {}
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"⚠️ Error parsing extra_data: {e}")
+            metadata = {}
+        
+        # Convert datetime objects to strings for JSON serialization
+        created_at = self.created_at.isoformat() if hasattr(self.created_at, 'isoformat') else self.created_at
+        last_login = self.last_login.isoformat() if hasattr(self.last_login, 'isoformat') else self.last_login
+        last_multiplier_check = self.last_multiplier_check.isoformat() if hasattr(self.last_multiplier_check, 'isoformat') else self.last_multiplier_check
+        
         return {
             "user_id": self.user_id,
             "username": self.username,
@@ -136,15 +167,15 @@ class User(Base):
             "cur8_multiplier": self.cur8_multiplier,
             "votes_cur8_witness": bool(self.votes_cur8_witness),
             "delegation_amount": self.delegation_amount,
-            "last_multiplier_check": self.last_multiplier_check,
+            "last_multiplier_check": last_multiplier_check,
             "total_xp_earned": self.total_xp_earned,
-            "game_scores": json.loads(self.game_scores) if self.game_scores else {},
+            "game_scores": game_scores,
             "avatar": self.avatar,
-            "created_at": self.created_at,
-            "last_login": self.last_login,
+            "created_at": created_at,
+            "last_login": last_login,
             "login_streak": self.login_streak,
             "last_login_date": self.last_login_date,
-            "metadata": json.loads(self.extra_data) if self.extra_data else {}
+            "metadata": metadata
         }
     
     def __repr__(self) -> str:

@@ -286,9 +286,17 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password_hash: Optional[str] = None
     steem_username: Optional[str] = None
+    is_anonymous: Optional[bool] = None
     cur8_multiplier: Optional[float] = None
+    votes_cur8_witness: Optional[bool] = None
+    delegation_amount: Optional[float] = None
     total_xp_earned: Optional[float] = None
+    game_scores: Optional[Dict[str, Any]] = None
     avatar: Optional[str] = None
+    last_login: Optional[str] = None
+    login_streak: Optional[int] = None
+    last_login_date: Optional[str] = None
+    extra_data: Optional[Dict[str, Any]] = None
 
 
 # GameSession CRUD Schemas

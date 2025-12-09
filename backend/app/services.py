@@ -213,10 +213,14 @@ class UserService(BaseService):
             if existing and existing.user_id != id_value:
                 raise ValidationError(f"Email {data['email']} already exists")
         
-        # Convert dicts to JSON strings
+        # Convert dicts to JSON strings for database storage
         if 'game_scores' in data and isinstance(data['game_scores'], dict):
             data['game_scores'] = json.dumps(data['game_scores'])
-        if 'metadata' in data and isinstance(data['metadata'], dict):
+        
+        # Handle both 'extra_data' and 'metadata' keys
+        if 'extra_data' in data and isinstance(data['extra_data'], dict):
+            data['extra_data'] = json.dumps(data['extra_data'])
+        elif 'metadata' in data and isinstance(data['metadata'], dict):
             data['extra_data'] = json.dumps(data['metadata'])
             del data['metadata']
         

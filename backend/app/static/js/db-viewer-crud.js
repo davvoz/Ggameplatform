@@ -207,12 +207,12 @@ class CRUDManager {
                 { key: 'delegation_amount', label: 'Delegation Amount (STEEM)', type: 'number', step: '0.001', min: '0' },
                 { key: 'last_multiplier_check', label: 'Last Multiplier Check', type: 'text', readonly: true },
                 { key: 'total_xp_earned', label: 'XP Totale', type: 'number', step: '0.01', min: '0' },
-                { key: 'game_scores', label: 'Game Scores', type: 'json' },
+                { key: 'game_scores', label: 'Game Scores', type: 'textarea', isJSON: true },
                 { key: 'avatar', label: 'Avatar URL', type: 'text' },
                 { key: 'last_login', label: 'Last Login', type: 'datetime-local' },
                 { key: 'login_streak', label: 'Login Streak', type: 'number', min: '0' },
                 { key: 'last_login_date', label: 'Last Login Date', type: 'text' },
-                { key: 'extra_data', label: 'Extra Data', type: 'json' },
+                { key: 'extra_data', label: 'Extra Data', type: 'textarea', isJSON: true },
                 { key: 'created_at', label: 'Created At', type: 'datetime-local', readonly: true }
             ],
             'sessions': [
@@ -545,19 +545,25 @@ class CRUDManager {
                 // Already handled above
                 continue;
             } else if (input.type === 'number') {
-                data[key] = value ? parseFloat(value) : 0;
+                data[key] = value ? parseFloat(value) : null;
             } else if (input.type === 'select-one' && key === 'status_id') {
                 // Convert status_id to integer
                 data[key] = value ? parseInt(value) : null;
-            } else if (input.dataset.json || key === 'parameters') {
-                // Parse JSON fields
-                try {
-                    data[key] = value ? JSON.parse(value) : {};
-                } catch (e) {
-                    data[key] = {};
+            } else if (input.dataset.json || key === 'parameters' || key === 'game_scores' || key === 'extra_data') {
+                // Parse JSON fields - send null if empty instead of empty string
+                if (!value || value.trim() === '') {
+                    data[key] = null;
+                } else {
+                    try {
+                        data[key] = JSON.parse(value);
+                    } catch (e) {
+                        console.warn(`Failed to parse JSON for ${key}, sending as null:`, e);
+                        data[key] = null;
+                    }
                 }
             } else {
-                data[key] = value;
+                // For regular text fields, send null if empty
+                data[key] = value || null;
             }
         }
 

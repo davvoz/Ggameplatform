@@ -821,6 +821,15 @@ export default class RuntimeShell {
                     this.showLevelUpNotification(data.session.level_up);
                 }
 
+                // Emit event to trigger quest refresh
+                window.dispatchEvent(new CustomEvent('gameSessionEnded', {
+                    detail: {
+                        session: data.session,
+                        xp_earned: data.session.xp_earned,
+                        duration_seconds: data.session.duration_seconds
+                    }
+                }));
+
                 // Note: Leaderboard (both weekly and all-time) is now automatically
                 // updated by the backend trigger system when session ends
             }

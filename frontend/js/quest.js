@@ -679,3 +679,46 @@ class QuestCard {
         }
     }
 }
+
+// Listen for game session end events to refresh quest progress
+window.addEventListener('gameSessionEnded', async (event) => {
+    console.log('🎮 Game session ended, refreshing quest progress...', event.detail);
+    
+    // Only refresh if we're on the quests page
+    const questsList = document.getElementById('questsList');
+    if (!questsList) {
+        return; // Not on quests page
+    }
+    
+    // Get current user
+    const user = window.AuthManager?.getUser();
+    if (!user || !user.user_id) {
+        return;
+    }
+    
+    try {
+        // Reload quests
+        const { fetchUserQuests } = await import('./api.js');
+        const quests = await fetchUserQuests(user.user_id);
+        
+        // Update statistics
+        const statistics = new QuestStatistics(quests);
+        statistics.render();
+        
+        // Update quest list
+        const questList = new QuestList(quests, user.user_id);
+        questList.render();
+        
+        // Reapply current filter
+        const activeFilterBtn = document.querySelector('.quest-filter-btn.active');
+        const currentFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
+        applyFilter(currentFilter, questsList);
+        
+        // Update highlight on ready filter
+        highlightReadyFilter(quests);
+        
+        console.log('✅ Quest progress refreshed after game session');
+    } catch (error) {
+        console.error('Error refreshing quest progress:', error);
+    }
+});

@@ -537,34 +537,17 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         new_total_xp = user.total_xp_earned
         print(f"[DB] Updating user total_xp: {old_total_xp} -> {new_total_xp} (+{xp_earned})")
         
-        # Check for level up and award rewards
+        # Check for level up and track rewards (awarded on next login/claim)
         from app.level_system import LevelSystem
         level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
         
         if level_up_info['leveled_up']:
             print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
             
-            # Award level-up coins if any
+            # Track level-up coins (will be awarded via separate transaction later)
             coins_awarded = level_up_info.get('coins_awarded', 0)
             if coins_awarded > 0:
-                from app.repositories import RepositoryFactory
-                from app.services import ServiceFactory
-                
-                coin_repo = RepositoryFactory.create_usercoins_repository(session)
-                transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
-                
-                coin_service = ServiceFactory.create_coin_service(
-                    coin_repo, transaction_repo
-                )
-                
-                coin_service.award_coins(
-                    user_id=user.user_id,
-                    amount=coins_awarded,
-                    transaction_type='level_milestone',
-                    source_id=f"level_{level_up_info['new_level']}",
-                    description=f"Level {level_up_info['new_level']} reached!"
-                )
-                print(f"[DB] 🪙 Awarded {coins_awarded} coins for reaching level {level_up_info['new_level']}")
+                print(f"[DB] 🪙 Level-up coins tracked: {coins_awarded} coins for level {level_up_info['new_level']} (will be awarded on claim)")
             
             # Store level-up info in session extra_data for frontend
             extra_data['level_up'] = {
@@ -573,11 +556,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
                 'title': level_up_info.get('title'),
                 'badge': level_up_info.get('badge'),
                 'coins_awarded': coins_awarded,
-                'is_milestone': level_up_info.get('is_milestone', False)
+                'is_milestone': level_up_info.get('is_milestone', False),
+                'coins_pending': True  # Indicate coins need to be claimed
             }
         
-        session.flush()
-        print(f"[DB] Session flushed to database")
+        # Do NOT manually flush - let the context manager commit automatically
+        # session.flush() can cause "transaction is closed" errors if it fails
         
         result = game_session.to_dict()
         
@@ -594,20 +578,24 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         
         # Track quest progress
         print(f"[DB] Tracking quest progress...")
-        track_quest_progress_for_session(session, {
-            'user_id': game_session.user_id,
-            'game_id': game_session.game_id,
-            'score': score,
-            'duration_seconds': duration_seconds,
-            'xp_earned': xp_earned
-        })
-        
-        print(f"[DB] Quest progress tracked")
+        try:
+            track_quest_progress_for_session(session, {
+                'user_id': game_session.user_id,
+                'game_id': game_session.game_id,
+                'score': score,
+                'duration_seconds': duration_seconds,
+                'xp_earned': xp_earned
+            })
+            print(f"[DB] Quest progress tracked")
+        except Exception as e:
+            print(f"[DB] ⚠️ Error tracking quest progress: {e}")
+            # Don't fail the session end if quest tracking fails
         
     # Note: Leaderboard is automatically updated by the trigger system
     # No need to manually recalculate ranks here
     
     print(f"[DB] end_game_session completed successfully - XP earned: {xp_earned}")
+    return result
     return result
 
 def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:

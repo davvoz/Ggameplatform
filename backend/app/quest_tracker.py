@@ -125,7 +125,9 @@ class QuestTracker:
                 user.total_xp_earned += quest.xp_reward
             
             # Award coins if coin service is available
-            if self.coin_service:
+            # Note: Coin service is disabled during session tracking to avoid transaction conflicts
+            # Coins will be awarded when user claims the quest reward
+            if self.coin_service and False:  # Temporarily disabled
                 try:
                     self.coin_service.award_quest_reward(
                         user_id=user_id,
@@ -155,7 +157,8 @@ class QuestTracker:
         for quest in quests:
             self._process_quest_for_session(user_id, quest, game_id, score, duration_seconds, xp_earned)
         
-        self.db.commit()
+        # Note: Do NOT commit here - let the caller manage the transaction
+        # self.db.commit()
     
     def _process_quest_for_session(self, user_id: str, quest: Quest, game_id: str, 
                                    score: int, duration_seconds: int, xp_earned: float):
@@ -258,8 +261,9 @@ class QuestTracker:
         elif quest_type == "reach_level":
             user = self.db.query(User).filter(User.user_id == user_id).first()
             if user:
-                # Simple level calculation: level = XP / 1000
-                current_level = int(user.total_xp_earned / 1000)
+                # Use LevelSystem to get accurate current level
+                from app.level_system import LevelSystem
+                current_level = LevelSystem.get_level_for_xp(user.total_xp_earned)
                 self.update_quest_progress(user_id, quest, current_level)
         
         # XP daily (resets each day)
@@ -409,7 +413,8 @@ class QuestTracker:
                 # User is not in top N yet
                 self.update_quest_progress(user_id, quest, 0)
         
-        self.db.commit()
+        # Note: Do NOT commit here - let the caller manage the transaction
+        # self.db.commit()
 
 
 def track_quest_progress_for_session(db: Session, session_data: Dict, coin_service: Optional[CoinService] = None):

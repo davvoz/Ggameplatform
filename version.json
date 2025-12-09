@@ -1,8 +1,17 @@
 {
-  "version": "1.20.2",
-  "timestamp": "2025-12-09T21:04:27.154Z",
-  "buildNumber": 56,
+  "version": "1.20.3",
+  "timestamp": "2025-12-09T21:17:28.753Z",
+  "buildNumber": 57,
   "changelog": [
+    {
+      "version": "1.20.3",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Implement detailed score verification for luciojolly user",
+        "🔖 Bump version to 1.20.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.20.2",
       "date": "2025-12-09",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Update quest progress handling for cumulative quests and refactor login streak fix script",
         "🔖 Bump version to 1.16.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.16.2",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance quest tracking and reward system after game session ends",
-        "🔖 Bump version to 1.16.1 [skip-version]"
       ]
     }
   ]

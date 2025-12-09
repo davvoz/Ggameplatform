@@ -1,8 +1,17 @@
 {
-  "version": "1.16.0",
-  "timestamp": "2025-12-09T11:16:21.968Z",
-  "buildNumber": 45,
+  "version": "1.16.1",
+  "timestamp": "2025-12-09T11:25:14.292Z",
+  "buildNumber": 46,
   "changelog": [
+    {
+      "version": "1.16.1",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Implement daily access tracking for user login quests",
+        "🔖 Bump version to 1.16.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.16.0",
       "date": "2025-12-09",
@@ -85,16 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: Enhance user model and schemas with game scores and extra data handling; add user data check and update scripts",
         "🔖 Bump version to 1.14.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.14.0",
-      "date": "2025-12-09",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: Add quest system migrations and updates",
-        "🔖 Bump version to 1.13.0 [skip-version]"
       ]
     }
   ]

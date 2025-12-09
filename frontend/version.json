@@ -1,8 +1,17 @@
 {
-  "version": "1.16.3",
-  "timestamp": "2025-12-09T13:55:33.186Z",
-  "buildNumber": 48,
+  "version": "1.17.0",
+  "timestamp": "2025-12-09T14:29:20.643Z",
+  "buildNumber": 49,
   "changelog": [
+    {
+      "version": "1.17.0",
+      "date": "2025-12-09",
+      "type": "minor",
+      "changes": [
+        "feat: Implement quest triggers for automatic quest progress updates",
+        "🔖 Bump version to 1.16.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.16.3",
       "date": "2025-12-09",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Update USER_ID for quest level correction script",
         "🔖 Bump version to 1.15.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.2",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Add script to force update all problematic quests and user progress",
-        "🔖 Bump version to 1.15.1 [skip-version]"
       ]
     }
   ]

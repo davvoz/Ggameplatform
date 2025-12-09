@@ -228,7 +228,7 @@ def calculate_progress(db, user, quest, extra_data):
                 WeeklyLeaderboard.week_start == week_start
             ).first()
             
-            return 1 if entry and entry.weekly_rank <= quest.target_value else 0
+            return 1 if entry and entry.rank <= quest.target_value else 0
         
         elif quest_type == 'play_time_cumulative':
             # Tempo totale cumulativo in secondi

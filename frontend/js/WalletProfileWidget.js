@@ -35,28 +35,25 @@ class WalletProfileWidget {
      */
     generateWalletHTML(balance, transactions) {
         return `
-            <div class="wallet-profile-section">
-                <div class="wallet-balance-card">
-                    <div class="balance-main">
-                        <div class="balance-amount">${balance.balance}</div>
-                        <div class="balance-label">Coins</div>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%;">
+                    <div style="background: rgba(251,191,36,0.13); border: 1.5px solid #fbbf24; border-radius: 12px; box-shadow: 0 2px 12px #fbbf2433; padding: 18px 0 10px 0; min-width: 120px; width: 80%; max-width: 220px; text-align: center; margin: 0 auto 2px auto;">
+                        <span style="font-size: 2.1rem; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 8px #fbbf2433; letter-spacing: 1px;">${balance.balance}</span>
+                        <div style="font-size: 1rem; color: #fbbf24; font-weight: 700; margin-top: 2px; letter-spacing: 0.5px;">Coins</div>
                     </div>
-                    <div class="balance-stats-mini">
-                        <div class="balance-stat">
-                            <span class="stat-icon">📥</span>
-                            <span class="stat-number">+${balance.total_earned}</span>
-                            <span class="stat-label">Earned</span>
+                    <div style="display: flex; gap: 18px; width: 100%; justify-content: center;">
+                        <div style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.18); border-radius: 10px; padding: 10px 18px; min-width: 90px; text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e;">+${balance.total_earned}</div>
+                            <div style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 600;">Earned</div>
                         </div>
-                        <div class="balance-stat">
-                            <span class="stat-icon">📤</span>
-                            <span class="stat-number">-${balance.total_spent}</span>
-                            <span class="stat-label">Spent</span>
+                        <div style="background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.16); border-radius: 10px; padding: 10px 18px; min-width: 90px; text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #ef4444;">-${balance.total_spent}</div>
+                            <div style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 600;">Spent</div>
                         </div>
                     </div>
                 </div>
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="#/wallet" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 16px;">View Transactions →</a>
+                <div style="text-align: center; margin-top: 22px; width: 100%;">
+                    <a href="#/wallet" style="color: var(--primary-color); text-decoration: none; font-weight: 700; font-size: 1.02rem; letter-spacing: 0.2px;">View All Transactions →</a>
                 </div>
             </div>
         `;

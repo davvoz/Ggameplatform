@@ -1,3 +1,31 @@
+/* Wallet modal styles (old, to be replaced) */
+.wallet-profile-section {
+        padding: 24px 18px 18px 18px;
+        background: var(--background-light);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+        border: 1.5px solid var(--border);
+        max-width: 400px;
+        margin: 0 auto;
+}
+/* Wallet Modal - harmonized with multiplier modal */
+.wallet-modal-content {
+        background: var(--background-light);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+        border: 1.5px solid var(--border);
+        padding: 0 0 24px 0;
+        max-width: 420px;
+        margin: 0 auto;
+        animation: modalFadeIn 0.22s cubic-bezier(.4,1.4,.6,1) 1;
+}
+
+@media (max-width: 600px) {
+    .wallet-modal-content {
+        max-width: 98vw;
+        padding: 0 0 16px 0;
+    }
+}
 /* ========================================
    Profile Page
    ======================================== */

@@ -12,6 +12,8 @@ try:
     from beem import Steem
     from beem.account import Account
     from beem.exceptions import AccountDoesNotExistsException
+    from beem.transactionbuilder import TransactionBuilder
+    from beembase import operations
     BEEM_AVAILABLE = True
 except ImportError:
     BEEM_AVAILABLE = False
@@ -43,8 +45,16 @@ class SteemRewardService:
             return
         
         try:
-            # Initialize Steem connection
-            self.steem = Steem(keys=[self.active_key])
+            # Initialize Steem connection with nodes
+            nodes = [
+                'https://api.moecki.online',
+                'https://api.pennsif.net',
+                'https://steemapi.boylikegirl.club',
+                'https://cn.steems.top',
+                'https://api.worldofxpilar.com',
+                'https://api.upvu.org'
+            ]
+            self.steem = Steem(nobroadcast=False, keys=[self.active_key], node=nodes)
             logger.info(f"✅ SteemRewardService initialized with account: {self.account_name}")
         except Exception as e:
             logger.error(f"Failed to initialize Steem connection: {e}")
@@ -102,20 +112,20 @@ class SteemRewardService:
             # Format memo
             full_memo = f"🏆 Weekly Leaderboard Reward - Rank #{rank} - {game_title} ({week_start} to {week_end})\n{memo}"
             
-            # Send transfer
-            from beem.transactionbuilder import TransactionBuilder
-            from beemgraphenebase.operations import Transfer
+            # Send transfer using the same method as steembot
+            tb = TransactionBuilder(steem_instance=self.steem)
             
-            op = Transfer(**{
-                "from": self.account_name,
-                "to": to_username,
-                "amount": f"{amount:.3f} STEEM",
-                "memo": full_memo
-            })
+            transfer_op = operations.Transfer(
+                **{
+                    'from': self.account_name,
+                    'to': to_username,
+                    'amount': f'{amount:.3f} STEEM',
+                    'memo': full_memo
+                }
+            )
             
-            tb = TransactionBuilder(blockchain_instance=self.steem)
-            tb.appendOps([op])
-            tb.appendWif(self.active_key)
+            tb.appendOps(transfer_op)
+            tb.appendSigner(self.account_name, 'active')
             tb.sign()
             result = tb.broadcast()
             

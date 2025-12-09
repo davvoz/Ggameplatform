@@ -381,6 +381,62 @@ class RainbowRushService:
             Ended session data
         """
         session = self.repository.end_session(session_id)
+        
+        # Track quest progress for RainbowRushGameSession
+        # Note: Generic GameSession records created by runtimeShell.js already track quests
+        # This is additional tracking for Rainbow Rush specific sessions
+        if session:
+            from app.quest_tracker import track_quest_progress_for_session
+            from app.repositories import RepositoryFactory
+            from app.services import ServiceFactory
+            
+            # Calculate session duration
+            if session.started_at and session.ended_at:
+                started = datetime.fromisoformat(session.started_at)
+                ended = datetime.fromisoformat(session.ended_at)
+                duration_seconds = int((ended - started).total_seconds())
+            else:
+                duration_seconds = 0
+            
+            # Extract score from current_stats if available
+            score = 0
+            try:
+                if session.current_stats:
+                    stats = json.loads(session.current_stats) if isinstance(session.current_stats, str) else session.current_stats
+                    score = stats.get('score', 0)
+            except:
+                pass
+            
+            # Get total XP earned from progress during this session
+            xp_earned = 0
+            try:
+                progress = self.repository.get_progress_by_user(session.user_id)
+                if progress and progress.statistics:
+                    stats = json.loads(progress.statistics) if isinstance(progress.statistics, str) else progress.statistics
+                    xp_earned = stats.get('session_xp', 0)
+            except:
+                pass
+            
+            # Prepare session data for quest tracker
+            session_data = {
+                'user_id': session.user_id,
+                'game_id': 'rainbow_rush',
+                'score': score,
+                'duration_seconds': duration_seconds,
+                'xp_earned': xp_earned
+            }
+            
+            # Get coin service for quest rewards
+            try:
+                coin_repo = RepositoryFactory.create_usercoins_repository(self.repository.db)
+                transaction_repo = RepositoryFactory.create_cointransaction_repository(self.repository.db)
+                coin_service = ServiceFactory.create_coin_service(coin_repo, transaction_repo)
+                
+                track_quest_progress_for_session(self.repository.db, session_data, coin_service)
+                print(f"✅ Quest progress tracked for Rainbow Rush session {session_id} (score: {score}, duration: {duration_seconds}s)")
+            except Exception as e:
+                print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
+        
         return session.to_dict() if session else None
     
     def get_active_session(self, user_id: str) -> Optional[Dict[str, Any]]:

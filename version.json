@@ -1,8 +1,17 @@
 {
-  "version": "1.19.0",
-  "timestamp": "2025-12-09T16:47:40.367Z",
-  "buildNumber": 52,
+  "version": "1.19.1",
+  "timestamp": "2025-12-09T17:00:26.000Z",
+  "buildNumber": 53,
   "changelog": [
+    {
+      "version": "1.19.1",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: [RAINBOW RUSH] Implement fullscreen mode for mobile with exit button",
+        "🔖 Bump version to 1.19.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.19.0",
       "date": "2025-12-09",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Implement script to fix and update quest progress for all users",
         "🔖 Bump version to 1.15.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.6",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Add quest progress tracking for Rainbow Rush sessions",
-        "🔖 Bump version to 1.15.5 [skip-version]"
       ]
     }
   ]

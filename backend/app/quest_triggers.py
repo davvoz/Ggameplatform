@@ -155,12 +155,14 @@ def create_quest_update_triggers():
         """
         
         conn.execute(text(login_streak_trigger))
-        conn.execute(text(reach_level_trigger))
+        # Note: reach_level trigger removed - SQL cannot replicate complex LevelSystem logic
+        # reach_level quests are updated via Python code in quest_tracker.py
+        # conn.execute(text(reach_level_trigger))
         conn.commit()
         
         print("✅ Quest update triggers created successfully!")
         print("   - update_login_streak_quests: Updates login_streak quests when user.login_streak changes")
-        print("   - update_reach_level_quests: Updates reach_level quests when user.total_xp_earned changes")
+        print("   ⚠️  reach_level quests: Updated via Python code (SQL trigger disabled)")
 
 
 def setup_quest_triggers():

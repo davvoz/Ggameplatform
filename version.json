@@ -1,8 +1,17 @@
 {
-  "version": "1.15.3",
-  "timestamp": "2025-12-09T09:37:23.246Z",
-  "buildNumber": 40,
+  "version": "1.15.4",
+  "timestamp": "2025-12-09T09:53:08.246Z",
+  "buildNumber": 41,
   "changelog": [
+    {
+      "version": "1.15.4",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Correct rank reference in quest progress calculations",
+        "🔖 Bump version to 1.15.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.15.3",
       "date": "2025-12-09",
@@ -88,16 +97,6 @@
       "changes": [
         "fix: remove obsolete demo and registration scripts",
         "🔖 Bump version to 1.11.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.11.5",
-      "date": "2025-12-08",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: remove obsolete badge styles and implement new level badge design",
-        "🔖 Bump version to 1.11.4 [skip-version]"
       ]
     }
   ]

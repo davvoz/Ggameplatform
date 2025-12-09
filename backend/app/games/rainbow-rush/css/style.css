@@ -69,6 +69,37 @@ body {
     #game-container {
         /* Container auto-sizes to canvas for fullscreen mobile */
     }
+    
+    /* Fullscreen mode ONLY on mobile */
+    body.game-fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body.game-fullscreen #game-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 9999 !important;
+    }
+    
+    body.game-fullscreen #gameCanvas,
+    body.game-fullscreen #textCanvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
 }
 
 .screen {
@@ -289,6 +320,16 @@ body {
 
 .back-button {
     margin-top: 0.75rem;
+}
+
+#exit-fullscreen-button {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    margin-top: 0.5rem;
+}
+
+#exit-fullscreen-button:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 }
 
 /* ==================== CONTROLS INFO ==================== */

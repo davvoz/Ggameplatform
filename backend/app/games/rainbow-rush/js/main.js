@@ -43,6 +43,9 @@ class RainbowRushApp {
 
             // Setup window listeners
             this.setupWindowListeners();
+            
+            // Setup fullscreen button
+            this.setupFullscreenButton();
 
             // Hide loading screen and show menu
             this.hideLoadingScreen();
@@ -221,6 +224,26 @@ class RainbowRushApp {
             }
         });
     }
+    
+    setupFullscreenButton() {
+        const exitFullscreenBtn = document.getElementById('exit-fullscreen-button');
+        if (exitFullscreenBtn) {
+            exitFullscreenBtn.addEventListener('click', () => {
+                this.exitFullscreen();
+            });
+        }
+        
+        // Mostra/nascondi il bottone in base allo stato fullscreen
+        this.updateFullscreenButtonVisibility();
+    }
+    
+    updateFullscreenButtonVisibility() {
+        const exitFullscreenBtn = document.getElementById('exit-fullscreen-button');
+        if (exitFullscreenBtn) {
+            const isFullscreen = document.body.classList.contains('game-fullscreen');
+            exitFullscreenBtn.style.display = isFullscreen ? 'inline-block' : 'none';
+        }
+    }
 
     setupWindowListeners() {
         // Handle window resize
@@ -245,7 +268,12 @@ class RainbowRushApp {
                         this.gameController.pauseGame();
                         this.gameController.needsFullscreenRestore = true;
                         this.gameController.autoPausedFullscreen = true;
+                        // Rimuovi classe CSS fullscreen
+                        document.body.classList.remove('game-fullscreen');
                     }
+                    
+                    // Aggiorna visibilità bottone
+                    this.updateFullscreenButtonVisibility();
                     
                     // Forza resize quando cambia lo stato fullscreen
                     setTimeout(() => {
@@ -373,18 +401,47 @@ class RainbowRushApp {
     }
 
     requestFullscreen() {
-        const elem = document.documentElement;
+        // Applica classe CSS per forzare fullscreen
+        document.body.classList.add('game-fullscreen');
         
+        // Aggiorna visibilità bottone
+        this.updateFullscreenButtonVisibility();
+        
+        // Scroll to top per nascondere la barra degli indirizzi su mobile
+        window.scrollTo(0, 0);
+        
+        // Prova anche l'API fullscreen nativa (funziona su desktop/Android)
+        const elem = document.documentElement;
         if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(err => {
-                console.warn('Fullscreen request failed:', err);
-            });
-        } else if (elem.webkitRequestFullscreen) { // Safari
+            elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
             elem.webkitRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) { // Firefox
+        } else if (elem.mozRequestFullScreen) {
             elem.mozRequestFullScreen();
-        } else if (elem.msRequestFullscreen) { // IE/Edge
+        } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
+        }
+    }
+    
+    exitFullscreen() {
+        // Rimuovi classe CSS fullscreen
+        document.body.classList.remove('game-fullscreen');
+        
+        // Aggiorna visibilità bottone
+        this.updateFullscreenButtonVisibility();
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+        
+        // Esci dal fullscreen nativo se attivo
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
         }
     }
 }

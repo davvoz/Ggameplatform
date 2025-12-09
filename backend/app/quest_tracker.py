@@ -107,8 +107,12 @@ class QuestTracker:
         
         user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
         
-        # Don't update if already completed
-        if user_quest.is_completed:
+        # For cumulative quests (login_streak, reach_level), always update progress
+        # even if already completed, to show current status
+        cumulative_quest_types = ['login_streak', 'reach_level', 'leaderboard_top']
+        
+        # Don't update if already completed (except for cumulative quests)
+        if user_quest.is_completed and quest.quest_type not in cumulative_quest_types:
             return
         
         # Update progress
@@ -374,7 +378,8 @@ class QuestTracker:
                 current_streak = user.login_streak or 0
                 self.update_quest_progress(user_id, quest, current_streak)
         
-        self.db.commit()
+        # Note: Do NOT commit here - let the caller manage the transaction
+        # self.db.commit()
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

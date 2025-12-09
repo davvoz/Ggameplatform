@@ -1,3 +1,109 @@
+/* Responsive: leaderboard table and winner cards */
+@media (max-width: 700px) {
+        .winner-card .col-rank {
+            min-width: 60px;
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .winner-card .col-player {
+            min-width: 110px;
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .winner-card .col-score {
+            min-width: 90px;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+        }
+        .winner-card .col-rewards {
+            min-width: 170px;
+            max-width: 170px;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+    .table-header,
+    .winners-grid-header {
+        display: none;
+    }
+    .table-body {
+        overflow-x: auto;
+        display: block;
+        white-space: nowrap;
+        padding-bottom: 2px;
+    }
+    .winners-grid {
+        display: flex;
+        flex-direction: column;
+        white-space: normal;
+        padding-bottom: 2px;
+    }
+    .table-row,
+    .winners-grid-scrollable {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+    .winner-card {
+        display: inline-flex !important;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        min-width: 430px;
+        padding: 8px 4px;
+        margin-bottom: 8px;
+        border-radius: var(--radius-md);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        background: var(--surface-elevated);
+        border: 1px solid var(--border);
+        white-space: nowrap;
+        vertical-align: top;
+    }
+    .col-rank {
+        font-size: 1.1em;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-right: 8px;
+        margin-bottom: 0;
+    }
+    .col-player {
+        font-size: 1em;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-right: 8px;
+        margin-bottom: 0;
+    }
+    .col-score {
+        font-size: 1em;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-right: 8px;
+        margin-bottom: 0;
+        text-align: left;
+    }
+    .col-rewards {
+        margin-top: 0;
+        margin-bottom: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+    .inline-reward-badge {
+        flex-wrap: wrap;
+        font-size: 1em;
+        gap: 4px;
+    }
+}
 /* ========================================
    Leaderboard Styles
    ======================================== */
@@ -383,8 +489,9 @@
     background: linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(75, 0, 130, 0.08) 100%);
     border: 1px solid rgba(0, 217, 255, 0.2);
     border-radius: var(--radius-md);
-    padding: var(--spacing-sm);
-    text-align: center;
+        padding: 6px 8px;
+        min-height: 38px;
+        font-size: 0.97em;
     transition: var(--transition);
 }
 
@@ -441,7 +548,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 60px 1fr 100px 160px;
+    grid-template-columns: 60px 1fr 90px 180px;
     gap: var(--spacing-sm);
     background: linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(75, 0, 130, 0.08) 100%);
     padding: var(--spacing-md) var(--spacing-lg);
@@ -454,15 +561,51 @@
 }
 
 .table-header.has-games {
-    grid-template-columns: 60px 1fr 100px 80px 160px;
+    grid-template-columns: 60px 1fr 90px 80px 180px;
+    gap: var(--spacing-sm);
 }
 
 .table-header.no-rewards {
-    grid-template-columns: 60px 1fr 100px;
+    grid-template-columns: 60px 1fr 90px;
+    gap: var(--spacing-sm);
 }
 
 .table-header.has-games.no-rewards {
-    grid-template-columns: 60px 1fr 100px 80px;
+    grid-template-columns: 60px 1fr 90px 80px;
+    gap: var(--spacing-sm);
+@media (max-width: 700px) {
+    .table-row .col-rank, .table-header .col-rank {
+        min-width: 60px;
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .table-row .col-player, .table-header .col-player {
+        min-width: 130px;
+        max-width: 130px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .table-row .col-score, .table-header .col-score {
+        min-width: 90px;
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+    }
+    .table-row .col-rewards, .table-header .col-rewards {
+        min-width: 180px;
+        max-width: 180px;
+        overflow-x: auto;
+        white-space: nowrap;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+}
 }
 
 .table-body {
@@ -472,7 +615,7 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 60px 1fr 100px 160px;
+    grid-template-columns: 60px 1fr 90px 180px;
     gap: var(--spacing-sm);
     padding: var(--spacing-md) var(--spacing-lg);
     border-top: 1px solid var(--border);
@@ -482,15 +625,15 @@
 }
 
 .table-row.has-games {
-    grid-template-columns: 60px 1fr 100px 80px 160px;
+    grid-template-columns: 60px 1fr 90px 80px 180px;
 }
 
 .table-row.no-rewards {
-    grid-template-columns: 60px 1fr 100px;
+    grid-template-columns: 60px 1fr 90px;
 }
 
 .table-row.has-games.no-rewards {
-    grid-template-columns: 60px 1fr 100px 80px;
+    grid-template-columns: 60px 1fr 90px 80px;
 }
 
 .table-row:hover {
@@ -592,28 +735,39 @@
     background: var(--surface-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
+    padding: 18px 14px 10px 14px;
+    margin-bottom: 10px;
 }
 
 .week-title {
     color: var(--primary-color);
-    font-size: 1.3rem;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--border);
+    font-size: 1.08rem;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-weight: 700;
+    background: none;
+    transition: background 0.18s;
 }
 
 .winners-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-lg);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
 }
 
 .winner-card {
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(75, 0, 130, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.04) 0%, rgba(75, 0, 130, 0.04) 100%);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 160px;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    width: 100%;
+    padding: 6px 12px;
     transition: var(--transition);
 }
 
@@ -642,9 +796,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+        display: none !important;
 }
 
 .winner-medal {
@@ -659,32 +812,32 @@
 }
 
 .winner-info {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 6px;
 }
 
 .winner-name {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 2px;
 }
 
 .winner-game {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     color: var(--primary-color);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 2px;
 }
 
 .winner-score {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-secondary);
 }
 
 .winner-rewards {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-    padding-top: var(--spacing-md);
+    gap: 2px;
+    padding-top: 6px;
     border-top: 1px solid var(--border);
 }
 
@@ -692,7 +845,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     font-weight: 600;
 }
 

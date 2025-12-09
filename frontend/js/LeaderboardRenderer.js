@@ -383,7 +383,6 @@ class LeaderboardRenderer {
      */
     renderLeaderboardRow(entry, hasGames = false, showRewards = true) {
         const rankClass = entry.rank <= 3 ? `top-${entry.rank}` : '';
-        const medal = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : '';
         const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
 
         // Find reward for this rank (only if showing rewards)
@@ -399,14 +398,14 @@ class LeaderboardRenderer {
                 const coinPart = reward.coin_reward > 0 ? `<span class="reward-coins">🪙 ${reward.coin_reward}</span>` : '';
                 
                 if (steemPart || coinPart) {
-                    rewardContent = `${steemPart} ${coinPart}`;
+                    rewardContent = `${coinPart} ${steemPart}`;
                 }
             }
         }
 
         return `
             <div class="table-row ${rowClass}">
-                <div class="col-rank">${medal} #${entry.rank}</div>
+                <div class="col-rank">#${entry.rank}</div>
                 <div class="col-player">${entry.username || 'Anonymous'}</div>
                 <div class="col-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
                 ${hasGames ? `<div class="col-games">${entry.games_played || 0}</div>` : ''}
@@ -435,6 +434,7 @@ class LeaderboardRenderer {
             }
 
             container.innerHTML = this.renderWinnersHistory(data.winners);
+            this.attachCollapsibleHandlers();
 
         } catch (error) {
             console.error('Error loading winners:', error);
@@ -473,50 +473,41 @@ class LeaderboardRenderer {
     renderWeekGroup(group) {
         const start = new Date(group.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const end = new Date(group.week_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
+        const weekId = `week_${group.week_start.replace(/[^\w]/g, '')}_${group.week_end.replace(/[^\w]/g, '')}`;
         return `
-            <div class="week-group">
-                <h3 class="week-title">Week: ${start} - ${end}</h3>
-                <div class="winners-grid">
-                    ${group.winners.map(w => this.renderWinnerCard(w)).join('')}
+            <div class="week-group" id="${weekId}">
+                <h3 class="week-title collapsible" data-toggle="${weekId}" style="cursor:pointer; user-select:none; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.1em;">📅</span>
+                    <span>Week: ${start} - ${end}</span>
+                    <span class="toggle-arrow" style="margin-left:auto; font-size:1.2em; transition:transform 0.2s;">▼</span>
+                </h3>
+                <div class="collapsible-content" style="display:none;">
+                    ${this.renderLeaderboardTable(group.winners)}
                 </div>
             </div>
         `;
     }
-
     /**
-     * Render winner card
+     * After rendering, attach collapsible logic to week groups
      */
-    renderWinnerCard(winner) {
-        const medal = winner.rank === 1 ? '🥇' : winner.rank === 2 ? '🥈' : winner.rank === 3 ? '🥉' : '🏅';
-        const rewardSent = winner.reward_sent ? '✅' : '⏳';
-
-        // Show STEEM reward info only if there was actually a STEEM reward sent
-        const hasSteemReward = winner.steem_reward > 0 && (winner.steem_tx_id || winner.reward_sent);
-
-        return `
-            <div class="winner-card rank-${winner.rank}">
-                <div class="winner-header">
-                    <span class="winner-medal">${medal}</span>
-                    <span class="winner-rank">Rank ${winner.rank}</span>
-                </div>
-                <div class="winner-info">
-                    <div class="winner-name">${winner.username || 'Anonymous'}</div>
-                    <div class="winner-game">${winner.game_title}</div>
-                    <div class="winner-score">${winner.score.toLocaleString()} points</div>
-                </div>
-                <div class="winner-rewards">
-                    ${hasSteemReward ? `<div class="reward-item">💰 ${winner.steem_reward} STEEM ${rewardSent}</div>` : ''}
-                    ${winner.coin_reward > 0 ? `<div class="reward-item">🪙 ${winner.coin_reward} coins ${rewardSent}</div>` : ''}
-                    ${winner.steem_tx_id ? `<div class="tx-id">TX: ${winner.steem_tx_id.substring(0, 8)}...</div>` : ''}
-                </div>
-            </div>
-        `;
+    attachCollapsibleHandlers() {
+        document.querySelectorAll('.week-title.collapsible').forEach(title => {
+            const weekId = title.dataset.toggle;
+            const group = document.getElementById(weekId);
+            if (!group) return;
+            const content = group.querySelector('.collapsible-content');
+            const arrow = title.querySelector('.toggle-arrow');
+            // Start collapsed
+            content.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+            title.onclick = () => {
+                const isOpen = content.style.display === 'block';
+                content.style.display = isOpen ? 'none' : 'block';
+                arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            };
+        });
     }
-
-    /**
-     * Cleanup on destroy
-     */
+    // ...existing code...
     destroy() {
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);

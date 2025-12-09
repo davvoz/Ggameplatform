@@ -418,6 +418,54 @@ const AuthManager = {
         }
         if (callback) callback();
         return true;
+    },
+
+    /**
+     * Track daily access for login quests
+     * Called once per day to update login streak and login quests
+     */
+    async trackDailyAccess() {
+        if (!this.currentUser || !this.currentUser.user_id) {
+            return;
+        }
+
+        try {
+            // Check if we already tracked today
+            const lastTrackedDate = localStorage.getItem('lastDailyAccessTracked');
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (lastTrackedDate === today) {
+                // Already tracked today, skip
+                return;
+            }
+
+            const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+            const response = await fetch(`${apiUrl}/users/daily-access`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.currentUser.user_id
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Save that we tracked today
+                localStorage.setItem('lastDailyAccessTracked', today);
+                
+                // Update login streak if available
+                if (data.login_streak !== undefined) {
+                    this.currentUser.login_streak = data.login_streak;
+                    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                    localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
+                }
+                
+                console.log('✅ Daily access tracked:', data);
+            }
+        } catch (error) {
+            console.error('Error tracking daily access:', error);
+        }
     }
 };
 

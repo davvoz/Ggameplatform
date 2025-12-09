@@ -1,8 +1,18 @@
 {
-  "version": "1.15.2",
-  "timestamp": "2025-12-09T09:33:37.706Z",
-  "buildNumber": 39,
+  "version": "1.15.3",
+  "timestamp": "2025-12-09T09:37:23.246Z",
+  "buildNumber": 40,
   "changelog": [
+    {
+      "version": "1.15.3",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Update USER_ID for quest level correction script",
+        "🔖 Bump version to 1.15.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.15.2",
       "date": "2025-12-09",
@@ -88,15 +98,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: remove obsolete badge styles and implement new level badge design",
         "🔖 Bump version to 1.11.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.11.4",
-      "date": "2025-12-08",
-      "type": "patch",
-      "changes": [
-        "fix: remove border from profile header for cleaner design",
-        "🔖 Bump version to 1.11.3 [skip-version]"
       ]
     }
   ]

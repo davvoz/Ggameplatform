@@ -257,6 +257,21 @@ class BlockyRoadGame {
         // Initialize audio (requires user interaction)
         this.audio.init();
         
+        // Notify platform that game has started - this will create the session
+        if (typeof PlatformSDK !== 'undefined') {
+            try {
+                window.parent.postMessage({
+                    type: 'gameStarted',
+                    payload: {},
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, '*');
+                console.log('🎮 Game started event sent to platform');
+            } catch (e) {
+                console.error('⚠️ Failed to send game started event:', e);
+            }
+        }
+        
         console.log('🎮 Game started!');
     }
     
@@ -291,9 +306,19 @@ class BlockyRoadGame {
         
         console.log('🔄 Game restarted');
         
-        // Send score=0 to trigger session restart detection
+        // Notify platform that a new game has started - create new session
         if (typeof PlatformSDK !== 'undefined') {
-            PlatformSDK.sendScore(0);
+            try {
+                window.parent.postMessage({
+                    type: 'gameStarted',
+                    payload: {},
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, '*');
+                console.log('🎮 Game restart - new session creation requested');
+            } catch (e) {
+                console.error('⚠️ Failed to send game started event on restart:', e);
+            }
         }
     }
     

@@ -1,8 +1,18 @@
 {
-  "version": "1.15.7",
-  "timestamp": "2025-12-09T10:56:09.284Z",
-  "buildNumber": 44,
+  "version": "1.16.0",
+  "timestamp": "2025-12-09T11:16:21.968Z",
+  "buildNumber": 45,
   "changelog": [
+    {
+      "version": "1.16.0",
+      "date": "2025-12-09",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: Add daily access tracking for user login quests",
+        "🔖 Bump version to 1.15.7 [skip-version]"
+      ]
+    },
     {
       "version": "1.15.7",
       "date": "2025-12-09",
@@ -85,16 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: Add quest system migrations and updates",
         "🔖 Bump version to 1.13.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.13.0",
-      "date": "2025-12-09",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: enhance Steem connection initialization and improve leaderboard responsiveness",
-        "🔖 Bump version to 1.12.1 [skip-version]"
       ]
     }
   ]

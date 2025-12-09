@@ -1,8 +1,17 @@
 {
-  "version": "1.16.2",
-  "timestamp": "2025-12-09T13:24:50.211Z",
-  "buildNumber": 47,
+  "version": "1.16.3",
+  "timestamp": "2025-12-09T13:55:33.186Z",
+  "buildNumber": 48,
   "changelog": [
+    {
+      "version": "1.16.3",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Update quest progress handling for cumulative quests and refactor login streak fix script",
+        "🔖 Bump version to 1.16.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.16.2",
       "date": "2025-12-09",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: Add script to force update all problematic quests and user progress",
         "🔖 Bump version to 1.15.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.1",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Add urgent script to fix damaged reach_level quests and update user progress",
-        "🔖 Bump version to 1.15.0 [skip-version]"
       ]
     }
   ]

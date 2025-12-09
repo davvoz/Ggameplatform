@@ -1,8 +1,17 @@
 {
-  "version": "1.15.5",
-  "timestamp": "2025-12-09T10:06:42.451Z",
-  "buildNumber": 42,
+  "version": "1.15.6",
+  "timestamp": "2025-12-09T10:50:58.985Z",
+  "buildNumber": 43,
   "changelog": [
+    {
+      "version": "1.15.6",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Add quest progress tracking for Rainbow Rush sessions",
+        "🔖 Bump version to 1.15.5 [skip-version]"
+      ]
+    },
     {
       "version": "1.15.5",
       "date": "2025-12-09",
@@ -87,16 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [RAINBOW RUSH]remove unused powerup types and enhance UI rendering for active powerups",
         "🔖 Bump version to 1.12.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.12.0",
-      "date": "2025-12-08",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat:[ RAINBOW RUSH] brk changes",
-        "🔖 Bump version to 1.11.6 [skip-version]"
       ]
     }
   ]

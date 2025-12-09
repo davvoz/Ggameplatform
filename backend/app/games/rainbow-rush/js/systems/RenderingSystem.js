@@ -24,6 +24,9 @@ export class RenderingSystem {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         
+        // Debug mode for hitboxes
+        this.debugHitboxes = false; // Disattivato
+        
         // Canvas 2D per testo - deve avere le STESSE dimensioni del gameCanvas
         this.textCanvas = document.getElementById('textCanvas');
         const gameCanvas = document.getElementById('gameCanvas');
@@ -83,6 +86,12 @@ export class RenderingSystem {
 
     setPowerupTimers(timers) {
         this.powerupTimers = timers;
+        
+        // Pass to player renderer for effect labels
+        const playerRenderer = this.factory.getRenderer('player');
+        if (playerRenderer && playerRenderer.setPowerupTimers) {
+            playerRenderer.setPowerupTimers(timers);
+        }
     }
 
     setPlayer(player) {
@@ -199,7 +208,7 @@ export class RenderingSystem {
      * @param {Array} entities - Flat array of all entities
      */
     render(gl, entities) {
-        // Clear canvas 2D SEMPRE - le entity labels devono essere pulite!
+        // Clear canvas 2D solo all'inizio del frame
         if (this.textCtx) {
             this.textCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
         }
@@ -345,7 +354,7 @@ export class RenderingSystem {
             this.renderer.drawCircle(p.x, p.y, p.size || 2, finalColor);
         });
         
-        // Player always rendered last (on top)
+        // Render player last (on top)
         if (player) {
             this.factory.render(player, context);
         } else if (this.player) {
@@ -477,6 +486,12 @@ export class RenderingSystem {
         }
         if (this.hudRenderer) {
             this.hudRenderer.update(deltaTime, this.currentScore, this.currentLevel);
+        }
+        
+        // Update player renderer (for effect labels)
+        const playerRenderer = this.factory.getRenderer('player');
+        if (playerRenderer && playerRenderer.update) {
+            playerRenderer.update(deltaTime);
         }
     }
 

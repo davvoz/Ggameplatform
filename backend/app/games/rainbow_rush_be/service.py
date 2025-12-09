@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 import math
+from functools import lru_cache
 
 from .repository import RainbowRushRepository
 from .models import RainbowRushProgress, RainbowRushLevelCompletion, RainbowRushGameSession
@@ -207,12 +208,19 @@ class RainbowRushService:
         """
         progress = self.repository.get_or_create_progress(user_id)
         
-        # Parse existing completions
-        completions = json.loads(progress.level_completions) if progress.level_completions else {}
+        # Parse existing completions solo se necessario
+        try:
+            completions = json.loads(progress.level_completions) if progress.level_completions else {}
+        except (json.JSONDecodeError, TypeError):
+            completions = {}
         
         # Update level data
         level_key = str(level_id)
-        if level_key not in completions or level_data.get('stars', 0) > completions[level_key].get('stars', 0):
+        current_stars = completions.get(level_key, {}).get('stars', 0)
+        new_stars = level_data.get('stars', 0)
+        
+        # Update solo se migliorato
+        if level_key not in completions or new_stars > current_stars:
             completions[level_key] = level_data
         
         # Update progress
@@ -221,7 +229,8 @@ class RainbowRushService:
             'max_level_unlocked': max(progress.max_level_unlocked, level_id + 1)
         }
         
-        if 'stars' in level_data:
+        # Calcola total_stars solo se c'è stato un aggiornamento
+        if 'stars' in level_data and new_stars > current_stars:
             update_data['total_stars'] = sum(
                 comp.get('stars', 0) for comp in completions.values()
             )

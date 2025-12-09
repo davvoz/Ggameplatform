@@ -440,9 +440,7 @@ class GoalReachedState extends BaseGameState {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Glow effect
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-        ctx.shadowBlur = 20;
+        // Glow effect disabled for performance
         
         // Stroke (outline)
         ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';

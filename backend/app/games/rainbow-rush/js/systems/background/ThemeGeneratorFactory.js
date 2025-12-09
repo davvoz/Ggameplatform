@@ -21,7 +21,20 @@ export class ThemeGeneratorFactory {
             [THEME_NAMES.OCEAN]: () => import('./themes/OceanThemeGenerator.js'),
             [THEME_NAMES.VOLCANO]: () => import('./themes/VolcanoThemeGenerator.js'),
             [THEME_NAMES.SPACE]: () => import('./themes/SpaceThemeGenerator.js'),
-            // Additional themes will be loaded only if used
+            [THEME_NAMES.FOREST]: () => import('./themes/ForestThemeGenerator.js'),
+            [THEME_NAMES.ICE]: () => import('./themes/IceThemeGenerator.js'),
+            [THEME_NAMES.NIGHT]: () => import('./themes/NightThemeGenerator.js'),
+            [THEME_NAMES.PYRAMIDS]: () => import('./themes/PyramidsThemeGenerator.js'),
+            [THEME_NAMES.SUNSET_OCEAN]: () => import('./themes/SunsetOceanThemeGenerator.js'),
+            [THEME_NAMES.CRYSTAL_CAVE]: () => import('./themes/CrystalCaveThemeGenerator.js'),
+            [THEME_NAMES.MUSHROOM_FOREST]: () => import('./themes/MushroomForestThemeGenerator.js'),
+            [THEME_NAMES.AURORA_NIGHT]: () => import('./themes/AuroraNightThemeGenerator.js'),
+            [THEME_NAMES.DESERT_STORM]: () => import('./themes/DesertStormThemeGenerator.js'),
+            [THEME_NAMES.LAVA_OCEAN]: () => import('./themes/LavaOceanThemeGenerator.js'),
+            [THEME_NAMES.FROZEN_VOLCANO]: () => import('./themes/FrozenVolcanoThemeGenerator.js'),
+            [THEME_NAMES.SPACE_FOREST]: () => import('./themes/SpaceForestThemeGenerator.js'),
+            [THEME_NAMES.TOXIC_SWAMP]: () => import('./themes/ToxicSwampThemeGenerator.js'),
+            [THEME_NAMES.CYBER_CITY]: () => import('./themes/CyberCityThemeGenerator.js')
         };
         
         // Pre-load only the first theme (SKY) for instant startup

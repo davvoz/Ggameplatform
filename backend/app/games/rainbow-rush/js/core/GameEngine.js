@@ -143,22 +143,16 @@ export class GameEngine {
 
         const currentTime = performance.now();
         let elapsed = currentTime - this.lastTime;
-        
-        // Se elapsed è 0, usa un valore minimo (1ms) invece di skippare
-        if (elapsed <= 0) {
-            elapsed = 1; // Minimo 1ms per evitare deltaTime = 0
-        }
-        
-        // Se elapsed è troppo grande (es. tab inattivo o pause), usa un piccolo valore
-        if (elapsed > 1000) { // Più di 1 secondo
-            console.warn('⏰ Large time gap detected:', elapsed.toFixed(0), 'ms - using 16ms');
-            elapsed = 16; // Simula 60 FPS
-        }
-        
         this.lastTime = currentTime;
+        
+        // Clamp elapsed time: min 1ms, max 1000ms
+        elapsed = Math.max(1, Math.min(elapsed, 1000));
+        if (elapsed > 100) {
+            elapsed = 16; // Simula 60 FPS per grandi gap
+        }
 
-        // Cap delta time to prevent spiral of death (max 100ms = 10 FPS minimum)
-        const deltaTime = Math.min(elapsed / 1000, 0.1);
+        // Cap delta time to prevent spiral of death (max 100ms)
+        const deltaTime = elapsed / 1000;
         
         this.update(deltaTime);
         this.render();

@@ -18,7 +18,8 @@ export class SimpleParticleRenderer extends BaseParticleRenderer {
             PARTICLE_TYPES.SPORE,
             PARTICLE_TYPES.AURORA_PARTICLE,
             PARTICLE_TYPES.HEATWAVE,
-            PARTICLE_TYPES.SNOWFLAKE
+            PARTICLE_TYPES.SNOWFLAKE,
+            PARTICLE_TYPES.SIMPLE_PARTICLE
         ].includes(particleType);
     }
 

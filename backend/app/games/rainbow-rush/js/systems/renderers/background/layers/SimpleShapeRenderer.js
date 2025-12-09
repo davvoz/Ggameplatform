@@ -14,11 +14,18 @@ export class SimpleShapeRenderer extends BaseLayerRenderer {
             LAYER_TYPES.CRYSTAL,
             LAYER_TYPES.CRYSTAL_HANGING,
             LAYER_TYPES.CRYSTAL_FLOOR,
-            LAYER_TYPES.HEATWAVE
+            LAYER_TYPES.HEATWAVE,
+            LAYER_TYPES.SIMPLE_SHAPE
         ].includes(layerType);
     }
 
     doRender(layer, context) {
+        // Handle SIMPLE_SHAPE with shape property
+        if (layer.type === LAYER_TYPES.SIMPLE_SHAPE) {
+            this.renderSimpleShape(layer, context);
+            return;
+        }
+
         const renderers = {
             [LAYER_TYPES.WAVE]: () => this.renderWave(layer, context),
             [LAYER_TYPES.PYRAMID]: () => this.renderPyramid(layer),
@@ -33,6 +40,30 @@ export class SimpleShapeRenderer extends BaseLayerRenderer {
         if (renderFunction) {
             renderFunction();
         }
+    }
+
+    renderSimpleShape(layer, context) {
+        const shapeRenderers = {
+            'dune': () => this.renderDune(layer),
+            'pyramid': () => this.renderPyramid(layer),
+            'rectangle': () => this.renderer.drawRect(layer.x, layer.y, layer.width, layer.height, layer.color),
+            'mushroom_cap': () => this.renderMushroomCap(layer),
+            'small_mushroom': () => this.renderSmallMushroom(layer),
+            'line': () => this.renderer.drawRect(0, layer.y, context.canvasWidth, layer.thickness || 2, layer.color)
+        };
+
+        const shapeRenderer = shapeRenderers[layer.shape];
+        if (shapeRenderer) {
+            shapeRenderer();
+        }
+    }
+
+    renderMushroomCap(layer) {
+        this.renderer.drawCircle(layer.x, layer.y, layer.width / 2, layer.color);
+    }
+
+    renderSmallMushroom(layer) {
+        this.renderer.drawCircle(layer.x, layer.y, layer.width / 2, layer.color);
     }
 
     renderWave(layer, context) {

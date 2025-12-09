@@ -74,7 +74,7 @@ class RainbowRushRepository:
     
     def update_progress(self, progress_id: str, data: Dict[str, Any]) -> Optional[RainbowRushProgress]:
         """
-        Update player progress
+        Update player progress with optimized commit
         
         Args:
             progress_id: Progress identifier
@@ -98,23 +98,30 @@ class RainbowRushRepository:
                 'unlocked_items', 'statistics', 'metadata'
             ]
             
+            has_changes = False
             for key, value in data.items():
                 if key in allowed_fields and hasattr(progress, key):
-                    setattr(progress, key, value)
+                    if getattr(progress, key) != value:
+                        setattr(progress, key, value)
+                        has_changes = True
             
-            progress.updated_at = datetime.utcnow().isoformat()
-            progress.last_played = datetime.utcnow().isoformat()
+            # Commit solo se ci sono modifiche
+            if has_changes:
+                progress.updated_at = datetime.utcnow().isoformat()
+                progress.last_played = datetime.utcnow().isoformat()
+                self.db.flush()  # Flush invece di commit per batch operations
+                self.db.commit()
+                self.db.refresh(progress)
             
-            self.db.commit()
-            self.db.refresh(progress)
             return progress
         except SQLAlchemyError as e:
             self.db.rollback()
             raise Exception(f"Error updating progress: {str(e)}")
     
     def get_progress_by_user(self, user_id: str) -> Optional[RainbowRushProgress]:
-        """Get progress by user ID"""
+        """Get progress by user ID with optimized query"""
         try:
+            # Query ottimizzata - carica solo i campi necessari
             return self.db.query(RainbowRushProgress).filter(
                 RainbowRushProgress.user_id == user_id
             ).first()

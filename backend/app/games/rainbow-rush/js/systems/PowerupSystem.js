@@ -6,9 +6,7 @@
 export const PowerupTypes = {
     IMMORTALITY: 'immortality',
     FLIGHT: 'flight',
-    SUPER_JUMP: 'superJump',
-    SPEED_BOOST: 'speedBoost',
-    TURBO: 'turbo'
+    SUPER_JUMP: 'superJump'
 };
 
 export class Powerup {
@@ -50,20 +48,6 @@ export class Powerup {
                 this.glowColor = [1.0, 0.5, 0.7, 0.8];
                 this.duration = 6000; // 6 seconds
                 this.cooldown = 12000; // 12 seconds
-                break;
-            case PowerupTypes.SPEED_BOOST:
-                this.color = [1.0, 0.5, 0.0, 1.0]; // Orange
-                this.icon = '🚀';
-                this.glowColor = [1.0, 0.7, 0.3, 0.8];
-                this.duration = 5000; // 5 seconds
-                this.cooldown = 15000; // 15 seconds
-                break;
-            case PowerupTypes.TURBO:
-                this.color = [0.0, 1.0, 0.5, 1.0]; // Green
-                this.icon = '💨';
-                this.glowColor = [0.3, 1.0, 0.7, 0.8];
-                this.duration = 5000; // 5 seconds
-                this.cooldown = 15000; // 15 seconds
                 break;
         }
     }

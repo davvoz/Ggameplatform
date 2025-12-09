@@ -47,10 +47,10 @@ class RainbowRushApp {
             // Hide loading screen and show menu
             this.hideLoadingScreen();
             
-            // Load and display initial high score
+            // Carica high score dall'SDK e aggiorna il menu
             if (this.gameController?.scoreSystem) {
-                const highScore = await this.gameController.scoreSystem.loadHighScore();
-                this.screenManager.updateHighScore(highScore);
+                await this.gameController.scoreSystem.initHighScore();
+                this.screenManager.updateHighScore(this.gameController.scoreSystem.getHighScore());
             }
 
             this.initialized = true;

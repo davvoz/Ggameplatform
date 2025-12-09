@@ -39,9 +39,6 @@ export class ScoreSystem {
         // Level time tracking for speed bonus
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
-        
-        // Carica high score in modo asincrono
-        this.initHighScore();
     }
     
     /**
@@ -202,10 +199,9 @@ export class ScoreSystem {
         const finalPoints = Math.floor(points * this.bonusMultiplier * this.speedMultiplier);
         this.score += finalPoints;
 
-        // Update high score
+        // Update high score (solo locale, SDK gestisce la persistenza)
         if (this.score > this.highScore) {
             this.highScore = this.score;
-            this.saveHighScore();
         }
 
         this.notifyScoreChange();
@@ -403,12 +399,14 @@ export class ScoreSystem {
 
     /**
      * Salva high score su SDK o localStorage
+     * NOTA: Non più utilizzato durante il gioco - SDK gestisce automaticamente
+     * l'high score tramite leaderboard quando si completa un livello
      */
     async saveHighScore() {
         if (this.sdkEnabled && this.sdk) {
             // SDK gestisce automaticamente l'aggiornamento del high score
-            // quando si salva il progresso del livello
-            console.log('💾 High score managed by SDK:', this.highScore);
+            // tramite leaderboard quando si completa un livello
+            console.log('💾 High score managed by SDK (no action needed):', this.highScore);
         } else {
             this.saveHighScoreLocal();
         }

@@ -59,32 +59,25 @@ export class RenderingUtils {
     }
 
     /**
-     * Draw multi-layer glow effect - OTTIMIZZATO per performance
+     * Draw multi-layer glow effect - DISABLED for performance
      */
     static drawGlow(renderer, x, y, baseRadius, color, layers = 2, alphaBase = 0.2, alphaStep = 0.1) {
-        // Ridotto da 4 a 2 layer default per performance (+50% più veloce)
-        for (let i = 0; i < layers; i++) {
-            const glowSize = baseRadius + i * 5; // Ridotto da 10 a 5
-            const glowColor = [...color];
-            glowColor[3] = (alphaBase - i * alphaStep);
-            renderer.drawCircle(x, y, glowSize, glowColor);
-        }
+        // Glow disabled for better performance
+        // No-op function
     }
 
     /**
-     * Draw multi-layer shadow - OTTIMIZZATO per performance
+     * Draw single-layer shadow - OPTIMIZED for performance
      */
-    static drawShadow(renderer, x, y, width, height, layers = 2, baseAlpha = 0.15) {
-        // Ridotto da 3 a 2 layer per performance
-        for (let i = 0; i < layers; i++) {
-            renderer.drawRect(
-                x + 2 + i,
-                y + height + i,
-                width,
-                2,
-                [0.0, 0.0, 0.0, baseAlpha / (i + 1)]
-            );
-        }
+    static drawShadow(renderer, x, y, width, height, layers = 1, baseAlpha = 0.15) {
+        // Single layer only for maximum performance
+        renderer.drawRect(
+            x + 2,
+            y + height,
+            width,
+            2,
+            [0.0, 0.0, 0.0, baseAlpha]
+        );
     }
 
     /**

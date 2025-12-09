@@ -6,11 +6,12 @@ import { Enemy } from '../entities/Enemy.js';
 import { getEnemyConfig } from '../config/EnemyTypes.js';
 
 export class EnemySystem {
-    constructor(entityManager, canvasDimensions) {
+    constructor(entityManager, canvasDimensions, audioManager = null) {
         this.entityManager = entityManager;
         this.dims = canvasDimensions;
         this.player = null; // Will be set from outside
         this.levelManager = null; // Will be set from outside
+        this.audioManager = audioManager; // For sound effects
         
         // Enemy spawning (dynamic)
         this.spawnQueue = [];
@@ -125,6 +126,12 @@ export class EnemySystem {
         // Update each enemy
         for (let i = enemies.length - 1; i >= 0; i--) {
             const enemy = enemies[i];
+            
+            // Check for teleport sound BEFORE update
+            if (enemy.justTeleported && this.audioManager) {
+                this.audioManager.playSound('teleport');
+                enemy.justTeleported = false;
+            }
             
             // Update enemy logic
             enemy.update(deltaTime, this.player, this.dims);

@@ -451,6 +451,9 @@ export class Enemy {
             this.y = player.y + Math.sin(angle) * dist;
             
             this.teleportTimer = 0;
+            
+            // Signal that we teleported (for sound/effects)
+            this.justTeleported = true;
         }
     }
 

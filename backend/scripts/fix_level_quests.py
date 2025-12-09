@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from app.database import get_db_session
 from app.models import User, Quest, UserQuest
 
-USER_ID = "user_421c14bf22e040f2"
+USER_ID = "user_ab1faa2624b24938"
 
 def main():
     print("=" * 70)

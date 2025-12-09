@@ -1,3 +1,32 @@
+@media (max-width: 600px) {
+    .rewards-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        gap: 14px !important;
+        margin-top: 10px !important;
+        padding-bottom: 8px !important;
+        justify-content: flex-start !important;
+        scrollbar-width: thin;
+        scrollbar-color: #ffe066 #23243a;
+    }
+    .rewards-grid::-webkit-scrollbar {
+        height: 8px;
+        background: #23243a;
+    }
+    .rewards-grid::-webkit-scrollbar-thumb {
+        background: #ffe066;
+        border-radius: 8px;
+    }
+    }
+    .reward-badge {
+        min-width: 180px;
+        max-width: 220px;
+        width: 80vw;
+        flex: 0 0 auto;
+        margin: 0;
+    }
+}
 /* Responsive: leaderboard table and winner cards */
 @media (max-width: 700px) {
         .winner-card .col-rank {
@@ -452,7 +481,20 @@
 
 /* Rewards Info */
 .rewards-info {
-    display: none !important; /* Nascosto - ora le ricompense sono inline */
+    display: block;
+    margin-bottom: 24px;
+    padding: 16px 18px 12px 18px;
+    width: 100%;
+    background: #23243a;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    border: 1px solid #3a3b5a;
+    font-size: 1.08em;
+    color: #e0e0e0;
+    font-family: inherit;
+    transition: box-shadow 0.2s;
+    position: relative;
+    z-index: 1;
 }
 
 .rewards-info h3 {
@@ -481,24 +523,41 @@
 
 .rewards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 10px;
+    justify-items: stretch;
 }
 
 .reward-badge {
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(75, 0, 130, 0.08) 100%);
-    border: 1px solid rgba(0, 217, 255, 0.2);
-    border-radius: var(--radius-md);
-        padding: 6px 8px;
-        min-height: 38px;
-        font-size: 0.97em;
-    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, #2d2e4a 70%, #23243a 100%);
+    color: #ffe066;
+    border-radius: 10px;
+    padding: 14px 10px 12px 10px;
+    font-weight: 700;
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    border: 1px solid #ffe066;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s;
+    cursor: default;
+    min-width: 180px;
+    min-height: 120px;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
 }
 
 .reward-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 217, 255, 0.2);
-    border-color: var(--primary-color);
+    background: #35365a;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.24);
+    transform: scale(1.06);
+    border-color: #ffe066;
 }
 
 .reward-rank {
@@ -516,9 +575,9 @@
 }
 
 .steem-reward {
-    color: #ff4444;
+    color: #3fa7ff;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.08em;
 }
 
 .coin-reward {

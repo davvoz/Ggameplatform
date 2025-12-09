@@ -128,17 +128,17 @@ class LeaderboardRenderer {
                     </button>
                 </div>
 
+                <!-- Rewards Info (below tabs) -->
+                <div id="rewardsInfo" class="rewards-info">
+                    ${this.renderRewardsInfo()}
+                </div>
+
                 <!-- Game Filter -->
                 <div class="game-filter">
                     <label for="gameSelect">Filter by game:</label>
                     <select id="gameSelect" onchange="leaderboardRenderer.onGameChange(this.value)">
                         ${games.map((g, idx) => `<option value="${g.game_id}" ${idx === 0 ? 'selected' : ''} style="background-color: #1a1a2e; color: #e0e0e0;">${g.title}</option>`).join('')}
                     </select>
-                </div>
-
-                <!-- Rewards Info -->
-                <div id="rewardsInfo" class="rewards-info">
-                    ${this.renderRewardsInfo()}
                 </div>
 
                 <!-- Leaderboard Content -->
@@ -229,17 +229,8 @@ class LeaderboardRenderer {
             return '<p class="text-muted">No specific rewards for this game</p>';
         }
 
-        // Add STEEM info message if applicable
-        let steemInfoMessage = '';
-        if (this.currentGameId && !this.steemEnabled) {
-            steemInfoMessage = '<p class="steem-info-message">ℹ️ This game awards Coins only. STEEM rewards are not enabled for this game.</p>';
-        } else if (this.currentGameId && this.steemEnabled) {
-            steemInfoMessage = '<p class="steem-info-message steem-enabled">✨ This game awards both STEEM and Coins!</p>';
-        }
-
         return `
             <h3>💰 Weekly Rewards</h3>
-            ${steemInfoMessage}
             <div class="rewards-grid">
                 ${relevantRewards.map(r => this.renderRewardBadge(r)).join('')}
             </div>
@@ -263,7 +254,7 @@ class LeaderboardRenderer {
             <div class="reward-badge">
                 <div class="reward-rank">${medal} ${rankText}</div>
                 <div class="reward-amounts">
-                    ${showSteemReward ? `<span class="steem-reward">${reward.steem_reward} STEEM</span>` : ''}
+                    ${showSteemReward ? `<span class="steem-reward steem-blue">${reward.steem_reward} STEEM</span>` : ''}
                     ${reward.coin_reward > 0 ? `<span class="coin-reward">${reward.coin_reward} 🪙</span>` : ''}
                 </div>
                 ${reward.description ? `<div class="reward-desc">${reward.description}</div>` : ''}
@@ -286,7 +277,6 @@ class LeaderboardRenderer {
         const rewardsInfoEl = document.getElementById('rewardsInfo');
         if (rewardsInfoEl) {
             rewardsInfoEl.innerHTML = this.renderRewardsInfo();
-            // Hide the entire div when not on weekly tab
             rewardsInfoEl.style.display = (tab === 'weekly') ? 'block' : 'none';
         }
 
@@ -359,7 +349,10 @@ class LeaderboardRenderer {
      */
     renderLeaderboardTable(entries) {
         const hasGames = !this.currentGameId;
-        const showRewards = this.currentTab === 'weekly'; // Only show rewards in weekly tab
+        // If rendering winners history, detect by entry shape (has steem_reward, coin_reward, reward_sent)
+        const isWinnersHistory = entries.length > 0 && entries[0].hasOwnProperty('steem_reward') && entries[0].hasOwnProperty('coin_reward');
+        // Only show rewards column in winners history, not weekly tab
+        const showRewards = isWinnersHistory;
         const headerClass = `${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
         
         return `
@@ -385,18 +378,29 @@ class LeaderboardRenderer {
         const rankClass = entry.rank <= 3 ? `top-${entry.rank}` : '';
         const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
 
-        // Find reward for this rank (only if showing rewards)
+        // If entry is from winners history, show actual sent rewards
         let rewardContent = '';
-        
-        if (showRewards) {
+        if (showRewards && entry.hasOwnProperty('steem_reward') && entry.hasOwnProperty('coin_reward')) {
+            if (entry.coin_reward > 0) {
+                rewardContent += `<span class="reward-coins">🪙 ${entry.coin_reward}</span>`;
+            }
+            if (entry.steem_reward > 0) {
+                rewardContent += `<span class="reward-steem">💎 ${entry.steem_reward} STEEM</span>`;
+            }
+            if (entry.reward_sent && entry.steem_tx_id) {
+                rewardContent += `<span class="tx-id" style="font-size:0.82em; color:var(--text-muted);">TX:${entry.steem_tx_id.substring(0,8)}...</span>`;
+            }
+            if (entry.reward_sent) {
+                rewardContent += `<span style="font-size:0.95em;">✅</span>`;
+            }
+        } else if (showRewards) {
+            // Default: use config rewards for weekly tab
             const reward = this.rewards.find(r => {
                 return entry.rank >= r.rank_start && entry.rank <= r.rank_end;
             });
-            
             if (reward) {
                 const steemPart = reward.steem_reward > 0 ? `<span class="reward-steem">💎 ${reward.steem_reward} STEEM</span>` : '';
                 const coinPart = reward.coin_reward > 0 ? `<span class="reward-coins">🪙 ${reward.coin_reward}</span>` : '';
-                
                 if (steemPart || coinPart) {
                     rewardContent = `${coinPart} ${steemPart}`;
                 }

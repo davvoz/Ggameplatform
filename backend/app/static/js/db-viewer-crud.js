@@ -199,6 +199,7 @@ class CRUDManager {
                 { key: 'user_id', label: 'User ID', type: 'text', readonly: true },
                 { key: 'username', label: 'Username', type: 'text' },
                 { key: 'email', label: 'Email', type: 'email' },
+                { key: 'password_hash', label: 'Password Hash', type: 'text' },
                 { key: 'steem_username', label: 'Steem Username', type: 'text' },
                 { key: 'is_anonymous', label: 'Anonimo', type: 'checkbox' },
                 { key: 'cur8_multiplier', label: 'CUR8 Multiplier', type: 'number', step: '0.01', min: '1', max: '4' },
@@ -206,7 +207,13 @@ class CRUDManager {
                 { key: 'delegation_amount', label: 'Delegation Amount (STEEM)', type: 'number', step: '0.001', min: '0' },
                 { key: 'last_multiplier_check', label: 'Last Multiplier Check', type: 'text', readonly: true },
                 { key: 'total_xp_earned', label: 'XP Totale', type: 'number', step: '0.01', min: '0' },
-                { key: 'avatar', label: 'Avatar URL', type: 'text' }
+                { key: 'game_scores', label: 'Game Scores', type: 'json' },
+                { key: 'avatar', label: 'Avatar URL', type: 'text' },
+                { key: 'last_login', label: 'Last Login', type: 'datetime-local' },
+                { key: 'login_streak', label: 'Login Streak', type: 'number', min: '0' },
+                { key: 'last_login_date', label: 'Last Login Date', type: 'text' },
+                { key: 'extra_data', label: 'Extra Data', type: 'json' },
+                { key: 'created_at', label: 'Created At', type: 'datetime-local', readonly: true }
             ],
             'sessions': [
                 { key: 'session_id', label: 'Session ID', type: 'text', readonly: true },

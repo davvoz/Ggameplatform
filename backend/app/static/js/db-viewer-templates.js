@@ -273,12 +273,22 @@ class TemplateEngine {
                     <div><strong style="color:#6c757d">User ID:</strong><br><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px">${user.user_id}</code></div>
                     <div><strong style="color:#6c757d">Username:</strong><br><span style="font-size:1.1em;font-weight:600;color:#1a1a1a">${Utils.escapeHtml(user.username)}</span></div>
                     <div><strong style="color:#6c757d">Email:</strong><br>${Utils.escapeHtml(user.email || '-')}</div>
+                    <div><strong style="color:#6c757d">Password Hash:</strong><br><code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:0.75em">${user.password_hash ? '••••••••' : '-'}</code></div>
                     <div><strong style="color:#6c757d">Steem Username:</strong><br>${Utils.escapeHtml(user.steem_username || '-')}</div>
                     <div><strong style="color:#6c757d">Tipo Account:</strong><br><span style="color:${user.is_anonymous ? '#ff9800' : '#4caf50'};font-weight:600">${user.is_anonymous ? '🔓 Anonimo' : '🔐 Registrato'}</span></div>
                     <div><strong style="color:#6c757d">XP Totale:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#28a745">${parseFloat(user.total_xp_earned || 0).toFixed(2)}</span></div>
                     <div><strong style="color:#6c757d">Moltiplicatore CUR8:</strong><br><span style="font-size:1.2em;font-weight:bold;color:#9c27b0">${(user.cur8_multiplier || 1.0).toFixed(1)}x</span></div>
+                    <div><strong style="color:#6c757d">Votes CUR8 Witness:</strong><br><span style="color:${user.votes_cur8_witness ? '#28a745' : '#6c757d'};font-size:1.2em">${user.votes_cur8_witness ? '✅' : '⬜'}</span></div>
+                    <div><strong style="color:#6c757d">Delegation Amount:</strong><br><span style="font-weight:600;color:#2196f3">${(user.delegation_amount || 0).toFixed(3)} SP</span></div>
+                    <div><strong style="color:#6c757d">Last Multiplier Check:</strong><br>${user.last_multiplier_check ? Utils.formatDate(user.last_multiplier_check) : '-'}</div>
+                    <div><strong style="color:#6c757d">Avatar:</strong><br>${user.avatar ? `<img src="${user.avatar}" style="max-width:50px;border-radius:4px">` : '-'}</div>
+                    <div><strong style="color:#6c757d">Last Login:</strong><br>${Utils.formatDate(user.last_login) || '-'}</div>
+                    <div><strong style="color:#6c757d">Login Streak:</strong><br><span style="font-weight:bold;color:#ff5722;font-size:1.1em">${user.login_streak > 0 ? `🔥 ${user.login_streak} giorni` : '-'}</span></div>
+                    <div><strong style="color:#6c757d">Last Login Date:</strong><br><span style="color:#666">${user.last_login_date || '-'}</span></div>
                     <div><strong style="color:#6c757d">Data Registrazione:</strong><br>${Utils.formatDate(user.created_at)}</div>
                 </div>
+                ${user.game_scores ? `<div style="margin-top:16px"><strong style="color:#6c757d">Game Scores:</strong><pre style="background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;max-height:300px;font-size:0.875rem;border-left:4px solid #2196F3">${JSON.stringify(user.game_scores, null, 2)}</pre></div>` : ''}
+                ${user.extra_data ? `<div style="margin-top:16px"><strong style="color:#6c757d">Extra Data:</strong><pre style="background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;max-height:300px;font-size:0.875rem;border-left:4px solid #9C27B0">${JSON.stringify(user.extra_data, null, 2)}</pre></div>` : ''}
             </div>
         `;
     }

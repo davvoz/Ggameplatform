@@ -177,7 +177,7 @@ const TABLE_DEFINITIONS = {
         columns: [
             {
                 key: 'user_id',
-                label: 'User ID',
+                label: 'ID',
                 type: 'text',
                 searchable: true
             },
@@ -194,11 +194,6 @@ const TABLE_DEFINITIONS = {
                 searchable: true
             },
             {
-                key: 'steem_username',
-                label: 'Steem',
-                type: 'text'
-            },
-            {
                 key: 'is_anonymous',
                 label: 'Tipo',
                 type: 'custom',
@@ -210,91 +205,23 @@ const TABLE_DEFINITIONS = {
             },
             {
                 key: 'total_xp_earned',
-                label: 'XP Totale',
+                label: 'XP',
                 type: 'number',
-                decimals: 2
+                decimals: 0
             },
             {
-                key: 'cur8_multiplier',
-                label: 'Multiplier',
+                key: 'login_streak',
+                label: 'Streak',
                 type: 'custom',
                 render: (value) => ({
                     type: 'text',
-                    text: (value || 1.0).toFixed(2) + 'x',
-                    style: 'font-weight: 600; color: #9c27b0;'
+                    text: value > 0 ? `🔥 ${value}` : '-',
+                    style: value > 0 ? 'font-weight: bold; color: #ff5722;' : 'color: #999;'
                 })
-            },
-            {
-                key: 'votes_cur8_witness',
-                label: 'Witness',
-                type: 'custom',
-                render: (value) => ({
-                    type: 'text',
-                    text: value ? '✅' : '⬜',
-                    style: `font-size: 16px;`
-                })
-            },
-            {
-                key: 'delegation_amount',
-                label: 'Delegation',
-                type: 'custom',
-                render: (value) => ({
-                    type: 'text',
-                    text: (value || 0).toFixed(3) + ' SP',
-                    style: 'font-weight: 500; color: #2196f3;'
-                })
-            },
-            {
-                key: 'last_multiplier_check',
-                label: 'Last Check',
-                type: 'custom',
-                render: (value) => {
-                    if (!value) return { type: 'text', text: 'Never', style: 'color: #999;' };
-                    const date = new Date(value);
-                    const now = new Date();
-                    const diffMs = now - date;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    if (diffMins < 1) return { type: 'text', text: 'Just now', style: 'color: #4caf50;' };
-                    if (diffMins < 60) return { type: 'text', text: `${diffMins}m ago`, style: 'color: #4caf50;' };
-                    const diffHours = Math.floor(diffMins / 60);
-                    return { type: 'text', text: `${diffHours}h ago`, style: 'color: #ff9800;' };
-                }
-            },
-            {
-                key: 'password_hash',
-                label: 'Password Hash',
-                type: 'custom',
-                render: (value) => ({
-                    type: 'text',
-                    text: value ? '••••••••' : '-',
-                    style: 'color: #999; font-family: monospace;'
-                })
-            },
-            {
-                key: 'game_scores',
-                label: 'Game Scores',
-                type: 'json-preview',
-                maxLength: 30
-            },
-            {
-                key: 'avatar',
-                label: 'Avatar',
-                type: 'text'
             },
             {
                 key: 'last_login',
                 label: 'Ultimo Login',
-                type: 'date'
-            },
-            {
-                key: 'extra_data',
-                label: 'Extra Data',
-                type: 'json-preview',
-                maxLength: 30
-            },
-            {
-                key: 'created_at',
-                label: 'Registrato',
                 type: 'date'
             },
             {
@@ -318,6 +245,8 @@ const TABLE_DEFINITIONS = {
             { name: 'game_scores', type: 'JSON', label: 'Game Scores' },
             { name: 'avatar', type: 'STRING', label: 'Avatar' },
             { name: 'last_login', type: 'DATETIME', label: 'Last Login' },
+            { name: 'login_streak', type: 'INTEGER', label: 'Login Streak' },
+            { name: 'last_login_date', type: 'STRING', label: 'Last Login Date' },
             { name: 'extra_data', type: 'JSON', label: 'Extra Data' },
             { name: 'created_at', type: 'DATETIME', label: 'Created At', readonly: true }
         ]
@@ -553,6 +482,12 @@ const TABLE_DEFINITIONS = {
                 searchable: true
             },
             {
+                key: 'config',
+                label: 'Config',
+                type: 'json-preview',
+                maxLength: 20
+            },
+            {
                 key: 'is_active',
                 label: 'Attivo',
                 type: 'boolean',
@@ -560,11 +495,6 @@ const TABLE_DEFINITIONS = {
                 falseText: '✗ Inattivo',
                 trueColor: '#28a745',
                 falseColor: '#dc3545'
-            },
-            {
-                key: 'created_at',
-                label: 'Data Creazione',
-                type: 'date'
             },
             {
                 key: 'actions',
@@ -581,6 +511,7 @@ const TABLE_DEFINITIONS = {
             { name: 'target_value', type: 'INTEGER' },
             { name: 'xp_reward', type: 'INTEGER' },
             { name: 'reward_coins', type: 'INTEGER' },
+            { name: 'config', type: 'JSON' },
             { name: 'is_active', type: 'BOOLEAN' },
             { name: 'created_at', type: 'DATETIME' }
         ]
@@ -669,13 +600,13 @@ const TABLE_DEFINITIONS = {
             },
             {
                 key: 'user_id',
-                label: 'User ID',
+                label: 'User',
                 type: 'text',
                 searchable: true
             },
             {
                 key: 'quest_id',
-                label: 'Quest ID',
+                label: 'Quest',
                 type: 'number'
             },
             {
@@ -687,39 +618,25 @@ const TABLE_DEFINITIONS = {
                 key: 'is_completed',
                 label: 'Completato',
                 type: 'boolean',
-                trueText: '✓ Sì',
-                falseText: '✗ No',
+                trueText: '✓',
+                falseText: '✗',
                 trueColor: '#28a745',
                 falseColor: '#6c757d'
             },
             {
                 key: 'is_claimed',
-                label: 'Ricompensa Reclamata',
+                label: 'Reclamato',
                 type: 'boolean',
-                trueText: '✓ Reclamata',
-                falseText: '✗ Non reclamata',
+                trueText: '✓',
+                falseText: '✗',
                 trueColor: '#69f0ae',
                 falseColor: '#ffc107'
             },
             {
-                key: 'completed_at',
-                label: 'Data Completamento',
-                type: 'date'
-            },
-            {
-                key: 'claimed_at',
-                label: 'Data Reclamo',
-                type: 'custom',
-                render: (value) => ({
-                    type: 'text',
-                    text: value ? Utils.formatDate(value) : '-',
-                    style: value ? 'color: #69f0ae; font-weight: 500;' : 'color: #6c757d;'
-                })
-            },
-            {
-                key: 'started_at',
-                label: 'Data Inizio',
-                type: 'date'
+                key: 'extra_data',
+                label: 'Extra',
+                type: 'json-preview',
+                maxLength: 20
             },
             {
                 key: 'actions',
@@ -736,7 +653,8 @@ const TABLE_DEFINITIONS = {
             { name: 'is_claimed', type: 'BOOLEAN' },
             { name: 'completed_at', type: 'DATETIME' },
             { name: 'claimed_at', type: 'DATETIME' },
-            { name: 'started_at', type: 'DATETIME' }
+            { name: 'started_at', type: 'DATETIME' },
+            { name: 'extra_data', type: 'JSON' }
         ]
     },
 

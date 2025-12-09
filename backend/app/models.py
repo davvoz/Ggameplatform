@@ -117,6 +117,8 @@ class User(Base):
     avatar = Column(String, nullable=True)
     created_at = Column(String, nullable=False)
     last_login = Column(String, nullable=True)
+    login_streak = Column(Integer, default=0)  # Current consecutive login days
+    last_login_date = Column(String, nullable=True)  # Date of last login (YYYY-MM-DD)
     extra_data = Column(Text, default='{}')  # Renamed from 'metadata'
     
     # Relationships
@@ -140,6 +142,8 @@ class User(Base):
             "avatar": self.avatar,
             "created_at": self.created_at,
             "last_login": self.last_login,
+            "login_streak": self.login_streak,
+            "last_login_date": self.last_login_date,
             "metadata": json.loads(self.extra_data) if self.extra_data else {}
         }
     
@@ -273,12 +277,19 @@ class Quest(Base):
     reward_coins = Column(Integer, default=0)  # Renamed from sats_reward
     is_active = Column(Integer, default=1)
     created_at = Column(String, nullable=False)
+    config = Column(Text, default='{}')  # Additional quest configuration (JSON)
     
     # Relationships
     user_progress = relationship("UserQuest", back_populates="quest", cascade="all, delete-orphan")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert quest instance to dictionary."""
+        config = {}
+        try:
+            config = json.loads(self.config) if self.config else {}
+        except:
+            pass
+        
         return {
             "quest_id": self.quest_id,
             "title": self.title,
@@ -288,7 +299,8 @@ class Quest(Base):
             "xp_reward": self.xp_reward,
             "reward_coins": self.reward_coins,  # Renamed from sats_reward
             "is_active": bool(self.is_active),
-            "created_at": self.created_at
+            "created_at": self.created_at,
+            "config": config
         }
     
     def __repr__(self) -> str:
@@ -308,6 +320,7 @@ class UserQuest(Base):
     completed_at = Column(String, nullable=True)
     claimed_at = Column(String, nullable=True)
     started_at = Column(String, nullable=False)
+    extra_data = Column(Text, default='{}')  # For tracking daily/weekly resets
     
     # Relationships
     user = relationship("User")
@@ -324,7 +337,8 @@ class UserQuest(Base):
             "is_claimed": bool(self.is_claimed),
             "completed_at": self.completed_at,
             "claimed_at": self.claimed_at,
-            "started_at": self.started_at
+            "started_at": self.started_at,
+            "extra_data": json.loads(self.extra_data) if self.extra_data else {}
         }
     
     def __repr__(self) -> str:

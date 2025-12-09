@@ -108,6 +108,31 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
             updated_at=now
         )
         session.add(weekly_entry)
+    
+    # After updating weekly leaderboard, recalculate weekly ranks
+    recalculate_weekly_ranks(session, week_start)
+    
+    # Check leaderboard quests for this user
+    try:
+        from app.quest_tracker import check_leaderboard_quest_progress
+        check_leaderboard_quest_progress(session, user_id)
+    except Exception as e:
+        print(f"⚠️ Error checking leaderboard quests: {e}")
+
+
+def recalculate_weekly_ranks(session: Session, week_start: str):
+    """
+    Recalculate ranks for weekly leaderboard.
+    Ranks are calculated across all games for the week.
+    """
+    # Get all entries for this week, ordered by score (descending)
+    entries = session.query(WeeklyLeaderboard).filter(
+        WeeklyLeaderboard.week_start == week_start
+    ).order_by(WeeklyLeaderboard.score.desc()).all()
+    
+    # Update ranks
+    for idx, entry in enumerate(entries, start=1):
+        entry.rank = idx
 
 
 def recalculate_ranks_for_game(session: Session, game_id: str):

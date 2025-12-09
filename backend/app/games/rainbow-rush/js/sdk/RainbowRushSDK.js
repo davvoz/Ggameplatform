@@ -286,9 +286,11 @@ export class RainbowRushSDK {
     
     /**
      * End current session
+     * @param {number} finalScore - Final score achieved (optional)
+     * @param {Object} finalStats - Final game statistics (optional)
      * @returns {Promise<Object>} Ended session
      */
-    async endSession() {
+    async endSession(finalScore = null, finalStats = null) {
         if (!this.sessionId) {
             console.warn('[RainbowRushSDK] No active session to end');
             return null;
@@ -298,18 +300,26 @@ export class RainbowRushSDK {
             this.stopHeartbeat();
             
             const sessionId = this.sessionId;
-            const response = await this.apiRequest('POST', `/api/rainbow-rush/session/${sessionId}/end`, {});
+            
+            // Prepare payload with score and stats
+            const payload = {};
+            if (finalScore !== null) {
+                payload.score = finalScore;
+                console.log(`[RainbowRushSDK] 🎯 Sending final score: ${finalScore}`);
+            }
+            if (finalStats !== null) {
+                payload.current_stats = finalStats;
+                console.log(`[RainbowRushSDK] 📊 Sending final stats:`, finalStats);
+            }
+            
+            console.log(`[RainbowRushSDK] 📤 Payload to send:`, payload);
+            const response = await this.apiRequest('POST', `/api/rainbow-rush/session/${sessionId}/end`, payload);
             
             console.log('[RainbowRushSDK] Rainbow Rush session ended:', sessionId);
             
-            // Ask platform (RuntimeShell) to show XP notification
-            // The platform manages the main game session and XP calculation
-            window.parent.postMessage({
-                type: 'requestXPNotification',
-                payload: {},
-                protocolVersion: '1.0.0'
-            }, '*');
-            console.log('[RainbowRushSDK] 🎁 Requested XP notification from platform');
+            // DON'T request XP notification here - let the platform handle it when it receives gameOver
+            // The platform (RuntimeShell) will show XP notification when it processes the gameOver message
+            // Requesting it here causes the platform session to close BEFORE score is received
             
             this.emit('sessionEnded', response.session);
             this.sessionId = null;

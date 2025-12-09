@@ -294,9 +294,16 @@ async def update_session(
         )
 
 
+class SessionEndRequest(BaseModel):
+    """End session request schema"""
+    score: Optional[int] = Field(default=None, description="Final score")
+    current_stats: Optional[Dict[str, Any]] = Field(default=None, description="Final statistics")
+
+
 @router.post("/session/{session_id}/end")
 async def end_session(
     session_id: str,
+    request: SessionEndRequest = SessionEndRequest(),
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """
@@ -304,12 +311,32 @@ async def end_session(
     
     Args:
         session_id: Session identifier
+        request: Optional score and stats data
         service: RainbowRushService instance
         
     Returns:
         Ended session data
     """
     try:
+        print(f"🎯 [Rainbow Rush] Ending session {session_id}")
+        print(f"📊 [Rainbow Rush] Request score: {request.score}")
+        print(f"📊 [Rainbow Rush] Request stats: {request.current_stats}")
+        
+        # Update session with final score and stats before ending
+        if request.score is not None or request.current_stats is not None:
+            update_data = {}
+            if request.score is not None:
+                if request.current_stats is None:
+                    update_data['current_stats'] = {'score': request.score}
+                else:
+                    update_data['current_stats'] = request.current_stats
+                    update_data['current_stats']['score'] = request.score
+            elif request.current_stats is not None:
+                update_data['current_stats'] = request.current_stats
+            
+            print(f"💾 [Rainbow Rush] Updating session with: {update_data}")
+            service.update_game_session(session_id, update_data)
+        
         session = service.end_game_session(session_id)
         return JSONResponse(content={
             "success": True,

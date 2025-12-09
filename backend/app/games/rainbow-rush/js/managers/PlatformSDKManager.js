@@ -42,16 +42,18 @@ export class PlatformSDKManager {
     }
 
     async gameOver(score, details) {
-
+        console.log('🎯 [PlatformSDKManager] gameOver called with score:', score, 'details:', details);
+        
         if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
             console.warn('SDK not initialized, game over not reported');
             return;
         }
         try {
+            console.log('📡 [PlatformSDKManager] Calling window.PlatformSDK.gameOver with score:', score);
             window.PlatformSDK.gameOver(score, details);
-            console.log('Game over reported:', score, details);
+            console.log('✅ [PlatformSDKManager] Game over reported:', score, details);
         } catch (error) {
-            console.error('Failed to report game over:', error);
+            console.error('❌ [PlatformSDKManager] Failed to report game over:', error);
         }
     }
 

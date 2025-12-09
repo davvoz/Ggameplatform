@@ -182,15 +182,6 @@ export default class RuntimeShell {
                 }
                 break;
 
-            case 'requestXPNotification':
-                // Game requests to show XP notification (e.g., Rainbow Rush ending its internal session)
-                // End the platform session which will calculate and show XP
-                this.log('🎁 Game requested XP notification - ending platform session');
-                if (this.sessionId) {
-                    this.endGameSession(false);
-                }
-                break;
-
             default:
                 this.log('Unknown message type:', message.type);
         }

@@ -404,7 +404,10 @@ class RainbowRushService:
                 if session.current_stats:
                     stats = json.loads(session.current_stats) if isinstance(session.current_stats, str) else session.current_stats
                     score = stats.get('score', 0)
-            except:
+                    print(f"🎯 [Rainbow Rush] Extracted score from session: {score}")
+                    print(f"📊 [Rainbow Rush] Full stats: {stats}")
+            except Exception as e:
+                print(f"⚠️ [Rainbow Rush] Error extracting score: {e}")
                 pass
             
             # Get total XP earned from progress during this session

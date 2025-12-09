@@ -74,22 +74,30 @@ export class LevelOrchestrator {
         // - If resetHealth=false: CONTINUING game session (next level)
         //   → Keep session open, just update level if needed
         
+        console.log(`🎮 [LevelOrchestrator] loadLevel called - levelId: ${levelId}, resetHealth: ${resetHealth}`);
+        
         if (this.gameController?.rainbowRushSDK) {
             try {
                 if (resetHealth) {
                     // NEW GAME - End previous session if exists, then start new one
                     if (this.gameController.rainbowRushSDK.sessionId) {
-                        await this.gameController.rainbowRushSDK.endSession();
-                        console.log(`✅ Previous session ended (new game)`);
+                        // Get current score before ending session
+                        const currentScore = this.scoreSystem?.getScore() || 0;
+                        console.log(`🔚 [LevelOrchestrator] Ending previous session with score: ${currentScore}`);
+                        await this.gameController.rainbowRushSDK.endSession(currentScore);
+                        console.log(`✅ Previous session ended (new game) with score: ${currentScore}`);
                     }
                     
                     // Start new game session for this level
+                    console.log(`🚀 [LevelOrchestrator] Starting Rainbow Rush session for level ${levelId}`);
                     await this.gameController.rainbowRushSDK.startSession(levelId);
                     console.log(`✅ Game session started for level ${levelId}`);
                     
                     // Notify platform that game has started (triggers platform session creation)
                     if (this.gameController.sdkManager) {
+                        console.log(`📡 [LevelOrchestrator] Calling gameStarted() to notify platform`);
                         await this.gameController.sdkManager.gameStarted();
+                        console.log(`✅ [LevelOrchestrator] Platform notified of game start`);
                     }
                 } else {
                     // CONTINUING - Keep session open, player is progressing through levels
@@ -175,8 +183,15 @@ export class LevelOrchestrator {
         // End current session when level is completed
         if (this.gameController?.rainbowRushSDK?.sessionId) {
             try {
-                await this.gameController.rainbowRushSDK.endSession();
-                console.log('✅ Game session ended on level complete');
+                // Get final score before ending session
+                const finalScore = this.scoreSystem?.getScore() || 0;
+                const finalStats = {
+                    score: finalScore,
+                    level: currentLevel,
+                    coins: this.scoreSystem?.coins || 0
+                };
+                await this.gameController.rainbowRushSDK.endSession(finalScore, finalStats);
+                console.log(`✅ Game session ended on level complete with score: ${finalScore}`);
             } catch (error) {
                 console.error('❌ Failed to end game session:', error);
             }

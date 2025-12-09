@@ -87,7 +87,8 @@ class LevelSelectState extends BaseGameState {
     handleInput(action, data, context) {
         if (action === 'selectLevel') {
             const dims = context.engine.getCanvasDimensions();
-            context.levelController.loadLevel(data.levelId, dims);
+            // Load level WITH health reset (new game from level select)
+            context.levelController.loadLevel(data.levelId, dims, true);
             context.stateMachine.transitionTo(GameStates.PLAYING, context);
             return true;
         } else if (action === 'back') {
@@ -570,43 +571,55 @@ class GameOverState extends BaseGameState {
         const stats = context.scoreSystem.getGameStats();
         stats.level = context.levelManager.currentLevelId || 1;
         
-        // End game session
+        console.log('🎯 [GameOverState] Final stats:', stats);
+        console.log('🏆 [GameOverState] Final score:', stats.score);
+        
+        // IMPORTANT: Send all score data BEFORE resetting anything
+        // Store score before any async operations
+        const finalScore = stats.score;
+        const finalStats = {
+            level: stats.level,
+            coins: stats.coins,
+            score: finalScore,
+            time: Date.now()
+        };
+        
+        // End game session WITH SCORE
         if (context.gameController?.rainbowRushSDK?.sessionId) {
             try {
-                await context.gameController.rainbowRushSDK.endSession();
-                console.log('✅ Game session ended on game over');
+                // Pass final score and stats to endSession
+                console.log('💾 [GameOverState] Saving to Rainbow Rush session with score:', finalScore);
+                await context.gameController.rainbowRushSDK.endSession(finalScore, finalStats);
+                console.log('✅ Game session ended on game over with score:', finalScore);
             } catch (error) {
                 console.error('❌ Failed to end game session:', error);
             }
         }
         
-        await context.sdkManager.submitScore(stats.score).then(() => {
-            console.log('Score submitted successfully');
-        }).catch((error) => {
-            console.error('Error submitting score:', error);
-        }).then(() => {
-            // Send to SDK - grant XP every game
+        // Submit score to Platform SDK
+        try {
+            console.log('📤 [GameOverState] Submitting score to Platform SDK:', finalScore);
+            await context.sdkManager.submitScore(finalScore);
+            console.log('✅ [GameOverState] Score submitted to Platform SDK:', finalScore);
+        } catch (error) {
+            console.error('❌ [GameOverState] Error submitting score:', error);
+        }
+        
+        // Send gameOver to Platform SDK  
+        try {
             if (typeof PlatformSDK !== 'undefined') {
-                try {
-                    context.sdkManager.gameOver(stats.score, {
-                        level: stats.level,
-                        coins: stats.coins,
-                        score: stats.score,
-                        time: Date.now() 
-                    });
-                    console.log(`📡 Game over sent to SDK: score=${stats.score}`);
-
-                } catch (e) {
-                    console.error('⚠️ Failed to send game over to SDK:', e);
-                }
+                console.log('📡 [GameOverState] Sending gameOver to Platform SDK with score:', finalScore);
+                await context.sdkManager.gameOver(finalScore, finalStats);
+                console.log(`✅ Game over sent to SDK: score=${finalScore}`);
             }
-        });
+        } catch (e) {
+            console.error('⚠️ Failed to send game over to SDK:', e);
+        }
 
-
-        // Reset total score
+        // NOW it's safe to reset score after all SDK calls are done
         context.scoreSystem.fullReset();
 
-        // Emit game over event
+        // Emit game over event with the ORIGINAL stats (before reset)
         const event = new CustomEvent('gameOver', { detail: stats });
         window.dispatchEvent(event);
     }

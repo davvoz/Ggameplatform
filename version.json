@@ -1,8 +1,17 @@
 {
-  "version": "1.18.0",
-  "timestamp": "2025-12-09T15:21:27.816Z",
-  "buildNumber": 51,
+  "version": "1.19.0",
+  "timestamp": "2025-12-09T16:47:40.367Z",
+  "buildNumber": 52,
   "changelog": [
+    {
+      "version": "1.19.0",
+      "date": "2025-12-09",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance leaderboard rewards display and responsiveness",
+        "🔖 Bump version to 1.18.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.18.0",
       "date": "2025-12-09",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Add quest progress tracking for Rainbow Rush sessions",
         "🔖 Bump version to 1.15.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.5",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Ensure rank is not None before comparing in quest progress calculations",
-        "🔖 Bump version to 1.15.4 [skip-version]"
       ]
     }
   ]

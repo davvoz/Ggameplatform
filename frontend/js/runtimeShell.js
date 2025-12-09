@@ -25,7 +25,8 @@ const GAME_MESSAGE_TYPES = {
     REQUEST_FULLSCREEN: 'requestFullScreen',
     LOG: 'log',
     READY: 'ready',
-    RESET_SESSION: 'resetSession'
+    RESET_SESSION: 'resetSession',
+    GAME_STARTED: 'gameStarted'
 };
 
 // Allowed platform message types (Platform → Game)
@@ -173,6 +174,23 @@ export default class RuntimeShell {
                 });
                 break;
 
+            case GAME_MESSAGE_TYPES.GAME_STARTED:
+                // Game has actually started (level selected) - create session now
+                this.log('🎮 Game started, creating session...');
+                if (!this.sessionId) {
+                    this.startGameSession();
+                }
+                break;
+
+            case 'requestXPNotification':
+                // Game requests to show XP notification (e.g., Rainbow Rush ending its internal session)
+                // End the platform session which will calculate and show XP
+                this.log('🎁 Game requested XP notification - ending platform session');
+                if (this.sessionId) {
+                    this.endGameSession(false);
+                }
+                break;
+
             default:
                 this.log('Unknown message type:', message.type);
         }
@@ -224,8 +242,8 @@ export default class RuntimeShell {
         this.state.isReady = true;
         this.log('Game is ready:', payload);
 
-        // Start game session tracking
-        this.startGameSession();
+        // DON'T start session here - wait for actual game start
+        this.log('⏸️ Game ready, waiting for game start to create session...');
 
         // Process queued messages
         this.processMessageQueue();
@@ -843,6 +861,11 @@ export default class RuntimeShell {
      */
     showCur8Notification(xpAmount) {
         console.warn('🎁 SHOWING XP NOTIFICATION:', xpAmount, '- Stack trace:', new Error().stack);
+        
+        // Try to show notification inside the game iframe first (if game supports it)
+        this.sendMessage('showXPBanner', { xp_earned: xpAmount });
+        
+        // Also show in main page as fallback
         const notification = document.createElement('div');
         notification.className = 'xp-notification';
         notification.innerHTML = `
@@ -857,11 +880,12 @@ export default class RuntimeShell {
             style.id = 'xp-notification-style';
             style.textContent = `
             .xp-notification {
-                position: fixed;
-                top: 70px;
-                right: 20px;
-                z-index: 99999999;
+                position: fixed !important;
+                top: 70px !important;
+                right: 20px !important;
+                z-index: 2147483647 !important;
                 animation: slideInRight 0.5s ease;
+                pointer-events: none;
             }
             .xp-notification.hiding {
                 animation: slideOutRight 0.5s ease forwards;

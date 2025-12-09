@@ -502,7 +502,7 @@ class LevelSummaryState extends BaseGameState {
         super(GameStates.LEVEL_SUMMARY);
     }
 
-    enter(context) {
+    async enter(context) {
         super.enter(context);
         context.engine.stop();
 
@@ -512,6 +512,10 @@ class LevelSummaryState extends BaseGameState {
 
         // Complete level and calculate stars BEFORE getting summary
         context.levelManager.completeLevel();
+        
+        // DON'T end session here - player is continuing the game
+        // Session will end only on Game Over or when player quits
+        console.log('✅ Level completed - session continues for next level');
 
         // Get summary data
         const summary = context.levelManager.getLevelSummary();
@@ -565,6 +569,17 @@ class GameOverState extends BaseGameState {
         // Submit score
         const stats = context.scoreSystem.getGameStats();
         stats.level = context.levelManager.currentLevelId || 1;
+        
+        // End game session
+        if (context.gameController?.rainbowRushSDK?.sessionId) {
+            try {
+                await context.gameController.rainbowRushSDK.endSession();
+                console.log('✅ Game session ended on game over');
+            } catch (error) {
+                console.error('❌ Failed to end game session:', error);
+            }
+        }
+        
         await context.sdkManager.submitScore(stats.score).then(() => {
             console.log('Score submitted successfully');
         }).catch((error) => {

@@ -88,35 +88,35 @@ class RainbowRushApp {
         });
         
         // Level select from level select screen (reset health)
-        this.screenManager.on('levelSelect', ({ levelId }) => {
+        this.screenManager.on('levelSelect', async ({ levelId }) => {
             this.gameController.audioManager?.playSound('click');
             this.screenManager.hideAllScreens();
             this.requestFullscreen();
             // Load specific level WITH health reset (from level list)
             const dims = this.gameController.engine.getCanvasDimensions();
-            this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
+            await this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
             this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
         });
         
         // Next level from summary (keep health)
-        this.screenManager.on('nextLevel', ({ levelId }) => {
+        this.screenManager.on('nextLevel', async ({ levelId }) => {
             this.gameController.audioManager?.playSound('click');
             this.screenManager.hideAllScreens();
             this.requestFullscreen();
             // Load next level WITHOUT health reset (keep hearts)
             const dims = this.gameController.engine.getCanvasDimensions();
-            this.gameController.levelOrchestrator.loadLevel(levelId, dims, false);
+            await this.gameController.levelOrchestrator.loadLevel(levelId, dims, false);
             this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
         });
         
         // Retry level from summary (reset health)
-        this.screenManager.on('retryLevel', ({ levelId }) => {
+        this.screenManager.on('retryLevel', async ({ levelId }) => {
             this.gameController.audioManager?.playSound('click');
             this.screenManager.hideAllScreens();
             this.requestFullscreen();
             // Load retry level WITH health reset
             const dims = this.gameController.engine.getCanvasDimensions();
-            this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
+            await this.gameController.levelOrchestrator.loadLevel(levelId, dims, true);
             this.gameController.stateMachine.transitionTo('playing', this.gameController._getGameContext());
         });
         
@@ -245,7 +245,97 @@ class RainbowRushApp {
         }
     }
 
+    /**
+     * Show XP earned banner inside the game
+     * @param {number} xpAmount - Amount of XP earned
+     */
+    showXPBanner(xpAmount) {
+        console.log('🎁 Showing XP banner inside game:', xpAmount);
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner';
+        banner.innerHTML = `
+            <div class="game-xp-badge">
+                <span class="game-xp-icon">⭐</span>
+                <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
+            </div>
+        `;
+        
+        // Add styles if not already present
+        if (!document.getElementById('game-xp-banner-style')) {
+            const style = document.createElement('style');
+            style.id = 'game-xp-banner-style';
+            style.textContent = `
+                .game-xp-banner {
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    z-index: 10000;
+                    animation: xpSlideIn 0.5s ease;
+                    pointer-events: none;
+                }
+                .game-xp-banner.hiding {
+                    animation: xpSlideOut 0.5s ease forwards;
+                }
+                .game-xp-badge {
+                    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                    padding: 16px 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .game-xp-icon {
+                    font-size: 1.5em;
+                }
+                .game-xp-amount {
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    color: #1a1a1a;
+                }
+                @keyframes xpSlideIn {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes xpSlideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(banner);
+        
+        // Remove after 3.5 seconds
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        }, 3500);
+    }
+
     setupWindowListeners() {
+        // Listen for messages from platform (e.g., XP banner requests)
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
+                this.showXPBanner(event.data.payload.xp_earned);
+            }
+        });
+        
         // Handle window resize
         window.addEventListener('resize', () => {
            
@@ -300,6 +390,29 @@ class RainbowRushApp {
                     this.gameController.resumeGame();
                     this.gameController.autoPaused = false;
                 }
+            }
+        });
+        
+        // Handle page unload - cleanup session if user closes/leaves page
+        window.addEventListener('beforeunload', () => {
+            if (this.gameController?.rainbowRushSDK?.sessionId) {
+                // Use synchronous beacon API for reliable cleanup on page unload
+                navigator.sendBeacon(
+                    `${this.gameController.rainbowRushSDK.apiBaseUrl}/api/rainbow-rush/session/${this.gameController.rainbowRushSDK.sessionId}/end`,
+                    JSON.stringify({})
+                );
+                console.log('🚪 Session cleanup on page unload');
+            }
+        });
+        
+        // Also handle pagehide for mobile browsers
+        window.addEventListener('pagehide', () => {
+            if (this.gameController?.rainbowRushSDK?.sessionId) {
+                navigator.sendBeacon(
+                    `${this.gameController.rainbowRushSDK.apiBaseUrl}/api/rainbow-rush/session/${this.gameController.rainbowRushSDK.sessionId}/end`,
+                    JSON.stringify({})
+                );
+                console.log('🚪 Session cleanup on page hide');
             }
         });
     }

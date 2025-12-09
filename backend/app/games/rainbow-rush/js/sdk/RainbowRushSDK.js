@@ -297,9 +297,19 @@ export class RainbowRushSDK {
         try {
             this.stopHeartbeat();
             
-            const response = await this.apiRequest('POST', `/api/rainbow-rush/session/${this.sessionId}/end`, {});
+            const sessionId = this.sessionId;
+            const response = await this.apiRequest('POST', `/api/rainbow-rush/session/${sessionId}/end`, {});
             
-            console.log('[RainbowRushSDK] Session ended:', this.sessionId);
+            console.log('[RainbowRushSDK] Rainbow Rush session ended:', sessionId);
+            
+            // Ask platform (RuntimeShell) to show XP notification
+            // The platform manages the main game session and XP calculation
+            window.parent.postMessage({
+                type: 'requestXPNotification',
+                payload: {},
+                protocolVersion: '1.0.0'
+            }, '*');
+            console.log('[RainbowRushSDK] 🎁 Requested XP notification from platform');
             
             this.emit('sessionEnded', response.session);
             this.sessionId = null;

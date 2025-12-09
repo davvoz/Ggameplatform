@@ -55,6 +55,25 @@ export class PlatformSDKManager {
         }
     }
 
+    async gameStarted() {
+        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
+            console.warn('SDK not initialized, game started not reported');
+            return;
+        }
+        try {
+            // Send message directly to parent window (platform)
+            window.parent.postMessage({
+                type: 'gameStarted',
+                payload: {},
+                timestamp: Date.now(),
+                protocolVersion: '1.0.0'
+            }, '*');
+            console.log('🎮 Game started event sent to platform');
+        } catch (error) {
+            console.error('Failed to report game started:', error);
+        }
+    }
+
     async getLeaderboard(limit = 10) {
         // The platform handles leaderboard display
         // This is just a placeholder for compatibility

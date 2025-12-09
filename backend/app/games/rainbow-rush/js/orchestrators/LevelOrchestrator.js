@@ -65,8 +65,44 @@ export class LevelOrchestrator {
      * @param {Object} dims - Canvas dimensions {width, height}
      * @param {boolean} resetHealth - Se true, resetta la salute del player (default: true per lista livelli)
      */
-    loadLevel(levelId, dims, resetHealth = true) {
+    async loadLevel(levelId, dims, resetHealth = true) {
         console.log(`📋 Loading level ${levelId} (resetHealth: ${resetHealth})`);
+        
+        // Session management:
+        // - If resetHealth=true: NEW game session (from menu, restart, level select)
+        //   → End previous session and start new one
+        // - If resetHealth=false: CONTINUING game session (next level)
+        //   → Keep session open, just update level if needed
+        
+        if (this.gameController?.rainbowRushSDK) {
+            try {
+                if (resetHealth) {
+                    // NEW GAME - End previous session if exists, then start new one
+                    if (this.gameController.rainbowRushSDK.sessionId) {
+                        await this.gameController.rainbowRushSDK.endSession();
+                        console.log(`✅ Previous session ended (new game)`);
+                    }
+                    
+                    // Start new game session for this level
+                    await this.gameController.rainbowRushSDK.startSession(levelId);
+                    console.log(`✅ Game session started for level ${levelId}`);
+                    
+                    // Notify platform that game has started (triggers platform session creation)
+                    if (this.gameController.sdkManager) {
+                        await this.gameController.sdkManager.gameStarted();
+                    }
+                } else {
+                    // CONTINUING - Keep session open, player is progressing through levels
+                    console.log(`🎮 Continuing session for next level ${levelId}`);
+                    // Optionally update session with new level info (without closing it)
+                    if (this.gameController.rainbowRushSDK.sessionId) {
+                        // You could add an updateSession call here if backend supports it
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Failed to manage game session:', error);
+            }
+        }
         
         // Reset death animation state
         if (this.animationController) {
@@ -131,10 +167,20 @@ export class LevelOrchestrator {
      * Checks for ability unlocks and prepares summary
      * @returns {Object} Level summary data
      */
-    onLevelComplete() {
+    async onLevelComplete() {
         console.log('🎉 Level Complete!');
         
         const currentLevel = this.levelManager.currentLevelId;
+        
+        // End current session when level is completed
+        if (this.gameController?.rainbowRushSDK?.sessionId) {
+            try {
+                await this.gameController.rainbowRushSDK.endSession();
+                console.log('✅ Game session ended on level complete');
+            } catch (error) {
+                console.error('❌ Failed to end game session:', error);
+            }
+        }
         
         // Check and show ability unlock animations (if applicable)
         this.checkAbilityUnlock(currentLevel);

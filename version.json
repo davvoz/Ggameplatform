@@ -1,8 +1,18 @@
 {
-  "version": "1.13.0",
-  "timestamp": "2025-12-09T00:20:48.674Z",
-  "buildNumber": 35,
+  "version": "1.14.0",
+  "timestamp": "2025-12-09T08:16:36.714Z",
+  "buildNumber": 36,
   "changelog": [
+    {
+      "version": "1.14.0",
+      "date": "2025-12-09",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: Add quest system migrations and updates",
+        "🔖 Bump version to 1.13.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.13.0",
       "date": "2025-12-09",
@@ -88,15 +98,6 @@
       "changes": [
         "fix: [RAINBOW RUSH] Update stats display by removing high score from game over screen",
         "🔖 Bump version to 1.11.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.11.0",
-      "date": "2025-12-08",
-      "type": "minor",
-      "changes": [
-        "feat:[RAINBOW RUSH] Integrate backend leaderboard for high score management and update menu interactions",
-        "🔖 Bump version to 1.10.1 [skip-version]"
       ]
     }
   ]

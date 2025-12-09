@@ -1,8 +1,17 @@
 {
-  "version": "1.20.0",
-  "timestamp": "2025-12-09T18:01:13.837Z",
-  "buildNumber": 54,
+  "version": "1.20.1",
+  "timestamp": "2025-12-09T20:21:48.126Z",
+  "buildNumber": 55,
   "changelog": [
+    {
+      "version": "1.20.1",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix:[BLOCKY ROAD] Notify platform on game start and restart for session management",
+        "🔖 Bump version to 1.20.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.20.0",
       "date": "2025-12-09",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: Implement daily access tracking for user login quests",
         "🔖 Bump version to 1.16.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.16.0",
-      "date": "2025-12-09",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: Add daily access tracking for user login quests",
-        "🔖 Bump version to 1.15.7 [skip-version]"
       ]
     }
   ]

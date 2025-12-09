@@ -6,8 +6,9 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import get_db_session
-from app.models import GameSession, Game, User, Leaderboard
-from app.leaderboard_triggers import update_leaderboard_for_session, recalculate_ranks_for_game
+from app.models import GameSession, Game, User, Leaderboard, WeeklyLeaderboard
+from app.leaderboard_triggers import update_leaderboard_for_session, recalculate_ranks_for_game, recalculate_weekly_ranks
+from app.leaderboard_repository import LeaderboardRepository
 from sqlalchemy import desc, func
 import uuid
 from datetime import datetime
@@ -90,6 +91,82 @@ def fix_leaderboard():
                 print(f"      {entry.rank}. {username}: {entry.score}")
             
             print()
+        
+        # FIX WEEKLY LEADERBOARD
+        print("\n" + "="*80)
+        print("FIXING WEEKLY LEADERBOARD")
+        print("="*80 + "\n")
+        
+        lb_repo = LeaderboardRepository(session)
+        week_start, week_end = lb_repo.get_current_week()
+        
+        print(f"📅 Settimana corrente: {week_start} - {week_end}\n")
+        
+        for game in games:
+            print(f"\n🎮 Processando: {game.title} (ID: {game.game_id})")
+            print("-" * 80)
+            
+            # Ottieni i punteggi massimi per la settimana corrente
+            max_weekly_scores = session.query(
+                GameSession.user_id,
+                func.max(GameSession.score).label('max_score'),
+                func.max(GameSession.ended_at).label('last_played')
+            ).filter(
+                GameSession.game_id == game.game_id,
+                GameSession.ended_at.isnot(None),
+                GameSession.ended_at >= week_start,
+                GameSession.ended_at <= week_end
+            ).group_by(GameSession.user_id).all()
+            
+            if not max_weekly_scores:
+                print("   Nessuna sessione nella settimana corrente.")
+                continue
+            
+            print(f"   Trovati {len(max_weekly_scores)} utenti con sessioni questa settimana\n")
+            
+            for user_id, max_score, last_played in max_weekly_scores:
+                user = session.query(User).filter(User.user_id == user_id).first()
+                
+                # Skip anonymous users
+                if user and user.is_anonymous:
+                    continue
+                    
+                username = user.username if user and user.username else f"Anon ({user_id[:8]})"
+                
+                # Cerca entry weekly esistente
+                weekly_entry = session.query(WeeklyLeaderboard).filter(
+                    WeeklyLeaderboard.user_id == user_id,
+                    WeeklyLeaderboard.game_id == game.game_id,
+                    WeeklyLeaderboard.week_start == week_start
+                ).first()
+                
+                if weekly_entry:
+                    old_score = weekly_entry.score
+                    if old_score != max_score:
+                        print(f"   📝 Aggiornamento weekly {username}: {old_score} → {max_score}")
+                        weekly_entry.score = max_score
+                        weekly_entry.updated_at = last_played
+                    else:
+                        print(f"   ✅ OK weekly {username}: {max_score}")
+                else:
+                    print(f"   ➕ Creazione nuova entry weekly {username}: {max_score}")
+                    new_weekly = WeeklyLeaderboard(
+                        entry_id=f"wkly_{uuid.uuid4().hex[:16]}",
+                        week_start=week_start,
+                        week_end=week_end,
+                        user_id=user_id,
+                        game_id=game.game_id,
+                        score=max_score,
+                        created_at=last_played,
+                        updated_at=last_played
+                    )
+                    session.add(new_weekly)
+            
+            session.flush()
+        
+        # Ricalcola rank weekly
+        print(f"\n🔄 Ricalcolo rank weekly...")
+        recalculate_weekly_ranks(session, week_start)
         
         print("\n" + "="*80)
         print("✅ LEADERBOARD FISSATA CON SUCCESSO!")

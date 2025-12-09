@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Track daily access for login quests (only if authenticated)
+    if (window.AuthManager && window.AuthManager.isLoggedIn()) {
+        window.AuthManager.trackDailyAccess();
+    }
+
     initRouter();
 
     // Cleanup game session on page unload (browser close/refresh)

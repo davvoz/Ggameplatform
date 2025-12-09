@@ -251,6 +251,55 @@ class AuthManager {
             return null;
         }
     }
+
+    /**
+     * Traccia l'accesso giornaliero per le quest di login
+     * Viene chiamato una volta al giorno quando l'utente visita la piattaforma
+     */
+    async trackDailyAccess() {
+        if (!this.currentUser || !this.currentUser.user_id) {
+            return;
+        }
+
+        try {
+            // Verifica se abbiamo già tracciato oggi
+            const lastTrackedDate = localStorage.getItem('lastDailyAccessTracked');
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (lastTrackedDate === today) {
+                // Già tracciato oggi, skip
+                return;
+            }
+
+            // Importa config dinamicamente
+            const { config } = await import('./config.js');
+            
+            const response = await fetch(`${config.API_URL}/users/daily-access`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.currentUser.user_id
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Salva che abbiamo tracciato oggi
+                localStorage.setItem('lastDailyAccessTracked', today);
+                
+                // Aggiorna login streak se disponibile
+                if (data.login_streak !== undefined) {
+                    this.currentUser.login_streak = data.login_streak;
+                    this.saveToStorage();
+                }
+                
+                console.log('✅ Daily access tracked:', data);
+            }
+        } catch (error) {
+            console.error('Error tracking daily access:', error);
+        }
+    }
 }
 
 // Istanza globale

@@ -43,6 +43,9 @@ class SessionEnd(BaseModel):
     score: int
     duration_seconds: int
 
+class DailyAccess(BaseModel):
+    user_id: str
+
 # ============ ENDPOINTS ============
 
 @router.post("/register")
@@ -264,6 +267,39 @@ async def start_session(request: Request, session_data: SessionStart):
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/daily-access")
+async def track_daily_access(access_data: DailyAccess):
+    """Track user daily access for login streak and login quests."""
+    from app.database import get_db_session
+    from app.models import User
+    from app.quest_tracker import track_quest_progress_for_login
+    from datetime import datetime
+    
+    try:
+        with get_db_session() as db:
+            user = db.query(User).filter(User.user_id == access_data.user_id).first()
+            
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            # Update last_login timestamp
+            user.last_login = datetime.utcnow().isoformat()
+            db.flush()
+            
+            # Track login quests (login_after_24h, login_streak)
+            track_quest_progress_for_login(db, access_data.user_id)
+            
+            return {
+                "success": True,
+                "message": "Daily access tracked",
+                "login_streak": user.login_streak,
+                "last_login_date": user.last_login_date
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error tracking daily access: {str(e)}")
 
 @router.post("/sessions/end")
 async def end_game(session_data: SessionEnd):

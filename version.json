@@ -1,8 +1,17 @@
 {
-  "version": "1.20.1",
-  "timestamp": "2025-12-09T20:21:48.126Z",
-  "buildNumber": 55,
+  "version": "1.20.2",
+  "timestamp": "2025-12-09T21:04:27.154Z",
+  "buildNumber": 56,
   "changelog": [
+    {
+      "version": "1.20.2",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Add leaderboard consistency check and trigger test scripts",
+        "🔖 Bump version to 1.20.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.20.1",
       "date": "2025-12-09",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Enhance quest tracking and reward system after game session ends",
         "🔖 Bump version to 1.16.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.16.1",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Implement daily access tracking for user login quests",
-        "🔖 Bump version to 1.16.0 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "1.16.1",
-  "timestamp": "2025-12-09T11:25:14.292Z",
-  "buildNumber": 46,
+  "version": "1.16.2",
+  "timestamp": "2025-12-09T13:24:50.211Z",
+  "buildNumber": 47,
   "changelog": [
+    {
+      "version": "1.16.2",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance quest tracking and reward system after game session ends",
+        "🔖 Bump version to 1.16.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.16.1",
       "date": "2025-12-09",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: Add urgent script to fix damaged reach_level quests and update user progress",
         "🔖 Bump version to 1.15.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.15.0",
-      "date": "2025-12-09",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: Enhance user model and schemas with game scores and extra data handling; add user data check and update scripts",
-        "🔖 Bump version to 1.14.0 [skip-version]"
       ]
     }
   ]

@@ -51,6 +51,14 @@ def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
     setup_leaderboard_triggers()
+    
+    # Setup quest triggers for automatic quest progress updates
+    try:
+        from app.quest_triggers import setup_quest_triggers
+        setup_quest_triggers()
+    except Exception as e:
+        print(f"⚠️  Quest triggers setup failed: {e}")
+    
     print("✅ Database initialized with SQLAlchemy ORM")
 
 # ============ GAME MANAGEMENT ============

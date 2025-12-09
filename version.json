@@ -1,8 +1,17 @@
 {
-  "version": "1.15.1",
-  "timestamp": "2025-12-09T09:26:36.166Z",
-  "buildNumber": 38,
+  "version": "1.15.2",
+  "timestamp": "2025-12-09T09:33:37.706Z",
+  "buildNumber": 39,
   "changelog": [
+    {
+      "version": "1.15.2",
+      "date": "2025-12-09",
+      "type": "patch",
+      "changes": [
+        "fix: Add script to force update all problematic quests and user progress",
+        "🔖 Bump version to 1.15.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.15.1",
       "date": "2025-12-09",
@@ -88,16 +97,6 @@
       "changes": [
         "fix: remove border from profile header for cleaner design",
         "🔖 Bump version to 1.11.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.11.3",
-      "date": "2025-12-08",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Remove obsolete files related to high score tracking and user XP display",
-        "🔖 Bump version to 1.11.2 [skip-version]"
       ]
     }
   ]

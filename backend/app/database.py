@@ -568,8 +568,9 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
                 'coins_pending': True  # Indicate coins need to be claimed
             }
         
-        # Do NOT manually flush - let the context manager commit automatically
-        # session.flush() can cause "transaction is closed" errors if it fails
+        # IMPORTANTE: Flush esplicito per attivare i trigger della leaderboard
+        # Il trigger 'after_flush_postexec' si attiva solo dopo un flush esplicito
+        session.flush()
         
         result = game_session.to_dict()
         

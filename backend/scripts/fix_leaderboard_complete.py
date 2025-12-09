@@ -1,6 +1,10 @@
 """
 Script per fissare la leaderboard e verificare i trigger
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.database import get_db_session
 from app.models import GameSession, Game, User, Leaderboard
 from app.leaderboard_triggers import update_leaderboard_for_session, recalculate_ranks_for_game

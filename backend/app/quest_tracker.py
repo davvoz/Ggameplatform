@@ -267,7 +267,7 @@ class QuestTracker:
             if user:
                 # Use LevelSystem to get accurate current level
                 from app.level_system import LevelSystem
-                current_level = LevelSystem.get_level_for_xp(user.total_xp_earned)
+                current_level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
                 self.update_quest_progress(user_id, quest, current_level)
         
         # XP daily (resets each day)

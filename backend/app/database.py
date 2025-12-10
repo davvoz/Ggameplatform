@@ -545,17 +545,30 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         new_total_xp = user.total_xp_earned
         print(f"[DB] Updating user total_xp: {old_total_xp} -> {new_total_xp} (+{xp_earned})")
         
-        # Check for level up and track rewards (awarded on next login/claim)
+        # Check for level up and award coins immediately
         from app.level_system import LevelSystem
+        from app.services import CoinService
         level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
         
         if level_up_info['leveled_up']:
             print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
             
-            # Track level-up coins (will be awarded via separate transaction later)
+            # Award level-up coins immediately (excluding levels with quests: 10, 30, 50)
+            new_level = level_up_info['new_level']
             coins_awarded = level_up_info.get('coins_awarded', 0)
-            if coins_awarded > 0:
-                print(f"[DB] 🪙 Level-up coins tracked: {coins_awarded} coins for level {level_up_info['new_level']} (will be awarded on claim)")
+            quest_levels = [10, 30, 50]  # Levels with dedicated quests
+            
+            if coins_awarded > 0 and new_level not in quest_levels:
+                print(f"[DB] 🪙 Awarding level-up coins: {coins_awarded} coins for level {new_level}")
+                coin_service = CoinService(session)
+                coin_service.add_coins(
+                    user_id=game_session.user_id,
+                    amount=coins_awarded,
+                    source='level_up',
+                    description=f"Level {new_level} reached"
+                )
+            elif new_level in quest_levels:
+                print(f"[DB] 🎯 Level {new_level} has quest rewards - coins not awarded directly")
             
             # Store level-up info in session extra_data for frontend
             extra_data['level_up'] = {
@@ -565,7 +578,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
                 'badge': level_up_info.get('badge'),
                 'coins_awarded': coins_awarded,
                 'is_milestone': level_up_info.get('is_milestone', False),
-                'coins_pending': True  # Indicate coins need to be claimed
+                'coins_pending': False  # Coins awarded immediately
             }
         
         # IMPORTANTE: Flush esplicito per attivare i trigger della leaderboard

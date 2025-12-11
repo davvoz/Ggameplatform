@@ -1,7 +1,7 @@
 {
   "name": "Cur8 Game Platform",
   "short_name": "Cur8 Games",
-  "version": "1.22.3",
+  "version": "1.23.0",
   "description": "Play amazing blockchain-integrated browser games and earn rewards",
   "start_url": "/",
   "scope": "/",

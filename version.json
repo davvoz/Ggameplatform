@@ -1,8 +1,17 @@
 {
-  "version": "1.22.2",
-  "timestamp": "2025-12-11T21:25:12.285Z",
-  "buildNumber": 66,
+  "version": "1.22.3",
+  "timestamp": "2025-12-11T22:20:37.610Z",
+  "buildNumber": 67,
   "changelog": [
+    {
+      "version": "1.22.3",
+      "date": "2025-12-11",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance level calculation and improve quest completion logic",
+        "🔖 Bump version to 1.22.2 [skip-version]"
+      ]
+    },
     {
       "version": "1.22.2",
       "date": "2025-12-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Add weekly leaderboard verification script for rainbow rush",
         "🔖 Bump version to 1.20.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.20.3",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Implement detailed score verification for luciojolly user",
-        "🔖 Bump version to 1.20.2 [skip-version]"
       ]
     }
   ]

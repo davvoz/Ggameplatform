@@ -823,7 +823,7 @@ export default class RuntimeShell {
                     // }, 500);
                 }
 
-                this.showCur8Notification(data.session.xp_earned);
+                this.showCur8Notification(data.session.xp_earned, data.session);
                 
                 // Check for level up
                 if (data.session.level_up) {
@@ -849,21 +849,61 @@ export default class RuntimeShell {
 
     /**
      * Show XP earned notification
+     * @param {number} xpAmount - Total XP earned
+     * @param {object} session - Full session object with breakdown details
      */
-    showCur8Notification(xpAmount) {
+    showCur8Notification(xpAmount, session = null) {
         console.warn('🎁 SHOWING XP NOTIFICATION:', xpAmount, '- Stack trace:', new Error().stack);
         
         // Try to show notification inside the game iframe first (if game supports it)
-        this.sendMessage('showXPBanner', { xp_earned: xpAmount });
+        const payload = {
+            xp_earned: xpAmount,
+            extra_data: session?.metadata || session?.extra_data || null
+        };
+        this.sendMessage('showXPBanner', payload);
         
         // Also show in main page as fallback
         const notification = document.createElement('div');
         notification.className = 'xp-notification';
+        
+        // Build breakdown details if available
+        let breakdownHTML = '';
+        const sessionData = session?.metadata || session?.extra_data;
+        if (session && sessionData) {
+            const extraData = typeof sessionData === 'string' 
+                ? JSON.parse(sessionData) 
+                : sessionData;
+            
+            if (extraData.xp_breakdown && extraData.xp_breakdown.length > 0) {
+                breakdownHTML = '<div class="xp-breakdown">';
+                extraData.xp_breakdown.forEach(rule => {
+                    const isInactive = rule.xp_earned === 0;
+                    breakdownHTML += `
+                        <div class="xp-rule ${isInactive ? 'inactive' : ''}">
+                            <span class="rule-name">${rule.rule_name}</span>
+                            <span class="rule-xp">${isInactive ? '—' : '+' + rule.xp_earned.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+                const multiplier = extraData.user_multiplier || session.user_multiplier;
+                if (extraData.base_xp && multiplier && multiplier > 1) {
+                    breakdownHTML += `
+                        <div class="xp-rule multiplier">
+                            <span class="rule-name">CUR8 Multiplier (×${multiplier.toFixed(2)})</span>
+                            <span class="rule-xp">×${multiplier.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+                breakdownHTML += '</div>';
+            }
+        }
+        
         notification.innerHTML = `
             <div class="xp-badge">
                 <span class="xp-icon">⭐</span>
                 <span class="xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
+            ${breakdownHTML}
         `;
         // Add styles
         if (!document.getElementById('xp-notification-style')) {
@@ -898,6 +938,40 @@ export default class RuntimeShell {
                 font-weight: bold;
                 color: #1a1a1a;
             }
+            .xp-breakdown {
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 8px;
+                font-size: 0.85em;
+            }
+            .xp-rule {
+                display: flex;
+                justify-content: space-between;
+                padding: 4px 0;
+                color: #333;
+            }
+            .xp-rule.inactive {
+                opacity: 0.5;
+                color: #999;
+            }
+            .xp-rule.inactive .rule-xp {
+                color: #999;
+            }
+            .xp-rule.multiplier {
+                border-top: 1px solid #ddd;
+                margin-top: 4px;
+                padding-top: 8px;
+                font-weight: bold;
+                color: #ff6b35;
+            }
+            .rule-name {
+                flex: 1;
+            }
+            .rule-xp {
+                font-weight: bold;
+                color: #ffa500;
+            }
             @keyframes slideInRight {
                 from {
                     transform: translateX(400px);
@@ -930,7 +1004,7 @@ export default class RuntimeShell {
             setTimeout(() => {
                 notification.remove();
             }, 500);
-        }, 3500);
+        }, 10000);
     }
 
     /**

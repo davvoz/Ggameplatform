@@ -248,9 +248,32 @@ class RainbowRushApp {
     /**
      * Show XP earned banner inside the game
      * @param {number} xpAmount - Amount of XP earned
+     * @param {object|string} extraData - Extra data with XP breakdown
      */
-    showXPBanner(xpAmount) {
-        console.log('🎁 Showing XP banner inside game:', xpAmount);
+    showXPBanner(xpAmount, extraData = null) {
+        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+        
+        // Parse extra_data if it's a string
+        let parsedData = null;
+        if (extraData) {
+            parsedData = typeof extraData === 'string' ? JSON.parse(extraData) : extraData;
+        }
+        
+        // Build breakdown details
+        let breakdownHTML = '';
+        if (parsedData && parsedData.xp_breakdown && parsedData.xp_breakdown.length > 0) {
+            breakdownHTML = '<div class="game-xp-breakdown">';
+            parsedData.xp_breakdown.forEach(rule => {
+                const isInactive = rule.xp_earned === 0;
+                breakdownHTML += `
+                    <div class="game-xp-rule ${isInactive ? 'inactive' : ''}">
+                        <span class="game-rule-name">${rule.rule_name}</span>
+                        <span class="game-rule-xp">${isInactive ? '—' : '+' + rule.xp_earned.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            breakdownHTML += '</div>';
+        }
         
         // Create banner element
         const banner = document.createElement('div');
@@ -260,6 +283,7 @@ class RainbowRushApp {
                 <span class="game-xp-icon">⭐</span>
                 <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
+            ${breakdownHTML}
         `;
         
         // Add styles if not already present
@@ -294,6 +318,36 @@ class RainbowRushApp {
                     font-size: 1.2em;
                     font-weight: bold;
                     color: #1a1a1a;
+                }
+                .game-xp-breakdown {
+                    background: rgba(255, 255, 255, 0.95);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    font-size: 0.85em;
+                    max-height: 200px;
+                    overflow-y: auto;
+                }
+                .game-xp-rule {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 4px 0;
+                    color: #333;
+                }
+                .game-xp-rule.inactive {
+                    opacity: 0.5;
+                    color: #999;
+                }
+                .game-xp-rule.inactive .game-rule-xp {
+                    color: #999;
+                }
+                .game-rule-name {
+                    flex: 1;
+                }
+                .game-rule-xp {
+                    font-weight: bold;
+                    color: #ffa500;
+                    margin-left: 8px;
                 }
                 @keyframes xpSlideIn {
                     from {
@@ -332,7 +386,7 @@ class RainbowRushApp {
         // Listen for messages from platform (e.g., XP banner requests)
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
-                this.showXPBanner(event.data.payload.xp_earned);
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload.extra_data);
             }
         });
         

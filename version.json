@@ -1,8 +1,17 @@
 {
-  "version": "1.22.0",
-  "timestamp": "2025-12-11T16:21:21.410Z",
-  "buildNumber": 64,
+  "version": "1.22.1",
+  "timestamp": "2025-12-11T20:48:38.958Z",
+  "buildNumber": 65,
   "changelog": [
+    {
+      "version": "1.22.1",
+      "date": "2025-12-11",
+      "type": "patch",
+      "changes": [
+        "fix: [RR]Implement game completion logic and enhance level summary display",
+        "🔖 Bump version to 1.22.0 [skip-version]"
+      ]
+    },
     {
       "version": "1.22.0",
       "date": "2025-12-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Add leaderboard consistency check and trigger test scripts",
         "🔖 Bump version to 1.20.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.20.1",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix:[BLOCKY ROAD] Notify platform on game start and restart for session management",
-        "🔖 Bump version to 1.20.0 [skip-version]"
       ]
     }
   ]

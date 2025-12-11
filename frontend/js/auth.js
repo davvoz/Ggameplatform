@@ -284,14 +284,14 @@ const AuthManager = {
     async updateUI() {
         const userInfo = document.getElementById('userInfo');
         const userName = document.getElementById('userName');
-        const userCur8 = document.getElementById('userCur8');
+        const levelBadgeContainer = document.getElementById('levelBadgeContainer');
         const profileLink = document.getElementById('profileLink');
         const questsLink = document.getElementById('questsLink');
 
 
 
         // Verifica che gli elementi esistano (potrebbero non essere presenti in tutte le pagine)
-        if (!userInfo || !userName || !userCur8) {
+        if (!userInfo || !userName || !levelBadgeContainer) {
             return;
         }
 
@@ -340,11 +340,10 @@ const AuthManager = {
                 const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
                 if (response.ok) {
                     const levelInfo = await response.json();
-                    userCur8.style.backgroundColor = levelInfo.color;
-                    
-                    userCur8.innerHTML = `
+                    // Use a small swatch showing the level color instead of coloring the whole container
+                    levelBadgeContainer.innerHTML = `
                         <div class="level-badge-container">
-                            <span class="level-badge-icon">${levelInfo.badge}</span>
+                            <span class="level-color-swatch"><span class="level-badge-icon">${levelInfo.badge}</span></span>
                             <div class="level-badge-info">
                                 <div class="level-badge-title">
                                     <span class="level-badge-number">Lv${levelInfo.current_level}</span>
@@ -353,24 +352,41 @@ const AuthManager = {
                                 </div>
                                 <div class="level-badge-progress-container">
                                     <div class="level-badge-progress-bar">
-                                        <div class="level-badge-progress-fill" style="width: ${levelInfo.progress_percent}%;"></div>
+                                        <div class="level-badge-progress-fill"></div>
                                     </div>
-                                    <span class="level-badge-progress-text">${levelInfo.progress_percent.toFixed(0)}%</span>
+                                    <span class="level-badge-progress-text">${(() => {
+                                        const xpIn = levelInfo.xp_in_level ?? (levelInfo.current_xp - levelInfo.xp_current_level || 0);
+                                        const xpReq = levelInfo.xp_required_for_next_level ?? levelInfo.xp_needed_for_next ?? (levelInfo.xp_next_level - levelInfo.xp_current_level);
+                                        return `${Math.round(xpIn)} / ${Math.round(xpReq)} XP`;
+                                    })()}</span>
                                 </div>
                             </div>
                         </div>
                     `;
+
+                    // Apply CSS variables safely so invalid/undefined values don't leak into styles
+                    try {
+                        const created = levelBadgeContainer.querySelector('.level-badge-container');
+                        if (created) {
+                            const safeColor = levelInfo.color || getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#6366f1';
+                            const percent = Number(levelInfo.progress_percent) || 0;
+                            created.style.setProperty('--level-color', safeColor);
+                            created.style.setProperty('--progress-percent', `${percent}%`);
+                        }
+                    } catch (e) {
+                        console.warn('Could not apply CSS vars for level badge', e);
+                    }
                 } else {
                     // Fallback se API non risponde
                     const cur8Total = this.currentUser.total_xp_earned || 0;
                     const multiplier = this.currentUser.cur8_multiplier || 1.0;
-                    userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+                    levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
                 }
             } catch (error) {
                 console.error('Failed to load level info:', error);
                 const cur8Total = this.currentUser.total_xp_earned || 0;
                 const multiplier = this.currentUser.cur8_multiplier || 1.0;
-                userCur8.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+                levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
             }
 
         } else {

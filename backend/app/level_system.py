@@ -85,6 +85,19 @@ class LevelSystem:
             return 0
         
         return int(100 * math.pow(level, 1.5))
+
+    @staticmethod
+    def calculate_xp_required_for_next_level(level: int) -> int:
+        """
+        XP required to go from `level` to `level+1` (per-level requirement).
+
+        This is the Pokemon-style view: how much XP you still need to gain
+        to reach the next level, independent from the player's total XP.
+        It returns an integer number of XP points for that single level.
+        """
+        cur = LevelSystem.calculate_xp_for_level(level)
+        nxt = LevelSystem.calculate_xp_for_level(level + 1)
+        return int(nxt - cur)
     
     @staticmethod
     def get_xp_progress(current_xp: float) -> Dict:
@@ -99,23 +112,36 @@ class LevelSystem:
         """
         current_level = LevelSystem.calculate_level_from_xp(current_xp)
         next_level = current_level + 1
-        
+
         xp_current_level = LevelSystem.calculate_xp_for_level(current_level)
         xp_next_level = LevelSystem.calculate_xp_for_level(next_level)
-        
-        xp_in_level = current_xp - xp_current_level
-        xp_needed_for_next = xp_next_level - xp_current_level
-        
-        progress_percent = (xp_in_level / xp_needed_for_next * 100) if xp_needed_for_next > 0 else 0
-        
+
+        # XP gained inside the current level (clamped to >= 0)
+        xp_in_level = max(0.0, float(current_xp) - float(xp_current_level))
+
+        # XP required for the next level (per-level requirement, Pokemon-style)
+        xp_required_for_next = int(xp_next_level - xp_current_level)
+
+        # Remaining XP to reach next level
+        xp_to_next_level = max(0.0, float(xp_required_for_next) - xp_in_level)
+
+        # Progress percentage inside current level (clamped between 0 and 100)
+        if xp_required_for_next > 0:
+            progress_percent = (xp_in_level / xp_required_for_next) * 100.0
+        else:
+            progress_percent = 0.0
+
+        progress_percent = max(0.0, min(100.0, progress_percent))
+
         return {
             "current_level": current_level,
             "next_level": next_level,
-            "current_xp": current_xp,
+            "current_xp": round(float(current_xp), 2),
             "xp_current_level": xp_current_level,
             "xp_next_level": xp_next_level,
-            "xp_in_level": xp_in_level,
-            "xp_needed_for_next": xp_needed_for_next,
+            "xp_in_level": round(xp_in_level, 2),
+            "xp_required_for_next_level": xp_required_for_next,
+            "xp_to_next_level": round(xp_to_next_level, 2),
             "progress_percent": round(progress_percent, 2)
         }
     

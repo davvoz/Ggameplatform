@@ -129,10 +129,15 @@ async function handleClaimReward(questId, userId) {
             user.total_xp_earned = result.total_xp;
             window.AuthManager.setUser(user);
             
-            // Update XP display in navigation
-            const userCur8Element = document.getElementById('userCur8');
-            if (userCur8Element) {
-                userCur8Element.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
+            // Update XP display in navigation by asking AuthManager to re-render
+            const levelBadgeElement = document.getElementById('levelBadgeContainer');
+            if (window.AuthManager && typeof window.AuthManager.updateUI === 'function') {
+                // updateUI will fetch level info and re-render the badge properly
+                window.AuthManager.updateUI().catch(() => {
+                    if (levelBadgeElement) levelBadgeElement.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
+                });
+            } else if (levelBadgeElement) {
+                levelBadgeElement.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
             }
         }
 

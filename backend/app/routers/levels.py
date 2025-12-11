@@ -61,16 +61,23 @@ async def get_user_level_progress(
     
     # Get XP progress
     xp_progress = LevelSystem.get_xp_progress(user.total_xp_earned)
+    # Backwards compatibility: LevelProgressResponse expects `xp_needed_for_next`
+    # map our new `xp_required_for_next_level` to the old key name
+    if 'xp_required_for_next_level' in xp_progress:
+        xp_progress['xp_needed_for_next'] = xp_progress['xp_required_for_next_level']
     
     # Get title info
     title_info = LevelSystem.get_level_title(xp_progress["current_level"])
     
-    return {
+    # Compose response - keep only keys expected by the response model plus extras
+    resp = {
         "user_id": user.user_id,
         "username": user.username,
         **xp_progress,
         **title_info
     }
+
+    return resp
 
 
 @router.get("/milestones/all", response_model=List[LevelMilestoneResponse])

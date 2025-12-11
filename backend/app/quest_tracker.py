@@ -128,7 +128,11 @@ class QuestTracker:
                 # Award XP (only once)
                 user = self.db.query(User).filter(User.user_id == user_id).first()
                 if user:
-                    user.total_xp_earned += quest.xp_reward
+                    # Do NOT add XP here. Rewards must be claimed by the user via
+                    # the `/api/quests/claim/{quest_id}` endpoint. Marking the
+                    # quest as completed is enough; the claim handler will add
+                    # XP and coins when the user explicitly claims the reward.
+                    pass
 
                 # Award coins if coin service is available
                 # Note: Coin service is disabled during session tracking to avoid transaction conflicts

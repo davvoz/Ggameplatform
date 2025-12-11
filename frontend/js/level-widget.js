@@ -41,7 +41,12 @@ class LevelWidget {
     render() {
         if (!this.levelData) return;
 
-        const { current_level, title, badge, progress_percent, xp_needed_for_next } = this.levelData;
+        const { current_level, title, badge, progress_percent } = this.levelData;
+
+        // Support both old and new backend field names for per-level XP
+        const xp_in_level = this.levelData.xp_in_level ?? (this.levelData.current_xp - this.levelData.xp_current_level || 0);
+        const xp_required_for_next_level = this.levelData.xp_required_for_next_level ?? this.levelData.xp_needed_for_next ?? (this.levelData.xp_next_level - this.levelData.xp_current_level);
+        const xp_to_next_level = this.levelData.xp_to_next_level ?? Math.max(0, (xp_required_for_next_level || 0) - xp_in_level);
 
         const html = `
             <div class="level-widget">
@@ -56,10 +61,7 @@ class LevelWidget {
                     <div class="level-progress-bar">
                         <div class="level-progress-fill" style="width: ${progress_percent}%"></div>
                     </div>
-                    <div class="level-progress-text">${progress_percent.toFixed(1)}%</div>
-                </div>
-                <div class="level-xp-needed">
-                    ${xp_needed_for_next > 0 ? `${xp_needed_for_next.toFixed(0)} XP to next level` : 'Max level!'}
+                    <div class="level-progress-text">${Math.round(xp_in_level)} / ${Math.round(xp_required_for_next_level)} XP</div>
                 </div>
             </div>
         `;

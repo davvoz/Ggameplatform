@@ -513,14 +513,58 @@ class LevelSummaryState extends BaseGameState {
 
         // Complete level and calculate stars BEFORE getting summary
         context.levelManager.completeLevel();
-        
-        // DON'T end session here - player is continuing the game
-        // Session will end only on Game Over or when player quits
-        console.log('✅ Level completed - session continues for next level');
 
         // Get summary data
         const summary = context.levelManager.getLevelSummary();
         summary.score = context.scoreSystem.getScore();
+
+        // Check if this is the final level (game complete)
+        const isGameComplete = !summary.nextLevelId;
+        
+        if (isGameComplete) {
+            console.log('🏆 GAME COMPLETE! All 200 levels finished! Ending session...');
+            
+            // Build comprehensive final stats
+            const finalStats = {
+                level: context.levelManager.currentLevelId,
+                coins: context.scoreSystem.coins || 0,
+                score: summary.score,
+                time: Date.now(),
+                extra_data: {
+                    levels_completed: context.levelManager.currentLevelId,
+                    total_levels: 200,
+                    game_complete: true,
+                    coins_collected: context.scoreSystem.collectibles || 0,
+                    enemies_defeated: context.scoreSystem?.enemiesDefeated || 0,
+                    powerups_collected: context.scoreSystem?.powerupsCollected || 0,
+                    highest_combo: context.scoreSystem?.maxCombo || 0
+                }
+            };
+            
+            // End game session with final score
+            if (context.gameController?.rainbowRushSDK?.sessionId) {
+                try {
+                    console.log('💾 Saving final session with score:', summary.score);
+                    await context.gameController.rainbowRushSDK.endSession(summary.score, finalStats);
+                    console.log('✅ Game session ended on game completion');
+                } catch (error) {
+                    console.error('❌ Failed to end game session:', error);
+                }
+            }
+            
+            // Notify platform of game completion
+            try {
+                if (typeof PlatformSDK !== 'undefined') {
+                    console.log('📡 Notifying Platform SDK of game completion');
+                    await context.sdkManager.gameOver(summary.score, finalStats);
+                }
+            } catch (e) {
+                console.error('⚠️ Failed to notify platform of game completion:', e);
+            }
+        } else {
+            // Session continues for next level
+            console.log('✅ Level completed - session continues for next level');
+        }
 
         // Show HTML level summary screen
         const event = new CustomEvent('showLevelSummary', { detail: summary });

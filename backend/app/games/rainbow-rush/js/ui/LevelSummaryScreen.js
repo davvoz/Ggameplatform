@@ -10,6 +10,7 @@ export class LevelSummaryScreen {
         
         this.visible = false;
         this.summary = null;
+        this.isGameComplete = false; // Flag per completamento del gioco (tutti i 200 livelli)
         
         // Animazioni
         this.animationProgress = 0;
@@ -42,11 +43,14 @@ export class LevelSummaryScreen {
         this.confettiParticles = [];
         this.sparkleParticles = [];
         
+        // Rileva se è l'ultimo livello (completamento del gioco)
+        this.isGameComplete = !summary.nextLevelId;
+        
         // Crea pulsanti
         this.createButtons();
         
-        // Genera confetti se 3 stelle
-        if (summary.stars === 3) {
+        // Genera confetti se 3 stelle o se gioco completato
+        if (summary.stars === 3 || this.isGameComplete) {
             this.generateConfetti();
         }
         
@@ -57,6 +61,9 @@ export class LevelSummaryScreen {
         }
         
         console.log('🎊 Level Summary shown:', summary);
+        if (this.isGameComplete) {
+            console.log('🏆 GAME COMPLETE! Player finished all levels!');
+        }
     }
     
     /**
@@ -89,7 +96,7 @@ export class LevelSummaryScreen {
                 x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             },
             menu: {
-                label: 'Menu',
+                label: this.isGameComplete ? 'Back to Menu' : 'Menu',
                 color: [0.6, 0.6, 0.7, 1.0],
                 hoverColor: [0.7, 0.7, 0.8, 1.0],
                 action: 'menu',
@@ -97,8 +104,8 @@ export class LevelSummaryScreen {
             }
         };
         
-        // Add Next Level button if available
-        if (this.summary.nextLevelId) {
+        // Add Next Level button if available (only if not game complete)
+        if (this.summary.nextLevelId && !this.isGameComplete) {
             this.buttons.nextLevel = {
                 label: 'Next Level',
                 color: [0.2, 0.8, 0.3, 1.0],
@@ -158,7 +165,7 @@ export class LevelSummaryScreen {
     }
     
     /**
-     * Genera confetti per 3 stelle
+     * Genera confetti per 3 stelle o completamento del gioco
      */
     generateConfetti() {
         const colors = [
@@ -169,7 +176,10 @@ export class LevelSummaryScreen {
             [1.0, 0.2, 1.0, 1.0]
         ];
         
-        for (let i = 0; i < 100; i++) {
+        // Extra confetti per completamento del gioco
+        const confettiCount = this.isGameComplete ? 200 : 100;
+        
+        for (let i = 0; i < confettiCount; i++) {
             this.confettiParticles.push({
                 x: this.canvasWidth / 2,
                 y: this.canvasHeight * 0.3,
@@ -178,7 +188,7 @@ export class LevelSummaryScreen {
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 10,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                life: 1.0,
+                life: this.isGameComplete ? 1.5 : 1.0, // Confetti durano di pi\u00f9 per game complete
                 gravity: 500
             });
         }
@@ -360,19 +370,22 @@ export class LevelSummaryScreen {
         titleGradient.addColorStop(0.8, '#0080ff');
         titleGradient.addColorStop(1, '#8000ff');
         ctx.fillStyle = titleGradient;
-        ctx.font = 'bold 32px Arial, sans-serif';
+        const titleFontSize = this.isGameComplete ? 28 : 32;
+        ctx.font = `bold ${titleFontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
         ctx.shadowBlur = 4;
         ctx.shadowOffsetY = 2;
-        ctx.fillText(this.summary.levelName || `Level ${this.summary.levelId}`, canvasWidth / 2, panelY + 45);
+        const titleText = this.isGameComplete ? '🏆 GAME COMPLETE! 🏆' : (this.summary.levelName || `Level ${this.summary.levelId}`);
+        ctx.fillText(titleText, canvasWidth / 2, panelY + 45);
         ctx.restore();
         
         // Subtitle with emoji
         ctx.fillStyle = '#666';
         ctx.font = 'bold 16px Arial';
         ctx.shadowColor = 'transparent';
-        ctx.fillText('✨ Level Complete! ✨', canvasWidth / 2, panelY + 72);
+        const subtitleText = this.isGameComplete ? '🎉 All 200 Levels Completed! 🎉' : '✨ Level Complete! ✨';
+        ctx.fillText(subtitleText, canvasWidth / 2, panelY + 72);
         
         // Stars section with enhanced animation
         const starsY = panelY + 150;

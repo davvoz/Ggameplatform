@@ -1,8 +1,17 @@
 {
-  "version": "1.20.8",
-  "timestamp": "2025-12-10T23:51:33.388Z",
-  "buildNumber": 62,
+  "version": "1.21.0",
+  "timestamp": "2025-12-11T09:11:26.273Z",
+  "buildNumber": 63,
   "changelog": [
+    {
+      "version": "1.21.0",
+      "date": "2025-12-11",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance XP notification with breakdown details and multiplier",
+        "🔖 Bump version to 1.20.8 [skip-version]"
+      ]
+    },
     {
       "version": "1.20.8",
       "date": "2025-12-10",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: Enhance game session management and XP notification handling",
         "🔖 Bump version to 1.19.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.19.1",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: [RAINBOW RUSH] Implement fullscreen mode for mobile with exit button",
-        "🔖 Bump version to 1.19.0 [skip-version]"
       ]
     }
   ]

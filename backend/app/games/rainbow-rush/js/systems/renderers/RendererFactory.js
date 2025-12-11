@@ -98,6 +98,8 @@ export class RendererFactory {
         // Particles
         const particleRenderer = new ParticleRenderer(this.renderer);
         this.renderers.set('projectile-hit', particleRenderer);
+        this.renderers.set('enemy-defeat', particleRenderer);
+        this.renderers.set('sparkle', particleRenderer);
     }
 
     /**

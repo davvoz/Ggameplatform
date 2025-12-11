@@ -577,12 +577,33 @@ class GameOverState extends BaseGameState {
         // IMPORTANT: Send all score data BEFORE resetting anything
         // Store score before any async operations
         const finalScore = stats.score;
+        
+        // Build comprehensive stats for cumulative XP system
         const finalStats = {
             level: stats.level,
             coins: stats.coins,
             score: finalScore,
-            time: Date.now()
+            time: Date.now(),
+            // Cumulative XP data for backend
+            extra_data: {
+                levels_completed: context.levelManager.currentLevelId || 1,
+                distance: stats.distance || 0,  // Use stats.distance instead of player position
+                coins_collected: stats.collectibles || 0,  // Use collectibles from stats
+                enemies_defeated: context.scoreSystem?.enemiesDefeated || 0,
+                powerups_collected: context.scoreSystem?.powerupsCollected || 0,
+                highest_combo: context.scoreSystem?.maxCombo || 0
+            }
         };
+        
+        console.log('📊 [GameOverState] Extra data for XP calculation:', finalStats.extra_data);
+        
+        // Show stats banner in game
+        if (context.gameController?.showStatsBanner) {
+            context.gameController.showStatsBanner({
+                score: finalScore,
+                ...finalStats.extra_data
+            });
+        }
         
         // End game session WITH SCORE
         if (context.gameController?.rainbowRushSDK?.sessionId) {
@@ -614,6 +635,14 @@ class GameOverState extends BaseGameState {
             }
         } catch (e) {
             console.error('⚠️ Failed to send game over to SDK:', e);
+        }
+
+        // Show stats banner with game details
+        if (window.rainbowRushApp && typeof window.rainbowRushApp.showStatsBanner === 'function') {
+            window.rainbowRushApp.showStatsBanner({
+                score: finalScore,
+                ...finalStats.extra_data
+            });
         }
 
         // NOW it's safe to reset score after all SDK calls are done

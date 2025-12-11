@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Dict, Any
 from app.database import (
     create_user, get_user_by_id, get_user_by_username, 
     authenticate_user,  get_all_users,
@@ -42,6 +42,7 @@ class SessionEnd(BaseModel):
     session_id: str
     score: int
     duration_seconds: int
+    extra_data: Optional[Dict[str, Any]] = None
 
 class DailyAccess(BaseModel):
     user_id: str
@@ -191,6 +192,8 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
             "user": user,
             "auth_method": "steem_keychain",
             "benefits": {
+
+
                 "cur8_multiplier": auth_data.cur8_multiplier,
                 "verified": True,
                 "blockchain_backed": True
@@ -308,11 +311,13 @@ async def end_game(session_data: SessionEnd):
     print(f"  - session_id: {session_data.session_id}")
     print(f"  - score: {session_data.score} (type: {type(session_data.score).__name__})")
     print(f"  - duration_seconds: {session_data.duration_seconds}")
+    print(f"  - extra_data: {session_data.extra_data}")
     
     session = end_game_session(
         session_id=session_data.session_id,
         score=session_data.score,
-        duration_seconds=session_data.duration_seconds
+        duration_seconds=session_data.duration_seconds,
+        extra_data=session_data.extra_data
     )
     
     if not session:

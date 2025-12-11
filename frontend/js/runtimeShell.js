@@ -273,7 +273,7 @@ export default class RuntimeShell {
 
     /**
      * Handle game over event
-     * @param {Object} payload - The payload containing final score
+     * @param {Object} payload - The payload containing final score and extra_data
      */
     handleGameOver(payload) {
         // Log the received payload for debugging
@@ -285,8 +285,12 @@ export default class RuntimeShell {
         // Get score from payload, fallback to current state
         const finalScore = payload?.score ?? this.state.score ?? 0;
         this.state.score = finalScore;
+        
+        // Extract extra_data for cumulative XP system (levels, distance, etc.)
+        const extraData = payload?.extra_data || {};
 
         this.log('💀 Game Over! Final score:', this.state.score);
+        this.log('📊 Extra data:', extraData);
         this.showGameOverOverlay(this.state.score);
 
         // End game session and save score ONLY if session exists
@@ -296,7 +300,7 @@ export default class RuntimeShell {
             const startTime = this.sessionStartTime; // Save before clearing
             this.sessionId = null; // Clear immediately to prevent double-ending
             this.sessionStartTime = null;
-            this.endGameSessionById(sessionToEnd, this.state.score, startTime, false);
+            this.endGameSessionById(sessionToEnd, this.state.score, startTime, false, extraData);
 
             // Mark game over AFTER ending session
             this.state.isGameOver = true;
@@ -767,7 +771,7 @@ export default class RuntimeShell {
     /**
      * End a specific game session by ID
      */
-    async endGameSessionById(sessionId, score, startTime, useBeacon = false) {
+    async endGameSessionById(sessionId, score, startTime, useBeacon = false, extraData = null) {
         if (!sessionId) {
             return;
         }
@@ -783,7 +787,8 @@ export default class RuntimeShell {
             const payload = {
                 session_id: sessionId,
                 score: finalScore,
-                duration_seconds: durationSeconds
+                duration_seconds: durationSeconds,
+                extra_data: extraData || {}
             };
 
             this.log('Payload to send to backend:', JSON.stringify(payload));
@@ -858,6 +863,7 @@ export default class RuntimeShell {
         // Try to show notification inside the game iframe first (if game supports it)
         const payload = {
             xp_earned: xpAmount,
+            xp_breakdown: session?.xp_breakdown || [],
             extra_data: session?.metadata || session?.extra_data || null
         };
         this.sendMessage('showXPBanner', payload);

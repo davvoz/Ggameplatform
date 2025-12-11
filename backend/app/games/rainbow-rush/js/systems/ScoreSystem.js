@@ -39,6 +39,10 @@ export class ScoreSystem {
         // Level time tracking for speed bonus
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
+        
+        // Extra stats for XP system
+        this.enemiesDefeated = 0;
+        this.powerupsCollected = 0;
     }
     
     /**
@@ -90,6 +94,8 @@ export class ScoreSystem {
         this.currentSpeed = 0;
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
+        this.enemiesDefeated = 0;
+        this.powerupsCollected = 0;
     }
     
     update(deltaTime) {
@@ -192,6 +198,19 @@ export class ScoreSystem {
         const points = Math.floor(50 * this.multiplier * this.comboMultiplier);
         this.addScore(points);
         return points;
+    }
+    
+    addEnemyDefeated() {
+        this.enemiesDefeated++;
+        this.addCombo();
+        // Enemy defeat reward: base 30 points
+        const points = Math.floor(30 * this.multiplier * this.comboMultiplier);
+        this.addScore(points);
+        return points;
+    }
+    
+    addPowerupCollected() {
+        this.powerupsCollected++;
     }
 
     addScore(points) {
@@ -458,7 +477,9 @@ export class ScoreSystem {
             combo: this.combo,
             comboMultiplier: this.comboMultiplier,
             maxCombo: this.maxCombo,
-            speedMultiplier: this.speedMultiplier
+            speedMultiplier: this.speedMultiplier,
+            enemiesDefeated: this.enemiesDefeated,
+            powerupsCollected: this.powerupsCollected
         };
     }
 }

@@ -419,7 +419,8 @@ def calculate_session_xp(
     duration_seconds: int,
     is_new_high_score: bool,
     user_multiplier: float,
-    previous_high_score: int = 0
+    previous_high_score: int = 0,
+    extra_data: dict = None
 ) -> Dict[str, Any]:
     """
     Calculate XP for a game session using the rules system.
@@ -431,18 +432,29 @@ def calculate_session_xp(
         is_new_high_score: Whether this is a new high score
         user_multiplier: User's CUR8 multiplier
         previous_high_score: Previous high score (for improvement calculation)
+        extra_data: Additional game-specific data (levels_completed, distance, etc.)
         
     Returns:
         Dictionary with total_xp, base_xp, and breakdown
     """
     rules = get_game_xp_rules(game_id, active_only=True)
     
+    # Parse extra_data for new cumulative metrics
+    if extra_data is None:
+        extra_data = {}
+    if isinstance(extra_data, str):
+        import json
+        extra_data = json.loads(extra_data)
+    
     context = SessionContext(
         score=score,
         duration_seconds=duration_seconds,
         is_new_high_score=is_new_high_score,
         user_multiplier=user_multiplier,
-        previous_high_score=previous_high_score
+        previous_high_score=previous_high_score,
+        levels_completed=extra_data.get('levels_completed', 0),
+        distance=extra_data.get('distance', 0.0),
+        extra_data=extra_data
     )
     
     calculator = XPCalculator()
@@ -472,9 +484,9 @@ def create_game_session(user_id: str, game_id: str) -> dict:
         
         return game_session.to_dict()
 
-def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict:
+def end_game_session(session_id: str, score: int, duration_seconds: int, extra_data: dict = None) -> dict:
     """End a game session and calculate XP earned using the rules system."""
-    print(f"[DB] end_game_session called - session_id: {session_id}, score: {score}, duration: {duration_seconds}")
+    print(f"[DB] end_game_session called - session_id: {session_id}, score: {score}, duration: {duration_seconds}, extra_data: {extra_data}")
     
     with get_db_session() as session:
         game_session = session.query(GameSession).filter(
@@ -496,7 +508,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         multiplier = user.cur8_multiplier
         game_id = game_session.game_id
         
+        # Store extra_data in session for cumulative metrics
+        if extra_data:
+            game_session.extra_data = json.dumps(extra_data)
+        
         print(f"[DB] User multiplier: {multiplier}, current total_xp: {user.total_xp_earned}")
+        print(f"[DB] Extra data received: {extra_data}")
                 
         # Parse current game scores
         game_scores = json.loads(user.game_scores) if user.game_scores else {}
@@ -511,6 +528,9 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             user.game_scores = json.dumps(game_scores)
             print(f"[DB] New high score! {previous_high_score} -> {score}")
         
+        # Extract extra_data from session for cumulative metrics
+        session_extra_data = json.loads(game_session.extra_data) if game_session.extra_data else {}
+        
         # Calculate XP using the new rules system
         print(f"[DB] Calculating XP...")
         xp_result = calculate_session_xp(
@@ -519,11 +539,13 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             duration_seconds=duration_seconds,
             is_new_high_score=is_new_high_score,
             user_multiplier=multiplier,
-            previous_high_score=previous_high_score
+            previous_high_score=previous_high_score,
+            extra_data=session_extra_data
         )
         
         xp_earned = xp_result['total_xp']
         print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)})")
+        print(f"[DB] Metrics: levels={session_extra_data.get('levels_completed', 0)}, distance={session_extra_data.get('distance', 0)}")
         
         # Update session
         now = datetime.utcnow().isoformat()
@@ -548,6 +570,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         # Check for level up and award coins immediately
         from app.level_system import LevelSystem
         from app.services import CoinService
+        from app.repositories import RepositoryFactory
         level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
         
         if level_up_info['leveled_up']:
@@ -560,7 +583,9 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
             
             if coins_awarded > 0 and new_level not in quest_levels:
                 print(f"[DB] 🪙 Awarding level-up coins: {coins_awarded} coins for level {new_level}")
-                coin_service = CoinService(session)
+                coins_repo = RepositoryFactory.create_usercoins_repository(session)
+                transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
+                coin_service = CoinService(coins_repo, transaction_repo)
                 coin_service.add_coins(
                     user_id=game_session.user_id,
                     amount=coins_awarded,
@@ -586,6 +611,10 @@ def end_game_session(session_id: str, score: int, duration_seconds: int) -> dict
         session.flush()
         
         result = game_session.to_dict()
+        
+        # Add XP breakdown to response for frontend display
+        result['xp_breakdown'] = xp_result.get('rule_breakdown', [])
+        result['base_xp'] = xp_result.get('base_xp', 0)
         
         # Add level-up info to response if it happened
         if level_up_info['leveled_up']:

@@ -1,0 +1,253 @@
+/**
+ * Game Banners Styles
+ * XP Banner and Stats Banner with Rainbow Rush theme
+ */
+
+/* ============ STATS BANNER ============ */
+.game-stats-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    animation: statsSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: auto;
+    background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 25%, #6C5B7B 50%, #355C7D 75%, #2A9D8F 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(255, 107, 157, 0.5), 0 0 60px rgba(42, 157, 143, 0.3);
+    max-width: 550px;
+    width: 92%;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.game-stats-banner.hiding {
+    animation: statsSlideDown 0.5s ease forwards;
+}
+
+@keyframes statsSlideUp {
+    from {
+        transform: translateX(-50%) translateY(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes statsSlideDown {
+    from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-50%) translateY(120%);
+        opacity: 0;
+    }
+}
+
+.stats-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    font-size: 1.6em;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stats-close-btn:hover {
+    background: rgba(255, 107, 157, 0.8);
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+}
+
+.stats-close-btn:active {
+    transform: scale(0.95) rotate(90deg);
+}
+
+.stats-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.stats-icon {
+    font-size: 2.2em;
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.1); }
+}
+
+.stats-title {
+    font-size: 1.5em;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.3);
+    letter-spacing: 0.5px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item:hover {
+    transform: scale(1.08) translateY(-3px);
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stat-item.highlight {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.4) 0%, rgba(255, 165, 0, 0.4) 100%);
+    border: 3px solid rgba(255, 215, 0, 0.8);
+    grid-column: 1 / -1;
+    animation: highlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+    50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.stat-value {
+    font-size: 1.6em;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.3);
+    letter-spacing: 0.5px;
+}
+
+/* ============ XP BANNER ============ */
+.game-xp-banner {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10000;
+    animation: xpSlideIn 0.5s ease;
+    pointer-events: none;
+}
+
+.game-xp-banner.hiding {
+    animation: xpSlideOut 0.5s ease forwards;
+}
+
+.game-xp-badge {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.game-xp-icon {
+    font-size: 1.5em;
+}
+
+.game-xp-amount {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.game-xp-breakdown {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 0.85em;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.game-xp-rule {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    color: #333;
+}
+
+.game-xp-rule.inactive {
+    opacity: 0.5;
+    color: #999;
+}
+
+.game-xp-rule.inactive .game-rule-xp {
+    color: #999;
+}
+
+.game-rule-name {
+    flex: 1;
+}
+
+.game-rule-xp {
+    font-weight: bold;
+    color: #ffa500;
+    margin-left: 8px;
+}
+
+@keyframes xpSlideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes xpSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}

@@ -19,6 +19,10 @@ class SessionContext:
     is_new_high_score: bool
     user_multiplier: float
     previous_high_score: int = 0
+    # New fields for cumulative system
+    levels_completed: int = 0
+    distance: float = 0.0
+    extra_data: Dict[str, Any] = None
     
     def __post_init__(self):
         """Validate session context data."""
@@ -28,6 +32,12 @@ class SessionContext:
             raise ValueError("Duration cannot be negative")
         if self.user_multiplier < 0:
             raise ValueError("User multiplier cannot be negative")
+        if self.levels_completed < 0:
+            raise ValueError("Levels completed cannot be negative")
+        if self.distance < 0:
+            raise ValueError("Distance cannot be negative")
+        if self.extra_data is None:
+            self.extra_data = {}
 
 
 class XPCalculationStrategy(ABC):
@@ -269,6 +279,116 @@ class PercentileImprovementStrategy(XPCalculationStrategy):
             if max_xp is not None and (not isinstance(max_xp, (int, float)) or max_xp < 0):
                 return False
         
+        return True
+
+
+class LevelProgressionStrategy(XPCalculationStrategy):
+    """Award cumulative XP for each level completed (no cap)."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        Award cumulative XP: Sum of (base_xp + level * increment) for each level.
+        
+        Expected parameters:
+            - base_xp: float (default 10.0) - Base XP per level
+            - increment: float (default 2.0) - XP increment per level number
+        # New cumulative strategies (no caps)
+        'level_progression': LevelProgressionStrategy(),
+        'distance_bonus': DistanceBonusStrategy(),
+        'absolute_improvement': AbsoluteImprovementStrategy(),
+        
+        Example: levels 1-5 with base=10, increment=2
+            Level 1: 10+2 = 12 XP
+            Level 2: 10+4 = 14 XP
+            Level 3: 10+6 = 16 XP
+            Level 4: 10+8 = 18 XP
+            Level 5: 10+10 = 20 XP
+            Total: 80 XP
+        """
+        if context.levels_completed <= 0:
+            return 0.0
+        
+        base_xp = parameters.get('base_xp', 10.0)
+        increment = parameters.get('increment', 2.0)
+        
+        total_xp = 0.0
+        for level in range(1, context.levels_completed + 1):
+            total_xp += base_xp + (level * increment)
+        
+        return total_xp
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate level progression parameters."""
+        for key in ['base_xp', 'increment']:
+            if key in parameters:
+                if not isinstance(parameters[key], (int, float)) or parameters[key] < 0:
+                    return False
+        return True
+
+
+class DistanceBonusStrategy(XPCalculationStrategy):
+    """Award XP for distance milestones (no cap)."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        Award XP for every milestone_distance reached.
+        
+        Expected parameters:
+            - milestone_distance: float (default 500.0) - Distance per milestone
+            - xp_per_milestone: float (default 5.0) - XP awarded per milestone
+        
+        Example: 2500m traveled with milestone=500, xp=5
+            Milestones: 2500/500 = 5
+            Total: 5 * 5 = 25 XP
+        """
+        if context.distance <= 0:
+            return 0.0
+        
+        milestone_distance = parameters.get('milestone_distance', 500.0)
+        xp_per_milestone = parameters.get('xp_per_milestone', 5.0)
+        
+        if milestone_distance <= 0:
+            return 0.0
+        
+        milestones = int(context.distance / milestone_distance)
+        return milestones * xp_per_milestone
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate distance bonus parameters."""
+        for key in ['milestone_distance', 'xp_per_milestone']:
+            if key in parameters:
+                if not isinstance(parameters[key], (int, float)) or parameters[key] <= 0:
+                    return False
+        return True
+
+
+class AbsoluteImprovementStrategy(XPCalculationStrategy):
+    """Award XP based on absolute score improvement (no cap)."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        Award XP proportional to absolute score improvement.
+        
+        Expected parameters:
+            - xp_per_point: float (default 0.005) - XP per point of improvement
+        
+        Example: Improved from 50000 to 60000
+            Improvement: 10000 points
+            XP: 10000 * 0.005 = 50 XP
+        """
+        if not context.is_new_high_score or context.previous_high_score == 0:
+            return 0.0
+        
+        improvement = context.score - context.previous_high_score
+        xp_per_point = parameters.get('xp_per_point', 0.005)
+        
+        return improvement * xp_per_point
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate absolute improvement parameters."""
+        if 'xp_per_point' in parameters:
+            if not isinstance(parameters['xp_per_point'], (int, float)) or parameters['xp_per_point'] < 0:
+                return False
         return True
 
 

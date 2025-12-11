@@ -258,6 +258,12 @@
          * Send game over event to platform
          * @param {number} finalScore - The final score
          * @param {Object} metadata - Optional additional metadata (stats, achievements, etc.)
+         *                            Can include extra_data for cumulative XP system:
+         *                            - levels_completed: number
+         *                            - distance: number
+         *                            - coins_collected: number
+         *                            - powerups_collected: number
+         *                            - enemies_defeated: number
          */
         gameOver(finalScore, metadata = {}) {
             if (typeof finalScore !== 'number') {
@@ -267,9 +273,12 @@
             
             this.state.score = finalScore;
             
+            // Extract extra_data if provided
+            const extra_data = metadata.extra_data || metadata;
+            
             this.sendToPlatform('gameOver', {
                 score: finalScore,
-                ...metadata,
+                extra_data,
                 timestamp: Date.now()
             });
         }

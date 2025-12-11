@@ -35,7 +35,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
         for (let i = magnetBonuses.length - 1; i >= 0; i--) {
             if (this.checkCollision(magnetBonuses[i])) {
                 const magnet = magnetBonuses[i];
-                
+
                 // Magnetize all collectibles
                 const collectibles = entityManager.getEntities('collectibles');
                 collectibles.forEach(c => {
@@ -49,6 +49,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('🧲 Magnete Attivo!', 'Tutti i collectibles sono attratti!', 'info');
             }
         }
@@ -67,6 +68,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('💰 Pioggia di Monete!', 'Pioveranno monete per 10 secondi!', 'achievement');
 
                 return { type: 'coinRain', activated: true, duration: 10.0 };
@@ -91,6 +93,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('🛡️ Scudo Attivo!', 'Sei invincibile per 10 secondi!', 'achievement');
             }
         }
@@ -112,6 +115,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('💰 Moltiplicatore x3!', 'Tutti i punti triplicati per 12 secondi!', 'achievement');
             }
         }
@@ -144,6 +148,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('⚡ Safety Ricaricato!', 'Tutti i pallini ripristinati!', 'achievement');
                 this.triggerScreenFlash(0.3, [0.2, 1.0, 0.4]);
             }
@@ -164,7 +169,8 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     color: flight.color,
                     sound: 'powerup'
                 });
-
+                
+                this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('🪶 Volo Attivato!', '5 secondi di volo libero!', 'info');
             }
         }
@@ -197,6 +203,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                this.context.scoreSystem.addPowerupCollected();
                 if (healedAmount > 0) {
                     this.addNotification('💕 Cuori Completamente Ricaricati!', `+${healedAmount} cuoricini ripristinati!`, 'achievement');
                 } else {

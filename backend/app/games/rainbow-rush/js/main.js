@@ -246,6 +246,69 @@ class RainbowRushApp {
     }
 
     /**
+     * Show game statistics banner inside the game
+     * @param {object} stats - Game statistics to display
+     */
+    showStatsBanner(stats) {
+        console.log('📊 Showing stats banner inside game:', stats);
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-stats-banner';
+        
+        const statsHTML = `
+            <button class="stats-close-btn" aria-label="Close">✕</button>
+            <div class="stats-header">
+                <span class="stats-icon">🎮</span>
+                <span class="stats-title">Game Statistics</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">🎯 Score</span>
+                    <span class="stat-value">${stats.score?.toLocaleString() || 0}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🌈 Levels</span>
+                    <span class="stat-value">${stats.levels_completed || 0}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">📏 Distance</span>
+                    <span class="stat-value">${stats.distance ? Math.floor(stats.distance) + 'm' : '0m'}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🪙 Coins</span>
+                    <span class="stat-value">${stats.coins_collected || 0}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">💥 Enemies</span>
+                    <span class="stat-value">${stats.enemies_defeated || 0}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">⚡ Powerups</span>
+                    <span class="stat-value">${stats.powerups_collected || 0}</span>
+                </div>
+                ${stats.highest_combo > 0 ? `
+                <div class="stat-item highlight">
+                    <span class="stat-label">🔥 Best Combo</span>
+                    <span class="stat-value">${stats.highest_combo}×</span>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        banner.innerHTML = statsHTML;
+        
+        // Add close button handler
+        const closeBtn = banner.querySelector('.stats-close-btn');
+        closeBtn.addEventListener('click', () => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        });
+        
+        document.body.appendChild(banner);
+    }
+
+    /**
      * Show XP earned banner inside the game
      * @param {number} xpAmount - Amount of XP earned
      * @param {object|string} extraData - Extra data with XP breakdown
@@ -286,93 +349,6 @@ class RainbowRushApp {
             ${breakdownHTML}
         `;
         
-        // Add styles if not already present
-        if (!document.getElementById('game-xp-banner-style')) {
-            const style = document.createElement('style');
-            style.id = 'game-xp-banner-style';
-            style.textContent = `
-                .game-xp-banner {
-                    position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    z-index: 10000;
-                    animation: xpSlideIn 0.5s ease;
-                    pointer-events: none;
-                }
-                .game-xp-banner.hiding {
-                    animation: xpSlideOut 0.5s ease forwards;
-                }
-                .game-xp-badge {
-                    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-                    padding: 16px 24px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                .game-xp-icon {
-                    font-size: 1.5em;
-                }
-                .game-xp-amount {
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    color: #1a1a1a;
-                }
-                .game-xp-breakdown {
-                    background: rgba(255, 255, 255, 0.95);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 8px;
-                    font-size: 0.85em;
-                    max-height: 200px;
-                    overflow-y: auto;
-                }
-                .game-xp-rule {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 4px 0;
-                    color: #333;
-                }
-                .game-xp-rule.inactive {
-                    opacity: 0.5;
-                    color: #999;
-                }
-                .game-xp-rule.inactive .game-rule-xp {
-                    color: #999;
-                }
-                .game-rule-name {
-                    flex: 1;
-                }
-                .game-rule-xp {
-                    font-weight: bold;
-                    color: #ffa500;
-                    margin-left: 8px;
-                }
-                @keyframes xpSlideIn {
-                    from {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-                @keyframes xpSlideOut {
-                    from {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
         document.body.appendChild(banner);
         
         // Remove after 3.5 seconds
@@ -386,7 +362,8 @@ class RainbowRushApp {
         // Listen for messages from platform (e.g., XP banner requests)
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
-                this.showXPBanner(event.data.payload.xp_earned, event.data.payload.extra_data);
+                console.log('🎁 Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
         });
         
@@ -617,10 +594,12 @@ class RainbowRushApp {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         const app = new RainbowRushApp();
+        window.rainbowRushApp = app;  // Make app globally accessible
         app.init();
     });
 } else {
     const app = new RainbowRushApp();
+    window.rainbowRushApp = app;  // Make app globally accessible
     app.init();
 }
 

@@ -47,6 +47,9 @@ export class ShieldCollisionHandler extends PowerupCollisionHandler {
                     sound: 'powerup'
                 });
 
+                // Track powerup collection
+                this.context.scoreSystem.addPowerupCollected();
+
                 // Activate shield
                 this.context.player.hasShield = true;
                 this.context.player.shieldDuration = shield.duration || 15000;
@@ -78,7 +81,8 @@ export class MagnetCollisionHandler extends PowerupCollisionHandler {
                     points: 75,
                     sound: 'powerup'
                 });
-
+                // Track powerup collection
+                this.context.scoreSystem.addPowerupCollected();
                 // Activate magnet
                 this.context.player.hasMagnet = true;
                 this.context.player.magnetDuration = magnet.duration || 10000;

@@ -56,12 +56,45 @@ export class ParticleRenderer {
         this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1.0, 1.0, 1.0, alpha * 0.6]);
     }
 
+    renderEnemyDefeat(particle) {
+        const alpha = particle.life / particle.maxLife;
+        const color = [...particle.color];
+        color[3] *= alpha;
+        
+        // Enemy defeat explosion particle - radial burst effect
+        if (particle.glow) {
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 2.5, [...color, alpha * 0.2]);
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 1.5, [...color, alpha * 0.4]);
+        }
+        
+        this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.6, [1.0, 1.0, 1.0, alpha * 0.7]);
+    }
+
+    renderSparkle(particle) {
+        const alpha = particle.life / particle.maxLife;
+        const color = [...particle.color];
+        color[3] *= alpha;
+        
+        // Sparkle particle - small bright star effect
+        if (particle.glow) {
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 2, [...color, alpha * 0.3]);
+        }
+        
+        this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.3, [1.0, 1.0, 1.0, alpha * 0.9]);
+    }
+
     /**
      * Main render method called by RendererFactory
      */
     render(entity, context) {
         if (entity.type === 'projectile-hit') {
             this.renderProjectileHit(entity);
+        } else if (entity.type === 'enemy-defeat') {
+            this.renderEnemyDefeat(entity);
+        } else if (entity.type === 'sparkle') {
+            this.renderSparkle(entity);
         } else if (entity.type === 'boostParticle') {
             this.renderBoostParticle(entity);
         } else if (entity.type === 'powerupParticle') {

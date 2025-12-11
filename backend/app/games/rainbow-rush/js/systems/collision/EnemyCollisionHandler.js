@@ -42,10 +42,89 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
         if (this.context.player.checkObstacleCollision(enemy)) {
             if (!enemy.hasHitPlayer && this.context.player.alive) {
                 enemy.hasHitPlayer = true;
-                this._handleDamageCollision(enemy, entityManager, enemy.damage || 1);
+                
+                // Check if player is invincible (turbo/boost) - enemy gets defeated!
+                if (this.context.player.isTurboActive || this.context.player.boostActive || this.context.player.powerups.immortality) {
+                    this._handleEnemyDefeat(enemy, entityManager);
+                } else {
+                    // Normal damage
+                    this._handleDamageCollision(enemy, entityManager, enemy.damage || 1);
+                }
             }
         } else {
             enemy.hasHitPlayer = false;
+        }
+    }
+    
+    /**
+     * Handle enemy defeat when player is invincible
+     * @private
+     */
+    _handleEnemyDefeat(enemy, entityManager) {
+        // Mark enemy as dead
+        enemy.alive = false;
+        
+        // Award points
+        const points = this.context.scoreSystem.addEnemyDefeated();
+        
+        // Play sound
+        this.playSound('coin');
+        
+        // Create floating text
+        this.createFloatingText(
+            `💥 +${points} 🎯`,
+            enemy.x + enemy.width / 2,
+            enemy.y,
+            [1.0, 0.6, 0.2, 1.0],  // Orange color
+            entityManager
+        );
+        
+        // Create explosion particles
+        this._createEnemyExplosion(enemy, entityManager);
+    }
+    
+    /**
+     * Create explosion effect for defeated enemy
+     * @private
+     */
+    _createEnemyExplosion(enemy, entityManager) {
+        const centerX = enemy.x + enemy.width / 2;
+        const centerY = enemy.y + enemy.height / 2;
+        
+        // Create radial explosion particles
+        for (let i = 0; i < 12; i++) {
+            const angle = (Math.PI * 2 * i) / 12;
+            const speed = 120 + Math.random() * 80;
+            entityManager.addEntity('powerupParticles', {
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 50,  // Extra upward velocity
+                life: 0.6,
+                maxLife: 0.6,
+                size: 4 + Math.random() * 3,
+                color: [1.0, 0.6, 0.2, 1.0],  // Orange
+                gravity: 200,
+                type: 'enemy-defeat'
+            });
+        }
+        
+        // Add some sparkles
+        for (let i = 0; i < 8; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 60 + Math.random() * 40;
+            entityManager.addEntity('powerupParticles', {
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 30,
+                life: 0.4,
+                maxLife: 0.4,
+                size: 2 + Math.random() * 2,
+                color: [1.0, 1.0, 0.5, 1.0],  // Yellow sparkle
+                gravity: 150,
+                type: 'sparkle'
+            });
         }
     }
 

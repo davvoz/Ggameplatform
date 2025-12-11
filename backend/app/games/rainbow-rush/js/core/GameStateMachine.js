@@ -541,6 +541,22 @@ class LevelSummaryState extends BaseGameState {
                 }
             };
             
+            // Show stats banner in game
+            if (context.gameController?.showStatsBanner) {
+                context.gameController.showStatsBanner({
+                    score: summary.score,
+                    ...finalStats.extra_data
+                });
+            }
+            
+            // Show stats banner with game details (alternative method)
+            if (window.rainbowRushApp && typeof window.rainbowRushApp.showStatsBanner === 'function') {
+                window.rainbowRushApp.showStatsBanner({
+                    score: summary.score,
+                    ...finalStats.extra_data
+                });
+            }
+            
             // End game session with final score
             if (context.gameController?.rainbowRushSDK?.sessionId) {
                 try {

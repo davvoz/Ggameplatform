@@ -57,11 +57,15 @@ class LevelSystem:
         Returns:
             Current level (minimum 1)
         """
-        if xp <= 0:
+        if xp is None or xp <= 0:
             return 1
-        
-        # Inverse formula: level = (XP / 100)^(2/3)
-        level = int(math.floor(math.pow(xp / 100.0, 2.0/3.0)))
+
+        # Inverse formula: level = floor((XP / 100)^(2/3))
+        try:
+            level = int(math.floor(math.pow(xp / 100.0, 2.0/3.0)))
+        except Exception:
+            level = 1
+
         return max(1, level)
     
     @staticmethod

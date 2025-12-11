@@ -120,29 +120,31 @@ class QuestTracker:
         
         # Check if quest is completed
         if user_quest.current_progress >= quest.target_value:
-            user_quest.is_completed = 1
-            user_quest.completed_at = datetime.utcnow().isoformat()
-            
-            # Award XP
-            user = self.db.query(User).filter(User.user_id == user_id).first()
-            if user:
-                user.total_xp_earned += quest.xp_reward
-            
-            # Award coins if coin service is available
-            # Note: Coin service is disabled during session tracking to avoid transaction conflicts
-            # Coins will be awarded when user claims the quest reward
-            if self.coin_service and False:  # Temporarily disabled
-                try:
-                    self.coin_service.award_quest_reward(
-                        user_id=user_id,
-                        quest_id=quest.quest_id,
-                        quest_title=quest.title,
-                        quest_sats_reward=quest.reward_coins if hasattr(quest, 'reward_coins') else 0
-                    )
-                except Exception as e:
-                    print(f"⚠️ Failed to award coins for quest {quest.quest_id}: {e}")
-            
-            print(f"✅ Quest completed! User {user_id} completed quest {quest.quest_id}: {quest.title}")
+            # Only mark as completed and award rewards if it wasn't already completed
+            if not user_quest.is_completed:
+                user_quest.is_completed = 1
+                user_quest.completed_at = datetime.utcnow().isoformat()
+
+                # Award XP (only once)
+                user = self.db.query(User).filter(User.user_id == user_id).first()
+                if user:
+                    user.total_xp_earned += quest.xp_reward
+
+                # Award coins if coin service is available
+                # Note: Coin service is disabled during session tracking to avoid transaction conflicts
+                # Coins will be awarded when user claims the quest reward
+                if self.coin_service and False:  # Temporarily disabled
+                    try:
+                        self.coin_service.award_quest_reward(
+                            user_id=user_id,
+                            quest_id=quest.quest_id,
+                            quest_title=quest.title,
+                            quest_sats_reward=quest.reward_coins if hasattr(quest, 'reward_coins') else 0
+                        )
+                    except Exception as e:
+                        print(f"⚠️ Failed to award coins for quest {quest.quest_id}: {e}")
+
+                print(f"✅ Quest completed! User {user_id} completed quest {quest.quest_id}: {quest.title}")
     
     def track_session_end(self, session_data: Dict):
         """Track quest progress when a game session ends."""

@@ -1,8 +1,17 @@
 {
-  "version": "1.24.5",
-  "timestamp": "2025-12-12T15:07:06.645Z",
-  "buildNumber": 75,
+  "version": "1.24.6",
+  "timestamp": "2025-12-12T16:01:33.621Z",
+  "buildNumber": 76,
   "changelog": [
+    {
+      "version": "1.24.6",
+      "date": "2025-12-12",
+      "type": "patch",
+      "changes": [
+        "fix:[RR] add user debug panel and enhance SDK for user info tracking",
+        "🔖 Bump version to 1.24.5 [skip-version]"
+      ]
+    },
     {
       "version": "1.24.5",
       "date": "2025-12-12",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: Enhance level calculation and improve quest completion logic",
         "🔖 Bump version to 1.22.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.22.2",
-      "date": "2025-12-11",
-      "type": "patch",
-      "changes": [
-        "fix: [RR]Add stats banner display in Level Summary state",
-        "🔖 Bump version to 1.22.1 [skip-version]"
       ]
     }
   ]

@@ -14,6 +14,8 @@ from datetime import datetime
 from .database import get_rainbow_rush_db
 from .repository import RainbowRushRepository
 from .service import RainbowRushService, ValidationError
+from app.database import get_db
+from app.repositories import UserRepository
 
 
 # ==================== PYDANTIC SCHEMAS ====================
@@ -92,18 +94,44 @@ def get_rainbow_rush_service(db: Session = Depends(get_rainbow_rush_db)) -> Rain
     return RainbowRushService(repository)
 
 
+async def validate_user_exists(user_id: str, main_db: Session = Depends(get_db)) -> str:
+    """
+    Validate that user_id exists in main platform database
+    
+    Args:
+        user_id: User identifier to validate
+        main_db: Main database session
+        
+    Returns:
+        user_id if valid
+        
+    Raises:
+        HTTPException if user doesn't exist
+    """
+    user_repo = UserRepository(main_db)
+    user = user_repo.get_by_id(user_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found in platform. Please login first."
+        )
+    
+    return user_id
+
+
 # ==================== PROGRESS ENDPOINTS ====================
 
 @router.get("/progress/{user_id}", response_model=ProgressResponse)
 async def get_progress(
-    user_id: str,
+    user_id: str = Depends(validate_user_exists),
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """
     Get player progress
     
     Args:
-        user_id: User identifier
+        user_id: User identifier (validated from main DB)
         service: RainbowRushService instance
         
     Returns:
@@ -121,8 +149,8 @@ async def get_progress(
 
 @router.post("/progress/{user_id}/save-level")
 async def save_level_progress(
-    user_id: str,
-    request: SaveProgressRequest,
+    user_id: str = Depends(validate_user_exists),
+    request: SaveProgressRequest = ...,
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """
@@ -156,8 +184,8 @@ async def save_level_progress(
 
 @router.post("/completion/{user_id}")
 async def submit_level_completion(
-    user_id: str,
-    request: LevelCompletionRequest,
+    user_id: str = Depends(validate_user_exists),
+    request: LevelCompletionRequest = ...,
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """
@@ -194,7 +222,7 @@ async def submit_level_completion(
 
 @router.get("/completion/{user_id}/history")
 async def get_completion_history(
-    user_id: str,
+    user_id: str = Depends(validate_user_exists),
     level_id: Optional[int] = None,
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
@@ -228,8 +256,8 @@ async def get_completion_history(
 
 @router.post("/session/{user_id}/start")
 async def start_session(
-    user_id: str,
-    request: SessionStartRequest,
+    user_id: str = Depends(validate_user_exists),
+    request: SessionStartRequest = ...,
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """

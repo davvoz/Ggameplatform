@@ -5,8 +5,7 @@ Following SOLID principles and OOP best practices
 """
 
 from typing import Dict, Any
-from sqlalchemy import Column, String, Integer, Float, Text, ForeignKey, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Integer, Float, Text, Index
 from app.models import Base
 import json
 
@@ -21,8 +20,8 @@ class RainbowRushProgress(Base):
     # Primary key
     progress_id = Column(String, primary_key=True)  # Format: rr_prog_{user_id}
     
-    # Foreign key to users table
-    user_id = Column(String, ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False, unique=True)
+    # User ID from main platform (no FK because separate DB)
+    user_id = Column(String, nullable=False, unique=True, index=True)
     
     # Game progress
     current_level = Column(Integer, default=1, nullable=False)
@@ -50,9 +49,6 @@ class RainbowRushProgress(Base):
     
     # Additional metadata (JSON) - renamed to avoid SQLAlchemy conflict
     extra_data = Column(Text, default='{}', nullable=False)
-    
-    # Relationships
-    user = relationship("User", backref="rainbow_rush_progress")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert progress instance to dictionary"""
@@ -88,9 +84,9 @@ class RainbowRushLevelCompletion(Base):
     # Primary key
     completion_id = Column(String, primary_key=True)  # Format: rr_comp_{uuid}
     
-    # Foreign keys
-    user_id = Column(String, ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
-    progress_id = Column(String, ForeignKey('rainbow_rush_progress.progress_id', ondelete='CASCADE'), nullable=False)
+    # References (no FK because cross-DB for user_id)
+    user_id = Column(String, nullable=False, index=True)
+    progress_id = Column(String, nullable=False, index=True)
     
     # Level data
     level_id = Column(Integer, nullable=False)
@@ -120,10 +116,6 @@ class RainbowRushLevelCompletion(Base):
     # Session tracking for anti-cheat
     session_duration = Column(Float, default=0.0, nullable=False)  # Seconds
     client_timestamp = Column(String, nullable=True)
-    
-    # Relationships
-    user = relationship("User", backref="rainbow_rush_completions")
-    progress = relationship("RainbowRushProgress", backref="level_completions_rel")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert completion instance to dictionary"""
@@ -160,9 +152,9 @@ class RainbowRushGameSession(Base):
     # Primary key
     session_id = Column(String, primary_key=True)  # Format: rr_sess_{uuid}
     
-    # Foreign keys
-    user_id = Column(String, ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
-    progress_id = Column(String, ForeignKey('rainbow_rush_progress.progress_id', ondelete='CASCADE'), nullable=False)
+    # References (no FK because cross-DB for user_id)
+    user_id = Column(String, nullable=False, index=True)
+    progress_id = Column(String, nullable=False, index=True)
     
     # Session data
     level_id = Column(Integer, nullable=False)
@@ -184,10 +176,6 @@ class RainbowRushGameSession(Base):
     # Anti-cheat metrics
     heartbeat_count = Column(Integer, default=0, nullable=False)
     anomaly_flags = Column(Integer, default=0, nullable=False)  # Bit flags
-    
-    # Relationships
-    user = relationship("User", backref="rainbow_rush_sessions")
-    progress = relationship("RainbowRushProgress", backref="active_sessions")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert session instance to dictionary"""

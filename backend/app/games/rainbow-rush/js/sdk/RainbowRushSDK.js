@@ -88,25 +88,16 @@ export class RainbowRushSDK {
             return window.PlatformSDK.config.userId;
         }
         
-        // PRIORITY 3: Se AuthManager esiste ma non è loggato, NON creare utente anonimo
-        // Questo previene la creazione di ID anonimi quando c'è un sistema di autenticazione
+        // PRIORITY 3: Se AuthManager esiste ma non è loggato, BLOCCA
+        // Rainbow Rush richiede SEMPRE un account della piattaforma
         if (window.AuthManager && !window.AuthManager.isLoggedIn()) {
             console.warn('[RainbowRushSDK] ⚠️ AuthManager found but user not logged in. Please login first.');
             throw new Error('User not logged in. Please login to play Rainbow Rush.');
         }
         
-        // PRIORITY 4: Try localStorage (solo se non c'è AuthManager)
-        let userId = localStorage.getItem('rr_user_id');
-        if (userId) {
-            console.log('[RainbowRushSDK] Using cached user:', userId);
-            return userId;
-        }
-        
-        // PRIORITY 5: Create anonymous user (solo se non c'è sistema di auth)
-        userId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('rr_user_id', userId);
-        console.log('[RainbowRushSDK] Created anonymous user:', userId);
-        return userId;
+        // Se non c'è AuthManager, RICHIEDI LOGIN
+        console.error('[RainbowRushSDK] ❌ No authentication system found. Platform account required.');
+        throw new Error('Platform account required. Please login to play Rainbow Rush.');
     }
     
     // ==================== PROGRESS API ====================

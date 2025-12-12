@@ -554,6 +554,23 @@ class ProfileRenderer {
                 // Replace entire card content with level widget
                 const parentCard = cur8EarnedEl.closest('.stat-card');
                 if (parentCard) {
+                    // Compute XP per-level values with fallbacks (ensure variables exist in this scope)
+                    const xp_in_level = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
+                    const xp_required_for_next = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
+                    const xp_to_next = levelInfo?.xp_to_next_level ?? Math.max(0, (xp_required_for_next || 0) - xp_in_level);
+
+                    // Build right column HTML separately to avoid nested template literal ambiguity
+                    const rightColumnHtml = xp_to_next > 0 ? `
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next lvl</span>
+                            <span style="font-size: 18px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${xp_to_next.toFixed(0)}</span>
+                        </div>
+                    ` : `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;">
+                            <span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span>
+                        </div>
+                    `;
+
                     parentCard.innerHTML = `
                         <div style="padding: 20px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: 16px; border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05);">
                             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
@@ -580,15 +597,10 @@ class ProfileRenderer {
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 XP Totali</span>
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 Total XP</span>
                                     <span style="font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
                                 </div>
-                                ${levelInfo.xp_needed_for_next > 0 ? `
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next Lv</span>
-                                    <span style="font-size: 18px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${levelInfo.xp_needed_for_next.toFixed(0)}</span>
-                                </div>
-                                ` : '<div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;"><span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span></div>'}
+                                ${rightColumnHtml}
                             </div>
                         </div>
                     `;

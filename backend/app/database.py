@@ -586,12 +586,18 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
                 coins_repo = RepositoryFactory.create_usercoins_repository(session)
                 transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
                 coin_service = CoinService(coins_repo, transaction_repo)
-                coin_service.add_coins(
-                    user_id=game_session.user_id,
-                    amount=coins_awarded,
-                    source='level_up',
-                    description=f"Level {new_level} reached"
-                )
+                # Use service method `award_coins` (previously attempted to call non-existing `add_coins`)
+                try:
+                    coin_service.award_coins(
+                        user_id=game_session.user_id,
+                        amount=coins_awarded,
+                        transaction_type='level_up',
+                        source_id=str(new_level),
+                        description=f"Level {new_level} reached",
+                        extra_data={"source": "level_up", "level": new_level}
+                    )
+                except Exception as e:
+                    print(f"[DB] ⚠️ Failed to award level-up coins: {e}")
             elif new_level in quest_levels:
                 print(f"[DB] 🎯 Level {new_level} has quest rewards - coins not awarded directly")
             

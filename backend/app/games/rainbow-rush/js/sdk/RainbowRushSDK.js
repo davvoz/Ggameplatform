@@ -49,14 +49,21 @@ export class RainbowRushSDK {
                 const payload = event.data.payload;
                 console.log('[RainbowRushSDK] 📥 Received config from platform:', payload);
                 
-                // Store platform user data
+                // Store platform user data - THIS IS THE ONLY SOURCE OF TRUTH
                 if (payload.userId) {
+                    this.userId = payload.userId; // Set userId from parent
                     this.platformUserId = payload.userId;
-                    console.log('[RainbowRushSDK] 📥 platformUserId set to:', this.platformUserId);
+                    console.log('[RainbowRushSDK] 📥 userId set to:', this.userId);
                 }
                 if (payload.username) {
                     this.username = payload.username;
                     console.log('[RainbowRushSDK] 📥 username set to:', this.username);
+                }
+                
+                // Resolve the pending promise if waiting
+                if (this._configPromiseResolve) {
+                    this._configPromiseResolve();
+                    this._configPromiseResolve = null;
                 }
             }
         });
@@ -74,62 +81,44 @@ export class RainbowRushSDK {
         
         console.log('[RainbowRushSDK] Initializing...');
         
-        // Get user ID from platform SDK or localStorage
+        // Wait for config message from parent if not already received
         if (!this.userId) {
-            this.userId = await this.getCurrentUserId();
+            console.log('[RainbowRushSDK] ⏳ Waiting for platform config...');
+            await this.waitForConfig();
         }
         
+        // Verify we have userId
         if (!this.userId) {
-            throw new Error('User ID required for Rainbow Rush SDK');
+            console.error('[RainbowRushSDK] ❌ No userId received from platform');
+            throw new Error('User ID required for Rainbow Rush SDK - config not received from platform');
         }
         
         this.initialized = true;
-        console.log('[RainbowRushSDK] Initialized for user:', this.userId);
+        console.log('[RainbowRushSDK] ✅ Initialized for user:', this.userId);
+        console.log('[RainbowRushSDK] Username:', this.username);
         
         // Load initial progress
         return await this.getProgress();
     }
     
     /**
-     * Get current user ID from platform or create anonymous user
+     * Wait for platform config message
      * @private
-     * @returns {Promise<string>} User ID
      */
-    async getCurrentUserId() {
-        // PRIORITY 1: Try to get from global AuthManager (Ggameplatform)
-        if (window.AuthManager && window.AuthManager.isLoggedIn()) {
-            const user = window.AuthManager.getUser();
-            if (user && user.user_id) {
-                console.log('[RainbowRushSDK] ✅ Using AuthManager user_id:', user.user_id);
-                // Store username and platform user_id for debug panel
-                this.username = user.username || user.account_name || 'Unknown';
-                this.platformUserId = user.user_id;
-                // IMPORTANTE: Clear any anonymous ID when using real user
-                const oldId = localStorage.getItem('rr_user_id');
-                if (oldId && oldId !== user.user_id) {
-                    console.log('[RainbowRushSDK] 🗑️ Removing old anonymous ID:', oldId);
-                    localStorage.removeItem('rr_user_id');
-                }
-                return user.user_id;
-            }
+    async waitForConfig() {
+        // If userId is already set, return immediately
+        if (this.userId) {
+            console.log('[RainbowRushSDK] ✅ Already have userId');
+            return;
         }
         
-        // PRIORITY 2: Try to get from global PlatformSDK (fallback)
-        if (window.PlatformSDK && window.PlatformSDK.config?.userId) {
-            console.log('[RainbowRushSDK] Using PlatformSDK user:', window.PlatformSDK.config.userId);
-            return window.PlatformSDK.config.userId;
-        }
+        // Wait for config message - promise resolves when config arrives
+        await new Promise((resolve) => {
+            this._configPromiseResolve = resolve;
+        });
         
-        // PRIORITY 3: Se AuthManager esiste ma non è loggato, BLOCCA
-        // Rainbow Rush richiede SEMPRE un account della piattaforma
-        if (window.AuthManager && !window.AuthManager.isLoggedIn()) {
-            console.warn('[RainbowRushSDK] ⚠️ AuthManager found but user not logged in. Please login first.');
-            throw new Error('User not logged in. Please login to play Rainbow Rush.');
-        }
-        
-        // Se non c'è AuthManager, RICHIEDI LOGIN
-        console.error('[RainbowRushSDK] ❌ No authentication system found. Platform account required.');
-        throw new Error('Platform account required. Please login to play Rainbow Rush.');
+        // Clean up
+        this._configPromiseResolve = null;
     }
     
     // ==================== PROGRESS API ====================

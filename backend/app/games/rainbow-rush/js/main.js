@@ -262,35 +262,66 @@ class RainbowRushApp {
                 <span class="stats-icon">🎮</span>
                 <span class="stats-title">Game Statistics</span>
             </div>
+            <div class="stats-xp-info">
+                <div class="stats-xp-title">💡 How your stats earn XP:</div>
+            </div>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <span class="stat-label">🎯 Score</span>
-                    <span class="stat-value">${stats.score?.toLocaleString() || 0}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">🎯 Score</span>
+                        <span class="stat-value">${stats.score?.toLocaleString() || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Score × 0.008 multiplier = XP</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">🌈 Levels</span>
-                    <span class="stat-value">${stats.levels_completed || 0}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">🌈 Levels</span>
+                        <span class="stat-value">${stats.levels_completed || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Cumulative bonus per level completed</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">📏 Distance</span>
-                    <span class="stat-value">${stats.distance ? Math.floor(stats.distance) + 'm' : '0m'}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">📏 Distance</span>
+                        <span class="stat-value">${stats.distance ? Math.floor(stats.distance) + 'm' : '0m'}</span>
+                    </div>
+                    <div class="stat-xp-contribution">+5 XP every 500m milestone</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">🪙 Coins</span>
-                    <span class="stat-value">${stats.coins_collected || 0}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">⏱️ Time</span>
+                        <span class="stat-value">${stats.duration_seconds ? Math.floor(stats.duration_seconds / 60) + ':' + (stats.duration_seconds % 60).toString().padStart(2, '0') : '0:00'}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Minutes × 1.5 XP bonus</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">💥 Enemies</span>
-                    <span class="stat-value">${stats.enemies_defeated || 0}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">🪙 Coins</span>
+                        <span class="stat-value">${stats.coins_collected || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Boosts score → multiplied into XP</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">⚡ Powerups</span>
-                    <span class="stat-value">${stats.powerups_collected || 0}</span>
+                    <div class="stat-main">
+                        <span class="stat-label">💥 Enemies</span>
+                        <span class="stat-value">${stats.enemies_defeated || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Affects score calculation</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-main">
+                        <span class="stat-label">⚡ Powerups</span>
+                        <span class="stat-value">${stats.powerups_collected || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Helps boost performance</div>
                 </div>
                 ${stats.highest_combo > 0 ? `
                 <div class="stat-item highlight">
-                    <span class="stat-label">🔥 Best Combo</span>
-                    <span class="stat-value">${stats.highest_combo}×</span>
+                    <div class="stat-main">
+                        <span class="stat-label">🔥 Best Combo</span>
+                        <span class="stat-value">${stats.highest_combo}×</span>
+                    </div>
+                    <div class="stat-xp-contribution">Combo multiplier on score</div>
                 </div>
                 ` : ''}
             </div>
@@ -359,10 +390,20 @@ class RainbowRushApp {
     }
 
     setupWindowListeners() {
-        // Listen for messages from platform (e.g., XP banner requests)
+        // Register with PlatformSDK for XP banner events
+        if (window.PlatformSDK) {
+            window.PlatformSDK.on('showXPBanner', (payload) => {
+                console.log('🎁 [PlatformSDK Event] Showing XP banner inside game:', payload);
+                if (payload && payload.xp_earned !== undefined) {
+                    this.showXPBanner(payload.xp_earned, payload);
+                }
+            });
+        }
+        
+        // Listen for messages from platform (e.g., XP banner requests) - fallback
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
-                console.log('🎁 Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
         });

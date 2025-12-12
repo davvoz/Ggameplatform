@@ -153,6 +153,11 @@
                     this.handleExit(message.payload);
                     break;
                 
+                case 'showXPBanner':
+                    // Forward to custom handler if game has implemented it
+                    this.triggerEvent('showXPBanner', message.payload);
+                    break;
+                
                 default:
                     this.log('Unknown message type:', message.type);
             }

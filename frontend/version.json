@@ -1,8 +1,17 @@
 {
-  "version": "1.24.6",
-  "timestamp": "2025-12-12T16:01:33.621Z",
-  "buildNumber": 76,
+  "version": "1.24.7",
+  "timestamp": "2025-12-12T16:41:03.909Z",
+  "buildNumber": 77,
   "changelog": [
+    {
+      "version": "1.24.7",
+      "date": "2025-12-12",
+      "type": "patch",
+      "changes": [
+        "fix: [RR]enhance user ID handling and config message waiting in RainbowRushSDK",
+        "🔖 Bump version to 1.24.6 [skip-version]"
+      ]
+    },
     {
       "version": "1.24.6",
       "date": "2025-12-12",
@@ -86,15 +95,6 @@
       "changes": [
         "feat: Implement level XP calculation and update UI components for level display",
         "🔖 Bump version to 1.22.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.22.3",
-      "date": "2025-12-11",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance level calculation and improve quest completion logic",
-        "🔖 Bump version to 1.22.2 [skip-version]"
       ]
     }
   ]

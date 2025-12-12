@@ -95,9 +95,51 @@ export class ScreenManager {
     }
     
     /**
+     * Aggiorna il pannello debug con le info utente
+     */
+    updateDebugPanel(rainbowRushSDK = null) {
+        console.log('[ScreenManager] 🔍 updateDebugPanel called');
+        
+        // Get all data from SDK only - NO localStorage, NO AuthManager
+        const username = rainbowRushSDK?.username || 'N/A';
+        const platformUserId = rainbowRushSDK?.platformUserId || 'N/A';
+        const gameUserId = rainbowRushSDK?.userId || 'N/A';
+        
+        console.log('[ScreenManager] username:', username);
+        console.log('[ScreenManager] platformUserId:', platformUserId);
+        console.log('[ScreenManager] gameUserId:', gameUserId);
+        
+        const usernameEl = document.getElementById('debug-username');
+        const platformIdEl = document.getElementById('debug-platform-id');
+        const gameIdEl = document.getElementById('debug-game-id');
+        const matchStatusEl = document.getElementById('debug-match-status');
+        
+        // Update UI with SDK data
+        if (usernameEl) usernameEl.textContent = username;
+        if (platformIdEl) platformIdEl.textContent = platformUserId;
+        if (gameIdEl) gameIdEl.textContent = gameUserId;
+        
+        // Check if IDs match
+        if (matchStatusEl) {
+            if (platformUserId === 'N/A' || gameUserId === 'N/A') {
+                matchStatusEl.textContent = '⚠️ Loading...';
+                matchStatusEl.className = 'debug-value';
+            } else if (platformUserId === gameUserId) {
+                matchStatusEl.textContent = '✅ IDs Match!';
+                matchStatusEl.className = 'debug-value debug-match-ok';
+            } else {
+                matchStatusEl.textContent = '❌ IDs DIFFERENT!';
+                matchStatusEl.className = 'debug-value debug-match-error';
+            }
+        }
+    }
+    
+    /**
      * Mostra menu principale
      */
-    async showMenu(scoreSystem = null) {
+    async showMenu(scoreSystem = null, rainbowRushSDK = null) {
+        // Update debug panel
+        this.updateDebugPanel(rainbowRushSDK);
         this._showScreen('menu');
         
         // Se viene passato il ScoreSystem, carica l'high score dal backend

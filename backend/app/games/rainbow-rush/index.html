@@ -24,6 +24,27 @@
         <!-- Menu Screen -->
         <div id="menu-screen" class="screen active">
             <div class="screen-content">
+                <!-- User Debug Info Panel -->
+                <div class="user-debug-panel" id="user-debug-panel">
+                    <div class="debug-title">🔍 Account Info</div>
+                    <div class="debug-row">
+                        <span class="debug-label">Username:</span>
+                        <span class="debug-value" id="debug-username">Loading...</span>
+                    </div>
+                    <div class="debug-row">
+                        <span class="debug-label">Platform User ID:</span>
+                        <span class="debug-value debug-id" id="debug-platform-id">Loading...</span>
+                    </div>
+                    <div class="debug-row">
+                        <span class="debug-label">Game User ID:</span>
+                        <span class="debug-value debug-id" id="debug-game-id">Loading...</span>
+                    </div>
+                    <div class="debug-row">
+                        <span class="debug-label">IDs Match:</span>
+                        <span class="debug-value" id="debug-match-status">🔄 Checking...</span>
+                    </div>
+                </div>
+                
                 <div class="high-score">
                     High Score: <span id="menu-high-score">0</span>
                 </div>

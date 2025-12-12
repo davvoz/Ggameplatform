@@ -55,6 +55,9 @@ class RainbowRushApp {
                 await this.gameController.scoreSystem.initHighScore();
                 this.screenManager.updateHighScore(this.gameController.scoreSystem.getHighScore());
             }
+            
+            // Aggiorna il debug panel con le info utente
+            this.screenManager.updateDebugPanel(this.gameController?.rainbowRushSDK);
 
             this.initialized = true;
             console.log('✅ Rainbow Rush initialized successfully!');
@@ -135,7 +138,7 @@ class RainbowRushApp {
         // Pause menu - return to main menu
         this.screenManager.on('pauseMenu', async () => {
             this.gameController.audioManager?.playSound('click');
-            await this.screenManager.showMenu(this.gameController.scoreSystem);
+            await this.screenManager.showMenu(this.gameController.scoreSystem, this.gameController.rainbowRushSDK);
         });
         
         // Restart game
@@ -171,7 +174,7 @@ class RainbowRushApp {
             if (this.gameController?.audioManager) {
                 this.gameController.audioManager.playSound('click');
             }
-            await this.screenManager.showMenu(this.gameController?.scoreSystem);
+            await this.screenManager.showMenu(this.gameController?.scoreSystem, this.gameController?.rainbowRushSDK);
         });
     }
     
@@ -205,7 +208,7 @@ class RainbowRushApp {
         
         window.addEventListener('showMenu', async (e) => {
             if (this.screenManager && this.gameController) {
-                await this.screenManager.showMenu(this.gameController.scoreSystem);
+                await this.screenManager.showMenu(this.gameController.scoreSystem, this.gameController?.rainbowRushSDK);
                 // Non serve più updateHighScore manualmente, showMenu lo fa già
             }
         });

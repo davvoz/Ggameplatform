@@ -17,6 +17,8 @@ export class RainbowRushSDK {
     constructor(config = {}) {
         this.apiBaseUrl = config.apiBaseUrl || window.location.origin;
         this.userId = config.userId || null;
+        this.username = config.username || null;
+        this.platformUserId = null; // For comparison with game userId
         this.sessionId = null;
         this.sessionStartTime = null;
         this.heartbeatInterval = null;
@@ -31,6 +33,33 @@ export class RainbowRushSDK {
             lastHeartbeat: null,
             anomalyCount: 0
         };
+        
+        // Listen for config messages from parent (runtimeShell)
+        this.setupPlatformListener();
+    }
+    
+    /**
+     * Setup listener for platform messages (from parent window)
+     * @private
+     */
+    setupPlatformListener() {
+        window.addEventListener('message', (event) => {
+            // Only accept config messages
+            if (event.data && event.data.type === 'config') {
+                const payload = event.data.payload;
+                console.log('[RainbowRushSDK] 📥 Received config from platform:', payload);
+                
+                // Store platform user data
+                if (payload.userId) {
+                    this.platformUserId = payload.userId;
+                    console.log('[RainbowRushSDK] 📥 platformUserId set to:', this.platformUserId);
+                }
+                if (payload.username) {
+                    this.username = payload.username;
+                    console.log('[RainbowRushSDK] 📥 username set to:', this.username);
+                }
+            }
+        });
     }
     
     /**
@@ -72,6 +101,9 @@ export class RainbowRushSDK {
             const user = window.AuthManager.getUser();
             if (user && user.user_id) {
                 console.log('[RainbowRushSDK] ✅ Using AuthManager user_id:', user.user_id);
+                // Store username and platform user_id for debug panel
+                this.username = user.username || user.account_name || 'Unknown';
+                this.platformUserId = user.user_id;
                 // IMPORTANTE: Clear any anonymous ID when using real user
                 const oldId = localStorage.getItem('rr_user_id');
                 if (oldId && oldId !== user.user_id) {

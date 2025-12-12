@@ -1,8 +1,17 @@
 {
-  "version": "1.24.3",
-  "timestamp": "2025-12-12T11:09:58.950Z",
-  "buildNumber": 73,
+  "version": "1.24.4",
+  "timestamp": "2025-12-12T13:59:13.840Z",
+  "buildNumber": 74,
   "changelog": [
+    {
+      "version": "1.24.4",
+      "date": "2025-12-12",
+      "type": "patch",
+      "changes": [
+        "fix:[RR CORE] enforce platform account requirement and remove anonymous user handling in SDK and models",
+        "🔖 Bump version to 1.24.3 [skip-version]"
+      ]
+    },
     {
       "version": "1.24.3",
       "date": "2025-12-12",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: [RR]Implement game completion logic and enhance level summary display",
         "🔖 Bump version to 1.22.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.22.0",
-      "date": "2025-12-11",
-      "type": "minor",
-      "changes": [
-        "feat: [CROSS RR]Implement cumulative XP system in Rainbow Rush",
-        "🔖 Bump version to 1.21.0 [skip-version]"
       ]
     }
   ]

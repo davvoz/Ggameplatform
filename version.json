@@ -1,8 +1,18 @@
 {
-  "version": "1.24.4",
-  "timestamp": "2025-12-12T13:59:13.840Z",
-  "buildNumber": 74,
+  "version": "1.24.5",
+  "timestamp": "2025-12-12T15:07:06.645Z",
+  "buildNumber": 75,
   "changelog": [
+    {
+      "version": "1.24.5",
+      "date": "2025-12-12",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[RR script] add diagnostic script for luciojolly user to analyze progress discrepancies between mobile and desktop",
+        "🔖 Bump version to 1.24.4 [skip-version]"
+      ]
+    },
     {
       "version": "1.24.4",
       "date": "2025-12-12",
@@ -85,15 +95,6 @@
       "changes": [
         "fix: [RR]Add stats banner display in Level Summary state",
         "🔖 Bump version to 1.22.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.22.1",
-      "date": "2025-12-11",
-      "type": "patch",
-      "changes": [
-        "fix: [RR]Implement game completion logic and enhance level summary display",
-        "🔖 Bump version to 1.22.0 [skip-version]"
       ]
     }
   ]

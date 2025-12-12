@@ -1,8 +1,27 @@
 {
-  "version": "1.23.1",
-  "timestamp": "2025-12-12T00:07:55.039Z",
-  "buildNumber": 69,
+  "version": "1.24.1",
+  "timestamp": "2025-12-12T02:04:07.750Z",
+  "buildNumber": 71,
   "changelog": [
+    {
+      "version": "1.24.1",
+      "date": "2025-12-12",
+      "type": "patch",
+      "changes": [
+        "fix: Add level-up coin rewards to quest claim response and frontend handling",
+        "🔖 Bump version to 1.24.0 [skip-version]"
+      ]
+    },
+    {
+      "version": "1.24.0",
+      "date": "2025-12-12",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: Enhance XP display logic and update UI for level progression",
+        "🔖 Bump version to 1.23.1 [skip-version]"
+      ]
+    },
     {
       "version": "1.23.1",
       "date": "2025-12-12",
@@ -75,24 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Update level calculation method for quest progress tracking",
         "🔖 Bump version to 1.20.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.20.7",
-      "date": "2025-12-10",
-      "type": "patch",
-      "changes": [
-        "fix: Award level-up coins immediately and update session data accordingly",
-        "🔖 Bump version to 1.20.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.20.6",
-      "date": "2025-12-09",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance game session management with detailed score tracking and submission",
-        "🔖 Bump version to 1.20.5 [skip-version]"
       ]
     }
   ]

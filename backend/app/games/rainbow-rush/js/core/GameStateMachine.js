@@ -638,12 +638,16 @@ class GameOverState extends BaseGameState {
         // Store score before any async operations
         const finalScore = stats.score;
         
+        // Calculate session duration in seconds
+        const durationSeconds = context.gameController?.rainbowRushSDK?.getSessionDuration() || 0;
+        
         // Build comprehensive stats for cumulative XP system
         const finalStats = {
             level: stats.level,
             coins: stats.coins,
             score: finalScore,
             time: Date.now(),
+            duration_seconds: Math.floor(durationSeconds),  // Add duration at top level
             // Cumulative XP data for backend
             extra_data: {
                 levels_completed: context.levelManager.currentLevelId || 1,
@@ -651,7 +655,8 @@ class GameOverState extends BaseGameState {
                 coins_collected: stats.collectibles || 0,  // Use collectibles from stats
                 enemies_defeated: context.scoreSystem?.enemiesDefeated || 0,
                 powerups_collected: context.scoreSystem?.powerupsCollected || 0,
-                highest_combo: context.scoreSystem?.maxCombo || 0
+                highest_combo: context.scoreSystem?.maxCombo || 0,
+                duration_seconds: Math.floor(durationSeconds)  // Include playtime in extra_data too
             }
         };
         

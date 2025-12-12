@@ -290,26 +290,24 @@ class LevelProgressionStrategy(XPCalculationStrategy):
         Award cumulative XP: Sum of (base_xp + level * increment) for each level.
         
         Expected parameters:
-            - base_xp: float (default 10.0) - Base XP per level
-            - increment: float (default 2.0) - XP increment per level number
-        # New cumulative strategies (no caps)
-        'level_progression': LevelProgressionStrategy(),
-        'distance_bonus': DistanceBonusStrategy(),
-        'absolute_improvement': AbsoluteImprovementStrategy(),
+            - base_xp: float (default 0.03) - Base XP per level
+            - increment: float (default 0.0001) - XP increment per level number
         
-        Example: levels 1-5 with base=10, increment=2
-            Level 1: 10+2 = 12 XP
-            Level 2: 10+4 = 14 XP
-            Level 3: 10+6 = 16 XP
-            Level 4: 10+8 = 18 XP
-            Level 5: 10+10 = 20 XP
-            Total: 80 XP
+        Example: levels 1-5 with base=0.03, increment=0.0001
+            Level 1: 0.03 + 0.0001 = 0.0301 XP
+            Level 2: 0.03 + 0.0002 = 0.0302 XP
+            Level 3: 0.03 + 0.0003 = 0.0303 XP
+            Level 4: 0.03 + 0.0004 = 0.0304 XP
+            Level 5: 0.03 + 0.0005 = 0.0305 XP
+            Total: 0.15 XP
+        
+        Example: 194 levels (excellent game) ≈ 9 XP
         """
         if context.levels_completed <= 0:
             return 0.0
         
-        base_xp = parameters.get('base_xp', 10.0)
-        increment = parameters.get('increment', 2.0)
+        base_xp = parameters.get('base_xp', 0.03)
+        increment = parameters.get('increment', 0.0001)
         
         total_xp = 0.0
         for level in range(1, context.levels_completed + 1):
@@ -335,17 +333,19 @@ class DistanceBonusStrategy(XPCalculationStrategy):
         
         Expected parameters:
             - milestone_distance: float (default 500.0) - Distance per milestone
-            - xp_per_milestone: float (default 5.0) - XP awarded per milestone
+            - xp_per_milestone: float (default 0.2) - XP awarded per milestone
         
-        Example: 2500m traveled with milestone=500, xp=5
+        Example: 2500m traveled with milestone=500, xp=0.2
             Milestones: 2500/500 = 5
-            Total: 5 * 5 = 25 XP
+            Total: 5 * 0.2 = 1 XP
+        
+        Example: 25435m traveled (excellent game) ≈ 10 XP
         """
         if context.distance <= 0:
             return 0.0
         
         milestone_distance = parameters.get('milestone_distance', 500.0)
-        xp_per_milestone = parameters.get('xp_per_milestone', 5.0)
+        xp_per_milestone = parameters.get('xp_per_milestone', 0.2)
         
         if milestone_distance <= 0:
             return 0.0
@@ -370,17 +370,19 @@ class AbsoluteImprovementStrategy(XPCalculationStrategy):
         Award XP proportional to absolute score improvement.
         
         Expected parameters:
-            - xp_per_point: float (default 0.005) - XP per point of improvement
+            - xp_per_point: float (default 0.001) - XP per point of improvement
         
         Example: Improved from 50000 to 60000
             Improvement: 10000 points
-            XP: 10000 * 0.005 = 50 XP
+            XP: 10000 * 0.001 = 10 XP
+        
+        Example: Improved by 5000 points ≈ 5 XP
         """
         if not context.is_new_high_score or context.previous_high_score == 0:
             return 0.0
         
         improvement = context.score - context.previous_high_score
-        xp_per_point = parameters.get('xp_per_point', 0.005)
+        xp_per_point = parameters.get('xp_per_point', 0.001)
         
         return improvement * xp_per_point
     
@@ -402,6 +404,10 @@ class StrategyFactory:
         'high_score_bonus': HighScoreBonusStrategy(),
         'combo': ComboStrategy(),
         'percentile_improvement': PercentileImprovementStrategy(),
+        # New cumulative strategies (no caps)
+        'level_progression': LevelProgressionStrategy(),
+        'distance_bonus': DistanceBonusStrategy(),
+        'absolute_improvement': AbsoluteImprovementStrategy(),
     }
     
     @classmethod

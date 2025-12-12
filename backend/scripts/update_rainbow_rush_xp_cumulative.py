@@ -42,48 +42,48 @@ def create_new_rules():
             "rule_name": "Level Progression Bonus",
             "rule_type": "level_progression",
             "parameters": {
-                "base_xp": 10.0,
-                "increment": 2.0
+                "base_xp": 0.03,
+                "increment": 0.0001
             },
             "priority": 100,
-            "description": "Cumulative XP for each level. Level 1=12 XP, 2=14 XP, 3=16 XP, etc. NO CAP!"
+            "description": "Cumulative XP for each level. ~9 XP for 194 levels (excellent game). NO CAP!"
         },
         {
             "rule_name": "Score Performance",
             "rule_type": "score_multiplier",
             "parameters": {
-                "multiplier": 0.008  # Reduced from 0.015 to balance with other bonuses
+                "multiplier": 0.0003  # 100k score = ~30 XP, balanced for excellent games
             },
             "priority": 80,
-            "description": "Linear XP based on score: score × 0.008. Higher scores = more XP. NO CAP!"
+            "description": "Linear XP based on score: score × 0.0003. Higher scores = more XP. NO CAP!"
         },
         {
             "rule_name": "Survival Time",
             "rule_type": "time_bonus",
             "parameters": {
-                "xp_per_minute": 1.5  # Increased from 0.15 for better rewards
+                "xp_per_minute": 0.15  # Reasonable bonus for time played
             },
             "priority": 60,
-            "description": "XP for time survived: minutes × 1.5. Longer games = more XP. NO CAP!"
+            "description": "XP for time survived: minutes × 0.15. Longer games = more XP. NO CAP!"
         },
         {
             "rule_name": "Personal Best Breakthrough",
             "rule_type": "absolute_improvement",
             "parameters": {
-                "xp_per_point": 0.005
+                "xp_per_point": 0.001
             },
             "priority": 70,
-            "description": "Bonus for beating your record: (new_score - old_record) × 0.005. NO CAP!"
+            "description": "Bonus for beating your record: (new_score - old_record) × 0.001. NO CAP!"
         },
         {
             "rule_name": "Distance Milestone",
             "rule_type": "distance_bonus",
             "parameters": {
                 "milestone_distance": 500.0,
-                "xp_per_milestone": 5.0
+                "xp_per_milestone": 0.2
             },
             "priority": 50,
-            "description": "Bonus XP for every 500m traveled. 5 XP per milestone. NO CAP!"
+            "description": "Bonus XP for every 500m traveled. 0.2 XP per milestone. NO CAP!"
         }
     ]
     
@@ -166,11 +166,11 @@ def show_example_calculation():
         print()
         
         # Calculate each component
-        level_xp = sum(10 + (i * 2) for i in range(1, ex['levels'] + 1))
-        score_xp = ex['score'] * 0.008
-        time_xp = ex['minutes'] * 1.5
-        distance_xp = (ex['distance'] // 500) * 5.0
-        improvement_xp = ex.get('improvement', 0) * 0.005 if ex['new_record'] else 0
+        level_xp = sum(0.03 + (i * 0.0001) for i in range(1, ex['levels'] + 1))
+        score_xp = ex['score'] * 0.0003
+        time_xp = ex['minutes'] * 0.15
+        distance_xp = (ex['distance'] // 500) * 0.2
+        improvement_xp = ex.get('improvement', 0) * 0.001 if ex['new_record'] else 0
         
         total_base = level_xp + score_xp + time_xp + distance_xp + improvement_xp
         total_with_multiplier = total_base * 1.1  # Example with 1.1x multiplier

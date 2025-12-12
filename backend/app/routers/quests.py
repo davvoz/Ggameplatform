@@ -302,6 +302,36 @@ async def claim_quest_reward(
         if coin_result:
             coins_awarded = coin_result.get('amount', 0)
             print(f"✅ Awarded {coins_awarded} coins to {user_id} for quest {quest_id}")
+
+    # If level up happened, award level-up rewards (coins) as well, unless the level
+    # is one that is handled by dedicated quest rewards (to avoid duplicates)
+    level_up_coins = 0
+    if level_up:
+        try:
+            # Award level-up coins for the new level if configured.
+            # Removed the previous exception for quest-based milestone levels —
+            # now level-up rewards are always applied when present.
+            rewards = LevelSystem.get_level_up_rewards(new_level)
+            coins_for_level = int(rewards.get('coins', 0) or 0)
+            if coins_for_level > 0:
+                coins_repo = RepositoryFactory.create_usercoins_repository(db)
+                transaction_repo = RepositoryFactory.create_cointransaction_repository(db)
+                coin_service = ServiceFactory.create_coin_service(coins_repo, transaction_repo)
+                try:
+                    coin_service.award_coins(
+                        user_id=user_id,
+                        amount=coins_for_level,
+                        transaction_type='level_up',
+                        source_id=str(new_level),
+                        description=f"Level {new_level} reached",
+                        extra_data={"source": "level_up", "level": new_level}
+                    )
+                    level_up_coins = coins_for_level
+                    print(f"✅ Awarded {level_up_coins} level-up coins to {user_id} for reaching level {new_level}")
+                except Exception as e:
+                    print(f"[Quests] ⚠️ Failed to award level-up coins: {e}")
+        except Exception as e:
+            print(f"[Quests] ⚠️ Error checking/awarding level-up rewards: {e}")
     
     db.commit()
     db.refresh(progress)
@@ -312,6 +342,7 @@ async def claim_quest_reward(
         "quest_id": quest_id,
         "xp_reward": quest.xp_reward,
         "reward_coins": coins_awarded,
+        "level_up_coins": level_up_coins,
         "total_xp": user.total_xp_earned,
         "claimed_at": now,
         "level_up": level_up,

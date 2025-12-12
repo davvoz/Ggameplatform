@@ -152,7 +152,8 @@ async function handleClaimReward(questId, userId) {
                 new_level: result.new_level,
                 title: result.level_milestone.title,
                 badge: result.level_milestone.badge,
-                coins_awarded: 0, // Quest rewards are separate
+                // Pass level-up coins awarded by the backend so the banner shows them
+                coins_awarded: result.level_up_coins || 0,
                 is_milestone: true
             };
             

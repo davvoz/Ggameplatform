@@ -430,15 +430,29 @@ class RainbowRushService:
             }
             
             # Get coin service for quest rewards
+            # IMPORTANT: Use platform database for quest tracking, not Rainbow Rush game DB
             try:
-                coin_repo = RepositoryFactory.create_usercoins_repository(self.repository.db)
-                transaction_repo = RepositoryFactory.create_cointransaction_repository(self.repository.db)
-                coin_service = ServiceFactory.create_coin_service(coin_repo, transaction_repo)
+                from app.database import SessionLocal
                 
-                track_quest_progress_for_session(self.repository.db, session_data, coin_service)
-                print(f"✅ Quest progress tracked for Rainbow Rush session {session_id} (score: {score}, duration: {duration_seconds}s)")
+                # Create a platform database session for quest tracking
+                platform_db = SessionLocal()
+                try:
+                    coin_repo = RepositoryFactory.create_usercoins_repository(platform_db)
+                    transaction_repo = RepositoryFactory.create_cointransaction_repository(platform_db)
+                    coin_service = ServiceFactory.create_coin_service(coin_repo, transaction_repo)
+                    
+                    track_quest_progress_for_session(platform_db, session_data, coin_service)
+                    platform_db.commit()
+                    print(f"✅ Quest progress tracked for Rainbow Rush session {session_id} (score: {score}, duration: {duration_seconds}s)")
+                except Exception as e:
+                    platform_db.rollback()
+                    print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                finally:
+                    platform_db.close()
             except Exception as e:
-                print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
+                print(f"⚠️ Failed to initialize platform database for quest tracking: {e}")
         
         return session.to_dict() if session else None
     

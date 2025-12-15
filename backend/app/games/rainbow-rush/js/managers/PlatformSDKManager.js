@@ -26,51 +26,52 @@ export class PlatformSDKManager {
     }
 
     async submitScore(score) {
-        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
-            console.warn('SDK not initialized, score not submitted');
-            return null;
-        }
-
         try {
-            window.PlatformSDK.sendScore(score);
-            console.log('Score submitted:', score);
-            return { success: true, score };
+            if (typeof window.PlatformSDK !== 'undefined') {
+                window.PlatformSDK.sendScore(score);
+                console.log('Score submitted:', score);
+                return { success: true, score };
+            } else {
+                console.warn('PlatformSDK not available, score not submitted');
+                return { success: false, score: null };
+            }
         } catch (error) {
             console.error('Failed to submit score:', error);
-            return null;
+            return { success: false, score: null };
         }
     }
 
     async gameOver(score, details) {
         console.log('🎯 [PlatformSDKManager] gameOver called with score:', score, 'details:', details);
         
-        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
-            console.warn('SDK not initialized, game over not reported');
-            return;
-        }
         try {
-            console.log('📡 [PlatformSDKManager] Calling window.PlatformSDK.gameOver with score:', score);
-            window.PlatformSDK.gameOver(score, details);
-            console.log('✅ [PlatformSDKManager] Game over reported:', score, details);
+            if (typeof window.PlatformSDK !== 'undefined') {
+                console.log('📡 [PlatformSDKManager] Calling window.PlatformSDK.gameOver with score:', score);
+                window.PlatformSDK.gameOver(score, details);
+                console.log('✅ [PlatformSDKManager] Game over reported:', score, details);
+            } else {
+                console.warn('PlatformSDK not available, game over not reported');
+            }
         } catch (error) {
             console.error('❌ [PlatformSDKManager] Failed to report game over:', error);
         }
     }
 
     async gameStarted() {
-        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
-            console.warn('SDK not initialized, game started not reported');
-            return;
-        }
         try {
             // Send message directly to parent window (platform)
-            window.parent.postMessage({
-                type: 'gameStarted',
-                payload: {},
-                timestamp: Date.now(),
-                protocolVersion: '1.0.0'
-            }, '*');
-            console.log('🎮 Game started event sent to platform');
+            // Always send this message even if SDK didn't initialize properly
+            if (window.parent && typeof window.parent.postMessage === 'function') {
+                window.parent.postMessage({
+                    type: 'gameStarted',
+                    payload: {},
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, '*');
+                console.log('🎮 Game started event sent to platform');
+            } else {
+                console.warn('Parent window not available for gameStarted message');
+            }
         } catch (error) {
             console.error('Failed to report game started:', error);
         }

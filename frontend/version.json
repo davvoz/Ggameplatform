@@ -1,8 +1,20 @@
 {
-  "version": "1.24.7",
-  "timestamp": "2025-12-12T16:41:03.909Z",
-  "buildNumber": 77,
+  "version": "1.24.8",
+  "timestamp": "2025-12-15T11:37:15.685Z",
+  "buildNumber": 78,
   "changelog": [
+    {
+      "version": "1.24.8",
+      "date": "2025-12-15",
+      "type": "patch",
+      "changes": [
+        "Merge pull request #4 from davvoz/copilot/fix-quest-tracking-error",
+        "Add test script for Rainbow Rush quest tracking",
+        "Refactor imports to top of file per code review",
+        "Fix quest tracking to use platform database instead of game DB",
+        "Initial plan"
+      ]
+    },
     {
       "version": "1.24.7",
       "date": "2025-12-12",
@@ -86,15 +98,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Update coin awarding logic in end_game_session to use award_coins method",
         "🔖 Bump version to 1.23.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.23.0",
-      "date": "2025-12-11",
-      "type": "minor",
-      "changes": [
-        "feat: Implement level XP calculation and update UI components for level display",
-        "🔖 Bump version to 1.22.3 [skip-version]"
       ]
     }
   ]

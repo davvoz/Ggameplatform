@@ -1,8 +1,10 @@
 import sqlite3
 import json
+import os
 
 # Cerca l'utente user_6ce3def93bc34ac9
-conn = sqlite3.connect('data/games/rainbow_rush.db')
+db_path = os.path.join('/app', 'data', 'games', 'rainbow_rush.db')
+conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
 # Query per trovare l'utente

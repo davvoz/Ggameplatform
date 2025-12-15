@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seven - Dice Game</title>
+    <link rel="stylesheet" href="main.css">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Cannon.js - Physics Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    
+    <!-- Platform SDK -->
+    <script src="/sdk/platformsdk.js"></script>
+</head>
+<body>
+    <div class="game-containerdiv">
+                <!-- Notification -->
+        <div class="notification" id="notice" data-tone="neutral">
+            Benvenuto a Seven!
+        </div>
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="stat-box">
+                <div class="stat-label">💰 Coins</div>
+                <div class="stat-value" id="hudBank">100</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">📊 Score</div>
+                <div class="stat-value" id="hudScore">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">🎲 Rounds</div>
+                <div class="stat-value" id="hudRounds">0</div>
+            </div>
+        </div>
+
+        <!-- Dice Area -->
+        <div class="dice-area">
+            <canvas id="diceCanvas"></canvas>
+            <div class="result-overlay">
+                <div class="result-number" id="resultSum">—</div>
+                <div class="result-text" id="resultDetail">Compra un round per giocare</div>
+            </div>
+        </div>
+
+
+
+        <!-- Betting Controls -->
+        <div class="betting-controls">
+            
+            <!-- Bet Amount -->
+            <div class="bet-amount-box">
+                <div class="bet-label">Importo</div>
+                <div class="bet-slider-container">
+                    <input type="range" id="betAmountRange" min="1" max="50" value="5" class="bet-slider">
+                    <div class="bet-value"><span id="betAmount">5</span> 🪙</div>
+                    <button id="doubleBtn" class="double-btn">×2</button>
+                </div>
+            </div>
+
+            <!-- Main Bets -->
+            <div class="main-bets">
+                <button class="bet-btn bet-low" data-bet-type="low_range">
+                    <div class="bet-title">BASSO</div>
+                    <div class="bet-info">2-6 • 2x</div>
+                </button>
+                <button class="bet-btn bet-seven" data-bet-type="seven">
+                    <div class="bet-title">SEVEN</div>
+                    <div class="bet-info">7 • 5x</div>
+                </button>
+                <button class="bet-btn bet-high" data-bet-type="high_range">
+                    <div class="bet-title">ALTO</div>
+                    <div class="bet-info">8-12 • 2x</div>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

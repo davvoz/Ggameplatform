@@ -2,7 +2,7 @@
 Coins Router - API endpoints for coin management
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -13,6 +13,17 @@ from app.services import CoinService, ValidationError
 
 
 router = APIRouter(prefix="/api/coins", tags=["Coins"])
+
+
+def get_current_user_id(request: Request) -> str:
+    """Get current user ID from session"""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    return user_id
 
 
 # Pydantic schemas for request/response validation
@@ -134,6 +145,95 @@ async def award_coins(
             source_id=request.source_id,
             description=request.description,
             extra_data=request.extra_data
+        )
+        return transaction
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to award coins: {str(e)}"
+        )
+
+
+@router.get("/me/balance", response_model=CoinBalanceResponse)
+async def get_my_balance(
+    request: Request,
+    coin_service: CoinService = Depends(get_coin_service)
+):
+    """Get current user's coin balance"""
+    user_id = get_current_user_id(request)
+    print(f"[Coins API] Getting balance for user_id: {user_id}")
+    try:
+        balance = coin_service.get_user_balance(user_id)
+        print(f"[Coins API] Balance retrieved: {balance}")
+        return balance
+    except Exception as e:
+        print(f"[Coins API] Error getting balance: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get balance: {str(e)}"
+        )
+
+
+@router.post("/me/spend", response_model=CoinTransactionResponse)
+async def spend_my_coins(
+    request: Request,
+    spend_request: SpendCoinsRequest,
+    coin_service: CoinService = Depends(get_coin_service)
+):
+    """Spend coins from current user's balance"""
+    user_id = get_current_user_id(request)
+    try:
+        transaction = coin_service.spend_coins(
+            user_id=user_id,
+            amount=spend_request.amount,
+            transaction_type=spend_request.transaction_type,
+            source_id=spend_request.source_id,
+            description=spend_request.description,
+            extra_data=spend_request.extra_data
+        )
+        
+        if transaction is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient balance"
+            )
+        
+        return transaction
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to spend coins: {str(e)}"
+        )
+
+
+@router.post("/me/award", response_model=CoinTransactionResponse)
+async def award_my_coins(
+    request: Request,
+    award_request: AwardCoinsRequest,
+    coin_service: CoinService = Depends(get_coin_service)
+):
+    """Award coins to current user"""
+    user_id = get_current_user_id(request)
+    try:
+        transaction = coin_service.award_coins(
+            user_id=user_id,
+            amount=award_request.amount,
+            transaction_type=award_request.transaction_type,
+            source_id=award_request.source_id,
+            description=award_request.description,
+            extra_data=award_request.extra_data
         )
         return transaction
     except ValidationError as e:

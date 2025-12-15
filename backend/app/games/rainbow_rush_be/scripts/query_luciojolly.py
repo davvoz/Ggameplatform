@@ -1,8 +1,10 @@
 import sqlite3
 import json
+import os
 
 # Connetti al database
-conn = sqlite3.connect('data/games/rainbow_rush.db')
+db_path = os.path.join('/app', 'data', 'games', 'rainbow_rush.db')
+conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
 # Query per luciojolly

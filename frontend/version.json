@@ -1,8 +1,17 @@
 {
-  "version": "1.24.9",
-  "timestamp": "2025-12-15T12:16:54.875Z",
-  "buildNumber": 79,
+  "version": "2.0.0",
+  "timestamp": "2025-12-15T22:07:10.567Z",
+  "buildNumber": 80,
   "changelog": [
+    {
+      "version": "2.0.0",
+      "date": "2025-12-15",
+      "type": "major",
+      "changes": [
+        "breaking!: [SEVEN RR]implements 7even , fix rr scripts paths",
+        "🔖 Bump version to 1.24.9 [skip-version]"
+      ]
+    },
     {
       "version": "1.24.9",
       "date": "2025-12-15",
@@ -90,16 +99,6 @@
       "changes": [
         "fix: Add level-up coin rewards to quest claim response and frontend handling",
         "🔖 Bump version to 1.24.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.0",
-      "date": "2025-12-12",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: Enhance XP display logic and update UI for level progression",
-        "🔖 Bump version to 1.23.1 [skip-version]"
       ]
     }
   ]

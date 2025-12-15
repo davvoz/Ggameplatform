@@ -33,11 +33,11 @@ export class PlatformSDKManager {
                 return { success: true, score };
             } else {
                 console.warn('PlatformSDK not available, score not submitted');
-                return null;
+                return { success: false, score: null };
             }
         } catch (error) {
             console.error('Failed to submit score:', error);
-            return null;
+            return { success: false, score: null };
         }
     }
 
@@ -61,13 +61,17 @@ export class PlatformSDKManager {
         try {
             // Send message directly to parent window (platform)
             // Always send this message even if SDK didn't initialize properly
-            window.parent.postMessage({
-                type: 'gameStarted',
-                payload: {},
-                timestamp: Date.now(),
-                protocolVersion: '1.0.0'
-            }, '*');
-            console.log('🎮 Game started event sent to platform');
+            if (window.parent && typeof window.parent.postMessage === 'function') {
+                window.parent.postMessage({
+                    type: 'gameStarted',
+                    payload: {},
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, '*');
+                console.log('🎮 Game started event sent to platform');
+            } else {
+                console.warn('Parent window not available for gameStarted message');
+            }
         } catch (error) {
             console.error('Failed to report game started:', error);
         }

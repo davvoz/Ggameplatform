@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 import math
+import traceback
 from functools import lru_cache
 
 from .repository import RainbowRushRepository
@@ -387,8 +388,6 @@ class RainbowRushService:
         # This is additional tracking for Rainbow Rush specific sessions
         if session:
             from app.quest_tracker import track_quest_progress_for_session
-            from app.repositories import RepositoryFactory
-            from app.services import ServiceFactory
             
             # Calculate session duration
             if session.started_at and session.ended_at:
@@ -433,6 +432,8 @@ class RainbowRushService:
             # IMPORTANT: Use platform database for quest tracking, not Rainbow Rush game DB
             try:
                 from app.database import SessionLocal
+                from app.repositories import RepositoryFactory
+                from app.services import ServiceFactory
                 
                 # Create a platform database session for quest tracking
                 platform_db = SessionLocal()
@@ -447,7 +448,6 @@ class RainbowRushService:
                 except Exception as e:
                     platform_db.rollback()
                     print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
-                    import traceback
                     traceback.print_exc()
                 finally:
                     platform_db.close()

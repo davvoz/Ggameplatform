@@ -1,8 +1,17 @@
 {
-  "version": "2.0.5",
-  "timestamp": "2025-12-16T09:41:07.246Z",
-  "buildNumber": 85,
+  "version": "2.0.6",
+  "timestamp": "2025-12-16T10:06:17.784Z",
+  "buildNumber": 86,
   "changelog": [
+    {
+      "version": "2.0.6",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "refactor:[7] remove unused game session initialization and result update methods",
+        "🔖 Bump version to 2.0.5 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.5",
       "date": "2025-12-16",
@@ -89,15 +98,6 @@
       "changes": [
         "fix: [RR]enhance user ID handling and config message waiting in RainbowRushSDK",
         "🔖 Bump version to 1.24.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.6",
-      "date": "2025-12-12",
-      "type": "patch",
-      "changes": [
-        "fix:[RR] add user debug panel and enhance SDK for user info tracking",
-        "🔖 Bump version to 1.24.5 [skip-version]"
       ]
     }
   ]

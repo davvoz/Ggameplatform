@@ -70,7 +70,7 @@ export class Application {
     if (balance !== null && balance !== undefined && typeof balance === 'number') {
       gameState.setPlatformBalance(balance);
       gameState.enablePlatformCoins(true);
-      this._gameController._ui.updateHUD(gameState.rounds, gameState.bank, gameState.score);
+      this._gameController._ui.updateHUD(gameState.bank);
       
       if (balance > 0) {
         this._gameController._ui.setNotice(
@@ -114,7 +114,7 @@ export class Application {
 
     const state = this._gameController.getState();
     uiManager.updateBetAmount(uiManager.getBetAmount());
-    uiManager.updateHUD(state.rounds, state.bank, state.score);
+    uiManager.updateHUD(state.bank);
     
     // Force game to start in active state - hide pause overlay
     uiManager.setControlsEnabled(true);
@@ -127,7 +127,7 @@ export class Application {
     // Initialize offline mode as default
     gameState.enablePlatformCoins(false);
     gameState.setPlatformBalance(GAME_CONSTANTS.INITIAL_BANK);
-    this._gameController._ui.updateHUD(gameState.rounds, gameState.bank, gameState.score);
+    this._gameController._ui.updateHUD(gameState.bank);
 
     if (!platformAdapter.isAvailable()) {
       console.log('[Seven] Platform not available - running in standalone mode');

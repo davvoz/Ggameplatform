@@ -19,10 +19,7 @@ export class UIManager {
       notice: document.getElementById('notice'),
       resetBtn: document.getElementById('resetBtn'),
       hudBank: document.getElementById('hudBank'),
-      hudScore: document.getElementById('hudScore'),
       pauseOverlay: document.getElementById('pauseOverlay'),
-      
-      hudRounds: document.getElementById('hudRounds'),
       
       // Betting System
       betTypes: document.getElementById('betTypes'),
@@ -36,10 +33,8 @@ export class UIManager {
     this.elements.notice.dataset.tone = tone;
   }
 
-  updateHUD(rounds, bank, score) {
-    this.elements.hudRounds.textContent = String(rounds);
+  updateHUD(bank) {
     this.elements.hudBank.textContent = String(bank);
-    this.elements.hudScore.textContent = MathUtils.formatSigned(score);
   }
 
   updateBetAmount(amount) {

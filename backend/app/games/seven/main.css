@@ -1,22 +1,26 @@
 /* SEVEN - Simplified Game Interface */
 
 :root {
-  --bg-dark: #0a0e27;
-  --bg-card: #1a1f3a;
-  --bg-lighter: #252b47;
+  --bg-dark: #0d0d0d;
+  --bg-card: #1a1a1a;
+  --bg-lighter: #252525;
+  --bg-hover: #2f2f2f;
   
-  --primary: #3b82f6;
-  --success: #10b981;
-  --warning: #f59e0b;
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --success: #22c55e;
+  --warning: #fbbf24;
   --danger: #ef4444;
-  --seven: #8b5cf6;
-  --special: #ec4899;
+  --danger-hover: #dc2626;
+  --seven: #a78bfa;
+  --accent: #06b6d4;
   
   --text-white: #ffffff;
-  --text-gray: #9ca3af;
+  --text-gray: #e5e5e5;
+  --text-muted: #a3a3a3;
   
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --radius: 12px;
+  --border: rgba(255, 255, 255, 0.12);
+  --radius: 6px;
 }
 
 * {
@@ -37,42 +41,54 @@ body {
 }
 
 .game-container {
-  background: var(--bg-card);
-  padding: 10px;
+  background: var(--bg-dark);
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
 }
 
-/* Top Bar - Stats */
-.top-bar {
+/* Header Bar (Notification + Coins) */
+.header-bar {
   display: flex;
-  gap: 8px;
-  justify-content: space-between;
+  gap: 10px;
+  align-items: stretch;
   flex-shrink: 0;
+  height: 60px;
 }
 
 .stat-box {
-  flex: 1;
-  background: var(--bg-lighter);
-  padding: 8px;
-  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 0 20px;
+  border-radius: var(--radius);
   text-align: center;
+  min-width: 100px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .stat-label {
-  font-size: 11px;
-  color: var(--text-gray);
-  margin-bottom: 3px;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  line-height: 1;
 }
 
 .stat-value {
-  font-size: 20px;
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--text-white);
+  line-height: 1;
 }
 
 /* Dice Area */
@@ -83,6 +99,7 @@ body {
   height: 550px;
   overflow: hidden;
   flex-shrink: 0;
+  margin: 2px;
 }
 
 #diceCanvas {
@@ -93,28 +110,30 @@ body {
 
 /* Notification */
 .notification {
-  padding: 8px 12px;
-  background: var(--bg-lighter);
-  border-radius: 8px;
-  text-align: center;
-  border-left: 3px solid var(--primary);
-  font-size: 13px;
-  flex-shrink: 0;
+  flex: 1;
+  padding: 0 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  text-align: left;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  font-size: 14px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
 }
 
 .notification[data-tone="ok"] {
   border-left-color: var(--success);
-  background: rgba(16, 185, 129, 0.1);
 }
 
 .notification[data-tone="warn"] {
   border-left-color: var(--warning);
-  background: rgba(245, 158, 11, 0.1);
 }
 
-.notification[data-tone="error"] {
+.notification[data-tone="bad"] {
   border-left-color: var(--danger);
-  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Betting Controls */
@@ -159,44 +178,51 @@ body {
 }
 
 .bet-slider::-webkit-slider-thumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--accent);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: background 0.1s;
+  border: none;
 }
 
 .bet-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  background: #0891b2;
 }
 
 .bet-value {
   font-size: 16px;
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   min-width: 70px;
   text-align: center;
   background: var(--bg-card);
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  color: var(--text-white);
+  border: 1px solid var(--border);
 }
 
 .double-btn {
-  background: var(--primary);
-  border: none;
-  color: white;
+  background: var(--bg-lighter);
+  border: 1px solid var(--border);
+  color: var(--text-white);
   padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 14px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.1s;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .double-btn:hover:not(:disabled) {
-  background: var(--seven);
-  transform: scale(1.05);
+  background: var(--bg-hover);
+}
+
+.double-btn:active:not(:disabled) {
+  background: var(--bg-card);
 }
 
 .double-btn:disabled {
@@ -208,24 +234,37 @@ body {
 .main-bets {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .bet-btn {
   background: var(--bg-lighter);
-  border: 2px solid transparent;
+  border: none;
   color: var(--text-white);
-  padding: 12px;
-  border-radius: 8px;
+  padding: 0;
+  height: 70px;
+  border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s;
-  font-weight: bold;
+  transition: background 0.15s ease, transform 0.1s ease;
+  font-weight: 600;
+  font-size: 16px;
+  font-family: 'Segoe UI Semibold', 'Segoe UI', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
 }
 
 .bet-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
+  transform: scale(1.02);
+}
+
+.bet-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .bet-btn:disabled {
@@ -234,49 +273,51 @@ body {
 }
 
 .bet-low {
-  border-color: var(--primary);
-}
-
-.bet-low:hover:not(:disabled) {
   background: var(--primary);
 }
 
-.bet-seven {
-  border-color: var(--seven);
-}
-
-.bet-seven:hover:not(:disabled) {
-  background: var(--seven);
+.bet-low:hover:not(:disabled) {
+  background: var(--primary-hover);
 }
 
 .bet-high {
-  border-color: var(--danger);
-}
-
-.bet-high:hover:not(:disabled) {
   background: var(--danger);
 }
 
+.bet-high:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
+
 .bet-title {
-  font-size: 14px;
-  margin-bottom: 3px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .bet-info {
-  font-size: 10px;
-  opacity: 0.8;
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 400;
+  line-height: 1;
 }
 
 /* Seven Rule Warning */
 .seven-rule {
   text-align: center;
-  padding: 8px;
-  background: rgba(139, 92, 246, 0.2);
-  border: 1px solid var(--seven);
-  border-radius: 6px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--seven);
+  border-radius: 0;
   font-size: 12px;
-  color: var(--seven);
-  margin-top: 4px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.3;
 }
 
 /* Secondary Bets */

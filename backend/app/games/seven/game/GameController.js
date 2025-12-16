@@ -62,7 +62,7 @@ export class GameController {
         `Round attivato! Budget disponibile: ${amount} coins.`,
         NOTIFICATION_TONE.OK
       );
-      this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
+      this._ui.updateHUD(this._state.bank);
       this._ui.updateRoundBudget(this._state.roundBudget);
       await this._refreshPlatformBalance();
       return true;
@@ -137,7 +137,7 @@ export class GameController {
     // Update local balance
     this._state.updateBank(-betAmount);
     this._state.setCurrentBet(bet);
-    this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
+    this._ui.updateHUD(this._state.bank);
 
     this._state.rolling = true;
     this._renderer.setRolling(true);
@@ -216,13 +216,14 @@ export class GameController {
     });
 
     const tone = netProfit >= 0 ? NOTIFICATION_TONE.OK : NOTIFICATION_TONE.BAD;
-    const winLoseText = netProfit >= 0 ? 'Vinto' : 'Perso';
+    const winLoseText = netProfit >= 0 ? 'Won' : 'Lost';
+    const amount = Math.abs(netProfit);
     
     this._ui.setNotice(
-      `${winLoseText} ${MathUtils.formatSigned(netProfit)} coins · Balance: ${this._state.bank}`,
+      `${winLoseText} ${amount} coins · Balance: ${this._state.bank}`,
       tone
     );
-    this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
+    this._ui.updateHUD(this._state.bank);
 
     // Refresh balance from platform
     if (this._state._usePlatformCoins && this._platform.isAvailable()) {
@@ -256,7 +257,7 @@ export class GameController {
     const balance = await this._platform.getUserBalance();
     if (balance !== null) {
       this._state.setPlatformBalance(balance);
-      this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
+      this._ui.updateHUD(this._state.bank);
     }
   }
 

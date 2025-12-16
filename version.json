@@ -1,8 +1,17 @@
 {
-  "version": "2.0.11",
-  "timestamp": "2025-12-16T13:08:48.205Z",
-  "buildNumber": 91,
+  "version": "2.0.12",
+  "timestamp": "2025-12-16T13:54:38.663Z",
+  "buildNumber": 92,
   "changelog": [
+    {
+      "version": "2.0.12",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "fix: [7]implement dynamic betting modes with validation and UI updates",
+        "🔖 Bump version to 2.0.11 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.11",
       "date": "2025-12-16",
@@ -85,16 +94,6 @@
       "changes": [
         "fix: [7]adjust height of dice area for improved layout",
         "🔖 Bump version to 2.0.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.0.2",
-      "date": "2025-12-16",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[RR] Enhance gameOver reporting with postMessage fallback for PlatformSDK",
-        "🔖 Bump version to 2.0.1 [skip-version]"
       ]
     }
   ]

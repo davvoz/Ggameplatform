@@ -1,8 +1,18 @@
 {
-  "version": "2.0.10",
-  "timestamp": "2025-12-16T12:14:41.063Z",
-  "buildNumber": 90,
+  "version": "2.0.11",
+  "timestamp": "2025-12-16T13:08:48.205Z",
+  "buildNumber": 91,
   "changelog": [
+    {
+      "version": "2.0.11",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [7]adjust lighting and color settings for improved casino atmosphere",
+        "🔖 Bump version to 2.0.10 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.10",
       "date": "2025-12-16",
@@ -85,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[RR] Enhance gameOver reporting with postMessage fallback for PlatformSDK",
         "🔖 Bump version to 2.0.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.0.1",
-      "date": "2025-12-16",
-      "type": "patch",
-      "changes": [
-        "fix : [CROSS]Add debug logging for GAME_STARTED message handling in RuntimeShell",
-        "🔖 Bump version to 2.0.0 [skip-version]"
       ]
     }
   ]

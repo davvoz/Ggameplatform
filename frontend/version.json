@@ -1,8 +1,17 @@
 {
-  "version": "2.0.0",
-  "timestamp": "2025-12-15T22:07:10.567Z",
-  "buildNumber": 80,
+  "version": "2.0.1",
+  "timestamp": "2025-12-16T09:01:53.439Z",
+  "buildNumber": 81,
   "changelog": [
+    {
+      "version": "2.0.1",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "fix : [CROSS]Add debug logging for GAME_STARTED message handling in RuntimeShell",
+        "🔖 Bump version to 2.0.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.0",
       "date": "2025-12-15",
@@ -90,15 +99,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[RR] Enhance XP display and integration with PlatformSDK for improved game statistics",
         "🔖 Bump version to 1.24.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.1",
-      "date": "2025-12-12",
-      "type": "patch",
-      "changes": [
-        "fix: Add level-up coin rewards to quest claim response and frontend handling",
-        "🔖 Bump version to 1.24.0 [skip-version]"
       ]
     }
   ]

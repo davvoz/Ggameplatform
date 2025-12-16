@@ -17,9 +17,9 @@ export class VegetationRenderer extends BaseLayerRenderer {
 
     doRender(layer, context) {
         const renderers = {
-            [LAYER_TYPES.TREE]: () => this.renderTree(layer),
-            [LAYER_TYPES.MUSHROOM]: () => this.renderMushroom(layer),
-            [LAYER_TYPES.GIANT_MUSHROOM]: () => this.renderGiantMushroom(layer),
+            [LAYER_TYPES.TREE]: () => this.renderTree(layer, context),
+            [LAYER_TYPES.MUSHROOM]: () => this.renderMushroom(layer, context),
+            [LAYER_TYPES.GIANT_MUSHROOM]: () => this.renderGiantMushroom(layer, context),
             [LAYER_TYPES.SEAWEED]: () => this.renderSeaweed(layer, context)
         };
 
@@ -29,73 +29,115 @@ export class VegetationRenderer extends BaseLayerRenderer {
         }
     }
 
-    renderTree(layer) {
-        // Render trunk
-        const trunkColor = [...TREE_CONFIG.TRUNK_COLOR, layer.color[3]];
-        this.renderer.drawRect(
-            layer.x + layer.width * TREE_CONFIG.TRUNK_X_OFFSET,
-            layer.y + layer.height * TREE_CONFIG.TRUNK_Y_OFFSET,
-            layer.width * TREE_CONFIG.TRUNK_WIDTH_RATIO,
-            layer.height * TREE_CONFIG.TRUNK_HEIGHT_RATIO,
-            trunkColor
-        );
+    renderTree(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            
+            // Render trunk
+            const trunkColor = [...TREE_CONFIG.TRUNK_COLOR, layer.color[3]];
+            this.renderer.drawRect(
+                x + layer.width * TREE_CONFIG.TRUNK_X_OFFSET,
+                layer.y + layer.height * TREE_CONFIG.TRUNK_Y_OFFSET,
+                layer.width * TREE_CONFIG.TRUNK_WIDTH_RATIO,
+                layer.height * TREE_CONFIG.TRUNK_HEIGHT_RATIO,
+                trunkColor
+            );
 
-        // Render crown
-        this.renderer.drawCircle(
-            layer.x + layer.width / 2,
-            layer.y + layer.height * TREE_CONFIG.CROWN_Y_OFFSET,
-            layer.width * TREE_CONFIG.CROWN_RADIUS_RATIO,
-            layer.color
-        );
+            // Render crown
+            this.renderer.drawCircle(
+                x + layer.width / 2,
+                layer.y + layer.height * TREE_CONFIG.CROWN_Y_OFFSET,
+                layer.width * TREE_CONFIG.CROWN_RADIUS_RATIO,
+                layer.color
+            );
+        }
     }
 
-    renderMushroom(layer) {
-        // Render stem
-        this.renderer.drawRect(
-            layer.x + layer.size * MUSHROOM_CONFIG.STEM_X_OFFSET,
-            layer.y,
-            layer.size * MUSHROOM_CONFIG.STEM_WIDTH_RATIO,
-            layer.size * MUSHROOM_CONFIG.STEM_HEIGHT_RATIO,
-            MUSHROOM_CONFIG.STEM_COLOR
-        );
+    renderMushroom(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            
+            // Render stem
+            this.renderer.drawRect(
+                x + layer.size * MUSHROOM_CONFIG.STEM_X_OFFSET,
+                layer.y,
+                layer.size * MUSHROOM_CONFIG.STEM_WIDTH_RATIO,
+                layer.size * MUSHROOM_CONFIG.STEM_HEIGHT_RATIO,
+                MUSHROOM_CONFIG.STEM_COLOR
+            );
 
-        // Render cap
-        this.renderer.drawCircle(
-            layer.x + layer.size / 2,
-            layer.y,
-            layer.size * MUSHROOM_CONFIG.CAP_RADIUS_RATIO,
-            layer.color
-        );
+            // Render cap
+            this.renderer.drawCircle(
+                x + layer.size / 2,
+                layer.y,
+                layer.size * MUSHROOM_CONFIG.CAP_RADIUS_RATIO,
+                layer.color
+            );
+        }
     }
 
-    renderGiantMushroom(layer) {
-        // Render stem
-        this.renderer.drawRect(
-            layer.x - layer.size * GIANT_MUSHROOM_CONFIG.STEM_X_OFFSET,
-            layer.y,
-            layer.size * GIANT_MUSHROOM_CONFIG.STEM_WIDTH_RATIO,
-            layer.stemHeight,
-            GIANT_MUSHROOM_CONFIG.STEM_COLOR
-        );
+    renderGiantMushroom(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            
+            // Render stem
+            this.renderer.drawRect(
+                x - layer.size * GIANT_MUSHROOM_CONFIG.STEM_X_OFFSET,
+                layer.y,
+                layer.size * GIANT_MUSHROOM_CONFIG.STEM_WIDTH_RATIO,
+                layer.stemHeight,
+                GIANT_MUSHROOM_CONFIG.STEM_COLOR
+            );
 
-        // Render cap
-        this.renderer.drawCircle(
-            layer.x,
-            layer.y - layer.stemHeight,
-            layer.size,
-            layer.color
-        );
+            // Render cap
+            this.renderer.drawCircle(
+                x,
+                layer.y - layer.stemHeight,
+                layer.size,
+                layer.color
+            );
+        }
     }
 
     renderSeaweed(layer, context) {
         const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
         const sway = Math.sin(context.time + (layer.swayPhase || 0)) * 5;
-        this.renderer.drawRect(
-            layer.x + sway - offset,
-            layer.y - layer.height,
-            layer.width,
-            layer.height,
-            layer.color
-        );
+        
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth) + sway;
+            this.renderer.drawRect(
+                x,
+                layer.y - layer.height,
+                layer.width,
+                layer.height,
+                layer.color
+            );
+        }
     }
 }

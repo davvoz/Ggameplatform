@@ -39,18 +39,23 @@ export class CelestialRenderer extends BaseLayerRenderer {
     }
 
     renderCelestial(layer) {
+        // Celestial bodies move very slowly with parallax
+        const offset = layer.offset || 0;
+        
         // Render main celestial body
-        this.renderer.drawCircle(layer.x, layer.y, layer.radius, layer.color);
+        this.renderer.drawCircle(layer.x + offset, layer.y, layer.radius, layer.color);
         
         // Render glow if present
         if (layer.glowColor && layer.glowRadius) {
-            this.renderer.drawCircle(layer.x, layer.y, layer.glowRadius, layer.glowColor);
+            this.renderer.drawCircle(layer.x + offset, layer.y, layer.glowRadius, layer.glowColor);
         }
     }
 
     renderPlanet(layer) {
+        // Planets move very slowly with parallax
         const offset = layer.offset || 0;
-        const x = layer.x - offset;
+        const x = layer.x + offset;
+        
         this.renderer.drawCircle(x, layer.y, layer.radius, layer.color);
         
         if (layer.radius > PLANET_CONFIG.RING_THRESHOLD_RADIUS) {
@@ -74,13 +79,17 @@ export class CelestialRenderer extends BaseLayerRenderer {
     }
 
     renderMoon(layer) {
+        // Moon moves very slowly with parallax
+        const offset = layer.offset || 0;
+        const x = layer.x + offset;
+        
         // Main moon body
-        this.renderer.drawCircle(layer.x, layer.y, layer.radius, layer.color);
+        this.renderer.drawCircle(x, layer.y, layer.radius, layer.color);
         
         // Render craters
         MOON_CONFIG.CRATER_POSITIONS.forEach(crater => {
             this.renderer.drawCircle(
-                layer.x + crater.offsetX,
+                x + crater.offsetX,
                 layer.y + crater.offsetY,
                 crater.radius,
                 MOON_CONFIG.CRATER_COLOR
@@ -89,12 +98,15 @@ export class CelestialRenderer extends BaseLayerRenderer {
     }
 
     renderSun(layer) {
-        this.renderer.drawCircle(layer.x, layer.y, layer.radius, layer.color);
+        // Sun moves very slowly with parallax
+        const offset = layer.offset || 0;
+        this.renderer.drawCircle(layer.x + offset, layer.y, layer.radius, layer.color);
     }
 
     renderNebula(layer) {
+        // Nebula moves very slowly with parallax
         const offset = layer.offset || 0;
-        const x = layer.x - offset;
+        const x = layer.x + offset;
         
         // Main nebula cloud
         this.renderer.drawCircle(x, layer.y, layer.width / 2, layer.color);
@@ -109,9 +121,9 @@ export class CelestialRenderer extends BaseLayerRenderer {
     }
 
     renderSunray(layer) {
-        // Apply parallax offset
+        // Sunrays move very slowly with parallax
         const offset = layer.offset || 0;
-        const x = layer.x - offset;
+        const x = layer.x + offset;
         
         const rayEndX = x + Math.cos(layer.angle) * layer.length;
         const rayEndY = layer.y + Math.sin(layer.angle) * layer.length;

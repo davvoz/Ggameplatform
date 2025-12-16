@@ -11,19 +11,29 @@ export class AuroraWaveRenderer extends BaseLayerRenderer {
     }
 
     doRender(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
         const numPoints = AURORA_WAVE_CONFIG.NUM_POINTS;
         const wavePhase = context.time * layer.speed / AURORA_WAVE_CONFIG.SPEED_DIVISOR + 
                          (layer.phaseOffset || 0);
         
-        for (let i = 0; i < numPoints - 1; i++) {
-            const segment = this.calculateWaveSegment(i, numPoints, layer, context, wavePhase);
-            this.renderWaveSegment(segment);
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        // Draw wave segments for each tile
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            
+            for (let i = 0; i < numPoints - 1; i++) {
+                const segment = this.calculateWaveSegment(i, numPoints, layer, tileBaseX, tileWidth, wavePhase);
+                this.renderWaveSegment(segment);
+            }
         }
     }
 
-    calculateWaveSegment(index, numPoints, layer, context, wavePhase) {
-        const x1 = (context.canvasWidth / numPoints) * index;
-        const x2 = (context.canvasWidth / numPoints) * (index + 1);
+    calculateWaveSegment(index, numPoints, layer, tileBaseX, tileWidth, wavePhase) {
+        const x1 = tileBaseX + (tileWidth / numPoints) * index;
+        const x2 = tileBaseX + (tileWidth / numPoints) * (index + 1);
         const y1 = layer.y + Math.sin((x1 * layer.frequency) + wavePhase) * layer.amplitude;
         const y2 = layer.y + Math.sin((x2 * layer.frequency) + wavePhase) * layer.amplitude;
         

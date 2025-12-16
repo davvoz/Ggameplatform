@@ -28,11 +28,11 @@ export class SimpleShapeRenderer extends BaseLayerRenderer {
 
         const renderers = {
             [LAYER_TYPES.WAVE]: () => this.renderWave(layer, context),
-            [LAYER_TYPES.PYRAMID]: () => this.renderPyramid(layer),
-            [LAYER_TYPES.DUNE]: () => this.renderDune(layer),
-            [LAYER_TYPES.CRYSTAL]: () => this.renderCrystal(layer),
-            [LAYER_TYPES.CRYSTAL_HANGING]: () => this.renderCrystalHanging(layer),
-            [LAYER_TYPES.CRYSTAL_FLOOR]: () => this.renderCrystalFloor(layer),
+            [LAYER_TYPES.PYRAMID]: () => this.renderPyramid(layer, context),
+            [LAYER_TYPES.DUNE]: () => this.renderDune(layer, context),
+            [LAYER_TYPES.CRYSTAL]: () => this.renderCrystal(layer, context),
+            [LAYER_TYPES.CRYSTAL_HANGING]: () => this.renderCrystalHanging(layer, context),
+            [LAYER_TYPES.CRYSTAL_FLOOR]: () => this.renderCrystalFloor(layer, context),
             [LAYER_TYPES.HEATWAVE]: () => this.renderHeatwave(layer, context)
         };
 
@@ -43,13 +43,41 @@ export class SimpleShapeRenderer extends BaseLayerRenderer {
     }
 
     renderSimpleShape(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
         const shapeRenderers = {
-            'dune': () => this.renderDune(layer),
-            'pyramid': () => this.renderPyramid(layer),
-            'rectangle': () => this.renderer.drawRect(layer.x, layer.y, layer.width, layer.height, layer.color),
-            'mushroom_cap': () => this.renderMushroomCap(layer),
-            'small_mushroom': () => this.renderSmallMushroom(layer),
-            'line': () => this.renderer.drawRect(0, layer.y, context.canvasWidth, layer.thickness || 2, layer.color)
+            'dune': () => this.renderDune(layer, context),
+            'pyramid': () => this.renderPyramid(layer, context),
+            'rectangle': () => {
+                for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+                    const tileBaseX = tileIndex * tileWidth + offset;
+                    const x = tileBaseX + (layer.x % tileWidth);
+                    this.renderer.drawRect(x, layer.y, layer.width, layer.height, layer.color);
+                }
+            },
+            'mushroom_cap': () => {
+                for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+                    const tileBaseX = tileIndex * tileWidth + offset;
+                    const x = tileBaseX + (layer.x % tileWidth);
+                    this.renderer.drawCircle(x, layer.y, layer.width / 2, layer.color);
+                }
+            },
+            'small_mushroom': () => {
+                for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+                    const tileBaseX = tileIndex * tileWidth + offset;
+                    const x = tileBaseX + (layer.x % tileWidth);
+                    this.renderer.drawCircle(x, layer.y, layer.width / 2, layer.color);
+                }
+            },
+            'line': () => {
+                for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+                    const x = tileIndex * tileWidth + offset;
+                    this.renderer.drawRect(x, layer.y, tileWidth, layer.thickness || 2, layer.color);
+                }
+            }
         };
 
         const shapeRenderer = shapeRenderers[layer.shape];
@@ -58,58 +86,112 @@ export class SimpleShapeRenderer extends BaseLayerRenderer {
         }
     }
 
-    renderMushroomCap(layer) {
-        this.renderer.drawCircle(layer.x, layer.y, layer.width / 2, layer.color);
-    }
 
-    renderSmallMushroom(layer) {
-        this.renderer.drawCircle(layer.x, layer.y, layer.width / 2, layer.color);
-    }
 
     renderWave(layer, context) {
         const offset = layer.offset || 0;
-        this.renderer.drawRect(-offset, layer.y, 10000, 50, layer.color);
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const x = tileIndex * tileWidth + offset;
+            this.renderer.drawRect(x, layer.y, tileWidth, 50, layer.color);
+        }
     }
 
-    renderPyramid(layer) {
-        this.renderer.drawRect(layer.x, layer.y, layer.width, layer.height, layer.color);
+    renderPyramid(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            this.renderer.drawRect(x, layer.y, layer.width, layer.height, layer.color);
+        }
     }
 
-    renderDune(layer) {
-        this.renderer.drawCircle(layer.x, layer.y, layer.width / 2, layer.color);
+    renderDune(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            this.renderer.drawCircle(x, layer.y, layer.width / 2, layer.color);
+        }
     }
 
-    renderCrystal(layer) {
-        this.renderer.drawRect(
-            layer.x - layer.size / 2,
-            layer.y - layer.size / 2,
-            layer.size,
-            layer.size,
-            layer.color
-        );
+    renderCrystal(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            this.renderer.drawRect(
+                x - layer.size / 2,
+                layer.y - layer.size / 2,
+                layer.size,
+                layer.size,
+                layer.color
+            );
+        }
     }
 
-    renderCrystalHanging(layer) {
-        this.renderer.drawRect(
-            layer.x - layer.width / 2,
-            layer.y,
-            layer.width,
-            layer.height,
-            layer.color
-        );
+    renderCrystalHanging(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            this.renderer.drawRect(
+                x - layer.width / 2,
+                layer.y,
+                layer.width,
+                layer.height,
+                layer.color
+            );
+        }
     }
 
-    renderCrystalFloor(layer) {
-        this.renderer.drawRect(
-            layer.x - layer.width / 2,
-            layer.y - layer.height,
-            layer.width,
-            layer.height,
-            layer.color
-        );
+    renderCrystalFloor(layer, context) {
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const x = tileBaseX + (layer.x % tileWidth);
+            this.renderer.drawRect(
+                x - layer.width / 2,
+                layer.y - layer.height,
+                layer.width,
+                layer.height,
+                layer.color
+            );
+        }
     }
 
     renderHeatwave(layer, context) {
-        this.renderer.drawRect(0, layer.y, context.canvasWidth, 2, layer.color);
+        const offset = layer.offset || 0;
+        const tileWidth = context.canvasWidth * 2;
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4;
+        
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            const x = tileIndex * tileWidth + offset;
+            this.renderer.drawRect(x, layer.y, tileWidth, 2, layer.color);
+        }
     }
 }

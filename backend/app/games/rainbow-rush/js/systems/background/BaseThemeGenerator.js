@@ -23,6 +23,9 @@ export class BaseThemeGenerator {
 
         this.generateLayers(layers);
         this.generateParticles(particles);
+        
+        // Automatically assign parallax speeds to all layers
+        this.assignParallaxSpeeds(layers);
 
         return {
             layers,
@@ -149,5 +152,68 @@ export class BaseThemeGenerator {
      */
     getSkyY(heightRatio = 0.3) {
         return this.canvasHeight * heightRatio;
+    }
+
+    /**
+     * Assign parallax speed to layers based on their type and depth
+     * Layers further back move slower for parallax effect
+     * @param {Array} layers - Array of layer objects
+     */
+    assignParallaxSpeeds(layers) {
+        // Default parallax speeds by layer type (lower = slower = further back)
+        const parallaxConfig = {
+            'sky_gradient': 0.0,    // Background, no movement
+            'ground': 1.0,          // Foreground, full speed
+            'wave': 0.3,            // Far background
+            'dune': 0.4,            // Mid background
+            'simple_shape': 0.5,    // Variable depth
+            'tree': 0.6,            // Mid-foreground
+            'pyramid': 0.5,         // Mid-background
+            'seaweed': 0.4,         // Background decoration
+            'sunray': 0.08,         // Very far, subtle movement
+            'volcano': 0.5,         // Mid-background
+            'lava_flow': 0.7,       // Foreground
+            'mountain': 0.3,        // Far background
+            'vegetation': 0.6,      // Mid-foreground
+            'aurora_wave': 0.2,     // Far sky effect
+            'crystal': 0.5,         // Variable depth
+            'mushroom': 0.6,        // Mid-foreground
+            'building': 0.7,        // Foreground
+            'sun': 0.05,            // Very far, barely moves
+            'moon': 0.05,           // Very far, barely moves
+            'planet': 0.06,         // Very far, barely moves
+            'nebula': 0.04,         // Extremely far
+            'celestial': 0.05       // Generic celestial
+        };
+
+        layers.forEach((layer, index) => {
+            if (!layer.hasOwnProperty('parallaxSpeed')) {
+                // Priority order:
+                // 1. If layer has explicit speed property (and not 0), convert it
+                // 2. Use type-based configuration
+                // 3. Calculate based on index
+                
+                if (layer.speed !== undefined && layer.speed > 0) {
+                    // Convert old speed to parallaxSpeed (normalize between 0-1)
+                    // Higher speed = closer layer = higher parallaxSpeed
+                    layer.parallaxSpeed = Math.min(1.0, layer.speed / 10.0);
+                } else if (parallaxConfig.hasOwnProperty(layer.type)) {
+                    layer.parallaxSpeed = parallaxConfig[layer.type];
+                } else {
+                    // Default based on index (later layers = closer = faster)
+                    layer.parallaxSpeed = 0.3 + (index / layers.length) * 0.7;
+                }
+                
+                // Special case: if speed was explicitly 0, override to static
+                if (layer.speed === 0) {
+                    layer.parallaxSpeed = 0.0;
+                }
+            }
+            
+            // Initialize offset if not present
+            if (!layer.hasOwnProperty('offset')) {
+                layer.offset = 0;
+            }
+        });
     }
 }

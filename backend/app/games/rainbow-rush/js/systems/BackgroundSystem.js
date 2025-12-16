@@ -29,6 +29,11 @@ export class BackgroundSystem {
         this.particles = [];
         this.baseColors = [];
         
+        // Smooth speed tracking
+        this.currentScrollSpeed = 0;
+        this.targetScrollSpeed = 0;
+        this.speedSmoothFactor = 0.5; // Smooth transition factor (higher = faster response)
+        
         // Transition state
         this.transitionState = this.createTransitionState();
         
@@ -138,25 +143,30 @@ export class BackgroundSystem {
             this.updateTransition(deltaTime);
         }
         
-        this.updateLayers(deltaTime, cameraSpeed);
-        this.updateParticles(deltaTime, cameraSpeed);
+        // Apply base speed multiplier directly (NO smoothing, instant response)
+        const scrollSpeed = cameraSpeed * 0.3;
+        
+        this.updateLayers(deltaTime, scrollSpeed);
+        this.updateParticles(deltaTime, scrollSpeed);
     }
 
+    /**
+     * Update all layers with infinite tile-based scrolling
+     * Offset decreases (becomes negative) as camera moves right
+     */
     updateLayers(deltaTime, cameraSpeed) {
         this.layers.forEach(layer => {
-            if (!layer.offset) {
+            // Initialize offset
+            if (layer.offset === undefined) {
                 layer.offset = 0;
             }
             
-            // Apply parallax effect based on layer speed
-            const layerSpeed = layer.speed || 0;
-            const parallaxFactor = layerSpeed * 0.1; // Adjust parallax strength
-            layer.offset += (cameraSpeed * parallaxFactor) * deltaTime;
+            // Apply parallax effect - each layer scrolls at different speed
+            // parallaxSpeed: 0.0 = stationary (far background), 1.0 = full speed (foreground)
+            const parallaxSpeed = layer.parallaxSpeed !== undefined ? layer.parallaxSpeed : 0.5;
             
-            // Wrap offset for seamless scrolling (optional, depends on layer type)
-            if (layer.offset > this.canvasWidth * 2) {
-                layer.offset = 0;
-            }
+            // Decrease offset as camera moves right (offset becomes negative)
+            layer.offset -= (cameraSpeed * parallaxSpeed) * deltaTime;
         });
     }
 

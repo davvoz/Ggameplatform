@@ -66,6 +66,7 @@ export class LavaFlowRenderer extends BaseLayerRenderer {
     }
 
     calculateSegmentProperties(index, t, layer, time, segmentHeight, glowPulse) {
+        const offset = layer.offset || 0;
         // Width variation
         const widthFactor = LAVA_FLOW_CONFIG.WIDTH_BASE + t * LAVA_FLOW_CONFIG.WIDTH_GROWTH + 
                            Math.sin(time * 5 + layer.flowPhase + index * 0.5) * 0.15;
@@ -73,7 +74,7 @@ export class LavaFlowRenderer extends BaseLayerRenderer {
         
         // Horizontal wave movement
         const wave = Math.sin(time * 4 + layer.flowPhase + index * 0.3) * LAVA_FLOW_CONFIG.WAVE_AMPLITUDE;
-        const x = layer.x - segmentWidth / 2 + wave;
+        const x = layer.x + offset - segmentWidth / 2 + wave;
         
         // Color gradient
         const brightness = glowPulse * (LAVA_FLOW_CONFIG.BRIGHTNESS_BASE + 

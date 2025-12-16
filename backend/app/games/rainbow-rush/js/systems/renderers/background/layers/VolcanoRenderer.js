@@ -32,18 +32,28 @@ export class VolcanoRenderer extends BaseLayerRenderer {
     }
 
     doRender(layer, context) {
+        // Tile-based infinite scrolling
         const offset = layer.offset || 0;
-        const baseX = layer.x - offset;
-        const baseY = layer.y + layer.height;
-        const width = layer.width;
-        const height = layer.height;
-        const craterWidth = layer.craterWidth || 60;
-        const craterDepth = layer.craterDepth || 50;
-        const peak = layer.y;
-
-        this.renderVolcanoBody(baseX, baseY, width, peak, craterWidth, layer.color);
-        this.renderCrater(baseX, peak, craterWidth, craterDepth, context.time);
-        this.renderRockTexture(baseX, peak, width, height, layer.color);
+        const tileWidth = context.canvasWidth * 2; // Each tile is 2x screen width
+        
+        // Calculate which tiles are visible
+        const startTile = Math.floor(-offset / tileWidth) - 1;
+        const endTile = startTile + 4; // Draw 4 tiles to cover screen + margins
+        
+        // Draw volcano in each tile
+        for (let tileIndex = startTile; tileIndex <= endTile; tileIndex++) {
+            // Position within this tile (using original layer.x as offset within tile)
+            const tileBaseX = tileIndex * tileWidth + offset;
+            const volcanoX = tileBaseX + (layer.x % tileWidth);
+            
+            // Render volcano at this position
+            const baseY = layer.y + layer.height;
+            const peak = layer.y;
+            
+            this.renderVolcanoBody(volcanoX, baseY, layer.width, peak, layer.craterWidth || 60, layer.color);
+            this.renderCrater(volcanoX, peak, layer.craterWidth || 60, layer.craterDepth || 50, context.time);
+            this.renderRockTexture(volcanoX, peak, layer.width, layer.height, layer.color);
+        }
     }
 
     renderVolcanoBody(baseX, baseY, width, peak, craterWidth, baseColor) {

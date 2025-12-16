@@ -207,11 +207,13 @@ export class GameController {
         this.uiManager.update(deltaTime, context);
 
         // Update background (parallax)
-        const cameraSpeed = this.player.boostActive ? this.player.velocityX :
-            this.player.isTurboActive ? this.player.velocityX : 0;
-        this.backgroundSystem.update(deltaTime, cameraSpeed * 0.3);
+        // Background has constant base speed + player velocity for dynamic effects
+        const baseScrollSpeed = 200; // Constant background scroll
+        const backgroundSpeed = baseScrollSpeed + this.player.velocityX;
+        this.backgroundSystem.update(deltaTime, backgroundSpeed);
 
-        // Update level manager con velocità effettiva (include turbo/boost)
+        // Update level manager with player velocity only (platforms/entities)
+        const cameraSpeed = this.player.velocityX;
         this.levelManager.update(deltaTime, cameraSpeed);
         
         // Check if goal should spawn
@@ -336,6 +338,9 @@ export class GameController {
         this.renderingSystem.setScore(this.scoreSystem.getTotalScore());
         this.renderingSystem.setLevel(this.levelManager.currentLevelId || 1);
         this.renderingSystem.setLevelLength(this.levelManager.levelLength || 3000);
+        
+        // Update background theme based on level
+        this.backgroundSystem.setLevel(this.levelManager.currentLevelId || 1);
         this.renderingSystem.setDistanceTraveled(this.levelManager.distanceTraveled || 0);
         this.renderingSystem.setIsPaused(this.stateMachine.isPaused());
         this.renderingSystem.setDeathAnimation(this.animationController.getAnimations().deathAnimation);

@@ -1,8 +1,17 @@
 {
-  "version": "2.0.3",
-  "timestamp": "2025-12-16T09:29:10.135Z",
-  "buildNumber": 83,
+  "version": "2.0.4",
+  "timestamp": "2025-12-16T09:37:12.834Z",
+  "buildNumber": 84,
   "changelog": [
+    {
+      "version": "2.0.4",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "fix:[7] remove unused result overlay from dice area",
+        "🔖 Bump version to 2.0.3 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.3",
       "date": "2025-12-16",
@@ -90,15 +99,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[RR script] add diagnostic script for luciojolly user to analyze progress discrepancies between mobile and desktop",
         "🔖 Bump version to 1.24.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.4",
-      "date": "2025-12-12",
-      "type": "patch",
-      "changes": [
-        "fix:[RR CORE] enforce platform account requirement and remove anonymous user handling in SDK and models",
-        "🔖 Bump version to 1.24.3 [skip-version]"
       ]
     }
   ]

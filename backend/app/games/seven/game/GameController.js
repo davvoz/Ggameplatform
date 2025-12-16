@@ -180,22 +180,23 @@ export class GameController {
     const result = betResults.results[0];
     const { winnings, isWinning, multiplier } = result;
 
-    // Award coins if won
-    if (winnings > 0) {
+    // Award coins if won (winnings + original bet returned)
+    const totalPayout = isWinning ? winnings + bet.amount : 0;
+    if (totalPayout > 0) {
       if (this._state._usePlatformCoins && this._platform.isAvailable()) {
         await this._platform.awardCoins(
-          winnings,
-          `Seven win: ${winnings} coins`
+          totalPayout,
+          `Seven win: ${totalPayout} coins (bet: ${bet.amount}, winnings: ${winnings})`
         );
       }
-      this._state.updateBank(winnings);
+      this._state.updateBank(totalPayout);
     }
 
     // Update score and stats
-    const netProfit = winnings - bet.amount;
+    const netProfit = isWinning ? winnings : -bet.amount;
     this._state.updateScore(netProfit);
     this._state.incrementRounds();
-    this._state.updateRoundStats(bet.amount, winnings);
+    this._state.updateRoundStats(bet.amount, totalPayout);
 
     // Update UI
     const betName = this._getBetDisplayName(bet.type);

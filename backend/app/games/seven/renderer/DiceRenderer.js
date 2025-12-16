@@ -45,10 +45,26 @@ export class DiceRenderer {
 
   _initScene() {
     this._scene = new THREE.Scene();
-    this._scene.background = null;
     
-    // Add fog for depth
-    this._scene.fog = new THREE.Fog(0x0a0a14, 10, 30);
+    // Casino-style gradient background
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    // Dark burgundy to black gradient (classic casino)
+    const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+    gradient.addColorStop(0, '#1a0f0f');
+    gradient.addColorStop(0.5, '#0f0a0a');
+    gradient.addColorStop(1, '#000000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 512, 512);
+    
+    const bgTexture = new THREE.CanvasTexture(canvas);
+    this._scene.background = bgTexture;
+    
+    // Subtle fog for depth
+    this._scene.fog = new THREE.Fog(0x0a0505, 15, 35);
   }
 
   _initCamera() {
@@ -76,38 +92,39 @@ export class DiceRenderer {
   }
 
   _initLights() {
-    // Ambient light - soft fill
-    const ambientLight = new THREE.AmbientLight(0x8899ff, 0.4);
+    // Warm ambient light (casino atmosphere)
+    const ambientLight = new THREE.AmbientLight(0xffddaa, 0.3);
     this._scene.add(ambientLight);
 
-    // Main directional light with shadows
+    // Main overhead light with shadows
     const directionalLight = this._createDirectionalLight();
     this._scene.add(directionalLight);
 
-    // Purple rim light for dramatic effect
-    const rimLight = new THREE.DirectionalLight(0x7c5cff, 0.6);
-    rimLight.position.set(-5, 8, -5);
+    // Warm spot lights from above (like casino ceiling lights)
+    const spotLight1 = new THREE.SpotLight(0xffe8c0, 1.2);
+    spotLight1.position.set(0, 10, 0);
+    spotLight1.angle = Math.PI / 3;
+    spotLight1.penumbra = 0.3;
+    spotLight1.decay = 2;
+    spotLight1.distance = 25;
+    spotLight1.castShadow = true;
+    spotLight1.shadow.mapSize.width = 1024;
+    spotLight1.shadow.mapSize.height = 1024;
+    this._scene.add(spotLight1);
+    
+    // Secondary warm light from an angle
+    const rimLight = new THREE.DirectionalLight(0xffd4aa, 0.4);
+    rimLight.position.set(-8, 6, 5);
     this._scene.add(rimLight);
 
-    // Cyan accent light
-    const accentLight = new THREE.PointLight(0x00d4ff, 0.8, 20);
-    accentLight.position.set(5, 5, 5);
-    this._scene.add(accentLight);
+    // Subtle accent lights for depth
+    const accentLight1 = new THREE.PointLight(0xff9966, 0.3, 15);
+    accentLight1.position.set(6, 3, 4);
+    this._scene.add(accentLight1);
     
-    // Bottom rim light for platform glow
-    const bottomLight = new THREE.PointLight(0xff1493, 0.5, 15);
-    bottomLight.position.set(0, -1, 0);
-    this._scene.add(bottomLight);
-    
-    // Spotlight for dramatic shadows
-    const spotLight = new THREE.SpotLight(0xffffff, 0.5);
-    spotLight.position.set(0, 12, 0);
-    spotLight.angle = Math.PI / 4;
-    spotLight.penumbra = 0.5;
-    spotLight.decay = 2;
-    spotLight.distance = 20;
-    spotLight.castShadow = true;
-    this._scene.add(spotLight);
+    const accentLight2 = new THREE.PointLight(0xffaa77, 0.3, 15);
+    accentLight2.position.set(-6, 3, -4);
+    this._scene.add(accentLight2);
   }
 
   _createDirectionalLight() {
@@ -126,40 +143,157 @@ export class DiceRenderer {
   }
 
   _initPlatform() {
-    // Main platform - larger and more detailed
-    const platformGeometry = new THREE.CylinderGeometry(5.5, 5.5, 0.4, 64);
-    const platformMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a2e,
-      roughness: 0.3,
-      metalness: 0.6,
-      emissive: 0x7c5cff,
-      emissiveIntensity: 0.1
+    // Casino table base (wood structure)
+    const tableBaseGeometry = new THREE.BoxGeometry(12, 0.6, 9);
+    const woodMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3d2817,
+      roughness: 0.8,
+      metalness: 0.1,
+      normalScale: new THREE.Vector2(0.5, 0.5)
     });
-    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-    platform.position.y = -1.35;
-    platform.receiveShadow = true;
-    platform.castShadow = true;
-    this._scene.add(platform);
+    const tableBase = new THREE.Mesh(tableBaseGeometry, woodMaterial);
+    tableBase.position.y = -1.5;
+    tableBase.receiveShadow = true;
+    this._scene.add(tableBase);
     
-    // Platform rim with glow effect
-    const rimGeometry = new THREE.TorusGeometry(5.5, 0.08, 16, 64);
-    const rimMaterial = new THREE.MeshStandardMaterial({
-      color: 0x00d4ff,
-      emissive: 0x00d4ff,
-      emissiveIntensity: 1.5,
-      roughness: 0.2,
-      metalness: 0.8
+    // Green felt surface (classic casino)
+    const feltGeometry = new THREE.BoxGeometry(11.8, 0.05, 8.8);
+    const feltMaterial = new THREE.MeshStandardMaterial({
+      color: 0x0d5c2e,
+      roughness: 0.95,
+      metalness: 0,
+      normalScale: new THREE.Vector2(2, 2)
     });
-    const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.y = -1.15;
-    this._scene.add(rim);
+    const felt = new THREE.Mesh(feltGeometry, feltMaterial);
+    felt.position.y = -1.17;
+    felt.receiveShadow = true;
+    this._scene.add(felt);
     
-    // Add Cur8 logo on platform using canvas texture
-    this._addPlatformLogo();
+    // Wooden edges (refined border)
+    this._addTableEdges();
     
-    // Add decorative ring pattern
-    this._addDecorativeRings();
+    // Add subtle table markings
+    this._addTableMarkings();
+    
+    // Table legs
+    this._addTableLegs();
+  }
+  
+  _addTableEdges() {
+    const edgeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x5c3a1e,
+      roughness: 0.6,
+      metalness: 0.2
+    });
+    
+    // Long edges (left/right)
+    const longEdgeGeometry = new THREE.BoxGeometry(12, 0.3, 0.4);
+    
+    const edgeFront = new THREE.Mesh(longEdgeGeometry, edgeMaterial);
+    edgeFront.position.set(0, -1.05, 4.6);
+    edgeFront.castShadow = true;
+    this._scene.add(edgeFront);
+    
+    const edgeBack = new THREE.Mesh(longEdgeGeometry, edgeMaterial);
+    edgeBack.position.set(0, -1.05, -4.6);
+    edgeBack.castShadow = true;
+    this._scene.add(edgeBack);
+    
+    // Short edges (front/back)
+    const shortEdgeGeometry = new THREE.BoxGeometry(0.4, 0.3, 9);
+    
+    const edgeLeft = new THREE.Mesh(shortEdgeGeometry, edgeMaterial);
+    edgeLeft.position.set(-6, -1.05, 0);
+    edgeLeft.castShadow = true;
+    this._scene.add(edgeLeft);
+    
+    const edgeRight = new THREE.Mesh(shortEdgeGeometry, edgeMaterial);
+    edgeRight.position.set(6, -1.05, 0);
+    edgeRight.castShadow = true;
+    this._scene.add(edgeRight);
+  }
+  
+  _addTableMarkings() {
+    // Create canvas for table texture with subtle markings
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    // Base green felt color
+    ctx.fillStyle = '#0d5c2e';
+    ctx.fillRect(0, 0, 1024, 1024);
+    
+    // Add subtle line border
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(40, 40, 944, 944);
+    
+    // Center circle for dice area
+    ctx.beginPath();
+    ctx.arc(512, 512, 200, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // "SEVEN" text at top
+    ctx.font = 'bold 80px serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.25)';
+    ctx.fillText('SEVEN', 512, 150);
+    
+    // Dice icons (subtle)
+    const drawDie = (x, y, size) => {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillRect(x, y, size, size);
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
+    };
+    
+    drawDie(150, 450, 80);
+    drawDie(794, 450, 80);
+    
+    // Create texture
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    // Apply to felt
+    const markingsGeometry = new THREE.PlaneGeometry(11.6, 8.6);
+    const markingsMaterial = new THREE.MeshStandardMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 1,
+      roughness: 0.95,
+      metalness: 0
+    });
+    const markings = new THREE.Mesh(markingsGeometry, markingsMaterial);
+    markings.rotation.x = -Math.PI / 2;
+    markings.position.y = -1.145;
+    markings.receiveShadow = true;
+    this._scene.add(markings);
+  }
+  
+  _addTableLegs() {
+    const legGeometry = new THREE.CylinderGeometry(0.15, 0.18, 2.5, 16);
+    const legMaterial = new THREE.MeshStandardMaterial({
+      color: 0x2d1a0f,
+      roughness: 0.7,
+      metalness: 0.1
+    });
+    
+    const legPositions = [
+      { x: -5, z: 3.5 },
+      { x: 5, z: 3.5 },
+      { x: -5, z: -3.5 },
+      { x: 5, z: -3.5 }
+    ];
+    
+    legPositions.forEach(pos => {
+      const leg = new THREE.Mesh(legGeometry, legMaterial);
+      leg.position.set(pos.x, -2.75, pos.z);
+      leg.castShadow = true;
+      this._scene.add(leg);
+    });
   }
   
   _addPlatformLogo() {
@@ -301,32 +435,6 @@ export class DiceRenderer {
     this._scene.add(logo);
   }
   
-  _addDecorativeRings() {
-    // Add multiple decorative rings for depth
-    const ringCount = 3;
-    for (let i = 0; i < ringCount; i++) {
-      const radius = 3 + i * 0.8;
-      const ringGeometry = new THREE.TorusGeometry(radius, 0.02, 8, 64);
-      const hue = (i / ringCount) * 0.3;
-      const color = new THREE.Color().setHSL(0.5 + hue, 1, 0.5);
-      
-      const ringMaterial = new THREE.MeshStandardMaterial({
-        color: color,
-        emissive: color,
-        emissiveIntensity: 0.5 + i * 0.2,
-        roughness: 0.3,
-        metalness: 0.7,
-        transparent: true,
-        opacity: 0.6 - i * 0.15
-      });
-      
-      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = -1.13 - i * 0.01;
-      this._scene.add(ring);
-    }
-  }
-
   _initDice() {
     const diceFactory = new DiceFactory();
     this._diceA = diceFactory.createDie(

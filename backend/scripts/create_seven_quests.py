@@ -29,7 +29,7 @@ def create_seven_quests():
         quests = [
             {
                 'title': 'Seven: First Roll',
-                'description': 'Play your first round of Seven',
+                'description': 'Play your first roll (Over or Under)',
                 'quest_type': 'play_games',
                 'target_value': 1,
                 'xp_reward': 10,
@@ -38,32 +38,32 @@ def create_seven_quests():
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': 'seven',
-                    'type': 'rounds_played',
+                    'type': 'rolls_played',
                     'category': 'gameplay'
                 })
             },
             {
-                'title': 'Seven: Lucky Roller',
-                'description': 'Play 10 rounds of Seven',
+                'title': 'Seven: Expert Player',
+                'description': 'Complete 20 dice rolls',
                 'quest_type': 'play_games',
-                'target_value': 10,
+                'target_value': 20,
                 'xp_reward': 25,
                 'reward_coins': 15,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': 'seven',
-                    'type': 'rounds_played',
+                    'type': 'rolls_played',
                     'category': 'gameplay'
                 })
             },
             {
-                'title': 'Seven: Hot Streak',
-                'description': 'Win 3 times in a row',
+                'title': 'Seven: Lucky Streak',
+                'description': 'Win 5 bets in a row',
                 'quest_type': 'score',
-                'target_value': 3,
-                'xp_reward': 30,
-                'reward_coins': 20,
+                'target_value': 5,
+                'xp_reward': 40,
+                'reward_coins': 25,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
@@ -73,49 +73,78 @@ def create_seven_quests():
                 })
             },
             {
-                'title': 'Seven: High Roller',
-                'description': 'Reach a bank of 500 chips',
-                'quest_type': 'score',
-                'target_value': 500,
-                'xp_reward': 50,
-                'reward_coins': 50,
-                'is_active': 1,
-                'created_at': now,
-                'config': json.dumps({
-                    'game_id': 'seven',
-                    'type': 'bank_amount',
-                    'category': 'progression'
-                })
-            },
-            {
-                'title': 'Seven: All In',
-                'description': 'Win with a bet of 50 chips',
+                'title': 'Seven: In The Black',
+                'description': 'Reach a total profit of +50 coins',
                 'quest_type': 'score',
                 'target_value': 50,
-                'xp_reward': 40,
+                'xp_reward': 35,
                 'reward_coins': 30,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': 'seven',
-                    'type': 'win_with_bet',
-                    'category': 'skill'
+                    'type': 'total_profit',
+                    'category': 'progression'
                 })
             },
             {
-                'title': 'Seven: Perfect Seven',
-                'description': 'Roll exactly 7 five times',
+                'title': 'Seven: Cursed Seven',
+                'description': 'Roll a 7 (always loses) 3 times',
                 'quest_type': 'score',
-                'target_value': 5,
-                'xp_reward': 35,
-                'reward_coins': 25,
+                'target_value': 3,
+                'xp_reward': 20,
+                'reward_coins': 15,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': 'seven',
-                    'type': 'roll_exact',
-                    'value': 7,
+                    'type': 'roll_seven',
                     'category': 'luck'
+                })
+            },
+            {
+                'title': 'Seven: Under Master',
+                'description': 'Win 10 bets on Under (<7)',
+                'quest_type': 'score',
+                'target_value': 10,
+                'xp_reward': 30,
+                'reward_coins': 20,
+                'is_active': 1,
+                'created_at': now,
+                'config': json.dumps({
+                    'game_id': 'seven',
+                    'type': 'win_under_bets',
+                    'category': 'skill'
+                })
+            },
+            {
+                'title': 'Seven: Over Winner',
+                'description': 'Win 10 bets on Over (>7)',
+                'quest_type': 'score',
+                'target_value': 10,
+                'xp_reward': 30,
+                'reward_coins': 20,
+                'is_active': 1,
+                'created_at': now,
+                'config': json.dumps({
+                    'game_id': 'seven',
+                    'type': 'win_over_bets',
+                    'category': 'skill'
+                })
+            },
+            {
+                'title': 'Seven: Bold Gambler',
+                'description': 'Win a bet of at least 30 coins',
+                'quest_type': 'score',
+                'target_value': 30,
+                'xp_reward': 45,
+                'reward_coins': 35,
+                'is_active': 1,
+                'created_at': now,
+                'config': json.dumps({
+                    'game_id': 'seven',
+                    'type': 'win_with_high_bet',
+                    'category': 'skill'
                 })
             }
         ]

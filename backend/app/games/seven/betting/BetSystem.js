@@ -3,12 +3,12 @@
  * Single Responsibility: Gestione logica scommesse, validazione e calcolo vincite
  */
 
-import { BET_TYPE, BET_PAYOUT, GAME_CONSTANTS } from '../constants.js';
+import { BET_TYPE, GAME_CONSTANTS } from '../constants.js';
 
 export class BetSystem {
   /**
    * Valida una scommessa
-   * @param {Object} bet - { type: BET_TYPE, amount: number, value?: number }
+   * @param {Object} bet - { type: BET_TYPE, amount: number }
    * @returns {Object} { valid: boolean, error?: string }
    */
   static validateBet(bet) {
@@ -16,11 +16,11 @@ export class BetSystem {
       return { valid: false, error: 'Scommessa non valida' };
     }
 
-    const { type, amount, value } = bet;
+    const { type, amount } = bet;
 
-    // Verifica tipo scommessa
+    // Verifica tipo scommessa (solo UNDER o OVER)
     if (!Object.values(BET_TYPE).includes(type)) {
-      return { valid: false, error: 'Tipo di scommessa non valido' };
+      return { valid: false, error: 'Tipo di scommessa non valido (usa UNDER o OVER)' };
     }
 
     // Verifica ammontare
@@ -29,13 +29,6 @@ export class BetSystem {
         valid: false, 
         error: `Ammontare deve essere tra ${GAME_CONSTANTS.MIN_BET_AMOUNT} e ${GAME_CONSTANTS.MAX_BET_AMOUNT}` 
       };
-    }
-
-    // Per EXACT_TOTAL, richiede value (2-12)
-    if (type === BET_TYPE.EXACT_TOTAL) {
-      if (typeof value !== 'number' || value < 2 || value > 12) {
-        return { valid: false, error: 'Per totale esatto, specificare valore 2-12' };
-      }
     }
 
     return { valid: true };
@@ -55,26 +48,14 @@ export class BetSystem {
       return { valid: false, error: 'Devi piazzare almeno una scommessa' };
     }
 
-    if (bets.length > GAME_CONSTANTS.MAX_BETS_PER_ROLL) {
-      return { 
-        valid: false, 
-        error: `Massimo ${GAME_CONSTANTS.MAX_BETS_PER_ROLL} scommesse per tiro` 
-      };
+    if (bets.length > 1) {
+      return { valid: false, error: 'Puoi fare solo una scommessa per tiro (UNDER o OVER)' };
     }
 
-    // Valida ogni singola scommessa
-    for (const bet of bets) {
-      const validation = this.validateBet(bet);
-      if (!validation.valid) {
-        return validation;
-      }
-    }
-
-    // Verifica conflitti logici
-    const hasEven = bets.some(b => b.type === BET_TYPE.EVEN);
-    const hasOdd = bets.some(b => b.type === BET_TYPE.ODD);
-    if (hasEven && hasOdd) {
-      return { valid: false, error: 'Non puoi scommettere sia su pari che dispari' };
+    // Valida la singola scommessa
+    const validation = this.validateBet(bets[0]);
+    if (!validation.valid) {
+      return validation;
     }
 
     return { valid: true };
@@ -98,42 +79,24 @@ export class BetSystem {
    */
   static isBetWinning(bet, diceA, diceB) {
     const total = diceA + diceB;
-    const { type, value } = bet;
+    const { type } = bet;
 
-    switch (type) {
-      case BET_TYPE.EXACT_TOTAL:
-        return total === value;
-
-      case BET_TYPE.LOW_RANGE:
-        return total >= 2 && total <= 6;
-
-      case BET_TYPE.SEVEN:
-        return total === 7;
-
-      case BET_TYPE.HIGH_RANGE:
-        return total >= 8 && total <= 12;
-
-      case BET_TYPE.EVEN:
-        return total % 2 === 0;
-
-      case BET_TYPE.ODD:
-        return total % 2 === 1;
-
-      case BET_TYPE.DOUBLE:
-        return diceA === diceB;
-
-      case BET_TYPE.SEQUENCE:
-        return Math.abs(diceA - diceB) === 1;
-
-      case BET_TYPE.SNAKE_EYES:
-        return diceA === 1 && diceB === 1;
-
-      case BET_TYPE.BOXCARS:
-        return diceA === 6 && diceB === 6;
-
-      default:
-        return false;
+    // Se esce 7, si perde sempre
+    if (total === 7) {
+      return false;
     }
+
+    // UNDER: vinci se totale < 7
+    if (type === BET_TYPE.UNDER) {
+      return total < 7;
+    }
+
+    // OVER: vinci se totale > 7
+    if (type === BET_TYPE.OVER) {
+      return total > 7;
+    }
+
+    return false;
   }
 
   /**
@@ -141,75 +104,62 @@ export class BetSystem {
    * @param {Object} bet - Scommessa
    * @param {number} diceA - Risultato primo dado
    * @param {number} diceB - Risultato secondo dado
-   * @returns {number} - Vincita (0 se perde, amount * multiplier se vince)
+   * @returns {number} - Vincita (0 se perde, amount se vince - payout 1:1)
    */
   static calculateWinnings(bet, diceA, diceB) {
     if (!this.isBetWinning(bet, diceA, diceB)) {
       return 0;
     }
 
-    const multiplier = BET_PAYOUT[bet.type] || 1;
-    return bet.amount * multiplier;
+    // Payout 1:1 (vinci l'importo che hai scommesso)
+    return bet.amount;
   }
 
   /**
-   * Processa tutte le scommesse per un tiro
-   * @param {Array} bets - Array di scommesse
+   * Processa la scommessa per un tiro
+   * @param {Array} bets - Array con singola scommessa
    * @param {number} diceA - Risultato primo dado
    * @param {number} diceB - Risultato secondo dado
    * @returns {Object} { totalWinnings: number, results: Array }
    */
   static processBets(bets, diceA, diceB) {
-    const results = bets.map(bet => {
-      const isWinning = this.isBetWinning(bet, diceA, diceB);
-      const winnings = this.calculateWinnings(bet, diceA, diceB);
-      
-      return {
-        bet,
-        isWinning,
-        winnings,
-        multiplier: BET_PAYOUT[bet.type]
-      };
-    });
-
-    const totalWinnings = results.reduce((sum, result) => sum + result.winnings, 0);
+    const bet = bets[0]; // Solo una scommessa per tiro
+    const isWinning = this.isBetWinning(bet, diceA, diceB);
+    const winnings = this.calculateWinnings(bet, diceA, diceB);
+    
+    const result = {
+      bet,
+      isWinning,
+      winnings,
+      multiplier: 1 // Payout fisso 1:1
+    };
 
     return {
-      totalWinnings,
-      results,
-      totalBet: this.calculateTotalBetAmount(bets),
-      netProfit: totalWinnings - this.calculateTotalBetAmount(bets)
+      totalWinnings: winnings,
+      results: [result],
+      totalBet: bet.amount,
+      netProfit: winnings - bet.amount
     };
   }
 
   /**
    * Genera statistiche probabilità per tipo di scommessa
-   * @param {string} betType - Tipo scommessa
+   * @param {string} betType - Tipo scommessa (UNDER o OVER)
    * @returns {Object} { probability: number, expectedValue: number }
    */
   static getBetStatistics(betType) {
-    const probabilities = {
-      [BET_TYPE.EXACT_TOTAL]: 1/36,  // varia per numero, questa è media
-      [BET_TYPE.LOW_RANGE]: 15/36,
-      [BET_TYPE.SEVEN]: 6/36,
-      [BET_TYPE.HIGH_RANGE]: 15/36,
-      [BET_TYPE.EVEN]: 18/36,
-      [BET_TYPE.ODD]: 18/36,
-      [BET_TYPE.DOUBLE]: 6/36,
-      [BET_TYPE.SEQUENCE]: 10/36,
-      [BET_TYPE.SNAKE_EYES]: 1/36,
-      [BET_TYPE.BOXCARS]: 1/36
-    };
-
-    const probability = probabilities[betType] || 0;
-    const payout = BET_PAYOUT[betType] || 0;
+    // UNDER (2-6): 15 combinazioni su 36
+    // OVER (8-12): 15 combinazioni su 36
+    // 7: 6 combinazioni su 36 (perde sempre)
+    const probability = 15/36; // 41.67% per entrambi UNDER e OVER
+    const payout = 1; // Payout 1:1
     const expectedValue = probability * payout;
 
     return {
       probability,
       payout,
       expectedValue,
-      houseEdge: 1 - expectedValue
+      houseEdge: 1 - expectedValue // ~0.583 (58.3% house edge per il 7)
     };
   }
 }

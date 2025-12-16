@@ -49,53 +49,11 @@ export const FACE_ROTATIONS = Object.freeze({
   6: Object.freeze({ x: Math.PI / 2, y: 0, z: 0 })           // back (z-) to top
 });
 
-// Tipi di scommessa disponibili
+// Tipi di scommessa (il gioco è semplice: sotto o sopra 7)
 export const BET_TYPE = Object.freeze({
-  // Scommessa su totale esatto (2-12)
-  EXACT_TOTAL: 'exact_total',
-  
-  // Scommessa su range
-  LOW_RANGE: 'low_range',      // 2-6
-  SEVEN: 'seven',              // esattamente 7 (lucky seven)
-  HIGH_RANGE: 'high_range',    // 8-12
-  
-  // Scommessa pari/dispari
-  EVEN: 'even',
-  ODD: 'odd',
-  
-  // Scommesse speciali
-  DOUBLE: 'double',            // entrambi dadi stesso numero
-  SEQUENCE: 'sequence',        // numeri consecutivi (es. 3-4)
-  SNAKE_EYES: 'snake_eyes',    // doppio 1 (1-1)
-  BOXCARS: 'boxcars'           // doppio 6 (6-6)
-});
-
-// Payout multipliers per tipo di scommessa
-export const BET_PAYOUT = Object.freeze({
-  [BET_TYPE.EXACT_TOTAL]: 10,      // Molto difficile - payout alto
-  [BET_TYPE.LOW_RANGE]: 2,         // 5/12 probabilità
-  [BET_TYPE.SEVEN]: 4,             // 6/36 probabilità - lucky!
-  [BET_TYPE.HIGH_RANGE]: 2,        // 5/12 probabilità
-  [BET_TYPE.EVEN]: 1.9,            // ~50% probabilità
-  [BET_TYPE.ODD]: 1.9,             // ~50% probabilità
-  [BET_TYPE.DOUBLE]: 5,            // 6/36 probabilità
-  [BET_TYPE.SEQUENCE]: 3,          // 10/36 probabilità
-  [BET_TYPE.SNAKE_EYES]: 30,       // 1/36 probabilità - jackpot!
-  [BET_TYPE.BOXCARS]: 30           // 1/36 probabilità - jackpot!
-});
-
-// Descrizioni scommesse per UI
-export const BET_DESCRIPTION = Object.freeze({
-  [BET_TYPE.EXACT_TOTAL]: 'Totale esatto (2-12)',
-  [BET_TYPE.LOW_RANGE]: 'Totale basso (2-6)',
-  [BET_TYPE.SEVEN]: 'Lucky Seven! (7)',
-  [BET_TYPE.HIGH_RANGE]: 'Totale alto (8-12)',
-  [BET_TYPE.EVEN]: 'Totale pari',
-  [BET_TYPE.ODD]: 'Totale dispari',
-  [BET_TYPE.DOUBLE]: 'Doppio (stessa faccia)',
-  [BET_TYPE.SEQUENCE]: 'Sequenza (numeri consecutivi)',
-  [BET_TYPE.SNAKE_EYES]: 'Snake Eyes (1-1)',
-  [BET_TYPE.BOXCARS]: 'Boxcars (6-6)'
+  UNDER: 'under',  // Sotto 7 (< 7)
+  OVER: 'over'     // Sopra 7 (> 7)
+  // Nota: se esce 7 si perde sempre
 });
 
 export const OUTCOME_KIND = Object.freeze({

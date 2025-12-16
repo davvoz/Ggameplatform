@@ -86,14 +86,12 @@ def register_seven():
         
         xp_rules = [
             {
-                'rule_id': 'seven_rounds_played',
+                'rule_id': 'seven_participation',
                 'game_id': 'seven',
-                'rule_name': 'Rounds Played Bonus',
-                'rule_type': 'custom',
+                'rule_name': 'Participation Bonus',
+                'rule_type': 'flat',
                 'parameters': json.dumps({
-                    'xp_per_round': 0.5,
-                    'max_rounds': 20,
-                    'description': 'Earn XP for each round played'
+                    'base_xp': 0.5
                 }),
                 'priority': 5,
                 'is_active': 1,
@@ -101,15 +99,18 @@ def register_seven():
                 'updated_at': now
             },
             {
-                'rule_id': 'seven_win_streak',
+                'rule_id': 'seven_win_bonus',
                 'game_id': 'seven',
-                'rule_name': 'Win Streak Bonus',
+                'rule_name': 'Win Bonus',
                 'rule_type': 'threshold',
                 'parameters': json.dumps({
                     'thresholds': [
-                        {'score': 3, 'xp': 10, 'description': '3 wins in a row'},
-                        {'score': 5, 'xp': 20, 'description': '5 wins in a row'},
-                        {'score': 10, 'xp': 50, 'description': '10 wins in a row'}
+                        {'score': 50, 'xp': 5.0},
+                        {'score': 30, 'xp': 3.0},
+                        {'score': 20, 'xp': 1.5},
+                        {'score': 10, 'xp': 0.5},
+                        {'score': 5, 'xp': 0.25},
+                        {'score': 1, 'xp': 0.1}
                     ]
                 }),
                 'priority': 15,
@@ -118,44 +119,15 @@ def register_seven():
                 'updated_at': now
             },
             {
-                'rule_id': 'seven_high_roller',
-                'game_id': 'seven',
-                'rule_name': 'High Roller Bonus',
-                'rule_type': 'custom',
-                'parameters': json.dumps({
-                    'bank_threshold': 500,
-                    'bonus_xp': 30.0,
-                    'description': 'Reach 500+ chips bank'
-                }),
-                'priority': 20,
-                'is_active': 1,
-                'created_at': now,
-                'updated_at': now
-            },
-            {
                 'rule_id': 'seven_score_multiplier',
                 'game_id': 'seven',
-                'rule_name': 'Score Multiplier',
+                'rule_name': 'Winnings Multiplier',
                 'rule_type': 'score_multiplier',
                 'parameters': json.dumps({
-                    'multiplier': 0.02,
-                    'max_xp': 40.0
+                    'multiplier': 0.1,
+                    'max_xp': 10.0
                 }),
                 'priority': 10,
-                'is_active': 1,
-                'created_at': now,
-                'updated_at': now
-            },
-            {
-                'rule_id': 'seven_time_bonus',
-                'game_id': 'seven',
-                'rule_name': 'Time Played Bonus',
-                'rule_type': 'time_bonus',
-                'parameters': json.dumps({
-                    'xp_per_minute': 0.2,
-                    'max_minutes': 10.0
-                }),
-                'priority': 5,
                 'is_active': 1,
                 'created_at': now,
                 'updated_at': now

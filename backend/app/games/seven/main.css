@@ -207,8 +207,8 @@ body {
 /* Main Betting Buttons */
 .main-bets {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -265,6 +265,18 @@ body {
 .bet-info {
   font-size: 10px;
   opacity: 0.8;
+}
+
+/* Seven Rule Warning */
+.seven-rule {
+  text-align: center;
+  padding: 8px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid var(--seven);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--seven);
+  margin-top: 4px;
 }
 
 /* Secondary Bets */

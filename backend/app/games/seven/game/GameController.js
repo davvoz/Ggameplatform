@@ -229,32 +229,25 @@ export class GameController {
       await this._refreshPlatformBalance();
     }
 
-    // Send gameOver - RuntimeShell will close session and show XP banner
-    // Use max(0, netProfit) as score since XP system doesn't accept negatives
-    const finalScore = Math.max(0, netProfit);
-    console.log('[GameController] Roll complete - sending gameOver with score:', finalScore);
-    await this._platform.gameOver(finalScore, {
+    // Send gameOver - Use winnings as score (0 if lost, amount if won)
+    // XP system will reward based on coins won
+    console.log('[GameController] Roll complete - sending gameOver with score:', winnings);
+    await this._platform.gameOver(winnings, {
       bet_type: bet.type,
       bet_amount: bet.amount,
       winnings,
       net_profit: netProfit,
       dice_a: diceA,
       dice_b: diceB,
-      sum: diceA + diceB
+      sum: diceA + diceB,
+      won: isWinning
     });
   }
 
   _getBetDisplayName(type) {
     const names = {
-      'low_range': 'Basso (2-6)',
-      'seven': 'Seven',
-      'high_range': 'Alto (8-12)',
-      'even': 'Pari',
-      'odd': 'Dispari',
-      'double': 'Doppio',
-      'sequence': 'Sequenza',
-      'snake_eyes': 'Snake Eyes',
-      'boxcars': 'Boxcars'
+      'under': 'Under 7',
+      'over': 'Over 7'
     };
     return names[type] || type;
   }

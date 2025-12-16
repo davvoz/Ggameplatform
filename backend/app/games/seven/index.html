@@ -39,7 +39,23 @@
             
             <!-- Bet Amount -->
             <div class="bet-amount-box">
-                <div class="bet-label">Importo</div>
+                <div class="bet-label">
+                    <span> 
+                        Bet Amount
+                    </span>
+                    <!-- Mode Switcher (inline) -->
+                    <div class="mode-switcher">
+                        <button class="mode-btn active" data-mode="casual" title="Casual: 1-50">
+                            <span class="mode-icon">🎲</span>
+                        </button>
+                        <button class="mode-btn" data-mode="standard" title="Standard: 10-500">
+                            <span class="mode-icon">🎰</span>
+                        </button>
+                        <button class="mode-btn" data-mode="high_roller" title="High Roller: 100-5K">
+                            <span class="mode-icon">💎</span>
+                        </button>
+                    </div>
+                </div>
                 <div class="bet-slider-container">
                     <input type="range" id="betAmountRange" min="1" max="50" value="5" class="bet-slider">
                     <div class="bet-value"><span id="betAmount">5</span> 🪙</div>

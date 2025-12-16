@@ -144,6 +144,7 @@ body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  margin: 2px ;
 }
 
 /* Bet Amount */
@@ -160,6 +161,10 @@ body {
   color: var(--text-gray);
   margin-bottom: 6px;
   letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2px ;
 }
 
 .bet-slider-container {
@@ -228,6 +233,52 @@ body {
 .double-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Mode Switcher */
+.mode-switcher {
+  display: flex;
+  gap: 4px;
+}
+
+.mode-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-gray);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-width: 32px;
+  height: 24px;
+}
+
+.mode-btn:hover {
+  border-color: var(--primary);
+  background: var(--bg-lighter);
+}
+
+.mode-btn.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--text-white);
+}
+
+.mode-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mode-name {
+  display: none;
+}
+
+.mode-range {
+  display: none;
 }
 
 /* Main Betting Buttons */

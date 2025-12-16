@@ -24,7 +24,8 @@ export class UIManager {
       // Betting System
       betTypes: document.getElementById('betTypes'),
       betAmountRange: document.getElementById('betAmountRange'),
-      betAmount: document.getElementById('betAmount')
+      betAmount: document.getElementById('betAmount'),
+      modeButtons: document.querySelectorAll('.mode-btn')
     });
   }
 
@@ -72,6 +73,27 @@ export class UIManager {
     // Disable bet type buttons
     const betButtons = document.querySelectorAll('[data-bet-type]');
     betButtons.forEach(btn => btn.disabled = !enabled);
+    
+    // Disable mode buttons while rolling
+    this.elements.modeButtons.forEach(btn => btn.disabled = !enabled);
+  }
+
+  updateBetMode(mode) {
+    // Update slider min/max/step
+    this.elements.betAmountRange.min = mode.minBet;
+    this.elements.betAmountRange.max = mode.maxBet;
+    this.elements.betAmountRange.step = mode.minBet; // Step deve corrispondere al minBet
+    this.elements.betAmountRange.value = mode.defaultBet;
+    this.updateBetAmount(mode.defaultBet);
+    
+    // Update active mode button
+    this.elements.modeButtons.forEach(btn => {
+      if (btn.dataset.mode === mode.id) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   getCanvas() {

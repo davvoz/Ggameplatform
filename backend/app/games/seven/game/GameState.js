@@ -3,7 +3,7 @@
  * Single Responsibility: State management
  */
 
-import { GAME_CONSTANTS } from '../constants.js';
+import { GAME_CONSTANTS, BET_MODES } from '../constants.js';
 import { MathUtils } from '../utils/MathUtils.js';
 
 export class GameState {
@@ -22,6 +22,7 @@ export class GameState {
     this._paused = false;
     this._history = [];
     this._currentRoundStats = this._createRoundStats();
+    this._betMode = BET_MODES.CASUAL; // Default mode
   }
 
   _createRoundStats() {
@@ -172,5 +173,25 @@ export class GameState {
       stats: { ...this._currentRoundStats },
       timestamp: Date.now()
     });
+  }
+
+  get betMode() {
+    return this._betMode;
+  }
+
+  setBetMode(mode) {
+    this._betMode = mode;
+  }
+
+  getMinBet() {
+    return this._betMode.minBet;
+  }
+
+  getMaxBet() {
+    return this._betMode.maxBet;
+  }
+
+  getDefaultBet() {
+    return this._betMode.defaultBet;
   }
 }

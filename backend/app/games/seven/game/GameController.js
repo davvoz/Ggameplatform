@@ -76,8 +76,8 @@ export class GameController {
    * @param {Array} bets - Array di scommesse { type, amount, value? }
    */
   placeBets(bets) {
-    // Valida scommesse
-    const validation = BetSystem.validateBets(bets);
+    // Valida scommesse con modalità corrente
+    const validation = BetSystem.validateBets(bets, this._state.betMode);
     if (!validation.valid) {
       this._ui.setNotice(validation.error, NOTIFICATION_TONE.BAD);
       return false;
@@ -107,8 +107,8 @@ export class GameController {
       amount: betAmount
     };
 
-    // Valida scommessa
-    const validation = BetSystem.validateBet(bet);
+    // Valida scommessa con modalità corrente
+    const validation = BetSystem.validateBet(bet, this._state.betMode);
     if (!validation.valid) {
       this._ui.setNotice(validation.error, NOTIFICATION_TONE.BAD);
       return;

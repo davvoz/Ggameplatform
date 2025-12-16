@@ -9,9 +9,10 @@ export class BetSystem {
   /**
    * Valida una scommessa
    * @param {Object} bet - { type: BET_TYPE, amount: number }
+   * @param {Object} betMode - Current bet mode with min/max limits
    * @returns {Object} { valid: boolean, error?: string }
    */
-  static validateBet(bet) {
+  static validateBet(bet, betMode = null) {
     if (!bet || typeof bet !== 'object') {
       return { valid: false, error: 'Scommessa non valida' };
     }
@@ -23,11 +24,14 @@ export class BetSystem {
       return { valid: false, error: 'Tipo di scommessa non valido (usa UNDER o OVER)' };
     }
 
-    // Verifica ammontare
-    if (typeof amount !== 'number' || amount < GAME_CONSTANTS.MIN_BET_AMOUNT || amount > GAME_CONSTANTS.MAX_BET_AMOUNT) {
+    // Verifica ammontare con limiti dinamici
+    const minBet = betMode ? betMode.minBet : GAME_CONSTANTS.MIN_BET_AMOUNT;
+    const maxBet = betMode ? betMode.maxBet : GAME_CONSTANTS.MAX_BET_AMOUNT;
+    
+    if (typeof amount !== 'number' || amount < minBet || amount > maxBet) {
       return { 
         valid: false, 
-        error: `Ammontare deve essere tra ${GAME_CONSTANTS.MIN_BET_AMOUNT} e ${GAME_CONSTANTS.MAX_BET_AMOUNT}` 
+        error: `Ammontare deve essere tra ${minBet} e ${maxBet}` 
       };
     }
 
@@ -37,9 +41,10 @@ export class BetSystem {
   /**
    * Valida array di scommesse per un singolo tiro
    * @param {Array} bets - Array di scommesse
+   * @param {Object} betMode - Current bet mode with min/max limits
    * @returns {Object} { valid: boolean, error?: string }
    */
-  static validateBets(bets) {
+  static validateBets(bets, betMode = null) {
     if (!Array.isArray(bets)) {
       return { valid: false, error: 'Le scommesse devono essere un array' };
     }
@@ -53,7 +58,7 @@ export class BetSystem {
     }
 
     // Valida la singola scommessa
-    const validation = this.validateBet(bets[0]);
+    const validation = this.validateBet(bets[0], betMode);
     if (!validation.valid) {
       return validation;
     }

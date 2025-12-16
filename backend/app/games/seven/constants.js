@@ -13,7 +13,7 @@ export const GAME_CONSTANTS = Object.freeze({
   ROUND_COST: 10,           // Costo per acquistare un round
   ROLLS_PER_ROUND: 20,      // Numero di tiri per round
   
-  // Bet Limits
+  // Bet Limits (deprecated - use BET_MODES)
   MIN_BET_AMOUNT: 1,
   MAX_BET_AMOUNT: 50,
   MAX_BETS_PER_ROLL: 5,     // Massimo numero di scommesse per tiro
@@ -54,6 +54,34 @@ export const BET_TYPE = Object.freeze({
   UNDER: 'under',  // Sotto 7 (< 7)
   OVER: 'over'     // Sopra 7 (> 7)
   // Nota: se esce 7 si perde sempre
+});
+
+// Bet Modes - Different stake levels
+export const BET_MODES = Object.freeze({
+  CASUAL: {
+    id: 'casual',
+    name: 'Casual',
+    icon: '🎲',
+    minBet: 1,
+    maxBet: 50,
+    defaultBet: 5
+  },
+  STANDARD: {
+    id: 'standard',
+    name: 'Standard',
+    icon: '🎰',
+    minBet: 10,
+    maxBet: 500,
+    defaultBet: 50
+  },
+  HIGH_ROLLER: {
+    id: 'high_roller',
+    name: 'High Roller',
+    icon: '💎',
+    minBet: 100,
+    maxBet: 5000,
+    defaultBet: 500
+  }
 });
 
 export const OUTCOME_KIND = Object.freeze({

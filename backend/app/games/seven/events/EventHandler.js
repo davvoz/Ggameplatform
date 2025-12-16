@@ -3,7 +3,7 @@
  * Single Responsibility: Event management
  */
 
-import { BET_TYPE } from '../constants.js';
+import { BET_TYPE, BET_MODES } from '../constants.js';
 
 export class EventHandler {
   constructor(uiManager, gameController) {
@@ -17,6 +17,7 @@ export class EventHandler {
     this._attachBetTypeEvents();
     this._attachBetAmountEvents();
     this._attachBetManagementEvents();
+    this._attachModeEvents();
     this._attachKeyboardEvents();
   }
 
@@ -113,7 +114,32 @@ export class EventHandler {
     // No bet list management needed
   }
 
+  _attachModeEvents() {
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modeId = btn.dataset.mode;
+        this._handleModeChange(modeId);
+      });
+    });
+  }
 
+  _handleModeChange(modeId) {
+    let selectedMode;
+    if (modeId === 'casual') {
+      selectedMode = BET_MODES.CASUAL;
+    } else if (modeId === 'standard') {
+      selectedMode = BET_MODES.STANDARD;
+    } else if (modeId === 'high_roller') {
+      selectedMode = BET_MODES.HIGH_ROLLER;
+    }
+    
+    if (selectedMode) {
+      const state = this._controller.getState();
+      state.setBetMode(selectedMode);
+      this._ui.updateBetMode(selectedMode);
+    }
+  }
 
   _attachKeyboardEvents() {
     window.addEventListener('keydown', (event) => {

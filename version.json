@@ -1,8 +1,17 @@
 {
-  "version": "2.0.4",
-  "timestamp": "2025-12-16T09:37:12.834Z",
-  "buildNumber": 84,
+  "version": "2.0.5",
+  "timestamp": "2025-12-16T09:41:07.246Z",
+  "buildNumber": 85,
   "changelog": [
+    {
+      "version": "2.0.5",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "fix: [7]update notification and bet labels for improved clarity",
+        "🔖 Bump version to 2.0.4 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.4",
       "date": "2025-12-16",
@@ -89,16 +98,6 @@
       "changes": [
         "fix:[RR] add user debug panel and enhance SDK for user info tracking",
         "🔖 Bump version to 1.24.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.5",
-      "date": "2025-12-12",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[RR script] add diagnostic script for luciojolly user to analyze progress discrepancies between mobile and desktop",
-        "🔖 Bump version to 1.24.4 [skip-version]"
       ]
     }
   ]

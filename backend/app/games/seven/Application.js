@@ -35,7 +35,7 @@ export class Application {
 
     const uiManager = this._gameController._ui;
     const state = this._gameController.getState();
-    uiManager.setNotice('Piazza le tue scommesse e lancia i dadi!', NOTIFICATION_TONE.OK);
+    uiManager.setNotice('Choose your bets and roll the dice!', NOTIFICATION_TONE.OK);
   }
   
   async _loadUserCoins() {

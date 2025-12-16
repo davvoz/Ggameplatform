@@ -143,6 +143,9 @@ export class GameController {
     this._renderer.setRolling(true);
     this._ui.setControlsEnabled(false);
 
+    // Notify platform that a new roll (game) has started - this will create the session
+    this._platform.sendGameStarted();
+
     // Generate target numbers
     const targetA = MathUtils.randomInt(1, 6);
     const targetB = MathUtils.randomInt(1, 6);
@@ -226,9 +229,11 @@ export class GameController {
       await this._refreshPlatformBalance();
     }
 
-    // Chiudi la sessione e invia lo score finale
-    console.log('[GameController] Ending session with final score:', netProfit);
-    await this._platform.gameOver(netProfit, {
+    // Send gameOver - RuntimeShell will close session and show XP banner
+    // Use max(0, netProfit) as score since XP system doesn't accept negatives
+    const finalScore = Math.max(0, netProfit);
+    console.log('[GameController] Roll complete - sending gameOver with score:', finalScore);
+    await this._platform.gameOver(finalScore, {
       bet_type: bet.type,
       bet_amount: bet.amount,
       winnings,

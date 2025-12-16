@@ -8,6 +8,7 @@ export class PlatformSDKAdapter {
     this._sdk = window.PlatformSDK;
     this._userId = null;
     this._config = null;
+    this._sessionId = null;
   }
 
   isAvailable() {
@@ -23,6 +24,20 @@ export class PlatformSDKAdapter {
       await this._sdk.sendScore(score, { extra_data: extraData });
     } catch (error) {
       // Silent fail - non-blocking
+    }
+  }
+
+  sendGameStarted() {
+    try {
+      console.log('[PlatformSDKAdapter] Sending gameStarted event');
+      window.parent.postMessage({
+        type: 'gameStarted',
+        payload: {},
+        timestamp: Date.now(),
+        protocolVersion: '1.0.0'
+      }, '*');
+    } catch (error) {
+      console.error('[PlatformSDKAdapter] Error sending gameStarted:', error);
     }
   }
 
@@ -227,6 +242,110 @@ export class PlatformSDKAdapter {
     } catch (error) {
       console.error('Failed to award coins:', error);
       return false;
+    }
+  }
+
+  async startSession() {
+    try {
+      const userId = this._ensureUserId();
+      if (!userId) {
+        console.error('[PlatformSDKAdapter] No userId available for starting session');
+        return null;
+      }
+
+      console.log('[PlatformSDKAdapter] Starting session for user:', userId);
+
+      const response = await fetch('/users/sessions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          user_id: userId,
+          game_id: 'seven'
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[PlatformSDKAdapter] Failed to start session:', response.status, errorText);
+        return null;
+      }
+
+      const result = await response.json();
+      this._sessionId = result.session.session_id;
+      console.log('[PlatformSDKAdapter] Session started:', this._sessionId);
+      return result.session;
+    } catch (error) {
+      console.error('[PlatformSDKAdapter] Exception starting session:', error);
+      return null;
+    }
+  }
+
+  async endSession(score, extraData = null) {
+    try {
+      if (!this._sessionId) {
+        console.warn('[PlatformSDKAdapter] No active session to end');
+        return null;
+      }
+
+      console.log('[PlatformSDKAdapter] Ending session:', this._sessionId, 'with score:', score);
+
+      const payload = {
+        session_id: this._sessionId,
+        score: Math.floor(score),  // Ensure integer
+        duration_seconds: 1,  // Minimum 1 second
+        extra_data: extraData || {}
+      };
+
+      console.log('[PlatformSDKAdapter] Payload to send:', payload);
+
+      const response = await fetch('/users/sessions/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[PlatformSDKAdapter] Failed to end session:', response.status, errorText);
+        return null;
+      }
+
+      const result = await response.json();
+      console.log('[PlatformSDKAdapter] Session ended successfully');
+      
+      const sessionId = this._sessionId;
+      this._sessionId = null;
+      
+      return result.session;
+    } catch (error) {
+      console.error('[PlatformSDKAdapter] Exception ending session:', error);
+      return null;
+    }
+  }
+
+  showXPNotification(xpAmount, sessionData) {
+    if (!this.isAvailable()) {
+      return;
+    }
+
+    try {
+      console.log('[PlatformSDKAdapter] Showing XP notification:', xpAmount);
+      
+      // Send message to RuntimeShell to show XP banner
+      window.parent.postMessage({
+        type: 'showXPBanner',
+        payload: {
+          xp_earned: xpAmount,
+          xp_breakdown: sessionData?.xp_breakdown || [],
+          extra_data: sessionData?.metadata || sessionData?.extra_data || null
+        },
+        timestamp: Date.now(),
+        protocolVersion: '1.0.0'
+      }, '*');
+    } catch (error) {
+      console.error('[PlatformSDKAdapter] Error showing XP notification:', error);
     }
   }
 }

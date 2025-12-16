@@ -45,12 +45,27 @@ export class PlatformSDKManager {
         console.log('🎯 [PlatformSDKManager] gameOver called with score:', score, 'details:', details);
         
         try {
+            // Primary: Use PlatformSDK if available
             if (typeof window.PlatformSDK !== 'undefined') {
                 console.log('📡 [PlatformSDKManager] Calling window.PlatformSDK.gameOver with score:', score);
                 window.PlatformSDK.gameOver(score, details);
-                console.log('✅ [PlatformSDKManager] Game over reported:', score, details);
+                console.log('✅ [PlatformSDKManager] Game over reported via PlatformSDK');
             } else {
-                console.warn('PlatformSDK not available, game over not reported');
+                console.warn('⚠️ PlatformSDK not available, using postMessage fallback');
+            }
+            
+            // ALWAYS send postMessage as backup (critical for mobile)
+            if (window.parent && typeof window.parent.postMessage === 'function') {
+                window.parent.postMessage({
+                    type: 'gameOver',
+                    payload: {
+                        score: score,
+                        extra_data: details
+                    },
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, '*');
+                console.log('✅ [PlatformSDKManager] gameOver sent via postMessage (score:', score, ')');
             }
         } catch (error) {
             console.error('❌ [PlatformSDKManager] Failed to report game over:', error);

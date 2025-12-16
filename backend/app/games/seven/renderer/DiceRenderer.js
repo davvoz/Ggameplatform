@@ -88,20 +88,20 @@ export class DiceRenderer {
     this._renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this._renderer.outputEncoding = THREE.sRGBEncoding;
     this._renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this._renderer.toneMappingExposure = 1.2;
+    this._renderer.toneMappingExposure = 0.8;
   }
 
   _initLights() {
-    // Warm ambient light (casino atmosphere)
-    const ambientLight = new THREE.AmbientLight(0xffddaa, 0.3);
+    // Warm ambient light (casino atmosphere) - ridotta
+    const ambientLight = new THREE.AmbientLight(0xffddaa, 0.2);
     this._scene.add(ambientLight);
 
     // Main overhead light with shadows
     const directionalLight = this._createDirectionalLight();
     this._scene.add(directionalLight);
 
-    // Warm spot lights from above (like casino ceiling lights)
-    const spotLight1 = new THREE.SpotLight(0xffe8c0, 1.2);
+    // Warm spot lights from above (like casino ceiling lights) - intensità ridotta
+    const spotLight1 = new THREE.SpotLight(0xffe8c0, 0.7);
     spotLight1.position.set(0, 10, 0);
     spotLight1.angle = Math.PI / 3;
     spotLight1.penumbra = 0.3;
@@ -112,8 +112,8 @@ export class DiceRenderer {
     spotLight1.shadow.mapSize.height = 1024;
     this._scene.add(spotLight1);
     
-    // Secondary warm light from an angle
-    const rimLight = new THREE.DirectionalLight(0xffd4aa, 0.4);
+    // Secondary warm light from an angle - ridotta
+    const rimLight = new THREE.DirectionalLight(0xffd4aa, 0.25);
     rimLight.position.set(-8, 6, 5);
     this._scene.add(rimLight);
 
@@ -128,7 +128,7 @@ export class DiceRenderer {
   }
 
   _createDirectionalLight() {
-    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    const light = new THREE.DirectionalLight(0xffffff, 0.5);
     light.position.set(5, 10, 7);
     light.castShadow = true;
     light.shadow.mapSize.width = 2048;
@@ -156,10 +156,10 @@ export class DiceRenderer {
     tableBase.receiveShadow = true;
     this._scene.add(tableBase);
     
-    // Green felt surface (classic casino)
+    // Green felt surface (classic casino) - verde scuro professionale
     const feltGeometry = new THREE.BoxGeometry(11.8, 0.05, 8.8);
     const feltMaterial = new THREE.MeshStandardMaterial({
-      color: 0x0d5c2e,
+      color: 0x064a1f,
       roughness: 0.95,
       metalness: 0,
       normalScale: new THREE.Vector2(2, 2)
@@ -220,39 +220,101 @@ export class DiceRenderer {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
     
-    // Base green felt color
-    ctx.fillStyle = '#0d5c2e';
+    // Base green felt color - verde casinò scuro
+    ctx.fillStyle = '#064a1f';
     ctx.fillRect(0, 0, 1024, 1024);
     
     // Add subtle line border
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
     ctx.lineWidth = 3;
     ctx.strokeRect(40, 40, 944, 944);
     
     // Center circle for dice area
     ctx.beginPath();
-    ctx.arc(512, 512, 200, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
-    ctx.lineWidth = 2;
+    ctx.arc(512, 512, 220, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+    ctx.lineWidth = 4;
     ctx.stroke();
     
-    // "SEVEN" text at top
+    // Logo "7" al centro del cerchio - stile pulito con bordi
+    ctx.save();
+    ctx.translate(512, 480);
+    
+    // Bordo nero esterno più spesso
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 38;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    // Linea orizzontale sopra
+    ctx.moveTo(-100, -100);
+    ctx.lineTo(100, -100);
+    // Linea diagonale
+    ctx.lineTo(100, -80);
+    ctx.lineTo(-30, 110);
+    ctx.stroke();
+    
+    // Bordo oro intermedio
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 22;
+    
+    ctx.beginPath();
+    ctx.moveTo(-100, -100);
+    ctx.lineTo(100, -100);
+    ctx.lineTo(100, -80);
+    ctx.lineTo(-30, 110);
+    ctx.stroke();
+    
+    // Riempimento interno oro chiaro con glow
+    ctx.strokeStyle = '#FFED4E';
+    ctx.lineWidth = 14;
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+    ctx.shadowBlur = 15;
+    
+    ctx.beginPath();
+    ctx.moveTo(-100, -100);
+    ctx.lineTo(100, -100);
+    ctx.lineTo(100, -80);
+    ctx.lineTo(-30, 110);
+    ctx.stroke();
+    
+    ctx.restore();
+    
+    // "SEVEN" text lungo la circonferenza in basso
+    const text = 'SEVEN';
+    const radius = 220;
+    const centerX = 512;
+    const centerY = 512;
+    const angleStart = Math.PI * 0.1 // Centrato rispetto alla vista camera
+    const angleStep = (Math.PI * 0.9) / text.length; // Distribuisci lungo l'arco da sinistra a destra
+    
     ctx.font = 'bold 80px serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255, 215, 0, 0.25)';
-    ctx.fillText('SEVEN', 512, 150);
+    ctx.textBaseline = 'middle';
     
-    // Dice icons (subtle)
-    const drawDie = (x, y, size) => {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.fillRect(x, y, size, size);
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, size, size);
-    };
-    
-    drawDie(150, 450, 80);
-    drawDie(794, 450, 80);
+    for (let i = 0; i < text.length; i++) {
+      const angle = angleStart + i * angleStep;
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle - Math.PI / 2); // Ruota la lettera perpendicolare all'arco
+      
+      // Bordo nero
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 10;
+      ctx.strokeText(text[text.length - 1 - i], 0, 0);
+      
+      // Testo oro
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText(text[text.length - 1 - i], 0, 0);
+      
+      ctx.restore();
+    }
     
     // Create texture
     const texture = new THREE.CanvasTexture(canvas);

@@ -1,8 +1,17 @@
 {
-  "version": "2.0.7",
-  "timestamp": "2025-12-16T10:59:28.644Z",
-  "buildNumber": 87,
+  "version": "2.0.8",
+  "timestamp": "2025-12-16T11:25:29.130Z",
+  "buildNumber": 88,
   "changelog": [
+    {
+      "version": "2.0.8",
+      "date": "2025-12-16",
+      "type": "patch",
+      "changes": [
+        "fix: [7]simplify betting system to only support Under and Over bets, update UI and quests accordingly",
+        "🔖 Bump version to 2.0.7 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.7",
       "date": "2025-12-16",
@@ -87,18 +96,6 @@
         "Fix score and experience by removing SDK init checks",
         "Initial plan",
         "🔖 Bump version to 1.24.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "1.24.8",
-      "date": "2025-12-15",
-      "type": "patch",
-      "changes": [
-        "Merge pull request #4 from davvoz/copilot/fix-quest-tracking-error",
-        "Add test script for Rainbow Rush quest tracking",
-        "Refactor imports to top of file per code review",
-        "Fix quest tracking to use platform database instead of game DB",
-        "Initial plan"
       ]
     }
   ]

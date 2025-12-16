@@ -91,20 +91,6 @@ body {
   display: block;
 }
 
-.result-number {
-  font-size: 48px;
-  font-weight: bold;
-  color: var(--seven);
-  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-  font-family: 'Courier New', monospace;
-}
-
-.result-text {
-  font-size: 12px;
-  color: var(--text-gray);
-  margin-top: 3px;
-}
-
 /* Notification */
 .notification {
   padding: 8px 12px;

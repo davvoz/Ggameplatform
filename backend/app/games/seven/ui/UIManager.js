@@ -66,11 +66,6 @@ export class UIManager {
     return names[type] || type;
   }
 
-  updateResult(sum, detail) {
-    this.elements.resultSum.textContent = String(sum);
-    this.elements.resultDetail.textContent = detail;
-  }
-
   resetResult() {
     this.elements.resultSum.textContent = '—';
     this.elements.resultDetail.textContent = 'Scegli Sopra o Sotto e lancia.';

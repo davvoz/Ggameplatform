@@ -120,13 +120,6 @@ export class GameController {
       return;
     }
 
-    // INIZIALIZZA SESSIONE - invia gameStarted per creare la sessione
-    console.log('[GameController] Initializing session for bet:', betType, betAmount);
-    await this._platform.startGameSession({
-      bet_type: betType,
-      bet_amount: betAmount
-    });
-
     // Spend coins via platform API
     if (this._state._usePlatformCoins && this._platform.isAvailable()) {
       const spent = await this._platform.spendCoins(
@@ -206,7 +199,7 @@ export class GameController {
     const resultMessage = isWinning 
       ? `${betName} vincente! ${multiplier}x = ${winnings} 🪙`
       : `${betName} perdente`;
-    this._ui.updateResult(sum, resultMessage);
+
 
     // Add to history
     this._state.addHistoryEntry({

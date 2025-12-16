@@ -50,19 +50,7 @@ export class PlatformSDKAdapter {
     }
   }
 
-  async startGameSession(extraData) {
-    if (!this.isAvailable()) {
-      return;
-    }
 
-    try {
-      console.log('[PlatformSDKAdapter] Starting new game session with data:', extraData);
-      // Send gameStarted message which triggers RuntimeShell to create a session
-      this._sdk.sendToPlatform('gameStarted', extraData || {});
-    } catch (error) {
-      console.error('[PlatformSDKAdapter] Failed to start session:', error);
-    }
-  }
 
   async initialize(callbacks) {
     if (!this.isAvailable()) {

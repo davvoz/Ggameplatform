@@ -91,15 +91,6 @@ body {
   display: block;
 }
 
-.result-overlay {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  pointer-events: none;
-}
-
 .result-number {
   font-size: 48px;
   font-weight: bold;
@@ -179,11 +170,9 @@ body {
   background: var(--bg-card);
   outline: none;
   cursor: pointer;
-  -webkit-appearance: none;
 }
 
 .bet-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   width: 18px;
   height: 18px;
   border-radius: 50%;

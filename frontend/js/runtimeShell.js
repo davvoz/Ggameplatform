@@ -176,9 +176,14 @@ export default class RuntimeShell {
 
             case GAME_MESSAGE_TYPES.GAME_STARTED:
                 // Game has actually started (level selected) - create session now
+                console.log('🎮🎮🎮 [RuntimeShell] GAME_STARTED message received!');
+                console.log('🎮 Current sessionId:', this.sessionId);
                 this.log('🎮 Game started, creating session...');
                 if (!this.sessionId) {
+                    console.log('🎮 No sessionId, calling startGameSession()...');
                     this.startGameSession();
+                } else {
+                    console.log('🎮 SessionId already exists:', this.sessionId);
                 }
                 break;
 

@@ -48,11 +48,7 @@ class WalletRenderer {
                         </div>
                     </div>
 
-                    <!-- Transaction History -->
-                    <div class="transaction-section">
-                        <h2>📜 Transaction History</h2>
-                        ${this.renderTransactions(transactions)}
-                    </div>
+                    
 
                     <!-- How to Earn Coins -->
                     <div class="earn-coins-section">
@@ -74,6 +70,12 @@ class WalletRenderer {
                                 <p>Gain coins as you level up your profile</p>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Transaction History -->
+                    <div class="transaction-section">
+                        <h2>📜 Transaction History</h2>
+                        ${this.renderTransactions(transactions)}
                     </div>
                 </div>
             `;

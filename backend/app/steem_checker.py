@@ -251,6 +251,13 @@ def update_user_multiplier(user_id: str, steem_username: str, db_session, force:
         # Check if we should skip (cache valid and not forced)
         if not force and not should_check_multiplier(user):
             print(f"⏭️ Skipping multiplier check for {steem_username} (cache valid)")
+            # Still record that a check was attempted so the DB viewer and logs
+            # reflect the most recent check time even if we don't query Steem.
+            try:
+                user.last_multiplier_check = datetime.now().isoformat()
+                db_session.commit()
+            except Exception as e:
+                print(f"⚠️ Could not update last_multiplier_check for {user_id}: {e}")
             return False
         
         # Check current Steem status

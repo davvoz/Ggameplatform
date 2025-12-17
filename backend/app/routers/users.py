@@ -450,7 +450,7 @@ async def get_game_leaderboard(game_id: str, limit: int = 10):
 
 
 @router.post("/check-steem-multiplier/{user_id}")
-async def check_steem_multiplier(user_id: str):
+async def check_steem_multiplier(user_id: str, force: bool = False):
     """
     Check and update Steem multiplier from blockchain.
     Uses 10-minute cache - only queries Steem API if needed.
@@ -468,11 +468,10 @@ async def check_steem_multiplier(user_id: str):
         if not user.steem_username:
             raise HTTPException(status_code=400, detail="User has no Steem account")
         
-        # Check multiplier (respects 10-minute cache)
-        updated = update_user_multiplier(user_id, user.steem_username, session, force=False)
+        # Check multiplier (respects 10-minute cache unless forced)
+        updated = update_user_multiplier(user_id, user.steem_username, session, force=force)
         session.commit()
         session.refresh(user)
-        
         return {
             "success": True,
             "user_id": user_id,
@@ -481,6 +480,7 @@ async def check_steem_multiplier(user_id: str):
             "delegation_amount": user.delegation_amount,
             "cur8_multiplier": user.cur8_multiplier,
             "updated": updated,
+            "forced": bool(force),
             "last_check": user.last_multiplier_check
         }
 

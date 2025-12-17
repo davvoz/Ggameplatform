@@ -171,6 +171,11 @@ from app.weekly_scheduler import start_scheduler
 start_scheduler()
 print("✅ Weekly leaderboard scheduler started")
 
+# Start multiplier scheduler (frequent Steem multiplier checks)
+from app.multiplier_scheduler import start_scheduler as start_multiplier_scheduler
+start_multiplier_scheduler()
+print("✅ Multiplier scheduler started")
+
 # Static files serving
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)

@@ -39,11 +39,17 @@ class ProfileRenderer {
             const userPromise = this.loadUserData();
             const sessionsPromise = this.loadUserSessions(cachedUser.user_id);
 
-            // Wait for both user and sessions
-            const [user, sessions] = await Promise.all([userPromise, sessionsPromise]);
-            
+            // Wait for both user and sessions (sessionsPromise now returns an object {count, sessions})
+            const [user, sessionsData] = await Promise.all([userPromise, sessionsPromise]);
+            const sessions = (sessionsData && sessionsData.sessions) ? sessionsData.sessions : [];
+
             // Calculate stats immediately after sessions arrive
             const stats = this.calculateStats(sessions);
+
+            // If API provided a total count, prefer that for gamesPlayed (avoids client-side limit effects)
+            if (sessionsData && typeof sessionsData.count === 'number') {
+                stats.gamesPlayed = sessionsData.count;
+            }
             
             // Update stats section
             this.updateStatsSection(user, stats);
@@ -117,11 +123,12 @@ class ProfileRenderer {
         console.log('🎮 Loading sessions for user:', userId);
         try {
             const sessionsData = await getUserSessions(userId);
-            console.log('✅ Sessions loaded:', sessionsData?.sessions?.length || 0);
-            return sessionsData.sessions || [];
+            console.log('✅ Sessions loaded:', sessionsData?.sessions?.length || 0, 'total:', sessionsData?.count);
+            // Return the full response so caller can access total count if API provides it
+            return sessionsData || { count: 0, sessions: [] };
         } catch (error) {
             console.error('❌ Error loading sessions:', error);
-            return [];
+            return { count: 0, sessions: [] };
         }
     }
 
@@ -853,15 +860,7 @@ class ProfileRenderer {
             container.innerHTML = '<p class="wallet-error">⚠️ Failed to load wallet</p>';
         });
 
-        // Close handlers
-        const closeBtn = modalContent.querySelector('.close-btn');
-        closeBtn.addEventListener('click', () => modal.remove());
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
+        // Note: close handlers already attached above; nothing more to do here
     }
 
     /**

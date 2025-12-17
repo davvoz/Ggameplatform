@@ -245,14 +245,33 @@ async def get_user(user_id: str):
 
 @router.get("/{user_id}/sessions")
 async def get_user_game_sessions(user_id: str, limit: int = 10):
-    """Get user's game sessions."""
-    sessions = get_user_sessions(user_id, limit)
-    
-    return {
-        "success": True,
-        "count": len(sessions),
-        "sessions": sessions
-    }
+    """Get user's game sessions and total count.
+
+    Returns a paginated list of recent sessions (limited by `limit`) and the
+    total number of sessions for that user in the database as `count`.
+    """
+    from app.database import get_db_session
+    from app.models import GameSession
+    from sqlalchemy import func, desc
+
+    with get_db_session() as session:
+        # Total sessions for this user (unlimited)
+        total = session.query(func.count()).select_from(GameSession).filter(
+            GameSession.user_id == user_id
+        ).scalar() or 0
+
+        # Recent sessions limited by `limit`
+        sessions_q = session.query(GameSession).filter(
+            GameSession.user_id == user_id
+        ).order_by(desc(GameSession.started_at)).limit(limit).all()
+
+        sessions = [s.to_dict() for s in sessions_q]
+
+        return {
+            "success": True,
+            "count": int(total),
+            "sessions": sessions
+        }
 
 @router.post("/sessions/start")
 @limiter.limit("30/minute")

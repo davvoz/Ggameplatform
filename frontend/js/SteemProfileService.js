@@ -7,6 +7,33 @@ export class SteemProfileService {
     }
 
     /**
+     * Get outgoing vesting delegations (delegations made by the account)
+     * @param {string} username
+     * @returns {Promise<Array>} array of delegation objects
+     */
+    async getOutgoingVestingDelegations(username) {
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'condenser_api.get_vesting_delegations',
+                    params: [username, '', 100],
+                    id: 1
+                })
+            });
+
+            if (!response.ok) return [];
+            const data = await response.json();
+            return data.result || [];
+        } catch (error) {
+            console.error('Error fetching outgoing vesting delegations:', error);
+            return [];
+        }
+    }
+
+    /**
      * Fetch Steem user profile data
      * @param {string} username - Steem username
      * @returns {Promise<Object|null>} Profile data or null if not found

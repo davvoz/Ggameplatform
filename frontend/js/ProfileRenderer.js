@@ -864,6 +864,232 @@ class ProfileRenderer {
     }
 
     /**
+     * Broadcast a witness vote for @cur8.witness using Steem Keychain
+     */
+    async voteCur8Witness() {
+        const user = this.authManager.getUser();
+        const steemUsername = this.extractSteemUsername(user);
+        if (!steemUsername) throw new Error('No Steem username available');
+
+        if (!window.steem_keychain) {
+            throw new Error('Steem Keychain not found');
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                // Preferred: requestWitnessVote (simpler witness API supported by Keychain)
+                if (typeof window.steem_keychain.requestWitnessVote === 'function') {
+                    try {
+                        window.steem_keychain.requestWitnessVote(steemUsername, 'cur8.witness', true, (response) => {
+                            console.log('Keychain.requestWitnessVote callback:', response);
+
+                            // Handle common response shapes
+                            if (response && (response.success === true || response.success === 'true')) return resolve(response);
+                            if (response && response.result) return resolve(response);
+                            if (typeof response === 'string' && response.length > 0) return resolve({ tx: response });
+
+                            let errMsg = 'Keychain requestWitnessVote failed';
+                            try {
+                                if (response && response.error) errMsg = response.error.message || JSON.stringify(response.error);
+                                else if (response && response.message) errMsg = response.message;
+                                else if (!response) errMsg = 'No response from Keychain requestWitnessVote';
+                                else errMsg = JSON.stringify(response);
+                            } catch (e) {
+                                errMsg = 'Unknown Keychain response format';
+                            }
+                            return reject(new Error(errMsg));
+                        });
+                        return; // exit; callback will resolve/reject
+                    } catch (e) {
+                        console.warn('requestWitnessVote threw, falling back to requestBroadcast', e);
+                        // fall through to broadcast
+                    }
+                }
+
+                // Fallback: construct an account_witness_vote operation and broadcast
+                const ops = [[
+                    'account_witness_vote',
+                    { voter: steemUsername, witness: 'cur8.witness', approve: true }
+                ]];
+
+                window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
+                    console.log('Keychain.requestBroadcast callback result:', result);
+
+                    if (result && (result.success === true || result.success === 'true')) return resolve(result);
+                    if (result && result.result) return resolve(result);
+                    if (typeof result === 'string' && result.length > 0) return resolve({ tx: result });
+
+                    let errMsg = 'Keychain broadcast failed';
+                    try {
+                        if (result && result.error) errMsg = result.error.message || JSON.stringify(result.error);
+                        else if (result && result.message) errMsg = result.message;
+                        else if (!result) errMsg = 'No response from Keychain';
+                        else errMsg = JSON.stringify(result);
+                    } catch (e) {
+                        errMsg = 'Unknown Keychain response format';
+                    }
+                    return reject(new Error(errMsg));
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
+     * Refresh multiplier information for the current user by re-fetching Steem profile
+     * and invoking backend update endpoint used elsewhere in the renderer.
+     */
+    async refreshMultiplierForCurrentUser() {
+        const user = this.authManager.getUser();
+        if (!user || !user.user_id) throw new Error('No user logged in');
+
+        const steemUsername = this.extractSteemUsername(user);
+        if (!steemUsername) throw new Error('No Steem username available');
+
+        try {
+            const steemProfile = await steemProfileService.fetchProfile(steemUsername);
+            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+
+            const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) throw new Error('Failed to update user multiplier on backend');
+
+            const result = await response.json();
+
+            // Update local user object and UI
+            const updatedUser = Object.assign({}, user, {
+                cur8_multiplier: result.cur8_multiplier,
+                votes_cur8_witness: result.votes_cur8_witness,
+                delegation_amount: result.delegation_amount
+            });
+
+            this.authManager.setUser(updatedUser);
+
+            // Immediately update visible multiplier badge on the profile page so user doesn't need extra refresh
+            try {
+                const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1.0;
+                const multEl = document.querySelector('.stat-value.multiplier');
+                if (multEl) {
+                    multEl.textContent = `${newMult.toFixed(2)}x`;
+                    multEl.style.color = '#818cf8';
+                    multEl.style.fontWeight = '700';
+                }
+
+                // Dispatch event in case other components listen for multiplier updates
+                window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+            } catch (e) {
+                console.warn('Failed to update multiplier badge DOM:', e);
+            }
+
+            return result;
+        } catch (err) {
+            console.error('Error refreshing multiplier:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Directly call backend update endpoint with explicit votes_witness and delegation_amount values.
+     * Use this after a user-initiated vote to ensure the backend records the change immediately.
+     */
+    async updateMultiplierBackend(votesWitness = false, delegationAmount = 0) {
+        const user = this.authManager.getUser();
+        if (!user || !user.user_id) throw new Error('No user logged in');
+        try {
+            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            const url = `${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${votesWitness}&delegation_amount=${delegationAmount}`;
+            const response = await fetch(url, { method: 'POST' });
+            if (!response.ok) throw new Error('Backend update failed');
+            const result = await response.json();
+
+            // Update local user object and UI immediately
+            const updatedUser = Object.assign({}, user, {
+                cur8_multiplier: result.cur8_multiplier,
+                votes_cur8_witness: result.votes_cur8_witness,
+                delegation_amount: result.delegation_amount
+            });
+            this.authManager.setUser(updatedUser);
+
+            // Also update multiplier badge
+            try {
+                const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1.0;
+                const multEl = document.querySelector('.stat-value.multiplier');
+                if (multEl) multEl.textContent = `${newMult.toFixed(2)}x`;
+            } catch (e) {
+                console.warn('Failed to update multiplier badge DOM:', e);
+            }
+
+            return result;
+        } catch (err) {
+            console.error('updateMultiplierBackend error:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Delegate a given amount of STEEM Power to @cur8 using Keychain.
+     * amountSp: number (STEEM Power)
+     */
+    async delegateToCur8(amountSp) {
+        const user = this.authManager.getUser();
+        const steemUsername = this.extractSteemUsername(user);
+        if (!user || !user.user_id) throw new Error('No user logged in');
+        if (!steemUsername) throw new Error('No Steem username available');
+
+        if (!window.steem_keychain) {
+            throw new Error('Steem Keychain not found');
+        }
+
+        if (!amountSp || Number(amountSp) <= 0) throw new Error('Invalid delegation amount');
+
+        // Convert SP to VESTS using SteemProfileService helper
+        let vestsPerSteem = 2000.0;
+        try {
+            vestsPerSteem = await steemProfileService._getVestsToSpRatio();
+        } catch (e) {
+            console.warn('Could not get vests ratio, using fallback', e);
+        }
+
+        const vests = Number(amountSp) * Number(vestsPerSteem);
+        const vesting_shares = `${vests.toFixed(6)} VESTS`;
+
+        return new Promise((resolve, reject) => {
+            try {
+                const ops = [[
+                    'delegate_vesting_shares',
+                    { delegator: steemUsername, delegatee: 'cur8', vesting_shares }
+                ]];
+
+                // Prefer a explicit Keychain delegation method if available
+                if (typeof window.steem_keychain.requestDelegateVestingShares === 'function') {
+                    try {
+                        window.steem_keychain.requestDelegateVestingShares(steemUsername, 'cur8', vesting_shares, (resp) => {
+                            console.log('Keychain.requestDelegateVestingShares callback:', resp);
+                            if (resp && (resp.success === true || resp.result)) return resolve(resp);
+                            return reject(new Error((resp && resp.error && resp.error.message) || 'Delegation failed'));
+                        });
+                        return;
+                    } catch (e) {
+                        console.warn('requestDelegateVestingShares threw, falling back to requestBroadcast', e);
+                    }
+                }
+
+                window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
+                    console.log('Keychain.requestBroadcast delegation result:', result);
+                    if (result && (result.success === true || result.result)) return resolve(result);
+                    if (typeof result === 'string' && result.length > 0) return resolve({ tx: result });
+                    return reject(new Error((result && result.error && result.error.message) || 'Delegation broadcast failed'));
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
      * Show multiplier breakdown modal
      */
     showMultiplierModal(breakdown) {
@@ -906,6 +1132,7 @@ class ProfileRenderer {
                                         <div style="font-size: 15px; color: var(--text-primary); font-weight: 600;">Witness Vote</div>
                                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${breakdown.witness_bonus > 0 ? 'Voting for cur8.witness' : 'Not voting yet'}</div>
                                     </div>
+                                    ${breakdown.witness_bonus === 0 ? `<button id="voteCur8Btn" style="margin-left:12px; background: linear-gradient(90deg,#16a34a,#059669); color: white; border: none; padding: 6px 10px; border-radius: 8px; font-weight:700; cursor: pointer;">Vote</button>` : ''}
                                 </div>
                                 <span style="font-weight: 800; font-size: 20px; color: ${breakdown.witness_bonus > 0 ? '#22c55e' : 'var(--text-muted)'};">+${breakdown.witness_bonus.toFixed(1)}x</span>
                             </div>
@@ -916,16 +1143,24 @@ class ProfileRenderer {
                                 <div>
                                     <div style="font-size: 15px; color: var(--text-primary); font-weight: 600;">Steem Delegation</div>
                                     <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${breakdown.delegation_amount.toFixed(0)} STEEM delegated</div>
+                                                                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; width:100%; flex-direction:column;">
+                                                                                <div style="display:flex; gap:8px; width:100%; align-items:center;">
+                                                                                    <input id="delegateAmountSlider" list="delegateTicks" type="range" min="0" max="10000" step="1" value="${breakdown.delegation_amount.toFixed(0)}" style="flex:1;">
+                                                                                    <datalist id="delegateTicks"></datalist>
+                                                                                    <button id="delegateCur8Btn" style="background: linear-gradient(90deg,#3b82f6,#2563eb); color: white; border: none; padding: 8px 10px; border-radius: 8px; font-weight:700; cursor: pointer;">Delegate</button>
+                                                                                </div>
+                                                                                <!-- available SP label removed; slider shows ticks instead -->
+                                                                        </div>
                                 </div>
-                                <span style="font-weight: 800; font-size: 20px; color: ${breakdown.delegation_bonus > 0 ? '#3b82f6' : 'var(--text-muted)'};">+${breakdown.delegation_bonus.toFixed(2)}x</span>
+                                <span id="delegationBonusValue" style="font-weight: 800; font-size: 20px; color: ${breakdown.delegation_bonus > 0 ? '#3b82f6' : 'var(--text-muted)'};">+${breakdown.delegation_bonus.toFixed(2)}x</span>
                             </div>
                         </div>
                         
                         <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); margin: 12px 0;"></div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 16px; color: var(--text-primary); font-weight: 700;">Total Multiplier</span>
-                            <span style="font-weight: 800; font-size: 24px; color: #818cf8;">${breakdown.final_multiplier.toFixed(2)}x</span>
+                            <span style="font-size: 16px; color: var(--text-primary); font-weight: 700;">Total Multiplier <span style="font-size:12px; color:var(--text-secondary); font-weight:600; margin-left:8px;">(max 4x)</span></span>
+                            <span id="finalMultiplierValue" style="font-weight: 800; font-size: 24px; color: #818cf8;">${breakdown.final_multiplier.toFixed(2)}x</span>
                         </div>
                     </div>
                     
@@ -937,9 +1172,8 @@ class ProfileRenderer {
                             </div>
                             ${breakdown.witness_bonus === 0 ? '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 22px;">• Vote <strong>@cur8.witness</strong> → <strong>+0.5x</strong></div>' : ''}
                             ${breakdown.delegation_amount < 1000 ? '<div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 22px;">• Delegate to <strong>@cur8</strong> → <strong>+0.1x /1000 SP</strong></div>' : ''}
-                            <div style="font-size: 13px; color: #fbbf24; font-weight: 700; margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; text-align: center;">
-                                Max: ${breakdown.max_multiplier.toFixed(1)}x
-                            </div>
+                            <!-- Max indicator moved next to Total Multiplier -->
+                            <div id="multiplierStatus" style="margin-top:8px; font-size:13px; color:var(--text-secondary);"></div>
                         </div>
                     ` : ''}
                 </div>
@@ -954,6 +1188,270 @@ class ProfileRenderer {
                 modal.remove();
             }
         });
+
+        // Wire up vote button inside modal (if present)
+        const voteBtn = modal.querySelector('#voteCur8Btn');
+        const statusEl = modal.querySelector('#multiplierStatus');
+        const delegateBtn = modal.querySelector('#delegateCur8Btn');
+        // Slider and numeric input for delegation
+        const delegateInput = modal.querySelector('#delegateAmountSlider');
+        const delegateStatusId = 'delegateStatus';
+        let delegateStatusEl = modal.querySelector('#' + delegateStatusId);
+        if (!delegateStatusEl) {
+            // append a small status line under delegation input if present
+            const delegNode = modal.querySelector('#delegateAmountSlider')?.parentElement?.parentElement;
+            if (delegNode) {
+                delegateStatusEl = document.createElement('div');
+                delegateStatusEl.id = delegateStatusId;
+                delegateStatusEl.style.cssText = 'margin-top:6px; font-size:13px; color:var(--text-secondary);';
+                delegNode.appendChild(delegateStatusEl);
+            }
+        }
+
+        if (voteBtn) {
+            voteBtn.addEventListener('click', async () => {
+                voteBtn.disabled = true;
+                const prev = voteBtn.textContent;
+                voteBtn.textContent = '🔄 Voting...';
+                try {
+                    await this.voteCur8Witness();
+                    voteBtn.textContent = '✅ Voted';
+                    if (statusEl) statusEl.textContent = '✅ Vote broadcasted. Updating multiplier...';
+
+                    // Update backend multiplier explicitly (force votes_witness=true)
+                    // Preserve current delegation amount instead of sending 0 which would clear delegations
+                    try {
+                        const currentDelegation = Number(breakdown && breakdown.delegation_amount ? breakdown.delegation_amount : (this.authManager.getUser && this.authManager.getUser().delegation_amount) || 0) || 0;
+                        await this.updateMultiplierBackend(true, currentDelegation);
+                    } catch (e) {
+                        // fallback: try a safe refresh without overwriting delegation
+                        console.warn('Failed to update with preserved delegation, falling back to refresh:', e);
+                        await this.refreshMultiplierForCurrentUser();
+                    }
+                    if (statusEl) statusEl.textContent = '✅ Vote applied. Updating UI...';
+
+                    // Fetch updated breakdown and re-open modal with fresh data
+                    try {
+                        const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+                        const userId = this.authManager.getUser().user_id;
+                        const br = await fetch(`${API_URL}/users/multiplier-breakdown/${userId}`);
+                        if (br.ok) {
+                            const json = await br.json();
+                            modal.remove();
+                            this.showMultiplierModal(json.breakdown);
+                        }
+                    } catch (e) {
+                        console.warn('Could not reload multiplier breakdown:', e);
+                    }
+
+                    // Refresh header/profile visuals using updated Steem profile data
+                    try {
+                        const updatedUser = this.authManager.getUser();
+                        const steemUsername = this.extractSteemUsername(updatedUser);
+                        if (steemUsername) {
+                            const steemProfile = await steemProfileService.fetchProfile(steemUsername);
+                            if (steemProfile) {
+                                this.updateProfileWithSteemData(updatedUser, steemProfile);
+                            }
+                        }
+                        // Notify other parts of the app
+                        window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: this.authManager.getUser() }));
+                    } catch (e) {
+                        console.warn('Error updating profile visuals after vote:', e);
+                    }
+                } catch (err) {
+                    console.error('Vote error:', err);
+                    voteBtn.textContent = '❌ Failed';
+                    // Do not show error messages inside the modal; log only and show brief button state
+                } finally {
+                    voteBtn.disabled = false;
+                    setTimeout(() => { try { voteBtn.textContent = prev } catch(e){} }, 3000);
+                }
+            });
+        }
+
+        if (delegateBtn && delegateInput) {
+            // Prefill input and wire live preview
+            try {
+                if (delegateInput) delegateInput.value = Number(breakdown.delegation_amount || 0).toFixed(0);
+            } catch (e) { /* ignore */ }
+
+
+            const slider = modal.querySelector('#delegateAmountSlider');
+            const delegationBonusEl = modal.querySelector('#delegationBonusValue');
+            const finalMultEl = modal.querySelector('#finalMultiplierValue');
+
+            // set slider max based on available SP on account (fallback to 10000)
+            try {
+                const user = this.authManager.getUser && this.authManager.getUser();
+                let availableSp = 10000;
+                if (breakdown.available_sp !== undefined) availableSp = Number(breakdown.available_sp);
+                else if (breakdown.available_steem !== undefined) availableSp = Number(breakdown.available_steem);
+                else if (user && (user.steem_power !== undefined)) availableSp = Number(user.steem_power);
+                // ensure sensible max
+                if (slider) slider.max = Math.max(1, Math.floor(availableSp));
+            } catch (e) {
+                // ignore
+            }
+
+            const computePreview = () => {
+                try {
+                    // use slider value for preview
+                    const val = Math.max(0, Number((slider && slider.value) || 0));
+                    // per SP bonus fallback: +0.1x per 1000 SP => 0.0001 per SP
+                    let perSp = 0.0001;
+                    if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
+                        perSp = Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
+                    }
+                    const rawDelegationBonus = val * perSp;
+                    // per-delegation cap (default 2.5x) can be provided by backend in breakdown.max_delegation_bonus
+                    const perDelegationCap = (breakdown.max_delegation_bonus !== undefined) ? Number(breakdown.max_delegation_bonus) : 2.5;
+                    const cappedBySingleDelegation = Math.min(rawDelegationBonus, perDelegationCap);
+
+                    const baseWithoutDelegation = (Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0);
+                    // tentative total using single-delegation-capped bonus
+                    let newTotal = baseWithoutDelegation + cappedBySingleDelegation;
+                    // enforce absolute total cap (4x)
+                    const cappedTotal = Math.min(newTotal, 4.0);
+                    // effective delegation bonus after global cap applied
+                    const effectiveDelegationBonus = Math.max(0, cappedTotal - baseWithoutDelegation);
+                    if (delegationBonusEl) delegationBonusEl.textContent = `+${effectiveDelegationBonus.toFixed(2)}x`;
+                    if (finalMultEl) finalMultEl.textContent = `${cappedTotal.toFixed(2)}x`;
+                    // update delegate button text to show selected amount when not disabled
+                    try {
+                        if (delegateBtn && !delegateBtn.disabled) delegateBtn.textContent = `Delegate ${val.toFixed(0)} SP`;
+                    } catch (e) { /* ignore */ }
+                    const labelEl = modal.querySelector('#delegateAmountLabel');
+                    try {
+                        let available = breakdown.available_sp !== undefined ? Number(breakdown.available_sp) : (breakdown.available_steem !== undefined ? Number(breakdown.available_steem) : null);
+                        if (available === null) {
+                            const user = this.authManager.getUser && this.authManager.getUser();
+                            if (user && user.steem_power !== undefined) available = Number(user.steem_power);
+                        }
+                        if (labelEl) labelEl.textContent = `Selected: ${val.toFixed(0)} SP — Available: ${available !== null ? Math.floor(available) : '—'}`;
+                    } catch (e) {
+                        if (labelEl) labelEl.textContent = `Selected: ${val.toFixed(0)} SP`;
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            };
+
+            
+                    if (slider) {
+                        slider.addEventListener('input', () => {
+                            computePreview();
+                        });
+                    }
+            computePreview();
+
+            // Fetch Steem profile to determine available SP and populate tick marks on the slider
+            (async () => {
+                try {
+                    const user = this.authManager.getUser && this.authManager.getUser();
+                    const steemUsername = this.extractSteemUsername(user);
+                    if (!steemUsername) return;
+
+                    const spProfile = await steemProfileService.fetchProfile(steemUsername);
+                    if (!spProfile || !spProfile.account) return;
+
+                    const vestsPerSteem = await steemProfileService._getVestsToSpRatio();
+                    const vesting_shares = parseFloat((spProfile.account.vesting_shares || '0 VESTS').split(' ')[0] || '0');
+                    const delegated_vesting_shares = parseFloat((spProfile.account.delegated_vesting_shares || '0 VESTS').split(' ')[0] || '0');
+
+                    // Fetch outgoing delegations to compute amount delegated to others excluding @cur8
+                    let delegatedToCur8Vests = 0;
+                    try {
+                        const outgoing = await steemProfileService.getOutgoingVestingDelegations(spProfile.account.name);
+                        if (Array.isArray(outgoing) && outgoing.length > 0) {
+                            for (const d of outgoing) {
+                                try {
+                                    if (d.delegatee === 'cur8') {
+                                        delegatedToCur8Vests += parseFloat((d.vesting_shares || '0 VESTS').split(' ')[0] || '0');
+                                    }
+                                } catch (e) { /* ignore */ }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Could not fetch outgoing delegations to compute cur8 portion:', e);
+                    }
+
+                    // available vests should not subtract delegations made to @cur8
+                    const delegatedToOthers = Math.max(0, delegated_vesting_shares - delegatedToCur8Vests);
+                    const availableVests = Math.max(0, vesting_shares - delegatedToOthers);
+                    const availableSp = Math.floor(availableVests / (vestsPerSteem || 1));
+
+                    // update slider max and ensure value is within bounds
+                    if (slider) {
+                        slider.max = Math.max(1, availableSp);
+                        if (Number(slider.value) > Number(slider.max)) slider.value = slider.max;
+                    }
+
+                    // populate datalist ticks (0, 10%, 25%, 50%, max)
+                    const dl = modal.querySelector('#delegateTicks');
+                    if (dl) {
+                        dl.innerHTML = '';
+                        const ticks = [0, Math.floor(availableSp * 0.1), Math.floor(availableSp * 0.25), Math.floor(availableSp * 0.5), availableSp];
+                        const uniq = Array.from(new Set(ticks)).filter(n => Number.isFinite(n));
+                        uniq.forEach(v => {
+                            const opt = document.createElement('option');
+                            opt.value = v;
+                            dl.appendChild(opt);
+                        });
+                    }
+
+                    // expose available_sp to breakdown for computePreview logic
+                    try { breakdown.available_sp = availableSp; } catch (e) {}
+                    computePreview();
+                } catch (e) {
+                    console.warn('Could not load Steem profile for slider ticks:', e);
+                }
+            })();
+
+            delegateBtn.addEventListener('click', async () => {
+                delegateBtn.disabled = true;
+                const amount = Number((delegateInput && delegateInput.value) || 0);
+                const prevText = delegateBtn.textContent;
+                delegateBtn.textContent = '🔄 Delegating...';
+                if (delegateStatusEl) delegateStatusEl.textContent = '';
+                try {
+                    if (!amount || amount <= 0) throw new Error('Inserisci un importo valido');
+
+                    await this.delegateToCur8(amount);
+                    if (delegateStatusEl) delegateStatusEl.textContent = '✅ Delegation broadcasted. Updating multiplier...';
+
+                    // Notify backend of delegation amount and update UI
+                    // Preserve current witness vote instead of sending false which would clear it
+                    try {
+                        const votesWitness = (breakdown && typeof breakdown.witness_bonus !== 'undefined') ? (Number(breakdown.witness_bonus) > 0) : Boolean(this.authManager.getUser && this.authManager.getUser().votes_cur8_witness);
+                        await this.updateMultiplierBackend(votesWitness, amount);
+                    } catch (e) {
+                        console.warn('Failed to update backend with preserved vote flag, falling back to refresh:', e);
+                        await this.refreshMultiplierForCurrentUser();
+                    }
+
+                    // Refresh breakdown and profile visuals
+                    try {
+                        const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+                        const userId = this.authManager.getUser().user_id;
+                        const br = await fetch(`${API_URL}/users/multiplier-breakdown/${userId}`);
+                        if (br.ok) {
+                            const json = await br.json();
+                            modal.remove();
+                            this.showMultiplierModal(json.breakdown);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to refresh breakdown after delegation:', e);
+                    }
+                } catch (err) {
+                    console.error('Delegation error:', err);
+                    delegateBtn.textContent = '❌ Failed';
+                } finally {
+                    delegateBtn.disabled = false;
+                    setTimeout(() => { try { delegateBtn.textContent = prevText } catch(e){} }, 3000);
+                }
+            });
+        }
     }
 }
 /**

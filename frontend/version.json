@@ -1,8 +1,18 @@
 {
-  "version": "2.0.15",
-  "timestamp": "2025-12-17T22:09:35.351Z",
-  "buildNumber": 95,
+  "version": "2.0.16",
+  "timestamp": "2025-12-17T23:09:34.149Z",
+  "buildNumber": 96,
   "changelog": [
+    {
+      "version": "2.0.16",
+      "date": "2025-12-17",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "Fix: implement multiplier scheduler for frequent Steem multiplier checks and update user multipliers",
+        "🔖 Bump version to 2.0.15 [skip-version]"
+      ]
+    },
     {
       "version": "2.0.15",
       "date": "2025-12-17",
@@ -86,15 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[7] add session management and game start notification",
         "🔖 Bump version to 2.0.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.0.6",
-      "date": "2025-12-16",
-      "type": "patch",
-      "changes": [
-        "refactor:[7] remove unused game session initialization and result update methods",
-        "🔖 Bump version to 2.0.5 [skip-version]"
       ]
     }
   ]

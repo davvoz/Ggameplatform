@@ -1139,20 +1139,17 @@ class ProfileRenderer {
                         </div>
                         
                         <div style="padding: 12px; background: ${breakdown.delegation_bonus > 0 ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border-radius: 10px; border: 2px solid ${breakdown.delegation_bonus > 0 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.1)'};">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:8px;">
                                 <div>
                                     <div style="font-size: 15px; color: var(--text-primary); font-weight: 600;">Steem Delegation</div>
                                     <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${breakdown.delegation_amount.toFixed(0)} STEEM delegated</div>
-                                                                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; width:100%; flex-direction:column;">
-                                                                                <div style="display:flex; gap:8px; width:100%; align-items:center;">
-                                                                                    <input id="delegateAmountSlider" list="delegateTicks" type="range" min="0" max="10000" step="1" value="${breakdown.delegation_amount.toFixed(0)}" style="flex:1;">
-                                                                                    <datalist id="delegateTicks"></datalist>
-                                                                                    <button id="delegateCur8Btn" style="background: linear-gradient(90deg,#3b82f6,#2563eb); color: white; border: none; padding: 8px 10px; border-radius: 8px; font-weight:700; cursor: pointer;">Delegate</button>
-                                                                                </div>
-                                                                                <!-- available SP label removed; slider shows ticks instead -->
-                                                                        </div>
                                 </div>
                                 <span id="delegationBonusValue" style="font-weight: 800; font-size: 20px; color: ${breakdown.delegation_bonus > 0 ? '#3b82f6' : 'var(--text-muted)'};">+${breakdown.delegation_bonus.toFixed(2)}x</span>
+                            </div>
+                            <div style="display:flex; gap:8px; width:100%; align-items:center;">
+                                <input id="delegateAmountSlider" list="delegateTicks" type="range" min="0" max="10000" step="1" value="${breakdown.delegation_amount.toFixed(0)}" style="flex:1;">
+                                <datalist id="delegateTicks"></datalist>
+                                <button id="delegateCur8Btn" style="background: linear-gradient(90deg,#3b82f6,#2563eb); color: white; border: none; padding: 8px 10px; border-radius: 8px; font-weight:700; cursor: pointer;">Delegate</button>
                             </div>
                         </div>
                         

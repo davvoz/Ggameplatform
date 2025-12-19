@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seven - Dice Game</title>
     <link rel="stylesheet" href="main.css">
-    
+
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
+
     <!-- Cannon.js - Physics Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
-    
+
     <!-- Platform SDK -->
     <script src="/sdk/platformsdk.js"></script>
 </head>
+
 <body>
     <div class="game-containerdiv">
         <!-- Header (Notification + Coins) -->
@@ -36,11 +38,11 @@
 
         <!-- Betting Controls -->
         <div class="betting-controls">
-            
+
             <!-- Bet Amount -->
             <div class="bet-amount-box">
                 <div class="bet-label">
-                    <span> 
+                    <span>
                         Bet Amount
                     </span>
                     <!-- Mode Switcher (inline) -->
@@ -56,32 +58,53 @@
                         </button>
                     </div>
                 </div>
-                <div class="bet-slider-container">
-                    <input type="range" id="betAmountRange" min="1" max="50" value="5" class="bet-slider">
-                    <div class="bet-value"><span id="betAmount">5</span> 🪙</div>
-                    <button id="doubleBtn" class="double-btn">×2</button>
+                <div class="bet-amount-controls">
+                    <div class="leftDiv">
+                        <button class="bet-btn-control bet-decrease" id="decreaseBet" title="Decrease bet amount">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                        <div class="bet-input-wrapper">
+                            <input type="number" id="betAmountInput" min="1" max="50" value="5" class="bet-input"
+                                readonly>
+                            <span class="bet-currency">🪙</span>
+                        </div>
+                        <button class="bet-btn-control bet-increase" id="increaseBet" title="Increase bet amount">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="rightDiv">
+                        <button id="doubleBtn" class="double-btn">×2</button>
+                        <button id="halfBtn" class="half-btn">÷2</button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Main Bets -->
-            <div class="main-bets">
-                <button class="bet-btn bet-low" data-bet-type="under">
-                    <div class="bet-title">UNDER 7</div>
-                    <div class="bet-info">2-6 • 1:1</div>
-                </button>
-                <button class="bet-btn bet-high" data-bet-type="over">
-                    <div class="bet-title">OVER 7</div>
-                    <div class="bet-info">8-12 • 1:1</div>
-                </button>
-            </div>
-            <div class="seven-rule">
-                ⚠️ If 7 appears, you always lose!
+                <!-- Main Bets -->
+                <div class="main-bets">
+                    <button class="bet-btn bet-low" data-bet-type="under">
+                        <div class="bet-title">UNDER 7</div>
+                        <div class="bet-info">2-6 • 1:1</div>
+                    </button>
+                    <button class="bet-btn bet-high" data-bet-type="over">
+                        <div class="bet-title">OVER 7</div>
+                        <div class="bet-info">8-12 • 1:1</div>
+                    </button>
+                </div>
+                <div class="seven-rule">
+                    ⚠️ If 7 appears, you always lose!
+                </div>
+
             </div>
 
         </div>
 
-    </div>
-
-    <script type="module" src="main.js"></script>
+        <script type="module" src="main.js"></script>
 </body>
+
 </html>

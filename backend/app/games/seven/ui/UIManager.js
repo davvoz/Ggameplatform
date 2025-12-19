@@ -23,8 +23,11 @@ export class UIManager {
       
       // Betting System
       betTypes: document.getElementById('betTypes'),
-      betAmountRange: document.getElementById('betAmountRange'),
-      betAmount: document.getElementById('betAmount'),
+      betAmountInput: document.getElementById('betAmountInput'),
+      increaseBet: document.getElementById('increaseBet'),
+      decreaseBet: document.getElementById('decreaseBet'),
+      doubleBtn: document.getElementById('doubleBtn'),
+      halfBtn: document.getElementById('halfBtn'),
       modeButtons: document.querySelectorAll('.mode-btn')
     });
   }
@@ -39,11 +42,31 @@ export class UIManager {
   }
 
   updateBetAmount(amount) {
-    this.elements.betAmount.textContent = String(amount);
+    this.elements.betAmountInput.value = String(amount);
+    this._updateBetButtons();
   }
 
   getBetAmount() {
-    return parseInt(this.elements.betAmountRange.value, 10);
+    return parseInt(this.elements.betAmountInput.value, 10);
+  }
+
+  _updateBetButtons() {
+    const currentBet = this.getBetAmount();
+    const min = parseInt(this.elements.betAmountInput.min, 10);
+    const max = parseInt(this.elements.betAmountInput.max, 10);
+    const step = parseInt(this.elements.betAmountInput.step || 1, 10);
+
+    // Disable decrease if at minimum
+    this.elements.decreaseBet.disabled = currentBet <= min;
+    
+    // Disable increase if at maximum
+    this.elements.increaseBet.disabled = currentBet >= max;
+    
+    // Disable double if would exceed max
+    this.elements.doubleBtn.disabled = currentBet * 2 > max;
+    
+    // Disable half if would go below min
+    this.elements.halfBtn.disabled = Math.floor(currentBet / 2) < min;
   }
 
   _getBetDisplayName(type) {
@@ -68,7 +91,11 @@ export class UIManager {
   }
 
   setControlsEnabled(enabled) {
-    this.elements.betAmountRange.disabled = !enabled;
+    this.elements.betAmountInput.disabled = !enabled;
+    this.elements.increaseBet.disabled = !enabled;
+    this.elements.decreaseBet.disabled = !enabled;
+    this.elements.doubleBtn.disabled = !enabled;
+    this.elements.halfBtn.disabled = !enabled;
     
     // Disable bet type buttons
     const betButtons = document.querySelectorAll('[data-bet-type]');
@@ -76,14 +103,19 @@ export class UIManager {
     
     // Disable mode buttons while rolling
     this.elements.modeButtons.forEach(btn => btn.disabled = !enabled);
+    
+    // Re-check button states if enabled
+    if (enabled) {
+      this._updateBetButtons();
+    }
   }
 
   updateBetMode(mode) {
-    // Update slider min/max/step
-    this.elements.betAmountRange.min = mode.minBet;
-    this.elements.betAmountRange.max = mode.maxBet;
-    this.elements.betAmountRange.step = mode.minBet; // Step deve corrispondere al minBet
-    this.elements.betAmountRange.value = mode.defaultBet;
+    // Update input min/max/step
+    this.elements.betAmountInput.min = mode.minBet;
+    this.elements.betAmountInput.max = mode.maxBet;
+    this.elements.betAmountInput.step = mode.minBet; // Step deve corrispondere al minBet
+    this.elements.betAmountInput.value = mode.defaultBet;
     this.updateBetAmount(mode.defaultBet);
     
     // Update active mode button

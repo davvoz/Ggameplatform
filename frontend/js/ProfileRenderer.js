@@ -1354,8 +1354,11 @@ class ProfileRenderer {
                         perSp = Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
                     }
                     const rawDelegationBonus = val * perSp;
-                    // per-delegation cap (default 2.5x) can be provided by backend in breakdown.max_delegation_bonus
-                    const perDelegationCap = (breakdown.max_delegation_bonus !== undefined) ? Number(breakdown.max_delegation_bonus) : 2.5;
+                    // per-delegation cap can be provided by backend in breakdown.max_delegation_bonus
+                    // Default depends on whether user votes witness: 2.5x when voting, 3.0x when not voting
+                    const perDelegationCap = (breakdown.max_delegation_bonus !== undefined)
+                        ? Number(breakdown.max_delegation_bonus)
+                        : ((Number(breakdown.witness_bonus) && Number(breakdown.witness_bonus) > 0) ? 2.5 : 3.0);
                     const cappedBySingleDelegation = Math.min(rawDelegationBonus, perDelegationCap);
 
                     let baseWithoutDelegation = (breakdown.base !== undefined) ? Number(breakdown.base) : ((Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0));

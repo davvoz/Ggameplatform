@@ -81,15 +81,26 @@
         if(slider && delegationValue){
             slider.addEventListener('input', ()=>{
                 const val = Number(slider.value)||0;
-                // naive preview: delegation_bonus scales linearly (server does actual calc)
-                const preview = Math.min(2.0, (val/10000)*2.0);
-                delegationValue.textContent = `+${preview.toFixed(2)}x`;
-                const finalEl = modal.querySelector('#navFinalMultiplierValue');
-                if(finalEl){
-                    const base = breakdown.base||1.0;
-                    const newFinal = base + (breakdown.witness_bonus||0) + preview;
-                    finalEl.textContent = `${Math.min(4, newFinal).toFixed(2)}x`;
-                }
+                    // compute per-delegation cap (backend override allowed). Default: 2.5 if voting witness, else 3.0
+                    const perDelegationCapNav = (breakdown.max_delegation_bonus !== undefined)
+                        ? Number(breakdown.max_delegation_bonus)
+                        : ((Number(breakdown.witness_bonus) && Number(breakdown.witness_bonus) > 0) ? 2.5 : 3.0);
+
+                    // try to compute per-SP ratio from breakdown when available
+                    let perSpNav = 0.0001;
+                    if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
+                        perSpNav = Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
+                    }
+
+                    const rawPreview = val * perSpNav;
+                    const preview = Math.min(perDelegationCapNav, rawPreview);
+                    delegationValue.textContent = `+${preview.toFixed(2)}x`;
+                    const finalEl = modal.querySelector('#navFinalMultiplierValue');
+                    if (finalEl) {
+                        const base = breakdown.base || 1.0;
+                        const newFinal = base + (Number(breakdown.witness_bonus) || 0) + preview;
+                        finalEl.textContent = `${Math.min(4, newFinal).toFixed(2)}x`;
+                    }
             });
         }
 

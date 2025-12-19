@@ -349,21 +349,34 @@
 
 
 .btn-logout {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
+    /* Always show logout as a solid error (red) button */
+    background: linear-gradient(135deg, var(--error), #dc2626);
+    border: none;
+    color: white;
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 0.8rem;
-    transition: var(--transition);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: none;
     white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(255, 61, 113, 0.3);
 }
 
 .btn-logout:hover {
-    background: var(--error);
-    border-color: var(--error);
-    color: white;
+    /* Keep the same appearance on hover (no color change) */
+    background: linear-gradient(135deg, var(--error), #dc2626);
+    transform: none;
+    box-shadow: 0 2px 8px rgba(255, 61, 113, 0.3);
+}
+
+/* Ensure the moved logout button behaves correctly in mobile menu */
+@media (max-width: 768px) {
+    .nav-logout .btn-logout {
+        width: 100%;
+        padding: var(--spacing-sm);
+        display: block;
+    }
 }
 
 /* Modal Styles (for existing modal in index.html) */

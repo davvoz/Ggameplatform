@@ -34,6 +34,12 @@
     margin: 0;
 }
 
+/* Prevent site title from wrapping when navbar gets crowded */
+.nav-brand {
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
 .nav-menu {
     display: flex;
     align-items: center;
@@ -66,19 +72,143 @@
                 0 4px 12px rgba(0, 217, 255, 0.3);
 }
 
-/* User Info Desktop */
+/* Container for navigation links so user/level cards stay aligned to the right */
+.nav-links {
+    display: flex;
+    /* increased horizontal spacing between nav link items */
+    gap: 1.25rem; /* ~20px */
+    align-items: center;
+    flex: 1 1 auto;
+}
+
+/* User Info Desktop (outer wrapper — themed by grouped rule) */
 .user-info {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
-    border-radius: calc(var(--radius-lg) + 6px);
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 8px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-    backdrop-filter: blur(6px);
     margin-left: var(--spacing-md);
 }
+
+/* Small avatar used inside navbar user card */
+.nav-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.06);
+}
+
+.nav-user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Themed glassy card style for profile (outer), multiplier and outer level card wrapper */
+.user-info,
+.nav-level-card,
+.nav-multiplier-card {
+    background: linear-gradient(180deg, rgba(12,14,23,0.55), rgba(18,21,30,0.45));
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 30px rgba(2,6,23,0.6), 0 2px 8px rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* subtle colored inner glow using primary color */
+.nav-level-card, .nav-multiplier-card {
+    position: relative;
+}
+.nav-level-card::after, .nav-multiplier-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(0,0,0,0));
+    mix-blend-mode: screen;
+}
+
+/* hover effects removed for static cards */
+.nav-user-card:hover, .nav-level-card:hover, .nav-multiplier-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+.nav-multiplier-card .multiplier-value {
+    color: #0ee8ff; /* brighter accent for multiplier */
+    text-shadow: 0 4px 18px rgba(14,232,255,0.14);
+}
+
+/* Compact profile card adjustments */
+.nav-user-card {
+    gap: 8px;
+    padding: 4px 6px;
+    max-width: 260px; /* prevent the profile card from growing too wide */
+    flex: 0 0 auto;
+    /* inner container should be transparent — outer `.user-info` provides the card chrome */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.nav-username {
+    display: inline-block;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.95rem;
+}
+
+.nav-multiplier {
+    margin: 0 8px;
+}
+
+/* Container holding username + multiplier inline */
+.nav-user-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 80px;
+    max-width: 140px;
+    overflow: hidden;
+}
+
+.nav-multiplier {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Multiplier badge inside navbar user card */
+.nav-multiplier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.nav-multiplier {
+    font-weight: 900;
+    font-size: 1.02rem;
+    color: var(--primary-color);
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 10px;
+}
+
+
+/* Level card: keep pointer but remove hover animation */
+.level-badge-container { cursor: pointer; }
+.level-badge-container:hover { transform: none !important; transition: none !important; }
+
+/* subtle pulse when XP increases can be triggered by adding .xp-pulse */
+.xp-pulse { animation: pulse 1.2s ease-in-out; }
 
 .user-info #userName {
     color: var(--text-primary);
@@ -108,13 +238,172 @@
     align-items: center;
     gap: 8px;
     padding: 6px 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.06));
+    /* make inner badge transparent so only the outer nav-level-card shows the theme */
+    background: transparent;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 6px 20px rgba(2,6,23,0.55), inset 0 1px 0 rgba(255,255,255,0.02);
-    min-width: 220px;
+    border: none;
+    box-shadow: none;
+    min-width: 180px;
     max-width: 480px;
     flex: 0 0 auto;
+}
+
+/* Reset any inner widget chrome so the outer card provides the visual frame */
+.level-badge-container > * {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Ensure badge container can position the multiplier inside it */
+.level-badge-container { position: relative; }
+
+.level-badge-container .level-multiplier {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    font-weight: 900;
+    color: var(--primary-color);
+    font-size: 1rem;
+    background: transparent;
+}
+
+@media (max-width: 768px) {
+    .level-badge-container .level-multiplier {
+        position: static;
+        margin-left: 8px;
+        margin-top: 6px;
+    }
+}
+
+/* Standalone level card in navbar (separate from user profile card) */
+.nav-level-card {
+    display: flex;
+    align-items: center;
+    /* provide larger offset from the nav links */
+    margin-left: 1.25rem;
+    /* match multiplier card chrome: padding and size */
+    padding: 10px 12px;
+    min-width: 120px;
+    height: 64px;
+}
+
+/* Center the content inside the standalone level card so the badge looks aligned */
+.nav-level-card {
+    justify-content: center;
+}
+
+/* When the badge container is inside the navbar-level card, center its children
+   and neutralize absolute positioning used elsewhere to avoid visual offset. */
+.nav-level-card #levelBadgeContainer,
+.nav-level-card .level-badge-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px;
+    min-width: 0;
+}
+
+/* Prevent inner multiplier from using absolute positioning inside the nav card */
+.nav-level-card .level-multiplier {
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    margin-left: 8px;
+}
+
+/* Slightly reduce the swatch margin when displayed in the compact nav card */
+.nav-level-card .level-color-swatch {
+    margin-right: 8px;
+}
+
+/* Multiplier moved into level card */
+.level-multiplier {
+    font-weight: 900;
+    color: var(--primary-color);
+    font-size: 1rem;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+
+/* When multiplier is placed inside the badge container, align it to the right area */
+#levelBadgeContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.level-multiplier {
+    margin-left: 10px;
+}
+
+/* New multiplier card styles */
+
+.nav-multiplier-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    /* use same padding/rounded chrome as .nav-level-card via grouped theme */
+    padding: 10px 12px;
+    min-width: 120px;
+    height: 64px; /* match level card */
+}
+
+/* Center the multiplier title and value horizontally and vertically */
+
+.nav-multiplier-card {
+    text-align: left;
+}
+
+.nav-multiplier-card .multiplier-title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* left-align the two-line title */
+    justify-content: center;
+    text-align: left;
+}
+
+.nav-multiplier-card .multiplier-value {
+    margin: 0;
+}
+
+/* Increase horizontal spacing between links and the nav cards on desktop */
+@media (min-width: 769px) {
+    .nav-multiplier-card {
+        margin-left: 1.25rem;
+    }
+    .nav-level-card {
+        margin-left: 1.25rem;
+    }
+}
+
+.nav-multiplier-card .multiplier-title {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.85);
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.nav-multiplier-card .multiplier-value {
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .nav-multiplier-card { display: none; }
+}
+
+@media (max-width: 768px) {
+    .level-multiplier {
+        display: block;
+        margin: 6px 0 0 0;
+        font-size: 1rem;
+    }
 }
 
 .level-badge-icon {
@@ -169,6 +458,18 @@
     font-weight: 800;
     font-size: 14px;
     color: #ffffff;
+
+/* Overrides: remove residual chrome/contour from the navbar user area
+   If the visible contour comes from the adjacent multiplier/level cards,
+   these rules force a transparent background and remove border/shadow. */
+#userInfo,
+#userInfo .nav-user-card,
+.nav-multiplier-card,
+.nav-level-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.5px;
     display: flex;
@@ -221,6 +522,41 @@
     min-width: 40px;
     text-align: right;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Shimmer (mirror) effect on hover for Level and Multiplier cards */
+.nav-level-card, .nav-multiplier-card {
+    position: relative;
+    overflow: hidden; /* contain the shimmer */
+}
+
+.nav-level-card::before, .nav-multiplier-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    filter: blur(6px);
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+}
+
+.nav-level-card:hover::before, .nav-multiplier-card:hover::before {
+    /* start immediately and run once on hover (no repeat) - faster duration */
+    animation: shimmer-slide 400ms linear 1;
+    animation-delay: 0s;
+    opacity: 1;
+}
+
+@keyframes shimmer-slide {
+    0% { left: -120%; opacity: 0; }
+    20% { opacity: 0.85; }
+    60% { opacity: 0.95; }
+    100% { left: 120%; opacity: 0; }
 }
 
 /* Responsive adjustments for smaller screens */
@@ -419,6 +755,45 @@
         overflow-y: auto;
         z-index: 999;
     }
+    /* On mobile make nav-links stack vertically and not stretch horizontally */
+    .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: stretch;
+        flex: none;
+        width: 100%;
+    }
+
+    /* Make level card full width inside the mobile menu and remove left margin */
+    .nav-level-card {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+        padding: 8px 0;
+    }
+
+    /* Allow username to wrap and free space on mobile to avoid truncation */
+    .nav-user-meta {
+        max-width: none;
+        width: auto;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .nav-username {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        max-width: none;
+    }
+
+    /* Make level badge itself fluid on mobile to avoid forcing horizontal width */
+    .level-badge-container {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+    }
     
     .nav-menu.active {
         right: 0;
@@ -445,6 +820,69 @@
         background: var(--surface);
         border-radius: var(--radius-md);
         margin-bottom: var(--spacing-md);
+    }
+
+    /* Mobile stacking: ensure cards and logout are visually separated and full-width */
+    .nav-multiplier-card,
+    .nav-level-card,
+    .user-info,
+    .nav-logout {
+        width: 100%;
+        margin-bottom: var(--spacing-md);
+        box-sizing: border-box;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .nav-multiplier-card {
+        display: flex !important;
+        justify-content: center; /* center horizontally on mobile */
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        text-align: center;
+    }
+
+    .nav-multiplier-card .multiplier-title {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Separate logout with a subtle divider and make its button full-width */
+    .nav-logout {
+        border-top: 1px solid rgba(255,255,255,0.04);
+        padding-top: 12px;
+        margin-top: 6px;
+    }
+
+    .nav-logout #logoutBtn,
+    .nav-logout .btn-logout {
+        width: 100%;
+        display: block;
+        padding: var(--spacing-sm);
+    }
+
+    /* Ensure level card and its badge take full width inside mobile menu */
+    .nav-level-card {
+        width: 100%;
+        margin-left: 0;
+        padding: 10px 0;
+        justify-content: flex-start;
+    }
+
+    #levelBadgeContainer, .level-badge-container {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        padding-right: 12px;
+    }
+
+    /* Make the profile card full width too */
+    .nav-user-card {
+        width: 100%;
+        justify-content: flex-start;
     }
     
     .user-info #userName {
@@ -488,4 +926,22 @@
     .nav-menu.active {
         right: 0;
     }
+
+    /* ensure profile row stays compact on very small screens */
+    .nav-user-card {
+        gap: 6px;
+    }
+
+    .nav-avatar {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* Ensure the JS placeholder for user info remains invisible in the UI
+   while staying addressable by scripts. */
+#userInfo,
+#userInfo * {
+    display: none !important;
+    visibility: hidden !important;
 }

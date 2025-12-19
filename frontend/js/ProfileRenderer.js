@@ -522,6 +522,29 @@ class ProfileRenderer {
                         };
                         
                         console.log('✅ Multiplier badge configured:', breakdown.final_multiplier.toFixed(2));
+                        // Sync multiplier to global AuthManager and notify other UI (navbar)
+                        try {
+                            const currentUser = this.authManager && this.authManager.getUser && this.authManager.getUser();
+                            if (currentUser && currentUser.user_id) {
+                                const updatedUser = Object.assign({}, currentUser, {
+                                    cur8_multiplier: Number(breakdown.final_multiplier),
+                                    votes_cur8_witness: (breakdown.witness_bonus && Number(breakdown.witness_bonus) > 0) ? true : (currentUser.votes_cur8_witness || false),
+                                    delegation_amount: Number(breakdown.delegation_amount || currentUser.delegation_amount || 0)
+                                });
+                                try {
+                                    if (this.authManager.setUser) this.authManager.setUser(updatedUser);
+                                } catch (e) {
+                                    console.warn('Failed to call authManager.setUser while syncing multiplier:', e);
+                                }
+                                try {
+                                    window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+                                } catch (e) {
+                                    console.warn('Failed to dispatch multiplierUpdated after profile load:', e);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Failed to sync nav multiplier from profile load', e);
+                        }
                     }
                 } else {
                     multiplierEl.textContent = `${multiplier}x`;
@@ -1278,17 +1301,47 @@ class ProfileRenderer {
             const delegationBonusEl = modal.querySelector('#delegationBonusValue');
             const finalMultEl = modal.querySelector('#finalMultiplierValue');
 
-            // set slider max based on available SP on account (fallback to 10000)
+            // set slider max based on available SP/delegation info (prefer precise backend values)
             try {
                 const user = this.authManager.getUser && this.authManager.getUser();
-                let availableSp = 10000;
-                if (breakdown.available_sp !== undefined) availableSp = Number(breakdown.available_sp);
-                else if (breakdown.available_steem !== undefined) availableSp = Number(breakdown.available_steem);
-                else if (user && (user.steem_power !== undefined)) availableSp = Number(user.steem_power);
-                // ensure sensible max
-                if (slider) slider.max = Math.max(1, Math.floor(availableSp));
+                let availableSp = 0;
+                if (breakdown.available_sp !== undefined) availableSp = Number(breakdown.available_sp) || 0;
+                else if (breakdown.available_steem !== undefined) availableSp = Number(breakdown.available_steem) || 0;
+                else if (user && (user.steem_power !== undefined)) availableSp = Number(user.steem_power) || 0;
+
+                // Ensure slider max covers current delegation amount and user's reported SP
+                const delegatedAmount = Number(breakdown.delegation_amount || 0) || 0;
+                const userSp = (user && user.steem_power !== undefined) ? Number(user.steem_power) : 0;
+                const inferredMax = Math.max(1, Math.floor(Math.max(availableSp, delegatedAmount, userSp)));
+
+                if (slider) {
+                    slider.max = inferredMax;
+                    // Ensure slider default value reflects current delegation if present
+                    if (delegatedAmount > 0) {
+                        slider.value = Math.min(delegatedAmount, slider.max);
+                    } else if (!slider.value) {
+                        slider.value = 0;
+                    }
+                }
+
+                // populate datalist ticks including current delegation and availableSp
+                const dlInit = modal.querySelector('#delegateTicks');
+                if (dlInit) {
+                    dlInit.innerHTML = '';
+                    const ticksInit = [0, Math.floor(inferredMax * 0.1), Math.floor(inferredMax * 0.25), Math.floor(inferredMax * 0.5), inferredMax];
+                    if (delegatedAmount > 0) ticksInit.push(Math.floor(delegatedAmount));
+                    const uniqInit = Array.from(new Set(ticksInit)).filter(n => Number.isFinite(n));
+                    uniqInit.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v;
+                        dlInit.appendChild(opt);
+                    });
+                }
+
+                // expose available_sp to breakdown for computePreview logic
+                try { breakdown.available_sp = Math.max(availableSp, delegatedAmount); } catch (e) {}
             } catch (e) {
-                // ignore
+                console.warn('Error initializing delegation slider:', e);
             }
 
             const computePreview = () => {
@@ -1305,7 +1358,9 @@ class ProfileRenderer {
                     const perDelegationCap = (breakdown.max_delegation_bonus !== undefined) ? Number(breakdown.max_delegation_bonus) : 2.5;
                     const cappedBySingleDelegation = Math.min(rawDelegationBonus, perDelegationCap);
 
-                    const baseWithoutDelegation = (Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0);
+                    let baseWithoutDelegation = (breakdown.base !== undefined) ? Number(breakdown.base) : ((Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0));
+                    // include witness bonus in the base (if present)
+                    baseWithoutDelegation = baseWithoutDelegation + (Number(breakdown.witness_bonus) || 0);
                     // tentative total using single-delegation-capped bonus
                     let newTotal = baseWithoutDelegation + cappedBySingleDelegation;
                     // enforce absolute total cap (4x)
@@ -1470,3 +1525,17 @@ export async function fetchSteemProfile(username) {
 }
 
 export const steemProfileService = new SteemProfileService();
+
+// Expose a helper to open the canonical CUR8 multiplier modal from other scripts
+try {
+    window.showCur8MultiplierModal = function (breakdown) {
+        try {
+            const renderer = new ProfileRenderer();
+            renderer.showMultiplierModal(breakdown);
+        } catch (e) {
+            console.warn('showCur8MultiplierModal failed:', e);
+        }
+    };
+} catch (e) {
+    // ignore if window not writable
+}

@@ -1,4 +1,5 @@
 import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay } from './api.js';
+import { SteemProfileService } from './SteemProfileService.js';
 import { QuestRenderer } from './quest.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.js';
@@ -22,6 +23,109 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initRouter();
+
+    // Populate navbar user info if authenticated
+    try {
+        const userInfoEl = document.getElementById('userInfo');
+        if (window.AuthManager && window.AuthManager.currentUser && userInfoEl) {
+            const user = window.AuthManager.currentUser;
+            const userNameEl = document.getElementById('userName');
+            const navAvatar = document.getElementById('navAvatar');
+            const navMultiplier = document.getElementById('navMultiplier');
+            const levelCardContainer = document.getElementById('levelCardContainer');
+            if (userNameEl) userNameEl.textContent = user.username || user.steemUsername || 'Player';
+
+            if (navAvatar) {
+                navAvatar.src = './icons/icon-72x72.png';
+                // if user has a steem username, fetch the Steem profile for the avatar
+                try {
+                    const steemService = new SteemProfileService();
+                    const steemUsername = user.steemUsername || user.steem_username || user.username;
+                    if (steemUsername) {
+                        steemService.fetchProfile(steemUsername).then(sp => {
+                            if (sp && sp.profileImage) {
+                                navAvatar.src = sp.profileImage;
+                            }
+                        }).catch(e => {
+                            console.warn('Could not fetch Steem profile for navbar avatar:', e);
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Failed to init SteemProfileService:', e);
+                }
+            }
+            if (navMultiplier) navMultiplier.textContent = `${(user.cur8_multiplier || 1).toFixed(2)}x`;
+
+            // show container
+            userInfoEl.style.display = 'flex';
+
+            // Multiplier is rendered in its own navbar card (`#multiplierCard`).
+
+            // Level card click-to-profile disabled per UI requirement
+
+            // Wire logout button if present
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', () => {
+                try { window.AuthManager.logout(); } catch (e) { console.warn('Logout failed', e); }
+                window.location.href = '/auth.html';
+            });
+        }
+    } catch (e) { console.warn('Navbar init failed', e); }
+
+    // Listen for multiplier updates dispatched by ProfileRenderer and other components
+    window.addEventListener('multiplierUpdated', (ev) => {
+        try {
+            const updated = ev?.detail || ev;
+            const navMultiplierEl = document.getElementById('navMultiplier');
+
+            // Prefer explicit cur8_multiplier on user object
+            if (updated && (updated.cur8_multiplier !== undefined && updated.cur8_multiplier !== null)) {
+                if (navMultiplierEl) navMultiplierEl.textContent = `${Number(updated.cur8_multiplier).toFixed(2)}x`;
+                return;
+            }
+
+            // If a breakdown payload was provided, prefer its final_multiplier
+            if (updated && updated.breakdown && updated.breakdown.final_multiplier !== undefined) {
+                if (navMultiplierEl) navMultiplierEl.textContent = `${Number(updated.breakdown.final_multiplier).toFixed(2)}x`;
+                return;
+            }
+
+            // Fallback: try to fetch fresh breakdown for the currently logged user
+            (async () => {
+                try {
+                    const user = window.AuthManager && window.AuthManager.getUser && window.AuthManager.getUser();
+                    if (!user || !user.user_id) return;
+                    const API_URL = window.ENV?.API_URL || window.location.origin;
+                    const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
+                    if (!resp.ok) return;
+                    const json = await resp.json();
+                    const finalMult = json && json.breakdown && json.breakdown.final_multiplier;
+                    if (navMultiplierEl && finalMult !== undefined) navMultiplierEl.textContent = `${Number(finalMult).toFixed(2)}x`;
+                } catch (e) {
+                    console.warn('Failed to refresh multiplier breakdown for nav:', e);
+                }
+            })();
+        } catch (err) {
+            console.warn('Failed to apply multiplierUpdated to nav:', err);
+        }
+    });
+
+    // Keep navbar multiplier in sync on login/logout
+    window.addEventListener('userLogin', (e) => {
+        try {
+            const user = window.AuthManager?.getUser?.();
+            const navMultiplierEl = document.getElementById('navMultiplier');
+            if (navMultiplierEl && user) {
+                const val = Number(user.cur8_multiplier || 1).toFixed(2);
+                navMultiplierEl.textContent = `${val}x`;
+            }
+        } catch (err) { console.warn('Failed to update nav multiplier on login', err); }
+    });
+
+    window.addEventListener('userLogout', () => {
+        const navMultiplierEl = document.getElementById('navMultiplier');
+        if (navMultiplierEl) navMultiplierEl.textContent = `1.00x`;
+    });
 
     // Cleanup game session on page unload (browser close/refresh)
     window.addEventListener('beforeunload', () => {

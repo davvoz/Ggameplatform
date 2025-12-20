@@ -1,8 +1,17 @@
 {
-  "version": "2.2.1",
-  "timestamp": "2025-12-20T00:27:20.702Z",
-  "buildNumber": 103,
+  "version": "2.2.2",
+  "timestamp": "2025-12-20T01:11:35.741Z",
+  "buildNumber": 104,
   "changelog": [
+    {
+      "version": "2.2.2",
+      "date": "2025-12-20",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD] implement game over retry button and session reset logic",
+        "🔖 Bump version to 2.2.1 [skip-version]"
+      ]
+    },
     {
       "version": "2.2.1",
       "date": "2025-12-20",
@@ -88,15 +97,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: reorder transaction history section in wallet renderer for improved layout & Game played count on profile section",
         "🔖 Bump version to 2.0.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.0.14",
-      "date": "2025-12-17",
-      "type": "patch",
-      "changes": [
-        "fix: enhance user sessions endpoint to return total count and recent sessions",
-        "🔖 Bump version to 2.0.13 [skip-version]"
       ]
     }
   ]

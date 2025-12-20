@@ -394,6 +394,123 @@ class AbsoluteImprovementStrategy(XPCalculationStrategy):
         return True
 
 
+class CustomStrategy(XPCalculationStrategy):
+    """Calculate XP using custom logic based on extra_data from session."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        Calculate XP using custom logic defined in parameters.
+        Uses extra_data from context for game-specific metrics.
+        
+        Supported custom calculations:
+        1. xp_per_wave: XP per wave completed (from extra_data['wave'])
+        2. xp_per_10_kills: XP per 10 kills (from extra_data['kills'])
+        3. level_bonuses: XP bonuses for reaching specific tower levels
+        
+        Example parameters for merge-tower-defense:
+            {
+                'xp_per_wave': 2.0,
+                'max_waves': 20
+            }
+            or
+            {
+                'xp_per_10_kills': 1.0,
+                'max_kills': 200
+            }
+            or
+            {
+                'level_bonuses': [
+                    {'level': 7, 'xp': 20.0},
+                    {'level': 6, 'xp': 15.0}
+                ]
+            }
+        """
+        if not context.extra_data:
+            return 0.0
+        
+        xp = 0.0
+        
+        # Wave progression bonus
+        if 'xp_per_wave' in parameters:
+            wave = context.extra_data.get('wave', 0)
+            max_waves = parameters.get('max_waves', 999)
+            xp_per_wave = parameters['xp_per_wave']
+            
+            effective_wave = min(wave, max_waves)
+            xp += effective_wave * xp_per_wave
+        
+        # Kills bonus
+        if 'xp_per_10_kills' in parameters:
+            kills = context.extra_data.get('kills', 0)
+            max_kills = parameters.get('max_kills', 999)
+            xp_per_10 = parameters['xp_per_10_kills']
+            
+            effective_kills = min(kills, max_kills)
+            kill_groups = effective_kills / 10.0
+            xp += kill_groups * xp_per_10
+        
+        # Tower/Level achievement bonuses
+        if 'level_bonuses' in parameters:
+            level_bonuses = parameters['level_bonuses']
+            highest_level = context.extra_data.get('highest_tower_level', 0)
+            
+            # Award XP for the highest level reached
+            for bonus in level_bonuses:
+                if highest_level >= bonus.get('level', 0):
+                    xp += bonus.get('xp', 0)
+                    break  # Only award the highest matching bonus
+        
+        # Tower merges bonus
+        if 'xp_per_merge' in parameters:
+            merges = context.extra_data.get('tower_merges', 0)
+            max_merges = parameters.get('max_merges', 999)
+            xp_per_merge = parameters['xp_per_merge']
+            
+            effective_merges = min(merges, max_merges)
+            xp += effective_merges * xp_per_merge
+        
+        # Coins earned bonus
+        if 'xp_per_100_coins' in parameters:
+            coins = context.extra_data.get('coins_earned', 0)
+            max_coins = parameters.get('max_coins', 99999)
+            xp_per_100 = parameters['xp_per_100_coins']
+            
+            effective_coins = min(coins, max_coins)
+            coin_groups = effective_coins / 100.0
+            xp += coin_groups * xp_per_100
+        
+        return xp
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate custom parameters."""
+        # Wave bonus validation
+        if 'xp_per_wave' in parameters:
+            if not isinstance(parameters['xp_per_wave'], (int, float)) or parameters['xp_per_wave'] < 0:
+                return False
+        
+        # Kills bonus validation
+        if 'xp_per_10_kills' in parameters:
+            if not isinstance(parameters['xp_per_10_kills'], (int, float)) or parameters['xp_per_10_kills'] < 0:
+                return False
+        
+        # Level bonuses validation
+        if 'level_bonuses' in parameters:
+            bonuses = parameters['level_bonuses']
+            if not isinstance(bonuses, list):
+                return False
+            for bonus in bonuses:
+                if not isinstance(bonus, dict):
+                    return False
+                if 'level' not in bonus or 'xp' not in bonus:
+                    return False
+                if not isinstance(bonus['level'], (int, float)) or bonus['level'] < 0:
+                    return False
+                if not isinstance(bonus['xp'], (int, float)) or bonus['xp'] < 0:
+                    return False
+        
+        return True
+
+
 class StrategyFactory:
     """Factory for creating XP calculation strategies (Factory Pattern)."""
     
@@ -408,6 +525,8 @@ class StrategyFactory:
         'level_progression': LevelProgressionStrategy(),
         'distance_bonus': DistanceBonusStrategy(),
         'absolute_improvement': AbsoluteImprovementStrategy(),
+        # Custom strategy for game-specific calculations
+        'custom': CustomStrategy(),
     }
     
     @classmethod

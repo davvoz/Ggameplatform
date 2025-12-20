@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <title>Merge Tower Defense</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background: #000;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #loadingScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-title {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 48px;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-subtitle {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            color: #00ff88;
+            opacity: 0.7;
+            margin-bottom: 50px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 136, 0.2);
+            border-top: 4px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .loading-title {
+                font-size: 36px;
+            }
+            .loading-subtitle {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen">
+        <div class="loading-title">⚔️ MERGE TOWER ⚔️</div>
+        <div class="loading-subtitle">Elite Defense Force</div>
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Platform SDK -->
+    <script src="../../sdk/platformsdk.js"></script>
+    
+    <!-- Professional Sprite System -->
+    <script src="js/sprite-renderer.js"></script>
+    <script src="js/sprite-animation-system.js"></script>
+    <script src="js/enemy-sprites.js"></script>
+    <script src="js/sprites/towers/basic.js"></script>
+    <script src="js/sprites/towers/rapid.js"></script>
+    <script src="js/sprites/towers/sniper.js"></script>
+    <script src="js/sprites/towers/splash.js"></script>
+    <script src="js/sprites/towers/freeze.js"></script>
+    <script src="js/sprites/towers/laser.js"></script>
+    <script src="js/sprites/towers/electric.js"></script>
+    <script src="js/tower-sprites.js"></script>
+    <script src="js/multi-part-enemies.js"></script>
+    <script src="js/multi-part-towers.js"></script>
+    
+    <!-- Game Core Modules -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/graphics.js"></script>
+    
+    <!-- New Enemy System (Component-Based Architecture) -->
+    <script src="js/enemy-components.js"></script>
+    <script src="js/enemy-configs.js"></script>
+    <script src="js/enemy-tactical.js"></script>
+    
+    <!-- Original Entities (Legacy compatibility) -->
+    <script src="js/entities.js"></script>
+    
+    <script src="js/particles.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    
+    <!-- Game Entry Point -->
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,8 +1,17 @@
 {
-  "version": "2.2.2",
-  "timestamp": "2025-12-20T01:11:35.741Z",
-  "buildNumber": 104,
+  "version": "2.2.3",
+  "timestamp": "2025-12-20T20:48:32.137Z",
+  "buildNumber": 105,
   "changelog": [
+    {
+      "version": "2.2.3",
+      "date": "2025-12-20",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD] adjust game balance for nightmare mode and implement linear scaling for enemies",
+        "🔖 Bump version to 2.2.2 [skip-version]"
+      ]
+    },
     {
       "version": "2.2.2",
       "date": "2025-12-20",
@@ -87,16 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "Fix: implement multiplier scheduler for frequent Steem multiplier checks and update user multipliers",
         "🔖 Bump version to 2.0.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.0.15",
-      "date": "2025-12-17",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: reorder transaction history section in wallet renderer for improved layout & Game played count on profile section",
-        "🔖 Bump version to 2.0.14 [skip-version]"
       ]
     }
   ]

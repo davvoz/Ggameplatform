@@ -185,7 +185,11 @@ class UIManager {
         const ctx = this.graphics.ctx;
         const cannon = button.cannon;
         const isSelected = button.id === this.selectedCannonType;
-        const canAfford = gameState.coins >= cannon.cost;
+        
+        // Usa la funzione calculateTowerCost per ottenere il costo reale
+        const actualCost = typeof calculateTowerCost === 'function' ? 
+                          calculateTowerCost(cannon.id, 1) : cannon.cost;
+        const canAfford = gameState.coins >= actualCost;
 
         const cornerRadius = Math.min(8, Math.floor(button.width * 0.12));
         
@@ -230,7 +234,7 @@ class UIManager {
         
         // Cost
         const costColor = canAfford ? CONFIG.COLORS.TEXT_WARNING : CONFIG.COLORS.TEXT_DANGER;
-        this.graphics.drawText(`💰${cannon.cost}`, button.x + button.width / 2, button.y + button.height * 0.85, {
+        this.graphics.drawText(`💰${actualCost}`, button.x + button.width / 2, button.y + button.height * 0.85, {
             size: costSize,
             color: costColor,
             align: 'center',

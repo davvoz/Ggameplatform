@@ -742,16 +742,46 @@ function generateWaveComposition(waveNumber) {
 function applyWaveScaling(config, waveNumber) {
     const scaled = JSON.parse(JSON.stringify(config)); // Deep clone
     
-    // HP scaling
-    const hpMultiplier = 1.0 + (waveNumber - 1) * 0.15;
+    // LINEAR HP SCALING - Crescita costante e prevedibile
+    // Formula: HP = BaseHP * (1 + (wave - 1) * scalingFactor)
+    const hpScalingFactor = 0.35; // 35% di HP in più per wave
+    const hpMultiplier = 1.0 + (waveNumber - 1) * hpScalingFactor;
     scaled.combat.hp = Math.floor(scaled.combat.hp * hpMultiplier);
     
-    // Speed scaling (capped)
-    const speedMultiplier = Math.min(1.5, 1.0 + (waveNumber - 1) * 0.05);
+    // LINEAR SPEED SCALING con cap
+    const speedScalingFactor = 0.08; // 8% velocità in più per wave
+    const maxSpeedMultiplier = 3.0; // Cap massimo 3x
+    const speedMultiplier = Math.min(
+        maxSpeedMultiplier,
+        1.0 + (waveNumber - 1) * speedScalingFactor
+    );
     scaled.movement.speed *= speedMultiplier;
     
-    // Reward scaling
-    scaled.reward = Math.floor(scaled.reward * (1.0 + (waveNumber - 1) * 0.1));
+    // DODGE CHANCE SCALING LINEARE - Counter agli sniper
+    if (waveNumber >= 3) {
+        const dodgePerWave = 0.015; // 1.5% dodge per wave
+        const dodgeBonus = (waveNumber - 2) * dodgePerWave;
+        scaled.combat.dodgeChance = Math.min(0.5, scaled.combat.dodgeChance + dodgeBonus);
+    }
+    
+    // REWARD SCALING LINEARE - Ricompense crescono lentamente
+    const rewardScalingFactor = 0.12; // 12% in più per wave
+    const rewardMultiplier = 1.0 + (waveNumber - 1) * rewardScalingFactor;
+    scaled.reward = Math.floor(scaled.reward * rewardMultiplier * 0.5); // *0.5 = ancora ridotte
+    
+    // ARMOR SCALING LINEARE dalla wave 3
+    if (waveNumber >= 3 && scaled.combat.armor >= 0) {
+        const armorPerWave = 0.3; // +0.3 armor per wave
+        const armorBonus = Math.floor((waveNumber - 2) * armorPerWave);
+        scaled.combat.armor += armorBonus;
+    }
+    
+    // CC RESISTANCE SCALING LINEARE dalla wave 2
+    if (waveNumber >= 2) {
+        const resistPerWave = 0.025; // 2.5% resist per wave
+        const ccResistanceBonus = (waveNumber - 1) * resistPerWave;
+        scaled.combat.ccResistance = Math.min(0.9, scaled.combat.ccResistance + ccResistanceBonus);
+    }
     
     return scaled;
 }

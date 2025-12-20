@@ -9,16 +9,16 @@ const CONFIG = {
     ROWS: 12,
     DEFENSE_ZONE_ROWS: 4,  // Increased from zombie-tower (was 3)
     
-    // Game Balance
-    INITIAL_COINS: 150,
+    // Game Balance - NIGHTMARE MODE: Impossibile con una sola strategia
+    INITIAL_COINS: 50,  // Ridotto da 60 - Solo 2 torri base!
     INITIAL_ENERGY: 100,
-    ENERGY_DRAIN_PER_ZOMBIE: 1.5,
-    ENERGY_REGEN_RATE: 0.2,  // Regen per second when no zombies past line
+    ENERGY_DRAIN_PER_ZOMBIE: 3.0,  // Aumentato da 2.5
+    ENERGY_REGEN_RATE: 0.1,  // Ridotto da 0.15 - regen molto più lento
     
     // Wave Configuration
-    BASE_WAVE_ZOMBIES: 8,
+    BASE_WAVE_ZOMBIES: 10,  // Aumentato da 10
     WAVE_ZOMBIE_INCREMENT: 3,
-    SPAWN_INTERVAL: 1200,
+    SPAWN_INTERVAL: 1500,  // Ridotto da 1000 - spawning MOLTO più veloce
     
     // Performance
     MAX_PARTICLES: 200,
@@ -49,19 +49,22 @@ const CONFIG = {
 };
 
 // Cannon Types - Strategic variety with unique roles
+// NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
+// Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
 const CANNON_TYPES = {
     BASIC: {
         id: 'BASIC',
         name: 'Basic',
         icon: '🔫', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.BASIC.base : null,
-        cost: 25,
-        damage: 3,
-        fireRate: 1000,
-        range: 3,
+        cost: 20,  // Manteniamo basso per permettere l'inizio
+        damage: 2,  // Ridotto da 3 - torri più deboli
+        fireRate: 1200,  // Aumentato da 1000 - spara più lentamente
+        range: 2.8,  // Ridotto da 3
         projectileSpeed: 10,
         color: '#00ff88',
         description: 'Balanced turret',
+        costMultiplier: 1.0, // Moltiplicatore di costo per tipo
         // Merge strategy: Good starting tower, efficient economy
     },
     
@@ -70,13 +73,14 @@ const CANNON_TYPES = {
         name: 'Rapid',
         icon: '⚡', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.RAPID.base : null,
-        cost: 50,
-        damage: 2,
-        fireRate: 400,
-        range: 2.5,
+        cost: 55,  // Aumentato da 40
+        damage: 1.5,  // Ridotto da 2
+        fireRate: 500,  // Aumentato da 400 - meno rapido
+        range: 2.3,  // Ridotto da 2.5
         projectileSpeed: 14,
         color: '#00ddff',
         description: 'High fire rate',
+        costMultiplier: 1.3,  // Aumentato da 1.1
         // Merge strategy: Volume damage, good vs swarms
     },
     
@@ -85,13 +89,14 @@ const CANNON_TYPES = {
         name: 'Sniper',
         icon: '🎯', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.SNIPER.base : null,
-        cost: 80,
-        damage: 12,
-        fireRate: 2500,
-        range: 6,
-        projectileSpeed: 20,
+        cost: 150,  // DRASTICAMENTE aumentato da 100 - quasi 3x BASIC!
+        damage: 8,  // Ridotto ulteriormente da 10
+        fireRate: 3200,  // Aumentato da 2800 - MOLTO più lento
+        range: 5.0,  // Ridotto da 5.5
+        projectileSpeed: 18,  // Ridotto da 20 - più lento
         color: '#ff0066',
         description: 'Long range power',
+        costMultiplier: 2.2,  // DRASTICAMENTE aumentato da 1.6 - il più costoso!
         // Merge strategy: Back line support, high single-target
     },
     
@@ -100,14 +105,15 @@ const CANNON_TYPES = {
         name: 'Splash',
         icon: '💥', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.SPLASH.base : null,
-        cost: 120,
-        damage: 8,
-        fireRate: 1800,
-        range: 3,
-        splashRadius: 1.5,
+        cost: 140,  // Aumentato da 95
+        damage: 6,  // Ridotto da 8
+        fireRate: 2000,  // Aumentato da 1800 - più lento
+        range: 2.8,  // Ridotto da 3
+        splashRadius: 1.3,  // Ridotto da 1.5
         projectileSpeed: 8,
         color: '#ff8800',
         description: 'Area damage',
+        costMultiplier: 1.7,  // Aumentato da 1.4
         // Merge strategy: Crowd control, strategic positioning
     },
     
@@ -116,15 +122,16 @@ const CANNON_TYPES = {
         name: 'Freeze',
         icon: '❄️', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.FREEZE.base : null,
-        cost: 100,
-        damage: 2,
-        fireRate: 1500,
-        range: 3.5,
-        slowFactor: 0.5,
-        slowDuration: 2000,
+        cost: 110,  // Aumentato da 80
+        damage: 1,  // Ridotto da 2
+        fireRate: 1800,  // Aumentato da 1500 - più lento
+        range: 3.2,  // Ridotto da 3.5
+        slowFactor: 0.6,  // Aumentato da 0.5 - slow meno efficace
+        slowDuration: 1800,  // Ridotto da 2000
         projectileSpeed: 12,
         color: '#aaffff',
         description: 'Slows enemies',
+        costMultiplier: 1.5,  // Aumentato da 1.25
         // Merge strategy: Support, combos with other towers
     },
     
@@ -133,14 +140,15 @@ const CANNON_TYPES = {
         name: 'Laser',
         icon: '🔆', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.LASER.base : null,
-        cost: 150,
-        damage: 6,
-        fireRate: 600,
-        range: 5,
-        piercing: 3,  // Hits multiple enemies
+        cost: 180,  // Aumentato da 120
+        damage: 5,  // Ridotto da 6
+        fireRate: 750,  // Aumentato da 600 - meno rapido
+        range: 4.5,  // Ridotto da 5
+        piercing: 2,  // Ridotto da 3 - penetra meno nemici
         projectileSpeed: 25,
         color: '#ffff00',
         description: 'Piercing beam',
+        costMultiplier: 2.0,  // Aumentato da 1.5
         // Merge strategy: Line control, efficient vs groups
     },
     
@@ -149,14 +157,15 @@ const CANNON_TYPES = {
         name: 'Electric',
         icon: '⚡', // Legacy fallback
         sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.ELECTRIC.base : null,
-        cost: 140,
-        damage: 5,
-        fireRate: 1200,
-        range: 3,
-        chainTargets: 4,  // Chains to nearby enemies
+        cost: 160,  // Aumentato da 110
+        damage: 4,  // Ridotto da 5
+        fireRate: 1400,  // Aumentato da 1200 - più lento
+        range: 2.8,  // Ridotto da 3
+        chainTargets: 3,  // Ridotto da 4 - catena a meno nemici
         projectileSpeed: 15,
         color: '#aa00ff',
         description: 'Chains to enemies',
+        costMultiplier: 1.9,  // Aumentato da 1.45
         // Merge strategy: High value vs clustered enemies
     }
 };
@@ -241,14 +250,16 @@ const ZOMBIE_TYPES = {
 };
 
 // Level progression for merge system
+// NOTA: Moltiplicatori aumentati per bilanciare la nuova difficoltà logaritmica dei nemici
+// e i costi esponenziali degli upgrade
 const MERGE_LEVELS = [
     { level: 1, damageMultiplier: 1.0, rangeBonus: 0, fireRateBonus: 1.0, icon: '⭐' },
-    { level: 2, damageMultiplier: 2.2, rangeBonus: 0.5, fireRateBonus: 1.15, icon: '✨' },
-    { level: 3, damageMultiplier: 4.5, rangeBonus: 1.0, fireRateBonus: 1.35, icon: '💫' },
-    { level: 4, damageMultiplier: 9.0, rangeBonus: 1.5, fireRateBonus: 1.6, icon: '⚡' },
-    { level: 5, damageMultiplier: 18.0, rangeBonus: 2.0, fireRateBonus: 2.0, icon: '🌟' },
-    { level: 6, damageMultiplier: 35.0, rangeBonus: 2.5, fireRateBonus: 2.5, icon: '🔥' },
-    { level: 7, damageMultiplier: 70.0, rangeBonus: 3.0, fireRateBonus: 3.0, icon: '💎' },
+    { level: 2, damageMultiplier: 2.5, rangeBonus: 0.5, fireRateBonus: 1.2, icon: '✨' },
+    { level: 3, damageMultiplier: 6.0, rangeBonus: 1.0, fireRateBonus: 1.5, icon: '💫' },
+    { level: 4, damageMultiplier: 14.0, rangeBonus: 1.5, fireRateBonus: 1.85, icon: '⚡' },
+    { level: 5, damageMultiplier: 30.0, rangeBonus: 2.0, fireRateBonus: 2.3, icon: '🌟' },
+    { level: 6, damageMultiplier: 60.0, rangeBonus: 2.5, fireRateBonus: 2.9, icon: '🔥' },
+    { level: 7, damageMultiplier: 120.0, rangeBonus: 3.0, fireRateBonus: 3.6, icon: '💎' },
 ];
 
 // Special abilities unlocked at higher levels

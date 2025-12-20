@@ -125,7 +125,9 @@ class Game {
         }
         
         // Check if can afford
-        if (this.state.coins < cannonDef.cost) {
+        const actualCost = typeof calculateTowerCost === 'function' ? 
+                          calculateTowerCost(cannonType, 1) : cannonDef.cost;
+        if (this.state.coins < actualCost) {
             this.particles.createWarningEffect(col, row, '💰');
             return;
         }
@@ -137,7 +139,7 @@ class Game {
         }
         
         // Place cannon
-        this.state.coins -= cannonDef.cost;
+        this.state.coins -= actualCost;
         this.entities.addCannon(col, row, cannonType);
         this.particles.createPlacementEffect(col, row);
         
@@ -308,8 +310,15 @@ class Game {
     startWave() {
         this.state.waveInProgress = true;
         this.state.waveZombiesSpawned = 0;
-        this.state.waveZombiesTotal = CONFIG.BASE_WAVE_ZOMBIES + 
-                                      (this.state.wave - 1) * CONFIG.WAVE_ZOMBIE_INCREMENT;
+        
+        // ZOMBIE COUNT NIGHTMARE - Ondate MASSIVE!
+        const zombieScalingFactor = 4.0; // Aumentato da 3.0
+        const zombieGrowthRate = 15.0; // Aumentato da 12.0
+        const additionalZombies = Math.floor(
+            Math.log10(1 + (this.state.wave - 1) * zombieScalingFactor) * zombieGrowthRate
+        );
+        this.state.waveZombiesTotal = CONFIG.BASE_WAVE_ZOMBIES + additionalZombies;
+        
         this.state.lastSpawnTime = performance.now();
         
         // Wave announcement
@@ -326,23 +335,23 @@ class Game {
     spawnZombie() {
         const col = Utils.randomInt(0, CONFIG.COLS - 1);
         const type = this.selectZombieType();
-        const waveMultiplier = 1 + (this.state.wave - 1) * 0.25;
         
-        this.entities.addZombie(col, type, waveMultiplier);
+        // Passa il numero della wave per applicare lo scaling logaritmico
+        this.entities.addZombie(col, type, this.state.wave);
         this.state.waveZombiesSpawned++;
     }
 
     selectZombieType() {
         const wave = this.state.wave;
         
-        // Progressive difficulty
+        // Progressive difficulty - FAVORISCE nemici veloci e agili (counter sniper)
         const options = [
-            { value: 'NORMAL', weight: Math.max(10, 20 - wave) },
-            { value: 'FAST', weight: wave >= 2 ? 10 + wave : 0 },
-            { value: 'TANK', weight: wave >= 3 ? 5 + Math.floor(wave / 2) : 0 },
-            { value: 'AGILE', weight: wave >= 5 ? 5 + Math.floor(wave / 3) : 0 },
-            { value: 'ARMORED', weight: wave >= 7 ? 3 + Math.floor(wave / 4) : 0 },
-            { value: 'BOSS', weight: wave >= 10 && wave % 5 === 0 ? 2 : 0 }
+            { value: 'NORMAL', weight: Math.max(5, 15 - wave) }, // Ridotto
+            { value: 'FAST', weight: wave >= 2 ? 15 + wave * 2 : 0 }, // MOLTO aumentato
+            { value: 'TANK', weight: wave >= 3 ? 8 + Math.floor(wave / 2) : 0 }, // Aumentato
+            { value: 'AGILE', weight: wave >= 4 ? 12 + Math.floor(wave / 2) : 0 }, // Aumentato e anticipa
+            { value: 'ARMORED', weight: wave >= 5 ? 8 + Math.floor(wave / 3) : 0 }, // Anticipa
+            { value: 'BOSS', weight: wave >= 8 && wave % 4 === 0 ? 3 : 0 } // Boss più frequenti
         ];
         
         return Utils.weightedRandom(options.filter(o => o.weight > 0));
@@ -351,10 +360,14 @@ class Game {
     completeWave() {
         this.state.waveInProgress = false;
         
-        // Wave rewards
-        const baseReward = 50;
-        const waveBonus = this.state.wave * 25;
-        const energyBonus = Math.floor(this.state.energy / 10);
+        // WAVE REWARDS MINIME - Economia DISPERATA!
+        const baseReward = 15; // Ridotto da 25
+        const rewardScalingFactor = 1.0; // Ridotto da 1.5
+        const rewardGrowthRate = 0.6; // Ridotto da 0.8
+        const logMultiplier = 1.0 + Math.log10(1 + (this.state.wave - 1) * rewardScalingFactor) * rewardGrowthRate;
+        const waveBonus = Math.floor(baseReward * logMultiplier * 0.5); // *0.5 = ulteriore riduzione massiccia
+        
+        const energyBonus = Math.floor(this.state.energy / 20); // Cambiato da /15 a /20
         const totalReward = baseReward + waveBonus + energyBonus;
         
         this.state.coins += totalReward;

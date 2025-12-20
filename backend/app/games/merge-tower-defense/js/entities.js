@@ -219,6 +219,7 @@ class Zombie {
         this.scale = baseStats.scale;
         this.armor = baseStats.armor || 0;
         this.dodgeChance = baseStats.dodgeChance || 0;
+        this.ccResistance = 0; // Inizializza CC resistance (verrà scalato con la wave)
         this.isBoss = baseStats.isBoss || false;
         
         // Status effects
@@ -510,11 +511,37 @@ class EntityManager {
     }
 
     // Zombie management
-    addZombie(col, type, waveMultiplier = 1.0) {
+    addZombie(col, type, waveNumber = 1) {
         const zombie = new Zombie(col, type);
-        zombie.maxHp *= waveMultiplier;
-        zombie.hp = zombie.maxHp;
-        zombie.reward = Math.floor(zombie.reward * (1 + (waveMultiplier - 1) * 0.5));
+        
+        // Applica lo scaling logaritmico completo usando applyWaveScaling
+        if (typeof applyWaveScaling === 'function' && waveNumber > 1) {
+            // Crea un config fittizio per applicare lo scaling
+            const baseConfig = {
+                combat: {
+                    hp: zombie.maxHp,
+                    armor: zombie.armor,
+                    dodgeChance: zombie.dodgeChance,
+                    ccResistance: 0
+                },
+                movement: {
+                    speed: zombie.speed
+                },
+                reward: zombie.reward
+            };
+            
+            const scaled = applyWaveScaling(baseConfig, waveNumber);
+            
+            // Applica i valori scalati
+            zombie.maxHp = scaled.combat.hp;
+            zombie.hp = zombie.maxHp;
+            zombie.speed = scaled.movement.speed;
+            zombie.reward = scaled.reward;
+            zombie.armor = scaled.combat.armor;
+            zombie.dodgeChance = scaled.combat.dodgeChance;
+            zombie.ccResistance = scaled.combat.ccResistance || 0;
+        }
+        
         this.zombies.push(zombie);
         return zombie;
     }

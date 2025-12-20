@@ -133,22 +133,22 @@ class ParticleSystem {
             vy: -2,
             vx: 0,
             gravity: 2,
-            life: 1.5,
+            life: 1.0,
             scale: 1.5,
             glow: true
         });
         
-        // Debris particles
-        for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8;
+        // Debris particles - reduced from 8 to 4
+        for (let i = 0; i < 4; i++) {
+            const angle = (Math.PI * 2 * i) / 4;
             this.emit(x, y, {
                 text: '•',
-                color: Utils.randomChoice(['#00ff88', '#88ffbb', '#00aa66']),
-                vx: Math.cos(angle) * 3,
-                vy: Math.sin(angle) * 3,
-                gravity: 3,
-                life: 0.8,
-                scale: 0.8
+                color: '#00ff88',
+                vx: Math.cos(angle) * 2,
+                vy: Math.sin(angle) * 2,
+                gravity: 2,
+                life: 0.6,
+                scale: 0.6
             });
         }
     }
@@ -157,17 +157,17 @@ class ParticleSystem {
      * Create merge effect
      */
     createMergeEffect(x, y) {
-        // Stars
-        for (let i = 0; i < 12; i++) {
-            const angle = (Math.PI * 2 * i) / 12;
+        // Stars - reduced from 12 to 6
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
             this.emit(x, y, {
                 text: '⭐',
                 color: '#ffff00',
                 vx: Math.cos(angle) * 2,
                 vy: Math.sin(angle) * 2,
                 gravity: 1,
-                life: 1.0,
-                scale: 1.2,
+                life: 0.8,
+                scale: 1.0,
                 glow: true
             });
         }
@@ -178,8 +178,8 @@ class ParticleSystem {
             color: '#ffffff',
             vy: 0,
             vx: 0,
-            life: 0.5,
-            scale: 2.0,
+            life: 0.4,
+            scale: 1.5,
             glow: true,
             fadeOut: true
         });
@@ -190,7 +190,7 @@ class ParticleSystem {
             color: '#00ff88',
             vy: -1,
             vx: 0,
-            life: 1.5,
+            life: 1.2,
             scale: 1.0,
             glow: true
         });
@@ -200,20 +200,21 @@ class ParticleSystem {
      * Create explosion effect
      */
     createExplosion(x, y, radius, color = '#ff8800') {
-        const particleCount = Math.floor(radius * 10);
+        // Simplified: use fixed small count instead of radius-based
+        const particleCount = 4; // Reduced from radius * 10
         
         for (let i = 0; i < particleCount; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Utils.randomFloat(2, 5);
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = 3;
             
             this.emit(x, y, {
-                text: Utils.randomChoice(['💥', '🔥', '✨', '💫']),
+                text: '💥',
                 color: color,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                gravity: 2,
-                life: Utils.randomFloat(0.5, 1.0),
-                scale: Utils.randomFloat(0.8, 1.5),
+                gravity: 1.5,
+                life: 0.6,
+                scale: 1.0,
                 glow: true
             });
         }
@@ -223,16 +224,17 @@ class ParticleSystem {
      * Create freeze effect
      */
     createFreezeEffect(x, y) {
-        for (let i = 0; i < 6; i++) {
-            const angle = (Math.PI * 2 * i) / 6;
+        // Reduced from 6 to 4 particles
+        for (let i = 0; i < 4; i++) {
+            const angle = (Math.PI * 2 * i) / 4;
             this.emit(x, y, {
                 text: '❄️',
                 color: '#aaffff',
-                vx: Math.cos(angle) * 1.5,
-                vy: Math.sin(angle) * 1.5,
+                vx: Math.cos(angle) * 1.2,
+                vy: Math.sin(angle) * 1.2,
                 gravity: 0.5,
-                life: 1.0,
-                scale: 0.8,
+                life: 0.8,
+                scale: 0.7,
                 glow: true
             });
         }
@@ -287,16 +289,17 @@ class ParticleSystem {
      * Create placement effect
      */
     createPlacementEffect(x, y) {
-        for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8;
+        // Reduced from 8 to 4 particles
+        for (let i = 0; i < 4; i++) {
+            const angle = (Math.PI * 2 * i) / 4;
             this.emit(x, y, {
                 text: '✨',
                 color: '#00ff88',
                 vx: Math.cos(angle) * 1,
                 vy: Math.sin(angle) * 1,
                 gravity: 0,
-                life: 0.5,
-                scale: 0.8,
+                life: 0.4,
+                scale: 0.7,
                 glow: true
             });
         }

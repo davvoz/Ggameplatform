@@ -62,7 +62,10 @@ class Game {
         // Tap handler
         this.input.onTap((gridPos, screenPos) => {
             if (this.state.isGameOver) {
-                this.restart();
+                // Check if retry button was clicked
+                if (this.ui.isRetryButtonClicked(screenPos.x, screenPos.y)) {
+                    this.restart();
+                }
                 return;
             }
             
@@ -634,6 +637,11 @@ class Game {
         // Render UI
         this.ui.render(this.state);
         
+        // Show game over popup if game is over
+        if (this.state.isGameOver) {
+            this.ui.showGameOver(this.state);
+        }
+        
         // Debug info (optional)
         if (window.location.search.includes('debug')) {
             this.renderDebugInfo();
@@ -686,15 +694,11 @@ class Game {
         this.entities.clear();
         this.particles.clear();
         this.deselectAll();
+        this.ui.clearRetryButton();
         
-        // Reset session via platform SDK
-        if (window.PlatformSDK && window.PlatformSDK.resetSession) {
-            try {
-                PlatformSDK.resetSession();
-                console.log('[Merge Tower] Session reset for new game');
-            } catch (error) {
-                console.error('[Merge Tower] Failed to reset session:', error);
-            }
+        // Reset session state (handled entirely in main.js)
+        if (window.resetGameSession) {
+            window.resetGameSession();
         }
     }
 

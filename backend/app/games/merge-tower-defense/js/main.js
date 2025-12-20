@@ -113,6 +113,21 @@
         sessionActive = false;
     }
     
+    function resetSession() {
+        // Close current session if active before resetting
+        if (sessionActive) {
+            console.log('[Merge Tower] Closing active session before retry');
+            endSession();
+        }
+        
+        // Reset session state for retry
+        sessionActive = false;
+        firstUpdate = true;
+        lastSentScore = 0;
+        sessionStartTime = 0;
+        console.log('[Merge Tower] Session state reset - ready for new session');
+    }
+    
     // ========== GAME LOOP ==========
     
     let lastTime = performance.now();
@@ -127,18 +142,20 @@
         const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
         lastTime = currentTime;
         
-        // Start session on first update
-        if (firstUpdate && platformReady) {
-            startSession();
-            firstUpdate = false;
-        }
-        
         // Update and render
         game.update(dt);
         game.render();
         
-        // Check for game over
+        // Check game state
         const state = game.getState();
+        
+        // Start session on first update (only if not game over)
+        if (firstUpdate && platformReady && !state.isGameOver) {
+            startSession();
+            firstUpdate = false;
+        }
+        
+        // Check for game over
         if (state.isGameOver && sessionActive) {
             endSession();
         }
@@ -157,6 +174,9 @@
     
     // ========== START GAME ==========
     
+    // Expose resetSession globally for game.js
+    window.resetGameSession = resetSession;
+    
     function startGame() {
         console.log('[Merge Tower] Starting game...');
         
@@ -173,19 +193,9 @@
     
     // ========== VISIBILITY HANDLING ==========
     
-    // Pause game when tab loses focus
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            game.pause();
-        } else {
-            // Don't auto-resume, let user click to resume
-        }
-    });
-    
-    // Pause on window blur
-    window.addEventListener('blur', () => {
-        game.pause();
-    });
+    // Note: Removed automatic pause on blur/visibility change
+    // The game should continue running even when tab loses focus
+    // This prevents the game from becoming stuck in pause state
     
     // ========== FULLSCREEN SUPPORT ==========
     

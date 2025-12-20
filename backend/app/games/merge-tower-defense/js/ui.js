@@ -16,6 +16,9 @@ class UIManager {
         // Shop buttons
         this.shopButtons = [];
         this.setupShopButtons();
+        
+        // Game over button
+        this.retryButton = null;
     }
 
     setupShopButtons() {
@@ -309,9 +312,24 @@ class UIManager {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, width, height);
         
+        // Popup box
+        const popupWidth = Math.min(400, width * 0.85);
+        const popupHeight = Math.min(450, height * 0.7);
+        const popupX = (width - popupWidth) / 2;
+        const popupY = (height - popupHeight) / 2;
+        
+        // Popup background
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
+        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+        
+        // Popup border
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_DANGER;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        
         // Title
-        this.graphics.drawText('💀 GAME OVER 💀', width / 2, height * 0.3, {
-            size: 48,
+        this.graphics.drawText('💀 GAME OVER 💀', width / 2, popupY + 60, {
+            size: 42,
             color: CONFIG.COLORS.TEXT_DANGER,
             align: 'center',
             bold: true,
@@ -326,24 +344,64 @@ class UIManager {
             `Time: ${Utils.formatTime(gameState.playTime)}`
         ];
         
-        let y = height * 0.45;
+        let y = popupY + 130;
         stats.forEach(stat => {
             this.graphics.drawText(stat, width / 2, y, {
-                size: 24,
+                size: 22,
                 color: CONFIG.COLORS.TEXT_PRIMARY,
                 align: 'center',
                 shadow: true
             });
-            y += 40;
+            y += 38;
         });
         
-        // Restart hint
-        this.graphics.drawText('Tap to Restart', width / 2, height * 0.75, {
-            size: 20,
-            color: CONFIG.COLORS.TEXT_SECONDARY,
+        // Retry button
+        const buttonWidth = 180;
+        const buttonHeight = 50;
+        const buttonX = (width - buttonWidth) / 2;
+        const buttonY = popupY + popupHeight - 80;
+        
+        // Store button bounds for click detection
+        this.retryButton = {
+            x: buttonX,
+            y: buttonY,
+            width: buttonWidth,
+            height: buttonHeight
+        };
+        
+        // Button background
+        ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // Button border
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // Button text
+        this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
+            size: 24,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
             align: 'center',
+            baseline: 'middle',
+            bold: true,
             shadow: true
         });
+    }
+
+    // Check if retry button was clicked
+    isRetryButtonClicked(screenX, screenY) {
+        if (!this.retryButton) return false;
+        
+        return screenX >= this.retryButton.x &&
+               screenX <= this.retryButton.x + this.retryButton.width &&
+               screenY >= this.retryButton.y &&
+               screenY <= this.retryButton.y + this.retryButton.height;
+    }
+    
+    // Reset retry button
+    clearRetryButton() {
+        this.retryButton = null;
     }
 
     // Victory screen (optional, for future waves)

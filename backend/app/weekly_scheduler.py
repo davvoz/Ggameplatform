@@ -31,6 +31,8 @@ class WeeklyLeaderboardScheduler:
         self.running = False
         self.thread = None
         self.steem_service = SteemRewardService()
+        # Use a dedicated scheduler instance to avoid conflicts with multiplier_scheduler
+        self.scheduler = schedule.Scheduler()
         logger.info("✅ WeeklyLeaderboardScheduler initialized")
     
     def process_weekly_reset(self, week_start: str = None, week_end: str = None) -> Dict[str, Any]:
@@ -298,8 +300,8 @@ class WeeklyLeaderboardScheduler:
     def schedule_weekly_job(self):
         """Schedule weekly job to run every Monday at 00:00 UTC."""
         # Clear any existing jobs to prevent duplicates
-        schedule.clear()
-        schedule.every().monday.at("00:00").do(self.process_weekly_reset)
+        self.scheduler.clear()
+        self.scheduler.every().monday.at("00:00").do(self.process_weekly_reset)
         logger.info("📅 Scheduled weekly reset for every Monday at 00:00 UTC")
     
     def run_scheduler(self):
@@ -308,7 +310,7 @@ class WeeklyLeaderboardScheduler:
         self.running = True
         
         while self.running:
-            schedule.run_pending()
+            self.scheduler.run_pending()
             time.sleep(60)  # Check every minute
         
         logger.info("⏹️  Scheduler thread stopped")

@@ -22,6 +22,8 @@ class MultiplierScheduler:
     def __init__(self):
         self.running = False
         self.thread: Optional[threading.Thread] = None
+        # Use a dedicated scheduler instance to avoid conflicts with weekly_scheduler
+        self.scheduler = schedule.Scheduler()
 
     def scheduled_multiplier_check(self):
         logger.info("🔁 Running scheduled multiplier check")
@@ -67,9 +69,9 @@ class MultiplierScheduler:
 
     def schedule_job(self):
         # Clear any existing jobs to prevent duplicates
-        schedule.clear()
+        self.scheduler.clear()
         # Run every 10 minutes
-        schedule.every(10).minutes.do(self.scheduled_multiplier_check)
+        self.scheduler.every(10).minutes.do(self.scheduled_multiplier_check)
         logger.info("Scheduled multiplier check every 10 minutes")
 
     def run_scheduler(self):
@@ -77,7 +79,7 @@ class MultiplierScheduler:
         self.running = True
         while self.running:
             try:
-                schedule.run_pending()
+                self.scheduler.run_pending()
             except Exception:
                 logger.exception("Multiplier scheduler loop error")
             time.sleep(30)

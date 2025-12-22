@@ -742,44 +742,53 @@ function generateWaveComposition(waveNumber) {
 function applyWaveScaling(config, waveNumber) {
     const scaled = JSON.parse(JSON.stringify(config)); // Deep clone
     
-    // LINEAR HP SCALING - Crescita costante e prevedibile
-    // Formula: HP = BaseHP * (1 + (wave - 1) * scalingFactor)
-    const hpScalingFactor = 0.35; // 35% di HP in più per wave
+    // HYBRID HP SCALING - Inizio dolce, poi aggressivo
+    // Prime 10 wave: crescita moderata
+    // Dopo wave 10: crescita molto aggressiva
+    let hpScalingFactor;
+    if (waveNumber <= 10) {
+        hpScalingFactor = 0.25; // 25% per wave (dolce)
+    } else {
+        // Dopo wave 10, accelera: base + bonus per ogni wave oltre la 10
+        const baseFromWave10 = 1.0 + (10 - 1) * 0.25; // HP a wave 10
+        const additionalWaves = waveNumber - 10;
+        hpScalingFactor = (baseFromWave10 + additionalWaves * 1.0) / (waveNumber - 1); // 100% per wave dopo la 10!
+    }
     const hpMultiplier = 1.0 + (waveNumber - 1) * hpScalingFactor;
     scaled.combat.hp = Math.floor(scaled.combat.hp * hpMultiplier);
     
-    // LINEAR SPEED SCALING con cap
-    const speedScalingFactor = 0.08; // 8% velocità in più per wave
-    const maxSpeedMultiplier = 3.0; // Cap massimo 3x
+    // SPEED SCALING - Progressione graduale con velocità aumentata
+    const speedScalingFactor = 0.10; // Aumentato da 0.08 - 10% per wave
+    const maxSpeedMultiplier = 3.5;
     const speedMultiplier = Math.min(
         maxSpeedMultiplier,
         1.0 + (waveNumber - 1) * speedScalingFactor
     );
     scaled.movement.speed *= speedMultiplier;
     
-    // DODGE CHANCE SCALING LINEARE - Counter agli sniper
-    if (waveNumber >= 3) {
-        const dodgePerWave = 0.015; // 1.5% dodge per wave
-        const dodgeBonus = (waveNumber - 2) * dodgePerWave;
-        scaled.combat.dodgeChance = Math.min(0.5, scaled.combat.dodgeChance + dodgeBonus);
+    // DODGE CHANCE - Inizia dalla wave 5
+    if (waveNumber >= 5) {
+        const dodgePerWave = 0.02; // 2% dodge per wave
+        const dodgeBonus = (waveNumber - 4) * dodgePerWave;
+        scaled.combat.dodgeChance = Math.min(0.6, scaled.combat.dodgeChance + dodgeBonus);
     }
     
-    // REWARD SCALING LINEARE - Ricompense crescono lentamente
-    const rewardScalingFactor = 0.12; // 12% in più per wave
+    // REWARD SCALING - Più generoso all'inizio
+    const rewardScalingFactor = 0.15; // 15% in più per wave
     const rewardMultiplier = 1.0 + (waveNumber - 1) * rewardScalingFactor;
-    scaled.reward = Math.floor(scaled.reward * rewardMultiplier * 0.5); // *0.5 = ancora ridotte
+    scaled.reward = Math.floor(scaled.reward * rewardMultiplier * 0.6); // -40% invece di -70%
     
-    // ARMOR SCALING LINEARE dalla wave 3
-    if (waveNumber >= 3 && scaled.combat.armor >= 0) {
-        const armorPerWave = 0.3; // +0.3 armor per wave
-        const armorBonus = Math.floor((waveNumber - 2) * armorPerWave);
+    // ARMOR - Inizia dalla wave 5
+    if (waveNumber >= 5 && scaled.combat.armor >= 0) {
+        const armorPerWave = 0.4;
+        const armorBonus = Math.floor((waveNumber - 4) * armorPerWave);
         scaled.combat.armor += armorBonus;
     }
     
-    // CC RESISTANCE SCALING LINEARE dalla wave 2
-    if (waveNumber >= 2) {
-        const resistPerWave = 0.025; // 2.5% resist per wave
-        const ccResistanceBonus = (waveNumber - 1) * resistPerWave;
+    // CC RESISTANCE - Inizia dalla wave 3
+    if (waveNumber >= 3) {
+        const resistPerWave = 0.03; // 3% resist per wave
+        const ccResistanceBonus = (waveNumber - 2) * resistPerWave;
         scaled.combat.ccResistance = Math.min(0.9, scaled.combat.ccResistance + ccResistanceBonus);
     }
     

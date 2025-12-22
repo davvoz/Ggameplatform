@@ -219,8 +219,35 @@ class Zombie {
         this.scale = baseStats.scale;
         this.armor = baseStats.armor || 0;
         this.dodgeChance = baseStats.dodgeChance || 0;
-        this.ccResistance = 0; // Inizializza CC resistance (verrà scalato con la wave)
+        this.ccResistance = 0;
         this.isBoss = baseStats.isBoss || false;
+        
+        // SPECIAL ABILITIES
+        this.isHealer = baseStats.isHealer || false;
+        this.healRange = baseStats.healRange || 0;
+        this.healAmount = baseStats.healAmount || 0;
+        this.healInterval = baseStats.healInterval || 2000;
+        this.lastHealTime = 0;
+        
+        this.hasShield = baseStats.hasShield || false;
+        this.shield = baseStats.shield || 0;
+        this.maxShield = this.shield;
+        this.shieldRegen = baseStats.shieldRegen || 0;
+        this.shieldRegenDelay = baseStats.shieldRegenDelay || 3000;
+        this.lastShieldDamageTime = 0;
+        
+        this.canSplit = baseStats.canSplit || false;
+        this.splitCount = baseStats.splitCount || 0;
+        this.splitType = baseStats.splitType || 'FAST';
+        this.splitHpPercent = baseStats.splitHpPercent || 0.5;
+        
+        this.canPhase = baseStats.canPhase || false;
+        this.phaseInterval = baseStats.phaseInterval || 4000;
+        this.phaseDistance = baseStats.phaseDistance || 2.5;
+        this.phaseInvulnerable = baseStats.phaseInvulnerable || 500;
+        this.lastPhaseTime = 0;
+        this.isInvulnerable = false;
+        this.invulnerableUntil = 0;
         
         // Status effects
         this.slowUntil = 0;
@@ -246,6 +273,10 @@ class Zombie {
                 case 'AGILE': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
                 case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
                 case 'BOSS': this.multiSprite = MultiPartEnemySprites.createBoss(); break;
+                case 'HEALER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
+                case 'SHIELDED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
+                case 'SPLITTER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
+                case 'PHASER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
             }
             
             if (this.multiSprite) {
@@ -271,10 +302,86 @@ class Zombie {
     }
 
     update(dt, currentTime) {
+        // Check invulnerability (PHASER ability)
+        if (this.isInvulnerable && currentTime > this.invulnerableUntil) {
+            this.isInvulnerable = false;
+        }
+        
+        // PHASER ability: teleport forward
+        if (this.canPhase && currentTime - this.lastPhaseTime >= this.phaseInterval) {
+            this.row += this.phaseDistance;
+            this.lastPhaseTime = currentTime;
+            this.isInvulnerable = true;
+            this.invulnerableUntil = currentTime + this.phaseInvulnerable;
+        }
+        
+        // HEALER ability: heal nearby enemies
+        if (this.isHealer && currentTime - this.lastHealTime >= this.healInterval) {
+            this.lastHealTime = currentTime;
+            // Healing logic will be handled in game.js
+        }
+        
+        // SHIELDED ability: regenerate shield if not damaged recently
+        if (this.hasShield && this.shield < this.maxShield) {
+            if (currentTime - this.lastShieldDamageTime >= this.shieldRegenDelay) {
+                this.shield = Math.min(this.maxShield, this.shield + this.shieldRegen * dt);
+            }
+        }
+        
         // Apply slow effect
         const effectiveSpeed = currentTime < this.slowUntil ? 
                               this.speed * this.slowFactor : 
                               this.speed;
+        
+        this.row += effectiveSpeed * dt;
+        
+        // Animation
+        this.animPhase += dt * (effectiveSpeed + 2);
+        
+        // Hit flash decay
+        if (this.hitFlash > 0) {
+            this.hitFlash -= dt * 3;
+        }
+        
+        // Update multi-part sprite animation
+        if (this.multiSprite) {
+            this.multiSprite.update(dt);
+        }
+    }
+
+    takeDamage(amount, currentTime) {
+        // PHASER invulnerability
+        if (this.isInvulnerable) {
+            return 0;
+        }
+        
+        // SHIELDED: damage shield first
+        if (this.hasShield && this.shield > 0) {
+            const shieldDamage = Math.min(this.shield, amount);
+            this.shield -= shieldDamage;
+            amount -= shieldDamage;
+            this.lastShieldDamageTime = currentTime;
+            
+            if (amount <= 0) {
+        // FREEZE blocks shield regeneration
+        if (this.hasShield) {
+            this.lastShieldDamageTime = currentTime;
+        }
+        
+                this.hitFlash = 0.5;  // Minor flash for shield hit
+                return shieldDamage;
+            }
+        }
+        
+        // Apply armor reduction
+        // Apply slow effect
+        const effectiveSpeed = currentTime < this.slowUntil ? 
+                              this.speed * this.slowFactor : 
+                              this.speed;
+        
+        this.row += effectiveSpeed * dt;
+        
+        // A           this.speed;
         
         this.row += effectiveSpeed * dt;
         
@@ -423,8 +530,13 @@ class Projectile {
         const dy = this.targetY - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        this.vx = (dx / dist) * cannon.projectileSpeed;
-        this.vy = (dy / dist) * cannon.projectileSpeed;
+        if (dist > 0) {
+            this.vx = (dx / dist) * cannon.projectileSpeed;
+            this.vy = (dy / dist) * cannon.projectileSpeed;
+        } else {
+            this.vx = 0;
+            this.vy = 0;
+        }
         
         this.damage = cannon.damage;
         this.color = cannon.color;
@@ -435,6 +547,7 @@ class Projectile {
         this.slowFactor = cannon.slowFactor || 0;
         this.slowDuration = cannon.slowDuration || 0;
         this.chainTargets = cannon.chainTargets || 0;
+        this.cannonType = cannon.type;
         this.owner = cannon;
     }
 

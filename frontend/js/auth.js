@@ -345,6 +345,12 @@ const AuthManager = {
 
             userName.textContent = badge + displayName;
 
+            // Popola anche il nome utente sopra il logout
+            const navUserNameTop = document.getElementById('navUserNameTop');
+            if (navUserNameTop) {
+                navUserNameTop.textContent = displayName;
+            }
+
             // Carica info livello
             try {
                 const API_URL = window.ENV?.API_URL || window.location.origin;
@@ -383,6 +389,12 @@ const AuthManager = {
                             const percent = Number(levelInfo.progress_percent) || 0;
                             created.style.setProperty('--level-color', safeColor);
                             created.style.setProperty('--progress-percent', `${percent}%`);
+                            
+                            // Applica anche al parent .nav-level-card per il gradiente
+                            const navLevelCard = levelBadgeContainer.closest('.nav-level-card');
+                            if (navLevelCard) {
+                                navLevelCard.style.setProperty('--level-color', safeColor);
+                            }
                         }
                     } catch (e) {
                         console.warn('Could not apply CSS vars for level badge', e);

@@ -23,7 +23,29 @@ class ProfileRenderer {
         // Get cached user data for immediate rendering
         const cachedUser = this.authManager.getUser();
         
-        // Render page immediately with cached data and loading placeholders
+        // Attempt to fetch the latest multiplier breakdown and sync it BEFORE rendering
+        try {
+            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            if (cachedUser && cachedUser.user_id) {
+                const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${cachedUser.user_id}`);
+                if (resp && resp.ok) {
+                    const json = await resp.json();
+                    const breakdown = json && json.breakdown;
+                    if (breakdown && breakdown.final_multiplier !== undefined) {
+                        const updatedUser = Object.assign({}, cachedUser, { cur8_multiplier: Number(breakdown.final_multiplier), delegation_amount: Number(breakdown.delegation_amount || cachedUser.delegation_amount || 0) });
+                        try { if (this.authManager.setUser) this.authManager.setUser(updatedUser); } catch (e) { console.warn('AuthManager.setUser failed during pre-render sync:', e); }
+                        // notify listeners (navbar) of the updated multiplier
+                        try { window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser })); } catch (e) {}
+                        // refresh cachedUser reference
+                        // (renderProfilePageSkeleton will use this.authManager.getUser() where needed)
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not pre-sync multiplier breakdown before rendering profile:', e);
+        }
+
+        // Render page immediately with cached (now-synced) data and loading placeholders
         await this.renderProfilePageSkeleton(cachedUser);
 
         // Load all data in background (non-blocking)

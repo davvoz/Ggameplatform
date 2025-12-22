@@ -300,6 +300,17 @@ const AuthManager = {
             // User logged in
             userInfo.style.display = 'flex';
 
+            // Ensure navbar multiplier reflects current user immediately
+            try {
+                const navMultiplierEl = document.getElementById('navMultiplier');
+                if (navMultiplierEl) {
+                    const mult = Number(this.currentUser.cur8_multiplier || 1).toFixed(2);
+                    navMultiplierEl.textContent = `${mult}x`;
+                }
+            } catch (e) {
+                console.warn('Could not update nav multiplier from AuthManager.updateUI:', e);
+            }
+
             // Show profile link
             if (profileLink) {
                 profileLink.classList.remove('auth-required');

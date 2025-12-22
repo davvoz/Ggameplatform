@@ -166,15 +166,30 @@ app.include_router(levels.router, tags=["levels"])
 app.include_router(leaderboard.router, tags=["leaderboard"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 
-# Start weekly leaderboard scheduler
-from app.weekly_scheduler import start_scheduler
-start_scheduler()
-print("✅ Weekly leaderboard scheduler started")
+# Scheduler startup/shutdown events
+@app.on_event("startup")
+async def startup_schedulers():
+    """Start schedulers on application startup."""
+    from app.weekly_scheduler import start_scheduler
+    from app.multiplier_scheduler import start_scheduler as start_multiplier_scheduler
+    
+    start_scheduler()
+    print("✅ Weekly leaderboard scheduler started")
+    
+    start_multiplier_scheduler()
+    print("✅ Multiplier scheduler started")
 
-# Start multiplier scheduler (frequent Steem multiplier checks)
-from app.multiplier_scheduler import start_scheduler as start_multiplier_scheduler
-start_multiplier_scheduler()
-print("✅ Multiplier scheduler started")
+@app.on_event("shutdown")
+async def shutdown_schedulers():
+    """Stop schedulers on application shutdown."""
+    from app.weekly_scheduler import stop_scheduler
+    from app.multiplier_scheduler import stop_scheduler as stop_multiplier_scheduler
+    
+    stop_scheduler()
+    print("🛑 Weekly leaderboard scheduler stopped")
+    
+    stop_multiplier_scheduler()
+    print("🛑 Multiplier scheduler stopped")
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

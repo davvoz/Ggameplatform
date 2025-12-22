@@ -216,6 +216,8 @@ class WeeklyLeaderboardScheduler:
     
     def schedule_weekly_job(self):
         """Schedule weekly job to run every Monday at 00:00 UTC."""
+        # Clear any existing jobs to prevent duplicates
+        schedule.clear()
         schedule.every().monday.at("00:00").do(self.process_weekly_reset)
         logger.info("📅 Scheduled weekly reset for every Monday at 00:00 UTC")
     

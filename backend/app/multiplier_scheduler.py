@@ -38,6 +38,8 @@ class MultiplierScheduler:
             logger.exception("Critical error during scheduled multiplier check")
 
     def schedule_job(self):
+        # Clear any existing jobs to prevent duplicates
+        schedule.clear()
         # Run every 10 minutes
         schedule.every(10).minutes.do(self.scheduled_multiplier_check)
         logger.info("Scheduled multiplier check every 10 minutes")

@@ -13,3 +13,4 @@ python-dotenv==1.0.0
 schedule==1.2.0
 beem==0.24.24
 Pillow==10.3.0
+requests==2.31.0

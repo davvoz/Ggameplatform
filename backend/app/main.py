@@ -172,24 +172,38 @@ async def startup_schedulers():
     """Start schedulers on application startup."""
     from app.weekly_scheduler import start_scheduler
     from app.multiplier_scheduler import start_scheduler as start_multiplier_scheduler
+    from app.telegram_notifier import send_telegram_info
     
     start_scheduler()
     print("✅ Weekly leaderboard scheduler started")
     
     start_multiplier_scheduler()
     print("✅ Multiplier scheduler started")
+    
+    # Send startup notification
+    send_telegram_info(
+        "Platform Startup",
+        "Game platform backend has started successfully. All schedulers are running."
+    )
 
 @app.on_event("shutdown")
 async def shutdown_schedulers():
     """Stop schedulers on application shutdown."""
     from app.weekly_scheduler import stop_scheduler
     from app.multiplier_scheduler import stop_scheduler as stop_multiplier_scheduler
+    from app.telegram_notifier import send_telegram_warning
     
     stop_scheduler()
     print("🛑 Weekly leaderboard scheduler stopped")
     
     stop_multiplier_scheduler()
     print("🛑 Multiplier scheduler stopped")
+    
+    # Send shutdown notification
+    send_telegram_warning(
+        "Platform Shutdown",
+        "Game platform backend is shutting down. All schedulers have been stopped."
+    )
 
 # Static files serving
 static_path = Path(__file__).parent / "static"

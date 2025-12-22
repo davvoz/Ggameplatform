@@ -9,6 +9,7 @@ import time
 import threading
 from datetime import datetime
 from typing import Dict, Any
+import uuid
 
 from app.database import get_db_session
 from app.leaderboard_repository import LeaderboardRepository
@@ -16,6 +17,7 @@ from app.steem_reward_service import SteemRewardService
 from app.services import CoinService
 from app.repositories import RepositoryFactory
 from app.models import WeeklyWinner, User
+from app.telegram_notifier import send_telegram_error, send_telegram_success, send_telegram_warning
 
 
 logger = logging.getLogger(__name__)
@@ -41,19 +43,25 @@ class WeeklyLeaderboardScheduler:
         
         Steps:
         1. Get previous week dates (or use provided dates)
-        2. Save winners to history
-        3. Distribute STEEM rewards
-        4. Distribute coin rewards
-        5. Clear weekly leaderboard
+        2. Check idempotency (prevent duplicate processing)
+        3. Save winners to history
+        4. Distribute STEEM rewards
+        5. Distribute coin rewards
+        6. Clear weekly leaderboard
         
         Returns:
             Dict with processing results
         """
-        logger.info("🔄 Starting weekly leaderboard reset process...")
+        # Generate unique run ID for tracking
+        run_id = f"weekly_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        logger.info(f"🔄 Starting weekly leaderboard reset process (run_id: {run_id})...")
         
         results = {
             'success': False,
             'timestamp': datetime.utcnow().isoformat(),
+            'run_id': run_id,
+            'week_start': week_start,
+            'week_end': week_end,
             'winners_saved': 0,
             'steem_sent': 0,
             'steem_failed': 0,
@@ -61,7 +69,8 @@ class WeeklyLeaderboardScheduler:
             'leaderboard_cleared': 0,
             'games_processed': 0,
             'total_winners': 0,
-            'errors': []
+            'errors': [],
+            'skipped': False
         }
         
         try:
@@ -72,9 +81,41 @@ class WeeklyLeaderboardScheduler:
                 if week_start is None or week_end is None:
                     week_start, week_end = lb_repo.get_previous_week()
                 
+                results['week_start'] = week_start
+                results['week_end'] = week_end
+                
                 logger.info(f"Processing week: {week_start} to {week_end}")
                 
-                # Step 2: Save winners to history
+                # Step 2: 🔒 IDEMPOTENCY CHECK - Prevent duplicate processing
+                existing_winners = session.query(WeeklyWinner).filter(
+                    WeeklyWinner.week_start == week_start,
+                    WeeklyWinner.week_end == week_end
+                ).first()
+                
+                if existing_winners:
+                    warning_msg = f"Week {week_start} to {week_end} already processed, skipping to prevent duplicates"
+                    logger.warning(f"⚠️ {warning_msg}")
+                    
+                    # Send Telegram warning
+                    send_telegram_warning(
+                        "Weekly Reset - Already Processed",
+                        warning_msg,
+                        context={
+                            'run_id': run_id,
+                            'week_start': week_start,
+                            'week_end': week_end,
+                            'existing_winners_count': session.query(WeeklyWinner).filter(
+                                WeeklyWinner.week_start == week_start,
+                                WeeklyWinner.week_end == week_end
+                            ).count()
+                        }
+                    )
+                    
+                    results['success'] = True
+                    results['skipped'] = True
+                    return results
+                
+                # Step 3: Save winners to history
                 try:
                     winners = lb_repo.save_weekly_winners(week_start, week_end)
                     results['winners_saved'] = len(winners)
@@ -205,13 +246,53 @@ class WeeklyLeaderboardScheduler:
                 # Mark as successful if no critical errors
                 results['success'] = len(results['errors']) == 0
                 
+                # 📲 Send Telegram notification
+                if results['success']:
+                    send_telegram_success(
+                        "Weekly Leaderboard Reset - Completed",
+                        f"Successfully processed week {week_start} to {week_end}",
+                        stats={
+                            'run_id': run_id,
+                            'winners_saved': results['winners_saved'],
+                            'games_processed': results['games_processed'],
+                            'steem_sent': results['steem_sent'],
+                            'steem_failed': results['steem_failed'],
+                            'coins_distributed': results['coins_distributed'],
+                            'leaderboard_cleared': results['leaderboard_cleared']
+                        }
+                    )
+                else:
+                    send_telegram_warning(
+                        "Weekly Leaderboard Reset - Completed with Errors",
+                        f"Processed week {week_start} to {week_end} but encountered {len(results['errors'])} errors",
+                        context={
+                            'run_id': run_id,
+                            'errors': results['errors'],
+                            'steem_sent': results['steem_sent'],
+                            'steem_failed': results['steem_failed']
+                        }
+                    )
+                
                 logger.info(f"✅ Weekly reset complete: {results}")
                 return results
                 
         except Exception as e:
             error_msg = f"Critical error in weekly reset: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             results['errors'].append(error_msg)
+            
+            # 📲 Send Telegram error notification
+            send_telegram_error(
+                "Weekly Leaderboard Reset - Critical Failure",
+                e,
+                context={
+                    'run_id': run_id,
+                    'week_start': week_start,
+                    'week_end': week_end,
+                    'partial_results': results
+                }
+            )
+            
             return results
     
     def schedule_weekly_job(self):

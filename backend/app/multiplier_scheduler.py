@@ -13,6 +13,7 @@ from typing import Optional
 from app.database import get_db_session
 from app.models import User
 from app.steem_checker import update_user_multiplier
+from app.telegram_notifier import send_telegram_error
 
 logger = logging.getLogger(__name__)
 
@@ -24,18 +25,45 @@ class MultiplierScheduler:
 
     def scheduled_multiplier_check(self):
         logger.info("🔁 Running scheduled multiplier check")
+        errors_count = 0
+        users_checked = 0
+        
         try:
             with get_db_session() as session:
                 users = session.query(User).filter(User.steem_username != None).all()
-                logger.info("Found %d users with Steem accounts to check", len(users))
+                users_checked = len(users)
+                logger.info("Found %d users with Steem accounts to check", users_checked)
+                
                 for u in users:
                     try:
                         # Do not force: leave cache logic to update_user_multiplier
                         update_user_multiplier(u.user_id, u.steem_username, session, force=False)
-                    except Exception:
+                    except Exception as e:
+                        errors_count += 1
                         logger.exception("Error checking multiplier for user %s", u.user_id)
-        except Exception:
+                        
+                        # Send Telegram alert for persistent errors (every 10th error)
+                        if errors_count % 10 == 0:
+                            send_telegram_error(
+                                "Multiplier Scheduler - Repeated Errors",
+                                e,
+                                context={
+                                    'errors_count': errors_count,
+                                    'users_checked': users_checked,
+                                    'current_user': u.user_id
+                                }
+                            )
+                            
+        except Exception as e:
             logger.exception("Critical error during scheduled multiplier check")
+            send_telegram_error(
+                "Multiplier Scheduler - Critical Failure",
+                e,
+                context={
+                    'users_checked': users_checked,
+                    'errors_count': errors_count
+                }
+            )
 
     def schedule_job(self):
         # Clear any existing jobs to prevent duplicates

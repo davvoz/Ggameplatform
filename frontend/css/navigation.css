@@ -117,30 +117,11 @@
     backdrop-filter: blur(6px) saturate(120%);
 }
 
-/* subtle colored inner glow using primary color */
-.nav-level-card, .nav-multiplier-card {
-    position: relative;
-}
-.nav-level-card::after, .nav-multiplier-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 12px;
-    pointer-events: none;
-    background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(0,0,0,0));
-    mix-blend-mode: screen;
-}
-
 /* hover effects removed for static cards */
 .nav-user-card:hover, .nav-level-card:hover, .nav-multiplier-card:hover {
     transform: none !important;
     box-shadow: none !important;
     transition: none !important;
-}
-
-.nav-multiplier-card .multiplier-value {
-    color: #0ee8ff; /* brighter accent for multiplier */
-    text-shadow: 0 4px 18px rgba(14,232,255,0.14);
 }
 
 /* Compact profile card adjustments */
@@ -280,12 +261,20 @@
 .nav-level-card {
     display: flex;
     align-items: center;
-    /* provide larger offset from the nav links */
     margin-left: 1.25rem;
-    /* match multiplier card chrome: padding and size */
     padding: 10px 12px;
     min-width: 120px;
     height: 64px;
+    /* Gradiente dinamico con colore del livello */
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--level-color, #6366f1) 35%, transparent) 0%, 
+        color-mix(in srgb, var(--level-color, #6366f1) 20%, transparent) 50%,
+        rgba(12,14,23,0.6) 100%) !important;
+    border: 1px solid color-mix(in srgb, var(--level-color, #6366f1) 30%, transparent) !important;
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--level-color, #6366f1) 12%, rgba(2,6,23,0.6)), 
+                0 2px 8px rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(6px) saturate(140%);
+    position: relative;
 }
 
 /* Center the content inside the standalone level card so the badge looks aligned */
@@ -303,6 +292,8 @@
     gap: 8px;
     padding: 0 6px;
     min-width: 0;
+    position: relative;
+    z-index: 2;
 }
 
 /* Prevent inner multiplier from using absolute positioning inside the nav card */
@@ -346,10 +337,18 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    /* use same padding/rounded chrome as .nav-level-card via grouped theme */
     padding: 10px 12px;
     min-width: 120px;
-    height: 64px; /* match level card */
+    height: 64px;
+    /* Gradiente cyan elegante come "Cur8 Games" text */
+    background: linear-gradient(135deg, 
+        rgba(0, 200, 255, 0.35) 0%,
+        rgba(0, 150, 220, 0.3) 50%,
+        rgba(12,14,23,0.6) 100%) !important;
+    border: 1px solid rgba(0, 200, 255, 0.3) !important;
+    box-shadow: 0 8px 30px rgba(0, 200, 255, 0.15), 0 2px 8px rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(6px) saturate(140%);
+    position: relative;
 }
 
 /* Center the multiplier title and value horizontally and vertically */
@@ -382,16 +381,21 @@
 
 .nav-multiplier-card .multiplier-title {
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.95);
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
+    position: relative;
+    z-index: 1;
 }
 
 .nav-multiplier-card .multiplier-value {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 900;
-    color: var(--primary-color);
+    color: #00d4ff;
+    text-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 768px) {
@@ -458,23 +462,20 @@
     font-weight: 800;
     font-size: 14px;
     color: #ffffff;
-
-/* Overrides: remove residual chrome/contour from the navbar user area
-   If the visible contour comes from the adjacent multiplier/level cards,
-   these rules force a transparent background and remove border/shadow. */
-#userInfo,
-#userInfo .nav-user-card,
-.nav-multiplier-card,
-.nav-level-card {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+/* Overrides: remove residual chrome/contour ONLY from the navbar user profile area
+   The multiplier and level cards should keep their gradient backgrounds */
+#userInfo,
+#userInfo .nav-user-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .level-badge-number {

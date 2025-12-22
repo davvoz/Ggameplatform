@@ -300,6 +300,17 @@ const AuthManager = {
             // User logged in
             userInfo.style.display = 'flex';
 
+            // Ensure navbar multiplier reflects current user immediately
+            try {
+                const navMultiplierEl = document.getElementById('navMultiplier');
+                if (navMultiplierEl) {
+                    const mult = Number(this.currentUser.cur8_multiplier || 1).toFixed(2);
+                    navMultiplierEl.textContent = `${mult}x`;
+                }
+            } catch (e) {
+                console.warn('Could not update nav multiplier from AuthManager.updateUI:', e);
+            }
+
             // Show profile link
             if (profileLink) {
                 profileLink.classList.remove('auth-required');
@@ -333,6 +344,12 @@ const AuthManager = {
             }
 
             userName.textContent = badge + displayName;
+
+            // Popola anche il nome utente sopra il logout
+            const navUserNameTop = document.getElementById('navUserNameTop');
+            if (navUserNameTop) {
+                navUserNameTop.textContent = displayName;
+            }
 
             // Carica info livello
             try {
@@ -372,6 +389,12 @@ const AuthManager = {
                             const percent = Number(levelInfo.progress_percent) || 0;
                             created.style.setProperty('--level-color', safeColor);
                             created.style.setProperty('--progress-percent', `${percent}%`);
+                            
+                            // Applica anche al parent .nav-level-card per il gradiente
+                            const navLevelCard = levelBadgeContainer.closest('.nav-level-card');
+                            if (navLevelCard) {
+                                navLevelCard.style.setProperty('--level-color', safeColor);
+                            }
                         }
                     } catch (e) {
                         console.warn('Could not apply CSS vars for level badge', e);

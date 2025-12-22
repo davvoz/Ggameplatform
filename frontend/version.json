@@ -1,8 +1,17 @@
 {
-  "version": "2.2.4",
-  "timestamp": "2025-12-22T20:08:17.306Z",
-  "buildNumber": 106,
+  "version": "2.2.5",
+  "timestamp": "2025-12-22T21:20:03.563Z",
+  "buildNumber": 107,
   "changelog": [
+    {
+      "version": "2.2.5",
+      "date": "2025-12-22",
+      "type": "patch",
+      "changes": [
+        "fix: implement startup and shutdown events for schedulers; clear existing jobs to prevent duplicates",
+        "🔖 Bump version to 2.2.4 [skip-version]"
+      ]
+    },
     {
       "version": "2.2.4",
       "date": "2025-12-22",
@@ -85,16 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: adjust layout and styling for Steem delegation section in profile renderer",
         "🔖 Bump version to 2.1.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.1.0",
-      "date": "2025-12-18",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: add witness voting and delegation functionality to profile renderer",
-        "🔖 Bump version to 2.0.16 [skip-version]"
       ]
     }
   ]

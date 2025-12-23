@@ -11,11 +11,13 @@
 1. Read [IMPLEMENTATION.md](#implementation) for the roadmap
 2. Study [REFACTORING.md](#refactoring) for code examples
 3. Reference [config-indie.js](#config) for data values
+4. Check [SDK-INTEGRATION.md](#sdk-integration) for platform integration
 
 **Need specific info?** Jump to:
 - **Why these mechanics?** → [MECHANICS.md](#mechanics)
 - **How should it look?** → [VISUAL.md](#visual)
 - **What's the plan?** → [IMPLEMENTATION.md](#implementation)
+- **How does SDK work?** → [SDK-INTEGRATION.md](#sdk-integration)
 
 ---
 
@@ -253,6 +255,35 @@ Each example shows:
 
 ---
 
+### SDK-INTEGRATION.md
+**Platform SDK Integration Guide for Indie Serious Game**
+
+**Purpose**: Document SDK integration and XP tracking
+**Audience**: Developers, backend engineers, QA testers
+**Length**: ~13 KB
+
+**Contents**:
+- Current SDK integration status (complete ✅)
+- Indie-specific XP metrics
+- Score calculation for indie mode
+- Session flow integration
+- Implementation updates needed
+- XP calculation formulas
+- Testing checklist
+- Platform SDK API reference
+- Error handling and standalone mode
+
+**When to read**:
+- When working on platform integration
+- Before implementing indie metrics tracking
+- When testing XP calculation
+- When debugging SDK issues
+
+**Key takeaway**:
+"SDK is already fully integrated and production-ready. Only minor enhancements needed for indie-specific metrics tracking."
+
+---
+
 ## Document Relationships
 
 ```
@@ -263,7 +294,8 @@ SUMMARY.md (Start Here)
     │
     ├─→ IMPLEMENTATION.md (How? Roadmap)
     │   ├─→ REFACTORING.md (Code examples)
-    │   └─→ config-indie.js (Data values)
+    │   ├─→ config-indie.js (Data values)
+    │   └─→ SDK-INTEGRATION.md (Platform integration)
     │
     └─→ README.md (What? User guide)
 ```
@@ -285,8 +317,9 @@ SUMMARY.md (Start Here)
 1. SUMMARY.md (quick overview)
 2. IMPLEMENTATION.md (see roadmap)
 3. REFACTORING.md (see code examples)
-4. config-indie.js (reference data)
-5. MECHANICS.md (understand intent)
+4. SDK-INTEGRATION.md (platform integration)
+5. config-indie.js (reference data)
+6. MECHANICS.md (understand intent)
 
 ### For Artists/UI
 1. VISUAL.md (complete visual guide)
@@ -335,6 +368,12 @@ SUMMARY.md (Start Here)
 → DESIGN.md, section "Tower System - Specialization & Counter-Play"
 → MECHANICS.md, section "1. Tower Specialization System"
 
+**"Is SDK integrated?"**
+→ SDK-INTEGRATION.md, section "Current SDK Integration Status"
+
+**"What XP metrics are tracked?"**
+→ SDK-INTEGRATION.md, section "XP Metrics for Indie Serious Game"
+
 ## File Statistics
 
 ```
@@ -346,10 +385,13 @@ IMPLEMENTATION.md   18.4 KB   Technical roadmap
 MECHANICS.md        11.4 KB   System explanations
 VISUAL.md           11.7 KB   Visual specification
 REFACTORING.md      20.5 KB   Code examples
+SDK-INTEGRATION.md  13.5 KB   Platform SDK guide
 config-indie.js     18.5 KB   Data configuration
 README.md          Updated    User documentation
+QUICKSTART.md        9.1 KB   Developer onboarding
+INDEX.md            10.5 KB   Navigation guide
 ─────────────────────────────────────────────────────────
-TOTAL              ~101 KB    Complete documentation
+TOTAL              ~134 KB    Complete documentation
 ```
 
 ## Version History

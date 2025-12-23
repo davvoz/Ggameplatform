@@ -1,8 +1,17 @@
 {
-  "version": "2.3.10",
-  "timestamp": "2025-12-23T11:02:11.953Z",
-  "buildNumber": 118,
+  "version": "2.3.11",
+  "timestamp": "2025-12-23T12:06:21.727Z",
+  "buildNumber": 119,
   "changelog": [
+    {
+      "version": "2.3.11",
+      "date": "2025-12-23",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD]implement dynamic wall energy consumption and rendering for zombies",
+        "🔖 Bump version to 2.3.10 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.10",
       "date": "2025-12-23",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: use dedicated scheduler instances in MultiplierScheduler and WeeklyLeaderboardScheduler to avoid job conflicts",
         "🔖 Bump version to 2.3.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.1",
-      "date": "2025-12-22",
-      "type": "patch",
-      "changes": [
-        "fix: update navigation styles and enhance user profile display; add username above logout button",
-        "🔖 Bump version to 2.3.0 [skip-version]"
       ]
     }
   ]

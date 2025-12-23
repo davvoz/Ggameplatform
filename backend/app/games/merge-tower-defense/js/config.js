@@ -52,7 +52,7 @@ export const CONFIG = {
 // NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
 // Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
 import { TowerSpriteLibrary } from './tower-sprites.js';
-import { EnemySpriteLibrary } from './enemy-sprites.js';
+import { MultiPartEnemySprites } from './multi-part-enemies.js';
 
 export const CANNON_TYPES = {
     BASIC: {
@@ -187,7 +187,7 @@ export const ZOMBIE_TYPES = {
         id: 'NORMAL',
         name: 'Shambler',
         icon: '🧟', // Legacy fallback
-        sprite: () => EnemySpriteLibrary.GRUNT.base,
+        sprite: () => MultiPartEnemySprites.createGrunt(),
         hp: 8,
         speed: 0.5,
         reward: 15,
@@ -199,7 +199,7 @@ export const ZOMBIE_TYPES = {
         id: 'FAST',
         name: 'Runner',
         icon: '🧟‍♂️', // Legacy fallback
-        sprite: () => EnemySpriteLibrary.RUSHER.base,
+        sprite: () => MultiPartEnemySprites.createRusher(),
         hp: 5,
         speed: 1.2,
         reward: 25,
@@ -211,7 +211,7 @@ export const ZOMBIE_TYPES = {
         id: 'TANK',
         name: 'Brute',
         icon: '🧟‍♀️', // Legacy fallback
-        sprite: () => EnemySpriteLibrary.TANK.base,
+        sprite: () => MultiPartEnemySprites.createTank(),
         hp: 35,
         speed: 0.3,
         reward: 60,
@@ -223,7 +223,7 @@ export const ZOMBIE_TYPES = {
         id: 'AGILE',
         name: 'Leaper',
         icon: '🦇', // Legacy fallback
-        sprite: () => EnemySpriteLibrary.FLYER.base,
+        sprite: () => MultiPartEnemySprites.createFlyer(),
         hp: 12,
         speed: 1.0,
         dodgeChance: 0.25,  // Can dodge projectiles
@@ -236,7 +236,7 @@ export const ZOMBIE_TYPES = {
         id: 'ARMORED',
         name: 'Juggernaut',
         icon: '🛡️', // Legacy fallback
-        sprite: () => EnemySpriteLibrary.TANK.base,
+        sprite: () => MultiPartEnemySprites.createTank(),
         hp: 50,
         speed: 0.25,
         armor: 5,  // Reduces damage
@@ -249,7 +249,7 @@ export const ZOMBIE_TYPES = {
         id: 'BOSS',
         name: 'Overlord',
         icon: '👹',
-        sprite: () => EnemySpriteLibrary.BOSS.base,
+        sprite: () => MultiPartEnemySprites.createBoss(),
         hp: 150,
         speed: 0.4,
         armor: 3,
@@ -265,7 +265,7 @@ export const ZOMBIE_TYPES = {
         id: 'HEALER',
         name: 'Necromancer',
         icon: '🧙',
-        sprite: () => EnemySpriteLibrary.GRUNT.base,
+        sprite: () => MultiPartEnemySprites.createHealer(),
         hp: 15,
         speed: 0.7,
         healRange: 3.0,  // Cura nemici in raggio 3 celle
@@ -281,7 +281,7 @@ export const ZOMBIE_TYPES = {
         id: 'SHIELDED',
         name: 'Guardian',
         icon: '🛡️',
-        sprite: () => EnemySpriteLibrary.TANK.base,
+        sprite: () => MultiPartEnemySprites.createGolem(),
         hp: 20,
         speed: 0.5,
         shield: 30,  // Scudo che deve essere distrutto prima di danneggiare HP
@@ -297,7 +297,7 @@ export const ZOMBIE_TYPES = {
         id: 'SPLITTER',
         name: 'Hivemind',
         icon: '🦠',
-        sprite: () => EnemySpriteLibrary.GRUNT.base,
+        sprite: () => MultiPartEnemySprites.createGrunt(),
         hp: 25,
         speed: 0.6,
         splitCount: 3,  // Si divide in 3 nemici più piccoli alla morte
@@ -313,7 +313,7 @@ export const ZOMBIE_TYPES = {
         id: 'PHASER',
         name: 'Phantom',
         icon: '👻',
-        sprite: () => EnemySpriteLibrary.FLYER.base,
+        sprite: () => MultiPartEnemySprites.createFlyer(),
         hp: 12,
         speed: 0.8,
         phaseInterval: 4000,  // Teletrasporta ogni 4 secondi
@@ -331,7 +331,7 @@ export const ZOMBIE_TYPES = {
         id: 'VAMPIRE',
         name: 'Bloodlord',
         icon: '🧛',
-        sprite: () => EnemySpriteLibrary.VAMPIRE.base,
+        sprite: () => MultiPartEnemySprites.createVampire(),
         hp: 22,
         speed: 0.7,
         lifesteal: 0.3,  // Ruba 30% del danno subito come HP quando attacca
@@ -346,7 +346,7 @@ export const ZOMBIE_TYPES = {
         id: 'BOMBER',
         name: 'Detonator',
         icon: '💣',
-        sprite: () => EnemySpriteLibrary.BOMBER.base,
+        sprite: () => MultiPartEnemySprites.createBomber(),
         hp: 18,
         speed: 0.9,
         explosionRadius: 2.0,  // Esplode alla morte danneggiando torrette vicine
@@ -361,7 +361,7 @@ export const ZOMBIE_TYPES = {
         id: 'SHADOW',
         name: 'Nightcrawler',
         icon: '🌑',
-        sprite: () => EnemySpriteLibrary.SHADOW.base,
+        sprite: () => MultiPartEnemySprites.createShadow(),
         hp: 10,
         speed: 1.1,
         invisDuration: 2500,  // Invisibile per 2.5 secondi
@@ -376,7 +376,7 @@ export const ZOMBIE_TYPES = {
         id: 'SIREN',
         name: 'Banshee',
         icon: '👻',
-        sprite: () => EnemySpriteLibrary.SIREN.base,
+        sprite: () => MultiPartEnemySprites.createSiren(),
         hp: 14,
         speed: 0.6,
         disableRange: 2.5,  // Range del grido paralizzante
@@ -392,7 +392,7 @@ export const ZOMBIE_TYPES = {
         id: 'GOLEM',
         name: 'Earthshaker',
         icon: '🗿',
-        sprite: () => EnemySpriteLibrary.GOLEM.base,
+        sprite: () => MultiPartEnemySprites.createGolem(),
         hp: 80,
         speed: 0.2,
         stomp: true,  // Ogni 3 celle camminate, stordisce torrette vicine
@@ -421,14 +421,14 @@ export const MERGE_LEVELS = [
 // UI Configuration
 export const UI_CONFIG = {
     TOP_BAR_HEIGHT: 80,
-    SHOP_HEIGHT: 120,
+    SHOP_HEIGHT: 90,
     STAT_PANEL_WIDTH: 100,
-    BUTTON_SIZE: 80,
-    BUTTON_SPACING: 8,
+    BUTTON_SIZE: 70,
+    BUTTON_SPACING: 6,
     FONT_FAMILY: 'Arial, sans-serif',
-    FONT_SIZE_LARGE: 24,
-    FONT_SIZE_MEDIUM: 16,
-    FONT_SIZE_SMALL: 12,
+    FONT_SIZE_LARGE: 20,
+    FONT_SIZE_MEDIUM: 14,
+    FONT_SIZE_SMALL: 11,
 };
 
 

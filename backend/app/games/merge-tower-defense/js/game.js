@@ -377,9 +377,7 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
-        if (wave === 1) {
-            return 'ARMORED';
-        }
+
         let options = [
             { value: 'NORMAL', weight: Math.max(2, 12 - Math.floor(wave / 2)) },
             { value: 'FAST', weight: wave >= 2 ? 10 + Math.floor(wave * 1.2) : 0 },
@@ -498,6 +496,10 @@ export class Game {
                 });
 
                 if (healedCount > 0) {
+                    // Play heal animation
+                    if (healer.multiSprite && healer.multiSprite.animations && healer.multiSprite.animations.has('heal')) {
+                        healer.multiSprite.play('heal', true);
+                    }
                     // Healer pulse effect
                     this.particles.emit(healer.col, healer.row, {
                         text: '✨',
@@ -824,22 +826,43 @@ export class Game {
 
     updateEnergy(dt) {
         // Consumo mattoni: solo i nemici fermi al muro (atWall === true)
+        // Gli healer attaccano molto meno (ogni 5 secondi invece di 0.5)
         const zombiesAtWall = this.entities.zombies.filter(z => z.atWall);
-        const zombiesAtWallCount = zombiesAtWall.length;
+        const regularZombiesAtWall = zombiesAtWall.filter(z => !z.isHealer);
+        const healersAtWall = zombiesAtWall.filter(z => z.isHealer);
+        const regularCount = regularZombiesAtWall.length;
 
         if (!this.state._wallEnergyTimer) this.state._wallEnergyTimer = 0;
+        if (!this.state._healerWallTimer) this.state._healerWallTimer = 0;
         this.state._wallEnergyTimer += dt;
+        this.state._healerWallTimer += dt;
 
-        // Ogni 0.5 secondi, ogni zombie al muro consuma 1 mattone
-        if (this.state._wallEnergyTimer >= 0.5 && zombiesAtWallCount > 0) {
-            const bricksToRemove = Math.min(zombiesAtWallCount, this.state.energy);
-            this.state.energy -= bricksToRemove;
+        let totalBricksToRemove = 0;
+        let zombiesToAnimate = [];
+
+        // Nemici normali: ogni 0.5 secondi, ogni zombie al muro consuma 1 mattone
+        if (this.state._wallEnergyTimer >= 0.5 && regularCount > 0) {
+            const bricks = Math.min(regularCount, this.state.energy);
+            totalBricksToRemove += bricks;
+            zombiesToAnimate = zombiesToAnimate.concat(regularZombiesAtWall.slice(0, bricks));
             this.state._wallEnergyTimer = 0;
+        }
+
+        // Healer: ogni 5 secondi, ogni healer al muro consuma 1 mattone
+        if (this.state._healerWallTimer >= 5.0 && healersAtWall.length > 0) {
+            const bricks = Math.min(healersAtWall.length, this.state.energy - totalBricksToRemove);
+            if (bricks > 0) {
+                totalBricksToRemove += bricks;
+                zombiesToAnimate = zombiesToAnimate.concat(healersAtWall.slice(0, bricks));
+            }
+            this.state._healerWallTimer = 0;
+        }
+
+        if (totalBricksToRemove > 0) {
+            this.state.energy -= totalBricksToRemove;
 
             // Effetto visivo: animazione di attacco su ogni nemico che consuma
-            let bricksDone = 0;
-            for (const zombie of zombiesAtWall) {
-                if (bricksDone >= bricksToRemove) break;
+            for (const zombie of zombiesToAnimate) {
                 // Effetto particella
                 this.particles.emit(zombie.col, zombie.row + 0.5, {
                     text: '💥',
@@ -852,7 +875,6 @@ export class Game {
                 // Animazione: il nemico "colpisce" il muro
                 if (!zombie._attackAnim) zombie._attackAnim = 0;
                 zombie._attackAnim = 0.3;
-                bricksDone++;
             }
             // Penalità: azzera kill streak
             this.state.killsWithoutLeak = 0;
@@ -862,7 +884,7 @@ export class Game {
             }
         }
         // Regen energy slowly when safe (nessun nemico al muro)
-        if (zombiesAtWall === 0) {
+        if (zombiesAtWall.length === 0) {
             this.state.energy = Math.min(
                 CONFIG.INITIAL_ENERGY,
                 this.state.energy + CONFIG.ENERGY_REGEN_RATE * dt

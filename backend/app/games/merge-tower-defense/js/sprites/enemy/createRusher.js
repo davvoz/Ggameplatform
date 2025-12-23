@@ -28,7 +28,7 @@ export function rusher() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
-            x: 0.15, y: 0,
+            x: 0.09, y: 0,
             width: 0.35, height: 0.55,
             color: '#8a3a3a',
             fill: true

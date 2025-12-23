@@ -319,7 +319,7 @@ class Zombie {
                 case 'AGILE': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
                 case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createArmored(); break;
                 case 'BOSS': this.multiSprite = MultiPartEnemySprites.createBoss(); break;
-                case 'HEALER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
+                case 'HEALER': this.multiSprite = MultiPartEnemySprites.createHealer(); break;
                 case 'SHIELDED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
                 case 'SPLITTER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
                 case 'PHASER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
@@ -448,8 +448,8 @@ class Zombie {
         // Movimento: i nemici COLLIDONO con i mattoni (si fermano SOPRA i mattoni)
         const brickRows = 4;
         const brickHeightCells = brickRows * 0.22;
-        // muroRow = riga dove inizia il muro - 0.5 per far stare il nemico sopra
-        const muroRow = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) - brickHeightCells - 0.55;
+        // muroRow = riga dove inizia il muro - aumentato offset per fermare i nemici prima
+        const muroRow = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) - brickHeightCells - 0.85;
         if (!this._wallProgress) this._wallProgress = 0;
         if (this.row < muroRow) {
             this.row += effectiveSpeed * dt;
@@ -476,7 +476,8 @@ class Zombie {
                     // At wall: idle between occasional "attack" or "drain" strikes
                     if (this.multiSprite.currentAnimation !== 'idle' && 
                         this.multiSprite.currentAnimation !== 'attack' &&
-                        this.multiSprite.currentAnimation !== 'drain') {
+                        this.multiSprite.currentAnimation !== 'drain' &&
+                        this.multiSprite.currentAnimation !== 'heal') {
                         this.multiSprite.play('idle');
                     }
                     // Restart idle if it stopped playing (safety check)
@@ -484,9 +485,11 @@ class Zombie {
                         this.multiSprite.play('idle');
                     }
                     // Periodic attack if animation exists (non-vampire enemies)
+                    // Healers attack very rarely (every 10 seconds), normal enemies every 1.1 seconds
                     if (!this.isVampire && this.multiSprite.animations && this.multiSprite.animations.has('attack')) {
                         this._attackAccumulator = (this._attackAccumulator || 0) + dt;
-                        if (this._attackAccumulator >= 1.1) {
+                        const attackInterval = this.isHealer ? 10.0 : 1.1;
+                        if (this._attackAccumulator >= attackInterval) {
                             this._attackAccumulator = 0;
                             this.multiSprite.play('attack', true);
                         }
@@ -563,7 +566,8 @@ class Zombie {
     }
 
     isOffScreen() {
-        return this.row > CONFIG.ROWS + 1;
+        // Limite più restrittivo: non permettere ai nemici di andare oltre la zona di difesa
+        return this.row >= (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS + 0.5);
     }
 
     isPastDefenseLine() {

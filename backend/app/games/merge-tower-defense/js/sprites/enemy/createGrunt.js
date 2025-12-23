@@ -29,16 +29,9 @@ export function grunt() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
-            x: 0.25, y: 0,
+            x: 0.05, y: 0,
             width: 0.5, height: 0.65,
             color: '#3a5a4a',
-            fill: true
-        },
-        {
-            type: 'rect',
-            x: 0.13, y: 0.15,
-            width: 0.24, height: 0.08,
-            color: '#5a7a6a',
             fill: true
         }
     ], 0.5, 0.5, 0);
@@ -51,9 +44,9 @@ export function grunt() {
     // SHOULDERS (z-order 5)
     const shoulders = sprite.addPart('shoulders', {
         type: 'rect',
-        x: 0, y: 0,
-        width: 0.56, height: 0.15,
-        color: '#4a6a5a',
+        x: 0.3, y: 0,
+        width: 0.66, height: 0.05,
+        color: '#07c465ff',
         fill: true
     }, 0.5, 0.5, 5);
     shoulders.setBaseTransform(0, -0.08);

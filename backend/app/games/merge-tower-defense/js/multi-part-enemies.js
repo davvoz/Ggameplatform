@@ -11,6 +11,10 @@ import { healer } from './sprites/enemy/createHealer.js';
 import { armored } from './sprites/enemy/createArmored.js';
 import { boss } from './sprites/enemy/createBoss.js';
 import { vampire } from './sprites/enemy/createVampire.js';
+import { bomber } from './sprites/enemy/createBomber.js';
+import { shadow } from './sprites/enemy/createShadow.js';
+import { siren } from './sprites/enemy/createSiren.js';
+import { golem } from './sprites/enemy/createGolem.js';
 
 export const MultiPartEnemySprites = {
 
@@ -18,26 +22,21 @@ export const MultiPartEnemySprites = {
         return grunt();
     },
 
-
     createRusher() {
         return rusher();
     },
-
 
     createTank() {
         return tank();
     },
 
-
     createFlyer() {
         return flyer();
     },
 
-
     createHealer() {
         return healer();
     },
-
 
     createBoss() {
         return boss();
@@ -48,7 +47,22 @@ export const MultiPartEnemySprites = {
     },
 
     createVampire() {
-       return vampire();
-    }
+        return vampire();
+    },
 
+    createBomber() {
+        return bomber();
+    },
+
+    createShadow() {
+        return shadow();
+    },
+
+    createSiren() {
+        return siren();
+    },
+
+    createGolem() {
+        return golem();
+    }
 };

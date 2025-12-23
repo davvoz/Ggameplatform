@@ -5,6 +5,7 @@
 
 // ============ CANNON ENTITY ============
 import { MultiPartTowerSprites } from './multi-part-towers.js';
+import { MultiPartEnemySprites } from './multi-part-enemies.js';
 import { CANNON_TYPES, CONFIG, ZOMBIE_TYPES, MERGE_LEVELS } from './config.js';
 import { Utils } from './utils.js';
 // If MERGE_LEVELS is defined elsewhere, import it here
@@ -264,7 +265,7 @@ class Zombie {
     }
 
     initMultiPartSprite() {
-        if (typeof MultiPartEnemySprites === 'undefined') return;
+        if (!MultiPartEnemySprites) return;
         
         try {
             switch(this.type) {
@@ -289,10 +290,21 @@ class Zombie {
                 
                 this.multiSprite.onAnimationComplete = (name) => {
                     if (name === 'hit') {
+                        // Return to appropriate locomotion
                         if (this.type === 'AGILE') {
                             this.multiSprite.play('fly');
+                        } else if (this.atWall && this.multiSprite.animations.has('attack')) {
+                            // After hit while at wall, favor idle to prevent jitter
+                            this.multiSprite.play('idle');
                         } else {
                             this.multiSprite.play('walk');
+                        }
+                    } else if (name === 'attack') {
+                        // After attack, return to idle at wall or walk otherwise
+                        if (this.atWall) {
+                            this.multiSprite.play('idle');
+                        } else {
+                            this.multiSprite.play(this.type === 'AGILE' ? 'fly' : 'walk');
                         }
                     }
                 };
@@ -347,7 +359,43 @@ class Zombie {
         // Il nemico è fermo al muro
         this.atWall = this.row >= muroRow - 0.05;
         
-        // Animation
+        // Drive professional multi-part animations instead of sinusoidal wobble
+        if (this.multiSprite) {
+            // Scale playback speed with movement
+            const speedFactor = Math.max(0.6, effectiveSpeed / Math.max(0.001, this.speed));
+            this.multiSprite.setSpeed(speedFactor);
+
+            // Check if hit animation finished (not playing and was hit)
+            const isHitPlaying = this.multiSprite.currentAnimation === 'hit' && this.multiSprite.playing;
+            const isDeathPlaying = this.multiSprite.currentAnimation === 'death';
+            
+            // Don't interrupt hit or death animations
+            if (!isHitPlaying && !isDeathPlaying) {
+                const locomotion = this.type === 'AGILE' || this.type === 'PHASER' ? 'fly' : 'walk';
+                
+                if (this.atWall) {
+                    // At wall: idle between occasional "attack" strikes
+                    if (this.multiSprite.currentAnimation !== 'idle' && this.multiSprite.currentAnimation !== 'attack') {
+                        this.multiSprite.play('idle');
+                    }
+                    // Periodic attack if animation exists
+                    if (this.multiSprite.animations && this.multiSprite.animations.has('attack')) {
+                        this._attackAccumulator = (this._attackAccumulator || 0) + dt;
+                        if (this._attackAccumulator >= 1.1) {
+                            this._attackAccumulator = 0;
+                            this.multiSprite.play('attack', true);
+                        }
+                    }
+                } else {
+                    // In motion: ensure walk/fly is playing
+                    if (this.multiSprite.currentAnimation !== locomotion || !this.multiSprite.playing) {
+                        this.multiSprite.play(locomotion);
+                    }
+                }
+            }
+        }
+        
+        // Legacy oscillation phase (used only for fallback emoji rendering)
         this.animPhase += dt * (effectiveSpeed + 2);
         
         // Hit flash decay
@@ -418,9 +466,6 @@ class Zombie {
     }
 
     render(graphics) {
-        const wobble = Math.sin(this.animPhase) * 0.05;
-        const rotation = Math.sin(this.animPhase * 0.5) * 0.1;
-        
         // Flash red when hit
         const flashColor = this.hitFlash > 0 ? '#ffffff' : null;
         
@@ -437,8 +482,8 @@ class Zombie {
             }
             
             try {
-                // pos.x + cellSize/2, pos.y + cellSize/2 is the CENTER of the cell
-                this.multiSprite.render(graphics.ctx, pos.x + cellSize/2, pos.y + cellSize/2, size);
+                // gridToScreen already returns the CENTER of the cell
+                this.multiSprite.render(graphics.ctx, pos.x, pos.y, size);
             } catch(e) {
                 console.error('[ZOMBIE] Render error:', e);
             }
@@ -447,6 +492,10 @@ class Zombie {
                 graphics.ctx.restore();
             }
         } else if (this.sprite) {
+            // Legacy wobble for fallback sprite
+            const wobble = Math.sin(this.animPhase) * 0.05;
+            const rotation = Math.sin(this.animPhase * 0.5) * 0.1;
+            
             // Use professional sprite only
             graphics.drawSprite(this.sprite, this.col, this.row, {
                 scale: this.scale,

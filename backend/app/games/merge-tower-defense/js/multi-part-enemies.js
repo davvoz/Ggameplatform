@@ -3,7 +3,7 @@
  * Each enemy built from independent animated parts
  */
 
-import { MultiPartSprite, AnimationBuilder } from './sprite-animation-system.js';
+import { MultiPartSprite, AnimationBuilder, AnimationClip } from './sprite-animation-system.js';
 
 export const MultiPartEnemySprites = {
 
@@ -13,7 +13,27 @@ export const MultiPartEnemySprites = {
     createGrunt() {
         const sprite = new MultiPartSprite('grunt');
 
-        // BODY (main part)
+        // LEFT LEG (behind body, z-order -10)
+        const legLeft = sprite.addPart('legLeft', {
+            type: 'ellipse',
+            x: 0, y: 0.18,
+            width: 0.14, height: 0.36,
+            color: '#2a4a3a',
+            fill: true
+        }, 0.5, 0, -10);
+        legLeft.setBaseTransform(-0.08, 0.28);
+
+        // RIGHT LEG (behind body, z-order -10)
+        const legRight = sprite.addPart('legRight', {
+            type: 'ellipse',
+            x: 0, y: 0.18,
+            width: 0.14, height: 0.36,
+            color: '#2a4a3a',
+            fill: true
+        }, 0.5, 0, -10);
+        legRight.setBaseTransform(0.08, 0.28);
+
+        // BODY (main part, z-order 0)
         const body = sprite.addPart('body', [
             {
                 type: 'ellipse',
@@ -29,21 +49,25 @@ export const MultiPartEnemySprites = {
                 color: '#5a7a6a',
                 fill: true
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 0);
         body.setBaseTransform(0, 0.25);
 
-        // SHOULDERS
+        // Parent legs to body
+        sprite.setParent('legLeft', 'body');
+        sprite.setParent('legRight', 'body');
+
+        // SHOULDERS (z-order 5)
         const shoulders = sprite.addPart('shoulders', {
             type: 'rect',
             x: 0, y: 0,
             width: 0.56, height: 0.15,
             color: '#4a6a5a',
             fill: true
-        }, 0.5, 0.5);
+        }, 0.5, 0.5, 5);
         shoulders.setBaseTransform(0, -0.08);
         sprite.setParent('shoulders', 'body');
 
-        // HEAD
+        // HEAD (z-order 10)
         const head = sprite.addPart('head', [
             {
                 type: 'circle',
@@ -66,15 +90,18 @@ export const MultiPartEnemySprites = {
                 color: '#ff3333',
                 fill: true
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 10);
         head.setBaseTransform(0, -0.25);
         sprite.setParent('head', 'body');
 
-        // Setup animations
-        sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body'], 2.0));
-        sprite.addAnimation(AnimationBuilder.createWalkAnimation(['body', 'head'], 1.0));
-        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'shoulders'], 0.25));
-        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head'], 1.2));
+        // Setup animations with legs for real walk cycle
+        const walkParts = ['body', 'head', 'shoulders', 'legLeft', 'legRight'];
+        sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulders'], 2.0));
+        sprite.addAnimation(AnimationBuilder.createWalkAnimation(walkParts, 0.5));
+        // Natural attack motion (wind-up + strike) using body/head
+        sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head', 'shoulders'], 0.6));
+        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'shoulders', 'legLeft', 'legRight'], 0.25));
+        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'shoulders', 'legLeft', 'legRight'], 1.2));
 
         return sprite;
     },
@@ -85,7 +112,27 @@ export const MultiPartEnemySprites = {
     createRusher() {
         const sprite = new MultiPartSprite('rusher');
 
-        // BODY (lean forward)
+        // LEFT LEG (thin and fast, behind body z-order -10)
+        const legLeft = sprite.addPart('legLeft', {
+            type: 'ellipse',
+            x: 0, y: 0.15,
+            width: 0.10, height: 0.30,
+            color: '#6a2a2a',
+            fill: true
+        }, 0.5, 0, -10);
+        legLeft.setBaseTransform(-0.06, 0.20);
+
+        // RIGHT LEG (behind body z-order -10)
+        const legRight = sprite.addPart('legRight', {
+            type: 'ellipse',
+            x: 0, y: 0.15,
+            width: 0.10, height: 0.30,
+            color: '#6a2a2a',
+            fill: true
+        }, 0.5, 0, -10);
+        legRight.setBaseTransform(0.06, 0.20);
+
+        // BODY (lean forward, z-order 0)
         const body = sprite.addPart('body', [
             {
                 type: 'ellipse',
@@ -114,10 +161,14 @@ export const MultiPartEnemySprites = {
                 stroke: true,
                 strokeWidth: 2
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 0);
         body.setBaseTransform(0, 0.1, 0.1); // Leaning forward
 
-        // HORNS
+        // Parent legs to body
+        sprite.setParent('legLeft', 'body');
+        sprite.setParent('legRight', 'body');
+
+        // HORNS (z-order 15)
         const hornLeft = sprite.addPart('hornLeft', {
             type: 'polygon',
             points: [
@@ -127,7 +178,7 @@ export const MultiPartEnemySprites = {
             ],
             color: '#aa4a4a',
             fill: true
-        }, 0.5, 1);
+        }, 0.5, 1, 15);
         hornLeft.setBaseTransform(-0.05, -0.1);
 
         const hornRight = sprite.addPart('hornRight', {
@@ -139,10 +190,10 @@ export const MultiPartEnemySprites = {
             ],
             color: '#aa4a4a',
             fill: true
-        }, 0.5, 1);
+        }, 0.5, 1, 15);
         hornRight.setBaseTransform(0.05, -0.1);
 
-        // HEAD (aggressive)
+        // HEAD (aggressive, z-order 10)
         const head = sprite.addPart('head', [
             {
                 type: 'ellipse',
@@ -165,18 +216,21 @@ export const MultiPartEnemySprites = {
                 color: '#ffaa00',
                 fill: true
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 10);
         head.setBaseTransform(0.02, -0.22, 0.05);
         sprite.setParent('head', 'body');
         sprite.setParent('hornLeft', 'head');
         sprite.setParent('hornRight', 'head');
 
-        // Fast walk animation
-        const fastWalk = AnimationBuilder.createWalkAnimation(['body', 'head'], 0.4);
+        // Fast walk animation - includes legs for running motion
+        const walkParts = ['body', 'head', 'hornLeft', 'hornRight', 'legLeft', 'legRight'];
+        const fastWalk = AnimationBuilder.createWalkAnimation(walkParts, 0.3);
         sprite.addAnimation(fastWalk);
         sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body'], 1.0));
-        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head'], 0.2));
-        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head'], 0.8));
+        // Add attack animation for rusher (fast jab)
+        sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head'], 0.45));
+        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'legLeft', 'legRight'], 0.2));
+        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'legLeft', 'legRight'], 0.8));
 
         return sprite;
     },
@@ -187,7 +241,27 @@ export const MultiPartEnemySprites = {
     createTank() {
         const sprite = new MultiPartSprite('tank');
 
-        // BODY (heavy and large)
+        // LEFT LEG (thick and heavy, behind body z-order -10)
+        const legLeft = sprite.addPart('legLeft', {
+            type: 'rect',
+            x: -0.06, y: 0.16,
+            width: 0.14, height: 0.34,
+            color: '#3a3a5a',
+            fill: true
+        }, 0.5, 0, -10);
+        legLeft.setBaseTransform(-0.09, 0.22);
+
+        // RIGHT LEG (behind body z-order -10)
+        const legRight = sprite.addPart('legRight', {
+            type: 'rect',
+            x: -0.06, y: 0.16,
+            width: 0.14, height: 0.34,
+            color: '#3a3a5a',
+            fill: true
+        }, 0.5, 0, -10);
+        legRight.setBaseTransform(0.09, 0.22);
+
+        // BODY (heavy and large, z-order 0)
         const body = sprite.addPart('body', [
             {
                 type: 'rect',
@@ -223,17 +297,21 @@ export const MultiPartEnemySprites = {
                 color: '#8a8aaa',
                 fill: true
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 0);
         body.setBaseTransform(0, 0.2);
 
-        // SHOULDER PAULDRONS
+        // Parent legs to body
+        sprite.setParent('legLeft', 'body');
+        sprite.setParent('legRight', 'body');
+
+        // SHOULDER PAULDRONS (z-order 5)
         const shoulderLeft = sprite.addPart('shoulderLeft', {
             type: 'circle',
             x: 0, y: 0,
             radius: 0.08,
             color: '#5a5a7a',
             fill: true
-        }, 0.5, 0.5);
+        }, 0.5, 0.5, 5);
         shoulderLeft.setBaseTransform(-0.28, 0.03);
         sprite.setParent('shoulderLeft', 'body');
 
@@ -243,11 +321,11 @@ export const MultiPartEnemySprites = {
             radius: 0.08,
             color: '#5a5a7a',
             fill: true
-        }, 0.5, 0.5);
+        }, 0.5, 0.5, 5);
         shoulderRight.setBaseTransform(0.28, 0.03);
         sprite.setParent('shoulderRight', 'body');
 
-        // HEAD
+        // HEAD (z-order 10)
         const head = sprite.addPart('head', [
             {
                 type: 'rect',
@@ -263,16 +341,19 @@ export const MultiPartEnemySprites = {
                 color: '#ff4444',
                 fill: true
             }
-        ], 0.5, 0.5);
+        ], 0.5, 0.5, 10);
         head.setBaseTransform(0, -0.25);
         sprite.setParent('head', 'body');
 
-        // Slow heavy animations
-        sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body'], 3.0));
-        const slowWalk = AnimationBuilder.createWalkAnimation(['body', 'head'], 1.5);
+        // Slow heavy animations with legs and shoulder movement
+        const allParts = ['body', 'head', 'shoulderLeft', 'shoulderRight', 'legLeft', 'legRight'];
+        sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulderLeft', 'shoulderRight'], 3.0));
+        const slowWalk = AnimationBuilder.createWalkAnimation(allParts, 1.0);
         sprite.addAnimation(slowWalk);
-        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head'], 0.3));
-        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head'], 1.5));
+        // Heavy attack animation (slower, weighty)
+        sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head', 'shoulderLeft', 'shoulderRight'], 0.7));
+        sprite.addAnimation(AnimationBuilder.createHitAnimation(allParts, 0.3));
+        sprite.addAnimation(AnimationBuilder.createDeathAnimation(allParts, 1.5));
 
         return sprite;
     },
@@ -283,52 +364,53 @@ export const MultiPartEnemySprites = {
     createFlyer() {
         const sprite = new MultiPartSprite('flyer');
 
-        // BODY (small core)
+        // BODY (larger core)
         const body = sprite.addPart('body', {
             type: 'ellipse',
             x: 0, y: 0,
-            width: 0.25, height: 0.35,
+            width: 0.40, height: 0.50,
             color: '#4a3a5a',
             fill: true
         }, 0.5, 0.5);
         body.setBaseTransform(0, 0);
 
-        // HEAD
+        // HEAD (larger)
         const head = sprite.addPart('head', [
             {
                 type: 'circle',
                 x: 0, y: 0,
-                radius: 0.12,
+                radius: 0.18,
                 color: '#3a2a4a',
                 fill: true
             },
             {
                 type: 'circle',
-                x: -0.05, y: -0.02,
-                radius: 0.04,
+                x: -0.07, y: -0.03,
+                radius: 0.06,
                 color: '#ffff00',
                 fill: true
             },
             {
                 type: 'circle',
-                x: 0.05, y: -0.02,
-                radius: 0.04,
+                x: 0.07, y: -0.03,
+                radius: 0.06,
                 color: '#ffff00',
                 fill: true
             }
         ], 0.5, 0.5);
-        head.setBaseTransform(0, -0.18);
+        head.setBaseTransform(0, -0.28);
         sprite.setParent('head', 'body');
 
-        // LEFT WING (will flap)
+        // LEFT WING (will flap) - MUCH bigger wings
         const wingLeft = sprite.addPart('wingLeft', [
             {
                 type: 'polygon',
                 points: [
                     { x: 0, y: 0 },
-                    { x: -0.2, y: -0.1 },
-                    { x: -0.15, y: 0.1 },
-                    { x: -0.03, y: 0.1 }
+                    { x: -0.42, y: -0.22 },
+                    { x: -0.48, y: 0.06 },
+                    { x: -0.32, y: 0.20 },
+                    { x: -0.10, y: 0.16 }
                 ],
                 color: '#6a4a7a',
                 fill: true,
@@ -338,26 +420,27 @@ export const MultiPartEnemySprites = {
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.1, y: -0.05 },
                     { x: -0.18, y: -0.08 },
-                    { x: -0.13, y: 0.05 }
+                    { x: -0.38, y: -0.16 },
+                    { x: -0.28, y: 0.10 }
                 ],
-                color: 'rgba(138, 98, 158, 0.5)',
+                color: 'rgba(138, 98, 158, 0.6)',
                 fill: true
             }
         ], 1, 0.5); // Pivot at body connection
-        wingLeft.setBaseTransform(-0.125, 0);
+        wingLeft.setBaseTransform(-0.18, 0);
         sprite.setParent('wingLeft', 'body');
 
-        // RIGHT WING
+        // RIGHT WING - MUCH bigger wings
         const wingRight = sprite.addPart('wingRight', [
             {
                 type: 'polygon',
                 points: [
                     { x: 0, y: 0 },
-                    { x: 0.2, y: -0.1 },
-                    { x: 0.15, y: 0.1 },
-                    { x: 0.03, y: 0.1 }
+                    { x: 0.42, y: -0.22 },
+                    { x: 0.48, y: 0.06 },
+                    { x: 0.32, y: 0.20 },
+                    { x: 0.10, y: 0.16 }
                 ],
                 color: '#6a4a7a',
                 fill: true,
@@ -367,57 +450,94 @@ export const MultiPartEnemySprites = {
             {
                 type: 'polygon',
                 points: [
-                    { x: 0.1, y: -0.05 },
                     { x: 0.18, y: -0.08 },
-                    { x: 0.13, y: 0.05 }
+                    { x: 0.38, y: -0.16 },
+                    { x: 0.28, y: 0.10 }
                 ],
-                color: 'rgba(138, 98, 158, 0.5)',
+                color: 'rgba(138, 98, 158, 0.6)',
                 fill: true
             }
         ], 0, 0.5);
-        wingRight.setBaseTransform(0.125, 0);
+        wingRight.setBaseTransform(0.18, 0);
         sprite.setParent('wingRight', 'body');
 
-        // TAIL
+        // TAIL (larger)
         const tail = sprite.addPart('tail', {
             type: 'polygon',
             points: [
                 { x: 0, y: 0 },
-                { x: -0.05, y: 0.2 },
-                { x: 0.05, y: 0.2 }
+                { x: -0.08, y: 0.28 },
+                { x: 0.08, y: 0.28 }
             ],
             color: '#4a3a5a',
             fill: true
         }, 0.5, 0);
-        tail.setBaseTransform(0, 0.175);
+        tail.setBaseTransform(0, 0.24);
         sprite.setParent('tail', 'body');
 
-        // Wing flap animation
-        const fly = new AnimationClip('fly', 0.3, true);
+        // Wing flap animation - MOLTO più ampio e visibile
+        const fly = new AnimationClip('fly', 0.20, true);
         fly.addTrack('wingLeft', [
-            { time: 0, transform: { rotation: 0 } },
-            { time: 0.15, transform: { rotation: -0.6 } },
-            { time: 0.3, transform: { rotation: 0 } }
+            { time: 0, transform: { rotation: 0.5, scaleY: 1.0, scaleX: 1.0 } },
+            { time: 0.05, transform: { rotation: -1.2, scaleY: 0.75, scaleX: 0.9 } },
+            { time: 0.10, transform: { rotation: -0.8, scaleY: 0.85, scaleX: 0.95 } },
+            { time: 0.15, transform: { rotation: -0.3, scaleY: 0.95, scaleX: 1.0 } },
+            { time: 0.20, transform: { rotation: 0.5, scaleY: 1.0, scaleX: 1.0 } }
         ]);
         fly.addTrack('wingRight', [
-            { time: 0, transform: { rotation: 0 } },
-            { time: 0.15, transform: { rotation: 0.6 } },
-            { time: 0.3, transform: { rotation: 0 } }
+            { time: 0, transform: { rotation: -0.5, scaleY: 1.0, scaleX: 1.0 } },
+            { time: 0.05, transform: { rotation: 1.2, scaleY: 0.75, scaleX: 0.9 } },
+            { time: 0.10, transform: { rotation: 0.8, scaleY: 0.85, scaleX: 0.95 } },
+            { time: 0.15, transform: { rotation: 0.3, scaleY: 0.95, scaleX: 1.0 } },
+            { time: 0.20, transform: { rotation: -0.5, scaleY: 1.0, scaleX: 1.0 } }
         ]);
         fly.addTrack('body', [
-            { time: 0, transform: { y: 0 } },
-            { time: 0.15, transform: { y: -0.05 } },
-            { time: 0.3, transform: { y: 0 } }
+            { time: 0, transform: { y: 0.03, rotation: 0.03 } },
+            { time: 0.05, transform: { y: -0.08, rotation: -0.04 } },
+            { time: 0.10, transform: { y: -0.05, rotation: -0.02 } },
+            { time: 0.15, transform: { y: -0.02, rotation: 0 } },
+            { time: 0.20, transform: { y: 0.03, rotation: 0.03 } }
+        ]);
+        fly.addTrack('head', [
+            { time: 0, transform: { y: 0, rotation: 0.05 } },
+            { time: 0.05, transform: { y: -0.04, rotation: -0.08 } },
+            { time: 0.10, transform: { y: -0.02, rotation: -0.03 } },
+            { time: 0.15, transform: { y: -0.01, rotation: 0 } },
+            { time: 0.20, transform: { y: 0, rotation: 0.05 } }
+        ]);
+        fly.addTrack('tail', [
+            { time: 0, transform: { rotation: 0.15 } },
+            { time: 0.10, transform: { rotation: -0.20 } },
+            { time: 0.20, transform: { rotation: 0.15 } }
         ]);
 
         sprite.addAnimation(fly);
 
-        // --- AGGIUNTA: walk = fly ---
-        const walk = new AnimationClip('walk', 0.3, true);
+        // --- AGGIUNTA: walk = fly (stessa durata 0.20) ---
+        const walk = new AnimationClip('walk', 0.20, true);
         walk.tracks = JSON.parse(JSON.stringify(fly.tracks));
         sprite.addAnimation(walk);
+        
+        // Idle - gentle hovering
+        const idle = new AnimationClip('idle', 0.5, true);
+        idle.addTrack('wingLeft', [
+            { time: 0, transform: { rotation: 0.1 } },
+            { time: 0.25, transform: { rotation: -0.3 } },
+            { time: 0.5, transform: { rotation: 0.1 } }
+        ]);
+        idle.addTrack('wingRight', [
+            { time: 0, transform: { rotation: -0.1 } },
+            { time: 0.25, transform: { rotation: 0.3 } },
+            { time: 0.5, transform: { rotation: -0.1 } }
+        ]);
+        idle.addTrack('body', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.25, transform: { y: -0.03 } },
+            { time: 0.5, transform: { y: 0 } }
+        ]);
+        sprite.addAnimation(idle);
 
-        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head'], 0.2));
+        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'wingLeft', 'wingRight'], 0.2));
         sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'wingLeft', 'wingRight', 'tail'], 1.0));
 
         return sprite;
@@ -885,27 +1005,95 @@ export const MultiPartEnemySprites = {
         head.setBaseTransform(0, -0.03);
         sprite.setParent('head', 'body');
 
-        // Heavy walk animation - slow and powerful
-        const walk = new AnimationClip('walk', 1.8, true);
+        // LEFT LEG (massive, z-order -10)
+        const legLeft = sprite.addPart('legLeft', {
+            type: 'polygon',
+            points: [
+                { x: -0.08, y: 0 },
+                { x: 0.08, y: 0 },
+                { x: 0.06, y: 0.36 },
+                { x: -0.06, y: 0.36 }
+            ],
+            color: '#5a3a3a',
+            fill: true
+        }, 0.5, 0, -10);
+        legLeft.setBaseTransform(-0.10, 0.22);
+        sprite.setParent('legLeft', 'body');
+
+        // RIGHT LEG (z-order -10)
+        const legRight = sprite.addPart('legRight', {
+            type: 'polygon',
+            points: [
+                { x: -0.08, y: 0 },
+                { x: 0.08, y: 0 },
+                { x: 0.06, y: 0.36 },
+                { x: -0.06, y: 0.36 }
+            ],
+            color: '#5a3a3a',
+            fill: true
+        }, 0.5, 0, -10);
+        legRight.setBaseTransform(0.10, 0.22);
+        sprite.setParent('legRight', 'body');
+
+        // Heavy walk animation - slow and powerful with legs
+        const walk = new AnimationClip('walk', 1.5, true);
         walk.addTrack('body', [
             { time: 0, transform: { y: 0, rotation: 0 } },
-            { time: 0.45, transform: { y: -0.02, rotation: 0.02 } },
-            { time: 0.9, transform: { y: 0, rotation: 0 } },
-            { time: 1.35, transform: { y: -0.02, rotation: -0.02 } },
-            { time: 1.8, transform: { y: 0, rotation: 0 } }
+            { time: 0.375, transform: { y: -0.06, rotation: 0.05 } },
+            { time: 0.75, transform: { y: 0, rotation: 0 } },
+            { time: 1.125, transform: { y: -0.06, rotation: -0.05 } },
+            { time: 1.5, transform: { y: 0, rotation: 0 } }
+        ]);
+        walk.addTrack('legLeft', [
+            { time: 0, transform: { rotation: 0.5, y: -0.04 } },
+            { time: 0.375, transform: { rotation: 0, y: 0 } },
+            { time: 0.75, transform: { rotation: -0.5, y: -0.04 } },
+            { time: 1.125, transform: { rotation: 0, y: 0 } },
+            { time: 1.5, transform: { rotation: 0.5, y: -0.04 } }
+        ]);
+        walk.addTrack('legRight', [
+            { time: 0, transform: { rotation: -0.5, y: -0.04 } },
+            { time: 0.375, transform: { rotation: 0, y: 0 } },
+            { time: 0.75, transform: { rotation: 0.5, y: -0.04 } },
+            { time: 1.125, transform: { rotation: 0, y: 0 } },
+            { time: 1.5, transform: { rotation: -0.5, y: -0.04 } }
         ]);
         walk.addTrack('shoulderLeft', [
             { time: 0, transform: { rotation: 0 } },
-            { time: 0.9, transform: { rotation: 0.08 } },
-            { time: 1.8, transform: { rotation: 0 } }
+            { time: 0.75, transform: { rotation: 0.1 } },
+            { time: 1.5, transform: { rotation: 0 } }
         ]);
         walk.addTrack('shoulderRight', [
             { time: 0, transform: { rotation: 0 } },
-            { time: 0.9, transform: { rotation: -0.08 } },
-            { time: 1.8, transform: { rotation: 0 } }
+            { time: 0.75, transform: { rotation: -0.1 } },
+            { time: 1.5, transform: { rotation: 0 } }
+        ]);
+        walk.addTrack('armLeft', [
+            { time: 0, transform: { rotation: -0.3 } },
+            { time: 0.75, transform: { rotation: 0.3 } },
+            { time: 1.5, transform: { rotation: -0.3 } }
+        ]);
+        walk.addTrack('armRight', [
+            { time: 0, transform: { rotation: 0.3 } },
+            { time: 0.75, transform: { rotation: -0.3 } },
+            { time: 1.5, transform: { rotation: 0.3 } }
         ]);
 
         sprite.addAnimation(walk);
+        
+        // Idle animation for Boss
+        const idle = new AnimationClip('idle', 2.0, true);
+        idle.addTrack('body', [
+            { time: 0, transform: { y: 0 } },
+            { time: 1.0, transform: { y: -0.02 } },
+            { time: 2.0, transform: { y: 0 } }
+        ]);
+        idle.addTrack('head', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 1.0, transform: { rotation: 0.03 } },
+            { time: 2.0, transform: { rotation: 0 } }
+        ]);
+        sprite.addAnimation(idle);
 
         // Attack animation - powerful swing
         const attack = new AnimationClip('attack', 0.8, false);
@@ -929,8 +1117,8 @@ export const MultiPartEnemySprites = {
         ]);
         sprite.addAnimation(attack);
 
-        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head'], 0.25));
-        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'armLeft', 'armRight'], 1.5));
+        sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'legLeft', 'legRight'], 0.25));
+        sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'armLeft', 'armRight', 'legLeft', 'legRight'], 1.5));
 
         return sprite;
     }

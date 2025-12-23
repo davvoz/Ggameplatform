@@ -68,7 +68,7 @@ export class Transform {
 // ============================================================================
 
 export class SpritePart {
-    constructor(name, geometry, pivotX = 0.5, pivotY = 0.5) {
+    constructor(name, geometry, pivotX = 0.5, pivotY = 0.5, zOrder = 0) {
         this.name = name;
         this.geometry = geometry; // The visual definition
         this.transform = new Transform();
@@ -77,6 +77,7 @@ export class SpritePart {
         this.visible = true;
         this.opacity = 1.0;
         this.tint = null;
+        this.zOrder = zOrder; // Lower = rendered first (behind)
         
         // Animation state
         this.baseTransform = {
@@ -233,9 +234,14 @@ export class MultiPartSprite {
 
     /**
      * Add a sprite part
+     * @param {string} name - Part name
+     * @param {Object} geometry - Visual definition
+     * @param {number} pivotX - X pivot (0-1)
+     * @param {number} pivotY - Y pivot (0-1)
+     * @param {number} zOrder - Z-order (lower = behind, higher = front)
      */
-    addPart(name, geometry, pivotX = 0.5, pivotY = 0.5) {
-        const part = new SpritePart(name, geometry, pivotX, pivotY);
+    addPart(name, geometry, pivotX = 0.5, pivotY = 0.5, zOrder = 0) {
+        const part = new SpritePart(name, geometry, pivotX, pivotY, zOrder);
         this.parts.set(name, part);
         return part;
     }
@@ -337,8 +343,9 @@ export class MultiPartSprite {
         ctx.rotate(rootWorld.rotation);
         ctx.scale(rootWorld.scaleX, rootWorld.scaleY);
 
-        // Render parts in order (back to front)
-        const partsArray = Array.from(this.parts.values());
+        // Render parts in z-order (lower zOrder = rendered first = behind)
+        const partsArray = Array.from(this.parts.values())
+            .sort((a, b) => a.zOrder - b.zOrder);
         
         for (const part of partsArray) {
             if (!part.visible) continue;
@@ -532,64 +539,122 @@ export class AnimationBuilder {
 
     /**
      * Create walk animation - legs and body movement
+     * VERY VISIBLE motion for clear walking effect
      */
     static createWalkAnimation(parts, duration = 0.8) {
         const clip = new AnimationClip('walk', duration, true);
 
-        // Body bounce
+        // Body bounce and sway - VERY pronounced
         if (parts.includes('body')) {
             clip.addTrack('body', [
-                { time: 0, transform: { y: 0 } },
-                { time: duration * 0.25, transform: { y: -0.03 } },
-                { time: duration * 0.5, transform: { y: 0 } },
-                { time: duration * 0.75, transform: { y: -0.03 } },
-                { time: duration, transform: { y: 0 } }
+                { time: 0, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } },
+                { time: duration * 0.25, transform: { y: -0.08, rotation: -0.08, scaleY: 0.95 } },
+                { time: duration * 0.5, transform: { y: 0, rotation: -0.05, scaleY: 1.0 } },
+                { time: duration * 0.75, transform: { y: -0.08, rotation: 0.08, scaleY: 0.95 } },
+                { time: duration, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } }
             ]);
         }
 
-        // Head bobbing (slight)
+        // Head bobbing with tilt - more visible
         if (parts.includes('head')) {
             clip.addTrack('head', [
-                { time: 0, transform: { y: 0, rotation: 0 } },
-                { time: duration * 0.25, transform: { y: -0.01, rotation: 0.05 } },
-                { time: duration * 0.5, transform: { y: 0, rotation: 0 } },
-                { time: duration * 0.75, transform: { y: -0.01, rotation: -0.05 } },
-                { time: duration, transform: { y: 0, rotation: 0 } }
+                { time: 0, transform: { y: 0, rotation: 0.08, x: 0 } },
+                { time: duration * 0.25, transform: { y: -0.05, rotation: -0.12, x: -0.03 } },
+                { time: duration * 0.5, transform: { y: 0.03, rotation: 0, x: 0 } },
+                { time: duration * 0.75, transform: { y: -0.05, rotation: 0.12, x: 0.03 } },
+                { time: duration, transform: { y: 0, rotation: 0.08, x: 0 } }
             ]);
         }
 
-        // Left leg
+        // Shoulders sway opposite to body
+        if (parts.includes('shoulders')) {
+            clip.addTrack('shoulders', [
+                { time: 0, transform: { rotation: -0.06 } },
+                { time: duration * 0.25, transform: { rotation: 0.1 } },
+                { time: duration * 0.5, transform: { rotation: 0.06 } },
+                { time: duration * 0.75, transform: { rotation: -0.1 } },
+                { time: duration, transform: { rotation: -0.06 } }
+            ]);
+        }
+
+        // Left leg - LARGE swing for visibility
         if (parts.includes('legLeft')) {
             clip.addTrack('legLeft', [
-                { time: 0, transform: { rotation: 0.3 } },
-                { time: duration * 0.5, transform: { rotation: -0.3 } },
-                { time: duration, transform: { rotation: 0.3 } }
+                { time: 0, transform: { rotation: 0.6, y: -0.03 } },
+                { time: duration * 0.25, transform: { rotation: 0, y: 0 } },
+                { time: duration * 0.5, transform: { rotation: -0.6, y: -0.03 } },
+                { time: duration * 0.75, transform: { rotation: 0, y: 0 } },
+                { time: duration, transform: { rotation: 0.6, y: -0.03 } }
             ]);
         }
 
-        // Right leg (opposite phase)
+        // Right leg (opposite phase) - LARGE swing
         if (parts.includes('legRight')) {
             clip.addTrack('legRight', [
-                { time: 0, transform: { rotation: -0.3 } },
-                { time: duration * 0.5, transform: { rotation: 0.3 } },
-                { time: duration, transform: { rotation: -0.3 } }
+                { time: 0, transform: { rotation: -0.6, y: -0.03 } },
+                { time: duration * 0.25, transform: { rotation: 0, y: 0 } },
+                { time: duration * 0.5, transform: { rotation: 0.6, y: -0.03 } },
+                { time: duration * 0.75, transform: { rotation: 0, y: 0 } },
+                { time: duration, transform: { rotation: -0.6, y: -0.03 } }
             ]);
         }
 
         // Arms swing
         if (parts.includes('armLeft')) {
             clip.addTrack('armLeft', [
-                { time: 0, transform: { rotation: -0.2 } },
-                { time: duration * 0.5, transform: { rotation: 0.2 } },
-                { time: duration, transform: { rotation: -0.2 } }
+                { time: 0, transform: { rotation: -0.4 } },
+                { time: duration * 0.5, transform: { rotation: 0.4 } },
+                { time: duration, transform: { rotation: -0.4 } }
             ]);
         }
 
         if (parts.includes('armRight')) {
             clip.addTrack('armRight', [
-                { time: 0, transform: { rotation: 0.2 } },
-                { time: duration * 0.5, transform: { rotation: -0.2 } },
-                { time: duration, transform: { rotation: 0.2 } }
+                { time: 0, transform: { rotation: 0.4 } },
+                { time: duration * 0.5, transform: { rotation: -0.4 } },
+                { time: duration, transform: { rotation: 0.4 } }
+            ]);
+        }
+
+        // Horns bob with head movement
+        if (parts.includes('hornLeft')) {
+            clip.addTrack('hornLeft', [
+                { time: 0, transform: { rotation: 0.15 } },
+                { time: duration * 0.25, transform: { rotation: -0.2 } },
+                { time: duration * 0.5, transform: { rotation: 0 } },
+                { time: duration * 0.75, transform: { rotation: 0.2 } },
+                { time: duration, transform: { rotation: 0.15 } }
+            ]);
+        }
+
+        if (parts.includes('hornRight')) {
+            clip.addTrack('hornRight', [
+                { time: 0, transform: { rotation: -0.1 } },
+                { time: duration * 0.25, transform: { rotation: 0.15 } },
+                { time: duration * 0.5, transform: { rotation: 0 } },
+                { time: duration * 0.75, transform: { rotation: -0.15 } },
+                { time: duration, transform: { rotation: -0.1 } }
+            ]);
+        }
+
+        // Shoulder pauldrons sway
+        if (parts.includes('shoulderLeft')) {
+            clip.addTrack('shoulderLeft', [
+                { time: 0, transform: { y: 0, rotation: 0.05 } },
+                { time: duration * 0.25, transform: { y: -0.02, rotation: -0.03 } },
+                { time: duration * 0.5, transform: { y: 0, rotation: -0.05 } },
+                { time: duration * 0.75, transform: { y: -0.02, rotation: 0.03 } },
+                { time: duration, transform: { y: 0, rotation: 0.05 } }
+            ]);
+        }
+
+        if (parts.includes('shoulderRight')) {
+            clip.addTrack('shoulderRight', [
+                { time: 0, transform: { y: 0, rotation: -0.05 } },
+                { time: duration * 0.25, transform: { y: -0.02, rotation: 0.03 } },
+                { time: duration * 0.5, transform: { y: 0, rotation: 0.05 } },
+                { time: duration * 0.75, transform: { y: -0.02, rotation: -0.03 } },
+                { time: duration, transform: { y: 0, rotation: -0.05 } }
             ]);
         }
 

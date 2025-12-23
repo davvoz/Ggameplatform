@@ -229,7 +229,7 @@ export const ZOMBIE_TYPES = {
         dodgeChance: 0.25,  // Can dodge projectiles
         reward: 40,
         color: '#ff00ff',
-        scale: 0.85,
+        scale: 1.2,
     },
     
     ARMORED: {

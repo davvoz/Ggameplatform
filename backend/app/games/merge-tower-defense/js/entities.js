@@ -174,7 +174,7 @@ class Cannon {
         // Draw level indicator
         if (this.level > 1) {
             graphics.drawLevel(this.col, this.row, this.level, this.levelIcon);
-        }null
+        }
         
         // Draw selection
         if (this.selected) {

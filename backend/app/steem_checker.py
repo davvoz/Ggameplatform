@@ -198,31 +198,7 @@ def get_steem_multiplier_data(username: str) -> Dict:
     }
 
 
-def should_check_multiplier(user) -> bool:
-    """
-    Check if enough time has passed since last multiplier check
-    Only checks every 10 minutes to avoid hammering Steem API
-    
-    Args:
-        user: User model instance
-        
-    Returns:
-        True if check needed (>10 min since last check or never checked)
-    """
-    from datetime import datetime, timedelta
-    
-    if not user.last_multiplier_check:
-        return True
-    
-    try:
-        last_check = datetime.fromisoformat(user.last_multiplier_check)
-        now = datetime.now()
-        time_diff = now - last_check
-        
-        # Check every 10 minutes
-        return time_diff > timedelta(minutes=10)
-    except:
-        return True
+# NOTE: Cache/check-throttling logic removed - multiplier is checked on every call
 
 
 def update_user_multiplier(user_id: str, steem_username: str, db_session, force: bool = False) -> bool:
@@ -248,17 +224,7 @@ def update_user_multiplier(user_id: str, steem_username: str, db_session, force:
         if not user or not steem_username:
             return False
         
-        # Check if we should skip (cache valid and not forced)
-        if not force and not should_check_multiplier(user):
-            print(f"⏭️ Skipping multiplier check for {steem_username} (cache valid)")
-            # Still record that a check was attempted so the DB viewer and logs
-            # reflect the most recent check time even if we don't query Steem.
-            try:
-                user.last_multiplier_check = datetime.now().isoformat()
-                db_session.commit()
-            except Exception as e:
-                print(f"⚠️ Could not update last_multiplier_check for {user_id}: {e}")
-            return False
+        # Always perform a fresh check (cache/throttling removed)
         
         # Check current Steem status
         print(f"🔍 Checking Steem multiplier for {steem_username}...")

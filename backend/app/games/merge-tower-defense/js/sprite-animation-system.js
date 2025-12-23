@@ -7,7 +7,7 @@
 // TRANSFORM SYSTEM - Hierarchical transforms for sprite parts
 // ============================================================================
 
-class Transform {
+export class Transform {
     constructor(x = 0, y = 0, rotation = 0, scaleX = 1, scaleY = 1) {
         this.x = x;
         this.y = y;
@@ -67,7 +67,7 @@ class Transform {
 // SPRITE PART - Individual animated component
 // ============================================================================
 
-class SpritePart {
+export class SpritePart {
     constructor(name, geometry, pivotX = 0.5, pivotY = 0.5) {
         this.name = name;
         this.geometry = geometry; // The visual definition
@@ -123,7 +123,7 @@ class SpritePart {
 // ANIMATION CLIP - Keyframe-based animation data
 // ============================================================================
 
-class AnimationClip {
+export class AnimationClip {
     constructor(name, duration, loop = true) {
         this.name = name;
         this.duration = duration; // in seconds
@@ -217,7 +217,7 @@ class AnimationClip {
 // MULTI-PART SPRITE - Container for animated parts
 // ============================================================================
 
-class MultiPartSprite {
+export class MultiPartSprite {
     constructor(name) {
         this.name = name;
         this.parts = new Map(); // partName -> SpritePart
@@ -502,7 +502,7 @@ class MultiPartSprite {
 // ANIMATION BUILDER - Helper to create animations easily
 // ============================================================================
 
-class AnimationBuilder {
+export class AnimationBuilder {
     /**
      * Create idle animation - subtle breathing/bobbing
      */
@@ -694,9 +694,4 @@ class AnimationBuilder {
     }
 }
 
-// Export to global scope
-window.Transform = Transform;
-window.SpritePart = SpritePart;
-window.AnimationClip = AnimationClip;
-window.MultiPartSprite = MultiPartSprite;
-window.AnimationBuilder = AnimationBuilder;
+

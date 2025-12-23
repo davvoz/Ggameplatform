@@ -8,7 +8,7 @@
 // SPRITE RENDERER - Core rendering engine
 // ============================================================================
 
-class SpriteRenderer {
+export class SpriteRenderer {
     constructor() {
         this.spriteCache = new Map();
         this.animationFrameCache = new Map();

@@ -3,7 +3,9 @@
  * Each tower built from independent animated parts for professional animations
  */
 
-const MultiPartTowerSprites = {
+import { MultiPartSprite, AnimationBuilder, AnimationClip } from './sprite-animation-system.js';
+
+export const MultiPartTowerSprites = {
 
     /**
      * Create BASIC tower with rotating turret

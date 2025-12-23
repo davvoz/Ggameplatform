@@ -4,7 +4,12 @@
  */
 
 // ============ CANNON ENTITY ============
-class Cannon {
+import { MultiPartTowerSprites } from './multi-part-towers.js';
+import { CANNON_TYPES, CONFIG, ZOMBIE_TYPES, MERGE_LEVELS } from './config.js';
+import { Utils } from './utils.js';
+// If MERGE_LEVELS is defined elsewhere, import it here
+
+export class Cannon {
     constructor(col, row, type) {
         this.col = col;
         this.row = row;
@@ -72,11 +77,7 @@ class Cannon {
         this.sprite = baseStats.sprite ? baseStats.sprite() : null;
         
         // Debug: verificare che sprite sia caricato
-        if (!this.sprite && window.TowerSpriteLibrary) {
-            console.error(`[CANNON] No sprite for ${this.type}, TowerSpriteLibrary exists but sprite is null`);
-        } else if (!this.sprite) {
-            console.error(`[CANNON] No sprite for ${this.type}, TowerSpriteLibrary not loaded`);
-        }
+
         
         // Special properties
         this.splashRadius = baseStats.splashRadius;
@@ -592,7 +593,7 @@ class Projectile {
 }
 
 // ============ ENTITY MANAGER ============
-class EntityManager {
+export class EntityManager {
     constructor() {
         this.cannons = [];
         this.zombies = [];
@@ -734,6 +735,4 @@ class EntityManager {
 }
 
 // Export
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Cannon, Zombie, Projectile, EntityManager };
-}
+

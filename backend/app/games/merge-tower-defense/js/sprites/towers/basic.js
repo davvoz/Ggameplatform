@@ -391,7 +391,4 @@ const BasicTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.BasicTowerSprite = BasicTowerSprite;
-}
+export { BasicTowerSprite };

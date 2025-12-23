@@ -3,7 +3,7 @@
  * Helper functions for common operations
  */
 
-const Utils = {
+export const Utils = {
     /**
      * Calculate distance between two points
      */

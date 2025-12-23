@@ -3,7 +3,12 @@
  * Main game logic with advanced merge mechanics
  */
 
-class Game {
+import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES } from './config.js';
+import { Utils } from './utils.js';
+import { ParticleSystem } from './particles.js';
+import { EntityManager } from './entities.js';
+
+export class Game {
     constructor(graphics, input, ui) {
         this.graphics = graphics;
         this.input = input;

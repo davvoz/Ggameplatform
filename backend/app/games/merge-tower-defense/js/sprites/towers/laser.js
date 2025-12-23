@@ -330,7 +330,4 @@ const LaserTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.LaserTowerSprite = LaserTowerSprite;
-}
+export { LaserTowerSprite };

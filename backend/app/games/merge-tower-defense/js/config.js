@@ -3,7 +3,7 @@
  * All game constants and balancing parameters
  */
 
-const CONFIG = {
+export const CONFIG = {
     // Grid Configuration
     COLS: 7,
     ROWS: 12,
@@ -51,12 +51,15 @@ const CONFIG = {
 // Cannon Types - Strategic variety with unique roles
 // NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
 // Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
-const CANNON_TYPES = {
+import { TowerSpriteLibrary } from './tower-sprites.js';
+import { EnemySpriteLibrary } from './enemy-sprites.js';
+
+export const CANNON_TYPES = {
     BASIC: {
         id: 'BASIC',
         name: 'Basic',
         icon: '🔫',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.BASIC.base : null,
+        sprite: () => TowerSpriteLibrary.BASIC.base,
         cost: 20,
         damage: 3,
         fireRate: 1500,
@@ -73,7 +76,7 @@ const CANNON_TYPES = {
         id: 'RAPID',
         name: 'Rapid',
         icon: '🔥',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.RAPID.base : null,
+        sprite: () => TowerSpriteLibrary.RAPID.base,
         cost: 35,
         damage: 2,
         fireRate: 350,
@@ -90,7 +93,7 @@ const CANNON_TYPES = {
         id: 'SNIPER',
         name: 'Sniper',
         icon: '🎯',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.SNIPER.base : null,
+        sprite: () => TowerSpriteLibrary.SNIPER.base,
         cost: 120,
         damage: 15,
         fireRate: 2800,
@@ -107,7 +110,7 @@ const CANNON_TYPES = {
         id: 'SPLASH',
         name: 'Splash',
         icon: '💥',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.SPLASH.base : null,
+        sprite: () => TowerSpriteLibrary.SPLASH.base,
         cost: 90,
         damage: 5,
         fireRate: 1800,
@@ -125,7 +128,7 @@ const CANNON_TYPES = {
         id: 'FREEZE',
         name: 'Freeze',
         icon: '❄️',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.FREEZE.base : null,
+        sprite: () => TowerSpriteLibrary.FREEZE.base,
         cost: 65,
         damage: 2,
         fireRate: 1600,
@@ -144,7 +147,7 @@ const CANNON_TYPES = {
         id: 'LASER',
         name: 'Laser',
         icon: '🔆',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.LASER.base : null,
+        sprite: () => TowerSpriteLibrary.LASER.base,
         cost: 110,
         damage: 6,
         fireRate: 850,
@@ -162,7 +165,7 @@ const CANNON_TYPES = {
         id: 'ELECTRIC',
         name: 'Electric',
         icon: '⚡',
-        sprite: () => window.TowerSpriteLibrary ? window.TowerSpriteLibrary.ELECTRIC.base : null,
+        sprite: () => TowerSpriteLibrary.ELECTRIC.base,
         cost: 95,
         damage: 4,
         fireRate: 1300,
@@ -177,37 +180,14 @@ const CANNON_TYPES = {
     }
 };
 
-// EXPONENTIAL COST CALCULATION per gli upgrade
-// Formula: baseCost * (costMultiplier) * (2.0 ^ (level - 1))
-// Progressione: accessibile all'inizio, costoso in late game
-function calculateTowerCost(towerType, level = 1) {
-    const config = CANNON_TYPES[towerType];
-    if (!config) return 0;
-    
-    const baseCost = config.cost;
-    const multiplier = config.costMultiplier || 1.0;
-    
-    // Formula esponenziale BILANCIATA:
-    // Level 1: baseCost
-    // Level 2: baseCost * 2.0 = 2x
-    // Level 3: baseCost * 4.0 = 4x
-    // Level 4: baseCost * 8.0 = 8x
-    // Level 5: baseCost * 16.0 = 16x
-    // Level 6: baseCost * 32.0 = 32x
-    // Level 7: baseCost * 64.0 = 64x
-    const exponentialBase = 2.0;  // Ridotto da 2.5 per renderlo più accessibile
-    const levelMultiplier = Math.pow(exponentialBase, level - 1);
-    
-    return Math.floor(baseCost * multiplier * levelMultiplier);
-}
 
 // Zombie Types - Progressive difficulty curve
-const ZOMBIE_TYPES = {
+export const ZOMBIE_TYPES = {
     NORMAL: {
         id: 'NORMAL',
         name: 'Shambler',
         icon: '🧟', // Legacy fallback
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.GRUNT.base : null,
+        sprite: () => EnemySpriteLibrary.GRUNT.base,
         hp: 8,
         speed: 0.5,
         reward: 15,
@@ -219,7 +199,7 @@ const ZOMBIE_TYPES = {
         id: 'FAST',
         name: 'Runner',
         icon: '🧟‍♂️', // Legacy fallback
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.RUSHER.base : null,
+        sprite: () => EnemySpriteLibrary.RUSHER.base,
         hp: 5,
         speed: 1.2,
         reward: 25,
@@ -231,7 +211,7 @@ const ZOMBIE_TYPES = {
         id: 'TANK',
         name: 'Brute',
         icon: '🧟‍♀️', // Legacy fallback
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.TANK.base : null,
+        sprite: () => EnemySpriteLibrary.TANK.base,
         hp: 35,
         speed: 0.3,
         reward: 60,
@@ -243,7 +223,7 @@ const ZOMBIE_TYPES = {
         id: 'AGILE',
         name: 'Leaper',
         icon: '🦇', // Legacy fallback
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.FLYER.base : null,
+        sprite: () => EnemySpriteLibrary.FLYER.base,
         hp: 12,
         speed: 1.0,
         dodgeChance: 0.25,  // Can dodge projectiles
@@ -256,7 +236,7 @@ const ZOMBIE_TYPES = {
         id: 'ARMORED',
         name: 'Juggernaut',
         icon: '🛡️', // Legacy fallback
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.TANK.base : null,
+        sprite: () => EnemySpriteLibrary.TANK.base,
         hp: 50,
         speed: 0.25,
         armor: 5,  // Reduces damage
@@ -269,7 +249,7 @@ const ZOMBIE_TYPES = {
         id: 'BOSS',
         name: 'Overlord',
         icon: '👹',
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.BOSS.base : null,
+        sprite: () => EnemySpriteLibrary.BOSS.base,
         hp: 150,
         speed: 0.4,
         armor: 3,
@@ -285,7 +265,7 @@ const ZOMBIE_TYPES = {
         id: 'HEALER',
         name: 'Necromancer',
         icon: '🧙',
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.GRUNT.base : null,
+        sprite: () => EnemySpriteLibrary.GRUNT.base,
         hp: 15,
         speed: 0.7,
         healRange: 3.0,  // Cura nemici in raggio 3 celle
@@ -301,7 +281,7 @@ const ZOMBIE_TYPES = {
         id: 'SHIELDED',
         name: 'Guardian',
         icon: '🛡️',
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.TANK.base : null,
+        sprite: () => EnemySpriteLibrary.TANK.base,
         hp: 20,
         speed: 0.5,
         shield: 30,  // Scudo che deve essere distrutto prima di danneggiare HP
@@ -317,7 +297,7 @@ const ZOMBIE_TYPES = {
         id: 'SPLITTER',
         name: 'Hivemind',
         icon: '🦠',
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.GRUNT.base : null,
+        sprite: () => EnemySpriteLibrary.GRUNT.base,
         hp: 25,
         speed: 0.6,
         splitCount: 3,  // Si divide in 3 nemici più piccoli alla morte
@@ -333,7 +313,7 @@ const ZOMBIE_TYPES = {
         id: 'PHASER',
         name: 'Phantom',
         icon: '👻',
-        sprite: () => window.EnemySpriteLibrary ? window.EnemySpriteLibrary.FLYER.base : null,
+        sprite: () => EnemySpriteLibrary.FLYER.base,
         hp: 12,
         speed: 0.8,
         phaseInterval: 4000,  // Teletrasporta ogni 4 secondi
@@ -349,7 +329,7 @@ const ZOMBIE_TYPES = {
 // Level progression for merge system
 // NOTA: Moltiplicatori aumentati per bilanciare la nuova difficoltà logaritmica dei nemici
 // e i costi esponenziali degli upgrade
-const MERGE_LEVELS = [
+export const MERGE_LEVELS = [
     { level: 1, damageMultiplier: 1.0, rangeBonus: 0, fireRateBonus: 1.0, icon: '⭐' },
     { level: 2, damageMultiplier: 2.5, rangeBonus: 0.5, fireRateBonus: 1.2, icon: '✨' },
     { level: 3, damageMultiplier: 6.0, rangeBonus: 1.0, fireRateBonus: 1.5, icon: '💫' },
@@ -359,36 +339,8 @@ const MERGE_LEVELS = [
     { level: 7, damageMultiplier: 120.0, rangeBonus: 3.0, fireRateBonus: 3.6, icon: '💎' },
 ];
 
-// Special abilities unlocked at higher levels
-const SPECIAL_ABILITIES = {
-    MULTISHOT: {
-        name: 'Multi-Shot',
-        minLevel: 3,
-        description: 'Fires multiple projectiles',
-        applyTo: ['BASIC', 'RAPID'],
-    },
-    EXPLOSIVE: {
-        name: 'Explosive Rounds',
-        minLevel: 4,
-        description: 'Projectiles explode on impact',
-        applyTo: ['SNIPER', 'SPLASH'],
-    },
-    CHAIN_LIGHTNING: {
-        name: 'Enhanced Chain',
-        minLevel: 4,
-        description: 'Chains to more targets',
-        applyTo: ['ELECTRIC'],
-    },
-    PERMAFROST: {
-        name: 'Permafrost',
-        minLevel: 5,
-        description: 'Freezes enemies solid',
-        applyTo: ['FREEZE'],
-    },
-};
-
 // UI Configuration
-const UI_CONFIG = {
+export const UI_CONFIG = {
     TOP_BAR_HEIGHT: 80,
     SHOP_HEIGHT: 120,
     STAT_PANEL_WIDTH: 100,
@@ -400,7 +352,5 @@ const UI_CONFIG = {
     FONT_SIZE_SMALL: 12,
 };
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { CONFIG, CANNON_TYPES, ZOMBIE_TYPES, MERGE_LEVELS, SPECIAL_ABILITIES, UI_CONFIG };
-}
+
+

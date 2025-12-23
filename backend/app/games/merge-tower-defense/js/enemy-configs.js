@@ -7,7 +7,7 @@
 // FRONTLINE ENEMIES
 // ============================================================================
 
-const ENEMY_GRUNT = {
+export const ENEMY_GRUNT = {
     type: 'grunt',
     threatLevel: 1,
     reward: 4,
@@ -63,7 +63,7 @@ const ENEMY_GRUNT = {
     }
 };
 
-const ENEMY_RUSHER = {
+export const ENEMY_RUSHER = {
     type: 'rusher',
     threatLevel: 2,
     reward: 5,

@@ -2,8 +2,11 @@
  * Graphics Engine
  * Handles all rendering with sprite-based system
  */
+import { SpriteRenderer } from './sprite-renderer.js';
+import { UI_CONFIG, CONFIG } from './config.js';
+import { Utils } from './utils.js';
 
-class Graphics {
+export class Graphics {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d', { alpha: false });
@@ -486,6 +489,4 @@ class Graphics {
 }
 
 // Export
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Graphics;
-}
+

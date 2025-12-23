@@ -3,7 +3,10 @@
  * Handles all UI rendering and interactions
  */
 
-class UIManager {
+import { CONFIG, CANNON_TYPES, UI_CONFIG } from './config.js';
+import { Utils } from './utils.js';
+
+export class UIManager {
     constructor(graphics, canvas) {
         this.graphics = graphics;
         this.canvas = canvas;

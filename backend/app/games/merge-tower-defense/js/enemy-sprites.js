@@ -8,7 +8,7 @@
 // ENEMY SPRITE DEFINITIONS
 // ============================================================================
 
-const EnemySpriteLibrary = {
+export const EnemySpriteLibrary = {
 
     // ========== GRUNT - Basic frontline infantry ==========
     GRUNT: {

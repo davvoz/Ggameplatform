@@ -400,7 +400,4 @@ const ElectricTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.ElectricTowerSprite = ElectricTowerSprite;
-}
+export { ElectricTowerSprite };

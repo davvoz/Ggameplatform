@@ -3,7 +3,10 @@
  * Advanced particle effects with pooling
  */
 
-class Particle {
+import { Utils } from './utils.js';
+import { CONFIG } from './config.js';
+
+export class Particle {
     constructor() {
         this.reset();
     }
@@ -70,7 +73,7 @@ class Particle {
     }
 }
 
-class ParticleSystem {
+export class ParticleSystem {
     constructor() {
         this.pool = Utils.createPool(
             () => new Particle(),

@@ -252,7 +252,4 @@ const SplashTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.SplashTowerSprite = SplashTowerSprite;
-}
+export { SplashTowerSprite };

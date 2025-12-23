@@ -111,43 +111,10 @@
     
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Platform SDK -->
+    <!-- Platform SDK (if needed, keep as global) -->
     <script src="../../sdk/platformsdk.js"></script>
-    
-    <!-- Professional Sprite System -->
-    <script src="js/sprite-renderer.js"></script>
-    <script src="js/sprite-animation-system.js"></script>
-    <script src="js/enemy-sprites.js"></script>
-    <script src="js/sprites/towers/basic.js"></script>
-    <script src="js/sprites/towers/rapid.js"></script>
-    <script src="js/sprites/towers/sniper.js"></script>
-    <script src="js/sprites/towers/splash.js"></script>
-    <script src="js/sprites/towers/freeze.js"></script>
-    <script src="js/sprites/towers/laser.js"></script>
-    <script src="js/sprites/towers/electric.js"></script>
-    <script src="js/tower-sprites.js"></script>
-    <script src="js/multi-part-enemies.js"></script>
-    <script src="js/multi-part-towers.js"></script>
-    
-    <!-- Game Core Modules -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/graphics.js"></script>
-    
-    <!-- New Enemy System (Component-Based Architecture) -->
-    <script src="js/enemy-components.js"></script>
-    <script src="js/enemy-configs.js"></script>
-    <script src="js/enemy-tactical.js"></script>
-    
-    <!-- Original Entities (Legacy compatibility) -->
-    <script src="js/entities.js"></script>
-    
-    <script src="js/particles.js"></script>
-    <script src="js/input.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/game.js"></script>
-    
-    <!-- Game Entry Point -->
-    <script src="js/main.js"></script>
+
+    <!-- Game Entry Point as ES6 module -->
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

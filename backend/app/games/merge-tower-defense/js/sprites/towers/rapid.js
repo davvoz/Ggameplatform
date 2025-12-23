@@ -254,7 +254,4 @@ const RapidTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.RapidTowerSprite = RapidTowerSprite;
-}
+export { RapidTowerSprite };

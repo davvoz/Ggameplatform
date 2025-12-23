@@ -263,7 +263,4 @@ const SniperTowerSprite = {
     }
 };
 
-// Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.SniperTowerSprite = SniperTowerSprite;
-}
+export { SniperTowerSprite };

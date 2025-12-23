@@ -11,7 +11,9 @@
  * Movement Component
  * Handles pathfinding, speed modifiers, and position updates
  */
-class MovementComponent {
+import { CONFIG } from './config.js';
+
+export class MovementComponent {
     constructor(config) {
         this.baseSpeed = config.speed;
         this.currentSpeed = this.baseSpeed;

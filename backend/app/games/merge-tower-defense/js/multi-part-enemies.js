@@ -3,7 +3,9 @@
  * Each enemy built from independent animated parts
  */
 
-const MultiPartEnemySprites = {
+import { MultiPartSprite, AnimationBuilder } from './sprite-animation-system.js';
+
+export const MultiPartEnemySprites = {
 
     /**
      * Create GRUNT with separate body parts
@@ -127,7 +129,7 @@ const MultiPartEnemySprites = {
             fill: true
         }, 0.5, 1);
         hornLeft.setBaseTransform(-0.05, -0.1);
-        
+
         const hornRight = sprite.addPart('hornRight', {
             type: 'polygon',
             points: [
@@ -409,6 +411,12 @@ const MultiPartEnemySprites = {
         ]);
 
         sprite.addAnimation(fly);
+
+        // --- AGGIUNTA: walk = fly ---
+        const walk = new AnimationClip('walk', 0.3, true);
+        walk.tracks = JSON.parse(JSON.stringify(fly.tracks));
+        sprite.addAnimation(walk);
+
         sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head'], 0.2));
         sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'wingLeft', 'wingRight', 'tail'], 1.0));
 
@@ -626,6 +634,11 @@ const MultiPartEnemySprites = {
         ]);
 
         sprite.addAnimation(float);
+
+        // --- AGGIUNTA: walk = float ---
+        const walk = new AnimationClip('walk', 3.0, true);
+        walk.tracks = JSON.parse(JSON.stringify(float.tracks));
+        sprite.addAnimation(walk);
 
         // Healing cast animation
         const heal = new AnimationClip('heal', 0.8, false);
@@ -924,4 +937,4 @@ const MultiPartEnemySprites = {
 };
 
 // Export
-window.MultiPartEnemySprites = MultiPartEnemySprites;
+

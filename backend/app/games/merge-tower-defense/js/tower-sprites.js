@@ -8,7 +8,15 @@
 // TOWER SPRITE DEFINITIONS
 // ============================================================================
 
-const TowerSpriteLibrary = {
+import { BasicTowerSprite } from './sprites/towers/basic.js';
+import { RapidTowerSprite } from './sprites/towers/rapid.js';
+import { SniperTowerSprite } from './sprites/towers/sniper.js';
+import { SplashTowerSprite } from './sprites/towers/splash.js';
+import { FreezeTowerSprite } from './sprites/towers/freeze.js';
+import { LaserTowerSprite } from './sprites/towers/laser.js';
+import { ElectricTowerSprite } from './sprites/towers/electric.js';
+
+export const TowerSpriteLibrary = {
 
     // ========== BASIC - Standard ballistic turret ==========
     BASIC: BasicTowerSprite,
@@ -31,5 +39,4 @@ const TowerSpriteLibrary = {
     ELECTRIC: ElectricTowerSprite
 };
 
-// Export to global scope
-window.TowerSpriteLibrary = TowerSpriteLibrary;
+

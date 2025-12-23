@@ -3,43 +3,51 @@
  * Initializes game and handles Platform SDK integration
  */
 
+import { Graphics } from './graphics.js';
+import { InputHandler } from './input.js';
+import { UIManager } from './ui.js';
+import { Game } from './game.js';
+
+// If PlatformSDK is a module, import it. Otherwise, assume global.
+// import { PlatformSDK } from '../../sdk/platformsdk.js';
+
 (async function() {
     'use strict';
-    
+
     // Get canvas
     const canvas = document.getElementById('gameCanvas');
     const loadingScreen = document.getElementById('loadingScreen');
-    
+
     // Initialize systems
     console.log('[Merge Tower] Initializing game systems...');
-    
+
     const graphics = new Graphics(canvas);
     const input = new InputHandler(canvas, graphics);
     const ui = new UIManager(graphics, canvas);
     const game = new Game(graphics, input, ui);
-    
+
     console.log('[Merge Tower] Game systems initialized');
-    
+
     // ========== PLATFORM SDK INTEGRATION ==========
-    
+
     let platformReady = false;
     let sessionActive = false;
     let sessionStartTime = 0;
-    
+
     try {
         console.log('[Merge Tower] Initializing Platform SDK...');
-        
+
         await PlatformSDK.init({
             onPause: () => {
                 console.log('[Merge Tower] Game paused by platform');
                 game.pause();
             },
-            
+
             onResume: () => {
                 console.log('[Merge Tower] Game resumed by platform');
                 game.resume();
             },
-            
+
             onExit: () => {
                 console.log('[Merge Tower] Exit requested by platform');
                 if (sessionActive) {
@@ -47,29 +55,29 @@
                 }
                 game.gameOver();
             },
-            
+
             onStart: () => {
                 console.log('[Merge Tower] Start signal received from platform');
                 game.resume();
             }
         });
-        
+
         platformReady = true;
         console.log('[Merge Tower] Platform SDK ready');
-        
+
     } catch (error) {
         console.warn('[Merge Tower] Platform SDK initialization failed:', error);
         console.log('[Merge Tower] Running in standalone mode');
     }
-    
+
     // ========== SESSION MANAGEMENT ==========
-    
+
     function startSession() {
         if (!platformReady || sessionActive) return;
-        
+
         sessionActive = true;
         sessionStartTime = Date.now();
-        
+
         // Send gameStarted event to platform
         try {
             window.parent.postMessage({
@@ -191,45 +199,9 @@
         console.log('[Merge Tower] Game started!');
     }
     
-    // ========== VISIBILITY HANDLING ==========
     
-    // Note: Removed automatic pause on blur/visibility change
-    // The game should continue running even when tab loses focus
-    // This prevents the game from becoming stuck in pause state
+
     
-    // ========== FULLSCREEN SUPPORT ==========
-    
-    function isFullscreen() {
-        return !!(
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
-    }
-    
-    function requestFullscreen() {
-        const elem = document.documentElement;
-        
-        try {
-            if (elem.requestFullscreen) {
-                return elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                return elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                return elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-                return elem.msRequestFullscreen();
-            }
-        } catch (e) {
-            console.log('[Merge Tower] Fullscreen not supported:', e);
-            return Promise.resolve();
-        }
-        return Promise.resolve();
-    }
-    
-    // iOS doesn't support true fullscreen, but we can maximize viewport
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
     // Just start the game - let the platform handle fullscreen if needed
     console.log('[Merge Tower] Starting game...');

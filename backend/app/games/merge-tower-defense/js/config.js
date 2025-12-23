@@ -323,6 +323,85 @@ export const ZOMBIE_TYPES = {
         color: '#aa00ff',
         scale: 1.0,
         canPhase: true,
+    },
+    
+    // ===== NEW UNIQUE ENEMIES =====
+    
+    VAMPIRE: {
+        id: 'VAMPIRE',
+        name: 'Bloodlord',
+        icon: '🧛',
+        sprite: () => EnemySpriteLibrary.VAMPIRE.base,
+        hp: 22,
+        speed: 0.7,
+        lifesteal: 0.3,  // Ruba 30% del danno subito come HP quando attacca
+        lifestealRange: 2.0,  // Range di attacco per rubare vita
+        reward: 75,
+        color: '#8B0000',
+        scale: 1.15,
+        isVampire: true,
+    },
+    
+    BOMBER: {
+        id: 'BOMBER',
+        name: 'Detonator',
+        icon: '💣',
+        sprite: () => EnemySpriteLibrary.BOMBER.base,
+        hp: 18,
+        speed: 0.9,
+        explosionRadius: 2.0,  // Esplode alla morte danneggiando torrette vicine
+        explosionDamage: 15,  // Danno alle torrette nell'esplosione
+        reward: 50,
+        color: '#FF4500',
+        scale: 1.1,
+        isBomber: true,
+    },
+    
+    SHADOW: {
+        id: 'SHADOW',
+        name: 'Nightcrawler',
+        icon: '🌑',
+        sprite: () => EnemySpriteLibrary.SHADOW.base,
+        hp: 10,
+        speed: 1.1,
+        invisDuration: 2500,  // Invisibile per 2.5 secondi
+        invisCooldown: 5000,  // Cooldown tra invisibilità
+        reward: 55,
+        color: '#1a1a2e',
+        scale: 0.95,
+        canInvis: true,
+    },
+    
+    SIREN: {
+        id: 'SIREN',
+        name: 'Banshee',
+        icon: '👻',
+        sprite: () => EnemySpriteLibrary.SIREN.base,
+        hp: 14,
+        speed: 0.6,
+        disableRange: 2.5,  // Range del grido paralizzante
+        disableDuration: 1500,  // Disabilita torrette per 1.5 sec
+        disableCooldown: 6000,  // Cooldown tra gridi
+        reward: 80,
+        color: '#E0B0FF',
+        scale: 1.05,
+        isSiren: true,
+    },
+    
+    GOLEM: {
+        id: 'GOLEM',
+        name: 'Earthshaker',
+        icon: '🗿',
+        sprite: () => EnemySpriteLibrary.GOLEM.base,
+        hp: 80,
+        speed: 0.2,
+        stomp: true,  // Ogni 3 celle camminate, stordisce torrette vicine
+        stompRange: 1.5,
+        stompStunDuration: 800,
+        reward: 100,
+        color: '#8B4513',
+        scale: 1.5,
+        isGolem: true,
     }
 };
 

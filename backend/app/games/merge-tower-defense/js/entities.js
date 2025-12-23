@@ -10,7 +10,7 @@ import { CANNON_TYPES, CONFIG, ZOMBIE_TYPES, MERGE_LEVELS } from './config.js';
 import { Utils } from './utils.js';
 // If MERGE_LEVELS is defined elsewhere, import it here
 
-export class Cannon {
+ class Cannon {
     constructor(col, row, type) {
         this.col = col;
         this.row = row;
@@ -30,8 +30,8 @@ export class Cannon {
     }
 
     initMultiPartSprite() {
-        if (typeof MultiPartTowerSprites === 'undefined') {
-            console.warn('[CANNON] MultiPartTowerSprites not defined for', this.type);
+        if (!MultiPartTowerSprites) {
+            console.warn('[CANNON] MultiPartTowerSprites not available for', this.type);
             return;
         }
         
@@ -113,6 +113,14 @@ export class Cannon {
         if (this.multiSprite) {
             this.multiSprite.update(dt);
             
+            // Ensure idle animation keeps playing
+            if (!this.multiSprite.playing && this.multiSprite.currentAnimation !== 'idle') {
+                this.multiSprite.play('idle');
+            } else if (!this.multiSprite.playing) {
+                // Restart idle if it somehow stopped
+                this.multiSprite.play('idle');
+            }
+            
             // Rotate turret/chamber towards target
             if (this.targetLocked && !this.targetLocked.isDead()) {
                 const targetPos = {x: this.targetLocked.col, y: this.targetLocked.row};
@@ -126,7 +134,8 @@ export class Cannon {
                                  this.multiSprite.getPart('chamber') || 
                                  this.multiSprite.getPart('housing');
                 if (rotatePart) {
-                    rotatePart.animatedTransform.rotation = angle;
+                    // Add rotation to the animated transform, don't override
+                    rotatePart.targetRotation = angle;
                 }
             }
         }
@@ -147,8 +156,8 @@ export class Cannon {
             const pos = graphics.gridToScreen(this.col, this.row);
             const cellSize = graphics.getCellSize();
             try {
-                // pos.x + cellSize/2, pos.y + cellSize/2 is the CENTER of the cell
-                this.multiSprite.render(graphics.ctx, pos.x + cellSize/2, pos.y + cellSize/2, cellSize);
+                // gridToScreen already returns the CENTER of the cell
+                this.multiSprite.render(graphics.ctx, pos.x, pos.y, cellSize);
             } catch(e) {
                 console.error('[CANNON] Render error for', this.type, ':', e);
                 // Fallback to static sprite on error
@@ -251,6 +260,41 @@ class Zombie {
         this.isInvulnerable = false;
         this.invulnerableUntil = 0;
         
+        // NEW ABILITIES
+        // VAMPIRE - Lifesteal on attack
+        this.isVampire = baseStats.isVampire || false;
+        this.lifesteal = baseStats.lifesteal || 0;
+        this.lifestealRange = baseStats.lifestealRange || 2.0;
+        this.lastDrainTime = 0;
+        this.drainInterval = 1500; // Drain every 1.5 sec
+        
+        // BOMBER - Explodes on death
+        this.isBomber = baseStats.isBomber || false;
+        this.explosionRadius = baseStats.explosionRadius || 2.0;
+        this.explosionDamage = baseStats.explosionDamage || 15;
+        
+        // SHADOW - Invisibility
+        this.canInvis = baseStats.canInvis || false;
+        this.invisDuration = baseStats.invisDuration || 2500;
+        this.invisCooldown = baseStats.invisCooldown || 5000;
+        this.lastInvisTime = -5000; // Start ready
+        this.isInvisible = false;
+        this.invisUntil = 0;
+        
+        // SIREN - Disable towers
+        this.isSiren = baseStats.isSiren || false;
+        this.disableRange = baseStats.disableRange || 2.5;
+        this.disableDuration = baseStats.disableDuration || 1500;
+        this.disableCooldown = baseStats.disableCooldown || 6000;
+        this.lastDisableTime = 0;
+        
+        // GOLEM - Ground stomp
+        this.isGolem = baseStats.isGolem || false;
+        this.stompRange = baseStats.stompRange || 1.5;
+        this.stompStunDuration = baseStats.stompStunDuration || 800;
+        this.lastStompRow = -10; // Track position for stomp trigger
+        this.stompEveryNCells = 3; // Stomp every 3 cells traveled
+        
         // Status effects
         this.slowUntil = 0;
         this.slowFactor = 1.0;
@@ -273,12 +317,18 @@ class Zombie {
                 case 'FAST': this.multiSprite = MultiPartEnemySprites.createRusher(); break;
                 case 'TANK': this.multiSprite = MultiPartEnemySprites.createTank(); break;
                 case 'AGILE': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
-                case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
+                case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createArmored(); break;
                 case 'BOSS': this.multiSprite = MultiPartEnemySprites.createBoss(); break;
                 case 'HEALER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
                 case 'SHIELDED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
                 case 'SPLITTER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
                 case 'PHASER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
+                // NEW ENEMIES
+                case 'VAMPIRE': this.multiSprite = MultiPartEnemySprites.createVampire(); break;
+                case 'BOMBER': this.multiSprite = MultiPartEnemySprites.createBomber(); break;
+                case 'SHADOW': this.multiSprite = MultiPartEnemySprites.createShadow(); break;
+                case 'SIREN': this.multiSprite = MultiPartEnemySprites.createSiren(); break;
+                case 'GOLEM': this.multiSprite = MultiPartEnemySprites.createGolem(); break;
             }
             
             if (this.multiSprite) {
@@ -299,8 +349,8 @@ class Zombie {
                         } else {
                             this.multiSprite.play('walk');
                         }
-                    } else if (name === 'attack') {
-                        // After attack, return to idle at wall or walk otherwise
+                    } else if (name === 'attack' || name === 'drain') {
+                        // After attack or drain, return to idle at wall or walk otherwise
                         if (this.atWall) {
                             this.multiSprite.play('idle');
                         } else {
@@ -320,12 +370,61 @@ class Zombie {
             this.isInvulnerable = false;
         }
         
+        // Check invisibility ending (SHADOW ability)
+        if (this.isInvisible && currentTime > this.invisUntil) {
+            this.isInvisible = false;
+        }
+        
         // PHASER ability: teleport forward
         if (this.canPhase && currentTime - this.lastPhaseTime >= this.phaseInterval) {
             this.row += this.phaseDistance;
             this.lastPhaseTime = currentTime;
             this.isInvulnerable = true;
             this.invulnerableUntil = currentTime + this.phaseInvulnerable;
+        }
+        
+        // SHADOW ability: become invisible periodically
+        if (this.canInvis && !this.isInvisible && currentTime - this.lastInvisTime >= this.invisCooldown) {
+            this.isInvisible = true;
+            this.invisUntil = currentTime + this.invisDuration;
+            this.lastInvisTime = currentTime;
+            // Trigger invis animation if available
+            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('invis')) {
+                this.multiSprite.play('invis');
+            }
+        }
+        
+        // GOLEM ability: stomp every N cells traveled
+        if (this.isGolem) {
+            const cellsTraveled = this.row - this.lastStompRow;
+            if (cellsTraveled >= this.stompEveryNCells) {
+                this.lastStompRow = this.row;
+                this.needsStomp = true; // Flag for game.js to handle
+                // Trigger stomp animation
+                if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('stomp')) {
+                    this.multiSprite.play('stomp');
+                }
+            }
+        }
+        
+        // VAMPIRE ability: drain attack flag (handled in game.js)
+        if (this.isVampire && this.atWall && currentTime - this.lastDrainTime >= this.drainInterval) {
+            this.needsDrain = true; // Flag for game.js to handle
+            this.lastDrainTime = currentTime;
+            // Trigger drain animation
+            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('drain')) {
+                this.multiSprite.play('drain');
+            }
+        }
+        
+        // SIREN ability: scream to disable towers
+        if (this.isSiren && currentTime - this.lastDisableTime >= this.disableCooldown) {
+            this.needsScream = true; // Flag for game.js to handle
+            this.lastDisableTime = currentTime;
+            // Trigger scream animation
+            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('scream')) {
+                this.multiSprite.play('scream');
+            }
         }
         
         // HEALER ability: heal nearby enemies
@@ -374,12 +473,18 @@ class Zombie {
                 const locomotion = this.type === 'AGILE' || this.type === 'PHASER' ? 'fly' : 'walk';
                 
                 if (this.atWall) {
-                    // At wall: idle between occasional "attack" strikes
-                    if (this.multiSprite.currentAnimation !== 'idle' && this.multiSprite.currentAnimation !== 'attack') {
+                    // At wall: idle between occasional "attack" or "drain" strikes
+                    if (this.multiSprite.currentAnimation !== 'idle' && 
+                        this.multiSprite.currentAnimation !== 'attack' &&
+                        this.multiSprite.currentAnimation !== 'drain') {
                         this.multiSprite.play('idle');
                     }
-                    // Periodic attack if animation exists
-                    if (this.multiSprite.animations && this.multiSprite.animations.has('attack')) {
+                    // Restart idle if it stopped playing (safety check)
+                    if (this.multiSprite.currentAnimation === 'idle' && !this.multiSprite.playing) {
+                        this.multiSprite.play('idle');
+                    }
+                    // Periodic attack if animation exists (non-vampire enemies)
+                    if (!this.isVampire && this.multiSprite.animations && this.multiSprite.animations.has('attack')) {
                         this._attackAccumulator = (this._attackAccumulator || 0) + dt;
                         if (this._attackAccumulator >= 1.1) {
                             this._attackAccumulator = 0;
@@ -466,6 +571,20 @@ class Zombie {
     }
 
     render(graphics) {
+        // Skip rendering if invisible (SHADOW ability)
+        if (this.isInvisible) {
+            // Draw a faint ghost outline only
+            const pos = graphics.gridToScreen(this.col, this.row);
+            graphics.ctx.save();
+            graphics.ctx.globalAlpha = 0.15;
+            graphics.ctx.fillStyle = '#00ffff';
+            graphics.ctx.beginPath();
+            graphics.ctx.arc(pos.x, pos.y, graphics.getCellSize() * 0.3, 0, Math.PI * 2);
+            graphics.ctx.fill();
+            graphics.ctx.restore();
+            return;
+        }
+        
         // Flash red when hit
         const flashColor = this.hitFlash > 0 ? '#ffffff' : null;
         

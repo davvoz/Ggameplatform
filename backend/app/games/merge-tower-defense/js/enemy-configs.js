@@ -116,7 +116,7 @@ export const ENEMY_RUSHER = {
     }
 };
 
-const ENEMY_BRAWLER = {
+export const ENEMY_BRAWLER = {
     type: 'brawler',
     threatLevel: 2,
     reward: 12,
@@ -173,7 +173,7 @@ const ENEMY_BRAWLER = {
 // TACTICAL ENEMIES
 // ============================================================================
 
-const ENEMY_FLANKER = {
+export const ENEMY_FLANKER = {
     type: 'flanker',
     threatLevel: 2,
     reward: 8,
@@ -239,7 +239,7 @@ const ENEMY_FLANKER = {
     }
 };
 
-const ENEMY_SABOTEUR = {
+export const ENEMY_SABOTEUR = {
     type: 'saboteur',
     threatLevel: 3,
     reward: 10,
@@ -312,7 +312,7 @@ const ENEMY_SABOTEUR = {
     }
 };
 
-const ENEMY_SUPPORT = {
+export const ENEMY_SUPPORT = {
     type: 'support',
     threatLevel: 3,
     reward: 15,
@@ -385,7 +385,7 @@ const ENEMY_SUPPORT = {
 // ELITE ENEMIES
 // ============================================================================
 
-const ENEMY_ASSASSIN = {
+export const ENEMY_ASSASSIN = {
     type: 'assassin',
     threatLevel: 4,
     reward: 12,
@@ -451,7 +451,7 @@ const ENEMY_ASSASSIN = {
     }
 };
 
-const ENEMY_JUGGERNAUT = {
+export const ENEMY_JUGGERNAUT = {
     type: 'juggernaut',
     threatLevel: 4,
     reward: 20,
@@ -516,7 +516,7 @@ const ENEMY_JUGGERNAUT = {
 // BOSS ENEMIES
 // ============================================================================
 
-const ENEMY_OVERLORD = {
+export const ENEMY_OVERLORD = {
     type: 'overlord',
     threatLevel: 5,
     reward: 50,
@@ -620,7 +620,7 @@ const ENEMY_OVERLORD = {
 // ENEMY FACTORY REGISTRY
 // ============================================================================
 
-const ENEMY_CONFIGS = {
+export const ENEMY_CONFIGS = {
     // Frontline
     grunt: ENEMY_GRUNT,
     rusher: ENEMY_RUSHER,
@@ -643,11 +643,12 @@ const ENEMY_CONFIGS = {
 // WAVE COMPOSITION TEMPLATES
 // ============================================================================
 
-const WAVE_TEMPLATES = {
+export const WAVE_TEMPLATES = {
     // Early game waves (1-5)
     basic: [
         { type: 'grunt', count: 5, delay: 0 },
-        { type: 'rusher', count: 1, delay: 3000 }
+        { type: 'rusher', count: 1, delay: 3000 },
+        { type: 'armored', count: 1, delay: 500 }
     ],
     
     early_pressure: [
@@ -707,8 +708,9 @@ const WAVE_TEMPLATES = {
 // WAVE PROGRESSION SYSTEM
 // ============================================================================
 
-function generateWaveComposition(waveNumber) {
+export function generateWaveComposition(waveNumber) {
     // Boss waves every 5 waves
+ 
     if (waveNumber % 5 === 0 && waveNumber >= 5) {
         return WAVE_TEMPLATES.boss_wave;
     }
@@ -739,7 +741,7 @@ function generateWaveComposition(waveNumber) {
     return templates[(waveNumber - 13) % templates.length];
 }
 
-function applyWaveScaling(config, waveNumber) {
+export function applyWaveScaling(config, waveNumber) {
     const scaled = JSON.parse(JSON.stringify(config)); // Deep clone
     
     // HYBRID HP SCALING - Inizio dolce, poi aggressivo
@@ -793,14 +795,4 @@ function applyWaveScaling(config, waveNumber) {
     }
     
     return scaled;
-}
-
-// Export
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        ENEMY_CONFIGS,
-        WAVE_TEMPLATES,
-        generateWaveComposition,
-        applyWaveScaling
-    };
 }

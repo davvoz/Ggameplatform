@@ -13,12 +13,12 @@ export class Game {
         this.graphics = graphics;
         this.input = input;
         this.ui = ui;
-        
+
         this.entities = new EntityManager();
         this.particles = new ParticleSystem();
-        
+
         this.state = this.createInitialState();
-        
+
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
     }
@@ -28,7 +28,7 @@ export class Game {
             // Resources
             coins: CONFIG.INITIAL_COINS,
             energy: CONFIG.INITIAL_ENERGY,
-            
+
             // Wave management
             wave: 1,
             waveInProgress: false,
@@ -36,27 +36,27 @@ export class Game {
             waveZombiesSpawned: 0,
             lastSpawnTime: 0,
             waveClearBonus: 0,
-            
+
             // Scoring
             score: 0,
             kills: 0,
             highestLevel: 1,
             combos: 0,
-            
+
             // Session tracking for XP system
             towerMerges: 0,
             towersPlaced: 0,
             coinsEarned: 0,
-            
+
             // Game state
             isPaused: false,
             isGameOver: false,
             playTime: 0,
-            
+
             // Merge system
             selectedCannons: [],
             cannonLimit: CONFIG.COLS * CONFIG.DEFENSE_ZONE_ROWS,
-            
+
             // UI state
             showMergeHint: false,
             mergeHintPos: null
@@ -73,12 +73,12 @@ export class Game {
                 }
                 return;
             }
-            
+
             if (this.state.isPaused) return;
-            
+
             // Check UI interaction
             const uiAction = this.ui.handleTap(gridPos, screenPos, this.state);
-            
+
             if (uiAction) {
                 if (uiAction.type === 'shop') {
                     // Shop button selected
@@ -93,18 +93,18 @@ export class Game {
                 }
             }
         });
-        
+
         // Drag handler for merge system
         this.input.onDragEnd((startPos, endPos) => {
             if (this.state.isPaused || this.state.isGameOver) return;
-            
+
             this.handleDragMerge(startPos, endPos);
         });
     }
 
     handleGridTap(gridPos) {
         const cannon = this.entities.getCannon(gridPos.col, gridPos.row);
-        
+
         if (cannon) {
             // Toggle cannon selection for merge
             this.toggleCannonSelection(cannon);
@@ -133,8 +133,8 @@ export class Game {
         }
 
         // Calcola costo con moltiplicatore
-        const baseCost = typeof calculateTowerCost === 'function' ? 
-                          calculateTowerCost(cannonType, 1) : cannonDef.cost;
+        const baseCost = typeof calculateTowerCost === 'function' ?
+            calculateTowerCost(cannonType, 1) : cannonDef.cost;
         const actualCost = Math.floor(baseCost * this.state.cannonPriceMultiplier[cannonType]);
         if (this.state.coins < actualCost) {
             this.particles.createWarningEffect(col, row, '💰');
@@ -163,7 +163,7 @@ export class Game {
 
     toggleCannonSelection(cannon) {
         const index = this.state.selectedCannons.indexOf(cannon);
-        
+
         if (index >= 0) {
             // Deselect
             cannon.selected = false;
@@ -172,7 +172,7 @@ export class Game {
             // Select
             cannon.selected = true;
             this.state.selectedCannons.push(cannon);
-            
+
             // Check for auto-merge (3 of same type and level)
             if (this.state.selectedCannons.length === 3) {
                 this.checkMerge();
@@ -182,14 +182,14 @@ export class Game {
 
     checkMerge() {
         const selected = this.state.selectedCannons;
-        
+
         if (selected.length !== 3) return;
-        
+
         const first = selected[0];
-        const allSame = selected.every(c => 
+        const allSame = selected.every(c =>
             c.type === first.type && c.level === first.level
         );
-        
+
         if (allSame && first.level < MERGE_LEVELS.length) {
             // MERGE!
             this.performMerge(selected);
@@ -207,25 +207,25 @@ export class Game {
         const row = targetCannon.row;
         const type = targetCannon.type;
         const newLevel = targetCannon.level + 1;
-        
+
         // Remove all selected cannons
         cannons.forEach(cannon => {
             this.entities.removeCannon(cannon);
         });
-        
+
         // Create upgraded cannon at target position
         const newCannon = this.entities.addCannon(col, row, type);
         newCannon.level = newLevel;
         newCannon.updateStats();
-        
+
         // Update highest level reached
         if (newLevel > this.state.highestLevel) {
             this.state.highestLevel = newLevel;
         }
-        
+
         // Visual feedback
         this.particles.createMergeEffect(col, row);
-        
+
         // Score bonus
         const mergeBonus = Math.floor(100 * Math.pow(2, newLevel - 1));
         this.state.score += mergeBonus;
@@ -237,10 +237,10 @@ export class Game {
             scale: 1.5,
             glow: true
         });
-        
+
         // Track merges for XP system
         this.state.towerMerges++;
-        
+
         // Clear selection
         this.deselectAll();
     }
@@ -249,15 +249,15 @@ export class Game {
         // Advanced merge: drag cannon onto another to attempt merge
         const sourceCannon = this.entities.getCannon(startPos.col, startPos.row);
         const targetCannon = this.entities.getCannon(endPos.col, endPos.row);
-        
+
         if (!sourceCannon) return;
-        
+
         if (targetCannon) {
             // Try to merge source into target
             if (sourceCannon.canMergeWith(targetCannon)) {
                 // Need to find third matching cannon nearby
                 const matchingCannons = this.findMatchingCannons(sourceCannon);
-                
+
                 if (matchingCannons.length >= 2) {
                     // Auto-select and merge
                     const toMerge = [sourceCannon, targetCannon, matchingCannons[0]];
@@ -267,7 +267,7 @@ export class Game {
             }
         } else {
             // Move cannon to new position if valid
-            if (this.ui.isInDefenseZone(endPos.row) && 
+            if (this.ui.isInDefenseZone(endPos.row) &&
                 this.ui.isValidGridPos(endPos)) {
                 sourceCannon.col = endPos.col;
                 sourceCannon.row = endPos.row;
@@ -282,7 +282,7 @@ export class Game {
     }
 
     findMatchingCannons(cannon) {
-        return this.entities.cannons.filter(c => 
+        return this.entities.cannons.filter(c =>
             c !== cannon && c.canMergeWith(cannon)
         );
     }
@@ -293,26 +293,26 @@ export class Game {
     }
 
     // ========== WAVE MANAGEMENT ==========
-    
+
     updateWaveSystem(dt, currentTime) {
         // Start first wave
         if (!this.state.waveInProgress && this.state.wave === 1) {
             this.startWave();
         }
-        
+
         // Spawn zombies
         if (this.state.waveInProgress) {
             if (this.state.waveZombiesSpawned < this.state.waveZombiesTotal) {
                 const timeSinceLastSpawn = currentTime - this.state.lastSpawnTime;
-                
+
                 if (timeSinceLastSpawn >= CONFIG.SPAWN_INTERVAL) {
                     this.spawnZombie();
                     this.state.lastSpawnTime = currentTime;
                 }
             }
-            
+
             // Check if wave completed
-            if (this.state.waveZombiesSpawned >= this.state.waveZombiesTotal && 
+            if (this.state.waveZombiesSpawned >= this.state.waveZombiesTotal &&
                 this.entities.zombies.length === 0) {
                 this.completeWave();
             }
@@ -377,6 +377,9 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
+        if (wave === 1) {
+            return 'ARMORED';
+        }
         let options = [
             { value: 'NORMAL', weight: Math.max(2, 12 - Math.floor(wave / 2)) },
             { value: 'FAST', weight: wave >= 2 ? 10 + Math.floor(wave * 1.2) : 0 },
@@ -388,7 +391,13 @@ export class Game {
             { value: 'HEALER', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
             { value: 'SHIELDED', weight: wave >= 6 ? 7 + Math.floor(wave / 2) : 0 },
             { value: 'SPLITTER', weight: wave >= 7 ? 8 + Math.floor(wave / 2) : 0 },
-            { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 }
+            { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 },
+            // NEW UNIQUE ENEMIES
+            { value: 'VAMPIRE', weight: wave >= 6 ? 6 + Math.floor(wave / 3) : 0 },  // Lifesteal bloodlord
+            { value: 'BOMBER', weight: wave >= 5 ? 7 + Math.floor(wave / 3) : 0 },   // Explodes on death
+            { value: 'SHADOW', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 },   // Goes invisible
+            { value: 'SIREN', weight: wave >= 8 ? 4 + Math.floor(wave / 4) : 0 },    // Disables towers
+            { value: 'GOLEM', weight: wave >= 10 ? 3 + Math.floor(wave / 5) : 0 }    // Massive stone stomper
         ];
         // Ondate speciali: bilanciato per essere difficile ma non impossibile
         if (this.state.specialWave === 'Assalto Speciale!') {
@@ -396,14 +405,24 @@ export class Game {
                 { value: 'SPLITTER', weight: 12 },
                 { value: 'FAST', weight: 15 },
                 { value: 'AGILE', weight: 10 },
+                { value: 'SHADOW', weight: 8 },
                 { value: 'NORMAL', weight: 8 }
             ];
         } else if (this.state.specialWave === 'Doppio Boss!') {
             options = [
                 { value: 'BOSS', weight: 8 },
+                { value: 'GOLEM', weight: 6 },
                 { value: 'TANK', weight: 15 },
                 { value: 'ARMORED', weight: 12 },
                 { value: 'NORMAL', weight: 10 }
+            ];
+        } else if (this.state.specialWave === 'Incubo Oscuro!') {
+            // New special wave with new enemies
+            options = [
+                { value: 'VAMPIRE', weight: 15 },
+                { value: 'SHADOW', weight: 12 },
+                { value: 'SIREN', weight: 10 },
+                { value: 'BOMBER', weight: 8 }
             ];
         }
         return Utils.weightedRandom(options.filter(o => o.weight > 0));
@@ -411,24 +430,24 @@ export class Game {
 
     completeWave() {
         this.state.waveInProgress = false;
-        
+
         // WAVE REWARDS - Più generose all'inizio
         const baseReward = 20; // Aumentato da 10
         const rewardScalingFactor = 1.0;
         const rewardGrowthRate = 0.8; // Aumentato da 0.4
         const logMultiplier = 1.0 + Math.log10(1 + (this.state.wave - 1) * rewardScalingFactor) * rewardGrowthRate;
         const waveBonus = Math.floor(baseReward * logMultiplier * 0.6); // *0.6 invece di *0.3
-        
+
         const energyBonus = Math.floor(this.state.energy / 15); // Cambiato da /30 a /15
         const totalReward = baseReward + waveBonus + energyBonus;
-        
+
         this.state.coins += totalReward;
         this.state.score += waveBonus * 2;
         this.state.coinsEarned += totalReward; // Track for XP system
-        
+
         // Heal energy
         this.state.energy = Math.min(CONFIG.INITIAL_ENERGY, this.state.energy + 20);
-        
+
         // Visual feedback
         this.particles.createWaveClearEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2);
         this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 + 1, {
@@ -439,7 +458,7 @@ export class Game {
             scale: 1.5,
             glow: true
         });
-        
+
         // Next wave after delay
         setTimeout(() => {
             if (!this.state.isGameOver) {
@@ -450,23 +469,23 @@ export class Game {
     }
 
     // ========== COMBAT SYSTEM ==========
-    
+
     updateCombat(dt, currentTime) {
         // HEALER healing system
         this.entities.zombies.forEach(healer => {
             if (healer.isHealer && currentTime - healer.lastHealTime >= healer.healInterval) {
                 healer.lastHealTime = currentTime;
-                
+
                 // Find zombies in heal range
                 let healedCount = 0;
                 this.entities.zombies.forEach(target => {
                     if (target === healer || target.hp >= target.maxHp) return;
-                    
+
                     const dist = Utils.distance(healer.col, healer.row, target.col, target.row);
                     if (dist <= healer.healRange) {
                         target.hp = Math.min(target.maxHp, target.hp + healer.healAmount);
                         healedCount++;
-                        
+
                         // Visual feedback
                         this.particles.emit(target.col, target.row, {
                             text: `+${healer.healAmount}💚`,
@@ -477,7 +496,7 @@ export class Game {
                         });
                     }
                 });
-                
+
                 if (healedCount > 0) {
                     // Healer pulse effect
                     this.particles.emit(healer.col, healer.row, {
@@ -490,20 +509,20 @@ export class Game {
                 }
             }
         });
-        
+
         // Cannons fire at zombies
         this.entities.cannons.forEach(cannon => {
             if (!cannon.canFire(currentTime)) return;
-            
+
             // Find target
             const target = this.findTarget(cannon);
-            
+
             if (target) {
                 cannon.fire(currentTime, target);
                 this.entities.fireProjectile(cannon, target);
             }
         });
-        
+
         // Check projectile collisions
         this.checkProjectileCollisions(currentTime);
     }
@@ -511,46 +530,46 @@ export class Game {
     findTarget(cannon) {
         let bestTarget = null;
         let bestScore = -Infinity;
-        
+
         for (const zombie of this.entities.zombies) {
             const dist = Utils.distance(cannon.col, cannon.row, zombie.col, zombie.row);
-            
+
             if (dist <= cannon.range) {
                 // Prioritize zombies further along the path (closer to wall)
                 const progressScore = zombie.row * 10;
                 const healthScore = -zombie.hp; // Prefer low health
-                
+
                 // Bonus for zombies at wall (actively damaging bricks)
                 const atWallBonus = zombie.atWall ? 50 : 0;
-                
+
                 // Bonus for zombies in corners (less tower coverage)
                 const cornerBonus = (zombie.col < 1.5 || zombie.col > CONFIG.COLS - 1.5) ? 30 : 0;
-                
+
                 const score = progressScore + healthScore + atWallBonus + cornerBonus;
-                
+
                 if (score > bestScore) {
                     bestScore = score;
                     bestTarget = zombie;
                 }
             }
         }
-        
+
         return bestTarget;
     }
 
     checkProjectileCollisions(currentTime) {
         const projectiles = this.entities.projectilePool.active;
-        
+
         for (let i = projectiles.length - 1; i >= 0; i--) {
             const proj = projectiles[i];
             if (!proj.active) continue;
-            
+
             // Check collision with zombies
             for (const zombie of this.entities.zombies) {
                 if (proj.hasHitTarget(zombie)) continue;
-                
+
                 const dist = Utils.distance(proj.x, proj.y, zombie.col, zombie.row);
-                
+
                 if (dist < 0.4) {
                     // Check dodge
                     if (zombie.dodgeChance && Math.random() < zombie.dodgeChance) {
@@ -564,26 +583,26 @@ export class Game {
                         proj.addPiercedTarget(zombie);
                         continue;
                     }
-                    
+
                     // Hit!
                     this.damageZombie(zombie, proj, currentTime);
-                    
+
                     // Handle special effects
                     if (proj.splashRadius > 0) {
                         this.applySplashDamage(zombie, proj, currentTime);
                     }
-                    
+
                     if (proj.chainTargets > 0) {
                         this.applyChainDamage(zombie, proj, currentTime);
                     }
-                    
+
                     // Mark projectile as hit (unless piercing)
                     if (proj.piercing > 0) {
                         proj.addPiercedTarget(zombie);
                     } else {
                         proj.active = false;
                     }
-                    
+
                     break;
                 }
             }
@@ -595,10 +614,10 @@ export class Game {
         const cannonType = proj.cannonType || 'BASIC';
         const cannonConfig = CANNON_TYPES[cannonType];
         const effectiveness = (cannonConfig.effectiveness && cannonConfig.effectiveness[zombie.type]) || 1.0;
-        
+
         const baseDamage = proj.damage * effectiveness;
         const result = zombie.takeDamage(baseDamage, currentTime);
-        
+
         // Shield/Invulnerability block animation
         if (result.blocked) {
             if (result.type === 'shield') {
@@ -625,9 +644,9 @@ export class Game {
             }
             return; // No damage number for blocked hits
         }
-        
+
         const actualDamage = result.damage;
-        
+
         // Visual feedback with effectiveness indicator
         if (effectiveness >= 1.5) {
             this.particles.createDamageNumber(zombie.col, zombie.row, actualDamage, '#00ff00'); // Green for effective
@@ -636,13 +655,13 @@ export class Game {
         } else {
             this.particles.createDamageNumber(zombie.col, zombie.row, actualDamage);
         }
-        
+
         // Apply slow effect
         if (proj.slowFactor > 0) {
             zombie.applySlow(proj.slowFactor, proj.slowDuration, currentTime);
             this.particles.createFreezeEffect(zombie.col, zombie.row);
         }
-        
+
         // Check death
         if (zombie.isDead()) {
             this.killZombie(zombie);
@@ -651,16 +670,16 @@ export class Game {
 
     applySplashDamage(epicenter, proj, currentTime) {
         this.particles.createExplosion(epicenter.col, epicenter.row, proj.splashRadius, proj.color);
-        
+
         for (const zombie of this.entities.zombies) {
             if (zombie === epicenter) continue;
-            
+
             const dist = Utils.distance(epicenter.col, epicenter.row, zombie.col, zombie.row);
-            
+
             if (dist <= proj.splashRadius) {
                 const splashDamage = proj.damage * 0.5;
                 const result = zombie.takeDamage(splashDamage, currentTime);
-                
+
                 // Show damage/block effect
                 if (result.blocked) {
                     if (result.type === 'shield') {
@@ -669,7 +688,7 @@ export class Game {
                 } else {
                     this.particles.createDamageNumber(zombie.col, zombie.row, result.damage);
                 }
-                
+
                 if (zombie.isDead()) {
                     this.killZombie(zombie);
                 }
@@ -681,30 +700,30 @@ export class Game {
         let currentTarget = source;
         let chainsLeft = proj.chainTargets;
         const hitTargets = [source];
-        
+
         while (chainsLeft > 0) {
             let nearestTarget = null;
             let nearestDist = Infinity;
-            
+
             for (const zombie of this.entities.zombies) {
                 if (hitTargets.includes(zombie)) continue;
-                
+
                 const dist = Utils.distance(currentTarget.col, currentTarget.row, zombie.col, zombie.row);
-                
+
                 if (dist < 3 && dist < nearestDist) {
                     nearestDist = dist;
                     nearestTarget = zombie;
                 }
             }
-            
+
             if (!nearestTarget) break;
-            
+
             // Chain to next target
             this.particles.createLightningEffect(nearestTarget.col, nearestTarget.row);
-            
+
             const chainDamage = proj.damage * 0.7;
             const result = nearestTarget.takeDamage(chainDamage, currentTime);
-            
+
             // Show damage/block effect
             if (result.blocked) {
                 if (result.type === 'shield') {
@@ -713,11 +732,11 @@ export class Game {
             } else {
                 this.particles.createDamageNumber(nearestTarget.col, nearestTarget.row, result.damage);
             }
-            
+
             if (nearestTarget.isDead()) {
                 this.killZombie(nearestTarget);
             }
-            
+
             hitTargets.push(nearestTarget);
             currentTarget = nearestTarget;
             chainsLeft--;
@@ -802,21 +821,21 @@ export class Game {
     }
 
     // ========== ENERGY SYSTEM ==========
-    
+
     updateEnergy(dt) {
         // Consumo mattoni: solo i nemici fermi al muro (atWall === true)
         const zombiesAtWall = this.entities.zombies.filter(z => z.atWall);
         const zombiesAtWallCount = zombiesAtWall.length;
-        
+
         if (!this.state._wallEnergyTimer) this.state._wallEnergyTimer = 0;
         this.state._wallEnergyTimer += dt;
-        
+
         // Ogni 0.5 secondi, ogni zombie al muro consuma 1 mattone
         if (this.state._wallEnergyTimer >= 0.5 && zombiesAtWallCount > 0) {
             const bricksToRemove = Math.min(zombiesAtWallCount, this.state.energy);
             this.state.energy -= bricksToRemove;
             this.state._wallEnergyTimer = 0;
-            
+
             // Effetto visivo: animazione di attacco su ogni nemico che consuma
             let bricksDone = 0;
             for (const zombie of zombiesAtWall) {
@@ -852,25 +871,25 @@ export class Game {
     }
 
     // ========== GAME FLOW ==========
-    
+
     update(dt) {
         if (this.state.isPaused || this.state.isGameOver) return;
-        
+
         const currentTime = performance.now();
-        
+
         // Update systems
         this.updateWaveSystem(dt, currentTime);
         this.updateCombat(dt, currentTime);
         this.updateEnergy(dt);
-        
+
         // Update entities
         this.entities.update(dt, currentTime);
         this.particles.update(dt);
         this.graphics.updateAnimation(dt);
-        
+
         // Update play time
         this.state.playTime += dt;
-        
+
         // Performance monitoring
         this.performanceMonitor.update();
     }
@@ -878,22 +897,22 @@ export class Game {
     render() {
         this.graphics.clear();
         this.graphics.drawGrid();
-        
+
         // Render muro di mattoni dinamico (energia)
         this.graphics.drawBrickWall(this.state.energy);
-        
+
         // Render game entities
         this.entities.render(this.graphics, performance.now());
         this.particles.render(this.graphics);
-        
+
         // Render UI
         this.ui.render(this.state);
-        
+
         // Show game over popup if game is over
         if (this.state.isGameOver) {
             this.ui.showGameOver(this.state);
         }
-        
+
         // Debug info (optional)
         if (window.location.search.includes('debug')) {
             this.renderDebugInfo();
@@ -903,7 +922,7 @@ export class Game {
     renderDebugInfo() {
         const counts = this.entities.getCounts();
         const fps = this.performanceMonitor.getFPS();
-        
+
         const debug = [
             `FPS: ${fps}`,
             `Cannons: ${counts.cannons}`,
@@ -911,7 +930,7 @@ export class Game {
             `Projectiles: ${counts.projectiles}`,
             `Particles: ${this.particles.getCount()}`
         ];
-        
+
         let y = 10;
         debug.forEach(line => {
             this.graphics.drawText(line, 10, y, {
@@ -933,9 +952,9 @@ export class Game {
 
     gameOver() {
         if (this.state.isGameOver) return;
-        
+
         this.state.isGameOver = true;
-        
+
         // Note: gameOver is now handled by main.js with complete session management
         // This ensures proper tracking of session duration and all XP metrics
     }
@@ -947,7 +966,7 @@ export class Game {
         this.particles.clear();
         this.deselectAll();
         this.ui.clearRetryButton();
-        
+
         // Reset session state (handled entirely in main.js)
         if (window.resetGameSession) {
             window.resetGameSession();

@@ -3,6 +3,9 @@
  * Production-grade component-based architecture following SOLID principles
  */
 
+import { CONFIG } from './config.js';
+import { Utils } from './utils.js';
+
 // ============================================================================
 // COMPONENT INTERFACES & BASE CLASSES
 // ============================================================================
@@ -11,8 +14,6 @@
  * Movement Component
  * Handles pathfinding, speed modifiers, and position updates
  */
-import { CONFIG } from './config.js';
-
 export class MovementComponent {
     constructor(config) {
         this.baseSpeed = config.speed;
@@ -98,7 +99,7 @@ export class MovementComponent {
  * Combat Component
  * Handles HP, armor, resistances, and damage calculation
  */
-class CombatComponent {
+export class CombatComponent {
     constructor(config) {
         this.maxHP = config.hp;
         this.currentHP = this.maxHP;
@@ -161,7 +162,7 @@ class CombatComponent {
  * AI Component
  * Handles decision-making and tactical behavior
  */
-class AIComponent {
+export class AIComponent {
     constructor(config) {
         this.behaviorType = config.behaviorType || 'simple';
         this.perceptionRadius = config.perceptionRadius || 5;
@@ -305,7 +306,7 @@ class AIComponent {
  * Animation Component
  * Manages animation states and sprite rendering
  */
-class AnimationComponent {
+export class AnimationComponent {
     constructor(config) {
         this.animations = config.animations; // State name -> animation config
         this.currentState = 'idle';
@@ -366,7 +367,7 @@ class AnimationComponent {
  * State Component
  * Manages state machine and transitions
  */
-class StateComponent {
+export class StateComponent {
     constructor(config) {
         this.states = config.states; // State definitions
         this.currentState = config.initialState || 'idle';
@@ -466,7 +467,7 @@ class StateComponent {
  * Enemy
  * Base class using component composition
  */
-class EnemyEntity {
+export class EnemyEntity {
     constructor(config) {
         this.id = Utils.generateID();
         this.type = config.type;
@@ -776,16 +777,4 @@ class EnemyEntity {
             offsetX += cellSize * 0.15;
         });
     }
-}
-
-// Export
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        MovementComponent,
-        CombatComponent,
-        AIComponent,
-        AnimationComponent,
-        StateComponent,
-        EnemyEntity
-    };
 }

@@ -315,6 +315,10 @@ export class MultiPartSprite {
         // Check if animation finished
         if (!anim.loop && this.animationTime >= anim.duration) {
             this.playing = false;
+            // Call the completion callback if defined
+            if (this.onAnimationComplete) {
+                this.onAnimationComplete(this.currentAnimation);
+            }
         }
     }
 
@@ -333,9 +337,9 @@ export class MultiPartSprite {
     render(ctx, x, y, size, options = {}) {
         ctx.save();
         
-        // Position sprite - x,y is the CENTER, coordinates are 0-1 relative to top-left
-        // So we offset by -size/2 to make 0.5,0.5 the center
-        ctx.translate(x - size/2, y - size/2);
+        // Position sprite at the center (x,y is already the cell center)
+        // Parts use coordinates where 0,0 is the center, ranging roughly -0.5 to 0.5
+        ctx.translate(x, y);
 
         // Apply root transform
         const rootWorld = this.rootTransform.getWorldTransform();
@@ -753,6 +757,174 @@ export class AnimationBuilder {
                     { time: duration, transform: { rotation: Math.random() * 1.0 - 0.5 } }
                 ]);
             }
+        }
+
+        return clip;
+    }
+
+    // ========================================================================
+    // TOWER ANIMATIONS - Elegant and subtle
+    // ========================================================================
+
+    /**
+     * Create tower idle animation - subtle pulsing/scanning
+     */
+    static createTowerIdleAnimation(parts, duration = 2.5) {
+        const clip = new AnimationClip('idle', duration, true);
+
+        // Turret subtle scanning motion
+        if (parts.includes('turret')) {
+            clip.addTrack('turret', [
+                { time: 0, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } },
+                { time: duration * 0.25, transform: { rotation: 0.03, scaleX: 1.01, scaleY: 0.99 } },
+                { time: duration * 0.5, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } },
+                { time: duration * 0.75, transform: { rotation: -0.03, scaleX: 0.99, scaleY: 1.01 } },
+                { time: duration, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } }
+            ]);
+        }
+
+        // Barrel very subtle breathing
+        if (parts.includes('barrel')) {
+            clip.addTrack('barrel', [
+                { time: 0, transform: { scaleX: 1.0, x: 0 } },
+                { time: duration * 0.5, transform: { scaleX: 1.02, x: 0.005 } },
+                { time: duration, transform: { scaleX: 1.0, x: 0 } }
+            ]);
+        }
+
+        // Barrel1 and Barrel2 for twin-barrel towers
+        if (parts.includes('barrel1')) {
+            clip.addTrack('barrel1', [
+                { time: 0, transform: { scaleX: 1.0 } },
+                { time: duration * 0.5, transform: { scaleX: 1.02 } },
+                { time: duration, transform: { scaleX: 1.0 } }
+            ]);
+        }
+        if (parts.includes('barrel2')) {
+            clip.addTrack('barrel2', [
+                { time: 0, transform: { scaleX: 1.0 } },
+                { time: duration * 0.33, transform: { scaleX: 1.02 } },
+                { time: duration * 0.66, transform: { scaleX: 1.0 } },
+                { time: duration, transform: { scaleX: 1.0 } }
+            ]);
+        }
+
+        // Chamber rotation for gatling-style
+        if (parts.includes('chamber')) {
+            clip.addTrack('chamber', [
+                { time: 0, transform: { rotation: 0 } },
+                { time: duration, transform: { rotation: 0.1 } }
+            ]);
+        }
+
+        // Lens glow effect
+        if (parts.includes('lens')) {
+            clip.addTrack('lens', [
+                { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+                { time: duration * 0.5, transform: { scaleX: 1.15, scaleY: 1.15 } },
+                { time: duration, transform: { scaleX: 1.0, scaleY: 1.0 } }
+            ]);
+        }
+
+        // Coil subtle pulse for electric
+        if (parts.includes('coil')) {
+            clip.addTrack('coil', [
+                { time: 0, transform: { scaleY: 1.0 } },
+                { time: duration * 0.25, transform: { scaleY: 1.05 } },
+                { time: duration * 0.5, transform: { scaleY: 1.0 } },
+                { time: duration * 0.75, transform: { scaleY: 1.05 } },
+                { time: duration, transform: { scaleY: 1.0 } }
+            ]);
+        }
+
+        return clip;
+    }
+
+    /**
+     * Create tower fire animation - recoil effect
+     */
+    static createTowerFireAnimation(parts, duration = 0.2) {
+        const clip = new AnimationClip('fire', duration, false);
+
+        // Barrel recoil
+        if (parts.includes('barrel')) {
+            clip.addTrack('barrel', [
+                { time: 0, transform: { x: 0, scaleX: 1.0 } },
+                { time: duration * 0.15, transform: { x: -0.06, scaleX: 0.92 } },
+                { time: duration * 0.4, transform: { x: -0.03, scaleX: 0.96 } },
+                { time: duration, transform: { x: 0, scaleX: 1.0 } }
+            ]);
+        }
+
+        // Twin barrels alternate recoil
+        if (parts.includes('barrel1')) {
+            clip.addTrack('barrel1', [
+                { time: 0, transform: { x: 0 } },
+                { time: duration * 0.15, transform: { x: -0.05 } },
+                { time: duration, transform: { x: 0 } }
+            ]);
+        }
+        if (parts.includes('barrel2')) {
+            clip.addTrack('barrel2', [
+                { time: 0, transform: { x: 0 } },
+                { time: duration * 0.25, transform: { x: -0.05 } },
+                { time: duration, transform: { x: 0 } }
+            ]);
+        }
+
+        // Turret slight kickback
+        if (parts.includes('turret')) {
+            clip.addTrack('turret', [
+                { time: 0, transform: { x: 0, scaleX: 1.0 } },
+                { time: duration * 0.15, transform: { x: -0.02, scaleX: 0.97 } },
+                { time: duration, transform: { x: 0, scaleX: 1.0 } }
+            ]);
+        }
+
+        // Chamber spin for gatling
+        if (parts.includes('chamber')) {
+            clip.addTrack('chamber', [
+                { time: 0, transform: { rotation: 0 } },
+                { time: duration, transform: { rotation: 0.5 } }
+            ]);
+        }
+
+        return clip;
+    }
+
+    /**
+     * Create charging animation for sniper/laser
+     */
+    static createTowerChargingAnimation(parts, duration = 0.4) {
+        const clip = new AnimationClip('charging', duration, false);
+
+        // Lens intensifies
+        if (parts.includes('lens')) {
+            clip.addTrack('lens', [
+                { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+                { time: duration * 0.5, transform: { scaleX: 1.3, scaleY: 1.3 } },
+                { time: duration * 0.8, transform: { scaleX: 1.5, scaleY: 1.5 } },
+                { time: duration, transform: { scaleX: 1.0, scaleY: 1.0 } }
+            ]);
+        }
+
+        // Barrel extends slightly
+        if (parts.includes('barrel')) {
+            clip.addTrack('barrel', [
+                { time: 0, transform: { scaleX: 1.0, x: 0 } },
+                { time: duration * 0.7, transform: { scaleX: 1.05, x: 0.02 } },
+                { time: duration * 0.85, transform: { scaleX: 0.95, x: -0.04 } },
+                { time: duration, transform: { scaleX: 1.0, x: 0 } }
+            ]);
+        }
+
+        // Turret braces
+        if (parts.includes('turret')) {
+            clip.addTrack('turret', [
+                { time: 0, transform: { scaleY: 1.0 } },
+                { time: duration * 0.7, transform: { scaleY: 0.97 } },
+                { time: duration, transform: { scaleY: 1.0 } }
+            ]);
         }
 
         return clip;

@@ -3,6 +3,11 @@
  * Squad coordination, formation management, and emergent behavior
  */
 
+import { ENEMY_CONFIGS, generateWaveComposition, applyWaveScaling } from './enemy-configs.js';
+import { CONFIG } from './config.js';
+import { Utils } from './utils.js';
+import { EnemyEntity } from './enemy-components.js';
+
 // ============================================================================
 // SQUAD SYSTEM
 // ============================================================================
@@ -578,12 +583,5 @@ class EnemyFactory {
     }
 }
 
-// Export
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        Squad,
-        ThreatAssessment,
-        SpawnDirector,
-        EnemyFactory
-    };
-}
+// Export using ES6
+export { Squad, ThreatAssessment, SpawnDirector, EnemyFactory };

@@ -244,6 +244,38 @@ export class ParticleSystem {
     }
 
     /**
+     * Create shield block effect - visual feedback when enemy shield absorbs damage
+     */
+    createShieldBlock(x, y) {
+        // Blue shield sparkle burst
+        for (let i = 0; i < 4; i++) {
+            const angle = (Math.PI * 2 * i) / 4 + Math.PI / 4;
+            this.emit(x, y, {
+                text: '✦',
+                color: '#44aaff',
+                vx: Math.cos(angle) * 1.5,
+                vy: Math.sin(angle) * 1.5,
+                gravity: 0.3,
+                life: 0.5,
+                scale: 0.8,
+                glow: true
+            });
+        }
+        
+        // Shield ripple effect
+        this.emit(x, y, {
+            text: '◯',
+            color: '#88ccff',
+            vx: 0,
+            vy: 0,
+            life: 0.3,
+            scale: 1.5,
+            glow: true,
+            fadeOut: true
+        });
+    }
+
+    /**
      * Create chain lightning effect
      */
     createLightningEffect(x, y) {

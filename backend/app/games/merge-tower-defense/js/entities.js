@@ -355,6 +355,11 @@ class Zombie {
             this.hitFlash -= dt * 3;
         }
         
+        // Shield block animation decay
+        if (this._shieldBlockAnim > 0) {
+            this._shieldBlockAnim -= dt * 2;
+        }
+        
         // Update multi-part sprite animation
         if (this.multiSprite) {
             this.multiSprite.update(dt);
@@ -364,7 +369,8 @@ class Zombie {
     takeDamage(amount, currentTime) {
         // PHASER invulnerability
         if (this.isInvulnerable) {
-            return 0;
+            this._shieldBlockAnim = 0.3; // Animazione invulnerabilità
+            return { damage: 0, blocked: true, type: 'invulnerable' };
         }
         
         // SHIELDED: damage shield first
@@ -373,45 +379,15 @@ class Zombie {
             this.shield -= shieldDamage;
             amount -= shieldDamage;
             this.lastShieldDamageTime = currentTime;
+            this._shieldBlockAnim = 0.4; // Animazione scudo colpito
             
             if (amount <= 0) {
-        // FREEZE blocks shield regeneration
-        if (this.hasShield) {
-            this.lastShieldDamageTime = currentTime;
-        }
-        
-                this.hitFlash = 0.5;  // Minor flash for shield hit
-                return shieldDamage;
+                this.hitFlash = 0.5;
+                return { damage: shieldDamage, blocked: true, type: 'shield' };
             }
         }
         
         // Apply armor reduction
-        // Apply slow effect
-        const effectiveSpeed = currentTime < this.slowUntil ? 
-                              this.speed * this.slowFactor : 
-                              this.speed;
-        
-        this.row += effectiveSpeed * dt;
-        
-        // A           this.speed;
-        
-        this.row += effectiveSpeed * dt;
-        
-        // Update animation
-        this.animPhase += dt * (effectiveSpeed + 2);
-        
-        // Hit flash decay
-        if (this.hitFlash > 0) {
-            this.hitFlash -= dt * 3;
-        }
-        
-        // Update multi-part sprite animation
-        if (this.multiSprite) {
-            this.multiSprite.update(dt);
-        }
-    }
-
-    takeDamage(amount) {
         const actualDamage = Math.max(1, amount - this.armor);
         this.hp -= actualDamage;
         this.hitFlash = 1.0;
@@ -421,7 +397,7 @@ class Zombie {
             this.multiSprite.play('hit');
         }
         
-        return actualDamage;
+        return { damage: actualDamage, blocked: false, type: 'normal' };
     }
 
     applySlow(factor, duration, currentTime) {

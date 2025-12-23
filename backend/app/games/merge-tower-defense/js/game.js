@@ -323,18 +323,18 @@ export class Game {
         this.state.waveInProgress = true;
         this.state.waveZombiesSpawned = 0;
 
-        // Difficoltà progressiva e ondate speciali
-        let zombieScalingFactor = 2.5 + Math.floor(this.state.wave / 5); // Scala più velocemente dopo ogni 5 ondate
-        let zombieGrowthRate = 8.0 + Math.floor(this.state.wave / 7) * 2; // Scala più velocemente dopo ogni 7 ondate
+        // Difficoltà progressiva BILANCIATA
+        let zombieScalingFactor = 2.0 + Math.floor(this.state.wave / 8); // Scala più lentamente
+        let zombieGrowthRate = 6.0 + Math.floor(this.state.wave / 10); // Scala più lentamente
         let additionalZombies = Math.floor(
             Math.log10(1 + (this.state.wave - 1) * zombieScalingFactor) * zombieGrowthRate
         );
         // Eventi speciali: ogni 6 ondate, "Assalto Speciale"
         if (this.state.wave % 6 === 0) {
-            additionalZombies += 10 + this.state.wave * 2;
+            additionalZombies += 5 + this.state.wave; // Ridotto da 10 + wave*2
             this.state.specialWave = 'Assalto Speciale!';
         } else if (this.state.wave % 10 === 0) {
-            additionalZombies += 20;
+            additionalZombies += 8; // Ridotto da 20
             this.state.specialWave = 'Doppio Boss!';
         } else {
             this.state.specialWave = null;
@@ -390,18 +390,20 @@ export class Game {
             { value: 'SPLITTER', weight: wave >= 7 ? 8 + Math.floor(wave / 2) : 0 },
             { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 }
         ];
-        // Ondate speciali: solo splitter o boss
+        // Ondate speciali: bilanciato per essere difficile ma non impossibile
         if (this.state.specialWave === 'Assalto Speciale!') {
             options = [
-                { value: 'SPLITTER', weight: 18 + Math.floor(wave / 2) },
-                { value: 'FAST', weight: 10 + Math.floor(wave / 2) },
-                { value: 'AGILE', weight: 8 + Math.floor(wave / 2) }
+                { value: 'SPLITTER', weight: 12 },
+                { value: 'FAST', weight: 15 },
+                { value: 'AGILE', weight: 10 },
+                { value: 'NORMAL', weight: 8 }
             ];
         } else if (this.state.specialWave === 'Doppio Boss!') {
             options = [
-                { value: 'BOSS', weight: 20 },
-                { value: 'TANK', weight: 10 },
-                { value: 'ARMORED', weight: 8 }
+                { value: 'BOSS', weight: 8 },
+                { value: 'TANK', weight: 15 },
+                { value: 'ARMORED', weight: 12 },
+                { value: 'NORMAL', weight: 10 }
             ];
         }
         return Utils.weightedRandom(options.filter(o => o.weight > 0));
@@ -514,10 +516,17 @@ export class Game {
             const dist = Utils.distance(cannon.col, cannon.row, zombie.col, zombie.row);
             
             if (dist <= cannon.range) {
-                // Prioritize zombies further along the path
+                // Prioritize zombies further along the path (closer to wall)
                 const progressScore = zombie.row * 10;
                 const healthScore = -zombie.hp; // Prefer low health
-                const score = progressScore + healthScore;
+                
+                // Bonus for zombies at wall (actively damaging bricks)
+                const atWallBonus = zombie.atWall ? 50 : 0;
+                
+                // Bonus for zombies in corners (less tower coverage)
+                const cornerBonus = (zombie.col < 1.5 || zombie.col > CONFIG.COLS - 1.5) ? 30 : 0;
+                
+                const score = progressScore + healthScore + atWallBonus + cornerBonus;
                 
                 if (score > bestScore) {
                     bestScore = score;
@@ -588,7 +597,36 @@ export class Game {
         const effectiveness = (cannonConfig.effectiveness && cannonConfig.effectiveness[zombie.type]) || 1.0;
         
         const baseDamage = proj.damage * effectiveness;
-        const actualDamage = zombie.takeDamage(baseDamage, currentTime);
+        const result = zombie.takeDamage(baseDamage, currentTime);
+        
+        // Shield/Invulnerability block animation
+        if (result.blocked) {
+            if (result.type === 'shield') {
+                // Shield absorb effect - blue shield icon with sparkles
+                this.particles.emit(zombie.col, zombie.row - 0.3, {
+                    text: '🛡️',
+                    color: '#44aaff',
+                    vy: -1.5,
+                    life: 0.6,
+                    scale: 1.2,
+                    glow: true
+                });
+                this.particles.createShieldBlock(zombie.col, zombie.row);
+            } else if (result.type === 'invulnerable') {
+                // Phaser invulnerability - purple sparkle
+                this.particles.emit(zombie.col, zombie.row - 0.3, {
+                    text: '✨',
+                    color: '#aa66ff',
+                    vy: -1,
+                    life: 0.4,
+                    scale: 1.5,
+                    glow: true
+                });
+            }
+            return; // No damage number for blocked hits
+        }
+        
+        const actualDamage = result.damage;
         
         // Visual feedback with effectiveness indicator
         if (effectiveness >= 1.5) {
@@ -621,8 +659,16 @@ export class Game {
             
             if (dist <= proj.splashRadius) {
                 const splashDamage = proj.damage * 0.5;
-                zombie.takeDamage(splashDamage);
-                this.particles.createDamageNumber(zombie.col, zombie.row, splashDamage);
+                const result = zombie.takeDamage(splashDamage, currentTime);
+                
+                // Show damage/block effect
+                if (result.blocked) {
+                    if (result.type === 'shield') {
+                        this.particles.createShieldBlock(zombie.col, zombie.row);
+                    }
+                } else {
+                    this.particles.createDamageNumber(zombie.col, zombie.row, result.damage);
+                }
                 
                 if (zombie.isDead()) {
                     this.killZombie(zombie);
@@ -657,8 +703,16 @@ export class Game {
             this.particles.createLightningEffect(nearestTarget.col, nearestTarget.row);
             
             const chainDamage = proj.damage * 0.7;
-            nearestTarget.takeDamage(chainDamage);
-            this.particles.createDamageNumber(nearestTarget.col, nearestTarget.row, chainDamage);
+            const result = nearestTarget.takeDamage(chainDamage, currentTime);
+            
+            // Show damage/block effect
+            if (result.blocked) {
+                if (result.type === 'shield') {
+                    this.particles.createShieldBlock(nearestTarget.col, nearestTarget.row);
+                }
+            } else {
+                this.particles.createDamageNumber(nearestTarget.col, nearestTarget.row, result.damage);
+            }
             
             if (nearestTarget.isDead()) {
                 this.killZombie(nearestTarget);

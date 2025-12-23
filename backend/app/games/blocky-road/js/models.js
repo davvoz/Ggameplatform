@@ -131,23 +131,18 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
-        // Main body
-        const bodyGeometry = new THREE.BoxGeometry(0.9, 0.5, 1.6);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ 
-            color: color,
-            flatShading: true
-        });
+        // Main body using pooled geometry
+        const bodyGeometry = GeometryPool.getBoxGeometry(0.9, 0.5, 1.6);
+        const bodyMaterial = MaterialPool.getMaterial(color);
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.3;
         body.castShadow = true;
         body.receiveShadow = true;
         group.add(body);
         
-        // Windshield/parabrezza
-        const cabinGeometry = new THREE.BoxGeometry(0.75, 0.4, 0.7);
-        const cabinMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xB0E0FF, // azzurro chiaro per effetto vetro
-            flatShading: true,
+        // Windshield/parabrezza using pooled geometry
+        const cabinGeometry = GeometryPool.getBoxGeometry(0.75, 0.4, 0.7);
+        const cabinMaterial = MaterialPool.getMaterial(0xB0E0FF, {
             transparent: true,
             opacity: 0.85
         });
@@ -156,38 +151,27 @@ const Models = {
         cabin.castShadow = true;
         group.add(cabin);
         
-        // Front grill/smile
-        const grillGeometry = new THREE.BoxGeometry(0.5, 0.15, 0.1);
-        const grillMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x222222,
-            flatShading: true
-        });
+        // Front grill/smile using pooled geometry
+        const grillGeometry = GeometryPool.getBoxGeometry(0.5, 0.15, 0.1);
+        const grillMaterial = MaterialPool.getMaterial(0x222222);
         const grill = new THREE.Mesh(grillGeometry, grillMaterial);
         grill.position.set(0, 0.25, 0.85);
         group.add(grill);
         
-        // Front bumper
-        const bumperGeometry = new THREE.BoxGeometry(1.0, 0.15, 0.2);
-        const bumperMaterial = new THREE.MeshLambertMaterial({ 
-            color: new THREE.Color(color).multiplyScalar(0.8),
-            flatShading: true
-        });
+        // Front bumper using pooled geometry
+        const bumperGeometry = GeometryPool.getBoxGeometry(1.0, 0.15, 0.2);
+        const bumperColor = new THREE.Color(color).multiplyScalar(0.8).getHex();
+        const bumperMaterial = MaterialPool.getMaterial(bumperColor);
         const bumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
         bumper.position.set(0, 0.15, 0.9);
         group.add(bumper);
         
-        // Wheels with rims
-        const wheelGeometry = new THREE.BoxGeometry(0.25, 0.35, 0.35);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x1a1a1a,
-            flatShading: true
-        });
+        // Wheels with rims using pooled geometry
+        const wheelGeometry = GeometryPool.getBoxGeometry(0.25, 0.35, 0.35);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
         
-        const rimGeometry = new THREE.BoxGeometry(0.28, 0.2, 0.2);
-        const rimMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x666666,
-            flatShading: true
-        });
+        const rimGeometry = GeometryPool.getBoxGeometry(0.28, 0.2, 0.2);
+        const rimMaterial = MaterialPool.getMaterial(0x666666);
         
         const wheels = [
             { x: -0.5, z: 0.6 },
@@ -227,31 +211,26 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
-        // Truck cab (front part)
-        const cabGeometry = new THREE.BoxGeometry(0.95, 0.7, 0.9);
-        const cabMaterial = new THREE.MeshLambertMaterial({ 
-            color: color,
-            flatShading: true
-        });
+        // Truck cab (front part) - POOLED
+        const cabGeometry = GeometryPool.getBoxGeometry(0.95, 0.7, 0.9);
+        const cabMaterial = MaterialPool.getMaterial(color);
         const cab = new THREE.Mesh(cabGeometry, cabMaterial);
         cab.position.set(0, 0.45, 0.6);
         cab.castShadow = true;
         cab.receiveShadow = true;
         group.add(cab);
         
-        // Cargo area (back part)
-        const cargoGeometry = new THREE.BoxGeometry(0.95, 0.8, 1.2);
-        const cargoMaterial = new THREE.MeshLambertMaterial({ 
-            color: new THREE.Color(color).multiplyScalar(0.85),
-            flatShading: true
-        });
+        // Cargo area (back part) - POOLED
+        const cargoGeometry = GeometryPool.getBoxGeometry(0.95, 0.8, 1.2);
+        const cargoColor = new THREE.Color(color).multiplyScalar(0.85).getHex();
+        const cargoMaterial = MaterialPool.getMaterial(cargoColor);
         const cargo = new THREE.Mesh(cargoGeometry, cargoMaterial);
         cargo.position.set(0, 0.5, -0.5);
         cargo.castShadow = true;
         group.add(cargo);
         
-        // Windshield
-        const windshieldGeometry = new THREE.BoxGeometry(0.8, 0.45, 0.15);
+        // Windshield - NON pooled (transparent)
+        const windshieldGeometry = GeometryPool.getBoxGeometry(0.8, 0.45, 0.15);
         const windshieldMaterial = new THREE.MeshLambertMaterial({ 
             color: 0x87CEEB,
             flatShading: true,
@@ -262,12 +241,9 @@ const Models = {
         windshield.position.set(0, 0.6, 1.0);
         group.add(windshield);
         
-        // Headlights
-        const lightGeometry = new THREE.BoxGeometry(0.2, 0.15, 0.1);
-        const lightMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xFFFF99,
-            flatShading: true
-        });
+        // Headlights - POOLED
+        const lightGeometry = GeometryPool.getBoxGeometry(0.2, 0.15, 0.1);
+        const lightMaterial = MaterialPool.getMaterial(0xFFFF99);
         
         const leftLight = new THREE.Mesh(lightGeometry, lightMaterial);
         leftLight.position.set(-0.3, 0.3, 1.1);
@@ -277,35 +253,25 @@ const Models = {
         rightLight.position.set(0.3, 0.3, 1.1);
         group.add(rightLight);
         
-        // Door line detail on cab
-        const doorGeometry = new THREE.BoxGeometry(0.05, 0.5, 0.6);
-        const doorMaterial = new THREE.MeshLambertMaterial({ 
-            color: new THREE.Color(color).multiplyScalar(0.6),
-            flatShading: true
-        });
+        // Door line detail on cab - POOLED
+        const doorGeometry = GeometryPool.getBoxGeometry(0.05, 0.5, 0.6);
+        const doorColor = new THREE.Color(color).multiplyScalar(0.6).getHex();
+        const doorMaterial = MaterialPool.getMaterial(doorColor);
         const door = new THREE.Mesh(doorGeometry, doorMaterial);
         door.position.set(0.5, 0.45, 0.6);
         group.add(door);
         
-        // Wheels with rims
-        const wheelGeometry = new THREE.BoxGeometry(0.28, 0.4, 0.4);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x1a1a1a,
-            flatShading: true
-        });
+        // Wheels with rims - POOLED
+        const wheelGeometry = GeometryPool.getBoxGeometry(0.28, 0.4, 0.4);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
         
-        const rimGeometry = new THREE.BoxGeometry(0.3, 0.25, 0.25);
-        const rimMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x666666,
-            flatShading: true
-        });
+        const rimGeometry = GeometryPool.getBoxGeometry(0.3, 0.25, 0.25);
+        const rimMaterial = MaterialPool.getMaterial(0x666666);
         
-        // Front fenders
-        const fenderGeometry = new THREE.BoxGeometry(0.15, 0.25, 0.5);
-        const fenderMaterial = new THREE.MeshLambertMaterial({ 
-            color: new THREE.Color(color).multiplyScalar(0.7),
-            flatShading: true
-        });
+        // Front fenders - POOLED
+        const fenderGeometry = GeometryPool.getBoxGeometry(0.15, 0.25, 0.5);
+        const fenderColor = new THREE.Color(color).multiplyScalar(0.7).getHex();
+        const fenderMaterial = MaterialPool.getMaterial(fenderColor);
         
         const wheels = [
             { x: -0.55, z: 0.7 },
@@ -360,53 +326,53 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
 
-        // Corpo principale
-        const bodyGeometry = new THREE.BoxGeometry(0.5, 0.3, 1.0);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: color, flatShading: true });
+        // Corpo principale - POOLED
+        const bodyGeometry = GeometryPool.getBoxGeometry(0.5, 0.3, 1.0);
+        const bodyMaterial = MaterialPool.getMaterial(color);
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.32;
         body.castShadow = true;
         body.receiveShadow = true;
         group.add(body);
 
-        // Sella nera
-        const seatGeometry = new THREE.BoxGeometry(0.45, 0.12, 0.35);
-        const seatMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, flatShading: true });
+        // Sella nera - POOLED
+        const seatGeometry = GeometryPool.getBoxGeometry(0.45, 0.12, 0.35);
+        const seatMaterial = MaterialPool.getMaterial(0x222222);
         const seat = new THREE.Mesh(seatGeometry, seatMaterial);
         seat.position.set(0, 0.43, -0.15);
         group.add(seat);
 
-        // Parabrezza piccolo trasparente
-        const windshieldGeometry = new THREE.BoxGeometry(0.32, 0.12, 0.05);
+        // Parabrezza piccolo trasparente - NON pooled (transparent)
+        const windshieldGeometry = GeometryPool.getBoxGeometry(0.32, 0.12, 0.05);
         const windshieldMaterial = new THREE.MeshLambertMaterial({ color: 0xB0E0FF, transparent: true, opacity: 0.7 });
         const windshield = new THREE.Mesh(windshieldGeometry, windshieldMaterial);
         windshield.position.set(0, 0.48, 0.38);
         group.add(windshield);
 
-        // Manubrio
-        const handleGeometry = new THREE.BoxGeometry(0.6, 0.07, 0.07);
-        const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x333333, flatShading: true });
+        // Manubrio - POOLED
+        const handleGeometry = GeometryPool.getBoxGeometry(0.6, 0.07, 0.07);
+        const handleMaterial = MaterialPool.getMaterial(0x333333);
         const handles = new THREE.Mesh(handleGeometry, handleMaterial);
         handles.position.set(0, 0.52, 0.45);
         group.add(handles);
 
-        // Fari anteriori
-        const headlightGeometry = new THREE.BoxGeometry(0.12, 0.08, 0.08);
-        const headlightMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFAA });
+        // Fari anteriori - POOLED
+        const headlightGeometry = GeometryPool.getBoxGeometry(0.12, 0.08, 0.08);
+        const headlightMaterial = MaterialPool.getMaterial(0xFFFFAA);
         const headlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
         headlight.position.set(0, 0.38, 0.52);
         group.add(headlight);
 
-        // Fari posteriori
-        const taillightGeometry = new THREE.BoxGeometry(0.10, 0.06, 0.06);
-        const taillightMaterial = new THREE.MeshLambertMaterial({ color: 0xFF2222 });
+        // Fari posteriori - POOLED
+        const taillightGeometry = GeometryPool.getBoxGeometry(0.10, 0.06, 0.06);
+        const taillightMaterial = MaterialPool.getMaterial(0xFF2222);
         const taillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
         taillight.position.set(0, 0.38, -0.52);
         group.add(taillight);
 
-        // Ruote grandi
-        const wheelGeometry = new THREE.CylinderGeometry(0.14, 0.14, 0.08, 16);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        // Ruote grandi - POOLED
+        const wheelGeometry = GeometryPool.getCylinderGeometry(0.14, 0.14, 0.08, 16);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
         const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
         frontWheel.position.set(0, 0.13, 0.48);
         frontWheel.rotation.z = Math.PI / 2;
@@ -424,35 +390,35 @@ const Models = {
         return group;
     },
     
-    // Create tree
+    // Create tree - OPTIMIZED
     createTree: () => {
         const group = new THREE.Group();
         
-        // Trunk
-        const trunkGeometry = new THREE.BoxGeometry(0.3, 0.8, 0.3);
-        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        // Trunk using pooled geometry
+        const trunkGeometry = GeometryPool.getBoxGeometry(0.3, 0.8, 0.3);
+        const trunkMaterial = MaterialPool.getMaterial(0x8B4513);
         const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
         trunk.position.y = 0.5;
         trunk.castShadow = true;
         trunk.receiveShadow = true;
         group.add(trunk);
         
-        // Foliage (3 layers)
-        const foliageMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        // Foliage (3 layers) using pooled geometry
+        const foliageMaterial = MaterialPool.getMaterial(0x228B22);
         
-        const foliageGeometry1 = new THREE.BoxGeometry(1.0, 0.4, 1.0);
+        const foliageGeometry1 = GeometryPool.getBoxGeometry(1.0, 0.4, 1.0);
         const foliage1 = new THREE.Mesh(foliageGeometry1, foliageMaterial);
         foliage1.position.y = 1.0;
         foliage1.castShadow = true;
         group.add(foliage1);
         
-        const foliageGeometry2 = new THREE.BoxGeometry(0.8, 0.4, 0.8);
+        const foliageGeometry2 = GeometryPool.getBoxGeometry(0.8, 0.4, 0.8);
         const foliage2 = new THREE.Mesh(foliageGeometry2, foliageMaterial);
         foliage2.position.y = 1.4;
         foliage2.castShadow = true;
         group.add(foliage2);
         
-        const foliageGeometry3 = new THREE.BoxGeometry(0.5, 0.3, 0.5);
+        const foliageGeometry3 = GeometryPool.getBoxGeometry(0.5, 0.3, 0.5);
         const foliage3 = new THREE.Mesh(foliageGeometry3, foliageMaterial);
         foliage3.position.y = 1.75;
         foliage3.castShadow = true;
@@ -464,7 +430,7 @@ const Models = {
     // Create coin with type: 'steem' (common), 'ethereum' (rare), 'bitcoin' (super rare)
     createCoin: (type = 'steem') => {
         const group = new THREE.Group();
-        const coinGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32);
+        const coinGeometry = GeometryPool.getCylinderGeometry(0.3, 0.3, 0.1, 32);
         let texturePath = null;
         let edgeColor = 0xFFFFFF;
         let textureRepeat = 0.7; // default zoom
@@ -486,20 +452,20 @@ const Models = {
         }
 
         // Materiali: bordo adattato, facce con logo
-        const edgeMaterial = new THREE.MeshLambertMaterial({ color: edgeColor });
+        // IMPORTANTE: materiali con texture NON possono essere pooled (causano dissolvenza)
+        const edgeMaterial = MaterialPool.getMaterial(edgeColor);
         let faceMaterial;
         if (texturePath) {
-            const loader = new THREE.TextureLoader();
-            const texture = loader.load(texturePath);
-            texture.center.set(0.5, 0.5);
-            // Ruota solo STEEM e Bitcoin, non Ethereum
-            if (type === 'steem' || type === 'bitcoin') {
-                texture.rotation = Math.PI / 2;
+            const texture = TextureCache.get(texturePath);
+            if (texture) {
+                // Crea NUOVO materiale per ogni moneta (texture già configurata al preload)
+                faceMaterial = new THREE.MeshLambertMaterial({ map: texture });
+            } else {
+                // Fallback if texture not loaded
+                faceMaterial = MaterialPool.getMaterial(0xFFFFFF);
             }
-            texture.repeat.set(textureRepeat, textureRepeat); // Zoom variabile
-            faceMaterial = new THREE.MeshLambertMaterial({ map: texture });
         } else {
-            faceMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+            faceMaterial = MaterialPool.getMaterial(0xFFFFFF);
         }
         // Ordine materiali: [lato, top, bottom]
         const materials = [edgeMaterial, faceMaterial, faceMaterial];
@@ -514,16 +480,13 @@ const Models = {
         return group;
     },
     
-    // Create log (floating platform on water) - grid-aligned
+    // Create log (floating platform on water) - grid-aligned - OPTIMIZED
     createLog: (length = 3) => {
         const group = new THREE.Group();
         
-        // Main log body - simple box, no caps
+        // Main log body - NOTA: lunghezza variabile, dobbiamo creare geometria dinamica
         const logGeometry = new THREE.BoxGeometry(length, 0.4, 0.9);
-        const logMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x8B4513,
-            flatShading: true
-        });
+        const logMaterial = MaterialPool.getMaterial(0x8B4513);
         const log = new THREE.Mesh(logGeometry, logMaterial);
         log.castShadow = true;
         log.receiveShadow = true;
@@ -531,10 +494,7 @@ const Models = {
         
         // Darker stripes for texture
         const stripeGeometry = new THREE.BoxGeometry(length * 0.9, 0.41, 0.15);
-        const stripeMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x654321,
-            flatShading: true
-        });
+        const stripeMaterial = MaterialPool.getMaterial(0x654321);
         const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
         stripe.position.y = 0.01;
         group.add(stripe);
@@ -542,23 +502,20 @@ const Models = {
         return group;
     },
     
-    // Create lily pad (small platform on water)
+    // Create lily pad (small platform on water) - OPTIMIZED
     createLilyPad: () => {
         const group = new THREE.Group();
         
-        const geometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1, 8);
-        const material = new THREE.MeshLambertMaterial({ 
-            color: 0x2E7D32,
-            flatShading: true
-        });
+        const geometry = GeometryPool.getCylinderGeometry(0.6, 0.6, 0.1, 8);
+        const material = MaterialPool.getMaterial(0x2E7D32);
         const pad = new THREE.Mesh(geometry, material);
         pad.position.y = 0.15;
         pad.castShadow = true;
         group.add(pad);
         
         // Small flower on top
-        const flowerGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        const flowerMaterial = new THREE.MeshLambertMaterial({ color: 0xFFB6C1 });
+        const flowerGeometry = GeometryPool.getBoxGeometry(0.2, 0.2, 0.2);
+        const flowerMaterial = MaterialPool.getMaterial(0xFFB6C1);
         const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
         flower.position.y = 0.3;
         group.add(flower);
@@ -566,49 +523,35 @@ const Models = {
         return group;
     },
     
-    // Create terrain block
+    // Create terrain block - OPTIMIZED with pooled geometry
     createTerrainBlock: (type = 'grass') => {
-        const geometry = new THREE.BoxGeometry(1, 0.5, 1);
+        const geometry = GeometryPool.getBoxGeometry(1, 0.5, 1);
         let material;
         
         switch(type) {
             case 'grass':
-                material = new THREE.MeshLambertMaterial({ 
-                    color: 0x5FAD56,
-                    flatShading: true
-                });
+                material = MaterialPool.getMaterial(0x5FAD56);
                 break;
             case 'road':
                 // Varied asphalt colors for visual interest
                 const roadColors = [0x555555, 0x4A4A4A, 0x606060];
-                material = new THREE.MeshLambertMaterial({ 
-                    color: roadColors[Math.floor(Math.random() * roadColors.length)],
-                    flatShading: true
-                });
+                const roadColor = roadColors[Math.floor(Math.random() * roadColors.length)];
+                material = MaterialPool.getMaterial(roadColor);
                 break;
             case 'water':
                 // Varied water blues
                 const waterColors = [0x2196F3, 0x42A5F5, 0x1E88E5];
-                material = new THREE.MeshLambertMaterial({ 
-                    color: waterColors[Math.floor(Math.random() * waterColors.length)],
-                    flatShading: true,
-                    transparent: true,
-                    opacity: 0.9
-                });
+                const waterColor = waterColors[Math.floor(Math.random() * waterColors.length)];
+                material = MaterialPool.getMaterial(waterColor, { transparent: true, opacity: 0.9 });
                 break;
             case 'rail':
-                material = new THREE.MeshLambertMaterial({ 
-                    color: 0x6B5742,
-                    flatShading: true
-                });
+                material = MaterialPool.getMaterial(0x6B5742);
                 break;
             default:
                 // Varied grass greens
                 const grassColors = [0x5FAD56, 0x6BB85D, 0x52A047, 0x5CB85C];
-                material = new THREE.MeshLambertMaterial({ 
-                    color: grassColors[Math.floor(Math.random() * grassColors.length)],
-                    flatShading: true
-                });
+                const grassColor = grassColors[Math.floor(Math.random() * grassColors.length)];
+                material = MaterialPool.getMaterial(grassColor);
         }
         
         const block = new THREE.Mesh(geometry, material);
@@ -619,9 +562,11 @@ const Models = {
         return block;
     },
     
-    // Add road stripe decoration (runs left-right along X axis)
+    // Add road stripe decoration (runs left-right along X axis) - OPTIMIZED
     createRoadStripe: (z, type = 'center') => {
-        const geometry = new THREE.PlaneGeometry(30, type === 'center' ? 0.15 : 0.1);
+        const width = type === 'center' ? 0.15 : 0.1;
+        // PlaneGeometry con dimensioni variabili - creiamo nuova geometria
+        const geometry = new THREE.PlaneGeometry(30, width);
         const material = new THREE.MeshBasicMaterial({ 
             color: 0xFFFFFF,
             side: THREE.DoubleSide
@@ -636,12 +581,9 @@ const Models = {
     createRailTrack: () => {
         const group = new THREE.Group();
         
-        // Rails (shiny metal) - extend along X axis (left to right)
-        const railGeometry = new THREE.BoxGeometry(30, 0.1, 0.1);
-        const railMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0xA8A8A8,
-            flatShading: true
-        });
+        // Rails (shiny metal) - extend along X axis (left to right) - POOLED
+        const railGeometry = GeometryPool.getBoxGeometry(30, 0.1, 0.1);
+        const railMaterial = MaterialPool.getMaterial(0xA8A8A8);
         
         const leftRail = new THREE.Mesh(railGeometry, railMaterial);
         leftRail.position.set(0, 0.28, -0.32);
@@ -651,12 +593,9 @@ const Models = {
         rightRail.position.set(0, 0.28, 0.32);
         group.add(rightRail);
         
-        // Wooden sleepers using InstancedMesh (1 draw call instead of 50!)
-        const sleeperGeometry = new THREE.BoxGeometry(0.15, 0.12, 0.85);
-        const sleeperMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x6B4423,
-            flatShading: true
-        });
+        // Wooden sleepers using InstancedMesh (1 draw call instead of 50!) - POOLED
+        const sleeperGeometry = GeometryPool.getBoxGeometry(0.15, 0.12, 0.85);
+        const sleeperMaterial = MaterialPool.getMaterial(0x6B4423);
         
         const sleeperCount = 50;
         const sleepers = new THREE.InstancedMesh(sleeperGeometry, sleeperMaterial, sleeperCount);
@@ -680,39 +619,40 @@ const Models = {
     createTrainWarningLight: () => {
         const group = new THREE.Group();
         
-        // Base - concrete base (simplified)
-        const baseGeometry = new THREE.CylinderGeometry(0.15, 0.18, 0.15, 6); // 8 -> 6 segments
-        const baseMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 });
+        // Base - concrete base (simplified) - POOLED
+        const baseGeometry = GeometryPool.getCylinderGeometry(0.15, 0.18, 0.15, 6);
+        const baseMaterial = MaterialPool.getMaterial(0x555555);
         const base = new THREE.Mesh(baseGeometry, baseMaterial);
         base.position.y = 0.075;
         base.castShadow = true;
         group.add(base);
         
-        // Pole - metal pole (simplified)
-        const poleGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 6); // 8 -> 6 segments
-        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+        // Pole - metal pole (simplified) - POOLED
+        const poleGeometry = GeometryPool.getCylinderGeometry(0.06, 0.06, 1.4, 6);
+        const poleMaterial = MaterialPool.getMaterial(0x222222);
         const pole = new THREE.Mesh(poleGeometry, poleMaterial);
         pole.position.y = 0.85;
         pole.castShadow = true;
         group.add(pole);
         
-        // Light housing - black box with stripe
-        const housingGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.2);
-        const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        // Light housing - black box with stripe - POOLED
+        const housingGeometry = GeometryPool.getBoxGeometry(0.3, 0.4, 0.2);
+        const housingMaterial = MaterialPool.getMaterial(0x1a1a1a);
         const housing = new THREE.Mesh(housingGeometry, housingMaterial);
         housing.position.y = 1.65;
         housing.castShadow = true;
         group.add(housing);
         
-        // Yellow stripe on housing
-        const stripeGeometry = new THREE.BoxGeometry(0.31, 0.08, 0.21);
-        const stripeMaterial = new THREE.MeshLambertMaterial({ color: 0xffdd00 });
+        // Yellow stripe on housing - POOLED
+        const stripeGeometry = GeometryPool.getBoxGeometry(0.31, 0.08, 0.21);
+        const stripeMaterial = MaterialPool.getMaterial(0xffdd00);
         const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
         stripe.position.y = 1.5;
         group.add(stripe);
         
-        // Light lens - glass sphere (transparent when off) - simplified
-        const lensGeometry = new THREE.SphereGeometry(0.12, 8, 8); // 16x16 -> 8x8
+        // Light lens - glass sphere (transparent when off) - simplified - POOLED
+        const lensGeometry = GeometryPool.getSphereGeometry(0.12, 8, 8);
+        // Phong material NON può essere pooled (serve uno per ogni luce per animazione)
         const lensMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             transparent: true,
@@ -737,14 +677,14 @@ const Models = {
     
 
     
-    // Create grass tuft decoration
+    // Create grass tuft decoration - OPTIMIZED
     createGrassTuft: () => {
         const group = new THREE.Group();
-        const material = new THREE.MeshLambertMaterial({ color: 0x5FAD56 });
+        const bladeGeometry = GeometryPool.getBoxGeometry(0.05, 0.3, 0.05);
+        const material = MaterialPool.getMaterial(0x5FAD56);
         
         for (let i = 0; i < 3; i++) {
-            const blade = new THREE.BoxGeometry(0.05, 0.3, 0.05);
-            const mesh = new THREE.Mesh(blade, material);
+            const mesh = new THREE.Mesh(bladeGeometry, material);
             mesh.position.set(
                 (Math.random() - 0.5) * 0.2,
                 0.35,
@@ -757,22 +697,22 @@ const Models = {
         return group;
     },
     
-    // Create flower decoration
+    // Create flower decoration - OPTIMIZED
     createFlower: () => {
         const group = new THREE.Group();
         
-        // Stem
-        const stemGeometry = new THREE.BoxGeometry(0.05, 0.3, 0.05);
-        const stemMaterial = new THREE.MeshLambertMaterial({ color: 0x2F8B2D });
+        // Stem using pooled geometry
+        const stemGeometry = GeometryPool.getBoxGeometry(0.05, 0.3, 0.05);
+        const stemMaterial = MaterialPool.getMaterial(0x2F8B2D);
         const stem = new THREE.Mesh(stemGeometry, stemMaterial);
         stem.position.y = 0.35;
         group.add(stem);
         
-        // Flower head
+        // Flower head using pooled geometry
         const colors = [0xFF69B4, 0xFFFF00, 0xFF6347, 0xFF00FF, 0xFFA500];
         const flowerColor = colors[Math.floor(Math.random() * colors.length)];
-        const flowerGeometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-        const flowerMaterial = new THREE.MeshLambertMaterial({ color: flowerColor });
+        const flowerGeometry = GeometryPool.getBoxGeometry(0.15, 0.15, 0.15);
+        const flowerMaterial = MaterialPool.getMaterial(flowerColor);
         const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
         flower.position.y = 0.5;
         group.add(flower);
@@ -780,16 +720,13 @@ const Models = {
         return group;
     },
     
-    // Create rock decoration (bigger and more visible as obstacles)
+    // Create rock decoration (bigger and more visible as obstacles) - OPTIMIZED
     createRock: () => {
         const sizes = [0.35, 0.4, 0.45]; // Increased from 0.2-0.3
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
-        const geometry = new THREE.BoxGeometry(size, size * 0.7, size);
-        const material = new THREE.MeshLambertMaterial({ 
-            color: 0x696969, // Darker gray for better visibility
-            flatShading: true 
-        });
+        const geometry = GeometryPool.getBoxGeometry(size, size * 0.7, size);
+        const material = MaterialPool.getMaterial(0x696969);
         const rock = new THREE.Mesh(geometry, material);
         rock.position.y = 0.3;
         rock.rotation.y = Math.random() * Math.PI;
@@ -825,46 +762,40 @@ const Models = {
         const group = new THREE.Group();
         group.userData.trainColor = color;
         group.userData.trainCarColor = carColor;
-        // Engine front
-        const engineGeometry = new THREE.BoxGeometry(1.2, 0.8, 1.8);
-        const engineMaterial = new THREE.MeshLambertMaterial({ 
-            color: color,
-            flatShading: true
-        });
+        // Engine front using pooled geometry
+        const engineGeometry = GeometryPool.getBoxGeometry(1.2, 0.8, 1.8);
+        const engineMaterial = MaterialPool.getMaterial(color);
         const engine = new THREE.Mesh(engineGeometry, engineMaterial);
         engine.position.y = 0.5;
         engine.castShadow = true;
         group.add(engine);
         
-        // Chimney
-        const chimneyGeometry = new THREE.BoxGeometry(0.3, 0.5, 0.3);
-        const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x2C3E50 });
+        // Chimney using pooled geometry
+        const chimneyGeometry = GeometryPool.getBoxGeometry(0.3, 0.5, 0.3);
+        const chimneyMaterial = MaterialPool.getMaterial(0x2C3E50);
         const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
         chimney.position.set(0, 1.15, 0.4);
         chimney.castShadow = true;
         group.add(chimney);
         
-        // Cabin
-        const cabinGeometry = new THREE.BoxGeometry(1.0, 0.6, 1.0);
-        const cabinMaterial = new THREE.MeshLambertMaterial({ 
-            color: color,
-            flatShading: true
-        });
+        // Cabin using pooled geometry
+        const cabinGeometry = GeometryPool.getBoxGeometry(1.0, 0.6, 1.0);
+        const cabinMaterial = MaterialPool.getMaterial(color);
         const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
         cabin.position.set(0, 1.1, -0.5);
         cabin.castShadow = true;
         group.add(cabin);
         
-        // Windows
-        const windowGeometry = new THREE.BoxGeometry(1.01, 0.4, 0.3);
-        const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x87CEEB });
+        // Windows using pooled geometry
+        const windowGeometry = GeometryPool.getBoxGeometry(1.01, 0.4, 0.3);
+        const windowMaterial = MaterialPool.getMaterial(0x87CEEB);
         const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
         window1.position.set(0, 1.1, -0.3);
         group.add(window1);
         
-        // Wheels
-        const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 8);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x2C3E50 });
+        // Wheels using pooled geometry
+        const wheelGeometry = GeometryPool.getCylinderGeometry(0.25, 0.25, 0.2, 8);
+        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50);
         
         const wheelPositions = [
             { x: -0.5, z: 0.6 },
@@ -908,31 +839,26 @@ const Models = {
             color = this.userData.trainCarColor;
         }
         const group = new THREE.Group();
-        // Main car body - cargo container style
-        const bodyGeometry = new THREE.BoxGeometry(1.2, 0.7, 2.0);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ 
-            color: color,
-            flatShading: true
-        });
+        // Main car body - cargo container style using pooled geometry
+        const bodyGeometry = GeometryPool.getBoxGeometry(1.2, 0.7, 2.0);
+        const bodyMaterial = MaterialPool.getMaterial(color);
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.5;
         body.castShadow = true;
         group.add(body);
         
-        // Roof
-        const roofGeometry = new THREE.BoxGeometry(1.3, 0.1, 2.1);
-        const roofMaterial = new THREE.MeshLambertMaterial({ 
-            color: THREE.MathUtils.lerp(color, 0x000000, 0.3), // Darker roof
-            flatShading: true
-        });
+        // Roof using pooled geometry
+        const roofGeometry = GeometryPool.getBoxGeometry(1.3, 0.1, 2.1);
+        const roofColor = new THREE.Color(color).lerp(new THREE.Color(0x000000), 0.3).getHex();
+        const roofMaterial = MaterialPool.getMaterial(roofColor);
         const roof = new THREE.Mesh(roofGeometry, roofMaterial);
         roof.position.y = 0.9;
         roof.castShadow = true;
         group.add(roof);
         
-        // Wheels (4 wheels)
-        const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 8);
-        const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x2C3E50 });
+        // Wheels (4 wheels) using pooled geometry
+        const wheelGeometry = GeometryPool.getCylinderGeometry(0.25, 0.25, 0.2, 8);
+        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50);
         
         const wheelPositions = [
             { x: -0.5, z: 0.7 },

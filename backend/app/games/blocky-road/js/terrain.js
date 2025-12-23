@@ -330,8 +330,8 @@ class TerrainGenerator {
         waterfall.position.y = 0.1; // Slightly above water
         waterfallGroup.add(waterfall);
         
-        // Add foam particles that flow horizontally
-        const foamGeometry = new THREE.BoxGeometry(0.3, 0.2, 0.3);
+        // Add foam particles that flow horizontally - OPTIMIZED
+        const foamGeometry = GeometryPool.getBoxGeometry(0.3, 0.2, 0.3);
         const foamMaterial = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             transparent: true,

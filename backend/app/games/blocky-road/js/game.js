@@ -21,6 +21,7 @@ class BlockyRoadGame {
         this.isGameOver = false;
         this.isPaused = false;
         this.isStarted = false;
+        this.isLoaded = false; // Flag per controllare se il gioco è completamente caricato
         
         // Input - optimized for fast gameplay
         this.keys = {};
@@ -46,6 +47,10 @@ class BlockyRoadGame {
         updateProgress(10);
         this.setupScene();
         this.setupLights();
+        
+        // Preload textures (prevent lag during coin spawns)
+        updateProgress(20);
+        await TextureCache.preloadAll();
         
         // Create game systems
         updateProgress(30);
@@ -90,11 +95,19 @@ class BlockyRoadGame {
         // Start animation loop
         this.animate();
         
+        // Gestione resize e fullscreen
+        window.addEventListener('resize', () => {
+            if (this.camera) {
+                this.camera.onResize();
+            }
+        });
+        
         // Hide loading, show start screen
         updateProgress(100);
         setTimeout(() => {
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
+            this.isLoaded = true; // Gioco caricato
         }, 500);
         
         console.log('✅ Game initialized');
@@ -192,6 +205,33 @@ class BlockyRoadGame {
         this.boundaryShadows = [leftShadow, rightShadow];
     }
     
+    isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (window.innerWidth <= 768);
+    }
+    
+    async enterFullscreen() {
+        // Scroll to top per nascondere la barra degli indirizzi su mobile
+        window.scrollTo(0, 0);
+        
+        // Prova API fullscreen
+        try {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                await elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                await elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                await elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+                await elem.msRequestFullscreen();
+            }
+            console.log('🖥️ Fullscreen activated');
+        } catch (error) {
+            console.warn('⚠️ Fullscreen API failed:', error);
+        }
+    }
+    
     setupInput() {
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
@@ -221,12 +261,39 @@ class BlockyRoadGame {
     setupUI() {
         // Start button
         document.getElementById('startButton').addEventListener('click', () => {
+            // Chiudi sempre la finestra start screen
+            const startScreen = document.getElementById('startScreen');
+            if (startScreen) {
+                startScreen.style.display = 'none';
+            }
             this.startGame();
         });
         
-        // Restart button
+        // Touch per entrare in fullscreen e avviare il gioco
+        document.addEventListener('touchstart', (e) => {
+            // Solo se il gioco è caricato
+            if (this.isLoaded) {
+                // Touch = sempre mobile, entra sempre in fullscreen
+                this.enterFullscreen();
+                
+                if (!this.isStarted) {
+                    this.startGame();
+                }
+            }
+        }, { once: false, passive: true });
+        
+        // Restart button with debounce to prevent rapid clicks
+        let restartDebounce = false;
         document.getElementById('restartButton').addEventListener('click', () => {
+            if (restartDebounce) {
+                console.log('⏳ Restart already in progress...');
+                return;
+            }
+            restartDebounce = true;
             this.restartGame();
+            setTimeout(() => {
+                restartDebounce = false;
+            }, 1000); // 1000ms debounce - prevenzione doppio click
         });
         
         // Mute button
@@ -252,7 +319,12 @@ class BlockyRoadGame {
         if (this.isStarted) return;
         
         this.isStarted = true;
-        document.getElementById('startScreen').style.display = 'none';
+        
+        // Nascondi sempre lo start screen
+        const startScreen = document.getElementById('startScreen');
+        if (startScreen) {
+            startScreen.style.display = 'none';
+        }
         
         // Initialize audio (requires user interaction)
         this.audio.init();
@@ -298,7 +370,14 @@ class BlockyRoadGame {
         this.obstacles.updateScore(0);
         
         this.terrain.generateInitialTerrain();
-        this.player.reset(0, 0);
+        
+        // Rimuovi completamente il player esistente e ricreane uno nuovo
+        // (Fix per bug di invisibilità con restart rapidi)
+        if (this.player && this.player.mesh) {
+            this.scene.remove(this.player.mesh);
+        }
+        this.player = new Player(this.scene, this.particles);
+        console.log('🐰 Player rigenerato completamente');
         
         // Reset death line (invisible)
         this.deathLineZ = -7; // Player spawns at 0, so death line at -7 maintains correct distance

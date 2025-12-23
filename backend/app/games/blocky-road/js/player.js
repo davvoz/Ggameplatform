@@ -301,10 +301,17 @@ class Player {
         this.mesh.position.set(x, 0.2, z);
         this.mesh.rotation.set(0, 0, 0);
         this.mesh.scale.set(1, 1, 1);
+        this.mesh.visible = true; // FIX: Assicura che il player sia visibile dopo restart
         this.body.scale.set(1, 1, 1);
         this.isMoving = false;
         this.isAlive = true;
         this.isOnPlatform = false;
         this.currentPlatform = null;
+        
+        // Assicura che il player sia nella scena (fix per restart veloce)
+        if (!this.mesh.parent) {
+            this.scene.add(this.mesh);
+            console.log('🔧 Player re-added to scene');
+        }
     }
 }

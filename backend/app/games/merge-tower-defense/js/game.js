@@ -750,24 +750,46 @@ export class Game {
     // ========== ENERGY SYSTEM ==========
     
     updateEnergy(dt) {
-        // Check zombies past defense line
-        let zombiesPastLine = 0;
-        for (const zombie of this.entities.zombies) {
-            if (zombie.isPastDefenseLine()) {
-                zombiesPastLine++;
+        // Consumo mattoni: solo i nemici fermi al muro (atWall === true)
+        const zombiesAtWall = this.entities.zombies.filter(z => z.atWall);
+        const zombiesAtWallCount = zombiesAtWall.length;
+        
+        if (!this.state._wallEnergyTimer) this.state._wallEnergyTimer = 0;
+        this.state._wallEnergyTimer += dt;
+        
+        // Ogni 0.5 secondi, ogni zombie al muro consuma 1 mattone
+        if (this.state._wallEnergyTimer >= 0.5 && zombiesAtWallCount > 0) {
+            const bricksToRemove = Math.min(zombiesAtWallCount, this.state.energy);
+            this.state.energy -= bricksToRemove;
+            this.state._wallEnergyTimer = 0;
+            
+            // Effetto visivo: animazione di attacco su ogni nemico che consuma
+            let bricksDone = 0;
+            for (const zombie of zombiesAtWall) {
+                if (bricksDone >= bricksToRemove) break;
+                // Effetto particella
+                this.particles.emit(zombie.col, zombie.row + 0.5, {
+                    text: '💥',
+                    color: '#ff5555',
+                    vy: 0.3,
+                    life: 0.5,
+                    scale: 1.2,
+                    glow: true
+                });
+                // Animazione: il nemico "colpisce" il muro
+                if (!zombie._attackAnim) zombie._attackAnim = 0;
+                zombie._attackAnim = 0.3;
+                bricksDone++;
             }
-        }
-        if (zombiesPastLine > 0) {
-            // Drain energy
-            this.state.energy -= CONFIG.ENERGY_DRAIN_PER_ZOMBIE * zombiesPastLine * dt;
             // Penalità: azzera kill streak
             this.state.killsWithoutLeak = 0;
             if (this.state.energy <= 0) {
                 this.state.energy = 0;
                 this.gameOver();
             }
-        } else {
-            // Regen energy slowly when safe
+        }
+        // Regen energy slowly when safe (nessun nemico al muro)
+        if (zombiesAtWall === 0) {
             this.state.energy = Math.min(
                 CONFIG.INITIAL_ENERGY,
                 this.state.energy + CONFIG.ENERGY_REGEN_RATE * dt
@@ -802,6 +824,9 @@ export class Game {
     render() {
         this.graphics.clear();
         this.graphics.drawGrid();
+        
+        // Render muro di mattoni dinamico (energia)
+        this.graphics.drawBrickWall(this.state.energy);
         
         // Render game entities
         this.entities.render(this.graphics, performance.now());

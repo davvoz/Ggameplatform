@@ -334,7 +334,18 @@ class Zombie {
                               this.speed * this.slowFactor : 
                               this.speed;
         
-        this.row += effectiveSpeed * dt;
+        // Movimento: i nemici COLLIDONO con i mattoni (si fermano SOPRA i mattoni)
+        const brickRows = 4;
+        const brickHeightCells = brickRows * 0.22;
+        // muroRow = riga dove inizia il muro - 0.5 per far stare il nemico sopra
+        const muroRow = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) - brickHeightCells - 0.55;
+        if (!this._wallProgress) this._wallProgress = 0;
+        if (this.row < muroRow) {
+            this.row += effectiveSpeed * dt;
+            if (this.row > muroRow) this.row = muroRow;
+        }
+        // Il nemico è fermo al muro
+        this.atWall = this.row >= muroRow - 0.05;
         
         // Animation
         this.animPhase += dt * (effectiveSpeed + 2);
@@ -684,6 +695,31 @@ export class EntityManager {
             // Remove dead or off-screen zombies
             if (zombie.isDead() || zombie.isOffScreen()) {
                 this.zombies.splice(i, 1);
+            }
+        }
+        
+        // Anti-overlap: separa i nemici che si sovrappongono
+        const minDist = 0.85; // distanza minima tra centri (in celle)
+        for (let i = 0; i < this.zombies.length; i++) {
+            for (let j = i + 1; j < this.zombies.length; j++) {
+                const a = this.zombies[i];
+                const b = this.zombies[j];
+                const dx = b.col - a.col;
+                const dy = b.row - a.row;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist && dist > 0.01) {
+                    // Spingi via i due nemici
+                    const overlap = (minDist - dist) / 2;
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    a.col -= nx * overlap;
+                    a.row -= ny * overlap * 0.5; // meno spinta verticale
+                    b.col += nx * overlap;
+                    b.row += ny * overlap * 0.5;
+                    // Limita col tra 0 e CONFIG.COLS-1
+                    a.col = Math.max(0.5, Math.min(CONFIG.COLS - 0.5, a.col));
+                    b.col = Math.max(0.5, Math.min(CONFIG.COLS - 0.5, b.col));
+                }
             }
         }
 

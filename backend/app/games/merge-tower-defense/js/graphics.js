@@ -114,16 +114,6 @@ export class Graphics {
             ctx.stroke();
         }
         
-        // Defense line
-        ctx.strokeStyle = CONFIG.COLORS.DEFENSE_LINE;
-        ctx.lineWidth = CONFIG.DEFENSE_LINE_WIDTH;
-        ctx.setLineDash([10, 5]);
-        ctx.beginPath();
-        ctx.moveTo(0, defenseY);
-        ctx.lineTo(width, defenseY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        
         // Add defense zone label
         ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
         ctx.font = `bold ${this.cellSize * 0.25}px ${UI_CONFIG.FONT_FAMILY}`;
@@ -401,6 +391,35 @@ export class Graphics {
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
         this.ctx.restore();
+    }
+
+    /**
+     * Disegna il muro di mattoni dinamico (4 file da 25)
+     */
+    drawBrickWall(energy) {
+        const ctx = this.ctx;
+        const totalBricks = Math.max(0, Math.floor(energy));
+        const bricksPerRow = 25;
+        const brickRows = 4;
+        const brickW = this.cellSize * CONFIG.COLS / bricksPerRow;
+        const brickH = this.cellSize * 0.22;
+        const defenseY = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) * this.cellSize;
+        let bricksDrawn = 0;
+        for (let r = brickRows - 1; r >= 0; r--) {
+            for (let c = 0; c < bricksPerRow; c++) {
+                if (bricksDrawn >= totalBricks) return;
+                const bx = this.offsetX + c * brickW;
+                const by = this.offsetY + defenseY - brickRows * brickH + r * brickH;
+                ctx.fillStyle = '#b22222';
+                ctx.strokeStyle = '#fff2';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
+                ctx.fill();
+                ctx.stroke();
+                bricksDrawn++;
+            }
+        }
     }
 
     /**

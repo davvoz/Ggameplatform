@@ -152,6 +152,8 @@ import { Game } from './game.js';
         
         // Update and render
         game.update(dt);
+        // Passa lo stato al renderer per i mattoni dinamici
+        graphics.gameState = game.getState();
         game.render();
         
         // Check game state

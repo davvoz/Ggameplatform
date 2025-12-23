@@ -189,9 +189,14 @@ export class UIManager {
         const cannon = button.cannon;
         const isSelected = button.id === this.selectedCannonType;
         
-        // Usa la funzione calculateTowerCost per ottenere il costo reale
-        const actualCost = typeof calculateTowerCost === 'function' ? 
+        // Calcola il costo reale con il moltiplicatore dinamico
+        let baseCost = typeof calculateTowerCost === 'function' ? 
                           calculateTowerCost(cannon.id, 1) : cannon.cost;
+        let multiplier = 1;
+        if (gameState.cannonPriceMultiplier && gameState.cannonPriceMultiplier[cannon.id]) {
+            multiplier = gameState.cannonPriceMultiplier[cannon.id];
+        }
+        const actualCost = Math.floor(baseCost * multiplier);
         const canAfford = gameState.coins >= actualCost;
 
         const cornerRadius = Math.min(8, Math.floor(button.width * 0.12));

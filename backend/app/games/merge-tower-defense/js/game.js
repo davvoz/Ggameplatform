@@ -117,40 +117,47 @@ export class Game {
     placeCannon(col, row) {
         const cannonType = this.ui.getSelectedCannonType();
         const cannonDef = CANNON_TYPES[cannonType];
-        
+        // Meccanica: prezzo che aumenta ogni volta che si piazza una torretta di quel tipo
+        if (!this.state.cannonPriceMultiplier) this.state.cannonPriceMultiplier = {};
+        if (!this.state.cannonPriceMultiplier[cannonType]) this.state.cannonPriceMultiplier[cannonType] = 1;
+
         // Check if in defense zone
         if (!this.ui.isInDefenseZone(row)) {
             this.particles.createWarningEffect(col, row, '❌');
             return;
         }
-        
+
         // Check if position occupied
         if (this.entities.getCannon(col, row)) {
             return;
         }
-        
-        // Check if can afford
-        const actualCost = typeof calculateTowerCost === 'function' ? 
+
+        // Calcola costo con moltiplicatore
+        const baseCost = typeof calculateTowerCost === 'function' ? 
                           calculateTowerCost(cannonType, 1) : cannonDef.cost;
+        const actualCost = Math.floor(baseCost * this.state.cannonPriceMultiplier[cannonType]);
         if (this.state.coins < actualCost) {
             this.particles.createWarningEffect(col, row, '💰');
             return;
         }
-        
+
         // Check cannon limit
         if (this.entities.cannons.length >= this.state.cannonLimit) {
             this.particles.createWarningEffect(col, row, 'FULL!');
             return;
         }
-        
+
         // Place cannon
         this.state.coins -= actualCost;
         this.entities.addCannon(col, row, cannonType);
         this.particles.createPlacementEffect(col, row);
-        
+
+        // Aumenta il prezzo della torretta di 1/4 (25%)
+        this.state.cannonPriceMultiplier[cannonType] = parseFloat((this.state.cannonPriceMultiplier[cannonType] * 1.25).toFixed(3));
+
         // Track for XP system
         this.state.towersPlaced++;
-        
+
         // Play sound feedback (if audio system added later)
     }
 
@@ -315,20 +322,32 @@ export class Game {
     startWave() {
         this.state.waveInProgress = true;
         this.state.waveZombiesSpawned = 0;
-        
-        // ZOMBIE COUNT RIDOTTO - Wave più veloci e intense
-        const zombieScalingFactor = 2.5; // Ridotto da 5.0
-        const zombieGrowthRate = 8.0; // Ridotto da 18.0
-        const additionalZombies = Math.floor(
+
+        // Difficoltà progressiva e ondate speciali
+        let zombieScalingFactor = 2.5 + Math.floor(this.state.wave / 5); // Scala più velocemente dopo ogni 5 ondate
+        let zombieGrowthRate = 8.0 + Math.floor(this.state.wave / 7) * 2; // Scala più velocemente dopo ogni 7 ondate
+        let additionalZombies = Math.floor(
             Math.log10(1 + (this.state.wave - 1) * zombieScalingFactor) * zombieGrowthRate
         );
+        // Eventi speciali: ogni 6 ondate, "Assalto Speciale"
+        if (this.state.wave % 6 === 0) {
+            additionalZombies += 10 + this.state.wave * 2;
+            this.state.specialWave = 'Assalto Speciale!';
+        } else if (this.state.wave % 10 === 0) {
+            additionalZombies += 20;
+            this.state.specialWave = 'Doppio Boss!';
+        } else {
+            this.state.specialWave = null;
+        }
         this.state.waveZombiesTotal = CONFIG.BASE_WAVE_ZOMBIES + additionalZombies;
-        
+
         this.state.lastSpawnTime = performance.now();
-        
-        // Wave announcement
+
+        // Annuncio ondata
+        let waveText = `⚔️ WAVE ${this.state.wave} ⚔️`;
+        if (this.state.specialWave) waveText += `\n${this.state.specialWave}`;
         this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 2, {
-            text: `⚔️ WAVE ${this.state.wave} ⚔️`,
+            text: waveText,
             color: CONFIG.COLORS.TEXT_WARNING,
             vy: -0.5,
             life: 2.0,
@@ -340,31 +359,51 @@ export class Game {
     spawnZombie() {
         const col = Utils.randomInt(0, CONFIG.COLS - 1);
         const type = this.selectZombieType();
-        
         // Passa il numero della wave per applicare lo scaling logaritmico
-        this.entities.addZombie(col, type, this.state.wave);
+        const zombie = this.entities.addZombie(col, type, this.state.wave);
+        // Potenziamento nemici speciali nelle ondate avanzate
+        if (zombie && zombie.isHealer && this.state.wave >= 12) {
+            zombie.healAmount = Math.floor(zombie.healAmount * (1 + (this.state.wave - 10) * 0.15));
+            zombie.healInterval = Math.max(800, zombie.healInterval - (this.state.wave - 10) * 80);
+        }
+        if (zombie && zombie.canPhase && this.state.wave >= 15) {
+            zombie.phaseInterval = Math.max(1200, zombie.phaseInterval - (this.state.wave - 14) * 150);
+        }
+        if (zombie && zombie.canSplit && this.state.wave >= 18) {
+            zombie.splitCount = Math.min(6, zombie.splitCount + Math.floor((this.state.wave - 17) / 3));
+        }
         this.state.waveZombiesSpawned++;
     }
 
     selectZombieType() {
         const wave = this.state.wave;
-        
-        // Progressive difficulty con NEMICI TATTICI SPECIALIZZATI
-        const options = [
-            { value: 'NORMAL', weight: Math.max(5, 15 - wave) },
-            { value: 'FAST', weight: wave >= 2 ? 12 + wave : 0 },
-            { value: 'TANK', weight: wave >= 3 ? 8 + Math.floor(wave / 2) : 0 },
-            { value: 'AGILE', weight: wave >= 4 ? 10 + Math.floor(wave / 2) : 0 },
+        let options = [
+            { value: 'NORMAL', weight: Math.max(2, 12 - Math.floor(wave / 2)) },
+            { value: 'FAST', weight: wave >= 2 ? 10 + Math.floor(wave * 1.2) : 0 },
+            { value: 'TANK', weight: wave >= 3 ? 7 + Math.floor(wave / 2) : 0 },
+            { value: 'AGILE', weight: wave >= 4 ? 8 + Math.floor(wave / 2) : 0 },
             { value: 'ARMORED', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
-            { value: 'BOSS', weight: wave >= 8 && wave % 4 === 0 ? 3 : 0 },
-            
-            // TACTICAL VARIANTS - richiedono strategie specifiche
-            { value: 'HEALER', weight: wave >= 5 ? 4 + Math.floor(wave / 4) : 0 },  // Priority target
-            { value: 'SHIELDED', weight: wave >= 6 ? 6 + Math.floor(wave / 3) : 0 }, // Needs sustained fire
-            { value: 'SPLITTER', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 }, // AoE counter
-            { value: 'PHASER', weight: wave >= 8 ? 4 + Math.floor(wave / 5) : 0 }    // Fast reaction
+            { value: 'BOSS', weight: (wave >= 8 && (wave % 4 === 0 || wave % 10 === 0)) ? 4 + Math.floor(wave / 8) : 0 },
+            // Tattici
+            { value: 'HEALER', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
+            { value: 'SHIELDED', weight: wave >= 6 ? 7 + Math.floor(wave / 2) : 0 },
+            { value: 'SPLITTER', weight: wave >= 7 ? 8 + Math.floor(wave / 2) : 0 },
+            { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 }
         ];
-        
+        // Ondate speciali: solo splitter o boss
+        if (this.state.specialWave === 'Assalto Speciale!') {
+            options = [
+                { value: 'SPLITTER', weight: 18 + Math.floor(wave / 2) },
+                { value: 'FAST', weight: 10 + Math.floor(wave / 2) },
+                { value: 'AGILE', weight: 8 + Math.floor(wave / 2) }
+            ];
+        } else if (this.state.specialWave === 'Doppio Boss!') {
+            options = [
+                { value: 'BOSS', weight: 20 },
+                { value: 'TANK', weight: 10 },
+                { value: 'ARMORED', weight: 8 }
+            ];
+        }
         return Utils.weightedRandom(options.filter(o => o.weight > 0));
     }
 
@@ -636,17 +675,13 @@ export class Game {
         if (zombie.canSplit && zombie.splitCount > 0) {
             const splitType = zombie.splitType;
             const splitHp = ZOMBIE_TYPES[splitType].hp * zombie.splitHpPercent;
-            
             for (let i = 0; i < zombie.splitCount; i++) {
                 const newZombie = this.entities.addZombie(zombie.col, splitType, this.state.wave);
                 newZombie.hp = splitHp;
                 newZombie.maxHp = splitHp;
                 newZombie.row = zombie.row;
-                
-                // Spread them out slightly
                 newZombie.col += (Math.random() - 0.5) * 0.5;
             }
-            
             this.particles.emit(zombie.col, zombie.row, {
                 text: 'SPLIT!',
                 color: '#ff00ff',
@@ -655,18 +690,59 @@ export class Game {
                 scale: 1.2
             });
         }
-        
+
+        // --- BONUS COMBO E KILL STREAK ---
+        if (!this.state.lastKillTime) this.state.lastKillTime = performance.now();
+        const now = performance.now();
+        if (now - this.state.lastKillTime < 1200) {
+            this.state.combo = (this.state.combo || 1) + 1;
+        } else {
+            this.state.combo = 1;
+        }
+        this.state.lastKillTime = now;
+        if (!this.state.maxCombo || this.state.combo > this.state.maxCombo) this.state.maxCombo = this.state.combo;
+
+        // Bonus per combo
+        let comboBonus = 0;
+        if (this.state.combo > 2) {
+            comboBonus = Math.floor(zombie.reward * this.state.combo * 0.5);
+            this.state.score += comboBonus;
+            this.particles.emit(zombie.col, zombie.row, {
+                text: `COMBO x${this.state.combo}! +${comboBonus}`,
+                color: '#00ffff',
+                vy: -2,
+                life: 1.2,
+                scale: 1.2,
+                glow: true
+            });
+        }
+
+        // Kill streak bonus ogni 10 uccisioni senza perdere energia
+        this.state.killsWithoutLeak = (this.state.killsWithoutLeak || 0) + 1;
+        if (this.state.killsWithoutLeak % 10 === 0) {
+            const streakBonus = 50 + 10 * this.state.wave;
+            this.state.coins += streakBonus;
+            this.particles.emit(zombie.col, zombie.row, {
+                text: `STREAK! +${streakBonus}💰`,
+                color: '#ffaa00',
+                vy: -2,
+                life: 1.5,
+                scale: 1.3,
+                glow: true
+            });
+        }
+
         // Rewards
         this.state.coins += zombie.reward;
         this.state.kills++;
-        
+
         const scoreReward = Math.floor(zombie.reward * this.state.wave * 1.5);
         this.state.score += scoreReward;
-        
+
         // Visual feedback
         this.particles.createDeathEffect(zombie.col, zombie.row, zombie.icon);
         this.particles.createCoinReward(zombie.col, zombie.row, zombie.reward);
-        
+
         // Remove zombie
         this.entities.removeZombie(zombie);
     }
@@ -676,17 +752,16 @@ export class Game {
     updateEnergy(dt) {
         // Check zombies past defense line
         let zombiesPastLine = 0;
-        
         for (const zombie of this.entities.zombies) {
             if (zombie.isPastDefenseLine()) {
                 zombiesPastLine++;
             }
         }
-        
         if (zombiesPastLine > 0) {
             // Drain energy
             this.state.energy -= CONFIG.ENERGY_DRAIN_PER_ZOMBIE * zombiesPastLine * dt;
-            
+            // Penalità: azzera kill streak
+            this.state.killsWithoutLeak = 0;
             if (this.state.energy <= 0) {
                 this.state.energy = 0;
                 this.gameOver();

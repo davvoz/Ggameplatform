@@ -1,8 +1,17 @@
 {
-  "version": "2.3.12",
-  "timestamp": "2025-12-23T14:43:44.436Z",
-  "buildNumber": 120,
+  "version": "2.3.13",
+  "timestamp": "2025-12-23T15:54:50.093Z",
+  "buildNumber": 121,
   "changelog": [
+    {
+      "version": "2.3.13",
+      "date": "2025-12-23",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD]Enhance enemy animations and configurations for improved gameplay experience",
+        "🔖 Bump version to 2.3.12 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.12",
       "date": "2025-12-23",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: remove cache/check-throttling logic for multiplier checks to ensure fresh data retrieval",
         "🔖 Bump version to 2.3.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.3",
-      "date": "2025-12-22",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD] rebalance game mechanics with adjusted enemy scaling, tower abilities, and wave dynamics",
-        "🔖 Bump version to 2.3.2 [skip-version]"
       ]
     }
   ]

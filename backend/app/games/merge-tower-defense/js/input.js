@@ -3,7 +3,7 @@
  * Manages touch and mouse input for mobile-first experience
  */
 
-import { Utils } from './utils.js';
+
 
 export class InputHandler {
     constructor(canvas, graphics) {

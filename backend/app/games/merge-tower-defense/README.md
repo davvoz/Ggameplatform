@@ -1,218 +1,234 @@
-# 🎮 Merge Tower Defense - Elite Defense Force
+# Merge Tower Defense
 
-## 📋 Overview
+## Overview
 
-A professional, mobile-first tower defense game with advanced merge mechanics. Built entirely in vanilla JavaScript with sprite-based rendering and optimized performance.
+A tactical tower defense game focused on strategic depth, specialization, and meaningful decision-making. Every tower excels in one context and fails in another. Every enemy presents a specific tactical problem. Victory comes from understanding, not grinding.
 
-## ✨ Key Features
+## Core Gameplay
 
-### Advanced Merge System
-- **Tap to Select**: Tap 3 cannons of the same type and level to merge
-- **Drag to Merge**: Drag cannons onto each other for quick merging
-- **7 Merge Levels**: Progressive power scaling up to legendary tier
-- **Strategic Positioning**: Move cannons freely in the defense zone
+### Specialization System
+Five tower types, each designed as a hard counter to specific threats:
+- **PIERCER** - Line-penetrating shots. Eliminates priority targets. Weak against armor.
+- **DISRUPTOR** - Area control and slowing. Stops fast enemies and teleporters. Weak against single targets.
+- **DEMOLISHER** - Heavy AoE with armor penetration. Breaks fortifications. Slow and predictable.
+- **SENTINEL** - Rapid fire with focus stacking. Shreds fast single targets. Useless against armor.
+- **ANCHOR** - Baseline versatility. Marks targets for team damage bonus. Jack of all trades, master of none.
 
-### Diverse Arsenal
-- **Basic Turret** 🔫 - Balanced all-rounder
-- **Rapid Fire** ⚡ - High DPS for swarms
-- **Sniper** 🎯 - Long-range precision
-- **Splash Cannon** 💥 - Area damage
-- **Freeze Tower** ❄️ - Crowd control
-- **Laser Beam** 🔆 - Piercing attacks
-- **Electric Chain** ⚡ - Multi-target damage
+### Tactical Problems
+Five enemy types, each requiring specific solutions:
+- **SWARM** - Many weak units in tight formation. Overwhelms single-target towers. Counter: AoE damage.
+- **CHARGER** - Fast striker that sprints and retreats. Bypasses slow defenses. Counter: High DPS tracking.
+- **FORTRESS** - Heavily armored vanguard. Blocks low damage attacks. Counter: Armor penetration.
+- **PHANTOM** - Teleporting infiltrator. Unpredictable positioning. Counter: Zone control or alpha strike.
+- **VANGUARD** - Baseline threat. Tests overall defense setup. Counter: Any balanced strategy.
 
-### Enemy Variety
-- **Shambler** 🧟 - Basic zombie
-- **Runner** 🧟‍♂️ - Fast and agile
-- **Brute** 🧟‍♀️ - High health tank
-- **Leaper** 🦇 - Can dodge attacks
-- **Juggernaut** 🛡️ - Armored enemy
-- **Overlord** 👹 - Boss with special abilities
+### Merge Evolution
+Three tier system with qualitative changes:
+- **Tier 1** - Base functionality. Place 1 tower.
+- **Tier 2** - Unlock passive ability. Merge 3 identical Tier 1 towers.
+- **Tier 3** - Transform attack pattern. Merge 3 identical Tier 2 towers.
 
-### Professional Polish
-- **Sprite-Based Rendering** - Smooth animations and effects
-- **Object Pooling** - Optimized performance
-- **Particle System** - Rich visual feedback
-- **Mobile-First** - Touch-optimized controls
-- **Responsive Design** - Adapts to any screen size
+Example: SENTINEL evolution
+- Tier 1: Rapid fire
+- Tier 2: "Lock On" - Stacking damage bonus on same target
+- Tier 3: "Terminator" - Execute enemies below 20% HP
 
-## 🎯 Gameplay
+### Deterministic Waves
+No randomness. Waves are authored tactical challenges with intended solutions. Each wave composition creates specific problems requiring specific tower combinations and positioning.
+
+## Gameplay Philosophy
 
 ### Objective
-Defend your territory by placing and merging turrets to stop waves of zombies from reaching the red line.
+Survive 10+ waves of composed enemy formations. Each wave is a designed puzzle with intended counter-strategies.
 
 ### Controls
-- **Tap** - Select turrets or place new ones
-- **Drag** - Move turrets or quick-merge
-- **Shop** - Select turret type at the bottom
+- **Click/Tap** - Select towers, place new ones
+- **Right Click** - Salvage tower for resources
+- **Hover** - Preview tower range and effectiveness
 
-### Strategy Tips
-1. **Start Strong**: Place basic turrets to build economy
-2. **Merge Early**: Level 2 turrets are 2.2x more powerful
-3. **Mix Types**: Use freeze + damage combos
-4. **Position Wisely**: Snipers in back, splash in front
-5. **Save Coins**: Higher merges give exponential power
+### Strategic Principles
+1. **Read the Wave** - Identify enemy composition before spawning
+2. **Counter-Build** - Place towers that counter the specific threats
+3. **Positioning** - Tower placement determines engagement timing
+4. **Resource Management** - Every coin spent has opportunity cost
+5. **Merge Timing** - Balance immediate power vs. future flexibility
 
-### Merge System
-- Merge 3 identical turrets of the same level
-- Each merge doubles effectiveness
-- Maximum level: 7 (70x base damage!)
-- Strategic positioning is key
+### Core Loop
+1. Assess incoming wave composition
+2. Identify primary threats
+3. Place countering towers
+4. Engage and adapt
+5. Salvage inefficient towers
+6. Iterate for next wave
 
-## 🏗️ Architecture
+No grinding. No RNG. Pure tactical decision-making.
 
-### Modular Design
+## Architecture
+
+### Modular, Data-Driven Design
 ```
 merge-tower-defense/
-├── index.html          # Entry point (minimal)
+├── DESIGN.md              # Design philosophy and vision
+├── IMPLEMENTATION.md      # Technical roadmap
+├── index.html            # Entry point
 ├── js/
-│   ├── config.js       # Game configuration
-│   ├── utils.js        # Utility functions
-│   ├── graphics.js     # Rendering engine
-│   ├── entities.js     # Game entities (cannons, zombies, projectiles)
-│   ├── particles.js    # Particle effects system
-│   ├── input.js        # Touch/mouse input handler
-│   ├── ui.js           # UI rendering and interaction
-│   ├── game.js         # Core game logic
-│   └── main.js         # Initialization & SDK integration
+│   ├── config-indie.js   # Indie serious game config (NEW)
+│   ├── config.js         # Legacy casual config (deprecated)
+│   ├── systems/          # Game systems (NEW)
+│   │   ├── combat-system.js
+│   │   ├── wave-director.js
+│   │   ├── economy-system.js
+│   │   └── scenario-manager.js
+│   ├── entities.js       # Game entities (refactored)
+│   ├── graphics.js       # Rendering (geometric mode added)
+│   ├── game.js           # Core game logic (refactored)
+│   └── main.js           # Initialization
 ```
 
-### Performance Optimizations
-- **Canvas Caching**: Pre-rendered grid
-- **Object Pooling**: Reuse projectiles and particles
-- **Delta Time**: Smooth 60 FPS gameplay
-- **Sprite Batching**: Efficient emoji rendering
-- **Memory Management**: Automatic cleanup
+### Design Principles
+- **No Hard-Coded Logic**: All values data-driven
+- **Effectiveness Matrix**: Tower-enemy relationships explicit
+- **Deterministic**: No random elements in core gameplay
+- **Modular**: Systems are independent and composable
+- **Extensible**: Easy to add new towers, enemies, waves
 
-### Platform SDK Integration
-- ✅ Score tracking with real-time updates
-- ✅ Game session management
-- ✅ Pause/Resume handling
-- ✅ Game Over with extra_data
-- ✅ XP distribution with detailed breakdown
-- ✅ Ready signal on initialization
+### Technical Features
+- **Object Pooling**: Optimized memory usage
+- **Delta Time**: Frame-independent physics
+- **Feature Flags**: Indie/Classic mode toggle
+- **Canvas Rendering**: Clean geometric visuals
+- **Platform SDK**: Integration with game platform
 
-## 🚀 Improvements Over Zombie Tower
+## Design Philosophy
 
-### Technical
-1. **Fully Modular** - Separated concerns, maintainable code
-2. **ES6+ Features** - Classes, async/await, modern syntax
-3. **Better Performance** - Object pooling, caching, optimization
-4. **Mobile-First** - Touch-optimized from the ground up
-5. **Scalable** - Easy to add new features
+### Functional Minimalism
+- Fewer mechanics, all meaningful
+- Every system interacts with others
+- No gratuitous randomness
+- Victory through understanding
 
-### Gameplay
-1. **Deeper Strategy** - 7 turret types with unique mechanics
-2. **Advanced Merge** - Drag & drop, auto-merge, visual feedback
-3. **Larger Defense Zone** - 4 rows instead of 3 (33% more space!)
-4. **Enemy Variety** - 6 zombie types with special abilities
-5. **Progressive Difficulty** - Dynamic wave composition
-6. **Rich Feedback** - Particle effects, animations, sound-ready
+### Specialization Over Generalization
+- No "best" tower that works everywhere
+- Every tool excels in one context, fails in another
+- Player must adapt strategy per wave
 
-### Visual
-1. **Sprite-Based System** - Professional rendering
-2. **Smooth Animations** - Eased movements, no jank
-3. **Particle Effects** - Explosions, merges, damage numbers
-4. **Glow Effects** - Dynamic shadows and highlights
-5. **Polished UI** - Modern, clean interface
+### Deterministic Challenge
+- Waves are authored puzzles, not random spawns
+- Enemies have readable patterns
+- Difficulty from composition, not inflated stats
 
-## 🎨 Visual Design
+### Short, Intense Sessions
+- 10-15 minute complete runs
+- Constant decision-making
+- Minimal downtime between waves
+- Flow state focused
 
-### Color Scheme
-- Primary: Electric Green (#00ff88)
-- Secondary: Cyan (#00ddff)
-- Warning: Gold (#ffaa00)
-- Danger: Red (#ff3333)
-- Background: Deep Space (#0a0a0a)
+### Visual Clarity
+- Geometric shapes, not decorative sprites
+- Information-dense UI
+- Every pixel serves gameplay
+- Immediate feedback on effectiveness
 
-### Typography
-- Font: Arial (universal compatibility)
-- Sizes: Responsive, scales with screen
-- Effects: Shadows, glows, outlines
+## Configuration
 
-## 📱 Mobile Optimization
+All gameplay values are data-driven and externalized in `config-indie.js`:
+- Tower stats and effectiveness matrices
+- Enemy behaviors and counters
+- Wave compositions
+- Economy parameters
+- Progression unlocks
 
-- Touch-first input system
-- No accidental zoom or scroll
-- Optimized for portrait orientation
-- Responsive grid sizing
-- Large, tappable targets
-- Visual feedback on all interactions
+Easy to balance, extend, and modify without touching code.
 
-## 🔧 Configuration
+## Development Mode
 
-All game parameters are in `config.js`:
-- Grid size and layout
-- Starting resources
-- Wave progression
-- Turret stats
-- Enemy stats
-- Merge progression
-- Performance limits
+Add `?mode=classic` to URL for legacy casual mode (emoji-based, random waves).
+Default is indie serious mode (geometric, deterministic).
 
-## 🐛 Debug Mode
+## Strategy Guide
 
+### Tower-Enemy Counter Matrix
+```
+Tower      | SWARM | CHARGER | FORTRESS | PHANTOM | VANGUARD
+-----------|-------|---------|----------|---------|----------
+PIERCER    | Weak  | Strong  | Weak     | Strong  | Normal
+DISRUPTOR  | Strong| Weak    | Weak     | Strong  | Normal
+DEMOLISHER | Strong| Weak    | Strong   | Weak    | Normal
+SENTINEL   | Weak  | Strong  | Weak     | Strong  | Normal
+ANCHOR     | Normal| Normal  | Normal   | Normal  | Normal
+```
+
+### Opening Strategies
+1. **Balanced Start**: 2x ANCHOR for economy and marking
+2. **Rush Counter**: 1x DISRUPTOR center, 1x SENTINEL flanks
+3. **Tank Counter**: Save for early DEMOLISHER
+
+### Merge Priorities
+- Tier 2: Immediate power spike, unlock abilities
+- Tier 3: Win condition, transforms gameplay
+- Don't over-merge early: Flexibility > raw power
+
+### Common Mistakes
+- Building generalist defense (all ANCHOR)
+- Over-investing in single tower type
+- Merging too early before seeing wave pattern
+- Ignoring salvage option when tower becomes obsolete
+
+## Technical Details
+
+### Debug Mode
 Add `?debug` to URL for:
 - FPS counter
 - Entity counts
-- Performance metrics
-- Console logging
-- Global access via `window.MergeTower`
+- Effectiveness indicators
+- Wave preview
 
-## 📊 Scoring System
+### Performance
+- Target: 60 FPS stable
+- Max entities: 50 enemies, 28 towers, 50 projectiles
+- Canvas-based rendering with geometric primitives
+- Object pooling for particles and projectiles
 
-- **Base Score**: Enemy rewards × wave number × 1.5
-- **Merge Bonus**: 100 × 2^(level-1)
-- **Wave Clear**: Wave number × 50
-- **Combo System**: Future feature ready
+## Roadmap
 
-## 🎮 Platform Integration
+### Phase 1: Core Mechanics (Current)
+- [x] Design document and vision
+- [x] Indie configuration system
+- [ ] Tower specialization implementation
+- [ ] Enemy behavior patterns
+- [ ] Deterministic wave system
+- [ ] Geometric renderer
 
-### Session Tracking
-- Automatic session start on first game action
-- Session end on game over with detailed stats
-- Score updates in real-time
+### Phase 2: Polish
+- [ ] Balance pass on all waves
+- [ ] Visual clarity improvements
+- [ ] Audio design (minimal, functional)
+- [ ] Tutorial integration
 
-### Extra Data
-```javascript
-{
-    wave: number,
-    kills: number,
-    highest_level: number,
-    play_time: number (seconds)
-}
-```
+### Phase 3: Progression
+- [ ] Scenario system (15 challenges)
+- [ ] Doctrine choices
+- [ ] Mastery unlocks
 
-### XP Distribution
-Platform SDK handles XP calculation based on:
-- Final score
-- Wave reached
-- Enemies killed
-- Highest tower level achieved
+### Phase 4: Release
+- [ ] Final balance
+- [ ] Platform integration
+- [ ] Performance optimization
 
-## 🚀 Future Enhancements
+## Contributing
 
-- [ ] Sound effects and music
-- [ ] Power-ups and abilities
-- [ ] More enemy types
-- [ ] Boss battles
-- [ ] Achievements
-- [ ] Leaderboards
-- [ ] Daily challenges
-- [ ] Custom maps
+This game is focused on depth, not breadth. New features must:
+1. Interact with existing systems
+2. Create meaningful decisions
+3. Avoid power creep
+4. Maintain clarity
 
-## 📄 License
+See DESIGN.md for philosophy and IMPLEMENTATION.md for technical details.
+
+## License
 
 Part of the G Game Platform ecosystem.
 
-## 👥 Credits
-
-Built with ❤️ for the G Game Platform
-- Professional JavaScript architecture
-- Optimized for mobile gaming
-- Platform SDK integrated
-- Ready for production
-
 ---
 
-**Have fun defending! 🎮⚔️🧟**
+**Master the counters. Control the field. Win through understanding.**

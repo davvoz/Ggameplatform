@@ -1,8 +1,17 @@
 {
-  "version": "2.3.4",
-  "timestamp": "2025-12-23T00:27:44.615Z",
-  "buildNumber": 112,
+  "version": "2.3.5",
+  "timestamp": "2025-12-23T02:38:50.362Z",
+  "buildNumber": 113,
   "changelog": [
+    {
+      "version": "2.3.5",
+      "date": "2025-12-23",
+      "type": "patch",
+      "changes": [
+        "fix: Implement geometry and material pooling for optimization",
+        "🔖 Bump version to 2.3.4 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.4",
       "date": "2025-12-23",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [MTD] implement game over retry button and session reset logic",
         "🔖 Bump version to 2.2.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.2.1",
-      "date": "2025-12-20",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]update thumbnail image for Merge Tower Defense game",
-        "🔖 Bump version to 2.2.0 [skip-version]"
       ]
     }
   ]

@@ -483,7 +483,7 @@ export class UIManager {
             ctx.lineWidth = 2;
             ctx.strokeRect(retryButtonX, exitButtonY, buttonWidth, buttonHeight);
             
-            this.graphics.drawText('🔲 EXIT FULLSCREEN', width / 2, exitButtonY + buttonHeight / 2, {
+            this.graphics.drawText('EXIT FULLSCREEN', width / 2, exitButtonY + buttonHeight / 2, {
                 size: 20,
                 color: CONFIG.COLORS.TEXT_PRIMARY,
                 align: 'center',

@@ -1,8 +1,17 @@
 {
-  "version": "2.3.21",
-  "timestamp": "2025-12-24T13:08:26.889Z",
-  "buildNumber": 129,
+  "version": "2.3.22",
+  "timestamp": "2025-12-24T13:44:58.089Z",
+  "buildNumber": 130,
   "changelog": [
+    {
+      "version": "2.3.22",
+      "date": "2025-12-24",
+      "type": "patch",
+      "changes": [
+        "fix: [AUDIO] Add enemy damage wall sound effect and update UI for sound settings",
+        "🔖 Bump version to 2.3.21 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.21",
       "date": "2025-12-24",
@@ -85,15 +94,6 @@
       "changes": [
         "fix:[MTD]Enhance enemy animations and configurations for improved gameplay experience",
         "🔖 Bump version to 2.3.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.12",
-      "date": "2025-12-23",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD] enhance zombie damage handling and visual feedback for shield blocks",
-        "🔖 Bump version to 2.3.11 [skip-version]"
       ]
     }
   ]

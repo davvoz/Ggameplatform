@@ -189,6 +189,10 @@ function applyWaveScaling(baseConfig, waveNumber) {
         const bounce = recoilActive ? 0.5 : 0.2;
         const shake = recoilActive ? 0.3 : 0;
         
+        // Check if stunned or disabled
+        const isStunned = this.stunnedUntil && currentTime < this.stunnedUntil;
+        const isDisabled = this.disabledUntil && currentTime < this.disabledUntil;
+        
         // Draw range indicator if selected
         if (this.selected) {
             graphics.drawRange(this.col, this.row, this.range, Utils.colorWithAlpha(this.color, 0.15));
@@ -198,6 +202,13 @@ function applyWaveScaling(baseConfig, waveNumber) {
         if (this.multiSprite) {
             const pos = graphics.gridToScreen(this.col, this.row);
             const cellSize = graphics.getCellSize();
+            
+            // Apply visual effects for stunned/disabled state
+            if (isStunned || isDisabled) {
+                graphics.ctx.save();
+                graphics.ctx.globalAlpha = 0.5 + Math.sin(currentTime * 0.01) * 0.2; // Flicker effect
+            }
+            
             try {
                 // gridToScreen already returns the CENTER of the cell
                 this.multiSprite.render(graphics.ctx, pos.x, pos.y, cellSize);
@@ -212,6 +223,21 @@ function applyWaveScaling(baseConfig, waveNumber) {
                         glowColor: this.color
                     });
                 }
+            }
+            
+            // Restore alpha and draw status indicator
+            if (isStunned || isDisabled) {
+                graphics.ctx.restore();
+                
+                // Draw status icon above tower
+                graphics.ctx.font = `${cellSize * 0.4}px Arial`;
+                graphics.ctx.textAlign = 'center';
+                graphics.ctx.textBaseline = 'middle';
+                graphics.ctx.fillText(
+                    isDisabled ? '🔇' : '💫',
+                    pos.x,
+                    pos.y - cellSize * 0.5
+                );
             }
         } else if (this.sprite) {
             // Use professional sprite only
@@ -360,6 +386,7 @@ class Zombie {
                 case 'RUSHER': this.multiSprite = MultiPartEnemySprites.createRusher(); break;
                 case 'TANK': this.multiSprite = MultiPartEnemySprites.createTank(); break;
                 case 'FLYER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
+                case 'SPLITTER': this.multiSprite = MultiPartEnemySprites.createSplitter(); break;
                 case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createArmored(); break;
                 case 'BOSS': this.multiSprite = MultiPartEnemySprites.createBoss(); break;
                 case 'HEALER': this.multiSprite = MultiPartEnemySprites.createHealer(); break;

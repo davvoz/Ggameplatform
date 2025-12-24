@@ -9,7 +9,7 @@ export function vampire() {
         type: 'ellipse',
         x: 0, y: 0.16,
         width: 0.10, height: 0.32,
-        color: '#1a1a2a',
+        color: '#9b7f02ff',
         fill: true
     }, 0.5, 0, -10);
     legLeft.setBaseTransform(-0.07, 0.24);
@@ -19,22 +19,17 @@ export function vampire() {
         type: 'ellipse',
         x: 0, y: 0.16,
         width: 0.10, height: 0.32,
-        color: '#1a1a2a',
+        color: '#9b7f02ff',
         fill: true
     }, 0.5, 0, -10);
     legRight.setBaseTransform(0.07, 0.24);
 
     // CAPE BACK (behind body, z-order -5)
     const capeBack = sprite.addPart('capeBack', {
-        type: 'polygon',
-        points: [
-            { x: 0.3, y: 0 },
-            { x: 0.7, y: 0 },
-            { x: 0.75, y: 0.5 },
-            { x: 0.5, y: 0.55 },
-            { x: 0.25, y: 0.5 }
-        ],
-        color: '#2a0a1a',
+        type: 'rect',
+        x: 0, y: 0,
+        width: 0.30, height: 0.40,
+        color: '#db0872ff',
         fill: true
     }, 0.5, 0, -5);
     capeBack.setBaseTransform(0, 0.1);
@@ -43,7 +38,7 @@ export function vampire() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
-            x: 0.25, y: 0,
+            x: 0, y: 0,
             width: 0.42, height: 0.55,
             color: '#3a1a2a',
             fill: true
@@ -51,22 +46,15 @@ export function vampire() {
         {
             type: 'polygon', // Vest/collar detail
             points: [
-                { x: 0.42, y: 0.05 },
-                { x: 0.5, y: 0.15 },
-                { x: 0.58, y: 0.05 },
-                { x: 0.58, y: 0.35 },
-                { x: 0.42, y: 0.35 }
+                { x: 0, y: 0.05 },
+                { x: -0.12, y: 0.25 },
+                { x: -0.08, y: 0.30 },
+                { x: 0, y: 0.15 },
+                { x: 0.08, y: 0.30 },
+                { x: 0.12, y: 0.25 }
             ],
-            color: '#5a1a3a',
+            color: '#ff2828ff',
             fill: true
-        },
-        {
-            type: 'circle', // Brooch
-            x: 0.5, y: 0.12,
-            radius: 0.03,
-            color: '#ff2222',
-            fill: true,
-            glow: { color: '#ff0000', blur: 4 }
         }
     ], 0.5, 0.5, 0);
     body.setBaseTransform(0, 0.18);
@@ -85,7 +73,7 @@ export function vampire() {
             { x: -0.12, y: 0.35 },
             { x: -0.02, y: 0.30 }
         ],
-        color: '#4a0a2a',
+        color:'#585300ff',
         fill: true
     }, 1, 0, 5);
     capeLeft.setBaseTransform(-0.18, 0.02);
@@ -100,7 +88,7 @@ export function vampire() {
             { x: 0.12, y: 0.35 },
             { x: 0.02, y: 0.30 }
         ],
-        color: '#4a0a2a',
+        color: '#585300ff',
         fill: true
     }, 0, 0, 5);
     capeRight.setBaseTransform(0.18, 0.02);
@@ -164,7 +152,6 @@ export function vampire() {
 
     // Animations
     const allParts = ['body', 'head', 'capeLeft', 'capeRight', 'capeBack', 'legLeft', 'legRight'];
-    const upperParts = ['body', 'head', 'capeLeft', 'capeRight'];
 
     // Custom IDLE animation with cape flutter - more dramatic
     const idle = new AnimationClip('idle', 2.0, true);

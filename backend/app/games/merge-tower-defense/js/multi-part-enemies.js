@@ -16,6 +16,7 @@ import { shadow } from './sprites/enemy/createShadow.js';
 import { siren } from './sprites/enemy/createSiren.js';
 import { golem } from './sprites/enemy/createGolem.js';
 import { phaser } from './sprites/enemy/createPhaser.js';
+import { splitter } from './sprites/enemy/createSplitter.js';
 
 export const MultiPartEnemySprites = {
 
@@ -68,6 +69,10 @@ export const MultiPartEnemySprites = {
     },
 
     createPhaser() {
-        return phaser();  
+        return phaser();
+    },
+
+    createSplitter() {
+        return splitter(); // Reuse grunt sprite with different color scheme
     }
 };

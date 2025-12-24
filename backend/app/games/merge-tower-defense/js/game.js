@@ -273,26 +273,15 @@ export class Game {
     }
 
     handleDragMerge(startPos, endPos) {
-        // Advanced merge: drag cannon onto another to attempt merge
+        // Drag merge disabled - merging is only allowed via selection
+        // Only allow moving cannons to empty positions
         const sourceCannon = this.entities.getCannon(startPos.col, startPos.row);
         const targetCannon = this.entities.getCannon(endPos.col, endPos.row);
 
         if (!sourceCannon) return;
 
-        if (targetCannon) {
-            // Try to merge source into target
-            if (sourceCannon.canMergeWith(targetCannon)) {
-                // Need to find third matching cannon nearby
-                const matchingCannons = this.findMatchingCannons(sourceCannon);
-
-                if (matchingCannons.length >= 2) {
-                    // Auto-select and merge
-                    const toMerge = [sourceCannon, targetCannon, matchingCannons[0]];
-                    this.state.selectedCannons = toMerge;
-                    this.performMerge(toMerge);
-                }
-            }
-        } else {
+        // Only move if target position is empty (no merge via drag)
+        if (!targetCannon) {
             // Move cannon to new position if valid
             if (this.ui.isInDefenseZone(endPos.row) &&
                 this.ui.isValidGridPos(endPos)) {
@@ -306,6 +295,7 @@ export class Game {
                 });
             }
         }
+        // If targetCannon exists, do nothing - merge only via selection
     }
 
     findMatchingCannons(cannon) {
@@ -417,21 +407,23 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
-       // if (wave == 1) return 'GOLEM';
+        if (wave == 1) return 'VAMPIRE'; // Prima ondata più facile con vampiri
 
         let options = [
-            { value: 'NORMAL', weight: Math.max(2, 12 - Math.floor(wave / 2)) },
-            { value: 'TANK', weight: wave >= 3 ? 7 + Math.floor(wave / 2) : 0 },
-            { value: 'RUSHER', weight: wave >= 4 ? 8 + Math.floor(wave / 2) : 0 },
-            { value: 'ARMORED', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
-            { value: 'BOSS', weight: (wave >= 8 && (wave % 4 === 0 || wave % 10 === 0)) ? 4 + Math.floor(wave / 8) : 0 },
-            { value: 'HEALER', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
-            { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 },
-            { value: 'VAMPIRE', weight: wave >= 6 ? 6 + Math.floor(wave / 3) : 0 },  // Lifesteal bloodlord
-            { value: 'BOMBER', weight: wave >= 5 ? 7 + Math.floor(wave / 3) : 0 },   // Explodes on death
-            { value: 'SHADOW', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 },   // Goes invisible
-            { value: 'SIREN', weight: wave >= 8 ? 4 + Math.floor(wave / 4) : 0 },    // Disables towers
-            { value: 'GOLEM', weight: wave >= 10 ? 3 + Math.floor(wave / 5) : 0 }    // Massive stone stomper
+            { value: 'NORMAL', weight: Math.max(3, 15 - wave) },                      // Common early, rare late
+            { value: 'TANK', weight: wave >= 3 ? 6 + Math.floor(wave / 3) : 0 },       // Wave 3+
+            { value: 'RUSHER', weight: wave >= 3 ? 7 + Math.floor(wave / 3) : 0 },     // Wave 3+ (fast)
+            { value: 'FLYER', weight: wave >= 4 ? 8 + Math.floor(wave / 2) : 0 },      // Wave 4+ (flying)
+            { value: 'SPLITTER', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },   // Wave 5+ (splits on death)
+            { value: 'ARMORED', weight: wave >= 6 ? 5 + Math.floor(wave / 4) : 0 },    // Wave 6+ (tanky)
+            { value: 'HEALER', weight: wave >= 6 ? 5 + Math.floor(wave / 4) : 0 },     // Wave 6+ (priority target)
+            { value: 'BOMBER', weight: wave >= 7 ? 6 + Math.floor(wave / 3) : 0 },     // Wave 7+ (explodes)
+            { value: 'VAMPIRE', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 },    // Wave 7+ (lifesteal)
+            { value: 'SHADOW', weight: wave >= 8 ? 5 + Math.floor(wave / 4) : 0 },     // Wave 8+ (invisible)
+            { value: 'PHASER', weight: wave >= 9 ? 6 + Math.floor(wave / 3) : 0 },     // Wave 9+ (teleports)
+            { value: 'SIREN', weight: wave >= 10 ? 4 + Math.floor(wave / 5) : 0 },     // Wave 10+ (disables towers)
+            { value: 'GOLEM', weight: wave >= 12 ? 3 + Math.floor(wave / 6) : 0 },     // Wave 12+ (massive)
+            { value: 'BOSS', weight: (wave >= 10 && wave % 5 === 0) ? 5 + Math.floor(wave / 10) : 0 } // Every 5 waves from 10
         ];
         // Ondate speciali: bilanciato per essere difficile ma non impossibile
         if (this.state.specialWave === 'Assalto Speciale!') {
@@ -505,6 +497,112 @@ export class Game {
     // ========== COMBAT SYSTEM ==========
 
     updateCombat(dt, currentTime) {
+        // GOLEM ability: stomp that stuns nearby towers
+        this.entities.zombies.forEach(golem => {
+            if (golem.needsStomp) {
+                golem.needsStomp = false;
+                
+                let towersStunned = 0;
+                this.entities.cannons.forEach(cannon => {
+                    const dist = Utils.distance(golem.col, golem.row, cannon.col, cannon.row);
+                    if (dist <= golem.stompRange) {
+                        // Stun the tower
+                        cannon.stunnedUntil = currentTime + golem.stompStunDuration;
+                        towersStunned++;
+                        
+                        // Visual feedback
+                        this.particles.emit(cannon.col, cannon.row, {
+                            text: '💫 STUNNED!',
+                            color: '#8B4513',
+                            vy: -1,
+                            life: 0.8,
+                            scale: 1.0
+                        });
+                    }
+                });
+                
+                // Stomp visual effect
+                this.particles.emit(golem.col, golem.row, {
+                    text: '🗿 STOMP!',
+                    color: '#8B4513',
+                    vy: -1.5,
+                    life: 1.0,
+                    scale: 1.3,
+                    glow: true
+                });
+                
+                // Screen shake effect could go here
+            }
+        });
+
+        // SIREN ability: scream that disables nearby towers
+        this.entities.zombies.forEach(siren => {
+            if (siren.needsScream) {
+                siren.needsScream = false;
+                
+                let towersDisabled = 0;
+                this.entities.cannons.forEach(cannon => {
+                    const dist = Utils.distance(siren.col, siren.row, cannon.col, cannon.row);
+                    if (dist <= siren.disableRange) {
+                        // Disable the tower (longer than stun)
+                        cannon.disabledUntil = currentTime + siren.disableDuration;
+                        towersDisabled++;
+                        
+                        // Visual feedback
+                        this.particles.emit(cannon.col, cannon.row, {
+                            text: '🔇 DISABLED!',
+                            color: '#E0B0FF',
+                            vy: -1,
+                            life: 1.2,
+                            scale: 1.0
+                        });
+                    }
+                });
+                
+                // Scream visual effect
+                this.particles.emit(siren.col, siren.row, {
+                    text: '👻 SCREAM!',
+                    color: '#E0B0FF',
+                    vy: -1.5,
+                    life: 1.2,
+                    scale: 1.4,
+                    glow: true
+                });
+            }
+        });
+
+        // VAMPIRE ability: drain life from energy when at wall
+        this.entities.zombies.forEach(vampire => {
+            if (vampire.needsDrain && vampire.isVampire) {
+                vampire.needsDrain = false;
+                
+                // Vampire drains energy and heals itself
+                const drainAmount = Math.floor(5 * vampire.lifesteal);
+                const healAmount = Math.floor(drainAmount * 2);
+                
+                this.state.energy = Math.max(0, this.state.energy - drainAmount);
+                vampire.hp = Math.min(vampire.maxHp, vampire.hp + healAmount);
+                
+                // Visual feedback
+                this.particles.emit(vampire.col, vampire.row, {
+                    text: `🩸+${healAmount}`,
+                    color: '#8B0000',
+                    vy: -1,
+                    life: 0.8,
+                    scale: 1.0
+                });
+                
+                // Energy drain visual
+                this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS, {
+                    text: `-${drainAmount}⚡`,
+                    color: '#ff0000',
+                    vy: -0.5,
+                    life: 0.6,
+                    scale: 0.9
+                });
+            }
+        });
+
         // HEALER healing system
         this.entities.zombies.forEach(healer => {
             if (healer.isHealer && currentTime - healer.lastHealTime >= healer.healInterval) {
@@ -550,6 +648,25 @@ export class Game {
 
         // Cannons fire at zombies
         this.entities.cannons.forEach(cannon => {
+            // Check if tower is stunned or disabled
+            if (cannon.stunnedUntil && currentTime < cannon.stunnedUntil) {
+                // Tower is stunned - show visual feedback
+                if (!cannon.showingStunEffect) {
+                    cannon.showingStunEffect = true;
+                }
+                return;
+            }
+            cannon.showingStunEffect = false;
+            
+            if (cannon.disabledUntil && currentTime < cannon.disabledUntil) {
+                // Tower is disabled - show visual feedback
+                if (!cannon.showingDisableEffect) {
+                    cannon.showingDisableEffect = true;
+                }
+                return;
+            }
+            cannon.showingDisableEffect = false;
+            
             if (!cannon.canFire(currentTime)) return;
 
             // Find target
@@ -573,6 +690,9 @@ export class Game {
         let bestScore = -Infinity;
 
         for (const zombie of this.entities.zombies) {
+            // Skip invisible enemies - can't target them
+            if (zombie.isInvisible) continue;
+            
             const dist = Utils.distance(cannon.col, cannon.row, zombie.col, zombie.row);
 
             if (dist <= cannon.range) {
@@ -608,6 +728,9 @@ export class Game {
             // Check collision with zombies
             for (const zombie of this.entities.zombies) {
                 if (proj.hasHitTarget(zombie)) continue;
+                
+                // Skip invisible enemies - projectiles pass through them
+                if (zombie.isInvisible) continue;
 
                 const dist = Utils.distance(proj.x, proj.y, zombie.col, zombie.row);
 
@@ -789,6 +912,59 @@ export class Game {
     }
 
     killZombie(zombie) {
+        // BOMBER ability: explode on death, damaging nearby towers
+        if (zombie.isBomber && zombie.explosionRadius > 0) {
+            const explosionDamage = zombie.explosionDamage || 15;
+            let towersHit = 0;
+            
+            this.entities.cannons.forEach(cannon => {
+                const dist = Utils.distance(zombie.col, zombie.row, cannon.col, cannon.row);
+                if (dist <= zombie.explosionRadius) {
+                    // Damage tower (reduce level or destroy)
+                    cannon.level = Math.max(0, cannon.level - 1);
+                    towersHit++;
+                    
+                    // Visual feedback on tower
+                    this.particles.emit(cannon.col, cannon.row, {
+                        text: '💥-1',
+                        color: '#ff4500',
+                        vy: -1.2,
+                        life: 1.0,
+                        scale: 1.1
+                    });
+                    
+                    // If tower level goes to 0, destroy it
+                    if (cannon.level <= 0) {
+                        this.entities.removeCannon(cannon);
+                        this.particles.emit(cannon.col, cannon.row, {
+                            text: '💀 DESTROYED!',
+                            color: '#ff0000',
+                            vy: -1.5,
+                            life: 1.5,
+                            scale: 1.3
+                        });
+                    } else {
+                        cannon.updateStats();
+                    }
+                }
+            });
+            
+            // Explosion visual effect
+            this.particles.createExplosion(zombie.col, zombie.row, zombie.explosionRadius, '#ff4500');
+            this.particles.emit(zombie.col, zombie.row, {
+                text: '💣 BOOM!',
+                color: '#ff4500',
+                vy: -2,
+                life: 1.2,
+                scale: 1.4,
+                glow: true
+            });
+            
+            if (towersHit > 0) {
+                this.audio.explosion?.();
+            }
+        }
+
         // SPLITTER ability: spawn smaller enemies on death
         if (zombie.canSplit && zombie.splitCount > 0) {
             const splitType = zombie.splitType;

@@ -1,8 +1,17 @@
 {
-  "version": "2.3.19",
-  "timestamp": "2025-12-24T08:41:56.443Z",
-  "buildNumber": 127,
+  "version": "2.3.20",
+  "timestamp": "2025-12-24T10:51:13.123Z",
+  "buildNumber": 128,
   "changelog": [
+    {
+      "version": "2.3.20",
+      "date": "2025-12-24",
+      "type": "patch",
+      "changes": [
+        "fix: [DB-VIEWER]update session closing logic to prevent XP award for abandoned sessions",
+        "🔖 Bump version to 2.3.19 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.19",
       "date": "2025-12-24",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: [MTD]implement dynamic wall energy consumption and rendering for zombies",
         "🔖 Bump version to 2.3.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.10",
-      "date": "2025-12-23",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD] implement dynamic cannon pricing and progressive wave difficulty",
-        "🔖 Bump version to 2.3.9 [skip-version]"
       ]
     }
   ]

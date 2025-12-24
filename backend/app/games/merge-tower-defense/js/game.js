@@ -78,6 +78,11 @@ export class Game {
                 // Check if retry button was clicked
                 if (this.ui.isRetryButtonClicked(screenPos.x, screenPos.y)) {
                     this.restart();
+                    return;
+                }
+                // Check if exit fullscreen button was clicked
+                if (this.ui.isExitFullscreenButtonClicked(screenPos.x, screenPos.y)) {
+                    this.exitFullscreen();
                 }
                 return;
             }

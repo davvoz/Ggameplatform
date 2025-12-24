@@ -431,38 +431,94 @@ export class UIManager {
             y += 38;
         });
         
-        // Retry button
+        // Buttons
         const buttonWidth = 180;
         const buttonHeight = 50;
-        const buttonX = (width - buttonWidth) / 2;
-        const buttonY = popupY + popupHeight - 80;
+        const isFullscreen = document.body.classList.contains('game-fullscreen');
         
-        // Store button bounds for click detection
-        this.retryButton = {
-            x: buttonX,
-            y: buttonY,
-            width: buttonWidth,
-            height: buttonHeight
-        };
-        
-        // Button background
-        ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
-        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-        
-        // Button border
-        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
-        
-        // Button text
-        this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
-            size: 24,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
-            align: 'center',
-            baseline: 'middle',
-            bold: true,
-            shadow: true
-        });
+        // Adjust button positions based on fullscreen state
+        let buttonY;
+        if (isFullscreen) {
+            // Two buttons: Retry and Exit Fullscreen
+            const spacing = 15;
+            const totalHeight = buttonHeight * 2 + spacing;
+            buttonY = popupY + popupHeight - totalHeight - 30;
+            
+            // Retry button
+            const retryButtonX = (width - buttonWidth) / 2;
+            this.retryButton = {
+                x: retryButtonX,
+                y: buttonY,
+                width: buttonWidth,
+                height: buttonHeight
+            };
+            
+            ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
+            ctx.fillRect(retryButtonX, buttonY, buttonWidth, buttonHeight);
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(retryButtonX, buttonY, buttonWidth, buttonHeight);
+            
+            this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
+                size: 24,
+                color: CONFIG.COLORS.TEXT_PRIMARY,
+                align: 'center',
+                baseline: 'middle',
+                bold: true,
+                shadow: true
+            });
+            
+            // Exit Fullscreen button
+            const exitButtonY = buttonY + buttonHeight + spacing;
+            this.exitFullscreenButton = {
+                x: retryButtonX,
+                y: exitButtonY,
+                width: buttonWidth,
+                height: buttonHeight
+            };
+            
+            ctx.fillStyle = 'rgba(60, 60, 80, 0.9)';
+            ctx.fillRect(retryButtonX, exitButtonY, buttonWidth, buttonHeight);
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(retryButtonX, exitButtonY, buttonWidth, buttonHeight);
+            
+            this.graphics.drawText('🔲 EXIT FULLSCREEN', width / 2, exitButtonY + buttonHeight / 2, {
+                size: 20,
+                color: CONFIG.COLORS.TEXT_PRIMARY,
+                align: 'center',
+                baseline: 'middle',
+                bold: true,
+                shadow: true
+            });
+        } else {
+            // Single retry button
+            buttonY = popupY + popupHeight - 80;
+            const buttonX = (width - buttonWidth) / 2;
+            
+            this.retryButton = {
+                x: buttonX,
+                y: buttonY,
+                width: buttonWidth,
+                height: buttonHeight
+            };
+            this.exitFullscreenButton = null;
+            
+            ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
+            ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            
+            this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
+                size: 24,
+                color: CONFIG.COLORS.TEXT_PRIMARY,
+                align: 'center',
+                baseline: 'middle',
+                bold: true,
+                shadow: true
+            });
+        }
     }
 
     // Check if retry button was clicked
@@ -475,9 +531,20 @@ export class UIManager {
                screenY <= this.retryButton.y + this.retryButton.height;
     }
     
+    // Check if exit fullscreen button was clicked
+    isExitFullscreenButtonClicked(screenX, screenY) {
+        if (!this.exitFullscreenButton) return false;
+        
+        return screenX >= this.exitFullscreenButton.x &&
+               screenX <= this.exitFullscreenButton.x + this.exitFullscreenButton.width &&
+               screenY >= this.exitFullscreenButton.y &&
+               screenY <= this.exitFullscreenButton.y + this.exitFullscreenButton.height;
+    }
+    
     // Reset retry button
     clearRetryButton() {
         this.retryButton = null;
+        this.exitFullscreenButton = null;
     }
 
     // Victory screen (optional, for future waves)

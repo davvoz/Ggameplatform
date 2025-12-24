@@ -1,8 +1,17 @@
 {
-  "version": "2.3.16",
-  "timestamp": "2025-12-23T23:01:40.745Z",
-  "buildNumber": 124,
+  "version": "2.3.17",
+  "timestamp": "2025-12-24T00:01:02.320Z",
+  "buildNumber": 125,
   "changelog": [
+    {
+      "version": "2.3.17",
+      "date": "2025-12-24",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD] enemy components and implement wave scaling system",
+        "🔖 Bump version to 2.3.16 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.16",
       "date": "2025-12-23",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: [MTD]clean",
         "🔖 Bump version to 2.3.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.7",
-      "date": "2025-12-23",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[MTD]clean",
-        "🔖 Bump version to 2.3.6 [skip-version]"
       ]
     }
   ]

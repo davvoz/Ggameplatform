@@ -10,6 +10,49 @@ import { CANNON_TYPES, CONFIG, ZOMBIE_TYPES, MERGE_LEVELS } from './config.js';
 import { Utils } from './utils.js';
 // If MERGE_LEVELS is defined elsewhere, import it here
 
+/**
+ * Wave Scaling System
+ * Applies exponential scaling to enemy stats based on wave number
+ * HP scaling accelerates in later waves to maintain challenge
+ */
+function applyWaveScaling(baseConfig, waveNumber) {
+    // HP scaling: esponenziale ma parte piano
+    // Wave 1-3: quasi invariato, poi accelera
+    // Wave 1: x1.0, Wave 5: x1.25, Wave 10: x1.85, Wave 20: x5.0, Wave 30: x13.5
+    const effectiveWave = Math.max(0, waveNumber - 3); // Scaling parte dalla wave 4
+    const hpMultiplier = 1 + effectiveWave * 0.08 + Math.pow(1.10, effectiveWave) - 1;
+    
+    // Speed scaling: molto leggero, solo nelle wave avanzate
+    // Wave 1-5: x1.0, Wave 10: x1.05, Wave 20: x1.15
+    const speedEffectiveWave = Math.max(0, waveNumber - 5);
+    const speedMultiplier = Math.min(1.30, 1 + speedEffectiveWave * 0.01);
+    
+    // Reward scaling: cresce per compensare la difficoltà
+    const rewardMultiplier = 1 + (waveNumber - 1) * 0.04;
+    
+    // Armor scaling: +20% ogni 6 wave per nemici corazzati
+    const armorMultiplier = 1 + Math.floor((waveNumber - 1) / 6) * 0.2;
+    
+    // Dodge scaling: piccolo aumento per nemici agili, parte dalla wave 5
+    const dodgeBonus = Math.min(0.15, Math.max(0, waveNumber - 5) * 0.01);
+    
+    // CC Resistance: nemici più resistenti a slow/stun nelle wave avanzate
+    const ccResistance = Math.min(0.4, Math.max(0, waveNumber - 8) * 0.02);
+    
+    return {
+        combat: {
+            hp: Math.round(baseConfig.combat.hp * hpMultiplier),
+            armor: Math.round(baseConfig.combat.armor * armorMultiplier),
+            dodgeChance: Math.min(0.5, baseConfig.combat.dodgeChance + dodgeBonus),
+            ccResistance: ccResistance
+        },
+        movement: {
+            speed: baseConfig.movement.speed * speedMultiplier
+        },
+        reward: Math.round(baseConfig.reward * rewardMultiplier)
+    };
+}
+
  class Cannon {
     constructor(col, row, type) {
         this.col = col;
@@ -445,18 +488,56 @@ class Zombie {
                               this.speed * this.slowFactor : 
                               this.speed;
         
-        // Movimento: i nemici COLLIDONO con i mattoni (si fermano SOPRA i mattoni)
+        // Movimento intelligente: i nemici cercano uno spazio libero
         const brickRows = 4;
         const brickHeightCells = brickRows * 0.22;
-        // muroRow = riga dove inizia il muro - aumentato offset per fermare i nemici prima
         const muroRow = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) - brickHeightCells - 0.85;
+        
         if (!this._wallProgress) this._wallProgress = 0;
-        if (this.row < muroRow) {
+        if (!this.targetCol) this.targetCol = this.col;
+        
+        // Comportamento tattico: cerca spazio libero
+        if (this.row < muroRow - 0.5) {
+            // Fase 1: scendi verso la zona di attacco
             this.row += effectiveSpeed * dt;
+        } else {
+            // Fase 2: sei vicino al muro, cerca uno spazio libero orizzontalmente
+            const nearbyEnemies = this.findNearbyEnemies(0.8); // Raggio di rilevamento
+            
+            if (nearbyEnemies.length > 0 && this.row < muroRow) {
+                // C'è qualcuno troppo vicino, prova a spostarti lateralmente
+                const avgCol = nearbyEnemies.reduce((sum, e) => sum + e.col, 0) / nearbyEnemies.length;
+                
+                // Muoviti nella direzione opposta alla media dei nemici vicini
+                if (Math.abs(this.col - avgCol) > 0.1) {
+                    const moveDirection = this.col > avgCol ? 1 : -1;
+                    const horizontalSpeed = effectiveSpeed * 0.6;
+                    this.targetCol = Math.max(0, Math.min(CONFIG.COLS - 1, this.col + moveDirection * horizontalSpeed * dt * 3));
+                }
+                
+                // Continua a scendere lentamente mentre cerchi spazio
+                this.row += effectiveSpeed * dt * 0.5;
+            } else {
+                // Spazio libero trovato, scendi fino al muro
+                this.row += effectiveSpeed * dt;
+            }
+            
+            // Movimento laterale graduale verso targetCol
+            if (Math.abs(this.col - this.targetCol) > 0.05) {
+                const lateralSpeed = effectiveSpeed * 0.4;
+                if (this.col < this.targetCol) {
+                    this.col = Math.min(this.targetCol, this.col + lateralSpeed * dt);
+                } else {
+                    this.col = Math.max(this.targetCol, this.col - lateralSpeed * dt);
+                }
+            }
+            
+            // Limita alla riga del muro
             if (this.row > muroRow) this.row = muroRow;
         }
-        // Il nemico è fermo al muro
-        this.atWall = this.row >= muroRow - 0.05;
+        
+        // Il nemico è fermo al muro - tolleranza aumentata per assicurare che attacchino
+        this.atWall = this.row >= muroRow - 0.5;
         
         // Drive professional multi-part animations instead of sinusoidal wobble
         if (this.multiSprite) {
@@ -520,6 +601,16 @@ class Zombie {
         if (this.multiSprite) {
             this.multiSprite.update(dt);
         }
+    }
+
+    findNearbyEnemies(radius) {
+        if (!this._allEnemies) return [];
+        return this._allEnemies.filter(e => 
+            e !== this && 
+            !e.isDead() && 
+            Math.abs(e.col - this.col) < radius && 
+            Math.abs(e.row - this.row) < radius
+        );
     }
 
     takeDamage(amount, currentTime) {
@@ -661,6 +752,7 @@ class Projectile {
         this.active = false;
         this.x = 0;
         this.y = 0;
+        this.target = null; // Aggiunto
         this.targetX = 0;
         this.targetY = 0;
         this.vx = 0;
@@ -682,10 +774,11 @@ class Projectile {
         this.active = true;
         this.x = x;
         this.y = y;
+        this.target = target; // Memorizza il nemico, non la posizione!
         this.targetX = target.col;
         this.targetY = target.row;
         
-        // Calculate velocity
+        // Calculate initial velocity
         const dx = this.targetX - x;
         const dy = this.targetY - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -713,6 +806,28 @@ class Projectile {
 
     update(dt) {
         if (!this.active) return;
+        
+        // Se il target è morto, disattiva il projectile
+        if (this.target && this.target.isDead()) {
+            this.active = false;
+            return;
+        }
+        
+        // Aggiorna il target se il nemico è ancora vivo
+        if (this.target && !this.target.isDead()) {
+            this.targetX = this.target.col;
+            this.targetY = this.target.row;
+            
+            // Ricalcola velocità per seguire il nemico
+            const dx = this.targetX - this.x;
+            const dy = this.targetY - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > 0) {
+                this.vx = (dx / dist) * this.speed;
+                this.vy = (dy / dist) * this.speed;
+            }
+        }
         
         this.x += this.vx * dt;
         this.y += this.vy * dt;
@@ -835,9 +950,10 @@ export class EntityManager {
 
     // Update all entities
     update(dt, currentTime) {
-        // Update zombies
+        // Update zombies - pass riferimento a tutti i nemici per il comportamento tattico
         for (let i = this.zombies.length - 1; i >= 0; i--) {
             const zombie = this.zombies[i];
+            zombie._allEnemies = this.zombies; // Passa riferimento alla lista per findNearbyEnemies
             zombie.update(dt, currentTime);
             
             // Remove dead or off-screen zombies

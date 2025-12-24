@@ -394,28 +394,57 @@ export class Graphics {
 
     /**
      * Disegna il muro di mattoni dinamico (4 file da 25)
+     * @param {number} energy - Energia attuale
+     * @param {boolean} isRecharging - Se l'animazione di ricarica è attiva
+     * @param {number} baseEnergy - Energia base prima della ricarica (per evidenziare nuovi mattoncini)
      */
-    drawBrickWall(energy) {
+    drawBrickWall(energy, isRecharging = false, baseEnergy = 0) {
         const ctx = this.ctx;
         const totalBricks = Math.max(0, Math.floor(energy));
+        const baseBricks = Math.max(0, Math.floor(baseEnergy));
         const bricksPerRow = 25;
         const brickRows = 4;
         const brickW = this.cellSize * CONFIG.COLS / bricksPerRow;
         const brickH = this.cellSize * 0.22;
         const defenseY = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) * this.cellSize;
         let bricksDrawn = 0;
+        
+        // Animazione pulse per nuovi mattoncini
+        const pulsePhase = (this.animationTime * 8) % 1;
+        const pulseGlow = 0.5 + Math.sin(pulsePhase * Math.PI * 2) * 0.5;
+        
         for (let r = brickRows - 1; r >= 0; r--) {
             for (let c = 0; c < bricksPerRow; c++) {
                 if (bricksDrawn >= totalBricks) return;
                 const bx = this.offsetX + c * brickW;
                 const by = this.offsetY + defenseY - brickRows * brickH + r * brickH;
-                ctx.fillStyle = '#b22222';
-                ctx.strokeStyle = '#fff2';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
-                ctx.fill();
-                ctx.stroke();
+                
+                // Controlla se è un nuovo mattoncino (aggiunto durante ricarica)
+                const isNewBrick = isRecharging && bricksDrawn >= baseBricks;
+                
+                if (isNewBrick) {
+                    // Nuovo mattoncino con effetto glow verde brillante
+                    ctx.save();
+                    ctx.shadowColor = '#00ff88';
+                    ctx.shadowBlur = 8 + pulseGlow * 6;
+                    ctx.fillStyle = `rgb(${178 + Math.floor(pulseGlow * 40)}, ${34 + Math.floor(pulseGlow * 80)}, ${34 + Math.floor(pulseGlow * 60)})`;
+                    ctx.strokeStyle = `rgba(0, 255, 136, ${0.5 + pulseGlow * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                } else {
+                    // Mattoncino normale
+                    ctx.fillStyle = '#b22222';
+                    ctx.strokeStyle = '#fff2';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
+                    ctx.fill();
+                    ctx.stroke();
+                }
                 bricksDrawn++;
             }
         }

@@ -28,7 +28,7 @@ export function bomber() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
-            x: 0.25, y: 0,
+            x: 0, y: 0,
             width: 0.50, height: 0.60,
             color: '#4a3a2a',
             fill: true

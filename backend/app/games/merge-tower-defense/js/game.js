@@ -59,7 +59,13 @@ export class Game {
 
             // UI state
             showMergeHint: false,
-            mergeHintPos: null
+            mergeHintPos: null,
+
+            // Energy recharge animation
+            energyRechargeActive: false,
+            energyRechargeTarget: 0,
+            energyRechargeBase: 0,
+            energyRechargeSpeed: 80 // mattoncini al secondo
         };
     }
 
@@ -443,8 +449,13 @@ export class Game {
         this.state.score += waveBonus * 2;
         this.state.coinsEarned += totalReward; // Track for XP system
 
-        // Heal energy
-        this.state.energy = Math.min(CONFIG.INITIAL_ENERGY, this.state.energy + 20);
+        // Heal energy - start animation
+        const newEnergy = Math.min(CONFIG.INITIAL_ENERGY, this.state.energy + 20);
+        if (newEnergy > this.state.energy) {
+            this.state.energyRechargeActive = true;
+            this.state.energyRechargeBase = this.state.energy;
+            this.state.energyRechargeTarget = newEnergy;
+        }
 
         // Visual feedback
         this.particles.createWaveClearEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2);
@@ -572,7 +583,8 @@ export class Game {
 
                 const dist = Utils.distance(proj.x, proj.y, zombie.col, zombie.row);
 
-                if (dist < 0.4) {
+                // Raggio di collisione aumentato per seguire meglio i nemici che si muovono
+                if (dist < 0.6) {
                     // Check dodge
                     if (zombie.dodgeChance && Math.random() < zombie.dodgeChance) {
                         this.particles.emit(zombie.col, zombie.row, {
@@ -899,6 +911,21 @@ export class Game {
 
         const currentTime = performance.now();
 
+        // Update energy recharge animation
+        if (this.state.energyRechargeActive) {
+            const rechargeAmount = this.state.energyRechargeSpeed * dt;
+            this.state.energy = Math.min(
+                this.state.energyRechargeTarget,
+                this.state.energy + rechargeAmount
+            );
+            
+            // Check if animation complete
+            if (this.state.energy >= this.state.energyRechargeTarget) {
+                this.state.energy = this.state.energyRechargeTarget;
+                this.state.energyRechargeActive = false;
+            }
+        }
+
         // Update systems
         this.updateWaveSystem(dt, currentTime);
         this.updateCombat(dt, currentTime);
@@ -921,7 +948,11 @@ export class Game {
         this.graphics.drawGrid();
 
         // Render muro di mattoni dinamico (energia)
-        this.graphics.drawBrickWall(this.state.energy);
+        this.graphics.drawBrickWall(
+            this.state.energy,
+            this.state.energyRechargeActive,
+            this.state.energyRechargeBase
+        );
 
         // Render game entities
         this.entities.render(this.graphics, performance.now());

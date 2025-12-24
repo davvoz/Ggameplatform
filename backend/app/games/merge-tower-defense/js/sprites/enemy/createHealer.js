@@ -29,7 +29,7 @@ export function healer() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
-            x: 0.25, y: 0.05,
+            x: 0, y: 0.05,
             width: 0.48, height: 0.50,
             color: '#aa7acc',
             fill: true

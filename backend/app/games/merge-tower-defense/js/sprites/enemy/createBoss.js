@@ -110,7 +110,7 @@ export function boss() {
     const body = sprite.addPart('body', [
         {
             type: 'ellipse', // Main torso
-            x: 0.17, y: 0,
+            x: 0.1, y: 0,
             width: 0.37, height: 0.41,
             color: '#3a1a2a',
             fill: true

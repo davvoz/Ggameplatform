@@ -7,29 +7,29 @@ export const CONFIG = {
     // Grid Configuration
     COLS: 7,
     ROWS: 12,
-    DEFENSE_ZONE_ROWS: 4,  // Increased from zombie-tower (was 3)
-    
+    DEFENSE_ZONE_ROWS: 4,  // Aumentato da 4 - i nemici si fermano più in alto
+
     // Game Balance - Inizio più facile, late game difficile
-    INITIAL_COINS: 80,  // Aumentato da 40 - 4 torri per iniziare
+    INITIAL_COINS: 100,  // Aumentato da 80 - 5 torri per iniziare
     INITIAL_ENERGY: 100,  // Ripristinato
     ENERGY_DRAIN_PER_ZOMBIE: 2.0,  // Ridotto da 4.0 - meno punitivo all'inizio
     ENERGY_REGEN_RATE: 0.15,  // Aumentato da 0.05 - regen decente
-    
+
     // Wave Configuration
-    BASE_WAVE_ZOMBIES: 6,  // Ridotto da 8 - wave più corte
+    BASE_WAVE_ZOMBIES: 4,  // Ridotto da 6 - primo livello più facile
     WAVE_ZOMBIE_INCREMENT: 3,
     SPAWN_INTERVAL: 800,  // Ridotto da 1000 - spawn più veloce
-    
+
     // Performance
     MAX_PARTICLES: 200,
     MAX_PROJECTILES: 100,
     PARTICLE_POOL_SIZE: 300,
-    
+
     // Visual
     CELL_BORDER: 1,
     GRID_LINE_WIDTH: 1,
     DEFENSE_LINE_WIDTH: 3,
-    
+
     // Colors
     COLORS: {
         BACKGROUND: '#0a0a0a',
@@ -51,17 +51,17 @@ export const CONFIG = {
 // Cannon Types - Strategic variety with unique roles
 // NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
 // Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
-import { TowerSpriteLibrary } from './tower-sprites.js';
 import { MultiPartEnemySprites } from './multi-part-enemies.js';
+import { MultiPartTowerSprites } from './multi-part-towers.js';
 
 export const CANNON_TYPES = {
     BASIC: {
         id: 'BASIC',
         name: 'Basic',
         icon: '🔫',
-        sprite: () => TowerSpriteLibrary.BASIC.base,
+        sprite: () => MultiPartTowerSprites.createBasic(),
         cost: 20,
-        damage: 3,
+        damage: 2,
         fireRate: 1500,
         range: 2.5,
         projectileSpeed: 8,
@@ -71,12 +71,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 1.0, SHIELDED: 0.8, SPLITTER: 1.0, PHASER: 0.7 },
         // Merge strategy: Versatile, okay against everything
     },
-    
+
     RAPID: {
         id: 'RAPID',
         name: 'Rapid',
         icon: '🔥',
-        sprite: () => TowerSpriteLibrary.RAPID.base,
+        sprite: () => MultiPartTowerSprites.createRapid(),
         cost: 35,
         damage: 2,
         fireRate: 350,
@@ -88,12 +88,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 1.3, SHIELDED: 0.6, SPLITTER: 0.8, PHASER: 1.5 },
         // Merge strategy: COUNTER per FAST zombies e PHASER - high DPS
     },
-    
+
     SNIPER: {
         id: 'SNIPER',
         name: 'Sniper',
         icon: '🎯',
-        sprite: () => TowerSpriteLibrary.SNIPER.base,
+        sprite: () => MultiPartTowerSprites.createSniper(),
         cost: 120,
         damage: 15,
         fireRate: 2800,
@@ -105,12 +105,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 2.0, SHIELDED: 0.5, SPLITTER: 1.2, PHASER: 0.8 },
         // Merge strategy: COUNTER per HEALER - one-shot priority targets
     },
-    
+
     SPLASH: {
         id: 'SPLASH',
         name: 'Splash',
         icon: '💥',
-        sprite: () => TowerSpriteLibrary.SPLASH.base,
+        sprite: () => MultiPartTowerSprites.createSplash(),
         cost: 90,
         damage: 5,
         fireRate: 1800,
@@ -123,12 +123,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 1.1, SHIELDED: 1.3, SPLITTER: 2.0, PHASER: 0.9 },
         // Merge strategy: COUNTER per SPLITTER - AoE prevents split abuse
     },
-    
+
     FREEZE: {
         id: 'FREEZE',
         name: 'Freeze',
         icon: '❄️',
-        sprite: () => TowerSpriteLibrary.FREEZE.base,
+        sprite: () => MultiPartTowerSprites.createFreeze(),
         cost: 65,
         damage: 2,
         fireRate: 1600,
@@ -142,12 +142,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 0.8, SHIELDED: 2.0, SPLITTER: 1.0, PHASER: 1.3 },
         // Merge strategy: COUNTER per SHIELDED - previene regen scudo
     },
-    
+
     LASER: {
         id: 'LASER',
         name: 'Laser',
         icon: '🔆',
-        sprite: () => TowerSpriteLibrary.LASER.base,
+        sprite: () => MultiPartTowerSprites.createLaser(),
         cost: 110,
         damage: 6,
         fireRate: 850,
@@ -160,12 +160,12 @@ export const CANNON_TYPES = {
         effectiveness: { HEALER: 1.4, SHIELDED: 1.0, SPLITTER: 1.4, PHASER: 1.0 },
         // Merge strategy: Buono vs linee di nemici
     },
-    
+
     ELECTRIC: {
         id: 'ELECTRIC',
         name: 'Electric',
         icon: '⚡',
-        sprite: () => TowerSpriteLibrary.ELECTRIC.base,
+        sprite: () => MultiPartTowerSprites.createElectric(),
         cost: 95,
         damage: 4,
         fireRate: 1300,
@@ -188,25 +188,25 @@ export const ZOMBIE_TYPES = {
         name: 'Shambler',
         icon: '🧟', // Legacy fallback
         sprite: () => MultiPartEnemySprites.createGrunt(),
-        hp: 8,
+        hp: 10,
         speed: 0.5,
         reward: 15,
         color: '#00ff00',
         scale: 1.0,
     },
-    
+
     FAST: {
         id: 'FAST',
         name: 'Runner',
         icon: '🧟‍♂️', // Legacy fallback
         sprite: () => MultiPartEnemySprites.createRusher(),
-        hp: 5,
+        hp: 6,
         speed: 1.2,
         reward: 25,
         color: '#ffff00',
         scale: 0.9,
     },
-    
+
     TANK: {
         id: 'TANK',
         name: 'Brute',
@@ -218,7 +218,7 @@ export const ZOMBIE_TYPES = {
         color: '#ff0000',
         scale: 1.3,
     },
-    
+
     AGILE: {
         id: 'AGILE',
         name: 'Leaper',
@@ -231,7 +231,7 @@ export const ZOMBIE_TYPES = {
         color: '#ff00ff',
         scale: 1.2,
     },
-    
+
     ARMORED: {
         id: 'ARMORED',
         name: 'Juggernaut',
@@ -244,7 +244,7 @@ export const ZOMBIE_TYPES = {
         color: '#888888',
         scale: 1.4,
     },
-    
+
     BOSS: {
         id: 'BOSS',
         name: 'Overlord',
@@ -258,9 +258,9 @@ export const ZOMBIE_TYPES = {
         scale: 1.6,
         isBoss: true,
     },
-    
+
     // ===== TACTICAL VARIANTS =====
-    
+
     HEALER: {
         id: 'HEALER',
         name: 'Necromancer',
@@ -276,7 +276,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.1,
         isHealer: true,
     },
-    
+
     SHIELDED: {
         id: 'SHIELDED',
         name: 'Guardian',
@@ -292,7 +292,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.2,
         hasShield: true,
     },
-    
+
     SPLITTER: {
         id: 'SPLITTER',
         name: 'Hivemind',
@@ -308,7 +308,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.15,
         canSplit: true,
     },
-    
+
     PHASER: {
         id: 'PHASER',
         name: 'Phantom',
@@ -324,9 +324,9 @@ export const ZOMBIE_TYPES = {
         scale: 1.0,
         canPhase: true,
     },
-    
+
     // ===== NEW UNIQUE ENEMIES =====
-    
+
     VAMPIRE: {
         id: 'VAMPIRE',
         name: 'Bloodlord',
@@ -341,7 +341,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.15,
         isVampire: true,
     },
-    
+
     BOMBER: {
         id: 'BOMBER',
         name: 'Detonator',
@@ -356,7 +356,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.1,
         isBomber: true,
     },
-    
+
     SHADOW: {
         id: 'SHADOW',
         name: 'Nightcrawler',
@@ -371,7 +371,7 @@ export const ZOMBIE_TYPES = {
         scale: 0.95,
         canInvis: true,
     },
-    
+
     SIREN: {
         id: 'SIREN',
         name: 'Banshee',
@@ -387,7 +387,7 @@ export const ZOMBIE_TYPES = {
         scale: 1.05,
         isSiren: true,
     },
-    
+
     GOLEM: {
         id: 'GOLEM',
         name: 'Earthshaker',

@@ -201,48 +201,6 @@ export class AudioSynthesizer {
 export class SoundLibrary {
     constructor(synth) {
         this.synth = synth;
-        this.audioCache = {};
-        this.loadAudioFiles();
-    }
-
-    loadAudioFiles() {
-        // Tower shoot sounds paths
-        const soundPaths = {
-            towerShootBasic: 'assets/sounds/sfx/shoot_basic.wav',
-            towerShootRapid: 'assets/sounds/sfx/shoot_rapid.wav',
-            towerShootSniper: 'assets/sounds/sfx/shoot_sniper.wav',
-            towerShootSplash: 'assets/sounds/sfx/shoot_splash.wav',
-            towerShootFreeze: 'assets/sounds/sfx/shoot_freeze.wav',
-            towerShootLaser: 'assets/sounds/sfx/shoot_laser.wav',
-            towerShootElectric: 'assets/sounds/sfx/shoot_electric.wav'
-        };
-
-        // Preload audio files
-        for (const [key, path] of Object.entries(soundPaths)) {
-            this.audioCache[key] = new Audio(path);
-            this.audioCache[key].preload = 'auto';
-            // Handle load errors gracefully
-            this.audioCache[key].addEventListener('error', () => {
-                console.warn(`[AUDIO] Failed to load ${path}, using synth fallback`);
-                this.audioCache[key] = null;
-            });
-        }
-    }
-
-    playAudioFile(key, volume = 0.3, playbackRate = 1.0) {
-        const audio = this.audioCache[key];
-        if (!audio) return false;
-
-        try {
-            // Clone audio to allow overlapping plays
-            const sound = audio.cloneNode();
-            sound.volume = volume;
-            sound.playbackRate = playbackRate;
-            sound.play().catch(() => {});
-            return true;
-        } catch (e) {
-            return false;
-        }
     }
 
     // Tower sounds
@@ -258,8 +216,6 @@ export class SoundLibrary {
 
     // Tower shoot sounds - specific per type
     towerShootBasic() {
-        if (this.playAudioFile('towerShootBasic', 0.35)) return;
-        
         // Classic "pew" - quick burst
         this.synth.playNote(
             800,
@@ -280,8 +236,6 @@ export class SoundLibrary {
     }
 
     towerShootRapid() {
-        if (this.playAudioFile('towerShootRapid', 0.28, 1.1)) return;
-        
         // Sharp "bang bang" - percussive hit
         this.synth.createNoise(
             0.04,
@@ -298,8 +252,6 @@ export class SoundLibrary {
     }
 
     towerShootSniper() {
-        if (this.playAudioFile('towerShootSniper', 0.5)) return;
-        
         // Deep "BOOM" - explosive cannon
         // Low frequency punch
         this.synth.playNote(
@@ -330,8 +282,6 @@ export class SoundLibrary {
     }
 
     towerShootSplash() {
-        if (this.playAudioFile('towerShootSplash', 0.38)) return;
-        
         // "Whoomp" - heavy projectile launch
         this.synth.playNote(
             120,
@@ -351,8 +301,6 @@ export class SoundLibrary {
     }
 
     towerShootFreeze() {
-        if (this.playAudioFile('towerShootFreeze', 0.32)) return;
-        
         // "Schrreeech" - icy crystalline screech
         // High pitch sweep down with shimmer
         this.synth.createPitchSweep(
@@ -383,8 +331,6 @@ export class SoundLibrary {
     }
 
     towerShootLaser() {
-        if (this.playAudioFile('towerShootLaser', 0.38)) return;
-        
         // "Peewoo" - sci-fi laser with pitch rise
         // Rising pitch sweep
         this.synth.createPitchSweep(
@@ -407,8 +353,6 @@ export class SoundLibrary {
     }
 
     towerShootElectric() {
-        if (this.playAudioFile('towerShootElectric', 0.32)) return;
-        
         // "Bzzzzt" - electric zap with crackle
         // Random frequency modulation for chaotic zap
         const freqs = [800, 1200, 900, 1500, 700];
@@ -487,13 +431,33 @@ export class SoundLibrary {
     }
 
     enemyHit(pitch = 1) {
+        // "Splat" - satisfying hit sound
+        // Impact punch
         this.synth.playNote(
             200 * pitch,
-            'sawtooth',
-            0.1,
-            { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
-            { volume: 0.25, filter: { type: 'lowpass', freq: 1500 } }
+            'square',
+            0.08,
+            { attack: 0.001, decay: 0.03, sustain: 0, release: 0.05 },
+            { volume: 0.28, filter: { type: 'lowpass', freq: 1200, q: 5 } }
         );
+        // Hit snap
+        setTimeout(() => {
+            this.synth.createNoise(
+                0.03,
+                { attack: 0.001, decay: 0.012, sustain: 0, release: 0.018 },
+                { volume: 0.18, filterType: 'highpass', filterFreq: 2000 }
+            );
+        }, 5);
+        // Softer body hit
+        setTimeout(() => {
+            this.synth.playNote(
+                150 * pitch,
+                'sine',
+                0.06,
+                { attack: 0.001, decay: 0.025, sustain: 0, release: 0.035 },
+                { volume: 0.15, filter: { type: 'lowpass', freq: 800 } }
+            );
+        }, 10);
     }
 
     enemyDeath() {
@@ -512,6 +476,36 @@ export class SoundLibrary {
                 { volume: 0.15, filterType: 'highpass', filterFreq: 2000 }
             );
         }, 50);
+    }
+
+    enemyDamageWall() {
+        // "Thud" - enemy hitting the wall
+        // Low impact sound
+        this.synth.playNote(
+            100,
+            'sine',
+            0.15,
+            { attack: 0.001, decay: 0.06, sustain: 0, release: 0.09 },
+            { volume: 0.3, filter: { type: 'lowpass', freq: 500, q: 3 } }
+        );
+        // Impact noise
+        setTimeout(() => {
+            this.synth.createNoise(
+                0.08,
+                { attack: 0.001, decay: 0.04, sustain: 0, release: 0.04 },
+                { volume: 0.2, filterType: 'lowpass', filterFreq: 1200 }
+            );
+        }, 5);
+        // Brick crack sound
+        setTimeout(() => {
+            this.synth.playNote(
+                400,
+                'square',
+                0.05,
+                { attack: 0.001, decay: 0.02, sustain: 0, release: 0.03 },
+                { volume: 0.15, filter: { type: 'highpass', freq: 800, q: 4 } }
+            );
+        }, 15);
     }
 
     bossSpawn() {

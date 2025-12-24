@@ -160,6 +160,11 @@ export class AudioEngine {
         this.soundLib.enemyDeath(); 
     }
     
+    enemyDamageWall() { 
+        if (!this.soundEnabled) return;
+        this.soundLib.enemyDamageWall(); 
+    }
+    
     bossSpawn() { 
         if (!this.soundEnabled) return;
         this.soundLib.bossSpawn(); 

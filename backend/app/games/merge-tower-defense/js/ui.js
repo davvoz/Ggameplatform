@@ -28,9 +28,7 @@ export class UIManager {
         this.settingsButton = null;
         this.showSettingsPopup = false;
         this.settingsPopupButtons = [];
-        this.volumeSliders = [];
-        this.isDraggingSlider = false;
-        this.draggedSlider = null;
+        this.settingsCheckboxes = [];
     }
 
     setupShopButtons() {
@@ -511,8 +509,8 @@ export class UIManager {
         ctx.fillRect(0, 0, width, height);
         
         // Popup box
-        const popupWidth = Math.min(400, width * 0.85);
-        const popupHeight = Math.min(450, height * 0.7);
+        const popupWidth = Math.min(380, width * 0.85);
+        const popupHeight = Math.min(380, height * 0.65);
         const popupX = (width - popupWidth) / 2;
         const popupY = (height - popupHeight) / 2;
         
@@ -545,33 +543,17 @@ export class UIManager {
         let contentY = popupY + 100;
         
         this.settingsPopupButtons = [];
-        this.volumeSliders = [];
+        this.settingsCheckboxes = [];
         
-        // Music volume slider
-        this.graphics.drawText('🎵 Music Volume', contentX, contentY, {
-            size: 18,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
-            align: 'left',
-            bold: true
-        });
-        contentY += 35;
-        
-        const musicVolume = this.audio ? this.audio.volume : 0.3;
-        this.renderVolumeSlider(contentX, contentY, contentWidth, 'music', musicVolume);
-        contentY += 50;
-        
-        // Sound volume slider
-        this.graphics.drawText('🔊 Sound Volume', contentX, contentY, {
-            size: 18,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
-            align: 'left',
-            bold: true
-        });
-        contentY += 35;
-        
-        const soundVolume = this.audio ? this.audio.soundVolume : 0.5;
-        this.renderVolumeSlider(contentX, contentY, contentWidth, 'sound', soundVolume);
+        // Music toggle checkbox
+        const musicEnabled = this.audio ? this.audio.enabled : true;
+        this.renderCheckbox(contentX, contentY, '🎵 Background Music', 'music', musicEnabled);
         contentY += 60;
+        
+        // Sound toggle checkbox
+        const soundEnabled = this.audio ? this.audio.soundEnabled : true;
+        this.renderCheckbox(contentX, contentY, '🔊 Sound Effects', 'sound', soundEnabled);
+        contentY += 70;
         
         // Fullscreen toggle button
         const buttonHeight = 50;
@@ -585,47 +567,52 @@ export class UIManager {
         this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight * 0.8, '✕ Close', 'close');
     }
     
-    renderVolumeSlider(x, y, width, type, value) {
+    renderCheckbox(x, y, text, action, checked) {
         const ctx = this.graphics.ctx;
-        const sliderHeight = 20;
-        const handleRadius = 12;
+        const boxSize = 32;
+        const boxX = x + 5;
+        const boxY = y;
         
-        // Store slider for interaction
-        this.volumeSliders.push({
-            x, y, width, height: sliderHeight, type, value
+        // Store checkbox for interaction
+        this.settingsCheckboxes.push({
+            x: boxX,
+            y: boxY,
+            width: boxSize,
+            height: boxSize,
+            action,
+            checked
         });
         
-        // Slider track background
-        ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
-        Utils.drawRoundRect(ctx, x, y, width, sliderHeight, sliderHeight / 2);
+        // Checkbox box
+        ctx.fillStyle = checked ? CONFIG.COLORS.TEXT_PRIMARY : 'rgba(40, 40, 40, 0.8)';
+        Utils.drawRoundRect(ctx, boxX, boxY, boxSize, boxSize, 6);
         ctx.fill();
         
-        // Slider track fill (volume level)
-        const fillWidth = width * value;
-        ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
-        Utils.drawRoundRect(ctx, x, y, fillWidth, sliderHeight, sliderHeight / 2);
-        ctx.fill();
-        
-        // Slider handle
-        const handleX = x + fillWidth;
-        const handleY = y + sliderHeight / 2;
-        
-        ctx.beginPath();
-        ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
-        ctx.fillStyle = CONFIG.COLORS.BUTTON_BG;
-        ctx.fill();
+        // Checkbox border
         ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
+        Utils.drawRoundRect(ctx, boxX, boxY, boxSize, boxSize, 6);
         ctx.stroke();
         
-        // Volume percentage text
-        const percentage = Math.round(value * 100);
-        this.graphics.drawText(`${percentage}%`, x + width + 40, y + sliderHeight / 2, {
-            size: 16,
+        // Checkmark
+        if (checked) {
+            this.graphics.drawText('✓', boxX + boxSize / 2, boxY + boxSize / 2, {
+                size: 24,
+                color: '#000000',
+                align: 'center',
+                baseline: 'middle',
+                bold: true
+            });
+        }
+        
+        // Label text
+        this.graphics.drawText(text, boxX + boxSize + 15, boxY + boxSize / 2, {
+            size: 20,
             color: CONFIG.COLORS.TEXT_PRIMARY,
             align: 'left',
             baseline: 'middle',
-            bold: true
+            bold: true,
+            shadow: true
         });
     }
     
@@ -680,29 +667,19 @@ export class UIManager {
     checkSettingsPopupClick(screenX, screenY) {
         if (!this.showSettingsPopup) return null;
         
-        // Check slider clicks/drags first
-        for (const slider of this.volumeSliders) {
-            const handleX = slider.x + slider.width * slider.value;
-            const handleY = slider.y + slider.height / 2;
-            const handleRadius = 12;
-            
-            // Check if clicking on handle
-            const dist = Math.sqrt(Math.pow(screenX - handleX, 2) + Math.pow(screenY - handleY, 2));
-            if (dist <= handleRadius + 5) {
-                this.isDraggingSlider = true;
-                this.draggedSlider = slider;
-                return 'slider';
-            }
-            
-            // Check if clicking anywhere on slider track
-            if (screenX >= slider.x && screenX <= slider.x + slider.width &&
-                screenY >= slider.y && screenY <= slider.y + slider.height) {
-                // Jump to clicked position
-                const newValue = Math.max(0, Math.min(1, (screenX - slider.x) / slider.width));
-                this.updateSliderValue(slider, newValue);
-                this.isDraggingSlider = true;
-                this.draggedSlider = slider;
-                return 'slider';
+        // Check checkbox clicks
+        for (const checkbox of this.settingsCheckboxes) {
+            if (screenX >= checkbox.x && screenX <= checkbox.x + checkbox.width &&
+                screenY >= checkbox.y && screenY <= checkbox.y + checkbox.height) {
+                // Toggle checkbox
+                if (this.audio) {
+                    if (checkbox.action === 'music') {
+                        this.audio.toggle();
+                    } else if (checkbox.action === 'sound') {
+                        this.audio.toggleSounds();
+                    }
+                }
+                return 'checkbox';
             }
         }
         
@@ -719,31 +696,6 @@ export class UIManager {
         }
         
         return null;
-    }
-    
-    handleSliderDrag(screenX, screenY) {
-        if (!this.isDraggingSlider || !this.draggedSlider) return;
-        
-        const slider = this.draggedSlider;
-        const newValue = Math.max(0, Math.min(1, (screenX - slider.x) / slider.width));
-        this.updateSliderValue(slider, newValue);
-    }
-    
-    stopSliderDrag() {
-        this.isDraggingSlider = false;
-        this.draggedSlider = null;
-    }
-    
-    updateSliderValue(slider, value) {
-        slider.value = value;
-        
-        if (this.audio) {
-            if (slider.type === 'music') {
-                this.audio.setVolume(value);
-            } else if (slider.type === 'sound') {
-                this.audio.setSoundVolume(value);
-            }
-        }
     }
     
     toggleSettingsPopup() {

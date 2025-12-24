@@ -110,21 +110,7 @@ export class Game {
         });
 
         // Drag handler for merge system
-        this.input.onDrag((gridPos, screenPos) => {
-            // Handle slider dragging in settings popup
-            if (this.ui.showSettingsPopup && this.ui.isDraggingSlider) {
-                this.ui.handleSliderDrag(screenPos.x, screenPos.y);
-                return;
-            }
-        });
-        
         this.input.onDragEnd((startPos, endPos) => {
-            // Stop slider dragging
-            if (this.ui.showSettingsPopup && this.ui.isDraggingSlider) {
-                this.ui.stopSliderDrag();
-                return;
-            }
-            
             if (this.state.isPaused || this.state.isGameOver) return;
 
             this.handleDragMerge(startPos, endPos);
@@ -920,6 +906,9 @@ export class Game {
 
         if (totalBricksToRemove > 0) {
             this.state.energy -= totalBricksToRemove;
+            
+            // Play wall damage sound
+            this.audio.enemyDamageWall();
 
             // Effetto visivo: animazione di attacco su ogni nemico che consuma
             for (const zombie of zombiesToAnimate) {

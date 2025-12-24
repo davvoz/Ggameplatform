@@ -61,11 +61,9 @@ export class Game {
             showMergeHint: false,
             mergeHintPos: null,
 
-            // Energy recharge animation
-            energyRechargeActive: false,
-            energyRechargeTarget: 0,
-            energyRechargeBase: 0,
-            energyRechargeSpeed: 80 // mattoncini al secondo
+            // Energy display animation (displayEnergy si avvicina gradualmente a energy)
+            displayEnergy: CONFIG.INITIAL_ENERGY,
+            energyAnimSpeed: 50 // mattoncini al secondo (più lento = più visibile)
         };
     }
 
@@ -311,7 +309,13 @@ export class Game {
             if (this.state.waveZombiesSpawned < this.state.waveZombiesTotal) {
                 const timeSinceLastSpawn = currentTime - this.state.lastSpawnTime;
 
-                if (timeSinceLastSpawn >= CONFIG.SPAWN_INTERVAL) {
+                // Spawn più lento per le wave "Doppio Boss!" (ogni 10 wave)
+                let spawnInterval = CONFIG.SPAWN_INTERVAL;
+                if (this.state.specialWave === 'Doppio Boss!') {
+                    spawnInterval = CONFIG.SPAWN_INTERVAL * 4.5; // 2.5x più lento
+                }
+
+                if (timeSinceLastSpawn >= spawnInterval) {
                     this.spawnZombie();
                     this.state.lastSpawnTime = currentTime;
                 }
@@ -449,13 +453,8 @@ export class Game {
         this.state.score += waveBonus * 2;
         this.state.coinsEarned += totalReward; // Track for XP system
 
-        // Heal energy - start animation
-        const newEnergy = Math.min(CONFIG.INITIAL_ENERGY, this.state.energy + 20);
-        if (newEnergy > this.state.energy) {
-            this.state.energyRechargeActive = true;
-            this.state.energyRechargeBase = this.state.energy;
-            this.state.energyRechargeTarget = newEnergy;
-        }
+        // Heal energy (displayEnergy seguirà automaticamente con animazione)
+        this.state.energy = Math.min(CONFIG.INITIAL_ENERGY, this.state.energy + 20);
 
         // Visual feedback
         this.particles.createWaveClearEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2);
@@ -911,18 +910,20 @@ export class Game {
 
         const currentTime = performance.now();
 
-        // Update energy recharge animation
-        if (this.state.energyRechargeActive) {
-            const rechargeAmount = this.state.energyRechargeSpeed * dt;
-            this.state.energy = Math.min(
-                this.state.energyRechargeTarget,
-                this.state.energy + rechargeAmount
-            );
+        // Update energy display animation (displayEnergy si avvicina a energy)
+        if (this.state.displayEnergy !== this.state.energy) {
+            const diff = this.state.energy - this.state.displayEnergy;
+            const step = this.state.energyAnimSpeed * dt;
             
-            // Check if animation complete
-            if (this.state.energy >= this.state.energyRechargeTarget) {
-                this.state.energy = this.state.energyRechargeTarget;
-                this.state.energyRechargeActive = false;
+            if (Math.abs(diff) <= step) {
+                // Snap to target
+                this.state.displayEnergy = this.state.energy;
+            } else if (diff > 0) {
+                // Guadagno energia - aumenta displayEnergy
+                this.state.displayEnergy += step;
+            } else {
+                // Perdo energia - diminuisci displayEnergy
+                this.state.displayEnergy -= step;
             }
         }
 
@@ -947,11 +948,14 @@ export class Game {
         this.graphics.clear();
         this.graphics.drawGrid();
 
-        // Render muro di mattoni dinamico (energia)
+        // Render muro di mattoni dinamico (energia con animazione)
+        const isGaining = this.state.displayEnergy < this.state.energy;
+        const isLosing = this.state.displayEnergy > this.state.energy;
         this.graphics.drawBrickWall(
-            this.state.energy,
-            this.state.energyRechargeActive,
-            this.state.energyRechargeBase
+            this.state.displayEnergy,
+            isGaining,
+            isLosing,
+            this.state.energy
         );
 
         // Render game entities

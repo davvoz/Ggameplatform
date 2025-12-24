@@ -16,9 +16,9 @@ export const CONFIG = {
     ENERGY_REGEN_RATE: 0.15,  // Aumentato da 0.05 - regen decente
 
     // Wave Configuration
-    BASE_WAVE_ZOMBIES: 4,  // Ridotto da 6 - primo livello più facile
-    WAVE_ZOMBIE_INCREMENT: 3,
-    SPAWN_INTERVAL: 800,  // Ridotto da 1000 - spawn più veloce
+    BASE_WAVE_ZOMBIES: 3,  // Ridotto da 6 - primo livello più facile
+    WAVE_ZOMBIE_INCREMENT: 2,
+    SPAWN_INTERVAL: 1000,  // Ridotto da 1000 - spawn più veloce
 
     // Performance
     MAX_PARTICLES: 200,

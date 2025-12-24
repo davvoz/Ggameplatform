@@ -394,48 +394,70 @@ export class Graphics {
 
     /**
      * Disegna il muro di mattoni dinamico (4 file da 25)
-     * @param {number} energy - Energia attuale
-     * @param {boolean} isRecharging - Se l'animazione di ricarica è attiva
-     * @param {number} baseEnergy - Energia base prima della ricarica (per evidenziare nuovi mattoncini)
+     * @param {number} displayEnergy - Energia visualizzata (animata)
+     * @param {boolean} isGaining - Se stiamo guadagnando energia
+     * @param {boolean} isLosing - Se stiamo perdendo energia
+     * @param {number} targetEnergy - Energia target reale
      */
-    drawBrickWall(energy, isRecharging = false, baseEnergy = 0) {
+    drawBrickWall(displayEnergy, isGaining = false, isLosing = false, targetEnergy = 0) {
         const ctx = this.ctx;
-        const totalBricks = Math.max(0, Math.floor(energy));
-        const baseBricks = Math.max(0, Math.floor(baseEnergy));
+        const displayBricks = Math.max(0, Math.floor(displayEnergy));
+        const targetBricks = Math.max(0, Math.floor(targetEnergy));
         const bricksPerRow = 25;
         const brickRows = 4;
         const brickW = this.cellSize * CONFIG.COLS / bricksPerRow;
         const brickH = this.cellSize * 0.22;
         const defenseY = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) * this.cellSize;
-        let bricksDrawn = 0;
         
-        // Animazione pulse per nuovi mattoncini
-        const pulsePhase = (this.animationTime * 8) % 1;
+        // Animazione pulse
+        const pulsePhase = (this.animationTime * 6) % 1;
         const pulseGlow = 0.5 + Math.sin(pulsePhase * Math.PI * 2) * 0.5;
+        
+        // Determina quanti mattoncini disegnare (il massimo tra display e target per mostrare quelli che stanno sparendo)
+        const maxBricks = isLosing ? displayBricks : Math.max(displayBricks, targetBricks);
+        let bricksDrawn = 0;
         
         for (let r = brickRows - 1; r >= 0; r--) {
             for (let c = 0; c < bricksPerRow; c++) {
-                if (bricksDrawn >= totalBricks) return;
+                if (bricksDrawn >= maxBricks) return;
+                
                 const bx = this.offsetX + c * brickW;
                 const by = this.offsetY + defenseY - brickRows * brickH + r * brickH;
                 
-                // Controlla se è un nuovo mattoncino (aggiunto durante ricarica)
-                const isNewBrick = isRecharging && bricksDrawn >= baseBricks;
+                // Determina lo stato del mattoncino
+                const isNewBrick = isGaining && bricksDrawn >= displayBricks && bricksDrawn < targetBricks;
+                const isDyingBrick = isLosing && bricksDrawn >= targetBricks && bricksDrawn < displayBricks;
+                const isNormalBrick = bricksDrawn < displayBricks && bricksDrawn < targetBricks;
+                const isDisplayedBrick = bricksDrawn < displayBricks;
                 
                 if (isNewBrick) {
-                    // Nuovo mattoncino con effetto glow verde brillante
+                    // Mattoncino in arrivo - glow verde brillante che pulsa
                     ctx.save();
                     ctx.shadowColor = '#00ff88';
-                    ctx.shadowBlur = 8 + pulseGlow * 6;
-                    ctx.fillStyle = `rgb(${178 + Math.floor(pulseGlow * 40)}, ${34 + Math.floor(pulseGlow * 80)}, ${34 + Math.floor(pulseGlow * 60)})`;
-                    ctx.strokeStyle = `rgba(0, 255, 136, ${0.5 + pulseGlow * 0.5})`;
+                    ctx.shadowBlur = 10 + pulseGlow * 8;
+                    ctx.fillStyle = `rgb(${100 + Math.floor(pulseGlow * 80)}, ${180 + Math.floor(pulseGlow * 75)}, ${100 + Math.floor(pulseGlow * 50)})`;
+                    ctx.strokeStyle = `rgba(0, 255, 136, ${0.6 + pulseGlow * 0.4})`;
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
                     ctx.fill();
                     ctx.stroke();
                     ctx.restore();
-                } else {
+                } else if (isDyingBrick) {
+                    // Mattoncino che sta per sparire - glow rosso che pulsa e fade
+                    ctx.save();
+                    ctx.shadowColor = '#ff4444';
+                    ctx.shadowBlur = 8 + pulseGlow * 6;
+                    ctx.globalAlpha = 0.5 + pulseGlow * 0.5;
+                    ctx.fillStyle = `rgb(${200 + Math.floor(pulseGlow * 55)}, ${50 + Math.floor(pulseGlow * 30)}, ${30})`;
+                    ctx.strokeStyle = `rgba(255, 100, 100, ${0.5 + pulseGlow * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.rect(bx, by, brickW - 1.5, brickH - 1.5);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (isDisplayedBrick) {
                     // Mattoncino normale
                     ctx.fillStyle = '#b22222';
                     ctx.strokeStyle = '#fff2';

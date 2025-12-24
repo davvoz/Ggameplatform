@@ -1,8 +1,17 @@
 {
-  "version": "2.3.26",
-  "timestamp": "2025-12-24T22:12:06.769Z",
-  "buildNumber": 134,
+  "version": "2.3.27",
+  "timestamp": "2025-12-24T23:00:25.634Z",
+  "buildNumber": 135,
   "changelog": [
+    {
+      "version": "2.3.27",
+      "date": "2025-12-24",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD]Implement combat system and enemy AI for tower defense game",
+        "🔖 Bump version to 2.3.26 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.26",
       "date": "2025-12-24",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [MTD] adjust wave parameters and enhance energy display animation",
         "🔖 Bump version to 2.3.17 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.17",
-      "date": "2025-12-24",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD] enemy components and implement wave scaling system",
-        "🔖 Bump version to 2.3.16 [skip-version]"
       ]
     }
   ]

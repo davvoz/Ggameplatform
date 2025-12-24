@@ -32,20 +32,20 @@ export function siren() {
         {
             type: 'ellipse',
             x: 0.25, y: 0,
-            width: 0.38, height: 0.45,
+            width: 0, height: 0.45,
             color: '#7ac0d0',
             fill: true
         },
         {
             type: 'ellipse', // Scale pattern
             x: 0.25, y: 0.15,
-            width: 0.32, height: 0.28,
+            width: 0, height: 0.28,
             color: '#5ab0c0',
             fill: true
         },
         {
             type: 'circle', // Jewel ornament
-            x: 0.5, y: 0.08,
+            x: 0, y: 0.08,
             radius: 0.035,
             color: '#ff66aa',
             fill: true,

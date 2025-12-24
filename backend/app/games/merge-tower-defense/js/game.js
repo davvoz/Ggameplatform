@@ -8,6 +8,7 @@ import { Utils } from './utils.js';
 import { ParticleSystem } from './particles.js';
 import { EntityManager } from './entities.js';
 import { AudioEngine } from './audio.js';
+import { CombatSystem } from './combat.js';
 
 export class Game {
     constructor(graphics, input, ui) {
@@ -20,6 +21,9 @@ export class Game {
         this.audio = new AudioEngine();
 
         this.state = this.createInitialState();
+
+        // Initialize combat system (OOP-based)
+        this.combatSystem = new CombatSystem(this);
 
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
@@ -407,7 +411,7 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
-        if (wave == 1) return 'VAMPIRE'; // Prima ondata più facile con vampiri
+        if (wave == 1) return 'SIREN'; // Prima ondata più facile con vampiri
 
         let options = [
             { value: 'NORMAL', weight: Math.max(3, 15 - wave) },                      // Common early, rare late
@@ -421,7 +425,7 @@ export class Game {
             { value: 'VAMPIRE', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 },    // Wave 7+ (lifesteal)
             { value: 'SHADOW', weight: wave >= 8 ? 5 + Math.floor(wave / 4) : 0 },     // Wave 8+ (invisible)
             { value: 'PHASER', weight: wave >= 9 ? 6 + Math.floor(wave / 3) : 0 },     // Wave 9+ (teleports)
-            { value: 'SIREN', weight: wave >= 10 ? 4 + Math.floor(wave / 5) : 0 },     // Wave 10+ (disables towers)
+            { value: 'SIREN', weight: wave >= 8 ? 6 + Math.floor(wave / 4) : 0 },      // Wave 8+ (disables towers)
             { value: 'GOLEM', weight: wave >= 12 ? 3 + Math.floor(wave / 6) : 0 },     // Wave 12+ (massive)
             { value: 'BOSS', weight: (wave >= 10 && wave % 5 === 0) ? 5 + Math.floor(wave / 10) : 0 } // Every 5 waves from 10
         ];
@@ -446,7 +450,7 @@ export class Game {
             options = [
                 { value: 'VAMPIRE', weight: 15 },
                 { value: 'SHADOW', weight: 12 },
-                { value: 'SIREN', weight: 10 },
+                { value: 'SIREN', weight: 14 },
                 { value: 'BOMBER', weight: 8 }
             ];
         }
@@ -496,282 +500,16 @@ export class Game {
 
     // ========== COMBAT SYSTEM ==========
 
+    /**
+     * Update combat - delegates to CombatSystem (OOP pattern)
+     * The CombatSystem handles:
+     * - Zombie abilities (Golem stomp, Siren scream, Vampire drain, Healer)
+     * - Tower status effects (stun, disable)
+     * - Tower targeting and firing
+     * - Projectile collision detection
+     */
     updateCombat(dt, currentTime) {
-        // GOLEM ability: stomp that stuns nearby towers
-        this.entities.zombies.forEach(golem => {
-            if (golem.needsStomp) {
-                golem.needsStomp = false;
-                
-                let towersStunned = 0;
-                this.entities.cannons.forEach(cannon => {
-                    const dist = Utils.distance(golem.col, golem.row, cannon.col, cannon.row);
-                    if (dist <= golem.stompRange) {
-                        // Stun the tower
-                        cannon.stunnedUntil = currentTime + golem.stompStunDuration;
-                        towersStunned++;
-                        
-                        // Visual feedback
-                        this.particles.emit(cannon.col, cannon.row, {
-                            text: '💫 STUNNED!',
-                            color: '#8B4513',
-                            vy: -1,
-                            life: 0.8,
-                            scale: 1.0
-                        });
-                    }
-                });
-                
-                // Stomp visual effect
-                this.particles.emit(golem.col, golem.row, {
-                    text: '🗿 STOMP!',
-                    color: '#8B4513',
-                    vy: -1.5,
-                    life: 1.0,
-                    scale: 1.3,
-                    glow: true
-                });
-                
-                // Screen shake effect could go here
-            }
-        });
-
-        // SIREN ability: scream that disables nearby towers
-        this.entities.zombies.forEach(siren => {
-            if (siren.needsScream) {
-                siren.needsScream = false;
-                
-                let towersDisabled = 0;
-                this.entities.cannons.forEach(cannon => {
-                    const dist = Utils.distance(siren.col, siren.row, cannon.col, cannon.row);
-                    if (dist <= siren.disableRange) {
-                        // Disable the tower (longer than stun)
-                        cannon.disabledUntil = currentTime + siren.disableDuration;
-                        towersDisabled++;
-                        
-                        // Visual feedback
-                        this.particles.emit(cannon.col, cannon.row, {
-                            text: '🔇 DISABLED!',
-                            color: '#E0B0FF',
-                            vy: -1,
-                            life: 1.2,
-                            scale: 1.0
-                        });
-                    }
-                });
-                
-                // Scream visual effect
-                this.particles.emit(siren.col, siren.row, {
-                    text: '👻 SCREAM!',
-                    color: '#E0B0FF',
-                    vy: -1.5,
-                    life: 1.2,
-                    scale: 1.4,
-                    glow: true
-                });
-            }
-        });
-
-        // VAMPIRE ability: drain life from energy when at wall
-        this.entities.zombies.forEach(vampire => {
-            if (vampire.needsDrain && vampire.isVampire) {
-                vampire.needsDrain = false;
-                
-                // Vampire drains energy and heals itself
-                const drainAmount = Math.floor(5 * vampire.lifesteal);
-                const healAmount = Math.floor(drainAmount * 2);
-                
-                this.state.energy = Math.max(0, this.state.energy - drainAmount);
-                vampire.hp = Math.min(vampire.maxHp, vampire.hp + healAmount);
-                
-                // Visual feedback
-                this.particles.emit(vampire.col, vampire.row, {
-                    text: `🩸+${healAmount}`,
-                    color: '#8B0000',
-                    vy: -1,
-                    life: 0.8,
-                    scale: 1.0
-                });
-                
-                // Energy drain visual
-                this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS, {
-                    text: `-${drainAmount}⚡`,
-                    color: '#ff0000',
-                    vy: -0.5,
-                    life: 0.6,
-                    scale: 0.9
-                });
-            }
-        });
-
-        // HEALER healing system
-        this.entities.zombies.forEach(healer => {
-            if (healer.isHealer && currentTime - healer.lastHealTime >= healer.healInterval) {
-                healer.lastHealTime = currentTime;
-
-                // Find zombies in heal range
-                let healedCount = 0;
-                this.entities.zombies.forEach(target => {
-                    if (target === healer || target.hp >= target.maxHp) return;
-
-                    const dist = Utils.distance(healer.col, healer.row, target.col, target.row);
-                    if (dist <= healer.healRange) {
-                        target.hp = Math.min(target.maxHp, target.hp + healer.healAmount);
-                        healedCount++;
-
-                        // Visual feedback
-                        this.particles.emit(target.col, target.row, {
-                            text: `+${healer.healAmount}💚`,
-                            color: '#00ff88',
-                            vy: -0.8,
-                            life: 0.8,
-                            scale: 0.9
-                        });
-                    }
-                });
-
-                if (healedCount > 0) {
-                    // Play heal animation
-                    if (healer.multiSprite && healer.multiSprite.animations && healer.multiSprite.animations.has('heal')) {
-                        healer.multiSprite.play('heal', true);
-                    }
-                    // Healer pulse effect
-                    this.particles.emit(healer.col, healer.row, {
-                        text: '✨',
-                        color: '#00ffaa',
-                        vy: -0.5,
-                        life: 0.5,
-                        scale: 1.2
-                    });
-                }
-            }
-        });
-
-        // Cannons fire at zombies
-        this.entities.cannons.forEach(cannon => {
-            // Check if tower is stunned or disabled
-            if (cannon.stunnedUntil && currentTime < cannon.stunnedUntil) {
-                // Tower is stunned - show visual feedback
-                if (!cannon.showingStunEffect) {
-                    cannon.showingStunEffect = true;
-                }
-                return;
-            }
-            cannon.showingStunEffect = false;
-            
-            if (cannon.disabledUntil && currentTime < cannon.disabledUntil) {
-                // Tower is disabled - show visual feedback
-                if (!cannon.showingDisableEffect) {
-                    cannon.showingDisableEffect = true;
-                }
-                return;
-            }
-            cannon.showingDisableEffect = false;
-            
-            if (!cannon.canFire(currentTime)) return;
-
-            // Find target
-            const target = this.findTarget(cannon);
-
-            if (target) {
-                cannon.fire(currentTime, target);
-                this.entities.fireProjectile(cannon, target);
-
-                // Play shoot sound specific to tower type
-                this.audio.towerShoot(cannon.type);
-            }
-        });
-
-        // Check projectile collisions
-        this.checkProjectileCollisions(currentTime);
-    }
-
-    findTarget(cannon) {
-        let bestTarget = null;
-        let bestScore = -Infinity;
-
-        for (const zombie of this.entities.zombies) {
-            // Skip invisible enemies - can't target them
-            if (zombie.isInvisible) continue;
-            
-            const dist = Utils.distance(cannon.col, cannon.row, zombie.col, zombie.row);
-
-            if (dist <= cannon.range) {
-                // Prioritize zombies further along the path (closer to wall)
-                const progressScore = zombie.row * 10;
-                const healthScore = -zombie.hp; // Prefer low health
-
-                // Bonus for zombies at wall (actively damaging bricks)
-                const atWallBonus = zombie.atWall ? 50 : 0;
-
-                // Bonus for zombies in corners (less tower coverage)
-                const cornerBonus = (zombie.col < 1.5 || zombie.col > CONFIG.COLS - 1.5) ? 30 : 0;
-
-                const score = progressScore + healthScore + atWallBonus + cornerBonus;
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestTarget = zombie;
-                }
-            }
-        }
-
-        return bestTarget;
-    }
-
-    checkProjectileCollisions(currentTime) {
-        const projectiles = this.entities.projectilePool.active;
-
-        for (let i = projectiles.length - 1; i >= 0; i--) {
-            const proj = projectiles[i];
-            if (!proj.active) continue;
-
-            // Check collision with zombies
-            for (const zombie of this.entities.zombies) {
-                if (proj.hasHitTarget(zombie)) continue;
-                
-                // Skip invisible enemies - projectiles pass through them
-                if (zombie.isInvisible) continue;
-
-                const dist = Utils.distance(proj.x, proj.y, zombie.col, zombie.row);
-
-                // Raggio di collisione aumentato per seguire meglio i nemici che si muovono
-                if (dist < 0.6) {
-                    // Check dodge
-                    if (zombie.dodgeChance && Math.random() < zombie.dodgeChance) {
-                        this.particles.emit(zombie.col, zombie.row, {
-                            text: 'DODGE!',
-                            color: CONFIG.COLORS.TEXT_WARNING,
-                            vy: -1,
-                            life: 0.5,
-                            scale: 0.8
-                        });
-                        proj.addPiercedTarget(zombie);
-                        continue;
-                    }
-
-                    // Hit!
-                    this.damageZombie(zombie, proj, currentTime);
-
-                    // Handle special effects
-                    if (proj.splashRadius > 0) {
-                        this.applySplashDamage(zombie, proj, currentTime);
-                    }
-
-                    if (proj.chainTargets > 0) {
-                        this.applyChainDamage(zombie, proj, currentTime);
-                    }
-
-                    // Mark projectile as hit (unless piercing)
-                    if (proj.piercing > 0) {
-                        proj.addPiercedTarget(zombie);
-                    } else {
-                        proj.active = false;
-                    }
-
-                    break;
-                }
-            }
-        }
+        this.combatSystem.update(dt, currentTime);
     }
 
     damageZombie(zombie, proj, currentTime) {

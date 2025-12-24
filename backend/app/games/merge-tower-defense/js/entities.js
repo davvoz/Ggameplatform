@@ -8,6 +8,7 @@ import { MultiPartTowerSprites } from './multi-part-towers.js';
 import { MultiPartEnemySprites } from './multi-part-enemies.js';
 import { CANNON_TYPES, CONFIG, ZOMBIE_TYPES, MERGE_LEVELS } from './config.js';
 import { Utils } from './utils.js';
+import { enemyAI } from './enemy-ai.js';
 // If MERGE_LEVELS is defined elsewhere, import it here
 
 /**
@@ -432,138 +433,23 @@ class Zombie {
     }
 
     update(dt, currentTime) {
-        // Check invulnerability (PHASER ability)
-        if (this.isInvulnerable && currentTime > this.invulnerableUntil) {
-            this.isInvulnerable = false;
-        }
+        // ===== SPECIAL ABILITIES (status effects) =====
+        this.updateAbilities(dt, currentTime);
         
-        // Check invisibility ending (SHADOW ability)
-        if (this.isInvisible && currentTime > this.invisUntil) {
-            this.isInvisible = false;
-        }
+        // ===== MOVEMENT is now handled by EnemyAISystem =====
+        // The AI system is called from EntityManager.update()
+        // This allows centralized, OOP-based movement with:
+        // - Lane switching
+        // - Collision avoidance
+        // - Retreat behavior
+        // - Type-specific strategies
         
-        // PHASER ability: teleport forward
-        if (this.canPhase && currentTime - this.lastPhaseTime >= this.phaseInterval) {
-            this.row += this.phaseDistance;
-            this.lastPhaseTime = currentTime;
-            this.isInvulnerable = true;
-            this.invulnerableUntil = currentTime + this.phaseInvulnerable;
-        }
+        // Calculate effective speed for animations
+        const effectiveSpeed = currentTime < this.slowUntil 
+            ? this.speed * this.slowFactor 
+            : this.speed;
         
-        // SHADOW ability: become invisible periodically
-        if (this.canInvis && !this.isInvisible && currentTime - this.lastInvisTime >= this.invisCooldown) {
-            this.isInvisible = true;
-            this.invisUntil = currentTime + this.invisDuration;
-            this.lastInvisTime = currentTime;
-            // Trigger invis animation if available
-            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('invis')) {
-                this.multiSprite.play('invis');
-            }
-        }
-        
-        // GOLEM ability: stomp every N cells traveled
-        if (this.isGolem) {
-            const cellsTraveled = this.row - this.lastStompRow;
-            if (cellsTraveled >= this.stompEveryNCells) {
-                this.lastStompRow = this.row;
-                this.needsStomp = true; // Flag for game.js to handle
-                // Trigger stomp animation
-                if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('stomp')) {
-                    this.multiSprite.play('stomp');
-                }
-            }
-        }
-        
-        // VAMPIRE ability: drain attack flag (handled in game.js)
-        if (this.isVampire && this.atWall && currentTime - this.lastDrainTime >= this.drainInterval) {
-            this.needsDrain = true; // Flag for game.js to handle
-            this.lastDrainTime = currentTime;
-            // Trigger drain animation
-            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('drain')) {
-                this.multiSprite.play('drain');
-            }
-        }
-        
-        // SIREN ability: scream to disable towers
-        if (this.isSiren && currentTime - this.lastDisableTime >= this.disableCooldown) {
-            this.needsScream = true; // Flag for game.js to handle
-            this.lastDisableTime = currentTime;
-            // Trigger scream animation
-            if (this.multiSprite && this.multiSprite.animations && this.multiSprite.animations.has('scream')) {
-                this.multiSprite.play('scream');
-            }
-        }
-        
-        // HEALER ability: heal nearby enemies
-        if (this.isHealer && currentTime - this.lastHealTime >= this.healInterval) {
-            this.lastHealTime = currentTime;
-            // Healing logic will be handled in game.js
-        }
-        
-        // SHIELDED ability: regenerate shield if not damaged recently
-        if (this.hasShield && this.shield < this.maxShield) {
-            if (currentTime - this.lastShieldDamageTime >= this.shieldRegenDelay) {
-                this.shield = Math.min(this.maxShield, this.shield + this.shieldRegen * dt);
-            }
-        }
-        
-        // Apply slow effect
-        const effectiveSpeed = currentTime < this.slowUntil ? 
-                              this.speed * this.slowFactor : 
-                              this.speed;
-        
-        // Movimento intelligente: i nemici cercano uno spazio libero
-        const brickRows = 4;
-        const brickHeightCells = brickRows * 0.22;
-        const muroRow = (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS) - brickHeightCells - 0.85;
-        
-        if (!this._wallProgress) this._wallProgress = 0;
-        if (!this.targetCol) this.targetCol = this.col;
-        
-        // Comportamento tattico: cerca spazio libero
-        if (this.row < muroRow - 0.5) {
-            // Fase 1: scendi verso la zona di attacco
-            this.row += effectiveSpeed * dt;
-        } else {
-            // Fase 2: sei vicino al muro, cerca uno spazio libero orizzontalmente
-            const nearbyEnemies = this.findNearbyEnemies(0.8); // Raggio di rilevamento
-            
-            if (nearbyEnemies.length > 0 && this.row < muroRow) {
-                // C'è qualcuno troppo vicino, prova a spostarti lateralmente
-                const avgCol = nearbyEnemies.reduce((sum, e) => sum + e.col, 0) / nearbyEnemies.length;
-                
-                // Muoviti nella direzione opposta alla media dei nemici vicini
-                if (Math.abs(this.col - avgCol) > 0.1) {
-                    const moveDirection = this.col > avgCol ? 1 : -1;
-                    const horizontalSpeed = effectiveSpeed * 0.6;
-                    this.targetCol = Math.max(0, Math.min(CONFIG.COLS - 1, this.col + moveDirection * horizontalSpeed * dt * 3));
-                }
-                
-                // Continua a scendere lentamente mentre cerchi spazio
-                this.row += effectiveSpeed * dt * 0.5;
-            } else {
-                // Spazio libero trovato, scendi fino al muro
-                this.row += effectiveSpeed * dt;
-            }
-            
-            // Movimento laterale graduale verso targetCol
-            if (Math.abs(this.col - this.targetCol) > 0.05) {
-                const lateralSpeed = effectiveSpeed * 0.4;
-                if (this.col < this.targetCol) {
-                    this.col = Math.min(this.targetCol, this.col + lateralSpeed * dt);
-                } else {
-                    this.col = Math.max(this.targetCol, this.col - lateralSpeed * dt);
-                }
-            }
-            
-            // Limita alla riga del muro
-            if (this.row > muroRow) this.row = muroRow;
-        }
-        
-        // Il nemico è fermo al muro - tolleranza aumentata per assicurare che attacchino
-        this.atWall = this.row >= muroRow - 0.5;
-        
-        // Drive professional multi-part animations instead of sinusoidal wobble
+        // Drive professional multi-part animations
         if (this.multiSprite) {
             // Scale playback speed with movement
             const speedFactor = Math.max(0.6, effectiveSpeed / Math.max(0.001, this.speed));
@@ -624,6 +510,81 @@ class Zombie {
         // Update multi-part sprite animation
         if (this.multiSprite) {
             this.multiSprite.update(dt);
+        }
+    }
+
+    /**
+     * Update special abilities (separated from movement for OOP)
+     */
+    updateAbilities(dt, currentTime) {
+        // Check invulnerability (PHASER ability)
+        if (this.isInvulnerable && currentTime > this.invulnerableUntil) {
+            this.isInvulnerable = false;
+        }
+        
+        // Check invisibility ending (SHADOW ability)
+        if (this.isInvisible && currentTime > this.invisUntil) {
+            this.isInvisible = false;
+        }
+        
+        // PHASER ability: teleport forward
+        if (this.canPhase && currentTime - this.lastPhaseTime >= this.phaseInterval) {
+            this.row += this.phaseDistance;
+            this.lastPhaseTime = currentTime;
+            this.isInvulnerable = true;
+            this.invulnerableUntil = currentTime + this.phaseInvulnerable;
+        }
+        
+        // SHADOW ability: become invisible periodically
+        if (this.canInvis && !this.isInvisible && currentTime - this.lastInvisTime >= this.invisCooldown) {
+            this.isInvisible = true;
+            this.invisUntil = currentTime + this.invisDuration;
+            this.lastInvisTime = currentTime;
+            if (this.multiSprite?.animations?.has('invis')) {
+                this.multiSprite.play('invis');
+            }
+        }
+        
+        // GOLEM ability: stomp every N cells traveled
+        if (this.isGolem) {
+            const cellsTraveled = this.row - this.lastStompRow;
+            if (cellsTraveled >= this.stompEveryNCells) {
+                this.lastStompRow = this.row;
+                this.needsStomp = true;
+                if (this.multiSprite?.animations?.has('stomp')) {
+                    this.multiSprite.play('stomp');
+                }
+            }
+        }
+        
+        // VAMPIRE ability: drain attack flag
+        if (this.isVampire && this.atWall && currentTime - this.lastDrainTime >= this.drainInterval) {
+            this.needsDrain = true;
+            this.lastDrainTime = currentTime;
+            if (this.multiSprite?.animations?.has('drain')) {
+                this.multiSprite.play('drain');
+            }
+        }
+        
+        // SIREN ability: scream to disable towers
+        if (this.isSiren && currentTime - this.lastDisableTime >= this.disableCooldown) {
+            this.needsScream = true;
+            this.lastDisableTime = currentTime;
+            if (this.multiSprite?.animations?.has('scream')) {
+                this.multiSprite.play('scream');
+            }
+        }
+        
+        // HEALER ability
+        if (this.isHealer && currentTime - this.lastHealTime >= this.healInterval) {
+            this.lastHealTime = currentTime;
+        }
+        
+        // SHIELDED ability: regenerate shield
+        if (this.hasShield && this.shield < this.maxShield) {
+            if (currentTime - this.lastShieldDamageTime >= this.shieldRegenDelay) {
+                this.shield = Math.min(this.maxShield, this.shield + this.shieldRegen * dt);
+            }
         }
     }
 
@@ -928,7 +889,6 @@ export class EntityManager {
         
         // Applica lo scaling logaritmico completo usando applyWaveScaling
         if (typeof applyWaveScaling === 'function' && waveNumber > 1) {
-            // Crea un config fittizio per applicare lo scaling
             const baseConfig = {
                 combat: {
                     hp: zombie.maxHp,
@@ -944,7 +904,6 @@ export class EntityManager {
             
             const scaled = applyWaveScaling(baseConfig, waveNumber);
             
-            // Applica i valori scalati
             zombie.maxHp = scaled.combat.hp;
             zombie.hp = zombie.maxHp;
             zombie.speed = scaled.movement.speed;
@@ -953,6 +912,9 @@ export class EntityManager {
             zombie.dodgeChance = scaled.combat.dodgeChance;
             zombie.ccResistance = scaled.combat.ccResistance || 0;
         }
+        
+        // Initialize AI for this enemy
+        enemyAI.initializeEnemy(zombie);
         
         this.zombies.push(zombie);
         return zombie;
@@ -974,41 +936,28 @@ export class EntityManager {
 
     // Update all entities
     update(dt, currentTime) {
-        // Update zombies - pass riferimento a tutti i nemici per il comportamento tattico
+        // ===== ENEMY AI SYSTEM (OOP-based movement) =====
+        // First update abilities for all zombies
+        for (const zombie of this.zombies) {
+            zombie._allEnemies = this.zombies;
+            zombie.update(dt, currentTime);
+        }
+        
+        // Then update movement via centralized AI system
+        // This handles lane switching, avoidance, retreat, etc.
+        enemyAI.updateAll(this.zombies, dt, currentTime, this.cannons);
+        
+        // Remove dead or off-screen zombies
         for (let i = this.zombies.length - 1; i >= 0; i--) {
             const zombie = this.zombies[i];
-            zombie._allEnemies = this.zombies; // Passa riferimento alla lista per findNearbyEnemies
-            zombie.update(dt, currentTime);
-            
-            // Remove dead or off-screen zombies
             if (zombie.isDead() || zombie.isOffScreen()) {
                 this.zombies.splice(i, 1);
             }
         }
         
-        // Anti-overlap: separa i nemici che si sovrappongono
-        const minDist = 0.85; // distanza minima tra centri (in celle)
-        for (let i = 0; i < this.zombies.length; i++) {
-            for (let j = i + 1; j < this.zombies.length; j++) {
-                const a = this.zombies[i];
-                const b = this.zombies[j];
-                const dx = b.col - a.col;
-                const dy = b.row - a.row;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < minDist && dist > 0.01) {
-                    // Spingi via i due nemici
-                    const overlap = (minDist - dist) / 2;
-                    const nx = dx / dist;
-                    const ny = dy / dist;
-                    a.col -= nx * overlap;
-                    a.row -= ny * overlap * 0.5; // meno spinta verticale
-                    b.col += nx * overlap;
-                    b.row += ny * overlap * 0.5;
-                    // Limita col tra 0 e CONFIG.COLS-1
-                    a.col = Math.max(0.5, Math.min(CONFIG.COLS - 0.5, a.col));
-                    b.col = Math.max(0.5, Math.min(CONFIG.COLS - 0.5, b.col));
-                }
-            }
+        // Update cannons
+        for (const cannon of this.cannons) {
+            cannon.update(dt);
         }
 
         // Update projectiles

@@ -7,6 +7,7 @@ import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES } from './config.js';
 import { Utils } from './utils.js';
 import { ParticleSystem } from './particles.js';
 import { EntityManager } from './entities.js';
+import { AudioEngine } from './audio.js';
 
 export class Game {
     constructor(graphics, input, ui) {
@@ -16,11 +17,14 @@ export class Game {
 
         this.entities = new EntityManager();
         this.particles = new ParticleSystem();
+        this.audio = new AudioEngine();
 
         this.state = this.createInitialState();
 
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
+        
+        this.audio.play();
     }
 
     createInitialState() {
@@ -84,7 +88,14 @@ export class Game {
             const uiAction = this.ui.handleTap(gridPos, screenPos, this.state);
 
             if (uiAction) {
-                if (uiAction.type === 'shop') {
+                if (uiAction.type === 'settings') {
+                    // Handle settings actions
+                    if (uiAction.action === 'fullscreen') {
+                        this.toggleFullscreen();
+                    } else if (uiAction.action === 'music') {
+                        this.audio.toggle();
+                    }
+                } else if (uiAction.type === 'shop') {
                     // Shop button selected
                     this.particles.emit(gridPos.col, gridPos.row, {
                         text: '✓',
@@ -99,7 +110,21 @@ export class Game {
         });
 
         // Drag handler for merge system
+        this.input.onDrag((gridPos, screenPos) => {
+            // Handle slider dragging in settings popup
+            if (this.ui.showSettingsPopup && this.ui.isDraggingSlider) {
+                this.ui.handleSliderDrag(screenPos.x, screenPos.y);
+                return;
+            }
+        });
+        
         this.input.onDragEnd((startPos, endPos) => {
+            // Stop slider dragging
+            if (this.ui.showSettingsPopup && this.ui.isDraggingSlider) {
+                this.ui.stopSliderDrag();
+                return;
+            }
+            
             if (this.state.isPaused || this.state.isGameOver) return;
 
             this.handleDragMerge(startPos, endPos);
@@ -128,11 +153,13 @@ export class Game {
         // Check if in defense zone
         if (!this.ui.isInDefenseZone(row)) {
             this.particles.createWarningEffect(col, row, '❌');
+            this.audio.uiError();
             return;
         }
 
         // Check if position occupied
         if (this.entities.getCannon(col, row)) {
+            this.audio.uiError();
             return;
         }
 
@@ -142,12 +169,14 @@ export class Game {
         const actualCost = Math.floor(baseCost * this.state.cannonPriceMultiplier[cannonType]);
         if (this.state.coins < actualCost) {
             this.particles.createWarningEffect(col, row, '💰');
+            this.audio.uiError();
             return;
         }
 
         // Check cannon limit
         if (this.entities.cannons.length >= this.state.cannonLimit) {
             this.particles.createWarningEffect(col, row, 'FULL!');
+            this.audio.uiError();
             return;
         }
 
@@ -155,14 +184,13 @@ export class Game {
         this.state.coins -= actualCost;
         this.entities.addCannon(col, row, cannonType);
         this.particles.createPlacementEffect(col, row);
+        this.audio.towerPlace();
 
         // Aumenta il prezzo della torretta di 1/4 (25%)
         this.state.cannonPriceMultiplier[cannonType] = parseFloat((this.state.cannonPriceMultiplier[cannonType] * 1.25).toFixed(3));
 
         // Track for XP system
         this.state.towersPlaced++;
-
-        // Play sound feedback (if audio system added later)
     }
 
     toggleCannonSelection(cannon) {
@@ -172,10 +200,12 @@ export class Game {
             // Deselect
             cannon.selected = false;
             this.state.selectedCannons.splice(index, 1);
+            this.audio.uiClick();
         } else {
             // Select
             cannon.selected = true;
             this.state.selectedCannons.push(cannon);
+            this.audio.uiClick();
 
             // Check for auto-merge (3 of same type and level)
             if (this.state.selectedCannons.length === 3) {
@@ -201,6 +231,7 @@ export class Game {
             // Not compatible - deselect all
             this.deselectAll();
             this.particles.createWarningEffect(first.col, first.row, '❌ NO MATCH');
+            this.audio.uiError();
         }
     }
 
@@ -229,6 +260,7 @@ export class Game {
 
         // Visual feedback
         this.particles.createMergeEffect(col, row);
+        this.audio.towerMerge();
 
         // Score bonus
         const mergeBonus = Math.floor(100 * Math.pow(2, newLevel - 1));
@@ -364,6 +396,7 @@ export class Game {
             scale: 2.0,
             glow: true
         });
+        this.audio.waveStart();
     }
 
     spawnZombie() {
@@ -371,6 +404,12 @@ export class Game {
         const type = this.selectZombieType();
         // Passa il numero della wave per applicare lo scaling logaritmico
         const zombie = this.entities.addZombie(col, type, this.state.wave);
+        
+        if (type === 'BOSS' || type === 'GOLEM') {
+            this.audio.bossSpawn();
+        } else {
+            this.audio.enemySpawn();
+        }
         // Potenziamento nemici speciali nelle ondate avanzate
         if (zombie && zombie.isHealer && this.state.wave >= 12) {
             zombie.healAmount = Math.floor(zombie.healAmount * (1 + (this.state.wave - 10) * 0.15));
@@ -466,6 +505,7 @@ export class Game {
             scale: 1.5,
             glow: true
         });
+        this.audio.waveComplete();
 
         // Next wave after delay
         setTimeout(() => {
@@ -532,6 +572,9 @@ export class Game {
             if (target) {
                 cannon.fire(currentTime, target);
                 this.entities.fireProjectile(cannon, target);
+                
+                // Play shoot sound specific to tower type
+                this.audio.towerShoot(cannon.type);
             }
         });
 
@@ -663,10 +706,13 @@ export class Game {
         // Visual feedback with effectiveness indicator
         if (effectiveness >= 1.5) {
             this.particles.createDamageNumber(zombie.col, zombie.row, actualDamage, '#00ff00'); // Green for effective
+            this.audio.enemyHit(1.2);
         } else if (effectiveness <= 0.7) {
             this.particles.createDamageNumber(zombie.col, zombie.row, actualDamage, '#888888'); // Gray for ineffective
+            this.audio.enemyHit(0.8);
         } else {
             this.particles.createDamageNumber(zombie.col, zombie.row, actualDamage);
+            this.audio.enemyHit();
         }
 
         // Apply slow effect
@@ -801,6 +847,7 @@ export class Game {
                 scale: 1.2,
                 glow: true
             });
+            this.audio.combo(this.state.combo);
         }
 
         // Kill streak bonus ogni 10 uccisioni senza perdere energia
@@ -828,6 +875,8 @@ export class Game {
         // Visual feedback
         this.particles.createDeathEffect(zombie.col, zombie.row, zombie.icon);
         this.particles.createCoinReward(zombie.col, zombie.row, zombie.reward);
+        this.audio.enemyDeath();
+        this.audio.coinCollect();
 
         // Remove zombie
         this.entities.removeZombie(zombie);
@@ -1001,16 +1050,20 @@ export class Game {
 
     pause() {
         this.state.isPaused = true;
+        this.audio.pause();
     }
 
     resume() {
         this.state.isPaused = false;
+        this.audio.resume();
     }
 
     gameOver() {
         if (this.state.isGameOver) return;
 
         this.state.isGameOver = true;
+        this.audio.stop();
+        this.audio.gameOverSound();
 
         // Note: gameOver is now handled by main.js with complete session management
         // This ensures proper tracking of session duration and all XP metrics
@@ -1023,6 +1076,8 @@ export class Game {
         this.particles.clear();
         this.deselectAll();
         this.ui.clearRetryButton();
+        
+        this.audio.play();
 
         // Reset session state (handled entirely in main.js)
         if (window.resetGameSession) {
@@ -1032,6 +1087,73 @@ export class Game {
 
     getState() {
         return this.state;
+    }
+    
+    toggleFullscreen() {
+        const isFullscreen = document.body.classList.contains('game-fullscreen');
+        
+        if (isFullscreen) {
+            this.exitFullscreen();
+        } else {
+            this.requestFullscreen();
+        }
+    }
+    
+    requestFullscreen() {
+        // Close settings popup
+        this.ui.closeSettingsPopup();
+        
+        // Apply CSS class for fullscreen styling
+        document.body.classList.add('game-fullscreen');
+        
+        // Scroll to top to hide address bar on mobile
+        window.scrollTo(0, 0);
+        
+        // Try native fullscreen API (works on desktop/Android)
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+        
+        // Resize canvas after fullscreen
+        setTimeout(() => {
+            this.graphics.setupCanvas();
+            this.ui.setupShopButtons();
+        }, 100);
+    }
+    
+    exitFullscreen() {
+        // Close settings popup
+        this.ui.closeSettingsPopup();
+        
+        // Remove CSS fullscreen class
+        document.body.classList.remove('game-fullscreen');
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+        
+        // Exit native fullscreen if active
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        
+        // Resize canvas after exiting fullscreen
+        setTimeout(() => {
+            this.graphics.setupCanvas();
+            this.ui.setupShopButtons();
+        }, 100);
     }
 }
 

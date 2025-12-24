@@ -23,8 +23,9 @@ import { Game } from './game.js';
 
     const graphics = new Graphics(canvas);
     const input = new InputHandler(canvas, graphics);
-    const ui = new UIManager(graphics, canvas);
-    const game = new Game(graphics, input, ui);
+    const game = new Game(graphics, input, null); // UI will be passed after
+    const ui = new UIManager(graphics, canvas, game.audio);
+    game.ui = ui;
 
     console.log('[Merge Tower] Game systems initialized');
 
@@ -205,7 +206,26 @@ import { Game } from './game.js';
 
     
     
-    // Just start the game - let the platform handle fullscreen if needed
+        // ========== START GAME ==========
+    
+    // Expose resetSession globally for game.js
+    window.resetGameSession = resetSession;
+    
+    function startGame() {
+        console.log('[Merge Tower] Starting game...');
+        
+        // Hide loading screen
+        loadingScreen.classList.add('hidden');
+        
+        // Start game loop
+        running = true;
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+        
+        console.log('[Merge Tower] Game started!');
+    }
+    
+    // Just start the game
     console.log('[Merge Tower] Starting game...');
     setTimeout(startGame, 500);
     

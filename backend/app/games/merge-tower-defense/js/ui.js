@@ -7,9 +7,10 @@ import { CONFIG, CANNON_TYPES, UI_CONFIG } from './config.js';
 import { Utils } from './utils.js';
 
 export class UIManager {
-    constructor(graphics, canvas) {
+    constructor(graphics, canvas, audio = null) {
         this.graphics = graphics;
         this.canvas = canvas;
+        this.audio = audio;
         
         this.selectedCannonType = 'BASIC';
         this.showRangePreview = false;
@@ -22,9 +23,18 @@ export class UIManager {
         
         // Game over button
         this.retryButton = null;
+        
+        // Settings
+        this.settingsButton = null;
+        this.showSettingsPopup = false;
+        this.settingsPopupButtons = [];
+        this.volumeSliders = [];
+        this.isDraggingSlider = false;
+        this.draggedSlider = null;
     }
 
     setupShopButtons() {
+        // Use canvas width to match iframe width
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const buttonCount = Object.keys(CANNON_TYPES).length;
         const horizontalPadding = 12;
@@ -83,13 +93,19 @@ export class UIManager {
                 Utils.colorWithAlpha(cannon.color, 0.2)
             );
         }
+        
+        // Settings popup
+        if (this.showSettingsPopup) {
+            this.renderSettingsPopup();
+        }
     }
 
     renderTopBar(gameState) {
         const ctx = this.graphics.ctx;
+        // Use canvas width to match iframe width
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         
-        // Background
+        // Background - full canvas width
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, width, UI_CONFIG.TOP_BAR_HEIGHT);
         
@@ -97,6 +113,32 @@ export class UIManager {
         ctx.strokeStyle = CONFIG.COLORS.BUTTON_BORDER;
         ctx.lineWidth = 2;
         ctx.strokeRect(0, 0, width, UI_CONFIG.TOP_BAR_HEIGHT);
+        
+        // Settings gear icon (top-right)
+        const gearSize = 32;
+        const gearX = width - gearSize - 10;
+        const gearY = 10;
+        
+        // Store settings button position for click detection
+        this.settingsButton = {
+            x: gearX,
+            y: gearY,
+            width: gearSize,
+            height: gearSize
+        };
+        
+        // Draw gear background
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
+        ctx.beginPath();
+        ctx.arc(gearX + gearSize/2, gearY + gearSize/2, gearSize/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw gear icon
+        ctx.font = `${gearSize * 0.7}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.fillText('⚙️', gearX + gearSize/2, gearY + gearSize/2);
         
         // Stats
         const stats = [
@@ -122,7 +164,9 @@ export class UIManager {
             }
         ];
         
-        const statWidth = width / stats.length;
+        // Adjust stat width to accommodate gear icon
+        const statsAreaWidth = width - gearSize - 20;
+        const statWidth = statsAreaWidth / stats.length;
         
         stats.forEach((stat, index) => {
             const x = statWidth * index + statWidth / 2;
@@ -150,9 +194,9 @@ export class UIManager {
         
         // Wave progress bar
         if (gameState.waveInProgress) {
-            const barWidth = width * 0.8;
+            const barWidth = statsAreaWidth * 0.8;
             const barHeight = 4;
-            const barX = (width - barWidth) / 2;
+            const barX = (statsAreaWidth - barWidth) / 2;
             const barY = UI_CONFIG.TOP_BAR_HEIGHT - 10;
             const progress = gameState.waveZombiesSpawned / gameState.waveZombiesTotal;
             
@@ -166,10 +210,11 @@ export class UIManager {
 
     renderShop(gameState) {
         const ctx = this.graphics.ctx;
+        // Use canvas width to match iframe width
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         
-        // Background
+        // Background - full canvas width
         ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.fillRect(0, height - UI_CONFIG.SHOP_HEIGHT, width, UI_CONFIG.SHOP_HEIGHT);
         
@@ -265,6 +310,27 @@ export class UIManager {
     }
 
     handleTap(gridPos, screenPos, gameState) {
+        // Check settings popup clicks first (highest priority)
+        if (this.showSettingsPopup) {
+            const popupAction = this.checkSettingsPopupClick(screenPos.x, screenPos.y);
+            if (popupAction) {
+                // Close popup if close button was clicked
+                if (popupAction === 'close') {
+                    this.closeSettingsPopup();
+                }
+                return { type: 'settings', action: popupAction };
+            }
+            // Click outside popup - close it
+            this.closeSettingsPopup();
+            return { type: 'settings', action: 'close' };
+        }
+        
+        // Check settings gear click
+        if (this.checkSettingsClick(screenPos.x, screenPos.y)) {
+            this.toggleSettingsPopup();
+            return { type: 'settings', action: 'open' };
+        }
+        
         // Check shop button clicks
         const clickedButton = this.getClickedShopButton(screenPos);
         if (clickedButton) {
@@ -432,6 +498,260 @@ export class UIManager {
             bold: true,
             shadow: true
         });
+    }
+    
+    // Settings popup
+    renderSettingsPopup() {
+        const ctx = this.graphics.ctx;
+        const width = this.canvas.width / (window.devicePixelRatio || 1);
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        
+        // Overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Popup box
+        const popupWidth = Math.min(400, width * 0.85);
+        const popupHeight = Math.min(450, height * 0.7);
+        const popupX = (width - popupWidth) / 2;
+        const popupY = (height - popupHeight) / 2;
+        
+        // Popup background with tower defense theme
+        ctx.fillStyle = 'rgba(10, 20, 15, 0.95)';
+        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+        
+        // Popup border (neon green like defense zone)
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        
+        // Inner glow effect
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(popupX + 3, popupY + 3, popupWidth - 6, popupHeight - 6);
+        
+        // Title with gear icon
+        this.graphics.drawText('⚙️ SETTINGS', width / 2, popupY + 45, {
+            size: 32,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'center',
+            bold: true,
+            shadow: true
+        });
+        
+        // Settings options
+        const contentWidth = popupWidth * 0.8;
+        const contentX = popupX + (popupWidth - contentWidth) / 2;
+        let contentY = popupY + 100;
+        
+        this.settingsPopupButtons = [];
+        this.volumeSliders = [];
+        
+        // Music volume slider
+        this.graphics.drawText('🎵 Music Volume', contentX, contentY, {
+            size: 18,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'left',
+            bold: true
+        });
+        contentY += 35;
+        
+        const musicVolume = this.audio ? this.audio.volume : 0.3;
+        this.renderVolumeSlider(contentX, contentY, contentWidth, 'music', musicVolume);
+        contentY += 50;
+        
+        // Sound volume slider
+        this.graphics.drawText('🔊 Sound Volume', contentX, contentY, {
+            size: 18,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'left',
+            bold: true
+        });
+        contentY += 35;
+        
+        const soundVolume = this.audio ? this.audio.soundVolume : 0.5;
+        this.renderVolumeSlider(contentX, contentY, contentWidth, 'sound', soundVolume);
+        contentY += 60;
+        
+        // Fullscreen toggle button
+        const buttonHeight = 50;
+        const isFullscreen = document.body.classList.contains('game-fullscreen');
+        const fullscreenText = isFullscreen ? '🔲 Exit Fullscreen' : '⛶ Enter Fullscreen';
+        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, fullscreenText, 'fullscreen');
+        contentY += buttonHeight + 15;
+        
+        // Close button
+        contentY += 15;
+        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight * 0.8, '✕ Close', 'close');
+    }
+    
+    renderVolumeSlider(x, y, width, type, value) {
+        const ctx = this.graphics.ctx;
+        const sliderHeight = 20;
+        const handleRadius = 12;
+        
+        // Store slider for interaction
+        this.volumeSliders.push({
+            x, y, width, height: sliderHeight, type, value
+        });
+        
+        // Slider track background
+        ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+        Utils.drawRoundRect(ctx, x, y, width, sliderHeight, sliderHeight / 2);
+        ctx.fill();
+        
+        // Slider track fill (volume level)
+        const fillWidth = width * value;
+        ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        Utils.drawRoundRect(ctx, x, y, fillWidth, sliderHeight, sliderHeight / 2);
+        ctx.fill();
+        
+        // Slider handle
+        const handleX = x + fillWidth;
+        const handleY = y + sliderHeight / 2;
+        
+        ctx.beginPath();
+        ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+        ctx.fillStyle = CONFIG.COLORS.BUTTON_BG;
+        ctx.fill();
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Volume percentage text
+        const percentage = Math.round(value * 100);
+        this.graphics.drawText(`${percentage}%`, x + width + 40, y + sliderHeight / 2, {
+            size: 16,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'left',
+            baseline: 'middle',
+            bold: true
+        });
+    }
+    
+    renderSettingsButton(x, y, width, height, text, action, disabled = false) {
+        const ctx = this.graphics.ctx;
+        
+        // Store button for click detection
+        this.settingsPopupButtons.push({
+            x, y, width, height, action, disabled
+        });
+        
+        // Button background
+        if (disabled) {
+            ctx.fillStyle = 'rgba(50, 50, 50, 0.5)';
+        } else if (action === 'close') {
+            ctx.fillStyle = 'rgba(220, 50, 50, 0.8)';
+        } else {
+            ctx.fillStyle = CONFIG.COLORS.BUTTON_BG;
+        }
+        
+        Utils.drawRoundRect(ctx, x, y, width, height, 8);
+        ctx.fill();
+        
+        // Button border
+        ctx.strokeStyle = disabled ? '#555555' : CONFIG.COLORS.BUTTON_BORDER;
+        ctx.lineWidth = 2;
+        Utils.drawRoundRect(ctx, x, y, width, height, 8);
+        ctx.stroke();
+        
+        // Button text
+        this.graphics.drawText(text, x + width / 2, y + height / 2, {
+            size: 18,
+            color: disabled ? '#666666' : CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'center',
+            baseline: 'middle',
+            bold: true,
+            shadow: !disabled
+        });
+    }
+    
+    // Check if settings gear was clicked
+    checkSettingsClick(screenX, screenY) {
+        if (!this.settingsButton) return false;
+        
+        return screenX >= this.settingsButton.x && 
+               screenX <= this.settingsButton.x + this.settingsButton.width &&
+               screenY >= this.settingsButton.y && 
+               screenY <= this.settingsButton.y + this.settingsButton.height;
+    }
+    
+    // Check if settings popup button was clicked
+    checkSettingsPopupClick(screenX, screenY) {
+        if (!this.showSettingsPopup) return null;
+        
+        // Check slider clicks/drags first
+        for (const slider of this.volumeSliders) {
+            const handleX = slider.x + slider.width * slider.value;
+            const handleY = slider.y + slider.height / 2;
+            const handleRadius = 12;
+            
+            // Check if clicking on handle
+            const dist = Math.sqrt(Math.pow(screenX - handleX, 2) + Math.pow(screenY - handleY, 2));
+            if (dist <= handleRadius + 5) {
+                this.isDraggingSlider = true;
+                this.draggedSlider = slider;
+                return 'slider';
+            }
+            
+            // Check if clicking anywhere on slider track
+            if (screenX >= slider.x && screenX <= slider.x + slider.width &&
+                screenY >= slider.y && screenY <= slider.y + slider.height) {
+                // Jump to clicked position
+                const newValue = Math.max(0, Math.min(1, (screenX - slider.x) / slider.width));
+                this.updateSliderValue(slider, newValue);
+                this.isDraggingSlider = true;
+                this.draggedSlider = slider;
+                return 'slider';
+            }
+        }
+        
+        // Check buttons
+        for (const button of this.settingsPopupButtons) {
+            if (button.disabled) continue;
+            
+            if (screenX >= button.x && 
+                screenX <= button.x + button.width &&
+                screenY >= button.y && 
+                screenY <= button.y + button.height) {
+                return button.action;
+            }
+        }
+        
+        return null;
+    }
+    
+    handleSliderDrag(screenX, screenY) {
+        if (!this.isDraggingSlider || !this.draggedSlider) return;
+        
+        const slider = this.draggedSlider;
+        const newValue = Math.max(0, Math.min(1, (screenX - slider.x) / slider.width));
+        this.updateSliderValue(slider, newValue);
+    }
+    
+    stopSliderDrag() {
+        this.isDraggingSlider = false;
+        this.draggedSlider = null;
+    }
+    
+    updateSliderValue(slider, value) {
+        slider.value = value;
+        
+        if (this.audio) {
+            if (slider.type === 'music') {
+                this.audio.setVolume(value);
+            } else if (slider.type === 'sound') {
+                this.audio.setSoundVolume(value);
+            }
+        }
+    }
+    
+    toggleSettingsPopup() {
+        this.showSettingsPopup = !this.showSettingsPopup;
+    }
+    
+    closeSettingsPopup() {
+        this.showSettingsPopup = false;
     }
 }
 

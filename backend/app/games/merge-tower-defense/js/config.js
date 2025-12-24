@@ -68,7 +68,7 @@ export const CANNON_TYPES = {
         color: '#00ff88',
         description: 'Balanced, decent vs all',
         costMultiplier: 1.0,
-        effectiveness: { HEALER: 1.0, SHIELDED: 0.8, SPLITTER: 1.0, PHASER: 0.7 },
+        effectiveness: { NORMAL: 1.0, TANK: 0.9, RUSHER: 1.0, FLYER: 1.0, ARMORED: 0.8, BOSS: 0.9, HEALER: 1.1, PHASER: 0.9, VAMPIRE: 1.0, BOMBER: 1.0, SHADOW: 0.9, SIREN: 1.0, GOLEM: 0.8 },
         // Merge strategy: Versatile, okay against everything
     },
 
@@ -85,8 +85,8 @@ export const CANNON_TYPES = {
         color: '#ff8800',
         description: 'Shreds fast targets',
         costMultiplier: 1.3,
-        effectiveness: { HEALER: 1.3, SHIELDED: 0.6, SPLITTER: 0.8, PHASER: 1.5 },
-        // Merge strategy: COUNTER per FAST zombies e PHASER - high DPS
+        effectiveness: { NORMAL: 1.2, TANK: 0.7, RUSHER: 1.6, FLYER: 1.5, ARMORED: 0.5, BOSS: 0.6, HEALER: 1.4, PHASER: 1.7, VAMPIRE: 1.1, BOMBER: 1.3, SHADOW: 1.8, SIREN: 1.2, GOLEM: 0.5 },
+        // Merge strategy: COUNTER per nemici veloci (RUSHER, SHADOW, PHASER, FLYER) - high DPS
     },
 
     SNIPER: {
@@ -102,8 +102,8 @@ export const CANNON_TYPES = {
         color: '#0088ff',
         description: 'Assassinates priority targets',
         costMultiplier: 2.0,
-        effectiveness: { HEALER: 2.0, SHIELDED: 0.5, SPLITTER: 1.2, PHASER: 0.8 },
-        // Merge strategy: COUNTER per HEALER - one-shot priority targets
+        effectiveness: { NORMAL: 0.8, TANK: 1.0, RUSHER: 0.7, FLYER: 1.0, ARMORED: 0.9, BOSS: 1.3, HEALER: 2.2, PHASER: 0.9, VAMPIRE: 1.8, BOMBER: 1.5, SHADOW: 0.8, SIREN: 2.0, GOLEM: 1.2 },
+        // Merge strategy: COUNTER per priority targets (HEALER, SIREN, VAMPIRE) - one-shot elimination
     },
 
     SPLASH: {
@@ -120,8 +120,8 @@ export const CANNON_TYPES = {
         color: '#ffaa00',
         description: 'Destroys grouped enemies',
         costMultiplier: 1.6,
-        effectiveness: { HEALER: 1.1, SHIELDED: 1.3, SPLITTER: 2.0, PHASER: 0.9 },
-        // Merge strategy: COUNTER per SPLITTER - AoE prevents split abuse
+        effectiveness: { NORMAL: 1.5, TANK: 1.3, RUSHER: 1.4, FLYER: 1.3, ARMORED: 1.2, BOSS: 0.8, HEALER: 1.4, PHASER: 1.2, VAMPIRE: 1.3, BOMBER: 1.8, SHADOW: 1.3, SIREN: 1.3, GOLEM: 0.9 },
+        // Merge strategy: COUNTER per nemici raggruppati e BOMBER (li uccide prima che esplodano)
     },
 
     FREEZE: {
@@ -137,10 +137,10 @@ export const CANNON_TYPES = {
         slowDuration: 2000,
         projectileSpeed: 10,
         color: '#00ddff',
-        description: 'Blocks shield regeneration',
+        description: 'Slows all enemies effectively',
         costMultiplier: 1.4,
-        effectiveness: { HEALER: 0.8, SHIELDED: 2.0, SPLITTER: 1.0, PHASER: 1.3 },
-        // Merge strategy: COUNTER per SHIELDED - previene regen scudo
+        effectiveness: { NORMAL: 1.1, TANK: 1.3, RUSHER: 1.8, FLYER: 1.5, ARMORED: 1.2, BOSS: 1.6, HEALER: 1.2, PHASER: 1.9, VAMPIRE: 1.3, BOMBER: 1.4, SHADOW: 1.7, SIREN: 1.3, GOLEM: 2.0 },
+        // Merge strategy: COUNTER per nemici veloci e boss/golem - rallenta avanzamento
     },
 
     LASER: {
@@ -157,8 +157,8 @@ export const CANNON_TYPES = {
         color: '#ffff00',
         description: 'Line-piercing laser',
         costMultiplier: 1.8,
-        effectiveness: { HEALER: 1.4, SHIELDED: 1.0, SPLITTER: 1.4, PHASER: 1.0 },
-        // Merge strategy: Buono vs linee di nemici
+        effectiveness: { NORMAL: 1.4, TANK: 1.3, RUSHER: 1.2, FLYER: 1.3, ARMORED: 1.6, BOSS: 1.2, HEALER: 1.5, PHASER: 1.1, VAMPIRE: 1.4, BOMBER: 1.3, SHADOW: 1.2, SIREN: 1.4, GOLEM: 1.3 },
+        // Merge strategy: Buono vs linee di nemici e ARMORED (piercing ignora parte armor)
     },
 
     ELECTRIC: {
@@ -175,8 +175,8 @@ export const CANNON_TYPES = {
         color: '#aa00ff',
         description: 'Chains between groups',
         costMultiplier: 1.7,
-        effectiveness: { HEALER: 1.6, SHIELDED: 0.9, SPLITTER: 1.3, PHASER: 1.1 },
-        // Merge strategy: Buono vs nemici raggruppati
+        effectiveness: { NORMAL: 1.6, TANK: 1.2, RUSHER: 1.3, FLYER: 1.4, ARMORED: 1.0, BOSS: 0.9, HEALER: 1.9, PHASER: 1.3, VAMPIRE: 1.5, BOMBER: 1.4, SHADOW: 1.3, SIREN: 1.7, GOLEM: 1.0 },
+        // Merge strategy: Eccellente vs gruppi e priority targets (chain hit su HEALER/SIREN)
     }
 };
 
@@ -195,17 +195,6 @@ export const ZOMBIE_TYPES = {
         scale: 1.0,
     },
 
-    FAST: {
-        id: 'FAST',
-        name: 'Runner',
-        icon: '🧟‍♂️', // Legacy fallback
-        sprite: () => MultiPartEnemySprites.createRusher(),
-        hp: 6,
-        speed: 1.2,
-        reward: 25,
-        color: '#ffff00',
-        scale: 0.9,
-    },
 
     TANK: {
         id: 'TANK',
@@ -219,17 +208,29 @@ export const ZOMBIE_TYPES = {
         scale: 1.3,
     },
 
-    AGILE: {
-        id: 'AGILE',
+    RUSHER: {
+        id: 'RUSHER',
         name: 'Leaper',
         icon: '🦇', // Legacy fallback
-        sprite: () => MultiPartEnemySprites.createFlyer(),
+        sprite: () => MultiPartEnemySprites.createRusher(),
         hp: 12,
         speed: 1.0,
         dodgeChance: 0.25,  // Can dodge projectiles
         reward: 40,
         color: '#ff00ff',
         scale: 1.2,
+    },
+
+    FLYER: {
+        id: 'FLYER',
+        name: 'Sky Demon',
+        icon: '🦇', // Legacy fallback
+        sprite: () => MultiPartEnemySprites.createFlyer(),
+        hp: 15,
+        speed: 0.9,
+        reward: 35,
+        color: '#6a4a7a',
+        scale: 1.1,
     },
 
     ARMORED: {
@@ -277,43 +278,11 @@ export const ZOMBIE_TYPES = {
         isHealer: true,
     },
 
-    SHIELDED: {
-        id: 'SHIELDED',
-        name: 'Guardian',
-        icon: '🛡️',
-        sprite: () => MultiPartEnemySprites.createGolem(),
-        hp: 20,
-        speed: 0.5,
-        shield: 30,  // Scudo che deve essere distrutto prima di danneggiare HP
-        shieldRegen: 2,  // Rigenera 2 scudo/sec se non colpito per 3sec
-        shieldRegenDelay: 3000,
-        reward: 55,
-        color: '#00aaff',
-        scale: 1.2,
-        hasShield: true,
-    },
-
-    SPLITTER: {
-        id: 'SPLITTER',
-        name: 'Hivemind',
-        icon: '🦠',
-        sprite: () => MultiPartEnemySprites.createGrunt(),
-        hp: 25,
-        speed: 0.6,
-        splitCount: 3,  // Si divide in 3 nemici più piccoli alla morte
-        splitType: 'FAST',  // Tipo nemico spawn alla divisione
-        splitHpPercent: 0.5,  // I figli hanno 50% HP del tipo base
-        reward: 45,
-        color: '#ff00ff',
-        scale: 1.15,
-        canSplit: true,
-    },
-
     PHASER: {
         id: 'PHASER',
         name: 'Phantom',
         icon: '👻',
-        sprite: () => MultiPartEnemySprites.createFlyer(),
+        sprite: () => MultiPartEnemySprites.createPhaser(),
         hp: 12,
         speed: 0.8,
         phaseInterval: 4000,  // Teletrasporta ogni 4 secondi
@@ -325,7 +294,6 @@ export const ZOMBIE_TYPES = {
         canPhase: true,
     },
 
-    // ===== NEW UNIQUE ENEMIES =====
 
     VAMPIRE: {
         id: 'VAMPIRE',

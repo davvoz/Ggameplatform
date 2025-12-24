@@ -15,6 +15,7 @@ import { bomber } from './sprites/enemy/createBomber.js';
 import { shadow } from './sprites/enemy/createShadow.js';
 import { siren } from './sprites/enemy/createSiren.js';
 import { golem } from './sprites/enemy/createGolem.js';
+import { phaser } from './sprites/enemy/createPhaser.js';
 
 export const MultiPartEnemySprites = {
 
@@ -64,5 +65,9 @@ export const MultiPartEnemySprites = {
 
     createGolem() {
         return golem();
+    },
+
+    createPhaser() {
+        return phaser();  
     }
 };

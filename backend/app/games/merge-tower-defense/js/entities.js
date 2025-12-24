@@ -357,16 +357,13 @@ class Zombie {
         try {
             switch(this.type) {
                 case 'NORMAL': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
-                case 'FAST': this.multiSprite = MultiPartEnemySprites.createRusher(); break;
+                case 'RUSHER': this.multiSprite = MultiPartEnemySprites.createRusher(); break;
                 case 'TANK': this.multiSprite = MultiPartEnemySprites.createTank(); break;
-                case 'AGILE': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
+                case 'FLYER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
                 case 'ARMORED': this.multiSprite = MultiPartEnemySprites.createArmored(); break;
                 case 'BOSS': this.multiSprite = MultiPartEnemySprites.createBoss(); break;
                 case 'HEALER': this.multiSprite = MultiPartEnemySprites.createHealer(); break;
-                case 'SHIELDED': this.multiSprite = MultiPartEnemySprites.createTank(); break;
-                case 'SPLITTER': this.multiSprite = MultiPartEnemySprites.createGrunt(); break;
-                case 'PHASER': this.multiSprite = MultiPartEnemySprites.createFlyer(); break;
-                // NEW ENEMIES
+                case 'PHASER': this.multiSprite = MultiPartEnemySprites.createPhaser(); break;
                 case 'VAMPIRE': this.multiSprite = MultiPartEnemySprites.createVampire(); break;
                 case 'BOMBER': this.multiSprite = MultiPartEnemySprites.createBomber(); break;
                 case 'SHADOW': this.multiSprite = MultiPartEnemySprites.createShadow(); break;
@@ -374,34 +371,34 @@ class Zombie {
                 case 'GOLEM': this.multiSprite = MultiPartEnemySprites.createGolem(); break;
             }
             
-            if (this.multiSprite) {
-                if (this.type === 'AGILE') {
-                    this.multiSprite.play('fly');
-                } else {
-                    this.multiSprite.play('walk');
-                }
+            // if (this.multiSprite) {
+            //     if (this.type === 'RUSHER') {
+            //         this.multiSprite.play('fly');
+            //     } else {
+            //         this.multiSprite.play('walk');
+            //     }
                 
-                this.multiSprite.onAnimationComplete = (name) => {
-                    if (name === 'hit') {
-                        // Return to appropriate locomotion
-                        if (this.type === 'AGILE') {
-                            this.multiSprite.play('fly');
-                        } else if (this.atWall && this.multiSprite.animations.has('attack')) {
-                            // After hit while at wall, favor idle to prevent jitter
-                            this.multiSprite.play('idle');
-                        } else {
-                            this.multiSprite.play('walk');
-                        }
-                    } else if (name === 'attack' || name === 'drain') {
-                        // After attack or drain, return to idle at wall or walk otherwise
-                        if (this.atWall) {
-                            this.multiSprite.play('idle');
-                        } else {
-                            this.multiSprite.play(this.type === 'AGILE' ? 'fly' : 'walk');
-                        }
-                    }
-                };
-            }
+            //     this.multiSprite.onAnimationComplete = (name) => {
+            //         if (name === 'hit') {
+            //             // Return to appropriate locomotion
+            //             if (this.type === 'RUSHER') {
+            //                 this.multiSprite.play('fly');
+            //             } else if (this.atWall && this.multiSprite.animations.has('attack')) {
+            //                 // After hit while at wall, favor idle to prevent jitter
+            //                 this.multiSprite.play('idle');
+            //             } else {
+            //                 this.multiSprite.play('walk');
+            //             }
+            //         } else if (name === 'attack' || name === 'drain') {
+            //             // After attack or drain, return to idle at wall or walk otherwise
+            //             if (this.atWall) {
+            //                 this.multiSprite.play('idle');
+            //             } else {
+            //                 this.multiSprite.play(this.type === 'RUSHER' ? 'fly' : 'walk');
+            //             }
+            //         }
+            //     };
+            // }
         } catch(e) {
             this.multiSprite = null;
         }
@@ -551,7 +548,7 @@ class Zombie {
             
             // Don't interrupt hit or death animations
             if (!isHitPlaying && !isDeathPlaying) {
-                const locomotion = this.type === 'AGILE' || this.type === 'PHASER' ? 'fly' : 'walk';
+                const locomotion = this.type === 'FLYER'  ? 'fly' : 'walk';
                 
                 if (this.atWall) {
                     // At wall: idle between occasional "attack" or "drain" strikes

@@ -23,7 +23,7 @@ export class Game {
 
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
-        
+
         this.audio.play();
     }
 
@@ -395,7 +395,7 @@ export class Game {
         const type = this.selectZombieType();
         // Passa il numero della wave per applicare lo scaling logaritmico
         const zombie = this.entities.addZombie(col, type, this.state.wave);
-        
+
         if (type === 'BOSS' || type === 'GOLEM') {
             this.audio.bossSpawn();
         } else {
@@ -417,20 +417,16 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
+       // if (wave == 1) return 'GOLEM';
 
         let options = [
             { value: 'NORMAL', weight: Math.max(2, 12 - Math.floor(wave / 2)) },
-            { value: 'FAST', weight: wave >= 2 ? 10 + Math.floor(wave * 1.2) : 0 },
             { value: 'TANK', weight: wave >= 3 ? 7 + Math.floor(wave / 2) : 0 },
-            { value: 'AGILE', weight: wave >= 4 ? 8 + Math.floor(wave / 2) : 0 },
+            { value: 'RUSHER', weight: wave >= 4 ? 8 + Math.floor(wave / 2) : 0 },
             { value: 'ARMORED', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
             { value: 'BOSS', weight: (wave >= 8 && (wave % 4 === 0 || wave % 10 === 0)) ? 4 + Math.floor(wave / 8) : 0 },
-            // Tattici
             { value: 'HEALER', weight: wave >= 5 ? 6 + Math.floor(wave / 3) : 0 },
-            { value: 'SHIELDED', weight: wave >= 6 ? 7 + Math.floor(wave / 2) : 0 },
-            { value: 'SPLITTER', weight: wave >= 7 ? 8 + Math.floor(wave / 2) : 0 },
             { value: 'PHASER', weight: wave >= 8 ? 7 + Math.floor(wave / 2) : 0 },
-            // NEW UNIQUE ENEMIES
             { value: 'VAMPIRE', weight: wave >= 6 ? 6 + Math.floor(wave / 3) : 0 },  // Lifesteal bloodlord
             { value: 'BOMBER', weight: wave >= 5 ? 7 + Math.floor(wave / 3) : 0 },   // Explodes on death
             { value: 'SHADOW', weight: wave >= 7 ? 5 + Math.floor(wave / 4) : 0 },   // Goes invisible
@@ -440,11 +436,10 @@ export class Game {
         // Ondate speciali: bilanciato per essere difficile ma non impossibile
         if (this.state.specialWave === 'Assalto Speciale!') {
             options = [
-                { value: 'SPLITTER', weight: 12 },
-                { value: 'FAST', weight: 15 },
-                { value: 'AGILE', weight: 10 },
-                { value: 'SHADOW', weight: 8 },
-                { value: 'NORMAL', weight: 8 }
+                { value: 'RUSHER', weight: 15 },
+                { value: 'SHADOW', weight: 10 },
+                { value: 'NORMAL', weight: 8 },
+                { value: 'FLYER', weight: 8 }
             ];
         } else if (this.state.specialWave === 'Doppio Boss!') {
             options = [
@@ -563,7 +558,7 @@ export class Game {
             if (target) {
                 cannon.fire(currentTime, target);
                 this.entities.fireProjectile(cannon, target);
-                
+
                 // Play shoot sound specific to tower type
                 this.audio.towerShoot(cannon.type);
             }
@@ -911,7 +906,7 @@ export class Game {
 
         if (totalBricksToRemove > 0) {
             this.state.energy -= totalBricksToRemove;
-            
+
             // Play wall damage sound
             this.audio.enemyDamageWall();
 
@@ -957,7 +952,7 @@ export class Game {
         if (this.state.displayEnergy !== this.state.energy) {
             const diff = this.state.energy - this.state.displayEnergy;
             const step = this.state.energyAnimSpeed * dt;
-            
+
             if (Math.abs(diff) <= step) {
                 // Snap to target
                 this.state.displayEnergy = this.state.energy;
@@ -1070,7 +1065,7 @@ export class Game {
         this.particles.clear();
         this.deselectAll();
         this.ui.clearRetryButton();
-        
+
         this.audio.play();
 
         // Reset session state (handled entirely in main.js)
@@ -1082,31 +1077,31 @@ export class Game {
     getState() {
         return this.state;
     }
-    
+
     toggleFullscreen() {
         const isFullscreen = document.body.classList.contains('game-fullscreen');
-        
+
         if (isFullscreen) {
             this.exitFullscreen();
         } else {
             this.requestFullscreen();
         }
     }
-    
+
     requestFullscreen() {
         // Close settings popup
         this.ui.closeSettingsPopup();
-        
+
         // Apply CSS class for fullscreen styling
         document.body.classList.add('game-fullscreen');
-        
+
         // Scroll to top to hide address bar on mobile
         window.scrollTo(0, 0);
-        
+
         // Try native fullscreen API (works on desktop/Android)
         const elem = document.documentElement;
         if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(() => {});
+            elem.requestFullscreen().catch(() => { });
         } else if (elem.webkitRequestFullscreen) {
             elem.webkitRequestFullscreen();
         } else if (elem.mozRequestFullScreen) {
@@ -1114,27 +1109,27 @@ export class Game {
         } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
         }
-        
+
         // Resize canvas after fullscreen
         setTimeout(() => {
             this.graphics.setupCanvas();
             this.ui.setupShopButtons();
         }, 100);
     }
-    
+
     exitFullscreen() {
         // Close settings popup
         this.ui.closeSettingsPopup();
-        
+
         // Remove CSS fullscreen class
         document.body.classList.remove('game-fullscreen');
-        
+
         // Scroll to top
         window.scrollTo(0, 0);
-        
+
         // Exit native fullscreen if active
         if (document.exitFullscreen) {
-            document.exitFullscreen().catch(() => {});
+            document.exitFullscreen().catch(() => { });
         } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
         } else if (document.mozCancelFullScreen) {
@@ -1142,7 +1137,7 @@ export class Game {
         } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
         }
-        
+
         // Resize canvas after exiting fullscreen
         setTimeout(() => {
             this.graphics.setupCanvas();

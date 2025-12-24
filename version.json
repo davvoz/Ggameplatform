@@ -1,8 +1,17 @@
 {
-  "version": "2.3.23",
-  "timestamp": "2025-12-24T14:45:16.567Z",
-  "buildNumber": 131,
+  "version": "2.3.24",
+  "timestamp": "2025-12-24T15:20:17.554Z",
+  "buildNumber": 132,
   "changelog": [
+    {
+      "version": "2.3.24",
+      "date": "2025-12-24",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD]Refactor tower sprites: remove SplashTowerSprite, add new tower types (Basic, Electric, Freeze, Laser, Rapid, Sniper, Splash) with animations and graphical components",
+        "🔖 Bump version to 2.3.23 [skip-version]"
+      ]
+    },
     {
       "version": "2.3.23",
       "date": "2025-12-24",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[MTD]create enemies",
         "🔖 Bump version to 2.3.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.14",
-      "date": "2025-12-23",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD]Add enemy sprites and animations for Grunt, Healer, Rusher, Tank, and Vampire",
-        "🔖 Bump version to 2.3.13 [skip-version]"
       ]
     }
   ]

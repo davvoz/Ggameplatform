@@ -686,7 +686,7 @@ def close_open_sessions(max_duration_seconds: int = None) -> int:
         now = datetime.utcnow().isoformat()
         
         for game_session in open_sessions:
-            print(f"  ⏱️  Processing session {game_session.session_id} (user: {game_session.user_id}, game: {game_session.game_id})")
+            print(f"  ⏱️  Force closing session {game_session.session_id} (user: {game_session.user_id}, game: {game_session.game_id})")
             
             # Calculate duration
             started = datetime.fromisoformat(game_session.started_at)
@@ -697,23 +697,13 @@ def close_open_sessions(max_duration_seconds: int = None) -> int:
                 print(f"    ⚠️  Duration capped from {duration}s to {max_duration_seconds}s")
                 duration = max_duration_seconds
             
-            # Calculate CUR8 (minimal since we're forcing close)
-            user = db.query(User).filter(User.user_id == game_session.user_id).first()
-            multiplier = user.cur8_multiplier if user else 1.0
+            # Force close: NO XP awarded (session was abandoned/orphaned)
+            print(f"    ⚠️  Force close - NO XP awarded (duration: {duration}s)")
             
-            minutes_played = min(duration / 60, 10)
-            xp_earned = minutes_played * 0.1 * multiplier
-            
-            print(f"    💎 XP earned: {xp_earned:.2f} (duration: {duration}s, multiplier: {multiplier})")
-            
-            # Update session
+            # Update session without XP
             game_session.duration_seconds = duration
-            game_session.xp_earned = xp_earned
+            game_session.xp_earned = 0
             game_session.ended_at = now
-            
-            # Update user's total XP
-            if user:
-                user.total_xp_earned += xp_earned
             
             closed_count += 1
         
@@ -739,22 +729,14 @@ def force_close_session(session_id: str) -> bool:
         ended = datetime.utcnow()
         duration = int((ended - started).total_seconds())
         
-        # Calculate CUR8
-        user = session.query(User).filter(User.user_id == game_session.user_id).first()
-        multiplier = user.cur8_multiplier if user else 1.0
+        # Force close: NO XP awarded (session was abandoned/orphaned)
+        print(f"⚠️  Force closing session {session_id} - NO XP awarded (duration: {duration}s)")
         
-        minutes_played = min(duration / 60, 10)
-        xp_earned = minutes_played * 0.1 * multiplier
-        
-        # Update session
+        # Update session without XP
         now = datetime.utcnow().isoformat()
         game_session.duration_seconds = duration
-        game_session.xp_earned = xp_earned
+        game_session.xp_earned = 0
         game_session.ended_at = now
-        
-        # Update user's total XP
-        if user:
-            user.total_xp_earned += xp_earned
         
         session.flush()
         

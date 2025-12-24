@@ -44,15 +44,18 @@ export class Graphics {
             const availableWidth = width;
             const availableHeight = height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT;
             
-            // Usa tutta la larghezza disponibile (nessun margine laterale)
-            this.cellSize = availableWidth / CONFIG.COLS;
+            // Calcola cellSize basandosi sul minimo tra larghezza e altezza disponibili
+            // per garantire che l'intera griglia sia visibile su tutti i dispositivi
+            const cellSizeByWidth = availableWidth / CONFIG.COLS;
+            const cellSizeByHeight = availableHeight / CONFIG.ROWS;
+            this.cellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
             
             const gridWidth = CONFIG.COLS * this.cellSize;
             const gridHeight = CONFIG.ROWS * this.cellSize;
             
-            // Nessun margine laterale, centra verticalmente e sposta un po' più in alto
-            this.offsetX = 0;
-            this.offsetY = UI_CONFIG.TOP_BAR_HEIGHT + (availableHeight - gridHeight) / 2 - this.cellSize;
+            // Centra orizzontalmente e verticalmente
+            this.offsetX = (width - gridWidth) / 2;
+            this.offsetY = UI_CONFIG.TOP_BAR_HEIGHT + (availableHeight - gridHeight) / 2;
             
             this.gridCacheDirty = true;
         };

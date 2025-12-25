@@ -25,6 +25,9 @@ export const CONFIG = {
     MAX_PROJECTILES: 100,
     PARTICLE_POOL_SIZE: 300,
 
+    // Continue system
+    CONTINUE_COST: 100,  // Cost in platform coins to continue
+
     // Visual
     CELL_BORDER: 1,
     GRID_LINE_WIDTH: 1,
@@ -333,8 +336,8 @@ export const ZOMBIE_TYPES = {
         sprite: () => MultiPartEnemySprites.createBomber(),
         hp: 18,
         speed: 0.9,
-        explosionRadius: 2.0,  // Esplode alla morte danneggiando torrette vicine
-        explosionDamage: 15,  // Danno alle torrette nell'esplosione
+        explosionRadius: 2.0,  // Esplode alla morte stunnando torrette vicine
+        stunDuration: 2000,  // Stun le torri per 2 secondi
         reward: 50,
         color: '#FF4500',
         scale: 1.1,

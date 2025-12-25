@@ -133,6 +133,10 @@ function applyWaveScaling(baseConfig, waveNumber) {
     }
 
     canFire(currentTime) {
+        // Cannot fire if stunned
+        if (this.stunned) {
+            return false;
+        }
         return currentTime - this.lastFireTime >= this.fireRate;
     }
 
@@ -153,6 +157,15 @@ function applyWaveScaling(baseConfig, waveNumber) {
     }
 
     update(dt) {
+        // Handle stun duration
+        if (this.stunned && this.stunDuration !== undefined) {
+            this.stunDuration -= dt * 1000; // dt is in seconds
+            if (this.stunDuration <= 0) {
+                this.stunned = false;
+                this.stunDuration = 0;
+            }
+        }
+        
         // Update multi-part sprite animation
         if (this.multiSprite) {
             this.multiSprite.update(dt);

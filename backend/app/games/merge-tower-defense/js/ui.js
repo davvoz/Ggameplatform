@@ -379,40 +379,56 @@ export class UIManager {
     }
 
     // Game over screen
-    showGameOver(gameState, onRestart) {
+    showGameOver(gameState, platformBalance = 0, continueCost = 100) {
         const ctx = this.graphics.ctx;
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         
+        // Ensure values are numbers
+        platformBalance = Number(platformBalance) || 0;
+        continueCost = Number(continueCost) || 100;
+        
         // Overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.fillRect(0, 0, width, height);
         
         // Popup box
-        const popupWidth = Math.min(400, width * 0.85);
-        const popupHeight = Math.min(450, height * 0.7);
+        const popupWidth = Math.min(420, width * 0.85);
+        const popupHeight = Math.min(540, height * 0.75);
         const popupX = (width - popupWidth) / 2;
         const popupY = (height - popupHeight) / 2;
         
-        // Popup background
-        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
+        // Popup background with darker theme
+        ctx.fillStyle = 'rgba(15, 15, 20, 0.98)';
         ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
         
-        // Popup border
+        // Double border effect (tower defense style)
         ctx.strokeStyle = CONFIG.COLORS.TEXT_DANGER;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
         
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(popupX + 6, popupY + 6, popupWidth - 12, popupHeight - 12);
+        
         // Title
-        this.graphics.drawText('💀 GAME OVER 💀', width / 2, popupY + 60, {
-            size: 42,
+        this.graphics.drawText('💀 GAME OVER 💀', width / 2, popupY + 55, {
+            size: 40,
             color: CONFIG.COLORS.TEXT_DANGER,
             align: 'center',
             bold: true,
             shadow: true
         });
         
-        // Stats
+        // Stats section with header
+        const statsY = popupY + 110;
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
+        ctx.fillRect(popupX + 20, statsY, popupWidth - 40, 160);
+        
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(popupX + 20, statsY, popupWidth - 40, 160);
+        
         const stats = [
             `Wave Reached: ${gameState.wave}`,
             `Score: ${Utils.formatNumber(gameState.score)}`,
@@ -420,29 +436,106 @@ export class UIManager {
             `Time: ${Utils.formatTime(gameState.playTime)}`
         ];
         
-        let y = popupY + 130;
+        let y = statsY + 28;
         stats.forEach(stat => {
             this.graphics.drawText(stat, width / 2, y, {
-                size: 22,
+                size: 20,
                 color: CONFIG.COLORS.TEXT_PRIMARY,
                 align: 'center',
                 shadow: true
             });
-            y += 38;
+            y += 35;
         });
         
-        // Buttons
-        const buttonWidth = 180;
-        const buttonHeight = 50;
+        // Buttons section
+        const buttonWidth = 200;
+        const buttonHeight = 55;
         const isFullscreen = document.body.classList.contains('game-fullscreen');
+        const spacing = 12;
+        const canAffordContinue = platformBalance >= continueCost;
+        
+        // Continue info box (if can't afford)
+        if (!canAffordContinue) {
+            const infoY = popupY + popupHeight - 200;
+            const infoWidth = popupWidth - 40;
+            const infoHeight = 50;
+            const infoX = popupX + 20;
+            
+            // Info box background
+            ctx.fillStyle = 'rgba(255, 170, 0, 0.1)';
+            ctx.fillRect(infoX, infoY, infoWidth, infoHeight);
+            
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_WARNING;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(infoX, infoY, infoWidth, infoHeight);
+            
+            this.graphics.drawText('💎 Need Platform Coins to Continue', width / 2, infoY + 18, {
+                size: 14,
+                color: CONFIG.COLORS.TEXT_WARNING,
+                align: 'center',
+                baseline: 'middle',
+                bold: true,
+                shadow: false
+            });
+            this.graphics.drawText(`You have ${platformBalance} • Need ${continueCost}`, width / 2, infoY + 35, {
+                size: 12,
+                color: '#aaaaaa',
+                align: 'center',
+                baseline: 'middle',
+                shadow: false
+            });
+        }
         
         // Adjust button positions based on fullscreen state
         let buttonY;
         if (isFullscreen) {
-            // Two buttons: Retry and Exit Fullscreen
-            const spacing = 15;
-            const totalHeight = buttonHeight * 2 + spacing;
-            buttonY = popupY + popupHeight - totalHeight - 30;
+            // Three buttons: Continue, Retry, and Exit Fullscreen
+            const totalHeight = buttonHeight * 3 + spacing * 2;
+            buttonY = popupY + popupHeight - totalHeight - 25;
+            
+            // Continue button (if can afford)
+            const continueButtonX = (width - buttonWidth) / 2;
+            if (canAffordContinue) {
+                this.continueButton = {
+                    x: continueButtonX,
+                    y: buttonY,
+                    width: buttonWidth,
+                    height: buttonHeight
+                };
+                
+                // Continue button - bright green with border
+                ctx.fillStyle = 'rgba(0, 200, 100, 0.95)';
+                Utils.drawRoundRect(ctx, continueButtonX, buttonY, buttonWidth, buttonHeight, 8);
+                ctx.fill();
+                
+                ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+                ctx.lineWidth = 3;
+                Utils.drawRoundRect(ctx, continueButtonX, buttonY, buttonWidth, buttonHeight, 8);
+                ctx.stroke();
+                
+                // Button text with icon
+                this.graphics.drawText('💎 CONTINUE', width / 2, buttonY + buttonHeight / 2 - 8, {
+                    size: 22,
+                    color: '#000000',
+                    align: 'center',
+                    baseline: 'middle',
+                    bold: true,
+                    shadow: false
+                });
+                
+                this.graphics.drawText(`${continueCost} Platform Coins`, width / 2, buttonY + buttonHeight / 2 + 12, {
+                    size: 13,
+                    color: 'rgba(0, 0, 0, 0.7)',
+                    align: 'center',
+                    baseline: 'middle',
+                    bold: false,
+                    shadow: false
+                });
+                
+                buttonY += buttonHeight + spacing;
+            } else {
+                this.continueButton = null;
+            }
             
             // Retry button
             const retryButtonX = (width - buttonWidth) / 2;
@@ -453,11 +546,14 @@ export class UIManager {
                 height: buttonHeight
             };
             
-            ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
-            ctx.fillRect(retryButtonX, buttonY, buttonWidth, buttonHeight);
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.fillStyle = 'rgba(200, 40, 40, 0.9)';
+            Utils.drawRoundRect(ctx, retryButtonX, buttonY, buttonWidth, buttonHeight, 8);
+            ctx.fill();
+            
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_DANGER;
             ctx.lineWidth = 2;
-            ctx.strokeRect(retryButtonX, buttonY, buttonWidth, buttonHeight);
+            Utils.drawRoundRect(ctx, retryButtonX, buttonY, buttonWidth, buttonHeight, 8);
+            ctx.stroke();
             
             this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
                 size: 24,
@@ -465,7 +561,7 @@ export class UIManager {
                 align: 'center',
                 baseline: 'middle',
                 bold: true,
-                shadow: true
+                shadow: false
             });
             
             // Exit Fullscreen button
@@ -477,25 +573,74 @@ export class UIManager {
                 height: buttonHeight
             };
             
-            ctx.fillStyle = 'rgba(60, 60, 80, 0.9)';
-            ctx.fillRect(retryButtonX, exitButtonY, buttonWidth, buttonHeight);
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.fillStyle = 'rgba(50, 60, 70, 0.9)';
+            Utils.drawRoundRect(ctx, retryButtonX, exitButtonY, buttonWidth, buttonHeight, 8);
+            ctx.fill();
+            
+            ctx.strokeStyle = 'rgba(100, 120, 140, 0.8)';
             ctx.lineWidth = 2;
-            ctx.strokeRect(retryButtonX, exitButtonY, buttonWidth, buttonHeight);
+            Utils.drawRoundRect(ctx, retryButtonX, exitButtonY, buttonWidth, buttonHeight, 8);
+            ctx.stroke();
             
             this.graphics.drawText('EXIT FULLSCREEN', width / 2, exitButtonY + buttonHeight / 2, {
-                size: 20,
+                size: 18,
                 color: CONFIG.COLORS.TEXT_PRIMARY,
                 align: 'center',
                 baseline: 'middle',
                 bold: true,
-                shadow: true
+                shadow: false
             });
         } else {
-            // Single retry button
-            buttonY = popupY + popupHeight - 80;
-            const buttonX = (width - buttonWidth) / 2;
+            // Continue and Retry buttons
+            const totalHeight = canAffordContinue ? buttonHeight * 2 + spacing : buttonHeight;
+            buttonY = popupY + popupHeight - totalHeight - 25;
             
+            // Continue button (if can afford)
+            if (canAffordContinue) {
+                const continueButtonX = (width - buttonWidth) / 2;
+                this.continueButton = {
+                    x: continueButtonX,
+                    y: buttonY,
+                    width: buttonWidth,
+                    height: buttonHeight
+                };
+                
+                // Continue button - bright green with border
+                ctx.fillStyle = 'rgba(0, 200, 100, 0.95)';
+                Utils.drawRoundRect(ctx, continueButtonX, buttonY, buttonWidth, buttonHeight, 8);
+                ctx.fill();
+                
+                ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+                ctx.lineWidth = 3;
+                Utils.drawRoundRect(ctx, continueButtonX, buttonY, buttonWidth, buttonHeight, 8);
+                ctx.stroke();
+                
+                // Button text with icon
+                this.graphics.drawText('💎 CONTINUE', width / 2, buttonY + buttonHeight / 2 - 8, {
+                    size: 22,
+                    color: '#000000',
+                    align: 'center',
+                    baseline: 'middle',
+                    bold: true,
+                    shadow: false
+                });
+                
+                this.graphics.drawText(`${continueCost} Platform Coins`, width / 2, buttonY + buttonHeight / 2 + 12, {
+                    size: 13,
+                    color: 'rgba(0, 0, 0, 0.7)',
+                    align: 'center',
+                    baseline: 'middle',
+                    bold: false,
+                    shadow: false
+                });
+                
+                buttonY += buttonHeight + spacing;
+            } else {
+                this.continueButton = null;
+            }
+            
+            // Retry button
+            const buttonX = (width - buttonWidth) / 2;
             this.retryButton = {
                 x: buttonX,
                 y: buttonY,
@@ -504,11 +649,14 @@ export class UIManager {
             };
             this.exitFullscreenButton = null;
             
-            ctx.fillStyle = CONFIG.COLORS.TEXT_DANGER;
-            ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+            ctx.fillStyle = 'rgba(200, 40, 40, 0.9)';
+            Utils.drawRoundRect(ctx, buttonX, buttonY, buttonWidth, buttonHeight, 8);
+            ctx.fill();
+            
+            ctx.strokeStyle = CONFIG.COLORS.TEXT_DANGER;
             ctx.lineWidth = 2;
-            ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            Utils.drawRoundRect(ctx, buttonX, buttonY, buttonWidth, buttonHeight, 8);
+            ctx.stroke();
             
             this.graphics.drawText('🔄 RETRY', width / 2, buttonY + buttonHeight / 2, {
                 size: 24,
@@ -516,11 +664,21 @@ export class UIManager {
                 align: 'center',
                 baseline: 'middle',
                 bold: true,
-                shadow: true
+                shadow: false
             });
         }
     }
 
+    // Check if continue button was clicked
+    isContinueButtonClicked(screenX, screenY) {
+        if (!this.continueButton) return false;
+        
+        return screenX >= this.continueButton.x &&
+               screenX <= this.continueButton.x + this.continueButton.width &&
+               screenY >= this.continueButton.y &&
+               screenY <= this.continueButton.y + this.continueButton.height;
+    }
+    
     // Check if retry button was clicked
     isRetryButtonClicked(screenX, screenY) {
         if (!this.retryButton) return false;
@@ -544,6 +702,7 @@ export class UIManager {
     // Reset retry button
     clearRetryButton() {
         this.retryButton = null;
+        this.continueButton = null;
         this.exitFullscreenButton = null;
     }
 

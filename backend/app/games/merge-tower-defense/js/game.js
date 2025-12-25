@@ -79,6 +79,11 @@ export class Game {
         // Tap handler
         this.input.onTap((gridPos, screenPos) => {
             if (this.state.isGameOver) {
+                // Check if continue button was clicked
+                if (this.ui.isContinueButtonClicked(screenPos.x, screenPos.y)) {
+                    this.continueGame();
+                    return;
+                }
                 // Check if retry button was clicked
                 if (this.ui.isRetryButtonClicked(screenPos.x, screenPos.y)) {
                     this.restart();
@@ -411,7 +416,7 @@ export class Game {
 
     selectZombieType() {
         const wave = this.state.wave;
-        if (wave == 1) return 'SIREN'; // Prima ondata più facile con vampiri
+        //if (wave == 1) return 'RUSHER'; // Prima ondata più facile con vampiri
 
         let options = [
             { value: 'NORMAL', weight: Math.max(3, 15 - wave) },                      // Common early, rare late
@@ -650,43 +655,29 @@ export class Game {
     }
 
     killZombie(zombie) {
-        // BOMBER ability: explode on death, damaging nearby towers
+        // BOMBER ability: explode on death, stunning nearby towers temporarily
         if (zombie.isBomber && zombie.explosionRadius > 0) {
-            const explosionDamage = zombie.explosionDamage || 15;
             let towersHit = 0;
-            
+
             this.entities.cannons.forEach(cannon => {
                 const dist = Utils.distance(zombie.col, zombie.row, cannon.col, cannon.row);
                 if (dist <= zombie.explosionRadius) {
-                    // Damage tower (reduce level or destroy)
-                    cannon.level = Math.max(0, cannon.level - 1);
+                    // Stun tower for 2 seconds (disable shooting)
+                    cannon.stunned = true;
+                    cannon.stunDuration = 2000;
                     towersHit++;
-                    
+
                     // Visual feedback on tower
                     this.particles.emit(cannon.col, cannon.row, {
-                        text: '💥-1',
+                        text: '💥STUN',
                         color: '#ff4500',
                         vy: -1.2,
                         life: 1.0,
                         scale: 1.1
                     });
-                    
-                    // If tower level goes to 0, destroy it
-                    if (cannon.level <= 0) {
-                        this.entities.removeCannon(cannon);
-                        this.particles.emit(cannon.col, cannon.row, {
-                            text: '💀 DESTROYED!',
-                            color: '#ff0000',
-                            vy: -1.5,
-                            life: 1.5,
-                            scale: 1.3
-                        });
-                    } else {
-                        cannon.updateStats();
-                    }
                 }
             });
-            
+
             // Explosion visual effect
             this.particles.createExplosion(zombie.col, zombie.row, zombie.explosionRadius, '#ff4500');
             this.particles.emit(zombie.col, zombie.row, {
@@ -697,7 +688,7 @@ export class Game {
                 scale: 1.4,
                 glow: true
             });
-            
+
             if (towersHit > 0) {
                 this.audio.explosion?.();
             }
@@ -919,7 +910,9 @@ export class Game {
 
         // Show game over popup if game is over
         if (this.state.isGameOver) {
-            this.ui.showGameOver(this.state);
+            const platformBalance = window.platformBalance || 0;
+            const continueCost = CONFIG.CONTINUE_COST || 100;
+            this.ui.showGameOver(this.state, platformBalance, continueCost);
         }
 
         // Debug info (optional)
@@ -970,6 +963,39 @@ export class Game {
 
         // Note: gameOver is now handled by main.js with complete session management
         // This ensures proper tracking of session duration and all XP metrics
+    }
+
+    continueGame() {
+        // This will be handled by main.js which has access to PlatformSDK
+        if (window.handleContinueGame) {
+            window.handleContinueGame();
+        }
+    }
+
+    resumeAfterContinue() {
+        // Resume game after continue
+        this.state.isGameOver = false;
+
+        // Restore energy to full
+        this.state.energy = CONFIG.INITIAL_ENERGY;
+        this.state.displayEnergy = CONFIG.INITIAL_ENERGY;
+
+        // Clear all zombies - use slice to avoid modifying array during iteration
+        const zombiesToRemove = [...this.entities.zombies];
+        zombiesToRemove.forEach(zombie => {
+            this.entities.removeZombie(zombie);
+        });
+
+        // Restart the current wave
+        this.startWave();
+
+        // Clear UI buttons
+        this.ui.clearRetryButton();
+
+        // Resume audio
+        this.audio.play();
+
+        console.log('[Game] Resumed after continue - wave restarted, zombies cleared:', zombiesToRemove.length);
     }
 
     restart() {

@@ -7,6 +7,7 @@ import { Graphics } from './graphics.js';
 import { InputHandler } from './input.js';
 import { UIManager } from './ui.js';
 import { Game } from './game.js';
+import { CONFIG } from './config.js';
 
 // If PlatformSDK is a module, import it. Otherwise, assume global.
 // import { PlatformSDK } from '../../sdk/platformsdk.js';
@@ -34,6 +35,7 @@ import { Game } from './game.js';
     let platformReady = false;
     let sessionActive = false;
     let sessionStartTime = 0;
+    let platformBalance = 0;
 
     try {
         console.log('[Merge Tower] Initializing Platform SDK...');
@@ -65,10 +67,52 @@ import { Game } from './game.js';
 
         platformReady = true;
         console.log('[Merge Tower] Platform SDK ready');
+        
+        // Load user's coin balance using platform API (like seven does)
+        try {
+            // Get userId from platform config
+            let userId = null;
+            if (window.platformConfig && window.platformConfig.userId) {
+                userId = window.platformConfig.userId;
+            } else if (PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
+                const config = PlatformSDK.getConfig();
+                if (config && config.userId) {
+                    userId = config.userId;
+                }
+            }
+            
+            if (userId) {
+                console.log('[Merge Tower] Fetching balance for user:', userId);
+                const response = await fetch(`/api/coins/${userId}/balance`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    platformBalance = data.balance || 0;
+                    window.platformBalance = platformBalance;
+                    console.log('[Merge Tower] Platform balance loaded:', platformBalance);
+                } else {
+                    console.warn('[Merge Tower] Failed to load balance, status:', response.status);
+                    platformBalance = 0;
+                    window.platformBalance = 0;
+                }
+            } else {
+                console.warn('[Merge Tower] No userId available');
+                platformBalance = 0;
+                window.platformBalance = 0;
+            }
+        } catch (error) {
+            console.warn('[Merge Tower] Failed to load platform balance:', error);
+            platformBalance = 0;
+            window.platformBalance = 0;
+        }
 
     } catch (error) {
         console.warn('[Merge Tower] Platform SDK initialization failed:', error);
         console.log('[Merge Tower] Running in standalone mode');
+        platformBalance = 0;
+        window.platformBalance = 0;
     }
 
     // ========== SESSION MANAGEMENT ==========
@@ -136,6 +180,76 @@ import { Game } from './game.js';
         sessionStartTime = 0;
         console.log('[Merge Tower] Session state reset - ready for new session');
     }
+    
+    // ========== CONTINUE SYSTEM ==========
+    
+    async function handleContinueGame() {
+        if (!platformReady) {
+            console.warn('[Merge Tower] Platform not ready, cannot continue');
+            return;
+        }
+        
+        const continueCost = CONFIG.CONTINUE_COST || 100;
+        
+        // Check balance
+        if (platformBalance < continueCost) {
+            console.warn('[Merge Tower] Insufficient balance to continue');
+            return;
+        }
+        
+        try {
+            // Get userId like seven does
+            let userId = null;
+            if (window.platformConfig && window.platformConfig.userId) {
+                userId = window.platformConfig.userId;
+            } else if (PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
+                const config = PlatformSDK.getConfig();
+                if (config && config.userId) {
+                    userId = config.userId;
+                }
+            }
+            
+            if (!userId) {
+                console.error('[Merge Tower] No userId available for spending');
+                return;
+            }
+            
+            // Spend coins via platform API (exactly like seven)
+            const response = await fetch(`/api/coins/${userId}/spend`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    amount: continueCost,
+                    transaction_type: 'game_continue',
+                    source_id: 'merge-tower-defense',
+                    description: `Merge Tower continue: ${continueCost} coins`
+                })
+            });
+            
+            if (!response.ok) {
+                console.warn('[Merge Tower] Failed to spend coins, status:', response.status);
+                return;
+            }
+            
+            // Update balance
+            platformBalance -= continueCost;
+            window.platformBalance = platformBalance;
+            console.log('[Merge Tower] Continue purchased, new balance:', platformBalance);
+            
+            // Resume game
+            game.resumeAfterContinue();
+            
+            // Don't end session - keep it active
+            console.log('[Merge Tower] Game continued successfully');
+            
+        } catch (error) {
+            console.error('[Merge Tower] Error during continue:', error);
+        }
+    }
+    
+    // Expose continue handler globally
+    window.handleContinueGame = handleContinueGame;
     
     // ========== GAME LOOP ==========
     

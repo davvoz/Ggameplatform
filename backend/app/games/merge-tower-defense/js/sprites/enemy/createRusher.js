@@ -24,12 +24,12 @@ export function rusher() {
     }, 0.5, 0, -10);
     legRight.setBaseTransform(0.06, 0.20);
 
-    // BODY (lean forward, z-order 0)
+    // BODY (lean forward, z-order 0) - PIÙ PICCOLO CON MACCHIE GIALLE
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
             x: 0.09, y: 0,
-            width: 0.35, height: 0.55,
+            width: 0.26, height: 0.41,  // Ridotto da 0.35, 0.55
             color: '#8a3a3a',
             fill: true
         },
@@ -52,6 +52,39 @@ export function rusher() {
             color: '#ff6666',
             stroke: true,
             strokeWidth: 2
+        },
+        // MACCHIE GIALLE sul corpo
+        {
+            type: 'ellipse',
+            x: 0.02, y: -0.08,
+            width: 0.04, height: 0.05,
+            color: 'rgba(255, 220, 60, 0.85)',
+            fill: true,
+            glow: { color: '#ffdc3c', blur: 3 }
+        },
+        {
+            type: 'ellipse',
+            x: 0.12, y: -0.06,
+            width: 0.035, height: 0.045,
+            color: 'rgba(255, 220, 60, 0.8)',
+            fill: true,
+            glow: { color: '#ffdc3c', blur: 2 }
+        },
+        {
+            type: 'ellipse',
+            x: 0.08, y: 0.07,
+            width: 0.03, height: 0.04,
+            color: 'rgba(255, 220, 60, 0.75)',
+            fill: true,
+            glow: { color: '#ffdc3c', blur: 2 }
+        },
+        {
+            type: 'ellipse',
+            x: -0.02, y: 0.05,
+            width: 0.03, height: 0.04,
+            color: 'rgba(255, 220, 60, 0.75)',
+            fill: true,
+            glow: { color: '#ffdc3c', blur: 2 }
         }
     ], 0.5, 0.5, 0);
     body.setBaseTransform(0, 0.1, 0.1); // Leaning forward
@@ -59,6 +92,49 @@ export function rusher() {
     // Parent legs to body
     sprite.setParent('legLeft', 'body');
     sprite.setParent('legRight', 'body');
+
+    // CRESTA SULLA SCHIENA (z-order -2)
+    const crest = sprite.addPart('crest', [
+        {
+            type: 'polygon',
+            points: [
+                { x: -0.04, y: 0 },
+                { x: -0.08, y: -0.14 },
+                { x: -0.05, y: -0.18 },
+                { x: 0, y: -0.22 },
+                { x: 0.05, y: -0.18 },
+                { x: 0.08, y: -0.14 },
+                { x: 0.04, y: 0 }
+            ],
+            color: 'rgba(170, 74, 74, 0.75)',
+            fill: true,
+            glow: { color: '#aa4a4a', blur: 4 }
+        },
+        // Spine details
+        {
+            type: 'polygon',
+            points: [
+                { x: -0.02, y: -0.02 },
+                { x: -0.04, y: -0.10 },
+                { x: 0, y: -0.14 },
+                { x: 0.04, y: -0.10 },
+                { x: 0.02, y: -0.02 }
+            ],
+            color: 'rgba(200, 100, 100, 0.65)',
+            fill: true
+        },
+        // Yellow accent on crest
+        {
+            type: 'ellipse',
+            x: 0, y: -0.16,
+            width: 0.025, height: 0.03,
+            color: 'rgba(255, 220, 60, 0.9)',
+            fill: true,
+            glow: { color: '#ffdc3c', blur: 2 }
+        }
+    ], 0.5, 1, -2);
+    crest.setBaseTransform(0.05, -0.15);  // Spostato leggermente a destra per seguire body
+    sprite.setParent('crest', 'body');
 
     // HORNS (z-order 15)
     const hornLeft = sprite.addPart('hornLeft', {

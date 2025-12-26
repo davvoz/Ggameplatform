@@ -5,9 +5,14 @@ This script:
 2. Creates XP rules
 3. Creates quests
 4. Generates thumbnail
+
+Usage:
+  python scripts/setup_yatzi_3d.py          # Interactive mode
+  python scripts/setup_yatzi_3d.py --force  # Auto mode (for Docker/CI)
 """
 import sys
 import os
+import argparse
 from pathlib import Path
 from datetime import datetime
 import subprocess
@@ -18,8 +23,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from app.database import SessionLocal
 from app.models import Game
 
-def setup_yatzi_game():
-    """Setup Yatzi 3D in the platform"""
+def setup_yatzi_game(force=False):
+    """Setup Yatzi 3D in the platform
+    
+    Args:
+        force: If True, automatically update existing game without prompting
+    """
     
     db = SessionLocal()
     
@@ -34,12 +43,19 @@ def setup_yatzi_game():
         existing_game = db.query(Game).filter(Game.game_id == 'yatzi_3d_by_luciogiolli').first()
         
         if existing_game:
-            print(f"⚠️  Game 'yatzi_3d_by_luciogiolli' already exists!")
+            print(f"ℹ️  Game 'yatzi_3d_by_luciogiolli' already exists!")
             print(f"   Title: {existing_game.title}")
             print(f"   Category: {existing_game.category}")
-            response = input("Do you want to update it? (y/N): ")
-            if response.lower() != 'y':
-                print("Skipping game registration...")
+            
+            if force:
+                print("   [--force] Auto-updating...")
+                should_update = True
+            else:
+                response = input("Do you want to update it? (y/N): ")
+                should_update = response.lower() == 'y'
+            
+            if not should_update:
+                print("   Skipping game registration...")
             else:
                 # Update existing game
                 existing_game.title = "Yatzi 3D"
@@ -158,4 +174,9 @@ def setup_yatzi_game():
         db.close()
 
 if __name__ == "__main__":
-    setup_yatzi_game()
+    parser = argparse.ArgumentParser(description='Setup Yatzi 3D game in the platform')
+    parser.add_argument('--force', '-f', action='store_true', 
+                        help='Auto-update without prompting (for Docker/CI)')
+    args = parser.parse_args()
+    
+    setup_yatzi_game(force=args.force)

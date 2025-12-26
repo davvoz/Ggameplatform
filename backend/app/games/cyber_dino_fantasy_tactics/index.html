@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cyber Dino Fantasy Tactics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="hud-row">
+        <div class="hud-box" id="player-hud"></div>
+        <div class="hud-box" id="enemy-hud"></div>
+      </div>
+      <div id="battlefield">
+        <!-- Canvas-based sprite rendering (primary) -->
+        <canvas id="battlefield-canvas"></canvas>
+        <!-- CSS sprite fallback (hidden when canvas is active) -->
+        <div id="player-sprite" class="sprite player" style="display:none;"></div>
+        <div id="enemy-sprite" class="sprite enemy" style="display:none;"></div>
+      </div>
+      <div id="log">
+        <div id="log-inner"></div>
+      </div>
+      <div id="controls"></div>
+      <div id="modal-root"></div>
+    </div>
+    <div id="fx-layer"></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

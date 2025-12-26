@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Yatzi 3D</title>
+  <link rel="stylesheet" href="./styles.css">
+  
+  <!-- Platform SDK -->
+  <script src="/sdk/platformsdk.js"></script>
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.169.0",
+      "three/examples/jsm/controls/OrbitControls.js": "https://esm.sh/three@0.169.0/examples/jsm/controls/OrbitControls.js",
+      "cannon-es": "https://esm.sh/cannon-es@0.20.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen">
+    <div class="loading-title">🎲 YATZI 3D 🎲</div>
+    <div class="loading-subtitle">Caricamento in corso...</div>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <div id="app">
+    <!-- Three.js Canvas Container -->
+    <div id="three-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui">
+      <!-- Header Bar -->
+      <div id="top-bar">
+        <div id="status-box" data-tone="neutral">
+          <span id="status-line">Tuo turno: lancia i dadi</span>
+        </div>
+        
+        <div class="info-box">
+          <span class="info-label">Mano</span>
+          <span class="info-value" id="round-label">1/13</span>
+        </div>
+        
+        <div class="info-box">
+          <span class="info-label">Lanci</span>
+          <span class="info-value" id="roll-label">0/3</span>
+        </div>
+        
+        <button id="zoom-btn" title="Zoom vista">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+            <path d="M8 11h6"/>
+          </svg>
+        </button>
+        
+        <button id="fullscreen-btn" title="Schermo intero">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Game Controls -->
+      <div id="controls">
+        <button id="roll-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+            <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+          </svg>
+          Lancia
+        </button>
+        <button id="end-turn-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Segna
+        </button>
+      </div>
+
+      <!-- Score Panel -->
+      <div id="score-wrapper">
+        <!-- Player Column -->
+        <div class="score-column">
+          <div class="score-header">👤 Tu</div>
+          <div class="score-content">
+            <div class="section-header">Parte Alta</div>
+            <div id="player-score-list-upper" class="score-list"></div>
+            <div class="summary-row">
+              Somma: <span id="player-upper-sum">0</span>
+            </div>
+            <div class="summary-row">
+              Bonus (≥63): <span id="player-bonus">0</span>
+            </div>
+
+            <div class="section-header">Parte Bassa</div>
+            <div id="player-score-list-lower" class="score-list"></div>
+            <div class="summary-row">
+              Somma: <span id="player-lower-sum">0</span>
+            </div>
+          </div>
+          <div class="total-row">
+            Totale: <span id="player-total">0</span>
+          </div>
+        </div>
+
+        <!-- CPU Column -->
+        <div class="score-column">
+          <div class="score-header">🤖 CPU</div>
+          <div class="score-content">
+            <div class="section-header">Parte Alta</div>
+            <div id="ai-score-list-upper" class="score-list"></div>
+            <div class="summary-row">
+              Somma: <span id="ai-upper-sum">0</span>
+            </div>
+            <div class="summary-row">
+              Bonus (≥63): <span id="ai-bonus">0</span>
+            </div>
+
+            <div class="section-header">Parte Bassa</div>
+            <div id="ai-score-list-lower" class="score-list"></div>
+            <div class="summary-row">
+              Somma: <span id="ai-lower-sum">0</span>
+            </div>
+          </div>
+          <div class="total-row">
+            Totale: <span id="ai-total">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"></div>
+
+    <!-- Game Over Overlay -->
+    <div id="game-over-overlay">
+      <div class="game-over-content">
+        <div class="game-over-title" id="game-over-title">Hai Vinto!</div>
+        <div class="game-over-score" id="game-over-score">250 - 180</div>
+        <div class="game-over-buttons">
+          <button class="game-over-btn primary" id="restart-btn">Nuova Partita</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

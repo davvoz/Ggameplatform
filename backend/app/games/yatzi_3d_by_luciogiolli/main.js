@@ -33,6 +33,8 @@ const gameOverOverlay = document.getElementById("game-over-overlay");
 const gameOverTitle = document.getElementById("game-over-title");
 const gameOverScore = document.getElementById("game-over-score");
 const restartBtn = document.getElementById("restart-btn");
+const difficultyPanel = document.getElementById("difficulty-panel");
+const difficultyCards = Array.from(document.querySelectorAll(".difficulty-card"));
 
 let renderer, scene, camera, controls;
 let diceMgr;
@@ -43,6 +45,14 @@ let gameState;
 let lastTime = performance.now();
 let sessionStarted = false;
 let isZoomedOut = false;
+let aiDifficulty = null;
+let gameStarted = false;
+
+const DIFFICULTY_LABEL = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard"
+};
 
 // Camera positions
 const CAMERA_NORMAL = { y: 7, z: 9, fov: 45 };
@@ -103,6 +113,38 @@ function sendScoreToPlatform(playerScore, aiScore) {
     } catch (error) {
       console.error('⚠️ Failed to send score:', error);
     }
+  }
+}
+
+function getDifficultyLabel(value) {
+  return DIFFICULTY_LABEL[value] || DIFFICULTY_LABEL.medium;
+}
+
+function closeDifficultyPanel() {
+  if (difficultyPanel) {
+    difficultyPanel.classList.add("hidden");
+  }
+}
+
+function setDifficulty(newDifficulty, options = {}) {
+  const { announce = true, startGame = false } = options;
+  const normalized = DIFFICULTY_LABEL[newDifficulty] ? newDifficulty : "medium";
+  aiDifficulty = normalized;
+
+  if (announce) {
+    showToast(`AI: ${getDifficultyLabel(normalized)}`);
+    statusLine.textContent = `CPU ${getDifficultyLabel(normalized)} pronta a giocare`;
+  }
+
+  if (startGame && !gameStarted) {
+    gameStarted = true;
+    closeDifficultyPanel();
+    // Initialize game state on first start
+    resetGameState();
+  } else if (gameStarted) {
+    // Change difficulty mid-game: reset
+    hideGameOver();
+    resetGameState();
   }
 }
 
@@ -172,7 +214,7 @@ function onResize() {
 }
 
 function onPointerDown(event) {
-  if (!isPlayerTurn() || gameState.rollsUsed === 0 || diceMgr.isRolling) return;
+  if (!gameState || !isPlayerTurn() || gameState.rollsUsed === 0 || diceMgr.isRolling) return;
   const rect = renderer.domElement.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width;
   const y = (event.clientY - rect.top) / rect.height;
@@ -210,6 +252,7 @@ function createScoreRows() {
 }
 
 function resetGameState() {
+  hideGameOver();
   gameState = {
     round: 1,
     maxRounds: CATEGORIES.length,
@@ -227,7 +270,7 @@ function resetGameState() {
 }
 
 function isPlayerTurn() {
-  return gameState.currentPlayer === "player";
+  return gameState && gameState.currentPlayer === "player";
 }
 
 function updateScoreLists() {
@@ -298,6 +341,12 @@ function updateScoreLists() {
 }
 
 function updateUI() {
+  if (!gameState) {
+    rollBtn.disabled = true;
+    endTurnBtn.disabled = true;
+    return;
+  }
+  
   roundLabel.textContent = `${gameState.round}/${gameState.maxRounds}`;
   rollLabel.textContent = `${gameState.rollsUsed}/3`;
   updateScoreLists();
@@ -343,7 +392,7 @@ function showToast(text, ms = 900) {
 }
 
 function handleRoll() {
-  if (!isPlayerTurn() || diceMgr.isRolling || gameState.rollsUsed >= 3) return;
+  if (!gameState || !isPlayerTurn() || diceMgr.isRolling || gameState.rollsUsed >= 3) return;
   
   // Start session on first roll
   if (!sessionStarted) {
@@ -360,7 +409,7 @@ function handleRoll() {
 }
 
 function handleCategoryClick(e) {
-  if (!isPlayerTurn() || gameState.gameOver) return;
+  if (!gameState || !isPlayerTurn() || gameState.gameOver) return;
   const row = e.target.closest(".score-row.player-row");
   if (!row) return;
   const cat = row.dataset.category;
@@ -418,7 +467,7 @@ function nextTurn() {
 }
 
 function handleEndTurn() {
-  if (!isPlayerTurn() || gameState.rollsUsed === 0 || !gameState.selectedCategory) {
+  if (!gameState || !isPlayerTurn() || gameState.rollsUsed === 0 || !gameState.selectedCategory) {
     showToast("Scegli una categoria");
     return;
   }
@@ -463,7 +512,7 @@ async function aiTurnStart() {
   for (let r = 0; r < 3; r++) {
     if (gameState.gameOver || isPlayerTurn()) return;
 
-    statusLine.textContent = `Turno CPU... lancio ${r + 1}`;
+    statusLine.textContent = `Turno CPU ${getDifficultyLabel(aiDifficulty)}... lancio ${r + 1}`;
 
     const unheld = diceMgr.getUnheldIndices();
     // If everything is already held and it's not the very first roll, stop early
@@ -482,7 +531,8 @@ async function aiTurnStart() {
       const keepMask = aiDecideKeep(
         diceMgr.values.slice(),
         gameState.aiScores,
-        r + 1
+        r + 1,
+        aiDifficulty
       );
       // Only apply the mask if not all dice are kept (to allow third roll)
       const keptCount = keepMask.filter(k => k).length;
@@ -509,12 +559,14 @@ async function aiTurnStart() {
 
   const { category, score } = aiChooseCategory(
     diceMgr.values.slice(),
-    gameState.aiScores
+    gameState.aiScores,
+    aiDifficulty
   );
   commitScore("ai", category, diceMgr.values.slice());
   statusLine.textContent = `CPU segna su ${category} (+${score})`;
+  showToast(`🤖 CPU: ${category} +${score}`, 1200);
   updateUI();
-  await waitMs(700);
+  await waitMs(1000);
   nextTurn();
 }
 
@@ -668,7 +720,17 @@ function hideGameOver() {
 
 function handleRestart() {
   hideGameOver();
-  resetGameState();
+  gameStarted = false;
+  gameState = null;
+  aiDifficulty = null;
+  diceMgr.resetHeld();
+  diceMgr.resetValues();
+  if (difficultyPanel) {
+    difficultyPanel.classList.remove("hidden");
+  }
+  statusLine.textContent = "Scegli la difficoltà";
+  rollBtn.disabled = true;
+  endTurnBtn.disabled = true;
 }
 
 // ===== LOADING SCREEN =====
@@ -679,6 +741,23 @@ function hideLoadingScreen() {
       loadingScreen.style.display = 'none';
     }, 500);
   }
+}
+
+function initDifficultySelector() {
+  if (!difficultyCards.length) return;
+  difficultyCards.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.difficulty;
+      if (!gameStarted) {
+        // First selection: start game
+        setDifficulty(next, { announce: true, startGame: true });
+      } else {
+        // Subsequent selections: change difficulty and reset
+        if (next === aiDifficulty) return;
+        setDifficulty(next, { announce: true, startGame: false });
+      }
+    });
+  });
 }
 
 function initEvents() {
@@ -711,9 +790,13 @@ async function init() {
   await initSDK();
   initThree();
   createScoreRows();
-  resetGameState();
+  initDifficultySelector();
   initEvents();
   animate();
+  
+  // Disable buttons until game starts
+  rollBtn.disabled = true;
+  endTurnBtn.disabled = true;
   
   // Hide loading screen after everything is ready
   hideLoadingScreen();

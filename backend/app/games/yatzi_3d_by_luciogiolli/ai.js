@@ -6,9 +6,44 @@ import {
 
 /* ================== CONFIG ================== */
 
-const SIMULATIONS = 200;      // Più simulazioni = decisioni migliori
 const BONUS_TARGET = 63;
 const BONUS_VALUE = 35;
+
+// Profili di difficoltà: modificano profondità di ricerca e aggressività
+const DIFFICULTIES = {
+  easy: {
+    simulations: 80,
+    bonusWeight: 0.45,
+    rarityWeight: 0.6,
+    zeroPenalty: 0.6,
+    riskBias: -0.25,
+    mistakeChance: 0.12,
+    holdGreed: 32
+  },
+  medium: {
+    simulations: 200,
+    bonusWeight: 0.75,
+    rarityWeight: 1.0,
+    zeroPenalty: 1.0,
+    riskBias: 0,
+    mistakeChance: 0.05,
+    holdGreed: 30
+  },
+  hard: {
+    simulations: 420,
+    bonusWeight: 1.2,
+    rarityWeight: 1.35,
+    zeroPenalty: 1.2,
+    riskBias: 0.25,
+    mistakeChance: 0.01,
+    holdGreed: 24,
+    chaseYahtzee: true
+  }
+};
+
+function getConfig(difficulty = "medium") {
+  return DIFFICULTIES[difficulty] || DIFFICULTIES.medium;
+}
 
 // Valori attesi per categoria upper (per valutare se siamo in linea con il bonus)
 const UPPER_EXPECTED = {
@@ -121,14 +156,14 @@ function expectedUpperFromRemaining(remaining) {
 /* ================== EVALUATION ================== */
 
 // Calcola il valore atteso di una maschera con simulazioni Monte Carlo
-function evaluateKeepMask(mask, dice, scoreState, rollsLeft) {
+function evaluateKeepMask(mask, dice, scoreState, rollsLeft, config) {
   if (rollsLeft === 0) {
-    return getBestScoreForDice(dice, scoreState);
+    return getBestScoreForDice(dice, scoreState, config);
   }
   
   let totalScore = 0;
-  
-  for (let sim = 0; sim < SIMULATIONS; sim++) {
+
+  for (let sim = 0; sim < config.simulations; sim++) {
     // Simula i lanci rimanenti
     let simDice = dice.slice();
     
@@ -137,14 +172,14 @@ function evaluateKeepMask(mask, dice, scoreState, rollsLeft) {
     }
     
     // Trova il miglior punteggio possibile
-    totalScore += getBestScoreForDice(simDice, scoreState);
+    totalScore += getBestScoreForDice(simDice, scoreState, config);
   }
   
-  return totalScore / SIMULATIONS;
+  return totalScore / config.simulations;
 }
 
 // Calcola il miglior punteggio possibile per i dadi attuali
-function getBestScoreForDice(dice, scoreState) {
+function getBestScoreForDice(dice, scoreState, config) {
   let best = 0;
   let bestCat = null;
   
@@ -152,7 +187,7 @@ function getBestScoreForDice(dice, scoreState) {
     if (scoreState.used[cat]) continue;
     
     const score = scoreCategory(cat, dice);
-    const adjustedScore = adjustScoreForStrategy(cat, score, dice, scoreState);
+    const adjustedScore = adjustScoreForStrategy(cat, score, dice, scoreState, config);
     
     if (adjustedScore > best) {
       best = adjustedScore;
@@ -164,63 +199,91 @@ function getBestScoreForDice(dice, scoreState) {
 }
 
 // Aggiusta il punteggio in base alla strategia
-function adjustScoreForStrategy(category, rawScore, dice, scoreState) {
+function adjustScoreForStrategy(category, rawScore, dice, scoreState, config) {
   let score = rawScore;
   const upperCats = getUpperCategories();
   const isUpper = upperCats.includes(category);
+  const rarityWeight = config.rarityWeight || 1;
+  const bonusWeight = config.bonusWeight || 1;
+  const zeroPenalty = config.zeroPenalty || 1;
   
   // Calcola stato bonus
   const currentUpper = currentUpperSum(scoreState);
   const remaining = upperRemaining(scoreState);
   const expectedRemaining = expectedUpperFromRemaining(remaining.filter(c => c !== category));
+  const riskBias = config.riskBias || 0;
+  const mistakeChance = config.mistakeChance || 0;
   
   if (isUpper) {
     // Bonus per stare in linea con il target 63
     const expectedForThis = UPPER_EXPECTED[category];
+    const projectedTotal = currentUpper + rawScore + expectedRemaining;
     
     if (rawScore >= expectedForThis) {
       // Sopra la media: bonus proporzionale
-      score += (rawScore - expectedForThis) * 0.5;
+      score += (rawScore - expectedForThis) * (0.5 + 0.2 * riskBias);
     } else if (rawScore < expectedForThis) {
       // Sotto la media: penalità se rischia il bonus
-      const projectedTotal = currentUpper + rawScore + expectedRemaining;
       if (projectedTotal < BONUS_TARGET) {
-        score -= (expectedForThis - rawScore) * 0.8;
+        score -= (expectedForThis - rawScore) * (0.8 + 0.3 * (1 - riskBias));
+      } else {
+        // Leggera penalità se siamo ancora in corsa per il bonus
+        score -= (expectedForThis - rawScore) * 0.2;
       }
     }
     
     // Bonus se questa mossa ci fa raggiungere il bonus
     if (currentUpper + rawScore >= BONUS_TARGET && currentUpper < BONUS_TARGET) {
-      score += BONUS_VALUE * 0.5;  // Anticipa metà del bonus
+      score += BONUS_VALUE * 0.5 * bonusWeight;  // Anticipa parte del bonus
+    } else if (riskBias > 0 && projectedTotal >= BONUS_TARGET - 6) {
+      // Se siamo vicini al bonus, incoraggia la scelta
+      score += BONUS_VALUE * 0.15 * bonusWeight;
     }
   }
   
   // Bonus per combinazioni rare e preziose
   if (category === "Yatzi" && rawScore === 50) {
-    score += 15;  // Yatzi è prezioso, non sacrificarlo
+    score += 15 * rarityWeight;  // Yatzi è prezioso, non sacrificarlo
+    if (config.chaseYahtzee && remaining.length <= 4) {
+      // Aggiungi un po' di appetito nel finale partita
+      score += 5;
+    }
   }
   
   if (category === "Scala lunga" && rawScore === 40) {
-    score += 10;
+    score += 10 * rarityWeight;
   }
   
   if (category === "Full" && rawScore === 25) {
-    score += 5;
+    score += 5 * rarityWeight;
   }
   
   // Penalità per sacrificare categorie importanti con 0
   if (rawScore === 0) {
-    if (category === "Yatzi") score -= 8;
-    else if (category === "Scala lunga") score -= 6;
-    else if (category === "Scala corta") score -= 4;
-    else if (category === "Full") score -= 3;
-    else if (category === "Poker") score -= 2;
-    else if (!isUpper) score -= 1;
+    let penalty = 0;
+    if (category === "Yatzi") penalty = 8;
+    else if (category === "Scala lunga") penalty = 6;
+    else if (category === "Scala corta") penalty = 4;
+    else if (category === "Full") penalty = 3;
+    else if (category === "Poker") penalty = 2;
+    else if (!isUpper) penalty = 1;
+    score -= penalty * zeroPenalty;
   }
   
   // Chance è una categoria di fallback, penalizzala leggermente
   if (category === "Chance") {
     score -= 3;
+  }
+
+  // Rischio controllato: somma alta incoraggia la scelta se siamo aggressivi
+  if (riskBias !== 0) {
+    const sum = dice.reduce((a, b) => a + b, 0);
+    score += (sum - 18) * 0.05 * riskBias;
+  }
+
+  // Margine di errore deliberato per livelli facili
+  if (mistakeChance && Math.random() < mistakeChance) {
+    score -= 3 + Math.random() * 4;
   }
   
   return score;
@@ -228,7 +291,9 @@ function adjustScoreForStrategy(category, rawScore, dice, scoreState) {
 
 /* ================== MAIN AI DECISIONS ================== */
 
-export function aiDecideKeep(dice, scoreState, rollIndex) {
+export function aiDecideKeep(dice, scoreState, rollIndex, difficulty = "medium") {
+  const config = getConfig(difficulty);
+
   // Dopo l'ultimo lancio, tieni tutto
   if (rollIndex >= 2) {
     return dice.map(() => true);
@@ -241,15 +306,15 @@ export function aiDecideKeep(dice, scoreState, rollIndex) {
   let bestEV = -Infinity;
   
   // Valuta il punteggio attuale (se teniamo tutto)
-  const currentBest = getBestScoreForDice(dice, scoreState);
+  const currentBest = getBestScoreForDice(dice, scoreState, config);
   
   // Se abbiamo già un punteggio eccellente, tieni tutto
-  if (currentBest >= 40) {
+  if (currentBest >= config.holdGreed) {
     return dice.map(() => true);
   }
   
   for (const mask of masks) {
-    const ev = evaluateKeepMask(mask, dice, scoreState, rollsLeft);
+    const ev = evaluateKeepMask(mask, dice, scoreState, rollsLeft, config);
     
     if (ev > bestEV) {
       bestEV = ev;
@@ -259,14 +324,20 @@ export function aiDecideKeep(dice, scoreState, rollIndex) {
   
   // Se la miglior EV non è molto migliore del punteggio attuale,
   // e il punteggio attuale è già buono, tieni tutto
-  if (currentBest >= 25 && bestEV < currentBest + 5) {
+  if (currentBest >= config.holdGreed - 8 && bestEV < currentBest + 5) {
     return dice.map(() => true);
+  }
+  
+  // Margine di errore: l'AI easy può prendere decisioni meno ottimali
+  if (config.mistakeChance && Math.random() < config.mistakeChance * 0.6) {
+    return masks[Math.floor(Math.random() * masks.length)] || bestMask;
   }
   
   return bestMask;
 }
 
-export function aiChooseCategory(dice, scoreState) {
+export function aiChooseCategory(dice, scoreState, difficulty = "medium") {
+  const config = getConfig(difficulty);
   let bestCat = null;
   let bestScore = -Infinity;
   
@@ -278,93 +349,17 @@ export function aiChooseCategory(dice, scoreState) {
     if (scoreState.used[cat]) continue;
     
     const rawScore = scoreCategory(cat, dice);
-    let adjustedScore = rawScore;
-    
-    // Strategia upper section / bonus
-    if (upperCats.includes(cat)) {
-      const expectedForThis = UPPER_EXPECTED[cat];
-      const otherRemaining = remaining.filter(c => c !== cat);
-      const expectedFromOthers = expectedUpperFromRemaining(otherRemaining);
-      const projectedTotal = currentUpper + rawScore + expectedFromOthers;
-      
-      if (rawScore >= expectedForThis) {
-        // Buon punteggio per questa categoria
-        adjustedScore += (rawScore - expectedForThis) * 0.3;
-      } else {
-        // Sotto la media
-        if (projectedTotal < BONUS_TARGET) {
-          // Rischiamo di perdere il bonus
-          adjustedScore -= (expectedForThis - rawScore) * 0.5;
-        }
-      }
-      
-      // Bonus se raggiungiamo il 63
-      if (currentUpper + rawScore >= BONUS_TARGET && currentUpper < BONUS_TARGET) {
-        adjustedScore += BONUS_VALUE * 0.3;
-      }
-    }
-    
-    // Yatzi: molto prezioso
-    if (cat === "Yatzi") {
-      if (rawScore === 50) {
-        adjustedScore += 20;
-      } else {
-        // Non sacrificare Yatzi se non necessario
-        const usedCount = Object.values(scoreState.used).filter(Boolean).length;
-        if (usedCount < 10) {
-          adjustedScore -= 15;
-        }
-      }
-    }
-    
-    // Scale: preziose
-    if (cat === "Scala lunga") {
-      if (rawScore === 40) {
-        adjustedScore += 10;
-      } else {
-        adjustedScore -= 8;
-      }
-    }
-    
-    if (cat === "Scala corta") {
-      if (rawScore === 30) {
-        adjustedScore += 5;
-      } else {
-        adjustedScore -= 5;
-      }
-    }
-    
-    // Full
-    if (cat === "Full") {
-      if (rawScore === 25) {
-        adjustedScore += 5;
-      } else {
-        adjustedScore -= 4;
-      }
-    }
-    
-    // Poker/Tris: usa se hai un buon punteggio
-    if (cat === "Poker" && rawScore > 0) {
-      adjustedScore += 2;
-    }
-    
-    if (cat === "Tris" && rawScore > 0) {
-      adjustedScore += 1;
-    }
-    
-    // Chance: categoria di fallback
+    let adjustedScore = adjustScoreForStrategy(cat, rawScore, dice, scoreState, config);
+
+    // Chance: leggero boost se abbiamo somma alta
     if (cat === "Chance") {
       const sum = dice.reduce((a, b) => a + b, 0);
-      if (sum >= 25) {
-        adjustedScore += 2;
-      } else {
-        adjustedScore -= 2;
-      }
+      adjustedScore += (sum - 20) * 0.12;
     }
-    
-    // Penalità per sacrificare con 0
-    if (rawScore === 0) {
-      adjustedScore -= 3;
+
+    // Margine di errore per la difficoltà easy
+    if (config.mistakeChance && Math.random() < config.mistakeChance * 0.35) {
+      adjustedScore -= 5;
     }
     
     if (adjustedScore > bestScore) {

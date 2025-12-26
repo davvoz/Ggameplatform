@@ -1,8 +1,17 @@
 {
-  "version": "2.4.1",
-  "timestamp": "2025-12-26T01:08:02.588Z",
-  "buildNumber": 138,
+  "version": "2.4.2",
+  "timestamp": "2025-12-26T11:12:34.239Z",
+  "buildNumber": 139,
   "changelog": [
+    {
+      "version": "2.4.2",
+      "date": "2025-12-26",
+      "type": "patch",
+      "changes": [
+        "fix:[Yatzi] Implement difficulty selection panel and AI difficulty settings for Yatzi 3D",
+        "🔖 Bump version to 2.4.1 [skip-version]"
+      ]
+    },
     {
       "version": "2.4.1",
       "date": "2025-12-26",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: [AUDIO] Add enemy damage wall sound effect and update UI for sound settings",
         "🔖 Bump version to 2.3.21 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.21",
-      "date": "2025-12-24",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[MTD] Implement audio management system with background music and sound effects",
-        "🔖 Bump version to 2.3.20 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "2.5.0",
-  "timestamp": "2025-12-26T17:16:41.876Z",
-  "buildNumber": 140,
+  "version": "2.6.0",
+  "timestamp": "2025-12-27T12:16:05.565Z",
+  "buildNumber": 141,
   "changelog": [
+    {
+      "version": "2.6.0",
+      "date": "2025-12-27",
+      "type": "minor",
+      "changes": [
+        "feat: roba",
+        "🔖 Bump version to 2.5.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.5.0",
       "date": "2025-12-26",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[MTD]Refactor tower sprites: remove SplashTowerSprite, add new tower types (Basic, Electric, Freeze, Laser, Rapid, Sniper, Splash) with animations and graphical components",
         "🔖 Bump version to 2.3.23 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.3.23",
-      "date": "2025-12-24",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD] Add exit fullscreen button and update retry button layout for fullscreen mode",
-        "🔖 Bump version to 2.3.22 [skip-version]"
       ]
     }
   ]

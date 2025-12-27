@@ -92,20 +92,19 @@ def setup_yatzi_game(force=False):
         
         print()
         
-        # Step 2: Create thumbnail
-        print("🎨 Step 2: Creating thumbnail...")
+        # Step 2: Verify thumbnail exists
+        print("🎨 Step 2: Verifying thumbnail...")
         try:
-            result = subprocess.run(
-                [sys.executable, os.path.join(os.path.dirname(__file__), 'create_yatzi_thumbnail.py')],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                print("✅ Thumbnail created!")
+            game_dir = Path(__file__).parent.parent / 'app' / 'games' / 'yatzi_3d_by_luciogiolli'
+            thumbnail_path = game_dir / 'thumbnail.png'
+            
+            if thumbnail_path.exists():
+                print(f"✅ Thumbnail found at: {thumbnail_path}")
             else:
-                print(f"⚠️  Thumbnail creation had issues: {result.stderr}")
+                print(f"⚠️  Warning: thumbnail.png not found in game directory")
+                print(f"   Expected location: {thumbnail_path}")
         except Exception as e:
-            print(f"⚠️  Could not create thumbnail: {e}")
+            print(f"⚠️  Could not verify thumbnail: {e}")
         
         print()
         
@@ -149,7 +148,7 @@ def setup_yatzi_game(force=False):
         print()
         print("📋 Summary:")
         print("  ✅ Game registered in database")
-        print("  ✅ Thumbnail created")
+        print("  ✅ Thumbnail verified")
         print("  ✅ XP rules configured")
         print("  ✅ Quests created")
         print("  ✅ SDK integration added")

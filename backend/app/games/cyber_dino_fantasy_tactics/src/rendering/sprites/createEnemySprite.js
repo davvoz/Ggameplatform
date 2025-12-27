@@ -166,7 +166,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             glow: { color: colors.glowColor, blur: 8 }
         }
     ], 0.5, 0.5, -8);
-    tail.setBaseTransform(0, 0.08);
+    tail.setBaseTransform(-0.07, 0.18, -10);
 
     // ========================================================================
     // BODY - Corrupted torso with dark core (z-order: 0)
@@ -342,7 +342,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             glow: { color: colors.glowColor, blur: 2 }
         }
     ], 0.5, 0, 2);
-    armLeft.setBaseTransform(-0.15, -0.04);
+    armLeft.setBaseTransform(-0.05, -0.04);
 
     const armRight = sprite.addPart('armRight', [
         {
@@ -379,7 +379,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             glow: { color: colors.glowColor, blur: 2 }
         }
     ], 0.5, 0, 2);
-    armRight.setBaseTransform(0.15, -0.04);
+    armRight.setBaseTransform(0.05, -0.04);
 
     // ========================================================================
     // HEAD - Monstrous dino head (z-order: 10)
@@ -477,7 +477,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             glow: { color: colors.glowColor, blur: 5 }
         }
     ], 0.5, 1, 12);
-    hornLeft.setBaseTransform(-0.08, -0.30);
+    hornLeft.setBaseTransform(-0.08, -0.1);
 
     const hornRight = sprite.addPart('hornRight', [
         {
@@ -500,7 +500,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             glow: { color: colors.glowColor, blur: 5 }
         }
     ], 0.5, 1, 12);
-    hornRight.setBaseTransform(0.08, -0.30);
+    hornRight.setBaseTransform(0.08, -0.1);
 
     // ========================================================================
     // WEAPON - Dark energy weapon (z-order: 15)
@@ -542,7 +542,7 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
             fill: false
         }
     ], 0.5, 1, 15);
-    weapon.setBaseTransform(-0.24, 0.05);
+    weapon.setBaseTransform(0.29, 0.19, 15);
     weapon.opacity = 0.95;
 
     // Set up hierarchy

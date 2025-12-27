@@ -93,7 +93,10 @@ export class CombatSystem {
     if (currentOwner === TurnOwner.PLAYER) {
       player.tickCooldowns();
       this.startTurn({ turnOwner: TurnOwner.ENEMY });
-      this.performEnemyTurn({ enemy, player });
+      // Delay enemy action so player can see it happening
+      setTimeout(() => {
+        this.performEnemyTurn({ enemy, player });
+      }, 800);
     } else {
       enemy.tickCooldowns();
       this.startTurn({ turnOwner: TurnOwner.PLAYER });

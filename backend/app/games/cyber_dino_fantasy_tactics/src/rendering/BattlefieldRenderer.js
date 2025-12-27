@@ -82,19 +82,10 @@ export class BattlefieldRenderer {
      * Initialize player sprite based on character data
      */
     initPlayerSprite(character) {
-        // Determine focus from affinities
-        const affinities = character?.affinities || {};
-        let focus = 'TECH';
-        let maxVal = 0;
+        // Pass all affinities to create a mixed color sprite
+        const affinities = character?.affinities || { TECH: 1 };
         
-        for (const [key, val] of Object.entries(affinities)) {
-            if (val > maxVal) {
-                maxVal = val;
-                focus = key;
-            }
-        }
-        
-        this.playerSprite = createPlayerSprite(focus);
+        this.playerSprite = createPlayerSprite(affinities);
         AnimationLibrary.applyAnimationsToSprite(this.playerSprite);
     }
 
@@ -427,6 +418,51 @@ export class BattlefieldRenderer {
     }
 
     /**
+     * Play ability-specific animation
+     */
+    playAbilityAnimation(isPlayer, animationType, callback = null) {
+        const sprite = isPlayer ? this.playerSprite : this.enemySprite;
+        if (!sprite) return;
+        
+        // Check if the specific animation exists, fallback to cast
+        const hasAnimation = sprite.animations && sprite.animations.has(animationType);
+        const animToPlay = hasAnimation ? animationType : 'cast';
+        
+        sprite.play(animToPlay, true);
+        
+        // Spawn appropriate particles based on animation type
+        if (animationType.includes('Lightning') || animationType.includes('Arcane')) {
+            this.spawnLightningParticles(isPlayer);
+        } else if (animationType.includes('Beam') || animationType.includes('Tech')) {
+            this.spawnBeamParticles(isPlayer);
+        } else if (animationType.includes('Claw') || animationType.includes('Primal')) {
+            this.spawnClawParticles(isPlayer);
+        } else if (animationType.includes('Shield')) {
+            this.spawnShieldParticles(isPlayer);
+        } else if (animationType.includes('Heal')) {
+            this.spawnHealParticles(isPlayer);
+        } else {
+            this.spawnCastParticles(isPlayer);
+        }
+        
+        if (callback) {
+            this.pendingAnimations.push({
+                target: isPlayer ? 'player' : 'enemy',
+                animationName: animToPlay,
+                callback: () => {
+                    sprite.play('idle');
+                    callback();
+                }
+            });
+        } else {
+            sprite.onAnimationComplete = () => {
+                sprite.play('idle');
+                sprite.onAnimationComplete = null;
+            };
+        }
+    }
+
+    /**
      * Play guard animation
      */
     playGuard(isPlayer, callback = null) {
@@ -577,6 +613,126 @@ export class BattlefieldRenderer {
                 color: color,
                 life: 0.5 + Math.random() * 0.3,
                 maxLife: 0.8,
+                alpha: 1
+            });
+        }
+    }
+
+    /**
+     * Spawn lightning particles (Arcane)
+     */
+    spawnLightningParticles(isPlayer) {
+        const x = isPlayer ? this.width * 0.25 : this.width * 0.75;
+        const y = this.height * 0.5;
+        
+        for (let i = 0; i < 30; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 40 + Math.random() * 60;
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 30,
+                y: y + (Math.random() - 0.5) * 30,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 60,
+                size: 2 + Math.random() * 4,
+                color: '#88aaff',
+                life: 0.6 + Math.random() * 0.4,
+                maxLife: 1.0,
+                alpha: 1
+            });
+        }
+    }
+
+    /**
+     * Spawn beam particles (Tech)
+     */
+    spawnBeamParticles(isPlayer) {
+        const x = isPlayer ? this.width * 0.25 : this.width * 0.75;
+        const y = this.height * 0.55;
+        const targetX = isPlayer ? this.width * 0.75 : this.width * 0.25;
+        
+        for (let i = 0; i < 20; i++) {
+            const t = i / 20;
+            this.particles.push({
+                x: x + (targetX - x) * t,
+                y: y + (Math.random() - 0.5) * 10,
+                vx: (targetX - x) * 3,
+                vy: (Math.random() - 0.5) * 20,
+                size: 2 + Math.random() * 3,
+                color: '#ffaa44',
+                life: 0.4 + Math.random() * 0.3,
+                maxLife: 0.7,
+                alpha: 1
+            });
+        }
+    }
+
+    /**
+     * Spawn claw particles (Primal)
+     */
+    spawnClawParticles(isPlayer) {
+        const x = isPlayer ? this.width * 0.25 : this.width * 0.75;
+        const y = this.height * 0.58;
+        
+        for (let i = 0; i < 25; i++) {
+            const angle = (isPlayer ? 0 : Math.PI) + (Math.random() - 0.5) * 1.2;
+            const speed = 50 + Math.random() * 70;
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + (Math.random() - 0.5) * 20,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: 3 + Math.random() * 5,
+                color: '#44ff88',
+                life: 0.5 + Math.random() * 0.3,
+                maxLife: 0.8,
+                alpha: 1
+            });
+        }
+    }
+
+    /**
+     * Spawn shield particles
+     */
+    spawnShieldParticles(isPlayer) {
+        const x = isPlayer ? this.width * 0.25 : this.width * 0.75;
+        const y = this.height * 0.6;
+        
+        for (let i = 0; i < 30; i++) {
+            const angle = (i / 30) * Math.PI * 2;
+            const radius = 40 + Math.random() * 20;
+            this.particles.push({
+                x: x + Math.cos(angle) * radius,
+                y: y + Math.sin(angle) * radius,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                size: 2 + Math.random() * 3,
+                color: '#77ddff',
+                life: 0.7 + Math.random() * 0.3,
+                maxLife: 1.0,
+                alpha: 1
+            });
+        }
+    }
+
+    /**
+     * Spawn heal particles
+     */
+    spawnHealParticles(isPlayer) {
+        const x = isPlayer ? this.width * 0.25 : this.width * 0.75;
+        const y = this.height * 0.6;
+        
+        for (let i = 0; i < 35; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * 30;
+            this.particles.push({
+                x: x + Math.cos(angle) * radius,
+                y: y + Math.sin(angle) * radius,
+                vx: (Math.random() - 0.5) * 20,
+                vy: -50 - Math.random() * 40,
+                size: 2 + Math.random() * 4,
+                color: '#88ff88',
+                life: 0.8 + Math.random() * 0.4,
+                maxLife: 1.2,
                 alpha: 1
             });
         }

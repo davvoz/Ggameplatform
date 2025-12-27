@@ -293,6 +293,137 @@ export class ProceduralGenerator {
     return ability;
   }
 
+  /**
+   * Generate hybrid ability that scales with all player affinities
+   */
+  generateHybridAbility({ level, affinities, category }) {
+    const rarity = this.rollRarity();
+    const mult = rarityMultiplier(rarity);
+
+    if (!category) {
+      const cats = ["ATTACK", "CONTROL", "DEFENSE", "SUPPORT"];
+      category = randomOf(cats, this.rng);
+    }
+
+    // Calculate dominant and secondary affinities
+    const affinityArray = [
+      { type: Affinity.ARCANE, value: affinities[Affinity.ARCANE] || 0 },
+      { type: Affinity.TECH, value: affinities[Affinity.TECH] || 0 },
+      { type: Affinity.PRIMAL, value: affinities[Affinity.PRIMAL] || 0 },
+    ].sort((a, b) => b.value - a.value);
+
+    const primary = affinityArray[0].type;
+    const secondary = affinityArray[1].type;
+
+    // Hybrid ability names combining affinities
+    const hybridNames = {
+      ATTACK: {
+        [`${Affinity.ARCANE}_${Affinity.TECH}`]: "Fulmine Arcano",
+        [`${Affinity.ARCANE}_${Affinity.PRIMAL}`]: "Zanne Mistiche",
+        [`${Affinity.TECH}_${Affinity.ARCANE}`]: "Scarica Eterea",
+        [`${Affinity.TECH}_${Affinity.PRIMAL}`]: "Morso Cibernetico",
+        [`${Affinity.PRIMAL}_${Affinity.ARCANE}`]: "Artiglio Incantato",
+        [`${Affinity.PRIMAL}_${Affinity.TECH}`]: "Assalto Potenziato",
+      },
+      DEFENSE: {
+        [`${Affinity.ARCANE}_${Affinity.TECH}`]: "Campo Runico-Tech",
+        [`${Affinity.ARCANE}_${Affinity.PRIMAL}`]: "Barriera Organica",
+        [`${Affinity.TECH}_${Affinity.ARCANE}`]: "Scudo Quantico",
+        [`${Affinity.TECH}_${Affinity.PRIMAL}`]: "Corazza Adattiva",
+        [`${Affinity.PRIMAL}_${Affinity.ARCANE}`]: "Pelle di Mana",
+        [`${Affinity.PRIMAL}_${Affinity.TECH}`]: "Esoscheletro Bio-Tech",
+      },
+      SUPPORT: {
+        [`${Affinity.ARCANE}_${Affinity.TECH}`]: "Sincronizzazione Nexus",
+        [`${Affinity.ARCANE}_${Affinity.PRIMAL}`]: "Risveglio Primordiale",
+        [`${Affinity.TECH}_${Affinity.ARCANE}`]: "Boost Eterico",
+        [`${Affinity.TECH}_${Affinity.PRIMAL}`]: "Stimolo Vitale",
+        [`${Affinity.PRIMAL}_${Affinity.ARCANE}`]: "Rinascita Arcana",
+        [`${Affinity.PRIMAL}_${Affinity.TECH}`]: "Regen Nano-Organico",
+      },
+      CONTROL: {
+        [`${Affinity.ARCANE}_${Affinity.TECH}`]: "Stasi Olografica",
+        [`${Affinity.ARCANE}_${Affinity.PRIMAL}`]: "Vincolo Primevo",
+        [`${Affinity.TECH}_${Affinity.ARCANE}`]: "Glitch Dimensionale",
+        [`${Affinity.TECH}_${Affinity.PRIMAL}`]: "Tramortimento Bio",
+        [`${Affinity.PRIMAL}_${Affinity.ARCANE}`]: "Incantamento Ferino",
+        [`${Affinity.PRIMAL}_${Affinity.TECH}`]: "Sovraccarico Sensoriale",
+      },
+    };
+
+    const nameKey = `${primary}_${secondary}`;
+    const name = hybridNames[category]?.[nameKey] || `Abilità Ibrida ${category}`;
+
+    // Hybrid cost: distributed across resources based on affinities
+    const baseCost = 8 + level * 2;
+    const m = affinities[Affinity.ARCANE] || 0;
+    const t = affinities[Affinity.TECH] || 0;
+    const p = affinities[Affinity.PRIMAL] || 0;
+    const total = m + t + p || 1;
+
+    const cost = {
+      mana: Math.round(baseCost * (m / total)),
+      energy: Math.round(baseCost * (p / total)),
+      health: 0,
+    };
+
+    const cooldown = 3 + Math.floor(this.rng() * 2);
+    const range = category === "MOVEMENT" ? 3 : 1;
+
+    // Description based on affinity mix
+    const affinityDesc = [];
+    if (m > 0.3) affinityDesc.push("arcano");
+    if (t > 0.3) affinityDesc.push("tech");
+    if (p > 0.3) affinityDesc.push("primale");
+    const description = `Abilità ibrida ${affinityDesc.join("-")}. Scala con tutte le tue affinità.`;
+
+    // Map each unique ability name to its own animation
+    const animationMap = {
+      // ATTACK abilities - 6 unique animations
+      "Fulmine Arcano": "animFulmineArcano",
+      "Zanne Mistiche": "animZanneMistiche",
+      "Scarica Eterea": "animScaricaEterea",
+      "Morso Cibernetico": "animMorsoCibernetico",
+      "Artiglio Incantato": "animArtiglioIncantato",
+      "Assalto Potenziato": "animAssaltoPotenziato",
+      
+      // DEFENSE abilities - 6 unique animations
+      "Campo Runico-Tech": "animCampoRunicoTech",
+      "Barriera Organica": "animBarrieraOrganica",
+      "Scudo Quantico": "animScudoQuantico",
+      "Corazza Adattiva": "animCorazzaAdattiva",
+      "Pelle di Mana": "animPelleDiMana",
+      "Esoscheletro Bio-Tech": "animEsoscheletroBioTech",
+      
+      // SUPPORT abilities - 6 unique animations
+      "Sincronizzazione Nexus": "animSincronizzazioneNexus",
+      "Risveglio Primordiale": "animRisveglioprimordiale",
+      "Boost Eterico": "animBoostEterico",
+      "Stimolo Vitale": "animStimoloVitale",
+      "Rinascita Arcana": "animRinascitaArcana",
+      "Regen Nano-Organico": "animRegenNanoOrganico"
+    };
+
+    const animationType = animationMap[name] || "cast";
+
+    const ability = new Ability({
+      name,
+      category,
+      affinity: primary, // Store primary for UI purposes
+      cost,
+      cooldown,
+      range,
+      tags: ["HYBRID", primary, secondary, category, "PROCEDURAL"],
+      description,
+      animationType,
+      execute: (ctx) => {
+        this.executeHybridAbilityEffect({ ability, category, affinities, mult, ctx });
+      },
+    });
+
+    return ability;
+  }
+
   executeAbilityEffect({ ability, category, focus, mult, ctx }) {
     const { actor, target, log } = ctx;
     const stats = actor.getTotalStats();
@@ -340,13 +471,86 @@ export class ProceduralGenerator {
       log?.(
         `${actor.name} lancia ${ability.name} su ${target.name}, indebolendolo.`
       );
-      // hook per status effect / debuff futuri
       return;
     }
 
     if (category === "SUMMON") {
       log?.(
-        `${actor.name} evoca un alleato temporaneo (${ability.name}). (hook per future summon)`
+        `${actor.name} evoca un alleato temporaneo (${ability.name}).`
+      );
+      return;
+    }
+  }
+
+  executeHybridAbilityEffect({ ability, category, affinities, mult, ctx }) {
+    const { actor, target, log } = ctx;
+    const stats = actor.getTotalStats();
+
+    // Get affinity weights
+    const m = affinities[Affinity.ARCANE] || 0;
+    const t = affinities[Affinity.TECH] || 0;
+    const p = affinities[Affinity.PRIMAL] || 0;
+    const total = m + t + p || 1;
+
+    if (category === "ATTACK") {
+      // Hybrid damage: combines all power sources weighted by affinities
+      const magicDmg = stats.magicPower * (m / total);
+      const techDmg = stats.techPower * (t / total);
+      const primalDmg = (stats.attackPower + stats.vitality * 0.5) * (p / total);
+      
+      const totalPower = magicDmg + techDmg + primalDmg;
+      const dmg = (15 + totalPower * 1.2) * mult;
+      const applied = target.applyDamage(Math.round(dmg));
+      log?.(
+        `${actor.name} usa ${ability.name} su ${target.name} per ${Math.round(
+          applied
+        )} danni ibridi.`
+      );
+      return;
+    }
+
+    if (category === "DEFENSE") {
+      // Hybrid defense: combines shield and regeneration
+      const shieldAmount = (10 + stats.vitality * 1.2 + stats.agility * 0.5) * mult * (t / total);
+      const healAmount = (5 + stats.vitality * 0.8) * mult * (p / total);
+      const manaShield = (8 + stats.magicPower * 0.5) * mult * (m / total);
+      
+      const totalShield = Math.round(shieldAmount + manaShield);
+      const totalHeal = Math.round(healAmount);
+      
+      actor.currentShield = Math.min(
+        actor.currentShield + totalShield,
+        stats.maxShield + totalShield
+      );
+      
+      if (totalHeal > 0) {
+        actor.heal(totalHeal);
+      }
+      
+      log?.(`${actor.name} genera ${totalShield} scudo e rigenera ${totalHeal} HP.`);
+      return;
+    }
+
+    if (category === "SUPPORT") {
+      // Hybrid support: combines healing and buffs
+      const heal = (12 + stats.vitality * 1.0 + stats.magicPower * 0.3) * mult;
+      const energyBoost = Math.round((5 + stats.techPower * 0.2) * mult);
+      
+      const restored = target.heal(Math.round(heal));
+      target.currentEnergy = Math.min(
+        target.currentEnergy + energyBoost,
+        stats.maxEnergy
+      );
+      
+      log?.(
+        `${actor.name} potenzia ${target.name}: +${Math.round(restored)} HP e +${energyBoost} energia.`
+      );
+      return;
+    }
+
+    if (category === "CONTROL") {
+      log?.(
+        `${actor.name} lancia ${ability.name} su ${target.name}, indebolendolo con potere ibrido.`
       );
       return;
     }

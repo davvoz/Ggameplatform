@@ -704,9 +704,7 @@ body {
         padding: 6px 10px;
     }
 
-    #battlefield-canvas {
-        /* Canvas maintains full coverage on mobile */
-    }
+
 
     .sprite {
         width: 52px;

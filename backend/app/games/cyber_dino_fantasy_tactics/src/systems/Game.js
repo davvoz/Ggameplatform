@@ -112,24 +112,28 @@ export class Game {
     player.equipment.implants.push(this.generator.generateImplant({ level: 1 }));
     player.equipment.vehicle = this.generator.generateVehicle({ level: 1 });
 
+    // Refresh resources after equipping items
+    player.refreshResourceMaximums();
+
+    // Generate hybrid abilities based on player's affinity mix
     player.abilities.push(
-      this.generator.generateAbility({
+      this.generator.generateHybridAbility({
         level: 1,
-        focus,
+        affinities: player.affinities,
         category: AbilityCategory.ATTACK,
       })
     );
     player.abilities.push(
-      this.generator.generateAbility({
+      this.generator.generateHybridAbility({
         level: 1,
-        focus,
+        affinities: player.affinities,
         category: AbilityCategory.DEFENSE,
       })
     );
     player.abilities.push(
-      this.generator.generateAbility({
+      this.generator.generateHybridAbility({
         level: 1,
-        focus,
+        affinities: player.affinities,
         category: AbilityCategory.SUPPORT,
       })
     );

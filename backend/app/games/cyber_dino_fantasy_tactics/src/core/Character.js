@@ -31,6 +31,10 @@ export class Character {
     this.currentEnergy = baseStats.maxEnergy;
     this.currentShield = baseStats.maxShield;
 
+    // Track last known max resources for refreshResourceMaximums
+    this._lastMaxMana = baseStats.maxMana;
+    this._lastMaxEnergy = baseStats.maxEnergy;
+
     this.equipment = {
       weaponMain: null,
       weaponOff: null,
@@ -70,6 +74,36 @@ export class Character {
     return list;
   }
 
+  /**
+   * Refresh current mana/energy when maxMana/maxEnergy change due to equipment
+   * If max increased, proportionally increase current. If max decreased, cap current.
+   */
+  refreshResourceMaximums() {
+    const totalStats = this.getTotalStats();
+    
+    // Proportionally scale currentMana if maxMana increased
+    if (totalStats.maxMana > this._lastMaxMana) {
+      const ratio = totalStats.maxMana / this._lastMaxMana;
+      this.currentMana = Math.min(this.currentMana * ratio, totalStats.maxMana);
+    } else if (this.currentMana > totalStats.maxMana) {
+      // Cap if maxMana decreased
+      this.currentMana = totalStats.maxMana;
+    }
+    
+    // Proportionally scale currentEnergy if maxEnergy increased
+    if (totalStats.maxEnergy > this._lastMaxEnergy) {
+      const ratio = totalStats.maxEnergy / this._lastMaxEnergy;
+      this.currentEnergy = Math.min(this.currentEnergy * ratio, totalStats.maxEnergy);
+    } else if (this.currentEnergy > totalStats.maxEnergy) {
+      // Cap if maxEnergy decreased
+      this.currentEnergy = totalStats.maxEnergy;
+    }
+    
+    // Update last known maxima for next comparison
+    this._lastMaxMana = totalStats.maxMana;
+    this._lastMaxEnergy = totalStats.maxEnergy;
+  }
+
   applyDamage(amount) {
     let remaining = amount;
 
@@ -82,6 +116,14 @@ export class Character {
 
     const applied = Math.min(this.currentHealth, remaining);
     this.currentHealth -= applied;
+    
+    // When character dies, drain all resources for visual feedback
+    if (this.currentHealth <= 0) {
+      this.currentMana = 0;
+      this.currentEnergy = 0;
+      this.currentShield = 0;
+    }
+    
     return applied;
   }
 

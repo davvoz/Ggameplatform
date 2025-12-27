@@ -72,7 +72,7 @@ export class UIController {
       }),
       eventBus.on("combat:abilityCast", (payload) => {
         if (!payload) return;
-        this.playCastAnim(payload.actor);
+        this.playCastAnim(payload.actor, payload.ability);
       }),
       eventBus.on("character:dead", (payload) => {
         if (payload?.character) {
@@ -152,7 +152,7 @@ export class UIController {
     }
   }
 
-  playCastAnim(character) {
+  playCastAnim(character, ability) {
     // HUD animation
     const hud = this.getHudForCharacter(character);
     if (hud) {
@@ -162,9 +162,10 @@ export class UIController {
       setTimeout(() => hud.classList.remove("cast-anim"), 340);
     }
 
-    // Canvas sprite animation
+    // Canvas sprite animation - use specific animation type from ability
     if (this.battlefieldRenderer) {
-      this.battlefieldRenderer.playCast(character?.isPlayer);
+      const animType = ability?.animationType || "cast";
+      this.battlefieldRenderer.playAbilityAnimation(character?.isPlayer, animType);
     }
   }
 
@@ -505,46 +506,148 @@ export class UIController {
 
     const header = document.createElement("div");
     header.className = "modal-header";
-    header.innerHTML = `<span>Build Tattica</span>`;
+    header.innerHTML = `<span>Build Tattica - Distribuisci 5 Punti</span>`;
 
     const content = document.createElement("div");
     content.style.display = "flex";
     content.style.flexDirection = "column";
-    content.style.gap = "6px";
+    content.style.gap = "12px";
 
-    const sliders = [
-      { key: "magic", label: "Magia (Arcane)", color: "#64d2ff" },
-      { key: "tech", label: "Tecnologia (Tech)", color: "#ffd60a" },
-      { key: "primal", label: "Spinta Vitale (Primal)", color: "#4cd964" },
+    const affinities = [
+      { key: "magic", label: "Magia (Arcane)", color: "#64d2ff", affinity: "ARCANE" },
+      { key: "tech", label: "Tecnologia (Tech)", color: "#ffd60a", affinity: "TECH" },
+      { key: "primal", label: "Spinta Vitale (Primal)", color: "#4cd964", affinity: "PRIMAL" },
     ];
 
-    const values = { magic: 1, tech: 1, primal: 1 };
+    const MAX_POINTS = 5;
+    const MAX_PER_AFFINITY = 5;
 
-    sliders.forEach((s) => {
+    // Get current affinities from player if exists
+    let initialValues = { magic: 2, tech: 2, primal: 1 }; // Default distribution
+    if (this.game.player && this.game.player.affinities) {
+      const playerAffinities = this.game.player.affinities;
+      const total = playerAffinities.ARCANE + playerAffinities.TECH + playerAffinities.PRIMAL;
+      if (total > 0) {
+        // Convert normalized affinities back to step points (0-5)
+        initialValues.magic = Math.round((playerAffinities.ARCANE / total) * MAX_POINTS);
+        initialValues.tech = Math.round((playerAffinities.TECH / total) * MAX_POINTS);
+        initialValues.primal = Math.round((playerAffinities.PRIMAL / total) * MAX_POINTS);
+        
+        // Adjust to ensure total is exactly MAX_POINTS
+        const currentTotal = initialValues.magic + initialValues.tech + initialValues.primal;
+        if (currentTotal !== MAX_POINTS) {
+          const diff = MAX_POINTS - currentTotal;
+          if (initialValues.magic > 0) initialValues.magic += diff;
+          else if (initialValues.tech > 0) initialValues.tech += diff;
+          else if (initialValues.primal > 0) initialValues.primal += diff;
+        }
+      }
+    }
+
+    const values = { ...initialValues };
+    const buttons = { magic: {}, tech: {}, primal: {} };
+
+    const updateUI = () => {
+      const totalPoints = values.magic + values.tech + values.primal;
+      const remainingPoints = MAX_POINTS - totalPoints;
+
+      affinities.forEach((aff) => {
+        const valueDisplay = buttons[aff.key].display;
+        const minusBtn = buttons[aff.key].minus;
+        const plusBtn = buttons[aff.key].plus;
+
+        valueDisplay.textContent = values[aff.key];
+
+        // Update button states
+        minusBtn.disabled = values[aff.key] <= 0;
+        plusBtn.disabled = remainingPoints <= 0 || values[aff.key] >= MAX_PER_AFFINITY;
+
+        // Update visual state
+        minusBtn.style.opacity = minusBtn.disabled ? "0.3" : "1";
+        plusBtn.style.opacity = plusBtn.disabled ? "0.3" : "1";
+      });
+
+      // Update remaining points display
+      remainingDisplay.textContent = `Punti rimanenti: ${remainingPoints}`;
+      remainingDisplay.style.color = remainingPoints === 0 ? "#4cd964" : "#ff9500";
+    };
+
+    // Create rows for each affinity
+    affinities.forEach((aff) => {
       const row = document.createElement("div");
-      row.className = "slider-row";
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+      row.style.padding = "8px";
+      row.style.background = "rgba(255, 255, 255, 0.05)";
+      row.style.borderRadius = "4px";
+
       const label = document.createElement("div");
-      label.textContent = s.label;
-      label.style.color = s.color;
-      const input = document.createElement("input");
-      input.type = "range";
-      input.min = "0";
-      input.max = "100";
-      input.value = "33";
-      input.oninput = () => {
-        values[s.key] = Number(input.value) || 0.1;
-        updatePreview();
+      label.textContent = aff.label;
+      label.style.color = aff.color;
+      label.style.fontWeight = "bold";
+      label.style.flex = "1";
+
+      const controls = document.createElement("div");
+      controls.style.display = "flex";
+      controls.style.alignItems = "center";
+      controls.style.gap = "8px";
+
+      const minusBtn = document.createElement("button");
+      minusBtn.className = "btn";
+      minusBtn.textContent = "−";
+      minusBtn.style.width = "32px";
+      minusBtn.style.height = "32px";
+      minusBtn.style.padding = "0";
+      minusBtn.style.fontSize = "18px";
+      minusBtn.onclick = () => {
+        if (values[aff.key] > 0) {
+          values[aff.key]--;
+          updateUI();
+        }
       };
+
+      const valueDisplay = document.createElement("div");
+      valueDisplay.style.width = "80px";
+      valueDisplay.style.textAlign = "center";
+      valueDisplay.style.fontSize = "16px";
+      valueDisplay.style.fontWeight = "bold";
+      valueDisplay.style.color = aff.color;
+
+      const plusBtn = document.createElement("button");
+      plusBtn.className = "btn";
+      plusBtn.textContent = "+";
+      plusBtn.style.width = "32px";
+      plusBtn.style.height = "32px";
+      plusBtn.style.padding = "0";
+      plusBtn.style.fontSize = "18px";
+      plusBtn.onclick = () => {
+        const totalPoints = values.magic + values.tech + values.primal;
+        if (totalPoints < MAX_POINTS && values[aff.key] < MAX_PER_AFFINITY) {
+          values[aff.key]++;
+          updateUI();
+        }
+      };
+
+      buttons[aff.key] = { minus: minusBtn, display: valueDisplay, plus: plusBtn };
+
+      controls.appendChild(minusBtn);
+      controls.appendChild(valueDisplay);
+      controls.appendChild(plusBtn);
+
       row.appendChild(label);
-      row.appendChild(input);
+      row.appendChild(controls);
+
       content.appendChild(row);
     });
 
-    const preview = document.createElement("div");
-    preview.style.fontSize = "10px";
-    preview.style.opacity = "0.9";
-    preview.style.marginTop = "2px";
-    content.appendChild(preview);
+    // Remaining points display
+    const remainingDisplay = document.createElement("div");
+    remainingDisplay.style.fontSize = "14px";
+    remainingDisplay.style.fontWeight = "bold";
+    remainingDisplay.style.textAlign = "center";
+    remainingDisplay.style.padding = "8px";
+    content.appendChild(remainingDisplay);
 
     const footer = document.createElement("div");
     footer.className = "row";
@@ -560,6 +663,12 @@ export class UIController {
     btnApply.className = "btn btn-primary";
     btnApply.textContent = "Applica";
     btnApply.onclick = () => {
+      const totalPoints = values.magic + values.tech + values.primal;
+      if (totalPoints !== MAX_POINTS) {
+        alert(`Devi distribuire esattamente ${MAX_POINTS} punti!`);
+        return;
+      }
+
       // preserve current credits when changing build
       const existingCredits = this.game.player ? this.game.player.credits : 100;
       this.game.createPlayer(values);
@@ -587,24 +696,7 @@ export class UIController {
     this.modalRoot.appendChild(backdrop);
     this.modalRoot.appendChild(modal);
 
-    const updatePreview = () => {
-      const total = values.magic + values.tech + values.primal || 1;
-      preview.innerHTML = `
-        <div class="tag-list">
-          <span class="chip chip-primary">Arcane: ${Math.round(
-            (values.magic / total) * 100
-          )}%</span>
-          <span class="chip chip-primary">Tech: ${Math.round(
-            (values.tech / total) * 100
-          )}%</span>
-          <span class="chip chip-primary">Primal: ${Math.round(
-            (values.primal / total) * 100
-          )}%</span>
-        </div>
-      `;
-    };
-
-    updatePreview();
+    updateUI();
   }
 
   openShopModal() {
@@ -783,6 +875,9 @@ export class UIController {
         } else if (item.type === ItemType.ARMOR) {
           player.equipment.armorChest = item;
         }
+
+        // Refresh resources after equipping
+        player.refreshResourceMaximums();
 
         // le pozioni applicano subito l'effetto
         if (item.type === ItemType.CONSUMABLE && typeof item.effect === "function") {

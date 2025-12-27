@@ -14,6 +14,7 @@ export class Ability {
     targetType = TargetType.ENEMY,
     tags = [],
     description = "",
+    animationType = "cast", // Specific animation type for this ability
     execute, // (ctx) => { events }
   }) {
     this.id = id;
@@ -26,6 +27,7 @@ export class Ability {
     this.targetType = targetType;
     this.tags = tags;
     this.description = description;
+    this.animationType = animationType;
     this.execute = execute;
   }
 

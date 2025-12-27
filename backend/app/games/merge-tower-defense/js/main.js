@@ -240,8 +240,9 @@ import { CONFIG } from './config.js';
             // Resume game
             game.resumeAfterContinue();
             
-            // Don't end session - keep it active
-            console.log('[Merge Tower] Game continued successfully');
+            // Restart session after continue
+            startSession();
+            console.log('[Merge Tower] Game continued successfully, session restarted');
             
         } catch (error) {
             console.error('[Merge Tower] Error during continue:', error);

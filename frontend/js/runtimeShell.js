@@ -1027,6 +1027,9 @@ export default class RuntimeShell {
     showLevelUpNotification(levelUpData) {
         const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
+        // Try to show notification inside the game iframe first (if game supports it)
+        this.sendMessage('showLevelUpModal', levelUpData);
+
         const modal = document.createElement('div');
         modal.className = 'level-up-modal';
         modal.innerHTML = `

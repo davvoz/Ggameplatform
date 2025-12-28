@@ -73,10 +73,8 @@ class ObstacleManager {
         // Check trains every frame (time-based spawning)
         this.updateTrains(playerZ);
         
-        // Spawn coins less frequently (every 5 frames) for performance
-        if (this.frameCount % 5 === 0) {
-            this.trySpawnCoins(playerZ);
-        }
+        // Spawn coins
+        this.trySpawnCoins(playerZ);
         
         // Update platforms (logs) - use reverse loop for safe removal
         for (let index = this.platforms.length - 1; index >= 0; index--) {

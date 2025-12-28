@@ -597,7 +597,8 @@ const Models = {
         const group = new THREE.Group();
         
         // Rails (shiny metal) - extend along X axis (left to right) - POOLED
-        const railGeometry = GeometryPool.getBoxGeometry(30, 0.1, 0.1);
+        // Reduced width from 30 to 24 to match terrain tiles (-12 to +12)
+        const railGeometry = GeometryPool.getBoxGeometry(24, 0.1, 0.1);
         const railMaterial = MaterialPool.getMaterial(0xA8A8A8, { poolable: true });
         
         const leftRail = new THREE.Mesh(railGeometry, railMaterial);

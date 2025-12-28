@@ -179,15 +179,15 @@ class ParticleSystem {
     }
     
     update(normalizedDelta = 1) {
-        // Update particles every 3rd frame for better performance
+        // Update particles every other frame for performance
         if (!this.updateCounter) this.updateCounter = 0;
         this.updateCounter++;
-        const skipPhysics = this.updateCounter % 3 !== 0;
+        const skipPhysics = this.updateCounter % 2 === 0;
         
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
             
-            // Skip physics update every 3rd frame
+            // Skip physics update every other frame
             if (!skipPhysics) {
                 const positions = particle.system.geometry.attributes.position.array;
                 

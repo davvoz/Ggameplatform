@@ -149,8 +149,9 @@ class TerrainGenerator {
         };
         
         // Create tiles across the row (optimized coverage)
-        // Playable area is -7 to +7, generate -12 to +12 for visual coverage with zoom
-        for (let x = -18; x <= 18; x++) {
+        // Playable area is -7 to +7, generate -12 to +12 for visual coverage
+        // PERFORMANCE: Reduced from -18/+18 to -12/+12 (37 tiles -> 25 tiles = 32% less geometry)
+        for (let x = -12; x <= 12; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);

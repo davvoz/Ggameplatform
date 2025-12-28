@@ -7,10 +7,11 @@
 import { MultiPartSprite } from '../SpriteAnimationSystem.js';
 
 /**
- * Create player sprite based on affinity focus
+ * Create player sprite based on affinity focus and equipment
  * @param {string|object} focus - 'ARCANE', 'TECH', 'PRIMAL' or object with affinities {ARCANE: 0.3, TECH: 0.5, PRIMAL: 0.2}
+ * @param {object} equipment - Character equipment (weaponMain, armorChest, etc.)
  */
-export function createPlayerSprite(focus = 'TECH') {
+export function createPlayerSprite(focus = 'TECH', equipment = {}) {
     const sprite = new MultiPartSprite('player');
 
     // Calculate affinity weights for visual elements
@@ -24,6 +25,29 @@ export function createPlayerSprite(focus = 'TECH') {
 
     // Color schemes based on focus
     const colors = getColorScheme(focus);
+    
+    // Override colors based on equipment if available
+    if (equipment.weaponMain) {
+        const weaponColor = getEquipmentColor(equipment.weaponMain, colors.weaponColor);
+        colors.weaponColor = weaponColor;
+        colors.glowColor = weaponColor;
+    }
+    
+    if (equipment.armorChest) {
+        const armorColorNew = getEquipmentColor(equipment.armorChest, colors.armorMain);
+        colors.armorMain = armorColorNew;
+        // Adjust related armor colors
+        const parsed = parseColor(armorColorNew);
+        colors.armorHighlight = `rgb(${Math.min(255, parsed.r * 1.3)}, ${Math.min(255, parsed.g * 1.3)}, ${Math.min(255, parsed.b * 1.3)})`;
+        colors.armorDark = `rgb(${parsed.r * 0.7}, ${parsed.g * 0.7}, ${parsed.b * 0.7})`;
+    }
+
+    // Pre-calculate armor visibility settings for early use (legs, etc.)
+    const hasArmorLegs = equipment.armorLegs != null || equipment.armorChest != null;
+    const armorLegsItem = equipment.armorLegs || equipment.armorChest;
+    const legArmorFocus = armorLegsItem?.meta?.focus || (techWeight >= arcaneWeight && techWeight >= primalWeight ? 'TECH' : (arcaneWeight >= primalWeight ? 'ARCANE' : 'PRIMAL'));
+    const legArmorRarity = armorLegsItem?.rarity || 'COMMON';
+    const legArmorColors = hasArmorLegs ? getArmorVisualColors(legArmorFocus, legArmorRarity) : null;
 
     // ========================================================================
     // AURA - Energy field behind character (z-order: -20)
@@ -85,61 +109,107 @@ export function createPlayerSprite(focus = 'TECH') {
     aura.opacity = 0.4 + arcaneWeight * 0.3;
 
     // ========================================================================
-    // LEGS (z-order: -5)
+    // LEGS (z-order: -5) - Now with visible armor
     // ========================================================================
-    const legLeft = sprite.addPart('legLeft', [
+    const legArmorMain = hasArmorLegs ? legArmorColors.main : colors.armorMain;
+    const legArmorDark = hasArmorLegs ? legArmorColors.dark : colors.armorDark;
+    const legArmorTrim = hasArmorLegs ? legArmorColors.trim : colors.energyColor;
+    const legArmorGlow = hasArmorLegs ? legArmorColors.glow : colors.glowColor;
+    const legGlowIntensity = legArmorRarity === 'LEGENDARY' ? 8 : legArmorRarity === 'EPIC' ? 6 : 4;
+    
+    const legLeftElements = [
         // Thigh
         {
             type: 'ellipse',
             x: 0, y: 0.06,
-            width: 0.08, height: 0.14,
+            width: 0.09, height: 0.16,
             color: colors.bodyDark,
             fill: true
         },
-        // Shin with cyber armor
+        // Shin armor plate - larger and more visible
         {
             type: 'roundRect',
             x: 0, y: 0.15,
-            width: 0.06, height: 0.10,
-            radius: 0.01,
-            color: colors.armorMain,
-            fill: true
+            width: 0.075, height: 0.13,
+            radius: 0.015,
+            color: legArmorMain,
+            fill: true,
+            glow: hasArmorLegs ? { color: legArmorGlow, blur: legGlowIntensity } : undefined
         },
-        // Foot
+        // Shin armor trim
+        {
+            type: 'line',
+            x1: -0.028, y1: 0.15,
+            x2: 0.028, y2: 0.15,
+            color: legArmorTrim,
+            strokeWidth: 2,
+            glow: { color: legArmorGlow, blur: 4 }
+        },
+        // Knee plate
+        {
+            type: 'circle',
+            x: 0, y: 0.10,
+            radius: 0.022,
+            color: legArmorDark,
+            fill: true,
+            glow: hasArmorLegs ? { color: legArmorGlow, blur: 4 } : undefined
+        },
+        // Foot armor
         {
             type: 'ellipse',
-            x: 0.01, y: 0.22,
-            width: 0.08, height: 0.04,
-            color: colors.armorDark,
+            x: 0.01, y: 0.24,
+            width: 0.10, height: 0.05,
+            color: legArmorDark,
             fill: true
         }
-    ], 0.5, 0, -5);
+    ];
+    
+    const legLeft = sprite.addPart('legLeft', legLeftElements, 0.5, 0, -5);
     legLeft.setBaseTransform(-0.08, 0.12);
 
-    const legRight = sprite.addPart('legRight', [
+    const legRightElements = [
         {
             type: 'ellipse',
             x: 0, y: 0.06,
-            width: 0.08, height: 0.14,
+            width: 0.09, height: 0.16,
             color: colors.bodyDark,
             fill: true
         },
         {
             type: 'roundRect',
             x: 0, y: 0.15,
-            width: 0.06, height: 0.10,
-            radius: 0.01,
-            color: colors.armorMain,
-            fill: true
+            width: 0.075, height: 0.13,
+            radius: 0.015,
+            color: legArmorMain,
+            fill: true,
+            glow: hasArmorLegs ? { color: legArmorGlow, blur: legGlowIntensity } : undefined
+        },
+        {
+            type: 'line',
+            x1: -0.028, y1: 0.15,
+            x2: 0.028, y2: 0.15,
+            color: legArmorTrim,
+            strokeWidth: 2,
+            glow: { color: legArmorGlow, blur: 4 }
+        },
+        {
+            type: 'circle',
+            x: 0, y: 0.10,
+            radius: 0.022,
+            color: legArmorDark,
+            fill: true,
+            glow: hasArmorLegs ? { color: legArmorGlow, blur: 4 } : undefined
         },
         {
             type: 'ellipse',
-            x: 0.01, y: 0.22,
-            width: 0.08, height: 0.04,
-            color: colors.armorDark,
+            x: 0.01, y: 0.24,
+            width: 0.10, height: 0.05,
+            color: legArmorDark,
             fill: true
         }
-    ], 0.5, 0, -5);
+    ];
+    
+    const legRight = sprite.addPart('legRight', legRightElements, 0.5, 0, -5);
     legRight.setBaseTransform(0.08, 0.12);
 
     // ========================================================================
@@ -232,9 +302,17 @@ export function createPlayerSprite(focus = 'TECH') {
     tail.setBaseTransform(0, 0.08);
 
     // ========================================================================
-    // BODY - Main torso with cyber armor (z-order: 0)
+    // BODY - Main torso with VISIBLE cyber armor (z-order: 0)
+    // Now equipment-dependent with clear armor visibility
     // ========================================================================
-    const body = sprite.addPart('body', [
+    const hasArmor = equipment.armorChest != null;
+    const armorItem = equipment.armorChest;
+    const armorFocus = armorItem?.meta?.focus || (techWeight >= arcaneWeight && techWeight >= primalWeight ? 'TECH' : (arcaneWeight >= primalWeight ? 'ARCANE' : 'PRIMAL'));
+    const armorRarity = armorItem?.rarity || 'COMMON';
+    const armorColors = getArmorVisualColors(armorFocus, armorRarity);
+    const armorGlowIntensity = armorRarity === 'LEGENDARY' ? 16 : armorRarity === 'EPIC' ? 12 : armorRarity === 'RARE' ? 8 : 5;
+    
+    const bodyElements = [
         // Main body shape
         {
             type: 'ellipse',
@@ -242,122 +320,254 @@ export function createPlayerSprite(focus = 'TECH') {
             width: 0.30, height: 0.35,
             color: colors.bodyMain,
             fill: true
-        },
-        // Chest armor plate
-        {
-            type: 'polygon',
-            points: [
-                { x: -0.10, y: -0.10 },
-                { x: 0.10, y: -0.10 },
-                { x: 0.12, y: 0.08 },
-                { x: 0, y: 0.12 },
-                { x: -0.12, y: 0.08 }
-            ],
-            color: colors.armorMain,
-            fill: true
-        },
-        // Energy core center
-        {
-            type: 'circle',
-            x: 0, y: 0,
-            radius: 0.05,
-            color: colors.energyColor,
-            fill: true,
-            glow: { color: colors.glowColor, blur: 8 }
-        },
-        // Core ring
-        {
-            type: 'circle',
-            x: 0, y: 0,
-            radius: 0.07,
-            color: colors.armorLight,
-            fill: false,
-            stroke: true,
-            strokeWidth: 2
         }
-    ], 0.5, 0.5, 0);
+    ];
+    
+    // Add armor based on equipment
+    if (hasArmor) {
+        // Equipped armor - much more visible with distinct plates
+        bodyElements.push(
+            // Main chest plate - larger and more prominent
+            {
+                type: 'polygon',
+                points: [
+                    { x: -0.13, y: -0.12 },
+                    { x: 0.13, y: -0.12 },
+                    { x: 0.15, y: 0.10 },
+                    { x: 0, y: 0.15 },
+                    { x: -0.15, y: 0.10 }
+                ],
+                color: armorColors.main,
+                fill: true,
+                glow: { color: armorColors.glow, blur: armorGlowIntensity }
+            },
+            // Upper chest highlight plate
+            {
+                type: 'polygon',
+                points: [
+                    { x: -0.10, y: -0.11 },
+                    { x: 0.10, y: -0.11 },
+                    { x: 0.08, y: -0.04 },
+                    { x: -0.08, y: -0.04 }
+                ],
+                color: armorColors.highlight,
+                fill: true
+            },
+            // Left armor panel
+            {
+                type: 'polygon',
+                points: [
+                    { x: -0.14, y: -0.08 },
+                    { x: -0.08, y: -0.06 },
+                    { x: -0.10, y: 0.08 },
+                    { x: -0.15, y: 0.06 }
+                ],
+                color: armorColors.dark,
+                fill: true
+            },
+            // Right armor panel
+            {
+                type: 'polygon',
+                points: [
+                    { x: 0.14, y: -0.08 },
+                    { x: 0.08, y: -0.06 },
+                    { x: 0.10, y: 0.08 },
+                    { x: 0.15, y: 0.06 }
+                ],
+                color: armorColors.dark,
+                fill: true
+            },
+            // Armor trim lines - horizontal
+            {
+                type: 'line',
+                x1: -0.12, y1: -0.06,
+                x2: 0.12, y2: -0.06,
+                color: armorColors.trim,
+                strokeWidth: 2,
+                glow: { color: armorColors.glow, blur: 6 }
+            },
+            {
+                type: 'line',
+                x1: -0.10, y1: 0.04,
+                x2: 0.10, y2: 0.04,
+                color: armorColors.trim,
+                strokeWidth: 2,
+                glow: { color: armorColors.glow, blur: 6 }
+            },
+            // Energy core center - larger and brighter
+            {
+                type: 'circle',
+                x: 0, y: -0.01,
+                radius: 0.06,
+                color: armorColors.glow,
+                fill: true,
+                glow: { color: armorColors.glow, blur: armorGlowIntensity + 4 }
+            },
+            // Core ring - larger
+            {
+                type: 'circle',
+                x: 0, y: -0.01,
+                radius: 0.08,
+                color: armorColors.trim,
+                fill: false,
+                stroke: true,
+                strokeWidth: 3,
+                glow: { color: armorColors.glow, blur: 4 }
+            }
+        );
+        
+        // Add extra decoration for high rarity
+        if (armorRarity === 'LEGENDARY' || armorRarity === 'EPIC') {
+            bodyElements.push(
+                // Corner gems/nodes
+                {
+                    type: 'circle',
+                    x: -0.10, y: -0.08,
+                    radius: 0.02,
+                    color: armorColors.glow,
+                    fill: true,
+                    glow: { color: armorColors.glow, blur: 8 }
+                },
+                {
+                    type: 'circle',
+                    x: 0.10, y: -0.08,
+                    radius: 0.02,
+                    color: armorColors.glow,
+                    fill: true,
+                    glow: { color: armorColors.glow, blur: 8 }
+                }
+            );
+        }
+    } else {
+        // Default armor - visible but simpler
+        bodyElements.push(
+            // Chest armor plate
+            {
+                type: 'polygon',
+                points: [
+                    { x: -0.10, y: -0.10 },
+                    { x: 0.10, y: -0.10 },
+                    { x: 0.12, y: 0.08 },
+                    { x: 0, y: 0.12 },
+                    { x: -0.12, y: 0.08 }
+                ],
+                color: colors.armorMain,
+                fill: true,
+                glow: { color: colors.glowColor, blur: 4 }
+            },
+            // Energy core center
+            {
+                type: 'circle',
+                x: 0, y: 0,
+                radius: 0.05,
+                color: colors.energyColor,
+                fill: true,
+                glow: { color: colors.glowColor, blur: 8 }
+            },
+            // Core ring
+            {
+                type: 'circle',
+                x: 0, y: 0,
+                radius: 0.07,
+                color: colors.armorLight,
+                fill: false,
+                stroke: true,
+                strokeWidth: 2
+            }
+        );
+    }
+    
+    const body = sprite.addPart('body', bodyElements, 0.5, 0.5, 0);
     body.setBaseTransform(0, -0.02);
 
     // ========================================================================
     // SHOULDERS (z-order: 5)
-    // TECH high: Multi-panel armor with energy circuits
-    // TECH low: Simple pauldrons
-    // PRIMAL: Adds bone spikes
+    // Now equipment-aware with enhanced visibility
     // ========================================================================
     const shoulderLeftElements = [];
     const shoulderRightElements = [];
     
-    if (techWeight > 0.4) {
-        // High TECH: Complex armor with circuits
+    // Use armor colors if equipped, otherwise base colors
+    const shoulderColor = hasArmor ? armorColors.main : colors.armorMain;
+    const shoulderHighlight = hasArmor ? armorColors.highlight : colors.armorLight;
+    const shoulderDark = hasArmor ? armorColors.dark : colors.armorDark;
+    const shoulderTrim = hasArmor ? armorColors.trim : colors.energyColor;
+    const shoulderGlow = hasArmor ? armorColors.glow : colors.glowColor;
+    const shoulderGlowAmount = hasArmor ? armorGlowIntensity : 6;
+    
+    if (techWeight > 0.4 || hasArmor) {
+        // Tech/Equipped: Complex armor with circuits - LARGER
         const techShoulderLeft = [
-            // Main plate
+            // Main plate - larger
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.06, y: -0.04 },
-                    { x: 0.06, y: -0.04 },
-                    { x: 0.08, y: 0.04 },
-                    { x: -0.08, y: 0.04 }
+                    { x: -0.08, y: -0.06 },
+                    { x: 0.08, y: -0.06 },
+                    { x: 0.10, y: 0.06 },
+                    { x: -0.10, y: 0.06 }
                 ],
-                color: colors.armorMain,
-                fill: true
+                color: shoulderColor,
+                fill: true,
+                glow: { color: shoulderGlow, blur: shoulderGlowAmount }
             },
             // Upper panel
             {
                 type: 'roundRect',
-                x: 0, y: -0.05,
-                width: 0.10, height: 0.03,
-                radius: 0.005,
-                color: colors.armorDark,
+                x: 0, y: -0.06,
+                width: 0.14, height: 0.04,
+                radius: 0.008,
+                color: shoulderHighlight,
                 fill: true
             },
             // Energy circuit 1
             {
                 type: 'line',
-                x1: -0.05, y1: -0.01,
-                x2: 0.05, y2: -0.01,
-                color: colors.energyColor,
-                strokeWidth: 2,
-                glow: { color: colors.glowColor, blur: 6 }
+                x1: -0.07, y1: -0.01,
+                x2: 0.07, y2: -0.01,
+                color: shoulderTrim,
+                strokeWidth: 3,
+                glow: { color: shoulderGlow, blur: 8 }
             },
             // Energy circuit 2
             {
                 type: 'line',
-                x1: -0.04, y1: 0.02,
-                x2: 0.04, y2: 0.02,
-                color: colors.energyColor,
-                strokeWidth: 1.5,
-                glow: { color: colors.glowColor, blur: 4 }
+                x1: -0.06, y1: 0.03,
+                x2: 0.06, y2: 0.03,
+                color: shoulderTrim,
+                strokeWidth: 2,
+                glow: { color: shoulderGlow, blur: 6 }
             },
-            // Tech node
+            // Tech node - larger
             {
                 type: 'circle',
                 x: 0, y: 0,
-                radius: 0.015,
-                color: colors.energyColor,
+                radius: 0.022,
+                color: shoulderTrim,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 8 }
+                glow: { color: shoulderGlow, blur: 10 }
             }
         ];
         shoulderLeftElements.push(...techShoulderLeft);
         shoulderRightElements.push(...techShoulderLeft);
     } else {
-        // Low TECH: Simple pauldrons
+        // Simple pauldrons - still enhanced
         const simpleShoulderLeft = [
             {
                 type: 'ellipse',
                 x: 0, y: 0,
-                width: 0.12, height: 0.10,
-                color: colors.armorMain,
-                fill: true
+                width: 0.14, height: 0.12,
+                color: shoulderColor,
+                fill: true,
+                glow: { color: shoulderGlow, blur: 4 }
             },
             {
                 type: 'line',
-                x1: -0.04, y1: 0,
-                x2: 0.04, y2: 0,
-                color: colors.energyColor,
-                strokeWidth: 1.5,
-                glow: { color: colors.glowColor, blur: 4 }
+                x1: -0.05, y1: 0,
+                x2: 0.05, y2: 0,
+                color: shoulderTrim,
+                strokeWidth: 2,
+                glow: { color: shoulderGlow, blur: 6 }
             }
         ];
         shoulderLeftElements.push(...simpleShoulderLeft);
@@ -387,71 +597,101 @@ export function createPlayerSprite(focus = 'TECH') {
     shoulderRight.setBaseTransform(0.15, -0.08);
 
     // ========================================================================
-    // ARMS (z-order: 2)
+    // ARMS (z-order: 2) - Now equipment-aware with visible armor
     // ========================================================================
-    const armLeft = sprite.addPart('armLeft', [
+    // Arm armor colors match chest armor if equipped
+    const armArmorColor = hasArmor ? armorColors.main : colors.armorMain;
+    const armArmorTrim = hasArmor ? armorColors.trim : colors.energyColor;
+    const armArmorGlow = hasArmor ? armorColors.glow : colors.glowColor;
+    
+    const armLeftElements = [
         // Upper arm
         {
             type: 'ellipse',
             x: 0, y: 0.05,
-            width: 0.06, height: 0.12,
+            width: 0.07, height: 0.14,
             color: colors.bodyDark,
             fill: true
         },
-        // Forearm with armor
+        // Forearm armor plate - larger and more visible
         {
             type: 'roundRect',
             x: 0, y: 0.14,
-            width: 0.05, height: 0.10,
-            radius: 0.01,
-            color: colors.armorMain,
-            fill: true
+            width: 0.065, height: 0.12,
+            radius: 0.015,
+            color: armArmorColor,
+            fill: true,
+            glow: hasArmor ? { color: armArmorGlow, blur: 4 } : undefined
+        },
+        // Armor trim line
+        {
+            type: 'line',
+            x1: -0.025, y1: 0.14,
+            x2: 0.025, y2: 0.14,
+            color: armArmorTrim,
+            strokeWidth: 2,
+            glow: { color: armArmorGlow, blur: 4 }
         },
         // Hand/claw
         {
             type: 'polygon',
             points: [
-                { x: -0.03, y: 0.20 },
-                { x: 0.03, y: 0.20 },
-                { x: 0.04, y: 0.26 },
-                { x: 0, y: 0.24 },
-                { x: -0.04, y: 0.26 }
+                { x: -0.035, y: 0.22 },
+                { x: 0.035, y: 0.22 },
+                { x: 0.045, y: 0.29 },
+                { x: 0, y: 0.27 },
+                { x: -0.045, y: 0.29 }
             ],
             color: colors.clawColor,
-            fill: true
+            fill: true,
+            glow: { color: colors.glowColor, blur: 3 }
         }
-    ], 0.5, 0, 2);
+    ];
+    
+    const armLeft = sprite.addPart('armLeft', armLeftElements, 0.5, 0, 2);
     armLeft.setBaseTransform(0, 0.06);
 
-    const armRight = sprite.addPart('armRight', [
+    const armRightElements = [
         {
             type: 'ellipse',
             x: 0, y: 0.05,
-            width: 0.06, height: 0.12,
+            width: 0.07, height: 0.14,
             color: colors.bodyDark,
             fill: true
         },
         {
             type: 'roundRect',
             x: 0, y: 0.14,
-            width: 0.05, height: 0.10,
-            radius: 0.01,
-            color: colors.armorMain,
-            fill: true
+            width: 0.065, height: 0.12,
+            radius: 0.015,
+            color: armArmorColor,
+            fill: true,
+            glow: hasArmor ? { color: armArmorGlow, blur: 4 } : undefined
+        },
+        {
+            type: 'line',
+            x1: -0.025, y1: 0.14,
+            x2: 0.025, y2: 0.14,
+            color: armArmorTrim,
+            strokeWidth: 2,
+            glow: { color: armArmorGlow, blur: 4 }
         },
         {
             type: 'polygon',
             points: [
-                { x: -0.03, y: 0.20 },
-                { x: 0.03, y: 0.20 },
-                { x: 0.04, y: 0.26 },
-                { x: 0, y: 0.24 },
-                { x: -0.04, y: 0.26 }
+                { x: -0.035, y: 0.22 },
+                { x: 0.035, y: 0.22 },
+                { x: 0.045, y: 0.29 },
+                { x: 0, y: 0.27 },
+                { x: -0.045, y: 0.29 }
             ],
             color: colors.clawColor,
-            fill: true
+            fill: true,
+            glow: { color: colors.glowColor, blur: 3 }
         }
-    ], 0.5, 0, 2);
+    ];
+    
+    const armRight = sprite.addPart('armRight', armRightElements, 0.5, 0, 2);
     armRight.setBaseTransform(0, 0.06);
 
     // ========================================================================
@@ -674,263 +914,330 @@ export function createPlayerSprite(focus = 'TECH') {
 
     // ========================================================================
     // WEAPON (z-order: 15)
-    // Different weapon types based on affinity combination
+    // Now renders based on ACTUAL EQUIPPED ITEM for clear visibility
     // ========================================================================
     const weaponElements = [];
-    let weaponTransform = { x: 0.2, y: 0.2, angle: 2 };
+    let weaponTransform = { x: 0.22, y: 0.08, angle: -25 };
     let weaponOpacity = 1.0;
     
     const dominant = Math.max(arcaneWeight, techWeight, primalWeight);
+    const hasWeapon = equipment.weaponMain != null;
+    const weaponItem = equipment.weaponMain;
+    const weaponFocus = weaponItem?.meta?.focus || (arcaneWeight >= techWeight && arcaneWeight >= primalWeight ? 'ARCANE' : (techWeight >= primalWeight ? 'TECH' : 'PRIMAL'));
+    const weaponRarity = weaponItem?.rarity || 'COMMON';
     
-    if (arcaneWeight === dominant && techWeight > 0.2) {
-        // ARCANE+TECH: Energy sword with magical aura
+    // Weapon glow intensity based on rarity
+    const weaponGlowIntensity = weaponRarity === 'LEGENDARY' ? 22 : weaponRarity === 'EPIC' ? 18 : weaponRarity === 'RARE' ? 14 : 10;
+    
+    // Get weapon-specific colors
+    const weaponColors = getWeaponVisualColors(weaponFocus, weaponRarity, colors);
+    
+    if (hasWeapon || arcaneWeight === dominant && techWeight > 0.2) {
+        // Energy sword - now larger and more visible with equipment colors
         weaponElements.push(
-            // Handle
+            // Handle - larger and more prominent
             {
                 type: 'roundRect',
-                x: 0, y: 0,
-                width: 0.04, height: 0.14,
-                radius: 0.01,
-                color: colors.armorDark,
+                x: 0, y: 0.02,
+                width: 0.06, height: 0.18,
+                radius: 0.015,
+                color: weaponColors.handle,
                 fill: true
             },
-            // Guard
+            // Guard - larger crossguard
             {
                 type: 'ellipse',
-                x: 0, y: -0.06,
-                width: 0.10, height: 0.03,
-                color: colors.armorMain,
-                fill: true
+                x: 0, y: -0.07,
+                width: 0.16, height: 0.05,
+                color: weaponColors.guard,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: 8 }
             },
-            // Blade aura (outer)
+            // Blade aura (outer) - much larger
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.03, y: -0.08 },
-                    { x: 0.03, y: -0.08 },
-                    { x: 0.02, y: -0.30 },
-                    { x: 0, y: -0.34 },
-                    { x: -0.02, y: -0.30 }
+                    { x: -0.05, y: -0.10 },
+                    { x: 0.05, y: -0.10 },
+                    { x: 0.035, y: -0.42 },
+                    { x: 0, y: -0.48 },
+                    { x: -0.035, y: -0.42 }
                 ],
-                color: colors.energyColor,
+                color: weaponColors.bladeAura,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 18 },
-                opacity: 0.4
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity + 6 },
+                opacity: 0.5
             },
-            // Blade core
+            // Blade core - main visible blade
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.018, y: -0.08 },
-                    { x: 0.018, y: -0.08 },
-                    { x: 0.012, y: -0.30 },
-                    { x: 0, y: -0.32 },
-                    { x: -0.012, y: -0.30 }
+                    { x: -0.028, y: -0.10 },
+                    { x: 0.028, y: -0.10 },
+                    { x: 0.018, y: -0.40 },
+                    { x: 0, y: -0.45 },
+                    { x: -0.018, y: -0.40 }
                 ],
-                color: colors.weaponColor,
+                color: weaponColors.blade,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 12 }
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity }
             },
-            // Core highlight
+            // Core highlight - energy line
             {
                 type: 'path',
                 points: [
-                    { x: 0, y: -0.10 },
-                    { x: 0, y: -0.30 }
+                    { x: 0, y: -0.12 },
+                    { x: 0, y: -0.42 }
                 ],
                 color: '#ffffff',
-                strokeWidth: 2,
+                strokeWidth: 3,
                 stroke: true,
-                fill: false
+                fill: false,
+                glow: { color: weaponColors.glow, blur: 6 }
+            },
+            // Rune marks on blade (for visibility)
+            {
+                type: 'circle',
+                x: 0, y: -0.18,
+                radius: 0.012,
+                color: weaponColors.glow,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: 8 }
+            },
+            {
+                type: 'circle',
+                x: 0, y: -0.28,
+                radius: 0.010,
+                color: weaponColors.glow,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: 6 }
             }
         );
-        weaponOpacity = 0.85 + arcaneWeight * 0.15;
-    } else if (primalWeight === dominant && primalWeight > 0.5) {
-        // PRIMAL dominant: Organic claw weapon
+        weaponTransform = { x: 0.24, y: 0.05, angle: -30 };
+        weaponOpacity = 1.0;
+    } else if (primalWeight === dominant && primalWeight > 0.3) {
+        // PRIMAL dominant: Organic claw weapon - larger and more visible
         weaponElements.push(
-            // Base/mounting
+            // Base/mounting - larger
             {
                 type: 'ellipse',
                 x: 0, y: 0,
-                width: 0.07, height: 0.12,
-                color: colors.bodyMain,
+                width: 0.10, height: 0.16,
+                color: weaponColors.handle,
                 fill: true
             },
-            // Claw 1
+            // Claw 1 - larger
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.025, y: -0.03 },
-                    { x: -0.05, y: -0.24 },
-                    { x: -0.01, y: -0.22 }
+                    { x: -0.035, y: -0.04 },
+                    { x: -0.08, y: -0.34 },
+                    { x: -0.015, y: -0.30 }
                 ],
-                color: colors.clawColor,
+                color: weaponColors.blade,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 8 }
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity }
             },
-            // Claw 2 (center)
+            // Claw 2 (center) - larger
             {
                 type: 'polygon',
                 points: [
-                    { x: 0, y: -0.03 },
-                    { x: -0.015, y: -0.30 },
+                    { x: 0, y: -0.04 },
+                    { x: -0.02, y: -0.40 },
+                    { x: 0.02, y: -0.38 }
+                ],
+                color: weaponColors.blade,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity }
+            },
+            // Claw 3 - larger
+            {
+                type: 'polygon',
+                points: [
+                    { x: 0.035, y: -0.04 },
+                    { x: 0.08, y: -0.30 },
                     { x: 0.015, y: -0.28 }
                 ],
-                color: colors.clawColor,
+                color: weaponColors.blade,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 8 }
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity }
             },
-            // Claw 3
-            {
-                type: 'polygon',
-                points: [
-                    { x: 0.025, y: -0.03 },
-                    { x: 0.05, y: -0.22 },
-                    { x: 0.01, y: -0.20 }
-                ],
-                color: colors.clawColor,
-                fill: true,
-                glow: { color: colors.glowColor, blur: 8 }
-            },
-            // Energy veins
+            // Energy veins - more prominent
             {
                 type: 'line',
                 x1: 0, y1: 0,
-                x2: -0.02, y2: -0.15,
-                color: colors.energyColor,
-                strokeWidth: 1.5,
-                glow: { color: colors.glowColor, blur: 4 }
+                x2: -0.04, y2: -0.22,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 8 }
             },
             {
                 type: 'line',
                 x1: 0, y1: 0,
-                x2: 0.02, y2: -0.13,
-                color: colors.energyColor,
-                strokeWidth: 1.5,
-                glow: { color: colors.glowColor, blur: 4 }
+                x2: 0, y2: -0.26,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 8 }
+            },
+            {
+                type: 'line',
+                x1: 0, y1: 0,
+                x2: 0.04, y2: -0.20,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 8 }
             }
         );
-    } else if (techWeight === dominant && techWeight > 0.5) {
-        // TECH dominant: Plasma rifle
+        weaponTransform = { x: 0.22, y: 0.12, angle: -20 };
+    } else if (techWeight === dominant && techWeight > 0.3) {
+        // TECH dominant: Plasma rifle - larger and more visible
         weaponElements.push(
-            // Grip
+            // Grip - larger
             {
                 type: 'roundRect',
-                x: 0, y: 0.05,
-                width: 0.05, height: 0.12,
-                radius: 0.01,
-                color: colors.armorDark,
+                x: 0, y: 0.08,
+                width: 0.07, height: 0.16,
+                radius: 0.015,
+                color: weaponColors.handle,
                 fill: true
             },
             // Trigger guard
             {
                 type: 'roundRect',
-                x: 0.01, y: 0.04,
-                width: 0.03, height: 0.04,
-                radius: 0.005,
-                color: colors.armorMain,
+                x: 0.015, y: 0.06,
+                width: 0.04, height: 0.05,
+                radius: 0.008,
+                color: weaponColors.guard,
                 fill: true
             },
-            // Barrel housing
+            // Barrel housing - larger
+            {
+                type: 'roundRect',
+                x: 0, y: -0.16,
+                width: 0.08, height: 0.28,
+                radius: 0.015,
+                color: weaponColors.guard,
+                fill: true
+            },
+            // Barrel tip - larger
+            {
+                type: 'circle',
+                x: 0, y: -0.30,
+                radius: 0.05,
+                color: weaponColors.handle,
+                fill: true
+            },
+            // Energy coils - more prominent
+            {
+                type: 'line',
+                x1: -0.035, y1: -0.10,
+                x2: 0.035, y2: -0.10,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 10 }
+            },
+            {
+                type: 'line',
+                x1: -0.035, y1: -0.17,
+                x2: 0.035, y2: -0.17,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 10 }
+            },
+            {
+                type: 'line',
+                x1: -0.035, y1: -0.24,
+                x2: 0.035, y2: -0.24,
+                color: weaponColors.glow,
+                strokeWidth: 3,
+                glow: { color: weaponColors.glow, blur: 10 }
+            },
+            // Muzzle glow - larger
+            {
+                type: 'circle',
+                x: 0, y: -0.30,
+                radius: 0.028,
+                color: weaponColors.glow,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity + 8 }
+            },
+            // Scope/sight - larger
             {
                 type: 'roundRect',
                 x: 0, y: -0.12,
-                width: 0.06, height: 0.20,
-                radius: 0.01,
-                color: colors.armorMain,
-                fill: true
+                width: 0.05, height: 0.08,
+                radius: 0.012,
+                color: weaponColors.blade,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: 6 }
             },
-            // Barrel tip
+            // Scope lens
             {
                 type: 'circle',
-                x: 0, y: -0.22,
-                radius: 0.035,
-                color: colors.armorDark,
-                fill: true
-            },
-            // Energy coil 1
-            {
-                type: 'line',
-                x1: -0.025, y1: -0.08,
-                x2: 0.025, y2: -0.08,
-                color: colors.energyColor,
-                strokeWidth: 2,
-                glow: { color: colors.glowColor, blur: 6 }
-            },
-            // Energy coil 2
-            {
-                type: 'line',
-                x1: -0.025, y1: -0.13,
-                x2: 0.025, y2: -0.13,
-                color: colors.energyColor,
-                strokeWidth: 2,
-                glow: { color: colors.glowColor, blur: 6 }
-            },
-            // Energy coil 3
-            {
-                type: 'line',
-                x1: -0.025, y1: -0.18,
-                x2: 0.025, y2: -0.18,
-                color: colors.energyColor,
-                strokeWidth: 2,
-                glow: { color: colors.glowColor, blur: 6 }
-            },
-            // Muzzle glow
-            {
-                type: 'circle',
-                x: 0, y: -0.22,
-                radius: 0.018,
-                color: colors.energyColor,
+                x: 0, y: -0.12,
+                radius: 0.015,
+                color: '#ffffff',
                 fill: true,
-                glow: { color: colors.glowColor, blur: 14 }
-            },
-            // Scope/sight
-            {
-                type: 'roundRect',
-                x: 0, y: -0.10,
-                width: 0.04, height: 0.06,
-                radius: 0.01,
-                color: colors.visorColor,
-                fill: true,
-                glow: { color: colors.glowColor, blur: 4 }
+                glow: { color: weaponColors.glow, blur: 4 }
             }
         );
-        weaponTransform = { x: 0.18, y: 0.08, angle: 8 };
+        weaponTransform = { x: 0.20, y: 0.06, angle: -35 };
     } else {
-        // Balanced: Simple energy blade
+        // Balanced: Energy blade - still larger and visible
         weaponElements.push(
+            // Handle - larger
             {
                 type: 'roundRect',
-                x: 0, y: 0,
-                width: 0.04, height: 0.12,
-                radius: 0.01,
-                color: colors.armorDark,
+                x: 0, y: 0.02,
+                width: 0.055, height: 0.16,
+                radius: 0.012,
+                color: weaponColors.handle,
                 fill: true
             },
+            // Guard - larger
             {
                 type: 'ellipse',
-                x: 0, y: -0.05,
-                width: 0.08, height: 0.03,
-                color: colors.armorMain,
-                fill: true
+                x: 0, y: -0.06,
+                width: 0.12, height: 0.045,
+                color: weaponColors.guard,
+                fill: true,
+                glow: { color: weaponColors.glow, blur: 6 }
             },
+            // Blade - larger
             {
                 type: 'polygon',
                 points: [
-                    { x: -0.02, y: -0.06 },
-                    { x: 0.02, y: -0.06 },
-                    { x: 0, y: -0.28 }
+                    { x: -0.03, y: -0.08 },
+                    { x: 0.03, y: -0.08 },
+                    { x: 0.01, y: -0.38 },
+                    { x: 0, y: -0.42 },
+                    { x: -0.01, y: -0.38 }
                 ],
-                color: colors.weaponColor,
+                color: weaponColors.blade,
                 fill: true,
-                glow: { color: colors.glowColor, blur: 10 }
+                glow: { color: weaponColors.glow, blur: weaponGlowIntensity }
+            },
+            // Energy core line
+            {
+                type: 'line',
+                x1: 0, y1: -0.10,
+                x2: 0, y2: -0.38,
+                color: '#ffffff',
+                strokeWidth: 2,
+                glow: { color: weaponColors.glow, blur: 6 }
             }
         );
+        weaponTransform = { x: 0.24, y: 0.08, angle: -28 };
     }
 
     const weapon = sprite.addPart('weapon', weaponElements, 0.5, 1, 15);
-    weapon.setBaseTransform(weaponTransform.x, weaponTransform.y, weaponTransform.angle);
+    weapon.setBaseTransform(weaponTransform.x, weaponTransform.y + 0.1,- weaponTransform.angle * Math.PI / 100);
     weapon.opacity = weaponOpacity;
+    // Add glow to entire weapon part based on rarity
+    if (weaponRarity === 'LEGENDARY' || weaponRarity === 'EPIC') {
+        weapon.glowColor = weaponColors.glow;
+        weapon.glowIntensity = weaponRarity === 'LEGENDARY' ? 1.5 : 1.0;
+    }
 
     // Set up hierarchy
     sprite.setParent('shoulderLeft', 'body');
@@ -1084,6 +1391,39 @@ function mixThreeColors(color1, color2, color3, w1, w2, w3) {
 }
 
 /**
+ * Get equipment-specific color or fall back to default
+ */
+function getEquipmentColor(item, defaultColor) {
+    if (!item) return defaultColor;
+    
+    // Use item rarity to determine color variations
+    const focus = item.meta?.focus;
+    const rarity = item.rarity;
+    
+    // Base colors by affinity
+    if (focus === 'ARCANE') {
+        if (rarity === 'LEGENDARY') return '#bf5af2';
+        if (rarity === 'EPIC') return '#9d4edd';
+        if (rarity === 'RARE') return '#7b2cbf';
+        return '#5a189a';
+    }
+    if (focus === 'TECH') {
+        if (rarity === 'LEGENDARY') return '#ffd60a';
+        if (rarity === 'EPIC') return '#ffc300';
+        if (rarity === 'RARE') return '#ffb703';
+        return '#fb8500';
+    }
+    if (focus === 'PRIMAL') {
+        if (rarity === 'LEGENDARY') return '#4cd964';
+        if (rarity === 'EPIC') return '#38b54a';
+        if (rarity === 'RARE') return '#2d9233';
+        return '#207227';
+    }
+    
+    return defaultColor;
+}
+
+/**
  * Parse color string to RGB(A)
  */
 function parseColor(color) {
@@ -1131,4 +1471,99 @@ function parseColor(color) {
 
     // Default fallback
     return { r: 255, g: 255, b: 255 };
+}
+
+/**
+ * Get weapon-specific visual colors based on focus and rarity
+ * Returns distinct, high-visibility colors for weapon parts
+ */
+function getWeaponVisualColors(focus, rarity, baseColors) {
+    const rarityMultipliers = {
+        'LEGENDARY': { brightness: 1.4, saturation: 1.2 },
+        'EPIC': { brightness: 1.25, saturation: 1.1 },
+        'RARE': { brightness: 1.1, saturation: 1.0 },
+        'COMMON': { brightness: 1.0, saturation: 0.9 }
+    };
+    
+    const mult = rarityMultipliers[rarity] || rarityMultipliers['COMMON'];
+    
+    // High contrast weapon colors by focus
+    const weaponSchemes = {
+        'ARCANE': {
+            handle: '#2a1a4a',
+            guard: '#6b3fa0',
+            blade: '#bf5af2',
+            bladeAura: 'rgba(191, 90, 242, 0.6)',
+            glow: '#ff66ff'
+        },
+        'TECH': {
+            handle: '#1a3a4a',
+            guard: '#4a7a9a',
+            blade: '#00d4ff',
+            bladeAura: 'rgba(0, 212, 255, 0.6)',
+            glow: '#00ffff'
+        },
+        'PRIMAL': {
+            handle: '#2a3a1a',
+            guard: '#5a7a3a',
+            blade: '#88ff44',
+            bladeAura: 'rgba(136, 255, 68, 0.6)',
+            glow: '#aaff00'
+        }
+    };
+    
+    const scheme = weaponSchemes[focus] || weaponSchemes['TECH'];
+    
+    // Apply rarity brightness boost
+    if (rarity === 'LEGENDARY') {
+        scheme.blade = '#ffffff';
+        scheme.bladeAura = `rgba(255, 255, 255, 0.7)`;
+        scheme.glow = focus === 'ARCANE' ? '#ff00ff' : focus === 'PRIMAL' ? '#00ff00' : '#00ffff';
+    } else if (rarity === 'EPIC') {
+        scheme.glow = focus === 'ARCANE' ? '#ff88ff' : focus === 'PRIMAL' ? '#88ff88' : '#88ffff';
+    }
+    
+    return scheme;
+}
+
+/**
+ * Get armor-specific visual colors based on focus and rarity
+ * Returns distinct colors for armor panels
+ */
+function getArmorVisualColors(focus, rarity) {
+    const armorSchemes = {
+        'ARCANE': {
+            main: '#4a2080',
+            highlight: '#7a40b0',
+            dark: '#2a1050',
+            trim: '#bf5af2',
+            glow: '#ff66ff'
+        },
+        'TECH': {
+            main: '#2a4a6a',
+            highlight: '#4a7a9a',
+            dark: '#1a2a4a',
+            trim: '#00d4ff',
+            glow: '#00ffff'
+        },
+        'PRIMAL': {
+            main: '#3a5a2a',
+            highlight: '#5a8a4a',
+            dark: '#1a3a1a',
+            trim: '#88ff44',
+            glow: '#aaff00'
+        }
+    };
+    
+    const scheme = armorSchemes[focus] || armorSchemes['TECH'];
+    
+    // Rarity color enhancements
+    if (rarity === 'LEGENDARY') {
+        scheme.trim = '#ffd700';
+        scheme.glow = '#ffff00';
+    } else if (rarity === 'EPIC') {
+        scheme.highlight = '#8a6ab0';
+    }
+    
+    return scheme;
 }

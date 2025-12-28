@@ -75,6 +75,11 @@ body {
     background: linear-gradient(90deg, #32d74b, #ffd60a);
 }
 
+.bar-fill.xp {
+    background: linear-gradient(90deg, #bf5af2, #ff2d55);
+    box-shadow: 0 0 10px rgba(191, 90, 242, 0.5);
+}
+
 .label-row {
     display: flex;
     justify-content: space-between;
@@ -432,7 +437,28 @@ body {
     display: flex;
     flex-direction: column-reverse;
     z-index: 50;
+    overflow-y: auto;
 }
+
+/* Miglioriamo lo stile della scrollbar */
+#log::-webkit-scrollbar {
+    width: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+/* Thumb (parte che si muove) */
+#log::-webkit-scrollbar-thumb {
+    background: #ac52db;
+    border-radius: 3px;
+}
+
+/* Hover sul thumb */
+#log::-webkit-scrollbar-thumb:hover {
+    background: #bca6c9;
+}
+
+
 
 #log-inner {
     display: flex;
@@ -454,6 +480,22 @@ body {
 
 .log-line.heal {
     color: #4cd964;
+}
+
+.log-line.xp {
+    color: #bf5af2;
+    font-weight: 600;
+}
+
+.log-line.levelup {
+    color: #ffd700;
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.log-line.unlock {
+    color: #64d2ff;
+    font-weight: 600;
 }
 
 /* Simple combat animations */
@@ -608,6 +650,28 @@ body {
 
 .btn-disabled {
     opacity: 0.4;
+}
+
+.btn-pass {
+    border-color: #6b7280;
+    color: #a0aec0;
+    font-size: 0.85em;
+}
+
+.btn-pass.btn-highlight {
+    border-color: #f59e0b;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.15);
+    animation: pulse-pass 1s infinite;
+}
+
+@keyframes pulse-pass {
+    0%, 100% { 
+        box-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
+    }
 }
 
 #modal-root {

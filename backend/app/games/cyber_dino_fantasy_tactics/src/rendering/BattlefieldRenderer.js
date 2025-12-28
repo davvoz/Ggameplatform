@@ -84,8 +84,9 @@ export class BattlefieldRenderer {
     initPlayerSprite(character) {
         // Pass all affinities to create a mixed color sprite
         const affinities = character?.affinities || { TECH: 1 };
+        const equipment = character?.equipment || {};
         
-        this.playerSprite = createPlayerSprite(affinities);
+        this.playerSprite = createPlayerSprite(affinities, equipment);
         AnimationLibrary.applyAnimationsToSprite(this.playerSprite);
     }
 

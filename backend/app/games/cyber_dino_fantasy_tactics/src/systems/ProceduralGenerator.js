@@ -266,10 +266,12 @@ export class ProceduralGenerator {
       baseNameByCat[category]?.[focus] ??
       baseNameByCat[category]?.[Affinity.ARCANE];
 
-    const baseCost = 8 + level * 2;
+    // Increased base cost and minimum resource consumption
+    const baseCost = 10 + level * 3;
+    const minCost = Math.ceil(baseCost * 0.4); // Minimum 40% of base cost
     const cost = {
-      mana: focus === Affinity.ARCANE ? baseCost : Math.round(baseCost / 2),
-      energy: focus === Affinity.PRIMAL ? baseCost : Math.round(baseCost / 3),
+      mana: Math.max(minCost, focus === Affinity.ARCANE ? baseCost : Math.round(baseCost * 0.6)),
+      energy: Math.max(minCost, focus === Affinity.PRIMAL ? baseCost : Math.round(baseCost * 0.5)),
       health: 0,
     };
 
@@ -284,7 +286,7 @@ export class ProceduralGenerator {
       cooldown,
       range,
       tags: [focus, category, "PROCEDURAL"],
-      description: `${rarity} ${category.toLowerCase()} ability.`,
+      description: `${rarity} ${category.toLowerCase()} ability. Costa ${cost.mana} mana e ${cost.energy} energia.`,
       execute: (ctx) => {
         this.executeAbilityEffect({ ability, category, focus, mult, ctx });
       },
@@ -296,9 +298,9 @@ export class ProceduralGenerator {
   /**
    * Generate hybrid ability that scales with all player affinities
    */
-  generateHybridAbility({ level, affinities, category }) {
-    const rarity = this.rollRarity();
-    const mult = rarityMultiplier(rarity);
+  generateHybridAbility({ level, affinities, category, isUltimate = false }) {
+    const rarity = isUltimate ? Rarity.LEGENDARY : this.rollRarity();
+    const mult = rarityMultiplier(rarity) * (isUltimate ? 2.0 : 1.0);
 
     if (!category) {
       const cats = ["ATTACK", "CONTROL", "DEFENSE", "SUPPORT"];
@@ -352,22 +354,40 @@ export class ProceduralGenerator {
     };
 
     const nameKey = `${primary}_${secondary}`;
-    const name = hybridNames[category]?.[nameKey] || `Abilità Ibrida ${category}`;
+    let name = hybridNames[category]?.[nameKey] || `Abilità Ibrida ${category}`;
+    
+    // Override name for ultimate abilities
+    if (isUltimate) {
+      const ultimateNames = {
+        ATTACK: `ULTIMATE: ${name} Devastante`,
+        DEFENSE: `ULTIMATE: Bastione ${name}`,
+        SUPPORT: `ULTIMATE: ${name} Supremo`,
+        CONTROL: `ULTIMATE: Dominio ${name}`,
+      };
+      name = ultimateNames[category] || `ULTIMATE: ${name}`;
+    }
 
     // Hybrid cost: distributed across resources based on affinities
-    const baseCost = 8 + level * 2;
+    // All abilities now cost BOTH mana AND energy to make resources meaningful
+    const baseCost = (10 + level * 3) * (isUltimate ? 2.5 : 1);
     const m = affinities[Affinity.ARCANE] || 0;
     const t = affinities[Affinity.TECH] || 0;
     const p = affinities[Affinity.PRIMAL] || 0;
     const total = m + t + p || 1;
 
+    // Minimum cost ensures abilities always consume resources
+    // Primary resource based on dominant affinity, secondary resource always has base cost
+    const manaCost = Math.round(baseCost * (m / total));
+    const energyCost = Math.round(baseCost * (p / total));
+    const minCost = Math.ceil(baseCost * 0.3); // Minimum 30% of base cost
+    
     const cost = {
-      mana: Math.round(baseCost * (m / total)),
-      energy: Math.round(baseCost * (p / total)),
+      mana: Math.max(minCost, manaCost),    // Always costs at least minCost mana
+      energy: Math.max(minCost, energyCost), // Always costs at least minCost energy
       health: 0,
     };
 
-    const cooldown = 3 + Math.floor(this.rng() * 2);
+    const cooldown = isUltimate ? 8 : (3 + Math.floor(this.rng() * 2));
     const range = category === "MOVEMENT" ? 3 : 1;
 
     // Description based on affinity mix
@@ -375,7 +395,7 @@ export class ProceduralGenerator {
     if (m > 0.3) affinityDesc.push("arcano");
     if (t > 0.3) affinityDesc.push("tech");
     if (p > 0.3) affinityDesc.push("primale");
-    const description = `Abilità ibrida ${affinityDesc.join("-")}. Scala con tutte le tue affinità.`;
+    const description = `Abilità ibrida ${affinityDesc.join("-")}. Costa ${cost.mana} mana e ${cost.energy} energia.`;
 
     // Map each unique ability name to its own animation
     const animationMap = {
@@ -413,7 +433,7 @@ export class ProceduralGenerator {
       cost,
       cooldown,
       range,
-      tags: ["HYBRID", primary, secondary, category, "PROCEDURAL"],
+      tags: isUltimate ? ["HYBRID", "ULTIMATE", primary, secondary, category, "PROCEDURAL"] : ["HYBRID", primary, secondary, category, "PROCEDURAL"],
       description,
       animationType,
       execute: (ctx) => {

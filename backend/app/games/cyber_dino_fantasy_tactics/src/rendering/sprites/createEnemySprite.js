@@ -169,18 +169,18 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
     tail.setBaseTransform(-0.07, 0.18, -10);
 
     // ========================================================================
-    // BODY - Corrupted torso with dark core (z-order: 0)
+    // BODY - Corrupted torso with dark core (z-order: 0) - Enhanced visibility
     // ========================================================================
     const body = sprite.addPart('body', [
         // Main body shape - more angular/threatening
         {
             type: 'polygon',
             points: [
-                { x: -0.14, y: -0.16 },
-                { x: 0.14, y: -0.16 },
-                { x: 0.18, y: 0.10 },
-                { x: 0, y: 0.16 },
-                { x: -0.18, y: 0.10 }
+                { x: -0.16, y: -0.18 },
+                { x: 0.16, y: -0.18 },
+                { x: 0.20, y: 0.12 },
+                { x: 0, y: 0.18 },
+                { x: -0.20, y: 0.12 }
             ],
             color: colors.bodyMain,
             fill: true
@@ -189,82 +189,166 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
         {
             type: 'ellipse',
             x: 0, y: -0.02,
-            width: 0.26, height: 0.28,
+            width: 0.28, height: 0.30,
             color: colors.bodyDark,
             fill: true
         },
-        // Corrupted armor plate
+        // Corrupted armor plate - larger and more visible
         {
             type: 'polygon',
             points: [
-                { x: -0.08, y: -0.12 },
-                { x: 0.08, y: -0.12 },
-                { x: 0.10, y: 0.06 },
-                { x: 0, y: 0.10 },
-                { x: -0.10, y: 0.06 }
+                { x: -0.12, y: -0.14 },
+                { x: 0.12, y: -0.14 },
+                { x: 0.14, y: 0.08 },
+                { x: 0, y: 0.14 },
+                { x: -0.14, y: 0.08 }
             ],
             color: colors.armorMain,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 8 }
+        },
+        // Armor upper highlight
+        {
+            type: 'polygon',
+            points: [
+                { x: -0.10, y: -0.13 },
+                { x: 0.10, y: -0.13 },
+                { x: 0.08, y: -0.06 },
+                { x: -0.08, y: -0.06 }
+            ],
+            color: colors.armorDark,
             fill: true
         },
-        // Dark core - pulsing
+        // Armor side panels
+        {
+            type: 'polygon',
+            points: [
+                { x: -0.13, y: -0.10 },
+                { x: -0.08, y: -0.08 },
+                { x: -0.10, y: 0.06 },
+                { x: -0.14, y: 0.04 }
+            ],
+            color: colors.armorDark,
+            fill: true
+        },
+        {
+            type: 'polygon',
+            points: [
+                { x: 0.13, y: -0.10 },
+                { x: 0.08, y: -0.08 },
+                { x: 0.10, y: 0.06 },
+                { x: 0.14, y: 0.04 }
+            ],
+            color: colors.armorDark,
+            fill: true
+        },
+        // Armor trim lines
+        {
+            type: 'line',
+            x1: -0.10, y1: -0.08,
+            x2: 0.10, y2: -0.08,
+            color: colors.energyColor,
+            strokeWidth: 2,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        {
+            type: 'line',
+            x1: -0.08, y1: 0.04,
+            x2: 0.08, y2: 0.04,
+            color: colors.energyColor,
+            strokeWidth: 2,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        // Dark core - pulsing - larger
         {
             type: 'circle',
             x: 0, y: -0.02,
-            radius: 0.06,
+            radius: 0.07,
             color: colors.coreColor,
             fill: true,
-            glow: { color: colors.glowColor, blur: 12 }
+            glow: { color: colors.glowColor, blur: 16 }
+        },
+        // Core ring
+        {
+            type: 'circle',
+            x: 0, y: -0.02,
+            radius: 0.09,
+            color: colors.energyColor,
+            fill: false,
+            stroke: true,
+            strokeWidth: 2,
+            glow: { color: colors.glowColor, blur: 4 }
         },
         // Core cracks
         {
             type: 'path',
             points: [
-                { x: -0.04, y: -0.04 },
+                { x: -0.05, y: -0.05 },
                 { x: 0, y: -0.02 },
-                { x: 0.04, y: -0.06 }
+                { x: 0.05, y: -0.07 }
             ],
             color: colors.energyColor,
-            strokeWidth: 1,
+            strokeWidth: 2,
             stroke: true,
-            fill: false
+            fill: false,
+            glow: { color: colors.glowColor, blur: 4 }
         }
     ], 0.5, 0.5, 0);
     body.setBaseTransform(0, -0.02);
 
     // ========================================================================
-    // SHOULDERS - Spiked pauldrons (z-order: 5)
+    // SHOULDERS - Spiked pauldrons (z-order: 5) - Enhanced visibility
     // ========================================================================
     const shoulderLeft = sprite.addPart('shoulderLeft', [
-        // Main pauldron
+        // Main pauldron - larger
         {
             type: 'ellipse',
             x: 0, y: 0,
-            width: 0.14, height: 0.12,
+            width: 0.16, height: 0.14,
             color: colors.armorMain,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        // Pauldron panel detail
+        {
+            type: 'ellipse',
+            x: 0, y: 0.02,
+            width: 0.12, height: 0.08,
+            color: colors.armorDark,
             fill: true
         },
-        // Large spike
+        // Energy trim
+        {
+            type: 'line',
+            x1: -0.06, y1: 0,
+            x2: 0.06, y2: 0,
+            color: colors.energyColor,
+            strokeWidth: 2,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        // Large spike - larger
         {
             type: 'polygon',
             points: [
-                { x: -0.03, y: -0.03 },
-                { x: 0, y: -0.14 },
-                { x: 0.03, y: -0.03 }
+                { x: -0.035, y: -0.04 },
+                { x: 0, y: -0.18 },
+                { x: 0.035, y: -0.04 }
             ],
             color: colors.spikeColor,
             fill: true,
-            glow: { color: colors.glowColor, blur: 3 }
+            glow: { color: colors.glowColor, blur: 6 }
         },
         // Small spike
         {
             type: 'polygon',
             points: [
-                { x: -0.06, y: -0.01 },
-                { x: -0.04, y: -0.08 },
-                { x: -0.02, y: -0.01 }
+                { x: -0.07, y: -0.02 },
+                { x: -0.05, y: -0.10 },
+                { x: -0.03, y: -0.02 }
             ],
             color: colors.spikeColor,
-            fill: true
+            fill: true,
+            glow: { color: colors.glowColor, blur: 3 }
         }
     ], 0.5, 0.5, 5);
     shoulderLeft.setBaseTransform(-0.16, -0.10);
@@ -273,33 +357,52 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
         {
             type: 'ellipse',
             x: 0, y: 0,
-            width: 0.14, height: 0.12,
+            width: 0.16, height: 0.14,
             color: colors.armorMain,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        {
+            type: 'ellipse',
+            x: 0, y: 0.02,
+            width: 0.12, height: 0.08,
+            color: colors.armorDark,
             fill: true
+        },
+        {
+            type: 'line',
+            x1: -0.06, y1: 0,
+            x2: 0.06, y2: 0,
+            color: colors.energyColor,
+            strokeWidth: 2,
+            glow: { color: colors.glowColor, blur: 6 }
         },
         {
             type: 'polygon',
             points: [
-                { x: -0.03, y: -0.03 },
-                { x: 0, y: -0.14 },
-                { x: 0.03, y: -0.03 }
+                { x: -0.035, y: -0.04 },
+                { x: 0, y: -0.18 },
+                { x: 0.035, y: -0.04 }
+            ],
+            color: colors.spikeColor,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        {
+            type: 'polygon',
+            points: [
+                { x: 0.07, y: -0.02 },
+                { x: 0.05, y: -0.10 },
+                { x: 0.03, y: -0.02 }
             ],
             color: colors.spikeColor,
             fill: true,
             glow: { color: colors.glowColor, blur: 3 }
-        },
-        {
-            type: 'polygon',
-            points: [
-                { x: 0.02, y: -0.01 },
-                { x: 0.04, y: -0.08 },
-                { x: 0.06, y: -0.01 }
-            ],
-            color: colors.spikeColor,
-            fill: true
         }
     ], 0.5, 0.5, 5);
     shoulderRight.setBaseTransform(0.16, -0.10);
+
+    // ========================================================================
 
     // ========================================================================
     // ARMS (z-order: 2)
@@ -503,47 +606,88 @@ export function createEnemySprite(focus = 'TECH', level = 1) {
     hornRight.setBaseTransform(0.08, -0.1);
 
     // ========================================================================
-    // WEAPON - Dark energy weapon (z-order: 15)
+    // WEAPON - Dark energy weapon (z-order: 15) - Enhanced visibility
     // ========================================================================
     const weapon = sprite.addPart('weapon', [
-        // Handle
+        // Handle - larger
         {
             type: 'roundRect',
-            x: 0, y: 0,
-            width: 0.05, height: 0.14,
-            radius: 0.01,
+            x: 0, y: 0.02,
+            width: 0.06, height: 0.18,
+            radius: 0.015,
             color: colors.armorDark,
             fill: true
         },
-        // Dark crystal blade
+        // Guard
+        {
+            type: 'ellipse',
+            x: 0, y: -0.07,
+            width: 0.14, height: 0.05,
+            color: colors.armorMain,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 6 }
+        },
+        // Dark crystal blade - larger and more prominent
         {
             type: 'polygon',
             points: [
-                { x: -0.04, y: -0.06 },
-                { x: 0.04, y: -0.06 },
-                { x: 0.06, y: -0.18 },
-                { x: 0, y: -0.34 },
-                { x: -0.06, y: -0.18 }
+                { x: -0.05, y: -0.08 },
+                { x: 0.05, y: -0.08 },
+                { x: 0.07, y: -0.22 },
+                { x: 0, y: -0.45 },
+                { x: -0.07, y: -0.22 }
             ],
             color: colors.weaponColor,
             fill: true,
-            glow: { color: colors.glowColor, blur: 12 }
+            glow: { color: colors.glowColor, blur: 18 }
         },
-        // Dark core
+        // Inner blade aura
+        {
+            type: 'polygon',
+            points: [
+                { x: -0.03, y: -0.10 },
+                { x: 0.03, y: -0.10 },
+                { x: 0.04, y: -0.20 },
+                { x: 0, y: -0.40 },
+                { x: -0.04, y: -0.20 }
+            ],
+            color: colors.coreColor,
+            fill: true,
+            glow: { color: colors.coreColor, blur: 12 }
+        },
+        // Dark core energy line
         {
             type: 'path',
             points: [
-                { x: 0, y: -0.08 },
-                { x: 0, y: -0.30 }
+                { x: 0, y: -0.12 },
+                { x: 0, y: -0.38 }
             ],
-            color: colors.coreColor,
+            color: '#ffffff',
             strokeWidth: 3,
             stroke: true,
-            fill: false
+            fill: false,
+            glow: { color: colors.glowColor, blur: 8 }
+        },
+        // Rune marks
+        {
+            type: 'circle',
+            x: 0, y: -0.18,
+            radius: 0.012,
+            color: colors.glowColor,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 8 }
+        },
+        {
+            type: 'circle',
+            x: 0, y: -0.28,
+            radius: 0.010,
+            color: colors.glowColor,
+            fill: true,
+            glow: { color: colors.glowColor, blur: 6 }
         }
     ], 0.5, 1, 15);
-    weapon.setBaseTransform(0.29, 0.19, 15);
-    weapon.opacity = 0.95;
+    weapon.setBaseTransform(0.25, 0.1, 25 * Math.PI / 35);
+    weapon.opacity = 1.0;
 
     // Set up hierarchy
     sprite.setParent('shoulderLeft', 'body');

@@ -23,6 +23,10 @@ export class Character {
     this.affinities = { ...affinities };
     this.isPlayer = isPlayer;
 
+    // XP system
+    this.xp = 0;
+    this.totalXP = 0;
+
     // simple currency for shop
     this.credits = 0;
 
@@ -117,10 +121,9 @@ export class Character {
     const applied = Math.min(this.currentHealth, remaining);
     this.currentHealth -= applied;
     
-    // When character dies, drain all resources for visual feedback
+    // When character dies, clamp HP to 0 and drain shield
     if (this.currentHealth <= 0) {
-      this.currentMana = 0;
-      this.currentEnergy = 0;
+      this.currentHealth = 0;
       this.currentShield = 0;
     }
     

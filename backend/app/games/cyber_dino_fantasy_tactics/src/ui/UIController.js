@@ -58,6 +58,7 @@ export class UIController {
       eventBus.on("log", (payload) => this.appendLog(payload)),
       eventBus.on("turn:start", () => this.renderAll()),
       eventBus.on("turn:end", () => this.renderAll()),
+      eventBus.on("resources:changed", () => this.renderAll()), // Update UI when resources change
       eventBus.on("combat:basicHit", (payload) => {
         if (!payload) return;
         this.playHitAnim(payload.defender);
@@ -77,8 +78,13 @@ export class UIController {
       eventBus.on("character:dead", (payload) => {
         if (payload?.character) {
           this.playDeathAnim(payload.character);
+          // Update UI to show zero resources
+          this.renderAll();
           if (payload.character.isPlayer) {
-            setTimeout(() => this.openGameOverModal(), 1200);
+            setTimeout(() => {
+              this.renderAll(); // Update again before modal
+              this.openGameOverModal();
+            }, 1200);
           } else {
             // Enemy died - play victory animation for player
             setTimeout(() => {
@@ -96,6 +102,10 @@ export class UIController {
           type: "system",
           text: "Un nuovo nemico entra in scena.",
         });
+      }),
+      eventBus.on("player:levelup", (payload) => {
+        this.showLevelUpNotification(payload);
+        this.renderAll();
       })
     );
   }
@@ -229,10 +239,10 @@ export class UIController {
       return;
     }
     const stats = character.getTotalStats();
-    const hp = character.currentHealth;
-    const mp = character.currentMana;
-    const en = character.currentEnergy;
-    const sh = character.currentShield;
+    const hp = Math.max(0, character.currentHealth);
+    const mp = Math.max(0, character.currentMana);
+    const en = Math.max(0, character.currentEnergy);
+    const sh = Math.max(0, character.currentShield);
 
     container.innerHTML = `
       <div class="label-row">
@@ -245,6 +255,23 @@ export class UIController {
         <span>${character.isPlayer ? "Crediti" : "Focus"}</span>
         <span>${character.isPlayer ? (character.credits ?? 0) : ""}</span>
       </div>
+
+      ${
+        character.isPlayer
+          ? `<div style="margin-top:4px">
+          <div class="label-row"><span>XP</span><span>${Math.round(
+            character.xp ?? 0
+          )}/${Math.round(
+            this.game.levelingSystem?.getXPForLevel(character.level) ?? 100
+          )}</span></div>
+          <div class="bar"><div class="bar-fill xp" style="transform:scaleX(${
+            this.game.levelingSystem
+              ? this.game.levelingSystem.getProgressPercent(character) / 100
+              : 0
+          })"></div></div>
+        </div>`
+          : ""
+      }
 
       <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
         <div>
@@ -340,6 +367,14 @@ export class UIController {
     const btnShop = this.makeButton("Shop", "");
     btnShop.onclick = () => this.openShopModal();
 
+    // Pass Turn button - allows player to skip their turn
+    const btnPassTurn = this.makeButton("Passa", "btn-pass");
+    btnPassTurn.dataset.icon = "⏭";
+    btnPassTurn.onclick = () => {
+      this.game.playerPassTurn();
+      this.renderAll();
+    };
+
     const btnRestart = this.makeButton("Restart", "");
     btnRestart.onclick = () => {
       // reset game state and UI similar to Game Over retry
@@ -350,7 +385,7 @@ export class UIController {
       this.renderAll();
     };
 
-    const allButtons = [btnAttack, ...abilityButtons, btnLoadout, btnShop, btnRestart];
+    const allButtons = [btnAttack, ...abilityButtons, btnPassTurn, btnLoadout, btnShop, btnRestart];
     for (const btn of allButtons) {
       this.controlsContainer.appendChild(btn);
     }
@@ -364,16 +399,56 @@ export class UIController {
       this.controlsContainer.querySelectorAll("[data-ability-index]")
     );
     const player = this.game.player;
+    const isPlayerTurn = this.game.turnOwner === "PLAYER";
+    
     buttons.forEach((btn) => {
       const idx = Number(btn.dataset.abilityIndex);
       const ability = player.abilities[idx];
       if (!ability) return;
       const cd = player.getCooldown(ability);
-      const can = player.canPayCost(ability.cost) && cd === 0;
+      const canPay = player.canPayCost(ability.cost);
+      const can = canPay && cd === 0 && isPlayerTurn;
       btn.textContent =
         cd > 0 ? `${ability.name} (${cd})` : ability.name;
       btn.classList.toggle("btn-disabled", !can);
     });
+
+    // Also disable attack button when not player turn or not enough energy
+    const btnAttack = this.controlsContainer.querySelector(".btn-primary");
+    if (btnAttack) {
+      const stats = player.getTotalStats();
+      const energyCost = Math.ceil(stats.maxEnergy * 0.15);
+      const hasEnergy = player.currentEnergy >= energyCost;
+      const canAttack = isPlayerTurn && hasEnergy;
+      
+      btnAttack.classList.toggle("btn-disabled", !canAttack);
+      if (!isPlayerTurn) {
+        btnAttack.textContent = "Attacco (Attendi...)";
+      } else if (!hasEnergy) {
+        btnAttack.textContent = "Attacco (No Energia)";
+      } else {
+        btnAttack.textContent = "Attacco";
+      }
+    }
+
+    // Update Pass Turn button - highlight it when no other actions are available
+    const btnPass = this.controlsContainer.querySelector(".btn-pass");
+    if (btnPass) {
+      const actions = this.game.getPlayerAvailableActions();
+      const stats = player.getTotalStats();
+      const energyCost = Math.ceil(stats.maxEnergy * 0.15);
+      const canAttack = player.currentEnergy >= energyCost;
+      const noActionsAvailable = !canAttack && !actions.canUseAbility;
+      
+      btnPass.classList.toggle("btn-disabled", !isPlayerTurn);
+      btnPass.classList.toggle("btn-highlight", noActionsAvailable && isPlayerTurn);
+      
+      if (noActionsAvailable && isPlayerTurn) {
+        btnPass.textContent = "⚠ Passa Turno";
+      } else {
+        btnPass.textContent = "Passa";
+      }
+    }
   }
 
   renderAll() {
@@ -699,6 +774,31 @@ export class UIController {
     updateUI();
   }
 
+  isItemAlreadyOwned(player, item) {
+    // Check if item is already equipped
+    if (item.type === ItemType.WEAPON) {
+      const equipped = player.equipment.weaponMain;
+      if (equipped && equipped.name === item.name && equipped.rarity === item.rarity) {
+        return true;
+      }
+    } else if (item.type === ItemType.ARMOR) {
+      const slots = ['armorHead', 'armorChest', 'armorLegs', 'armorArms', 'armorCore'];
+      for (const slot of slots) {
+        const equipped = player.equipment[slot];
+        if (equipped && equipped.name === item.name && equipped.rarity === item.rarity) {
+          return true;
+        }
+      }
+    }
+    
+    // Check if item is in inventory
+    return player.inventory.some(invItem => 
+      invItem.name === item.name && 
+      invItem.rarity === item.rarity &&
+      invItem.type === item.type
+    );
+  }
+
   openShopModal() {
     this.modalRoot.innerHTML = "";
     const player = this.game.player;
@@ -854,11 +954,28 @@ export class UIController {
       item.meta = item.meta || {};
       item.meta.price = price;
 
+      const isOwned = this.isItemAlreadyOwned(player, item);
+      const canAfford = (player.credits ?? 0) >= price;
+
       const btnBuy = document.createElement("button");
-      btnBuy.className = "btn btn-primary";
+      btnBuy.className = isOwned ? "btn btn-disabled" : (canAfford ? "btn btn-primary" : "btn");
       btnBuy.style.minWidth = "70px";
-      btnBuy.textContent = `${price} C`;
+      btnBuy.textContent = isOwned ? "Posseduto" : `${price} C`;
+      
+      if (isOwned) {
+        btnBuy.style.opacity = "0.5";
+        btnBuy.style.cursor = "not-allowed";
+      }
+      
       btnBuy.onclick = () => {
+        if (isOwned) {
+          this.appendLog({
+            type: "system",
+            text: "Hai già questo oggetto.",
+          });
+          return;
+        }
+        
         if ((player.credits ?? 0) < price) {
           this.appendLog({
             type: "system",
@@ -905,6 +1022,10 @@ export class UIController {
           type: "system",
           text: `Hai comprato ${item.name}.`,
         });
+        
+        // Update sprites to reflect new equipment
+        this.initBattlefieldSprites();
+        
         this.renderAll();
         this.modalRoot.innerHTML = "";
       };
@@ -992,5 +1113,66 @@ export class UIController {
 
     this.modalRoot.appendChild(backdrop);
     this.modalRoot.appendChild(modal);
+  }
+
+  showLevelUpNotification({ player, levelResult }) {
+    // Create a temporary notification overlay
+    const notification = document.createElement("div");
+    notification.style.position = "fixed";
+    notification.style.top = "50%";
+    notification.style.left = "50%";
+    notification.style.transform = "translate(-50%, -50%) scale(0.5)";
+    notification.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    notification.style.padding = "30px 40px";
+    notification.style.borderRadius = "15px";
+    notification.style.border = "3px solid #ffd700";
+    notification.style.boxShadow = "0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.5)";
+    notification.style.zIndex = "10000";
+    notification.style.textAlign = "center";
+    notification.style.color = "#fff";
+    notification.style.opacity = "0";
+    notification.style.transition = "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)";
+    notification.style.pointerEvents = "none";
+    
+    const { newLevel, statIncreases } = levelResult;
+    
+    notification.innerHTML = `
+      <div style="font-size: 48px; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.3); margin-bottom: 10px;">
+        🎉 LEVEL UP! 🎉
+      </div>
+      <div style="font-size: 32px; font-weight: 600; color: #ffd700; margin-bottom: 15px;">
+        Livello ${newLevel}
+      </div>
+      <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">
+        ${player.name} diventa più forte!
+      </div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 15px; font-size: 12px;">
+        ${statIncreases.maxHealth ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">❤️ HP +${Math.floor(statIncreases.maxHealth)}</div>` : ''}
+        ${statIncreases.maxMana ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">💙 Mana +${Math.floor(statIncreases.maxMana)}</div>` : ''}
+        ${statIncreases.maxEnergy ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">⚡ Energia +${Math.floor(statIncreases.maxEnergy)}</div>` : ''}
+        ${statIncreases.attackPower ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">⚔️ ATK +${Math.floor(statIncreases.attackPower)}</div>` : ''}
+        ${statIncreases.magicPower ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">✨ MAG +${Math.floor(statIncreases.magicPower)}</div>` : ''}
+        ${statIncreases.techPower ? `<div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">🔧 TEC +${Math.floor(statIncreases.techPower)}</div>` : ''}
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+      notification.style.opacity = "1";
+      notification.style.transform = "translate(-50%, -50%) scale(1)";
+    }, 10);
+    
+    // Animate out and remove
+    setTimeout(() => {
+      notification.style.opacity = "0";
+      notification.style.transform = "translate(-50%, -50%) scale(0.8)";
+      setTimeout(() => {
+        if (notification.parentNode) {
+          document.body.removeChild(notification);
+        }
+      }, 500);
+    }, 3000);
   }
 }

@@ -7,6 +7,19 @@ export class CombatSystem {
 
   calculateBasicAttack({ attacker, defender }) {
     const stats = attacker.getTotalStats();
+    
+    // Basic attack costs energy
+    const energyCost = Math.ceil(stats.maxEnergy * 0.15);
+    if (attacker.currentEnergy < energyCost) {
+      this.eventBus.emit("log", {
+        type: "system",
+        text: `${attacker.name} non ha abbastanza energia per attaccare.`,
+      });
+      return;
+    }
+    
+    attacker.currentEnergy -= energyCost;
+    
     const base = stats.attackPower + stats.vitality * 0.5;
     const variance = base * 0.2 * (Math.random() * 2 - 1);
     let dmg = base + variance;
@@ -63,6 +76,23 @@ export class CombatSystem {
       return;
     }
 
+    // Pay cost BEFORE animation so UI updates immediately
+    actor.payCost(ability.cost);
+    
+    // Log resource consumption
+    const costParts = [];
+    if (ability.cost.mana > 0) costParts.push(`${ability.cost.mana} mana`);
+    if (ability.cost.energy > 0) costParts.push(`${ability.cost.energy} energia`);
+    if (costParts.length > 0) {
+      this.eventBus.emit("log", {
+        type: "system",
+        text: `${actor.name} consuma ${costParts.join(" e ")}.`,
+      });
+    }
+    
+    // Emit event to update UI immediately after resource consumption
+    this.eventBus.emit("resources:changed", { character: actor });
+
     // trigger cast animation
     this.eventBus.emit("combat:abilityCast", {
       ability,
@@ -70,7 +100,6 @@ export class CombatSystem {
       target,
     });
 
-    actor.payCost(ability.cost);
     const ctx = {
       actor,
       target,
@@ -92,6 +121,8 @@ export class CombatSystem {
   endTurn({ currentOwner, player, enemy }) {
     if (currentOwner === TurnOwner.PLAYER) {
       player.tickCooldowns();
+      // Regenerate enemy resources at start of their turn
+      this.regenerateResources(enemy);
       this.startTurn({ turnOwner: TurnOwner.ENEMY });
       // Delay enemy action so player can see it happening
       setTimeout(() => {
@@ -99,8 +130,35 @@ export class CombatSystem {
       }, 800);
     } else {
       enemy.tickCooldowns();
+      // Regenerate player resources at start of their turn (after enemy ends)
+      this.regenerateResources(player);
+      this.eventBus.emit("resources:changed", { character: player });
       this.startTurn({ turnOwner: TurnOwner.PLAYER });
+      
+      // Check if player can do anything after regeneration
+      this.eventBus.emit("turn:checkPlayerActions", { player, enemy });
     }
+  }
+
+  regenerateResources(character) {
+    // Don't regenerate resources if character is dead
+    if (!character.isAlive()) return;
+    
+    const stats = character.getTotalStats();
+    
+    // Regenerate 3% of max mana per turn (reduced from 6%)
+    const manaRegen = stats.maxMana * 0.03;
+    character.currentMana = Math.min(
+      character.currentMana + manaRegen,
+      stats.maxMana
+    );
+
+    // Regenerate 4% of max energy per turn (reduced from 8%)
+    const energyRegen = stats.maxEnergy * 0.04;
+    character.currentEnergy = Math.min(
+      character.currentEnergy + energyRegen,
+      stats.maxEnergy
+    );
   }
 
   performEnemyTurn({ enemy, player }) {

@@ -1,8 +1,17 @@
 {
-  "version": "2.10.1",
-  "timestamp": "2025-12-28T21:59:55.521Z",
-  "buildNumber": 147,
+  "version": "2.10.2",
+  "timestamp": "2025-12-28T23:31:11.773Z",
+  "buildNumber": 148,
   "changelog": [
+    {
+      "version": "2.10.2",
+      "date": "2025-12-28",
+      "type": "patch",
+      "changes": [
+        "fix: improve input handling and performance optimizations across game components",
+        "🔖 Bump version to 2.10.1 [skip-version]"
+      ]
+    },
     {
       "version": "2.10.1",
       "date": "2025-12-28",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[Yatzi] Implement difficulty selection panel and AI difficulty settings for Yatzi 3D",
         "🔖 Bump version to 2.4.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.4.1",
-      "date": "2025-12-26",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance [Yatzi] 3D setup script with force update option and usage instructions",
-        "🔖 Bump version to 2.4.0 [skip-version]"
       ]
     }
   ]

@@ -426,7 +426,7 @@ class BlockyRoadGame {
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
             
-            // Prevent double-triggering from key repeat
+            // Prevent double-triggering from key repeat (browser auto-repeat when holding key)
             if (this.keys[key]) return;
             
             this.keys[key] = true;
@@ -436,10 +436,23 @@ class BlockyRoadGame {
                 return;
             }
             
-            // Instant input queuing for arrow keys/WASD
+            // Process movement immediately on key press (single press only)
             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-                // Trigger handleInput immediately for responsive feel
-                this.handleInput();
+                let dx = 0, dz = 0;
+                
+                if (key === 'arrowup' || key === 'w') {
+                    dz = 1;
+                } else if (key === 'arrowdown' || key === 's') {
+                    dz = -1;
+                } else if (key === 'arrowleft' || key === 'a') {
+                    dx = 1;  // Swapped: left now goes right in world space
+                } else if (key === 'arrowright' || key === 'd') {
+                    dx = -1; // Swapped: right now goes left in world space
+                }
+                
+                if (dx !== 0 || dz !== 0) {
+                    this.processMove(dx, dz);
+                }
             }
         });
         
@@ -604,24 +617,6 @@ class BlockyRoadGame {
     handleInput() {
         if (this.inputCooldown > 0) {
             this.inputCooldown--;
-            return;
-        }
-        
-        let dx = 0, dz = 0;
-        
-        if (this.keys['arrowup'] || this.keys['w']) {
-            dz = 1;
-        } else if (this.keys['arrowdown'] || this.keys['s']) {
-            dz = -1;
-        } else if (this.keys['arrowleft'] || this.keys['a']) {
-            dx = 1;  // Swapped: left now goes right in world space
-        } else if (this.keys['arrowright'] || this.keys['d']) {
-            dx = -1; // Swapped: right now goes left in world space
-        }
-        
-        if (dx !== 0 || dz !== 0) {
-            // Process immediately - no queuing needed
-            this.processMove(dx, dz);
         }
     }
     
@@ -631,8 +626,6 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            this.inputCooldown = 1;  // 1 frame cooldown for reliable fast input
-            
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
                 const currentGridZ = this.player.gridZ;
@@ -774,9 +767,6 @@ class BlockyRoadGame {
         // Normalize deltaTime to 60 FPS (16.67ms per frame)
         // This makes movement speed independent of frame rate
         const normalizedDelta = deltaTime / 16.67;
-        
-        // Handle input
-        this.handleInput();
         
         // Update game systems
         const playerPos = this.player.getPosition();

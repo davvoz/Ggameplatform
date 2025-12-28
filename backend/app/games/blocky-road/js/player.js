@@ -48,6 +48,7 @@ class Player {
         
         // Jump timing
         this.jumpDuration = 150; // ms, faster than Phaser (was 300)
+        this.activeTweens = []; // Track active tweens for cancellation
     }
     
     canMove() {
@@ -55,7 +56,13 @@ class Player {
     }
     
     move(dx, dz, onComplete) {
-        if (!this.canMove()) return false;
+        if (!this.isAlive) return false;
+        
+        // Cancel active tweens to allow instant new movement (BEFORE any checks)
+        if (this.isMoving) {
+            this.cancelActiveTweens();
+            this.isMoving = false; // Reset flag immediately
+        }
         
         const targetX = this.gridX + dx;
         const targetZ = this.gridZ + dz;
@@ -127,6 +134,26 @@ class Player {
         return true;
     }
     
+    cancelActiveTweens() {
+        // Stop all active tweens immediately
+        this.activeTweens.forEach(tween => {
+            if (tween && tween.stop) {
+                tween.stop();
+            }
+        });
+        this.activeTweens = [];
+        
+        // Snap position to current grid position (stop mid-animation)
+        this.mesh.position.x = this.gridX;
+        this.mesh.position.z = this.gridZ;
+        this.mesh.position.y = 0.2;
+        
+        // Reset body scale to normal
+        if (this.body && this.body.scale) {
+            this.body.scale.set(1, 1, 1);
+        }
+    }
+    
     animateJump(targetX, targetZ, onComplete) {
         const startPos = {
             x: this.mesh.position.x,
@@ -141,13 +168,14 @@ class Player {
         };
         
         // Squash before jump
-        new TWEEN.Tween(this.body.scale)
+        const squashTween = new TWEEN.Tween(this.body.scale)
             .to({ x: 1.2, y: 0.7, z: 1.2 }, this.jumpDuration * 0.2)
             .easing(TWEEN.Easing.Quadratic.Out)
             .start();
+        this.activeTweens.push(squashTween);
         
         // Main jump arc
-        new TWEEN.Tween(this.mesh.position)
+        const jumpTween = new TWEEN.Tween(this.mesh.position)
             .to({ x: targetX, z: targetZ }, this.jumpDuration)
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate(() => {
@@ -169,7 +197,7 @@ class Player {
                 this.mesh.position.y = 0.2;
                 
                 // Stretch then back to normal
-                new TWEEN.Tween(this.body.scale)
+                const stretchTween = new TWEEN.Tween(this.body.scale)
                     .to({ x: 0.8, y: 1.3, z: 0.8 }, this.jumpDuration * 0.15)
                     .easing(TWEEN.Easing.Quadratic.Out)
                     .chain(
@@ -178,11 +206,14 @@ class Player {
                             .easing(TWEEN.Easing.Quadratic.In)
                     )
                     .start();
+                this.activeTweens.push(stretchTween);
                 
                 this.isMoving = false;
+                this.activeTweens = []; // Clear completed tweens
                 if (onComplete) onComplete();
             })
             .start();
+        this.activeTweens.push(jumpTween);
     }
     
     die(inWater = false) {

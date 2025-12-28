@@ -108,7 +108,7 @@ class TouchControls {
     
     handleSwipe(direction) {
         if (!this.game.isStarted || this.game.isGameOver || this.game.isPaused) return;
-        if (this.game.player.isMoving || this.game.inputCooldown > 0) return;
+        // No cooldown - instant cancellation system allows rapid inputs
         
         let dx = 0, dz = 0;
         

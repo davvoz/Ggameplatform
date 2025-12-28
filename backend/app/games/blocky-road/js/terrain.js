@@ -58,16 +58,17 @@ class TerrainGenerator {
     initObjectPools() {
         console.log('🔧 Pre-caching rail tracks and warning lights...');
         
-        // Pre-generate 10 rail tracks (enough for most games)
-        for (let i = 0; i < 10; i++) {
+        // Pre-generate 30 rail tracks (enough to cover full view distance)
+        // View spans playerZ - 5 to playerZ + 25 = 30 rows max
+        for (let i = 0; i < 30; i++) {
             const track = Models.createRailTrack();
             track.visible = false; // Hide until needed
             this.scene.add(track);
             this.railTrackPool.push(track);
         }
         
-        // Pre-generate 20 warning lights (2 per rail)
-        for (let i = 0; i < 20; i++) {
+        // Pre-generate 60 warning lights (2 per rail × 30 rails)
+        for (let i = 0; i < 60; i++) {
             const light = Models.createTrainWarningLight();
             light.visible = false; // Hide until needed
             this.scene.add(light);
@@ -86,9 +87,10 @@ class TerrainGenerator {
             row.isBarrier = true;
         }
         
-        // Start with safe grass zone at spawn point
+        // Start with safe grass zone at spawn point (NO OBSTACLES)
         for (let z = -2; z < 3; z++) {
-            this.createRow(z, 'grass');
+            const row = this.createRow(z, 'grass');
+            row.isSafeZone = true; // Mark as safe - no tree/rock obstacles
         }
         
         // Generate zones ahead
@@ -175,6 +177,7 @@ class TerrainGenerator {
     addGrassDecorations(row) {
         const decorationChance = 0.4;
         const isBarrier = row.isBarrier; // Dense obstacles behind spawn
+        const isSafeZone = row.isSafeZone; // Safe zone at spawn - no obstacles
         
         for (let x = -12; x <= 12; x++) {
             // Create natural borders with trees/rocks at edges
@@ -224,7 +227,10 @@ class TerrainGenerator {
                 const rand = Math.random();
                 let decoration;
                 
-                if (rand < 0.6) { // More grass/flowers
+                // In safe zone, only allow non-obstacle decorations (grass/flowers)
+                if (isSafeZone) {
+                    decoration = rand < 0.5 ? Models.createGrassTuft() : Models.createFlower();
+                } else if (rand < 0.6) { // More grass/flowers
                     decoration = rand < 0.3 ? Models.createGrassTuft() : Models.createFlower();
                 } else if (rand < 0.85) {
                     decoration = Models.createRock();
@@ -419,11 +425,11 @@ class TerrainGenerator {
                     } else {
                         // Normal disposal for non-pooled objects
                         this.scene.remove(dec);
-                        if (dec.geometry) dec.geometry.dispose();
-                        if (dec.material) dec.material.dispose();
+                        // Skip geometry/material disposal for pooled materials
                         dec.traverse(child => {
-                            if (child.geometry) child.geometry.dispose();
-                            if (child.material) child.material.dispose();
+                            if (child.isMesh) {
+                                this.scene.remove(child);
+                            }
                         });
                     }
                 });

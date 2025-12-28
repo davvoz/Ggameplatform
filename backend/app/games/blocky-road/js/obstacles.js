@@ -54,7 +54,7 @@ class ObstacleManager {
         this.currentScore = score;
     }
     
-    update(playerZ) {
+    update(playerZ, normalizedDelta = 1) {
         this.spawnTimer++;
         this.frameCount++; // Increment global frame counter
         
@@ -138,14 +138,14 @@ class ObstacleManager {
             }
             
             // Normal horizontal movement - move even while emerging/submerging
-            platform.mesh.position.x += platform.velocity;
+            platform.mesh.position.x += platform.velocity * normalizedDelta;
             platform.x = platform.mesh.position.x;
         });
         
         // Update vehicles
         this.obstacles.forEach((obstacle, index) => {
             const oldX = obstacle.mesh.position.x;
-            obstacle.mesh.position.x += obstacle.velocity;
+            obstacle.mesh.position.x += obstacle.velocity * normalizedDelta;
             
             // Rotate wheels for effect (only if has wheels cached)
             if (obstacle.wheels) {

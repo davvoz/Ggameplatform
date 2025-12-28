@@ -771,13 +771,17 @@ class BlockyRoadGame {
         
         const frameStart = performance.now();
         
+        // Normalize deltaTime to 60 FPS (16.67ms per frame)
+        // This makes movement speed independent of frame rate
+        const normalizedDelta = deltaTime / 16.67;
+        
         // Handle input
         this.handleInput();
         
         // Update game systems
         const playerPos = this.player.getPosition();
-        this.player.update();
-        this.terrain.update(playerPos.z, this.score);
+        this.player.update(normalizedDelta);
+        this.terrain.update(playerPos.z, this.score, normalizedDelta);
         
         // Update shadow camera to follow player
         this.dirLight.target.position.set(playerPos.worldX, 0, playerPos.worldZ);
@@ -786,9 +790,9 @@ class BlockyRoadGame {
         
         // Update obstacles with current score for difficulty progression
         this.obstacles.updateScore(this.score);
-        this.obstacles.update(playerPos.z);
+        this.obstacles.update(playerPos.z, normalizedDelta);
         
-        this.particles.update();
+        this.particles.update(normalizedDelta);
         
         // Rising danger zone mechanic (like Crossy Road's water)
         // DISABLED TEMPORARILY
@@ -813,8 +817,8 @@ class BlockyRoadGame {
         
         // Update death line (chases player from behind)
         if (this.deathLineEnabled) {
-            // Death line ALWAYS advances at 1 block per second
-            this.deathLineZ += this.deathLineSpeed;
+            // Death line ALWAYS advances at 1 block per second (frame rate independent)
+            this.deathLineZ += this.deathLineSpeed * normalizedDelta;
             
             // Calculate distance from player
             const distanceFromPlayer = playerPos.z - this.deathLineZ;
@@ -846,7 +850,7 @@ class BlockyRoadGame {
             y: playerPos.y,
             z: cameraTargetZ
         };
-        this.camera.follow(cameraTarget);
+        this.camera.follow(cameraTarget, normalizedDelta);
         
         // Update boundary shadows to follow camera
         if (this.boundaryShadows) {
@@ -884,7 +888,7 @@ class BlockyRoadGame {
         }
         
         // Danger zone always moves forward (like Crossy Road water)
-        this.dangerZone += this.dangerZoneSpeed * deltaTime;
+        this.dangerZone += this.dangerZoneSpeed * normalizedDelta;
         
         // Keep minimum distance behind player
         const minDistance = 10;

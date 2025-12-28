@@ -178,7 +178,7 @@ class ParticleSystem {
         });
     }
     
-    update() {
+    update(normalizedDelta = 1) {
         // Update particles every other frame for performance
         if (!this.updateCounter) this.updateCounter = 0;
         this.updateCounter++;

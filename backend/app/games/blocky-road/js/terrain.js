@@ -359,7 +359,7 @@ class TerrainGenerator {
         return waterfallGroup;
     }
     
-    update(playerZ, currentScore) {
+    update(playerZ, currentScore, normalizedDelta = 1) {
         // Update score for progressive terrain difficulty
         if (currentScore !== undefined) {
             this.currentScore = currentScore;
@@ -369,8 +369,8 @@ class TerrainGenerator {
         const animationDistance = 20;
         this.rows.forEach(row => {
             if (Math.abs(row.z - playerZ) < animationDistance) {
-                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall, normalizedDelta);
+                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall, normalizedDelta);
             }
         });
         
@@ -433,18 +433,18 @@ class TerrainGenerator {
         });
     }
     
-    animateWaterfall(waterfall) {
+    animateWaterfall(waterfall, normalizedDelta = 1) {
         if (!waterfall.userData.foamParticles) return;
         
         // Determine flow direction based on waterfall position (left = flow left, right = flow right)
         const isLeftSide = waterfall.position.x < 0;
         const flowDirection = isLeftSide ? -1 : 1; // Left side flows left (negative X), right side flows right (positive X)
         
-        // Animate foam particles flowing horizontally
+        // Animate foam particles flowing horizontally (frame rate independent)
         waterfall.userData.foamParticles.forEach(foam => {
-            foam.position.x += foam.userData.flowSpeed * flowDirection;
-            foam.rotation.y += 0.08; // Spin horizontally
-            foam.rotation.z += 0.03;
+            foam.position.x += foam.userData.flowSpeed * flowDirection * normalizedDelta;
+            foam.rotation.y += 0.08 * normalizedDelta; // Spin horizontally
+            foam.rotation.z += 0.03 * normalizedDelta;
             
             // Reset when flowing too far
             if ((isLeftSide && foam.position.x < -1.5) || (!isLeftSide && foam.position.x > 1.5)) {

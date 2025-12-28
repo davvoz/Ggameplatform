@@ -240,7 +240,7 @@ class Player {
         this.platformOffset = 0;
     }
     
-    update() {
+    update(normalizedDelta = 1) {
         // Move with platform while maintaining lateral offset
         if (this.isOnPlatform && this.currentPlatform && !this.isMoving) {
             // Keep player on platform with their offset position

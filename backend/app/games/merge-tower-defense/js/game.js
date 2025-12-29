@@ -3,7 +3,7 @@
  * Main game logic with advanced merge mechanics
  */
 
-import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES } from './config.js';
+import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES, SHOP_ITEMS } from './config.js';
 import { Utils } from './utils.js';
 import { ParticleSystem } from './particles.js';
 import { EntityManager } from './entities.js';
@@ -71,7 +71,11 @@ export class Game {
 
             // Energy display animation (displayEnergy si avvicina gradualmente a energy)
             displayEnergy: CONFIG.INITIAL_ENERGY,
-            energyAnimSpeed: 50 // mattoncini al secondo (più lento = più visibile)
+            energyAnimSpeed: 50, // mattoncini al secondo (più lento = più visibile)
+
+            // Shop and Bonus System
+            activeBoosts: [], // Array di boost attivi: {id, type, effect, startTime, duration, endTime}
+            shopOpen: false
         };
     }
 
@@ -110,13 +114,18 @@ export class Game {
                         this.audio.toggle();
                     }
                 } else if (uiAction.type === 'shop') {
-                    // Shop button selected
-                    this.particles.emit(gridPos.col, gridPos.row, {
-                        text: '✓',
-                        color: CONFIG.COLORS.TEXT_PRIMARY,
-                        vy: -1,
-                        life: 0.5
-                    });
+                    // Handle shop actions
+                    if (uiAction.action === 'purchase' && uiAction.item) {
+                        this.purchaseShopItem(uiAction.item.id);
+                    } else if (uiAction.action === 'select') {
+                        // Shop tower button selected - visual feedback
+                        this.particles.emit(gridPos.col, gridPos.row, {
+                            text: '✓',
+                            color: CONFIG.COLORS.TEXT_PRIMARY,
+                            vy: -1,
+                            life: 0.5
+                        });
+                    }
                 } else if (uiAction.type === 'grid') {
                     this.handleGridTap(gridPos);
                 }
@@ -135,6 +144,12 @@ export class Game {
         const cannon = this.entities.getCannon(gridPos.col, gridPos.row);
 
         if (cannon) {
+            // Check if we're in tower upgrade mode
+            if (this.state.selectingTowerForUpgrade) {
+                this.upgradeTower(cannon);
+                return;
+            }
+            
             // Toggle cannon selection for merge
             this.toggleCannonSelection(cannon);
         } else {
@@ -243,7 +258,7 @@ export class Game {
         const type = targetCannon.type;
         const newLevel = targetCannon.level + 1;
 
-        // Remove all selected cannons
+        // Remove all selected cannons first
         cannons.forEach(cannon => {
             this.entities.removeCannon(cannon);
         });
@@ -251,7 +266,19 @@ export class Game {
         // Create upgraded cannon at target position
         const newCannon = this.entities.addCannon(col, row, type);
         newCannon.level = newLevel;
-        newCannon.updateStats();
+        
+        // Apply boosts to the new cannon if there are active boosts
+        const hasActiveBoosts = this.state.activeBoosts && this.state.activeBoosts.length > 0;
+        if (hasActiveBoosts) {
+            const boostMultipliers = {
+                damage: this.getBoostMultiplier('damage_multiplier'),
+                range: this.getBoostMultiplier('range_multiplier'), 
+                fireRate: this.getBoostMultiplier('firerate_multiplier')
+            };
+            newCannon.updateStats(boostMultipliers);
+        } else {
+            newCannon.updateStats();
+        }
 
         // Update highest level reached
         if (newLevel > this.state.highestLevel) {
@@ -874,6 +901,8 @@ export class Game {
         this.updateWaveSystem(dt, currentTime);
         this.updateCombat(dt, currentTime);
         this.updateEnergy(dt);
+        this.updateBoosts(dt); // Aggiorna i bonus temporanei
+        this.updateTowerBoosts(); // Applica i bonus alle torrette
 
         // Update entities
         this.entities.update(dt, currentTime);
@@ -904,6 +933,9 @@ export class Game {
         // Render game entities
         this.entities.render(this.graphics, performance.now());
         this.particles.render(this.graphics);
+        
+        // Render boost effects on towers
+        this.renderBoostEffects();
 
         // Render UI
         this.ui.render(this.state);
@@ -1055,6 +1087,373 @@ export class Game {
             this.graphics.setupCanvas();
             this.ui.setupShopButtons();
         }, 100);
+    }
+
+    // Shop and Bonus System Methods
+    purchaseShopItem(itemId) {
+        const item = SHOP_ITEMS[itemId];
+        if (!item) return false;
+
+        // Check if player has enough coins
+        if (this.state.coins < item.cost) {
+            this.particles.createWarningEffect(3, 2, '💰 Not enough coins!');
+            this.audio.uiError();
+            return false;
+        }
+
+        // Deduct coins
+        this.state.coins -= item.cost;
+        
+        if (item.type === 'instant') {
+            this.applyInstantBoost(item);
+        } else if (item.type === 'temporary') {
+            this.applyTemporaryBoost(item);
+        } else if (item.type === 'special') {
+            this.applySpecialBoost(item);
+        }
+
+        this.audio.uiClick();
+        return true;
+    }
+
+    applyInstantBoost(item) {
+        if (item.effect.type === 'energy') {
+            this.state.energy = Math.min(CONFIG.INITIAL_ENERGY * 2, this.state.energy + item.effect.amount);
+            
+            // Use the new energy boost effect
+            this.particles.createEnergyBoostEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 1, item.effect.amount);
+        }
+    }
+
+    applyTemporaryBoost(item) {
+        const now = Date.now();
+        const boost = {
+            id: item.id,
+            type: item.effect.type,
+            multiplier: item.effect.multiplier,
+            startTime: now,
+            duration: item.duration,
+            endTime: now + item.duration,
+            icon: item.icon,
+            name: item.name
+        };
+
+        // Remove any existing boost of the same type
+        this.state.activeBoosts = this.state.activeBoosts.filter(b => b.type !== item.effect.type);
+        
+        // Add new boost
+        this.state.activeBoosts.push(boost);
+
+        // Specific visual effects for each boost type
+        const centerX = CONFIG.COLS / 2;
+        const centerY = CONFIG.ROWS / 2 - 1;
+        
+        switch(item.effect.type) {
+            case 'damage_multiplier':
+                this.particles.createDamageBoostEffect(centerX, centerY);
+                break;
+            case 'range_multiplier':
+                this.particles.createRangeBoostEffect(centerX, centerY);
+                break;
+            case 'firerate_multiplier':
+                this.particles.createFireRateBoostEffect(centerX, centerY);
+                break;
+            default:
+                this.particles.createShopEffect(centerX, centerY, item.icon, CONFIG.COLORS.TEXT_WARNING);
+        }
+    }
+
+    applySpecialBoost(item) {
+        if (item.effect.type === 'tower_upgrade') {
+            // Enable tower selection mode for upgrade
+            this.state.selectingTowerForUpgrade = true;
+            this.state.pendingUpgradeItem = item;
+            
+            // Show instruction particle
+            this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 1, {
+                text: '⭐ CLICK A TOWER TO UPGRADE ⭐',
+                color: '#ffdd00',
+                vy: -1,
+                life: 3.0,
+                scale: 1.5,
+                glow: true
+            });
+            
+            // Close shop popup to allow tower selection
+            this.ui.closeShopPopup();
+        }
+    }
+
+    upgradeTower(cannon) {
+        if (!cannon || !this.state.pendingUpgradeItem) return;
+        
+        // Check if tower is already max level
+        if (cannon.level >= MERGE_LEVELS.length) {
+            this.particles.createWarningEffect(cannon.col, cannon.row, '⚠️ MAX LEVEL!');
+            this.audio.uiError();
+            return;
+        }
+        
+        // Upgrade the tower
+        cannon.level++;
+        
+        // Apply boosts if active
+        const hasActiveBoosts = this.state.activeBoosts && this.state.activeBoosts.length > 0;
+        if (hasActiveBoosts) {
+            const boostMultipliers = {
+                damage: this.getBoostMultiplier('damage_multiplier'),
+                range: this.getBoostMultiplier('range_multiplier'), 
+                fireRate: this.getBoostMultiplier('firerate_multiplier')
+            };
+            cannon.updateStats(boostMultipliers);
+        } else {
+            cannon.updateStats();
+        }
+        
+        // Visual feedback
+        this.particles.createTowerUpgradeEffect(cannon.col, cannon.row);
+        this.audio.towerMerge(); // Reuse merge sound
+        
+        // Bonus score
+        const upgradeBonus = Math.floor(500 * cannon.level);
+        this.state.score += upgradeBonus;
+        this.particles.emit(cannon.col, cannon.row, {
+            text: `⭐ LEVEL ${cannon.level} ⭐`,
+            color: '#ffdd00',
+            vy: -2,
+            life: 2.0,
+            scale: 1.8,
+            glow: true
+        });
+        
+        // Clear selection mode
+        this.state.selectingTowerForUpgrade = false;
+        this.state.pendingUpgradeItem = null;
+    }
+
+    updateBoosts(deltaTime) {
+        const now = Date.now();
+        // Remove expired boosts
+        const expiredBoosts = this.state.activeBoosts.filter(boost => now >= boost.endTime);
+        
+        expiredBoosts.forEach(boost => {
+            this.particles.createBoostExpiredEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2, boost.icon, boost.name);
+        });
+
+        this.state.activeBoosts = this.state.activeBoosts.filter(boost => now < boost.endTime);
+    }
+
+    updateTowerBoosts() {
+        const boostMultipliers = {
+            damage: this.getBoostMultiplier('damage_multiplier'),
+            range: this.getBoostMultiplier('range_multiplier'), 
+            fireRate: this.getBoostMultiplier('firerate_multiplier')
+        };
+        
+        // Only update if there are active boosts
+        const hasActiveBoosts = boostMultipliers.damage > 1 || boostMultipliers.range > 1 || boostMultipliers.fireRate > 1;
+        
+        if (hasActiveBoosts || this.state.lastBoostUpdate) {
+            // Update all tower stats
+            this.entities.cannons.forEach(cannon => {
+                cannon.updateStats(hasActiveBoosts ? boostMultipliers : null);
+            });
+            
+            this.state.lastBoostUpdate = hasActiveBoosts;
+        }
+    }
+
+    renderBoostEffects() {
+        if (this.state.activeBoosts.length === 0) return;
+        
+        const ctx = this.graphics.ctx;
+        const currentTime = Date.now();
+        const time = currentTime * 0.001;
+        
+        // Get boost effects
+        const damageBoost = this.state.activeBoosts.find(b => b.type === 'damage_multiplier');
+        const rangeBoost = this.state.activeBoosts.find(b => b.type === 'range_multiplier');
+        const fireRateBoost = this.state.activeBoosts.find(b => b.type === 'firerate_multiplier');
+        
+        // Render effects on all towers
+        this.entities.cannons.forEach((cannon, index) => {
+            const screenPos = this.graphics.gridToScreen(cannon.col, cannon.row);
+            const x = screenPos.x + this.graphics.cellSize / 2;
+            const y = screenPos.y + this.graphics.cellSize / 2;
+            const cellSize = this.graphics.cellSize;
+            
+            // Phase offset for each tower to create wave effect
+            const phaseOffset = index * 0.5;
+            
+            // Damage boost effect - fiery pulsing aura with particles
+            if (damageBoost) {
+                const pulse = Math.sin(time * 6 + phaseOffset) * 0.5 + 0.5;
+                const outerPulse = Math.sin(time * 4 + phaseOffset) * 0.3 + 0.7;
+                
+                // Outer glow ring
+                ctx.save();
+                ctx.shadowColor = '#ff4444';
+                ctx.shadowBlur = 15 + pulse * 10;
+                ctx.globalAlpha = 0.15 + pulse * 0.15;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, cellSize * 0.7);
+                gradient.addColorStop(0, 'rgba(255, 100, 50, 0.4)');
+                gradient.addColorStop(0.5, 'rgba(255, 50, 50, 0.2)');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize * 0.7 * outerPulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // Inner fire glow
+                ctx.save();
+                ctx.globalAlpha = 0.3 + pulse * 0.2;
+                ctx.fillStyle = '#ff6644';
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // Rotating fire particles
+                for (let i = 0; i < 4; i++) {
+                    const angle = time * 3 + (i * Math.PI / 2) + phaseOffset;
+                    const radius = cellSize * (0.35 + Math.sin(time * 8 + i) * 0.1);
+                    const px = x + Math.cos(angle) * radius;
+                    const py = y + Math.sin(angle) * radius;
+                    
+                    ctx.save();
+                    ctx.globalAlpha = 0.7 + Math.sin(time * 10 + i) * 0.3;
+                    ctx.fillStyle = i % 2 === 0 ? '#ff4400' : '#ffaa00';
+                    ctx.beginPath();
+                    ctx.arc(px, py, 3 + Math.sin(time * 5 + i) * 1, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            
+            // Range boost effect - expanding radar waves
+            if (rangeBoost) {
+                const waveSpeed = time * 2;
+                
+                // Multiple expanding rings
+                for (let ring = 0; ring < 3; ring++) {
+                    const ringPhase = (waveSpeed + ring * 0.5 + phaseOffset) % 1.5;
+                    const ringRadius = cellSize * (0.3 + ringPhase * 0.6);
+                    const ringAlpha = Math.max(0, 0.5 - ringPhase * 0.35);
+                    
+                    ctx.save();
+                    ctx.globalAlpha = ringAlpha;
+                    ctx.strokeStyle = '#4488ff';
+                    ctx.lineWidth = 2 - ringPhase;
+                    ctx.beginPath();
+                    ctx.arc(x, y, ringRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                
+                // Central radar glow
+                ctx.save();
+                ctx.shadowColor = '#4488ff';
+                ctx.shadowBlur = 10;
+                const radarGradient = ctx.createRadialGradient(x, y, 0, x, y, cellSize * 0.3);
+                radarGradient.addColorStop(0, 'rgba(68, 136, 255, 0.3)');
+                radarGradient.addColorStop(1, 'rgba(68, 136, 255, 0)');
+                ctx.fillStyle = radarGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // Rotating radar sweep
+                const sweepAngle = time * 4 + phaseOffset;
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = '#88ccff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.cos(sweepAngle) * cellSize * 0.5, y + Math.sin(sweepAngle) * cellSize * 0.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+            
+            // Fire rate boost effect - electric sparks and speed lines
+            if (fireRateBoost) {
+                const sparkIntensity = Math.sin(time * 12 + phaseOffset) * 0.5 + 0.5;
+                
+                // Central energy core
+                ctx.save();
+                ctx.shadowColor = '#ffcc00';
+                ctx.shadowBlur = 8 + sparkIntensity * 8;
+                const coreGradient = ctx.createRadialGradient(x, y, 0, x, y, cellSize * 0.25);
+                coreGradient.addColorStop(0, 'rgba(255, 255, 100, 0.5)');
+                coreGradient.addColorStop(1, 'rgba(255, 200, 0, 0)');
+                ctx.fillStyle = coreGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // Orbiting electric sparks
+                for (let i = 0; i < 6; i++) {
+                    const sparkAngle = time * 8 + (i * Math.PI / 3) + phaseOffset;
+                    const orbitRadius = cellSize * 0.4;
+                    const sparkX = x + Math.cos(sparkAngle) * orbitRadius;
+                    const sparkY = y + Math.sin(sparkAngle) * orbitRadius;
+                    
+                    ctx.save();
+                    ctx.shadowColor = '#ffff00';
+                    ctx.shadowBlur = 5;
+                    ctx.globalAlpha = 0.6 + Math.sin(time * 15 + i * 2) * 0.4;
+                    ctx.fillStyle = '#ffee00';
+                    ctx.beginPath();
+                    ctx.arc(sparkX, sparkY, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // Lightning arcs between sparks
+                ctx.save();
+                ctx.globalAlpha = 0.3 + sparkIntensity * 0.3;
+                ctx.strokeStyle = '#ffff88';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 3; i++) {
+                    const startAngle = time * 8 + (i * Math.PI * 2 / 3) + phaseOffset;
+                    const endAngle = startAngle + Math.PI / 3;
+                    const startX = x + Math.cos(startAngle) * cellSize * 0.35;
+                    const startY = y + Math.sin(startAngle) * cellSize * 0.35;
+                    const endX = x + Math.cos(endAngle) * cellSize * 0.35;
+                    const endY = y + Math.sin(endAngle) * cellSize * 0.35;
+                    const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 10;
+                    const midY = (startY + endY) / 2 + (Math.random() - 0.5) * 10;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.quadraticCurveTo(midX, midY, endX, endY);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        });
+    }
+
+    getBoostMultiplier(type) {
+        const boost = this.state.activeBoosts.find(b => b.type === type);
+        return boost ? boost.multiplier : 1;
+    }
+
+    getRemainingBoostTime(type) {
+        const boost = this.state.activeBoosts.find(b => b.type === type);
+        if (!boost) return 0;
+        return Math.max(0, boost.endTime - Date.now());
+    }
+
+    getBoostProgress(type) {
+        const boost = this.state.activeBoosts.find(b => b.type === type);
+        if (!boost) return 0;
+        const elapsed = Date.now() - boost.startTime;
+        return Math.max(0, Math.min(1, elapsed / boost.duration));
     }
 
     exitFullscreen() {

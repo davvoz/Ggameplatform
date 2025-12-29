@@ -418,5 +418,76 @@ export const UI_CONFIG = {
     FONT_SIZE_SMALL: 11,
 };
 
+// Shop Configuration
+export const SHOP_ITEMS = {
+    ENERGY_SMALL: {
+        id: 'ENERGY_SMALL',
+        name: 'Energy Pack',
+        description: '+10 Energy',
+        icon: '⚡',
+        cost: 150,
+        type: 'instant',
+        effect: { type: 'energy', amount: 10 },
+        color: '#00ffff'
+    },
+    ENERGY_LARGE: {
+        id: 'ENERGY_LARGE',
+        name: 'Mega Energy',
+        description: '+50 Energy',
+        icon: '🔋',
+        cost: 600,
+        type: 'instant',
+        effect: { type: 'energy', amount: 50 },
+        color: '#00ff88'
+    },
+    RANGE_BOOST: {
+        id: 'RANGE_BOOST',
+        name: 'Radar Boost',
+        description: '10x Range for 10s',
+        icon: '📡',
+        cost: 1250,
+        type: 'temporary',
+        duration: 10000, // 10 secondi
+        effect: { type: 'range_multiplier', multiplier: 10 },
+        color: '#4488ff',
+        barColor: '#2266dd'
+    },
+    FIRERATE_BOOST: {
+        id: 'FIRERATE_BOOST',
+        name: 'Turbo Fire',
+        description: '10x Fire Rate for 10s',
+        icon: '💨',
+        cost: 1000,
+        type: 'temporary',
+        duration: 10000, // 10 secondi
+        effect: { type: 'firerate_multiplier', multiplier: 10 },
+        color: '#ffcc00',
+        barColor: '#cc9900'
+    },
+    DAMAGE_BOOST: {
+        id: 'DAMAGE_BOOST',
+        name: 'Power Surge',
+        description: '10x Damage for 10s',
+        icon: '💥',
+        cost: 1750,
+        type: 'temporary',
+        duration: 10000, // 10 secondi  
+        effect: { type: 'damage_multiplier', multiplier: 10 },
+        color: '#ff4444',
+        barColor: '#cc2222'
+    },
+    TOWER_UPGRADE: {
+        id: 'TOWER_UPGRADE',
+        name: 'Tower Evolution',
+        description: 'Upgrade a tower +1 level',
+        icon: '⭐',
+        cost: 10000,
+        type: 'special',
+        effect: { type: 'tower_upgrade' },
+        color: '#ffdd00',
+        barColor: '#ffaa00'
+    }
+};
+
 
 

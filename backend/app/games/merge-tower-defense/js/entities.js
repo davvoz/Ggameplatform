@@ -108,13 +108,28 @@ function applyWaveScaling(baseConfig, waveNumber) {
         }
     }
 
-    updateStats() {
+    updateStats(boostMultipliers = null) {
         const baseStats = CANNON_TYPES[this.type];
         const levelData = MERGE_LEVELS[this.level - 1] || MERGE_LEVELS[MERGE_LEVELS.length - 1];
         
+        // Calculate base stats
         this.damage = baseStats.damage * levelData.damageMultiplier;
         this.range = baseStats.range + levelData.rangeBonus;
         this.fireRate = baseStats.fireRate / levelData.fireRateBonus;
+        
+        // Apply boost multipliers if provided
+        if (boostMultipliers) {
+            if (boostMultipliers.damage) {
+                this.damage *= boostMultipliers.damage;
+            }
+            if (boostMultipliers.range) {
+                this.range *= boostMultipliers.range;
+            }
+            if (boostMultipliers.fireRate) {
+                this.fireRate /= boostMultipliers.fireRate; // Lower fireRate = faster shooting
+            }
+        }
+        
         this.projectileSpeed = baseStats.projectileSpeed;
         this.color = baseStats.color;
         

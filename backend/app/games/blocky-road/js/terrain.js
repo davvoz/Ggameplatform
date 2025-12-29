@@ -58,16 +58,17 @@ class TerrainGenerator {
     initObjectPools() {
         console.log('🔧 Pre-caching rail tracks and warning lights...');
         
-        // Pre-generate 10 rail tracks (enough for most games)
-        for (let i = 0; i < 10; i++) {
+        // Pre-generate 30 rail tracks (enough to cover full view distance)
+        // View spans playerZ - 5 to playerZ + 25 = 30 rows max
+        for (let i = 0; i < 30; i++) {
             const track = Models.createRailTrack();
             track.visible = false; // Hide until needed
             this.scene.add(track);
             this.railTrackPool.push(track);
         }
         
-        // Pre-generate 20 warning lights (2 per rail)
-        for (let i = 0; i < 20; i++) {
+        // Pre-generate 60 warning lights (2 per rail × 30 rails)
+        for (let i = 0; i < 60; i++) {
             const light = Models.createTrainWarningLight();
             light.visible = false; // Hide until needed
             this.scene.add(light);
@@ -86,9 +87,10 @@ class TerrainGenerator {
             row.isBarrier = true;
         }
         
-        // Start with safe grass zone at spawn point
+        // Start with safe grass zone at spawn point (NO OBSTACLES)
         for (let z = -2; z < 3; z++) {
-            this.createRow(z, 'grass');
+            const row = this.createRow(z, 'grass');
+            row.isSafeZone = true; // Mark as safe - no tree/rock obstacles
         }
         
         // Generate zones ahead
@@ -147,8 +149,9 @@ class TerrainGenerator {
         };
         
         // Create tiles across the row (optimized coverage)
-        // Playable area is -7 to +7, generate -12 to +12 for visual coverage with zoom
-        for (let x = -18; x <= 18; x++) {
+        // Playable area is -7 to +7, generate -12 to +12 for visual coverage
+        // PERFORMANCE: Reduced from -18/+18 to -12/+12 (37 tiles -> 25 tiles = 32% less geometry)
+        for (let x = -12; x <= 12; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);
@@ -175,6 +178,7 @@ class TerrainGenerator {
     addGrassDecorations(row) {
         const decorationChance = 0.4;
         const isBarrier = row.isBarrier; // Dense obstacles behind spawn
+        const isSafeZone = row.isSafeZone; // Safe zone at spawn - no obstacles
         
         for (let x = -12; x <= 12; x++) {
             // Create natural borders with trees/rocks at edges
@@ -224,7 +228,10 @@ class TerrainGenerator {
                 const rand = Math.random();
                 let decoration;
                 
-                if (rand < 0.6) { // More grass/flowers
+                // In safe zone, only allow non-obstacle decorations (grass/flowers)
+                if (isSafeZone) {
+                    decoration = rand < 0.5 ? Models.createGrassTuft() : Models.createFlower();
+                } else if (rand < 0.6) { // More grass/flowers
                     decoration = rand < 0.3 ? Models.createGrassTuft() : Models.createFlower();
                 } else if (rand < 0.85) {
                     decoration = Models.createRock();
@@ -359,7 +366,7 @@ class TerrainGenerator {
         return waterfallGroup;
     }
     
-    update(playerZ, currentScore) {
+    update(playerZ, currentScore, normalizedDelta = 1) {
         // Update score for progressive terrain difficulty
         if (currentScore !== undefined) {
             this.currentScore = currentScore;
@@ -369,8 +376,8 @@ class TerrainGenerator {
         const animationDistance = 20;
         this.rows.forEach(row => {
             if (Math.abs(row.z - playerZ) < animationDistance) {
-                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall);
-                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall);
+                if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall, normalizedDelta);
+                if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall, normalizedDelta);
             }
         });
         
@@ -419,11 +426,11 @@ class TerrainGenerator {
                     } else {
                         // Normal disposal for non-pooled objects
                         this.scene.remove(dec);
-                        if (dec.geometry) dec.geometry.dispose();
-                        if (dec.material) dec.material.dispose();
+                        // Skip geometry/material disposal for pooled materials
                         dec.traverse(child => {
-                            if (child.geometry) child.geometry.dispose();
-                            if (child.material) child.material.dispose();
+                            if (child.isMesh) {
+                                this.scene.remove(child);
+                            }
                         });
                     }
                 });
@@ -433,18 +440,18 @@ class TerrainGenerator {
         });
     }
     
-    animateWaterfall(waterfall) {
+    animateWaterfall(waterfall, normalizedDelta = 1) {
         if (!waterfall.userData.foamParticles) return;
         
         // Determine flow direction based on waterfall position (left = flow left, right = flow right)
         const isLeftSide = waterfall.position.x < 0;
         const flowDirection = isLeftSide ? -1 : 1; // Left side flows left (negative X), right side flows right (positive X)
         
-        // Animate foam particles flowing horizontally
+        // Animate foam particles flowing horizontally (frame rate independent)
         waterfall.userData.foamParticles.forEach(foam => {
-            foam.position.x += foam.userData.flowSpeed * flowDirection;
-            foam.rotation.y += 0.08; // Spin horizontally
-            foam.rotation.z += 0.03;
+            foam.position.x += foam.userData.flowSpeed * flowDirection * normalizedDelta;
+            foam.rotation.y += 0.08 * normalizedDelta; // Spin horizontally
+            foam.rotation.z += 0.03 * normalizedDelta;
             
             // Reset when flowing too far
             if ((isLeftSide && foam.position.x < -1.5) || (!isLeftSide && foam.position.x > 1.5)) {

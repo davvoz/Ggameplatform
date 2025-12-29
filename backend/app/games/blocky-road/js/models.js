@@ -394,17 +394,17 @@ const Models = {
     createTree: () => {
         const group = new THREE.Group();
         
-        // Trunk using pooled geometry
+        // Trunk using pooled geometry + poolable material (static decoration)
         const trunkGeometry = GeometryPool.getBoxGeometry(0.3, 0.8, 0.3);
-        const trunkMaterial = MaterialPool.getMaterial(0x8B4513);
+        const trunkMaterial = MaterialPool.getMaterial(0x8B4513, { poolable: true });
         const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
         trunk.position.y = 0.5;
         trunk.castShadow = true;
         trunk.receiveShadow = true;
         group.add(trunk);
         
-        // Foliage (3 layers) using pooled geometry
-        const foliageMaterial = MaterialPool.getMaterial(0x228B22);
+        // Foliage (3 layers) using pooled geometry + poolable material (static decoration)
+        const foliageMaterial = MaterialPool.getMaterial(0x228B22, { poolable: true });
         
         const foliageGeometry1 = GeometryPool.getBoxGeometry(1.0, 0.4, 1.0);
         const foliage1 = new THREE.Mesh(foliageGeometry1, foliageMaterial);
@@ -530,28 +530,28 @@ const Models = {
         
         switch(type) {
             case 'grass':
-                material = MaterialPool.getMaterial(0x5FAD56);
+                material = MaterialPool.getMaterial(0x5FAD56, { poolable: true });
                 break;
             case 'road':
                 // Varied asphalt colors for visual interest
                 const roadColors = [0x555555, 0x4A4A4A, 0x606060];
                 const roadColor = roadColors[Math.floor(Math.random() * roadColors.length)];
-                material = MaterialPool.getMaterial(roadColor);
+                material = MaterialPool.getMaterial(roadColor, { poolable: true });
                 break;
             case 'water':
                 // Varied water blues
                 const waterColors = [0x2196F3, 0x42A5F5, 0x1E88E5];
                 const waterColor = waterColors[Math.floor(Math.random() * waterColors.length)];
-                material = MaterialPool.getMaterial(waterColor, { transparent: true, opacity: 0.9 });
+                material = MaterialPool.getMaterial(waterColor, { transparent: true, opacity: 0.9, poolable: true });
                 break;
             case 'rail':
-                material = MaterialPool.getMaterial(0x6B5742);
+                material = MaterialPool.getMaterial(0x6B5742, { poolable: true });
                 break;
             default:
                 // Varied grass greens
                 const grassColors = [0x5FAD56, 0x6BB85D, 0x52A047, 0x5CB85C];
                 const grassColor = grassColors[Math.floor(Math.random() * grassColors.length)];
-                material = MaterialPool.getMaterial(grassColor);
+                material = MaterialPool.getMaterial(grassColor, { poolable: true });
         }
         
         const block = new THREE.Mesh(geometry, material);
@@ -578,12 +578,28 @@ const Models = {
     },
     
     // Create rail track decoration (runs left-right along X axis)
+    // Pre-calculated matrices for rail sleepers (calculated ONCE, reused forever)
+    _sleeperMatrices: null,
+    _getSleeperMatrices: function() {
+        if (!this._sleeperMatrices) {
+            this._sleeperMatrices = [];
+            const matrix = new THREE.Matrix4();
+            for (let x = -12; x <= 12; x += 0.5) {
+                matrix.setPosition(x, 0.26, 0);
+                this._sleeperMatrices.push(matrix.clone());
+                if (this._sleeperMatrices.length >= 50) break;
+            }
+        }
+        return this._sleeperMatrices;
+    },
+
     createRailTrack: () => {
         const group = new THREE.Group();
         
         // Rails (shiny metal) - extend along X axis (left to right) - POOLED
-        const railGeometry = GeometryPool.getBoxGeometry(30, 0.1, 0.1);
-        const railMaterial = MaterialPool.getMaterial(0xA8A8A8);
+        // Reduced width from 30 to 24 to match terrain tiles (-12 to +12)
+        const railGeometry = GeometryPool.getBoxGeometry(24, 0.1, 0.1);
+        const railMaterial = MaterialPool.getMaterial(0xA8A8A8, { poolable: true });
         
         const leftRail = new THREE.Mesh(railGeometry, railMaterial);
         leftRail.position.set(0, 0.28, -0.32);
@@ -595,18 +611,15 @@ const Models = {
         
         // Wooden sleepers using InstancedMesh (1 draw call instead of 50!) - POOLED
         const sleeperGeometry = GeometryPool.getBoxGeometry(0.15, 0.12, 0.85);
-        const sleeperMaterial = MaterialPool.getMaterial(0x6B4423);
+        const sleeperMaterial = MaterialPool.getMaterial(0x6B4423, { poolable: true });
         
         const sleeperCount = 50;
         const sleepers = new THREE.InstancedMesh(sleeperGeometry, sleeperMaterial, sleeperCount);
         
-        const matrix = new THREE.Matrix4();
-        let index = 0;
-        for (let x = -12; x <= 12; x += 0.5) {
-            if (index >= sleeperCount) break;
-            matrix.setPosition(x, 0.26, 0);
-            sleepers.setMatrixAt(index, matrix);
-            index++;
+        // Use pre-calculated matrices (ZERO computation here!)
+        const matrices = Models._getSleeperMatrices();
+        for (let i = 0; i < matrices.length; i++) {
+            sleepers.setMatrixAt(i, matrices[i]);
         }
         sleepers.instanceMatrix.needsUpdate = true;
         
@@ -619,40 +632,40 @@ const Models = {
     createTrainWarningLight: () => {
         const group = new THREE.Group();
         
-        // Base - concrete base (simplified) - POOLED
+        // Base - concrete base (simplified) - POOLED (static, never changes)
         const baseGeometry = GeometryPool.getCylinderGeometry(0.15, 0.18, 0.15, 6);
-        const baseMaterial = MaterialPool.getMaterial(0x555555);
+        const baseMaterial = MaterialPool.getMaterial(0x555555, { poolable: true });
         const base = new THREE.Mesh(baseGeometry, baseMaterial);
         base.position.y = 0.075;
         base.castShadow = true;
         group.add(base);
         
-        // Pole - metal pole (simplified) - POOLED
+        // Pole - metal pole (simplified) - POOLED (static, never changes)
         const poleGeometry = GeometryPool.getCylinderGeometry(0.06, 0.06, 1.4, 6);
-        const poleMaterial = MaterialPool.getMaterial(0x222222);
+        const poleMaterial = MaterialPool.getMaterial(0x222222, { poolable: true });
         const pole = new THREE.Mesh(poleGeometry, poleMaterial);
         pole.position.y = 0.85;
         pole.castShadow = true;
         group.add(pole);
         
-        // Light housing - black box with stripe - POOLED
+        // Light housing - black box with stripe - POOLED (static, never changes)
         const housingGeometry = GeometryPool.getBoxGeometry(0.3, 0.4, 0.2);
-        const housingMaterial = MaterialPool.getMaterial(0x1a1a1a);
+        const housingMaterial = MaterialPool.getMaterial(0x1a1a1a, { poolable: true });
         const housing = new THREE.Mesh(housingGeometry, housingMaterial);
         housing.position.y = 1.65;
         housing.castShadow = true;
         group.add(housing);
         
-        // Yellow stripe on housing - POOLED
+        // Yellow stripe on housing - POOLED (static, never changes)
         const stripeGeometry = GeometryPool.getBoxGeometry(0.31, 0.08, 0.21);
-        const stripeMaterial = MaterialPool.getMaterial(0xffdd00);
+        const stripeMaterial = MaterialPool.getMaterial(0xffdd00, { poolable: true });
         const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
         stripe.position.y = 1.5;
         group.add(stripe);
         
-        // Light lens - glass sphere (transparent when off) - simplified - POOLED
+        // Light lens - glass sphere (transparent when off) - NOT POOLED (animated opacity!)
         const lensGeometry = GeometryPool.getSphereGeometry(0.12, 8, 8);
-        // Phong material NON può essere pooled (serve uno per ogni luce per animazione)
+        // Phong material NOT pooled - opacity changes for animation
         const lensMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             transparent: true,
@@ -681,7 +694,7 @@ const Models = {
     createGrassTuft: () => {
         const group = new THREE.Group();
         const bladeGeometry = GeometryPool.getBoxGeometry(0.05, 0.3, 0.05);
-        const material = MaterialPool.getMaterial(0x5FAD56);
+        const material = MaterialPool.getMaterial(0x5FAD56, { poolable: true });
         
         for (let i = 0; i < 3; i++) {
             const mesh = new THREE.Mesh(bladeGeometry, material);
@@ -701,18 +714,18 @@ const Models = {
     createFlower: () => {
         const group = new THREE.Group();
         
-        // Stem using pooled geometry
+        // Stem using pooled geometry + poolable material (static decoration)
         const stemGeometry = GeometryPool.getBoxGeometry(0.05, 0.3, 0.05);
-        const stemMaterial = MaterialPool.getMaterial(0x2F8B2D);
+        const stemMaterial = MaterialPool.getMaterial(0x2F8B2D, { poolable: true });
         const stem = new THREE.Mesh(stemGeometry, stemMaterial);
         stem.position.y = 0.35;
         group.add(stem);
         
-        // Flower head using pooled geometry
+        // Flower head using pooled geometry + poolable material (static decoration)
         const colors = [0xFF69B4, 0xFFFF00, 0xFF6347, 0xFF00FF, 0xFFA500];
         const flowerColor = colors[Math.floor(Math.random() * colors.length)];
         const flowerGeometry = GeometryPool.getBoxGeometry(0.15, 0.15, 0.15);
-        const flowerMaterial = MaterialPool.getMaterial(flowerColor);
+        const flowerMaterial = MaterialPool.getMaterial(flowerColor, { poolable: true });
         const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
         flower.position.y = 0.5;
         group.add(flower);
@@ -726,7 +739,7 @@ const Models = {
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
         const geometry = GeometryPool.getBoxGeometry(size, size * 0.7, size);
-        const material = MaterialPool.getMaterial(0x696969);
+        const material = MaterialPool.getMaterial(0x696969, { poolable: true });
         const rock = new THREE.Mesh(geometry, material);
         rock.position.y = 0.3;
         rock.rotation.y = Math.random() * Math.PI;

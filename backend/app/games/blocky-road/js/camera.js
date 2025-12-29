@@ -35,21 +35,26 @@ class CrossyCamera {
         window.addEventListener('resize', () => this.onResize());
     }
     
-    follow(target) {
+    follow(target, normalizedDelta = 1) {
+        // Frame-rate independent lerp: convert 60fps factors to exponential decay
+        // Formula: newFactor = 1 - Math.pow(1 - factor60fps, normalizedDelta)
+        const smoothX = 1 - Math.pow(1 - 0.08, normalizedDelta);
+        const smoothZ = 1 - Math.pow(1 - 0.15, normalizedDelta);
+        
         // Different easing for X (smooth player following) and Z (constant advancement)
         // X: Heavy smoothing to avoid jitter on moving platforms
-        this.target.x += (target.x - this.target.x) * 0.08;
+        this.target.x += (target.x - this.target.x) * smoothX;
         
         // Z: Light smoothing for responsive forward movement (death line driven)
-        this.target.z += (target.z - this.target.z) * 0.15;
+        this.target.z += (target.z - this.target.z) * smoothZ;
         
         // Camera follows smoothed target
         const targetCamZ = this.target.z - 5;
         const targetCamX = this.target.x - 5;
         
         // Apply camera easing
-        this.camera.position.x += (targetCamX - this.camera.position.x) * 0.08;
-        this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.15;
+        this.camera.position.x += (targetCamX - this.camera.position.x) * smoothX;
+        this.camera.position.z += (targetCamZ - this.camera.position.z) * smoothZ;
         
         // Keep fixed rotation instead of continuous lookAt
         this.camera.rotation.copy(this.fixedRotation);

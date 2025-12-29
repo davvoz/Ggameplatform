@@ -394,6 +394,7 @@
     cursor: pointer;
     transition: var(--transition);
     box-shadow: var(--shadow-md);
+    margin-bottom: var(--spacing-lg);
 }
 
 .play-game-btn:hover {

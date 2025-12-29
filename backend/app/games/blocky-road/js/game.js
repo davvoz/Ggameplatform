@@ -33,6 +33,133 @@ class BlockyRoadGame {
         this.dangerZoneSpeed = 0.003; // Slower, constant forward movement
         this.dangerZoneActive = false; // Activate after first move
         this.lastTime = null; // For delta time calculation
+        
+        // Setup window listeners for platform messages
+        this.setupWindowListeners();
+    }
+    
+    /**
+     * Show XP earned banner inside the game
+     * @param {number} xpAmount - Amount of XP earned
+     * @param {object|string} extraData - Extra data with XP breakdown
+     */
+    showXPBanner(xpAmount, extraData = null) {
+        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+        
+        // Parse extra_data if it's a string
+        let parsedData = null;
+        if (extraData) {
+            parsedData = typeof extraData === 'string' ? JSON.parse(extraData) : extraData;
+        }
+        
+        // Build breakdown details
+        let breakdownHTML = '';
+        if (parsedData && parsedData.xp_breakdown && parsedData.xp_breakdown.length > 0) {
+            breakdownHTML = '<div class="game-xp-breakdown">';
+            parsedData.xp_breakdown.forEach(rule => {
+                const isInactive = rule.xp_earned === 0;
+                breakdownHTML += `
+                    <div class="game-xp-rule ${isInactive ? 'inactive' : ''}">
+                        <span class="game-rule-name">${rule.rule_name}</span>
+                        <span class="game-rule-xp">${isInactive ? '—' : '+' + rule.xp_earned.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            breakdownHTML += '</div>';
+        }
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner';
+        banner.innerHTML = `
+            <div class="game-xp-badge">
+                <span class="game-xp-icon">⭐</span>
+                <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
+            </div>
+            ${breakdownHTML}
+        `;
+        
+        document.body.appendChild(banner);
+        
+        // Remove after 3.5 seconds
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        }, 3500);
+    }
+    
+    /**
+     * Show level-up notification
+     */
+    showLevelUpNotification(levelUpData) {
+        const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
+
+        const modal = document.createElement('div');
+        modal.className = 'level-up-modal';
+        modal.innerHTML = `
+            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+                <div class="level-up-badge-container">
+                    <span class="level-up-badge">${badge}</span>
+                </div>
+                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+                <div class="level-up-levels">
+                    <span class="old-level">${old_level}</span>
+                    <span class="level-arrow">→</span>
+                    <span class="new-level">${new_level}</span>
+                </div>
+                <div class="level-up-new-title">${title}</div>
+                ${is_milestone ? '<div class="level-up-milestone-badge">✨ TRAGUARDO ✨</div>' : ''}
+                ${coins_awarded > 0 ? `
+                    <div class="level-up-reward">
+                        <span class="reward-icon">🪙</span>
+                        <span class="reward-amount">+${coins_awarded} Coins</span>
+                    </div>
+                ` : ''}
+                <button class="level-up-close">Continua</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Trigger animation
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // Close handler
+        const closeBtn = modal.querySelector('.level-up-close');
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+
+        // Auto-close after 6 seconds
+        setTimeout(() => {
+            if (modal.parentElement) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }, 6000);
+    }
+    
+    /**
+     * Setup window listeners for platform messages
+     */
+    setupWindowListeners() {
+        // Listen for messages from platform (e.g., XP banner and level-up requests)
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+            
+            // Handle XP banner
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
+                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
+            }
+            
+            // Handle level-up notification
+            if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+                this.showLevelUpNotification(event.data.payload);
+            }
+        });
     }
     
     async init() {
@@ -95,11 +222,19 @@ class BlockyRoadGame {
         // Start animation loop
         this.animate();
         
-        // Gestione resize e fullscreen
+        // Gestione resize
         window.addEventListener('resize', () => {
             if (this.camera) {
                 this.camera.onResize();
             }
+        });
+        
+        // Gestione fullscreen change
+        document.addEventListener('fullscreenchange', () => {
+            this.handleFullscreenChange();
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+            this.handleFullscreenChange();
         });
         
         // Hide loading, show start screen
@@ -210,6 +345,61 @@ class BlockyRoadGame {
                (window.innerWidth <= 768);
     }
     
+    handleFullscreenChange() {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        
+        // Aggiungi classe per sfondo nero
+        if (isFullscreen) {
+            document.body.classList.add('fullscreen-active');
+        } else {
+            document.body.classList.remove('fullscreen-active');
+        }
+        
+        if (isFullscreen) {
+            // In fullscreen: forza aspect ratio mobile (9:16) su desktop
+            if (!this.isMobile()) {
+                const height = window.innerHeight;
+                const width = Math.floor(height * 9 / 16);
+                
+                // Ridimensiona renderer con aspect ratio mobile
+                if (this.renderer) {
+                    this.renderer.setSize(width, height);
+                }
+                
+                // Aggiorna camera con aspect ratio mobile
+                if (this.camera && this.camera.camera) {
+                    const aspect = width / height;
+                    const frustumSize = 8;
+                    this.camera.camera.left = -frustumSize * aspect;
+                    this.camera.camera.right = frustumSize * aspect;
+                    this.camera.camera.top = frustumSize;
+                    this.camera.camera.bottom = -frustumSize;
+                    this.camera.camera.updateProjectionMatrix();
+                }
+                
+                // Centra il canvas
+                if (this.renderer) {
+                    this.renderer.domElement.style.position = 'fixed';
+                    this.renderer.domElement.style.left = '50%';
+                    this.renderer.domElement.style.top = '50%';
+                    this.renderer.domElement.style.transform = 'translate(-50%, -50%)';
+                }
+                
+                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
+            } else {
+                // Mobile: usa tutto lo schermo
+                if (this.camera) {
+                    this.camera.onResize();
+                }
+            }
+        } else {
+            // Uscito da fullscreen: ripristina dimensioni normali
+            if (this.camera) {
+                this.camera.onResize();
+            }
+        }
+    }
+    
     async enterFullscreen() {
         // Scroll to top per nascondere la barra degli indirizzi su mobile
         window.scrollTo(0, 0);
@@ -236,7 +426,7 @@ class BlockyRoadGame {
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
             
-            // Prevent double-triggering from key repeat
+            // Prevent double-triggering from key repeat (browser auto-repeat when holding key)
             if (this.keys[key]) return;
             
             this.keys[key] = true;
@@ -246,10 +436,23 @@ class BlockyRoadGame {
                 return;
             }
             
-            // Instant input queuing for arrow keys/WASD
+            // Process movement immediately on key press (single press only)
             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-                // Trigger handleInput immediately for responsive feel
-                this.handleInput();
+                let dx = 0, dz = 0;
+                
+                if (key === 'arrowup' || key === 'w') {
+                    dz = 1;
+                } else if (key === 'arrowdown' || key === 's') {
+                    dz = -1;
+                } else if (key === 'arrowleft' || key === 'a') {
+                    dx = 1;  // Swapped: left now goes right in world space
+                } else if (key === 'arrowright' || key === 'd') {
+                    dx = -1; // Swapped: right now goes left in world space
+                }
+                
+                if (dx !== 0 || dz !== 0) {
+                    this.processMove(dx, dz);
+                }
             }
         });
         
@@ -266,6 +469,8 @@ class BlockyRoadGame {
             if (startScreen) {
                 startScreen.style.display = 'none';
             }
+            // Fullscreen su tutti i dispositivi
+            this.enterFullscreen();
             this.startGame();
         });
         
@@ -281,6 +486,14 @@ class BlockyRoadGame {
                 }
             }
         }, { once: false, passive: true });
+        
+        // Click per entrare in fullscreen (desktop)
+        document.addEventListener('click', (e) => {
+            // Entra in fullscreen ogni volta che si clicca sul gioco
+            if (this.isLoaded) {
+                this.enterFullscreen();
+            }
+        }, { passive: true });
         
         // Restart button with debounce to prevent rapid clicks
         let restartDebounce = false;
@@ -404,24 +617,6 @@ class BlockyRoadGame {
     handleInput() {
         if (this.inputCooldown > 0) {
             this.inputCooldown--;
-            return;
-        }
-        
-        let dx = 0, dz = 0;
-        
-        if (this.keys['arrowup'] || this.keys['w']) {
-            dz = 1;
-        } else if (this.keys['arrowdown'] || this.keys['s']) {
-            dz = -1;
-        } else if (this.keys['arrowleft'] || this.keys['a']) {
-            dx = 1;  // Swapped: left now goes right in world space
-        } else if (this.keys['arrowright'] || this.keys['d']) {
-            dx = -1; // Swapped: right now goes left in world space
-        }
-        
-        if (dx !== 0 || dz !== 0) {
-            // Process immediately - no queuing needed
-            this.processMove(dx, dz);
         }
     }
     
@@ -431,8 +626,6 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            this.inputCooldown = 1;  // 1 frame cooldown for reliable fast input
-            
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
                 const currentGridZ = this.player.gridZ;
@@ -571,13 +764,14 @@ class BlockyRoadGame {
         
         const frameStart = performance.now();
         
-        // Handle input
-        this.handleInput();
+        // Normalize deltaTime to 60 FPS (16.67ms per frame)
+        // This makes movement speed independent of frame rate
+        const normalizedDelta = deltaTime / 16.67;
         
         // Update game systems
         const playerPos = this.player.getPosition();
-        this.player.update();
-        this.terrain.update(playerPos.z, this.score);
+        this.player.update(normalizedDelta);
+        this.terrain.update(playerPos.z, this.score, normalizedDelta);
         
         // Update shadow camera to follow player
         this.dirLight.target.position.set(playerPos.worldX, 0, playerPos.worldZ);
@@ -586,9 +780,9 @@ class BlockyRoadGame {
         
         // Update obstacles with current score for difficulty progression
         this.obstacles.updateScore(this.score);
-        this.obstacles.update(playerPos.z);
+        this.obstacles.update(playerPos.z, normalizedDelta);
         
-        this.particles.update();
+        this.particles.update(normalizedDelta);
         
         // Rising danger zone mechanic (like Crossy Road's water)
         // DISABLED TEMPORARILY
@@ -613,8 +807,8 @@ class BlockyRoadGame {
         
         // Update death line (chases player from behind)
         if (this.deathLineEnabled) {
-            // Death line ALWAYS advances at 1 block per second
-            this.deathLineZ += this.deathLineSpeed;
+            // Death line ALWAYS advances at 1 block per second (frame rate independent)
+            this.deathLineZ += this.deathLineSpeed * normalizedDelta;
             
             // Calculate distance from player
             const distanceFromPlayer = playerPos.z - this.deathLineZ;
@@ -646,7 +840,7 @@ class BlockyRoadGame {
             y: playerPos.y,
             z: cameraTargetZ
         };
-        this.camera.follow(cameraTarget);
+        this.camera.follow(cameraTarget, normalizedDelta);
         
         // Update boundary shadows to follow camera
         if (this.boundaryShadows) {
@@ -684,7 +878,7 @@ class BlockyRoadGame {
         }
         
         // Danger zone always moves forward (like Crossy Road water)
-        this.dangerZone += this.dangerZoneSpeed * deltaTime;
+        this.dangerZone += this.dangerZoneSpeed * normalizedDelta;
         
         // Keep minimum distance behind player
         const minDistance = 10;

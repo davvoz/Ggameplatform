@@ -25,20 +25,25 @@ class ObstacleManager {
         const score = this.currentScore;
         
         // Easy start (score 0-20): 30-50% of full difficulty
-        // Medium (score 20-50): 50-80% of full difficulty  
-        // Hard (score 50+): 80-100% of full difficulty
+        // Easy (score 0-50): 30-50% difficulty
+        // Medium (score 50-150): 50-75% difficulty  
+        // Hard (score 150-300): 75-95% difficulty
+        // Extra Hard (score 300+): 95-100% difficulty
         
         let difficulty = 0.3; // Start at 30%
         
-        if (score <= 20) {
+        if (score <= 50) {
             // Linear progression from 30% to 50%
-            difficulty = 0.3 + (score / 20) * 0.2;
-        } else if (score <= 50) {
-            // Linear progression from 50% to 80%
-            difficulty = 0.5 + ((score - 20) / 30) * 0.3;
+            difficulty = 0.3 + (score / 50) * 0.2;
+        } else if (score <= 150) {
+            // Linear progression from 50% to 75%
+            difficulty = 0.5 + ((score - 50) / 100) * 0.25;
+        } else if (score <= 300) {
+            // Linear progression from 75% to 95%
+            difficulty = 0.75 + ((score - 150) / 150) * 0.2;
         } else {
-            // Linear progression from 80% to 100%
-            difficulty = 0.8 + Math.min((score - 50) / 50, 0.2);
+            // Linear progression from 95% to 100%
+            difficulty = 0.95 + Math.min((score - 300) / 200, 0.05);
         }
         
         return {
@@ -54,7 +59,7 @@ class ObstacleManager {
         this.currentScore = score;
     }
     
-    update(playerZ) {
+    update(playerZ, normalizedDelta = 1) {
         this.spawnTimer++;
         this.frameCount++; // Increment global frame counter
         
@@ -71,8 +76,9 @@ class ObstacleManager {
         // Spawn coins
         this.trySpawnCoins(playerZ);
         
-        // Update platforms (logs)
-        this.platforms.forEach((platform, index) => {
+        // Update platforms (logs) - use reverse loop for safe removal
+        for (let index = this.platforms.length - 1; index >= 0; index--) {
+            const platform = this.platforms[index];
             // Emerge animation from waterfall - rise up from below
             // Take into account log length - first block should be usable as soon as it enters playable area
             if (platform.isEmerging) {
@@ -91,8 +97,8 @@ class ObstacleManager {
                     ? leadingEdge >= enterEdge  // Moving right: front edge past -5
                     : leadingEdge <= enterEdge; // Moving left: front edge past +5
                 
-                // Continue emerging animation
-                platform.emergeProgress += 0.04; // Faster emerge for smoother appearance
+                // Continue emerging animation (frame-rate independent)
+                platform.emergeProgress += 0.04 * normalizedDelta; // Faster emerge for smoother appearance
                 const startY = platform.startY || -0.8;
                 platform.mesh.position.y = THREE.MathUtils.lerp(startY, platform.targetY, platform.emergeProgress);
                 
@@ -125,7 +131,7 @@ class ObstacleManager {
             }
             
             if (platform.isSubmerging) {
-                platform.submergeProgress += 0.04; // Match emerge speed
+                platform.submergeProgress += 0.04 * normalizedDelta; // Match emerge speed (frame-rate independent)
                 platform.mesh.position.y = THREE.MathUtils.lerp(platform.targetY, -0.8, platform.submergeProgress);
                 
                 if (platform.submergeProgress >= 1) {
@@ -138,19 +144,20 @@ class ObstacleManager {
             }
             
             // Normal horizontal movement - move even while emerging/submerging
-            platform.mesh.position.x += platform.velocity;
+            platform.mesh.position.x += platform.velocity * normalizedDelta;
             platform.x = platform.mesh.position.x;
-        });
+        }
         
-        // Update vehicles
-        this.obstacles.forEach((obstacle, index) => {
+        // Update vehicles - use reverse loop for safe removal
+        for (let index = this.obstacles.length - 1; index >= 0; index--) {
+            const obstacle = this.obstacles[index];
             const oldX = obstacle.mesh.position.x;
-            obstacle.mesh.position.x += obstacle.velocity;
+            obstacle.mesh.position.x += obstacle.velocity * normalizedDelta;
             
             // Rotate wheels for effect (only if has wheels cached)
             if (obstacle.wheels) {
                 obstacle.wheels.forEach(wheel => {
-                    wheel.rotation.x += obstacle.velocity * 0.5;
+                    wheel.rotation.x += obstacle.velocity * 0.5 * normalizedDelta;
                 });
             }
             
@@ -217,24 +224,19 @@ class ObstacleManager {
                     this.obstacles.splice(index, 1);
                 }
             }
-        });
+        }
         
-        // Update coins (rotation) - update every other frame for performance
-        if (!this.coinUpdateCounter) this.coinUpdateCounter = 0;
-        this.coinUpdateCounter++;
-        const updateCoins = this.coinUpdateCounter % 2 === 0;
-        
-        this.coins.forEach((coin, index) => {
-            if (updateCoins) {
-                coin.mesh.rotation.y += coin.rotationSpeed * 2; // Compensate for skipped frames
-            }
+        // Update coins (rotation) - now frame-rate independent
+        for (let index = this.coins.length - 1; index >= 0; index--) {
+            const coin = this.coins[index];
+            coin.mesh.rotation.y += coin.rotationSpeed * normalizedDelta;
             
             // Remove if collected or too far (don't dispose shared geometries/materials)
             if (coin.collected || coin.z < playerZ - 15) {
                 this.scene.remove(coin.mesh);
                 this.coins.splice(index, 1);
             }
-        });
+        }
     }
     
     trySpawnVehicles(playerZ) {
@@ -246,7 +248,10 @@ class ObstacleManager {
             if (!row || row.type !== 'road') continue;
             
             // Check if already has vehicles currently
-            const vehicleCount = this.obstacles.filter(obs => Math.abs(obs.z - z) < 0.5).length;
+            let vehicleCount = 0;
+            for (let i = 0; i < this.obstacles.length; i++) {
+                if (Math.abs(this.obstacles[i].z - z) < 0.5) vehicleCount++;
+            }
             
             // Progressive difficulty: 0-2 vehicles based on difficulty
             // At 30% difficulty: 0-1 vehicles (easy start)
@@ -274,11 +279,23 @@ class ObstacleManager {
             if (!this.trainTimers[z]) {
                 const settings = this.getDifficultySettings();
                 
-                // Progressive train frequency - LESS trains for performance:
-                // Low difficulty (30%): 15-20 seconds between trains
-                // High difficulty (100%): 8-12 seconds between trains
-                const minDelay = Math.floor(480 - (settings.trainFrequency * 240)); // 480->240 (8->4 sec)
-                const maxDelay = Math.floor(1200 - (settings.trainFrequency * 480)); // 1200->720 (20->12 sec)
+                // Progressive train frequency with aggressive scaling:
+                // 30%: 15s, 50%: 10s, 75%: 7s, 95%: 5s, 100%: 3s
+                let avgSeconds;
+                const diff = settings.trainFrequency;
+                if (diff <= 0.5) {
+                    avgSeconds = 15 - ((diff - 0.3) / 0.2) * 5; // 15s->10s
+                } else if (diff <= 0.75) {
+                    avgSeconds = 10 - ((diff - 0.5) / 0.25) * 3; // 10s->7s
+                } else if (diff <= 0.95) {
+                    avgSeconds = 7 - ((diff - 0.75) / 0.2) * 2; // 7s->5s
+                } else {
+                    avgSeconds = 5 - ((diff - 0.95) / 0.05) * 2; // 5s->3s
+                }
+                const avgFrames = avgSeconds * 60;
+                const variance = Math.floor(avgFrames * 0.15); // ±15% variation
+                const minDelay = Math.floor(avgFrames - variance);
+                const maxDelay = Math.floor(avgFrames + variance);
                 const initialDelay = minDelay + Math.floor(Math.random() * (maxDelay - minDelay));
                 
                 this.trainTimers[z] = {
@@ -306,8 +323,21 @@ class ObstacleManager {
                 
                 // Schedule next train with progressive difficulty
                 const settings = this.getDifficultySettings();
-                const minNext = Math.floor(480 - (settings.trainFrequency * 240));
-                const maxNext = Math.floor(1200 - (settings.trainFrequency * 480));
+                let avgSeconds;
+                const diff = settings.trainFrequency;
+                if (diff <= 0.5) {
+                    avgSeconds = 15 - ((diff - 0.3) / 0.2) * 5; // 15s->10s
+                } else if (diff <= 0.75) {
+                    avgSeconds = 10 - ((diff - 0.5) / 0.25) * 3; // 10s->7s
+                } else if (diff <= 0.95) {
+                    avgSeconds = 7 - ((diff - 0.75) / 0.2) * 2; // 7s->5s
+                } else {
+                    avgSeconds = 5 - ((diff - 0.95) / 0.05) * 2; // 5s->3s
+                }
+                const avgFrames = avgSeconds * 60;
+                const variance = Math.floor(avgFrames * 0.15); // ±15% variation
+                const minNext = Math.floor(avgFrames - variance);
+                const maxNext = Math.floor(avgFrames + variance);
                 const nextDelay = minNext + Math.floor(Math.random() * (maxNext - minNext));
                 this.trainTimers[z] = {
                     nextSpawn: this.frameCount + nextDelay,
@@ -606,9 +636,10 @@ class ObstacleManager {
             if (!row || row.type !== 'water') continue;
             
             // Count current platforms on this row (including emerging)
-            const currentLogs = this.platforms.filter(plat => 
-                Math.abs(plat.z - z) < 0.5
-            ).length;
+            let currentLogs = 0;
+            for (let i = 0; i < this.platforms.length; i++) {
+                if (Math.abs(this.platforms[i].z - z) < 0.5) currentLogs++;
+            }
             
             // Progressive platform density:
             // Low difficulty: 4-5 logs (easy crossings)
@@ -709,9 +740,17 @@ class ObstacleManager {
         };
         
         this.platforms.push(platform);
-    }    getPlatformsAt(z) {
-        // Return platforms (logs) in water at this row
-        return this.platforms.filter(plat => Math.abs(plat.z - z) < 0.5);
+    }
+    
+    getPlatformsAt(z) {
+        // Optimized: manual loop instead of filter to avoid array allocation
+        const result = [];
+        for (let i = 0; i < this.platforms.length; i++) {
+            if (Math.abs(this.platforms[i].z - z) < 0.5) {
+                result.push(this.platforms[i]);
+            }
+        }
+        return result;
     }
     
     clear() {

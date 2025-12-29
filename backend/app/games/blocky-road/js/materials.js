@@ -55,18 +55,39 @@ class MaterialPool {
             flatShading: true,
             transparent: false,
             opacity: 1.0,
+            poolable: false, // DEFAULT: don't pool (safe but creates more materials)
             ...options
         };
         
-        // DISABILITATO IL POOLING - Three.js ha problemi con materiali condivisi
-        // che causano dissolvenze e artefatti visivi
-        // I materiali sono leggeri, crearli non causa lag (le geometrie sono pooled)
-        return new THREE.MeshLambertMaterial({
+        // Don't pool materials that will have properties modified (causes visual artifacts)
+        // Only pool materials explicitly marked as poolable (static objects only)
+        if (!opts.poolable) {
+            return new THREE.MeshLambertMaterial({
+                color: color,
+                flatShading: opts.flatShading,
+                transparent: opts.transparent,
+                opacity: opts.opacity
+            });
+        }
+        
+        // Create unique key for material (color + options)
+        const key = `${color}_${opts.flatShading}_${opts.transparent}_${opts.opacity}`;
+        
+        // Check if we already have this material
+        if (this.materials.has(key)) {
+            return this.materials.get(key);
+        }
+        
+        // Create new material and cache it
+        const material = new THREE.MeshLambertMaterial({
             color: color,
             flatShading: opts.flatShading,
             transparent: opts.transparent,
             opacity: opts.opacity
         });
+        
+        this.materials.set(key, material);
+        return material;
     }
     
     static clear() {

@@ -1,8 +1,17 @@
 {
-  "version": "2.10.4",
-  "timestamp": "2025-12-29T01:39:26.764Z",
-  "buildNumber": 150,
+  "version": "2.10.5",
+  "timestamp": "2025-12-30T00:10:26.034Z",
+  "buildNumber": 151,
   "changelog": [
+    {
+      "version": "2.10.5",
+      "date": "2025-12-30",
+      "type": "patch",
+      "changes": [
+        "fix: enhance performance logging and optimize object pooling for terrain and obstacles",
+        "🔖 Bump version to 2.10.4 [skip-version]"
+      ]
+    },
     {
       "version": "2.10.4",
       "date": "2025-12-29",
@@ -84,15 +93,6 @@
       "changes": [
         "feat: remove test HTML file for API testing",
         "🔖 Bump version to 2.6.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.6.0",
-      "date": "2025-12-27",
-      "type": "minor",
-      "changes": [
-        "feat: roba",
-        "🔖 Bump version to 2.5.0 [skip-version]"
       ]
     }
   ]

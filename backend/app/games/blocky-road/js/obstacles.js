@@ -63,6 +63,11 @@ class ObstacleManager {
         this.spawnTimer++;
         this.frameCount++; // Increment global frame counter
         
+        // Log obstacle counts every 60 frames
+        if (this.frameCount % 60 === 0) {
+            console.log(`🎮 Obstacles: ${this.obstacles.length} vehicles | ${this.platforms.length} platforms | ${this.coins.length} coins | Active trains: ${Object.keys(this.trainTimers).length}`);
+        }
+        
         // Spawn new vehicles on road rows
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnTimer = 0;

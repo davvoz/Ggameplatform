@@ -457,13 +457,6 @@ class TerrainGenerator {
             this.currentZoneRows--;
         }
         
-        // Log scene stats every 60 frames (1 second at 60fps)
-        if (!this._statsCounter) this._statsCounter = 0;
-        this._statsCounter++;
-        if (this._statsCounter % 60 === 0) {
-            console.log(`📊 Scene Stats: ${this.rows.length} rows | Objects in scene: ${this.scene.children.length}`);
-        }
-        
         // Cleanup old rows less frequently (every 10th frame)
         if (!this.cleanupCounter) this.cleanupCounter = 0;
         this.cleanupCounter++;

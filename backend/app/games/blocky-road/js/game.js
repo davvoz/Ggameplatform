@@ -979,15 +979,6 @@ class BlockyRoadGame {
                 console.warn(`  📦 MEMORY: Geometries:${renderInfo.memory.geometries} | Textures:${renderInfo.memory.textures} | Programs:${renderInfo.programs?.length || 0}`);
             }
         }
-        
-        // Log every 60 frames (~1 second)
-        if (!this._frameCounter) this._frameCounter = 0;
-        this._frameCounter++;
-        if (this._frameCounter % 60 === 0) {
-            console.log(`📊 Average frame: ${totalFrameTime.toFixed(2)}ms | TWEEN: ${tweenTime.toFixed(2)}ms | Update: ${updateTime.toFixed(2)}ms | Render: ${renderTime.toFixed(2)}ms`);
-            console.log(`  🎨 Render Stats: Calls:${renderInfo.render.calls} | Triangles:${renderInfo.render.triangles} | Scene objects:${this.scene.children.length}`);
-            console.log(`  💾 Memory: Geometries:${renderInfo.memory.geometries} | Textures:${renderInfo.memory.textures}`);
-        }
     }
     
     showMovementHint() {

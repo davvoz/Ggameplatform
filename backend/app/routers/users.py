@@ -34,6 +34,11 @@ class SteemKeychainAuth(BaseModel):
     message: str
     cur8_multiplier: Optional[float] = 1.0  # Base multiplier (will be calculated based on witness vote & delegation)
 
+class SteemPostingKeyAuth(BaseModel):
+    username: str
+    posting_key: str
+    cur8_multiplier: Optional[float] = 1.0  # Base multiplier (will be calculated based on witness vote & delegation)
+
 class SessionStart(BaseModel):
     user_id: str
     game_id: str
@@ -202,6 +207,95 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Steem authentication failed: {str(e)}")
+
+@router.post("/steem-posting-key-auth")
+async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth):
+    """Authenticate user with Steem posting key.
+    
+    This method verifies the user's posting key against the Steem blockchain
+    and creates/updates the user account accordingly.
+    """
+    try:
+        from app.steem_checker import verify_posting_key, update_user_multiplier
+        
+        # Verify the posting key
+        verification = verify_posting_key(auth_data.username, auth_data.posting_key)
+        
+        if not verification["success"]:
+            raise HTTPException(
+                status_code=401, 
+                detail=verification["message"]
+            )
+        
+        # Key is valid - search for existing user or create new one
+        user = get_user_by_username(auth_data.username)
+        
+        if user:
+            # User exists - update last login and multiplier
+            from app.database import get_db_session
+            from app.models import User
+            
+            try:
+                with get_db_session() as session:
+                    update_user_multiplier(user['user_id'], auth_data.username, session, force=True)
+                    session.commit()
+                    # Reload user data
+                    db_user = session.query(User).filter(User.user_id == user['user_id']).first()
+                    if db_user:
+                        user = db_user.to_dict()
+            except Exception as e:
+                print(f"[POSTING KEY AUTH] Could not update multiplier: {e}")
+        else:
+            # Create new user for this Steem account
+            user = create_user(
+                username=auth_data.username,
+                email=f"{auth_data.username}@steem.blockchain",
+                password=None,
+                cur8_multiplier=auth_data.cur8_multiplier
+            )
+            
+            from app.database import get_db_session
+            from app.models import User
+            import json
+            
+            # Update Steem multiplier
+            try:
+                with get_db_session() as session:
+                    update_user_multiplier(user['user_id'], auth_data.username, session, force=True)
+                    session.commit()
+            except Exception as e:
+                print(f"[POSTING KEY AUTH] Could not update multiplier: {e}")
+            
+            # Add Steem metadata
+            with get_db_session() as session:
+                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
+                if db_user:
+                    extra_data = {
+                        "auth_method": "steem_posting_key",
+                        "steem_username": auth_data.username,
+                        "verified": True
+                    }
+                    db_user.extra_data = json.dumps(extra_data)
+                    db_user.steem_username = auth_data.username
+                    session.flush()
+                    user = db_user.to_dict()
+        
+        return {
+            "success": True,
+            "message": f"Welcome {auth_data.username}! Authenticated via Posting Key",
+            "user": user,
+            "auth_method": "steem_posting_key",
+            "benefits": {
+                "cur8_multiplier": user.get('cur8_multiplier', 1.0),
+                "verified": True,
+                "blockchain_backed": True
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Posting key authentication failed: {str(e)}")
 
 @router.get("/")
 async def list_users():

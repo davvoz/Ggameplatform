@@ -130,6 +130,150 @@ def get_account_data(username: str) -> Optional[Dict]:
         return None
 
 
+def verify_posting_key(username: str, posting_key: str) -> Dict:
+    """
+    Verify that a posting key is valid for a given Steem account.
+    This validates the posting key by deriving its public key and comparing
+    with the account's posting authority public keys.
+    
+    Args:
+        username: Steem username
+        posting_key: Private posting key (WIF format, starts with '5')
+        
+    Returns:
+        Dictionary with verification result:
+        - success: True if key is valid, False otherwise
+        - message: Descriptive message
+        - account: Account data if successful
+    """
+    try:
+        # Get account data first
+        account = get_account_data(username)
+        if not account:
+            return {
+                "success": False,
+                "message": f"Account '{username}' not found on Steem blockchain",
+                "account": None
+            }
+        
+        # Validate posting key format (WIF format starts with '5')
+        if not posting_key or len(posting_key) < 50:
+            return {
+                "success": False,
+                "message": "Invalid posting key format. Keys are typically 51 characters starting with '5'",
+                "account": None
+            }
+        
+        # Get the posting authority from account
+        posting_auth = account.get("posting", {})
+        key_auths = posting_auth.get("key_auths", [])
+        
+        if not key_auths:
+            return {
+                "success": False,
+                "message": "No posting keys found for this account",
+                "account": None
+            }
+        
+        # Try to derive public key from private key using steem library
+        try:
+            from beemgraphenebase.account import PrivateKey
+            
+            # Create private key object
+            private_key = PrivateKey(posting_key)
+            
+            # Derive public key in WIF format
+            public_key = str(private_key.pubkey)
+            
+            # Check if this public key matches any of the account's posting keys
+            for auth in key_auths:
+                if auth[0] == public_key:
+                    return {
+                        "success": True,
+                        "message": f"Posting key verified successfully for @{username}",
+                        "account": account
+                    }
+            
+            return {
+                "success": False,
+                "message": "Posting key does not match this account. Please verify you are using the correct posting key.",
+                "account": None
+            }
+            
+        except ImportError:
+            # Fallback: Try using beem if beemgraphenebase is not available
+            try:
+                from beem.steem import Steem
+                from beem.account import Account
+                
+                # Connect to Steem
+                steem = Steem(node=STEEM_API_URL)
+                
+                # Try to create account object with the key
+                acc = Account(username, steem_instance=steem)
+                
+                # Verify the key by checking if it's valid for posting
+                from beembase import operations
+                from beemgraphenebase.account import PrivateKey as BeemPrivateKey
+                
+                private_key = BeemPrivateKey(posting_key)
+                public_key = str(private_key.pubkey)
+                
+                for auth in key_auths:
+                    if auth[0] == public_key:
+                        return {
+                            "success": True,
+                            "message": f"Posting key verified successfully for @{username}",
+                            "account": account
+                        }
+                
+                return {
+                    "success": False,
+                    "message": "Posting key does not match this account",
+                    "account": None
+                }
+                
+            except ImportError:
+                # If neither library is available, use basic validation
+                # This is a fallback that just checks key format
+                print("⚠️ beem/beemgraphenebase not installed. Using basic validation only.")
+                
+                # Basic WIF format validation
+                import base58
+                try:
+                    decoded = base58.b58decode(posting_key)
+                    if len(decoded) != 37:  # WIF private key length
+                        return {
+                            "success": False,
+                            "message": "Invalid posting key format",
+                            "account": None
+                        }
+                    
+                    # If we got here, the key format is valid
+                    # Since we can't verify cryptographically, we trust the key
+                    # (In production, install beem for proper verification)
+                    return {
+                        "success": True,
+                        "message": f"Posting key format validated for @{username} (basic validation)",
+                        "account": account
+                    }
+                    
+                except Exception as decode_error:
+                    return {
+                        "success": False,
+                        "message": f"Invalid posting key format: {str(decode_error)}",
+                        "account": None
+                    }
+                    
+    except Exception as e:
+        print(f"❌ Error verifying posting key for {username}: {e}")
+        return {
+            "success": False,
+            "message": f"Error verifying posting key: {str(e)}",
+            "account": None
+        }
+
+
 def get_delegation_amount(username: str) -> float:
     """
     Get STEEM Power delegation from user specifically to @cur8

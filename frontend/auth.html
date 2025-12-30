@@ -40,6 +40,36 @@
                     <div id="steemStatus" class="auth-status"></div>
                 </div>
                 
+                <!-- Posting Key Auth -->
+                <div class="auth-card">
+                    <div class="card-icon">🔑</div>
+                    <h2 class="card-title">Posting Key</h2>
+                    <p class="card-description">Login with your Steem username and posting key</p>
+                    
+                    <div class="benefits-compact">
+                        <div class="benefit-item">⚡ Bonus Multipliers</div>
+                        <div class="benefit-item">🔗 Blockchain Identity</div>
+                        <div class="benefit-item">💾 Progress Saved</div>
+                        <div class="benefit-item">📱 No Extension Needed</div>
+                    </div>
+                    
+                    <div class="auth-form-inline">
+                        <div class="form-group-compact">
+                            <input type="text" id="postingKeyUsername" placeholder="Steem Username" autocomplete="username" />
+                        </div>
+                        <div class="form-group-compact">
+                            <input type="password" id="postingKey" placeholder="Posting Key" autocomplete="current-password" />
+                        </div>
+                    </div>
+                    
+                    <button class="btn-auth btn-auth-tertiary" onclick="loginWithPostingKey()">
+                        <span class="btn-icon">🔓</span>
+                        <span>Login with Key</span>
+                    </button>
+                    
+                    <div id="postingKeyStatus" class="auth-status"></div>
+                </div>
+                
                 <!-- Anonymous Auth -->
                 <div class="auth-card">
                     <div class="card-icon">👤</div>
@@ -159,6 +189,82 @@
                     }
                 }
             );
+        }
+        
+        // Login with Posting Key
+        async function loginWithPostingKey() {
+            const statusEl = document.getElementById('postingKeyStatus');
+            const usernameInput = document.getElementById('postingKeyUsername');
+            const postingKeyInput = document.getElementById('postingKey');
+            
+            const username = usernameInput.value.trim().toLowerCase();
+            const postingKey = postingKeyInput.value.trim();
+            
+            // Validate inputs
+            if (!username) {
+                statusEl.className = 'auth-status error';
+                statusEl.innerHTML = '❌ Inserisci il tuo username Steem';
+                statusEl.style.display = 'block';
+                usernameInput.focus();
+                return;
+            }
+            
+            if (!postingKey) {
+                statusEl.className = 'auth-status error';
+                statusEl.innerHTML = '❌ Inserisci la tua posting key';
+                statusEl.style.display = 'block';
+                postingKeyInput.focus();
+                return;
+            }
+            
+            // Basic key format validation
+            if (postingKey.length < 50 || !postingKey.startsWith('5')) {
+                statusEl.className = 'auth-status error';
+                statusEl.innerHTML = '❌ Formato posting key non valido. Le chiavi Steem iniziano con "5" e sono lunghe circa 51 caratteri';
+                statusEl.style.display = 'block';
+                return;
+            }
+            
+            statusEl.className = 'auth-status info';
+            statusEl.innerHTML = '<span class="auth-loading"></span>Verifica posting key in corso...';
+            statusEl.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_BASE}/steem-posting-key-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        posting_key: postingKey,
+                        cur8_multiplier: 1.0
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.className = 'auth-status success';
+                    statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | XP Totale: ${data.user.total_xp_earned}</small>`;
+                    
+                    // Clear the posting key from the input (security)
+                    postingKeyInput.value = '';
+                    
+                    // Save user to localStorage (NOT the posting key!)
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('authMethod', 'steem_posting_key');
+                    
+                    // Redirect to game platform after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    throw new Error(data.detail || 'Authentication failed');
+                }
+                
+            } catch (error) {
+                statusEl.className = 'auth-status error';
+                statusEl.innerHTML = `❌ Errore: ${error.message}`;
+            }
         }
         
         // Play Anonymous

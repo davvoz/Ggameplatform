@@ -1047,14 +1047,14 @@ export default class RuntimeShell {
                     <span class="new-level">${new_level}</span>
                 </div>
                 <div class="level-up-new-title">${title}</div>
-                ${is_milestone ? '<div class="level-up-milestone-badge">✨ TRAGUARDO ✨</div>' : ''}
+                ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
                 ${coins_awarded > 0 ? `
                     <div class="level-up-reward">
                         <span class="reward-icon">🪙</span>
                         <span class="reward-amount">+${coins_awarded} Coins</span>
                     </div>
                 ` : ''}
-                <button class="level-up-close">Continua</button>
+                <button class="level-up-close">Continue</button>
             </div>
         `;
 

@@ -139,7 +139,7 @@ class DailyLoginBanner {
                 <div class="daily-login-footer">
                     ${canClaim ? `
                         <button class="claim-button" onclick="dailyLoginBanner.claimReward()">
-                            🎁 Claim Day ${currentDay} Reward (${this.rewards[currentDay].coins} coins)
+                            🎁 Claim Day ${currentDay} Reward
                         </button>
                         <p class="claim-hint">Come back tomorrow for more rewards!</p>
                     ` : `

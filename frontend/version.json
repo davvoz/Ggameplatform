@@ -1,8 +1,18 @@
 {
-  "version": "2.12.0",
-  "timestamp": "2025-12-30T18:14:33.423Z",
-  "buildNumber": 155,
+  "version": "2.12.1",
+  "timestamp": "2025-12-30T18:23:56.994Z",
+  "buildNumber": 156,
   "changelog": [
+    {
+      "version": "2.12.1",
+      "date": "2025-12-30",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Add script to populate daily login reward configuration with default rewards",
+        "🔖 Bump version to 2.12.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.12.0",
       "date": "2025-12-30",
@@ -86,15 +96,6 @@
       "changes": [
         "fix: implement frame-rate independent movement and camera following",
         "🔖 Bump version to 2.10.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.10.0",
-      "date": "2025-12-28",
-      "type": "minor",
-      "changes": [
-        "feat: add XP banner and level-up notifications, enhance fullscreen handling",
-        "🔖 Bump version to 2.9.1 [skip-version]"
       ]
     }
   ]

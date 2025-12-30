@@ -34,6 +34,11 @@ class BlockyRoadGame {
         this.dangerZoneActive = false; // Activate after first move
         this.lastTime = null; // For delta time calculation
         
+        // Movement hint system
+        this.movementHintShown = false;
+        this.inactivityTimer = 0;
+        this.inactivityThreshold = 180; // Show hint after 3 seconds (180 frames @ 60fps)
+        
         // Setup window listeners for platform messages
         this.setupWindowListeners();
     }
@@ -626,6 +631,15 @@ class BlockyRoadGame {
         });
         
         if (moved) {
+            // Hide movement hint on first move
+            if (!this.movementHintShown) {
+                this.hideMovementHint();
+                this.movementHintShown = true;
+            }
+            
+            // Reset inactivity timer
+            this.inactivityTimer = 0;
+            
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
                 const currentGridZ = this.player.gridZ;
@@ -767,6 +781,14 @@ class BlockyRoadGame {
         // Normalize deltaTime to 60 FPS (16.67ms per frame)
         // This makes movement speed independent of frame rate
         const normalizedDelta = deltaTime / 16.67;
+        
+        // Check for player inactivity and show hint
+        if (!this.movementHintShown && this.isStarted && !this.isGameOver) {
+            this.inactivityTimer++;
+            if (this.inactivityTimer >= this.inactivityThreshold) {
+                this.showMovementHint();
+            }
+        }
         
         // Update game systems
         const playerPos = this.player.getPosition();
@@ -965,6 +987,22 @@ class BlockyRoadGame {
             console.log(`📊 Average frame: ${totalFrameTime.toFixed(2)}ms | TWEEN: ${tweenTime.toFixed(2)}ms | Update: ${updateTime.toFixed(2)}ms | Render: ${renderTime.toFixed(2)}ms`);
             console.log(`  🎨 Render Stats: Calls:${renderInfo.render.calls} | Triangles:${renderInfo.render.triangles} | Scene objects:${this.scene.children.length}`);
             console.log(`  💾 Memory: Geometries:${renderInfo.memory.geometries} | Textures:${renderInfo.memory.textures}`);
+        }
+    }
+    
+    showMovementHint() {
+        const hint = document.getElementById('movementHint');
+        if (hint && !this.movementHintShown) {
+            hint.classList.add('show');
+            console.log('💡 Showing movement hint');
+        }
+    }
+    
+    hideMovementHint() {
+        const hint = document.getElementById('movementHint');
+        if (hint) {
+            hint.classList.remove('show');
+            console.log('✅ Movement hint hidden - player moved');
         }
     }
 }

@@ -316,12 +316,15 @@ class TerrainGenerator {
             track = Models.createRailTrack();
             this.scene.add(track);
         }
-        track.position.set(0, 0.2, row.z);
+        // OPTIMIZED: Direct matrix update instead of position.set()
+        track.position.z = row.z;
+        track.updateMatrixWorld(true);
         track.userData.isRailTrack = true;
         row.decorations.push(track);
         const trackTime = performance.now() - trackStart;
         
         // Get pre-cached warning lights from pool
+        const lightsStart = performance.now();
         let leftLight, rightLight;
         if (this.warningLightPool.length >= 2) {
             leftLight = this.warningLightPool.pop();
@@ -336,20 +339,25 @@ class TerrainGenerator {
             this.scene.add(rightLight);
         }
         
-        leftLight.position.set(-4, 0, row.z - 0.6);
-        leftLight.rotation.y = Math.PI;
+        // OPTIMIZED: Batch position updates
+        leftLight.position.x = -4;
+        leftLight.position.z = row.z - 0.6;
+        leftLight.rotation.y = Math.PI; // Face the tracks
+        leftLight.updateMatrixWorld(true);
         leftLight.userData.isWarningLight = true;
         row.decorations.push(leftLight);
         
-        rightLight.position.set(4, 0, row.z - 0.6);
-        rightLight.rotation.y = Math.PI;
+        rightLight.position.x = 4;
+        rightLight.position.z = row.z - 0.6;
+        rightLight.rotation.y = Math.PI; // Face the tracks
+        rightLight.updateMatrixWorld(true);
         rightLight.userData.isWarningLight = true;
         row.decorations.push(rightLight);
-        const lightsTime = performance.now() - trackStart - railStart;
+        const lightsTime = performance.now() - lightsStart;
         
         const railTime = performance.now() - railStart;
-        if (railTime > 3) {
-            console.warn(`🚂 SLOW RAIL z=${row.z}: ${railTime.toFixed(2)}ms | Track:${trackTime.toFixed(2)}ms Lights:${lightsTime.toFixed(2)}ms`);
+        if (railTime > 2) {
+            console.warn(`🚂 RAIL z=${row.z}: ${railTime.toFixed(2)}ms | Track:${trackTime.toFixed(2)}ms Lights:${lightsTime.toFixed(2)}ms`);
         }
         
         // Store lights for flashing when train comes

@@ -63,28 +63,35 @@ def create_reward_config_table():
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='daily_login_reward_config'"
             ))
             
-            if result.fetchone():
+            table_exists = result.fetchone() is not None
+            
+            if table_exists:
                 print("ℹ️  Table daily_login_reward_config already exists")
-                return
+            else:
+                # Create table
+                print("Creating daily_login_reward_config table...")
+                session.execute(text("""
+                    CREATE TABLE daily_login_reward_config (
+                        day INTEGER PRIMARY KEY,
+                        coins_reward INTEGER NOT NULL,
+                        emoji TEXT DEFAULT '🪙',
+                        is_active INTEGER DEFAULT 1,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                """))
+                
+                session.commit()
+                print("✅ Table daily_login_reward_config created successfully!")
             
-            # Create table
-            print("Creating daily_login_reward_config table...")
-            session.execute(text("""
-                CREATE TABLE daily_login_reward_config (
-                    day INTEGER PRIMARY KEY,
-                    coins_reward INTEGER NOT NULL,
-                    emoji TEXT DEFAULT '🪙',
-                    is_active INTEGER DEFAULT 1,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """))
+            # Check if config is empty
+            count = session.execute(text("SELECT COUNT(*) FROM daily_login_reward_config")).scalar()
             
-            session.commit()
-            print("✅ Table daily_login_reward_config created successfully!")
-            
-            # Populate with default rewards
-            populate_default_rewards(session)
+            if count == 0:
+                print("📋 Config table is empty, populating with defaults...")
+                populate_default_rewards(session)
+            else:
+                print(f"ℹ️  Config table already has {count} rewards configured")
             
         except Exception as e:
             print(f"❌ Error creating config table: {e}")

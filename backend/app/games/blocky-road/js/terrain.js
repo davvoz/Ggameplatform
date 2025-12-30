@@ -58,17 +58,17 @@ class TerrainGenerator {
     initObjectPools() {
         console.log('🔧 Pre-caching rail tracks and warning lights...');
         
-        // Pre-generate 30 rail tracks (enough to cover full view distance)
-        // View spans playerZ - 5 to playerZ + 25 = 30 rows max
-        for (let i = 0; i < 30; i++) {
+        // Pre-generate 50 rail tracks (increased from 30 to prevent pool exhaustion)
+        // View spans playerZ - 20 to playerZ + 25 = 45 rows max, some will be rails
+        for (let i = 0; i < 50; i++) {
             const track = Models.createRailTrack();
             track.visible = false; // Hide until needed
             this.scene.add(track);
             this.railTrackPool.push(track);
         }
         
-        // Pre-generate 60 warning lights (2 per rail × 30 rails)
-        for (let i = 0; i < 60; i++) {
+        // Pre-generate 100 warning lights (increased from 60, 2 per rail × 50 rails)
+        for (let i = 0; i < 100; i++) {
             const light = Models.createTrainWarningLight();
             light.visible = false; // Hide until needed
             this.scene.add(light);
@@ -140,6 +140,7 @@ class TerrainGenerator {
     }
     
     createRow(z, type) {
+        const rowStart = performance.now();
         const row = {
             z: z,
             type: type,
@@ -151,20 +152,29 @@ class TerrainGenerator {
         // Create tiles across the row (optimized coverage)
         // Playable area is -7 to +7, generate -12 to +12 for visual coverage
         // PERFORMANCE: Reduced from -18/+18 to -12/+12 (37 tiles -> 25 tiles = 32% less geometry)
+        const tilesStart = performance.now();
         for (let x = -12; x <= 12; x++) {
             const tile = Models.createTerrainBlock(type);
             tile.position.set(x, 0, z);
             this.scene.add(tile);
             row.tiles.push(tile);
         }
+        const tilesTime = performance.now() - tilesStart;
         
         // Add decorations based on type
+        const decorationsStart = performance.now();
         if (type === 'grass') {
             this.addGrassDecorations(row);
         } else if (type === 'rail') {
             this.addRailDecorations(row);
         } else if (type === 'water') {
             this.addWaterDecorations(row);
+        }
+        const decorationsTime = performance.now() - decorationsStart;
+        
+        const totalRowTime = performance.now() - rowStart;
+        if (totalRowTime > 5) {
+            console.warn(`⚠️ SLOW ROW CREATE z=${z} type=${type}: ${totalRowTime.toFixed(2)}ms (tiles: ${tilesTime.toFixed(2)}ms, decorations: ${decorationsTime.toFixed(2)}ms)`);
         }
         
         this.rows.push(row);
@@ -176,9 +186,13 @@ class TerrainGenerator {
     }
     
     addGrassDecorations(row) {
+        const grassStart = performance.now();
         const decorationChance = 0.4;
         const isBarrier = row.isBarrier; // Dense obstacles behind spawn
         const isSafeZone = row.isSafeZone; // Safe zone at spawn - no obstacles
+        
+        let treeCount = 0, rockCount = 0, grassCount = 0, flowerCount = 0;
+        let createTime = 0, addTime = 0;
         
         for (let x = -12; x <= 12; x++) {
             // Create natural borders with trees/rocks at edges
@@ -188,43 +202,61 @@ class TerrainGenerator {
             
             // DENSE OBSTACLES IN BARRIER ZONE (behind spawn point)
             if (isBarrier && isPlayable && Math.random() < 0.8) {
+                const createStart = performance.now();
                 const decoration = Math.random() < 0.7 ? Models.createTree() : Models.createRock();
+                createTime += performance.now() - createStart;
                 decoration.userData.isObstacle = true;
                 decoration.userData.gridX = x;
                 decoration.userData.gridZ = row.z;
                 decoration.position.set(x, 0.2, row.z);
                 decoration.scale.multiplyScalar(1.3);
+                const addStart = performance.now();
                 this.scene.add(decoration);
+                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
+                if (decoration.userData.isTree) treeCount++; else rockCount++;
                 continue;
             }
             
             // Force obstacles at borders for visual boundary
             if (isEdge && Math.random() < 0.7) {
+                const createStart = performance.now();
                 const decoration = Math.random() < 0.5 ? Models.createTree() : Models.createRock();
+                createTime += performance.now() - createStart;
                 decoration.userData.isObstacle = true;
                 decoration.userData.gridX = x;
                 decoration.userData.gridZ = row.z;
                 decoration.position.set(x, 0.2, row.z);
                 decoration.scale.multiplyScalar(1.2); // Slightly bigger at edges
+                const addStart = performance.now();
                 this.scene.add(decoration);
+                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
+                if (decoration.userData.isTree) treeCount++; else rockCount++;
             }
             // Sparse decorations outside playable area (reduced from 60% to 25%)
             else if (isOutside && Math.random() < 0.25) {
+                const createStart = performance.now();
                 const rand = Math.random();
                 const decoration = rand < 0.5 ? Models.createTree() : 
                                  rand < 0.8 ? Models.createRock() : Models.createFlower();
+                createTime += performance.now() - createStart;
                 decoration.position.set(
                     x + (Math.random() - 0.5) * 0.8,
                     0.2,
                     row.z + (Math.random() - 0.5) * 0.8
                 );
+                const addStart = performance.now();
                 this.scene.add(decoration);
+                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
+                if (decoration.userData.isTree) treeCount++;
+                else if (decoration.userData.isRock) rockCount++;
+                else if (decoration.userData.isFlower) flowerCount++;
             }
             // Normal decorations in playable area
             else if (isPlayable && Math.random() < decorationChance) {
+                const createStart = performance.now();
                 const rand = Math.random();
                 let decoration;
                 
@@ -245,6 +277,7 @@ class TerrainGenerator {
                     decoration.userData.gridX = x;
                     decoration.userData.gridZ = row.z;
                 }
+                createTime += performance.now() - createStart;
                 
                 decoration.position.set(
                     x + (Math.random() - 0.5) * 0.6,
@@ -252,14 +285,28 @@ class TerrainGenerator {
                     row.z + (Math.random() - 0.5) * 0.6
                 );
                 
+                const addStart = performance.now();
                 this.scene.add(decoration);
+                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
+                if (decoration.userData.isTree) treeCount++;
+                else if (decoration.userData.isRock) rockCount++;
+                else if (decoration.userData.isGrass) grassCount++;
+                else if (decoration.userData.isFlower) flowerCount++;
             }
+        }
+        
+        const grassTime = performance.now() - grassStart;
+        if (grassTime > 3) {
+            console.warn(`🌿 SLOW GRASS z=${row.z}: ${grassTime.toFixed(2)}ms | Trees:${treeCount} Rocks:${rockCount} Grass:${grassCount} Flowers:${flowerCount} | Create:${createTime.toFixed(2)}ms Add:${addTime.toFixed(2)}ms`);
         }
     }
     
     addRailDecorations(row) {
+        const railStart = performance.now();
+        
         // Get pre-cached rail track from pool (or create if pool exhausted)
+        const trackStart = performance.now();
         let track;
         if (this.railTrackPool.length > 0) {
             track = this.railTrackPool.pop();
@@ -269,11 +316,15 @@ class TerrainGenerator {
             track = Models.createRailTrack();
             this.scene.add(track);
         }
-        track.position.set(0, 0.2, row.z);
+        // OPTIMIZED: Direct matrix update instead of position.set()
+        track.position.z = row.z;
+        track.updateMatrixWorld(true);
         track.userData.isRailTrack = true;
         row.decorations.push(track);
+        const trackTime = performance.now() - trackStart;
         
         // Get pre-cached warning lights from pool
+        const lightsStart = performance.now();
         let leftLight, rightLight;
         if (this.warningLightPool.length >= 2) {
             leftLight = this.warningLightPool.pop();
@@ -288,15 +339,26 @@ class TerrainGenerator {
             this.scene.add(rightLight);
         }
         
-        leftLight.position.set(-4, 0, row.z - 0.6);
-        leftLight.rotation.y = Math.PI;
+        // OPTIMIZED: Batch position updates
+        leftLight.position.x = -4;
+        leftLight.position.z = row.z - 0.6;
+        leftLight.rotation.y = Math.PI; // Face the tracks
+        leftLight.updateMatrixWorld(true);
         leftLight.userData.isWarningLight = true;
         row.decorations.push(leftLight);
         
-        rightLight.position.set(4, 0, row.z - 0.6);
-        rightLight.rotation.y = Math.PI;
+        rightLight.position.x = 4;
+        rightLight.position.z = row.z - 0.6;
+        rightLight.rotation.y = Math.PI; // Face the tracks
+        rightLight.updateMatrixWorld(true);
         rightLight.userData.isWarningLight = true;
         row.decorations.push(rightLight);
+        const lightsTime = performance.now() - lightsStart;
+        
+        const railTime = performance.now() - railStart;
+        if (railTime > 2) {
+            console.warn(`🚂 RAIL z=${row.z}: ${railTime.toFixed(2)}ms | Track:${trackTime.toFixed(2)}ms Lights:${lightsTime.toFixed(2)}ms`);
+        }
         
         // Store lights for flashing when train comes
         row.warningLights = [leftLight, rightLight];
@@ -382,7 +444,7 @@ class TerrainGenerator {
         });
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
-        const generationDistance = 25; // Reduced from 35 - less rows pre-generated
+        const generationDistance = 15; // Reduced for better performance
         if (this.currentMaxZ < playerZ + generationDistance) {
             // Generate only 1 row per frame to avoid lag spikes
             if (!this.currentZoneRows || this.currentZoneRows <= 0) {
@@ -390,12 +452,9 @@ class TerrainGenerator {
                 this.currentZoneRows = zone.minRows + Math.floor(Math.random() * (zone.maxRows - zone.minRows + 1));
             }
             
-            const startTime = performance.now();
             this.currentMaxZ++;
             this.createRow(this.currentMaxZ, this.currentZone.type);
             this.currentZoneRows--;
-            const elapsed = performance.now() - startTime;
-            if (elapsed > 5) console.log(`⚠️ Terrain row ${this.currentMaxZ} took ${elapsed.toFixed(2)}ms`);
         }
         
         // Cleanup old rows less frequently (every 10th frame)
@@ -403,7 +462,7 @@ class TerrainGenerator {
         this.cleanupCounter++;
         if (this.cleanupCounter % 10 !== 0) return;
         
-        const cleanupDistance = 20;
+        const cleanupDistance = 12; // Reduced for better performance
         this.rows = this.rows.filter(row => {
             if (row.z < playerZ - cleanupDistance) {
                 // Remove all meshes

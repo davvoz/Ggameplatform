@@ -39,6 +39,18 @@ class TouchControls {
     handleTouchStart(e) {
         if (e.touches.length > 0) {
             const touch = e.touches[0];
+            
+            // Ignore touches on UI buttons (game over screen, mute button, etc.)
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && (
+                target.tagName === 'BUTTON' ||
+                target.closest('button') ||
+                target.closest('#gameOver') ||
+                target.closest('#startScreen')
+            )) {
+                return; // Don't process this touch as player input
+            }
+            
             this.touchStartX = touch.clientX;
             this.touchStartY = touch.clientY;
             // Initialize touchEnd to same position to prevent false swipe detection

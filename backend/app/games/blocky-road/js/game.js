@@ -34,6 +34,11 @@ class BlockyRoadGame {
         this.dangerZoneActive = false; // Activate after first move
         this.lastTime = null; // For delta time calculation
         
+        // Movement hint system
+        this.movementHintShown = false;
+        this.inactivityTimer = 0;
+        this.inactivityThreshold = 180; // Show hint after 3 seconds (180 frames @ 60fps)
+        
         // Setup window listeners for platform messages
         this.setupWindowListeners();
     }
@@ -626,6 +631,15 @@ class BlockyRoadGame {
         });
         
         if (moved) {
+            // Hide movement hint on first move
+            if (!this.movementHintShown) {
+                this.hideMovementHint();
+                this.movementHintShown = true;
+            }
+            
+            // Reset inactivity timer
+            this.inactivityTimer = 0;
+            
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
                 const currentGridZ = this.player.gridZ;
@@ -768,10 +782,24 @@ class BlockyRoadGame {
         // This makes movement speed independent of frame rate
         const normalizedDelta = deltaTime / 16.67;
         
+        // Check for player inactivity and show hint
+        if (!this.movementHintShown && this.isStarted && !this.isGameOver) {
+            this.inactivityTimer++;
+            if (this.inactivityTimer >= this.inactivityThreshold) {
+                this.showMovementHint();
+            }
+        }
+        
         // Update game systems
         const playerPos = this.player.getPosition();
+        
+        const playerUpdateStart = performance.now();
         this.player.update(normalizedDelta);
+        const playerUpdateTime = performance.now() - playerUpdateStart;
+        
+        const terrainUpdateStart = performance.now();
         this.terrain.update(playerPos.z, this.score, normalizedDelta);
+        const terrainUpdateTime = performance.now() - terrainUpdateStart;
         
         // Update shadow camera to follow player
         this.dirLight.target.position.set(playerPos.worldX, 0, playerPos.worldZ);
@@ -780,9 +808,20 @@ class BlockyRoadGame {
         
         // Update obstacles with current score for difficulty progression
         this.obstacles.updateScore(this.score);
+        const obstaclesUpdateStart = performance.now();
         this.obstacles.update(playerPos.z, normalizedDelta);
+        const obstaclesUpdateTime = performance.now() - obstaclesUpdateStart;
         
+        const particlesUpdateStart = performance.now();
         this.particles.update(normalizedDelta);
+        const particlesUpdateTime = performance.now() - particlesUpdateStart;
+        
+        const totalUpdateTime = performance.now() - frameStart;
+        
+        // Log slow frames (>16.67ms = below 60fps)
+        if (totalUpdateTime > 16.67) {
+            console.warn(`⚠️ SLOW FRAME: ${totalUpdateTime.toFixed(2)}ms | Player: ${playerUpdateTime.toFixed(2)}ms | Terrain: ${terrainUpdateTime.toFixed(2)}ms | Obstacles: ${obstaclesUpdateTime.toFixed(2)}ms | Particles: ${particlesUpdateTime.toFixed(2)}ms`);
+        }
         
         // Rising danger zone mechanic (like Crossy Road's water)
         // DISABLED TEMPORARILY
@@ -903,19 +942,59 @@ class BlockyRoadGame {
     animate() {
         requestAnimationFrame(() => this.animate());
         
+        const frameStart = performance.now();
+        
         // Calculate delta time for smooth updates
         const now = performance.now();
         const deltaTime = this.lastTime ? now - this.lastTime : 16;
         this.lastTime = now;
         
         // Update TWEEN animations
+        const tweenStart = performance.now();
         TWEEN.update();
+        const tweenTime = performance.now() - tweenStart;
         
         // Update game with delta time
+        const updateStart = performance.now();
         this.update(deltaTime);
+        const updateTime = performance.now() - updateStart;
         
         // Render
+        const renderStart = performance.now();
         this.renderer.render(this.scene, this.camera.getCamera());
+        const renderTime = performance.now() - renderStart;
+        
+        const totalFrameTime = performance.now() - frameStart;
+        
+        // Get detailed render info from Three.js
+        const renderInfo = this.renderer.info;
+        
+        // Log every frame if slow (>16.67ms = below 60fps)
+        if (totalFrameTime > 16.67) {
+            console.warn(`🎬 FRAME LAG: ${totalFrameTime.toFixed(2)}ms | TWEEN: ${tweenTime.toFixed(2)}ms | Update: ${updateTime.toFixed(2)}ms | Render: ${renderTime.toFixed(2)}ms | FPS: ${(1000/totalFrameTime).toFixed(0)}`);
+            
+            // If render is the bottleneck, log detailed info
+            if (renderTime > 8) {
+                console.warn(`  🖼️ RENDER DETAILS: DrawCalls:${renderInfo.render.calls} | Triangles:${renderInfo.render.triangles} | Points:${renderInfo.render.points} | Lines:${renderInfo.render.lines}`);
+                console.warn(`  📦 MEMORY: Geometries:${renderInfo.memory.geometries} | Textures:${renderInfo.memory.textures} | Programs:${renderInfo.programs?.length || 0}`);
+            }
+        }
+    }
+    
+    showMovementHint() {
+        const hint = document.getElementById('movementHint');
+        if (hint && !this.movementHintShown) {
+            hint.classList.add('show');
+            console.log('💡 Showing movement hint');
+        }
+    }
+    
+    hideMovementHint() {
+        const hint = document.getElementById('movementHint');
+        if (hint) {
+            hint.classList.remove('show');
+            console.log('✅ Movement hint hidden - player moved');
+        }
     }
 }
 

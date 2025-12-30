@@ -422,6 +422,58 @@
                 opacity: 1;
             }
         }
+        
+        /* ============ MOVEMENT HINT ============ */
+        #movementHint {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 150;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        
+        #movementHint.show {
+            display: block;
+            animation: hintPulse 2s ease-in-out infinite;
+        }
+        
+        #movementHint h2 {
+            font-size: 28px;
+            margin: 0 0 15px 0;
+            color: #4CAF50;
+        }
+        
+        #movementHint p {
+            font-size: 20px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        #movementHint .icon {
+            font-size: 32px;
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+                opacity: 0.9;
+            }
+        }
     </style>
 </head>
 <body>
@@ -431,6 +483,12 @@
     </div>
     
     <button id="muteButton" title="Toggle sound">🔊</button>
+    
+    <div id="movementHint">
+        <h2>How to Move</h2>
+        <p><span class="icon">👆</span> Tap to move forward</p>
+        <p><span class="icon">👉</span> Swipe to change direction</p>
+    </div>
 
     <div id="loadingScreen">
         <h2>🎮 Loading...</h2>
@@ -443,7 +501,7 @@
     <div id="startScreen" style="display: none;">
         <h1>Blocky Road</h1>
         <p>Cross the road without getting hit!</p>
-        <p>🎮 Swipe or Arrow Keys to move</p>
+        <p>🎮 Swipe or Tap to move</p>
         <p>🪙 Collect coins for bonus points</p>
         <button id="startButton">START GAME</button>
     </div>

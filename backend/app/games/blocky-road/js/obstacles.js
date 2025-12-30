@@ -243,7 +243,9 @@ class ObstacleManager {
         const settings = this.getDifficultySettings();
         
         // Check rows ahead of player for roads
-        for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
+        // Don't spawn vehicles behind player (playerZ - 3) to reduce computation
+        const minSpawnZ = Math.floor(playerZ) - 3;
+        for (let z = minSpawnZ; z < playerZ + 20; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row || row.type !== 'road') continue;
             
@@ -271,26 +273,35 @@ class ObstacleManager {
         const minZ = Math.floor(playerZ) - 5;
         const maxZ = Math.floor(playerZ) + 25;
         
+        // Clean up train timers for rows far behind player (more than 10 rows back)
+        const cleanupThreshold = Math.floor(playerZ) - 10;
+        for (const z in this.trainTimers) {
+            if (parseInt(z) < cleanupThreshold) {
+                delete this.trainTimers[z];
+            }
+        }
+        
         for (let z = minZ; z < maxZ; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row || row.type !== 'rail') continue;
             
             // Initialize timer for this row if new
             if (!this.trainTimers[z]) {
-                const settings = this.getDifficultySettings();
-                
-                // Progressive train frequency with aggressive scaling:
-                // 30%: 15s, 50%: 10s, 75%: 7s, 95%: 5s, 100%: 3s
+                // Progressive train frequency based on score:
+                // Score 0-100: 7-10 seconds
+                // Score 100-150: transition 10s->7s
+                // Score 150-300: 5-7 seconds
+                // Score 300+: 3-5 seconds
                 let avgSeconds;
-                const diff = settings.trainFrequency;
-                if (diff <= 0.5) {
-                    avgSeconds = 15 - ((diff - 0.3) / 0.2) * 5; // 15s->10s
-                } else if (diff <= 0.75) {
-                    avgSeconds = 10 - ((diff - 0.5) / 0.25) * 3; // 10s->7s
-                } else if (diff <= 0.95) {
-                    avgSeconds = 7 - ((diff - 0.75) / 0.2) * 2; // 7s->5s
+                const score = this.currentScore;
+                if (score <= 100) {
+                    avgSeconds = 8.5; // With ±15% = 7.2-9.8s
+                } else if (score <= 150) {
+                    avgSeconds = 10 - ((score - 100) / 50) * 3; // 10s->7s
+                } else if (score <= 300) {
+                    avgSeconds = 7 - ((score - 150) / 150) * 2; // 7s->5s
                 } else {
-                    avgSeconds = 5 - ((diff - 0.95) / 0.05) * 2; // 5s->3s
+                    avgSeconds = 5 - Math.min((score - 300) / 200, 1) * 2; // 5s->3s
                 }
                 const avgFrames = avgSeconds * 60;
                 const variance = Math.floor(avgFrames * 0.15); // ±15% variation
@@ -322,17 +333,20 @@ class ObstacleManager {
                 timer.spawned = true;
                 
                 // Schedule next train with progressive difficulty
-                const settings = this.getDifficultySettings();
+                // Score 0-100: 7-10 seconds
+                // Score 100-150: transition 10s->7s
+                // Score 150-300: 5-7 seconds
+                // Score 300+: 3-5 seconds
                 let avgSeconds;
-                const diff = settings.trainFrequency;
-                if (diff <= 0.5) {
-                    avgSeconds = 15 - ((diff - 0.3) / 0.2) * 5; // 15s->10s
-                } else if (diff <= 0.75) {
-                    avgSeconds = 10 - ((diff - 0.5) / 0.25) * 3; // 10s->7s
-                } else if (diff <= 0.95) {
-                    avgSeconds = 7 - ((diff - 0.75) / 0.2) * 2; // 7s->5s
+                const score = this.currentScore;
+                if (score <= 100) {
+                    avgSeconds = 8.5; // With ±15% = 7.2-9.8s
+                } else if (score <= 150) {
+                    avgSeconds = 10 - ((score - 100) / 50) * 3; // 10s->7s
+                } else if (score <= 300) {
+                    avgSeconds = 7 - ((score - 150) / 150) * 2; // 7s->5s
                 } else {
-                    avgSeconds = 5 - ((diff - 0.95) / 0.05) * 2; // 5s->3s
+                    avgSeconds = 5 - Math.min((score - 300) / 200, 1) * 2; // 5s->3s
                 }
                 const avgFrames = avgSeconds * 60;
                 const variance = Math.floor(avgFrames * 0.15); // ±15% variation
@@ -631,7 +645,9 @@ class ObstacleManager {
     
     trySpawnPlatforms(playerZ) {
         // Check water rows ahead of player
-        for (let z = Math.floor(playerZ); z < playerZ + 20; z++) {
+        // Don't spawn platforms behind player (playerZ - 3) to reduce computation
+        const minSpawnZ = Math.floor(playerZ) - 3;
+        for (let z = minSpawnZ; z < playerZ + 20; z++) {
             const row = this.terrain.getRowAt(z);
             if (!row || row.type !== 'water') continue;
             

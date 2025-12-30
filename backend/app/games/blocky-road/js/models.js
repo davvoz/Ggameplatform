@@ -584,6 +584,7 @@ const Models = {
         if (!this._sleeperMatrices) {
             this._sleeperMatrices = [];
             const matrix = new THREE.Matrix4();
+            // 50 sleepers spaced 0.5 units apart (pre-calculated once)
             for (let x = -12; x <= 12; x += 0.5) {
                 matrix.setPosition(x, 0.26, 0);
                 this._sleeperMatrices.push(matrix.clone());
@@ -609,7 +610,7 @@ const Models = {
         rightRail.position.set(0, 0.28, 0.32);
         group.add(rightRail);
         
-        // Wooden sleepers using InstancedMesh (1 draw call instead of 50!) - POOLED
+        // Wooden sleepers using InstancedMesh (1 draw call!) - POOLED
         const sleeperGeometry = GeometryPool.getBoxGeometry(0.15, 0.12, 0.85);
         const sleeperMaterial = MaterialPool.getMaterial(0x6B4423, { poolable: true });
         

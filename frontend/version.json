@@ -1,8 +1,18 @@
 {
-  "version": "2.11.0",
-  "timestamp": "2025-12-30T17:38:01.553Z",
-  "buildNumber": 154,
+  "version": "2.12.0",
+  "timestamp": "2025-12-30T18:14:33.423Z",
+  "buildNumber": 155,
   "changelog": [
+    {
+      "version": "2.12.0",
+      "date": "2025-12-30",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: Implement daily login reward system with configurable rewards",
+        "🔖 Bump version to 2.11.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.11.0",
       "date": "2025-12-30",
@@ -85,15 +95,6 @@
       "changes": [
         "feat: add XP banner and level-up notifications, enhance fullscreen handling",
         "🔖 Bump version to 2.9.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.9.1",
-      "date": "2025-12-27",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD] restart session after continuing the game",
-        "🔖 Bump version to 2.9.0 [skip-version]"
       ]
     }
   ]

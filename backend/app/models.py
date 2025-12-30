@@ -654,6 +654,66 @@ class WeeklyWinner(Base):
         return f"<WeeklyWinner {self.week_start}: {self.user_id} - Rank {self.rank}>"
 
 
+class UserLoginStreak(Base):
+    """Daily login reward tracking for 7-day cycle system."""
+    __tablename__ = 'user_login_streak'
+    
+    user_id = Column(String, ForeignKey('users.user_id'), primary_key=True)
+    current_day = Column(Integer, default=1)  # 1-7, resets after day 7
+    last_claim_date = Column(String, nullable=True)  # YYYY-MM-DD format
+    total_cycles_completed = Column(Integer, default=0)  # How many 7-day cycles completed
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    
+    # Relationships
+    user = relationship("User")
+    
+    # Index for efficient queries
+    __table_args__ = (
+        Index('idx_user_login_streak_user', 'user_id'),
+    )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert daily login reward instance to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "current_day": self.current_day,
+            "last_claim_date": self.last_claim_date,
+            "total_cycles_completed": self.total_cycles_completed,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<UserLoginStreak {self.user_id}: Day {self.current_day}>"
+
+
+class DailyLoginRewardConfig(Base):
+    """Daily login reward configuration - defines rewards for each day of the 7-day cycle."""
+    __tablename__ = 'daily_login_reward_config'
+    
+    day = Column(Integer, primary_key=True)  # 1-7
+    coins_reward = Column(Integer, nullable=False)
+    emoji = Column(Text, default='🪙')
+    is_active = Column(Integer, default=1)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert daily login reward config instance to dictionary."""
+        return {
+            "day": self.day,
+            "coins_reward": self.coins_reward,
+            "emoji": self.emoji,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<DailyLoginRewardConfig Day {self.day}: {self.coins_reward} coins>"
+
+
 class AdminUser(Base):
     """Admin user model for DB Viewer and admin access."""
     __tablename__ = 'admin_users'

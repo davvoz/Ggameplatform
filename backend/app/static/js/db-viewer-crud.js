@@ -332,6 +332,18 @@ class CRUDManager {
                 { key: 'steem_tx_id', label: 'STEEM Transaction ID', type: 'text' },
                 { key: 'reward_sent', label: 'Ricompensa Inviata', type: 'checkbox' },
                 { key: 'reward_sent_at', label: 'Data Invio Ricompensa', type: 'datetime-local' }
+            ],
+            'user_login_streak': [
+                { key: 'user_id', label: 'User ID', type: 'select', required: true, foreignKey: 'user_ids', readonly: true },
+                { key: 'current_day', label: 'Giorno Corrente (1-7)', type: 'number', min: '1', max: '7', required: true },
+                { key: 'last_claim_date', label: 'Data Ultimo Claim', type: 'date' },
+                { key: 'total_cycles_completed', label: 'Cicli Completati', type: 'number', min: '0', required: true }
+            ],
+            'daily_login_reward_config': [
+                { key: 'day', label: 'Giorno (1-7)', type: 'number', min: '1', max: '7', required: true, readonly: false },
+                { key: 'coins_reward', label: 'Ricompensa Coins', type: 'number', min: '1', required: true },
+                { key: 'emoji', label: 'Emoji', type: 'text' },
+                { key: 'is_active', label: 'Attivo', type: 'checkbox' }
             ]
         };
 
@@ -461,7 +473,9 @@ class CRUDManager {
             'level_rewards': 'reward_id',
             'weekly_leaderboards': 'entry_id',
             'leaderboard_rewards': 'reward_id',
-            'weekly_winners': 'winner_id'
+            'weekly_winners': 'winner_id',
+            'user_login_streak': 'user_id',
+            'daily_login_reward_config': 'day'
         };
         return idFields[tableKey] || 'id';
     }
@@ -486,7 +500,9 @@ class CRUDManager {
             'level_rewards': `Reward for Level ${item.level} - ${item.reward_type}`,
             'weekly_leaderboards': `Week ${item.week_start} - ${item.game_id} - Score: ${item.score}`,
             'leaderboard_rewards': `Rank ${item.rank_start}-${item.rank_end} - ${item.steem_reward || 0} STEEM`,
-            'weekly_winners': `Winner ${item.winner_id} - Week ${item.week_start} - Rank ${item.rank}`
+            'weekly_winners': `Winner ${item.winner_id} - Week ${item.week_start} - Rank ${item.rank}`,
+            'user_login_streak': `User ${item.user_id.substring(0, 16)}... - Day ${item.current_day}/7 - ${item.total_cycles_completed} cycles`,
+            'daily_login_reward_config': `Day ${item.day} - ${item.emoji} ${item.coins_reward} coins`
         };
         return displayFields[tableKey] || String(item[idField] || 'Record');
     }

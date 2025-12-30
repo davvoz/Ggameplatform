@@ -540,3 +540,42 @@ async def get_multiplier_breakdown(user_id: str):
             "user_id": user_id,
             "breakdown": breakdown
         }
+
+
+# ============ DAILY LOGIN REWARDS ============
+
+@router.get("/daily-login-status/{user_id}")
+async def get_daily_login_status(user_id: str):
+    """Get user's daily login reward status."""
+    from app.database import get_db_session
+    from app.daily_login_service import DailyLoginService
+    
+    try:
+        with get_db_session() as db:
+            service = DailyLoginService(db)
+            status = service.get_user_status(user_id)
+            
+            return {
+                "success": True,
+                **status
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/daily-login-claim/{user_id}")
+async def claim_daily_login_reward(user_id: str):
+    """Claim today's daily login reward."""
+    from app.database import get_db_session
+    from app.daily_login_service import DailyLoginService
+    
+    try:
+        with get_db_session() as db:
+            service = DailyLoginService(db)
+            result = service.claim_daily_reward(user_id)
+            
+            return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

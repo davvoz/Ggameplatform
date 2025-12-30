@@ -46,9 +46,18 @@
     <link rel="stylesheet" href="./css/utilities.css">
     <link rel="stylesheet" href="./css/quest-hero.css">
     <link rel="stylesheet" href="./css/auth.css">
+    <link rel="stylesheet" href="./css/daily-login-banner.css">
 </head>
 
 <body>
+    <!-- Daily Login Banner (will be shown after login) -->
+    <div id="daily-login-overlay" class="daily-login-overlay" onclick="dailyLoginBanner.hide()"></div>
+    
+    <!-- Floating button to open daily reward banner (shown only when can claim) -->
+    <button id="daily-login-trigger" class="daily-login-trigger" onclick="dailyLoginBanner.show()" style="display:none;" title="Open Daily Rewards">
+        🎁
+    </button>
+    
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -540,12 +549,23 @@
     <script src="./js/WalletRenderer.js"></script>
     <script src="./js/WalletProfileWidget.js"></script>
     <script src="./js/LeaderboardAPI.js"></script>
+    <script src="./js/daily-login-banner.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script src="./js/nav-multiplier.js"></script>
 
-    <!-- Initialize Coin Balance Widget on login -->
+    <!-- Initialize Coin Balance Widget and Daily Login Banner on login -->
     <script>
-        // Initialize coin widget when user logs in
+        // Function to initialize daily login banner
+        function initDailyLoginBanner(user) {
+            if (window.dailyLoginBanner && user && user.user_id) {
+                window.dailyLoginBanner.init(user).then(() => {
+                    // Don't auto-show banner, only show trigger button if can claim
+                    console.log('Daily login banner initialized - trigger button managed automatically');
+                }).catch(err => console.error('Failed to init daily login banner:', err));
+            }
+        }
+        
+        // Initialize coin widget and daily login banner when user logs in
         if (window.AuthManager) {
             const originalLogin = window.AuthManager.login;
             window.AuthManager.login = function (...args) {
@@ -558,22 +578,27 @@
                             window.coinAPI = new window.CoinAPI();
                             window.coinBalanceWidget = new window.CoinBalanceWidget(window.coinAPI);
                         }
-                        window.coinBalanceWidget.init(user.user_id);
+                        
+                        // Initialize daily login banner
+                        initDailyLoginBanner(user);
                     }
                 }
                 return result;
             };
-
-            // Initialize on page load if already logged in
-            if (window.AuthManager.isLoggedIn()) {
-                const user = window.AuthManager.getUser();
-                if (user && user.user_id) {
-                    window.coinAPI = new window.CoinAPI();
-                    window.coinBalanceWidget = new window.CoinBalanceWidget(window.coinAPI);
-                    window.coinBalanceWidget.init(user.user_id);
-                }
-            }
         }
+        
+        // Also initialize when page loads if user is already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window.AuthManager && window.AuthManager.isLoggedIn()) {
+                    const user = window.AuthManager.getUser();
+                    if (user && user.user_id) {
+                        console.log('User already logged in, initializing daily login banner...');
+                        initDailyLoginBanner(user);
+                    }
+                }
+            }, 1000); // Wait for AuthManager to be ready
+        });
     </script>
 
     <!-- PWA Service Worker - Solo per fullscreen iOS -->

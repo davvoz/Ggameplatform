@@ -1232,6 +1232,140 @@ const TABLE_DEFINITIONS = {
             { name: 'reward_sent_at', type: 'DATETIME' },
             { name: 'created_at', type: 'DATETIME' }
         ]
+    },
+
+    user_login_streak: {
+        name: 'user_login_streak',
+        label: 'User Login Streak',
+        apiEndpoint: 'admin/user_login_streak',
+        dataKey: 'user_login_streak',
+        icon: '🎁',
+        color: '#667eea',
+        erDiagram: {
+            x: 450,
+            y: 600,
+            color: '#667eea'
+        },
+        columns: [
+            { 
+                key: 'user_id', 
+                label: 'User', 
+                type: 'text', 
+                searchable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<code style="font-size: 0.85em;">${value.substring(0, 16)}...</code>`
+                })
+            },
+            { 
+                key: 'current_day', 
+                label: 'Giorno', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #667eea; font-size: 16px;">Day ${value}/7</strong>`
+                })
+            },
+            { 
+                key: 'last_claim_date', 
+                label: 'Ultimo Claim', 
+                type: 'date',
+                render: (value) => {
+                    if (!value) return { type: 'text', content: '-' };
+                    return {
+                        type: 'html',
+                        content: `<span style="color: #28a745;">${value}</span>`
+                    };
+                }
+            },
+            { 
+                key: 'total_cycles_completed', 
+                label: 'Cicli', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: value > 0 ? `<span style="color: #ffd700;">🏆 ${value}</span>` : '<span style="color: #666;">0</span>'
+                })
+            },
+            { key: 'created_at', label: 'Creato', type: 'datetime' },
+            { key: 'updated_at', label: 'Aggiornato', type: 'datetime' },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'user_id', type: 'STRING', pk: true, fk: { table: 'users', field: 'user_id' } },
+            { name: 'current_day', type: 'INTEGER' },
+            { name: 'last_claim_date', type: 'DATE' },
+            { name: 'total_cycles_completed', type: 'INTEGER' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
+    },
+
+    daily_login_reward_config: {
+        name: 'daily_login_reward_config',
+        label: 'Daily Reward Config',
+        apiEndpoint: 'admin/daily_login_reward_config',
+        dataKey: 'daily_login_reward_config',
+        icon: '⚙️',
+        color: '#9c27b0',
+        erDiagram: {
+            x: 550,
+            y: 600,
+            color: '#9c27b0'
+        },
+        columns: [
+            { 
+                key: 'day', 
+                label: 'Giorno', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<strong style="color: #9c27b0; font-size: 16px;">Day ${value}</strong>`
+                })
+            },
+            { 
+                key: 'emoji', 
+                label: 'Icon', 
+                type: 'text',
+                render: (value) => ({
+                    type: 'html',
+                    content: `<span style="font-size: 24px;">${value}</span>`
+                })
+            },
+            { 
+                key: 'coins_reward', 
+                label: 'Coins', 
+                type: 'number', 
+                sortable: true,
+                render: (value) => ({
+                    type: 'html',
+                    content: `<span style="color: #ffd700; font-weight: bold; font-size: 16px;">🪙 ${value}</span>`
+                })
+            },
+            { 
+                key: 'is_active', 
+                label: 'Attivo', 
+                type: 'boolean',
+                render: (value) => ({
+                    type: 'html',
+                    content: value ? '<span style="color: #28a745;">✓ Sì</span>' : '<span style="color: #dc3545;">✗ No</span>'
+                })
+            },
+            { key: 'created_at', label: 'Creato', type: 'datetime' },
+            { key: 'updated_at', label: 'Aggiornato', type: 'datetime' },
+            { key: 'actions', label: 'Azioni', type: 'actions' }
+        ],
+        fields: [
+            { name: 'day', type: 'INTEGER', pk: true },
+            { name: 'coins_reward', type: 'INTEGER' },
+            { name: 'emoji', type: 'TEXT' },
+            { name: 'is_active', type: 'BOOLEAN' },
+            { name: 'created_at', type: 'DATETIME' },
+            { name: 'updated_at', type: 'DATETIME' }
+        ]
     }
 };
 
@@ -1249,7 +1383,9 @@ const STATS_CONFIG = [
     { key: 'total_level_rewards', label: 'Ricompense', icon: '🎁' },
     { key: 'total_weekly_leaderboard_entries', label: 'Leaderboard Weekly', icon: '📅' },
     { key: 'total_leaderboard_rewards', label: 'Premi LB', icon: '🏅' },
-    { key: 'total_weekly_winners', label: 'Vincitori', icon: '🏆' }
+    { key: 'total_weekly_winners', label: 'Vincitori', icon: '🏆' },
+    { key: 'total_user_login_streak', label: 'Login Streaks', icon: '🎁' },
+    { key: 'total_daily_login_reward_config', label: 'Daily Config', icon: '⚙️' }
 ];
 
 // Global configuration

@@ -134,6 +134,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .stat-badge .stat-label {
@@ -148,6 +149,47 @@
     display: block;
     font-size: 1.3rem;
     font-weight: 700;
+}
+
+/* Daily Rewards Badge specific styles */
+#dailyRewardsBadge .stat-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Pulse animation for available rewards */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(139, 92, 246, 0.7);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .profile-stats-quick {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .stat-badge {
+        min-width: 100%;
+        padding: var(--spacing-lg);
+    }
+    
+    .stat-badge .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    #dailyRewardsBadge {
+        order: -1; /* Show daily rewards first on mobile */
+    }
 }
 
 .profile-content {

@@ -304,6 +304,14 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         weekly_winners_query = session.query(WeeklyWinner).order_by(desc(WeeklyWinner.week_start), WeeklyWinner.rank).all()
         weekly_winners = [ww.to_dict() for ww in weekly_winners_query]
         
+        # Get daily login rewards data
+        from app.models import UserLoginStreak, DailyLoginRewardConfig
+        user_login_streak_query = session.query(UserLoginStreak).order_by(desc(UserLoginStreak.updated_at)).all()
+        user_login_streak = [uls.to_dict() for uls in user_login_streak_query]
+        
+        daily_login_reward_config_query = session.query(DailyLoginRewardConfig).order_by(DailyLoginRewardConfig.day).all()
+        daily_login_reward_config = [dlrc.to_dict() for dlrc in daily_login_reward_config_query]
+        
         # Calculate total coins in circulation
         total_coins_circulation = sum([uc.balance for uc in user_coins_query])
     
@@ -322,6 +330,8 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "total_weekly_leaderboard_entries": len(weekly_leaderboards),
         "total_leaderboard_rewards": len(leaderboard_rewards),
         "total_weekly_winners": len(weekly_winners),
+        "total_user_login_streak": len(user_login_streak),
+        "total_daily_login_reward_config": len(daily_login_reward_config),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -339,6 +349,8 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "weekly_leaderboards": weekly_leaderboards,
         "leaderboard_rewards": leaderboard_rewards,
         "weekly_winners": weekly_winners,
+        "user_login_streak": user_login_streak,
+        "daily_login_reward_config": daily_login_reward_config,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -414,6 +426,14 @@ async def export_database():
         
         weekly_winners_query = session.query(WeeklyWinner).order_by(desc(WeeklyWinner.week_start), WeeklyWinner.rank).all()
         weekly_winners = [ww.to_dict() for ww in weekly_winners_query]
+        
+        # Export daily login rewards
+        from app.models import UserLoginStreak, DailyLoginRewardConfig
+        user_login_streak_query = session.query(UserLoginStreak).order_by(desc(UserLoginStreak.updated_at)).all()
+        user_login_streak = [uls.to_dict() for uls in user_login_streak_query]
+        
+        daily_login_reward_config_query = session.query(DailyLoginRewardConfig).order_by(DailyLoginRewardConfig.day).all()
+        daily_login_reward_config = [dlrc.to_dict() for dlrc in daily_login_reward_config_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -432,6 +452,8 @@ async def export_database():
         "total_weekly_leaderboard_entries": len(weekly_leaderboards),
         "total_leaderboard_rewards": len(leaderboard_rewards),
         "total_weekly_winners": len(weekly_winners),
+        "total_user_login_streak": len(user_login_streak),
+        "total_daily_login_reward_config": len(daily_login_reward_config),
         "games": games,
         "users": users,
         "sessions": sessions,
@@ -446,7 +468,9 @@ async def export_database():
         "level_rewards": level_rewards,
         "weekly_leaderboards": weekly_leaderboards,
         "leaderboard_rewards": leaderboard_rewards,
-        "weekly_winners": weekly_winners
+        "weekly_winners": weekly_winners,
+        "daily_login_rewards": daily_login_rewards,
+        "daily_login_reward_config": daily_login_reward_config
     }
 
 @router.get("/sessions/open")
@@ -1682,6 +1706,198 @@ async def delete_weekly_winner(winner_id: str, db: Session = Depends(get_db)):
         db.delete(winner)
         db.commit()
         return {"success": True, "message": "Winner deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ DAILY LOGIN REWARDS ENDPOINTS ============
+
+@router.get("/user_login_streak")
+async def get_user_login_streaks(db: Session = Depends(get_db)):
+    """Get all user login streaks"""
+    try:
+        from app.models import UserLoginStreak
+        streaks = db.query(UserLoginStreak).order_by(UserLoginStreak.updated_at.desc()).all()
+        return {"success": True, "user_login_streak": [r.to_dict() for r in streaks]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/user_login_streak/{user_id}")
+async def get_user_login_streak(user_id: str, db: Session = Depends(get_db)):
+    """Get user login streak by user ID"""
+    try:
+        from app.models import UserLoginStreak
+        streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
+        if not streak:
+            raise HTTPException(status_code=404, detail="User login streak not found")
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/user_login_streak/{user_id}")
+async def update_user_login_streak(user_id: str, streak_data: dict, db: Session = Depends(get_db)):
+    """Update user login streak"""
+    try:
+        from app.models import UserLoginStreak
+        streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
+        if not streak:
+            raise HTTPException(status_code=404, detail="User login streak not found")
+        
+        if 'current_day' in reward_data:
+            reward.current_day = reward_data['current_day']
+        if 'last_claim_date' in reward_data:
+            reward.last_claim_date = reward_data['last_claim_date']
+        if 'total_cycles_completed' in reward_data:
+            reward.total_cycles_completed = reward_data['total_cycles_completed']
+        
+        reward.updated_at = datetime.utcnow().isoformat()
+        db.commit()
+        db.refresh(reward)
+        
+        return {"success": True, "data": reward.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/user_login_streak/{user_id}")
+async def delete_user_login_streak(user_id: str, db: Session = Depends(get_db)):
+    """Delete user login streak"""
+    try:
+        from app.models import UserLoginStreak
+        streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
+        if not streak:
+            raise HTTPException(status_code=404, detail="User login streak not found")
+        
+        db.delete(streak)
+        db.commit()
+        return {"success": True, "message": "User login streak deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ DAILY LOGIN REWARD CONFIG ENDPOINTS ============
+
+@router.get("/daily_login_reward_config")
+async def get_daily_login_reward_configs(db: Session = Depends(get_db)):
+    """Get all daily login reward configurations"""
+    try:
+        from app.models import DailyLoginRewardConfig
+        configs = db.query(DailyLoginRewardConfig).order_by(DailyLoginRewardConfig.day).all()
+        return {"success": True, "daily_login_reward_config": [c.to_dict() for c in configs]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/daily_login_reward_config/{day}")
+async def get_daily_login_reward_config(day: int, db: Session = Depends(get_db)):
+    """Get daily login reward configuration by day"""
+    try:
+        from app.models import DailyLoginRewardConfig
+        config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Configuration not found")
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/daily_login_reward_config/{day}")
+async def update_daily_login_reward_config(day: int, config_data: dict, db: Session = Depends(get_db)):
+    """Update daily login reward configuration"""
+    try:
+        from app.models import DailyLoginRewardConfig
+        config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Configuration not found")
+        
+        if 'coins_reward' in config_data:
+            config.coins_reward = config_data['coins_reward']
+        if 'emoji' in config_data:
+            config.emoji = config_data['emoji']
+        if 'is_active' in config_data:
+            config.is_active = config_data['is_active']
+        
+        config.updated_at = datetime.utcnow().isoformat()
+        db.commit()
+        db.refresh(config)
+        
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/daily_login_reward_config")
+async def create_daily_login_reward_config(config_data: dict, db: Session = Depends(get_db)):
+    """Create new daily login reward configuration"""
+    try:
+        from app.models import DailyLoginRewardConfig
+        
+        # Check if day already exists
+        existing = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == config_data.get('day')).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Configuration for this day already exists")
+        
+        now = datetime.utcnow().isoformat()
+        config = DailyLoginRewardConfig(
+            day=config_data['day'],
+            coins_reward=config_data['coins_reward'],
+            emoji=config_data.get('emoji', '🪙'),
+            is_active=config_data.get('is_active', 1),
+            created_at=now,
+            updated_at=now
+        )
+        
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+        
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/daily_login_reward_config/{day}")
+async def delete_daily_login_reward_config(day: int, db: Session = Depends(get_db)):
+    """Delete daily login reward configuration"""
+    try:
+        from app.models import DailyLoginRewardConfig
+        config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Configuration not found")
+        
+        db.delete(config)
+        db.commit()
+        return {"success": True, "message": "Configuration deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+        db.delete(reward)
+        db.commit()
+        return {"success": True, "message": "Daily login reward deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

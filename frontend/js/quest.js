@@ -1,4 +1,60 @@
 /**
+ * Show level up modal
+ */
+function showLevelUpModal(levelUpData) {
+    const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
+
+    const modal = document.createElement('div');
+    modal.className = 'level-up-modal';
+    modal.innerHTML = `
+        <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+            <div class="level-up-animation">
+                <div class="level-up-rays"></div>
+                <div class="level-up-badge-container">
+                    <span class="level-up-badge">${badge}</span>
+                </div>
+            </div>
+            <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+            <div class="level-up-levels">
+                <span class="old-level">${old_level}</span>
+                <span class="level-arrow">→</span>
+                <span class="new-level">${new_level}</span>
+            </div>
+            <div class="level-up-new-title">${title}</div>
+            ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+            ${coins_awarded > 0 ? `
+                <div class="level-up-reward">
+                    <span class="reward-icon">🪙</span>
+                    <span class="reward-amount">+${coins_awarded} Coins</span>
+                </div>
+            ` : ''}
+            <button class="level-up-close">Continue</button>
+        </div>
+    `;
+
+    // Load level-up styles if not already loaded
+    if (!document.querySelector('#level-up-styles')) {
+        const link = document.createElement('link');
+        link.id = 'level-up-styles';
+        link.rel = 'stylesheet';
+        link.href = '/css/level-widget.css';
+        document.head.appendChild(link);
+    }
+
+    document.body.appendChild(modal);
+
+    // Trigger animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Close handler
+    const closeBtn = modal.querySelector('.level-up-close');
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    });
+}
+
+/**
  * Highlight the "Da Claimare" filter button when there are unclaimed rewards
  */
 function highlightReadyFilter(quests) {
@@ -115,6 +171,8 @@ async function handleClaimReward(questId, userId) {
         const { claimQuestReward } = await import('./api.js');
         const result = await claimQuestReward(questId, userId);
 
+        console.log('[Quest Claim] Backend response:', result);
+
         // Success animation
         btn.classList.remove('claiming');
         btn.classList.add('claimed-success');
@@ -142,26 +200,21 @@ async function handleClaimReward(questId, userId) {
         }
 
         // Check for level up and show animation
-        if (result.level_up && result.level_milestone) {
-            // Import RuntimeShell to show level up modal
-            const { default: RuntimeShell } = await import('./runtimeShell.js');
+        if (result.level_up && result.level_info) {
+            console.log('🎉 Level up detected!', result);
             
             // Prepare level up data
             const levelUpData = {
                 old_level: result.old_level,
                 new_level: result.new_level,
-                title: result.level_milestone.title,
-                badge: result.level_milestone.badge,
-                // Pass level-up coins awarded by the backend so the banner shows them
+                title: result.level_info.title,
+                badge: result.level_info.badge,
                 coins_awarded: result.level_up_coins || 0,
-                is_milestone: true
+                is_milestone: result.level_info.is_milestone || false
             };
             
-            // Show level up modal using RuntimeShell method
-            if (RuntimeShell && RuntimeShell.prototype.showLevelUpNotification) {
-                const shell = new RuntimeShell();
-                shell.showLevelUpNotification(levelUpData);
-            }
+            // Show level up modal directly (compatible with how games show it)
+            showLevelUpModal(levelUpData);
         }
 
         // Wait for animation to complete, then reload quests

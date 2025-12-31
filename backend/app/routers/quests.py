@@ -261,24 +261,40 @@ async def claim_quest_reward(
     
     # Check if level up occurred
     level_up = new_level > old_level
-    level_milestone = None
+    level_info = None
+    is_milestone = False
+    
+    print(f"[Quest Claim] User {user_id}: old_level={old_level}, new_level={new_level}, level_up={level_up}")
     
     if level_up:
-        # Get milestone info for new level
+        # Get level info (milestone or generic title)
+        level_title_info = LevelSystem.get_level_title(new_level)
+        print(f"[Quest Claim] Level title info: {level_title_info}")
+        
+        # Check if this exact level is a milestone
         milestone = db.query(LevelMilestone).filter(
             LevelMilestone.level == new_level,
             LevelMilestone.is_active == 1
         ).first()
         
+        is_milestone = milestone is not None
+        print(f"[Quest Claim] Is milestone: {is_milestone}")
+        
+        level_info = {
+            "level": new_level,
+            "title": level_title_info.get("title", f"Level {new_level}"),
+            "badge": level_title_info.get("badge", "⭐"),
+            "color": level_title_info.get("color", "#4ade80"),
+            "is_milestone": is_milestone
+        }
+        
         if milestone:
-            level_milestone = {
-                "level": milestone.level,
-                "title": milestone.title,
-                "badge": milestone.badge,
-                "color": milestone.color,
-                "description": milestone.description
-            }
-            print(f"🎉 Level up! {user_id} reached level {new_level}: {milestone.title}")
+            level_info["description"] = milestone.description
+            print(f"🎉 Milestone reached! {user_id} reached level {new_level}: {milestone.title}")
+        else:
+            print(f"🎉 Level up! {user_id} reached level {new_level}")
+        
+        print(f"[Quest Claim] Level info to return: {level_info}")
     
     # Award coin rewards (if any)
     coins_awarded = 0
@@ -350,7 +366,12 @@ async def claim_quest_reward(
         "new_level": new_level
     }
     
-    if level_milestone:
-        response["level_milestone"] = level_milestone
+    if level_info:
+        response["level_info"] = level_info
+        print(f"[Quest Claim] ✅ Added level_info to response: {level_info}")
+    else:
+        print(f"[Quest Claim] ⚠️ level_info is None, not adding to response")
+    
+    print(f"[Quest Claim] Final response keys: {response.keys()}")
     
     return response

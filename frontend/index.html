@@ -401,6 +401,22 @@
             </div>
 
             <div class="profile-content">
+                <!-- Steem Post Button -->
+                <div class="steem-post-banner" id="steemPostBanner" style="display: none;">
+                    <div class="banner-content">
+                        <div class="banner-icon">🎮</div>
+                        <div class="banner-text">
+                            <h3>Share Your Gaming Journey on Steem!</h3>
+                            <p>Showcase your achievements, get upvoted by the Cur8 community, and turn your achievements into real rewards!</p>
+                        </div>
+                        <button id="shareOnSteemBtn" class="btn-share-steem">
+                            <span class="btn-icon">🚀</span>
+                            <span class="btn-text">Share on Steem</span>
+                            <span class="btn-cost">500 🪙</span>
+                        </button>
+                    </div>
+                </div>
+
                 <h3>📊 Game Statistics</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -550,6 +566,9 @@
     <script src="./js/WalletProfileWidget.js"></script>
     <script src="./js/LeaderboardAPI.js"></script>
     <script src="./js/daily-login-banner.js"></script>
+    <script src="./js/SteemPostAPI.js"></script>
+    <script src="./js/SteemPostModal.js"></script>
+    <link rel="stylesheet" href="./css/steem-post-modal.css">
     <script type="module" src="./js/main.js"></script>
     <script src="./js/nav-multiplier.js"></script>
 

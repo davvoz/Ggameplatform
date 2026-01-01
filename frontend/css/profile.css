@@ -36,6 +36,134 @@
     padding-top: var(--spacing-xl);
 }
 
+/* Steem Post Banner */
+.steem-post-banner {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    animation: bannerSlideIn 0.5s ease;
+}
+
+@keyframes bannerSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.banner-icon {
+    font-size: 48px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.banner-text {
+    flex: 1;
+    min-width: 250px;
+}
+
+.banner-text h3 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.banner-text p {
+    margin: 0;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+
+.btn-share-steem {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    white-space: nowrap;
+}
+
+.btn-share-steem:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.btn-share-steem:active {
+    transform: translateY(-1px);
+}
+
+.btn-share-steem .btn-icon {
+    font-size: 20px;
+}
+
+.btn-share-steem .btn-cost {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.btn-share-steem.disabled,
+.btn-share-steem:disabled {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-share-steem.disabled:hover,
+.btn-share-steem:disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+@media (max-width: 768px) {
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .banner-icon {
+        font-size: 64px;
+    }
+
+    .banner-text {
+        min-width: unset;
+    }
+
+    .btn-share-steem {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .profile-header {
     background: var(--background-light);
     padding: var(--spacing-2xl);

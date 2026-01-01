@@ -319,6 +319,9 @@ class ProfileRenderer {
         this.appContainer.innerHTML = '';
         this.appContainer.appendChild(profileContent);
 
+        // Initialize Steem post button
+        this.initializeSteemPostButton(user);
+
         // Show loading in activity sections
         const activityContainer = document.getElementById('recentActivityContainer');
         if (activityContainer) {
@@ -1530,14 +1533,105 @@ class ProfileRenderer {
             });
         }
     }
-}
-/**
- * Render the profile page
- */
 
-export async function renderProfile() {
-    const renderer = new ProfileRenderer();
-    await renderer.render();
+    /**
+     * Initialize Steem post button
+     */
+    async initializeSteemPostButton(user) {
+        const steemPostBanner = document.getElementById('steemPostBanner');
+        const shareBtn = document.getElementById('shareOnSteemBtn');
+
+        // Only show for Steem users
+        if (user && (user.steem_username || user.username) && steemPostBanner) {
+            steemPostBanner.style.display = 'block';
+
+            // Initialize API if needed
+            if (!window.steemPostAPI) {
+                const API_URL = window.ENV?.API_URL || window.location.origin;
+                window.steemPostAPI = new SteemPostAPI(API_URL);
+            }
+
+            // Check post availability (cooldown)
+            try {
+                const availability = await window.steemPostAPI.checkPostAvailability(user.user_id);
+                
+                if (!availability.can_post && shareBtn) {
+                    // Format time remaining
+                    const formatTimeRemaining = (hours, minutes) => {
+                        if (hours > 0) {
+                            return `${hours}h ${minutes}m`;
+                        } else {
+                            return `${minutes}m`;
+                        }
+                    };
+                    
+                    // Disable button and show cooldown
+                    shareBtn.disabled = true;
+                    shareBtn.classList.add('disabled');
+                    shareBtn.innerHTML = `
+                        <span class="btn-icon">⏱️</span>
+                        <span class="btn-text">Available in ${formatTimeRemaining(availability.hours_remaining, availability.minutes_remaining)}</span>
+                        <span class="btn-cost">500 🪙</span>
+                    `;
+                    
+                    // Update button every minute
+                    const updateInterval = setInterval(async () => {
+                        try {
+                            const newAvailability = await window.steemPostAPI.checkPostAvailability(user.user_id);
+                            if (newAvailability.can_post) {
+                                // Enable button
+                                shareBtn.disabled = false;
+                                shareBtn.classList.remove('disabled');
+                                shareBtn.innerHTML = `
+                                    <span class="btn-icon">🚀</span>
+                                    <span class="btn-text">Share on Steem</span>
+                                    <span class="btn-cost">500 🪙</span>
+                                `;
+                                clearInterval(updateInterval);
+                            } else {
+                                // Update countdown
+                                shareBtn.innerHTML = `
+                                    <span class="btn-icon">⏱️</span>
+                                    <span class="btn-text">Available in ${formatTimeRemaining(newAvailability.hours_remaining, newAvailability.minutes_remaining)}</span>
+                                    <span class="btn-cost">500 🪙</span>
+                                `;
+                            }
+                        } catch (error) {
+                            console.error('Error updating cooldown:', error);
+                        }
+                    }, 60000); // Update every minute
+                }
+            } catch (error) {
+                console.error('Error checking post availability:', error);
+            }
+
+            if (shareBtn) {
+                shareBtn.addEventListener('click', async () => {
+                    // Don't open if disabled
+                    if (shareBtn.disabled) return;
+                    
+                    try {
+                        // Initialize services if not already done
+                        if (!window.coinAPI) {
+                            const API_URL = window.ENV?.API_URL || window.location.origin;
+                            window.coinAPI = new CoinAPI(API_URL);
+                        }
+
+                        // Create and show modal
+                        const modal = new SteemPostModal(
+                            window.steemPostAPI,
+                            window.coinAPI,
+                            this.authManager
+                        );
+                        await modal.show();
+                    } catch (error) {
+                        console.error('Error showing Steem post modal:', error);
+                        alert(`Failed to open post creator: ${error.message}`);
+                    }
+                });
+            }
+        }
+    }
 }
 
 /**
@@ -1550,6 +1644,14 @@ export async function fetchSteemProfile(username) {
 }
 
 export const steemProfileService = new SteemProfileService();
+
+/**
+ * Exported render function for router
+ */
+export async function renderProfile() {
+    const renderer = new ProfileRenderer();
+    await renderer.render();
+}
 
 // Expose a helper to open the canonical CUR8 multiplier modal from other scripts
 try {

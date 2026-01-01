@@ -119,6 +119,7 @@ class User(Base):
     last_login = Column(String, nullable=True)
     login_streak = Column(Integer, default=0)  # Current consecutive login days
     last_login_date = Column(String, nullable=True)  # Date of last login (YYYY-MM-DD)
+    last_steem_post = Column(String, nullable=True)  # ISO timestamp of last Steem post publication
     extra_data = Column(Text, default='{}')  # Renamed from 'metadata'
     
     # Relationships

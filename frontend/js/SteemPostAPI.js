@@ -233,40 +233,46 @@ class SteemPostAPI {
             // Generate permlink
             const permlink = this._generatePermlink(title);
 
-            // Use dhive library via CDN
-            if (!window.dhive) {
-                // Load dhive dynamically
+            // Use dsteem library via CDN
+            if (!window.dsteem) {
+                // Load dsteem dynamically
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/dsteem@latest/dist/dsteem.js';
                 script.onload = () => {
-                    this._publishWithDhive(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
+                    this._publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
                 };
                 script.onerror = () => {
                     reject(new Error('Failed to load Steem publishing library. Please try again or use Keychain.'));
                 };
                 document.head.appendChild(script);
             } else {
-                this._publishWithDhive(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
+                this._publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
             }
         });
     }
 
     /**
-     * Publish post using dhive library
+     * Publish post using dsteem library
      * @private
      */
-    async _publishWithDhive(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject) {
+    async _publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject) {
         try {
-            const dhive = window.dhive;
+            console.log('Publishing with posting key...');
+            console.log('Username:', steemUsername);
+            console.log('Permlink:', permlink);
+            console.log('Tags:', tags);
+            
+            const dsteem = window.dsteem;
             
             // Create client
-            const client = new dhive.Client([
-                'https://api.steemit.com',
-                'https://api.moecki.online'
-            ]);
+            const client = new dsteem.Client('https://api.steemit.com');
 
             // Create private key
-            const key = dhive.PrivateKey.fromString(postingKey);
+            const key = dsteem.PrivateKey.fromString(postingKey);
+            
+            // Get public key from private key
+            const publicKey = key.createPublic().toString();
+            console.log('Public key derived from posting key:', publicKey);
 
             // Prepare comment operation
             const commentOp = [
@@ -284,6 +290,8 @@ class SteemPostAPI {
                     })
                 }
             ];
+            
+            console.log('Broadcasting operation to Steem blockchain...');
 
             // Broadcast operation
             const result = await client.broadcast.sendOperations([commentOp], key);

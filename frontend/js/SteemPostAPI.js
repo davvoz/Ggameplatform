@@ -103,6 +103,36 @@ class SteemPostAPI {
     }
 
     /**
+     * Confirm successful post publication (updates cooldown timer)
+     * @param {string} userId - User ID
+     * @param {string} postUrl - Published post URL
+     */
+    async confirmPost(userId, postUrl) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/steem/confirm-post`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    post_url: postUrl
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to confirm post');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error confirming post:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Refund coins if post publication failed
      * @param {string} userId - User ID
      * @param {string} transactionId - Original transaction ID

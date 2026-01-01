@@ -276,6 +276,15 @@ class SteemPostModal {
                 }
             }
 
+            // Confirm post publication and update cooldown timer
+            try {
+                await this.steemPostAPI.confirmPost(user.user_id, result.post_url);
+                console.log('Post confirmed, cooldown timer updated');
+            } catch (confirmError) {
+                console.error('Failed to confirm post (cooldown not updated):', confirmError);
+                // Don't fail the entire process, just log the error
+            }
+
             // Success!
             this.showSuccess(result.post_url);
 

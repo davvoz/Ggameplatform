@@ -294,10 +294,8 @@ async def create_post(
                 detail="Insufficient balance"
             )
         
-        # Update last post timestamp
-        from datetime import datetime
-        user.last_steem_post = datetime.utcnow().isoformat()
-        db.commit()
+        # NOTE: Do NOT update last_steem_post here!
+        # It will be updated by the /confirm-post endpoint after successful publication
         
         # Return post data for frontend to publish
         # The frontend will use Steem Keychain to actually broadcast
@@ -390,6 +388,64 @@ async def get_post_availability(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check availability: {str(e)}"
+        )
+
+
+@router.post("/confirm-post")
+async def confirm_post(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Confirm successful post publication and update cooldown timer
+    
+    This endpoint should be called ONLY after the post has been successfully
+    published to the blockchain via Keychain or posting key.
+    
+    Args:
+        request: Dict with user_id and post_url
+        
+    Returns:
+        Confirmation status
+    """
+    try:
+        user_id = request.get('user_id')
+        post_url = request.get('post_url')
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing user_id"
+            )
+        
+        # Get user
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Update last post timestamp
+        from datetime import datetime
+        user.last_steem_post = datetime.utcnow().isoformat()
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Post confirmed and cooldown timer updated",
+            "next_post_available": datetime.fromisoformat(user.last_steem_post),
+            "cooldown_hours": 48
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to confirm post: {str(e)}"
         )
 
 

@@ -16,21 +16,19 @@ import uuid
 def calculate_coins(level):
     """Calculate coins for a level based on progressive formula"""
     
-    # Base coins based on level range
-    if level <= 10:
-        base = level * 2
-    elif level <= 20:
-        base = level * 3
+    # More balanced progression - slower growth
+    if level <= 20:
+        base = 5 + level  # 6-25 coins
     elif level <= 50:
-        base = level * 5
+        base = 10 + level  # 31-60 coins
     elif level <= 100:
-        base = level * 8
+        base = 15 + (level // 2)  # 40-65 coins
     else:  # 101-200
-        base = level * 10
+        base = 20 + (level // 3)  # 53-86 coins
     
-    # Bonus for multiples of 5: +20 coins
+    # Small bonus for multiples of 5: +5 coins
     if level % 5 == 0:
-        base += 20
+        base += 10
     
     return base
 
@@ -63,13 +61,14 @@ def populate_level_rewards():
     clear_existing_rewards()
     
     print("\n📊 Reward Structure:")
-    print("  Levels 1-10:   level × 2 coins")
-    print("  Levels 11-20:  level × 3 coins")
-    print("  Levels 21-50:  level × 5 coins")
-    print("  Levels 51-100: level × 8 coins")
-    print("  Levels 101-200: level × 10 coins")
-    print("  Bonus: Multiples of 5 get +20 coins")
-    print("    Example: Level 10 = 10×2+20 = 40 coins")
+    print("  Levels 2-20:   5 + level coins (6-30)")
+    print("  Levels 21-50:  10 + level coins (31-60)")
+    print("  Levels 51-100: 15 + level/2 coins (40-65)")
+    print("  Levels 101-200: 20 + level/3 coins (53-86)")
+    print("  Bonus: Multiples of 5 get +5 coins")
+    print("    Example: Level 10 = 5+10+5 = 20 coins")
+    print("    Example: Level 50 = 10+50+5 = 65 coins")
+    print("    Example: Level 200 = 20+66+5 = 91 coins")
     
     print("\n💰 Creating rewards...")
     

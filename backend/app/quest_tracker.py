@@ -226,6 +226,12 @@ class QuestTracker:
             self._process_merge_td_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Rainbow Rush game quests
+        if game_id == 'rainbow-rush' and tracking_type:
+            print(f"🌈 [QuestTracker] Processing RR quest: {quest.title} (type: {tracking_type})")
+            self._process_rainbow_rush_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative)
@@ -754,6 +760,95 @@ class QuestTracker:
         
         elif tracking_type == 'total_kills':
             self.update_quest_progress(user_id, quest, cumulative['total_kills'])
+        
+        elif tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'])
+    
+    def _process_rainbow_rush_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                     tracking_type: str, score: int, extra_data: Dict):
+        """Process Rainbow Rush game-specific quests."""
+        print(f"    🌈 [RR] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        today = self._get_today_date()
+        
+        if reset_period == 'daily' and reset_on_complete:
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # Only reset if quest WAS completed and it's a new day
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 Daily reset triggered for {quest.title}")
+                user_quest.current_progress = 0
+                user_quest.is_completed = 0
+                user_quest.is_claimed = 0
+                user_quest.completed_at = None
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = {
+                    'levels_completed': 0,
+                    'coins_collected': 0,
+                    'high_score': 0,
+                    'games_played': 0
+                }
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative data if not present
+        if 'cumulative' not in stored_data:
+            stored_data['cumulative'] = {
+                'levels_completed': 0,
+                'coins_collected': 0,
+                'high_score': 0,
+                'games_played': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            # Get session stats - Rainbow Rush uses different field names:
+            # 'level' for current level (not cumulative), 'collectibles' for coins
+            # Also support new naming if frontend is updated
+            session_levels = extra_data.get('levels_completed', 0) or extra_data.get('level', 0)
+            session_coins = extra_data.get('coins_collected', 0) or extra_data.get('collectibles', 0)
+            
+            print(f"    🌈 [RR] Session stats: levels={session_levels}, coins={session_coins}, score={score}")
+            
+            # Accumulate levels and coins
+            cumulative['levels_completed'] += session_levels
+            cumulative['coins_collected'] += session_coins
+            
+            # Track high score (best ever)
+            if score > cumulative['high_score']:
+                cumulative['high_score'] = score
+            
+            print(f"    🌈 [RR] Cumulative: levels={cumulative['levels_completed']}, coins={cumulative['coins_collected']}, high_score={cumulative['high_score']}")
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'levels_completed':
+            self.update_quest_progress(user_id, quest, cumulative['levels_completed'])
+        
+        elif tracking_type == 'coins_collected':
+            self.update_quest_progress(user_id, quest, cumulative['coins_collected'])
+        
+        elif tracking_type == 'high_score':
+            # Check if high score meets target
+            if cumulative['high_score'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1)
         
         elif tracking_type == 'games_played':
             self.update_quest_progress(user_id, quest, cumulative['games_played'])

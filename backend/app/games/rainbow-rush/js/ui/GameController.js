@@ -594,6 +594,8 @@ export class GameController {
     // === PRIVATE HELPERS ===
 
     _startDeathSequence() {
+        //chiudiamo la sessione
+        this.sdkManager.gameOver(this.scoreSystem.getTotalScore(), this.scoreSystem.getGameStats());
         console.log('💀 Player died, starting death sequence');
         this.animationController.isShowingDeathAnimation = true;
         this.animationController.startDeathSequence(

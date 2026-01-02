@@ -326,12 +326,15 @@ class SessionEndRequest(BaseModel):
     """End session request schema"""
     score: Optional[int] = Field(default=None, description="Final score")
     current_stats: Optional[Dict[str, Any]] = Field(default=None, description="Final statistics")
+    
+    class Config:
+        extra = 'allow'  # Allow extra fields
 
 
 @router.post("/session/{session_id}/end")
 async def end_session(
     session_id: str,
-    request: SessionEndRequest = SessionEndRequest(),
+    request: Optional[SessionEndRequest] = None,
     service: RainbowRushService = Depends(get_rainbow_rush_service)
 ):
     """
@@ -347,6 +350,11 @@ async def end_session(
     """
     try:
         print(f"🎯 [Rainbow Rush] Ending session {session_id}")
+        
+        # Handle None request (empty body)
+        if request is None:
+            request = SessionEndRequest()
+        
         print(f"📊 [Rainbow Rush] Request score: {request.score}")
         print(f"📊 [Rainbow Rush] Request stats: {request.current_stats}")
         
@@ -372,6 +380,9 @@ async def end_session(
             "message": "Session ended successfully"
         })
     except Exception as e:
+        print(f"❌ [Rainbow Rush] Error ending session: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error ending session: {str(e)}"

@@ -399,12 +399,37 @@ class RainbowRushService:
             
             # Extract score from current_stats if available
             score = 0
+            extra_data = {}
             try:
                 if session.current_stats:
                     stats = json.loads(session.current_stats) if isinstance(session.current_stats, str) else session.current_stats
                     score = stats.get('score', 0)
+                    
+                    # Extract extra data for quest tracking
+                    # Check if extra_data is nested inside stats (from frontend)
+                    nested_extra = stats.get('extra_data', {})
+                    
+                    extra_data = {
+                        'levels_completed': nested_extra.get('levels_completed', 
+                                           stats.get('levels_completed', 
+                                           stats.get('levelsCompleted', 
+                                           stats.get('level', 0)))),
+                        'coins_collected': nested_extra.get('coins_collected',
+                                          stats.get('coins_collected', 
+                                          stats.get('coinsCollected', 
+                                          stats.get('collectibles', 
+                                          stats.get('coins', 0))))),
+                        'distance': nested_extra.get('distance', stats.get('distance', 0)),
+                        'enemies_defeated': nested_extra.get('enemies_defeated', 
+                                           stats.get('enemies_defeated', 
+                                           stats.get('enemiesDefeated', 0))),
+                        'powerups_collected': nested_extra.get('powerups_collected',
+                                             stats.get('powerups_collected', 
+                                             stats.get('powerupsCollected', 0))),
+                    }
                     print(f"🎯 [Rainbow Rush] Extracted score from session: {score}")
                     print(f"📊 [Rainbow Rush] Full stats: {stats}")
+                    print(f"🎮 [Rainbow Rush] Extra data for quests: {extra_data}")
             except Exception as e:
                 print(f"⚠️ [Rainbow Rush] Error extracting score: {e}")
                 pass
@@ -422,10 +447,11 @@ class RainbowRushService:
             # Prepare session data for quest tracker
             session_data = {
                 'user_id': session.user_id,
-                'game_id': 'rainbow_rush',
+                'game_id': 'rainbow-rush',  # Must match quest config game_id
                 'score': score,
                 'duration_seconds': duration_seconds,
-                'xp_earned': xp_earned
+                'xp_earned': xp_earned,
+                'extra_data': extra_data  # Contains levels_completed, coins_collected, etc.
             }
             
             # Get coin service for quest rewards

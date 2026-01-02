@@ -216,6 +216,7 @@ class QuestResponse(BaseModel):
     reward_coins: int
     is_active: bool
     created_at: str
+    config: Optional[dict] = None
     
     class Config:
         orm_mode = True

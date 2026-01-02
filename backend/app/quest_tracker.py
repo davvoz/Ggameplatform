@@ -124,6 +124,11 @@ class QuestTracker:
             if not user_quest.is_completed:
                 user_quest.is_completed = 1
                 user_quest.completed_at = datetime.utcnow().isoformat()
+                
+                # Save completion date for daily reset logic
+                extra_data = self._get_quest_extra_data(user_quest)
+                extra_data['last_completion_date'] = self._get_today_date()
+                self._set_quest_extra_data(user_quest, extra_data)
 
                 # Award XP (only once)
                 user = self.db.query(User).filter(User.user_id == user_id).first()
@@ -157,32 +162,77 @@ class QuestTracker:
         score = session_data.get('score', 0)
         duration_seconds = session_data.get('duration_seconds', 0)
         xp_earned = session_data.get('xp_earned', 0)
+        extra_data = session_data.get('extra_data', {}) or {}
+        
+        print(f"🎯 [QuestTracker] track_session_end called:")
+        print(f"    user_id: {user_id}, game_id: {game_id}, score: {score}")
+        print(f"    extra_data: {extra_data}")
         
         if not user_id:
+            print(f"⚠️ [QuestTracker] No user_id, skipping quest tracking")
             return
         
         # Get all active quests
         quests = self.db.query(Quest).filter(Quest.is_active == 1).all()
+        print(f"📋 [QuestTracker] Found {len(quests)} active quests to check")
         
         for quest in quests:
-            self._process_quest_for_session(user_id, quest, game_id, score, duration_seconds, xp_earned)
+            self._process_quest_for_session(user_id, quest, game_id, score, duration_seconds, xp_earned, extra_data)
         
         # Note: Do NOT commit here - let the caller manage the transaction
         # self.db.commit()
     
     def _process_quest_for_session(self, user_id: str, quest: Quest, game_id: str, 
-                                   score: int, duration_seconds: int, xp_earned: float):
+                                   score: int, duration_seconds: int, xp_earned: float,
+                                   extra_data: Dict = None):
         """Process a single quest based on session data."""
         
+        extra_data = extra_data or {}
         quest_type = quest.quest_type
+        
+        # Parse quest config to check for game-specific quests
+        quest_config = {}
+        try:
+            quest_config = json.loads(quest.config) if quest.config else {}
+        except:
+            pass
+        
+        # Check if this quest is for a specific game
+        quest_game_id = quest_config.get('game_id')
+        if quest_game_id and quest_game_id != game_id:
+            # This quest is for a different game, skip
+            return
+        
+        # Get the quest tracking type from config
+        tracking_type = quest_config.get('type', '')
+        
+        # ============ GAME-SPECIFIC QUEST HANDLING ============
+        
+        # Seven game quests
+        if game_id == 'seven' and tracking_type:
+            print(f"🎲 [QuestTracker] Processing Seven quest: {quest.title} (type: {tracking_type})")
+            self._process_seven_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
+        # Yatzi game quests
+        if game_id == 'yatzi_3d_by_luciogiolli' and tracking_type:
+            print(f"🎲 [QuestTracker] Processing Yatzi quest: {quest.title} (type: {tracking_type})")
+            self._process_yatzi_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
+        # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative)
         if quest_type == "play_games":
-            # Count total completed sessions
-            total_sessions = self.db.query(GameSession).filter(
+            # Count completed sessions - filter by game_id if specified in quest config
+            query = self.db.query(GameSession).filter(
                 GameSession.user_id == user_id,
                 GameSession.ended_at.isnot(None)
-            ).count()
+            )
+            # If quest is for a specific game, only count sessions for that game
+            if quest_game_id:
+                query = query.filter(GameSession.game_id == quest_game_id)
+            total_sessions = query.count()
             self.update_quest_progress(user_id, quest, total_sessions)
         
         # Play games weekly (resets each week)
@@ -386,6 +436,239 @@ class QuestTracker:
         
         # Note: Do NOT commit here - let the caller manage the transaction
         # self.db.commit()
+    
+    def _process_seven_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                              tracking_type: str, score: int, extra_data: Dict):
+        """Process Seven game-specific quests."""
+        print(f"    🎰 [Seven] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        
+        if reset_period == 'daily' and reset_on_complete:
+            today = self._get_today_date()
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # If quest was completed on a previous day, reset it
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 [Seven] Resetting completed quest for new day: {quest.title}")
+                user_quest.is_completed = 0
+                user_quest.current_progress = 0
+                user_quest.completed_at = None
+                user_quest.is_claimed = 0
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = None
+                stored_data['last_reset_date'] = today
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+                # Re-fetch stored_data after reset
+                stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Initialize cumulative counters if not present
+        if 'cumulative' not in stored_data or stored_data['cumulative'] is None:
+            stored_data['cumulative'] = {
+                'rolls_played': 0,
+                'wins': 0,
+                'losses': 0,
+                'win_streak': 0,
+                'max_win_streak': 0,
+                'total_profit': 0,
+                'roll_seven_count': 0,
+                'wins_under': 0,
+                'wins_over': 0,
+                'max_bet_won': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment rolls played
+            cumulative['rolls_played'] += 1
+            
+            won = extra_data.get('won', False)
+            net_profit = extra_data.get('net_profit', 0)
+            bet_amount = extra_data.get('bet_amount', 0)
+            bet_type = extra_data.get('bet_type', '')
+            dice_sum = extra_data.get('sum', 0)
+            winnings = extra_data.get('winnings', 0)
+            
+            # Track wins/losses
+            if won:
+                cumulative['wins'] += 1
+                cumulative['win_streak'] += 1
+                cumulative['max_win_streak'] = max(cumulative['max_win_streak'], cumulative['win_streak'])
+                
+                # Track wins by bet type
+                if bet_type == 'under':
+                    cumulative['wins_under'] += 1
+                elif bet_type == 'over':
+                    cumulative['wins_over'] += 1
+                
+                # Track high bet wins
+                if bet_amount > cumulative['max_bet_won']:
+                    cumulative['max_bet_won'] = bet_amount
+            else:
+                cumulative['losses'] += 1
+                cumulative['win_streak'] = 0
+            
+            # Track total profit
+            cumulative['total_profit'] += net_profit
+            
+            # Track rolling 7
+            if dice_sum == 7:
+                cumulative['roll_seven_count'] += 1
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'rolls_played':
+            self.update_quest_progress(user_id, quest, cumulative['rolls_played'])
+        
+        elif tracking_type == 'win_streak':
+            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'])
+        
+        elif tracking_type == 'total_profit':
+            # Only count positive profit
+            if cumulative['total_profit'] > 0:
+                self.update_quest_progress(user_id, quest, cumulative['total_profit'])
+        
+        elif tracking_type == 'roll_seven':
+            self.update_quest_progress(user_id, quest, cumulative['roll_seven_count'])
+        
+        elif tracking_type == 'win_under_bets':
+            self.update_quest_progress(user_id, quest, cumulative['wins_under'])
+        
+        elif tracking_type == 'win_over_bets':
+            self.update_quest_progress(user_id, quest, cumulative['wins_over'])
+        
+        elif tracking_type == 'win_with_high_bet':
+            # Quest target_value is the minimum bet to win with
+            if cumulative['max_bet_won'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1)
+    
+    def _process_yatzi_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                              tracking_type: str, score: int, extra_data: Dict):
+        """Process Yatzi 3D game-specific quests."""
+        print(f"    🎲 [Yatzi] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        
+        if reset_period == 'daily' and reset_on_complete:
+            today = self._get_today_date()
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # If quest was completed on a previous day, reset it
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 [Yatzi] Resetting completed quest for new day: {quest.title}")
+                user_quest.is_completed = 0
+                user_quest.current_progress = 0
+                user_quest.completed_at = None
+                user_quest.is_claimed = 0
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = None
+                stored_data['last_reset_date'] = today
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+                # Re-fetch stored_data after reset
+                stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Initialize cumulative counters if not present
+        if 'cumulative' not in stored_data or stored_data['cumulative'] is None:
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'wins': 0,
+                'win_streak': 0,
+                'max_win_streak': 0,
+                'high_score': 0,
+                'roll_yatzi_count': 0,
+                'full_houses': 0,
+                'large_straights': 0,
+                'upper_bonus_count': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            winner = extra_data.get('winner', '')
+            player_score = score  # Score is player's score
+            
+            # Track wins
+            if winner == 'player':
+                cumulative['wins'] += 1
+                cumulative['win_streak'] += 1
+                cumulative['max_win_streak'] = max(cumulative['max_win_streak'], cumulative['win_streak'])
+            else:
+                cumulative['win_streak'] = 0
+            
+            # Track high score
+            if player_score > cumulative['high_score']:
+                cumulative['high_score'] = player_score
+            
+            # Track specific achievements from extra_data
+            if extra_data.get('roll_yatzi', False):
+                cumulative['roll_yatzi_count'] += 1
+            
+            if extra_data.get('full_house', False):
+                cumulative['full_houses'] += 1
+            
+            if extra_data.get('large_straight', False):
+                cumulative['large_straights'] += 1
+            
+            if extra_data.get('upper_bonus', False):
+                cumulative['upper_bonus_count'] += 1
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'])
+        
+        elif tracking_type == 'wins':
+            self.update_quest_progress(user_id, quest, cumulative['wins'])
+        
+        elif tracking_type == 'win_streak':
+            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'])
+        
+        elif tracking_type == 'high_score':
+            # Check if current high score meets target
+            if cumulative['high_score'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1)
+        
+        elif tracking_type == 'roll_yatzi':
+            self.update_quest_progress(user_id, quest, cumulative['roll_yatzi_count'])
+        
+        elif tracking_type == 'full_houses':
+            self.update_quest_progress(user_id, quest, cumulative['full_houses'])
+        
+        elif tracking_type == 'large_straight':
+            self.update_quest_progress(user_id, quest, cumulative['large_straights'])
+        
+        elif tracking_type == 'upper_section_bonus':
+            self.update_quest_progress(user_id, quest, cumulative['upper_bonus_count'])
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

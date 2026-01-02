@@ -641,7 +641,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
                 'game_id': game_session.game_id,
                 'score': score,
                 'duration_seconds': duration_seconds,
-                'xp_earned': xp_earned
+                'xp_earned': xp_earned,
+                'extra_data': extra_data  # Pass extra_data for game-specific quest tracking
             })
             print(f"[DB] Quest progress tracked")
         except Exception as e:

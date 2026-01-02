@@ -779,6 +779,45 @@ main:has(.quests) {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
+.quest-daily-badge {
+    background: linear-gradient(135deg, #00BCD4 0%, #2196F3 100%);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: var(--spacing-sm);
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    cursor: help;
+    position: relative;
+}
+
+.quest-daily-badge::after {
+    content: 'Resets at midnight if completed';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--background);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    margin-bottom: 5px;
+}
+
+.quest-daily-badge:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
 @keyframes pulse-glow {
 
     0%,

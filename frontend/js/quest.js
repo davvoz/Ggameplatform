@@ -653,10 +653,17 @@ class QuestCard {
             ? `<span class="quest-game">Game: ${this.quest.game_id}</span>`
             : '';
 
+        // Check if quest has daily reset configured
+        const config = this.quest.config || {};
+        const dailyBadge = (config.reset_period === 'daily' || config.reset_on_complete)
+            ? '<span class="quest-daily-badge">🔄 Daily</span>'
+            : '';
+
         return `
             <div class="quest-info">
                 <span class="quest-type">${formatQuestType(this.quest.quest_type)}</span>
                 ${gameInfo}
+                ${dailyBadge}
             </div>
         `;
     }

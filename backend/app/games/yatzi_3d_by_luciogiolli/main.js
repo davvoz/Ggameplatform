@@ -102,14 +102,20 @@ function startGameSession() {
 function sendScoreToPlatform(playerScore, aiScore) {
   if (typeof PlatformSDK !== 'undefined') {
     try {
-      PlatformSDK.sendScore(playerScore, {
+      // Send gameOver with achievements for quest tracking
+      PlatformSDK.gameOver(playerScore, {
         extra_data: {
           ai_score: aiScore,
           winner: playerScore > aiScore ? 'player' : (playerScore < aiScore ? 'ai' : 'tie'),
-          rounds_played: gameState.maxRounds
+          rounds_played: gameState.maxRounds,
+          // Quest-specific achievements
+          roll_yatzi: gameState.achievements?.roll_yatzi || false,
+          full_house: gameState.achievements?.full_house || false,
+          large_straight: gameState.achievements?.large_straight || false,
+          upper_bonus: gameState.achievements?.upper_bonus || false
         }
       });
-      console.log(`📊 Score sent: Player=${playerScore}, AI=${aiScore}`);
+      console.log(`📊 Score sent: Player=${playerScore}, AI=${aiScore}`, gameState.achievements);
     } catch (error) {
       console.error('⚠️ Failed to send score:', error);
     }
@@ -261,7 +267,14 @@ function resetGameState() {
     playerScores: initialScoreState(),
     aiScores: initialScoreState(),
     selectedCategory: null,
-    gameOver: false
+    gameOver: false,
+    // Quest tracking: achievements during this game
+    achievements: {
+      roll_yatzi: false,
+      full_house: false,
+      large_straight: false,
+      upper_bonus: false
+    }
   };
   diceMgr.resetHeld();
   diceMgr.resetValues();
@@ -438,6 +451,28 @@ function commitScore(playerId, category, diceValues) {
   target.bonus = totals.bonus;
   target.lowerSubtotal = totals.lowerSubtotal;
   target.total = totals.total;
+
+  // Track achievements for quest system (player only)
+  if (playerId === "player" && s > 0) {
+    if (category === "Yatzi") {
+      gameState.achievements.roll_yatzi = true;
+      console.log("🎯 Achievement: Yatzi!");
+    }
+    if (category === "Full") {
+      gameState.achievements.full_house = true;
+      console.log("🎯 Achievement: Full House!");
+    }
+    if (category === "Scala lunga") {
+      gameState.achievements.large_straight = true;
+      console.log("🎯 Achievement: Large Straight!");
+    }
+  }
+  
+  // Check for upper bonus achievement (player only)
+  if (playerId === "player" && totals.bonus > 0 && !gameState.achievements.upper_bonus) {
+    gameState.achievements.upper_bonus = true;
+    console.log("🎯 Achievement: Upper Bonus!");
+  }
 
   return s;
 }

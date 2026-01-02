@@ -1,8 +1,17 @@
 {
-  "version": "2.15.0",
-  "timestamp": "2026-01-02T18:32:06.279Z",
-  "buildNumber": 166,
+  "version": "2.16.0",
+  "timestamp": "2026-01-02T20:59:56.335Z",
+  "buildNumber": 167,
   "changelog": [
+    {
+      "version": "2.16.0",
+      "date": "2026-01-02",
+      "type": "minor",
+      "changes": [
+        "feat: Implement Rainbow Rush daily quests setup and processing logic",
+        "🔖 Bump version to 2.15.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.15.0",
       "date": "2026-01-02",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: Update daily login reward button text and correct milestone badge label, new script for level rewards",
         "🔖 Bump version to 2.12.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.12.2",
-      "date": "2025-12-30",
-      "type": "patch",
-      "changes": [
-        "fix: Improve daily login reward config table creation logic",
-        "🔖 Bump version to 2.12.1 [skip-version]"
       ]
     }
   ]

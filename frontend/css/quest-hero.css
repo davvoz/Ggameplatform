@@ -686,7 +686,6 @@ main:has(.quests) {
 .reward-icon {
     font-size: 1.4rem;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    animation: icon-float 3s ease-in-out infinite;
 }
 
 @keyframes icon-float {

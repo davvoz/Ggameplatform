@@ -273,7 +273,7 @@
 
 .reward-icon {
     font-size: 36px;
-    animation: levelUpSpin 2s linear infinite;
+   
 }
 
 @keyframes levelUpSpin {

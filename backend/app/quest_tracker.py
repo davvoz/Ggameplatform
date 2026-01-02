@@ -220,6 +220,12 @@ class QuestTracker:
             self._process_yatzi_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Merge Tower Defense game quests
+        if game_id == 'merge-tower-defense' and tracking_type:
+            print(f"🏰 [QuestTracker] Processing MTD quest: {quest.title} (type: {tracking_type})")
+            self._process_merge_td_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative)
@@ -669,6 +675,88 @@ class QuestTracker:
         
         elif tracking_type == 'upper_section_bonus':
             self.update_quest_progress(user_id, quest, cumulative['upper_bonus_count'])
+    
+    def _process_merge_td_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                 tracking_type: str, score: int, extra_data: Dict):
+        """Process Merge Tower Defense game-specific quests."""
+        print(f"    🏰 [MTD] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        today = self._get_today_date()
+        
+        if reset_period == 'daily' and reset_on_complete:
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # Only reset if quest WAS completed and it's a new day
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 Daily reset triggered for {quest.title}")
+                user_quest.current_progress = 0
+                user_quest.is_completed = 0
+                user_quest.is_claimed = 0
+                user_quest.completed_at = None
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = {
+                    'total_kills': 0,
+                    'total_merges': 0,
+                    'max_wave': 0,
+                    'games_played': 0
+                }
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative data if not present
+        if 'cumulative' not in stored_data:
+            stored_data['cumulative'] = {
+                'total_kills': 0,
+                'total_merges': 0,
+                'max_wave': 0,
+                'games_played': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            # Get session stats
+            session_kills = extra_data.get('kills', 0)
+            session_merges = extra_data.get('tower_merges', 0)
+            session_wave = extra_data.get('wave', 0)
+            
+            # Accumulate kills and merges
+            cumulative['total_kills'] += session_kills
+            cumulative['total_merges'] += session_merges
+            
+            # Track max wave (highest ever reached)
+            if session_wave > cumulative['max_wave']:
+                cumulative['max_wave'] = session_wave
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'max_wave':
+            self.update_quest_progress(user_id, quest, cumulative['max_wave'])
+        
+        elif tracking_type == 'tower_merges':
+            self.update_quest_progress(user_id, quest, cumulative['total_merges'])
+        
+        elif tracking_type == 'total_kills':
+            self.update_quest_progress(user_id, quest, cumulative['total_kills'])
+        
+        elif tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'])
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

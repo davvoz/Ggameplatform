@@ -76,9 +76,8 @@ class DailyQuestScheduler:
                                     logger.info(f"🔄 Resetting quest '{quest.title}' for user {user_quest.user_id}")
                                     logger.info(f"   last_completion: {last_completion} -> today: {today}")
                                     
-                                    # Reset cumulative data
-                                    if 'cumulative' in extra_data:
-                                        extra_data['cumulative'] = {}
+                                    # Reset cumulative data (set to None so it gets re-initialized)
+                                    extra_data['cumulative'] = None
                                     extra_data['last_reset_date'] = today
                                     
                                     # Reset progress

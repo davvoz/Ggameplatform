@@ -100,12 +100,13 @@ class QuestTracker:
         
         return False
     
-    def update_quest_progress(self, user_id: str, quest: Quest, new_progress: int):
+    def update_quest_progress(self, user_id: str, quest: Quest, new_progress: int, user_quest: UserQuest = None):
         """Update progress for a specific quest."""
         if quest.is_active == 0:
             return
         
-        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        if user_quest is None:
+            user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
         
         # For cumulative quests (login_streak, reach_level), always update progress
         # even if already completed, to show current status
@@ -117,6 +118,7 @@ class QuestTracker:
         
         # Update progress
         user_quest.current_progress = new_progress
+        print(f"    📈 [QuestTracker] Updated progress: {quest.title} -> {new_progress}/{quest.target_value}")
         
         # Check if quest is completed
         if user_quest.current_progress >= quest.target_value:
@@ -482,8 +484,8 @@ class QuestTracker:
                 # Re-fetch stored_data after reset
                 stored_data = self._get_quest_extra_data(user_quest)
         
-        # Initialize cumulative counters if not present
-        if 'cumulative' not in stored_data or stored_data['cumulative'] is None:
+        # Initialize cumulative counters if not present or empty (after reset)
+        if 'cumulative' not in stored_data or not stored_data['cumulative']:
             stored_data['cumulative'] = {
                 'rolls_played': 0,
                 'wins': 0,
@@ -544,29 +546,45 @@ class QuestTracker:
         
         # Now update quest progress based on tracking type
         if tracking_type == 'rolls_played':
-            self.update_quest_progress(user_id, quest, cumulative['rolls_played'])
+            self.update_quest_progress(user_id, quest, cumulative['rolls_played'], user_quest)
         
         elif tracking_type == 'win_streak':
-            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'])
+            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'], user_quest)
         
         elif tracking_type == 'total_profit':
             # Only count positive profit
             if cumulative['total_profit'] > 0:
-                self.update_quest_progress(user_id, quest, cumulative['total_profit'])
+                self.update_quest_progress(user_id, quest, cumulative['total_profit'], user_quest)
         
         elif tracking_type == 'roll_seven':
-            self.update_quest_progress(user_id, quest, cumulative['roll_seven_count'])
+            self.update_quest_progress(user_id, quest, cumulative['roll_seven_count'], user_quest)
         
         elif tracking_type == 'win_under_bets':
-            self.update_quest_progress(user_id, quest, cumulative['wins_under'])
+            self.update_quest_progress(user_id, quest, cumulative['wins_under'], user_quest)
         
         elif tracking_type == 'win_over_bets':
-            self.update_quest_progress(user_id, quest, cumulative['wins_over'])
+            self.update_quest_progress(user_id, quest, cumulative['wins_over'], user_quest)
         
         elif tracking_type == 'win_with_high_bet':
-            # Quest target_value is the minimum bet to win with
-            if cumulative['max_bet_won'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1)
+            # min_bet from config specifies the minimum bet amount to count
+            min_bet = quest_config.get('min_bet', 30)
+            bet_amount = extra_data.get('bet_amount', 0)
+            won = extra_data.get('won', False)
+            
+            # Count wins with high bets
+            if won and bet_amount >= min_bet:
+                # Initialize counter if not present
+                if 'high_bet_wins' not in cumulative:
+                    cumulative['high_bet_wins'] = 0
+                cumulative['high_bet_wins'] += 1
+                
+                # Save updated cumulative
+                stored_data['cumulative'] = cumulative
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+                
+                print(f"    🎰 [Seven] High bet win! bet={bet_amount} >= min_bet={min_bet}, count={cumulative['high_bet_wins']}")
+                self.update_quest_progress(user_id, quest, cumulative['high_bet_wins'], user_quest)
     
     def _process_yatzi_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
                               tracking_type: str, score: int, extra_data: Dict):
@@ -601,8 +619,8 @@ class QuestTracker:
                 # Re-fetch stored_data after reset
                 stored_data = self._get_quest_extra_data(user_quest)
         
-        # Initialize cumulative counters if not present
-        if 'cumulative' not in stored_data or stored_data['cumulative'] is None:
+        # Initialize cumulative counters if not present or empty (after reset)
+        if 'cumulative' not in stored_data or not stored_data['cumulative']:
             stored_data['cumulative'] = {
                 'games_played': 0,
                 'wins': 0,
@@ -657,30 +675,30 @@ class QuestTracker:
         
         # Now update quest progress based on tracking type
         if tracking_type == 'games_played':
-            self.update_quest_progress(user_id, quest, cumulative['games_played'])
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
         
         elif tracking_type == 'wins':
-            self.update_quest_progress(user_id, quest, cumulative['wins'])
+            self.update_quest_progress(user_id, quest, cumulative['wins'], user_quest)
         
         elif tracking_type == 'win_streak':
-            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'])
+            self.update_quest_progress(user_id, quest, cumulative['max_win_streak'], user_quest)
         
         elif tracking_type == 'high_score':
             # Check if current high score meets target
             if cumulative['high_score'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1)
+                self.update_quest_progress(user_id, quest, 1, user_quest)
         
         elif tracking_type == 'roll_yatzi':
-            self.update_quest_progress(user_id, quest, cumulative['roll_yatzi_count'])
+            self.update_quest_progress(user_id, quest, cumulative['roll_yatzi_count'], user_quest)
         
         elif tracking_type == 'full_houses':
-            self.update_quest_progress(user_id, quest, cumulative['full_houses'])
+            self.update_quest_progress(user_id, quest, cumulative['full_houses'], user_quest)
         
         elif tracking_type == 'large_straight':
-            self.update_quest_progress(user_id, quest, cumulative['large_straights'])
+            self.update_quest_progress(user_id, quest, cumulative['large_straights'], user_quest)
         
         elif tracking_type == 'upper_section_bonus':
-            self.update_quest_progress(user_id, quest, cumulative['upper_bonus_count'])
+            self.update_quest_progress(user_id, quest, cumulative['upper_bonus_count'], user_quest)
     
     def _process_merge_td_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
                                  tracking_type: str, score: int, extra_data: Dict):
@@ -753,16 +771,16 @@ class QuestTracker:
         
         # Now update quest progress based on tracking type
         if tracking_type == 'max_wave':
-            self.update_quest_progress(user_id, quest, cumulative['max_wave'])
+            self.update_quest_progress(user_id, quest, cumulative['max_wave'], user_quest)
         
         elif tracking_type == 'tower_merges':
-            self.update_quest_progress(user_id, quest, cumulative['total_merges'])
+            self.update_quest_progress(user_id, quest, cumulative['total_merges'], user_quest)
         
         elif tracking_type == 'total_kills':
-            self.update_quest_progress(user_id, quest, cumulative['total_kills'])
+            self.update_quest_progress(user_id, quest, cumulative['total_kills'], user_quest)
         
         elif tracking_type == 'games_played':
-            self.update_quest_progress(user_id, quest, cumulative['games_played'])
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
     
     def _process_rainbow_rush_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
                                      tracking_type: str, score: int, extra_data: Dict):
@@ -840,18 +858,18 @@ class QuestTracker:
         
         # Now update quest progress based on tracking type
         if tracking_type == 'levels_completed':
-            self.update_quest_progress(user_id, quest, cumulative['levels_completed'])
+            self.update_quest_progress(user_id, quest, cumulative['levels_completed'], user_quest)
         
         elif tracking_type == 'coins_collected':
-            self.update_quest_progress(user_id, quest, cumulative['coins_collected'])
+            self.update_quest_progress(user_id, quest, cumulative['coins_collected'], user_quest)
         
         elif tracking_type == 'high_score':
             # Check if high score meets target
             if cumulative['high_score'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1)
+                self.update_quest_progress(user_id, quest, 1, user_quest)
         
         elif tracking_type == 'games_played':
-            self.update_quest_progress(user_id, quest, cumulative['games_played'])
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

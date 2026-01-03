@@ -1,8 +1,17 @@
 {
-  "version": "3.0.0",
-  "timestamp": "2026-01-03T19:41:54.830Z",
-  "buildNumber": 173,
+  "version": "3.1.0",
+  "timestamp": "2026-01-03T22:15:05.512Z",
+  "buildNumber": 174,
   "changelog": [
+    {
+      "version": "3.1.0",
+      "date": "2026-01-03",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance fullscreen support for iOS with CSS fallback and exit button",
+        "🔖 Bump version to 3.0.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.0.0",
       "date": "2026-01-03",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Implement daily reset functionality for Seven and Yatzi quests, including quest tracking and UI updates",
         "🔖 Bump version to 2.13.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.13.2",
-      "date": "2026-01-01",
-      "type": "patch",
-      "changes": [
-        "fix: Update post publishing to use dsteem library instead of dhive",
-        "🔖 Bump version to 2.13.1 [skip-version]"
       ]
     }
   ]

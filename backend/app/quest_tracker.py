@@ -735,8 +735,8 @@ class QuestTracker:
                 self._set_quest_extra_data(user_quest, stored_data)
                 self.db.flush()
         
-        # Initialize cumulative data if not present
-        if 'cumulative' not in stored_data:
+        # Initialize cumulative data if not present or None
+        if not stored_data.get('cumulative'):
             stored_data['cumulative'] = {
                 'total_kills': 0,
                 'total_merges': 0,
@@ -817,8 +817,8 @@ class QuestTracker:
                 self._set_quest_extra_data(user_quest, stored_data)
                 self.db.flush()
         
-        # Initialize cumulative data if not present
-        if 'cumulative' not in stored_data:
+        # Initialize cumulative data if not present or None
+        if not stored_data.get('cumulative'):
             stored_data['cumulative'] = {
                 'levels_completed': 0,
                 'coins_collected': 0,

@@ -1,8 +1,17 @@
 {
-  "version": "2.19.0",
-  "timestamp": "2026-01-03T16:23:21.091Z",
-  "buildNumber": 171,
+  "version": "2.20.0",
+  "timestamp": "2026-01-03T17:08:51.078Z",
+  "buildNumber": 172,
   "changelog": [
+    {
+      "version": "2.20.0",
+      "date": "2026-01-03",
+      "type": "minor",
+      "changes": [
+        "feat: Update quest tracking logic to use configurable score thresholds and add production fix script for quest data",
+        "🔖 Bump version to 2.19.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.19.0",
       "date": "2026-01-03",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Add confirm-post endpoint to update last post timestamp and integrate with SteemPostModal",
         "🔖 Bump version to 2.13.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.13.0",
-      "date": "2026-01-01",
-      "type": "minor",
-      "changes": [
-        "feat: Add last_steem_post column to users table and implement Steem post modal",
-        "🔖 Bump version to 2.12.6 [skip-version]"
       ]
     }
   ]

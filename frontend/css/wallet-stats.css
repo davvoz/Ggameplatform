@@ -234,7 +234,7 @@
     gap: 12px;
 }
 
-.hero-stat {
+.hero-stat-wt {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -336,7 +336,7 @@
         width: 100%;
     }
     
-    .hero-stat {
+    .hero-stat-wy {
         min-width: auto;
         padding: 12px;
     }

@@ -77,14 +77,14 @@ class WalletStatsRenderer {
                     
                     <div class="hero-right">
                         <div class="hero-stats-grid">
-                            <div class="hero-stat">
+                            <div class="hero-stat-wt">
                                 <span class="hero-stat-icon">↗</span>
                                 <div class="hero-stat-info">
                                     <span class="hero-stat-value positive">+${totalEarned.toLocaleString()}</span>
                                     <span class="hero-stat-label">Lifetime earned</span>
                                 </div>
                             </div>
-                            <div class="hero-stat">
+                            <div class="hero-stat-wt">
                                 <span class="hero-stat-icon">↙</span>
                                 <div class="hero-stat-info">
                                     <span class="hero-stat-value negative">-${totalSpent.toLocaleString()}</span>

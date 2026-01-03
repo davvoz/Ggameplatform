@@ -864,8 +864,9 @@ class QuestTracker:
             self.update_quest_progress(user_id, quest, cumulative['coins_collected'], user_quest)
         
         elif tracking_type == 'high_score':
-            # Check if high score meets target
-            if cumulative['high_score'] >= quest.target_value:
+            # Quest completes when high_score reaches the threshold from config
+            score_threshold = quest_config.get('score_threshold', quest.target_value)
+            if cumulative['high_score'] >= score_threshold:
                 self.update_quest_progress(user_id, quest, 1, user_quest)
         
         elif tracking_type == 'games_played':

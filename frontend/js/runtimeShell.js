@@ -333,11 +333,12 @@ export default class RuntimeShell {
     }
 
     /**
-     * Handle fullscreen request
+     * Handle fullscreen request - TOGGLES fullscreen on/off
      */
     handleFullscreenRequest() {
         const container = this.iframe.parentElement;
         const gamePlayer = document.querySelector('.game-player');
+        const targetElement = gamePlayer || container;
 
         // iOS/iPadOS Safari detection
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -349,16 +350,35 @@ export default class RuntimeShell {
                                      document.webkitFullscreenEnabled || 
                                      document.msFullscreenEnabled;
         
+        // Check if already in fullscreen (native or CSS)
+        const isInNativeFullscreen = document.fullscreenElement || 
+                                      document.webkitFullscreenElement || 
+                                      document.msFullscreenElement;
+        const isInCSSFullscreen = targetElement.classList.contains('ios-fullscreen');
+        
         if ((isIOS || isIPadOS) && !fullscreenSupported) {
             // iOS/iPadOS Safari doesn't support Fullscreen API
-            // Use CSS-based fullscreen fallback
+            // Use CSS-based fullscreen fallback (already toggles)
             this.enableIOSFullscreenFallback(container, gamePlayer);
         } else if (isSafari && !fullscreenSupported) {
             // Safari on Mac without fullscreen support
             this.enableIOSFullscreenFallback(container, gamePlayer);
+        } else if (isInNativeFullscreen) {
+            // Already in fullscreen - EXIT
+            this.log('Exiting native fullscreen');
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        } else if (isInCSSFullscreen) {
+            // In CSS fullscreen - exit
+            this.exitIOSFullscreen(targetElement);
         } else {
-            // Standard browsers with Fullscreen API support
-            const targetElement = gamePlayer || container;
+            // Not in fullscreen - ENTER
+            this.log('Entering native fullscreen');
             if (targetElement.requestFullscreen) {
                 targetElement.requestFullscreen();
             } else if (targetElement.webkitRequestFullscreen) {

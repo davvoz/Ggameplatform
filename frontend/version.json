@@ -1,8 +1,17 @@
 {
-  "version": "2.17.0",
-  "timestamp": "2026-01-03T10:14:41.399Z",
-  "buildNumber": 169,
+  "version": "2.18.0",
+  "timestamp": "2026-01-03T11:25:15.420Z",
+  "buildNumber": 170,
   "changelog": [
+    {
+      "version": "2.18.0",
+      "date": "2026-01-03",
+      "type": "minor",
+      "changes": [
+        "feat: Update quest progress handling and add consistency fixer script",
+        "🔖 Bump version to 2.17.0 [skip-version]"
+      ]
+    },
     {
       "version": "2.17.0",
       "date": "2026-01-03",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Revise coin calculation logic for level rewards to ensure balanced progression and update reward structure documentation",
         "🔖 Bump version to 2.12.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.12.5",
-      "date": "2025-12-31",
-      "type": "patch",
-      "changes": [
-        "fix: Update level-up handling to include detailed level info and show modal for milestones",
-        "🔖 Bump version to 2.12.4 [skip-version]"
       ]
     }
   ]

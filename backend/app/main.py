@@ -174,6 +174,7 @@ async def startup_schedulers():
     """Start schedulers on application startup."""
     from app.weekly_scheduler import start_scheduler
     from app.multiplier_scheduler import start_scheduler as start_multiplier_scheduler
+    from app.daily_quest_scheduler import start_daily_quest_scheduler
     from app.telegram_notifier import send_telegram_info
     
     start_scheduler()
@@ -181,6 +182,9 @@ async def startup_schedulers():
     
     start_multiplier_scheduler()
     print("✅ Multiplier scheduler started")
+    
+    start_daily_quest_scheduler()
+    print("✅ Daily quest reset scheduler started")
     
     # Send startup notification
     send_telegram_info(
@@ -193,6 +197,7 @@ async def shutdown_schedulers():
     """Stop schedulers on application shutdown."""
     from app.weekly_scheduler import stop_scheduler
     from app.multiplier_scheduler import stop_scheduler as stop_multiplier_scheduler
+    from app.daily_quest_scheduler import stop_daily_quest_scheduler
     from app.telegram_notifier import send_telegram_warning
     
     stop_scheduler()
@@ -200,6 +205,9 @@ async def shutdown_schedulers():
     
     stop_multiplier_scheduler()
     print("🛑 Multiplier scheduler stopped")
+    
+    stop_daily_quest_scheduler()
+    print("🛑 Daily quest reset scheduler stopped")
     
     # Send shutdown notification
     send_telegram_warning(

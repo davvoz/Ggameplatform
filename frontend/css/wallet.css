@@ -316,14 +316,14 @@
     text-align: center;
 }
 
-.stat-label {
+.stat .stat-label {
     display: block;
     font-size: 0.9rem;
     opacity: 0.8;
     margin-bottom: 10px;
 }
 
-.stat-value {
+.stat .stat-value {
     display: block;
     font-size: 1.8rem;
     font-weight: bold;
@@ -348,15 +348,15 @@
 .transaction-item {
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 15px;
+    background: var(--surface, rgba(255, 255, 255, 0.04));
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .transaction-item:hover {
-    transform: translateY(-2px);
+    transform: translateX(5px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -381,16 +381,17 @@
     font-weight: bold;
     font-size: 1.1rem;
     margin-bottom: 5px;
+    color: var(--text-primary, #ffffff);
 }
 
 .transaction-description {
-    color: #666;
+    color: var(--text-secondary, #b4bcd0);
     font-size: 0.9rem;
     margin-bottom: 5px;
 }
 
 .transaction-date {
-    color: #999;
+    color: var(--text-muted, #7a8499);
     font-size: 0.85rem;
 }
 
@@ -417,39 +418,39 @@
 .no-transactions {
     text-align: center;
     padding: 60px 20px;
-    color: #666;
+    color: var(--text-secondary, #b4bcd0);
     font-size: 1.1rem;
 }
 
 /* Earn Coins Section */
 .earn-coins-section {
     margin-top: 40px;
+    margin-bottom: 40px;
 }
 
 .earn-coins-section h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     margin-bottom: 30px;
-    text-align: center;
 }
 
 .earn-methods {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
 .earn-method {
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
+    background: var(--surface, rgba(255, 255, 255, 0.04));
+    border-radius: 16px;
+    padding: 30px 24px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .earn-method:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .earn-icon {
@@ -459,18 +460,25 @@
 }
 
 .earn-method h3 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin-bottom: 10px;
-    color: #333;
+    color: var(--text-primary, #ffffff);
 }
 
 .earn-method p {
-    color: #666;
-    font-size: 0.95rem;
+    color: var(--text-secondary, #b4bcd0);
+    font-size: 0.9rem;
     margin: 0;
+    line-height: 1.5;
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .earn-methods {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .wallet-container h1 {
         font-size: 2rem;
@@ -508,24 +516,4 @@
     }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .transaction-item,
-    .earn-method {
-        background: #2d3748;
-    }
-
-    .transaction-type,
-    .earn-method h3 {
-        color: #e2e8f0;
-    }
-
-    .transaction-description,
-    .earn-method p {
-        color: #a0aec0;
-    }
-
-    .transaction-date {
-        color: #718096;
-    }
-}
+/* Dark Mode is default - no additional overrides needed */

@@ -24,10 +24,14 @@ class CoinAPI {
 
     /**
      * Get user's transaction history
+     * @param {string} userId - User ID
+     * @param {number} limit - Maximum number of transactions (default 100)
+     * @param {number} offset - Number of transactions to skip (default 0)
+     * @returns {Promise<Array>} Array of transactions
      */
-    async getUserTransactions(userId, limit = 100) {
+    async getUserTransactions(userId, limit = 100, offset = 0) {
         try {
-            const response = await fetch(`${this.baseUrl}/api/coins/${userId}/transactions?limit=${limit}`);
+            const response = await fetch(`${this.baseUrl}/api/coins/${userId}/transactions?limit=${limit}&offset=${offset}`);
             if (!response.ok) throw new Error('Failed to fetch transactions');
             return await response.json();
         } catch (error) {
@@ -117,6 +121,26 @@ class CoinAPI {
         } catch (error) {
             console.error('Error spending coins:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Get detailed wallet statistics
+     * @param {string} userId - User ID
+     * @param {number} days - Number of days to analyze (default 30)
+     * @returns {Promise<Object>} Detailed statistics
+     */
+    async getDetailedStats(userId, days = 30) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/coins/${userId}/stats?days=${days}`);
+            if (!response.ok) {
+                console.warn('Detailed stats not available:', response.status);
+                return null;
+            }
+            return await response.json();
+        } catch (error) {
+            console.warn('Error fetching detailed stats:', error);
+            return null;
         }
     }
 }

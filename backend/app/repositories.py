@@ -361,12 +361,12 @@ class CoinTransactionRepository(BaseRepository[CoinTransaction]):
     def __init__(self, db_session: Session):
         super().__init__(CoinTransaction, db_session, id_field="transaction_id")
     
-    def get_by_user(self, user_id: str, limit: int = 100) -> List[CoinTransaction]:
-        """Get transactions for a specific user"""
+    def get_by_user(self, user_id: str, limit: int = 100, offset: int = 0) -> List[CoinTransaction]:
+        """Get transactions for a specific user with pagination"""
         try:
             return self.db_session.query(CoinTransaction).filter(
                 CoinTransaction.user_id == user_id
-            ).order_by(CoinTransaction.created_at.desc()).limit(limit).all()
+            ).order_by(CoinTransaction.created_at.desc()).offset(offset).limit(limit).all()
         except SQLAlchemyError as e:
             raise Exception(f"Error fetching transactions: {str(e)}")
     

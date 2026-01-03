@@ -572,10 +572,11 @@ class CoinService:
     def get_user_transactions(
         self,
         user_id: str,
-        limit: int = 100
+        limit: int = 100,
+        offset: int = 0
     ) -> List[Dict[str, Any]]:
-        """Get user's transaction history"""
-        transactions = self.transaction_repo.get_by_user(user_id, limit)
+        """Get user's transaction history with pagination"""
+        transactions = self.transaction_repo.get_by_user(user_id, limit, offset)
         return [tx.to_dict() for tx in transactions]
     
 

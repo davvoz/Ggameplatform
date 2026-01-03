@@ -630,6 +630,13 @@ export async function renderWallet() {
 
         const walletHTML = await window.walletRenderer.render(userId);
         appContainer.innerHTML = walletHTML;
+        
+        // Initialize animations and infinite scroll after DOM is ready
+        requestAnimationFrame(() => {
+            if (window.walletRenderer.initAfterRender) {
+                window.walletRenderer.initAfterRender();
+            }
+        });
     } catch (error) {
         console.error('Error rendering wallet:', error);
         appContainer.innerHTML = `

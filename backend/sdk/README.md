@@ -15,7 +15,7 @@ The Platform SDK is a lightweight, framework-agnostic JavaScript library that en
 - 🎯 **Simple API** - Easy to integrate in minutes
 - 📊 **Score Tracking** - Built-in score and level tracking
 - ⏸️ **Pause/Resume** - Automatic pause/resume handling
-- 🖥️ **Fullscreen Support** - Request fullscreen from platform
+- 🖥️ **Fullscreen Support** - Request fullscreen from platform (iOS compatible!)
 
 ## Installation
 
@@ -136,11 +136,40 @@ PlatformSDK.levelCompleted(5, {
 
 #### `requestFullScreen()`
 
-Request fullscreen mode.
+Request fullscreen mode via the platform.
 
 ```javascript
 PlatformSDK.requestFullScreen();
 ```
+
+#### `toggleFullscreen()` ⭐ Recommended for iOS
+
+Toggle fullscreen mode. **This is the recommended method for iOS compatibility!**
+
+iOS Safari doesn't support the standard Fullscreen API. This method automatically detects iOS/iPadOS and uses a CSS-based fullscreen workaround.
+
+```javascript
+// In your fullscreen button handler:
+fullscreenButton.addEventListener('click', () => {
+    PlatformSDK.toggleFullscreen();
+});
+```
+
+#### `isFullscreen()`
+
+Check if currently in fullscreen mode (works with both native and iOS CSS fullscreen).
+
+```javascript
+if (PlatformSDK.isFullscreen()) {
+    console.log('Currently in fullscreen');
+}
+```
+
+> **📱 iOS Note:** On iOS Safari (including PWA mode), the Fullscreen API is not supported. 
+> The SDK automatically falls back to a CSS-based fullscreen simulation that:
+> - Expands the game to fill the entire viewport
+> - Adds an exit button in the top-right corner
+> - Supports the iPhone notch/Dynamic Island with safe-area-insets
 
 ### Event Handling
 

@@ -198,6 +198,7 @@ export interface PlatformSDKInterface {
     
     /**
      * Request fullscreen mode from the platform
+     * This sends a message to the platform to handle fullscreen
      * 
      * @example
      * ```typescript
@@ -205,6 +206,38 @@ export interface PlatformSDKInterface {
      * ```
      */
     requestFullScreen(): void;
+    
+    /**
+     * Toggle fullscreen mode (works on iOS too!)
+     * This is a convenience method that works directly in the game.
+     * Use this instead of native requestFullscreen() for iOS compatibility.
+     * On iOS Safari, this uses a CSS-based fullscreen workaround since
+     * the Fullscreen API is not supported.
+     * 
+     * @example
+     * ```typescript
+     * // In your fullscreen button handler:
+     * fullscreenButton.addEventListener('click', () => {
+     *     PlatformSDK.toggleFullscreen();
+     * });
+     * ```
+     */
+    toggleFullscreen(): void;
+    
+    /**
+     * Check if currently in fullscreen mode
+     * Returns true for both native fullscreen and iOS CSS fullscreen
+     * 
+     * @returns true if in fullscreen mode
+     * 
+     * @example
+     * ```typescript
+     * if (PlatformSDK.isFullscreen()) {
+     *     console.log('Currently in fullscreen');
+     * }
+     * ```
+     */
+    isFullscreen(): boolean;
     
     /**
      * Register an event callback

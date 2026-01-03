@@ -622,7 +622,25 @@ function animate() {
 
 // ===== FULLSCREEN FUNCTIONALITY =====
 function toggleFullscreen() {
+  // Use Platform SDK if available (works on iOS!)
+  if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+    window.PlatformSDK.toggleFullscreen();
+    return;
+  }
+  
+  // Fallback for standalone mode
   const elem = document.documentElement;
+  
+  // iOS/iPadOS detection
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  
+  if ((isIOS || isIPadOS) && !fullscreenSupported) {
+    // iOS doesn't support Fullscreen API - use CSS workaround
+    toggleIOSFullscreen();
+    return;
+  }
   
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
     // Enter fullscreen
@@ -632,6 +650,9 @@ function toggleFullscreen() {
       elem.webkitRequestFullscreen();
     } else if (elem.msRequestFullscreen) {
       elem.msRequestFullscreen();
+    } else {
+      // Fallback to iOS method
+      toggleIOSFullscreen();
     }
     document.body.classList.add('game-fullscreen');
   } else {
@@ -647,9 +668,90 @@ function toggleFullscreen() {
   }
 }
 
+// iOS Fullscreen CSS workaround (since iOS Safari doesn't support Fullscreen API)
+function toggleIOSFullscreen() {
+  const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
+  
+  if (isFullscreen) {
+    // Exit fullscreen
+    document.body.classList.remove('ios-game-fullscreen');
+    document.body.classList.remove('game-fullscreen');
+    document.body.style.overflow = '';
+    const exitBtn = document.getElementById('ios-fs-exit');
+    if (exitBtn) exitBtn.remove();
+  } else {
+    // Enter fullscreen
+    injectIOSFullscreenStyles();
+    document.body.classList.add('ios-game-fullscreen');
+    document.body.classList.add('game-fullscreen');
+    document.body.style.overflow = 'hidden';
+    createIOSExitButton();
+    setTimeout(() => window.scrollTo(0, 1), 100);
+  }
+}
+
+function injectIOSFullscreenStyles() {
+  if (document.getElementById('ios-fullscreen-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'ios-fullscreen-styles';
+  style.textContent = `
+    .ios-game-fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      overflow: hidden !important;
+      z-index: 999999 !important;
+    }
+    .ios-game-fullscreen canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+    }
+    #ios-fs-exit {
+      position: fixed !important;
+      top: max(10px, env(safe-area-inset-top)) !important;
+      right: max(10px, env(safe-area-inset-right)) !important;
+      z-index: 9999999 !important;
+      background: rgba(0,0,0,0.7) !important;
+      color: white !important;
+      border: none !important;
+      border-radius: 50% !important;
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 24px !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function createIOSExitButton() {
+  if (document.getElementById('ios-fs-exit')) return;
+  const btn = document.createElement('button');
+  btn.id = 'ios-fs-exit';
+  btn.innerHTML = '✕';
+  btn.setAttribute('aria-label', 'Exit fullscreen');
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleIOSFullscreen();
+  });
+  document.body.appendChild(btn);
+}
+
 // Update fullscreen button icon based on state
 function updateFullscreenIcon() {
-  const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+  // Check both native fullscreen and iOS CSS fullscreen
+  const isFullscreen = document.fullscreenElement || 
+                       document.webkitFullscreenElement || 
+                       document.body.classList.contains('ios-game-fullscreen');
   fullscreenBtn.innerHTML = isFullscreen 
     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>

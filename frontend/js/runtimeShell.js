@@ -337,51 +337,132 @@ export default class RuntimeShell {
      */
     handleFullscreenRequest() {
         const container = this.iframe.parentElement;
+        const gamePlayer = document.querySelector('.game-player');
 
-        // iOS Safari detection
+        // iOS/iPadOS Safari detection
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         
-        if (isIOS) {
-            // iOS Safari doesn't support standard fullscreen API
-            // Try webkit fullscreen on iframe itself
-            if (this.iframe.webkitEnterFullscreen) {
-                try {
-                    this.iframe.webkitEnterFullscreen();
-                } catch (e) {
-                    this.log('iOS fullscreen not supported:', e);
-                    // Fallback: expand to viewport with fixed positioning
-                    this.enableIOSFullscreenFallback(container);
-                }
-            } else {
-                this.enableIOSFullscreenFallback(container);
-            }
+        // Check if Fullscreen API is actually supported (iOS Safari returns false)
+        const fullscreenSupported = document.fullscreenEnabled || 
+                                     document.webkitFullscreenEnabled || 
+                                     document.msFullscreenEnabled;
+        
+        if ((isIOS || isIPadOS) && !fullscreenSupported) {
+            // iOS/iPadOS Safari doesn't support Fullscreen API
+            // Use CSS-based fullscreen fallback
+            this.enableIOSFullscreenFallback(container, gamePlayer);
+        } else if (isSafari && !fullscreenSupported) {
+            // Safari on Mac without fullscreen support
+            this.enableIOSFullscreenFallback(container, gamePlayer);
         } else {
-            // Standard browsers
-            if (container.requestFullscreen) {
-                container.requestFullscreen();
-            } else if (container.webkitRequestFullscreen) {
-                container.webkitRequestFullscreen();
-            } else if (container.msRequestFullscreen) {
-                container.msRequestFullscreen();
+            // Standard browsers with Fullscreen API support
+            const targetElement = gamePlayer || container;
+            if (targetElement.requestFullscreen) {
+                targetElement.requestFullscreen();
+            } else if (targetElement.webkitRequestFullscreen) {
+                targetElement.webkitRequestFullscreen();
+            } else if (targetElement.msRequestFullscreen) {
+                targetElement.msRequestFullscreen();
+            } else {
+                // Fallback if no fullscreen API available
+                this.enableIOSFullscreenFallback(container, gamePlayer);
             }
         }
     }
 
     /**
      * iOS fullscreen fallback using CSS
+     * Since iOS Safari doesn't support the Fullscreen API, we simulate it with CSS
      */
-    enableIOSFullscreenFallback(container) {
-        if (container.classList.contains('ios-fullscreen')) {
+    enableIOSFullscreenFallback(container, gamePlayer) {
+        const targetElement = gamePlayer || container;
+        const isFullscreen = targetElement.classList.contains('ios-fullscreen');
+        
+        if (isFullscreen) {
             // Exit fullscreen
-            container.classList.remove('ios-fullscreen');
-            document.body.style.overflow = '';
+            this.exitIOSFullscreen(targetElement);
         } else {
             // Enter fullscreen
-            container.classList.add('ios-fullscreen');
-            document.body.style.overflow = 'hidden';
-            
-            // Scroll to top to hide address bar
+            this.enterIOSFullscreen(targetElement);
+        }
+    }
+
+    /**
+     * Enter iOS fullscreen mode
+     */
+    enterIOSFullscreen(element) {
+        element.classList.add('ios-fullscreen');
+        document.body.classList.add('ios-fullscreen-active');
+        document.body.style.overflow = 'hidden';
+        
+        // Hide the navbar
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            navbar.style.display = 'none';
+        }
+        
+        // Create exit button for iOS
+        this.createIOSExitButton(element);
+        
+        // Try to scroll to hide Safari address bar (works in PWA mode)
+        setTimeout(() => {
             window.scrollTo(0, 1);
+        }, 100);
+        
+        this.log('Entered iOS fullscreen mode');
+    }
+
+    /**
+     * Exit iOS fullscreen mode
+     */
+    exitIOSFullscreen(element) {
+        element.classList.remove('ios-fullscreen');
+        document.body.classList.remove('ios-fullscreen-active');
+        document.body.style.overflow = '';
+        
+        // Show the navbar again
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            navbar.style.display = '';
+        }
+        
+        // Remove exit button
+        this.removeIOSExitButton();
+        
+        this.log('Exited iOS fullscreen mode');
+    }
+
+    /**
+     * Create exit button for iOS fullscreen
+     */
+    createIOSExitButton(container) {
+        // Remove existing button if any
+        this.removeIOSExitButton();
+        
+        const exitBtn = document.createElement('button');
+        exitBtn.id = 'ios-fullscreen-exit-btn';
+        exitBtn.className = 'ios-fullscreen-exit-btn';
+        exitBtn.innerHTML = '✕';
+        exitBtn.setAttribute('aria-label', 'Exit fullscreen');
+        
+        exitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.exitIOSFullscreen(container);
+        });
+        
+        document.body.appendChild(exitBtn);
+    }
+
+    /**
+     * Remove iOS exit button
+     */
+    removeIOSExitButton() {
+        const existingBtn = document.getElementById('ios-fullscreen-exit-btn');
+        if (existingBtn) {
+            existingBtn.remove();
         }
     }
 

@@ -1,8 +1,17 @@
 {
-  "version": "3.2.0",
-  "timestamp": "2026-01-03T22:54:58.263Z",
-  "buildNumber": 175,
+  "version": "3.2.1",
+  "timestamp": "2026-01-03T23:26:18.418Z",
+  "buildNumber": 176,
   "changelog": [
+    {
+      "version": "3.2.1",
+      "date": "2026-01-03",
+      "type": "patch",
+      "changes": [
+        "fix: Rename hero-stat class to hero-stat-wt for consistency in wallet stats",
+        "🔖 Bump version to 3.2.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.0",
       "date": "2026-01-03",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Implement Rainbow Rush daily quests setup and processing logic",
         "🔖 Bump version to 2.15.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.15.0",
-      "date": "2026-01-02",
-      "type": "minor",
-      "changes": [
-        "feat: Add Merge Tower Defense daily quests and processing logic in QuestTracker",
-        "🔖 Bump version to 2.14.0 [skip-version]"
       ]
     }
   ]

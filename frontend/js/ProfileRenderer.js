@@ -820,6 +820,7 @@ class ProfileRenderer {
                         coinsBadge.style.background = 'linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(234, 179, 8, 0.1))';
                         coinsBadge.style.border = '2px solid rgba(234, 179, 8, 0.5)';
                         coinsBadge.style.boxShadow = '0 4px 12px rgba(234, 179, 8, 0.3)';
+                        coinsBadge.style.cursor = 'pointer';
                     });
                     
                     coinsBadge.addEventListener('mouseleave', () => {

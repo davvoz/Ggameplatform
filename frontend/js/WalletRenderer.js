@@ -42,7 +42,6 @@ class WalletRenderer {
                 <div class="wallet-container">
                     <header class="wallet-page-header">
                         <div class="header-content">
-                            <span class="header-icon">💰</span>
                             <div class="header-text">
                                 <h1>My Wallet</h1>
                                 <p class="header-subtitle">Track your earnings and spending</p>

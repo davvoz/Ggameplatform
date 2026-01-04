@@ -1557,12 +1557,14 @@ class ProfileRenderer {
                 const availability = await window.steemPostAPI.checkPostAvailability(user.user_id);
                 
                 if (!availability.can_post && shareBtn) {
-                    // Format time remaining
-                    const formatTimeRemaining = (hours, minutes) => {
-                        if (hours > 0) {
-                            return `${hours}h ${minutes}m`;
-                        } else {
+                    // Format time remaining - show only one unit (hours OR minutes OR seconds)
+                    const formatTimeRemaining = (hours, minutes, seconds) => {
+                        if (hours >= 1) {
+                            return `${hours}h`;
+                        } else if (minutes >= 1) {
                             return `${minutes}m`;
+                        } else {
+                            return `${seconds}s`;
                         }
                     };
                     
@@ -1571,12 +1573,13 @@ class ProfileRenderer {
                     shareBtn.classList.add('disabled');
                     shareBtn.innerHTML = `
                         <span class="btn-icon">⏱️</span>
-                        <span class="btn-text">Available in ${formatTimeRemaining(availability.hours_remaining, availability.minutes_remaining)}</span>
+                        <span class="btn-text">Available in ${formatTimeRemaining(availability.hours_remaining, availability.minutes_remaining, availability.seconds_remaining)}</span>
                         <span class="btn-cost">500 🪙</span>
                     `;
                     
-                    // Update button every minute
-                    const updateInterval = setInterval(async () => {
+                    // Update button dynamically based on time remaining
+                    let updateInterval;
+                    const updateCooldown = async () => {
                         try {
                             const newAvailability = await window.steemPostAPI.checkPostAvailability(user.user_id);
                             if (newAvailability.can_post) {
@@ -1588,19 +1591,40 @@ class ProfileRenderer {
                                     <span class="btn-text">Share on Steem</span>
                                     <span class="btn-cost">500 🪙</span>
                                 `;
-                                clearInterval(updateInterval);
+                                if (updateInterval) clearInterval(updateInterval);
                             } else {
                                 // Update countdown
                                 shareBtn.innerHTML = `
                                     <span class="btn-icon">⏱️</span>
-                                    <span class="btn-text">Available in ${formatTimeRemaining(newAvailability.hours_remaining, newAvailability.minutes_remaining)}</span>
+                                    <span class="btn-text">Available in ${formatTimeRemaining(newAvailability.hours_remaining, newAvailability.minutes_remaining, newAvailability.seconds_remaining)}</span>
                                     <span class="btn-cost">500 🪙</span>
                                 `;
+                                
+                                // Adjust update frequency based on time remaining
+                                if (updateInterval) clearInterval(updateInterval);
+                                let interval;
+                                if (newAvailability.hours_remaining >= 1) {
+                                    interval = 60000; // Update every minute if >= 1 hour
+                                } else if (newAvailability.minutes_remaining >= 1) {
+                                    interval = 1000; // Update every second if < 1 hour but >= 1 minute
+                                } else {
+                                    interval = 1000; // Update every second if < 1 minute
+                                }
+                                updateInterval = setInterval(updateCooldown, interval);
                             }
                         } catch (error) {
                             console.error('Error updating cooldown:', error);
                         }
-                    }, 60000); // Update every minute
+                    };
+                    
+                    // Determine initial interval
+                    let initialInterval;
+                    if (availability.hours_remaining >= 1) {
+                        initialInterval = 60000; // Every minute
+                    } else {
+                        initialInterval = 1000; // Every second
+                    }
+                    updateInterval = setInterval(updateCooldown, initialInterval);
                 }
             } catch (error) {
                 console.error('Error checking post availability:', error);

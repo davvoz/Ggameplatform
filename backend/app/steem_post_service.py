@@ -44,7 +44,7 @@ class SteemPostService:
         """
         
         # Generate engaging title
-        title = f"🎮 My Gaming Journey on Cur8 Games - Level {level} Achievement!"
+        title = f"My Gaming Journey on Cur8 Games 🎮 Level {level}"
         
         # Format leaderboard positions
         leaderboard_section = self._format_leaderboard_section(leaderboard_positions)
@@ -109,8 +109,6 @@ class SteemPostService:
         body_parts.append(f"<center>")
         body_parts.append(f"")
         body_parts.append(f"### 🔗 **[Start Playing Now!](https://games.cur8.fun)**")
-        body_parts.append(f"")
-        body_parts.append(f"### 🌐 **[Visit Our Website](https://cur8.fun)**")
         body_parts.append(f"")
         body_parts.append(f"---")
         body_parts.append(f"")

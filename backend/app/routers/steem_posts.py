@@ -12,6 +12,8 @@ from app.repositories import RepositoryFactory
 from app.services import CoinService
 from app.steem_post_service import SteemPostService
 from app.models import User, Leaderboard, Game
+from app.telegram_notifier import send_telegram_success
+from app.telegram_notifier import send_telegram_success
 
 
 router = APIRouter(prefix="/api/steem", tags=["Steem"])
@@ -356,6 +358,7 @@ async def get_post_availability(
         can_post = True
         hours_remaining = 0
         minutes_remaining = 0
+        seconds_remaining_int = 0
         next_available_time = None
         
         if user.last_steem_post:
@@ -370,12 +373,14 @@ async def get_post_availability(
                 seconds_remaining = (cooldown_hours * 3600) - time_diff.total_seconds()
                 hours_remaining = int(seconds_remaining // 3600)
                 minutes_remaining = int((seconds_remaining % 3600) // 60)
+                seconds_remaining_int = int(seconds_remaining % 60)
                 next_available_time = (last_post_time + timedelta(hours=cooldown_hours)).isoformat()
         
         return {
             "can_post": can_post,
             "hours_remaining": hours_remaining,
             "minutes_remaining": minutes_remaining,
+            "seconds_remaining": seconds_remaining_int,
             "next_available_time": next_available_time,
             "cooldown_hours": 48
         }
@@ -431,6 +436,20 @@ async def confirm_post(
         user.last_steem_post = datetime.utcnow().isoformat()
         db.commit()
         
+        # Send Telegram notification
+        try:
+            send_telegram_success(
+                title="New Steem Post Published (Keychain)",
+                message=f"User @{user.steem_username} published a new post!",
+                stats={
+                    "User": user.steem_username,
+                    "Platform User ID": user_id,
+                    "Post URL": post_url
+                }
+            )
+        except Exception as telegram_error:
+            print(f"Failed to send Telegram notification: {telegram_error}")
+        
         return {
             "success": True,
             "message": "Post confirmed and cooldown timer updated",
@@ -446,6 +465,135 @@ async def confirm_post(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to confirm post: {str(e)}"
+        )
+
+
+@router.post("/publish-with-key")
+async def publish_with_key(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Publish post to Steem blockchain using posting key (server-side with beem)
+    
+    This endpoint:
+    1. Verifies the posting key matches the username
+    2. Publishes the post using beem library
+    3. Returns the permlink and post URL
+    
+    Args:
+        request: Dict with username, posting_key, title, body, tags, metadata
+        
+    Returns:
+        Publication result with permlink and URL
+    """
+    try:
+        username = request.get('username')
+        posting_key = request.get('posting_key')
+        title = request.get('title')
+        body = request.get('body')
+        tags = request.get('tags', [])
+        metadata = request.get('metadata', {})
+        
+        if not all([username, posting_key, title, body]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required fields: username, posting_key, title, body"
+            )
+        
+        # Verify posting key
+        from app.steem_checker import verify_posting_key
+        verification = verify_posting_key(username, posting_key)
+        
+        if not verification['success']:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=verification['message']
+            )
+        
+        # Generate permlink
+        import time
+        import re
+        import random
+        timestamp = int(time.time())
+        random_suffix = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=6))
+        
+        # Convert title to URL-safe format
+        permlink = re.sub(r'[^a-z0-9\s-]', '', title.lower())
+        permlink = re.sub(r'\s+', '-', permlink)
+        permlink = re.sub(r'-+', '-', permlink)
+        permlink = permlink[:100]
+        permlink = f"{permlink}-{random_suffix}"
+        
+        # Publish using beem
+        try:
+            from beem import Steem
+            
+            # Create Steem instance with posting key
+            steem = Steem(keys=[posting_key], node='https://api.steemit.com')
+            
+            # Prepare metadata
+            json_metadata = {
+                'tags': tags,
+                **metadata
+            }
+            
+            # Post using steem.post() method
+            steem.post(
+                title=title,
+                body=body,
+                author=username,
+                permlink=permlink,
+                tags=tags,
+                json_metadata=json_metadata,
+                self_vote=False
+            )
+            
+            post_url = f"https://www.cur8.fun/app/@{username}/{permlink}"
+            
+            # Update last post timestamp
+            user = db.query(User).filter(User.steem_username == username).first()
+            if user:
+                from datetime import datetime
+                user.last_steem_post = datetime.utcnow().isoformat()
+                db.commit()
+            
+            # Send Telegram notification
+            try:
+                send_telegram_success(
+                    title="New Steem Post Published (Posting Key)",
+                    message=f"User @{username} published a new post using posting key!",
+                    stats={
+                        "User": username,
+                        "Post URL": post_url,
+                        "Permlink": permlink
+                    }
+                )
+            except Exception as telegram_error:
+                print(f"Failed to send Telegram notification: {telegram_error}")
+            
+            return {
+                "success": True,
+                "permlink": permlink,
+                "post_url": post_url,
+                "message": "Post published successfully on Steem blockchain"
+            }
+            
+        except Exception as beem_error:
+            print(f"Beem publication error: {beem_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to publish post: {str(beem_error)}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to publish post: {str(e)}"
         )
 
 

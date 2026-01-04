@@ -627,7 +627,7 @@ class ProfileRenderer {
                     `;
 
                     parentCard.innerHTML = `
-                        <div style="padding: 20px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: 16px; border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05);">
+                        <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: var(--radius-md); border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
                             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
                                 <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}33, ${levelInfo.color || '#6366f1'}11); border-radius: 50%; border: 3px solid ${levelInfo.color || '#6366f1'}66; box-shadow: 0 4px 12px ${levelInfo.color || '#6366f1'}44;">
                                     <span style="font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>

@@ -363,7 +363,7 @@
 
 .stat-card {
     background: var(--surface);
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-md);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;

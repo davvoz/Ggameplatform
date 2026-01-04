@@ -1,8 +1,17 @@
 {
-  "version": "3.2.2",
-  "timestamp": "2026-01-04T00:08:43.253Z",
-  "buildNumber": 177,
+  "version": "3.2.3",
+  "timestamp": "2026-01-04T23:18:34.983Z",
+  "buildNumber": 178,
   "changelog": [
+    {
+      "version": "3.2.3",
+      "date": "2026-01-04",
+      "type": "patch",
+      "changes": [
+        "fix: Add Telegram notifications for new Steem posts and enhance post publishing logic",
+        "🔖 Bump version to 3.2.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.2",
       "date": "2026-01-04",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Add daily quest reset scheduler for automatic quest management",
         "🔖 Bump version to 2.16.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.16.1",
-      "date": "2026-01-02",
-      "type": "patch",
-      "changes": [
-        "style: Remove animations from reward icons in level widget and quest hero styles",
-        "🔖 Bump version to 2.16.0 [skip-version]"
       ]
     }
   ]

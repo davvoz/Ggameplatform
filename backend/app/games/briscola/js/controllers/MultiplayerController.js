@@ -24,13 +24,21 @@ export class MultiplayerController {
      */
     getWebSocketUrl() {
         // Auto-detect backend URL based on current page location
-        // This works for both desktop (localhost) and mobile (LAN IP)
+        // This works for both local development and production behind reverse proxy
         const hostname = window.location.hostname;
+        const port = window.location.port;
         const isSecure = window.location.protocol === 'https:';
         const wsProtocol = isSecure ? 'wss:' : 'ws:';
         
-        // Use the same hostname as the current page, with port 8000 for backend
-        const wsUrl = `${wsProtocol}//${hostname}:8000/ws/briscola`;
+        // In production (no port or standard ports), don't add port
+        // In development (e.g., :3000), the backend is on :8000
+        let wsHost = hostname;
+        if (port && port !== '80' && port !== '443') {
+            // Development: frontend on :3000, backend on :8000
+            wsHost = `${hostname}:8000`;
+        }
+        
+        const wsUrl = `${wsProtocol}//${wsHost}/ws/briscola`;
         console.log('[Multiplayer] WebSocket URL:', wsUrl);
         return wsUrl;
     }

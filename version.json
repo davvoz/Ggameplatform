@@ -1,8 +1,17 @@
 {
-  "version": "3.2.6",
-  "timestamp": "2026-01-05T00:18:46.083Z",
-  "buildNumber": 181,
+  "version": "3.2.7",
+  "timestamp": "2026-01-05T00:44:40.872Z",
+  "buildNumber": 182,
   "changelog": [
+    {
+      "version": "3.2.7",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance level-up rewards system and add celebration animations for daily login claims. controls on steem rewards enabled before saving winner history",
+        "🔖 Bump version to 3.2.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.6",
       "date": "2026-01-05",
@@ -82,15 +91,6 @@
       "changes": [
         "breaking!:modify get_by_user , Implement Infinite Scroll Manager and Wallet Stats Renderer",
         "🔖 Bump version to 2.20.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.20.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Update quest tracking logic to use configurable score thresholds and add production fix script for quest data",
-        "🔖 Bump version to 2.19.0 [skip-version]"
       ]
     }
   ]

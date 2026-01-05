@@ -1,8 +1,17 @@
 {
-  "version": "3.2.5",
-  "timestamp": "2026-01-04T23:56:28.138Z",
-  "buildNumber": 180,
+  "version": "3.2.6",
+  "timestamp": "2026-01-05T00:18:46.083Z",
+  "buildNumber": 181,
   "changelog": [
+    {
+      "version": "3.2.6",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Add cover image to post content generation",
+        "🔖 Bump version to 3.2.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.5",
       "date": "2026-01-04",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Update quest tracking logic to use configurable score thresholds and add production fix script for quest data",
         "🔖 Bump version to 2.19.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.19.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Improve cumulative data initialization for quest tracking and add script to fix existing data",
-        "🔖 Bump version to 2.18.0 [skip-version]"
       ]
     }
   ]

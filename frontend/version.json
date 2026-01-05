@@ -1,8 +1,17 @@
 {
-  "version": "3.3.4",
-  "timestamp": "2026-01-05T11:22:12.384Z",
-  "buildNumber": 189,
+  "version": "3.3.5",
+  "timestamp": "2026-01-05T12:55:25.405Z",
+  "buildNumber": 190,
   "changelog": [
+    {
+      "version": "3.3.5",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA]enhance multiplayer game logic and score verification in GameEngine and MultiplayerController",
+        "🔖 Bump version to 3.3.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.4",
       "date": "2026-01-05",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: Add cover image to post content generation",
         "🔖 Bump version to 3.2.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.5",
-      "date": "2026-01-04",
-      "type": "patch",
-      "changes": [
-        "fix: Adjust padding and width for improved layout in profile renderer",
-        "🔖 Bump version to 3.2.4 [skip-version]"
       ]
     }
   ]

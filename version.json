@@ -1,8 +1,17 @@
 {
-  "version": "3.2.8",
-  "timestamp": "2026-01-05T01:14:42.028Z",
-  "buildNumber": 183,
+  "version": "3.2.9",
+  "timestamp": "2026-01-05T01:21:18.408Z",
+  "buildNumber": 184,
   "changelog": [
+    {
+      "version": "3.2.9",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Update description text in Steem post modal for clarity",
+        "🔖 Bump version to 3.2.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.8",
       "date": "2026-01-05",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: Enhance fullscreen handling with toggle functionality for iOS",
         "🔖 Bump version to 3.1.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.1.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Enhance fullscreen support for iOS with CSS fallback and exit button",
-        "🔖 Bump version to 3.0.0 [skip-version]"
       ]
     }
   ]

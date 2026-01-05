@@ -234,6 +234,87 @@ html, body {
     border-color: var(--accent-gold);
 }
 
+/* Deck Selector */
+.deck-selector {
+    background: var(--glass-bg);
+    padding: var(--spacing-lg);
+    border-radius: 16px;
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+}
+
+.deck-selector h3 {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-gold);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.deck-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.deck-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-cream);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-width: 100px;
+}
+
+.deck-btn:hover {
+    border-color: rgba(212, 175, 55, 0.7);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.deck-btn.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.deck-preview {
+    width: 50px;
+    height: 75px;
+    border-radius: 6px;
+    background-size: 1000% 400%;
+    background-repeat: no-repeat;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.deck-preview.piacentino {
+    background-image: url('../assets/cards.jpg');
+    background-position: 0% 0%;
+}
+
+.deck-preview.bresciano {
+    background-image: url('../assets/cards_br.jpg');
+    background-position: 0% 0%;
+}
+
+.deck-preview.bolognese {
+    background-image: url('../assets/cards_bo.jpg');
+    background-position: 0% 0%;
+}
+
+.deck-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
 .rules-link {
     margin-top: var(--spacing-lg);
 }

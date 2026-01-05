@@ -30,6 +30,7 @@ class BriscolaApp {
         
         this.currentMode = null; // 'ai', 'local', 'online'
         this.difficulty = 'medium';
+        this.selectedDeck = ''; // '' = piacentino, 'br' = bresciano, 'bo' = bolognese
     }
     
     async init() {
@@ -92,6 +93,26 @@ class BriscolaApp {
                 // Start game after selecting difficulty
                 if (this.currentMode === 'ai') {
                     this.startGame();
+                }
+            });
+        });
+
+        // Deck selector buttons
+        document.querySelectorAll('.deck-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                document.querySelectorAll('.deck-btn').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                const newDeck = e.currentTarget.dataset.deck;
+                
+                if (newDeck !== this.selectedDeck) {
+                    this.selectedDeck = newDeck;
+                    // Reload sprite sheet with new deck
+                    try {
+                        await this.spriteSheet.changeDeck(this.selectedDeck);
+                        console.log(`[Briscola] Deck changed to: ${this.selectedDeck || 'piacentino'}`);
+                    } catch (error) {
+                        console.error('[Briscola] Failed to change deck:', error);
+                    }
                 }
             });
         });

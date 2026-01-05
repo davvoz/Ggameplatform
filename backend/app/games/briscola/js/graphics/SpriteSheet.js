@@ -7,10 +7,18 @@
 
 import { SUIT_LIST, SPRITE_ORDER } from '../core/Cards.js';
 
+// Available deck types
+export const DECK_TYPES = {
+    PIACENTINO: { id: '', name: 'Piacentino', file: 'cards.jpg' },
+    BRESCIANO: { id: 'br', name: 'Bresciano', file: 'cards_br.jpg' },
+    BOLOGNESE: { id: 'bo', name: 'Bolognese', file: 'cards_bo.jpg' }
+};
+
 export class SpriteSheet {
     constructor() {
         this.image = null;
         this.loaded = false;
+        this.currentDeck = DECK_TYPES.PIACENTINO;
         
         // Card dimensions in sprite sheet (will be calculated)
         this.cardWidth = 0;
@@ -22,11 +30,26 @@ export class SpriteSheet {
     }
     
     /**
+     * Get file path for a deck type
+     * @param {string} deckSuffix - Deck suffix ('' for piacentino, 'br' for bresciano, 'bo' for bolognese)
+     * @returns {string} File path
+     */
+    getDeckFilePath(deckSuffix = '') {
+        if (deckSuffix === 'br') return 'assets/cards_br.jpg';
+        if (deckSuffix === 'bo') return 'assets/cards_bo.jpg';
+        return 'assets/cards.jpg';
+    }
+
+    /**
      * Load the sprite sheet image
      * @param {string} src - Image source path
+     * @param {string} deckSuffix - Optional deck suffix to load specific deck
      * @returns {Promise}
      */
-    load(src) {
+    load(src, deckSuffix = null) {
+        // If deckSuffix is provided, use it to determine the file
+        const finalSrc = deckSuffix !== null ? this.getDeckFilePath(deckSuffix) : src;
+        
         return new Promise((resolve, reject) => {
             this.image = new Image();
             
@@ -38,15 +61,27 @@ export class SpriteSheet {
                 this.loaded = true;
                 console.log(`[SpriteSheet] Loaded: ${this.image.width}x${this.image.height}`);
                 console.log(`[SpriteSheet] Card size: ${this.cardWidth}x${this.cardHeight}`);
+                console.log(`[SpriteSheet] Deck: ${finalSrc}`);
                 resolve();
             };
             
             this.image.onerror = () => {
-                reject(new Error(`Failed to load sprite sheet: ${src}`));
+                reject(new Error(`Failed to load sprite sheet: ${finalSrc}`));
             };
             
-            this.image.src = src;
+            this.image.src = finalSrc;
         });
+    }
+
+    /**
+     * Change deck type and reload sprite sheet
+     * @param {string} deckSuffix - Deck suffix
+     * @returns {Promise}
+     */
+    async changeDeck(deckSuffix) {
+        this.loaded = false;
+        await this.load(null, deckSuffix);
+        return this;
     }
     
     /**

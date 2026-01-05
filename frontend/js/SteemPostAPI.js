@@ -220,7 +220,7 @@ class SteemPostAPI {
     }
 
     /**
-     * Publish post using posting key (fallback method)
+     * Publish post using posting key (via backend with beem)
      * @param {string} steemUsername - Steem username
      * @param {string} postingKey - User's posting key
      * @param {string} title - Post title
@@ -229,83 +229,44 @@ class SteemPostAPI {
      * @param {object} metadata - Post metadata
      */
     async publishViaPostingKey(steemUsername, postingKey, title, body, tags, metadata = {}) {
-        return new Promise((resolve, reject) => {
-            // Generate permlink
-            const permlink = this._generatePermlink(title);
-
-            // Use dsteem library via CDN
-            if (!window.dsteem) {
-                // Load dsteem dynamically
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/dsteem@latest/dist/dsteem.js';
-                script.onload = () => {
-                    this._publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
-                };
-                script.onerror = () => {
-                    reject(new Error('Failed to load Steem publishing library. Please try again or use Keychain.'));
-                };
-                document.head.appendChild(script);
-            } else {
-                this._publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject);
-            }
-        });
-    }
-
-    /**
-     * Publish post using dsteem library
-     * @private
-     */
-    async _publishWithDsteem(steemUsername, postingKey, title, body, tags, permlink, metadata, resolve, reject) {
         try {
-            console.log('Publishing with posting key...');
+            console.log('Publishing via backend with beem...');
             console.log('Username:', steemUsername);
-            console.log('Permlink:', permlink);
+            console.log('Title:', title);
             console.log('Tags:', tags);
             
-            const dsteem = window.dsteem;
-            
-            // Create client
-            const client = new dsteem.Client('https://api.steemit.com');
-
-            // Create private key
-            const key = dsteem.PrivateKey.fromString(postingKey);
-            
-            // Get public key from private key
-            const publicKey = key.createPublic().toString();
-            console.log('Public key derived from posting key:', publicKey);
-
-            // Prepare comment operation
-            const commentOp = [
-                'comment',
-                {
-                    parent_author: '',
-                    parent_permlink: tags[0] || 'gaming',
-                    author: steemUsername,
-                    permlink: permlink,
+            const response = await fetch(`${this.baseUrl}/api/steem/publish-with-key`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: steemUsername,
+                    posting_key: postingKey,
                     title: title,
                     body: body,
-                    json_metadata: JSON.stringify({
-                        tags: tags,
-                        ...metadata
-                    })
-                }
-            ];
-            
-            console.log('Broadcasting operation to Steem blockchain...');
-
-            // Broadcast operation
-            const result = await client.broadcast.sendOperations([commentOp], key);
-
-            resolve({
-                success: true,
-                permlink: permlink,
-                post_url: `https://www.cur8.fun/app/@${steemUsername}/${permlink}`,
-                transaction_id: result.id
+                    tags: tags,
+                    metadata: metadata
+                })
             });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to publish post');
+            }
+
+            const result = await response.json();
+            
+            return {
+                success: true,
+                permlink: result.permlink,
+                post_url: result.post_url,
+                transaction_id: null // Backend doesn't return transaction ID from beem
+            };
 
         } catch (error) {
             console.error('Error publishing with posting key:', error);
-            reject(new Error(`Failed to publish: ${error.message}`));
+            throw error;
         }
     }
 

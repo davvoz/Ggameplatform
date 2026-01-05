@@ -206,7 +206,10 @@ class DailyLoginBanner {
             const data = await response.json();
             
             if (response.ok && data.success) {
-                // Update banner immediately
+                // Trigger celebration animation BEFORE updating
+                await this.playClaimAnimation(data);
+                
+                // Update banner after animation
                 await this.updateStatus();
                 await this.updateTriggerButtonVisibility();
                 
@@ -227,6 +230,101 @@ class DailyLoginBanner {
                 claimButton.disabled = false;
                 claimButton.textContent = `🎁 Claim Reward`;
             }
+        }
+    }
+    
+    /**
+     * Play celebration animation when claiming reward
+     */
+    async playClaimAnimation(data) {
+        return new Promise((resolve) => {
+            // Find the available day card
+            const availableCard = this.bannerElement.querySelector('.daily-login-day.available');
+            if (!availableCard) {
+                resolve();
+                return;
+            }
+            
+            // Add claiming animation class
+            availableCard.classList.add('claiming');
+            
+            // Create floating coins animation
+            this.createFloatingCoins(availableCard, data.coins_earned || 0);
+            
+            // Create confetti effect
+            this.createConfetti();
+            
+            // Wait for animations to complete
+            setTimeout(() => {
+                resolve();
+            }, 1500);
+        });
+    }
+    
+    /**
+     * Create floating coins animation
+     */
+    createFloatingCoins(sourceElement, coinsAmount) {
+        const rect = sourceElement.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Create multiple coin elements
+        const numCoins = Math.min(8, Math.max(3, Math.floor(coinsAmount / 10)));
+        
+        for (let i = 0; i < numCoins; i++) {
+            const coin = document.createElement('div');
+            coin.className = 'floating-coin';
+            coin.textContent = '🪙';
+            coin.style.left = centerX + 'px';
+            coin.style.top = centerY + 'px';
+            
+            // Random spread
+            const angle = (Math.PI * 2 * i) / numCoins;
+            const distance = 80 + Math.random() * 40;
+            const offsetX = Math.cos(angle) * distance;
+            const offsetY = Math.sin(angle) * distance - 100; // Bias upward
+            
+            coin.style.setProperty('--offset-x', offsetX + 'px');
+            coin.style.setProperty('--offset-y', offsetY + 'px');
+            coin.style.animationDelay = (i * 0.05) + 's';
+            
+            document.body.appendChild(coin);
+            
+            // Remove after animation
+            setTimeout(() => coin.remove(), 1500);
+        }
+    }
+    
+    /**
+     * Create confetti celebration effect
+     */
+    createConfetti() {
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500'];
+        const confettiCount = 30;
+        
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.backgroundColor = color;
+            
+            // Random position across top of screen
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.top = '-10px';
+            
+            // Random animation delay and duration
+            confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+            confetti.style.animationDuration = (1 + Math.random() * 1) + 's';
+            
+            // Random rotation
+            confetti.style.setProperty('--rotation', Math.random() * 360 + 'deg');
+            
+            document.body.appendChild(confetti);
+            
+            // Remove after animation
+            setTimeout(() => confetti.remove(), 2500);
         }
     }
     

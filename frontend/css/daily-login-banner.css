@@ -363,3 +363,93 @@
     opacity: 1;
     pointer-events: auto;
 }
+/* ===== CLAIM ANIMATIONS ===== */
+
+/* Claiming state for the card */
+.daily-login-day.claiming {
+    animation: claimPulse 0.6s ease-out;
+}
+
+@keyframes claimPulse {
+    0% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    50% { 
+        transform: scale(1.15);
+        box-shadow: 0 0 0 20px rgba(255, 193, 7, 0);
+    }
+    100% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+/* Floating coins animation */
+.floating-coin {
+    position: fixed;
+    font-size: 32px;
+    pointer-events: none;
+    z-index: 10001;
+    animation: floatUp 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(var(--offset-x), calc(var(--offset-y) * 0.5)) scale(1.2) rotate(180deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--offset-x), var(--offset-y)) scale(0.5) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Confetti animation */
+.confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 10001;
+    animation: confettiFall 2s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(var(--rotation, 360deg));
+        opacity: 0;
+    }
+}
+
+/* Glow effect on claim button */
+.claim-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.claim-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.claim-button:active::before {
+    width: 300px;
+    height: 300px;
+}

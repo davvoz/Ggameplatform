@@ -12,6 +12,7 @@
 .wallet-page-header .header-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 20px;
 }
 
@@ -25,6 +26,10 @@
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.wallet-page-header .header-text {
+    text-align: center;
 }
 
 .wallet-page-header .header-text h1 {
@@ -367,6 +372,30 @@
     overflow: hidden;
     border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.quick-stat-card .earn-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.quick-stat-card .earn-icon {
+    font-size: 36px;
+}
+
+.quick-stat-card h3 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--text-primary, #ffffff);
+}
+
+.quick-stat-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #b4bcd0);
+    line-height: 1.5;
+    margin: 0;
 }
 
 .quick-stat-card:hover {
@@ -1112,12 +1141,36 @@
     }
     
     .quick-stats-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
     
     .quick-stat-card {
-        padding: 20px;
+        padding: 16px 12px;
+        text-align: center;
+    }
+    
+    .quick-stat-card .earn-icon-title {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .quick-stat-card .earn-icon {
+        font-size: 28px;
+        margin: 0;
+    }
+    
+    .quick-stat-card h3 {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .quick-stat-card p {
+        font-size: 0.75rem;
+        line-height: 1.3;
+        margin: 0;
     }
     
     .stat-content .stat-value {

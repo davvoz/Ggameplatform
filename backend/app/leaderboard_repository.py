@@ -321,11 +321,12 @@ class LeaderboardRepository:
         now = datetime.utcnow().isoformat()
         winners = []
         
-        # Get all games
-        games = self.session.query(Game.game_id).all()
+        # Get all games with their steem_rewards_enabled flag
+        games = self.session.query(Game.game_id, Game.steem_rewards_enabled).all()
         
         for game in games:
             game_id = game[0]
+            steem_enabled = bool(game[1])  # Check if Steem rewards are enabled for this game
             
             # Get top players for this game
             top_players = self.session.query(
@@ -345,7 +346,8 @@ class LeaderboardRepository:
                 
                 # Get reward for this rank
                 reward = self.get_rewards_for_rank(game_id, rank)
-                steem_reward = reward.steem_reward if reward else 0.0
+                # Only give Steem rewards if enabled for this game
+                steem_reward = (reward.steem_reward if reward else 0.0) if steem_enabled else 0.0
                 coin_reward = reward.coin_reward if reward else 0
                 
                 # Create winner record

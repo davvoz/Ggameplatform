@@ -302,17 +302,32 @@
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
     .profile-stats-quick {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         width: 100%;
+        gap: var(--spacing-sm);
     }
     
     .stat-badge {
-        min-width: 100%;
-        padding: var(--spacing-lg);
+        min-width: 0;
+        min-height: 110px;
+        padding: var(--spacing-xl);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+    
+    .stat-badge .stat-label {
+        font-size: 0.8rem;
+        white-space: normal;
+        text-align: center;
+        width: 100%;
     }
     
     .stat-badge .stat-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
     
     #dailyRewardsBadge {
@@ -348,7 +363,7 @@
 
 .stat-card {
     background: var(--surface);
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-md);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;

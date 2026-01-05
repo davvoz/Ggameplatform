@@ -63,7 +63,7 @@ class SteemPostModal {
                     <div class="steem-post-modal-body">
                         <div class="post-creator-section">
                             <h3>✍️ Your Personal Message</h3>
-                            <p class="section-description">Add a personal touch to your gaming achievement post (optional)</p>
+                            <p class="section-description">Add a personal touch to your gaming achievement post</p>
                             <textarea 
                                 id="userMessageInput" 
                                 class="user-message-input" 

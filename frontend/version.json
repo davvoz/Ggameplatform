@@ -1,8 +1,72 @@
 {
-  "version": "3.2.2",
-  "timestamp": "2026-01-04T00:08:43.253Z",
-  "buildNumber": 177,
+  "version": "3.2.9",
+  "timestamp": "2026-01-05T01:21:18.408Z",
+  "buildNumber": 184,
   "changelog": [
+    {
+      "version": "3.2.9",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Update description text in Steem post modal for clarity",
+        "🔖 Bump version to 3.2.8 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.8",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Center align navigation cards and adjust padding for improved layout on mobile",
+        "🔖 Bump version to 3.2.7 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.7",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance level-up rewards system and add celebration animations for daily login claims. controls on steem rewards enabled before saving winner history",
+        "🔖 Bump version to 3.2.6 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.6",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: Add cover image to post content generation",
+        "🔖 Bump version to 3.2.5 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.5",
+      "date": "2026-01-04",
+      "type": "patch",
+      "changes": [
+        "fix: Adjust padding and width for improved layout in profile renderer",
+        "🔖 Bump version to 3.2.4 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.4",
+      "date": "2026-01-04",
+      "type": "patch",
+      "changes": [
+        "fix: Improve mobile responsiveness and layout for profile and wallet stats sections",
+        "🔖 Bump version to 3.2.3 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.2.3",
+      "date": "2026-01-04",
+      "type": "patch",
+      "changes": [
+        "fix: Add Telegram notifications for new Steem posts and enhance post publishing logic",
+        "🔖 Bump version to 3.2.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.2",
       "date": "2026-01-04",
@@ -28,69 +92,6 @@
       "changes": [
         "feat: Enhance fullscreen handling with toggle functionality for iOS",
         "🔖 Bump version to 3.1.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.1.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Enhance fullscreen support for iOS with CSS fallback and exit button",
-        "🔖 Bump version to 3.0.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.0.0",
-      "date": "2026-01-03",
-      "type": "major",
-      "changes": [
-        "breaking!:modify get_by_user , Implement Infinite Scroll Manager and Wallet Stats Renderer",
-        "🔖 Bump version to 2.20.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.20.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Update quest tracking logic to use configurable score thresholds and add production fix script for quest data",
-        "🔖 Bump version to 2.19.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.19.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Improve cumulative data initialization for quest tracking and add script to fix existing data",
-        "🔖 Bump version to 2.18.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.18.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Update quest progress handling and add consistency fixer script",
-        "🔖 Bump version to 2.17.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.17.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Add daily quest reset scheduler for automatic quest management",
-        "🔖 Bump version to 2.16.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "2.16.1",
-      "date": "2026-01-02",
-      "type": "patch",
-      "changes": [
-        "style: Remove animations from reward icons in level widget and quest hero styles",
-        "🔖 Bump version to 2.16.0 [skip-version]"
       ]
     }
   ]

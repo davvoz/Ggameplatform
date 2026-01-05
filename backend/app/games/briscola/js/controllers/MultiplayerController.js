@@ -23,11 +23,16 @@ export class MultiplayerController {
      * Get WebSocket URL from environment
      */
     getWebSocketUrl() {
-        // Get API URL from environment or default to port 8000
-        const apiUrl = window.ENV?.API_URL || 'http://localhost:8000';
-        const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
-        const host = new URL(apiUrl).host;
-        return `${wsProtocol}//${host}/ws/briscola`;
+        // Auto-detect backend URL based on current page location
+        // This works for both desktop (localhost) and mobile (LAN IP)
+        const hostname = window.location.hostname;
+        const isSecure = window.location.protocol === 'https:';
+        const wsProtocol = isSecure ? 'wss:' : 'ws:';
+        
+        // Use the same hostname as the current page, with port 8000 for backend
+        const wsUrl = `${wsProtocol}//${hostname}:8000/ws/briscola`;
+        console.log('[Multiplayer] WebSocket URL:', wsUrl);
+        return wsUrl;
     }
     
     /**

@@ -1,8 +1,17 @@
 {
-  "version": "3.4.0",
-  "timestamp": "2026-01-05T16:44:39.996Z",
-  "buildNumber": 195,
+  "version": "3.4.1",
+  "timestamp": "2026-01-05T22:21:43.697Z",
+  "buildNumber": 196,
   "changelog": [
+    {
+      "version": "3.4.1",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: update coin deduction logic to occur after successful post publication",
+        "🔖 Bump version to 3.4.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.0",
       "date": "2026-01-05",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: [BRISCOLA]add deck selection feature with UI and sprite sheet integration",
         "🔖 Bump version to 3.3.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.1",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[BRISCOLA] setup script",
-        "🔖 Bump version to 3.3.0 [skip-version]"
       ]
     }
   ]

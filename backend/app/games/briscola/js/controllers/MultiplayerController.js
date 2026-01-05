@@ -75,9 +75,11 @@ export class MultiplayerController {
         this.isHost = false;
         this.opponentName = null;
         
-        // Hide any lobby UI
+        // Ripristina lo stato della lobby UI
         document.getElementById('room-code-display').style.display = 'none';
         document.getElementById('join-room-form').style.display = 'none';
+        document.querySelector('.lobby-options').style.display = 'flex';
+        document.querySelector('.waiting-text').textContent = 'In attesa di un avversario...';
     }
     
     /**

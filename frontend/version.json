@@ -1,8 +1,18 @@
 {
-  "version": "3.2.7",
-  "timestamp": "2026-01-05T00:44:40.872Z",
-  "buildNumber": 182,
+  "version": "3.2.8",
+  "timestamp": "2026-01-05T01:14:42.028Z",
+  "buildNumber": 183,
   "changelog": [
+    {
+      "version": "3.2.8",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Center align navigation cards and adjust padding for improved layout on mobile",
+        "🔖 Bump version to 3.2.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.7",
       "date": "2026-01-05",
@@ -82,15 +92,6 @@
       "changes": [
         "feat: Enhance fullscreen support for iOS with CSS fallback and exit button",
         "🔖 Bump version to 3.0.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.0.0",
-      "date": "2026-01-03",
-      "type": "major",
-      "changes": [
-        "breaking!:modify get_by_user , Implement Infinite Scroll Manager and Wallet Stats Renderer",
-        "🔖 Bump version to 2.20.0 [skip-version]"
       ]
     }
   ]

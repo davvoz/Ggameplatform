@@ -1,8 +1,17 @@
 {
-  "version": "3.3.8",
-  "timestamp": "2026-01-05T13:51:31.979Z",
-  "buildNumber": 193,
+  "version": "3.3.9",
+  "timestamp": "2026-01-05T14:06:36.862Z",
+  "buildNumber": 194,
   "changelog": [
+    {
+      "version": "3.3.9",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA] improve WebSocket URL detection for local development and production",
+        "🔖 Bump version to 3.3.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.8",
       "date": "2026-01-05",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: Add Briscola game backend with multiplayer support and quest system",
         "🔖 Bump version to 3.2.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.9",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: Update description text in Steem post modal for clarity",
-        "🔖 Bump version to 3.2.8 [skip-version]"
       ]
     }
   ]

@@ -319,18 +319,21 @@ export class MultiplayerController {
             engine.player2Hand.push({ id: `opp_${i}`, hidden: true });
         }
         
-        // Set briscola
+        // Set briscola - gestisci sia presenza che assenza
         if (serverState.briscola) {
             engine.briscolaCard = engine.deserializeCard(serverState.briscola);
-            engine.briscolaSuit = serverState.briscola_suit;
+            engine.briscola = serverState.briscola_suit;
+        } else {
+            // Briscola non più disponibile (mazzo esaurito)
+            engine.briscolaCard = null;
         }
         
         // Set scores
         engine.player1Score = serverState.your_score || 0;
         engine.player2Score = serverState.opponent_score || 0;
         
-        // Set deck count
-        engine.deckRemaining = serverState.deck_remaining || 0;
+        // Set deck count (per multiplayer)
+        engine._onlineDeckRemaining = serverState.deck_remaining ?? 0;
         
         // Set current turn - be explicit about the boolean check
         const isMyTurn = serverState.is_your_turn === true;
@@ -470,6 +473,23 @@ export class MultiplayerController {
      * Handle game end from server
      */
     handleGameEnd(message) {
+        // Aggiorna i punteggi del gameEngine con quelli finali dal server
+        if (message.player1Score !== undefined && message.player2Score !== undefined) {
+            // Determina quale score è il nostro
+            const isHost = this.playerId === message.winner || 
+                           (this.isHost && message.winner === null);
+            
+            // Il server invia player1Score e player2Score dove player1 è l'host
+            if (this.isHost) {
+                this.app.gameEngine.player1Score = message.player1Score;
+                this.app.gameEngine.player2Score = message.player2Score;
+            } else {
+                // Siamo il guest, quindi i nostri punti sono player2Score
+                this.app.gameEngine.player1Score = message.player2Score;
+                this.app.gameEngine.player2Score = message.player1Score;
+            }
+        }
+        
         // Play end game sound
         if (message.winner === this.playerId) {
             this.app.soundManager?.play('gameWin');

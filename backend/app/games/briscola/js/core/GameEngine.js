@@ -39,6 +39,9 @@ export class GameEngine {
         this.player1Name = 'Tu';
         this.player2Name = 'CPU';
         
+        // Per multiplayer: deck remaining gestito dal server
+        this._onlineDeckRemaining = null;
+        
         this.isGameOver = false;
         this.isPaused = false;
         this.winner = null;
@@ -208,6 +211,16 @@ export class GameEngine {
         
         // Check for game over
         if (this.player1Hand.length === 0 && this.player2Hand.length === 0) {
+            // Ricalcola i punteggi dalle carte catturate per sicurezza
+            const calculatedP1 = this.player1Captured.reduce((sum, c) => sum + c.points, 0);
+            const calculatedP2 = this.player2Captured.reduce((sum, c) => sum + c.points, 0);
+            
+            console.log(`[GameEngine] Final score verification - P1: ${this.player1Score} (calculated: ${calculatedP1}), P2: ${this.player2Score} (calculated: ${calculatedP2})`);
+            
+            // Usa i punteggi calcolati
+            this.player1Score = calculatedP1;
+            this.player2Score = calculatedP2;
+            
             this.endGame();
         }
         
@@ -236,46 +249,41 @@ export class GameEngine {
      * @param {number} winner - The round winner (draws first)
      */
     drawCards(winner) {
-        if (this.deck.isEmpty) return;
+        // No cards left to draw
+        if (this.deck.remaining === 0) return;
         
         const firstDrawer = winner;
         const secondDrawer = winner === 1 ? 2 : 1;
         
-        // First drawer draws
-        let card = null;
-        if (this.deck.remaining > 1) {
-            card = this.deck.draw();
-        } else if (this.deck.remaining === 1) {
-            // Last card is the briscola
-            card = this.deck.takeBottom();
-            this.briscolaCard = null;
-        }
-        
-        if (card) {
-            if (firstDrawer === 1) {
-                this.player1Hand.push(card);
-            } else {
-                this.player2Hand.push(card);
+        // Winner draws first
+        if (this.deck.remaining > 0) {
+            const card = this.deck.draw();
+            if (card) {
+                if (firstDrawer === 1) {
+                    this.player1Hand.push(card);
+                } else {
+                    this.player2Hand.push(card);
+                }
+                console.log(`[GameEngine] Player ${firstDrawer} drew ${card.name}`);
             }
         }
         
-        // Second drawer draws
-        if (this.deck.remaining >= 1) {
-            card = this.deck.draw();
-        } else if (this.briscolaCard) {
-            // Take the briscola card
-            card = this.deck.takeBottom();
-            this.briscolaCard = null;
-        } else {
-            card = null;
+        // Loser draws second
+        if (this.deck.remaining > 0) {
+            const card = this.deck.draw();
+            if (card) {
+                if (secondDrawer === 1) {
+                    this.player1Hand.push(card);
+                } else {
+                    this.player2Hand.push(card);
+                }
+                console.log(`[GameEngine] Player ${secondDrawer} drew ${card.name}`);
+            }
         }
         
-        if (card) {
-            if (secondDrawer === 1) {
-                this.player1Hand.push(card);
-            } else {
-                this.player2Hand.push(card);
-            }
+        // Clear briscola reference when deck is empty
+        if (this.deck.remaining === 0) {
+            this.briscolaCard = null;
         }
     }
     
@@ -371,7 +379,7 @@ export class GameEngine {
             playedCard1: this.playedCard1,
             playedCard2: this.playedCard2,
             
-            deckRemaining: this.deck.remaining + (this.briscolaCard ? 1 : 0),
+            deckRemaining: this._onlineDeckRemaining !== null ? this._onlineDeckRemaining : (this.deck.remaining + (this.briscolaCard ? 1 : 0)),
             
             isGameOver: this.isGameOver,
             isPaused: this.isPaused,

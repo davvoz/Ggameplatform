@@ -200,6 +200,16 @@ class GameState:
         
         # Check game over
         if len(self.player1_hand) == 0 and len(self.player2_hand) == 0:
+            # Ricalcola i punteggi dalle carte catturate per sicurezza
+            calculated_p1 = sum(c.points for c in self.player1_captured)
+            calculated_p2 = sum(c.points for c in self.player2_captured)
+            
+            print(f"[Briscola] Final score verification - P1: {self.player1_score} (calculated: {calculated_p1}), P2: {self.player2_score} (calculated: {calculated_p2})")
+            
+            # Usa i punteggi calcolati
+            self.player1_score = calculated_p1
+            self.player2_score = calculated_p2
+            
             self._end_game()
         
         return {
@@ -239,51 +249,27 @@ class GameState:
         """Draw cards after round (winner draws first)"""
         loser_id = self.get_opponent_id(winner_id)
         
-        # Case 1: No cards left at all
-        if self.deck.remaining == 0 and self.briscola is None:
+        # No cards left to draw
+        if self.deck.remaining == 0:
             return
         
-        # Case 2: Only the briscola remains (deck empty, briscola card still there)
-        # This means last round where only briscola was left - already taken
-        if self.deck.remaining == 0 and self.briscola:
-            # Winner takes the briscola
-            self.get_hand(winner_id).append(self.briscola)
-            self.briscola = None
-            return
-        
-        # Case 3: Only one card left in deck (that card IS the briscola)
-        if self.deck.remaining == 1:
-            # The last card is the briscola - winner takes it
-            card = self.deck.draw()
-            if card:
-                self.get_hand(winner_id).append(card)
-            self.briscola = None
-            return
-        
-        # Case 4: Two cards left - winner takes normal card, loser takes briscola
-        if self.deck.remaining == 2:
-            # Winner draws from top
-            card = self.deck.draw()
-            if card:
-                self.get_hand(winner_id).append(card)
-            
-            # Loser takes the briscola (last card in deck)
-            briscola_card = self.deck.draw()
-            if briscola_card:
-                self.get_hand(loser_id).append(briscola_card)
-            self.briscola = None
-            return
-        
-        # Case 5: Normal draw - more than 2 cards left
         # Winner draws first
-        card = self.deck.draw()
-        if card:
-            self.get_hand(winner_id).append(card)
+        if self.deck.remaining > 0:
+            card = self.deck.draw()
+            if card:
+                self.get_hand(winner_id).append(card)
+                print(f"[Briscola] Winner {winner_id} drew {card.id}")
         
         # Loser draws second
-        card = self.deck.draw()
-        if card:
-            self.get_hand(loser_id).append(card)
+        if self.deck.remaining > 0:
+            card = self.deck.draw()
+            if card:
+                self.get_hand(loser_id).append(card)
+                print(f"[Briscola] Loser {loser_id} drew {card.id}")
+        
+        # Clear briscola reference when deck is empty
+        if self.deck.remaining == 0:
+            self.briscola = None
     
     def _end_game(self):
         """End the game and determine winner"""

@@ -1,8 +1,17 @@
 {
-  "version": "3.3.5",
-  "timestamp": "2026-01-05T12:55:25.405Z",
-  "buildNumber": 190,
+  "version": "3.3.6",
+  "timestamp": "2026-01-05T13:07:22.283Z",
+  "buildNumber": 191,
   "changelog": [
+    {
+      "version": "3.3.6",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA]update lobby UI state and messages for better user experience",
+        "🔖 Bump version to 3.3.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.5",
       "date": "2026-01-05",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: Enhance level-up rewards system and add celebration animations for daily login claims. controls on steem rewards enabled before saving winner history",
         "🔖 Bump version to 3.2.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.6",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: Add cover image to post content generation",
-        "🔖 Bump version to 3.2.5 [skip-version]"
       ]
     }
   ]

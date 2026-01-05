@@ -1,8 +1,18 @@
 {
-  "version": "3.3.0",
-  "timestamp": "2026-01-05T10:27:15.652Z",
-  "buildNumber": 185,
+  "version": "3.3.1",
+  "timestamp": "2026-01-05T10:39:36.222Z",
+  "buildNumber": 186,
   "changelog": [
+    {
+      "version": "3.3.1",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[BRISCOLA] setup script",
+        "🔖 Bump version to 3.3.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.0",
       "date": "2026-01-05",
@@ -84,15 +94,6 @@
       "changes": [
         "fix: Add pointer cursor style to coins badge for better UX",
         "🔖 Bump version to 3.2.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.1",
-      "date": "2026-01-03",
-      "type": "patch",
-      "changes": [
-        "fix: Rename hero-stat class to hero-stat-wt for consistency in wallet stats",
-        "🔖 Bump version to 3.2.0 [skip-version]"
       ]
     }
   ]

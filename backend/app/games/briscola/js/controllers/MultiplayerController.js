@@ -35,29 +35,52 @@ export class MultiplayerController {
      */
     connect() {
         return new Promise((resolve, reject) => {
+            console.log('[Multiplayer] Tentativo connessione a:', this.serverUrl);
+            
             try {
                 this.socket = new WebSocket(this.serverUrl);
                 
+                // Timeout per la connessione
+                const connectionTimeout = setTimeout(() => {
+                    console.error('[Multiplayer] Timeout connessione WebSocket');
+                    this.socket.close();
+                    reject(new Error('Timeout connessione - il server non risponde'));
+                }, 10000);
+                
                 this.socket.onopen = () => {
-                    console.log('[Multiplayer] Connected to server');
+                    clearTimeout(connectionTimeout);
+                    console.log('[Multiplayer] Connessione WebSocket stabilita');
                     resolve();
                 };
                 
                 this.socket.onmessage = (event) => {
-                    this.handleMessage(JSON.parse(event.data));
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('[Multiplayer] Messaggio ricevuto:', data.type);
+                        this.handleMessage(data);
+                    } catch (e) {
+                        console.error('[Multiplayer] Errore parsing messaggio:', e);
+                    }
                 };
                 
                 this.socket.onerror = (error) => {
+                    clearTimeout(connectionTimeout);
                     console.error('[Multiplayer] WebSocket error:', error);
-                    reject(error);
+                    console.error('[Multiplayer] ReadyState:', this.socket?.readyState);
+                    reject(new Error('Errore WebSocket - verifica che il server sia attivo'));
                 };
                 
-                this.socket.onclose = () => {
-                    console.log('[Multiplayer] Disconnected from server');
+                this.socket.onclose = (event) => {
+                    clearTimeout(connectionTimeout);
+                    console.log('[Multiplayer] WebSocket chiuso - code:', event.code, 'reason:', event.reason);
+                    if (event.code !== 1000) {
+                        console.warn('[Multiplayer] Chiusura anomala:', event.code);
+                    }
                     this.handleDisconnect();
                 };
                 
             } catch (error) {
+                console.error('[Multiplayer] Errore creazione WebSocket:', error);
                 reject(error);
             }
         });
@@ -86,10 +109,15 @@ export class MultiplayerController {
      * Create a new room
      */
     async createRoom() {
+        console.log('[Multiplayer] Tentativo di creazione stanza...');
+        console.log('[Multiplayer] WebSocket URL:', this.serverUrl);
+        
         try {
             await this.connect();
+            console.log('[Multiplayer] Connessione WebSocket riuscita');
             
             const username = this.app.platformBridge.getUsername() || 'Giocatore';
+            console.log('[Multiplayer] Invio richiesta createRoom per utente:', username);
             
             this.send({
                 type: 'createRoom',
@@ -103,7 +131,8 @@ export class MultiplayerController {
             document.querySelector('.lobby-options').style.display = 'none';
             
         } catch (error) {
-            this.app.showError('Impossibile connettersi al server');
+            console.error('[Multiplayer] Errore creazione stanza:', error);
+            this.showConnectionError('CREATE_ROOM_FAILED', error);
         }
     }
     
@@ -120,13 +149,17 @@ export class MultiplayerController {
      * Join an existing room
      */
     async joinRoom(code) {
+        console.log('[Multiplayer] Tentativo di unirsi alla stanza:', code);
+        
         if (!code || code.length !== 4) {
-            this.app.showError('Codice stanza non valido');
+            console.warn('[Multiplayer] Codice stanza non valido:', code);
+            this.showConnectionError('INVALID_CODE', 'Il codice deve essere di 4 caratteri');
             return;
         }
         
         try {
             await this.connect();
+            console.log('[Multiplayer] Connessione riuscita, invio joinRoom');
             
             const username = this.app.platformBridge.getUsername() || 'Giocatore';
             
@@ -137,9 +170,11 @@ export class MultiplayerController {
             });
             
             this.roomCode = code.toUpperCase();
+            console.log('[Multiplayer] Richiesta joinRoom inviata per stanza:', this.roomCode);
             
         } catch (error) {
-            this.app.showError('Impossibile connettersi al server');
+            console.error('[Multiplayer] Errore join room:', error);
+            this.showConnectionError('JOIN_ROOM_FAILED', error);
         }
     }
     
@@ -506,34 +541,166 @@ export class MultiplayerController {
      * Handle error
      */
     handleError(message) {
-        this.app.showError(message.message || 'Errore di connessione');
+        console.error('[Multiplayer] Errore dal server:', JSON.stringify(message));
         
-        if (message.code === 'ROOM_NOT_FOUND') {
+        // Logging dettagliato
+        const errorInfo = {
+            code: message.code || 'UNKNOWN',
+            message: message.message || 'Errore sconosciuto',
+            timestamp: new Date().toISOString(),
+            roomCode: this.roomCode,
+            playerId: this.playerId,
+            isHost: this.isHost
+        };
+        console.error('[Multiplayer] Error details:', JSON.stringify(errorInfo));
+        
+        // Mostra banner errore dettagliato
+        this.showConnectionError(message.code, message.message);
+        
+        if (message.code === 'ROOM_NOT_FOUND' || message.code === 'ROOM_FULL') {
             document.getElementById('join-room-form').style.display = 'none';
             document.querySelector('.lobby-options').style.display = 'flex';
         }
     }
     
     /**
+     * Show connection error banner with details
+     */
+    showConnectionError(code, details) {
+        const errorMessages = {
+            'ROOM_NOT_FOUND': 'La stanza non esiste. Verifica il codice inserito.',
+            'ROOM_FULL': 'La stanza è già piena. Prova a crearne una nuova.',
+            'CREATE_ROOM_FAILED': 'Impossibile creare la stanza. Il server potrebbe non essere raggiungibile.',
+            'JOIN_ROOM_FAILED': 'Impossibile unirsi alla stanza. Controlla la connessione.',
+            'WEBSOCKET_ERROR': 'Errore di connessione WebSocket.',
+            'CONNECTION_CLOSED': 'La connessione è stata chiusa.',
+            'UNKNOWN': 'Si è verificato un errore imprevisto.'
+        };
+        
+        const friendlyMessage = errorMessages[code] || errorMessages['UNKNOWN'];
+        const errorDetail = details instanceof Error ? details.message : (details || '');
+        
+        // Log per debug
+        console.error(`[Multiplayer] CONNECTION ERROR\n  Code: ${code}\n  Message: ${friendlyMessage}\n  Detail: ${errorDetail}\n  URL: ${this.serverUrl}`);
+        
+        // Crea banner errore
+        const existingBanner = document.getElementById('mp-error-banner');
+        if (existingBanner) existingBanner.remove();
+        
+        const banner = document.createElement('div');
+        banner.id = 'mp-error-banner';
+        banner.innerHTML = `
+            <div class="mp-error-header">
+                <span class="mp-error-icon">⚠️</span>
+                <span class="mp-error-title">Errore Multiplayer</span>
+                <button class="mp-error-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+            </div>
+            <div class="mp-error-body">
+                <div class="mp-error-message">${friendlyMessage}</div>
+                <div class="mp-error-details">
+                    <strong>Codice:</strong> ${code}<br>
+                    <strong>URL Server:</strong> ${this.serverUrl}<br>
+                    ${errorDetail ? `<strong>Dettaglio:</strong> ${errorDetail}<br>` : ''}
+                    <strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+            </div>
+        `;
+        banner.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #8B0000 0%, #B22222 100%);
+            color: white;
+            padding: 0;
+            border-radius: 12px;
+            z-index: 3000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            min-width: 320px;
+            max-width: 90vw;
+            font-family: sans-serif;
+            animation: slideDown 0.3s ease-out;
+        `;
+        
+        // Aggiungi stili per il banner
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            .mp-error-header {
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                background: rgba(0,0,0,0.2);
+                border-radius: 12px 12px 0 0;
+            }
+            .mp-error-icon { font-size: 20px; margin-right: 8px; }
+            .mp-error-title { font-weight: bold; flex: 1; }
+            .mp-error-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity 0.2s;
+            }
+            .mp-error-close:hover { opacity: 1; }
+            .mp-error-body { padding: 16px; }
+            .mp-error-message {
+                font-size: 16px;
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+            .mp-error-details {
+                font-size: 12px;
+                opacity: 0.85;
+                background: rgba(0,0,0,0.2);
+                padding: 10px;
+                border-radius: 6px;
+                font-family: monospace;
+                line-height: 1.6;
+            }
+        `;
+        banner.appendChild(style);
+        
+        document.body.appendChild(banner);
+        
+        // Rimuovi dopo 10 secondi
+        setTimeout(() => {
+            if (banner.parentElement) {
+                banner.style.animation = 'slideDown 0.3s ease-out reverse';
+                setTimeout(() => banner.remove(), 300);
+            }
+        }, 10000);
+    }
+    
+    /**
      * Handle opponent disconnect
      */
     handleOpponentDisconnect() {
-        this.app.showError('L\'avversario si è disconnesso');
+        console.log('[Multiplayer] Avversario disconnesso');
+        this.showConnectionError('OPPONENT_DISCONNECTED', 'L\'avversario ha abbandonato la partita');
         setTimeout(() => {
             this.disconnect();
             this.app.backToMenu();
-        }, 2000);
+        }, 3000);
     }
     
     /**
      * Handle our disconnect
      */
     handleDisconnect() {
+        console.log('[Multiplayer] handleDisconnect chiamato, currentMode:', this.app.currentMode);
+        
         if (this.app.currentMode === 'online') {
-            this.app.showError('Connessione persa');
+            console.error('[Multiplayer] Disconnessione durante partita online');
+            this.showConnectionError('CONNECTION_CLOSED', 'La connessione al server è stata interrotta');
             setTimeout(() => {
                 this.app.backToMenu();
-            }, 2000);
+            }, 3000);
         }
     }
     

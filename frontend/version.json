@@ -1,8 +1,17 @@
 {
-  "version": "3.3.3",
-  "timestamp": "2026-01-05T11:11:49.101Z",
-  "buildNumber": 188,
+  "version": "3.3.4",
+  "timestamp": "2026-01-05T11:22:12.384Z",
+  "buildNumber": 189,
   "changelog": [
+    {
+      "version": "3.3.4",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [CSP] enhance Content Security Policy for game iframes to support WebSocket connections",
+        "🔖 Bump version to 3.3.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.3",
       "date": "2026-01-05",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: Adjust padding and width for improved layout in profile renderer",
         "🔖 Bump version to 3.2.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.4",
-      "date": "2026-01-04",
-      "type": "patch",
-      "changes": [
-        "fix: Improve mobile responsiveness and layout for profile and wallet stats sections",
-        "🔖 Bump version to 3.2.3 [skip-version]"
       ]
     }
   ]

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Briscola - Italian Card Game</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Platform SDK -->
+    <script src="/sdk/platformsdk.js"></script>
+</head>
+
+<body>
+    <div id="game-container" class="game-container">
+        <!-- Main Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <div class="menu-content">
+                <h1 class="game-title">🃏 Briscola</h1>
+                <p class="game-subtitle">Gioco di Carte Italiano</p>
+                
+                <div class="menu-buttons">
+                    <button class="menu-btn primary" data-mode="ai">
+                        <span class="btn-icon">🤖</span>
+                        <span class="btn-text">Gioca vs AI</span>
+                    </button>
+                    <button class="menu-btn secondary" data-mode="online">
+                        <span class="btn-icon">🌐</span>
+                        <span class="btn-text">Multiplayer Online</span>
+                    </button>
+                </div>
+                
+                <div class="difficulty-selector" id="difficulty-selector" style="display: none;">
+                    <h3>Difficoltà AI</h3>
+                    <div class="difficulty-buttons">
+                        <button class="diff-btn" data-difficulty="easy">Facile</button>
+                        <button class="diff-btn active" data-difficulty="medium">Medio</button>
+                        <button class="diff-btn" data-difficulty="hard">Difficile</button>
+                    </div>
+                </div>
+                
+                <div class="rules-link">
+                    <button class="link-btn" id="show-rules">📜 Regole del Gioco</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Online Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-content">
+                <h2>🌐 Multiplayer Online</h2>
+                
+                <div class="lobby-options">
+                    <button class="lobby-btn" id="create-room">
+                        <span class="btn-icon">➕</span>
+                        <span class="btn-text">Crea Stanza</span>
+                    </button>
+                    <button class="lobby-btn" id="join-room">
+                        <span class="btn-icon">🚪</span>
+                        <span class="btn-text">Unisciti</span>
+                    </button>
+                </div>
+                
+                <div id="room-code-display" class="room-code-display" style="display: none;">
+                    <p>Codice Stanza:</p>
+                    <div class="room-code" id="room-code">XXXX</div>
+                    <p class="waiting-text">In attesa di un avversario...</p>
+                </div>
+                
+                <div id="join-room-form" class="join-room-form" style="display: none;">
+                    <input type="text" id="room-input" placeholder="Inserisci codice" maxlength="4">
+                    <button class="join-btn" id="join-room-submit">Unisciti</button>
+                </div>
+                
+                <button class="back-btn" id="lobby-back">← Torna al Menu</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- Opponent Area -->
+            <div class="opponent-area">
+                <div class="opponent-info">
+                    <div class="player-avatar opponent">
+                        <span>🤖</span>
+                    </div>
+                    <div class="opponent-details">
+                        <span class="opponent-name" id="opponent-name">Avversario</span>
+                        <div class="opponent-stats">
+                            <span class="opponent-score">Punti: <strong id="opponent-score">0</strong></span>
+                            <span class="opponent-cards-count">Carte: <span id="opponent-cards">3</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="opponent-hand" class="opponent-hand"></div>
+            </div>
+
+            <!-- Game Area -->
+            <div class="game-area">
+                <div class="deck-section">
+                    <div id="deck-pile" class="deck-pile">
+                        <div class="deck-card"></div>
+                        <span id="deck-count" class="deck-count">33</span>
+                    </div>
+                </div>
+                
+                <div class="briscola-section">
+                    <div class="briscola-container">
+                        <div id="briscola-card" class="briscola-card"></div>
+                        <div class="briscola-label">BRISCOLA</div>
+                    </div>
+                </div>
+                
+                <div class="play-section">
+                    <div id="play-area" class="play-area">
+                        <div id="played-cards" class="played-cards">
+                            <div id="first-played" class="played-slot first">
+                                <span class="slot-label">1°</span>
+                            </div>
+                            <div id="second-played" class="played-slot second">
+                                <span class="slot-label">2°</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="turn-indicator" class="turn-indicator">Il tuo turno</div>
+                </div>
+            </div>
+
+            <!-- Player Area -->
+            <div class="player-area">
+                <div id="player-hand" class="player-hand"></div>
+                
+                <div class="player-info-bar">
+                    <div class="player-info self">
+                        <div class="player-avatar">
+                            <span>👤</span>
+                        </div>
+                        <div class="player-details">
+                            <span class="player-name" id="player-name">Tu</span>
+                            <span class="player-score">Punti: <strong id="player-score">0</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <button id="pause-btn" class="control-btn" title="Pausa">
+                            <span>⏸️</span>
+                        </button>
+                        <button id="sound-toggle" class="control-btn" title="Audio">
+                            <span>🔊</span>
+                        </button>
+                        <button id="exit-btn" class="control-btn quit" title="Esci">
+                            <span>🚪</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <div class="gameover-content">
+                <div class="gameover-header">
+                    <div class="result-badge" id="result-badge">
+                        <span class="badge-text">VITTORIA</span>
+                    </div>
+                    <h2 class="gameover-title" id="gameover-title">Partita Conclusa</h2>
+                </div>
+                
+                <div class="scoreboard">
+                    <div class="score-card player1" id="score-card-1">
+                        <div class="score-card-header">
+                            <span class="score-player-name" id="go-player1">Tu</span>
+                        </div>
+                        <div class="score-card-value" id="go-score1">0</div>
+                        <div class="score-card-label">PUNTI</div>
+                    </div>
+                    
+                    <div class="score-divider">
+                        <span class="vs-text">VS</span>
+                    </div>
+                    
+                    <div class="score-card player2" id="score-card-2">
+                        <div class="score-card-header">
+                            <span class="score-player-name" id="go-player2">Avversario</span>
+                        </div>
+                        <div class="score-card-value" id="go-score2">0</div>
+                        <div class="score-card-label">PUNTI</div>
+                    </div>
+                </div>
+                
+                <div class="winner-announcement" id="winner-announcement"></div>
+                
+                <div class="gameover-buttons">
+                    <button class="gameover-btn primary" id="play-again">
+                        <span class="btn-icon-svg">↻</span>
+                        Gioca Ancora
+                    </button>
+                    <button class="gameover-btn secondary" id="back-to-menu">
+                        Menu Principale
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rules Modal -->
+        <div id="rules-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" id="close-rules">×</button>
+                <h2>📜 Regole della Briscola</h2>
+                <div class="rules-text">
+                    <h3>Obiettivo</h3>
+                    <p>Raggiungere il punteggio più alto catturando carte di valore.</p>
+                    
+                    <h3>Valori delle Carte</h3>
+                    <ul>
+                        <li><strong>Asso:</strong> 11 punti</li>
+                        <li><strong>Tre:</strong> 10 punti</li>
+                        <li><strong>Re:</strong> 4 punti</li>
+                        <li><strong>Cavallo:</strong> 3 punti</li>
+                        <li><strong>Fante:</strong> 2 punti</li>
+                        <li><strong>7, 6, 5, 4, 2:</strong> 0 punti</li>
+                    </ul>
+                    
+                    <h3>Ordine di Forza</h3>
+                    <p>Asso > Tre > Re > Cavallo > Fante > 7 > 6 > 5 > 4 > 2</p>
+                    
+                    <h3>Come si Gioca</h3>
+                    <ol>
+                        <li>Ogni giocatore riceve 3 carte</li>
+                        <li>Una carta viene scoperta: è la Briscola</li>
+                        <li>Il primo giocatore gioca una carta</li>
+                        <li>L'avversario deve rispondere</li>
+                        <li>Vince chi gioca la carta più forte</li>
+                        <li>Il vincitore pesca per primo</li>
+                        <li>Si continua fino a esaurire le carte</li>
+                    </ol>
+                    
+                    <h3>Chi Vince la Mano?</h3>
+                    <ul>
+                        <li>La Briscola batte sempre gli altri semi</li>
+                        <li>Se nessuno gioca Briscola, vince il seme iniziale</li>
+                        <li>Tra carte dello stesso seme, vince la più forte</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pause Modal -->
+        <div id="pause-modal" class="modal">
+            <div class="modal-content pause-content">
+                <h2>⏸️ Pausa</h2>
+                <div class="pause-buttons">
+                    <button class="menu-btn primary" id="resume-game">▶️ Riprendi</button>
+                    <button class="menu-btn secondary" id="quit-game">🚪 Abbandona</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

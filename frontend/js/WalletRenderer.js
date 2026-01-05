@@ -145,6 +145,85 @@ class WalletRenderer {
         
         // Initialize scroll-to-top button
         this._initScrollToTop();
+        
+        // Initialize sticky hero navbar
+        this._initStickyHero();
+    }
+    
+    /**
+     * Initialize sticky hero behavior
+     * The balance hero collapses into a compact navbar when scrolling
+     * @private
+     */
+    _initStickyHero() {
+        const balanceHero = document.querySelector('.balance-hero');
+        if (!balanceHero) return;
+        
+        // Create the compact sticky navbar clone
+        const stickyNavbar = document.createElement('div');
+        stickyNavbar.className = 'wallet-sticky-navbar';
+        stickyNavbar.innerHTML = `
+            <div class="sticky-navbar-content">
+                <div class="sticky-balance-info">
+                    <span class="sticky-label">Balance</span>
+                    <span class="sticky-balance">${this.balance?.balance?.toLocaleString() || '0'} 🪙</span>
+                </div>
+                <div class="sticky-stats">
+                    <span class="sticky-stat positive">+${this.balance?.total_earned?.toLocaleString() || '0'}</span>
+                    <span class="sticky-stat negative">-${this.balance?.total_spent?.toLocaleString() || '0'}</span>
+                </div>
+            </div>
+        `;
+        
+        // Insert sticky navbar at the beginning of wallet container
+        const walletContainer = document.querySelector('.wallet-container');
+        if (walletContainer) {
+            walletContainer.insertBefore(stickyNavbar, walletContainer.firstChild);
+        }
+        
+        // Get hero position for scroll calculations
+        let heroRect = balanceHero.getBoundingClientRect();
+        let heroTop = heroRect.top + window.scrollY;
+        let heroHeight = heroRect.height;
+        
+        // Recalculate on resize
+        const recalculatePositions = () => {
+            heroRect = balanceHero.getBoundingClientRect();
+            heroTop = heroRect.top + window.scrollY;
+            heroHeight = heroRect.height;
+        };
+        
+        window.addEventListener('resize', recalculatePositions, { passive: true });
+        
+        // Handle scroll behavior
+        const handleScroll = () => {
+            const scrollY = window.scrollY;
+            const triggerPoint = heroTop + heroHeight * 0.5; // Start compressing at 50% scroll
+            const fullCompressPoint = heroTop + heroHeight; // Fully compressed when hero is out of view
+            
+            if (scrollY < triggerPoint) {
+                // Normal state - hero fully visible
+                balanceHero.classList.remove('hero-compressing', 'hero-compressed');
+                stickyNavbar.classList.remove('visible');
+            } else if (scrollY < fullCompressPoint) {
+                // Compressing state
+                const progress = (scrollY - triggerPoint) / (fullCompressPoint - triggerPoint);
+                balanceHero.classList.add('hero-compressing');
+                balanceHero.classList.remove('hero-compressed');
+                balanceHero.style.setProperty('--compress-progress', progress);
+                stickyNavbar.classList.remove('visible');
+            } else {
+                // Fully compressed - show sticky navbar
+                balanceHero.classList.remove('hero-compressing');
+                balanceHero.classList.add('hero-compressed');
+                stickyNavbar.classList.add('visible');
+            }
+        };
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // Initial check
+        handleScroll();
     }
     
     /**

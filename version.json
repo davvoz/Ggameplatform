@@ -1,8 +1,17 @@
 {
-  "version": "3.3.1",
-  "timestamp": "2026-01-05T10:39:36.222Z",
-  "buildNumber": 186,
+  "version": "3.3.2",
+  "timestamp": "2026-01-05T10:53:45.690Z",
+  "buildNumber": 187,
   "changelog": [
+    {
+      "version": "3.3.2",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA]add deck selection feature with UI and sprite sheet integration",
+        "🔖 Bump version to 3.3.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.1",
       "date": "2026-01-05",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: Add Telegram notifications for new Steem posts and enhance post publishing logic",
         "🔖 Bump version to 3.2.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.2",
-      "date": "2026-01-04",
-      "type": "patch",
-      "changes": [
-        "fix: Add pointer cursor style to coins badge for better UX",
-        "🔖 Bump version to 3.2.1 [skip-version]"
       ]
     }
   ]

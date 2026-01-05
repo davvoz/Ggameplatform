@@ -1,8 +1,17 @@
 {
-  "version": "3.4.1",
-  "timestamp": "2026-01-05T22:21:43.697Z",
-  "buildNumber": 196,
+  "version": "3.4.2",
+  "timestamp": "2026-01-05T23:50:55.001Z",
+  "buildNumber": 197,
   "changelog": [
+    {
+      "version": "3.4.2",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "FIX: redesign authentication page with hero section and unified auth methods",
+        "🔖 Bump version to 3.4.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.1",
       "date": "2026-01-05",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [NGINX] enhance Content Security Policy and add WebSocket proxy for multiplayer",
         "🔖 Bump version to 3.3.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.2",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA]add deck selection feature with UI and sprite sheet integration",
-        "🔖 Bump version to 3.3.1 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,18 @@
 {
-  "version": "3.3.2",
-  "timestamp": "2026-01-05T10:53:45.690Z",
-  "buildNumber": 187,
+  "version": "3.3.3",
+  "timestamp": "2026-01-05T11:11:49.101Z",
+  "buildNumber": 188,
   "changelog": [
+    {
+      "version": "3.3.3",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [NGINX] enhance Content Security Policy and add WebSocket proxy for multiplayer",
+        "🔖 Bump version to 3.3.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.2",
       "date": "2026-01-05",
@@ -85,15 +95,6 @@
       "changes": [
         "fix: Improve mobile responsiveness and layout for profile and wallet stats sections",
         "🔖 Bump version to 3.2.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.3",
-      "date": "2026-01-04",
-      "type": "patch",
-      "changes": [
-        "fix: Add Telegram notifications for new Steem posts and enhance post publishing logic",
-        "🔖 Bump version to 3.2.2 [skip-version]"
       ]
     }
   ]

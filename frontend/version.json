@@ -1,8 +1,18 @@
 {
-  "version": "3.2.9",
-  "timestamp": "2026-01-05T01:21:18.408Z",
-  "buildNumber": 184,
+  "version": "3.3.0",
+  "timestamp": "2026-01-05T10:27:15.652Z",
+  "buildNumber": 185,
   "changelog": [
+    {
+      "version": "3.3.0",
+      "date": "2026-01-05",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: Add Briscola game backend with multiplayer support and quest system",
+        "🔖 Bump version to 3.2.9 [skip-version]"
+      ]
+    },
     {
       "version": "3.2.9",
       "date": "2026-01-05",
@@ -83,15 +93,6 @@
       "changes": [
         "fix: Rename hero-stat class to hero-stat-wt for consistency in wallet stats",
         "🔖 Bump version to 3.2.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.0",
-      "date": "2026-01-03",
-      "type": "minor",
-      "changes": [
-        "feat: Enhance fullscreen handling with toggle functionality for iOS",
-        "🔖 Bump version to 3.1.0 [skip-version]"
       ]
     }
   ]

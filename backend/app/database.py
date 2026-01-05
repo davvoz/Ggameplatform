@@ -576,30 +576,36 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         if level_up_info['leveled_up']:
             print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
             
-            # Award level-up coins immediately (excluding levels with quests: 10, 30, 50)
-            new_level = level_up_info['new_level']
-            coins_awarded = level_up_info.get('coins_awarded', 0)
-            quest_levels = [10, 30, 50]  # Levels with dedicated quests
+            # Award level-up coins for ALL levels gained
+            levels_with_rewards = level_up_info.get('levels_with_rewards', [])
+            total_coins_awarded = 0
             
-            if coins_awarded > 0 and new_level not in quest_levels:
-                print(f"[DB] 🪙 Awarding level-up coins: {coins_awarded} coins for level {new_level}")
+            if levels_with_rewards:
                 coins_repo = RepositoryFactory.create_usercoins_repository(session)
                 transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
                 coin_service = CoinService(coins_repo, transaction_repo)
-                # Use service method `award_coins` (previously attempted to call non-existing `add_coins`)
-                try:
-                    coin_service.award_coins(
-                        user_id=game_session.user_id,
-                        amount=coins_awarded,
-                        transaction_type='level_up',
-                        source_id=str(new_level),
-                        description=f"Level {new_level} reached",
-                        extra_data={"source": "level_up", "level": new_level}
-                    )
-                except Exception as e:
-                    print(f"[DB] ⚠️ Failed to award level-up coins: {e}")
-            elif new_level in quest_levels:
-                print(f"[DB] 🎯 Level {new_level} has quest rewards - coins not awarded directly")
+                
+                # Award coins for each level that has rewards
+                for level_data in levels_with_rewards:
+                    level = level_data['level']
+                    coins = level_data['coins']
+                    
+                    if coins > 0:
+                        print(f"[DB] 🪙 Awarding level-up coins: {coins} coins for level {level}")
+                        try:
+                            coin_service.award_coins(
+                                user_id=game_session.user_id,
+                                amount=coins,
+                                transaction_type='level_up',
+                                source_id=str(level),
+                                description=f"Level {level} reached",
+                                extra_data={"source": "level_up", "level": level}
+                            )
+                            total_coins_awarded += coins
+                        except Exception as e:
+                            print(f"[DB] ⚠️ Failed to award level-up coins for level {level}: {e}")
+                
+                print(f"[DB] 💰 Total coins awarded for level-up: {total_coins_awarded}")
             
             # Store level-up info in session extra_data for frontend
             extra_data['level_up'] = {
@@ -607,7 +613,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
                 'new_level': level_up_info['new_level'],
                 'title': level_up_info.get('title'),
                 'badge': level_up_info.get('badge'),
-                'coins_awarded': coins_awarded,
+                'coins_awarded': total_coins_awarded,  # Total coins from all levels
+                'levels_with_rewards': levels_with_rewards,  # Details for each level
                 'is_milestone': level_up_info.get('is_milestone', False),
                 'coins_pending': False  # Coins awarded immediately
             }

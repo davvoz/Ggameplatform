@@ -307,24 +307,44 @@ class LevelSystem:
             
         Returns:
             Dict with leveled_up bool and level-up details if applicable
+            
+        Note:
+            If multiple levels are gained, returns rewards for ALL intermediate levels.
         """
         old_level = LevelSystem.calculate_level_from_xp(old_xp)
         new_level = LevelSystem.calculate_level_from_xp(new_xp)
         
         if new_level > old_level:
-            rewards = LevelSystem.get_level_up_rewards(new_level)
+            # Get rewards for the final level reached (for title/badge display)
+            final_rewards = LevelSystem.get_level_up_rewards(new_level)
             title_info = LevelSystem.get_level_title(new_level)
+            
+            # Calculate total coins from ALL levels gained (including intermediate ones)
+            total_coins = 0
+            levels_with_rewards = []
+            
+            for level in range(old_level + 1, new_level + 1):
+                level_rewards = LevelSystem.get_level_up_rewards(level)
+                coins_for_level = level_rewards.get("coins", 0)
+                if coins_for_level > 0:
+                    total_coins += coins_for_level
+                    levels_with_rewards.append({
+                        "level": level,
+                        "coins": coins_for_level,
+                        "is_milestone": level_rewards.get("is_milestone", False)
+                    })
             
             return {
                 "leveled_up": True,
                 "old_level": old_level,
                 "new_level": new_level,
                 "levels_gained": new_level - old_level,
-                "coins_awarded": rewards.get("coins", 0),
+                "coins_awarded": total_coins,  # Total coins from all levels
+                "levels_with_rewards": levels_with_rewards,  # Details for each level
                 "title": title_info["title"],
                 "badge": title_info["badge"],
                 "color": title_info["color"],
-                "is_milestone": rewards.get("is_milestone", False),
+                "is_milestone": final_rewards.get("is_milestone", False),
                 "xp_progress": LevelSystem.get_xp_progress(new_xp)
             }
         

@@ -524,7 +524,7 @@ class ProfileRenderer {
                         
                         // Set permanent indigo background
                         parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
-                        parentBadge.style.border = '1px solid rgba(99, 102, 241, 0.3)';
+                        parentBadge.style.border = '2px solid rgba(99, 102, 241, 0.3)';
                         
                         // Update the value
                         multiplierEl.textContent = `${breakdown.final_multiplier.toFixed(2)}x`;

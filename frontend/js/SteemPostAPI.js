@@ -103,11 +103,12 @@ class SteemPostAPI {
     }
 
     /**
-     * Confirm successful post publication (updates cooldown timer)
+     * Confirm successful post publication (updates cooldown timer and deducts coins)
      * @param {string} userId - User ID
      * @param {string} postUrl - Published post URL
+     * @param {string} postTitle - Post title
      */
-    async confirmPost(userId, postUrl) {
+    async confirmPost(userId, postUrl, postTitle = 'Gaming milestone post') {
         try {
             const response = await fetch(`${this.baseUrl}/api/steem/confirm-post`, {
                 method: 'POST',
@@ -116,7 +117,8 @@ class SteemPostAPI {
                 },
                 body: JSON.stringify({
                     user_id: userId,
-                    post_url: postUrl
+                    post_url: postUrl,
+                    post_title: postTitle
                 })
             });
 

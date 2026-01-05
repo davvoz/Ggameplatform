@@ -310,8 +310,8 @@
     
     .stat-badge {
         min-width: 0;
-        min-height: 110px;
-        padding: var(--spacing-xl);
+        min-height: 90px;
+        padding: var(--spacing-md);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -327,7 +327,7 @@
     }
     
     .stat-badge .stat-value {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
     
     #dailyRewardsBadge {

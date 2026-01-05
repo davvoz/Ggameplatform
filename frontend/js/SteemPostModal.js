@@ -214,7 +214,7 @@ class SteemPostModal {
             return;
         }
 
-        let postData = null; // Declare here to use in catch block
+        let postData = null;
 
         try {
             // Disable button
@@ -224,7 +224,7 @@ class SteemPostModal {
                 <span>Processing...</span>
             `;
 
-            // Step 1: Create post and deduct coins
+            // Step 1: Generate post content (no coin deduction yet)
             const response = await this.steemPostAPI.createPost(user.user_id, userMessage);
             
             // Debug log
@@ -253,7 +253,7 @@ class SteemPostModal {
                     postData.title,
                     postData.body,
                     postData.tags,
-                    { transaction_id: postData.transaction_id }
+                    {}
                 );
             } else {
                 publishBtn.innerHTML = `
@@ -267,7 +267,7 @@ class SteemPostModal {
                     postData.title,
                     postData.body,
                     postData.tags,
-                    { transaction_id: postData.transaction_id }
+                    { user_id: user.user_id }
                 );
 
                 // Clear posting key from input immediately after use
@@ -276,13 +276,13 @@ class SteemPostModal {
                 }
             }
 
-            // Confirm post publication and update cooldown timer
+            // Step 3: Confirm post publication, deduct coins, and update cooldown timer
             try {
-                await this.steemPostAPI.confirmPost(user.user_id, result.post_url);
-                console.log('Post confirmed, cooldown timer updated');
+                await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postData.title);
+                console.log('Post confirmed, coins deducted, cooldown timer updated');
             } catch (confirmError) {
-                console.error('Failed to confirm post (cooldown not updated):', confirmError);
-                // Don't fail the entire process, just log the error
+                console.error('Failed to confirm post:', confirmError);
+                throw new Error(`Post was published but confirmation failed: ${confirmError.message}`);
             }
 
             // Success!
@@ -295,27 +295,7 @@ class SteemPostModal {
 
         } catch (error) {
             console.error('Error publishing post:', error);
-            
-            // Attempt to refund coins if post creation was successful but publishing failed
-            if (postData && postData.transaction_id) {
-                try {
-                    console.log('Attempting to refund coins...');
-                    const refundResult = await this.steemPostAPI.refundPost(user.user_id, postData.transaction_id);
-                    console.log('Refund successful:', refundResult);
-                    
-                    // Refresh coin balance
-                    if (window.coinBalanceWidget) {
-                        await window.coinBalanceWidget.updateBalance();
-                    }
-                    
-                    alert(`Failed to publish post:\n\n${error.message}\n\nYour ${refundResult.refunded_amount} coins have been refunded.`);
-                } catch (refundError) {
-                    console.error('Failed to refund coins:', refundError);
-                    alert(`Failed to publish post:\n\n${error.message}\n\nWARNING: Automatic refund failed. Please contact support with transaction ID: ${postData.transaction_id}`);
-                }
-            } else {
-                alert(`Failed to publish post:\n\n${error.message}\n\nYour coins have not been deducted.`);
-            }
+            alert(`Failed to publish post:\n\n${error.message}`);
             
             // Re-enable button
             publishBtn.disabled = false;

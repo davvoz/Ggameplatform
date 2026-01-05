@@ -1,8 +1,17 @@
 {
-  "version": "3.3.6",
-  "timestamp": "2026-01-05T13:07:22.283Z",
-  "buildNumber": 191,
+  "version": "3.3.7",
+  "timestamp": "2026-01-05T13:26:19.155Z",
+  "buildNumber": 192,
   "changelog": [
+    {
+      "version": "3.3.7",
+      "date": "2026-01-05",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA] enhance WebSocket connection handling and error reporting",
+        "🔖 Bump version to 3.3.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.3.6",
       "date": "2026-01-05",
@@ -86,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Center align navigation cards and adjust padding for improved layout on mobile",
         "🔖 Bump version to 3.2.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.2.7",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance level-up rewards system and add celebration animations for daily login claims. controls on steem rewards enabled before saving winner history",
-        "🔖 Bump version to 3.2.6 [skip-version]"
       ]
     }
   ]

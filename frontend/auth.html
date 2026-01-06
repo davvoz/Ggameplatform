@@ -11,25 +11,48 @@
 <body>
     <main class="container">
         <div class="auth-container">
-            <div class="auth-header">
-                <div class="logo">🎮</div>
-                <h1>Game Platform</h1>
-                <p class="auth-subtitle">Choose your login method to start playing</p>
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <img src="./icons/icon-192x192.png" alt="Cur8 Games Logo" class="hero-logo">
+                <h1 class="hero-title">Cur8 Games</h1>
+                <p class="hero-subtitle">Play. Earn. Compete.</p>
+                <div class="hero-stats">
+                    <div class="stat-pill">
+                        <span class="stat-icon">🏆</span>
+                        <span>Weekly Prizes</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon">💰</span>
+                        <span>Real Rewards</span>
+                    </div>
+                </div>
             </div>
-            
-            <div class="auth-cards">
-                <!-- Steem Keychain Auth -->
-                <div class="auth-card featured">
-                    <div class="card-badge">⭐ Recommended</div>
-                    <div class="card-icon">🔐</div>
-                    <h2 class="card-title">Steem Keychain</h2>
-                    <p class="card-description">Authenticate with blockchain and unlock maximum rewards</p>
+
+            <div class="auth-card-unified">
+                <!-- Method Switcher -->
+                <div class="method-switcher">
+                    <button class="method-tab active" data-method="keychain" onclick="switchAuthMethod('keychain')">
+                        <span>🔐</span> Keychain
+                    </button>
+                    <button class="method-tab" data-method="postingkey" onclick="switchAuthMethod('postingkey')">
+                        <span>🔑</span> Posting Key
+                    </button>
+                    <button class="method-tab" data-method="anonymous" onclick="switchAuthMethod('anonymous')">
+                        <span>👤</span> Anonymous
+                    </button>
+                </div>
+
+                <!-- Keychain Method -->
+                <div class="auth-method-content active" id="keychain-content">
+                    <div class="method-description">
+                        <h3>🔐 Steem Keychain</h3>
+                        <p>Authenticate securely via browser extension</p>
+                    </div>
                     
-                    <div class="benefits-compact">
-                        <div class="benefit-item">⚡ Bonus Multipliers</div>
-                        <div class="benefit-item">🔗 Blockchain Identity</div>
-                        <div class="benefit-item">💾 Progress Saved</div>
-                        <div class="benefit-item">🏆 Tournaments</div>
+                    <div class="auth-form-inline">
+                        <div class="form-group-compact">
+                            <input type="text" id="keychainUsername" placeholder="Steem Username" autocomplete="username" />
+                        </div>
                     </div>
                     
                     <button class="btn-auth btn-auth-primary" onclick="loginWithSteem()">
@@ -39,18 +62,12 @@
                     
                     <div id="steemStatus" class="auth-status"></div>
                 </div>
-                
-                <!-- Posting Key Auth -->
-                <div class="auth-card">
-                    <div class="card-icon">🔑</div>
-                    <h2 class="card-title">Posting Key</h2>
-                    <p class="card-description">Login with your Steem username and posting key</p>
-                    
-                    <div class="benefits-compact">
-                        <div class="benefit-item">⚡ Bonus Multipliers</div>
-                        <div class="benefit-item">🔗 Blockchain Identity</div>
-                        <div class="benefit-item">💾 Progress Saved</div>
-                        <div class="benefit-item">📱 No Extension Needed</div>
+
+                <!-- Posting Key Method -->
+                <div class="auth-method-content" id="postingkey-content">
+                    <div class="method-description">
+                        <h3>🔑 Posting Key Login</h3>
+                        <p>Login with your Steem username and posting key</p>
                     </div>
                     
                     <div class="auth-form-inline">
@@ -62,28 +79,22 @@
                         </div>
                     </div>
                     
-                    <button class="btn-auth btn-auth-tertiary" onclick="loginWithPostingKey()">
+                    <button class="btn-auth btn-auth-primary" onclick="loginWithPostingKey()">
                         <span class="btn-icon">🔓</span>
                         <span>Login with Key</span>
                     </button>
                     
                     <div id="postingKeyStatus" class="auth-status"></div>
                 </div>
-                
-                <!-- Anonymous Auth -->
-                <div class="auth-card">
-                    <div class="card-icon">👤</div>
-                    <h2 class="card-title">Play Anonymous</h2>
-                    <p class="card-description">Start playing instantly without registration</p>
-                    
-                    <div class="benefits-compact">
-                        <div class="benefit-item">⚡ Instant Access</div>
-                        <div class="benefit-item">🔒 Complete Privacy</div>
-                        <div class="benefit-item">🎮 No Registration</div>
-                        <div class="benefit-item">🧪 Quick Testing</div>
+
+                <!-- Anonymous Method -->
+                <div class="auth-method-content" id="anonymous-content">
+                    <div class="method-description">
+                        <h3>👤 Play Anonymous</h3>
+                        <p>Start playing without a Steem account (No Rewards)</p>
                     </div>
                     
-                    <button class="btn-auth btn-auth-secondary" onclick="playAnonymous()">
+                    <button class="btn-auth btn-auth-primary" onclick="playAnonymous()">
                         <span class="btn-icon">🚀</span>
                         <span>Play Now</span>
                     </button>
@@ -103,6 +114,21 @@
         // Get API URL from window.ENV
         const API_BASE = `${window.ENV?.API_URL || 'http://localhost:8000'}/users`;
         
+        // Switch authentication method
+        function switchAuthMethod(method) {
+            // Update tabs
+            document.querySelectorAll('.method-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.auth-method-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${method}-content`).classList.add('active');
+        }
+        
         // Check if Steem Keychain is installed
         function checkSteemKeychain() {
             if (typeof window.steem_keychain === 'undefined') {
@@ -114,30 +140,34 @@
         // Login with Steem Keychain
         async function loginWithSteem() {
             const statusEl = document.getElementById('steemStatus');
+            const usernameInput = document.getElementById('keychainUsername');
             
             if (!checkSteemKeychain()) {
                     statusEl.className = 'auth-status error';
-                    statusEl.innerHTML = '❌ SteemKeychain non rilevato! <br><small>Installa l\'estensione da <a href="https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm" target="_blank">Chrome Web Store</a></small>';
+                    statusEl.innerHTML = '❌ SteemKeychain not detected! <br><small>Install the extension from <a href="https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm" target="_blank">Chrome Web Store</a></small>';
                 statusEl.style.display = 'block';
                 return;
             }
             
-            statusEl.className = 'auth-status info';
-            statusEl.innerHTML = '<span class="auth-loading"></span>Richiesta username...';
-            statusEl.style.display = 'block';
+            const username = usernameInput.value.trim().toLowerCase();
             
-            // Request username
-            const username = prompt('Inserisci il tuo username Steem:');
             if (!username) {
-                statusEl.style.display = 'none';
+                statusEl.className = 'auth-status error';
+                statusEl.innerHTML = '❌ Enter your Steem username';
+                statusEl.style.display = 'block';
+                usernameInput.focus();
                 return;
             }
+            
+            statusEl.className = 'auth-status info';
+            statusEl.innerHTML = '<span class="auth-loading"></span>Waiting for Keychain signature...';
+            statusEl.style.display = 'block';
             
             // Create message to sign (username + timestamp)
             const timestamp = Math.floor(Date.now() / 1000);
             const message = `${username}|${timestamp}`;
             
-            statusEl.innerHTML = '<span class="auth-loading"></span>Attendi firma da Keychain...';
+            statusEl.innerHTML = '<span class="auth-loading"></span>Waiting for Keychain signature...';
             
             // Request signature from Keychain
             window.steem_keychain.requestSignBuffer(
@@ -148,7 +178,7 @@
                     if (response.success) {
                         try {
                             // Send to backend for verification
-                            statusEl.innerHTML = '<span class="auth-loading"></span>Verifica firma in corso...';
+                            statusEl.innerHTML = '<span class="auth-loading"></span>Verifying signature...';
                             
                             const authResponse = await fetch(`${API_BASE}/steem-auth`, {
                                 method: 'POST',
@@ -165,7 +195,7 @@
                             
                             if (authResponse.ok) {
                                 statusEl.className = 'auth-status success';
-                                statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | XP Totale: ${data.user.total_xp_earned}</small>`;
+                                statusEl.innerHTML = `✓ ${data.message}<br><small>Multiplier: ${data.user.cur8_multiplier}x | Total XP: ${data.user.total_xp_earned}</small>`;
                                 
                                 // Save user to localStorage
                                 localStorage.setItem('currentUser', JSON.stringify(data.user));
@@ -181,11 +211,11 @@
                             
                         } catch (error) {
                             statusEl.className = 'auth-status error';
-                            statusEl.innerHTML = `❌ Errore: ${error.message}`;
+                            statusEl.innerHTML = `❌ Error: ${error.message}`;
                         }
                     } else {
                         statusEl.className = 'auth-status error';
-                        statusEl.innerHTML = '❌ Firma rifiutata o fallita';
+                        statusEl.innerHTML = '❌ Signature rejected or failed';
                     }
                 }
             );
@@ -203,7 +233,7 @@
             // Validate inputs
             if (!username) {
                 statusEl.className = 'auth-status error';
-                statusEl.innerHTML = '❌ Inserisci il tuo username Steem';
+                statusEl.innerHTML = '❌ Enter your Steem username';
                 statusEl.style.display = 'block';
                 usernameInput.focus();
                 return;
@@ -211,7 +241,7 @@
             
             if (!postingKey) {
                 statusEl.className = 'auth-status error';
-                statusEl.innerHTML = '❌ Inserisci la tua posting key';
+                statusEl.innerHTML = '❌ Enter your posting key';
                 statusEl.style.display = 'block';
                 postingKeyInput.focus();
                 return;
@@ -220,13 +250,13 @@
             // Basic key format validation
             if (postingKey.length < 50 || !postingKey.startsWith('5')) {
                 statusEl.className = 'auth-status error';
-                statusEl.innerHTML = '❌ Formato posting key non valido. Le chiavi Steem iniziano con "5" e sono lunghe circa 51 caratteri';
+                statusEl.innerHTML = '❌ Invalid posting key format. Steem keys start with "5" and are approximately 51 characters long';
                 statusEl.style.display = 'block';
                 return;
             }
             
             statusEl.className = 'auth-status info';
-            statusEl.innerHTML = '<span class="auth-loading"></span>Verifica posting key in corso...';
+            statusEl.innerHTML = '<span class="auth-loading"></span>Verifying posting key...';
             statusEl.style.display = 'block';
             
             try {
@@ -244,7 +274,7 @@
                 
                 if (response.ok) {
                     statusEl.className = 'auth-status success';
-                    statusEl.innerHTML = `✓ ${data.message}<br><small>Moltiplicatore: ${data.user.cur8_multiplier}x | XP Totale: ${data.user.total_xp_earned}</small>`;
+                    statusEl.innerHTML = `✓ ${data.message}<br><small>Multiplier: ${data.user.cur8_multiplier}x | Total XP: ${data.user.total_xp_earned}</small>`;
                     
                     // Clear the posting key from the input (security)
                     postingKeyInput.value = '';
@@ -263,7 +293,7 @@
                 
             } catch (error) {
                 statusEl.className = 'auth-status error';
-                statusEl.innerHTML = `❌ Errore: ${error.message}`;
+                statusEl.innerHTML = `❌ Error: ${error.message}`;
             }
         }
         
@@ -272,7 +302,7 @@
             const statusEl = document.getElementById('anonStatus');
             
             statusEl.className = 'auth-status info';
-            statusEl.innerHTML = '<span class="auth-loading"></span>Creazione utente anonimo...';
+            statusEl.innerHTML = '<span class="auth-loading"></span>Creating anonymous user...';
             statusEl.style.display = 'block';
             
             try {
@@ -304,16 +334,31 @@
                 
             } catch (error) {
                 statusEl.className = 'auth-status error';
-                statusEl.innerHTML = `❌ Errore: ${error.message}`;
+                statusEl.innerHTML = `❌ Error: ${error.message}`;
             }
         }
         
+        // Switch authentication method
+        function switchAuthMethod(method) {
+            // Update tabs
+            document.querySelectorAll('.method-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.auth-method-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${method}-content`).classList.add('active');
+        }
+
         // Check if user is already logged in
         window.addEventListener('load', () => {
             const currentUser = localStorage.getItem('currentUser');
             if (currentUser) {
                 const user = JSON.parse(currentUser);
-                if (confirm(`Sei già autenticato come ${user.username || user.user_id}. Vuoi continuare?`)) {
+                if (confirm(`You are already authenticated as ${user.username || user.user_id}. Continue?`)) {
                     window.location.href = '/';
                 } else {
                     localStorage.removeItem('currentUser');

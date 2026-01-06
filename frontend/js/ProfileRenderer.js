@@ -522,9 +522,10 @@ class ProfileRenderer {
                         parentBadge.style.cursor = 'pointer';
                         parentBadge.style.transition = 'all 0.3s';
                         
-                        // Set permanent indigo background
+                        // Set permanent indigo background with same border radius as coin badge
+                        parentBadge.style.borderRadius = '10px';
                         parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
-                        parentBadge.style.border = '1px solid rgba(99, 102, 241, 0.3)';
+                        parentBadge.style.border = '2px solid rgba(99, 102, 241, 0.3)';
                         
                         // Update the value
                         multiplierEl.textContent = `${breakdown.final_multiplier.toFixed(2)}x`;

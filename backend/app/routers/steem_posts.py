@@ -276,35 +276,16 @@ async def create_post(
             user_message=request.user_message
         )
         
-        # Deduct coins BEFORE publishing
-        transaction = coin_service.spend_coins(
-            user_id=request.user_id,
-            amount=post_service.POST_COST_COINS,
-            transaction_type="steem_post_publish",
-            source_id=None,
-            description=f"Published post: {post_content['title'][:50]}...",
-            extra_data={
-                "post_title": post_content['title'],
-                "level": stats['level'],
-                "total_xp": stats['total_xp']
-            }
-        )
-        
-        if not transaction:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Insufficient balance"
-            )
-        
-        # NOTE: Do NOT update last_steem_post here!
-        # It will be updated by the /confirm-post endpoint after successful publication
+        # NOTE: Coins are now deducted AFTER successful publication
+        # (in confirm-post or publish-with-key endpoints)
+        # This prevents coin loss if Keychain fails to open or other errors occur
         
         # Return post data for frontend to publish
         # The frontend will use Steem Keychain to actually broadcast
         return CreatePostResponse(
             success=True,
             message="Post data prepared. Please confirm publication via Steem Keychain.",
-            transaction_id=transaction['transaction_id'],
+            transaction_id=None,  # No transaction yet - coins deducted after publication
             post_url=None,
             permlink=None,
             title=post_content['title'],
@@ -399,16 +380,18 @@ async def get_post_availability(
 @router.post("/confirm-post")
 async def confirm_post(
     request: dict,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    coin_service: CoinService = Depends(get_coin_service),
+    post_service: SteemPostService = Depends(get_steem_post_service)
 ):
     """
-    Confirm successful post publication and update cooldown timer
+    Confirm successful post publication, deduct coins, and update cooldown timer
     
     This endpoint should be called ONLY after the post has been successfully
-    published to the blockchain via Keychain or posting key.
+    published to the blockchain via Keychain.
     
     Args:
-        request: Dict with user_id and post_url
+        request: Dict with user_id, post_url, and post_title
         
     Returns:
         Confirmation status
@@ -416,6 +399,7 @@ async def confirm_post(
     try:
         user_id = request.get('user_id')
         post_url = request.get('post_url')
+        post_title = request.get('post_title', 'Gaming milestone post')
         
         if not user_id:
             raise HTTPException(
@@ -429,6 +413,25 @@ async def confirm_post(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
+            )
+        
+        # Deduct coins now that post is confirmed successful
+        transaction = coin_service.spend_coins(
+            user_id=user_id,
+            amount=post_service.POST_COST_COINS,
+            transaction_type="steem_post_publish",
+            source_id=None,
+            description=f"Published post: {post_title[:50]}...",
+            extra_data={
+                "post_title": post_title,
+                "post_url": post_url
+            }
+        )
+        
+        if not transaction:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient balance to complete publication"
             )
         
         # Update last post timestamp
@@ -471,7 +474,9 @@ async def confirm_post(
 @router.post("/publish-with-key")
 async def publish_with_key(
     request: dict,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    coin_service: CoinService = Depends(get_coin_service),
+    post_service: SteemPostService = Depends(get_steem_post_service)
 ):
     """
     Publish post to Steem blockchain using posting key (server-side with beem)
@@ -479,10 +484,11 @@ async def publish_with_key(
     This endpoint:
     1. Verifies the posting key matches the username
     2. Publishes the post using beem library
-    3. Returns the permlink and post URL
+    3. Deducts coins after successful publication
+    4. Returns the permlink and post URL
     
     Args:
-        request: Dict with username, posting_key, title, body, tags, metadata
+        request: Dict with username, posting_key, title, body, tags, metadata, user_id
         
     Returns:
         Publication result with permlink and URL
@@ -551,9 +557,29 @@ async def publish_with_key(
             
             post_url = f"https://www.cur8.fun/app/@{username}/{permlink}"
             
-            # Update last post timestamp
+            # Update last post timestamp and deduct coins
             user = db.query(User).filter(User.steem_username == username).first()
             if user:
+                # Deduct coins now that post is confirmed successful
+                transaction = coin_service.spend_coins(
+                    user_id=user.user_id,
+                    amount=post_service.POST_COST_COINS,
+                    transaction_type="steem_post_publish",
+                    source_id=None,
+                    description=f"Published post: {title[:50]}...",
+                    extra_data={
+                        "post_title": title,
+                        "post_url": post_url,
+                        "permlink": permlink
+                    }
+                )
+                
+                if not transaction:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Insufficient balance to complete publication"
+                    )
+                
                 from datetime import datetime
                 user.last_steem_post = datetime.utcnow().isoformat()
                 db.commit()

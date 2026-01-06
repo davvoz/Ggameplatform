@@ -4,7 +4,7 @@
 
 .game-player {
     position: fixed;
-    top: 116px; /* Height of navbar to avoid overlap */
+    top: 97px; /* Height of navbar to avoid overlap */
     left: 0;
     right: 0;
     bottom: 0;

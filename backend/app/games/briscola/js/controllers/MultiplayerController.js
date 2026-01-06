@@ -14,6 +14,8 @@ export class MultiplayerController {
         this.playerId = null;
         this.pendingStateUpdate = null;
         this.isProcessingRound = false;
+        this.waitingForRematch = false;
+        this.opponentWantsRematch = false;
         
         // WebSocket server URL (would need to be configured)
         this.serverUrl = this.getWebSocketUrl();
@@ -103,19 +105,61 @@ export class MultiplayerController {
      * Disconnect from server
      */
     disconnect() {
+        console.log('[Multiplayer] disconnect() chiamato');
+        
+        // Invia messaggio 'leave' al server prima di chiudere
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            try {
+                this.send({
+                    type: 'leave'
+                });
+                console.log('[Multiplayer] Messaggio leave inviato al server');
+            } catch (e) {
+                console.warn('[Multiplayer] Errore invio messaggio leave:', e);
+            }
+        }
+        
         if (this.socket) {
             this.socket.close();
             this.socket = null;
         }
+        
+        // Pulisci completamente lo stato
+        this.cleanup();
+    }
+    
+    /**
+     * Cleanup multiplayer state
+     * Resetta tutte le variabili e lo stato UI
+     */
+    cleanup() {
+        console.log('[Multiplayer] cleanup() - resetting all state');
+        
         this.roomCode = null;
         this.isHost = false;
         this.opponentName = null;
+        this.playerId = null;
+        this.pendingStateUpdate = null;
+        this.isProcessingRound = false;
+        this.waitingForRematch = false;
+        this.opponentWantsRematch = false;
         
         // Ripristina lo stato della lobby UI
-        document.getElementById('room-code-display').style.display = 'none';
-        document.getElementById('join-room-form').style.display = 'none';
-        document.querySelector('.lobby-options').style.display = 'flex';
-        document.querySelector('.waiting-text').textContent = 'In attesa di un avversario...';
+        const roomCodeDisplay = document.getElementById('room-code-display');
+        const joinRoomForm = document.getElementById('join-room-form');
+        const lobbyOptions = document.querySelector('.lobby-options');
+        const waitingText = document.querySelector('.waiting-text');
+        const roomInput = document.getElementById('room-input');
+        const roomCode = document.getElementById('room-code');
+        
+        if (roomCodeDisplay) roomCodeDisplay.style.display = 'none';
+        if (joinRoomForm) joinRoomForm.style.display = 'none';
+        if (lobbyOptions) lobbyOptions.style.display = 'flex';
+        if (waitingText) waitingText.textContent = 'In attesa di un avversario...';
+        if (roomInput) roomInput.value = '';
+        if (roomCode) roomCode.textContent = '----';
+        
+        console.log('[Multiplayer] cleanup completato');
     }
     
     /**
@@ -124,6 +168,9 @@ export class MultiplayerController {
     async createRoom() {
         console.log('[Multiplayer] Tentativo di creazione stanza...');
         console.log('[Multiplayer] WebSocket URL:', this.serverUrl);
+        
+        // Pulisci lo stato precedente prima di creare una nuova stanza
+        this.cleanup();
         
         try {
             await this.connect();
@@ -169,6 +216,9 @@ export class MultiplayerController {
             this.showConnectionError('INVALID_CODE', 'Il codice deve essere di 4 caratteri');
             return;
         }
+        
+        // Pulisci lo stato precedente prima di unirsi a una nuova stanza
+        this.cleanup();
         
         try {
             await this.connect();
@@ -248,6 +298,14 @@ export class MultiplayerController {
                 
             case 'gameEnd':
                 this.handleGameEnd(message);
+                break;
+                
+            case 'rematchRequested':
+                this.handleRematchRequested(message);
+                break;
+                
+            case 'rematchStart':
+                this.handleRematchStart(message);
                 break;
                 
             case 'error':
@@ -523,6 +581,10 @@ export class MultiplayerController {
      * Handle game end from server
      */
     handleGameEnd(message) {
+        // Reset rematch flags when game ends
+        this.waitingForRematch = false;
+        this.opponentWantsRematch = false;
+        
         // Aggiorna i punteggi del gameEngine con quelli finali dal server
         if (message.player1Score !== undefined && message.player2Score !== undefined) {
             // Determina quale score è il nostro
@@ -548,6 +610,145 @@ export class MultiplayerController {
         }
         
         this.app.endGame(message.winner === this.playerId ? 1 : (message.winner ? 2 : 0));
+    }
+    
+    /**
+     * Request rematch
+     */
+    requestRematch() {
+        console.log('[Multiplayer] ===== REMATCH REQUEST START =====');
+        console.log('[Multiplayer] socket:', this.socket);
+        console.log('[Multiplayer] socket.readyState:', this.socket?.readyState);
+        console.log('[Multiplayer] roomCode:', this.roomCode);
+        console.log('[Multiplayer] opponentWantsRematch:', this.opponentWantsRematch);
+        
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            console.error('[Multiplayer] Socket non connesso! readyState:', this.socket?.readyState);
+            this.app.showError('Connessione persa. Torna al menu e riconnettiti.');
+            return;
+        }
+        
+        this.waitingForRematch = true;
+        
+        this.send({
+            type: 'rematch'
+        });
+        
+        console.log('[Multiplayer] Messaggio rematch inviato');
+        
+        // Aggiorna UI SOLO se l'avversario non ha già richiesto
+        // Altrimenti aspetta il messaggio rematchStart dal server
+        if (!this.opponentWantsRematch) {
+            this.updateRematchUI();
+        } else {
+            // Entrambi hanno cliccato, mostra "Avvio partita..."
+            const playAgainBtn = document.getElementById('play-again');
+            if (playAgainBtn) {
+                playAgainBtn.disabled = true;
+                playAgainBtn.textContent = 'Avvio partita...';
+            }
+        }
+    }
+    
+    /**
+     * Handle rematch requested by opponent
+     */
+    handleRematchRequested(message) {
+        console.log('[Multiplayer] Avversario ha richiesto rematch, waitingForRematch:', this.waitingForRematch);
+        this.opponentWantsRematch = true;
+        
+        // Aggiorna sempre la UI per mostrare lo stato corretto
+        this.updateRematchUI();
+    }
+    
+    /**
+     * Handle rematch start
+     */
+    handleRematchStart(message) {
+        console.log('[Multiplayer] Rematch avviato dal server');
+        
+        // Reset rematch flags
+        this.waitingForRematch = false;
+        this.opponentWantsRematch = false;
+        
+        // Start the new game with server state
+        this.startOnlineGame(message.gameState);
+    }
+    
+    /**
+     * Update rematch UI
+     */
+    updateRematchUI() {
+        console.log('[Multiplayer] updateRematchUI - waitingForRematch:', this.waitingForRematch, 'opponentWantsRematch:', this.opponentWantsRematch);
+        
+        const playAgainBtn = document.getElementById('play-again');
+        const announcement = document.getElementById('winner-announcement');
+        
+        if (!playAgainBtn) {
+            console.warn('[Multiplayer] playAgainBtn non trovato!');
+            return;
+        }
+        
+        if (this.waitingForRematch && this.opponentWantsRematch) {
+            // Entrambi vogliono rigiocare - il server sta avviando il gioco
+            console.log('[Multiplayer] Entrambi vogliono rematch - mostro Avvio partita...');
+            playAgainBtn.disabled = true;
+            playAgainBtn.textContent = 'Avvio partita...';
+        } else if (this.waitingForRematch) {
+            // Stiamo aspettando l'avversario
+            console.log('[Multiplayer] In attesa avversario...');
+            playAgainBtn.disabled = true;
+            playAgainBtn.textContent = 'In attesa avversario...';
+            
+            if (announcement) {
+                const waitMsg = document.createElement('div');
+                waitMsg.id = 'rematch-wait-msg';
+                waitMsg.style.cssText = `
+                    margin-top: 15px;
+                    padding: 10px 20px;
+                    background: rgba(241, 196, 15, 0.2);
+                    border: 1px solid rgba(241, 196, 15, 0.4);
+                    border-radius: 8px;
+                    color: #f39c12;
+                    font-size: 14px;
+                    text-align: center;
+                `;
+                waitMsg.textContent = "In attesa che l'avversario accetti il rematch...";
+                
+                // Rimuovi messaggio precedente se esiste
+                const oldMsg = document.getElementById('rematch-wait-msg');
+                if (oldMsg) oldMsg.remove();
+                
+                announcement.appendChild(waitMsg);
+            }
+        } else if (this.opponentWantsRematch) {
+            // L'avversario vuole rigiocare
+            console.log('[Multiplayer] Avversario vuole rigiocare - mostro Accetta Rematch');
+            playAgainBtn.disabled = false;
+            playAgainBtn.innerHTML = '<span class=\"btn-icon-svg\">↻</span> Accetta Rematch';
+            
+            if (announcement) {
+                const acceptMsg = document.createElement('div');
+                acceptMsg.id = 'rematch-wait-msg';
+                acceptMsg.style.cssText = `
+                    margin-top: 15px;
+                    padding: 10px 20px;
+                    background: rgba(46, 204, 113, 0.2);
+                    border: 1px solid rgba(46, 204, 113, 0.4);
+                    border-radius: 8px;
+                    color: #27ae60;
+                    font-size: 14px;
+                    text-align: center;
+                `;
+                acceptMsg.textContent = "L'avversario vuole giocare di nuovo!";
+                
+                // Rimuovi messaggio precedente se esiste
+                const oldMsg = document.getElementById('rematch-wait-msg');
+                if (oldMsg) oldMsg.remove();
+                
+                announcement.appendChild(acceptMsg);
+            }
+        }
     }
     
     /**
@@ -698,6 +899,7 @@ export class MultiplayerController {
         this.showConnectionError('OPPONENT_DISCONNECTED', 'L\'avversario ha abbandonato la partita');
         setTimeout(() => {
             this.disconnect();
+            this.cleanup();
             this.app.backToMenu();
         }, 3000);
     }
@@ -712,8 +914,12 @@ export class MultiplayerController {
             console.error('[Multiplayer] Disconnessione durante partita online');
             this.showConnectionError('CONNECTION_CLOSED', 'La connessione al server è stata interrotta');
             setTimeout(() => {
+                this.cleanup();
                 this.app.backToMenu();
             }, 3000);
+        } else {
+            // Disconnessione quando non siamo in gioco, pulisci lo stato
+            this.cleanup();
         }
     }
     

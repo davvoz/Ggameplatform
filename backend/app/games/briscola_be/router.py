@@ -319,6 +319,7 @@ class GameRoom:
         self.game: Optional[GameState] = None
         self.connections: Dict[str, WebSocket] = {}
         self.created_at = datetime.now()
+        self.rematch_requests: set = set()  # Track who wants rematch
     
     @property
     def is_full(self) -> bool:
@@ -335,6 +336,7 @@ class GameRoom:
     def start_game(self):
         self.game = GameState(self.host_id, self.guest_id)
         self.game.initialize()
+        self.rematch_requests.clear()  # Clear rematch requests when starting new game
     
     def get_opponent_name(self, player_id: str) -> str:
         if player_id == self.host_id:
@@ -537,8 +539,8 @@ async def websocket_endpoint(websocket: WebSocket):
                             "player2Score": result.get("player2_score")
                         })
                         
-                        # Cleanup room
-                        room_manager.remove_room(current_room.room_code)
+                        # Non eliminare la stanza - permetti rematch
+                        # room_manager.remove_room(current_room.room_code)
             
             elif msg_type == "leave":
                 if current_room:
@@ -547,6 +549,50 @@ async def websocket_endpoint(websocket: WebSocket):
                     }, exclude=player_id)
                     room_manager.remove_room(current_room.room_code)
                     current_room = None
+            
+            elif msg_type == "rematch":
+                if not current_room:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Nessuna stanza attiva"
+                    })
+                    continue
+                
+                print(f"[Briscola WS] Rematch request from {player_id}")
+                print(f"[Briscola WS] Current rematch_requests: {current_room.rematch_requests}")
+                
+                # Aggiungi questo giocatore alle richieste di rematch
+                current_room.rematch_requests.add(player_id)
+                
+                print(f"[Briscola WS] After add, rematch_requests: {current_room.rematch_requests}, len: {len(current_room.rematch_requests)}")
+                
+                # Notifica l'avversario che questo giocatore vuole il rematch
+                await current_room.broadcast({
+                    "type": "rematchRequested",
+                    "playerId": player_id
+                }, exclude=player_id)
+                
+                # Se entrambi vogliono il rematch, riavvia il gioco
+                if len(current_room.rematch_requests) == 2:
+                    print(f"[Briscola WS] Both players want rematch, starting new game")
+                    
+                    # Riavvia il gioco
+                    current_room.start_game()
+                    
+                    print(f"[Briscola WS] Rematch started - current_player: {current_room.game.current_player_id}")
+                    
+                    # Invia lo stato del nuovo gioco a entrambi i giocatori
+                    for pid, ws in current_room.connections.items():
+                        opponent_name = current_room.get_opponent_name(pid)
+                        state = current_room.game.get_state_for_player(pid)
+                        
+                        print(f"[Briscola WS] Sending rematchStart to {pid}: is_your_turn={state['is_your_turn']}")
+                        
+                        await ws.send_json({
+                            "type": "rematchStart",
+                            "opponentName": opponent_name,
+                            "gameState": state
+                        })
     
     except WebSocketDisconnect:
         if current_room:

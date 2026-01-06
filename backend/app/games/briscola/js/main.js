@@ -180,6 +180,7 @@ class BriscolaApp {
         
         document.getElementById('lobby-back').addEventListener('click', () => {
             this.multiplayerController.disconnect();
+            this.multiplayerController.cleanup();
             this.showScreen('menu');
         });
         
@@ -355,16 +356,41 @@ class BriscolaApp {
             this.showConfetti();
         }
         
+        // Configura il pulsante "Gioca Ancora" in base alla modalità
+        const playAgainBtn = document.getElementById('play-again');
+        if (this.currentMode === 'online') {
+            // In modalità online, abilita per il rematch
+            playAgainBtn.style.display = '';
+            playAgainBtn.disabled = false;
+            playAgainBtn.innerHTML = '<span class="btn-icon-svg">↻</span> Gioca Ancora';
+        } else {
+            playAgainBtn.style.display = '';
+        }
+        
         this.showScreen('gameover');
     }
     
     playAgain() {
+        // In modalità online, richiedi rematch
+        if (this.currentMode === 'online') {
+            console.log('[Briscola] Richiesta rematch in modalità online');
+            this.multiplayerController.requestRematch();
+            return;
+        }
+        
         document.getElementById('winner-announcement').classList.remove('celebrate');
         this.startGame();
     }
     
     backToMenu() {
         document.getElementById('winner-announcement').classList.remove('celebrate');
+        
+        // Se siamo in modalità online, disconnetti e pulisci lo stato
+        if (this.currentMode === 'online') {
+            console.log('[Briscola] Disconnessione multiplayer prima di tornare al menu');
+            this.multiplayerController.disconnect();
+        }
+        
         this.currentMode = null;
         document.getElementById('difficulty-selector').style.display = 'none';
         this.showScreen('menu');

@@ -339,16 +339,28 @@ class BriscolaApp {
         badge.querySelector('.badge-text').textContent = badgeText;
         document.getElementById('winner-announcement').textContent = announcement;
         
-        // Report to platform
+        // Prepare quest data
         const isWin = winner === 1;
         const isDraw = winner === 0;
-        this.platformBridge.reportGameOver(state.player1Score, {
-            opponent_score: state.player2Score,
+        const isAI = this.currentMode === 'ai';
+        const isMultiplayer = this.currentMode === 'online';
+        const playerScore = state.player1Score;
+        const opponentScore = state.player2Score;
+        
+        // Report to platform with extra data for quest tracking
+        this.platformBridge.reportGameOver(playerScore, {
+            opponent_score: opponentScore,
+            player_score: playerScore,
             mode: this.currentMode,
             difficulty: this.difficulty,
             result: isWin ? 'win' : (isDraw ? 'draw' : 'loss'),
             hands_won: state.player1HandsWon,
-            total_hands: state.totalHands
+            total_hands: state.totalHands,
+            // Quest-specific data
+            won: isWin,
+            is_ai: isAI,
+            ai_difficulty: isAI ? this.difficulty : undefined,
+            is_multiplayer: isMultiplayer
         });
         
         // Show confetti for wins

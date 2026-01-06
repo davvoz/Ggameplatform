@@ -234,6 +234,12 @@ class QuestTracker:
             self._process_rainbow_rush_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Briscola game quests
+        if game_id == 'briscola' and tracking_type:
+            print(f"🃏 [QuestTracker] Processing Briscola quest: {quest.title} (type: {tracking_type})")
+            self._process_briscola_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative)
@@ -871,6 +877,103 @@ class QuestTracker:
         
         elif tracking_type == 'games_played':
             self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+    
+    def _process_briscola_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                tracking_type: str, score: int, extra_data: Dict):
+        """Process Briscola game-specific quests."""
+        print(f"    🃏 [Briscola] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Initialize cumulative counters if not present
+        if 'cumulative' not in stored_data or not stored_data['cumulative']:
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'wins': 0,
+                'losses': 0,
+                'win_streak': 0,
+                'current_win_streak': 0,
+                'hard_ai_wins': 0,
+                'perfect_scores': 0,  # Cappotto (120 punti)
+                'domination_wins': 0,  # Vince con almeno 40 punti di scarto
+                'multiplayer_games': 0,
+                'multiplayer_wins': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            won = extra_data.get('won', False)
+            player_score = extra_data.get('player_score', 0)
+            opponent_score = extra_data.get('opponent_score', 0)
+            is_ai = extra_data.get('is_ai', False)
+            ai_difficulty = extra_data.get('ai_difficulty', '')
+            is_multiplayer = extra_data.get('is_multiplayer', False)
+            
+            # Track wins/losses and win streak
+            if won:
+                cumulative['wins'] += 1
+                cumulative['current_win_streak'] += 1
+                cumulative['win_streak'] = max(cumulative['win_streak'], cumulative['current_win_streak'])
+                
+                # Track AI wins (hard difficulty)
+                if is_ai and ai_difficulty == 'hard':
+                    cumulative['hard_ai_wins'] += 1
+                
+                # Track perfect score (cappotto - 120 punti, tutti i punti)
+                if player_score == 120:
+                    cumulative['perfect_scores'] += 1
+                    print(f"    🃏 [Briscola] CAPPOTTO! Perfect score achieved!")
+                
+                # Track domination win (almeno 40 punti di scarto)
+                score_margin = player_score - opponent_score
+                if score_margin >= 40:
+                    cumulative['domination_wins'] += 1
+                    print(f"    🃏 [Briscola] DOMINATION! Win margin: {score_margin}")
+                
+                # Track multiplayer wins
+                if is_multiplayer:
+                    cumulative['multiplayer_wins'] += 1
+            else:
+                cumulative['losses'] += 1
+                cumulative['current_win_streak'] = 0
+            
+            # Track multiplayer games
+            if is_multiplayer:
+                cumulative['multiplayer_games'] += 1
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+        
+        elif tracking_type == 'wins':
+            self.update_quest_progress(user_id, quest, cumulative['wins'], user_quest)
+        
+        elif tracking_type == 'win_streak':
+            self.update_quest_progress(user_id, quest, cumulative['win_streak'], user_quest)
+        
+        elif tracking_type == 'hard_ai_wins':
+            self.update_quest_progress(user_id, quest, cumulative['hard_ai_wins'], user_quest)
+        
+        elif tracking_type == 'perfect_score':
+            self.update_quest_progress(user_id, quest, cumulative['perfect_scores'], user_quest)
+        
+        elif tracking_type == 'domination_win':
+            self.update_quest_progress(user_id, quest, cumulative['domination_wins'], user_quest)
+        
+        elif tracking_type == 'multiplayer_wins':
+            self.update_quest_progress(user_id, quest, cumulative['multiplayer_wins'], user_quest)
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

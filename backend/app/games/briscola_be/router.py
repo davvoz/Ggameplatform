@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/ws/briscola", tags=["briscola-multiplayer"])
 
@@ -532,6 +533,76 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     if result.get("is_game_over"):
                         winner = result.get("game_winner")
+                        
+                        # Track game completion for both players
+                        try:
+                            from app.database import SessionLocal
+                            from app.models import GameSession, User
+                            from app.quest_tracker import track_quest_progress_for_session
+                            from datetime import datetime
+                            
+                            db = SessionLocal()
+                            
+                            try:
+                                # Get user IDs from room
+                                host_user = db.query(User).filter(User.username == current_room.host_name).first()
+                                guest_user = db.query(User).filter(User.username == current_room.guest_name).first()
+                                
+                                # Track session for host (player 1)
+                                if host_user:
+                                    host_won = winner == current_room.host_id
+                                    host_score = result.get("player1_score")
+                                    opponent_score = result.get("player2_score")
+                                    
+                                    session_data = {
+                                        'user_id': host_user.user_id,
+                                        'game_id': 'briscola',
+                                        'score': host_score,
+                                        'duration_seconds': 300,  # Estimate, could track actual time
+                                        'xp_earned': 10,  # Will be calculated by XP system
+                                        'extra_data': {
+                                            'won': host_won,
+                                            'player_score': host_score,
+                                            'opponent_score': opponent_score,
+                                            'is_ai': False,
+                                            'is_multiplayer': True
+                                        }
+                                    }
+                                    
+                                    track_quest_progress_for_session(db, session_data)
+                                
+                                # Track session for guest (player 2)
+                                if guest_user:
+                                    guest_won = winner == current_room.guest_id
+                                    guest_score = result.get("player2_score")
+                                    opponent_score = result.get("player1_score")
+                                    
+                                    session_data = {
+                                        'user_id': guest_user.user_id,
+                                        'game_id': 'briscola',
+                                        'score': guest_score,
+                                        'duration_seconds': 300,
+                                        'xp_earned': 10,
+                                        'extra_data': {
+                                            'won': guest_won,
+                                            'player_score': guest_score,
+                                            'opponent_score': opponent_score,
+                                            'is_ai': False,
+                                            'is_multiplayer': True
+                                        }
+                                    }
+                                    
+                                    track_quest_progress_for_session(db, session_data)
+                                
+                                db.commit()
+                            except Exception as e:
+                                print(f"[Briscola] Error tracking multiplayer session: {e}")
+                                db.rollback()
+                            finally:
+                                db.close()
+                        except Exception as e:
+                            print(f"[Briscola] Error in multiplayer tracking: {e}")
+                        
                         await current_room.broadcast({
                             "type": "gameEnd",
                             "winner": winner,

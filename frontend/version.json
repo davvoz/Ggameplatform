@@ -1,8 +1,17 @@
 {
-  "version": "3.4.2",
-  "timestamp": "2026-01-05T23:50:55.001Z",
-  "buildNumber": 197,
+  "version": "3.4.3",
+  "timestamp": "2026-01-06T00:02:23.833Z",
+  "buildNumber": 198,
   "changelog": [
+    {
+      "version": "3.4.3",
+      "date": "2026-01-06",
+      "type": "patch",
+      "changes": [
+        "fix: adjust hero stats layout and stat pill styling for better alignment",
+        "🔖 Bump version to 3.4.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.2",
       "date": "2026-01-05",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: [CSP] enhance Content Security Policy for game iframes to support WebSocket connections",
         "🔖 Bump version to 3.3.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.3",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [NGINX] enhance Content Security Policy and add WebSocket proxy for multiplayer",
-        "🔖 Bump version to 3.3.2 [skip-version]"
       ]
     }
   ]

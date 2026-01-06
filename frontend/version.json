@@ -1,8 +1,18 @@
 {
-  "version": "3.4.3",
-  "timestamp": "2026-01-06T00:02:23.833Z",
-  "buildNumber": 198,
+  "version": "3.4.4",
+  "timestamp": "2026-01-06T19:54:09.223Z",
+  "buildNumber": 199,
   "changelog": [
+    {
+      "version": "3.4.4",
+      "date": "2026-01-06",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [BRISCOLA]implement rematch functionality in multiplayer mode and enhance cleanup process",
+        "🔖 Bump version to 3.4.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.3",
       "date": "2026-01-06",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: [BRISCOLA]enhance multiplayer game logic and score verification in GameEngine and MultiplayerController",
         "🔖 Bump version to 3.3.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.4",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [CSP] enhance Content Security Policy for game iframes to support WebSocket connections",
-        "🔖 Bump version to 3.3.3 [skip-version]"
       ]
     }
   ]

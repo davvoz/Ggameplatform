@@ -1,8 +1,17 @@
 {
-  "version": "3.4.4",
-  "timestamp": "2026-01-06T19:54:09.223Z",
-  "buildNumber": 199,
+  "version": "3.4.5",
+  "timestamp": "2026-01-06T22:39:01.703Z",
+  "buildNumber": 200,
   "changelog": [
+    {
+      "version": "3.4.5",
+      "date": "2026-01-06",
+      "type": "patch",
+      "changes": [
+        "fix: [BRISCOLA]enhance quest tracking for Briscola game, including multiplayer session data and specific quest processing",
+        "🔖 Bump version to 3.4.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.4",
       "date": "2026-01-06",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [BRISCOLA]update lobby UI state and messages for better user experience",
         "🔖 Bump version to 3.3.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.5",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA]enhance multiplayer game logic and score verification in GameEngine and MultiplayerController",
-        "🔖 Bump version to 3.3.4 [skip-version]"
       ]
     }
   ]

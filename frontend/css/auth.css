@@ -784,12 +784,14 @@
     }
     
     .hero-stats {
-        gap: var(--spacing-sm);
+        gap: var(--spacing-xs);
+        flex-wrap: nowrap;
     }
     
     .stat-pill {
-        font-size: 0.8rem;
-        padding: var(--spacing-xs) var(--spacing-md);
+        font-size: 0.7rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        white-space: nowrap;
     }
     
     .auth-header h2 {

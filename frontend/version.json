@@ -1,8 +1,18 @@
 {
-  "version": "3.4.8",
-  "timestamp": "2026-01-08T22:31:23.674Z",
-  "buildNumber": 203,
+  "version": "3.4.9",
+  "timestamp": "2026-01-08T22:37:06.648Z",
+  "buildNumber": 204,
   "changelog": [
+    {
+      "version": "3.4.9",
+      "date": "2026-01-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: implement script to delete inactive quests from the database",
+        "🔖 Bump version to 3.4.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.8",
       "date": "2026-01-08",
@@ -83,15 +93,6 @@
       "changes": [
         "feat: add sticky hero navbar for improved user experience during scrolling",
         "🔖 Bump version to 3.3.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.9",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA] improve WebSocket URL detection for local development and production",
-        "🔖 Bump version to 3.3.8 [skip-version]"
       ]
     }
   ]

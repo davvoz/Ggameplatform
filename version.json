@@ -1,8 +1,17 @@
 {
-  "version": "3.4.10",
-  "timestamp": "2026-01-08T22:59:55.372Z",
-  "buildNumber": 205,
+  "version": "3.4.11",
+  "timestamp": "2026-01-08T23:05:14.944Z",
+  "buildNumber": 206,
   "changelog": [
+    {
+      "version": "3.4.11",
+      "date": "2026-01-08",
+      "type": "patch",
+      "changes": [
+        "fix: enhance quest sorting to prioritize game_id, then quest_type, and target_value",
+        "🔖 Bump version to 3.4.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.10",
       "date": "2026-01-08",
@@ -84,15 +93,6 @@
       "changes": [
         "FIX: redesign authentication page with hero section and unified auth methods",
         "🔖 Bump version to 3.4.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.1",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: update coin deduction logic to occur after successful post publication",
-        "🔖 Bump version to 3.4.0 [skip-version]"
       ]
     }
   ]

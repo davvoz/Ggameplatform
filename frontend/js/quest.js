@@ -609,12 +609,24 @@ class QuestList {
     }
 
     sortQuests(quests) {
-        // Sort by quest_type first, then by target_value
+        // Sort by game_id (if exists), then quest_type, then target_value
         return quests.sort((a, b) => {
-            // Compare quest types
+            const gameIdA = a.config?.game_id || '';
+            const gameIdB = b.config?.game_id || '';
+            
+            // Compare game_id first (game quests grouped together)
+            if (gameIdA !== gameIdB) {
+                // Platform quests (no game_id) come after game quests
+                if (!gameIdA) return 1;
+                if (!gameIdB) return -1;
+                return gameIdA.localeCompare(gameIdB);
+            }
+            
+            // If same game_id (or both platform), compare quest types
             if (a.quest_type !== b.quest_type) {
                 return a.quest_type.localeCompare(b.quest_type);
             }
+            
             // If same type, sort by target_value (ascending)
             return a.target_value - b.target_value;
         });

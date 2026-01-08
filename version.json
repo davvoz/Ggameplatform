@@ -1,8 +1,17 @@
 {
-  "version": "3.4.6",
-  "timestamp": "2026-01-08T21:45:01.200Z",
-  "buildNumber": 201,
+  "version": "3.4.7",
+  "timestamp": "2026-01-08T22:04:24.639Z",
+  "buildNumber": 202,
   "changelog": [
+    {
+      "version": "3.4.7",
+      "date": "2026-01-08",
+      "type": "patch",
+      "changes": [
+        "fix: add new platform quests and update quest filter defaults",
+        "🔖 Bump version to 3.4.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.6",
       "date": "2026-01-08",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [BRISCOLA] auto-detect WebSocket URL based on current page location",
         "🔖 Bump version to 3.3.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.7",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA] enhance WebSocket connection handling and error reporting",
-        "🔖 Bump version to 3.3.6 [skip-version]"
       ]
     }
   ]

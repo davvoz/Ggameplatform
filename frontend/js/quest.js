@@ -603,9 +603,21 @@ class QuestState {
  */
 class QuestList {
     constructor(quests, userId) {
-        this.quests = quests;
+        this.quests = this.sortQuests(quests);
         this.userId = userId;
         this.questsList = document.getElementById('questsList');
+    }
+
+    sortQuests(quests) {
+        // Sort by quest_type first, then by target_value
+        return quests.sort((a, b) => {
+            // Compare quest types
+            if (a.quest_type !== b.quest_type) {
+                return a.quest_type.localeCompare(b.quest_type);
+            }
+            // If same type, sort by target_value (ascending)
+            return a.target_value - b.target_value;
+        });
     }
 
     render() {

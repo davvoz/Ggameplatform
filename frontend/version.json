@@ -1,8 +1,17 @@
 {
-  "version": "3.4.7",
-  "timestamp": "2026-01-08T22:04:24.639Z",
-  "buildNumber": 202,
+  "version": "3.4.8",
+  "timestamp": "2026-01-08T22:31:23.674Z",
+  "buildNumber": 203,
   "changelog": [
+    {
+      "version": "3.4.8",
+      "date": "2026-01-08",
+      "type": "patch",
+      "changes": [
+        "fix: update rule types in get_form_options to include 'threshold'",
+        "🔖 Bump version to 3.4.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.7",
       "date": "2026-01-08",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [BRISCOLA] improve WebSocket URL detection for local development and production",
         "🔖 Bump version to 3.3.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.3.8",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA] auto-detect WebSocket URL based on current page location",
-        "🔖 Bump version to 3.3.7 [skip-version]"
       ]
     }
   ]

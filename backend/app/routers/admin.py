@@ -190,7 +190,7 @@ async def get_form_options(db: Session = Depends(get_db)):
                     "xp_weekly",
                     "complete_quests"
                 ],
-                "rule_types": ["score_threshold", "time_played", "games_completed", "streak", "achievement"]
+                "rule_types": ["threshold", "score_threshold", "time_played", "games_completed", "streak", "achievement"]
             }
         }
     except Exception as e:

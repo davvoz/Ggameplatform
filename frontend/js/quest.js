@@ -294,8 +294,8 @@ function setupQuestFilters(quests) {
         });
     });
 
-    // Automatically show games quests on initial load
-    applyFilter('games', questsList);
+    // Automatically show platform quests on initial load
+    applyFilter('platform', questsList);
     
     // Highlight "Da Claimare" filter if there are unclaimed rewards
     console.log('🔥 CALLING highlightReadyFilter with quests:', quests);
@@ -696,10 +696,6 @@ class QuestCard {
 
     renderQuestInfo() {
         const config = this.quest.config || {};
-        const gameId = config.game_id;
-        const gameInfo = gameId
-            ? `<span class="quest-game">Game: ${gameId}</span>`
-            : '';
 
         // Check if quest has daily reset configured
         const dailyBadge = (config.reset_period === 'daily' || config.reset_on_complete)
@@ -709,7 +705,6 @@ class QuestCard {
         return `
             <div class="quest-info">
                 <span class="quest-type">${formatQuestType(this.quest.quest_type)}</span>
-                ${gameInfo}
                 ${dailyBadge}
             </div>
         `;

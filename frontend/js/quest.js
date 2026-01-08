@@ -294,8 +294,8 @@ function setupQuestFilters(quests) {
         });
     });
 
-    // Automatically show all quests on initial load
-    applyFilter('all', questsList);
+    // Automatically show games quests on initial load
+    applyFilter('games', questsList);
     
     // Highlight "Da Claimare" filter if there are unclaimed rewards
     console.log('🔥 CALLING highlightReadyFilter with quests:', quests);
@@ -319,11 +319,18 @@ async function applyFilter(filter, questsList) {
     // Filter and show cards
     const cardsToShow = Array.from(questCards).filter(card => {
         const status = card.dataset.questStatus;
+        const gameId = card.dataset.gameId;
         
-        if (filter === 'all') return true;
-        if (filter === 'active' && status === 'active') return true;
-        if (filter === 'ready' && status === 'ready') return true;
-        if (filter === 'claimed' && status === 'claimed') return true;
+        // Claimed quests appear ONLY in claimed filter
+        if (status === 'claimed') {
+            return filter === 'claimed';
+        }
+        
+        // Other filters
+        if (filter === 'games') return gameId && gameId !== 'null' && gameId !== '' && gameId !== 'undefined';
+        if (filter === 'platform') return !gameId || gameId === 'null' || gameId === '' || gameId === 'undefined';
+        if (filter === 'ready') return status === 'ready';
+        if (filter === 'claimed') return status === 'claimed';
         
         return false;
     });
@@ -348,13 +355,15 @@ async function applyFilter(filter, questsList) {
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'quests-empty-message';
 
-        const emptyIcon = filter === 'active' ? '📋' :
+        const emptyIcon = filter === 'games' ? '🎮' :
+            filter === 'platform' ? '🏆' :
             filter === 'ready' ? '🎁' :
-            filter === 'claimed' ? '✅' : '🎮';
+            filter === 'claimed' ? '✅' : '🎯';
 
-        const emptyText = filter === 'active' ? 'No active quests at the moment' :
+        const emptyText = filter === 'games' ? 'No game quests available' :
+            filter === 'platform' ? 'No platform quests available' :
             filter === 'ready' ? 'No rewards to claim' :
-            filter === 'claimed' ? 'No completed quests yet' :
+            filter === 'claimed' ? 'No claimed quests yet' :
             'No quests available';
 
         emptyMsg.innerHTML = `
@@ -382,6 +391,7 @@ export class QuestRenderer {
 
         this.renderTemplate();
         await this.loadAndDisplayQuests();
+        this.initScrollToTop();
     }
 
     validateAuthentication() {
@@ -480,6 +490,39 @@ export class QuestRenderer {
         } else {
             this.appContainer.innerHTML = errorMessage;
         }
+    }
+
+    /**
+     * Initialize scroll-to-top button
+     */
+    initScrollToTop() {
+        const scrollBtn = document.getElementById('scrollToTopQuests');
+        if (!scrollBtn) {
+            console.warn('Scroll to top button not found');
+            return;
+        }
+        
+        const showThreshold = 300;
+        
+        const toggleVisibility = () => {
+            if (window.scrollY > showThreshold) {
+                scrollBtn.classList.add('visible');
+            } else {
+                scrollBtn.classList.remove('visible');
+            }
+        };
+        
+        window.addEventListener('scroll', toggleVisibility, { passive: true });
+        
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Initial check
+        toggleVisibility();
     }
 }
 /**
@@ -613,6 +656,9 @@ class QuestCard {
     render() {
         const questCard = document.createElement('div');
         questCard.className = 'quest-card';
+        // Get game_id from config if it exists
+        const gameId = this.quest.config && this.quest.config.game_id ? this.quest.config.game_id : '';
+        questCard.dataset.gameId = gameId;
         questCard.innerHTML = this.buildHTML();
 
         this.applyStatusClass(questCard);
@@ -649,12 +695,13 @@ class QuestCard {
     }
 
     renderQuestInfo() {
-        const gameInfo = this.quest.game_id
-            ? `<span class="quest-game">Game: ${this.quest.game_id}</span>`
+        const config = this.quest.config || {};
+        const gameId = config.game_id;
+        const gameInfo = gameId
+            ? `<span class="quest-game">Game: ${gameId}</span>`
             : '';
 
         // Check if quest has daily reset configured
-        const config = this.quest.config || {};
         const dailyBadge = (config.reset_period === 'daily' || config.reset_on_complete)
             ? '<span class="quest-daily-badge">🔄 Daily</span>'
             : '';
@@ -707,17 +754,6 @@ class QuestCard {
 
     renderClaimButton() {
         if (this.state.isClaimed()) {
-            const claimedDate = this.state.getClaimedDate();
-            if (claimedDate) {
-                const dateStr = claimedDate.toLocaleDateString('it-IT', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                return `<div class="claimed-info">Claimed on ${dateStr}</div>`;
-            }
             return '';
         }
 

@@ -352,13 +352,13 @@
             </div>
 
             <div class="quest-filters">
-                <button class="quest-filter-btn active" data-filter="all">
+                <button class="quest-filter-btn active" data-filter="games">
                     <span class="filter-icon">🎮</span>
-                    <span class="filter-text">All Quests</span>
+                    <span class="filter-text">Games Quests</span>
                 </button>
-                <button class="quest-filter-btn" data-filter="active">
-                    <span class="filter-icon">📋</span>
-                    <span class="filter-text">To Do</span>
+                <button class="quest-filter-btn" data-filter="platform">
+                    <span class="filter-icon">🏆</span>
+                    <span class="filter-text">Platform Quests</span>
                 </button>
                 <button class="quest-filter-btn" data-filter="ready">
                     <span class="filter-icon">🎁</span>
@@ -366,12 +366,19 @@
                 </button>
                 <button class="quest-filter-btn" data-filter="claimed">
                     <span class="filter-icon">✅</span>
-                    <span class="filter-text">Done</span>
+                    <span class="filter-text">Claimed</span>
                 </button>
             </div>
             <div class="quests-list" id="questsList">
                 <div class="loading">Loading quests...</div>
             </div>
+            
+            <!-- Scroll to top button -->
+            <button class="scroll-to-top" id="scrollToTopQuests" aria-label="Scroll to top">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>
+            </button>
         </div>
     </template>
 

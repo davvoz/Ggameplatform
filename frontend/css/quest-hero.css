@@ -21,7 +21,7 @@ main:has(.quests) {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
 }
 
 .hero-background {
@@ -246,12 +246,13 @@ main:has(.quests) {
 @media (max-width: 768px) {
     .quests-hero {
         min-height: auto;
-        padding: calc(80px + var(--spacing-xl)) 0 var(--spacing-xl);
+        padding: calc(80px + var(--spacing-2xl)) 0 var(--spacing-md);
+        margin-bottom: var(--spacing-md);
     }
 
     .hero-content {
         padding: var(--spacing-md);
-        padding-top: 0;
+        padding-top: var(--spacing-md);
     }
 
     .hero-badge {
@@ -303,8 +304,9 @@ main:has(.quests) {
 
 @media (max-width: 480px) {
     .quests-hero {
-        min-height: 100vh;
-        padding: calc(70px + var(--spacing-md)) 0 var(--spacing-md);
+        min-height: auto;
+        padding: calc(70px + var(--spacing-xl)) 0 var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
     }
 
     .hero-stats {
@@ -440,7 +442,7 @@ main:has(.quests) {
     background: var(--surface-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -475,18 +477,18 @@ main:has(.quests) {
 }
 
 .quest-header {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 .quest-title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
 }
 
 .quest-title {
-    font-size: 1.4rem;
+    font-size: 1.15rem;
     color: var(--text-primary);
     margin: 0;
     font-weight: 700;
@@ -527,13 +529,15 @@ main:has(.quests) {
 
 .quest-description {
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: 1.4;
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 .quest-body {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .quest-info {
@@ -553,7 +557,7 @@ main:has(.quests) {
 
 .quest-progress {
     background: var(--background-lighter);
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     border-radius: var(--radius-md);
 }
 
@@ -566,7 +570,7 @@ main:has(.quests) {
 }
 
 .progress-bar {
-    height: 12px;
+    height: 8px;
     background: var(--surface);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -633,16 +637,16 @@ main:has(.quests) {
 
 .quest-rewards {
     display: flex;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
     flex-wrap: wrap;
 }
 
 .reward-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     background: var(--background-lighter);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
     transition: all 0.3s ease;
@@ -684,7 +688,7 @@ main:has(.quests) {
 }
 
 .reward-icon {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
@@ -719,7 +723,7 @@ main:has(.quests) {
 .reward-value {
     font-weight: 700;
     color: var(--text-primary);
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     letter-spacing: 0.02em;
 }
 
@@ -746,13 +750,7 @@ main:has(.quests) {
     }
 
     .quest-title {
-        font-size: 1.2rem;
-    }
-
-    .quest-title-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
+        font-size: 1.05rem;
     }
 }
 
@@ -1104,18 +1102,7 @@ main:has(.quests) {
     }
 }
 
-/* Claimed Info */
-.claimed-info {
-    text-align: center;
-    padding: var(--spacing-md);
-    background: rgba(105, 240, 174, 0.1);
-    border: 1px solid var(--success);
-    border-radius: var(--radius-md);
-    color: var(--success);
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-top: var(--spacing-md);
-}
+
 
 /* Celebration Overlay */
 .celebration-overlay {
@@ -1425,7 +1412,7 @@ main:has(.quests) {
 
 @media (max-width: 480px) {
     .quest-filters {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -1438,6 +1425,84 @@ main:has(.quests) {
     border: 2px dashed var(--border);
     margin: var(--spacing-xl) 0;
     animation: fadeInScale 0.5s ease-out;
+}
+
+/* ========== Scroll To Top Button ========== */
+.scroll-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: rgba(30, 30, 45, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.scroll-to-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 14px;
+    background: radial-gradient(ellipse at 30% 0%, rgba(0, 217, 255, 0.2) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.scroll-to-top svg {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s ease;
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top:hover {
+    background: rgba(40, 40, 60, 0.9);
+    border-color: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(0, 217, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.scroll-to-top:hover svg {
+    transform: translateY(-2px);
+}
+
+.scroll-to-top:active {
+    transform: scale(0.95);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+    }
 }
 
 @keyframes fadeInScale {

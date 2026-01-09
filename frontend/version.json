@@ -1,8 +1,17 @@
 {
-  "version": "3.4.13",
-  "timestamp": "2026-01-09T00:30:05.024Z",
-  "buildNumber": 208,
+  "version": "3.4.14",
+  "timestamp": "2026-01-09T00:41:47.401Z",
+  "buildNumber": 209,
   "changelog": [
+    {
+      "version": "3.4.14",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix: enhance game retrieval with session count and improve sorting criteria",
+        "🔖 Bump version to 3.4.13 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.13",
       "date": "2026-01-09",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: [BRISCOLA]enhance quest tracking for Briscola game, including multiplayer session data and specific quest processing",
         "🔖 Bump version to 3.4.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.4",
-      "date": "2026-01-06",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [BRISCOLA]implement rematch functionality in multiplayer mode and enhance cleanup process",
-        "🔖 Bump version to 3.4.3 [skip-version]"
       ]
     }
   ]

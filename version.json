@@ -1,8 +1,17 @@
 {
-  "version": "3.5.5",
-  "timestamp": "2026-01-09T02:23:33.268Z",
-  "buildNumber": 215,
+  "version": "3.6.0",
+  "timestamp": "2026-01-09T08:43:39.895Z",
+  "buildNumber": 216,
   "changelog": [
+    {
+      "version": "3.6.0",
+      "date": "2026-01-09",
+      "type": "minor",
+      "changes": [
+        "feat: Implement sticky profile navbar with dynamic behavior and responsive design",
+        "🔖 Bump version to 3.5.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.5.5",
       "date": "2026-01-09",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: add quest creation script for Blocky Road game with daily reset and train death tracking",
         "🔖 Bump version to 3.4.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.11",
-      "date": "2026-01-08",
-      "type": "patch",
-      "changes": [
-        "fix: enhance quest sorting to prioritize game_id, then quest_type, and target_value",
-        "🔖 Bump version to 3.4.10 [skip-version]"
       ]
     }
   ]

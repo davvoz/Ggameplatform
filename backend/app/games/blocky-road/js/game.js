@@ -16,6 +16,7 @@ class BlockyRoadGame {
         this.score = 0;
         this.baseScore = 0;  // Track max gridZ separately from total score
         this.coins = 0;
+        this.trainDeaths = 0;  // Track deaths by train collision
         this.highScore = 0;
         
         this.isGameOver = false;
@@ -697,7 +698,12 @@ class BlockyRoadGame {
         }
         
         // Check vehicle collision
-        if (this.obstacles.checkVehicleCollision(playerPos)) {
+        const hitObstacle = this.obstacles.checkVehicleCollision(playerPos);
+        if (hitObstacle) {
+            // Increment train deaths counter if hit by train
+            if (hitObstacle.type === 'train') {
+                this.trainDeaths++;
+            }
             this.gameOver('Hit by vehicle!');
             return;
         }
@@ -761,10 +767,11 @@ class BlockyRoadGame {
             try {
                 PlatformSDK.gameOver(this.score, {
                     coins: this.coins,
+                    train_deaths: this.trainDeaths,
                     reason: reason,
                     timestamp: Date.now()
                 });
-                console.log(`📡 Game over sent to SDK: score=${this.score}`);
+                console.log(`📡 Game over sent to SDK: score=${this.score}, coins=${this.coins}, train_deaths=${this.trainDeaths}`);
             } catch (e) {
                 console.error('⚠️ Failed to send game over to SDK:', e);
             }

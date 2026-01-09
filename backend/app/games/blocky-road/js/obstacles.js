@@ -618,11 +618,11 @@ class ObstacleManager {
             
             // Check if player overlaps with vehicle on X axis
             if (playerRight > vehicleLeft && playerLeft < vehicleRight) {
-                return true;
+                return obstacle; // Return the obstacle object instead of just true
             }
         }
         
-        return false;
+        return null; // Return null instead of false for no collision
     }
     
     checkCoinCollision(playerPos, onCollect) {

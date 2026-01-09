@@ -242,18 +242,53 @@ class QuestTracker:
         
         # ============ GENERIC QUEST HANDLING ============
         
-        # Play games quests (cumulative)
+        # Play games quests (cumulative or daily reset)
         if quest_type == "play_games":
+            user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+            
+            # Check for daily reset
+            reset_period = quest_config.get('reset_period')
+            reset_on_complete = quest_config.get('reset_on_complete', False)
+            
+            if reset_period == 'daily' and reset_on_complete:
+                today = self._get_today_date()
+                stored_data = self._get_quest_extra_data(user_quest)
+                last_reset_date = stored_data.get('last_reset_date')
+                
+                # Reset if it's a new day (regardless of completion status)
+                if last_reset_date != today:
+                    print(f"    🔄 [QuestTracker] Resetting daily quest for new day: {quest.title}")
+                    user_quest.is_completed = 0
+                    user_quest.current_progress = 0
+                    user_quest.completed_at = None
+                    user_quest.is_claimed = 0
+                    user_quest.claimed_at = None
+                    stored_data['last_reset_date'] = today
+                    self._set_quest_extra_data(user_quest, stored_data)
+                    self.db.flush()
+            
             # Count completed sessions - filter by game_id if specified in quest config
-            query = self.db.query(GameSession).filter(
-                GameSession.user_id == user_id,
-                GameSession.ended_at.isnot(None)
-            )
+            if reset_period == 'daily':
+                # For daily quests, only count sessions today
+                today_start = datetime.strptime(self._get_today_date(), '%Y-%m-%d')
+                query = self.db.query(GameSession).filter(
+                    GameSession.user_id == user_id,
+                    GameSession.ended_at.isnot(None),
+                    GameSession.ended_at >= today_start.isoformat()
+                )
+            else:
+                # For cumulative quests, count all sessions
+                query = self.db.query(GameSession).filter(
+                    GameSession.user_id == user_id,
+                    GameSession.ended_at.isnot(None)
+                )
+            
             # If quest is for a specific game, only count sessions for that game
             if quest_game_id:
                 query = query.filter(GameSession.game_id == quest_game_id)
+            
             total_sessions = query.count()
-            self.update_quest_progress(user_id, quest, total_sessions)
+            self.update_quest_progress(user_id, quest, total_sessions, user_quest)
         
         # Play games weekly (resets each week)
         elif quest_type == "play_games_weekly":
@@ -336,6 +371,47 @@ class QuestTracker:
             target_digit = quest.target_value
             if score % 10 == target_digit:
                 self.update_quest_progress(user_id, quest, 1)
+        
+        # Score with extra_data_field tracking (for custom metrics like coins, deaths, etc)
+        elif quest_type == "score":
+            extra_data_field = quest_config.get('extra_data_field')
+            
+            if extra_data_field:
+                # This quest tracks a specific field from extra_data
+                print(f"    📊 [QuestTracker] Score quest with extra_data_field: {extra_data_field}")
+                
+                user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+                
+                # Check for daily reset
+                reset_period = quest_config.get('reset_period')
+                reset_on_complete = quest_config.get('reset_on_complete', False)
+                
+                if reset_period == 'daily' and reset_on_complete:
+                    today = self._get_today_date()
+                    stored_data = self._get_quest_extra_data(user_quest)
+                    last_reset_date = stored_data.get('last_reset_date')
+                    
+                    # Reset if it's a new day (regardless of completion status)
+                    if last_reset_date != today:
+                        print(f"    🔄 [QuestTracker] Resetting daily quest for new day: {quest.title}")
+                        user_quest.is_completed = 0
+                        user_quest.current_progress = 0
+                        user_quest.completed_at = None
+                        user_quest.is_claimed = 0
+                        user_quest.claimed_at = None
+                        stored_data['last_reset_date'] = today
+                        self._set_quest_extra_data(user_quest, stored_data)
+                        self.db.flush()
+                
+                # Get the value from extra_data
+                field_value = extra_data.get(extra_data_field, 0)
+                print(f"    📊 [QuestTracker] extra_data.{extra_data_field} = {field_value}")
+                
+                if field_value > 0:
+                    # Increment progress by the field value
+                    new_progress = user_quest.current_progress + field_value
+                    print(f"    📈 [QuestTracker] Incrementing progress: {user_quest.current_progress} + {field_value} = {new_progress}")
+                    self.update_quest_progress(user_id, quest, new_progress, user_quest)
         
         # Reach level (based on XP)
         elif quest_type == "reach_level":

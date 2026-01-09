@@ -223,6 +223,12 @@ def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = Non
 @router.get("/db-viewer", response_class=HTMLResponse)
 async def db_viewer(username: str = Depends(verify_token_from_cookie)):
     """Database viewer interface - Protected with JWT cookie"""
+    html_file = Path(__file__).parent.parent / "static" / "db-viewer-v2.html"
+    return FileResponse(html_file)
+
+@router.get("/db-viewer-legacy", response_class=HTMLResponse)
+async def db_viewer_legacy(username: str = Depends(verify_token_from_cookie)):
+    """Legacy database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 

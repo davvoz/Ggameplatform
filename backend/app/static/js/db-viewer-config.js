@@ -1,8 +1,16 @@
 ﻿/**
  * Database Viewer Configuration
  * Centralised configuration for all tables and their definitions
+ * 
+ * NOTE: This file maintains backward compatibility with the existing system.
+ * The new centralized schema is defined in db-schema.js
+ * For new tables, add them to DB_SCHEMA in db-schema.js instead.
+ * 
  * To add a new table: simply add a new entry to TABLE_DEFINITIONS
  */
+
+// Bridge to new schema system - SchemaManager provides utility methods
+const schemaManager = typeof SchemaManager !== 'undefined' ? new SchemaManager() : null;
 
 const TABLE_DEFINITIONS = {
     games: {

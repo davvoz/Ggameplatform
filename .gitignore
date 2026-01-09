@@ -287,3 +287,6 @@ backend/migrate_xp_rules.py
 backend/test_xp_calculator.py
 start.bat
 .env.example
+bot/blocky_road_bot.py
+bot/requirements.txt
+bot/run_bot.bat

@@ -1,8 +1,17 @@
 {
-  "version": "3.7.1",
-  "timestamp": "2026-01-09T22:12:57.192Z",
-  "buildNumber": 221,
+  "version": "3.7.2",
+  "timestamp": "2026-01-09T22:38:55.689Z",
+  "buildNumber": 222,
   "changelog": [
+    {
+      "version": "3.7.2",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix: enhance user statistics retrieval and update leaderboard references to weekly data",
+        "🔖 Bump version to 3.7.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.1",
       "date": "2026-01-09",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: Improve async loading of profile stats and enhance sorting criteria for game display",
         "🔖 Bump version to 3.5.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.5.2",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: update GameUpdate schema to use snake_case for status and metadata fields",
-        "🔖 Bump version to 3.5.1 [skip-version]"
       ]
     }
   ]

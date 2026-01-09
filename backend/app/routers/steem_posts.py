@@ -64,7 +64,8 @@ def get_steem_post_service() -> SteemPostService:
 
 def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     """Get user statistics for post generation"""
-    from app.models import GameSession, CoinTransaction
+    from app.models import GameSession, CoinTransaction, WeeklyLeaderboard
+    from app.level_system import LevelSystem
     from sqlalchemy import func, distinct
     from datetime import datetime
     
@@ -72,22 +73,12 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Get level info
-    level = 1
+    # Get level info using the same logic as /api/levels/{user_id} endpoint
     total_xp = user.total_xp_earned or 0
+    xp_progress = LevelSystem.get_xp_progress(total_xp)
+    level = xp_progress.get('current_level', 1)
     
-    # Calculate level from XP (simplified - you may want to use level_system.py)
-    try:
-        from app.level_system import get_user_level_info
-        level_info = get_user_level_info(user_id, db)
-        if level_info:
-            level = level_info.get('current_level', 1)
-    except Exception as e:
-        print(f"Could not get level info: {e}")
-        # Fallback: estimate level from XP
-        level = max(1, int((total_xp / 100) ** 0.5))
-    
-    # Get games played count
+    # Get games played count - count all sessions (matches frontend behavior)
     games_played = db.query(func.count(GameSession.session_id)).filter(
         GameSession.user_id == user_id
     ).scalar() or 0
@@ -114,19 +105,25 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
             print(f"Could not calculate days_member: {e}")
             days_member = 0
     
-    # Get leaderboard positions (top 5 best ranks)
+    # Get WEEKLY leaderboard positions (top 5 best ranks from current week)
+    from app.leaderboard_repository import LeaderboardRepository
+    
+    lb_repo = LeaderboardRepository(db)
+    week_start, week_end = lb_repo.get_current_week()
+    
     leaderboard_entries = db.query(
-        Leaderboard.game_id,
-        Leaderboard.rank,
-        Leaderboard.score,
+        WeeklyLeaderboard.game_id,
+        WeeklyLeaderboard.rank,
+        WeeklyLeaderboard.score,
         Game.title
     ).join(
-        Game, Leaderboard.game_id == Game.game_id
+        Game, WeeklyLeaderboard.game_id == Game.game_id
     ).filter(
-        Leaderboard.user_id == user_id,
-        Leaderboard.rank.isnot(None)
+        WeeklyLeaderboard.user_id == user_id,
+        WeeklyLeaderboard.week_start == week_start,
+        WeeklyLeaderboard.rank.isnot(None)
     ).order_by(
-        Leaderboard.rank.asc()
+        WeeklyLeaderboard.rank.asc()
     ).limit(5).all()
     
     leaderboard_positions = []

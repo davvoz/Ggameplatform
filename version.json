@@ -1,8 +1,26 @@
 {
-  "version": "3.6.0",
-  "timestamp": "2026-01-09T08:43:39.895Z",
-  "buildNumber": 216,
+  "version": "3.6.2",
+  "timestamp": "2026-01-09T12:56:23.324Z",
+  "buildNumber": 218,
   "changelog": [
+    {
+      "version": "3.6.2",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "refactor: Optimize profile rendering by loading multiplier breakdown asynchronously",
+        "🔖 Bump version to 3.6.1 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.6.1",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD] Add special abilities system with bomb and pushback mechanics",
+        "🔖 Bump version to 3.6.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.6.0",
       "date": "2026-01-09",
@@ -75,24 +93,6 @@
       "changes": [
         "fix: enhance game retrieval with session count and improve sorting criteria",
         "🔖 Bump version to 3.4.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.13",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "refactor: remove XP breakdown display from banners and modals for cleaner UI",
-        "🔖 Bump version to 3.4.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.12",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "fix: add quest creation script for Blocky Road game with daily reset and train death tracking",
-        "🔖 Bump version to 3.4.11 [skip-version]"
       ]
     }
   ]

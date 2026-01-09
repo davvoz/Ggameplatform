@@ -1,8 +1,17 @@
 {
-  "version": "3.5.2",
-  "timestamp": "2026-01-09T01:57:53.526Z",
-  "buildNumber": 212,
+  "version": "3.5.3",
+  "timestamp": "2026-01-09T02:07:59.468Z",
+  "buildNumber": 213,
   "changelog": [
+    {
+      "version": "3.5.3",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix: Improve async loading of profile stats and enhance sorting criteria for game display",
+        "🔖 Bump version to 3.5.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.5.2",
       "date": "2026-01-09",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: implement script to delete inactive quests from the database",
         "🔖 Bump version to 3.4.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.8",
-      "date": "2026-01-08",
-      "type": "patch",
-      "changes": [
-        "fix: update rule types in get_form_options to include 'threshold'",
-        "🔖 Bump version to 3.4.7 [skip-version]"
       ]
     }
   ]

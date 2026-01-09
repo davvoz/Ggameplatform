@@ -17,29 +17,77 @@ export class UIManager {
         this.previewCol = 0;
         this.previewRow = 0;
         
-        // Shop buttons
+        // Shop buttons (bottom bar for tower types)
         this.shopButtons = [];
         this.setupShopButtons();
         
-        // Special ability buttons
-        this.abilityButtons = [];
-        this.setupAbilityButtons();
+        // Left sidebar with abilities and shop items
+        this.sidebarButtons = [];
+        this.setupSidebar();
         
         // Game over button
         this.retryButton = null;
         
         // Settings
         this.settingsButton = null;
-        this.shopButton = null; // Nuovo bottone shop
         this.showSettingsPopup = false;
-        this.showShopPopup = false; // Nuovo popup shop
         this.settingsPopupButtons = [];
         this.settingsCheckboxes = [];
-        this.shopItems = []; // Array dei pulsanti del negozio
         
         // Targeting mode for bomb ability
         this.bombTargetingMode = false;
         this.targetingCallback = null;
+    }
+
+    /**
+     * Setup the left sidebar with abilities and shop items
+     */
+    setupSidebar() {
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        
+        const sidebarWidth = UI_CONFIG.SIDEBAR_WIDTH || 64;
+        const buttonSize = 46;
+        const buttonSpacing = 5;
+        const sidebarX = (sidebarWidth - buttonSize) / 2; // Center buttons in sidebar
+        const startY = UI_CONFIG.TOP_BAR_HEIGHT + 10;
+        
+        this.sidebarButtons = [];
+        let currentY = startY;
+        
+        // Add ability buttons first
+        for (const [key, ability] of Object.entries(SPECIAL_ABILITIES)) {
+            this.sidebarButtons.push({
+                id: key,
+                type: 'ability',
+                x: sidebarX,
+                y: currentY,
+                width: buttonSize,
+                height: buttonSize,
+                data: ability
+            });
+            currentY += buttonSize + buttonSpacing;
+        }
+        
+        // Add separator space
+        currentY += 6;
+        
+        // Add shop item buttons
+        for (const [key, item] of Object.entries(SHOP_ITEMS)) {
+            this.sidebarButtons.push({
+                id: key,
+                type: 'shop',
+                x: sidebarX,
+                y: currentY,
+                width: buttonSize,
+                height: buttonSize,
+                data: item
+            });
+            currentY += buttonSize + buttonSpacing;
+        }
+        
+        // Store sidebar dimensions
+        this.sidebarWidth = sidebarWidth;
+        this.sidebarHeight = currentY - startY + 10;
     }
 
     setupAbilityButtons() {
@@ -122,8 +170,8 @@ export class UIManager {
         this.renderTopBar(gameState);
         this.renderShop(gameState);
         
-        // Render special ability buttons
-        this.renderAbilityButtons(gameState);
+        // Render left sidebar with abilities and shop items
+        this.renderSidebar(gameState);
         
         // Render active boost bars on screen (always visible when boosts are active)
         this.renderActiveBoostBars(gameState);
@@ -147,11 +195,6 @@ export class UIManager {
         // Settings popup
         if (this.showSettingsPopup) {
             this.renderSettingsPopup();
-        }
-        
-        // Shop popup
-        if (this.showShopPopup) {
-            this.renderShopPopup(gameState);
         }
     }
 
@@ -182,18 +225,6 @@ export class UIManager {
             height: gearSize
         };
         
-        // Shop cart icon (under settings button)
-        const shopX = gearX;
-        const shopY = gearY + gearSize + 6;
-        
-        // Store shop button position for click detection
-        this.shopButton = {
-            x: shopX,
-            y: shopY,
-            width: gearSize,
-            height: gearSize
-        };
-        
         // Draw settings gear background
         ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
         ctx.beginPath();
@@ -206,16 +237,6 @@ export class UIManager {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
         ctx.fillText('⚙️', gearX + gearSize/2, gearY + gearSize/2);
-        
-        // Draw shop cart background
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
-        ctx.beginPath();
-        ctx.arc(shopX + gearSize/2, shopY + gearSize/2, gearSize/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw shop cart icon
-        ctx.fillStyle = CONFIG.COLORS.TEXT_WARNING;
-        ctx.fillText('🛒', shopX + gearSize/2, shopY + gearSize/2);
         
         // Stats
         const stats = [
@@ -318,12 +339,12 @@ export class UIManager {
         const now = Date.now();
         const time = now * 0.001;
         
-        // Position bars on the left side, below the top bar
-        const barX = 10;
+        // Position bars to the right of the sidebar
+        const barX = (this.sidebarWidth || 64) + 8;
         let barY = UI_CONFIG.TOP_BAR_HEIGHT + 10;
-        const barWidth = 140;
-        const barHeight = 32;
-        const barSpacing = 8;
+        const barWidth = 120;
+        const barHeight = 28;
+        const barSpacing = 6;
         
         gameState.activeBoosts.forEach((boost, index) => {
             const remainingMs = boost.endTime - now;
@@ -417,6 +438,181 @@ export class UIManager {
             });
             
             barY += barHeight + barSpacing;
+        });
+    }
+
+    /**
+     * Render the left sidebar with abilities and shop items
+     */
+    renderSidebar(gameState) {
+        const ctx = this.graphics.ctx;
+        const now = Date.now();
+        const time = now * 0.001;
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        const sidebarWidth = UI_CONFIG.SIDEBAR_WIDTH || 64;
+        
+        // Draw sidebar background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, UI_CONFIG.TOP_BAR_HEIGHT, sidebarWidth, height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT);
+        
+        // Draw sidebar border
+        ctx.strokeStyle = CONFIG.COLORS.BUTTON_BORDER;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sidebarWidth, UI_CONFIG.TOP_BAR_HEIGHT);
+        ctx.lineTo(sidebarWidth, height - UI_CONFIG.SHOP_HEIGHT);
+        ctx.stroke();
+        
+        // Get ability states
+        const abilities = gameState.specialAbilities || {
+            BOMB: { level: 1, lastUsed: 0, uses: 0 },
+            PUSHBACK: { level: 1, lastUsed: 0, uses: 0 }
+        };
+        
+        this.sidebarButtons.forEach((button, index) => {
+            const cornerRadius = 6;
+            const centerX = button.x + button.width / 2;
+            const centerY = button.y + button.height / 2;
+            
+            if (button.type === 'ability') {
+                // Render ability button
+                const ability = button.data;
+                const abilityState = abilities[button.id] || { level: 1, lastUsed: 0, uses: 0 };
+                const level = abilityState.level;
+                const lastUsed = abilityState.lastUsed;
+                const cooldown = ability.baseCooldown;
+                const elapsed = now - lastUsed;
+                const isReady = elapsed >= cooldown;
+                const cooldownProgress = Math.min(1, elapsed / cooldown);
+                
+                // Button background
+                ctx.save();
+                if (isReady) {
+                    ctx.shadowColor = ability.glowColor;
+                    ctx.shadowBlur = 8;
+                }
+                
+                const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+                if (isReady) {
+                    bgGradient.addColorStop(0, Utils.colorWithAlpha(ability.color, 0.9));
+                    bgGradient.addColorStop(1, Utils.colorWithAlpha(ability.color, 0.6));
+                } else {
+                    bgGradient.addColorStop(0, 'rgba(40, 40, 50, 0.9)');
+                    bgGradient.addColorStop(1, 'rgba(25, 25, 35, 0.9)');
+                }
+                ctx.fillStyle = bgGradient;
+                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+                ctx.fill();
+                ctx.restore();
+                
+                // Cooldown overlay
+                if (!isReady) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    const startAngle = -Math.PI / 2;
+                    const endAngle = startAngle + (1 - cooldownProgress) * Math.PI * 2;
+                    ctx.arc(centerX, centerY, button.width / 2, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                    
+                    // Cooldown timer
+                    const remainingSec = Math.ceil((cooldown - elapsed) / 1000);
+                    ctx.save();
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`${remainingSec}s`, centerX, centerY + 12);
+                    ctx.restore();
+                }
+                
+                // Border
+                ctx.strokeStyle = isReady ? ability.glowColor : 'rgba(100, 100, 120, 0.6)';
+                ctx.lineWidth = isReady ? 2 : 1;
+                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+                ctx.stroke();
+                
+                // Icon
+                ctx.save();
+                ctx.font = `${button.width * 0.45}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = isReady ? 1.0 : 0.5;
+                ctx.fillText(ability.icon, centerX, centerY - 4);
+                ctx.restore();
+                
+                // Level indicator
+                ctx.save();
+                ctx.font = 'bold 9px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = isReady ? '#ffdd00' : '#888888';
+                ctx.fillText(`Lv${level}`, centerX, button.y + button.height - 6);
+                ctx.restore();
+                
+            } else if (button.type === 'shop') {
+                // Render shop item button
+                const item = button.data;
+                const canAfford = gameState.coins >= item.cost;
+                
+                // Check if temporary boost is already active
+                const isActive = item.type === 'temporary' && 
+                    gameState.activeBoosts?.some(b => b.type === item.effect.type);
+                const isDisabled = !canAfford || isActive;
+                
+                // Button background
+                ctx.save();
+                const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+                if (isActive) {
+                    // Active boost - show with pulsing glow
+                    const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+                    ctx.shadowColor = item.color;
+                    ctx.shadowBlur = 10 * pulse;
+                    bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.7));
+                    bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.4));
+                } else if (canAfford) {
+                    bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.4));
+                    bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.2));
+                } else {
+                    bgGradient.addColorStop(0, 'rgba(40, 40, 50, 0.8)');
+                    bgGradient.addColorStop(1, 'rgba(25, 25, 35, 0.8)');
+                }
+                ctx.fillStyle = bgGradient;
+                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+                ctx.fill();
+                ctx.restore();
+                
+                // Border
+                ctx.strokeStyle = isActive ? item.color : (canAfford ? Utils.colorWithAlpha(item.color, 0.8) : 'rgba(80, 80, 100, 0.5)');
+                ctx.lineWidth = isActive ? 2 : 1;
+                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+                ctx.stroke();
+                
+                // Icon
+                ctx.save();
+                ctx.font = `${button.width * 0.4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = isDisabled && !isActive ? 0.4 : 1.0;
+                ctx.fillText(item.icon, centerX, centerY - 4);
+                ctx.restore();
+                
+                // Cost or "ACTIVE" label
+                ctx.save();
+                ctx.font = 'bold 8px Arial';
+                ctx.textAlign = 'center';
+                if (isActive) {
+                    ctx.fillStyle = '#00ff88';
+                    ctx.fillText('ACTIVE', centerX, button.y + button.height - 5);
+                } else {
+                    ctx.fillStyle = canAfford ? '#ffdd00' : '#666666';
+                    ctx.fillText(`${item.cost}`, centerX, button.y + button.height - 5);
+                }
+                ctx.restore();
+            }
         });
     }
 
@@ -606,10 +802,10 @@ export class UIManager {
     }
 
     /**
-     * Check if ability button was clicked
+     * Check if sidebar button was clicked (ability or shop item)
      */
-    getClickedAbilityButton(screenPos) {
-        for (const button of this.abilityButtons) {
+    getClickedSidebarButton(screenPos) {
+        for (const button of this.sidebarButtons) {
             if (Utils.pointInRect(
                 screenPos.x, screenPos.y,
                 button.x, button.y,
@@ -617,6 +813,17 @@ export class UIManager {
             )) {
                 return button;
             }
+        }
+        return null;
+    }
+
+    /**
+     * Check if ability button was clicked (legacy - uses sidebar)
+     */
+    getClickedAbilityButton(screenPos) {
+        const clicked = this.getClickedSidebarButton(screenPos);
+        if (clicked && clicked.type === 'ability') {
+            return { id: clicked.id, ability: clicked.data };
         }
         return null;
     }
@@ -766,26 +973,15 @@ export class UIManager {
             return { type: 'settings', action: 'close' };
         }
         
-        // Check shop popup clicks
-        if (this.showShopPopup) {
-            const popupAction = this.checkShopPopupClick(screenPos.x, screenPos.y);
-            if (popupAction) {
-                if (popupAction.type === 'button' && popupAction.action === 'close') {
-                    this.closeShopPopup();
-                    return { type: 'shop', action: 'close' };
-                } else if (popupAction.type === 'purchase') {
-                    return { type: 'shop', action: 'purchase', item: popupAction.item };
-                }
+        // Check sidebar button clicks (abilities and shop items)
+        const clickedSidebar = this.getClickedSidebarButton(screenPos);
+        if (clickedSidebar) {
+            if (clickedSidebar.type === 'ability') {
+                return { type: 'ability', action: 'activate', abilityId: clickedSidebar.id };
+            } else if (clickedSidebar.type === 'shop') {
+                // Shop item from sidebar - trigger purchase
+                return { type: 'shop', action: 'purchase', item: clickedSidebar.data };
             }
-            // Click outside popup - close it
-            this.closeShopPopup();
-            return { type: 'shop', action: 'close' };
-        }
-        
-        // Check special ability button clicks
-        const clickedAbility = this.getClickedAbilityButton(screenPos);
-        if (clickedAbility) {
-            return { type: 'ability', action: 'activate', abilityId: clickedAbility.id };
         }
         
         // Check settings gear click
@@ -794,13 +990,7 @@ export class UIManager {
             return { type: 'settings', action: 'open' };
         }
         
-        // Check shop cart click
-        if (this.checkShopClick(screenPos.x, screenPos.y)) {
-            this.toggleShopPopup();
-            return { type: 'shop', action: 'open' };
-        }
-        
-        // Check shop button clicks
+        // Check shop button clicks (tower types)
         const clickedButton = this.getClickedShopButton(screenPos);
         if (clickedButton) {
             this.selectedCannonType = clickedButton.id;
@@ -1401,441 +1591,6 @@ export class UIManager {
     
     closeSettingsPopup() {
         this.showSettingsPopup = false;
-    }
-    
-    // Shop popup rendering
-    renderShopPopup(gameState) {
-        const ctx = this.graphics.ctx;
-        const width = this.canvas.width / (window.devicePixelRatio || 1);
-        const height = this.canvas.height / (window.devicePixelRatio || 1);
-        
-        // Overlay with animated gradient
-        const time = Date.now() * 0.001;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Popup box
-        const popupWidth = Math.min(380, width * 0.92);
-        const popupHeight = Math.min(520, height * 0.85);
-        const popupX = (width - popupWidth) / 2;
-        const popupY = (height - popupHeight) / 2;
-        
-        // Popup background with gradient
-        const gradient = ctx.createLinearGradient(popupX, popupY, popupX, popupY + popupHeight);
-        gradient.addColorStop(0, 'rgba(20, 25, 35, 0.98)');
-        gradient.addColorStop(1, 'rgba(10, 12, 18, 0.98)');
-        ctx.fillStyle = gradient;
-        Utils.drawRoundRect(ctx, popupX, popupY, popupWidth, popupHeight, 12);
-        ctx.fill();
-        
-        // Animated outer glow
-        const glowIntensity = 0.3 + Math.sin(time * 2) * 0.1;
-        ctx.save();
-        ctx.shadowColor = '#ffcc00';
-        ctx.shadowBlur = 20 * glowIntensity;
-        ctx.strokeStyle = CONFIG.COLORS.TEXT_WARNING;
-        ctx.lineWidth = 3;
-        Utils.drawRoundRect(ctx, popupX, popupY, popupWidth, popupHeight, 12);
-        ctx.stroke();
-        ctx.restore();
-        
-        // Inner border
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
-        ctx.lineWidth = 1;
-        Utils.drawRoundRect(ctx, popupX + 4, popupY + 4, popupWidth - 8, popupHeight - 8, 10);
-        ctx.stroke();
-        
-        // Title with animated sparkle
-        const titleY = popupY + 40;
-        this.graphics.drawText('🛒 POWER SHOP 🛒', width / 2, titleY, {
-            size: 24,
-            color: CONFIG.COLORS.TEXT_WARNING,
-            align: 'center',
-            bold: true,
-            shadow: true
-        });
-        
-        // Player coins display with coin icon animation
-        const coinBounce = Math.sin(time * 4) * 2;
-        this.graphics.drawText(`💰 ${Utils.formatNumber(gameState.coins)}`, width / 2, popupY + 68 + coinBounce, {
-            size: 20,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
-            align: 'center',
-            bold: true
-        });
-        
-        // Active boosts section (inside popup, at top)
-        if (gameState.activeBoosts && gameState.activeBoosts.length > 0) {
-            this.renderActiveBoostsInShop(popupX + 15, popupY + 90, popupWidth - 30, gameState);
-        }
-        
-        // Shop items section
-        const hasActiveBoosts = gameState.activeBoosts && gameState.activeBoosts.length > 0;
-        const contentWidth = popupWidth - 30;
-        const contentX = popupX + 15;
-        let contentY = hasActiveBoosts ? popupY + 90 + 60 : popupY + 95;
-        
-        this.shopItems = [];
-        
-        // Render shop items
-        const items = Object.values(SHOP_ITEMS);
-        const itemHeight = 65;
-        const itemSpacing = 8;
-        
-        for (const item of items) {
-            this.renderShopItem(contentX, contentY, contentWidth, itemHeight, item, gameState);
-            contentY += itemHeight + itemSpacing;
-        }
-        
-        // Close button
-        contentY += 10;
-        const buttonHeight = 40;
-        this.renderShopPopupButton(contentX, contentY, contentWidth, buttonHeight, '✕ CLOSE', 'close', false);
-    }
-    
-    // Render active boosts inside shop popup
-    renderActiveBoostsInShop(x, y, width, gameState) {
-        const ctx = this.graphics.ctx;
-        const boostHeight = 50;
-        const now = Date.now();
-        
-        // Section background
-        ctx.fillStyle = 'rgba(0, 255, 136, 0.05)';
-        Utils.drawRoundRect(ctx, x, y, width, boostHeight, 8);
-        ctx.fill();
-        
-        ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
-        ctx.lineWidth = 1;
-        Utils.drawRoundRect(ctx, x, y, width, boostHeight, 8);
-        ctx.stroke();
-        
-        // Title
-        this.graphics.drawText('⚡ ACTIVE BOOSTS', x + 10, y + 12, {
-            size: 10,
-            color: CONFIG.COLORS.TEXT_SECONDARY,
-            align: 'left',
-            bold: true
-        });
-        
-        // Render each active boost as a mini bar
-        const boostCount = gameState.activeBoosts.length;
-        const barWidth = (width - 20) / Math.min(boostCount, 3);
-        const barHeight = 22;
-        const barY = y + 22;
-        
-        gameState.activeBoosts.slice(0, 3).forEach((boost, index) => {
-            const barX = x + 10 + index * barWidth;
-            const remainingMs = boost.endTime - now;
-            const progress = Math.max(0, remainingMs / boost.duration);
-            const remainingSec = Math.ceil(remainingMs / 1000);
-            
-            // Get boost color
-            const item = SHOP_ITEMS[boost.id];
-            const boostColor = item?.color || CONFIG.COLORS.TEXT_PRIMARY;
-            const barColor = item?.barColor || boostColor;
-            
-            // Bar background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            Utils.drawRoundRect(ctx, barX, barY, barWidth - 5, barHeight, 4);
-            ctx.fill();
-            
-            // Progress bar with gradient
-            if (progress > 0) {
-                const barGradient = ctx.createLinearGradient(barX, barY, barX + (barWidth - 5) * progress, barY);
-                barGradient.addColorStop(0, boostColor);
-                barGradient.addColorStop(1, barColor);
-                ctx.fillStyle = barGradient;
-                Utils.drawRoundRect(ctx, barX, barY, (barWidth - 5) * progress, barHeight, 4);
-                ctx.fill();
-            }
-            
-            // Icon and time
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(boost.icon, barX + 4, barY + barHeight / 2);
-            
-            this.graphics.drawText(`${remainingSec}s`, barX + barWidth - 12, barY + barHeight / 2, {
-                size: 11,
-                color: remainingSec <= 3 ? CONFIG.COLORS.TEXT_DANGER : '#ffffff',
-                align: 'right',
-                bold: true
-            });
-        });
-    }
-    
-    renderShopItem(x, y, width, height, item, gameState) {
-        const ctx = this.graphics.ctx;
-        const canAfford = gameState.coins >= item.cost;
-        const time = Date.now() * 0.001;
-        
-        // Check if this boost type is already active
-        const isActive = gameState.activeBoosts && gameState.activeBoosts.some(b => b.id === item.id);
-        
-        // Store for click detection
-        this.shopItems.push({
-            x, y, width, height,
-            item,
-            canAfford
-        });
-        
-        // Item background with gradient
-        const bgGradient = ctx.createLinearGradient(x, y, x + width, y);
-        if (isActive) {
-            bgGradient.addColorStop(0, 'rgba(0, 255, 136, 0.15)');
-            bgGradient.addColorStop(1, 'rgba(0, 255, 136, 0.05)');
-        } else if (canAfford) {
-            bgGradient.addColorStop(0, `${item.color || 'rgba(255, 215, 0, 0.15)'}22`);
-            bgGradient.addColorStop(1, 'rgba(255, 215, 0, 0.05)');
-        } else {
-            bgGradient.addColorStop(0, 'rgba(60, 60, 60, 0.2)');
-            bgGradient.addColorStop(1, 'rgba(40, 40, 40, 0.1)');
-        }
-        ctx.fillStyle = bgGradient;
-        Utils.drawRoundRect(ctx, x, y, width, height, 10);
-        ctx.fill();
-        
-        // Animated border for affordable items
-        if (canAfford && !isActive) {
-            const pulseAlpha = 0.4 + Math.sin(time * 3) * 0.2;
-            ctx.strokeStyle = Utils.colorWithAlpha(item.color || CONFIG.COLORS.TEXT_WARNING, pulseAlpha);
-            ctx.lineWidth = 2;
-        } else if (isActive) {
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-            ctx.lineWidth = 2;
-        } else {
-            ctx.strokeStyle = 'rgba(80, 80, 80, 0.4)';
-            ctx.lineWidth = 1;
-        }
-        Utils.drawRoundRect(ctx, x, y, width, height, 10);
-        ctx.stroke();
-        
-        // Icon with glow effect for affordable items
-        const iconX = x + 35;
-        const iconY = y + height / 2;
-        
-        if (canAfford && !isActive) {
-            ctx.save();
-            ctx.shadowColor = item.color || CONFIG.COLORS.TEXT_WARNING;
-            ctx.shadowBlur = 10 + Math.sin(time * 4) * 5;
-            ctx.font = '28px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(item.icon, iconX, iconY);
-            ctx.restore();
-        } else {
-            ctx.font = '28px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = canAfford || isActive ? '#ffffff' : 'rgba(150, 150, 150, 0.5)';
-            ctx.fillText(item.icon, iconX, iconY);
-        }
-        
-        // Active indicator
-        if (isActive) {
-            this.graphics.drawText('ACTIVE ✓', x + width - 15, y + 12, {
-                size: 10,
-                color: CONFIG.COLORS.TEXT_PRIMARY,
-                align: 'right',
-                bold: true
-            });
-        }
-        
-        // Item name and description
-        const textX = x + 70;
-        const textColor = canAfford || isActive ? CONFIG.COLORS.TEXT_PRIMARY : 'rgba(180, 180, 180, 0.5)';
-        const descColor = canAfford || isActive ? CONFIG.COLORS.TEXT_SECONDARY : 'rgba(120, 120, 120, 0.5)';
-        
-        this.graphics.drawText(item.name, textX, y + height / 2 - 10, {
-            size: 15,
-            color: textColor,
-            bold: true,
-            align: 'left'
-        });
-        
-        this.graphics.drawText(item.description, textX, y + height / 2 + 10, {
-            size: 12,
-            color: descColor,
-            align: 'left'
-        });
-        
-        // Price with buy button look
-        const priceX = x + width - 55;
-        const priceY = y + height / 2;
-        const priceWidth = 80;
-        const priceHeight = 30;
-        
-        // Price button background
-        if (canAfford && !isActive) {
-            ctx.fillStyle = 'rgba(255, 200, 0, 0.2)';
-            Utils.drawRoundRect(ctx, priceX - 25, priceY - priceHeight/2, priceWidth, priceHeight, 6);
-            ctx.fill();
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_WARNING;
-            ctx.lineWidth = 1;
-            Utils.drawRoundRect(ctx, priceX - 25, priceY - priceHeight/2, priceWidth, priceHeight, 6);
-            ctx.stroke();
-        }
-        
-        const priceColor = isActive ? CONFIG.COLORS.TEXT_SECONDARY : 
-                          canAfford ? CONFIG.COLORS.TEXT_WARNING : CONFIG.COLORS.TEXT_DANGER;
-        this.graphics.drawText(`${item.cost} 💰`, priceX + 15, priceY, {
-            size: 14,
-            color: priceColor,
-            align: 'center',
-            bold: true
-        });
-    }
-    
-    renderShopPopupButton(x, y, width, height, text, action, disabled) {
-        const ctx = this.graphics.ctx;
-        
-        // Store for click detection
-        this.shopItems.push({
-            x, y, width, height,
-            action,
-            disabled,
-            isButton: true
-        });
-        
-        // Button background
-        ctx.fillStyle = disabled ? 'rgba(60, 60, 60, 0.3)' : 'rgba(255, 215, 0, 0.15)';
-        Utils.drawRoundRect(ctx, x, y, width, height, 8);
-        ctx.fill();
-        
-        // Button border
-        ctx.strokeStyle = disabled ? 'rgba(100, 100, 100, 0.5)' : CONFIG.COLORS.TEXT_WARNING;
-        ctx.lineWidth = 2;
-        Utils.drawRoundRect(ctx, x, y, width, height, 8);
-        ctx.stroke();
-        
-        // Button text
-        this.graphics.drawText(text, x + width / 2, y + height / 2, {
-            size: 18,
-            color: disabled ? '#666666' : CONFIG.COLORS.TEXT_WARNING,
-            align: 'center',
-            baseline: 'middle',
-            bold: true,
-            shadow: !disabled
-        });
-    }
-    
-    renderActiveBoosts(x, y, gameState) {
-        if (gameState.activeBoosts.length === 0) return;
-        
-        const ctx = this.graphics.ctx;
-        const boostWidth = 160;
-        const boostHeight = 60;
-        const spacing = 10;
-        
-        // Title
-        this.graphics.drawText('Active Boosts', x + boostWidth / 2, y, {
-            size: 16,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
-            align: 'center',
-            bold: true
-        });
-        
-        let boostY = y + 25;
-        
-        for (const boost of gameState.activeBoosts) {
-            // Boost background
-            ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
-            Utils.drawRoundRect(ctx, x, boostY, boostWidth, boostHeight, 6);
-            ctx.fill();
-            
-            // Boost border
-            ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-            ctx.lineWidth = 1;
-            Utils.drawRoundRect(ctx, x, boostY, boostWidth, boostHeight, 6);
-            ctx.stroke();
-            
-            // Icon and name
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
-            ctx.fillText(boost.icon, x + 8, boostY + 8);
-            
-            this.graphics.drawText(boost.name, x + 35, boostY + 12, {
-                size: 12,
-                color: CONFIG.COLORS.TEXT_PRIMARY,
-                align: 'left',
-                bold: true
-            });
-            
-            // Remaining time
-            const remainingMs = boost.endTime - Date.now();
-            const remainingSeconds = Math.ceil(remainingMs / 1000);
-            this.graphics.drawText(`${remainingSeconds}s`, x + boostWidth - 8, boostY + 12, {
-                size: 12,
-                color: CONFIG.COLORS.TEXT_WARNING,
-                align: 'right',
-                bold: true
-            });
-            
-            // Progress bar
-            const progress = 1 - ((Date.now() - boost.startTime) / boost.duration);
-            const barWidth = boostWidth - 16;
-            const barHeight = 8;
-            const barX = x + 8;
-            const barY = boostY + boostHeight - 16;
-            
-            // Bar background
-            ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-            Utils.drawRoundRect(ctx, barX, barY, barWidth, barHeight, 4);
-            ctx.fill();
-            
-            // Bar progress
-            if (progress > 0) {
-                ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
-                Utils.drawRoundRect(ctx, barX, barY, barWidth * progress, barHeight, 4);
-                ctx.fill();
-            }
-            
-            boostY += boostHeight + spacing;
-        }
-    }
-    
-    // Shop interaction methods
-    checkShopClick(screenX, screenY) {
-        if (!this.shopButton) return false;
-        
-        return screenX >= this.shopButton.x && 
-               screenX <= this.shopButton.x + this.shopButton.width &&
-               screenY >= this.shopButton.y && 
-               screenY <= this.shopButton.y + this.shopButton.height;
-    }
-    
-    checkShopPopupClick(screenX, screenY) {
-        if (!this.showShopPopup) return null;
-        
-        for (const shopItem of this.shopItems) {
-            if (screenX >= shopItem.x && 
-                screenX <= shopItem.x + shopItem.width &&
-                screenY >= shopItem.y && 
-                screenY <= shopItem.y + shopItem.height) {
-                
-                if (shopItem.isButton) {
-                    return { type: 'button', action: shopItem.action };
-                } else if (shopItem.item && shopItem.canAfford) {
-                    return { type: 'purchase', item: shopItem.item };
-                }
-            }
-        }
-        
-        return null;
-    }
-    
-    toggleShopPopup() {
-        this.showShopPopup = !this.showShopPopup;
-        this.shopItems = []; // Reset shop items when toggling
-    }
-    
-    closeShopPopup() {
-        this.showShopPopup = false;
-        this.shopItems = [];
     }
 }
 

@@ -30,18 +30,75 @@ export class Graphics {
     setupCanvas() {
         const updateSize = () => {
             const dpr = window.devicePixelRatio || 1;
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+            
+            // Portrait aspect ratio: 9:16 (width:height)
+            const TARGET_ASPECT_RATIO = 9 / 16;
+            const isDesktop = window.innerWidth >= 769;
+            const isFullscreen = document.fullscreenElement || document.body.classList.contains('game-fullscreen');
+            
+            let width, height;
+            
+            if (isDesktop && isFullscreen) {
+                // Desktop fullscreen: maintain portrait aspect ratio centered
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                
+                // Calculate dimensions maintaining 9:16 aspect ratio
+                if (screenWidth / screenHeight > TARGET_ASPECT_RATIO) {
+                    // Screen is wider than target - height is limiting factor
+                    height = screenHeight;
+                    width = Math.floor(height * TARGET_ASPECT_RATIO);
+                } else {
+                    // Screen is narrower - width is limiting factor
+                    width = screenWidth;
+                    height = Math.floor(width / TARGET_ASPECT_RATIO);
+                }
+                
+                // Center the canvas
+                const offsetLeft = Math.floor((screenWidth - width) / 2);
+                this.canvas.style.position = 'fixed';
+                this.canvas.style.left = offsetLeft + 'px';
+                this.canvas.style.top = '0px';
+                this.canvas.style.width = width + 'px';
+                this.canvas.style.height = height + 'px';
+            } else if (isDesktop && !isFullscreen) {
+                // Desktop not fullscreen: maintain portrait aspect ratio
+                const maxWidth = Math.min(500, window.innerWidth * 0.9);
+                const maxHeight = Math.min(900, window.innerHeight * 0.95);
+                
+                if (maxWidth / maxHeight > TARGET_ASPECT_RATIO) {
+                    height = maxHeight;
+                    width = Math.floor(height * TARGET_ASPECT_RATIO);
+                } else {
+                    width = maxWidth;
+                    height = Math.floor(width / TARGET_ASPECT_RATIO);
+                }
+                
+                this.canvas.style.position = 'relative';
+                this.canvas.style.left = 'auto';
+                this.canvas.style.top = 'auto';
+                this.canvas.style.width = width + 'px';
+                this.canvas.style.height = height + 'px';
+            } else {
+                // Mobile: full screen
+                width = window.innerWidth;
+                height = window.innerHeight;
+                
+                this.canvas.style.position = 'fixed';
+                this.canvas.style.left = '0px';
+                this.canvas.style.top = '0px';
+                this.canvas.style.width = width + 'px';
+                this.canvas.style.height = height + 'px';
+            }
             
             this.canvas.width = width * dpr;
             this.canvas.height = height * dpr;
-            this.canvas.style.width = width + 'px';
-            this.canvas.style.height = height + 'px';
             
             this.ctx.scale(dpr, dpr);
             
-            // Calculate cell size and centering
-            const availableWidth = width;
+            // Calculate cell size and centering (accounting for sidebar)
+            const sidebarWidth = UI_CONFIG.SIDEBAR_WIDTH || 64;
+            const availableWidth = width - sidebarWidth;
             const availableHeight = height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT;
             
             // Calcola cellSize basandosi sul minimo tra larghezza e altezza disponibili
@@ -53,8 +110,8 @@ export class Graphics {
             const gridWidth = CONFIG.COLS * this.cellSize;
             const gridHeight = CONFIG.ROWS * this.cellSize;
             
-            // Centra orizzontalmente e verticalmente
-            this.offsetX = (width - gridWidth) / 2;
+            // Position grid to the right of sidebar, centered in remaining space
+            this.offsetX = sidebarWidth + (availableWidth - gridWidth) / 2;
             this.offsetY = UI_CONFIG.TOP_BAR_HEIGHT + (availableHeight - gridHeight) / 2;
             
             this.gridCacheDirty = true;
@@ -62,6 +119,7 @@ export class Graphics {
         
         updateSize();
         window.addEventListener('resize', updateSize);
+        document.addEventListener('fullscreenchange', updateSize);
     }
 
     /**

@@ -393,22 +393,37 @@ export const ZOMBIE_TYPES = {
 };
 
 // Level progression for merge system
-// NOTA: Moltiplicatori aumentati per bilanciare la nuova difficoltà logaritmica dei nemici
-// e i costi esponenziali degli upgrade
-export const MERGE_LEVELS = [
-    { level: 1, damageMultiplier: 1.0, rangeBonus: 0, fireRateBonus: 1.0, icon: '⭐' },
-    { level: 2, damageMultiplier: 2.5, rangeBonus: 0.5, fireRateBonus: 1.2, icon: '✨' },
-    { level: 3, damageMultiplier: 6.0, rangeBonus: 1.0, fireRateBonus: 1.5, icon: '💫' },
-    { level: 4, damageMultiplier: 14.0, rangeBonus: 1.5, fireRateBonus: 1.85, icon: '⚡' },
-    { level: 5, damageMultiplier: 30.0, rangeBonus: 2.0, fireRateBonus: 2.3, icon: '🌟' },
-    { level: 6, damageMultiplier: 60.0, rangeBonus: 2.5, fireRateBonus: 2.9, icon: '🔥' },
-    { level: 7, damageMultiplier: 120.0, rangeBonus: 3.0, fireRateBonus: 3.6, icon: '💎' },
-];
+// Generate 200 levels with exponential scaling
+export const MERGE_LEVELS = (() => {
+    const levels = [];
+    const icons = ['⭐', '✨', '💫', '⚡', '🌟', '🔥', '💎', '👑', '🏆', '💀'];
+    
+    for (let i = 1; i <= 200; i++) {
+        // Exponential scaling for damage (doubles roughly every 2 levels)
+        const damageMultiplier = Math.pow(1.5, i - 1);
+        // Linear scaling for range
+        const rangeBonus = (i - 1) * 0.3;
+        // Gradual fire rate improvement
+        const fireRateBonus = 1 + (i - 1) * 0.15;
+        // Cycle through icons
+        const icon = icons[Math.min(Math.floor((i - 1) / 20), icons.length - 1)];
+        
+        levels.push({
+            level: i,
+            damageMultiplier: Math.round(damageMultiplier * 10) / 10,
+            rangeBonus: Math.round(rangeBonus * 10) / 10,
+            fireRateBonus: Math.round(fireRateBonus * 100) / 100,
+            icon
+        });
+    }
+    return levels;
+})();
 
 // UI Configuration
 export const UI_CONFIG = {
     TOP_BAR_HEIGHT: 80,
     SHOP_HEIGHT: 90,
+    SIDEBAR_WIDTH: 64,  // Left sidebar for abilities and shop items
     STAT_PANEL_WIDTH: 100,
     BUTTON_SIZE: 70,
     BUTTON_SPACING: 6,
@@ -498,9 +513,9 @@ export const SPECIAL_ABILITIES = {
         icon: '💣',
         baseCooldown: 15000, // 15 seconds cooldown
         baseRadius: 2.0, // 4x4 area = radius 2
-        baseDamage: 50,
-        damagePerLevel: 25, // +25 damage per level
-        maxLevel: 10,
+        baseDamage: 50, // Base damage (scales with wave)
+        damagePerLevel: 25, // +25 damage per ability level
+        maxLevel: 999, // Effectively no limit
         color: '#ff4400',
         glowColor: '#ff8800',
         // Visual settings
@@ -516,7 +531,7 @@ export const SPECIAL_ABILITIES = {
         baseCooldown: 12000, // 12 seconds cooldown
         basePushDistance: 3.0, // Push back 3 cells
         pushDistancePerLevel: 0.5, // +0.5 cells per level
-        maxLevel: 10,
+        maxLevel: 999, // Effectively no limit
         color: '#00aaff',
         glowColor: '#44ddff',
         // Visual settings

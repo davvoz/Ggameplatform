@@ -110,7 +110,10 @@ function applyWaveScaling(baseConfig, waveNumber) {
 
     updateStats(boostMultipliers = null) {
         const baseStats = CANNON_TYPES[this.type];
-        const levelData = MERGE_LEVELS[this.level - 1] || MERGE_LEVELS[MERGE_LEVELS.length - 1];
+        
+        // Get level data (capped at max level in MERGE_LEVELS)
+        const levelIndex = Math.min(this.level - 1, MERGE_LEVELS.length - 1);
+        const levelData = MERGE_LEVELS[levelIndex];
         
         // Calculate base stats
         this.damage = baseStats.damage * levelData.damageMultiplier;

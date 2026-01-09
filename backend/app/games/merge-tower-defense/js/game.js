@@ -119,20 +119,32 @@ export class Game {
                 return;
             }
 
-            if (this.state.isPaused) return;
-
-            // Check UI interaction
+            // Check UI interaction (allow settings interaction even when paused)
             const uiAction = this.ui.handleTap(gridPos, screenPos, this.state);
 
             if (uiAction) {
                 if (uiAction.type === 'settings') {
-                    // Handle settings actions
-                    if (uiAction.action === 'fullscreen') {
+                    // Handle settings actions (always allowed)
+                    if (uiAction.action === 'open') {
+                        // Pause game when opening settings
+                        this.pause();
+                    } else if (uiAction.action === 'close') {
+                        // Resume game when closing settings
+                        this.resume();
+                    } else if (uiAction.action === 'fullscreen') {
                         this.toggleFullscreen();
                     } else if (uiAction.action === 'music') {
                         this.audio.toggle();
+                    } else if (uiAction.action === 'checkbox') {
+                        // Checkbox toggled - handled in UI
                     }
-                } else if (uiAction.type === 'ability') {
+                    return;
+                }
+                
+                // Other actions blocked when paused
+                if (this.state.isPaused) return;
+                
+                if (uiAction.type === 'ability') {
                     // Handle special ability actions
                     if (uiAction.action === 'activate') {
                         this.activateSpecialAbility(uiAction.abilityId);
@@ -1022,6 +1034,9 @@ export class Game {
     }
 
     pause() {
+        // Don't pause during fullscreen transition
+        if (this.isFullscreenTransition) return;
+        
         this.state.isPaused = true;
         this.audio.pause();
     }
@@ -1106,8 +1121,13 @@ export class Game {
     }
 
     requestFullscreen() {
-        // Close settings popup
+        // Close settings popup and resume game
         this.ui.closeSettingsPopup();
+        this.resume();
+
+        // Prevent pause during fullscreen transition
+        this.isFullscreenTransition = true;
+        setTimeout(() => { this.isFullscreenTransition = false; }, 500);
 
         // Apply CSS class for fullscreen styling
         document.body.classList.add('game-fullscreen');
@@ -1138,6 +1158,16 @@ export class Game {
     purchaseShopItem(itemId) {
         const item = SHOP_ITEMS[itemId];
         if (!item) return false;
+
+        // Check if temporary boost is already active
+        if (item.type === 'temporary') {
+            const isAlreadyActive = this.state.activeBoosts.some(b => b.type === item.effect.type);
+            if (isAlreadyActive) {
+                this.particles.createWarningEffect(3, 2, '⏳ Already active!');
+                this.audio.uiError();
+                return false;
+            }
+        }
 
         // Check if player has enough coins
         if (this.state.coins < item.cost) {
@@ -1232,7 +1262,7 @@ export class Game {
     upgradeTower(cannon) {
         if (!cannon || !this.state.pendingUpgradeItem) return;
         
-        // Check if tower is already max level
+        // Check if tower is already max level (200)
         if (cannon.level >= MERGE_LEVELS.length) {
             this.particles.createWarningEffect(cannon.col, cannon.row, '⚠️ MAX LEVEL!');
             this.audio.uiError();
@@ -1550,9 +1580,13 @@ export class Game {
     executeBomb(gridPos, config, state) {
         const now = Date.now();
         const level = state.level;
+        const waveLevel = this.state.wave || 1;
         
-        // Calculate damage based on level
-        const damage = config.baseDamage + (level - 1) * config.damagePerLevel;
+        // Calculate damage based on ability level AND current wave
+        // Base damage + level bonus + wave scaling (grows stronger each wave)
+        const baseDamage = config.baseDamage + (level - 1) * config.damagePerLevel;
+        const waveMultiplier = 1 + (waveLevel - 1) * 0.5; // +50% damage per wave
+        const damage = Math.round(baseDamage * waveMultiplier);
         const radius = config.baseRadius;
 
         // Update ability state
@@ -1737,8 +1771,13 @@ export class Game {
     }
 
     exitFullscreen() {
-        // Close settings popup
+        // Close settings popup and resume game
         this.ui.closeSettingsPopup();
+        this.resume();
+
+        // Prevent pause during fullscreen transition
+        this.isFullscreenTransition = true;
+        setTimeout(() => { this.isFullscreenTransition = false; }, 500);
 
         // Remove CSS fullscreen class
         document.body.classList.remove('game-fullscreen');

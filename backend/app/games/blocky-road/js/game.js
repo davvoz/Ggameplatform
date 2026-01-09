@@ -52,29 +52,7 @@ class BlockyRoadGame {
     showXPBanner(xpAmount, extraData = null) {
         console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
         
-        // Parse extra_data if it's a string
-        let parsedData = null;
-        if (extraData) {
-            parsedData = typeof extraData === 'string' ? JSON.parse(extraData) : extraData;
-        }
-        
-        // Build breakdown details
-        let breakdownHTML = '';
-        if (parsedData && parsedData.xp_breakdown && parsedData.xp_breakdown.length > 0) {
-            breakdownHTML = '<div class="game-xp-breakdown">';
-            parsedData.xp_breakdown.forEach(rule => {
-                const isInactive = rule.xp_earned === 0;
-                breakdownHTML += `
-                    <div class="game-xp-rule ${isInactive ? 'inactive' : ''}">
-                        <span class="game-rule-name">${rule.rule_name}</span>
-                        <span class="game-rule-xp">${isInactive ? '—' : '+' + rule.xp_earned.toFixed(2)}</span>
-                    </div>
-                `;
-            });
-            breakdownHTML += '</div>';
-        }
-        
-        // Create banner element
+        // Create banner element (without breakdown)
         const banner = document.createElement('div');
         banner.className = 'game-xp-banner';
         banner.innerHTML = `
@@ -82,7 +60,6 @@ class BlockyRoadGame {
                 <span class="game-xp-icon">⭐</span>
                 <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
-            ${breakdownHTML}
         `;
         
         document.body.appendChild(banner);

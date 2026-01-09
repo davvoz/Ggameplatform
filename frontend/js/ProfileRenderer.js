@@ -832,7 +832,8 @@ class ProfileRenderer {
                     });
                     
                     coinsBadge.addEventListener('click', () => {
-                        this.openWalletModal(userId);
+                        // Navigate directly to wallet page
+                        window.location.hash = '#/wallet';
                     });
                 }
             } else {
@@ -842,75 +843,6 @@ class ProfileRenderer {
             console.error('❌ Error loading coin balance:', error);
             coinBalanceEl.textContent = '--';
         }
-    }
-
-    /**
-     * Open wallet modal
-     */
-    openWalletModal(userId) {
-        console.log('🪙 Opening wallet modal for user:', userId);
-        
-        // Copia struttura modale multiplier
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            animation: fadeIn 0.2s ease-out;
-        `;
-
-        modal.innerHTML = `
-            <div style="background: var(--background-light); border-radius: 16px; max-width: 450px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid var(--border); animation: slideUp 0.3s ease-out; position: relative;">
-                <div style="padding: 16px; border-bottom: 1px solid var(--border);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary);">🪙 Wallet</h2>
-                        <button class="close-btn" style="background: none; border: none; font-size: 28px; color: var(--text-muted); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">×</button>
-                    </div>
-                </div>
-                <div id="walletModalContainer" style="padding: 18px 16px 24px 16px;"></div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        // Close on background click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        // Close on X click
-        modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-
-        // Load wallet widget
-        const container = modal.querySelector('#walletModalContainer');
-        if (!window.WalletProfileWidget) {
-            container.innerHTML = '<p class="wallet-error">⚠️ Wallet widget not loaded</p>';
-            return;
-        }
-        const walletWidget = new window.WalletProfileWidget(container, userId);
-        walletWidget.render().then(() => {
-            console.log('✅ Wallet modal rendered');
-            // Add click handler to "View Full Wallet" link to close modal
-            const walletLink = container.querySelector('a[href="#/wallet"]');
-            if (walletLink) {
-                walletLink.addEventListener('click', () => {
-                    modal.remove();
-                });
-            }
-        }).catch(error => {
-            console.error('❌ Error rendering wallet modal:', error);
-            container.innerHTML = '<p class="wallet-error">⚠️ Failed to load wallet</p>';
-        });
-
-        // Note: close handlers already attached above; nothing more to do here
     }
 
     /**

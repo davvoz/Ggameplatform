@@ -1054,11 +1054,7 @@ export default class RuntimeShell {
                 color: #1a1a1a;
             }
             .xp-breakdown {
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 8px;
-                padding: 12px;
-                margin-top: 8px;
-                font-size: 0.85em;
+                display: none;
             }
             .xp-rule {
                 display: flex;

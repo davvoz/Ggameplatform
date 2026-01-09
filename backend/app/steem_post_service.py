@@ -23,7 +23,9 @@ class SteemPostService:
         level: int,
         total_xp: float,
         games_played: int,
-        total_play_time: str,
+        quests_done: int,
+        games_tried: int,
+        days_member: int,
         leaderboard_positions: List[Dict[str, Any]],
         user_message: Optional[str] = None
     ) -> Dict[str, str]:
@@ -35,7 +37,9 @@ class SteemPostService:
             level: Current level
             total_xp: Total XP earned
             games_played: Number of games played
-            total_play_time: Total time played
+            quests_done: Number of quests completed
+            games_tried: Number of unique games tried
+            days_member: Days since account creation
             leaderboard_positions: List of user's leaderboard positions
             user_message: Optional personal message from user
             
@@ -73,8 +77,10 @@ class SteemPostService:
         body_parts.append(f"### 🎯 Current Status")
         body_parts.append(f"- **Level:** {level}")
         body_parts.append(f"- **Total XP:** {total_xp:,.0f}")
-        body_parts.append(f"- **Games Played:** {games_played}")
-        body_parts.append(f"- **Total Play Time:** {total_play_time}")
+        body_parts.append(f"- **Total Games:** {games_played}")
+        body_parts.append(f"- **Quests Done:** {quests_done}")
+        body_parts.append(f"- **Games Tried:** {games_tried}")
+        body_parts.append(f"- **Days Member:** {days_member}")
         body_parts.append(f"")
         
         # Leaderboard positions

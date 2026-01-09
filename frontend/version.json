@@ -1,8 +1,26 @@
 {
-  "version": "3.4.14",
-  "timestamp": "2026-01-09T00:41:47.401Z",
-  "buildNumber": 209,
+  "version": "3.5.1",
+  "timestamp": "2026-01-09T01:52:45.043Z",
+  "buildNumber": 211,
   "changelog": [
+    {
+      "version": "3.5.1",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "FIX: added new game statistic, updated steem post with new statistic",
+        "🔖 Bump version to 3.5.0 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.5.0",
+      "date": "2026-01-09",
+      "type": "minor",
+      "changes": [
+        "feat: Implement enhanced template system for database viewer and add database schema analysis script",
+        "🔖 Bump version to 3.4.14 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.14",
       "date": "2026-01-09",
@@ -74,24 +92,6 @@
       "changes": [
         "fix: add new platform quests and update quest filter defaults",
         "🔖 Bump version to 3.4.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.6",
-      "date": "2026-01-08",
-      "type": "patch",
-      "changes": [
-        "fix: update quest filters and enhance UI elements, including scroll-to-top button",
-        "🔖 Bump version to 3.4.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.5",
-      "date": "2026-01-06",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA]enhance quest tracking for Briscola game, including multiplayer session data and specific quest processing",
-        "🔖 Bump version to 3.4.4 [skip-version]"
       ]
     }
   ]

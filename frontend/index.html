@@ -411,7 +411,9 @@
                 <!-- Steem Post Button -->
                 <div class="steem-post-banner" id="steemPostBanner" style="display: none;">
                     <div class="banner-content">
-                        <div class="banner-icon">🎮</div>
+                        <div class="banner-icon">
+                            <img src="./icons/steem.png" alt="Steem Logo">
+                        </div>
                         <div class="banner-text">
                             <h3>Share Your Gaming Journey on Steem!</h3>
                             <p>Showcase your achievements, get upvoted by the Cur8 community, and turn your achievements into real rewards!</p>
@@ -426,25 +428,39 @@
 
                 <h3>📊 Game Statistics</h3>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">🎮</div>
-                        <div class="stat-info">
-                            <span class="stat-number" id="gamesPlayed" data-stat="games-played">0</span>
-                            <span class="stat-text">Games Played</span>
+                    <div class="stats-left">
+                        <div class="stat-card">
+                            <div class="stat-icon">🎮</div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="gamesPlayed" data-stat="games-played">0</span>
+                                <span class="stat-text">Total Games</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="questsDone" data-stat="quests-done">0</span>
+                                <span class="stat-text">Quests Done</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🕹️</div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="gamesTried" data-stat="games-tried">0</span>
+                                <span class="stat-text">Games Tried</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="daysMember" data-stat="days-member">0</span>
+                                <span class="stat-text">Days Member</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏱️</div>
-                        <div class="stat-info">
-                            <span class="stat-number" id="totalPlayTime" data-stat="play-time">0h</span>
-                            <span class="stat-text">Total Play Time</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-info">
-                            <span class="stat-number" id="cur8Earned" data-stat="total-xp"></span>
-                            <span class="stat-text">XP</span>
+                    <div class="stats-right">
+                        <div class="level-card-container" id="levelCardContainer">
+                            <!-- Level card will be inserted here by JavaScript -->
                         </div>
                     </div>
                 </div>

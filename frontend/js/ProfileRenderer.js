@@ -598,71 +598,117 @@ class ProfileRenderer {
         }
         
         const gamesPlayedEl = content.querySelector('#gamesPlayed');
-        const totalPlayTimeEl = content.querySelector('#totalPlayTime');
-        const cur8EarnedEl = content.querySelector('#cur8Earned');
+        const questsDoneEl = content.querySelector('#questsDone');
+        const gamesTriedEl = content.querySelector('#gamesTried');
+        const daysMemberEl = content.querySelector('#daysMember');
         
         if (gamesPlayedEl) gamesPlayedEl.textContent = stats.gamesPlayed;
-        if (totalPlayTimeEl) totalPlayTimeEl.textContent = stats.totalPlayTime;
         
-        // Update XP card with detailed level info
-        if (cur8EarnedEl) {
-            if (levelInfo) {
-                // Replace entire card content with level widget
-                const parentCard = cur8EarnedEl.closest('.stat-card');
-                if (parentCard) {
-                    // Compute XP per-level values with fallbacks (ensure variables exist in this scope)
-                    const xp_in_level = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
-                    const xp_required_for_next = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
-                    const xp_to_next = levelInfo?.xp_to_next_level ?? Math.max(0, (xp_required_for_next || 0) - xp_in_level);
-
-                    // Build right column HTML separately to avoid nested template literal ambiguity
-                    const rightColumnHtml = xp_to_next > 0 ? `
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next lvl</span>
-                            <span style="font-size: 18px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${xp_to_next.toFixed(0)}</span>
-                        </div>
-                    ` : `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;">
-                            <span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span>
-                        </div>
-                    `;
-
-                    parentCard.innerHTML = `
-                        <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: var(--radius-md); border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
-                            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                                <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}33, ${levelInfo.color || '#6366f1'}11); border-radius: 50%; border: 3px solid ${levelInfo.color || '#6366f1'}66; box-shadow: 0 4px 12px ${levelInfo.color || '#6366f1'}44;">
-                                    <span style="font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="font-size: 24px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; margin-bottom: 4px;">
-                                        Level ${levelInfo.current_level}
-                                    </div>
-                                    <div style="font-size: 15px; font-weight: 600; color: #fff; opacity: 0.95; text-transform: uppercase; letter-spacing: 1px;">
-                                        ${levelInfo.title}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 14px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px;">
-                                    <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Progress</span>
-                                    <span style="font-weight: 800; font-size: 14px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${levelInfo.progress_percent.toFixed(1)}%</span>
-                                </div>
-                                <div style="height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); position: relative;">
-                                    <div style="height: 100%; background: linear-gradient(90deg, ${levelInfo.color || '#6366f1'}, #8b5cf6, ${levelInfo.color || '#6366f1'}); width: ${levelInfo.progress_percent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px ${levelInfo.color || '#6366f1'}aa, inset 0 1px 0 rgba(255,255,255,0.2);"></div>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 Total XP</span>
-                                    <span style="font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
-                                </div>
-                                ${rightColumnHtml}
-                            </div>
-                        </div>
-                    `;
+        // Calculate quests done (claimed)
+        if (questsDoneEl) {
+            try {
+                const API_URL = window.ENV?.API_URL || window.location.origin;
+                let offset = 0;
+                const limit = 1000;
+                let totalQuestClaims = 0;
+                let keepGoing = true;
+                while (keepGoing) {
+                    const txResponse = await fetch(`${API_URL}/api/coins/${user.user_id}/transactions?limit=${limit}&offset=${offset}`);
+                    if (!txResponse.ok) break;
+                    const txData = await txResponse.json();
+                    const questClaims = txData.filter(tx => tx.transaction_type === 'quest_reward').length;
+                    totalQuestClaims += questClaims;
+                    if (txData.length < limit) {
+                        keepGoing = false;
+                    } else {
+                        offset += limit;
+                    }
                 }
-            } else {
-                cur8EarnedEl.textContent = `${totalXP.toFixed(2)}`;
+                questsDoneEl.textContent = totalQuestClaims;
+            } catch (error) {
+                console.error('Failed to load quests count:', error);
+                questsDoneEl.textContent = '0';
+            }
+        }
+        
+        // Calculate games tried (unique games played)
+        if (gamesTriedEl) {
+            try {
+                const API_URL = window.ENV?.API_URL || window.location.origin;
+                const sessionsResponse = await fetch(`${API_URL}/users/${user.user_id}/sessions?limit=1000`);
+                if (sessionsResponse.ok) {
+                    const sessionsData = await sessionsResponse.json();
+                    const uniqueGames = new Set(sessionsData.sessions.map(s => s.game_id)).size;
+                    gamesTriedEl.textContent = uniqueGames;
+                }
+            } catch (error) {
+                console.error('Failed to load games tried:', error);
+                gamesTriedEl.textContent = '0';
+            }
+        }
+        
+        // Calculate days member
+        if (daysMemberEl && user.created_at) {
+            const createdDate = new Date(user.created_at);
+            const now = new Date();
+            const daysDiff = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+            daysMemberEl.textContent = daysDiff;
+        }
+        
+        // Update level card in new container
+        const levelCardContainer = content.querySelector('#levelCardContainer');
+        if (levelCardContainer) {
+            if (levelInfo) {
+                // Compute XP per-level values with fallbacks
+                const xp_in_level = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
+                const xp_required_for_next = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
+                const xp_to_next = levelInfo?.xp_to_next_level ?? Math.max(0, (xp_required_for_next || 0) - xp_in_level);
+
+                // Build right column HTML
+                const rightColumnHtml = xp_to_next > 0 ? `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next lvl</span>
+                        <span style="font-size: 18px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${xp_to_next.toFixed(0)}</span>
+                    </div>
+                ` : `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;">
+                        <span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span>
+                    </div>
+                `;
+
+                levelCardContainer.innerHTML = `
+                    <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: var(--radius-md); border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                            <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}33, ${levelInfo.color || '#6366f1'}11); border-radius: 50%; border: 3px solid ${levelInfo.color || '#6366f1'}66; box-shadow: 0 4px 12px ${levelInfo.color || '#6366f1'}44;">
+                                <span style="font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 24px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; margin-bottom: 4px;">
+                                    Level ${levelInfo.current_level}
+                                </div>
+                                <div style="font-size: 15px; font-weight: 600; color: #fff; opacity: 0.95; text-transform: uppercase; letter-spacing: 1px;">
+                                    ${levelInfo.title}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px;">
+                                <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Progress</span>
+                                <span style="font-weight: 800; font-size: 14px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${levelInfo.progress_percent.toFixed(1)}%</span>
+                            </div>
+                            <div style="height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); position: relative;">
+                                <div style="height: 100%; background: linear-gradient(90deg, ${levelInfo.color || '#6366f1'}, #8b5cf6, ${levelInfo.color || '#6366f1'}); width: ${levelInfo.progress_percent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px ${levelInfo.color || '#6366f1'}aa, inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 Total XP</span>
+                                <span style="font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
+                            </div>
+                            ${rightColumnHtml}
+                        </div>
+                    </div>
+                `;
             }
         }
     }

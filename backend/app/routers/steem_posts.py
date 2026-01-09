@@ -64,8 +64,9 @@ def get_steem_post_service() -> SteemPostService:
 
 def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     """Get user statistics for post generation"""
-    from app.models import GameSession
-    from sqlalchemy import func
+    from app.models import GameSession, CoinTransaction
+    from sqlalchemy import func, distinct
+    from datetime import datetime
     
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -91,14 +92,27 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
         GameSession.user_id == user_id
     ).scalar() or 0
     
-    # Get total play time
-    total_seconds = db.query(func.sum(GameSession.duration_seconds)).filter(
+    # Get quests done (count quest_reward transactions)
+    quests_done = db.query(func.count(CoinTransaction.transaction_id)).filter(
+        CoinTransaction.user_id == user_id,
+        CoinTransaction.transaction_type == 'quest_reward'
+    ).scalar() or 0
+    
+    # Get games tried (unique games played)
+    games_tried = db.query(func.count(distinct(GameSession.game_id))).filter(
         GameSession.user_id == user_id
     ).scalar() or 0
     
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    total_play_time = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+    # Get days member
+    days_member = 0
+    if user.created_at:
+        try:
+            created_date = datetime.fromisoformat(user.created_at)
+            now = datetime.utcnow()
+            days_member = (now - created_date).days
+        except Exception as e:
+            print(f"Could not calculate days_member: {e}")
+            days_member = 0
     
     # Get leaderboard positions (top 5 best ranks)
     leaderboard_entries = db.query(
@@ -130,7 +144,9 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
         "level": level,
         "total_xp": total_xp,
         "games_played": games_played,
-        "total_play_time": total_play_time,
+        "quests_done": quests_done,
+        "games_tried": games_tried,
+        "days_member": days_member,
         "leaderboard_positions": leaderboard_positions
     }
 
@@ -176,7 +192,9 @@ async def preview_post(
             level=stats['level'],
             total_xp=stats['total_xp'],
             games_played=stats['games_played'],
-            total_play_time=stats['total_play_time'],
+            quests_done=stats['quests_done'],
+            games_tried=stats['games_tried'],
+            days_member=stats['days_member'],
             leaderboard_positions=stats['leaderboard_positions'],
             user_message=request.user_message
         )
@@ -271,7 +289,9 @@ async def create_post(
             level=stats['level'],
             total_xp=stats['total_xp'],
             games_played=stats['games_played'],
-            total_play_time=stats['total_play_time'],
+            quests_done=stats['quests_done'],
+            games_tried=stats['games_tried'],
+            days_member=stats['days_member'],
             leaderboard_positions=stats['leaderboard_positions'],
             user_message=request.user_message
         )

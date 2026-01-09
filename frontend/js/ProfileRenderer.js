@@ -328,6 +328,9 @@ class ProfileRenderer {
         // Initialize Steem post button
         this.initializeSteemPostButton(user);
 
+        // Initialize sticky hero navbar
+        this._initStickyHero(user);
+
         // Show loading in activity sections
         const activityContainer = document.getElementById('recentActivityContainer');
         if (activityContainer) {
@@ -341,6 +344,169 @@ class ProfileRenderer {
 
         // Load coin balance in header badge
         this.loadCoinBalanceHeader(user.user_id);
+    }
+
+    /**
+     * Initialize sticky hero behavior
+     * The profile header collapses into a compact navbar when scrolling
+     * @private
+     */
+    _initStickyHero(user) {
+        const profileHeader = document.querySelector('.profile-header');
+        if (!profileHeader) return;
+        
+        // Get correct display name
+        const displayName = this.getDisplayName(user);
+        
+        // Create the compact sticky navbar clone
+        const stickyNavbar = document.createElement('div');
+        stickyNavbar.className = 'profile-sticky-navbar';
+        stickyNavbar.innerHTML = `
+            <div class="sticky-navbar-content">
+                <div class="sticky-profile-info">
+                    <span class="sticky-avatar"></span>
+                    <span class="sticky-username">${displayName}</span>
+                </div>
+                <div class="sticky-stats">
+                    <span class="sticky-stat multiplier" id="stickyMultiplierValue">${(user?.cur8_multiplier || 1).toFixed(2)}x</span>
+                    <span class="sticky-stat coins" id="stickyCoinsValue">🪙 --</span>
+                </div>
+            </div>
+        `;
+        
+        // Copy avatar to sticky navbar
+        const avatarIcon = document.querySelector('.avatar-icon');
+        const stickyAvatar = stickyNavbar.querySelector('.sticky-avatar');
+        if (avatarIcon && stickyAvatar) {
+            if (avatarIcon.style.backgroundImage) {
+                stickyAvatar.style.backgroundImage = avatarIcon.style.backgroundImage;
+                stickyAvatar.style.backgroundSize = 'cover';
+                stickyAvatar.style.backgroundPosition = 'center';
+            } else {
+                stickyAvatar.textContent = avatarIcon.textContent;
+            }
+        }
+        
+        // Add click handlers for multiplier and coins
+        const stickyMultiplier = stickyNavbar.querySelector('.sticky-stat.multiplier');
+        const stickyCoins = stickyNavbar.querySelector('.sticky-stat.coins');
+        
+        if (stickyMultiplier) {
+            stickyMultiplier.style.cursor = 'pointer';
+            stickyMultiplier.addEventListener('click', async () => {
+                // Fetch and show multiplier modal
+                try {
+                    const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+                    const response = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.showMultiplierModal(data.breakdown);
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch multiplier breakdown:', e);
+                }
+            });
+            stickyMultiplier.addEventListener('mouseenter', () => {
+                stickyMultiplier.style.transform = 'scale(1.05)';
+                stickyMultiplier.style.background = 'rgba(99, 102, 241, 0.25)';
+            });
+            stickyMultiplier.addEventListener('mouseleave', () => {
+                stickyMultiplier.style.transform = '';
+                stickyMultiplier.style.background = '';
+            });
+        }
+        
+        if (stickyCoins) {
+            stickyCoins.style.cursor = 'pointer';
+            stickyCoins.addEventListener('click', () => {
+                window.location.hash = '#/wallet';
+            });
+            stickyCoins.addEventListener('mouseenter', () => {
+                stickyCoins.style.transform = 'scale(1.05)';
+                stickyCoins.style.background = 'rgba(234, 179, 8, 0.25)';
+            });
+            stickyCoins.addEventListener('mouseleave', () => {
+                stickyCoins.style.transform = '';
+                stickyCoins.style.background = '';
+            });
+        }
+        
+        // Insert sticky navbar at the beginning of profile container
+        const profileContainer = document.querySelector('.profile');
+        if (profileContainer) {
+            profileContainer.insertBefore(stickyNavbar, profileContainer.firstChild);
+        }
+        
+        // Get header position for scroll calculations
+        let headerRect = profileHeader.getBoundingClientRect();
+        let headerTop = headerRect.top + window.scrollY;
+        let headerHeight = headerRect.height;
+        
+        // Recalculate on resize
+        const recalculatePositions = () => {
+            headerRect = profileHeader.getBoundingClientRect();
+            headerTop = headerRect.top + window.scrollY;
+            headerHeight = headerRect.height;
+        };
+        
+        window.addEventListener('resize', recalculatePositions, { passive: true });
+        
+        // Handle scroll behavior
+        const handleScroll = () => {
+            const scrollY = window.scrollY;
+            const triggerPoint = headerTop + headerHeight * 0.5;
+            const fullCompressPoint = headerTop + headerHeight;
+            
+            if (scrollY < triggerPoint) {
+                // Normal state - header fully visible
+                profileHeader.classList.remove('header-compressing', 'header-compressed');
+                stickyNavbar.classList.remove('visible');
+            } else if (scrollY < fullCompressPoint) {
+                // Compressing state
+                const progress = (scrollY - triggerPoint) / (fullCompressPoint - triggerPoint);
+                profileHeader.classList.add('header-compressing');
+                profileHeader.classList.remove('header-compressed');
+                profileHeader.style.setProperty('--compress-progress', progress);
+                stickyNavbar.classList.remove('visible');
+            } else {
+                // Fully compressed - show sticky navbar
+                profileHeader.classList.remove('header-compressing');
+                profileHeader.classList.add('header-compressed');
+                stickyNavbar.classList.add('visible');
+            }
+        };
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // Initial check
+        handleScroll();
+        
+        // Update sticky coins when coin balance updates
+        const coinBalanceHeader = document.getElementById('coinBalanceHeader');
+        if (coinBalanceHeader) {
+            const observer = new MutationObserver(() => {
+                const stickyCoinsEl = document.getElementById('stickyCoinsValue');
+                if (stickyCoinsEl) {
+                    stickyCoinsEl.textContent = `🪙 ${coinBalanceHeader.textContent}`;
+                }
+            });
+            observer.observe(coinBalanceHeader, { childList: true, characterData: true, subtree: true });
+        }
+        
+        // Update sticky avatar when main avatar is loaded (for Steem profile image)
+        const mainAvatarIcon = document.querySelector('.avatar-icon');
+        if (mainAvatarIcon) {
+            const avatarObserver = new MutationObserver(() => {
+                const stickyAvatarEl = document.querySelector('.profile-sticky-navbar .sticky-avatar');
+                if (stickyAvatarEl && mainAvatarIcon.style.backgroundImage) {
+                    stickyAvatarEl.style.backgroundImage = mainAvatarIcon.style.backgroundImage;
+                    stickyAvatarEl.style.backgroundSize = 'cover';
+                    stickyAvatarEl.style.backgroundPosition = 'center';
+                    stickyAvatarEl.textContent = '';
+                }
+            });
+            avatarObserver.observe(mainAvatarIcon, { attributes: true, attributeFilter: ['style'] });
+        }
     }
 
     /**

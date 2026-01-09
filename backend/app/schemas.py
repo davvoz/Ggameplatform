@@ -256,9 +256,9 @@ class GameUpdate(BaseModel):
     entry_point: Optional[str] = None
     category: Optional[str] = None
     tags: Optional[List[str]] = None
-    statusId: Optional[int] = None
+    status_id: Optional[int] = None
     steem_rewards_enabled: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    extra_data: Optional[Dict[str, Any]] = None
 
 
 # User CRUD Schemas

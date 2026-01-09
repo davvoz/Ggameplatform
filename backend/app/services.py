@@ -141,7 +141,7 @@ class GameService(BaseService):
         # Update timestamp
         data['updated_at'] = datetime.utcnow().isoformat()
         
-        # Convert camelCase to snake_case for status
+        # Convert camelCase to snake_case for status (support both formats)
         if 'statusId' in data:
             data['status_id'] = data.pop('statusId')
         
@@ -151,6 +151,8 @@ class GameService(BaseService):
         if 'metadata' in data and isinstance(data['metadata'], dict):
             data['extra_data'] = json.dumps(data['metadata'])
             del data['metadata']
+        if 'extra_data' in data and isinstance(data['extra_data'], dict):
+            data['extra_data'] = json.dumps(data['extra_data'])
         
         updated = self.repository.update(id_value, data)
         return updated.to_dict() if updated else None

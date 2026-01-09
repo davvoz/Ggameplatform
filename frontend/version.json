@@ -1,8 +1,18 @@
 {
-  "version": "3.6.2",
-  "timestamp": "2026-01-09T12:56:23.324Z",
-  "buildNumber": 218,
+  "version": "3.6.3",
+  "timestamp": "2026-01-09T15:10:36.174Z",
+  "buildNumber": 219,
   "changelog": [
+    {
+      "version": "3.6.3",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[MTD]add game mechanics and UI for improved gameplay experience",
+        "🔖 Bump version to 3.6.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.6.2",
       "date": "2026-01-09",
@@ -84,15 +94,6 @@
       "changes": [
         "feat: Implement enhanced template system for database viewer and add database schema analysis script",
         "🔖 Bump version to 3.4.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.14",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "fix: enhance game retrieval with session count and improve sorting criteria",
-        "🔖 Bump version to 3.4.13 [skip-version]"
       ]
     }
   ]

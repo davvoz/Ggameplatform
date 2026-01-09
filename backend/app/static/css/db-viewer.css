@@ -82,12 +82,8 @@ h1 {
     overflow-x: auto;
     overflow-y: hidden;
     flex-wrap: nowrap;
-    scrollbar-width: thin;
 }
 
-.tabs::-webkit-scrollbar {
-    height: 6px;
-}
 
 .tabs::-webkit-scrollbar-track {
     background: #f5f5f5;

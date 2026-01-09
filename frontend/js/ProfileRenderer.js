@@ -604,47 +604,55 @@ class ProfileRenderer {
         
         if (gamesPlayedEl) gamesPlayedEl.textContent = stats.gamesPlayed;
         
-        // Calculate quests done (claimed)
+        // Show loading indicators for async stats
+        if (questsDoneEl) questsDoneEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
+        if (gamesTriedEl) gamesTriedEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
+        
+        // Calculate quests done (claimed) - async without blocking
         if (questsDoneEl) {
-            try {
-                const API_URL = window.ENV?.API_URL || window.location.origin;
-                let offset = 0;
-                const limit = 1000;
-                let totalQuestClaims = 0;
-                let keepGoing = true;
-                while (keepGoing) {
-                    const txResponse = await fetch(`${API_URL}/api/coins/${user.user_id}/transactions?limit=${limit}&offset=${offset}`);
-                    if (!txResponse.ok) break;
-                    const txData = await txResponse.json();
-                    const questClaims = txData.filter(tx => tx.transaction_type === 'quest_reward').length;
-                    totalQuestClaims += questClaims;
-                    if (txData.length < limit) {
-                        keepGoing = false;
-                    } else {
-                        offset += limit;
+            (async () => {
+                try {
+                    const API_URL = window.ENV?.API_URL || window.location.origin;
+                    let offset = 0;
+                    const limit = 1000;
+                    let totalQuestClaims = 0;
+                    let keepGoing = true;
+                    while (keepGoing) {
+                        const txResponse = await fetch(`${API_URL}/api/coins/${user.user_id}/transactions?limit=${limit}&offset=${offset}`);
+                        if (!txResponse.ok) break;
+                        const txData = await txResponse.json();
+                        const questClaims = txData.filter(tx => tx.transaction_type === 'quest_reward').length;
+                        totalQuestClaims += questClaims;
+                        if (txData.length < limit) {
+                            keepGoing = false;
+                        } else {
+                            offset += limit;
+                        }
                     }
+                    questsDoneEl.textContent = totalQuestClaims;
+                } catch (error) {
+                    console.error('Failed to load quests count:', error);
+                    questsDoneEl.textContent = '0';
                 }
-                questsDoneEl.textContent = totalQuestClaims;
-            } catch (error) {
-                console.error('Failed to load quests count:', error);
-                questsDoneEl.textContent = '0';
-            }
+            })();
         }
         
-        // Calculate games tried (unique games played)
+        // Calculate games tried (unique games played) - async without blocking
         if (gamesTriedEl) {
-            try {
-                const API_URL = window.ENV?.API_URL || window.location.origin;
-                const sessionsResponse = await fetch(`${API_URL}/users/${user.user_id}/sessions?limit=1000`);
-                if (sessionsResponse.ok) {
-                    const sessionsData = await sessionsResponse.json();
-                    const uniqueGames = new Set(sessionsData.sessions.map(s => s.game_id)).size;
-                    gamesTriedEl.textContent = uniqueGames;
+            (async () => {
+                try {
+                    const API_URL = window.ENV?.API_URL || window.location.origin;
+                    const sessionsResponse = await fetch(`${API_URL}/users/${user.user_id}/sessions?limit=1000`);
+                    if (sessionsResponse.ok) {
+                        const sessionsData = await sessionsResponse.json();
+                        const uniqueGames = new Set(sessionsData.sessions.map(s => s.game_id)).size;
+                        gamesTriedEl.textContent = uniqueGames;
+                    }
+                } catch (error) {
+                    console.error('Failed to load games tried:', error);
+                    gamesTriedEl.textContent = '0';
                 }
-            } catch (error) {
-                console.error('Failed to load games tried:', error);
-                gamesTriedEl.textContent = '0';
-            }
+            })();
         }
         
         // Calculate days member

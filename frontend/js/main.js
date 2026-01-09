@@ -210,18 +210,16 @@ async function loadGames(filters = {}) {
             if (aSteemRewards !== bSteemRewards) {
                 return bSteemRewards - aSteemRewards; // Higher first (1 before 0)
             }
-            
-            // 2. Status display_order (lower number = higher priority)
-            const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
-            const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
-            if (aOrder !== bOrder) {
-                return aOrder - bOrder; // Lower first
-            }
-            
-            // 3. Session count (most played first)
+            // 2. Play count globale (session_count)
             const aCount = a.session_count ?? 0;
             const bCount = b.session_count ?? 0;
-            return bCount - aCount; // Higher first
+            if (aCount !== bCount) {
+                return bCount - aCount; // Higher first
+            }
+            // 3. Status display_order (lower number = higher priority)
+            const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
+            const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
+            return aOrder - bOrder; // Lower first
         });
 
         games.forEach(game => {

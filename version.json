@@ -1,8 +1,17 @@
 {
-  "version": "3.7.0",
-  "timestamp": "2026-01-09T17:20:46.306Z",
-  "buildNumber": 220,
+  "version": "3.7.1",
+  "timestamp": "2026-01-09T22:12:57.192Z",
+  "buildNumber": 221,
   "changelog": [
+    {
+      "version": "3.7.1",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "refactor: optimize profile data loading and rendering for improved performance",
+        "🔖 Bump version to 3.7.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.0",
       "date": "2026-01-09",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: update GameUpdate schema to use snake_case for status and metadata fields",
         "🔖 Bump version to 3.5.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.5.1",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "FIX: added new game statistic, updated steem post with new statistic",
-        "🔖 Bump version to 3.5.0 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "3.4.11",
-  "timestamp": "2026-01-08T23:05:14.944Z",
-  "buildNumber": 206,
+  "version": "3.4.12",
+  "timestamp": "2026-01-09T00:12:44.611Z",
+  "buildNumber": 207,
   "changelog": [
+    {
+      "version": "3.4.12",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix: add quest creation script for Blocky Road game with daily reset and train death tracking",
+        "🔖 Bump version to 3.4.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.11",
       "date": "2026-01-08",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: adjust hero stats layout and stat pill styling for better alignment",
         "🔖 Bump version to 3.4.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.2",
-      "date": "2026-01-05",
-      "type": "patch",
-      "changes": [
-        "FIX: redesign authentication page with hero section and unified auth methods",
-        "🔖 Bump version to 3.4.1 [skip-version]"
       ]
     }
   ]

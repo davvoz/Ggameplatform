@@ -596,11 +596,11 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         if level_up_info['leveled_up']:
             print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
             
-            # Award level-up coins for ALL levels gained
+            # Award level-up coins for ALL levels gained (skip for anonymous users)
             levels_with_rewards = level_up_info.get('levels_with_rewards', [])
             total_coins_awarded = 0
             
-            if levels_with_rewards:
+            if levels_with_rewards and not user.is_anonymous:
                 coins_repo = RepositoryFactory.create_usercoins_repository(session)
                 transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
                 coin_service = CoinService(coins_repo, transaction_repo)
@@ -626,6 +626,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
                             print(f"[DB] ⚠️ Failed to award level-up coins for level {level}: {e}")
                 
                 print(f"[DB] 💰 Total coins awarded for level-up: {total_coins_awarded}")
+            elif user.is_anonymous:
+                print(f"[DB] ⚠️ Skipping coin rewards for anonymous user")
             
             # Store level-up info in session extra_data for frontend
             extra_data['level_up'] = {

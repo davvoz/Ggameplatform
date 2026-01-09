@@ -4,6 +4,10 @@
 function showLevelUpModal(levelUpData) {
     const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
+    // Check if user is anonymous
+    const currentUser = window.AuthManager?.currentUser;
+    const isAnonymous = currentUser?.is_anonymous === true;
+
     const modal = document.createElement('div');
     modal.className = 'level-up-modal';
     modal.innerHTML = `
@@ -22,7 +26,7 @@ function showLevelUpModal(levelUpData) {
             </div>
             <div class="level-up-new-title">${title}</div>
             ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-            ${coins_awarded > 0 ? `
+            ${!isAnonymous && coins_awarded > 0 ? `
                 <div class="level-up-reward">
                     <span class="reward-icon">🪙</span>
                     <span class="reward-amount">+${coins_awarded} Coins</span>

@@ -3,7 +3,7 @@
  * Main game logic with advanced merge mechanics
  */
 
-import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES, SHOP_ITEMS } from './config.js';
+import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES, SHOP_ITEMS, SPECIAL_ABILITIES } from './config.js';
 import { Utils } from './utils.js';
 import { ParticleSystem } from './particles.js';
 import { EntityManager } from './entities.js';
@@ -75,7 +75,26 @@ export class Game {
 
             // Shop and Bonus System
             activeBoosts: [], // Array di boost attivi: {id, type, effect, startTime, duration, endTime}
-            shopOpen: false
+            shopOpen: false,
+
+            // Screen shake for explosions
+            screenShake: { x: 0, y: 0, intensity: 0, duration: 0 },
+
+            // Special Abilities System
+            specialAbilities: {
+                BOMB: {
+                    level: 1,
+                    lastUsed: 0,
+                    uses: 0, // Total uses for tracking/XP
+                    kills: 0 // Kills with this ability
+                },
+                PUSHBACK: {
+                    level: 1,
+                    lastUsed: 0,
+                    uses: 0,
+                    enemiesPushed: 0
+                }
+            }
         };
     }
 
@@ -112,6 +131,15 @@ export class Game {
                         this.toggleFullscreen();
                     } else if (uiAction.action === 'music') {
                         this.audio.toggle();
+                    }
+                } else if (uiAction.type === 'ability') {
+                    // Handle special ability actions
+                    if (uiAction.action === 'activate') {
+                        this.activateSpecialAbility(uiAction.abilityId);
+                    } else if (uiAction.action === 'bomb_placed') {
+                        // Bomb placement is handled via callback
+                    } else if (uiAction.action === 'cancel_targeting') {
+                        // Targeting cancelled - do nothing
                     }
                 } else if (uiAction.type === 'shop') {
                     // Handle shop actions
@@ -897,6 +925,9 @@ export class Game {
             }
         }
 
+        // Update screen shake
+        this.updateScreenShake(dt);
+
         // Update systems
         this.updateWaveSystem(dt, currentTime);
         this.updateCombat(dt, currentTime);
@@ -917,6 +948,15 @@ export class Game {
     }
 
     render() {
+        const ctx = this.graphics.ctx;
+        const shake = this.state.screenShake;
+        
+        // Apply screen shake
+        if (shake.duration > 0) {
+            ctx.save();
+            ctx.translate(shake.x, shake.y);
+        }
+
         this.graphics.clear();
         this.graphics.drawGrid();
 
@@ -936,6 +976,11 @@ export class Game {
         
         // Render boost effects on towers
         this.renderBoostEffects();
+
+        // Restore from screen shake before UI rendering
+        if (this.state.screenShake.duration > 0) {
+            ctx.restore();
+        }
 
         // Render UI
         this.ui.render(this.state);
@@ -1454,6 +1499,241 @@ export class Game {
         if (!boost) return 0;
         const elapsed = Date.now() - boost.startTime;
         return Math.max(0, Math.min(1, elapsed / boost.duration));
+    }
+
+    // ========== SPECIAL ABILITIES SYSTEM ==========
+
+    /**
+     * Activate a special ability (Bomb or Pushback)
+     */
+    activateSpecialAbility(abilityId) {
+        const abilityConfig = SPECIAL_ABILITIES[abilityId];
+        if (!abilityConfig) return;
+
+        const abilityState = this.state.specialAbilities[abilityId];
+        const now = Date.now();
+        const cooldown = abilityConfig.baseCooldown;
+        const elapsed = now - abilityState.lastUsed;
+
+        // Check cooldown
+        if (elapsed < cooldown) {
+            const remaining = Math.ceil((cooldown - elapsed) / 1000);
+            this.particles.createWarningEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 1, `⏳ ${remaining}s`);
+            this.audio.uiError();
+            return;
+        }
+
+        // Execute ability based on type
+        if (abilityId === 'BOMB') {
+            this.activateBombAbility(abilityConfig, abilityState);
+        } else if (abilityId === 'PUSHBACK') {
+            this.activatePushbackAbility(abilityConfig, abilityState);
+        }
+    }
+
+    /**
+     * Activate Bomb ability - enters targeting mode
+     */
+    activateBombAbility(config, state) {
+        // Enter targeting mode
+        this.ui.enterBombTargetingMode((gridPos) => {
+            this.executeBomb(gridPos, config, state);
+        });
+
+        // Audio feedback
+        this.audio.uiClick();
+    }
+
+    /**
+     * Execute the bomb at the target position
+     */
+    executeBomb(gridPos, config, state) {
+        const now = Date.now();
+        const level = state.level;
+        
+        // Calculate damage based on level
+        const damage = config.baseDamage + (level - 1) * config.damagePerLevel;
+        const radius = config.baseRadius;
+
+        // Update ability state
+        state.lastUsed = now;
+        state.uses++;
+
+        // Create spectacular explosion effect
+        this.particles.createMegaBombEffect(gridPos.col, gridPos.row, radius, damage);
+
+        // Screen shake for impact
+        this.addScreenShake(8, 0.25);
+
+        // Play explosion sound
+        this.audio.explosion?.() || this.audio.towerMerge();
+
+        // Damage all enemies in radius (4x4 area)
+        let killCount = 0;
+        const zombiesToCheck = [...this.entities.zombies]; // Copy to avoid modification during iteration
+        
+        for (const zombie of zombiesToCheck) {
+            const dist = Utils.distance(gridPos.col, gridPos.row, zombie.col, zombie.row);
+            
+            if (dist <= radius) {
+                // Full damage at center, reduced at edges
+                const falloff = 1 - (dist / radius) * 0.3;
+                const actualDamage = damage * falloff;
+                
+                const result = zombie.takeDamage(actualDamage, now);
+                
+                if (!result.blocked) {
+                    this.particles.createDamageNumber(zombie.col, zombie.row, result.damage, '#ff4400');
+                }
+
+                if (zombie.isDead()) {
+                    this.killZombie(zombie);
+                    killCount++;
+                }
+            }
+        }
+
+        // Track kills
+        state.kills += killCount;
+
+        // Level up the ability every 5 uses (max level 10)
+        if (state.uses % 5 === 0 && state.level < config.maxLevel) {
+            state.level++;
+            this.particles.createAbilityLevelUpEffect(
+                gridPos.col, gridPos.row,
+                state.level,
+                config.icon,
+                config.color
+            );
+        }
+
+        // Score bonus for bomb kills
+        if (killCount > 0) {
+            const bombBonus = killCount * 25 * level;
+            this.state.score += bombBonus;
+            this.particles.emit(gridPos.col, gridPos.row - 1.2, {
+                text: `+${bombBonus}`,
+                color: '#ffaa00',
+                vy: -1.5,
+                life: 1.0,
+                scale: 1.2,
+                glow: true
+            });
+        }
+    }
+
+    /**
+     * Add screen shake effect
+     */
+    addScreenShake(intensity, duration) {
+        this.state.screenShake.intensity = intensity;
+        this.state.screenShake.duration = duration;
+    }
+
+    /**
+     * Update screen shake effect
+     */
+    updateScreenShake(dt) {
+        const shake = this.state.screenShake;
+        if (shake.duration > 0) {
+            shake.duration -= dt;
+            const progress = shake.duration > 0 ? 1 : 0;
+            const currentIntensity = shake.intensity * progress;
+            shake.x = (Math.random() - 0.5) * currentIntensity * 2;
+            shake.y = (Math.random() - 0.5) * currentIntensity * 2;
+        } else {
+            shake.x = 0;
+            shake.y = 0;
+        }
+    }
+
+    /**
+     * Activate Pushback ability - creates a force wave that pushes all enemies back
+     */
+    activatePushbackAbility(config, state) {
+        const now = Date.now();
+        const level = state.level;
+        
+        // Calculate push distance based on level
+        const pushDistance = config.basePushDistance + (level - 1) * config.pushDistancePerLevel;
+
+        // Update ability state
+        state.lastUsed = now;
+        state.uses++;
+
+        // Create force wave effect at the defense line
+        const defenseLineY = CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS;
+        this.particles.createForceWaveEffect(defenseLineY, CONFIG.COLS);
+
+        // Play wave sound
+        this.audio.waveStart?.() || this.audio.towerMerge();
+
+        // Push all enemies back
+        let pushedCount = 0;
+        
+        for (const zombie of this.entities.zombies) {
+            // Calculate new position (pushed toward spawn)
+            const newRow = Math.max(-1, zombie.row - pushDistance);
+            const actualPush = zombie.row - newRow;
+            
+            if (actualPush > 0) {
+                // Create individual push effect
+                this.particles.createEnemyPushbackEffect(zombie.col, zombie.row, actualPush);
+                
+                // Move the enemy
+                zombie.row = newRow;
+                zombie.atWall = false; // No longer at wall after being pushed
+                
+                pushedCount++;
+            }
+        }
+
+        // Track pushed enemies
+        state.enemiesPushed += pushedCount;
+
+        // Level up the ability every 5 uses (max level 10)
+        if (state.uses % 5 === 0 && state.level < config.maxLevel) {
+            state.level++;
+            this.particles.createAbilityLevelUpEffect(
+                CONFIG.COLS / 2, CONFIG.ROWS / 2,
+                state.level,
+                config.icon,
+                config.color
+            );
+        }
+
+        // Score bonus for pushback
+        if (pushedCount > 0) {
+            const pushBonus = pushedCount * 10 * level;
+            this.state.score += pushBonus;
+            this.particles.emit(CONFIG.COLS / 2, defenseLineY - 0.5, {
+                text: `+${pushBonus}`,
+                color: '#00ccff',
+                vy: -1.5,
+                life: 1.0,
+                scale: 1.2,
+                glow: true
+            });
+        }
+    }
+
+    /**
+     * Get ability cooldown progress (0-1, 1 = ready)
+     */
+    getAbilityCooldownProgress(abilityId) {
+        const config = SPECIAL_ABILITIES[abilityId];
+        const state = this.state.specialAbilities[abilityId];
+        if (!config || !state) return 1;
+        
+        const elapsed = Date.now() - state.lastUsed;
+        return Math.min(1, elapsed / config.baseCooldown);
+    }
+
+    /**
+     * Check if ability is ready
+     */
+    isAbilityReady(abilityId) {
+        return this.getAbilityCooldownProgress(abilityId) >= 1;
     }
 
     exitFullscreen() {

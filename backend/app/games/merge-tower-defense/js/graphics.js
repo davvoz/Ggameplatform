@@ -396,6 +396,68 @@ export class Graphics {
     }
 
     /**
+     * Draw bomb target area indicator with pulsing animation
+     */
+    drawBombTarget(col, row, radius, time) {
+        const pos = this.gridToScreen(col, row);
+        const baseRadius = radius * this.cellSize;
+        
+        // Pulsing effect
+        const pulse = Math.sin(time * 8) * 0.1 + 1;
+        const actualRadius = baseRadius * pulse;
+        
+        this.ctx.save();
+        
+        // Outer glow
+        this.ctx.shadowColor = '#ff4400';
+        this.ctx.shadowBlur = 20 + Math.sin(time * 6) * 10;
+        
+        // Danger zone fill
+        const gradient = this.ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, actualRadius);
+        gradient.addColorStop(0, 'rgba(255, 68, 0, 0.4)');
+        gradient.addColorStop(0.6, 'rgba(255, 100, 0, 0.25)');
+        gradient.addColorStop(1, 'rgba(255, 50, 0, 0.1)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(pos.x, pos.y, actualRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Animated dashed border
+        this.ctx.setLineDash([10, 5]);
+        this.ctx.lineDashOffset = -time * 50;
+        this.ctx.strokeStyle = '#ff6600';
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+        
+        // Inner crosshair
+        this.ctx.setLineDash([]);
+        this.ctx.strokeStyle = '#ff4400';
+        this.ctx.lineWidth = 2;
+        
+        const crossSize = this.cellSize * 0.4;
+        
+        // Horizontal line
+        this.ctx.beginPath();
+        this.ctx.moveTo(pos.x - crossSize, pos.y);
+        this.ctx.lineTo(pos.x + crossSize, pos.y);
+        this.ctx.stroke();
+        
+        // Vertical line
+        this.ctx.beginPath();
+        this.ctx.moveTo(pos.x, pos.y - crossSize);
+        this.ctx.lineTo(pos.x, pos.y + crossSize);
+        this.ctx.stroke();
+        
+        // Center circle
+        this.ctx.beginPath();
+        this.ctx.arc(pos.x, pos.y, crossSize * 0.3, 0, Math.PI * 2);
+        this.ctx.stroke();
+        
+        this.ctx.restore();
+    }
+
+    /**
      * Disegna il muro di mattoni dinamico (4 file da 25)
      * @param {number} displayEnergy - Energia visualizzata (animata)
      * @param {boolean} isGaining - Se stiamo guadagnando energia

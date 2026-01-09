@@ -489,5 +489,43 @@ export const SHOP_ITEMS = {
     }
 };
 
+// Special Abilities Configuration
+export const SPECIAL_ABILITIES = {
+    BOMB: {
+        id: 'BOMB',
+        name: 'Mega Bomb',
+        description: 'Massive 4x4 explosion',
+        icon: '💣',
+        baseCooldown: 15000, // 15 seconds cooldown
+        baseRadius: 2.0, // 4x4 area = radius 2
+        baseDamage: 50,
+        damagePerLevel: 25, // +25 damage per level
+        maxLevel: 10,
+        color: '#ff4400',
+        glowColor: '#ff8800',
+        // Visual settings
+        explosionDuration: 800, // ms
+        shockwaveSpeed: 3.0,
+        particleCount: 20
+    },
+    PUSHBACK: {
+        id: 'PUSHBACK',
+        name: 'Force Wave',
+        description: 'Push enemies back',
+        icon: '🌊',
+        baseCooldown: 12000, // 12 seconds cooldown
+        basePushDistance: 3.0, // Push back 3 cells
+        pushDistancePerLevel: 0.5, // +0.5 cells per level
+        maxLevel: 10,
+        color: '#00aaff',
+        glowColor: '#44ddff',
+        // Visual settings
+        waveDuration: 600, // ms
+        waveWidth: 7, // Full grid width
+        waveSpeed: 8.0,
+        particleCount: 15
+    }
+};
+
 
 

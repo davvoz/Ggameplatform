@@ -3,7 +3,7 @@
  * Handles all UI rendering and interactions
  */
 
-import { CONFIG, CANNON_TYPES, UI_CONFIG, SHOP_ITEMS } from './config.js';
+import { CONFIG, CANNON_TYPES, UI_CONFIG, SHOP_ITEMS, SPECIAL_ABILITIES } from './config.js';
 import { Utils } from './utils.js';
 
 export class UIManager {
@@ -21,6 +21,10 @@ export class UIManager {
         this.shopButtons = [];
         this.setupShopButtons();
         
+        // Special ability buttons
+        this.abilityButtons = [];
+        this.setupAbilityButtons();
+        
         // Game over button
         this.retryButton = null;
         
@@ -32,6 +36,40 @@ export class UIManager {
         this.settingsPopupButtons = [];
         this.settingsCheckboxes = [];
         this.shopItems = []; // Array dei pulsanti del negozio
+        
+        // Targeting mode for bomb ability
+        this.bombTargetingMode = false;
+        this.targetingCallback = null;
+    }
+
+    setupAbilityButtons() {
+        // Setup ability buttons on the left side of the screen
+        const width = this.canvas.width / (window.devicePixelRatio || 1);
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        
+        const buttonSize = 56;
+        const buttonSpacing = 10;
+        const startX = 10;
+        const startY = UI_CONFIG.TOP_BAR_HEIGHT + 80; // Below boost bars area
+        
+        this.abilityButtons = [
+            {
+                id: 'BOMB',
+                x: startX,
+                y: startY,
+                width: buttonSize,
+                height: buttonSize,
+                ability: SPECIAL_ABILITIES.BOMB
+            },
+            {
+                id: 'PUSHBACK',
+                x: startX,
+                y: startY + buttonSize + buttonSpacing,
+                width: buttonSize,
+                height: buttonSize,
+                ability: SPECIAL_ABILITIES.PUSHBACK
+            }
+        ];
     }
 
     setupShopButtons() {
@@ -84,8 +122,16 @@ export class UIManager {
         this.renderTopBar(gameState);
         this.renderShop(gameState);
         
+        // Render special ability buttons
+        this.renderAbilityButtons(gameState);
+        
         // Render active boost bars on screen (always visible when boosts are active)
         this.renderActiveBoostBars(gameState);
+        
+        // Render bomb targeting overlay if in targeting mode
+        if (this.bombTargetingMode) {
+            this.renderBombTargeting(gameState);
+        }
         
         // Range preview when hovering
         if (this.showRangePreview && this.isInDefenseZone(this.previewRow)) {
@@ -374,6 +420,236 @@ export class UIManager {
         });
     }
 
+    /**
+     * Render special ability buttons (Bomb and Pushback)
+     */
+    renderAbilityButtons(gameState) {
+        const ctx = this.graphics.ctx;
+        const now = Date.now();
+        const time = now * 0.001;
+        
+        // Get ability state from game state
+        const abilities = gameState.specialAbilities || {
+            BOMB: { level: 1, lastUsed: 0, uses: 0 },
+            PUSHBACK: { level: 1, lastUsed: 0, uses: 0 }
+        };
+        
+        this.abilityButtons.forEach((button, index) => {
+            const ability = button.ability;
+            const abilityState = abilities[button.id] || { level: 1, lastUsed: 0, uses: 0 };
+            const level = abilityState.level;
+            const lastUsed = abilityState.lastUsed;
+            const cooldown = ability.baseCooldown;
+            const elapsed = now - lastUsed;
+            const isReady = elapsed >= cooldown;
+            const cooldownProgress = Math.min(1, elapsed / cooldown);
+            
+            const cornerRadius = 10;
+            const centerX = button.x + button.width / 2;
+            const centerY = button.y + button.height / 2;
+            
+            // Button background with glow when ready
+            ctx.save();
+            if (isReady) {
+                // Pulsing glow effect when ready
+                const pulse = Math.sin(time * 4 + index) * 0.3 + 0.7;
+                ctx.shadowColor = ability.glowColor;
+                ctx.shadowBlur = 15 * pulse;
+            }
+            
+            // Background gradient
+            const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+            if (isReady) {
+                bgGradient.addColorStop(0, Utils.colorWithAlpha(ability.color, 0.9));
+                bgGradient.addColorStop(1, Utils.colorWithAlpha(ability.color, 0.6));
+            } else {
+                bgGradient.addColorStop(0, 'rgba(40, 40, 50, 0.9)');
+                bgGradient.addColorStop(1, 'rgba(25, 25, 35, 0.9)');
+            }
+            ctx.fillStyle = bgGradient;
+            Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+            ctx.fill();
+            ctx.restore();
+            
+            // Cooldown overlay (pie chart style)
+            if (!isReady) {
+                ctx.save();
+                ctx.globalAlpha = 0.7;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                const startAngle = -Math.PI / 2;
+                const endAngle = startAngle + (1 - cooldownProgress) * Math.PI * 2;
+                ctx.arc(centerX, centerY, button.width / 2, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+                
+                // Cooldown timer text
+                const remainingSec = Math.ceil((cooldown - elapsed) / 1000);
+                ctx.save();
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = '#000000';
+                ctx.shadowBlur = 4;
+                ctx.fillText(`${remainingSec}s`, centerX, centerY + button.height / 4);
+                ctx.restore();
+            }
+            
+            // Border
+            ctx.strokeStyle = isReady ? ability.glowColor : 'rgba(100, 100, 120, 0.6)';
+            ctx.lineWidth = isReady ? 3 : 2;
+            Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+            ctx.stroke();
+            
+            // Icon
+            ctx.save();
+            if (isReady) {
+                ctx.shadowColor = ability.glowColor;
+                ctx.shadowBlur = 10;
+            }
+            ctx.font = `${button.width * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = isReady ? 1.0 : 0.5;
+            ctx.fillText(ability.icon, centerX, centerY - 5);
+            ctx.restore();
+            
+            // Level indicator (stars at bottom)
+            const levelY = button.y + button.height - 10;
+            ctx.save();
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = isReady ? '#ffdd00' : '#888888';
+            const levelText = `Lv.${level}`;
+            ctx.fillText(levelText, centerX, levelY);
+            ctx.restore();
+            
+            // Uses counter (if any)
+            if (abilityState.uses > 0) {
+                ctx.save();
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#00ff88';
+                ctx.fillText(`×${abilityState.uses}`, button.x + button.width - 5, button.y + 12);
+                ctx.restore();
+            }
+            
+            // Ready indicator animation
+            if (isReady) {
+                const readyPulse = Math.sin(time * 6) * 0.5 + 0.5;
+                ctx.save();
+                ctx.strokeStyle = Utils.colorWithAlpha('#ffffff', readyPulse * 0.6);
+                ctx.lineWidth = 2;
+                Utils.drawRoundRect(ctx, button.x - 2, button.y - 2, button.width + 4, button.height + 4, cornerRadius + 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        });
+    }
+
+    /**
+     * Render bomb targeting overlay
+     */
+    renderBombTargeting(gameState) {
+        const ctx = this.graphics.ctx;
+        const width = this.canvas.width / (window.devicePixelRatio || 1);
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        const time = Date.now() * 0.001;
+        
+        // Semi-transparent overlay
+        ctx.fillStyle = 'rgba(255, 50, 0, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Instruction text
+        ctx.save();
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ff4400';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 6;
+        const pulse = Math.sin(time * 5) * 0.2 + 0.8;
+        ctx.globalAlpha = pulse;
+        ctx.fillText('💣 TAP TO DROP BOMB 💣', width / 2, UI_CONFIG.TOP_BAR_HEIGHT + 40);
+        ctx.restore();
+        
+        // Cancel button
+        const cancelBtnWidth = 120;
+        const cancelBtnHeight = 40;
+        const cancelBtnX = width / 2 - cancelBtnWidth / 2;
+        const cancelBtnY = height - UI_CONFIG.SHOP_HEIGHT - 60;
+        
+        ctx.fillStyle = 'rgba(100, 30, 30, 0.9)';
+        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 8);
+        ctx.fill();
+        
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2;
+        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 8);
+        ctx.stroke();
+        
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('❌ CANCEL', width / 2, cancelBtnY + cancelBtnHeight / 2);
+        
+        // Store cancel button position for click detection
+        this.bombCancelButton = {
+            x: cancelBtnX,
+            y: cancelBtnY,
+            width: cancelBtnWidth,
+            height: cancelBtnHeight
+        };
+    }
+
+    /**
+     * Check if ability button was clicked
+     */
+    getClickedAbilityButton(screenPos) {
+        for (const button of this.abilityButtons) {
+            if (Utils.pointInRect(
+                screenPos.x, screenPos.y,
+                button.x, button.y,
+                button.width, button.height
+            )) {
+                return button;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Check if bomb cancel button was clicked
+     */
+    isBombCancelButtonClicked(screenX, screenY) {
+        if (!this.bombCancelButton) return false;
+        return Utils.pointInRect(
+            screenX, screenY,
+            this.bombCancelButton.x, this.bombCancelButton.y,
+            this.bombCancelButton.width, this.bombCancelButton.height
+        );
+    }
+
+    /**
+     * Enter bomb targeting mode
+     */
+    enterBombTargetingMode(callback) {
+        this.bombTargetingMode = true;
+        this.targetingCallback = callback;
+    }
+
+    /**
+     * Exit bomb targeting mode
+     */
+    exitBombTargetingMode() {
+        this.bombTargetingMode = false;
+        this.targetingCallback = null;
+        this.bombCancelButton = null;
+    }
+
     renderShopButton(button, gameState) {
         const ctx = this.graphics.ctx;
         const cannon = button.cannon;
@@ -455,6 +731,26 @@ export class UIManager {
     }
 
     handleTap(gridPos, screenPos, gameState) {
+        // Check if in bomb targeting mode
+        if (this.bombTargetingMode) {
+            // Check cancel button
+            if (this.isBombCancelButtonClicked(screenPos.x, screenPos.y)) {
+                this.exitBombTargetingMode();
+                return { type: 'ability', action: 'cancel_targeting' };
+            }
+            
+            // Valid grid position for bomb
+            if (this.isValidGridPos(gridPos)) {
+                const callback = this.targetingCallback;
+                this.exitBombTargetingMode();
+                if (callback) {
+                    callback(gridPos);
+                }
+                return { type: 'ability', action: 'bomb_placed', gridPos: gridPos };
+            }
+            return null;
+        }
+        
         // Check settings popup clicks first (highest priority)
         if (this.showSettingsPopup) {
             const popupAction = this.checkSettingsPopupClick(screenPos.x, screenPos.y);
@@ -484,6 +780,12 @@ export class UIManager {
             // Click outside popup - close it
             this.closeShopPopup();
             return { type: 'shop', action: 'close' };
+        }
+        
+        // Check special ability button clicks
+        const clickedAbility = this.getClickedAbilityButton(screenPos);
+        if (clickedAbility) {
+            return { type: 'ability', action: 'activate', abilityId: clickedAbility.id };
         }
         
         // Check settings gear click

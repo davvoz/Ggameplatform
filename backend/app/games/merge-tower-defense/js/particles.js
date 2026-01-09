@@ -725,6 +725,172 @@ export class ParticleSystem {
         });
     }
 
+    /**
+     * Create mega bomb explosion effect - professional realistic explosion
+     */
+    createMegaBombEffect(x, y, radius, damage) {
+        // Phase 1: Bright central flash (white-yellow core)
+        this.emit(x, y, {
+            text: '●',
+            color: '#ffffff',
+            vx: 0,
+            vy: 0,
+            life: 0.15,
+            scale: 4.0,
+            glow: true,
+            fadeOut: true
+        });
+        
+        // Phase 2: Expanding shockwave ring (12 particles in a circle)
+        for (let i = 0; i < 12; i++) {
+            const angle = (Math.PI * 2 * i) / 12;
+            const speed = 4 + Math.random() * 1;
+            this.emit(x, y, {
+                text: '○',
+                color: '#ffaa00',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                gravity: 0,
+                life: 0.4,
+                scale: 1.2,
+                glow: true,
+                fadeOut: true
+            });
+        }
+        
+        // Phase 3: Debris/sparks flying outward (8 pieces)
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.3;
+            const speed = 2 + Math.random() * 2;
+            const debrisChars = ['▪', '■', '▫'];
+            this.emit(x, y, {
+                text: debrisChars[Math.floor(Math.random() * debrisChars.length)],
+                color: i % 2 === 0 ? '#ff6600' : '#ffcc00',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 1,
+                gravity: 3,
+                life: 0.8,
+                scale: 0.6 + Math.random() * 0.4,
+                fadeOut: true
+            });
+        }
+        
+        // Phase 4: Smoke puffs (4 rising)
+        for (let i = 0; i < 4; i++) {
+            const offsetX = (Math.random() - 0.5) * 1.5;
+            const offsetY = (Math.random() - 0.5) * 1.5;
+            this.emit(x + offsetX, y + offsetY, {
+                text: '●',
+                color: '#555555',
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: -0.8 - Math.random() * 0.5,
+                gravity: -0.3,
+                life: 1.0,
+                scale: 1.0 + Math.random() * 0.5,
+                fadeOut: true
+            });
+        }
+
+        // Damage indicator - bold and clear
+        this.emit(x, y - 1, {
+            text: `${damage}`,
+            color: '#ffffff',
+            vy: -2,
+            life: 1.5,
+            scale: 1.8,
+            glow: true,
+            fadeOut: true
+        });
+    }
+
+    /**
+     * Create force wave pushback effect - clean horizontal wave
+     */
+    createForceWaveEffect(startY, waveWidth) {
+        const centerX = waveWidth / 2;
+        
+        // Simple wave line - one particle per 2 columns
+        for (let col = 0; col < waveWidth; col += 2) {
+            this.emit(col + 0.5, startY, {
+                text: '═',
+                color: '#00ccff',
+                vx: 0,
+                vy: -3,
+                gravity: 0,
+                life: 0.6,
+                scale: 1.5,
+                glow: true,
+                fadeOut: true
+            });
+        }
+
+        // Central wave indicator
+        this.emit(centerX, startY, {
+            text: '◆',
+            color: '#00eeff',
+            vy: -2,
+            life: 0.8,
+            scale: 2.0,
+            glow: true
+        });
+    }
+
+    /**
+     * Create individual enemy pushback effect - minimal
+     */
+    createEnemyPushbackEffect(x, y, pushDistance) {
+        // Simple push indicator
+        this.emit(x, y, {
+            text: '↑',
+            color: '#00ccff',
+            vy: -2,
+            vx: 0,
+            life: 0.4,
+            scale: 1.2,
+            glow: true,
+            fadeOut: true
+        });
+    }
+
+    /**
+     * Create ability ready pulse effect - minimal
+     */
+    createAbilityReadyEffect(x, y, icon, color) {
+        this.emit(x, y, {
+            text: icon,
+            color: color,
+            vy: -0.8,
+            life: 0.6,
+            scale: 1.5,
+            glow: true
+        });
+    }
+
+    /**
+     * Create ability level up effect - clean
+     */
+    createAbilityLevelUpEffect(x, y, level, icon, color) {
+        // Icon
+        this.emit(x, y, {
+            text: icon,
+            color: color,
+            vy: -1,
+            life: 1.0,
+            scale: 2.0,
+            glow: true
+        });
+
+        // Level text
+        this.emit(x, y - 0.5, {
+            text: `LV${level}`,
+            color: '#ffffff',
+            vy: -1.2,
+            life: 1.2,
+            scale: 1.2,
+            glow: true
+        });
+    }
+
     update(dt) {
         const active = this.pool.active;
         

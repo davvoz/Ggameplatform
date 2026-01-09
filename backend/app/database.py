@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 import uuid
 import json
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, desc
+from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker, Session, joinedload
 from contextlib import contextmanager
 import bcrypt
@@ -90,10 +90,30 @@ def create_game(game_data: dict) -> dict:
         return game.to_dict()
 
 def get_all_games() -> List[dict]:
-    """Retrieve all games from the database."""
+    """Retrieve all games from the database with session count."""
     with get_db_session() as session:
-        games = session.query(Game).options(joinedload(Game.status)).order_by(desc(Game.created_at)).all()
-        return [game.to_dict() for game in games]
+        # Query games with session count
+        games_with_counts = session.query(
+            Game,
+            func.count(GameSession.session_id).label('session_count')
+        ).outerjoin(
+            GameSession, Game.game_id == GameSession.game_id
+        ).options(
+            joinedload(Game.status)
+        ).group_by(
+            Game.game_id
+        ).order_by(
+            desc(Game.created_at)
+        ).all()
+        
+        # Convert to dict and add session_count
+        result = []
+        for game, session_count in games_with_counts:
+            game_dict = game.to_dict()
+            game_dict['session_count'] = session_count
+            result.append(game_dict)
+        
+        return result
 
 def get_game_by_id(game_id: str) -> Optional[dict]:
     """Retrieve a specific game by ID."""

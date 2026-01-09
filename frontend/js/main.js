@@ -199,11 +199,29 @@ async function loadGames(filters = {}) {
             return;
         }
 
-        // Sort games by status display_order (ordine field from game_statuses table)
+        // Sort games by multiple criteria:
+        // 1. Steem rewards enabled (1 first, 0 later)
+        // 2. Status display_order (developed first, then others)
+        // 3. Session count (most played first)
         games.sort((a, b) => {
+            // 1. Steem rewards (1 = true first, 0 = false later)
+            const aSteemRewards = a.steem_rewards_enabled ? 1 : 0;
+            const bSteemRewards = b.steem_rewards_enabled ? 1 : 0;
+            if (aSteemRewards !== bSteemRewards) {
+                return bSteemRewards - aSteemRewards; // Higher first (1 before 0)
+            }
+            
+            // 2. Status display_order (lower number = higher priority)
             const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
             const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
-            return aOrder - bOrder;
+            if (aOrder !== bOrder) {
+                return aOrder - bOrder; // Lower first
+            }
+            
+            // 3. Session count (most played first)
+            const aCount = a.session_count ?? 0;
+            const bCount = b.session_count ?? 0;
+            return bCount - aCount; // Higher first
         });
 
         games.forEach(game => {

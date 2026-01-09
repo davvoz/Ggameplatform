@@ -1,8 +1,17 @@
 {
-  "version": "3.4.12",
-  "timestamp": "2026-01-09T00:12:44.611Z",
-  "buildNumber": 207,
+  "version": "3.4.13",
+  "timestamp": "2026-01-09T00:30:05.024Z",
+  "buildNumber": 208,
   "changelog": [
+    {
+      "version": "3.4.13",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "refactor: remove XP breakdown display from banners and modals for cleaner UI",
+        "🔖 Bump version to 3.4.12 [skip-version]"
+      ]
+    },
     {
       "version": "3.4.12",
       "date": "2026-01-09",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [BRISCOLA]implement rematch functionality in multiplayer mode and enhance cleanup process",
         "🔖 Bump version to 3.4.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.3",
-      "date": "2026-01-06",
-      "type": "patch",
-      "changes": [
-        "fix: adjust hero stats layout and stat pill styling for better alignment",
-        "🔖 Bump version to 3.4.2 [skip-version]"
       ]
     }
   ]

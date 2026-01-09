@@ -122,7 +122,7 @@ class SteemPostService:
         body_parts.append(f"---")
         body_parts.append(f"")
         body_parts.append(f"*Posted via Cur8 Games*  ")
-        body_parts.append(f"*Powered by @{self.platform_account}*")
+        body_parts.append(f"*Powered by @cur8*")
         body_parts.append(f"")
         body_parts.append(f"</center>")
         

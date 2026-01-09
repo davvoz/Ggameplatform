@@ -1,8 +1,18 @@
 {
-  "version": "3.5.4",
-  "timestamp": "2026-01-09T02:13:20.639Z",
-  "buildNumber": 214,
+  "version": "3.5.5",
+  "timestamp": "2026-01-09T02:23:33.268Z",
+  "buildNumber": 215,
   "changelog": [
+    {
+      "version": "3.5.5",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Update post footer to use static account reference",
+        "🔖 Bump version to 3.5.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.5.4",
       "date": "2026-01-09",
@@ -83,15 +93,6 @@
       "changes": [
         "fix: enhance quest sorting to prioritize game_id, then quest_type, and target_value",
         "🔖 Bump version to 3.4.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.10",
-      "date": "2026-01-08",
-      "type": "patch",
-      "changes": [
-        "fix: sort quests by type and target value in QuestList constructor",
-        "🔖 Bump version to 3.4.9 [skip-version]"
       ]
     }
   ]

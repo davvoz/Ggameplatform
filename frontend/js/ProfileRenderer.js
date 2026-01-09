@@ -305,7 +305,7 @@ class ProfileRenderer {
 
         // Populate with cached user data (no Steem profile yet)
         this.populateProfileHeader(profileContent, user, null);
-        
+
         // Populate stats with loading placeholders
         const loadingStats = {
             gamesPlayed: 0,
@@ -315,6 +315,12 @@ class ProfileRenderer {
         };
         await this.populateProfileStats(profileContent, user, loadingStats);
         this.populateAccountSettings(profileContent, user);
+
+        // Steem loading indicator (avatar, multiplier, etc.)
+        const steemElements = profileContent.querySelectorAll('.steem-dependent');
+        steemElements.forEach(el => {
+            el.innerHTML = '<span class="loading-placeholder">⏳ Loading Steem data...</span>';
+        });
 
         this.appContainer.innerHTML = '';
         this.appContainer.appendChild(profileContent);
@@ -332,7 +338,7 @@ class ProfileRenderer {
         if (highScoresContainer) {
             highScoresContainer.innerHTML = '<div class="loading-placeholder">Loading high scores...</div>';
         }
-        
+
         // Load coin balance in header badge
         this.loadCoinBalanceHeader(user.user_id);
     }

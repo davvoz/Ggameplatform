@@ -1,8 +1,17 @@
 {
-  "version": "3.5.3",
-  "timestamp": "2026-01-09T02:07:59.468Z",
-  "buildNumber": 213,
+  "version": "3.5.4",
+  "timestamp": "2026-01-09T02:13:20.639Z",
+  "buildNumber": 214,
   "changelog": [
+    {
+      "version": "3.5.4",
+      "date": "2026-01-09",
+      "type": "patch",
+      "changes": [
+        "fix: Add loading indicators for Steem data in profile rendering",
+        "🔖 Bump version to 3.5.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.5.3",
       "date": "2026-01-09",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: sort quests by type and target value in QuestList constructor",
         "🔖 Bump version to 3.4.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.4.9",
-      "date": "2026-01-08",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: implement script to delete inactive quests from the database",
-        "🔖 Bump version to 3.4.8 [skip-version]"
       ]
     }
   ]

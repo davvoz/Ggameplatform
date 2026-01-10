@@ -867,6 +867,85 @@ export class ParticleSystem {
     }
 
     /**
+     * Create stun wave effect - electric shockwave that stuns enemies
+     */
+    createStunWaveEffect(x, y, radius, stunDuration) {
+        // Phase 1: Central electric flash
+        this.emit(x, y, {
+            text: '⚡',
+            color: '#ffffff',
+            vx: 0,
+            vy: 0,
+            life: 0.2,
+            scale: 3.5,
+            glow: true,
+            fadeOut: true
+        });
+
+        // Phase 2: Expanding electric ring (16 particles in a circle)
+        for (let i = 0; i < 16; i++) {
+            const angle = (Math.PI * 2 * i) / 16;
+            const speed = 3 + Math.random() * 1;
+            this.emit(x, y, {
+                text: '✦',
+                color: i % 2 === 0 ? '#ffee00' : '#ffffff',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                gravity: 0,
+                life: 0.5,
+                scale: 1.0,
+                glow: true,
+                fadeOut: true
+            });
+        }
+
+        // Phase 3: Electric arcs/bolts (8 bolts radiating outward)
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.2;
+            const speed = 2 + Math.random() * 1.5;
+            this.emit(x, y, {
+                text: '⚡',
+                color: '#ffff88',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                gravity: 0.5,
+                life: 0.6,
+                scale: 0.8 + Math.random() * 0.3,
+                glow: true,
+                fadeOut: true
+            });
+        }
+
+        // Phase 4: Sparks flying outward (6 sparks)
+        for (let i = 0; i < 6; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.5 + Math.random() * 2;
+            this.emit(x, y, {
+                text: '•',
+                color: '#ffee00',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.5,
+                gravity: 2,
+                life: 0.7,
+                scale: 0.5 + Math.random() * 0.3,
+                fadeOut: true
+            });
+        }
+
+        // Stun duration indicator
+        const durationSec = (stunDuration / 1000).toFixed(1);
+        this.emit(x, y - 0.8, {
+            text: `${durationSec}s`,
+            color: '#ffee00',
+            vy: -1.5,
+            life: 1.2,
+            scale: 1.4,
+            glow: true,
+            fadeOut: true
+        });
+    }
+
+    /**
      * Create ability level up effect - clean
      */
     createAbilityLevelUpEffect(x, y, level, icon, color) {

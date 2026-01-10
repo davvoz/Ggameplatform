@@ -93,6 +93,12 @@ export class Game {
                     lastUsed: 0,
                     uses: 0,
                     enemiesPushed: 0
+                },
+                STUN: {
+                    level: 1,
+                    lastUsed: 0,
+                    uses: 0,
+                    enemiesStunned: 0
                 }
             }
         };
@@ -1558,6 +1564,8 @@ export class Game {
             this.activateBombAbility(abilityConfig, abilityState);
         } else if (abilityId === 'PUSHBACK') {
             this.activatePushbackAbility(abilityConfig, abilityState);
+        } else if (abilityId === 'STUN') {
+            this.activateStunAbility(abilityConfig, abilityState);
         }
     }
 
@@ -1746,6 +1754,109 @@ export class Game {
                 vy: -1.5,
                 life: 1.0,
                 scale: 1.2,
+                glow: true
+            });
+        }
+    }
+
+    /**
+     * Activate Stun ability - enters targeting mode
+     */
+    activateStunAbility(config, state) {
+        // Enter targeting mode (same as bomb)
+        this.ui.enterBombTargetingMode((gridPos) => {
+            this.executeStun(gridPos, config, state);
+        });
+
+        // Audio feedback
+        this.audio.uiClick();
+    }
+
+    /**
+     * Execute the stun at the target position
+     */
+    executeStun(gridPos, config, state) {
+        const gameTime = performance.now(); // For stun effect timing (matches game loop)
+        const level = state.level;
+        
+        // Calculate stun parameters based on level
+        const stunDuration = config.baseStunDuration + (level - 1) * config.stunDurationPerLevel;
+        const radius = config.baseRadius + (level - 1) * config.radiusPerLevel;
+
+        // Update ability state - use Date.now() for cooldown tracking
+        state.lastUsed = Date.now();
+        state.uses++;
+
+        // Create stun shockwave effect
+        this.particles.createStunWaveEffect(gridPos.col, gridPos.row, radius, stunDuration);
+
+        // Screen shake for impact
+        this.addScreenShake(5, 0.2);
+
+        // Play stun sound
+        this.audio.waveStart?.() || this.audio.towerMerge();
+
+        // Stun all enemies in radius
+        let stunnedCount = 0;
+        
+        for (const zombie of this.entities.zombies) {
+            const dist = Utils.distance(gridPos.col, gridPos.row, zombie.col, zombie.row);
+            
+            if (dist <= radius) {
+                // Apply CC resistance (reduce stun duration for resistant enemies)
+                const effectiveDuration = stunDuration * (1 - (zombie.ccResistance || 0));
+                
+                if (effectiveDuration > 0) {
+                    zombie.stunnedUntil = gameTime + effectiveDuration;
+                    stunnedCount++;
+
+                    // Individual stun indicator
+                    this.particles.emit(zombie.col, zombie.row, {
+                        text: '💫',
+                        color: '#ffee00',
+                        vy: -1,
+                        life: 0.8,
+                        scale: 1.0,
+                        glow: true
+                    });
+                }
+            }
+        }
+
+        // Track stunned enemies
+        state.enemiesStunned += stunnedCount;
+
+        // Level up the ability every 5 uses
+        if (state.uses % 5 === 0 && state.level < config.maxLevel) {
+            state.level++;
+            this.particles.createAbilityLevelUpEffect(
+                gridPos.col, gridPos.row,
+                state.level,
+                config.icon,
+                config.color
+            );
+        }
+
+        // Score bonus for stuns
+        if (stunnedCount > 0) {
+            const stunBonus = stunnedCount * 15 * level;
+            this.state.score += stunBonus;
+            this.particles.emit(gridPos.col, gridPos.row - 1, {
+                text: `+${stunBonus}`,
+                color: '#ffee00',
+                vy: -1.5,
+                life: 1.0,
+                scale: 1.2,
+                glow: true
+            });
+
+            // Show stun count
+            this.particles.emit(gridPos.col, gridPos.row + 0.5, {
+                text: `⚡${stunnedCount} STUNNED!`,
+                color: '#ffffff',
+                vy: -0.8,
+                life: 1.5,
+                scale: 1.3,
                 glow: true
             });
         }

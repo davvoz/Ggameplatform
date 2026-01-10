@@ -350,6 +350,11 @@ export class EnemyMovementController {
         // Skip if dead
         if (enemy.isDead()) return;
 
+        // Skip if stunned
+        if (enemy.stunnedUntil && currentTime < enemy.stunnedUntil) {
+            return; // Cannot move while stunned
+        }
+
         // Calculate effective speed (with slow effects)
         const effectiveSpeed = currentTime < enemy.slowUntil 
             ? enemy.speed * enemy.slowFactor 

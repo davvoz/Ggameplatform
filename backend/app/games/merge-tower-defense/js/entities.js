@@ -28,8 +28,9 @@ function applyWaveScaling(baseConfig, waveNumber) {
     const speedEffectiveWave = Math.max(0, waveNumber - 5);
     const speedMultiplier = Math.min(1.30, 1 + speedEffectiveWave * 0.01);
     
-    // Reward scaling: cresce per compensare la difficoltà
-    const rewardMultiplier = 1 + (waveNumber - 1) * 0.04;
+    // Reward scaling: cresce significativamente per compensare la difficoltà
+    // Wave 1: x1.0, Wave 5: x1.48, Wave 10: x2.08, Wave 20: x3.28, Wave 30: x4.48
+    const rewardMultiplier = 1 + (waveNumber - 1) * 0.12;
     
     // Armor scaling: +20% ogni 6 wave per nemici corazzati
     const armorMultiplier = 1 + Math.floor((waveNumber - 1) / 6) * 0.2;
@@ -399,6 +400,7 @@ class Zombie {
         // Status effects
         this.slowUntil = 0;
         this.slowFactor = 1.0;
+        this.stunnedUntil = 0; // Stun effect timestamp
         
         // Animation
         this.animPhase = Math.random() * Math.PI * 2;
@@ -548,6 +550,11 @@ class Zombie {
      * Update special abilities (separated from movement for OOP)
      */
     updateAbilities(dt, currentTime) {
+        // Skip all abilities if stunned
+        if (this.stunnedUntil && currentTime < this.stunnedUntil) {
+            return; // Cannot use abilities while stunned
+        }
+
         // Check invulnerability (PHASER ability)
         if (this.isInvulnerable && currentTime > this.invulnerableUntil) {
             this.isInvulnerable = false;

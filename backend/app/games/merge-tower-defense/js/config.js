@@ -16,9 +16,9 @@ export const CONFIG = {
     ENERGY_REGEN_RATE: 0.15,  // Aumentato da 0.05 - regen decente
 
     // Wave Configuration
-    BASE_WAVE_ZOMBIES: 3,  // Ridotto da 6 - primo livello più facile
-    WAVE_ZOMBIE_INCREMENT: 2,
-    SPAWN_INTERVAL: 1000,  // Ridotto da 1000 - spawn più veloce
+    BASE_WAVE_ZOMBIES: 3,  // Aumentato - più nemici per wave
+    WAVE_ZOMBIE_INCREMENT: 2,  // Incremento più aggressivo
+    SPAWN_INTERVAL: 850,  // Spawn molto più veloce
 
     // Performance
     MAX_PARTICLES: 200,
@@ -393,18 +393,19 @@ export const ZOMBIE_TYPES = {
 };
 
 // Level progression for merge system
-// Generate 200 levels with exponential scaling
+// Generate 200 levels with exponential scaling - BILANCIATO
 export const MERGE_LEVELS = (() => {
     const levels = [];
     const icons = ['⭐', '✨', '💫', '⚡', '🌟', '🔥', '💎', '👑', '🏆', '💀'];
     
-    for (let i = 1; i <= 200; i++) {
-        // Exponential scaling for damage (doubles roughly every 2 levels)
-        const damageMultiplier = Math.pow(1.5, i - 1);
-        // Linear scaling for range
-        const rangeBonus = (i - 1) * 0.3;
-        // Gradual fire rate improvement
-        const fireRateBonus = 1 + (i - 1) * 0.15;
+    for (let i = 1; i <= 10; i++) {
+        // Exponential scaling for damage - bilanciato (x1.45 per livello)
+        // Lv1: x1, Lv2: x1.45, Lv3: x2.1, Lv4: x3.0, Lv5: x4.4, Lv10: x23
+        const damageMultiplier = Math.pow(1.45, i - 1);
+        // Range scaling moderato
+        const rangeBonus = (i - 1) * 0.25;
+        // Fire rate improvement graduale
+        const fireRateBonus = 1 + (i - 1) * 0.18;
         // Cycle through icons
         const icon = icons[Math.min(Math.floor((i - 1) / 20), icons.length - 1)];
         
@@ -512,9 +513,9 @@ export const SPECIAL_ABILITIES = {
         description: 'Massive 4x4 explosion',
         icon: '💣',
         baseCooldown: 15000, // 15 seconds cooldown
-        baseRadius: 2.0, // 4x4 area = radius 2
-        baseDamage: 50, // Base damage (scales with wave)
-        damagePerLevel: 25, // +25 damage per ability level
+        baseRadius: 3.0, // 4x4 area = radius 2
+        baseDamage: 70, // Base damage (scales with wave)
+        damagePerLevel: 50, // +25 damage per ability level
         maxLevel: 999, // Effectively no limit
         color: '#ff4400',
         glowColor: '#ff8800',
@@ -539,6 +540,23 @@ export const SPECIAL_ABILITIES = {
         waveWidth: 7, // Full grid width
         waveSpeed: 8.0,
         particleCount: 15
+    },
+    STUN: {
+        id: 'STUN',
+        name: 'Shock Wave',
+        description: 'Stun enemies in area',
+        icon: '⚡',
+        baseCooldown: 10000, // 10 seconds cooldown
+        baseRadius: 3.5, // Area of effect radius
+        baseStunDuration: 2000, // 2 seconds base stun
+        stunDurationPerLevel: 200, // +0.2s per level
+        radiusPerLevel: 0.2, // +0.2 radius per level
+        maxLevel: 999, // Effectively no limit
+        color: '#ffee00',
+        glowColor: '#ffff88',
+        // Visual settings
+        shockwaveDuration: 500, // ms
+        particleCount: 16
     }
 };
 

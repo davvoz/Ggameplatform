@@ -1,8 +1,18 @@
 {
-  "version": "3.7.4",
-  "timestamp": "2026-01-10T00:44:28.199Z",
-  "buildNumber": 224,
+  "version": "3.7.5",
+  "timestamp": "2026-01-10T02:37:30.620Z",
+  "buildNumber": 225,
   "changelog": [
+    {
+      "version": "3.7.5",
+      "date": "2026-01-10",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [MTD]implement stun ability with visual effects and enemy interaction",
+        "🔖 Bump version to 3.7.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.4",
       "date": "2026-01-10",
@@ -83,16 +93,6 @@
       "changes": [
         "feat: Implement sticky profile navbar with dynamic behavior and responsive design",
         "🔖 Bump version to 3.5.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.5.5",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Update post footer to use static account reference",
-        "🔖 Bump version to 3.5.4 [skip-version]"
       ]
     }
   ]

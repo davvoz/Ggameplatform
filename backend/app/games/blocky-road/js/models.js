@@ -131,9 +131,9 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
-        // Main body using pooled geometry
+        // Main body using pooled geometry - POOLED (no fade-out anymore)
         const bodyGeometry = GeometryPool.getBoxGeometry(0.9, 0.5, 1.6);
-        const bodyMaterial = MaterialPool.getMaterial(color);
+        const bodyMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.3;
         body.castShadow = true;
@@ -143,6 +143,7 @@ const Models = {
         // Windshield/parabrezza using pooled geometry
         const cabinGeometry = GeometryPool.getBoxGeometry(0.75, 0.4, 0.7);
         const cabinMaterial = MaterialPool.getMaterial(0xB0E0FF, {
+            poolable: true,
             transparent: true,
             opacity: 0.85
         });
@@ -153,7 +154,7 @@ const Models = {
         
         // Front grill/smile using pooled geometry
         const grillGeometry = GeometryPool.getBoxGeometry(0.5, 0.15, 0.1);
-        const grillMaterial = MaterialPool.getMaterial(0x222222);
+        const grillMaterial = MaterialPool.getMaterial(0x222222, { poolable: true });
         const grill = new THREE.Mesh(grillGeometry, grillMaterial);
         grill.position.set(0, 0.25, 0.85);
         group.add(grill);
@@ -161,17 +162,17 @@ const Models = {
         // Front bumper using pooled geometry
         const bumperGeometry = GeometryPool.getBoxGeometry(1.0, 0.15, 0.2);
         const bumperColor = new THREE.Color(color).multiplyScalar(0.8).getHex();
-        const bumperMaterial = MaterialPool.getMaterial(bumperColor);
+        const bumperMaterial = MaterialPool.getMaterial(bumperColor, { poolable: true });
         const bumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
         bumper.position.set(0, 0.15, 0.9);
         group.add(bumper);
         
         // Wheels with rims using pooled geometry
         const wheelGeometry = GeometryPool.getBoxGeometry(0.25, 0.35, 0.35);
-        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a, { poolable: true });
         
         const rimGeometry = GeometryPool.getBoxGeometry(0.28, 0.2, 0.2);
-        const rimMaterial = MaterialPool.getMaterial(0x666666);
+        const rimMaterial = MaterialPool.getMaterial(0x666666, { poolable: true });
         
         const wheels = [
             { x: -0.5, z: 0.6 },
@@ -211,29 +212,28 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
         
-        // Truck cab (front part) - POOLED
+        // Truck cab (front part) - POOLED (no fade-out anymore)
         const cabGeometry = GeometryPool.getBoxGeometry(0.95, 0.7, 0.9);
-        const cabMaterial = MaterialPool.getMaterial(color);
+        const cabMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const cab = new THREE.Mesh(cabGeometry, cabMaterial);
         cab.position.set(0, 0.45, 0.6);
         cab.castShadow = true;
         cab.receiveShadow = true;
         group.add(cab);
         
-        // Cargo area (back part) - POOLED
+        // Cargo area (back part)
         const cargoGeometry = GeometryPool.getBoxGeometry(0.95, 0.8, 1.2);
         const cargoColor = new THREE.Color(color).multiplyScalar(0.85).getHex();
-        const cargoMaterial = MaterialPool.getMaterial(cargoColor);
+        const cargoMaterial = MaterialPool.getMaterial(cargoColor, { poolable: true });
         const cargo = new THREE.Mesh(cargoGeometry, cargoMaterial);
         cargo.position.set(0, 0.5, -0.5);
         cargo.castShadow = true;
         group.add(cargo);
         
-        // Windshield - NON pooled (transparent)
+        // Windshield (transparent)
         const windshieldGeometry = GeometryPool.getBoxGeometry(0.8, 0.45, 0.15);
-        const windshieldMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x87CEEB,
-            flatShading: true,
+        const windshieldMaterial = MaterialPool.getMaterial(0x87CEEB, { 
+            poolable: true,
             transparent: true,
             opacity: 0.6
         });
@@ -241,9 +241,9 @@ const Models = {
         windshield.position.set(0, 0.6, 1.0);
         group.add(windshield);
         
-        // Headlights - POOLED
+        // Headlights
         const lightGeometry = GeometryPool.getBoxGeometry(0.2, 0.15, 0.1);
-        const lightMaterial = MaterialPool.getMaterial(0xFFFF99);
+        const lightMaterial = MaterialPool.getMaterial(0xFFFF99, { poolable: true });
         
         const leftLight = new THREE.Mesh(lightGeometry, lightMaterial);
         leftLight.position.set(-0.3, 0.3, 1.1);
@@ -253,25 +253,25 @@ const Models = {
         rightLight.position.set(0.3, 0.3, 1.1);
         group.add(rightLight);
         
-        // Door line detail on cab - POOLED
+        // Door line detail on cab
         const doorGeometry = GeometryPool.getBoxGeometry(0.05, 0.5, 0.6);
         const doorColor = new THREE.Color(color).multiplyScalar(0.6).getHex();
-        const doorMaterial = MaterialPool.getMaterial(doorColor);
+        const doorMaterial = MaterialPool.getMaterial(doorColor, { poolable: true });
         const door = new THREE.Mesh(doorGeometry, doorMaterial);
         door.position.set(0.5, 0.45, 0.6);
         group.add(door);
         
-        // Wheels with rims - POOLED
+        // Wheels with rims
         const wheelGeometry = GeometryPool.getBoxGeometry(0.28, 0.4, 0.4);
-        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a, { poolable: true });
         
         const rimGeometry = GeometryPool.getBoxGeometry(0.3, 0.25, 0.25);
-        const rimMaterial = MaterialPool.getMaterial(0x666666);
+        const rimMaterial = MaterialPool.getMaterial(0x666666, { poolable: true });
         
-        // Front fenders - POOLED
+        // Front fenders
         const fenderGeometry = GeometryPool.getBoxGeometry(0.15, 0.25, 0.5);
         const fenderColor = new THREE.Color(color).multiplyScalar(0.7).getHex();
-        const fenderMaterial = MaterialPool.getMaterial(fenderColor);
+        const fenderMaterial = MaterialPool.getMaterial(fenderColor, { poolable: true });
         
         const wheels = [
             { x: -0.55, z: 0.7 },
@@ -326,53 +326,53 @@ const Models = {
         color = realisticColors[Math.floor(Math.random() * realisticColors.length)];
         const group = new THREE.Group();
 
-        // Corpo principale - POOLED
+        // Corpo principale - POOLED (no fade-out anymore)
         const bodyGeometry = GeometryPool.getBoxGeometry(0.5, 0.3, 1.0);
-        const bodyMaterial = MaterialPool.getMaterial(color);
+        const bodyMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.32;
         body.castShadow = true;
         body.receiveShadow = true;
         group.add(body);
 
-        // Sella nera - POOLED
+        // Sella nera
         const seatGeometry = GeometryPool.getBoxGeometry(0.45, 0.12, 0.35);
-        const seatMaterial = MaterialPool.getMaterial(0x222222);
+        const seatMaterial = MaterialPool.getMaterial(0x222222, { poolable: true });
         const seat = new THREE.Mesh(seatGeometry, seatMaterial);
         seat.position.set(0, 0.43, -0.15);
         group.add(seat);
 
-        // Parabrezza piccolo trasparente - NON pooled (transparent)
+        // Parabrezza piccolo trasparente
         const windshieldGeometry = GeometryPool.getBoxGeometry(0.32, 0.12, 0.05);
-        const windshieldMaterial = new THREE.MeshLambertMaterial({ color: 0xB0E0FF, transparent: true, opacity: 0.7 });
+        const windshieldMaterial = MaterialPool.getMaterial(0xB0E0FF, { poolable: true, transparent: true, opacity: 0.7 });
         const windshield = new THREE.Mesh(windshieldGeometry, windshieldMaterial);
         windshield.position.set(0, 0.48, 0.38);
         group.add(windshield);
 
-        // Manubrio - POOLED
+        // Manubrio
         const handleGeometry = GeometryPool.getBoxGeometry(0.6, 0.07, 0.07);
-        const handleMaterial = MaterialPool.getMaterial(0x333333);
+        const handleMaterial = MaterialPool.getMaterial(0x333333, { poolable: true });
         const handles = new THREE.Mesh(handleGeometry, handleMaterial);
         handles.position.set(0, 0.52, 0.45);
         group.add(handles);
 
-        // Fari anteriori - POOLED
+        // Fari anteriori
         const headlightGeometry = GeometryPool.getBoxGeometry(0.12, 0.08, 0.08);
-        const headlightMaterial = MaterialPool.getMaterial(0xFFFFAA);
+        const headlightMaterial = MaterialPool.getMaterial(0xFFFFAA, { poolable: true });
         const headlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
         headlight.position.set(0, 0.38, 0.52);
         group.add(headlight);
 
-        // Fari posteriori - POOLED
+        // Fari posteriori
         const taillightGeometry = GeometryPool.getBoxGeometry(0.10, 0.06, 0.06);
-        const taillightMaterial = MaterialPool.getMaterial(0xFF2222);
+        const taillightMaterial = MaterialPool.getMaterial(0xFF2222, { poolable: true });
         const taillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
         taillight.position.set(0, 0.38, -0.52);
         group.add(taillight);
 
-        // Ruote grandi - POOLED
+        // Ruote grandi
         const wheelGeometry = GeometryPool.getCylinderGeometry(0.14, 0.14, 0.08, 16);
-        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a);
+        const wheelMaterial = MaterialPool.getMaterial(0x1a1a1a, { poolable: true });
         const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
         frontWheel.position.set(0, 0.13, 0.48);
         frontWheel.rotation.z = Math.PI / 2;
@@ -776,40 +776,40 @@ const Models = {
         const group = new THREE.Group();
         group.userData.trainColor = color;
         group.userData.trainCarColor = carColor;
-        // Engine front using pooled geometry
+        // Engine front - POOLED (no fade-out anymore)
         const engineGeometry = GeometryPool.getBoxGeometry(1.2, 0.8, 1.8);
-        const engineMaterial = MaterialPool.getMaterial(color);
+        const engineMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const engine = new THREE.Mesh(engineGeometry, engineMaterial);
         engine.position.y = 0.5;
         engine.castShadow = true;
         group.add(engine);
         
-        // Chimney using pooled geometry
+        // Chimney
         const chimneyGeometry = GeometryPool.getBoxGeometry(0.3, 0.5, 0.3);
-        const chimneyMaterial = MaterialPool.getMaterial(0x2C3E50);
+        const chimneyMaterial = MaterialPool.getMaterial(0x2C3E50, { poolable: true });
         const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
         chimney.position.set(0, 1.15, 0.4);
         chimney.castShadow = true;
         group.add(chimney);
         
-        // Cabin using pooled geometry
+        // Cabin
         const cabinGeometry = GeometryPool.getBoxGeometry(1.0, 0.6, 1.0);
-        const cabinMaterial = MaterialPool.getMaterial(color);
+        const cabinMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
         cabin.position.set(0, 1.1, -0.5);
         cabin.castShadow = true;
         group.add(cabin);
         
-        // Windows using pooled geometry
+        // Windows
         const windowGeometry = GeometryPool.getBoxGeometry(1.01, 0.4, 0.3);
-        const windowMaterial = MaterialPool.getMaterial(0x87CEEB);
+        const windowMaterial = MaterialPool.getMaterial(0x87CEEB, { poolable: true });
         const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
         window1.position.set(0, 1.1, -0.3);
         group.add(window1);
         
-        // Wheels using pooled geometry
+        // Wheels
         const wheelGeometry = GeometryPool.getCylinderGeometry(0.25, 0.25, 0.2, 8);
-        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50);
+        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50, { poolable: true });
         
         const wheelPositions = [
             { x: -0.5, z: 0.6 },
@@ -853,26 +853,26 @@ const Models = {
             color = this.userData.trainCarColor;
         }
         const group = new THREE.Group();
-        // Main car body - cargo container style using pooled geometry
+        // Main car body - POOLED (no fade-out anymore)
         const bodyGeometry = GeometryPool.getBoxGeometry(1.2, 0.7, 2.0);
-        const bodyMaterial = MaterialPool.getMaterial(color);
+        const bodyMaterial = MaterialPool.getMaterial(color, { poolable: true });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.5;
         body.castShadow = true;
         group.add(body);
         
-        // Roof using pooled geometry
+        // Roof
         const roofGeometry = GeometryPool.getBoxGeometry(1.3, 0.1, 2.1);
         const roofColor = new THREE.Color(color).lerp(new THREE.Color(0x000000), 0.3).getHex();
-        const roofMaterial = MaterialPool.getMaterial(roofColor);
+        const roofMaterial = MaterialPool.getMaterial(roofColor, { poolable: true });
         const roof = new THREE.Mesh(roofGeometry, roofMaterial);
         roof.position.y = 0.9;
         roof.castShadow = true;
         group.add(roof);
         
-        // Wheels (4 wheels) using pooled geometry
+        // Wheels (4 wheels)
         const wheelGeometry = GeometryPool.getCylinderGeometry(0.25, 0.25, 0.2, 8);
-        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50);
+        const wheelMaterial = MaterialPool.getMaterial(0x2C3E50, { poolable: true });
         
         const wheelPositions = [
             { x: -0.5, z: 0.7 },

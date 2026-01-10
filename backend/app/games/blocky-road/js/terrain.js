@@ -385,6 +385,9 @@ class TerrainGenerator {
             this.addRailDecorations(row);
         } else if (type === 'water') {
             this.addWaterDecorations(row);
+        } else if (type === 'road') {
+            // Add dashed markings between consecutive road rows
+            this.addRoadMarkings(row);
         }
         
         this.rows.push(row);
@@ -392,7 +395,45 @@ class TerrainGenerator {
     }
     
     addRoadMarkings(row) {
-        // TODO: Add road markings later
+        // Add dashed center markings BETWEEN consecutive road rows.
+        // We only add markings when the previous row is also 'road'.
+        if (!this.rows || this.rows.length === 0) return;
+        const prevRow = this.rows[this.rows.length - 1];
+        if (!prevRow || prevRow.type !== 'road') return;
+
+        // Compute z position between the two rows
+        const zBetween = (prevRow.z + row.z) / 2;
+
+        // Create a group to hold dash segments
+        const group = new THREE.Group();
+        group.userData.isRoadStripe = true;
+
+        // Segment dimensions and spacing (thinner and shorter dashes)
+        const segmentLength = 0.5; // shorter dash along X
+        const segmentDepth = 0.08; // slim depth along Z
+        const segmentHeight = 0.01; // very thin
+        const gap = 0.35; // small gap between dashes
+        const step = segmentLength + gap;
+
+        // Horizontal range: extend to full map edges (-12..12)
+        const startX = -12.0;
+        const endX = 12.0;
+
+        const geom = GeometryPool.getBoxGeometry(segmentLength, segmentHeight, segmentDepth);
+        const mat = MaterialPool.getMaterial(0xFFFFFF, { poolable: true });
+
+        // Place dashes centered on X; raise slightly above ground to avoid z-fighting
+        const yPos = 0.255;
+        for (let x = startX; x <= endX; x += step) {
+            const seg = new THREE.Mesh(geom, mat);
+            seg.position.set(x + segmentLength / 2, yPos, zBetween);
+            seg.userData.isRoadMark = true;
+            group.add(seg);
+        }
+
+        this.scene.add(group);
+        // Attach to the current row decorations so it will be cleaned up with this row
+        row.decorations.push(group);
     }
     
     addGrassDecorations(row) {

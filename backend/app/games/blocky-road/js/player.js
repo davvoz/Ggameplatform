@@ -47,7 +47,7 @@ class Player {
         this.head = this.mesh.userData.head;
         
         // Jump timing
-        this.jumpDuration = 150; // ms, faster than Phaser (was 300)
+        this.jumpDuration = 200; // ms, faster than Phaser (was 300)
         this.activeTweens = []; // Track active tweens for cancellation
     }
     

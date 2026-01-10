@@ -9,8 +9,22 @@ class TerrainGenerator {
         this.zoneRowsRemaining = 0;
         this.currentScore = 0; // Track score for progressive difficulty
         
-        // Pre-cache pool for expensive objects (eliminates lag)
-        this.railTrackPool = [];
+        // OTTIMIZZAZIONE: Sistema terrain tiles con InstancedMesh globale
+        // Invece di ~1000 mesh separate, usiamo 4 InstancedMesh (una per tipo)
+        this.terrainTypes = ['grass', 'road', 'water', 'rail'];
+        this.terrainMeshes = {}; // InstancedMesh per ogni tipo di terreno
+        this.terrainTilePositions = {}; // Map<type, Map<"x,z", index>>
+        this.maxTilesPerType = 2000; // Capacità massima per tipo
+        this.tilesPerRow = 25; // Da -12 a +12
+        
+        // NUOVO: Sistema rotaie ottimizzato con InstancedMesh globale
+        this.railRowsZ = new Set(); // Traccia le posizioni Z delle rotaie
+        this.globalRailMesh = null; // InstancedMesh globale per tutte le traverse
+        this.globalRailsMesh = null; // Mesh per i binari metallici
+        this.maxRailRows = 20; // Massimo numero di righe rotaia visibili
+        this.sleepersPerRow = 50; // Traverse per riga
+        
+        // Pre-cache pool for warning lights only (rails now use global InstancedMesh)
         this.warningLightPool = [];
         this.initObjectPools();
         
@@ -56,26 +70,235 @@ class TerrainGenerator {
     }
     
     initObjectPools() {
-        console.log('🔧 Pre-caching rail tracks and warning lights...');
+        console.log('🔧 Initializing global InstancedMesh systems...');
         
-        // Pre-generate 50 rail tracks (increased from 30 to prevent pool exhaustion)
-        // View spans playerZ - 20 to playerZ + 25 = 45 rows max, some will be rails
-        for (let i = 0; i < 50; i++) {
-            const track = Models.createRailTrack();
-            track.visible = false; // Hide until needed
-            this.scene.add(track);
-            this.railTrackPool.push(track);
+        // =====================================================
+        // TERRAIN TILES - InstancedMesh per tipo (colore fisso, no setColorAt)
+        // =====================================================
+        const tileGeometry = GeometryPool.getBoxGeometry(1, 0.5, 1);
+        
+        // Colori fissi per ogni tipo (evita creazione di nuovi shader)
+        this.terrainColors = {
+            grass: 0x5FAD56,  // Verde
+            road: 0x555555,   // Asfalto grigio
+            water: 0x2196F3,  // Blu
+            rail: 0x8B7355    // Ghiaia/sabbia
+        };
+        
+        for (const type of this.terrainTypes) {
+            // Materiale con colore fisso (POOLED per evitare nuovi shader)
+            const isWater = type === 'water';
+            const material = MaterialPool.getMaterial(this.terrainColors[type], {
+                poolable: !isWater, // L'acqua ha trasparenza quindi non poolabile
+                transparent: isWater,
+                opacity: isWater ? 0.9 : 1.0
+            });
+            const mesh = new THREE.InstancedMesh(tileGeometry, material, this.maxTilesPerType);
+            mesh.count = 0;
+            mesh.frustumCulled = false;
+            mesh.receiveShadow = true;
+            this.scene.add(mesh);
+            this.terrainMeshes[type] = mesh;
+            this.terrainTilePositions[type] = new Map();
         }
+        console.log(`✅ Terrain InstancedMesh created (4 types, ${this.maxTilesPerType} tiles each)`);
         
-        // Pre-generate 100 warning lights (increased from 60, 2 per rail × 50 rails)
+        // =====================================================
+        // RAIL SLEEPERS - InstancedMesh globale
+        // =====================================================
+        const sleeperGeometry = GeometryPool.getBoxGeometry(0.15, 0.12, 0.85);
+        const sleeperMaterial = MaterialPool.getMaterial(0x6B4423, { poolable: true });
+        const totalSleepers = this.maxRailRows * this.sleepersPerRow;
+        this.globalRailMesh = new THREE.InstancedMesh(sleeperGeometry, sleeperMaterial, totalSleepers);
+        this.globalRailMesh.count = 0;
+        this.globalRailMesh.frustumCulled = false;
+        this.scene.add(this.globalRailMesh);
+        
+        // Binari metallici
+        const railGeometry = GeometryPool.getBoxGeometry(24, 0.1, 0.1);
+        const railMaterial = MaterialPool.getMaterial(0xA8A8A8, { poolable: true });
+        this.globalRailsMesh = new THREE.InstancedMesh(railGeometry, railMaterial, this.maxRailRows * 2);
+        this.globalRailsMesh.count = 0;
+        this.globalRailsMesh.frustumCulled = false;
+        this.scene.add(this.globalRailsMesh);
+        
+        // Pre-calcola offset traverse
+        this.sleeperOffsets = [];
+        for (let i = 0; i < this.sleepersPerRow; i++) {
+            this.sleeperOffsets.push(-12 + (i * 0.5));
+        }
+        console.log(`✅ Rail InstancedMesh created (${totalSleepers} sleepers capacity)`);
+        
+        // =====================================================
+        // WARNING LIGHTS - Pool di oggetti
+        // =====================================================
         for (let i = 0; i < 100; i++) {
             const light = Models.createTrainWarningLight();
-            light.visible = false; // Hide until needed
+            light.visible = false;
             this.scene.add(light);
             this.warningLightPool.push(light);
         }
+        console.log(`✅ Pre-cached ${this.warningLightPool.length} warning lights`);
+    }
+    
+    // NUOVO: Aggiorna la InstancedMesh globale delle rotaie
+    updateGlobalRailMesh() {
+        const matrix = new THREE.Matrix4();
+        let sleeperIndex = 0;
+        let railIndex = 0;
         
-        console.log(`✅ Pre-cached ${this.railTrackPool.length} rail tracks and ${this.warningLightPool.length} warning lights`);
+        // Itera su tutte le righe rotaia attive
+        for (const z of this.railRowsZ) {
+            // Aggiungi traverse per questa riga
+            for (let i = 0; i < this.sleepersPerRow && sleeperIndex < this.globalRailMesh.count; i++) {
+                const x = this.sleeperOffsets[i];
+                matrix.makeTranslation(x, 0.2, z);
+                this.globalRailMesh.setMatrixAt(sleeperIndex, matrix);
+                sleeperIndex++;
+            }
+            
+            // Aggiungi i 2 binari metallici per questa riga
+            if (railIndex < this.globalRailsMesh.count) {
+                // Binario sinistro
+                matrix.makeTranslation(0, 0.28, z - 0.32);
+                this.globalRailsMesh.setMatrixAt(railIndex, matrix);
+                railIndex++;
+                
+                // Binario destro
+                matrix.makeTranslation(0, 0.28, z + 0.32);
+                this.globalRailsMesh.setMatrixAt(railIndex, matrix);
+                railIndex++;
+            }
+        }
+        
+        this.globalRailMesh.instanceMatrix.needsUpdate = true;
+        this.globalRailsMesh.instanceMatrix.needsUpdate = true;
+    }
+    
+    // NUOVO: Aggiunge una riga rotaia al sistema globale
+    addRailRow(z) {
+        if (this.railRowsZ.has(z)) return; // Già presente
+        
+        this.railRowsZ.add(z);
+        
+        // Aggiorna il count delle istanze
+        this.globalRailMesh.count = this.railRowsZ.size * this.sleepersPerRow;
+        this.globalRailsMesh.count = this.railRowsZ.size * 2;
+        
+        // Ricostruisci la mesh (necessario per aggiungere nuove righe)
+        this.updateGlobalRailMesh();
+    }
+    
+    // NUOVO: Rimuove una riga rotaia dal sistema globale
+    removeRailRow(z) {
+        if (!this.railRowsZ.has(z)) return;
+        
+        this.railRowsZ.delete(z);
+        
+        // Aggiorna il count delle istanze
+        this.globalRailMesh.count = this.railRowsZ.size * this.sleepersPerRow;
+        this.globalRailsMesh.count = this.railRowsZ.size * 2;
+        
+        // Ricostruisci la mesh
+        this.updateGlobalRailMesh();
+    }
+    
+    // =====================================================
+    // TERRAIN TILES - Metodi per InstancedMesh
+    // =====================================================
+    
+    // Aggiunge una riga di tiles al sistema InstancedMesh
+    addTerrainRow(z, type) {
+        const mesh = this.terrainMeshes[type];
+        const positions = this.terrainTilePositions[type];
+        const matrix = new THREE.Matrix4();
+        
+        for (let x = -12; x <= 12; x++) {
+            const key = `${x},${z}`;
+            if (positions.has(key)) continue; // Già presente
+            
+            const index = mesh.count;
+            if (index >= this.maxTilesPerType) {
+                console.warn(`⚠️ Max tiles reached for type ${type}`);
+                return;
+            }
+            
+            // Solo l'acqua ha y=-0.25 per effetto profondità
+            const tileY = (type === 'water') ? -0.25 : 0;
+            matrix.makeTranslation(x, tileY, z);
+            mesh.setMatrixAt(index, matrix);
+            
+            positions.set(key, index);
+            mesh.count++;
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+    }
+    
+    // Rimuove una riga di tiles dal sistema InstancedMesh
+    removeTerrainRow(z, type) {
+        const mesh = this.terrainMeshes[type];
+        const positions = this.terrainTilePositions[type];
+        const matrix = new THREE.Matrix4();
+        
+        // Trova tutti i tiles da rimuovere
+        const toRemove = [];
+        for (let x = -12; x <= 12; x++) {
+            const key = `${x},${z}`;
+            if (positions.has(key)) {
+                toRemove.push({ key, index: positions.get(key) });
+            }
+        }
+        
+        if (toRemove.length === 0) return;
+        
+        // Rimuovi sostituendo con l'ultimo elemento (swap-and-pop)
+        toRemove.sort((a, b) => b.index - a.index); // Ordina per indice decrescente
+        
+        for (const { key, index } of toRemove) {
+            const lastIndex = mesh.count - 1;
+            
+            if (index < lastIndex) {
+                // Copia l'ultimo elemento nella posizione da rimuovere
+                const lastMatrix = new THREE.Matrix4();
+                mesh.getMatrixAt(lastIndex, lastMatrix);
+                mesh.setMatrixAt(index, lastMatrix);
+                
+                // Aggiorna la mappa delle posizioni
+                for (const [k, v] of positions.entries()) {
+                    if (v === lastIndex) {
+                        positions.set(k, index);
+                        break;
+                    }
+                }
+            }
+            
+            positions.delete(key);
+            mesh.count--;
+        }
+        
+        mesh.instanceMatrix.needsUpdate = true;
+    }
+    
+    // Ricostruisce tutte le InstancedMesh dei terrain (usato dopo clear)
+    rebuildAllTerrainMeshes() {
+        const matrix = new THREE.Matrix4();
+        
+        for (const type of this.terrainTypes) {
+            const mesh = this.terrainMeshes[type];
+            const positions = this.terrainTilePositions[type];
+            
+            let index = 0;
+            for (const [key, _] of positions.entries()) {
+                const [x, z] = key.split(',').map(Number);
+                const tileY = (type === 'water') ? -0.25 : 0;
+                matrix.makeTranslation(x, tileY, z);
+                mesh.setMatrixAt(index, matrix);
+                positions.set(key, index);
+                index++;
+            }
+            mesh.count = index;
+            mesh.instanceMatrix.needsUpdate = true;
+        }
     }
     
     generateInitialTerrain() {
@@ -140,41 +363,25 @@ class TerrainGenerator {
     }
     
     createRow(z, type) {
-        const rowStart = performance.now();
         const row = {
             z: z,
             type: type,
-            tiles: [],
+            tiles: [], // Non più usato per mesh individuali, ma manteniamo per compatibilità
             decorations: [],
             obstacles: []
         };
         
-        // Create tiles across the row (optimized coverage)
-        // Playable area is -7 to +7, generate -12 to +12 for visual coverage
-        // PERFORMANCE: Reduced from -18/+18 to -12/+12 (37 tiles -> 25 tiles = 32% less geometry)
-        const tilesStart = performance.now();
-        for (let x = -12; x <= 12; x++) {
-            const tile = Models.createTerrainBlock(type);
-            tile.position.set(x, 0, z);
-            this.scene.add(tile);
-            row.tiles.push(tile);
-        }
-        const tilesTime = performance.now() - tilesStart;
+        // OTTIMIZZATO: Usa InstancedMesh invece di mesh individuali
+        // Questo riduce i draw calls da ~25 per riga a 0 (gestito globalmente)
+        this.addTerrainRow(z, type);
         
         // Add decorations based on type
-        const decorationsStart = performance.now();
         if (type === 'grass') {
             this.addGrassDecorations(row);
         } else if (type === 'rail') {
             this.addRailDecorations(row);
         } else if (type === 'water') {
             this.addWaterDecorations(row);
-        }
-        const decorationsTime = performance.now() - decorationsStart;
-        
-        const totalRowTime = performance.now() - rowStart;
-        if (totalRowTime > 5) {
-            console.warn(`⚠️ SLOW ROW CREATE z=${z} type=${type}: ${totalRowTime.toFixed(2)}ms (tiles: ${tilesTime.toFixed(2)}ms, decorations: ${decorationsTime.toFixed(2)}ms)`);
         }
         
         this.rows.push(row);
@@ -186,98 +393,94 @@ class TerrainGenerator {
     }
     
     addGrassDecorations(row) {
-        const grassStart = performance.now();
-        const decorationChance = 0.4;
-        const isBarrier = row.isBarrier; // Dense obstacles behind spawn
-        const isSafeZone = row.isSafeZone; // Safe zone at spawn - no obstacles
+        const decorationChance = 0.35; // Densità originale
+        const isBarrier = row.isBarrier;
+        const isSafeZone = row.isSafeZone;
         
-        let treeCount = 0, rockCount = 0, grassCount = 0, flowerCount = 0;
-        let createTime = 0, addTime = 0;
-        
-        for (let x = -12; x <= 12; x++) {
-            // Create natural borders with trees/rocks at edges
-            const isEdge = x === -8 || x === 8;
-            const isOutside = x < -8 || x > 8;
-            const isPlayable = x >= -7 && x <= 7;
+        // Genera decorazioni ogni 1 unità x (densità originale)
+        for (let x = -12; x <= 12; x += 1) {
+            const roundedX = Math.round(x);
+            const isEdge = roundedX === -8 || roundedX === 8;
+            const isOutside = roundedX < -8 || roundedX > 8;
+            const isPlayable = roundedX >= -7 && roundedX <= 7;
             
             // DENSE OBSTACLES IN BARRIER ZONE (behind spawn point)
-            if (isBarrier && isPlayable && Math.random() < 0.8) {
-                const createStart = performance.now();
+            if (isBarrier && isPlayable && Math.random() < 0.6) {
                 const decoration = Math.random() < 0.7 ? Models.createTree() : Models.createRock();
-                createTime += performance.now() - createStart;
                 decoration.userData.isObstacle = true;
-                decoration.userData.gridX = x;
+                decoration.userData.gridX = roundedX;
                 decoration.userData.gridZ = row.z;
                 decoration.position.set(x, 0.2, row.z);
                 decoration.scale.multiplyScalar(1.3);
-                const addStart = performance.now();
                 this.scene.add(decoration);
-                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
-                if (decoration.userData.isTree) treeCount++; else rockCount++;
                 continue;
             }
             
             // Force obstacles at borders for visual boundary
-            if (isEdge && Math.random() < 0.7) {
-                const createStart = performance.now();
+            if (isEdge && Math.random() < 0.5) {
                 const decoration = Math.random() < 0.5 ? Models.createTree() : Models.createRock();
-                createTime += performance.now() - createStart;
                 decoration.userData.isObstacle = true;
-                decoration.userData.gridX = x;
+                decoration.userData.gridX = roundedX;
                 decoration.userData.gridZ = row.z;
                 decoration.position.set(x, 0.2, row.z);
-                decoration.scale.multiplyScalar(1.2); // Slightly bigger at edges
-                const addStart = performance.now();
+                decoration.scale.multiplyScalar(1.2);
                 this.scene.add(decoration);
-                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
-                if (decoration.userData.isTree) treeCount++; else rockCount++;
             }
-            // Sparse decorations outside playable area (reduced from 60% to 25%)
+            // Decorazioni fuori dall'area giocabile - alberi, rocce e fiori
             else if (isOutside && Math.random() < 0.25) {
-                const createStart = performance.now();
                 const rand = Math.random();
-                const decoration = rand < 0.5 ? Models.createTree() : 
-                                 rand < 0.8 ? Models.createRock() : Models.createFlower();
-                createTime += performance.now() - createStart;
+                let decoration;
+                if (rand < 0.4) {
+                    decoration = Models.createTree();
+                } else if (rand < 0.7) {
+                    decoration = Models.createRock();
+                } else {
+                    decoration = Models.createFlower();
+                }
                 decoration.position.set(
                     x + (Math.random() - 0.5) * 0.8,
                     0.2,
                     row.z + (Math.random() - 0.5) * 0.8
                 );
-                const addStart = performance.now();
                 this.scene.add(decoration);
-                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
-                if (decoration.userData.isTree) treeCount++;
-                else if (decoration.userData.isRock) rockCount++;
-                else if (decoration.userData.isFlower) flowerCount++;
             }
-            // Normal decorations in playable area
+            // Decorazioni nell'area giocabile
             else if (isPlayable && Math.random() < decorationChance) {
-                const createStart = performance.now();
                 const rand = Math.random();
                 let decoration;
                 
-                // In safe zone, only allow non-obstacle decorations (grass/flowers)
+                // Safe zone: solo decorazioni non-ostacolo (fiori e erba)
                 if (isSafeZone) {
-                    decoration = rand < 0.5 ? Models.createGrassTuft() : Models.createFlower();
-                } else if (rand < 0.6) { // More grass/flowers
-                    decoration = rand < 0.3 ? Models.createGrassTuft() : Models.createFlower();
-                } else if (rand < 0.85) {
+                    if (rand < 0.5) {
+                        decoration = Models.createFlower();
+                    } else {
+                        decoration = Models.createGrassTuft();
+                    }
+                }
+                // Area normale: mix di ostacoli e decorazioni
+                else if (rand < 0.2) {
+                    // Rocce come ostacoli
                     decoration = Models.createRock();
                     decoration.userData.isObstacle = true;
-                    decoration.userData.gridX = x;
+                    decoration.userData.gridX = roundedX;
                     decoration.userData.gridZ = row.z;
-                    decoration.scale.multiplyScalar(1.5); // Make rocks bigger!
-                } else {
+                    decoration.scale.multiplyScalar(1.5);
+                } else if (rand < 0.35) {
+                    // Alberi come ostacoli
                     decoration = Models.createTree();
                     decoration.userData.isObstacle = true;
-                    decoration.userData.gridX = x;
+                    decoration.userData.gridX = roundedX;
                     decoration.userData.gridZ = row.z;
+                } else if (rand < 0.65) {
+                    // Fiori decorativi
+                    decoration = Models.createFlower();
+                } else {
+                    // Ciuffi d'erba
+                    decoration = Models.createGrassTuft();
                 }
-                createTime += performance.now() - createStart;
                 
                 decoration.position.set(
                     x + (Math.random() - 0.5) * 0.6,
@@ -285,46 +488,21 @@ class TerrainGenerator {
                     row.z + (Math.random() - 0.5) * 0.6
                 );
                 
-                const addStart = performance.now();
                 this.scene.add(decoration);
-                addTime += performance.now() - addStart;
                 row.decorations.push(decoration);
-                if (decoration.userData.isTree) treeCount++;
-                else if (decoration.userData.isRock) rockCount++;
-                else if (decoration.userData.isGrass) grassCount++;
-                else if (decoration.userData.isFlower) flowerCount++;
             }
-        }
-        
-        const grassTime = performance.now() - grassStart;
-        if (grassTime > 3) {
-            console.warn(`🌿 SLOW GRASS z=${row.z}: ${grassTime.toFixed(2)}ms | Trees:${treeCount} Rocks:${rockCount} Grass:${grassCount} Flowers:${flowerCount} | Create:${createTime.toFixed(2)}ms Add:${addTime.toFixed(2)}ms`);
         }
     }
     
     addRailDecorations(row) {
-        const railStart = performance.now();
+        // NUOVO: Usa il sistema globale InstancedMesh invece di creare oggetti individuali
+        // Questo elimina completamente il lag!
+        this.addRailRow(row.z);
         
-        // Get pre-cached rail track from pool (or create if pool exhausted)
-        const trackStart = performance.now();
-        let track;
-        if (this.railTrackPool.length > 0) {
-            track = this.railTrackPool.pop();
-            track.visible = true;
-        } else {
-            console.warn('⚠️ Rail pool exhausted, creating new track');
-            track = Models.createRailTrack();
-            this.scene.add(track);
-        }
-        // OPTIMIZED: Direct matrix update instead of position.set()
-        track.position.z = row.z;
-        track.updateMatrixWorld(true);
-        track.userData.isRailTrack = true;
-        row.decorations.push(track);
-        const trackTime = performance.now() - trackStart;
+        // Marca la riga come rotaia per il cleanup
+        row.isRailRow = true;
         
         // Get pre-cached warning lights from pool
-        const lightsStart = performance.now();
         let leftLight, rightLight;
         if (this.warningLightPool.length >= 2) {
             leftLight = this.warningLightPool.pop();
@@ -339,84 +517,67 @@ class TerrainGenerator {
             this.scene.add(rightLight);
         }
         
-        // OPTIMIZED: Batch position updates
-        leftLight.position.x = -4;
-        leftLight.position.z = row.z - 0.6;
-        leftLight.rotation.y = Math.PI; // Face the tracks
-        leftLight.updateMatrixWorld(true);
+        // Posiziona le luci di avvertimento
+        leftLight.position.set(-4, 0, row.z - 0.6);
+        leftLight.rotation.y = Math.PI;
         leftLight.userData.isWarningLight = true;
         row.decorations.push(leftLight);
         
-        rightLight.position.x = 4;
-        rightLight.position.z = row.z - 0.6;
-        rightLight.rotation.y = Math.PI; // Face the tracks
-        rightLight.updateMatrixWorld(true);
+        rightLight.position.set(4, 0, row.z - 0.6);
+        rightLight.rotation.y = Math.PI;
         rightLight.userData.isWarningLight = true;
         row.decorations.push(rightLight);
-        const lightsTime = performance.now() - lightsStart;
-        
-        const railTime = performance.now() - railStart;
-        if (railTime > 2) {
-            console.warn(`🚂 RAIL z=${row.z}: ${railTime.toFixed(2)}ms | Track:${trackTime.toFixed(2)}ms Lights:${lightsTime.toFixed(2)}ms`);
-        }
         
         // Store lights for flashing when train comes
         row.warningLights = [leftLight, rightLight];
     }
     
     addWaterDecorations(row) {
-        // Add waterfalls at the edges (±7.5 is edge of playable area)
-        // Left waterfall
+        // Cascate su ogni riga d'acqua (come prima)
         const leftWaterfall = this.createWaterfall();
-        leftWaterfall.position.set(-7.5, 0.3, row.z);
+        leftWaterfall.position.set(-7.5, 0.05, row.z);
         this.scene.add(leftWaterfall);
         row.decorations.push(leftWaterfall);
         row.leftWaterfall = leftWaterfall;
         
-        // Right waterfall
         const rightWaterfall = this.createWaterfall();
-        rightWaterfall.position.set(7.5, 0.3, row.z);
+        rightWaterfall.position.set(7.5, 0.05, row.z);
         this.scene.add(rightWaterfall);
         row.decorations.push(rightWaterfall);
         row.rightWaterfall = rightWaterfall;
     }
     
     createWaterfall() {
-        // Create a waterfall effect - horizontal flowing water
+        // OTTIMIZZATO: Usa materiali condivisi (creati una sola volta)
+        if (!TerrainGenerator.waterfallMaterial) {
+            TerrainGenerator.waterfallMaterial = new THREE.MeshBasicMaterial({
+                color: 0xaaddff,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            TerrainGenerator.waterfallGeometry = new THREE.PlaneGeometry(2, 1);
+            TerrainGenerator.foamMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.9
+            });
+        }
+        
         const waterfallGroup = new THREE.Group();
         
-        // Main waterfall plane - horizontal on ground
-        const geometry = new THREE.PlaneGeometry(2, 1); // Long along Z, narrow along X
-        const material = new THREE.MeshBasicMaterial({
-            color: 0xaaddff, // Light blue-white
-            transparent: true,
-            opacity: 0.7,
-            side: THREE.DoubleSide
-        });
-        
-        const waterfall = new THREE.Mesh(geometry, material);
-        waterfall.rotation.x = -Math.PI / 2; // Flat on ground
-        waterfall.position.y = 0.1; // Slightly above water
+        const waterfall = new THREE.Mesh(TerrainGenerator.waterfallGeometry, TerrainGenerator.waterfallMaterial);
+        waterfall.rotation.x = -Math.PI / 2;
+        waterfall.position.y = 0.1;
         waterfallGroup.add(waterfall);
         
-        // Add foam particles that flow horizontally - OPTIMIZED
+        // 2 particelle di schiuma per riga
         const foamGeometry = GeometryPool.getBoxGeometry(0.3, 0.2, 0.3);
-        const foamMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.9
-        });
-        
         waterfallGroup.userData.foamParticles = [];
-        waterfallGroup.userData.direction = 0; // Will be set based on position
         
-        for (let i = 0; i < 6; i++) {
-            const foam = new THREE.Mesh(foamGeometry, foamMaterial);
-            foam.position.set(
-                0, // Will move along X
-                0.15,
-                (Math.random() - 0.5) * 0.8 // Random Z position
-            );
+        for (let i = 0; i < 2; i++) {
+            const foam = new THREE.Mesh(foamGeometry, TerrainGenerator.foamMaterial);
+            foam.position.set(0, 0.15, (Math.random() - 0.5) * 0.8);
             foam.userData.animOffset = Math.random() * Math.PI * 2;
             foam.userData.flowSpeed = 0.03 + Math.random() * 0.04;
             foam.userData.startX = (Math.random() - 0.5) * 1.5;
@@ -434,8 +595,8 @@ class TerrainGenerator {
             this.currentScore = currentScore;
         }
         
-        // Animate only waterfalls near player (optimization)
-        const animationDistance = 20;
+        // Anima le cascate vicine al giocatore
+        const animationDistance = 15;
         this.rows.forEach(row => {
             if (Math.abs(row.z - playerZ) < animationDistance) {
                 if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall, normalizedDelta);
@@ -444,7 +605,7 @@ class TerrainGenerator {
         });
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
-        const generationDistance = 15; // Reduced for better performance
+        const generationDistance = 15;
         if (this.currentMaxZ < playerZ + generationDistance) {
             // Generate only 1 row per frame to avoid lag spikes
             if (!this.currentZoneRows || this.currentZoneRows <= 0) {
@@ -462,35 +623,29 @@ class TerrainGenerator {
         this.cleanupCounter++;
         if (this.cleanupCounter % 10 !== 0) return;
         
-        const cleanupDistance = 12; // Reduced for better performance
+        const cleanupDistance = 12;
         this.rows = this.rows.filter(row => {
             if (row.z < playerZ - cleanupDistance) {
-                // Remove all meshes
-                row.tiles.forEach(tile => {
-                    this.scene.remove(tile);
-                    tile.geometry.dispose();
-                    tile.material.dispose();
-                });
+                // OTTIMIZZATO: Rimuovi tiles dalla InstancedMesh
+                this.removeTerrainRow(row.z, row.type);
+                
+                // Rimuovi la riga rotaia dal sistema globale
+                if (row.isRailRow) {
+                    this.removeRailRow(row.z);
+                }
+                
                 row.decorations.forEach(dec => {
-                    // Return pooled objects for reuse
-                    if (dec.userData.isRailTrack) {
-                        dec.visible = false;
-                        dec.position.set(0, 0, 0);
-                        this.railTrackPool.push(dec);
-                    } else if (dec.userData.isWarningLight) {
+                    // Return warning lights to pool
+                    if (dec.userData.isWarningLight) {
                         dec.visible = false;
                         dec.position.set(0, 0, 0);
                         dec.rotation.y = 0;
                         this.warningLightPool.push(dec);
                     } else {
-                        // Normal disposal for non-pooled objects
+                        // Normal disposal
                         this.scene.remove(dec);
-                        // Skip geometry/material disposal for pooled materials
-                        dec.traverse(child => {
-                            if (child.isMesh) {
-                                this.scene.remove(child);
-                            }
-                        });
+                        if (dec.geometry) dec.geometry.dispose();
+                        if (dec.material) dec.material.dispose();
                     }
                 });
                 return false;
@@ -502,24 +657,24 @@ class TerrainGenerator {
     animateWaterfall(waterfall, normalizedDelta = 1) {
         if (!waterfall.userData.foamParticles) return;
         
-        // Determine flow direction based on waterfall position (left = flow left, right = flow right)
+        // Direzione del flusso basata sulla posizione
         const isLeftSide = waterfall.position.x < 0;
-        const flowDirection = isLeftSide ? -1 : 1; // Left side flows left (negative X), right side flows right (positive X)
+        const flowDirection = isLeftSide ? -1 : 1;
         
-        // Animate foam particles flowing horizontally (frame rate independent)
+        // Anima le particelle di schiuma
         waterfall.userData.foamParticles.forEach(foam => {
             foam.position.x += foam.userData.flowSpeed * flowDirection * normalizedDelta;
-            foam.rotation.y += 0.08 * normalizedDelta; // Spin horizontally
+            foam.rotation.y += 0.08 * normalizedDelta;
             foam.rotation.z += 0.03 * normalizedDelta;
             
-            // Reset when flowing too far
+            // Reset quando escono dall'area
             if ((isLeftSide && foam.position.x < -1.5) || (!isLeftSide && foam.position.x > 1.5)) {
                 foam.position.x = foam.userData.startX;
                 foam.position.z = (Math.random() - 0.5) * 0.8;
             }
         });
         
-        // Pulse the main waterfall opacity
+        // Effetto pulsante sull'opacità
         if (waterfall.children[0]) {
             const time = Date.now() * 0.002;
             waterfall.children[0].material.opacity = 0.6 + Math.sin(time) * 0.15;
@@ -563,20 +718,38 @@ class TerrainGenerator {
     
     clear() {
         this.rows.forEach(row => {
-            row.tiles.forEach(tile => {
-                this.scene.remove(tile);
-                tile.geometry.dispose();
-                tile.material.dispose();
-            });
+            // Non più necessario rimuovere tiles individuali - usiamo InstancedMesh
             row.decorations.forEach(dec => {
-                this.scene.remove(dec);
-                dec.traverse(child => {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
-                });
+                // Restituisci le warning lights al pool invece di distruggerle
+                if (dec.userData.isWarningLight) {
+                    dec.visible = false;
+                    dec.position.set(0, 0, 0);
+                    dec.rotation.y = 0;
+                    this.warningLightPool.push(dec);
+                } else {
+                    this.scene.remove(dec);
+                    dec.traverse(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                }
             });
         });
         this.rows = [];
         this.currentMaxZ = 0;
+        
+        // Reset del sistema rotaie globale
+        this.railRowsZ.clear();
+        this.globalRailMesh.count = 0;
+        this.globalRailMesh.instanceMatrix.needsUpdate = true;
+        this.globalRailsMesh.count = 0;
+        this.globalRailsMesh.instanceMatrix.needsUpdate = true;
+        
+        // Reset delle InstancedMesh terrain
+        for (const type of this.terrainTypes) {
+            this.terrainMeshes[type].count = 0;
+            this.terrainMeshes[type].instanceMatrix.needsUpdate = true;
+            this.terrainTilePositions[type].clear();
+        }
     }
 }

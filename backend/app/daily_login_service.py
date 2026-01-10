@@ -142,12 +142,14 @@ class DailyLoginService:
             Transaction details and updated status
             
         Raises:
-            ValueError: If reward already claimed today or user not found
+            ValueError: If reward already claimed today, user not found, or user is anonymous
         """
-        # Verify user exists
+        # Verify user exists and is not anonymous
         user = self.db.query(User).filter(User.user_id == user_id).first()
         if not user:
             raise ValueError("User not found")
+        if user.is_anonymous:
+            raise ValueError("Anonymous users cannot claim daily login rewards")
         
         # Get user's daily login record
         daily_login = self.db.query(UserLoginStreak).filter(

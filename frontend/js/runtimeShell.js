@@ -1109,13 +1109,13 @@ export default class RuntimeShell {
 
         document.body.appendChild(notification);
 
-        // Remove after animation
+        // Remove after 3.5 seconds (same duration as in-game banner)
         setTimeout(() => {
             notification.classList.add('hiding');
             setTimeout(() => {
                 notification.remove();
             }, 500);
-        }, 10000);
+        }, 3500);
     }
 
     /**
@@ -1124,8 +1124,20 @@ export default class RuntimeShell {
     showLevelUpNotification(levelUpData) {
         const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
+        // Check if user is anonymous
+        const currentUser = window.AuthManager?.currentUser;
+        const isAnonymous = currentUser?.is_anonymous === true;
+
+        // Add user_data to levelUpData for games to check
+        const enrichedLevelUpData = {
+            ...levelUpData,
+            user_data: {
+                is_anonymous: isAnonymous
+            }
+        };
+
         // Try to show notification inside the game iframe first (if game supports it)
-        this.sendMessage('showLevelUpModal', levelUpData);
+        this.sendMessage('showLevelUpModal', enrichedLevelUpData);
 
         const modal = document.createElement('div');
         modal.className = 'level-up-modal';
@@ -1145,7 +1157,7 @@ export default class RuntimeShell {
                 </div>
                 <div class="level-up-new-title">${title}</div>
                 ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-                ${coins_awarded > 0 ? `
+                ${!isAnonymous && coins_awarded > 0 ? `
                     <div class="level-up-reward">
                         <span class="reward-icon">🪙</span>
                         <span class="reward-amount">+${coins_awarded} Coins</span>

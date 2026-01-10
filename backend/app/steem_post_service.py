@@ -143,7 +143,7 @@ class SteemPostService:
             return ""
         
         lines = []
-        lines.append("### 🏆 Leaderboard Rankings")
+        lines.append("### 🏆 Weekly Leaderboard Rankings")
         lines.append("")
         lines.append("Here are my current positions:")
         lines.append("")

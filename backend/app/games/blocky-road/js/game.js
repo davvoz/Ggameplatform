@@ -75,7 +75,10 @@ class BlockyRoadGame {
      * Show level-up notification
      */
     showLevelUpNotification(levelUpData) {
-        const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
+        const { old_level, new_level, title, badge, coins_awarded, is_milestone, user_data } = levelUpData;
+
+        // Check if user is anonymous (from levelUpData or fallback to checking window.parent)
+        const isAnonymous = user_data?.is_anonymous === true;
 
         const modal = document.createElement('div');
         modal.className = 'level-up-modal';
@@ -95,7 +98,7 @@ class BlockyRoadGame {
                 </div>
                 <div class="level-up-new-title">${title}</div>
                 ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-                ${coins_awarded > 0 ? `
+                ${!isAnonymous && coins_awarded > 0 ? `
                     <div class="level-up-reward">
                         <span class="reward-icon">🪙</span>
                         <span class="reward-amount">+${coins_awarded} Coins</span>

@@ -343,56 +343,6 @@ class SteemPostModal {
             }, 300);
         }
     }
-
-    /**
-     * Simple markdown-like rendering (basic support)
-     */
-    _renderMarkdown(markdown) {
-        // This is a simplified version - in production, use a proper markdown library
-        let html = markdown;
-        
-        // Convert headers
-        html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
-        html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
-        
-        // Convert bold
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Convert lists
-        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-        
-        // Convert line breaks
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = '<p>' + html + '</p>';
-        
-        // Clean up
-        html = html.replace(/<p><\/p>/g, '');
-        html = html.replace(/<p>(<h[234]>)/g, '$1');
-        html = html.replace(/(<\/h[234]>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<ul>)/g, '$1');
-        html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-        html = html.replace(/<p><center>/g, '<center>');
-        html = html.replace(/<\/center><\/p>/g, '</center>');
-        html = html.replace(/<p>---<\/p>/g, '<hr>');
-        
-        return html;
-    }
-
-    /**
-     * Escape HTML to prevent XSS
-     */
-    _escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
-    }
 }
 
 // Export

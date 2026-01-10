@@ -23,6 +23,12 @@ class DailyLoginBanner {
             return;
         }
         
+        // Block anonymous users from daily login rewards
+        if (user.is_anonymous) {
+            console.log('DailyLoginBanner: Skipping initialization for anonymous user');
+            return;
+        }
+        
         console.log('DailyLoginBanner: Initializing for user', user.user_id);
         this.currentUser = user;
         await this.createBanner();

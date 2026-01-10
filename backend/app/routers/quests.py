@@ -319,35 +319,51 @@ async def claim_quest_reward(
             coins_awarded = coin_result.get('amount', 0)
             print(f"✅ Awarded {coins_awarded} coins to {user_id} for quest {quest_id}")
 
-    # If level up happened, award level-up rewards (coins) as well, unless the level
-    # is one that is handled by dedicated quest rewards (to avoid duplicates)
+    # If level up happened, award level-up rewards (coins) for ALL levels gained (skip for anonymous users)
     level_up_coins = 0
-    if level_up:
+    levels_rewarded = []
+    
+    if level_up and not user.is_anonymous:
         try:
-            # Award level-up coins for the new level if configured.
-            # Removed the previous exception for quest-based milestone levels —
-            # now level-up rewards are always applied when present.
-            rewards = LevelSystem.get_level_up_rewards(new_level)
-            coins_for_level = int(rewards.get('coins', 0) or 0)
-            if coins_for_level > 0:
+            # Use check_level_up to get ALL levels with rewards
+            old_xp = user.total_xp_earned - quest.reward_xp  # XP before quest
+            new_xp = user.total_xp_earned  # XP after quest
+            level_up_info = LevelSystem.check_level_up(old_xp, new_xp)
+            
+            levels_with_rewards = level_up_info.get('levels_with_rewards', [])
+            
+            if levels_with_rewards:
                 coins_repo = RepositoryFactory.create_usercoins_repository(db)
                 transaction_repo = RepositoryFactory.create_cointransaction_repository(db)
                 coin_service = ServiceFactory.create_coin_service(coins_repo, transaction_repo)
-                try:
-                    coin_service.award_coins(
-                        user_id=user_id,
-                        amount=coins_for_level,
-                        transaction_type='level_up',
-                        source_id=str(new_level),
-                        description=f"Level {new_level} reached",
-                        extra_data={"source": "level_up", "level": new_level}
-                    )
-                    level_up_coins = coins_for_level
-                    print(f"✅ Awarded {level_up_coins} level-up coins to {user_id} for reaching level {new_level}")
-                except Exception as e:
-                    print(f"[Quests] ⚠️ Failed to award level-up coins: {e}")
+                
+                # Award coins for EACH level that has rewards
+                for level_data in levels_with_rewards:
+                    level = level_data['level']
+                    coins_for_level = level_data['coins']
+                    
+                    if coins_for_level > 0:
+                        try:
+                            coin_service.award_coins(
+                                user_id=user_id,
+                                amount=coins_for_level,
+                                transaction_type='level_up',
+                                source_id=str(level),
+                                description=f"Level {level} reached",
+                                extra_data={"source": "level_up", "level": level}
+                            )
+                            level_up_coins += coins_for_level
+                            levels_rewarded.append({"level": level, "coins": coins_for_level})
+                            print(f"✅ Awarded {coins_for_level} level-up coins to {user_id} for reaching level {level}")
+                        except Exception as e:
+                            print(f"[Quests] ⚠️ Failed to award level-up coins for level {level}: {e}")
+                
+                if level_up_coins > 0:
+                    print(f"[Quests] 💰 Total level-up coins awarded: {level_up_coins} across {len(levels_rewarded)} levels")
         except Exception as e:
             print(f"[Quests] ⚠️ Error checking/awarding level-up rewards: {e}")
+    elif level_up and user.is_anonymous:
+        print(f"[Quests] ⚠️ Skipping coin rewards for anonymous user")
     
     db.commit()
     db.refresh(progress)
@@ -359,6 +375,7 @@ async def claim_quest_reward(
         "xp_reward": quest.xp_reward,
         "reward_coins": coins_awarded,
         "level_up_coins": level_up_coins,
+        "levels_rewarded": levels_rewarded,  # List of all levels that got rewards
         "total_xp": user.total_xp_earned,
         "claimed_at": now,
         "level_up": level_up,

@@ -161,30 +161,8 @@ class ObstacleManager {
                 });
             }
             
-            // Fade-out animation when approaching edge (beyond ±8)
-            const distanceFromCenter = Math.abs(obstacle.mesh.position.x);
-            if (distanceFromCenter > 8) {
-                // Start fading at x > 8, fully transparent at x > 12
-                const fadeProgress = (distanceFromCenter - 8) / 4;
-                const opacity = Math.max(0, 1 - fadeProgress);
-                
-                // Cache materials on first fade to avoid repeated traverse
-                if (!obstacle.cachedMaterials) {
-                    obstacle.cachedMaterials = [];
-                    obstacle.mesh.traverse(child => {
-                        if (child.material) {
-                            child.userData.originalOpacity = child.material.opacity || 1;
-                            child.material.transparent = true;
-                            obstacle.cachedMaterials.push(child.material);
-                        }
-                    });
-                }
-                
-                // Fast opacity update without traverse
-                obstacle.cachedMaterials.forEach((mat, i) => {
-                    mat.opacity = mat.userData?.originalOpacity * opacity || opacity;
-                });
-            }
+            // NO FADE-OUT - rimuove shader compilation lag
+            // I veicoli semplicemente si teletrasportano (wrap around) come in Crossy Road
             
             // Different behavior for trains vs vehicles
             if (obstacle.type === 'train') {
@@ -195,32 +173,17 @@ class ObstacleManager {
                     this.obstacles.splice(index, 1);
                 }
             } else {
-                // Vehicles wrap around (Crossy Road style)
+                // Vehicles wrap around instantly (Crossy Road style) - NO fade
                 if (obstacle.mesh.position.x > 12 && obstacle.velocity > 0) {
                     obstacle.mesh.position.x = -12;
-                    // Reset opacity using cached materials
-                    if (obstacle.cachedMaterials) {
-                        obstacle.cachedMaterials.forEach(mat => {
-                            mat.opacity = mat.userData?.originalOpacity || 1;
-                        });
-                    }
                 } else if (obstacle.mesh.position.x < -12 && obstacle.velocity < 0) {
                     obstacle.mesh.position.x = 12;
-                    // Reset opacity using cached materials
-                    if (obstacle.cachedMaterials) {
-                        obstacle.cachedMaterials.forEach(mat => {
-                            mat.opacity = mat.userData?.originalOpacity || 1;
-                        });
-                    }
                 }
                 
                 // Remove vehicles if too far (safety)
                 if (Math.abs(obstacle.mesh.position.x) > 15) {
                     this.scene.remove(obstacle.mesh);
-                    obstacle.mesh.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) child.material.dispose();
-                    });
+                    // Don't dispose pooled geometries
                     this.obstacles.splice(index, 1);
                 }
             }

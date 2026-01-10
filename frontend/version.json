@@ -1,8 +1,18 @@
 {
-  "version": "3.7.7",
-  "timestamp": "2026-01-10T23:13:04.330Z",
-  "buildNumber": 227,
+  "version": "3.7.8",
+  "timestamp": "2026-01-10T23:45:43.953Z",
+  "buildNumber": 228,
   "changelog": [
+    {
+      "version": "3.7.8",
+      "date": "2026-01-10",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: adjust jump duration and add road markings between consecutive road rows",
+        "🔖 Bump version to 3.7.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.7",
       "date": "2026-01-10",
@@ -84,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[MTD]add game mechanics and UI for improved gameplay experience",
         "🔖 Bump version to 3.6.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.6.2",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "refactor: Optimize profile rendering by loading multiplier breakdown asynchronously",
-        "🔖 Bump version to 3.6.1 [skip-version]"
       ]
     }
   ]

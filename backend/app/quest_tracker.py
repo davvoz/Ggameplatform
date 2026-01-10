@@ -246,11 +246,10 @@ class QuestTracker:
         if quest_type == "play_games":
             user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
             
-            # Check for daily reset
+            # Check for daily reset - reset every day for daily quests
             reset_period = quest_config.get('reset_period')
-            reset_on_complete = quest_config.get('reset_on_complete', False)
             
-            if reset_period == 'daily' and reset_on_complete:
+            if reset_period == 'daily':
                 today = self._get_today_date()
                 stored_data = self._get_quest_extra_data(user_quest)
                 last_reset_date = stored_data.get('last_reset_date')
@@ -382,11 +381,10 @@ class QuestTracker:
                 
                 user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
                 
-                # Check for daily reset
+                # Check for daily reset - reset every day for daily quests
                 reset_period = quest_config.get('reset_period')
-                reset_on_complete = quest_config.get('reset_on_complete', False)
                 
-                if reset_period == 'daily' and reset_on_complete:
+                if reset_period == 'daily':
                     today = self._get_today_date()
                     stored_data = self._get_quest_extra_data(user_quest)
                     last_reset_date = stored_data.get('last_reset_date')

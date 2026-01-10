@@ -1,8 +1,17 @@
 {
-  "version": "3.7.3",
-  "timestamp": "2026-01-09T23:12:35.812Z",
-  "buildNumber": 223,
+  "version": "3.7.4",
+  "timestamp": "2026-01-10T00:44:28.199Z",
+  "buildNumber": 224,
   "changelog": [
+    {
+      "version": "3.7.4",
+      "date": "2026-01-10",
+      "type": "patch",
+      "changes": [
+        "Optimize terrain and rail systems using InstancedMesh for improved performance; remove fade-out effects for obstacles and streamline object pooling.",
+        "🔖 Bump version to 3.7.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.3",
       "date": "2026-01-09",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Update post footer to use static account reference",
         "🔖 Bump version to 3.5.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.5.4",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "fix: Add loading indicators for Steem data in profile rendering",
-        "🔖 Bump version to 3.5.3 [skip-version]"
       ]
     }
   ]

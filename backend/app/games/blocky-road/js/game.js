@@ -919,8 +919,10 @@ class BlockyRoadGame {
         this.dangerZonePlane.visible = true;
         this.dangerZonePlane.position.z = this.dangerZone;
         
-        // Pulsating effect for urgency
-        const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 0.4;
+        // Pulsating effect - usa counter invece di Date.now()
+        if (!this.dangerZoneAnimTime) this.dangerZoneAnimTime = 0;
+        this.dangerZoneAnimTime += 0.005 * normalizedDelta;
+        const pulse = Math.sin(this.dangerZoneAnimTime) * 0.1 + 0.4;
         this.dangerZonePlane.material.opacity = pulse;
         
         // Check if danger caught the player (with buffer)

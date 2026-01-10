@@ -123,9 +123,6 @@ class Player {
         // Jump animation with TWEEN
         this.animateJump(targetX, targetZ, onComplete);
         
-        // Create jump particles
-        this.particleSystem.createJumpParticles(this.mesh.position);
-        
         // Play jump sound
         if (window.game && window.game.audio) {
             window.game.audio.play('jump');

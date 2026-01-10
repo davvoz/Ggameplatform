@@ -26,6 +26,9 @@ class TerrainGenerator {
         
         // Pre-cache pool for warning lights only (rails now use global InstancedMesh)
         this.warningLightPool = [];
+        
+        // Animation time per cascate (invece di Date.now() ripetuto)
+        this.waterfallAnimTime = 0;
         this.initObjectPools();
         
         // Terrain zone definitions - EASY START (lots of grass, very rare trains)
@@ -509,6 +512,20 @@ class TerrainGenerator {
             rightLight = this.warningLightPool.pop();
             leftLight.visible = true;
             rightLight.visible = true;
+            
+            // Ensure lights are OFF when reused
+            [leftLight, rightLight].forEach(light => {
+                const lightMesh = light.children.find(c => c.userData.isWarningLight);
+                const pointLight = light.children.find(c => c.userData.isWarningPointLight);
+                if (lightMesh) {
+                    lightMesh.material.opacity = 0.1;
+                    lightMesh.material.emissive.setHex(0x000000);
+                    lightMesh.material.emissiveIntensity = 0;
+                }
+                if (pointLight) {
+                    pointLight.intensity = 0;
+                }
+            });
         } else {
             console.warn('⚠️ Warning light pool exhausted, creating new lights');
             leftLight = Models.createTrainWarningLight();
@@ -595,14 +612,19 @@ class TerrainGenerator {
             this.currentScore = currentScore;
         }
         
-        // Anima le cascate vicine al giocatore
+        // OTTIMIZZAZIONE: Anima solo le cascate vicine (evita forEach su tutte le righe)
         const animationDistance = 15;
-        this.rows.forEach(row => {
-            if (Math.abs(row.z - playerZ) < animationDistance) {
+        const minZ = Math.floor(playerZ - animationDistance);
+        const maxZ = Math.floor(playerZ + animationDistance);
+        
+        // Itera solo sulle righe vicine invece di tutte
+        for (let z = minZ; z <= maxZ; z++) {
+            const row = this.getRowAt(z);
+            if (row && row.type === 'water') {
                 if (row.leftWaterfall) this.animateWaterfall(row.leftWaterfall, normalizedDelta);
                 if (row.rightWaterfall) this.animateWaterfall(row.rightWaterfall, normalizedDelta);
             }
-        });
+        }
         
         // Generate new terrain ahead gradually (1 row at a time when needed)
         const generationDistance = 15;
@@ -640,6 +662,19 @@ class TerrainGenerator {
                         dec.visible = false;
                         dec.position.set(0, 0, 0);
                         dec.rotation.y = 0;
+                        
+                        // Reset material state to OFF
+                        const lightMesh = dec.children.find(c => c.userData.isWarningLight);
+                        const pointLight = dec.children.find(c => c.userData.isWarningPointLight);
+                        if (lightMesh) {
+                            lightMesh.material.opacity = 0.1;
+                            lightMesh.material.emissive.setHex(0x000000);
+                            lightMesh.material.emissiveIntensity = 0;
+                        }
+                        if (pointLight) {
+                            pointLight.intensity = 0;
+                        }
+                        
                         this.warningLightPool.push(dec);
                     } else {
                         // Normal disposal
@@ -657,9 +692,14 @@ class TerrainGenerator {
     animateWaterfall(waterfall, normalizedDelta = 1) {
         if (!waterfall.userData.foamParticles) return;
         
-        // Direzione del flusso basata sulla posizione
-        const isLeftSide = waterfall.position.x < 0;
-        const flowDirection = isLeftSide ? -1 : 1;
+        // Cache isLeftSide una sola volta alla creazione
+        if (waterfall.userData.isLeftSide === undefined) {
+            waterfall.userData.isLeftSide = waterfall.position.x < 0;
+            waterfall.userData.flowDirection = waterfall.userData.isLeftSide ? -1 : 1;
+        }
+        
+        const isLeftSide = waterfall.userData.isLeftSide;
+        const flowDirection = waterfall.userData.flowDirection;
         
         // Anima le particelle di schiuma
         waterfall.userData.foamParticles.forEach(foam => {
@@ -674,15 +714,29 @@ class TerrainGenerator {
             }
         });
         
-        // Effetto pulsante sull'opacità
+        // Effetto pulsante sull'opacità - usa timestamp passato invece di Date.now()
         if (waterfall.children[0]) {
-            const time = Date.now() * 0.002;
-            waterfall.children[0].material.opacity = 0.6 + Math.sin(time) * 0.15;
+            // Usa il framecount del terreno invece di Date.now() per evitare chiamata costosa
+            if (!this.waterfallAnimTime) this.waterfallAnimTime = 0;
+            this.waterfallAnimTime += 0.002 * normalizedDelta;
+            waterfall.children[0].material.opacity = 0.6 + Math.sin(this.waterfallAnimTime) * 0.15;
         }
     }
     
     getRowAt(z) {
-        return this.rows.find(row => row.z === Math.round(z));
+        // Cache per l'ultima riga richiesta (chiamato spesso con stesso Z)
+        const roundedZ = Math.round(z);
+        if (this._lastGetZ === roundedZ && this._lastGetRow) {
+            return this._lastGetRow;
+        }
+        
+        const row = this.rows.find(row => row.z === roundedZ);
+        
+        // Salva in cache
+        this._lastGetZ = roundedZ;
+        this._lastGetRow = row;
+        
+        return row;
     }
     
     getTerrainTypeAt(x, z) {

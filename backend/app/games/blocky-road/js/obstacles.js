@@ -16,6 +16,15 @@ class ObstacleManager {
         this.trainTimers = {}; // Track per rail row: {z: {nextSpawn: frameCount, warned: bool}}
         this.frameCount = 0; // Global frame counter
         
+        // Warning lights animation - frame-based invece di setInterval
+        this.activeWarningLights = []; // {lightMesh, pointLight, startFrame, endFrame}
+        
+        // Limit train spawning to 1 per frame per evitare lag spikes
+        this.trainSpawnedThisFrame = false;
+        
+        // Track last initialized rail Z per sfasare i timer
+        this.lastRailZ = -Infinity;
+        
         // Difficulty progression system
         this.currentScore = 0;
     }
@@ -62,6 +71,10 @@ class ObstacleManager {
     update(playerZ, normalizedDelta = 1) {
         this.spawnTimer++;
         this.frameCount++; // Increment global frame counter
+        this.trainSpawnedThisFrame = false; // Reset flag ogni frame
+        
+        // Aggiorna warning lights attive (frame-based, no setInterval)
+        this.updateWarningLights();
         
         // Spawn new vehicles on road rows
         if (this.spawnTimer >= this.spawnInterval) {
@@ -250,27 +263,37 @@ class ObstacleManager {
             
             // Initialize timer for this row if new
             if (!this.trainTimers[z]) {
-                // Progressive train frequency based on score:
-                // Score 0-100: 7-10 seconds
-                // Score 100-150: transition 10s->7s
-                // Score 150-300: 5-7 seconds
-                // Score 300+: 3-5 seconds
+                // Progressive train frequency based on score (fixed intervals):
+                // Score 0-100: 6 seconds
+                // Score 100-150: 5 seconds
+                // Score 150-300: 4 seconds
+                // Score 300+: 3 seconds
                 let avgSeconds;
                 const score = this.currentScore;
                 if (score <= 100) {
-                    avgSeconds = 8.5; // With ±15% = 7.2-9.8s
+                    avgSeconds = 6;
                 } else if (score <= 150) {
-                    avgSeconds = 10 - ((score - 100) / 50) * 3; // 10s->7s
+                    avgSeconds = 5;
                 } else if (score <= 300) {
-                    avgSeconds = 7 - ((score - 150) / 150) * 2; // 7s->5s
+                    avgSeconds = 4;
                 } else {
-                    avgSeconds = 5 - Math.min((score - 300) / 200, 1) * 2; // 5s->3s
+                    avgSeconds = 3;
                 }
                 const avgFrames = avgSeconds * 60;
                 const variance = Math.floor(avgFrames * 0.15); // ±15% variation
                 const minDelay = Math.floor(avgFrames - variance);
                 const maxDelay = Math.floor(avgFrames + variance);
-                const initialDelay = minDelay + Math.floor(Math.random() * (maxDelay - minDelay));
+                let initialDelay = minDelay + Math.floor(Math.random() * (maxDelay - minDelay));
+                
+                // OTTIMIZZAZIONE: Se questa rotaia è vicina all'ultima inizializzata,
+                // sfasa il timer per evitare spawn simultanei
+                if (z - this.lastRailZ <= 3) {
+                    // Aggiungi 1-2 secondi di offset (60-120 frames)
+                    const offsetFrames = 60 + Math.floor(Math.random() * 60);
+                    initialDelay += offsetFrames;
+                    console.log(`🛤️ Rail Z=${z} close to last (${this.lastRailZ}), adding ${offsetFrames} frames offset`);
+                }
+                this.lastRailZ = z;
                 
                 this.trainTimers[z] = {
                     nextSpawn: this.frameCount + initialDelay,
@@ -290,26 +313,27 @@ class ObstacleManager {
                 }
             }
             
-            // Spawn train
-            if (framesUntilTrain <= 0 && !timer.spawned) {
+            // Spawn train (LIMITATO A 1 PER FRAME per evitare lag)
+            if (framesUntilTrain <= 0 && !timer.spawned && !this.trainSpawnedThisFrame) {
                 this.spawnCompleteTrain(row, timer.direction);
                 timer.spawned = true;
+                this.trainSpawnedThisFrame = true; // Flag per evitare altri spawn questo frame
                 
-                // Schedule next train with progressive difficulty
-                // Score 0-100: 7-10 seconds
-                // Score 100-150: transition 10s->7s
-                // Score 150-300: 5-7 seconds
-                // Score 300+: 3-5 seconds
+                // Schedule next train with progressive difficulty (fixed intervals)
+                // Score 0-100: 6 seconds
+                // Score 100-150: 5 seconds
+                // Score 150-300: 4 seconds
+                // Score 300+: 3 seconds
                 let avgSeconds;
                 const score = this.currentScore;
                 if (score <= 100) {
-                    avgSeconds = 8.5; // With ±15% = 7.2-9.8s
+                    avgSeconds = 6;
                 } else if (score <= 150) {
-                    avgSeconds = 10 - ((score - 100) / 50) * 3; // 10s->7s
+                    avgSeconds = 5;
                 } else if (score <= 300) {
-                    avgSeconds = 7 - ((score - 150) / 150) * 2; // 7s->5s
+                    avgSeconds = 4;
                 } else {
-                    avgSeconds = 5 - Math.min((score - 300) / 200, 1) * 2; // 5s->3s
+                    avgSeconds = 3;
                 }
                 const avgFrames = avgSeconds * 60;
                 const variance = Math.floor(avgFrames * 0.15); // ±15% variation
@@ -395,96 +419,112 @@ class ObstacleManager {
     }
     
     spawnCompleteTrain(row, direction) {
-        const startTime = performance.now();
-        const speed = 0.6 * direction; // Fast but not excessive - reduced for performance
-        const startX = direction > 0 ? -35 : 35; // Spawn far outside
+        const speed = 0.6 * direction;
+        const startX = direction > 0 ? -35 : 35;
         const trainColor = Math.random() < 0.5 ? 0x9C27B0 : 0xE91E63;
-        const railZ = row.z; // Use actual row Z position!
-        console.log(`🚂 Starting train spawn at Z=${railZ}...`);
+        const railZ = row.z;
         
-        // Locomotive + 11 cars
-        const totalCars = 12; // Standard train length
-        const carSpacing = 1.5; // Tighter spacing - cars are 1.2 wide, so 0.3 gap between them
+        // OTTIMIZZAZIONE: Crea un gruppo per tutto il treno (1 scene.add invece di 12)
+        const trainGroup = new THREE.Group();
+        const totalCars = 12;
+        const carSpacing = 1.5;
         
-        for (let i = 0; i < totalCars; i++) {
-            const isEngine = (i === 0);
-            let trainPart;
-            if (isEngine) {
-                trainPart = Models.createTrain(trainColor);
-                // Salva il colore delle carrozze scelto dalla locomotiva
-                this.lastTrainCarColor = trainPart.userData.trainCarColor;
-            } else {
-                trainPart = Models.createTrainCar(this.lastTrainCarColor);
-            }
+        // Crea locomotiva
+        const locomotive = Models.createTrain(trainColor);
+        const trainCarColor = locomotive.userData.trainCarColor;
+        locomotive.position.x = 0;
+        locomotive.position.y = 0.2;
+        locomotive.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+        trainGroup.add(locomotive);
+        
+        // Crea carrozze
+        for (let i = 1; i < totalCars; i++) {
+            const trainCar = Models.createTrainCar(trainCarColor);
+            if (!trainCar) continue;
             
-            if (!trainPart) {
-                console.error(`❌ Train part ${i} is null!`);
-                continue;
-            }
-            
-            // Cars trail BEHIND the locomotive (opposite to movement direction)
-            // If moving right (+), cars are to the LEFT (negative offset)
-            // If moving left (-), cars are to the RIGHT (positive offset)
+            // Offset relativo alla locomotiva
             const xOffset = i * carSpacing * (-direction);
-            const finalX = startX + xOffset;
-            trainPart.position.set(finalX, 0.2, railZ);
-            trainPart.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
-            
-            this.scene.add(trainPart);
-            
-            this.obstacles.push({
-                mesh: trainPart,
-                velocity: speed,
-                z: railZ,
-                type: 'train',
-                boundingBox: new THREE.Box3().setFromObject(trainPart)
-            });
+            trainCar.position.x = xOffset;
+            trainCar.position.y = 0.2;
+            trainCar.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+            trainGroup.add(trainCar);
         }
         
-        const elapsed = performance.now() - startTime;
-        console.log(`🚂 Train spawn completed in ${elapsed.toFixed(2)}ms (${totalCars} cars)`);
+        // Posiziona il gruppo nella scena
+        trainGroup.position.set(startX, 0, railZ);
+        this.scene.add(trainGroup);
+        
+        // Aggiungi come singolo ostacolo invece di 12 separati
+        this.obstacles.push({
+            mesh: trainGroup,
+            velocity: speed,
+            z: railZ,
+            type: 'train',
+            boundingBox: new THREE.Box3().setFromObject(trainGroup) // 1 calcolo invece di 12
+        });
     }
     
 
     
     startWarningLights(lights) {
         console.log('🚨 WARNING LIGHTS ACTIVATED!');
+        const endFrame = this.frameCount + 120; // 2 seconds at 60fps
+        
         lights.forEach(lightGroup => {
-            const lightMesh = lightGroup.children.find(c => c.userData.isWarningLight);
-            const pointLight = lightGroup.children.find(c => c.userData.isWarningPointLight);
+            // Cache i riferimenti una sola volta invece di find() ripetuto
+            if (!lightGroup.userData.cachedRefs) {
+                lightGroup.userData.cachedRefs = {
+                    lightMesh: lightGroup.children.find(c => c.userData.isWarningLight),
+                    pointLight: lightGroup.children.find(c => c.userData.isWarningPointLight)
+                };
+            }
+            
+            const { lightMesh, pointLight } = lightGroup.userData.cachedRefs;
             
             if (lightMesh) {
-                const startTime = Date.now();
-                
-                const flashInterval = setInterval(() => {
-                    const elapsed = Date.now() - startTime;
-                    if (elapsed > 2000) { // 2 seconds
-                        clearInterval(flashInterval);
-                        lightMesh.material.opacity = 0.1;
-                        lightMesh.material.emissive.setHex(0x000000);
-                        lightMesh.material.emissiveIntensity = 0;
-                        if (pointLight) pointLight.intensity = 0;
-                        return;
-                    }
-                    // Fast dramatic flash - on/off
-                    const flashCycle = Math.floor(elapsed / 150) % 2;
-                    const isOn = flashCycle === 0;
-                    if (isOn) {
-                        // ON - bright red glow
-                        lightMesh.material.opacity = 0.8;
-                        lightMesh.material.emissive.setHex(0xff0000);
-                        lightMesh.material.emissiveIntensity = 1.0;
-                        if (pointLight) pointLight.intensity = 10.0;
-                    } else {
-                        // OFF - transparent
-                        lightMesh.material.opacity = 0.1;
-                        lightMesh.material.emissive.setHex(0x000000);
-                        lightMesh.material.emissiveIntensity = 0;
-                        if (pointLight) pointLight.intensity = 0;
-                    }
-                }, 75); // Update faster for clear on/off effect
+                // Aggiungi alla lista delle luci attive
+                this.activeWarningLights.push({
+                    lightMesh,
+                    pointLight,
+                    startFrame: this.frameCount,
+                    endFrame: endFrame
+                });
             }
         });
+    }
+    
+    updateWarningLights() {
+        // Aggiorna tutte le luci attive (molto più efficiente di setInterval)
+        for (let i = this.activeWarningLights.length - 1; i >= 0; i--) {
+            const light = this.activeWarningLights[i];
+            const elapsed = this.frameCount - light.startFrame;
+            
+            if (this.frameCount >= light.endFrame) {
+                // Finito - spegni la luce
+                light.lightMesh.material.opacity = 0.1;
+                light.lightMesh.material.emissive.setHex(0x000000);
+                light.lightMesh.material.emissiveIntensity = 0;
+                if (light.pointLight) light.pointLight.intensity = 0;
+                this.activeWarningLights.splice(i, 1);
+                continue;
+            }
+            
+            // Flash on/off - 9 frames on, 9 frames off (150ms at 60fps)
+            const flashCycle = Math.floor(elapsed / 9) % 2;
+            const isOn = flashCycle === 0;
+            
+            if (isOn) {
+                light.lightMesh.material.opacity = 0.8;
+                light.lightMesh.material.emissive.setHex(0xff0000);
+                light.lightMesh.material.emissiveIntensity = 1.0;
+                if (light.pointLight) light.pointLight.intensity = 10.0;
+            } else {
+                light.lightMesh.material.opacity = 0.1;
+                light.lightMesh.material.emissive.setHex(0x000000);
+                light.lightMesh.material.emissiveIntensity = 0;
+                if (light.pointLight) light.pointLight.intensity = 0;
+            }
+        }
     }
     
     trySpawnCoins(playerZ) {
@@ -573,19 +613,36 @@ class ObstacleManager {
             const deltaZ = Math.abs(obstacle.mesh.position.z - playerPos.worldZ);
             if (deltaZ > 0.8) continue; // Skip vehicles on different rows
             
-            // Now check X collision on same row
-            const vehicleLeft = obstacle.mesh.position.x - 0.6; // Vehicle width buffer
-            const vehicleRight = obstacle.mesh.position.x + 0.6;
-            const playerLeft = playerPos.worldX - 0.4;
-            const playerRight = playerPos.worldX + 0.4;
-            
-            // Check if player overlaps with vehicle on X axis
-            if (playerRight > vehicleLeft && playerLeft < vehicleRight) {
-                return obstacle; // Return the obstacle object instead of just true
+            // Per i treni (che sono gruppi), controlla ogni carrozza
+            if (obstacle.type === 'train' && obstacle.mesh.children) {
+                for (const trainCar of obstacle.mesh.children) {
+                    // Posizione world della carrozza
+                    const worldPos = new THREE.Vector3();
+                    trainCar.getWorldPosition(worldPos);
+                    
+                    const carLeft = worldPos.x - 0.6;
+                    const carRight = worldPos.x + 0.6;
+                    const playerLeft = playerPos.worldX - 0.4;
+                    const playerRight = playerPos.worldX + 0.4;
+                    
+                    if (playerRight > carLeft && playerLeft < carRight) {
+                        return obstacle;
+                    }
+                }
+            } else {
+                // Veicoli normali (auto, camion, moto)
+                const vehicleLeft = obstacle.mesh.position.x - 0.6;
+                const vehicleRight = obstacle.mesh.position.x + 0.6;
+                const playerLeft = playerPos.worldX - 0.4;
+                const playerRight = playerPos.worldX + 0.4;
+                
+                if (playerRight > vehicleLeft && playerLeft < vehicleRight) {
+                    return obstacle;
+                }
             }
         }
         
-        return null; // Return null instead of false for no collision
+        return null;
     }
     
     checkCoinCollision(playerPos, onCollect) {
@@ -772,6 +829,14 @@ class ObstacleManager {
         // Reset train system
         this.trainTimers = {};
         this.frameCount = 0;
+        this.trainSpawnedThisFrame = false;
+        this.lastRailZ = -Infinity;
+        
+        // Reset warning lights system
+        this.activeWarningLights = [];
+        
+        // Reset difficulty score
+        this.currentScore = 0;
         
         // Reset coin spawn tracking for next game
         this.furthestCoinZ = undefined;

@@ -739,10 +739,10 @@ const Models = {
         const sizes = [0.35, 0.4, 0.45]; // Increased from 0.2-0.3
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
-        const geometry = GeometryPool.getBoxGeometry(size, size * 0.7, size);
+        const geometry = GeometryPool.getBoxGeometry(size, size * 1.0, size); // Altezza aumentata (era 0.7)
         const material = MaterialPool.getMaterial(0x696969, { poolable: true });
         const rock = new THREE.Mesh(geometry, material);
-        rock.position.y = 0.3;
+        rock.position.y = 0.35; // Alzato leggermente
         rock.rotation.y = Math.random() * Math.PI;
         rock.castShadow = false; // No shadows for small rocks
         rock.receiveShadow = true;

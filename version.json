@@ -1,8 +1,18 @@
 {
-  "version": "3.7.13",
-  "timestamp": "2026-01-11T21:57:31.039Z",
-  "buildNumber": 233,
+  "version": "3.8.0",
+  "timestamp": "2026-01-11T22:58:22.777Z",
+  "buildNumber": 234,
   "changelog": [
+    {
+      "version": "3.8.0",
+      "date": "2026-01-11",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: enhance STEEM rewards display with icons in leaderboard and game cards",
+        "🔖 Bump version to 3.7.13 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.13",
       "date": "2026-01-11",
@@ -84,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [MTD]implement stun ability with visual effects and enemy interaction",
         "🔖 Bump version to 3.7.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.4",
-      "date": "2026-01-10",
-      "type": "patch",
-      "changes": [
-        "Optimize terrain and rail systems using InstancedMesh for improved performance; remove fade-out effects for obstacles and streamline object pooling.",
-        "🔖 Bump version to 3.7.3 [skip-version]"
       ]
     }
   ]

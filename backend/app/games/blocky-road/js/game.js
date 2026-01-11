@@ -531,6 +531,8 @@ class BlockyRoadGame {
         // Initialize audio (requires user interaction)
         this.audio.init();
         
+        // Reset per-session train death counter
+        this.trainDeaths = 0;
         // Notify platform that game has started - this will create the session
         if (typeof PlatformSDK !== 'undefined') {
             try {
@@ -581,6 +583,8 @@ class BlockyRoadGame {
         this.player = new Player(this.scene, this.particles);
         console.log('🐰 Player rigenerato completamente');
         
+        // Reset per-session train death counter on restart
+        this.trainDeaths = 0;
         // Reset death line (invisible)
         this.deathLineZ = -7; // Player spawns at 0, so death line at -7 maintains correct distance
         this.deathLineEnabled = false;

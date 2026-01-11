@@ -1,8 +1,17 @@
 {
-  "version": "3.7.9",
-  "timestamp": "2026-01-11T00:45:43.735Z",
-  "buildNumber": 229,
+  "version": "3.7.10",
+  "timestamp": "2026-01-11T01:16:05.205Z",
+  "buildNumber": 230,
   "changelog": [
+    {
+      "version": "3.7.10",
+      "date": "2026-01-11",
+      "type": "patch",
+      "changes": [
+        "fix: correct variable name for quest XP reward calculation",
+        "🔖 Bump version to 3.7.9 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.9",
       "date": "2026-01-11",
@@ -84,15 +93,6 @@
       "changes": [
         "refactor: optimize profile data loading and rendering for improved performance",
         "🔖 Bump version to 3.7.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.0",
-      "date": "2026-01-09",
-      "type": "minor",
-      "changes": [
-        "feat: add db-states-configuration.js for managing application state, query system, and UI interactions",
-        "🔖 Bump version to 3.6.3 [skip-version]"
       ]
     }
   ]

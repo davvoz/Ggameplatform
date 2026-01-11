@@ -1,8 +1,17 @@
 {
-  "version": "3.7.11",
-  "timestamp": "2026-01-11T01:27:32.835Z",
-  "buildNumber": 231,
+  "version": "3.7.12",
+  "timestamp": "2026-01-11T20:34:41.434Z",
+  "buildNumber": 232,
   "changelog": [
+    {
+      "version": "3.7.12",
+      "date": "2026-01-11",
+      "type": "patch",
+      "changes": [
+        "fix: use normalizedDelta for consistent timer updates across devices",
+        "🔖 Bump version to 3.7.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.11",
       "date": "2026-01-11",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: implement anonymous user checks for daily login rewards and level-up notifications. multi level-up now gives all the rewards",
         "🔖 Bump version to 3.7.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.2",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "fix: enhance user statistics retrieval and update leaderboard references to weekly data",
-        "🔖 Bump version to 3.7.1 [skip-version]"
       ]
     }
   ]

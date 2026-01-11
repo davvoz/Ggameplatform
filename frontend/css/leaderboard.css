@@ -7,8 +7,6 @@
         margin-top: 10px !important;
         padding-bottom: 8px !important;
         justify-content: flex-start !important;
-        scrollbar-width: thin;
-        scrollbar-color: #ffe066 #23243a;
     }
     .rewards-grid::-webkit-scrollbar {
         height: 8px;
@@ -17,7 +15,6 @@
     .rewards-grid::-webkit-scrollbar-thumb {
         background: #ffe066;
         border-radius: 8px;
-    }
     }
     .reward-badge {
         min-width: 180px;

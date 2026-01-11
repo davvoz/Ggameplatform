@@ -162,7 +162,7 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    background: linear-gradient(135deg, #ff4444 0%, #ff8844 100%);
+    background: linear-gradient(45deg, #171fc9 60%, #8c8fe4 30%);
     color: white;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
@@ -170,20 +170,18 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
     z-index: 5;
-    animation: pulse-steem 2s ease-in-out infinite;
 }
 
 @keyframes pulse-steem {
 
     0%,
     100% {
-        box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+        box-shadow: 0 2px 8px #171fc9;
     }
 
     50% {
-        box-shadow: 0 4px 16px rgba(255, 68, 68, 0.8);
+        box-shadow: 0 4px 16px  #e48cd5;
     }
 }
 

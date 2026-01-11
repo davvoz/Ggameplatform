@@ -254,7 +254,7 @@ class LeaderboardRenderer {
             <div class="reward-badge">
                 <div class="reward-rank">${medal} ${rankText}</div>
                 <div class="reward-amounts">
-                    ${showSteemReward ? `<span class="steem-reward steem-blue">${reward.steem_reward} STEEM</span>` : ''}
+                    ${showSteemReward ? `<span class="steem-reward steem-blue">${reward.steem_reward} <img src="./icons/steem.png" alt="STEEM" class="steem-rewards-icon"></span>` : ''}
                     ${reward.coin_reward > 0 ? `<span class="coin-reward">${reward.coin_reward} 🪙</span>` : ''}
                 </div>
                 ${reward.description ? `<div class="reward-desc">${reward.description}</div>` : ''}

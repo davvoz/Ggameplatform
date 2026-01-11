@@ -280,7 +280,12 @@ function createGameCard(game) {
         const steemBadge = document.createElement('span');
         steemBadge.className = 'steem-rewards-badge';
         steemBadge.title = 'This game offers STEEM rewards';
-        steemBadge.textContent = '💰 STEEM';
+        const steemImg = document.createElement('img');
+        steemImg.src = './icons/steem.png';
+        steemImg.alt = 'STEEM';
+        steemImg.className = 'steem-rewards-icon';
+        steemBadge.appendChild(steemImg);
+        steemBadge.appendChild(document.createTextNode(' STEEM'));
         gameInfo.insertBefore(steemBadge, gameInfo.firstChild);
         console.log('Added STEEM badge for', game.title);
     }

@@ -131,7 +131,7 @@ function renderGameCard(game) {
     let steemBadgeHTML = '';
     console.log('Game:', game.title, 'steem_rewards_enabled:', game.steem_rewards_enabled);
     if (game.steem_rewards_enabled) {
-        steemBadgeHTML = `<span class="steem-rewards-badge" title="This game offers STEEM rewards">💰 STEEM</span>`;
+        steemBadgeHTML = `<span class="steem-rewards-badge" title="This game offers STEEM rewards"><img src="./icons/steem.png" alt="STEEM" class="steem-rewards-icon"> STEEM</span>`;
         console.log('Adding STEEM badge for', game.title);
     }
     

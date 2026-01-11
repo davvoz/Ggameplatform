@@ -1,8 +1,17 @@
 {
-  "version": "3.7.10",
-  "timestamp": "2026-01-11T01:16:05.205Z",
-  "buildNumber": 230,
+  "version": "3.7.11",
+  "timestamp": "2026-01-11T01:27:32.835Z",
+  "buildNumber": 231,
   "changelog": [
+    {
+      "version": "3.7.11",
+      "date": "2026-01-11",
+      "type": "patch",
+      "changes": [
+        "fix: reset train death counter on game start and restart",
+        "🔖 Bump version to 3.7.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.10",
       "date": "2026-01-11",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: enhance user statistics retrieval and update leaderboard references to weekly data",
         "🔖 Bump version to 3.7.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.1",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "refactor: optimize profile data loading and rendering for improved performance",
-        "🔖 Bump version to 3.7.0 [skip-version]"
       ]
     }
   ]

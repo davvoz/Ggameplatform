@@ -326,7 +326,7 @@ async def claim_quest_reward(
     if level_up and not user.is_anonymous:
         try:
             # Use check_level_up to get ALL levels with rewards
-            old_xp = user.total_xp_earned - quest.reward_xp  # XP before quest
+            old_xp = user.total_xp_earned - quest.xp_reward  # XP before quest
             new_xp = user.total_xp_earned  # XP after quest
             level_up_info = LevelSystem.check_level_up(old_xp, new_xp)
             

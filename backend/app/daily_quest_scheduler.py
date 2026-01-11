@@ -56,40 +56,43 @@ class DailyQuestScheduler:
                     try:
                         config = json.loads(quest.config) if quest.config else {}
                         
-                        # Only reset quests with reset_on_complete = true
-                        if not config.get('reset_on_complete', False):
-                            continue
-                        
-                        # Find completed user_quests for this quest
+                        # Reset ALL user_quests for this daily quest (completed or in-progress)
                         user_quests = session.query(UserQuest).filter(
-                            UserQuest.quest_id == quest.quest_id,
-                            UserQuest.is_completed == 1
+                            UserQuest.quest_id == quest.quest_id
                         ).all()
-                        
+
                         for user_quest in user_quests:
                             try:
                                 extra_data = json.loads(user_quest.extra_data) if user_quest.extra_data else {}
+                                last_reset = extra_data.get('last_reset_date')
+
+                                # Skip if already reset today
+                                if last_reset == today:
+                                    continue
+
+                                logger.info(f"🔄 Resetting daily quest '{quest.title}' for user {user_quest.user_id}")
+
+                                # Preserve historical completion date if present
                                 last_completion = extra_data.get('last_completion_date')
-                                
-                                # Reset if completed on a previous day
-                                if last_completion and last_completion != today:
-                                    logger.info(f"🔄 Resetting quest '{quest.title}' for user {user_quest.user_id}")
-                                    logger.info(f"   last_completion: {last_completion} -> today: {today}")
-                                    
-                                    # Reset cumulative data (set to None so it gets re-initialized)
-                                    extra_data['cumulative'] = None
-                                    extra_data['last_reset_date'] = today
-                                    
-                                    # Reset progress
-                                    user_quest.current_progress = 0
-                                    user_quest.is_completed = 0
-                                    user_quest.is_claimed = 0
-                                    user_quest.completed_at = None
-                                    user_quest.claimed_at = None
-                                    user_quest.extra_data = json.dumps(extra_data)
-                                    
-                                    reset_count += 1
-                                    
+
+                                # Reset cumulative data (set to None so it gets re-initialized)
+                                extra_data['cumulative'] = None
+                                extra_data['last_reset_date'] = today
+
+                                # Restore last_completion_date if it existed
+                                if last_completion:
+                                    extra_data['last_completion_date'] = last_completion
+
+                                # Reset progress and completion state
+                                user_quest.current_progress = 0
+                                user_quest.is_completed = 0
+                                user_quest.is_claimed = 0
+                                user_quest.completed_at = None
+                                user_quest.claimed_at = None
+                                user_quest.extra_data = json.dumps(extra_data)
+
+                                reset_count += 1
+
                             except Exception as e:
                                 errors_count += 1
                                 logger.exception(f"Error resetting quest {quest.quest_id} for user {user_quest.user_id}")

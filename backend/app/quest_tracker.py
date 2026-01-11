@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 import json
 
-from app.models import Quest, UserQuest, User, GameSession
+from app.models import Quest, UserQuest, User, GameSession, CoinTransaction
 from app.repositories import UserCoinsRepository, CoinTransactionRepository
 from app.services import CoinService
 
@@ -455,13 +455,25 @@ class QuestTracker:
             # This is checked separately when leaderboard updates
             pass
         
-        # Complete quests meta-quest
+        # Complete quests meta-quest (use same source as profile: claimed quest rewards)
         elif quest_type == "complete_quests":
-            completed_count = self.db.query(UserQuest).filter(
-                UserQuest.user_id == user_id,
-                UserQuest.is_completed == 1
-            ).count()
-            self.update_quest_progress(user_id, quest, completed_count)
+            # The profile page counts quest completions by counting awarded quest
+            # reward transactions. Use the same definition here to keep numbers
+            # consistent across the site.
+            try:
+                completed_count = self.db.query(func.count(CoinTransaction.transaction_id)).filter(
+                    CoinTransaction.user_id == user_id,
+                    CoinTransaction.transaction_type == 'quest_reward'
+                ).scalar() or 0
+            except Exception:
+                # Fallback: if something goes wrong, fall back to counting current completed flags
+                uq_count = self.db.query(UserQuest).filter(
+                    UserQuest.user_id == user_id,
+                    UserQuest.is_completed == 1
+                ).count()
+                completed_count = uq_count
+
+            self.update_quest_progress(user_id, quest, int(completed_count))
     
     def track_login(self, user_id: str):
         """Track quest progress when user logs in."""

@@ -428,7 +428,7 @@ class ObstacleManager {
         
         // OTTIMIZZAZIONE: Crea un gruppo per tutto il treno (1 scene.add invece di 12)
         const trainGroup = new THREE.Group();
-        const totalCars = 12;
+        const totalCars = 8; // reduced from 12 to lower per-train cost on mobile
         const carSpacing = 1.5;
         
         // Crea locomotiva
@@ -437,6 +437,8 @@ class ObstacleManager {
         locomotive.position.x = 0;
         locomotive.position.y = 0.2;
         locomotive.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+        // store local offset for collision checks (avoid getWorldPosition)
+        locomotive.userData.localOffsetX = 0;
         trainGroup.add(locomotive);
         
         // Crea carrozze
@@ -449,6 +451,8 @@ class ObstacleManager {
             trainCar.position.x = xOffset;
             trainCar.position.y = 0.2;
             trainCar.rotation.y = direction > 0 ? Math.PI / 2 : -Math.PI / 2;
+            // store local offset for lightweight collision testing
+            trainCar.userData.localOffsetX = xOffset;
             trainGroup.add(trainCar);
         }
         
@@ -457,12 +461,20 @@ class ObstacleManager {
         this.scene.add(trainGroup);
         
         // Aggiungi come singolo ostacolo invece di 12 separati
+        // Compute bounding box analytically to avoid expensive setFromObject traversal
+        const halfSpan = (totalCars - 1) * carSpacing;
+        const padding = 0.6; // collision padding on X and Z
+        let minLocalX = direction > 0 ? -halfSpan : 0;
+        let maxLocalX = direction > 0 ? 0 : halfSpan;
+        const min = new THREE.Vector3(trainGroup.position.x + minLocalX - padding, -1, railZ - 0.6);
+        const max = new THREE.Vector3(trainGroup.position.x + maxLocalX + padding, 2, railZ + 0.6);
+
         this.obstacles.push({
             mesh: trainGroup,
             velocity: speed,
             z: railZ,
             type: 'train',
-            boundingBox: new THREE.Box3().setFromObject(trainGroup) // 1 calcolo invece di 12
+            boundingBox: new THREE.Box3(min, max)
         });
     }
     
@@ -477,17 +489,19 @@ class ObstacleManager {
             if (!lightGroup.userData.cachedRefs) {
                 lightGroup.userData.cachedRefs = {
                     lightMesh: lightGroup.children.find(c => c.userData.isWarningLight),
-                    pointLight: lightGroup.children.find(c => c.userData.isWarningPointLight)
+                    glow: lightGroup.children.find(c => c.userData.isWarningGlow),
+                    dome: lightGroup.children.find(c => c.userData.isWarningDome)
                 };
             }
-            
-            const { lightMesh, pointLight } = lightGroup.userData.cachedRefs;
-            
+
+            const { lightMesh, glow, dome } = lightGroup.userData.cachedRefs;
+
             if (lightMesh) {
                 // Aggiungi alla lista delle luci attive
                 this.activeWarningLights.push({
                     lightMesh,
-                    pointLight,
+                    glow,
+                    dome,
                     startFrame: this.frameCount,
                     endFrame: endFrame
                 });
@@ -503,10 +517,25 @@ class ObstacleManager {
             
             if (this.frameCount >= light.endFrame) {
                 // Finito - spegni la luce
-                light.lightMesh.material.opacity = 0.1;
-                light.lightMesh.material.emissive.setHex(0x000000);
-                light.lightMesh.material.emissiveIntensity = 0;
-                if (light.pointLight) light.pointLight.intensity = 0;
+                if (light.lightMesh && light.lightMesh.userData && light.lightMesh.userData.offMaterial) {
+                    light.lightMesh.material = light.lightMesh.userData.offMaterial;
+                } else if (light.lightMesh) {
+                    light.lightMesh.material.opacity = 0.1;
+                    if (light.lightMesh.material.emissive) light.lightMesh.material.emissive.setHex(0x000000);
+                    if (typeof light.lightMesh.material.emissiveIntensity !== 'undefined') light.lightMesh.material.emissiveIntensity = 0;
+                }
+                if (light.glow) {
+                    if (light.glow.userData && typeof light.glow.userData.offOpacity !== 'undefined') {
+                        light.glow.material.opacity = light.glow.userData.offOpacity;
+                    } else {
+                        light.glow.material.opacity = 0.0;
+                    }
+                }
+                if (light.dome) {
+                    if (light.dome.userData && light.dome.userData.offMaterial) {
+                        light.dome.material = light.dome.userData.offMaterial;
+                    }
+                }
                 this.activeWarningLights.splice(i, 1);
                 continue;
             }
@@ -516,15 +545,45 @@ class ObstacleManager {
             const isOn = flashCycle === 0;
             
             if (isOn) {
-                light.lightMesh.material.opacity = 0.8;
-                light.lightMesh.material.emissive.setHex(0xff0000);
-                light.lightMesh.material.emissiveIntensity = 1.0;
-                if (light.pointLight) light.pointLight.intensity = 10.0;
+                if (light.lightMesh && light.lightMesh.userData && light.lightMesh.userData.onMaterial) {
+                    light.lightMesh.material = light.lightMesh.userData.onMaterial;
+                } else if (light.lightMesh) {
+                    light.lightMesh.material.opacity = 0.8;
+                    if (light.lightMesh.material.emissive) light.lightMesh.material.emissive.setHex(0xff0000);
+                    if (typeof light.lightMesh.material.emissiveIntensity !== 'undefined') light.lightMesh.material.emissiveIntensity = 1.0;
+                }
+                if (light.glow) {
+                    if (light.glow.userData && typeof light.glow.userData.onOpacity !== 'undefined') {
+                        light.glow.material.opacity = light.glow.userData.onOpacity;
+                    } else {
+                        light.glow.material.opacity = 0.6;
+                    }
+                }
+                if (light.dome) {
+                    if (light.dome.userData && light.dome.userData.onMaterial) {
+                        light.dome.material = light.dome.userData.onMaterial;
+                    }
+                }
             } else {
-                light.lightMesh.material.opacity = 0.1;
-                light.lightMesh.material.emissive.setHex(0x000000);
-                light.lightMesh.material.emissiveIntensity = 0;
-                if (light.pointLight) light.pointLight.intensity = 0;
+                if (light.lightMesh && light.lightMesh.userData && light.lightMesh.userData.offMaterial) {
+                    light.lightMesh.material = light.lightMesh.userData.offMaterial;
+                } else if (light.lightMesh) {
+                    light.lightMesh.material.opacity = 0.1;
+                    if (light.lightMesh.material.emissive) light.lightMesh.material.emissive.setHex(0x000000);
+                    if (typeof light.lightMesh.material.emissiveIntensity !== 'undefined') light.lightMesh.material.emissiveIntensity = 0;
+                }
+                if (light.glow) {
+                    if (light.glow.userData && typeof light.glow.userData.offOpacity !== 'undefined') {
+                        light.glow.material.opacity = light.glow.userData.offOpacity;
+                    } else {
+                        light.glow.material.opacity = 0.0;
+                    }
+                }
+                if (light.dome) {
+                    if (light.dome.userData && light.dome.userData.offMaterial) {
+                        light.dome.material = light.dome.userData.offMaterial;
+                    }
+                }
             }
         }
     }
@@ -617,16 +676,15 @@ class ObstacleManager {
             
             // Per i treni (che sono gruppi), controlla ogni carrozza
             if (obstacle.type === 'train' && obstacle.mesh.children) {
+                // Use stored local offsets to avoid getWorldPosition() and matrixWorld traversal
                 for (const trainCar of obstacle.mesh.children) {
-                    // Posizione world della carrozza
-                    const worldPos = new THREE.Vector3();
-                    trainCar.getWorldPosition(worldPos);
-                    
-                    const carLeft = worldPos.x - 0.6;
-                    const carRight = worldPos.x + 0.6;
+                    const localOffset = trainCar.userData && typeof trainCar.userData.localOffsetX === 'number' ? trainCar.userData.localOffsetX : 0;
+                    const carCenterX = obstacle.mesh.position.x + localOffset;
+                    const carLeft = carCenterX - 0.6;
+                    const carRight = carCenterX + 0.6;
                     const playerLeft = playerPos.worldX - 0.4;
                     const playerRight = playerPos.worldX + 0.4;
-                    
+
                     if (playerRight > carLeft && playerLeft < carRight) {
                         return obstacle;
                     }

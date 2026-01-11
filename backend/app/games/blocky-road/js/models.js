@@ -633,13 +633,7 @@ const Models = {
     createTrainWarningLight: () => {
         const group = new THREE.Group();
         
-        // Base - concrete base (simplified) - POOLED (static, never changes)
-        const baseGeometry = GeometryPool.getCylinderGeometry(0.15, 0.18, 0.15, 6);
-        const baseMaterial = MaterialPool.getMaterial(0x555555, { poolable: true });
-        const base = new THREE.Mesh(baseGeometry, baseMaterial);
-        base.position.y = 0.075;
-        base.castShadow = true;
-        group.add(base);
+        // (base removed - pole will be placed directly on terrain)
         
         // Pole - metal pole (simplified) - POOLED (static, never changes)
         const poleGeometry = GeometryPool.getCylinderGeometry(0.06, 0.06, 1.4, 6);
@@ -649,42 +643,140 @@ const Models = {
         pole.castShadow = true;
         group.add(pole);
         
-        // Light housing - black box with stripe - POOLED (static, never changes)
-        const housingGeometry = GeometryPool.getBoxGeometry(0.3, 0.4, 0.2);
-        const housingMaterial = MaterialPool.getMaterial(0x1a1a1a, { poolable: true });
+        // Light housing - replace box with a thin cylindrical bezel so no sharp cube shows
+        const housingRadius = 0.12;
+        const housingHeight = 0.06;
+        const housingGeometry = GeometryPool.getCylinderGeometry(housingRadius, housingRadius, housingHeight, 12);
+        const housingMaterial = MaterialPool.getMaterial(0x111111, { poolable: true, transparent: true, opacity: 0.22 });
         const housing = new THREE.Mesh(housingGeometry, housingMaterial);
-        housing.position.y = 1.65;
-        housing.castShadow = true;
+        housing.position.set(0, 1.65, 0);
+        housing.castShadow = false;
+        housing.receiveShadow = false;
         group.add(housing);
+
+        // Thin yellow band around the housing (slightly lower)
+        const bandGeometry = GeometryPool.getCylinderGeometry(housingRadius * 0.9, housingRadius * 0.9, 0.02, 12);
+        const bandMaterial = MaterialPool.getMaterial(0xffdd00, { poolable: true });
+        const band = new THREE.Mesh(bandGeometry, bandMaterial);
+        band.position.set(0, 1.58, 0);
+        band.castShadow = false;
+        group.add(band);
         
-        // Yellow stripe on housing - POOLED (static, never changes)
-        const stripeGeometry = GeometryPool.getBoxGeometry(0.31, 0.08, 0.21);
-        const stripeMaterial = MaterialPool.getMaterial(0xffdd00, { poolable: true });
-        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
-        stripe.position.y = 1.5;
-        group.add(stripe);
-        
-        // Light lens - glass sphere (transparent when off) - NOT POOLED (animated opacity!)
-        const lensGeometry = GeometryPool.getSphereGeometry(0.12, 8, 8);
-        // Phong material NOT pooled - opacity changes for animation
-        const lensMaterial = new THREE.MeshPhongMaterial({ 
+        // WARNING LIGHT: use a visible flat semaphore-style disc + additive glow plane
+        // Disc faces forward (+Z) and is easy to spot even on mobile
+        // Create a canvas radial texture for the light (cached on Models)
+        if (!Models._warningLightCanvasTexture) {
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const cx = size / 2;
+            const cy = size / 2;
+            const radius = size / 2;
+
+            // Outer transparent -> bright center radial gradient
+            const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+            grd.addColorStop(0.0, 'rgba(255,255,255,1)');
+            grd.addColorStop(0.12, 'rgba(255,200,200,1)');
+            grd.addColorStop(0.25, 'rgba(255,120,120,1)');
+            grd.addColorStop(0.45, 'rgba(255,50,50,0.95)');
+            grd.addColorStop(0.75, 'rgba(255,10,10,0.85)');
+            grd.addColorStop(1.0, 'rgba(255,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, size, size);
+
+            Models._warningLightCanvasTexture = new THREE.CanvasTexture(canvas);
+            Models._warningLightCanvasTexture.minFilter = THREE.LinearFilter;
+            Models._warningLightCanvasTexture.magFilter = THREE.LinearFilter;
+            Models._warningLightCanvasTexture.needsUpdate = true;
+        }
+
+        // Sprite materials: on/off use same texture but different blending/opacity
+        // Use neutral color so canvas' bright center stays bright
+        const onSpriteMat = new THREE.SpriteMaterial({
+            map: Models._warningLightCanvasTexture,
             color: 0xffffff,
             transparent: true,
-            opacity: 0.1,
-            emissive: 0x000000,
-            emissiveIntensity: 0,
-            shininess: 100
+            opacity: 1.0,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
-        const lens = new THREE.Mesh(lensGeometry, lensMaterial);
-        lens.position.set(0, 1.65, 0.12);
-        lens.userData.isWarningLight = true;
-        group.add(lens);
-        
-        // Add red point light for glow effect - MUCH BRIGHTER
-        const pointLight = new THREE.PointLight(0xff0000, 0, 8);
-        pointLight.position.set(0, 1.65, 0.2);
-        pointLight.userData.isWarningPointLight = true;
-        group.add(pointLight);
+        const offSpriteMat = new THREE.SpriteMaterial({
+            map: Models._warningLightCanvasTexture,
+            color: 0x220000,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: true,
+            blending: THREE.NormalBlending
+        });
+
+        // Core sprite (small) - recessed into the housing
+        const core = new THREE.Sprite(offSpriteMat);
+        // recessed into the top of the housing: place slightly below bezel
+        core.position.set(0, 1.74, 0);
+        // face upward (sprite faces camera by default; rotate so it's flat on top)
+        core.rotation.x = -Math.PI / 2;
+        core.scale.set(0.32, 0.32, 1);
+        core.userData.isWarningLight = true;
+        core.userData.onMaterial = onSpriteMat;
+        core.userData.offMaterial = offSpriteMat;
+        group.add(core);
+
+        // Glow sprite (bigger, behind core). Start OFF (opacity 0).
+        const glowMat = new THREE.SpriteMaterial({
+            map: Models._warningLightCanvasTexture,
+            color: 0xff4444,
+            transparent: true,
+            opacity: 0.0,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const glow = new THREE.Sprite(glowMat);
+        // place glow slightly lower than bezel so it appears under the ring
+        glow.position.set(0, 1.70, 0);
+        glow.rotation.x = -Math.PI / 2;
+        glow.scale.set(0.9, 0.9, 1);
+        glow.userData.isWarningGlow = true;
+        glow.userData.onOpacity = 0.4;
+        glow.userData.offOpacity = 0.0;
+        group.add(glow);
+
+        // Bezel/frame so the light looks embedded (small black ring)
+        // Transparent dome on top (hemisphere) so the light looks inside a glass cap
+        const domeRadius = 0.14;
+        // SphereGeometry(radius, widthSeg, heightSeg, phiStart, phiLength, thetaStart, thetaLength)
+        const domeGeometry = new THREE.SphereGeometry(domeRadius, 18, 12);
+        // Off material: subtle transparent glass (non-additive)
+        const domeOffMat = new THREE.MeshPhongMaterial({
+            color: 0x222222,
+            transparent: true,
+            opacity: 0.28,
+            shininess: 10,
+            depthWrite: false
+        });
+        // On material: use additive MeshBasicMaterial with depthTest disabled so internal glow shows
+        // make traffic-light red when ON
+        const domeOnMat = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            depthTest: false
+        });
+        const dome = new THREE.Mesh(domeGeometry, domeOffMat);
+        dome.userData.onMaterial = domeOnMat;
+        dome.userData.offMaterial = domeOffMat;
+        // render dome after sprites so additive dome overlays glow correctly
+        dome.renderOrder = 2000;
+        // Position dome on top of housing (slightly lowered for better fit)
+        dome.position.set(0, 1.74, 0);
+        dome.castShadow = false;
+        dome.receiveShadow = false;
+        // mark dome for cached lookup
+        dome.userData.isWarningDome = true;
+        group.add(dome);
         
         return group;
     },

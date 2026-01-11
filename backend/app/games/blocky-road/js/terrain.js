@@ -133,9 +133,10 @@ class TerrainGenerator {
         console.log(`✅ Rail InstancedMesh created (${totalSleepers} sleepers capacity)`);
         
         // =====================================================
-        // WARNING LIGHTS - Pool di oggetti
+        // WARNING LIGHTS - Pool di oggetti (reduced)
         // =====================================================
-        for (let i = 0; i < 100; i++) {
+        // Reduce pre-created warning lights to save memory and GPU cost on mobile devices
+        for (let i = 0; i < 32; i++) {
             const light = Models.createTrainWarningLight();
             light.visible = false;
             this.scene.add(light);
@@ -557,14 +558,23 @@ class TerrainGenerator {
             // Ensure lights are OFF when reused
             [leftLight, rightLight].forEach(light => {
                 const lightMesh = light.children.find(c => c.userData.isWarningLight);
-                const pointLight = light.children.find(c => c.userData.isWarningPointLight);
+                const glow = light.children.find(c => c.userData.isWarningGlow);
                 if (lightMesh) {
-                    lightMesh.material.opacity = 0.1;
-                    lightMesh.material.emissive.setHex(0x000000);
-                    lightMesh.material.emissiveIntensity = 0;
+                    // Prefer material swap if available
+                    if (lightMesh.userData && lightMesh.userData.offMaterial) {
+                        lightMesh.material = lightMesh.userData.offMaterial;
+                    } else {
+                        lightMesh.material.opacity = 0.1;
+                        if (lightMesh.material.emissive) lightMesh.material.emissive.setHex(0x000000);
+                        if (typeof lightMesh.material.emissiveIntensity !== 'undefined') lightMesh.material.emissiveIntensity = 0;
+                    }
                 }
-                if (pointLight) {
-                    pointLight.intensity = 0;
+                if (glow) {
+                    if (glow.userData && typeof glow.userData.offOpacity !== 'undefined') {
+                        glow.material.opacity = glow.userData.offOpacity;
+                    } else {
+                        glow.material.opacity = 0.0;
+                    }
                 }
             });
         } else {
@@ -577,11 +587,13 @@ class TerrainGenerator {
         
         // Posiziona le luci di avvertimento
         leftLight.position.set(-4, 0, row.z - 0.6);
+        // Rotate pole so the housing faces forward like before (use Y rotation)
         leftLight.rotation.y = Math.PI;
         leftLight.userData.isWarningLight = true;
         row.decorations.push(leftLight);
         
         rightLight.position.set(4, 0, row.z - 0.6);
+        // Rotate pole so the housing faces forward like before (use Y rotation)
         rightLight.rotation.y = Math.PI;
         rightLight.userData.isWarningLight = true;
         row.decorations.push(rightLight);
@@ -702,18 +714,31 @@ class TerrainGenerator {
                     if (dec.userData.isWarningLight) {
                         dec.visible = false;
                         dec.position.set(0, 0, 0);
-                        dec.rotation.y = 0;
+                        dec.rotation.set(0,0,0);
                         
-                        // Reset material state to OFF
+                        // Reset material state to OFF and hide glow
                         const lightMesh = dec.children.find(c => c.userData.isWarningLight);
-                        const pointLight = dec.children.find(c => c.userData.isWarningPointLight);
+                        const glow = dec.children.find(c => c.userData.isWarningGlow);
                         if (lightMesh) {
-                            lightMesh.material.opacity = 0.1;
-                            lightMesh.material.emissive.setHex(0x000000);
-                            lightMesh.material.emissiveIntensity = 0;
+                            if (lightMesh.userData && lightMesh.userData.offMaterial) {
+                                lightMesh.material = lightMesh.userData.offMaterial;
+                            } else {
+                                lightMesh.material.opacity = 0.1;
+                                if (lightMesh.material.emissive) lightMesh.material.emissive.setHex(0x000000);
+                                if (typeof lightMesh.material.emissiveIntensity !== 'undefined') lightMesh.material.emissiveIntensity = 0;
+                            }
                         }
-                        if (pointLight) {
-                            pointLight.intensity = 0;
+                        if (glow) {
+                            if (glow.userData && typeof glow.userData.offOpacity !== 'undefined') {
+                                glow.material.opacity = glow.userData.offOpacity;
+                            } else {
+                                glow.material.opacity = 0.0;
+                            }
+                        }
+                        // Reset dome material if present
+                        const dome = dec.children.find(c => c.userData.isWarningDome);
+                        if (dome && dome.userData && dome.userData.offMaterial) {
+                            dome.material = dome.userData.offMaterial;
                         }
                         
                         this.warningLightPool.push(dec);
@@ -817,6 +842,29 @@ class TerrainGenerator {
             row.decorations.forEach(dec => {
                 // Restituisci le warning lights al pool invece di distruggerle
                 if (dec.userData.isWarningLight) {
+                    // Reset visual state: core material off, glow opacity off, dome off
+                    const lightMesh = dec.children.find(c => c.userData && c.userData.isWarningLight);
+                    const glow = dec.children.find(c => c.userData && c.userData.isWarningGlow);
+                    const dome = dec.children.find(c => c.userData && c.userData.isWarningDome);
+
+                    if (lightMesh) {
+                        if (lightMesh.userData && lightMesh.userData.offMaterial) {
+                            lightMesh.material = lightMesh.userData.offMaterial;
+                        } else {
+                            lightMesh.material.opacity = 0.35;
+                        }
+                    }
+                    if (glow) {
+                        if (typeof glow.userData.offOpacity !== 'undefined') {
+                            glow.material.opacity = glow.userData.offOpacity;
+                        } else {
+                            glow.material.opacity = 0.0;
+                        }
+                    }
+                    if (dome && dome.userData && dome.userData.offMaterial) {
+                        dome.material = dome.userData.offMaterial;
+                    }
+
                     dec.visible = false;
                     dec.position.set(0, 0, 0);
                     dec.rotation.y = 0;

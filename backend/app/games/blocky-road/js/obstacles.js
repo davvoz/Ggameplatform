@@ -69,8 +69,10 @@ class ObstacleManager {
     }
     
     update(playerZ, normalizedDelta = 1) {
-        this.spawnTimer++;
-        this.frameCount++; // Increment global frame counter
+        // Use normalizedDelta to accumulate virtual "60fps frames" so timers
+        // remain consistent across devices with different refresh rates.
+        this.spawnTimer += normalizedDelta;
+        this.frameCount += normalizedDelta; // Increment global frame counter (virtual 60fps frames)
         this.trainSpawnedThisFrame = false; // Reset flag ogni frame
         
         // Aggiorna warning lights attive (frame-based, no setInterval)

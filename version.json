@@ -1,8 +1,17 @@
 {
-  "version": "3.7.12",
-  "timestamp": "2026-01-11T20:34:41.434Z",
-  "buildNumber": 232,
+  "version": "3.7.13",
+  "timestamp": "2026-01-11T21:57:31.039Z",
+  "buildNumber": 233,
   "changelog": [
+    {
+      "version": "3.7.13",
+      "date": "2026-01-11",
+      "type": "patch",
+      "changes": [
+        "fix: optimize train warning light and collision handling for mobile performance",
+        "🔖 Bump version to 3.7.12 [skip-version]"
+      ]
+    },
     {
       "version": "3.7.12",
       "date": "2026-01-11",
@@ -84,15 +93,6 @@
       "changes": [
         "Optimize terrain and rail systems using InstancedMesh for improved performance; remove fade-out effects for obstacles and streamline object pooling.",
         "🔖 Bump version to 3.7.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.3",
-      "date": "2026-01-09",
-      "type": "patch",
-      "changes": [
-        "fix: implement anonymous user checks for daily login rewards and level-up notifications. multi level-up now gives all the rewards",
-        "🔖 Bump version to 3.7.2 [skip-version]"
       ]
     }
   ]

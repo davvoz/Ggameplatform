@@ -162,7 +162,7 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    background: linear-gradient(45deg, #171fc9 60%, #8c8fe4 30%);
+    background: linear-gradient(180deg, #444ad4 101%, #8c8fe4 38%);
     color: white;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
@@ -181,7 +181,7 @@
     }
 
     50% {
-        box-shadow: 0 4px 16px  #e48cd5;
+        box-shadow: 0 4px 16px #e48cd5;
     }
 }
 

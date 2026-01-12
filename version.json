@@ -1,8 +1,17 @@
 {
-  "version": "3.8.0",
-  "timestamp": "2026-01-11T22:58:22.777Z",
-  "buildNumber": 234,
+  "version": "3.8.1",
+  "timestamp": "2026-01-12T00:06:53.903Z",
+  "buildNumber": 235,
   "changelog": [
+    {
+      "version": "3.8.1",
+      "date": "2026-01-12",
+      "type": "patch",
+      "changes": [
+        "fix: update background gradient and box-shadow in STEEM rewards badge",
+        "🔖 Bump version to 3.8.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.8.0",
       "date": "2026-01-11",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: optimize animations and improve performance for warning lights and terrain effects",
         "🔖 Bump version to 3.7.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.5",
-      "date": "2026-01-10",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD]implement stun ability with visual effects and enemy interaction",
-        "🔖 Bump version to 3.7.4 [skip-version]"
       ]
     }
   ]

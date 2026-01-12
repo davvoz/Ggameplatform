@@ -389,9 +389,6 @@
 <body>
     <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
     <script src="/sdk/platformsdk.js"></script>
-    <div id="backgroundLayers">
-        <canvas id="backgroundCanvas"></canvas>
-    </div>
     <div id="gameContainer">
         <div id="scoreDisplay">
             <div class="main-score" id="scoreValue">0</div>
@@ -513,9 +510,6 @@
             scene.background = texture;
             scene.fog = new THREE.Fog(0x1a1a2e, 30, 80);
 
-            // Initialize 2D background layers
-            initBackgroundLayers();
-
             camera = new THREE.PerspectiveCamera(
                 45,
                 window.innerWidth / window.innerHeight,
@@ -565,172 +559,24 @@
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            const isFullscreen = !!(document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement);
             
-            // Resize background canvas
-            const bgCanvas = document.getElementById('backgroundCanvas');
-            bgCanvas.width = window.innerWidth;
-            bgCanvas.height = window.innerHeight;
-            updateBackgroundLayers();
-        }
-
-        let bgCanvas, bgCtx;
-        let currentBackgroundPhase = 0;
-
-        function initBackgroundLayers() {
-            bgCanvas = document.getElementById('backgroundCanvas');
-            bgCanvas.width = window.innerWidth;
-            bgCanvas.height = window.innerHeight;
-            bgCtx = bgCanvas.getContext('2d');
-            updateBackgroundLayers();
-        }
-
-        function updateBackgroundLayers(blockCount = 0) {
-            if (!bgCtx) return;
-            
-            const width = bgCanvas.width;
-            const height = bgCanvas.height;
-            
-            // Clear canvas
-            bgCtx.clearRect(0, 0, width, height);
-            
-            // Phase 0-15: Ground with buildings (city)
-            // Phase 15-35: Sky with clouds
-            // Phase 35+: Space with stars
-            
-            if (blockCount < 15) {
-                // City phase
-                const phase = blockCount / 15;
-                drawCityBackground(phase);
-            } else if (blockCount < 35) {
-                // Clouds phase
-                const phase = (blockCount - 15) / 20;
-                drawCloudBackground(phase);
+            if (isFullscreen && !isMobile()) {
+                // In fullscreen on desktop: maintain mobile aspect ratio
+                const height = window.innerHeight;
+                const width = Math.floor(height * 9 / 16);
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
             } else {
-                // Space phase
-                const phase = Math.min((blockCount - 35) / 20, 1);
-                drawSpaceBackground(phase);
-            }
-        }
-
-        function drawCityBackground(fadeOut) {
-            const width = bgCanvas.width;
-            const height = bgCanvas.height;
-            
-            // Sky gradient (day to evening)
-            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, height);
-            skyGradient.addColorStop(0, `rgba(58, 123, 213, ${1 - fadeOut * 0.5})`);
-            skyGradient.addColorStop(1, `rgba(139, 69, 139, ${1 - fadeOut * 0.3})`);
-            bgCtx.fillStyle = skyGradient;
-            bgCtx.fillRect(0, 0, width, height);
-            
-            // Ground
-            bgCtx.fillStyle = `rgba(34, 139, 34, ${1 - fadeOut})`;
-            bgCtx.fillRect(0, height * 0.85, width, height * 0.15);
-            
-            // Buildings (simple rectangles)
-            const opacity = 1 - fadeOut;
-            const buildings = [
-                { x: 0.1, w: 0.08, h: 0.4, color: '40, 40, 60' },
-                { x: 0.25, w: 0.12, h: 0.5, color: '50, 50, 70' },
-                { x: 0.45, w: 0.1, h: 0.35, color: '45, 45, 65' },
-                { x: 0.65, w: 0.15, h: 0.55, color: '38, 38, 58' },
-                { x: 0.85, w: 0.09, h: 0.42, color: '42, 42, 62' }
-            ];
-            
-            buildings.forEach(b => {
-                const bx = width * b.x;
-                const bw = width * b.w;
-                const bh = height * b.h;
-                const by = height * 0.85 - bh;
-                
-                bgCtx.fillStyle = `rgba(${b.color}, ${opacity})`;
-                bgCtx.fillRect(bx, by, bw, bh);
-                
-                // Windows
-                bgCtx.fillStyle = `rgba(255, 220, 100, ${opacity * 0.6})`;
-                for (let y = by + 20; y < by + bh - 10; y += 25) {
-                    for (let x = bx + 10; x < bx + bw - 10; x += 20) {
-                        bgCtx.fillRect(x, y, 8, 12);
-                    }
-                }
-            });
-        }
-
-        function drawCloudBackground(progress) {
-            const width = bgCanvas.width;
-            const height = bgCanvas.height;
-            
-            // Sky gradient (transition to higher altitude)
-            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, height);
-            const r1 = Math.floor(100 - progress * 80);
-            const g1 = Math.floor(150 - progress * 130);
-            const b1 = Math.floor(220 - progress * 200);
-            skyGradient.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
-            skyGradient.addColorStop(1, `rgb(${Math.floor(r1 * 0.7)}, ${Math.floor(g1 * 0.5)}, ${Math.floor(b1 * 0.6)})`);
-            bgCtx.fillStyle = skyGradient;
-            bgCtx.fillRect(0, 0, width, height);
-            
-            // Clouds (simple ellipses)
-            const clouds = [
-                { x: 0.15, y: 0.3, w: 0.2, h: 0.08 },
-                { x: 0.5, y: 0.5, w: 0.25, h: 0.1 },
-                { x: 0.75, y: 0.25, w: 0.18, h: 0.07 },
-                { x: 0.3, y: 0.65, w: 0.22, h: 0.09 },
-                { x: 0.85, y: 0.55, w: 0.15, h: 0.06 }
-            ];
-            
-            clouds.forEach(cloud => {
-                const cx = width * cloud.x;
-                const cy = height * cloud.y;
-                const cw = width * cloud.w;
-                const ch = height * cloud.h;
-                
-                bgCtx.fillStyle = `rgba(255, 255, 255, ${0.7 - progress * 0.4})`;
-                bgCtx.beginPath();
-                bgCtx.ellipse(cx, cy, cw / 2, ch / 2, 0, 0, Math.PI * 2);
-                bgCtx.fill();
-            });
-        }
-
-        function drawSpaceBackground(progress) {
-            const width = bgCanvas.width;
-            const height = bgCanvas.height;
-            
-            // Deep space gradient
-            const spaceGradient = bgCtx.createLinearGradient(0, 0, 0, height);
-            const darkness = progress * 0.8;
-            spaceGradient.addColorStop(0, `rgb(${Math.floor(15 * (1 - darkness))}, ${Math.floor(10 * (1 - darkness))}, ${Math.floor(30 * (1 - darkness))})`);
-            spaceGradient.addColorStop(1, `rgb(5, 5, 10)`);
-            bgCtx.fillStyle = spaceGradient;
-            bgCtx.fillRect(0, 0, width, height);
-            
-            // Stars (more visible as we go deeper into space)
-            const starCount = Math.floor(80 * progress);
-            for (let i = 0; i < starCount; i++) {
-                const x = (i * 7919) % width; // pseudo-random but consistent
-                const y = (i * 3571) % height;
-                const size = ((i * 13) % 3) + 1;
-                const brightness = 0.5 + ((i * 17) % 50) / 100;
-                
-                bgCtx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
-                bgCtx.fillRect(x, y, size, size);
+                // Normal resize
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
             }
             
-            // Add some larger stars/planets
-            if (progress > 0.3) {
-                bgCtx.fillStyle = 'rgba(200, 200, 255, 0.8)';
-                bgCtx.beginPath();
-                bgCtx.arc(width * 0.85, height * 0.2, 4, 0, Math.PI * 2);
-                bgCtx.fill();
-                
-                bgCtx.fillStyle = 'rgba(255, 220, 200, 0.7)';
-                bgCtx.beginPath();
-                bgCtx.arc(width * 0.15, height * 0.7, 3, 0, Math.PI * 2);
-                bgCtx.fill();
-            }
+            camera.updateProjectionMatrix();
         }
 
         // ============================================
@@ -772,7 +618,7 @@
             const height = blocks.length * CONFIG.blockSize.height;
             
             // Rainbow color progression (slower)
-            currentHue = (currentHue + 3) % 360;
+            currentHue = (currentHue + 5) % 360;
             const color = new THREE.Color().setHSL(currentHue / 360, 0.8, 0.6);
             
             const geometry = new THREE.BoxGeometry(
@@ -973,9 +819,6 @@
                 .easing(TWEEN.Easing.Quadratic.Out)
                 .start();
             
-            // Update background gradient based on height
-            updateBackgroundLayers(blocks.length);
-            
             // Increase speed
             const absSpeed = Math.abs(movingSpeed);
             if (absSpeed < CONFIG.maxSpeed) {
@@ -1149,9 +992,6 @@
             cameraLookTarget.y = 0;
             camera.lookAt(0, 0, 0);
             
-            // Reset background to initial gradient
-            updateBackgroundLayers(0);
-            
             updateUI();
             
             // Create base and first moving block - now actually start the game
@@ -1205,18 +1045,131 @@
         }
 
         // ============================================
+        // Fullscreen Helper
+        // ============================================
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (window.innerWidth <= 768);
+        }
+
+        function requestFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function handleFullscreenChange() {
+            const isFullscreen = !!(document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement);
+            
+            if (isFullscreen && !isMobile()) {
+                // Desktop in fullscreen: force mobile aspect ratio (9:16)
+                const height = window.innerHeight;
+                const width = Math.floor(height * 9 / 16);
+                
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                
+                // Center canvas
+                renderer.domElement.style.position = 'fixed';
+                renderer.domElement.style.left = '50%';
+                renderer.domElement.style.top = '50%';
+                renderer.domElement.style.transform = 'translate(-50%, -50%)';
+                
+                document.body.style.background = '#000';
+                
+                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
+            } else {
+                // Exit fullscreen or mobile: restore normal size
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                
+                renderer.domElement.style.position = '';
+                renderer.domElement.style.left = '';
+                renderer.domElement.style.top = '';
+                renderer.domElement.style.transform = '';
+                
+                document.body.style.background = '';
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const isFullscreen = !!(document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement);
+            
+            if (isFullscreen && !isMobile()) {
+                // Desktop in fullscreen: force mobile aspect ratio (9:16)
+                const height = window.innerHeight;
+                const width = Math.floor(height * 9 / 16);
+                
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                
+                // Center canvas
+                renderer.domElement.style.position = 'fixed';
+                renderer.domElement.style.left = '50%';
+                renderer.domElement.style.top = '50%';
+                renderer.domElement.style.transform = 'translate(-50%, -50%)';
+                
+                document.body.style.background = '#000';
+                
+                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
+            } else {
+                // Exit fullscreen or mobile: restore normal size
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                
+                renderer.domElement.style.position = '';
+                renderer.domElement.style.left = '';
+                renderer.domElement.style.top = '';
+                renderer.domElement.style.transform = '';
+                
+                document.body.style.background = '';
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        // ============================================
         // Input Handlers
         // ============================================
         document.addEventListener('click', (event) => {
             // Start game on first click
             if (!gameState.isPlaying && !event.target.closest('button')) {
+                requestFullscreen();
                 startGame();
                 return;
             }
             
-            // First tap after startGame just starts the movement
+            // First tap after startGame starts movement AND places first block
             if (gameState.isPlaying && !gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
                 gameState.gameStarted = true;
+                placeBlock();
                 return;
             }
             
@@ -1230,14 +1183,16 @@
             // Start game on first tap
             if (!gameState.isPlaying && !event.target.closest('button')) {
                 event.preventDefault();
+                requestFullscreen();
                 startGame();
                 return;
             }
             
-            // First tap after startGame just starts the movement
+            // First tap after startGame starts movement AND places first block
             if (gameState.isPlaying && !gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
                 event.preventDefault();
                 gameState.gameStarted = true;
+                placeBlock();
                 return;
             }
             

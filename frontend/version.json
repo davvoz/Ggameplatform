@@ -1,8 +1,17 @@
 {
-  "version": "3.8.1",
-  "timestamp": "2026-01-12T00:06:53.903Z",
-  "buildNumber": 235,
+  "version": "3.8.2",
+  "timestamp": "2026-01-12T03:19:06.289Z",
+  "buildNumber": 236,
   "changelog": [
+    {
+      "version": "3.8.2",
+      "date": "2026-01-12",
+      "type": "patch",
+      "changes": [
+        "Add setup and reset scripts for Sky Tower game",
+        "🔖 Bump version to 3.8.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.8.1",
       "date": "2026-01-12",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: clarify daily reset logic in quest tracking",
         "🔖 Bump version to 3.7.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.6",
-      "date": "2026-01-10",
-      "type": "patch",
-      "changes": [
-        "fix: optimize animations and improve performance for warning lights and terrain effects",
-        "🔖 Bump version to 3.7.5 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "3.8.2",
-  "timestamp": "2026-01-12T03:19:06.289Z",
-  "buildNumber": 236,
+  "version": "3.8.3",
+  "timestamp": "2026-01-12T03:52:40.297Z",
+  "buildNumber": 237,
   "changelog": [
+    {
+      "version": "3.8.3",
+      "date": "2026-01-12",
+      "type": "patch",
+      "changes": [
+        "refactor: remove background layers and implement fullscreen handling for desktop",
+        "🔖 Bump version to 3.8.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.8.2",
       "date": "2026-01-12",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: adjust jump duration and add road markings between consecutive road rows",
         "🔖 Bump version to 3.7.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.7",
-      "date": "2026-01-10",
-      "type": "patch",
-      "changes": [
-        "fix: clarify daily reset logic in quest tracking",
-        "🔖 Bump version to 3.7.6 [skip-version]"
       ]
     }
   ]

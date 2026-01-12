@@ -240,6 +240,12 @@ class QuestTracker:
             self._process_briscola_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Sky Tower game quests
+        if game_id == 'sky-tower' and tracking_type:
+            print(f"🏗️ [QuestTracker] Processing Sky Tower quest: {quest.title} (type: {tracking_type})")
+            self._process_sky_tower_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative or daily reset)
@@ -1060,6 +1066,131 @@ class QuestTracker:
         
         elif tracking_type == 'multiplayer_wins':
             self.update_quest_progress(user_id, quest, cumulative['multiplayer_wins'], user_quest)
+    
+    def _process_sky_tower_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                  tracking_type: str, score: int, extra_data: Dict):
+        """Process Sky Tower game-specific quests."""
+        print(f"    🏗️ [SkyTower] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"    🏗️ [SkyTower] Config: {quest_config}")
+        print(f"    🏗️ [SkyTower] Tracking type: {tracking_type}")
+        print(f"    🏗️ [SkyTower] Score: {score}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        today = self._get_today_date()
+        
+        if reset_period == 'daily' and reset_on_complete:
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 Daily reset triggered for {quest.title}")
+                user_quest.current_progress = 0
+                user_quest.is_completed = 0
+                user_quest.is_claimed = 0
+                user_quest.completed_at = None
+                user_quest.claimed_at = None
+                # Reset cumulative data
+                stored_data['cumulative'] = {
+                    'games_played': 0,
+                    'high_score': 0,
+                    'total_perfect_stacks': 0,
+                    'max_combo': 0,
+                    'total_blocks': 0
+                }
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative data if not present
+        if not stored_data.get('cumulative'):
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'high_score': 0,
+                'total_perfect_stacks': 0,
+                'max_combo': 0,
+                'total_blocks': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            # Get session stats
+            session_perfect_stacks = extra_data.get('perfect_stacks', 0)
+            session_max_combo = extra_data.get('max_combo', 0)
+            session_total_blocks = extra_data.get('total_blocks', 0)
+            
+            print(f"    🏗️ [SkyTower] Session stats: perfect_stacks={session_perfect_stacks}, max_combo={session_max_combo}, total_blocks={session_total_blocks}, score={score}")
+            
+            # Accumulate perfect stacks and blocks
+            cumulative['total_perfect_stacks'] += session_perfect_stacks
+            cumulative['total_blocks'] += session_total_blocks
+            
+            # Track max combo (best ever)
+            if session_max_combo > cumulative['max_combo']:
+                cumulative['max_combo'] = session_max_combo
+            
+            # Track high score (best ever)
+            if score > cumulative['high_score']:
+                cumulative['high_score'] = score
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+        
+        elif tracking_type == 'score_in_game':
+            # Track the highest score reached in a single game
+            # Update progress to the best score achieved
+            current_best = user_quest.current_progress
+            if score > current_best:
+                self.update_quest_progress(user_id, quest, score, user_quest)
+                print(f"    🏗️ [SkyTower] score_in_game: NEW BEST! {score} (was {current_best}, target {quest.target_value})")
+            else:
+                print(f"    🏗️ [SkyTower] score_in_game: current {score}, best {current_best}, target {quest.target_value}")
+        
+        elif tracking_type == 'perfect_stacks_in_game':
+            # Track the highest perfect stacks in a single game
+            session_perfect = extra_data.get('perfect_stacks', 0) if extra_data else 0
+            current_best = user_quest.current_progress
+            if session_perfect > current_best:
+                self.update_quest_progress(user_id, quest, session_perfect, user_quest)
+                print(f"    🏗️ [SkyTower] perfect_stacks_in_game: NEW BEST! {session_perfect} (was {current_best}, target {quest.target_value})")
+            else:
+                print(f"    🏗️ [SkyTower] perfect_stacks_in_game: current {session_perfect}, best {current_best}, target {quest.target_value}")
+        
+        elif tracking_type == 'max_combo_in_game':
+            # Track the highest combo in a single game
+            session_combo = extra_data.get('max_combo', 0) if extra_data else 0
+            current_best = user_quest.current_progress
+            if session_combo > current_best:
+                self.update_quest_progress(user_id, quest, session_combo, user_quest)
+                print(f"    🏗️ [SkyTower] max_combo_in_game: NEW BEST! {session_combo} (was {current_best}, target {quest.target_value})")
+            else:
+                print(f"    🏗️ [SkyTower] max_combo_in_game: current {session_combo}, best {current_best}, target {quest.target_value}")
+        
+        elif tracking_type == 'high_score':
+            # Check if high score meets target
+            if cumulative['high_score'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+        
+        elif tracking_type == 'total_perfect_stacks':
+            self.update_quest_progress(user_id, quest, cumulative['total_perfect_stacks'], user_quest)
+        
+        elif tracking_type == 'max_combo':
+            # Check if max combo meets target
+            if cumulative['max_combo'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
     
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""

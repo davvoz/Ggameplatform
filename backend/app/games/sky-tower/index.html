@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Sky Tower - Build to the Sky</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #topBar {
+            display: none;
+        }
+
+        #scoreDisplay {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #scoreDisplay .main-score {
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        #perfectCounter {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            text-align: right;
+            color: white;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #perfectCounter .label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        #perfectCounter .value {
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        #gameOverlay {
+            display: none !important;
+        }
+
+        #gameOverScreen {
+            display: none !important;
+        }
+
+        #gameStats {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 25px 35px;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 30;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        #gameStats.show {
+            display: block;
+        }
+
+        #gameStats h2 {
+            font-size: 28px;
+            margin: 0 0 15px 0;
+            color: #FFD700;
+            text-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+        }
+
+        #gameStats .stats-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        #gameStats .stat-box {
+            text-align: center;
+        }
+
+        #gameStats .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #gameStats .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #667eea;
+        }
+
+        #startInstructions {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            color: white;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            z-index: 40;
+            animation: fadeInPulse 2s ease-in-out infinite;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #startInstructions.hidden {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        #restartPrompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: white;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            display: none;
+            z-index: 35;
+            animation: fadeInPulse 2s ease-in-out infinite;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #restartPrompt.show {
+            display: block;
+            animation: fadeInPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes fadeInPulse {
+            0%, 100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+            }
+        }
+
+        .overlay-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            margin-top: 150px;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .instructions {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #gameOverScreen {
+            display: none;
+        }
+
+        #gameOverScreen.show {
+            display: block;
+        }
+
+        .final-score {
+            font-size: 32px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+
+        .stat-item-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stat-item-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        #perfectText {
+            display: none;
+        }
+
+        @keyframes waveExpand {
+            0% {
+                width: 30px;
+                height: 30px;
+                opacity: 1;
+                border-width: 4px;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        @keyframes perfectPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+
+        #comboIndicator {
+            position: absolute;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+            display: none;
+            z-index: 20;
+            animation: comboPulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes comboPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        #instruction {
+            display: none;
+        }
+
+        #backgroundLayers {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #backgroundLayers canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            #topBar {
+                padding: 15px 20px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            h1 {
+                font-size: 36px;
+            }
+            
+            .instructions {
+                font-size: 16px;
+            }
+            
+            .overlay-content {
+                padding: 30px 20px;
+                margin: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
+    <script src="/sdk/platformsdk.js"></script>
+    <div id="backgroundLayers">
+        <canvas id="backgroundCanvas"></canvas>
+    </div>
+    <div id="gameContainer">
+        <div id="scoreDisplay">
+            <div class="main-score" id="scoreValue">0</div>
+        </div>
+
+        <div id="perfectCounter">
+            <div class="label">PERFECT</div>
+            <div class="value" id="perfectValue">0</div>
+        </div>
+
+        <div id="comboIndicator">
+            COMBO: <span id="comboValue">0</span>x
+        </div>
+
+        <div id="instruction">
+            Click, Tap or press SPACEBAR to stack
+        </div>
+
+        <div id="startInstructions">
+            TAP TO START
+        </div>
+
+        <div id="gameStats">
+            <h2>Tower Complete!</h2>
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-label">Height</div>
+                    <div class="stat-value" id="finalScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Perfect</div>
+                    <div class="stat-value" id="finalPerfect">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Combo</div>
+                    <div class="stat-value" id="finalCombo">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="restartPrompt">
+            TAP TO RESTART
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ============================================
+        // Platform Integration
+        // ============================================
+        PlatformSDK.init({
+            onPause: () => {
+                if (gameState.isPlaying) {
+                    gameState.isPaused = true;
+                }
+            },
+            onResume: () => {
+                gameState.isPaused = false;
+            },
+            onExit: () => {
+                if (gameState.isPlaying) {
+                    endGame();
+                }
+            }
+        });
+
+        // ============================================
+        // Three.js Setup
+        // ============================================
+        const CONFIG = {
+            blockSize: {
+                width: 3,
+                height: 0.6,
+                depth: 3
+            },
+            initialSpeed: 0.05,
+            speedIncrease: 0.0015,
+            maxSpeed: 0.15,
+            moveRange: 4.5,
+            perfectThreshold: 0.15,
+            cameraHeight: 10
+        };
+
+        let scene, camera, renderer;
+        let blocks = [];
+        let currentBlock = null;
+        let movingSpeed = CONFIG.initialSpeed;
+        let cameraLookTarget = { y: 0 };
+        let movingDirection = 'x';
+        let currentHue = 180;
+        let isFirstGame = true;
+
+        let gameState = {
+            score: 0,
+            perfectStacks: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalBlocks: 0,
+            isPlaying: false,
+            isPaused: false,
+            gameStarted: false
+        };
+
+        function initThree() {
+            scene = new THREE.Scene();
+            
+            // Simple gradient for Three.js scene background
+            const canvas = document.createElement('canvas');
+            canvas.width = 2;
+            canvas.height = 512;
+            const context = canvas.getContext('2d');
+            const gradient = context.createLinearGradient(0, 0, 0, 512);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#0f0f1e');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 2, 512);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            scene.background = texture;
+            scene.fog = new THREE.Fog(0x1a1a2e, 30, 80);
+
+            // Initialize 2D background layers
+            initBackgroundLayers();
+
+            camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                100
+            );
+            camera.position.set(8, CONFIG.cameraHeight, 8);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            mainLight.position.set(8, 15, 8);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+
+            const rimLight = new THREE.DirectionalLight(0x667eea, 0.4);
+            rimLight.position.set(-5, 5, -5);
+            scene.add(rimLight);
+            
+            const accentLight = new THREE.PointLight(0xf5576c, 0.3, 50);
+            accentLight.position.set(0, 10, 0);
+            scene.add(accentLight);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Resize background canvas
+            const bgCanvas = document.getElementById('backgroundCanvas');
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            updateBackgroundLayers();
+        }
+
+        let bgCanvas, bgCtx;
+        let currentBackgroundPhase = 0;
+
+        function initBackgroundLayers() {
+            bgCanvas = document.getElementById('backgroundCanvas');
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            bgCtx = bgCanvas.getContext('2d');
+            updateBackgroundLayers();
+        }
+
+        function updateBackgroundLayers(blockCount = 0) {
+            if (!bgCtx) return;
+            
+            const width = bgCanvas.width;
+            const height = bgCanvas.height;
+            
+            // Clear canvas
+            bgCtx.clearRect(0, 0, width, height);
+            
+            // Phase 0-15: Ground with buildings (city)
+            // Phase 15-35: Sky with clouds
+            // Phase 35+: Space with stars
+            
+            if (blockCount < 15) {
+                // City phase
+                const phase = blockCount / 15;
+                drawCityBackground(phase);
+            } else if (blockCount < 35) {
+                // Clouds phase
+                const phase = (blockCount - 15) / 20;
+                drawCloudBackground(phase);
+            } else {
+                // Space phase
+                const phase = Math.min((blockCount - 35) / 20, 1);
+                drawSpaceBackground(phase);
+            }
+        }
+
+        function drawCityBackground(fadeOut) {
+            const width = bgCanvas.width;
+            const height = bgCanvas.height;
+            
+            // Sky gradient (day to evening)
+            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, height);
+            skyGradient.addColorStop(0, `rgba(58, 123, 213, ${1 - fadeOut * 0.5})`);
+            skyGradient.addColorStop(1, `rgba(139, 69, 139, ${1 - fadeOut * 0.3})`);
+            bgCtx.fillStyle = skyGradient;
+            bgCtx.fillRect(0, 0, width, height);
+            
+            // Ground
+            bgCtx.fillStyle = `rgba(34, 139, 34, ${1 - fadeOut})`;
+            bgCtx.fillRect(0, height * 0.85, width, height * 0.15);
+            
+            // Buildings (simple rectangles)
+            const opacity = 1 - fadeOut;
+            const buildings = [
+                { x: 0.1, w: 0.08, h: 0.4, color: '40, 40, 60' },
+                { x: 0.25, w: 0.12, h: 0.5, color: '50, 50, 70' },
+                { x: 0.45, w: 0.1, h: 0.35, color: '45, 45, 65' },
+                { x: 0.65, w: 0.15, h: 0.55, color: '38, 38, 58' },
+                { x: 0.85, w: 0.09, h: 0.42, color: '42, 42, 62' }
+            ];
+            
+            buildings.forEach(b => {
+                const bx = width * b.x;
+                const bw = width * b.w;
+                const bh = height * b.h;
+                const by = height * 0.85 - bh;
+                
+                bgCtx.fillStyle = `rgba(${b.color}, ${opacity})`;
+                bgCtx.fillRect(bx, by, bw, bh);
+                
+                // Windows
+                bgCtx.fillStyle = `rgba(255, 220, 100, ${opacity * 0.6})`;
+                for (let y = by + 20; y < by + bh - 10; y += 25) {
+                    for (let x = bx + 10; x < bx + bw - 10; x += 20) {
+                        bgCtx.fillRect(x, y, 8, 12);
+                    }
+                }
+            });
+        }
+
+        function drawCloudBackground(progress) {
+            const width = bgCanvas.width;
+            const height = bgCanvas.height;
+            
+            // Sky gradient (transition to higher altitude)
+            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, height);
+            const r1 = Math.floor(100 - progress * 80);
+            const g1 = Math.floor(150 - progress * 130);
+            const b1 = Math.floor(220 - progress * 200);
+            skyGradient.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
+            skyGradient.addColorStop(1, `rgb(${Math.floor(r1 * 0.7)}, ${Math.floor(g1 * 0.5)}, ${Math.floor(b1 * 0.6)})`);
+            bgCtx.fillStyle = skyGradient;
+            bgCtx.fillRect(0, 0, width, height);
+            
+            // Clouds (simple ellipses)
+            const clouds = [
+                { x: 0.15, y: 0.3, w: 0.2, h: 0.08 },
+                { x: 0.5, y: 0.5, w: 0.25, h: 0.1 },
+                { x: 0.75, y: 0.25, w: 0.18, h: 0.07 },
+                { x: 0.3, y: 0.65, w: 0.22, h: 0.09 },
+                { x: 0.85, y: 0.55, w: 0.15, h: 0.06 }
+            ];
+            
+            clouds.forEach(cloud => {
+                const cx = width * cloud.x;
+                const cy = height * cloud.y;
+                const cw = width * cloud.w;
+                const ch = height * cloud.h;
+                
+                bgCtx.fillStyle = `rgba(255, 255, 255, ${0.7 - progress * 0.4})`;
+                bgCtx.beginPath();
+                bgCtx.ellipse(cx, cy, cw / 2, ch / 2, 0, 0, Math.PI * 2);
+                bgCtx.fill();
+            });
+        }
+
+        function drawSpaceBackground(progress) {
+            const width = bgCanvas.width;
+            const height = bgCanvas.height;
+            
+            // Deep space gradient
+            const spaceGradient = bgCtx.createLinearGradient(0, 0, 0, height);
+            const darkness = progress * 0.8;
+            spaceGradient.addColorStop(0, `rgb(${Math.floor(15 * (1 - darkness))}, ${Math.floor(10 * (1 - darkness))}, ${Math.floor(30 * (1 - darkness))})`);
+            spaceGradient.addColorStop(1, `rgb(5, 5, 10)`);
+            bgCtx.fillStyle = spaceGradient;
+            bgCtx.fillRect(0, 0, width, height);
+            
+            // Stars (more visible as we go deeper into space)
+            const starCount = Math.floor(80 * progress);
+            for (let i = 0; i < starCount; i++) {
+                const x = (i * 7919) % width; // pseudo-random but consistent
+                const y = (i * 3571) % height;
+                const size = ((i * 13) % 3) + 1;
+                const brightness = 0.5 + ((i * 17) % 50) / 100;
+                
+                bgCtx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+                bgCtx.fillRect(x, y, size, size);
+            }
+            
+            // Add some larger stars/planets
+            if (progress > 0.3) {
+                bgCtx.fillStyle = 'rgba(200, 200, 255, 0.8)';
+                bgCtx.beginPath();
+                bgCtx.arc(width * 0.85, height * 0.2, 4, 0, Math.PI * 2);
+                bgCtx.fill();
+                
+                bgCtx.fillStyle = 'rgba(255, 220, 200, 0.7)';
+                bgCtx.beginPath();
+                bgCtx.arc(width * 0.15, height * 0.7, 3, 0, Math.PI * 2);
+                bgCtx.fill();
+            }
+        }
+
+        // ============================================
+        // Block Creation
+        // ============================================
+        function createBaseBlock() {
+            const geometry = new THREE.BoxGeometry(
+                CONFIG.blockSize.width,
+                CONFIG.blockSize.height,
+                CONFIG.blockSize.depth
+            );
+            
+            // Use current hue for base block color
+            const color = new THREE.Color().setHSL(currentHue / 360, 0.8, 0.6);
+            
+            const material = new THREE.MeshStandardMaterial({ 
+                color: color,
+                metalness: 0.6,
+                roughness: 0.2,
+                emissive: color,
+                emissiveIntensity: 0.2
+            });
+            const block = new THREE.Mesh(geometry, material);
+            block.position.y = 0;
+            block.castShadow = true;
+            block.receiveShadow = true;
+            scene.add(block);
+            
+            blocks.push({
+                mesh: block,
+                width: CONFIG.blockSize.width,
+                depth: CONFIG.blockSize.depth,
+                position: { x: 0, z: 0 }
+            });
+        }
+
+        function createNewBlock() {
+            const lastBlock = blocks[blocks.length - 1];
+            const height = blocks.length * CONFIG.blockSize.height;
+            
+            // Rainbow color progression (slower)
+            currentHue = (currentHue + 3) % 360;
+            const color = new THREE.Color().setHSL(currentHue / 360, 0.8, 0.6);
+            
+            const geometry = new THREE.BoxGeometry(
+                lastBlock.width,
+                CONFIG.blockSize.height,
+                lastBlock.depth
+            );
+            const material = new THREE.MeshStandardMaterial({ 
+                color: color,
+                metalness: 0.6,
+                roughness: 0.2,
+                emissive: color,
+                emissiveIntensity: 0.2
+            });
+            const block = new THREE.Mesh(geometry, material);
+            
+            // Start position based on direction
+            if (movingDirection === 'x') {
+                block.position.set(-CONFIG.moveRange, height, lastBlock.position.z);
+            } else {
+                block.position.set(lastBlock.position.x, height, -CONFIG.moveRange);
+            }
+            
+            block.castShadow = true;
+            block.receiveShadow = true;
+            scene.add(block);
+            
+            // Spawn animation - scale from 0 to 1
+            block.scale.set(0, 0, 0);
+            new TWEEN.Tween(block.scale)
+                .to({ x: 1, y: 1, z: 1 }, 300)
+                .easing(TWEEN.Easing.Back.Out)
+                .start();
+            
+            currentBlock = {
+                mesh: block,
+                width: lastBlock.width,
+                depth: lastBlock.depth,
+                position: { x: block.position.x, z: block.position.z },
+                direction: movingDirection
+            };
+        }
+
+        // ============================================
+        // Game Logic
+        // ============================================
+        function updateBlock() {
+            if (!currentBlock || !gameState.isPlaying || gameState.isPaused) return;
+            
+            if (currentBlock.direction === 'x') {
+                currentBlock.mesh.position.x += movingSpeed;
+                currentBlock.position.x = currentBlock.mesh.position.x;
+                
+                if (currentBlock.mesh.position.x > CONFIG.moveRange || currentBlock.mesh.position.x < -CONFIG.moveRange) {
+                    movingSpeed *= -1;
+                }
+            } else {
+                currentBlock.mesh.position.z += movingSpeed;
+                currentBlock.position.z = currentBlock.mesh.position.z;
+                
+                if (currentBlock.mesh.position.z > CONFIG.moveRange || currentBlock.mesh.position.z < -CONFIG.moveRange) {
+                    movingSpeed *= -1;
+                }
+            }
+        }
+
+        function placeBlock() {
+            if (!currentBlock || gameState.isPaused) return;
+            
+            const lastBlock = blocks[blocks.length - 1];
+            
+            // Calculate overlap
+            const deltaX = currentBlock.position.x - lastBlock.position.x;
+            const deltaZ = currentBlock.position.z - lastBlock.position.z;
+            
+            const overlapX = lastBlock.width - Math.abs(deltaX);
+            const overlapZ = lastBlock.depth - Math.abs(deltaZ);
+            
+            // Check if block is completely off
+            if (overlapX <= 0 || overlapZ <= 0) {
+                // Make the block fall before ending game
+                if (currentBlock && currentBlock.mesh) {
+                    animateFallingPiece(currentBlock.mesh);
+                }
+                
+                // End game after a short delay to see the block fall
+                setTimeout(() => {
+                    endGame();
+                }, 100);
+                return;
+            }
+            
+            // Check for perfect placement
+            const isPerfect = Math.abs(deltaX) < CONFIG.perfectThreshold && 
+                            Math.abs(deltaZ) < CONFIG.perfectThreshold;
+            
+            if (isPerfect) {
+                // Perfect stack - no size reduction
+                gameState.perfectStacks++;
+                gameState.combo++;
+                
+                // Track max combo
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+                
+                updateComboDisplay();
+                
+                // Perfect placement animation - pulse effect
+                currentBlock.mesh.scale.set(1.1, 1.1, 1.1);
+                new TWEEN.Tween(currentBlock.mesh.scale)
+                    .to({ x: 1, y: 1, z: 1 }, 300)
+                    .easing(TWEEN.Easing.Elastic.Out)
+                    .start();
+                
+                // Glow effect
+                const originalIntensity = currentBlock.mesh.material.emissiveIntensity;
+                currentBlock.mesh.material.emissiveIntensity = 0.8;
+                new TWEEN.Tween(currentBlock.mesh.material)
+                    .to({ emissiveIntensity: originalIntensity }, 500)
+                    .start();
+                
+                // Align perfectly to previous block
+                currentBlock.mesh.position.x = lastBlock.position.x;
+                currentBlock.mesh.position.z = lastBlock.position.z;
+                
+                blocks.push({
+                    mesh: currentBlock.mesh,
+                    width: lastBlock.width,
+                    depth: lastBlock.depth,
+                    position: { 
+                        x: lastBlock.position.x, 
+                        z: lastBlock.position.z 
+                    }
+                });
+            } else {
+                // Cut block
+                gameState.combo = 0;
+                document.getElementById('comboIndicator').style.display = 'none';
+                
+                const newWidth = currentBlock.direction === 'x' ? overlapX : lastBlock.width;
+                const newDepth = currentBlock.direction === 'z' ? overlapZ : lastBlock.depth;
+                
+                // Calculate new center position (this is the fix!)
+                let newX, newZ;
+                
+                if (currentBlock.direction === 'x') {
+                    // Moving on X axis
+                    const cutSize = lastBlock.width - overlapX;
+                    const offsetDirection = deltaX > 0 ? 1 : -1;
+                    newX = lastBlock.position.x + (cutSize / 2) * offsetDirection;
+                    newZ = lastBlock.position.z;
+                } else {
+                    // Moving on Z axis
+                    const cutSize = lastBlock.depth - overlapZ;
+                    const offsetDirection = deltaZ > 0 ? 1 : -1;
+                    newX = lastBlock.position.x;
+                    newZ = lastBlock.position.z + (cutSize / 2) * offsetDirection;
+                }
+                
+                // Update block geometry
+                const newGeometry = new THREE.BoxGeometry(newWidth, CONFIG.blockSize.height, newDepth);
+                currentBlock.mesh.geometry.dispose();
+                currentBlock.mesh.geometry = newGeometry;
+                
+                // Set new position
+                currentBlock.mesh.position.x = newX;
+                currentBlock.mesh.position.z = newZ;
+                
+                blocks.push({
+                    mesh: currentBlock.mesh,
+                    width: newWidth,
+                    depth: newDepth,
+                    position: { x: newX, z: newZ }
+                });
+                
+                // Create falling piece (visual effect)
+                createFallingPiece(deltaX, deltaZ, lastBlock, currentBlock, newX, newZ);
+            }
+            
+            // Update score
+            gameState.score++;
+            gameState.totalBlocks++;
+            updateUI();
+            
+            // Move camera up smoothly with TWEEN
+            const targetY = blocks.length * CONFIG.blockSize.height + CONFIG.cameraHeight;
+            const targetLookY = blocks.length * CONFIG.blockSize.height;
+            
+            new TWEEN.Tween(camera.position)
+                .to({ y: targetY }, 400)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+            
+            // Smooth lookAt transition
+            new TWEEN.Tween(cameraLookTarget)
+                .to({ y: targetLookY }, 400)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+            
+            // Update background gradient based on height
+            updateBackgroundLayers(blocks.length);
+            
+            // Increase speed
+            const absSpeed = Math.abs(movingSpeed);
+            if (absSpeed < CONFIG.maxSpeed) {
+                movingSpeed = movingSpeed > 0 
+                    ? absSpeed + CONFIG.speedIncrease
+                    : -(absSpeed + CONFIG.speedIncrease);
+            }
+            
+            // Toggle direction
+            movingDirection = movingDirection === 'x' ? 'z' : 'x';
+            
+            // Create next block
+            createNewBlock();
+        }
+
+        function createFallingPiece(deltaX, deltaZ, lastBlock, cutBlock, newX, newZ) {
+            const cutDirection = cutBlock.direction;
+            
+            if (cutDirection === 'x') {
+                const overlapX = lastBlock.width - Math.abs(deltaX);
+                const fallWidth = lastBlock.width - overlapX;
+                const fallX = deltaX > 0 
+                    ? newX + overlapX / 2 + fallWidth / 2
+                    : newX - overlapX / 2 - fallWidth / 2;
+                
+                const geometry = new THREE.BoxGeometry(fallWidth, CONFIG.blockSize.height, cutBlock.depth);
+                const material = cutBlock.mesh.material.clone();
+                const fallingPiece = new THREE.Mesh(geometry, material);
+                fallingPiece.position.set(
+                    fallX,
+                    cutBlock.mesh.position.y,
+                    newZ
+                );
+                fallingPiece.castShadow = true;
+                scene.add(fallingPiece);
+                
+                animateFallingPiece(fallingPiece);
+            } else {
+                const overlapZ = lastBlock.depth - Math.abs(deltaZ);
+                const fallDepth = lastBlock.depth - overlapZ;
+                const fallZ = deltaZ > 0
+                    ? newZ + overlapZ / 2 + fallDepth / 2
+                    : newZ - overlapZ / 2 - fallDepth / 2;
+                
+                const geometry = new THREE.BoxGeometry(cutBlock.width, CONFIG.blockSize.height, fallDepth);
+                const material = cutBlock.mesh.material.clone();
+                const fallingPiece = new THREE.Mesh(geometry, material);
+                fallingPiece.position.set(
+                    newX,
+                    cutBlock.mesh.position.y,
+                    fallZ
+                );
+                fallingPiece.castShadow = true;
+                scene.add(fallingPiece);
+                
+                animateFallingPiece(fallingPiece);
+            }
+        }
+
+        function animateFallingPiece(piece) {
+            let velocity = 0;
+            const gravity = 0.008;
+            const rotationSpeed = (Math.random() - 0.5) * 0.1;
+            
+            const fall = () => {
+                velocity += gravity;
+                piece.position.y -= velocity;
+                piece.rotation.x += rotationSpeed;
+                piece.rotation.z += rotationSpeed * 0.7;
+                
+                if (piece.position.y > -15) {
+                    requestAnimationFrame(fall);
+                } else {
+                    scene.remove(piece);
+                    piece.geometry.dispose();
+                    piece.material.dispose();
+                }
+            };
+            
+            fall();
+        }
+
+        function updateComboDisplay() {
+            const comboEl = document.getElementById('comboIndicator');
+            if (gameState.combo >= 3) {
+                comboEl.style.display = 'block';
+                document.getElementById('comboValue').textContent = gameState.combo;
+                
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('perfectValue').textContent = gameState.perfectStacks;
+        }
+
+        // ============================================
+        // Game Flow
+        // ============================================
+        function startGame() {
+            document.getElementById('startInstructions').classList.add('hidden');
+            document.getElementById('gameStats').classList.remove('show');
+            document.getElementById('restartPrompt').classList.remove('show');
+            document.getElementById('comboIndicator').style.display = 'none';
+            
+            // Only randomize color on restart, not on first game
+            if (!isFirstGame) {
+                currentHue = Math.floor(Math.random() * 360);
+            }
+            isFirstGame = false;
+            
+            // Reset game state
+            gameState.score = 0;
+            gameState.perfectStacks = 0;
+            gameState.combo = 0;
+            gameState.maxCombo = 0;
+            gameState.totalBlocks = 0;
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+            gameState.gameStarted = false;
+            
+            // Notify platform that game has started - this will create the session
+            if (typeof PlatformSDK !== 'undefined') {
+                try {
+                    window.parent.postMessage({
+                        type: 'gameStarted',
+                        payload: {},
+                        timestamp: Date.now(),
+                        protocolVersion: '1.0.0'
+                    }, '*');
+                    console.log('🎮 Game started event sent to platform');
+                } catch (e) {
+                    console.error('⚠️ Failed to send game started event:', e);
+                }
+            }
+            
+            // Clear ALL objects from scene (including falling pieces)
+            const objectsToRemove = [];
+            scene.traverse((object) => {
+                if (object instanceof THREE.Mesh && object !== scene) {
+                    objectsToRemove.push(object);
+                }
+            });
+            
+            objectsToRemove.forEach(obj => {
+                scene.remove(obj);
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) {
+                        obj.material.forEach(m => m.dispose());
+                    } else {
+                        obj.material.dispose();
+                    }
+                }
+            });
+            
+            // Reset arrays
+            blocks = [];
+            currentBlock = null;
+            movingSpeed = CONFIG.initialSpeed;
+            movingDirection = 'x';
+            
+            // Stop all TWEEN animations
+            TWEEN.removeAll();
+            
+            // Reset camera position and lookAt target
+            camera.position.set(8, CONFIG.cameraHeight, 8);
+            cameraLookTarget.y = 0;
+            camera.lookAt(0, 0, 0);
+            
+            // Reset background to initial gradient
+            updateBackgroundLayers(0);
+            
+            updateUI();
+            
+            // Create base and first moving block - now actually start the game
+            createBaseBlock();
+            createNewBlock();
+        }
+
+        function endGame() {
+            gameState.isPlaying = false;
+            
+            // Camera zoom out and up to show full tower including the top
+            const towerHeight = blocks.length * CONFIG.blockSize.height;
+            const zoomDistance = Math.max(20, towerHeight * 0.9);
+            const zoomHeight = towerHeight * 0.5;
+            
+            // Look at the middle-top of the tower to keep the peak visible
+            const lookAtHeight = towerHeight * 0.6;
+            
+            new TWEEN.Tween(camera.position)
+                .to({ 
+                    x: zoomDistance * 0.7, 
+                    y: zoomHeight, 
+                    z: zoomDistance * 0.7 
+                }, 2000)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .start();
+            
+            new TWEEN.Tween(cameraLookTarget)
+                .to({ y: lookAtHeight }, 2000)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(() => {
+                    // Show stats and restart prompt after camera animation
+                    document.getElementById('restartPrompt').classList.add('show');
+                })
+                .start();
+            
+            // Show game stats panel
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalPerfect').textContent = gameState.perfectStacks;
+            document.getElementById('finalCombo').textContent = gameState.maxCombo;
+            document.getElementById('gameStats').classList.add('show');
+            
+            // Send game over to platform with score and extra_data for XP calculation
+            // score = tower height (for leaderboard)
+            // extra_data = stats for XP calculation (perfect stacks, combo, etc.)
+            PlatformSDK.gameOver(gameState.score, {
+                perfect_stacks: gameState.perfectStacks,
+                max_combo: gameState.maxCombo,
+                total_blocks: gameState.totalBlocks
+            });
+        }
+
+        // ============================================
+        // Input Handlers
+        // ============================================
+        document.addEventListener('click', (event) => {
+            // Start game on first click
+            if (!gameState.isPlaying && !event.target.closest('button')) {
+                startGame();
+                return;
+            }
+            
+            // First tap after startGame just starts the movement
+            if (gameState.isPlaying && !gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
+                gameState.gameStarted = true;
+                return;
+            }
+            
+            // Subsequent taps place blocks
+            if (gameState.isPlaying && gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
+                placeBlock();
+            }
+        });
+
+        document.addEventListener('touchstart', (event) => {
+            // Start game on first tap
+            if (!gameState.isPlaying && !event.target.closest('button')) {
+                event.preventDefault();
+                startGame();
+                return;
+            }
+            
+            // First tap after startGame just starts the movement
+            if (gameState.isPlaying && !gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
+                event.preventDefault();
+                gameState.gameStarted = true;
+                return;
+            }
+            
+            // Subsequent taps place blocks
+            if (gameState.isPlaying && gameState.gameStarted && !gameState.isPaused && !event.target.closest('button')) {
+                event.preventDefault();
+                placeBlock();
+            }
+        }, { passive: false });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && gameState.isPlaying && !gameState.isPaused) {
+                event.preventDefault();
+                placeBlock();
+            }
+        });
+
+        // ============================================
+        // Animation Loop
+        // ============================================
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+            updateBlock();
+            
+            // Smooth camera lookAt using animated target
+            camera.lookAt(0, cameraLookTarget.y, 0);
+            
+            renderer.render(scene, camera);
+        }
+
+        // ============================================
+        // Initialize
+        // ============================================
+        function initGame() {
+            // Set random starting hue before creating base block
+            currentHue = Math.floor(Math.random() * 360);
+            
+            // Create initial base block so tower is visible at start
+            createBaseBlock();
+            updateUI();
+        }
+
+        initThree();
+        animate();
+        initGame();
+        
+        // Game starts when user taps
+    </script>
+</body>
+</html>

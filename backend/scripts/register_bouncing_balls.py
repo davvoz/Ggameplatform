@@ -13,8 +13,8 @@ def register_bouncing_balls():
     """Register Bouncing Balls - Gravity Master game"""
     
     game_data = {
-        'gameId': 'bouncing-balls',
-        'title': 'Bouncing Balls - Gravity Master',
+        'gameId': 'RollABall',
+        'title': 'Roll A Ball',
         'description': 'Un gioco ipnotico e rilassante dove crei palline rimbalzanti! Tocca lo schermo per generare nuove palline, raccogli monete e sblocca potenziamenti incredibili. Aumenta gravità, rimbalzo, dimensione e molto altro. Goditi le spettacolari animazioni con effetti arcobaleno e particelle esplosive. Perfetto per mobile!',
         'author': 'Platform Team',
         'version': '1.0.0',
@@ -51,10 +51,10 @@ def register_bouncing_balls():
     }
     
     # Check if game already exists
-    existing = get_game_by_id('bouncing-balls')
+    existing = get_game_by_id('RollABall')
     if existing:
-        print('⚠️  Game "Bouncing Balls" already exists in database')
-        print('    Game ID: bouncing-balls')
+        print('⚠️  Game "Roll A Ball" already exists in database')
+        print('    Game ID: RollABall')
         print('    Title:', existing['title'])
         return
     

@@ -1,8 +1,17 @@
 {
-  "version": "3.8.3",
-  "timestamp": "2026-01-12T03:52:40.297Z",
-  "buildNumber": 237,
+  "version": "3.9.0",
+  "timestamp": "2026-01-13T16:16:33.858Z",
+  "buildNumber": 238,
   "changelog": [
+    {
+      "version": "3.9.0",
+      "date": "2026-01-13",
+      "type": "minor",
+      "changes": [
+        "feat:[RAB]add a PlayCanvas game",
+        "🔖 Bump version to 3.8.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.8.3",
       "date": "2026-01-12",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: enhance daily quest reset logic and improve quest completion tracking",
         "🔖 Bump version to 3.7.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.8",
-      "date": "2026-01-10",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: adjust jump duration and add road markings between consecutive road rows",
-        "🔖 Bump version to 3.7.7 [skip-version]"
       ]
     }
   ]

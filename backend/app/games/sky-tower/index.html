@@ -322,7 +322,7 @@
             position: absolute;
             top: 150px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) scale(0);
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
             padding: 12px 24px;
@@ -332,12 +332,43 @@
             box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
             display: none;
             z-index: 20;
-            animation: comboPulse 0.6s ease-in-out infinite;
+            opacity: 0;
+        }
+        
+        #comboIndicator.show {
+            animation: comboEnter 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
+                       comboPulse 0.6s ease-in-out 0.4s infinite;
+        }
+        
+        #comboIndicator.hide {
+            animation: comboExit 0.3s ease-in forwards;
+        }
+        
+        @keyframes comboEnter {
+            0% {
+                transform: translateX(-50%) scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(-50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes comboExit {
+            0% {
+                transform: translateX(-50%) scale(1) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) scale(0.5) translateY(-30px);
+                opacity: 0;
+            }
         }
 
         @keyframes comboPulse {
             0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
+            50% { transform: translateX(-50%) scale(1.08); }
         }
 
         #instruction {
@@ -786,75 +817,27 @@
                 const gain = audioCtx.createGain();
                 gain.connect(audioCtx.destination);
                 
-                // Base frequencies for C major scale
-                const notes = {
-                    C: 523.25, D: 587.33, E: 659.25, 
-                    F: 698.46, G: 783.99, A: 880.00, B: 987.77
-                };
+                // Base frequencies for C major scale (Do, Re, Mi, Fa, Sol, La, Si)
+                const baseNotes = [
+                    261.63,  // C (Do)
+                    293.66,  // D (Re)
+                    329.63,  // E (Mi)
+                    349.23,  // F (Fa)
+                    392.00,  // G (Sol)
+                    440.00,  // A (La)
+                    493.88   // B (Si)
+                ];
                 
+                // Calculate which note in the scale (1-7)
+                const noteIndex = ((comboCount - 1) % 7);
+                
+                // Calculate how many octaves to play (1 octave per 7 perfects)
+                const numOctaves = Math.floor((comboCount - 1) / 7) + 1;
+                
+                // Build frequencies array with multiple octaves
                 let frequencies = [];
-                
-                if (comboCount <= 7) {
-                    // Single notes: C, D, E, F, G, A, B
-                    const noteSequence = [notes.C, notes.D, notes.E, notes.F, notes.G, notes.A, notes.B];
-                    frequencies = [noteSequence[comboCount - 1]];
-                    
-                } else if (comboCount === 8) {
-                    // 2 notes: C + Dm7 voicing (C + F)
-                    frequencies = [notes.C * 2, notes.F * 2];
-                    
-                } else if (comboCount === 9) {
-                    // 3 notes: Cmaj (C + E + G) - clean major triad
-                    frequencies = [notes.C * 2, notes.E * 2, notes.G * 2];
-                    
-                } else if (comboCount === 10) {
-                    // 4 notes: Cmaj7 (C + E + G + B)
-                    frequencies = [notes.C * 2, notes.E * 2, notes.G * 2, notes.B * 2];
-                    
-                } else {
-                    // Extended list of varied diatonic jazz progressions (24 variations)
-                    const jazzProgressions = [
-                        // I - Cmaj variations
-                        [notes.C * 2, notes.E * 2, notes.G * 2, notes.B * 2, notes.D * 4],
-                        [notes.E * 2, notes.G * 2, notes.C * 4, notes.D * 4, notes.F * 4],
-                        [notes.G * 2, notes.B * 2, notes.E * 4, notes.A * 4, notes.C * 4],
-                        
-                        // ii - Dm variations
-                        [notes.D * 2, notes.F * 2, notes.A * 2, notes.C * 4, notes.E * 4],
-                        [notes.F * 2, notes.A * 2, notes.D * 4, notes.E * 4, notes.G * 4],
-                        [notes.A * 2, notes.C * 4, notes.F * 4, notes.G * 4, notes.B * 4],
-                        
-                        // iii - Em variations
-                        [notes.E * 2, notes.G * 2, notes.B * 2, notes.D * 4, notes.F * 4],
-                        [notes.G * 2, notes.B * 2, notes.E * 4, notes.F * 4, notes.A * 4],
-                        [notes.B * 2, notes.D * 4, notes.G * 4, notes.A * 4, notes.C * 4],
-                        
-                        // IV - Fmaj variations
-                        [notes.F * 2, notes.A * 2, notes.C * 4, notes.E * 4, notes.G * 4],
-                        [notes.A * 2, notes.C * 4, notes.F * 4, notes.G * 4, notes.B * 4],
-                        [notes.C * 4, notes.E * 4, notes.A * 4, notes.D * 4, notes.F * 4],
-                        
-                        // V - G7 variations
-                        [notes.G * 2, notes.B * 2, notes.D * 4, notes.F * 4, notes.A * 4],
-                        [notes.B * 2, notes.D * 4, notes.G * 4, notes.A * 4, notes.C * 4],
-                        [notes.D * 4, notes.F * 4, notes.B * 4, notes.C * 4, notes.E * 4],
-                        
-                        // vi - Am variations
-                        [notes.A * 2, notes.C * 4, notes.E * 4, notes.G * 4, notes.B * 4],
-                        [notes.C * 4, notes.E * 4, notes.A * 4, notes.B * 4, notes.D * 4],
-                        [notes.E * 4, notes.G * 4, notes.C * 4, notes.D * 4, notes.F * 4],
-                        
-                        // Extended voicings
-                        [notes.C * 2, notes.G * 2, notes.B * 2, notes.E * 4, notes.A * 4],
-                        [notes.D * 2, notes.A * 2, notes.C * 4, notes.F * 4, notes.B * 4],
-                        [notes.E * 2, notes.B * 2, notes.D * 4, notes.G * 4, notes.C * 4],
-                        [notes.F * 2, notes.C * 4, notes.E * 4, notes.A * 4, notes.D * 4],
-                        [notes.G * 2, notes.D * 4, notes.F * 4, notes.B * 4, notes.E * 4],
-                        [notes.A * 2, notes.E * 4, notes.G * 4, notes.C * 4, notes.F * 4]
-                    ];
-                    
-                    const chordIndex = (comboCount - 11) % jazzProgressions.length;
-                    frequencies = jazzProgressions[chordIndex];
+                for (let octave = 0; octave < numOctaves; octave++) {
+                    frequencies.push(baseNotes[noteIndex] * Math.pow(2, octave));
                 }
                 
                 // Very short sustain and 200ms release
@@ -876,11 +859,8 @@
                     activeOscillators.push(osc);
                 });
                 
-                // Volume envelope: instant attack, short sustain, smooth release to zero
-                // Divide volume equally by number of notes to keep total volume constant
-                const baseVolume = 0.15; // Base volume for single note
-                const volumePerNote = baseVolume / frequencies.length; // Divide by actual count
-                const peakVolume = volumePerNote * frequencies.length; // Will always equal baseVolume
+                // Volume envelope: reduce volume based on number of notes to avoid clipping
+                const baseVolume = 0.08 / Math.sqrt(numOctaves); // Reduce volume as more notes are added
                 
                 // Instant attack (no ramp)
                 gain.gain.setValueAtTime(baseVolume, audioCtx.currentTime);
@@ -1163,26 +1143,16 @@
                     cloudCluster.add(puff);
                 }
                 
-                // Position cloud cluster behind tower only (negative x or z)
-                const angle = Math.random() * Math.PI * 2;
+                // Position cloud cluster behind tower only (negative x AND negative z)
+                const angle = Math.random() * Math.PI * 0.5; // Only 90 degrees quadrant
                 const radius = 15 + Math.random() * 25;
-                let x = Math.cos(angle) * radius;
-                let z = Math.sin(angle) * radius;
-                
-                // Ensure cloud is behind tower (negative x OR negative z)
-                if (x >= 0 && z >= 0) {
-                    // Flip to behind tower
-                    if (Math.random() > 0.5) {
-                        x = -x;
-                    } else {
-                        z = -z;
-                    }
-                }
+                const x = -Math.abs(Math.cos(angle) * radius); // Force negative X
+                const z = -Math.abs(Math.sin(angle) * radius); // Force negative Z
                 
                 cloudCluster.position.x = x;
                 cloudCluster.position.z = z;
-                // Clouds at different heights from 3 to 30 (more variation)
-                cloudCluster.position.y = 3 + Math.random() * 27;
+                // Clouds at different heights from 15 to 40 (higher to avoid buildings)
+                cloudCluster.position.y = 15 + Math.random() * 25;
                 
                 // Overall cloud scale variation
                 const cloudScale = 0.6 + Math.random() * 0.8;
@@ -1328,7 +1298,7 @@
                     if (!isBehindTower(x, z)) continue;
                     
                     const distFromCenter = Math.sqrt(x * x + z * z);
-                    if (distFromCenter < 4) continue;
+                    if (distFromCenter < 8) continue; // Increased from 4 to 8 for tower platform
                     
                     // Skip if ON a road
                     if (isOnRoad(x, z)) continue;
@@ -1899,6 +1869,9 @@
             
             stars = new THREE.Points(starGeometry, starMaterial);
             scene.add(stars);
+            
+            // Create tower platform immediately
+            createTowerPlatform();
         }
         
         function updateEnvironment() {
@@ -2005,6 +1978,56 @@
         }
 
         // ============================================
+        // Tower Platform Creation
+        // ============================================
+        function createTowerPlatform() {
+            const platformGroup = new THREE.Group();
+            
+            // Main platform (square base at ground level)
+            const platformSize = 8;
+            const platformHeight = 0.2;
+            const platformGeometry = new THREE.BoxGeometry(platformSize, platformHeight, platformSize);
+            
+            const platformMaterial = new THREE.MeshStandardMaterial({
+                color: 0x444444,
+                metalness: 0.4,
+                roughness: 0.6
+            });
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.position.y = 0.1;
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            platformGroup.add(platform);
+            
+            // Platform border (yellow frame around edges)
+            const borderThickness = 0.2;
+            const borderHeight = 0.25;
+            const borderMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffcc00,
+                metalness: 0.5,
+                roughness: 0.3
+            });
+            
+            // Create 4 border sides
+            const borders = [
+                { size: [platformSize, borderHeight, borderThickness], pos: [0, borderHeight / 2 + platformHeight / 2, platformSize / 2] },
+                { size: [platformSize, borderHeight, borderThickness], pos: [0, borderHeight / 2 + platformHeight / 2, -platformSize / 2] },
+                { size: [borderThickness, borderHeight, platformSize], pos: [platformSize / 2, borderHeight / 2 + platformHeight / 2, 0] },
+                { size: [borderThickness, borderHeight, platformSize], pos: [-platformSize / 2, borderHeight / 2 + platformHeight / 2, 0] }
+            ];
+            
+            borders.forEach(b => {
+                const borderGeometry = new THREE.BoxGeometry(...b.size);
+                const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                border.position.set(...b.pos);
+                border.castShadow = true;
+                platformGroup.add(border);
+            });
+            
+            scene.add(platformGroup);
+        }
+
+        // ============================================
         // Block Creation
         // ============================================
         function createBaseBlock() {
@@ -2025,7 +2048,7 @@
                 emissiveIntensity: 0.2
             });
             const block = new THREE.Mesh(geometry, material);
-            block.position.y = 0;
+            block.position.y = 0.3; // At ground level
             block.castShadow = true;
             block.receiveShadow = true;
             scene.add(block);
@@ -2040,7 +2063,8 @@
 
         function createNewBlock() {
             const lastBlock = blocks[blocks.length - 1];
-            const height = blocks.length * CONFIG.blockSize.height;
+            // Calculate height: base block Y position + (number of blocks * block height)
+            const height = 0.3 + (blocks.length * CONFIG.blockSize.height);
             
             // Rainbow color progression (slower)
             currentHue = (currentHue + 5) % 360;
@@ -2220,7 +2244,13 @@
                 // Cut block - reset perfect streak
                 gameState.combo = 0;
                 gameState.perfectStreak = 0;
-                document.getElementById('comboIndicator').style.display = 'none';
+                const comboEl = document.getElementById('comboIndicator');
+                comboEl.classList.remove('show');
+                comboEl.classList.add('hide');
+                setTimeout(() => {
+                    comboEl.style.display = 'none';
+                    comboEl.classList.remove('hide');
+                }, 300);
                 
                 // Play normal block place sound
                 audioSystem.playBlockPlace();
@@ -2485,6 +2515,8 @@
             const comboEl = document.getElementById('comboIndicator');
             if (gameState.combo >= 3) {
                 comboEl.style.display = 'block';
+                comboEl.classList.remove('hide');
+                comboEl.classList.add('show');
                 document.getElementById('comboValue').textContent = gameState.combo;
                 
                 if (gameState.combo > gameState.maxCombo) {
@@ -2505,7 +2537,9 @@
             document.getElementById('startInstructions').classList.add('hidden');
             document.getElementById('gameStats').classList.remove('show');
             document.getElementById('restartPrompt').classList.remove('show');
-            document.getElementById('comboIndicator').style.display = 'none';
+            const comboEl = document.getElementById('comboIndicator');
+            comboEl.classList.remove('show', 'hide');
+            comboEl.style.display = 'none';
             
             // Only randomize color on restart, not on first game
             if (!isFirstGame) {

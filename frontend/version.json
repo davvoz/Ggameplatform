@@ -1,8 +1,17 @@
 {
-  "version": "3.9.4",
-  "timestamp": "2026-01-14T01:38:04.592Z",
-  "buildNumber": 242,
+  "version": "3.9.5",
+  "timestamp": "2026-01-14T17:28:35.767Z",
+  "buildNumber": 243,
   "changelog": [
+    {
+      "version": "3.9.5",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: Sky Tower, added terrain, city generation and UI",
+        "🔖 Bump version to 3.9.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.4",
       "date": "2026-01-14",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: enhance STEEM rewards display with icons in leaderboard and game cards",
         "🔖 Bump version to 3.7.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.13",
-      "date": "2026-01-11",
-      "type": "patch",
-      "changes": [
-        "fix: optimize train warning light and collision handling for mobile performance",
-        "🔖 Bump version to 3.7.12 [skip-version]"
       ]
     }
   ]

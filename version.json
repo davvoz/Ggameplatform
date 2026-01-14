@@ -1,8 +1,17 @@
 {
-  "version": "3.9.3",
-  "timestamp": "2026-01-14T01:29:32.156Z",
-  "buildNumber": 241,
+  "version": "3.9.4",
+  "timestamp": "2026-01-14T01:38:04.592Z",
+  "buildNumber": 242,
   "changelog": [
+    {
+      "version": "3.9.4",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: [SkyTower] Implement audio system for block actions and game events",
+        "🔖 Bump version to 3.9.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.3",
       "date": "2026-01-14",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: optimize train warning light and collision handling for mobile performance",
         "🔖 Bump version to 3.7.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.12",
-      "date": "2026-01-11",
-      "type": "patch",
-      "changes": [
-        "fix: use normalizedDelta for consistent timer updates across devices",
-        "🔖 Bump version to 3.7.11 [skip-version]"
       ]
     }
   ]

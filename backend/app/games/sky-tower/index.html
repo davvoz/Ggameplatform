@@ -456,6 +456,224 @@
         });
 
         // ============================================
+        // Audio System
+        // ============================================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        
+        // Track active oscillators to stop them
+        let activeOscillators = [];
+
+        const audioSystem = {
+            playBlockPlace: () => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.value = 300;
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.1);
+            },
+
+            playPerfectCombo: (comboCount) => {
+                // Stop all previous oscillators
+                activeOscillators.forEach(osc => {
+                    try {
+                        osc.stop();
+                    } catch (e) {
+                        // Already stopped
+                    }
+                });
+                activeOscillators = [];
+                
+                const gain = audioCtx.createGain();
+                gain.connect(audioCtx.destination);
+                
+                // Base frequencies for C major scale
+                const notes = {
+                    C: 523.25, D: 587.33, E: 659.25, 
+                    F: 698.46, G: 783.99, A: 880.00, B: 987.77
+                };
+                
+                let frequencies = [];
+                
+                if (comboCount <= 7) {
+                    // Single notes: C, D, E, F, G, A, B
+                    const noteSequence = [notes.C, notes.D, notes.E, notes.F, notes.G, notes.A, notes.B];
+                    frequencies = [noteSequence[comboCount - 1]];
+                    
+                } else if (comboCount === 8) {
+                    // 2 notes: C + Dm7 voicing (C + F)
+                    frequencies = [notes.C * 2, notes.F * 2];
+                    
+                } else if (comboCount === 9) {
+                    // 3 notes: Cmaj (C + E + G) - clean major triad
+                    frequencies = [notes.C * 2, notes.E * 2, notes.G * 2];
+                    
+                } else if (comboCount === 10) {
+                    // 4 notes: Cmaj7 (C + E + G + B)
+                    frequencies = [notes.C * 2, notes.E * 2, notes.G * 2, notes.B * 2];
+                    
+                } else {
+                    // Extended list of varied diatonic jazz progressions (24 variations)
+                    const jazzProgressions = [
+                        // I - Cmaj variations
+                        [notes.C * 2, notes.E * 2, notes.G * 2, notes.B * 2, notes.D * 4],
+                        [notes.E * 2, notes.G * 2, notes.C * 4, notes.D * 4, notes.F * 4],
+                        [notes.G * 2, notes.B * 2, notes.E * 4, notes.A * 4, notes.C * 4],
+                        
+                        // ii - Dm variations
+                        [notes.D * 2, notes.F * 2, notes.A * 2, notes.C * 4, notes.E * 4],
+                        [notes.F * 2, notes.A * 2, notes.D * 4, notes.E * 4, notes.G * 4],
+                        [notes.A * 2, notes.C * 4, notes.F * 4, notes.G * 4, notes.B * 4],
+                        
+                        // iii - Em variations
+                        [notes.E * 2, notes.G * 2, notes.B * 2, notes.D * 4, notes.F * 4],
+                        [notes.G * 2, notes.B * 2, notes.E * 4, notes.F * 4, notes.A * 4],
+                        [notes.B * 2, notes.D * 4, notes.G * 4, notes.A * 4, notes.C * 4],
+                        
+                        // IV - Fmaj variations
+                        [notes.F * 2, notes.A * 2, notes.C * 4, notes.E * 4, notes.G * 4],
+                        [notes.A * 2, notes.C * 4, notes.F * 4, notes.G * 4, notes.B * 4],
+                        [notes.C * 4, notes.E * 4, notes.A * 4, notes.D * 4, notes.F * 4],
+                        
+                        // V - G7 variations
+                        [notes.G * 2, notes.B * 2, notes.D * 4, notes.F * 4, notes.A * 4],
+                        [notes.B * 2, notes.D * 4, notes.G * 4, notes.A * 4, notes.C * 4],
+                        [notes.D * 4, notes.F * 4, notes.B * 4, notes.C * 4, notes.E * 4],
+                        
+                        // vi - Am variations
+                        [notes.A * 2, notes.C * 4, notes.E * 4, notes.G * 4, notes.B * 4],
+                        [notes.C * 4, notes.E * 4, notes.A * 4, notes.B * 4, notes.D * 4],
+                        [notes.E * 4, notes.G * 4, notes.C * 4, notes.D * 4, notes.F * 4],
+                        
+                        // Extended voicings
+                        [notes.C * 2, notes.G * 2, notes.B * 2, notes.E * 4, notes.A * 4],
+                        [notes.D * 2, notes.A * 2, notes.C * 4, notes.F * 4, notes.B * 4],
+                        [notes.E * 2, notes.B * 2, notes.D * 4, notes.G * 4, notes.C * 4],
+                        [notes.F * 2, notes.C * 4, notes.E * 4, notes.A * 4, notes.D * 4],
+                        [notes.G * 2, notes.D * 4, notes.F * 4, notes.B * 4, notes.E * 4],
+                        [notes.A * 2, notes.E * 4, notes.G * 4, notes.C * 4, notes.F * 4]
+                    ];
+                    
+                    const chordIndex = (comboCount - 11) % jazzProgressions.length;
+                    frequencies = jazzProgressions[chordIndex];
+                }
+                
+                // Very short sustain and 200ms release
+                const sustainTime = 0.05; // 50ms sustain - very short
+                const releaseTime = 0.2; // Fixed 200ms release
+                const totalDuration = sustainTime + releaseTime + 0.05; // Extra time for clean stop
+                
+                // Play all frequencies with slight delay for piano-like effect
+                frequencies.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    osc.connect(gain);
+                    osc.frequency.value = freq;
+                    
+                    // Slight stagger for piano-like articulation
+                    const startTime = audioCtx.currentTime + (index * 0.01);
+                    osc.start(startTime);
+                    osc.stop(startTime + totalDuration);
+                    
+                    activeOscillators.push(osc);
+                });
+                
+                // Volume envelope: instant attack, short sustain, smooth release to zero
+                const volumePerNote = 0.12 / Math.sqrt(frequencies.length);
+                const peakVolume = volumePerNote * frequencies.length;
+                
+                // Instant attack (no ramp)
+                gain.gain.setValueAtTime(peakVolume, audioCtx.currentTime);
+                
+                // Short sustain phase
+                gain.gain.setValueAtTime(peakVolume, audioCtx.currentTime + sustainTime);
+                
+                // Release phase - fade all the way to 0 to avoid clicks
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + sustainTime + releaseTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + sustainTime + releaseTime + 0.01);
+            },
+
+            playExpansion: () => {
+                // Rising sweep sound for block expansion
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass';
+                
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.4);
+                
+                filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.4);
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.4);
+            },
+
+            playGameOver: () => {
+                // Descending tones for game over
+                const times = [0, 0.15, 0.3];
+                const freqs = [440, 349.23, 293.66]; // A4, F4, D4
+                
+                times.forEach((time, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.frequency.value = freqs[i];
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + time);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + time + 0.3);
+                    
+                    osc.start(audioCtx.currentTime + time);
+                    osc.stop(audioCtx.currentTime + time + 0.3);
+                });
+            },
+
+            playFall: () => {
+                // Falling whoosh sound
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        };
+
+        // Resume audio context on first user interaction
+        document.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+
+        // ============================================
         // Three.js Setup
         // ============================================
         const CONFIG = {
@@ -487,6 +705,7 @@
             combo: 0,
             maxCombo: 0,
             totalBlocks: 0,
+            perfectStreak: 0,
             isPlaying: false,
             isPaused: false,
             gameStarted: false
@@ -699,6 +918,9 @@
             
             // Check if block is completely off
             if (overlapX <= 0 || overlapZ <= 0) {
+                // Play fall sound
+                audioSystem.playFall();
+                
                 // Make the block fall before ending game
                 if (currentBlock && currentBlock.mesh) {
                     animateFallingPiece(currentBlock.mesh);
@@ -719,11 +941,15 @@
                 // Perfect stack - no size reduction
                 gameState.perfectStacks++;
                 gameState.combo++;
+                gameState.perfectStreak++;
                 
                 // Track max combo
                 if (gameState.combo > gameState.maxCombo) {
                     gameState.maxCombo = gameState.combo;
                 }
+                
+                // Play combo sound with rising chord
+                audioSystem.playPerfectCombo(gameState.combo);
                 
                 updateComboDisplay();
                 
@@ -745,19 +971,53 @@
                 currentBlock.mesh.position.x = lastBlock.position.x;
                 currentBlock.mesh.position.z = lastBlock.position.z;
                 
+                // Check if we need to expand the block (every perfect block after the 8th)
+                let finalWidth = lastBlock.width;
+                let finalDepth = lastBlock.depth;
+                let finalX = lastBlock.position.x;
+                let finalZ = lastBlock.position.z;
+                
+                if (gameState.perfectStreak >= 8) {
+                    // Recover some size (increase by 15% but not exceed initial size)
+                    const recoveryFactor = 1.15;
+                    const maxWidth = CONFIG.blockSize.width;
+                    const maxDepth = CONFIG.blockSize.depth;
+                    
+                    finalWidth = Math.min(lastBlock.width * recoveryFactor, maxWidth);
+                    finalDepth = Math.min(lastBlock.depth * recoveryFactor, maxDepth);
+                    
+                    // Only animate if there was actual growth
+                    if (finalWidth > lastBlock.width || finalDepth > lastBlock.depth) {
+                        // Calculate new position (moved towards center)
+                        const deltaWidth = finalWidth - lastBlock.width;
+                        const deltaDepth = finalDepth - lastBlock.depth;
+                        finalX = lastBlock.position.x - Math.sign(lastBlock.position.x) * deltaWidth / 2;
+                        finalZ = lastBlock.position.z - Math.sign(lastBlock.position.z) * deltaDepth / 2;
+                        
+                        // Play expansion sound
+                        audioSystem.playExpansion();
+                        
+                        animateBlockExpansion(currentBlock.mesh, lastBlock.width, lastBlock.depth, finalWidth, finalDepth);
+                    }
+                }
+                
                 blocks.push({
                     mesh: currentBlock.mesh,
-                    width: lastBlock.width,
-                    depth: lastBlock.depth,
+                    width: finalWidth,
+                    depth: finalDepth,
                     position: { 
-                        x: lastBlock.position.x, 
-                        z: lastBlock.position.z 
+                        x: finalX, 
+                        z: finalZ 
                     }
                 });
             } else {
-                // Cut block
+                // Cut block - reset perfect streak
                 gameState.combo = 0;
+                gameState.perfectStreak = 0;
                 document.getElementById('comboIndicator').style.display = 'none';
+                
+                // Play normal block place sound
+                audioSystem.playBlockPlace();
                 
                 const newWidth = currentBlock.direction === 'x' ? overlapX : lastBlock.width;
                 const newDepth = currentBlock.direction === 'z' ? overlapZ : lastBlock.depth;
@@ -876,6 +1136,71 @@
                 
                 animateFallingPiece(fallingPiece);
             }
+        }
+
+        function animateBlockExpansion(mesh, oldWidth, oldDepth, newWidth, newDepth) {
+            // Update geometry with smooth animation
+            const duration = 600;
+            const startTime = Date.now();
+            
+            // Store original position
+            const originalX = mesh.position.x;
+            const originalZ = mesh.position.z;
+            
+            // Calculate how much to move towards center (0,0)
+            // Growth happens only on the inner side
+            const deltaWidth = newWidth - oldWidth;
+            const deltaDepth = newDepth - oldDepth;
+            
+            // Move towards center by half the growth amount on each axis
+            const targetX = originalX - Math.sign(originalX) * deltaWidth / 2;
+            const targetZ = originalZ - Math.sign(originalZ) * deltaDepth / 2;
+            
+            // Enhanced glow effect during expansion
+            const originalEmissive = mesh.material.emissive.getHex();
+            const originalIntensity = mesh.material.emissiveIntensity;
+            
+            mesh.material.emissive.setHex(0x4CAF50); // Green glow
+            
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                
+                // Interpolate dimensions
+                const currentWidth = oldWidth + (newWidth - oldWidth) * eased;
+                const currentDepth = oldDepth + (newDepth - oldDepth) * eased;
+                
+                // Interpolate position (move towards center as it grows)
+                mesh.position.x = originalX + (targetX - originalX) * eased;
+                mesh.position.z = originalZ + (targetZ - originalZ) * eased;
+                
+                // Update geometry
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(
+                    currentWidth,
+                    CONFIG.blockSize.height,
+                    currentDepth
+                );
+                
+                // Pulse scale effect
+                const scalePulse = 1 + Math.sin(progress * Math.PI) * 0.1;
+                mesh.scale.set(scalePulse, scalePulse, scalePulse);
+                
+                // Fade glow back to original
+                mesh.material.emissiveIntensity = originalIntensity + (0.6 - originalIntensity) * (1 - progress);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Reset to final state
+                    mesh.scale.set(1, 1, 1);
+                    mesh.material.emissive.setHex(originalEmissive);
+                    mesh.material.emissiveIntensity = originalIntensity;
+                }
+            };
+            
+            animate();
         }
 
         function animateFallingPiece(piece) {
@@ -1001,6 +1326,9 @@
 
         function endGame() {
             gameState.isPlaying = false;
+            
+            // Play game over sound
+            audioSystem.playGameOver();
             
             // Camera zoom out and up to show full tower including the top
             const towerHeight = blocks.length * CONFIG.blockSize.height;
@@ -1161,8 +1489,9 @@
         document.addEventListener('click', (event) => {
             // Start game on first click
             if (!gameState.isPlaying && !event.target.closest('button')) {
-                requestFullscreen();
                 startGame();
+                // Request fullscreen after starting game
+                setTimeout(() => requestFullscreen(), 100);
                 return;
             }
             
@@ -1183,8 +1512,9 @@
             // Start game on first tap
             if (!gameState.isPlaying && !event.target.closest('button')) {
                 event.preventDefault();
-                requestFullscreen();
                 startGame();
+                // Request fullscreen after starting game
+                setTimeout(() => requestFullscreen(), 100);
                 return;
             }
             
@@ -1204,9 +1534,27 @@
         }, { passive: false });
 
         document.addEventListener('keydown', (event) => {
-            if (event.code === 'Space' && gameState.isPlaying && !gameState.isPaused) {
+            if (event.code === 'Space') {
                 event.preventDefault();
-                placeBlock();
+                
+                // Start game if not playing
+                if (!gameState.isPlaying) {
+                    startGame();
+                    setTimeout(() => requestFullscreen(), 100);
+                    return;
+                }
+                
+                // First space after startGame starts movement AND places first block
+                if (gameState.isPlaying && !gameState.gameStarted && !gameState.isPaused) {
+                    gameState.gameStarted = true;
+                    placeBlock();
+                    return;
+                }
+                
+                // Place blocks during gameplay
+                if (gameState.isPlaying && gameState.gameStarted && !gameState.isPaused) {
+                    placeBlock();
+                }
             }
         });
 
@@ -1239,6 +1587,9 @@
         initThree();
         animate();
         initGame();
+        
+        // Give focus to the window so keyboard events work immediately
+        window.focus();
         
         // Game starts when user taps
     </script>

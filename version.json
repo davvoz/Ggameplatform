@@ -1,8 +1,17 @@
 {
-  "version": "3.9.8",
-  "timestamp": "2026-01-14T18:03:09.700Z",
-  "buildNumber": 246,
+  "version": "3.10.0",
+  "timestamp": "2026-01-14T20:06:36.973Z",
+  "buildNumber": 247,
   "changelog": [
+    {
+      "version": "3.10.0",
+      "date": "2026-01-14",
+      "type": "minor",
+      "changes": [
+        "feat: Add XP and level-up notifications with animations and modal display",
+        "🔖 Bump version to 3.9.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.8",
       "date": "2026-01-14",
@@ -82,15 +91,6 @@
       "changes": [
         "feat:[RAB]add a PlayCanvas game",
         "🔖 Bump version to 3.8.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.8.3",
-      "date": "2026-01-12",
-      "type": "patch",
-      "changes": [
-        "refactor: remove background layers and implement fullscreen handling for desktop",
-        "🔖 Bump version to 3.8.2 [skip-version]"
       ]
     }
   ]

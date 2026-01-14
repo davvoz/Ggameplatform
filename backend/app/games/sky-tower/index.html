@@ -404,6 +404,155 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* ============ XP & LEVEL-UP NOTIFICATIONS ============ */
+        .game-xp-banner {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            animation: xpSlideIn 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .game-xp-banner.hiding {
+            animation: xpSlideOut 0.5s ease forwards;
+        }
+        
+        .game-xp-badge {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .game-xp-icon {
+            font-size: 1.5em;
+        }
+        
+        .game-xp-amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        
+        @keyframes xpSlideIn {
+            0% {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes xpSlideOut {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        /* Level Up Modal */
+        .level-up-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .level-up-modal.show {
+            opacity: 1;
+        }
+        
+        .level-up-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .level-up-modal.show .level-up-content {
+            transform: scale(1);
+        }
+        
+        .level-up-animation {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .level-up-badge-container {
+            font-size: 80px;
+            animation: badgePop 0.6s ease-out;
+        }
+        
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .level-up-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .level-up-levels {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .level-up-new-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .level-up-close {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .level-up-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+        }
+
         @media (max-width: 768px) {
             #topBar {
                 padding: 15px 20px;
@@ -499,6 +648,102 @@
                 if (gameState.isPlaying) {
                     endGame();
                 }
+            }
+        });
+
+        // ============================================
+        // XP Banner & Level-Up Functions
+        // ============================================
+        function showXPBanner(xpAmount, extraData = null) {
+            console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+            
+            // Create banner element
+            const banner = document.createElement('div');
+            banner.className = 'game-xp-banner';
+            banner.innerHTML = `
+                <div class="game-xp-badge">
+                    <span class="game-xp-icon">⭐</span>
+                    <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
+                </div>
+            `;
+            
+            document.body.appendChild(banner);
+            
+            // Remove after 3.5 seconds
+            setTimeout(() => {
+                banner.classList.add('hiding');
+                setTimeout(() => banner.remove(), 500);
+            }, 3500);
+        }
+
+        function showLevelUpNotification(levelUpData) {
+            const { old_level, new_level, title, badge, coins_awarded, is_milestone, user_data } = levelUpData;
+
+            // Check if user is anonymous
+            const isAnonymous = user_data?.is_anonymous === true;
+
+            const modal = document.createElement('div');
+            modal.className = 'level-up-modal';
+            modal.innerHTML = `
+                <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+                    <div class="level-up-animation">
+                        <div class="level-up-badge-container">
+                            <span class="level-up-badge">${badge}</span>
+                        </div>
+                    </div>
+                    <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+                    <div class="level-up-levels">
+                        <span class="old-level">${old_level}</span>
+                        <span class="level-arrow">→</span>
+                        <span class="new-level">${new_level}</span>
+                    </div>
+                    <div class="level-up-new-title">${title}</div>
+                    ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+                    ${!isAnonymous && coins_awarded > 0 ? `
+                        <div class="level-up-reward">
+                            <span class="reward-icon">🪙</span>
+                            <span class="reward-amount">+${coins_awarded} Coins</span>
+                        </div>
+                    ` : ''}
+                    <button class="level-up-close">Continue</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Trigger animation
+            setTimeout(() => modal.classList.add('show'), 10);
+
+            // Close handler
+            const closeBtn = modal.querySelector('.level-up-close');
+            closeBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            });
+
+            // Auto-close after 6 seconds
+            setTimeout(() => {
+                if (modal.parentElement) {
+                    modal.classList.remove('show');
+                    setTimeout(() => modal.remove(), 300);
+                }
+            }, 6000);
+        }
+
+        // Listen for messages from platform (e.g., XP banner and level-up requests)
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+            
+            // Handle XP banner
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
+                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+                showXPBanner(event.data.payload.xp_earned, event.data.payload);
+            }
+            
+            // Handle level-up notification
+            if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+                showLevelUpNotification(event.data.payload);
             }
         });
 
@@ -2376,14 +2621,16 @@
             document.getElementById('finalCombo').textContent = gameState.maxCombo;
             document.getElementById('gameStats').classList.add('show');
             
-            // Send game over to platform with score and extra_data for XP calculation
+            // Send game over to platform only if score > 0 to avoid spam sessions
             // score = tower height (for leaderboard)
             // extra_data = stats for XP calculation (perfect stacks, combo, etc.)
-            PlatformSDK.gameOver(gameState.score, {
-                perfect_stacks: gameState.perfectStacks,
-                max_combo: gameState.maxCombo,
-                total_blocks: gameState.totalBlocks
-            });
+            if (gameState.score > 0) {
+                PlatformSDK.gameOver(gameState.score, {
+                    perfect_stacks: gameState.perfectStacks,
+                    max_combo: gameState.maxCombo,
+                    total_blocks: gameState.totalBlocks
+                });
+            }
         }
 
         // ============================================

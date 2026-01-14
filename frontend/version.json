@@ -1,8 +1,17 @@
 {
-  "version": "3.9.5",
-  "timestamp": "2026-01-14T17:28:35.767Z",
-  "buildNumber": 243,
+  "version": "3.9.6",
+  "timestamp": "2026-01-14T17:41:38.995Z",
+  "buildNumber": 244,
   "changelog": [
+    {
+      "version": "3.9.6",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: Adjust terrain and road generation parameters for improved gameplay experience",
+        "🔖 Bump version to 3.9.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.5",
       "date": "2026-01-14",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: update background gradient and box-shadow in STEEM rewards badge",
         "🔖 Bump version to 3.8.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.8.0",
-      "date": "2026-01-11",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: enhance STEEM rewards display with icons in leaderboard and game cards",
-        "🔖 Bump version to 3.7.13 [skip-version]"
       ]
     }
   ]

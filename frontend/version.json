@@ -1,8 +1,17 @@
 {
-  "version": "3.9.6",
-  "timestamp": "2026-01-14T17:41:38.995Z",
-  "buildNumber": 244,
+  "version": "3.9.7",
+  "timestamp": "2026-01-14T17:58:06.531Z",
+  "buildNumber": 245,
   "changelog": [
+    {
+      "version": "3.9.7",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance mobile performance with adaptive rendering and lighting adjustments",
+        "🔖 Bump version to 3.9.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.6",
       "date": "2026-01-14",
@@ -82,15 +91,6 @@
       "changes": [
         "Add setup and reset scripts for Sky Tower game",
         "🔖 Bump version to 3.8.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.8.1",
-      "date": "2026-01-12",
-      "type": "patch",
-      "changes": [
-        "fix: update background gradient and box-shadow in STEEM rewards badge",
-        "🔖 Bump version to 3.8.0 [skip-version]"
       ]
     }
   ]

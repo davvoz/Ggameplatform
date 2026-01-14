@@ -362,6 +362,48 @@
             height: 100%;
         }
 
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #loadingScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             #topBar {
                 padding: 15px 20px;
@@ -387,6 +429,11 @@
     </style>
 </head>
 <body>
+    <div id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Sky Tower...</div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
     <script src="/sdk/platformsdk.js"></script>
     <div id="gameContainer">
@@ -585,14 +632,16 @@
                 });
                 
                 // Volume envelope: instant attack, short sustain, smooth release to zero
-                const volumePerNote = 0.12 / Math.sqrt(frequencies.length);
-                const peakVolume = volumePerNote * frequencies.length;
+                // Divide volume equally by number of notes to keep total volume constant
+                const baseVolume = 0.15; // Base volume for single note
+                const volumePerNote = baseVolume / frequencies.length; // Divide by actual count
+                const peakVolume = volumePerNote * frequencies.length; // Will always equal baseVolume
                 
                 // Instant attack (no ramp)
-                gain.gain.setValueAtTime(peakVolume, audioCtx.currentTime);
+                gain.gain.setValueAtTime(baseVolume, audioCtx.currentTime);
                 
                 // Short sustain phase
-                gain.gain.setValueAtTime(peakVolume, audioCtx.currentTime + sustainTime);
+                gain.gain.setValueAtTime(baseVolume, audioCtx.currentTime + sustainTime);
                 
                 // Release phase - fade all the way to 0 to avoid clicks
                 gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + sustainTime + releaseTime);
@@ -692,12 +741,16 @@
 
         let scene, camera, renderer;
         let blocks = [];
+        let fallingPieces = []; // Track all falling pieces for collision detection
         let currentBlock = null;
         let movingSpeed = CONFIG.initialSpeed;
         let cameraLookTarget = { y: 0 };
         let movingDirection = 'x';
         let currentHue = 180;
         let isFirstGame = true;
+        
+        // Environment elements
+        let groundPlane, cloudLayer, stars, groundElements;
 
         let gameState = {
             score: 0,
@@ -773,8 +826,904 @@
             const accentLight = new THREE.PointLight(0xf5576c, 0.3, 50);
             accentLight.position.set(0, 10, 0);
             scene.add(accentLight);
+            
+            // Create environment
+            createEnvironment();
 
             window.addEventListener('resize', onWindowResize);
+        }
+        
+        function createEnvironment() {
+            // Ground plane (terrain) with color variation - completely flat
+            const groundGeometry = new THREE.PlaneGeometry(150, 150, 40, 40);
+            
+            // Add color variation for visual interest (NO height displacement)
+            const positions = groundGeometry.attributes.position;
+            const colors = [];
+            
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const y = positions.getY(i);
+                
+                // NO height variation - completely flat
+                // positions.setZ(i, 0); // Not needed, already flat
+                
+                // Color variation for natural patches of darker/lighter green
+                const colorNoise1 = (Math.sin(x * 0.4) * Math.cos(y * 0.4) + 1) / 2;
+                const colorNoise2 = (Math.sin(x * 1.2) * Math.cos(y * 0.9) + 1) / 2;
+                const greenVariation = 0.25 + colorNoise1 * 0.25 + colorNoise2 * 0.15;
+                colors.push(greenVariation * 0.6, greenVariation, greenVariation * 0.35);
+            }
+            
+            groundGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            groundGeometry.computeVertexNormals();
+            
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                roughness: 0.95,
+                metalness: 0.05
+            });
+            
+            groundPlane = new THREE.Mesh(groundGeometry, groundMaterial);
+            groundPlane.rotation.x = -Math.PI / 2;
+            // Offset ground toward negative x and z (behind tower)
+            groundPlane.position.set(-10, -0.3, -10);
+            groundPlane.receiveShadow = true;
+            scene.add(groundPlane);
+            
+            // Cloud layer - sparse clouds at various heights like real sky
+            const cloudGroup = new THREE.Group();
+            
+            // Create multiple fluffy clouds at different heights
+            for (let i = 0; i < 50; i++) {
+                const cloudCluster = new THREE.Group();
+                
+                // Each cloud is made of multiple overlapping spheres for a fluffy look
+                const numPuffs = 5 + Math.floor(Math.random() * 4);
+                for (let j = 0; j < numPuffs; j++) {
+                    const puffSize = 2 + Math.random() * 2.5;
+                    const puffGeometry = new THREE.SphereGeometry(puffSize, 16, 16);
+                    const puffMaterial = new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0,
+                        roughness: 1,
+                        metalness: 0,
+                        emissive: 0xffffff,
+                        emissiveIntensity: 0.1
+                    });
+                    
+                    const puff = new THREE.Mesh(puffGeometry, puffMaterial);
+                    
+                    // Position puffs in a cluster
+                    puff.position.x = (Math.random() - 0.5) * 4;
+                    puff.position.y = (Math.random() - 0.5) * 2;
+                    puff.position.z = (Math.random() - 0.5) * 4;
+                    
+                    // Slight random scale for organic look
+                    const scaleVariation = 0.8 + Math.random() * 0.4;
+                    puff.scale.set(scaleVariation, scaleVariation * 0.7, scaleVariation);
+                    
+                    cloudCluster.add(puff);
+                }
+                
+                // Position cloud cluster behind tower only (negative x or z)
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 15 + Math.random() * 25;
+                let x = Math.cos(angle) * radius;
+                let z = Math.sin(angle) * radius;
+                
+                // Ensure cloud is behind tower (negative x OR negative z)
+                if (x >= 0 && z >= 0) {
+                    // Flip to behind tower
+                    if (Math.random() > 0.5) {
+                        x = -x;
+                    } else {
+                        z = -z;
+                    }
+                }
+                
+                cloudCluster.position.x = x;
+                cloudCluster.position.z = z;
+                // Clouds at different heights from 3 to 30 (more variation)
+                cloudCluster.position.y = 3 + Math.random() * 27;
+                
+                // Overall cloud scale variation
+                const cloudScale = 0.6 + Math.random() * 0.8;
+                cloudCluster.scale.set(cloudScale, cloudScale * 0.8, cloudScale);
+                
+                // Store initial Y position for fade calculations
+                cloudCluster.userData.initialY = cloudCluster.position.y;
+                
+                cloudGroup.add(cloudCluster);
+            }
+            cloudLayer = cloudGroup;
+            scene.add(cloudLayer);
+            
+            // Populate ground with organized procedural placement
+            groundElements = new THREE.Group();
+            
+            // More organic city layout with sparse continuous roads
+            const roadWidth = 2.8;
+            
+            // Arrays to hold all instances data
+            const treeData = [];
+            const bushData = [];
+            const rockData = [];
+            const houseData = [];
+            const occupiedPositions = [];
+            const roads = []; // Store continuous road segments
+            
+            // Helper: check if position overlaps with existing building
+            const isPositionOccupied = (x, z, size) => {
+                return occupiedPositions.some(pos => {
+                    const dx = Math.abs(pos.x - x);
+                    const dz = Math.abs(pos.z - z);
+                    return dx < (pos.size + size) / 2 && dz < (pos.size + size) / 2;
+                });
+            };
+            
+            const isBehindTower = (x, z) => {
+                if (x < -2 && z < -2) return true;
+                if (x < -2 && z < 2) return true;
+                if (z < -2 && x < 2) return true;
+                return false;
+            };
+            
+            // Helper: check if position is ON a road
+            const isOnRoad = (x, z) => {
+                return roads.some(road => {
+                    if (road.type === 'horizontal') {
+                        return Math.abs(road.z - z) < roadWidth * 0.6 && 
+                               x >= road.startX && x <= road.endX;
+                    } else {
+                        return Math.abs(road.x - x) < roadWidth * 0.6 && 
+                               z >= road.startZ && z <= road.endZ;
+                    }
+                });
+            };
+            
+            // Helper: check if near a road (but not on it)
+            const isNearRoad = (x, z, minDist = 3, maxDist = 12) => {
+                return roads.some(road => {
+                    if (road.type === 'horizontal') {
+                        const dist = Math.abs(road.z - z);
+                        return dist > minDist && dist < maxDist && 
+                               x >= road.startX - maxDist && x <= road.endX + maxDist;
+                    } else {
+                        const dist = Math.abs(road.x - x);
+                        return dist > minDist && dist < maxDist && 
+                               z >= road.startZ - maxDist && z <= road.endZ + maxDist;
+                    }
+                });
+            };
+            
+            // Define organic zones using noise
+            const getZoneType = (x, z) => {
+                const dist = Math.sqrt(x * x + z * z);
+                const noise1 = Math.sin(x * 0.1) * Math.cos(z * 0.1);
+                const noise2 = Math.sin(x * 0.23 + 100) * Math.cos(z * 0.23 + 100);
+                
+                if (dist < 20) {
+                    return 'urban_dense';
+                } else if (dist < 35) {
+                    if (noise1 > 0.4) return 'park';
+                    return 'urban_medium';
+                } else if (dist < 50) {
+                    if (noise1 > 0.5) return 'forest';
+                    if (noise2 > 0.4) return 'park';
+                    return 'suburban';
+                } else {
+                    return 'nature';
+                }
+            };
+            
+            // First: Create main road network - sparse, organic roads with variation
+            const roadPositions = [];
+            
+            // Generate organic road positions with good coverage
+            for (let i = -7; i <= 2; i++) {
+                const basePos = i * 14; // Good spacing
+                const variation = (Math.random() - 0.5) * 6; // Some randomness
+                const roadPos = basePos + variation;
+                
+                // Skip some roads randomly for less uniformity
+                if (Math.random() > 0.2) {
+                    roadPositions.push(roadPos);
+                }
+            }
+            
+            // Create horizontal and vertical roads from positions
+            roadPositions.forEach(pos => {
+                // Skip roads that pass through tower (±3 units from origin)
+                if (Math.abs(pos) < 3) return;
+                
+                // Horizontal road (along Z axis)
+                if (isBehindTower(pos, -40)) {
+                    const zone = getZoneType(pos, -40);
+                    if (zone !== 'forest' && zone !== 'nature') {
+                        roads.push({
+                            type: 'horizontal',
+                            z: pos,
+                            startX: -80,
+                            endX: 20
+                        });
+                    }
+                }
+                
+                // Vertical road (along X axis)
+                if (isBehindTower(-40, pos)) {
+                    const zone = getZoneType(-40, pos);
+                    if (zone !== 'forest' && zone !== 'nature') {
+                        roads.push({
+                            type: 'vertical',
+                            x: pos,
+                            startZ: -80,
+                            endZ: 20
+                        });
+                    }
+                }
+            });
+            
+            // Second: Place buildings and nature AWAY from roads
+            for (let x = -80; x <= 20; x += 2.5) {
+                for (let z = -80; z <= 20; z += 2.5) {
+                    if (!isBehindTower(x, z)) continue;
+                    
+                    const distFromCenter = Math.sqrt(x * x + z * z);
+                    if (distFromCenter < 4) continue;
+                    
+                    // Skip if ON a road
+                    if (isOnRoad(x, z)) continue;
+                    
+                    const zone = getZoneType(x, z);
+                    const rand = Math.random();
+                    const nearRoad = isNearRoad(x, z);
+                    
+                    if (zone === 'urban_dense') {
+                        if (nearRoad && rand < 0.65) {
+                            const offsetX = x + (Math.random() - 0.5) * 2;
+                            const offsetZ = z + (Math.random() - 0.5) * 2;
+                            // Double check not on road with offset
+                            if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
+                                houseData.push({x: offsetX, z: offsetZ, rot: 0});
+                                occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
+                            }
+                        } else if (!nearRoad && rand < 0.25) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.7 + Math.random() * 0.4, rot: Math.random() * Math.PI * 2});
+                        }
+                    } else if (zone === 'urban_medium') {
+                        if (nearRoad && rand < 0.5) {
+                            const offsetX = x + (Math.random() - 0.5) * 2.5;
+                            const offsetZ = z + (Math.random() - 0.5) * 2.5;
+                            if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
+                                houseData.push({x: offsetX, z: offsetZ, rot: 0});
+                                occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
+                            }
+                        } else if (rand < 0.65) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.8 + Math.random() * 0.5, rot: Math.random() * Math.PI * 2});
+                        }
+                    } else if (zone === 'suburban') {
+                        if (rand < 0.2) {
+                            const offsetX = x + (Math.random() - 0.5) * 3;
+                            const offsetZ = z + (Math.random() - 0.5) * 3;
+                            if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
+                                houseData.push({x: offsetX, z: offsetZ, rot: 0});
+                                occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
+                            }
+                        } else if (rand < 0.7) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.7 + Math.random() * 0.6, rot: Math.random() * Math.PI * 2});
+                        }
+                    } else if (zone === 'park') {
+                        if (rand < 0.75) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.8 + Math.random() * 0.5, rot: Math.random() * Math.PI * 2});
+                        } else if (rand < 0.9) {
+                            bushData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.7 + Math.random() * 0.5});
+                        }
+                    } else if (zone === 'forest') {
+                        if (rand < 0.85) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.9 + Math.random() * 0.6, rot: Math.random() * Math.PI * 2});
+                        } else if (rand < 0.95) {
+                            bushData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.8 + Math.random() * 0.5});
+                        }
+                    } else {
+                        if (rand < 0.55) {
+                            treeData.push({x: x + (Math.random() - 0.5) * 3, z: z + (Math.random() - 0.5) * 3, scale: 0.8 + Math.random() * 0.7, rot: Math.random() * Math.PI * 2});
+                        } else if (rand < 0.7) {
+                            bushData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.7 + Math.random() * 0.6});
+                        } else if (rand < 0.8) {
+                            rockData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.6 + Math.random() * 0.8});
+                        }
+                    }
+                }
+            }
+            
+            // Helper function to find closest main road to a building
+            const findClosestRoad = (bx, bz) => {
+                let closestRoad = null;
+                let minDist = Infinity;
+                
+                roads.forEach(road => {
+                    let dist;
+                    if (road.type === 'horizontal') {
+                        dist = Math.abs(road.z - bz);
+                    } else {
+                        dist = Math.abs(road.x - bx);
+                    }
+                    
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestRoad = road;
+                    }
+                });
+                
+                return closestRoad;
+            };
+            
+            // Create small side roads from buildings to main roads
+            const sideRoads = [];
+            const sideRoadWidth = 1.2; // Narrower than main roads
+            
+            houseData.forEach(house => {
+                const closestRoad = findClosestRoad(house.x, house.z);
+                if (!closestRoad) return;
+                
+                // Store road info with building for rotation
+                house.closestRoad = closestRoad;
+                
+                // Calculate rotation so door faces the road
+                if (closestRoad.type === 'horizontal') {
+                    // Road is horizontal (along Z), door should face +Z or -Z
+                    house.rot = house.z > closestRoad.z ? Math.PI : 0; // Face toward road
+                } else {
+                    // Road is vertical (along X), door should face +X or -X
+                    house.rot = house.x > closestRoad.x ? -Math.PI / 2 : Math.PI / 2; // Face toward road
+                }
+                
+                // Determine building depth (approximate) to reach the door
+                const buildingDepth = 2; // Average building depth
+                
+                if (closestRoad.type === 'horizontal') {
+                    // Create vertical connection from building door to horizontal road
+                    const doorZ = house.z > closestRoad.z ? house.z + buildingDepth/2 : house.z - buildingDepth/2;
+                    const startZ = doorZ;
+                    const endZ = closestRoad.z;
+                    const length = Math.abs(endZ - startZ);
+                    
+                    // Check if road would cross through any buildings
+                    let crossesBuilding = false;
+                    for (let checkZ = Math.min(startZ, endZ); checkZ <= Math.max(startZ, endZ); checkZ += 0.5) {
+                        if (isPositionOccupied(house.x, checkZ, 1.5)) {
+                            crossesBuilding = true;
+                            break;
+                        }
+                    }
+                    
+                    // Only create side road if building is not too far from main road and doesn't cross buildings
+                    if (!crossesBuilding && length > 0.5 && length < 12) {
+                        sideRoads.push({
+                            type: 'side_vertical',
+                            x: house.x,
+                            startZ: Math.min(startZ, endZ),
+                            endZ: Math.max(startZ, endZ),
+                            length: length
+                        });
+                    }
+                } else {
+                    // Create horizontal connection from building door to vertical road
+                    const doorX = house.x > closestRoad.x ? house.x + buildingDepth/2 : house.x - buildingDepth/2;
+                    const startX = doorX;
+                    const endX = closestRoad.x;
+                    const length = Math.abs(endX - startX);
+                    
+                    // Check if road would cross through any buildings
+                    let crossesBuilding = false;
+                    for (let checkX = Math.min(startX, endX); checkX <= Math.max(startX, endX); checkX += 0.5) {
+                        if (isPositionOccupied(checkX, house.z, 1.5)) {
+                            crossesBuilding = true;
+                            break;
+                        }
+                    }
+                    
+                    // Only create side road if building is not too far from main road and doesn't cross buildings
+                    if (!crossesBuilding && length > 0.5 && length < 12) {
+                        sideRoads.push({
+                            type: 'side_horizontal',
+                            z: house.z,
+                            startX: Math.min(startX, endX),
+                            endX: Math.max(startX, endX),
+                            length: length
+                        });
+                    }
+                }
+            });
+            
+            // Create continuous road meshes (main roads)
+            roads.forEach(road => {
+                if (road.type === 'horizontal') {
+                    // Create long horizontal road strip
+                    const length = road.endX - road.startX;
+                    const roadGeometry = new THREE.PlaneGeometry(length, roadWidth);
+                    const roadMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x2a2a2a,
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+                    roadMesh.rotation.x = -Math.PI / 2;
+                    roadMesh.position.set((road.startX + road.endX) / 2, -0.28, road.z);
+                    roadMesh.receiveShadow = true;
+                    groundElements.add(roadMesh);
+                } else {
+                    // Create long vertical road strip
+                    const length = road.endZ - road.startZ;
+                    const roadGeometry = new THREE.PlaneGeometry(roadWidth, length);
+                    const roadMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x2a2a2a,
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+                    roadMesh.rotation.x = -Math.PI / 2;
+                    roadMesh.position.set(road.x, -0.28, (road.startZ + road.endZ) / 2);
+                    roadMesh.receiveShadow = true;
+                    groundElements.add(roadMesh);
+                }
+            });
+            
+            // Create side roads (smaller roads connecting buildings to main roads)
+            sideRoads.forEach(road => {
+                if (road.type === 'side_horizontal') {
+                    const roadGeometry = new THREE.PlaneGeometry(road.length, sideRoadWidth);
+                    const roadMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x2a2a2a, // Same as main roads
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+                    roadMesh.rotation.x = -Math.PI / 2;
+                    roadMesh.position.set((road.startX + road.endX) / 2, -0.28, road.z);
+                    roadMesh.receiveShadow = true;
+                    groundElements.add(roadMesh);
+                } else {
+                    const roadGeometry = new THREE.PlaneGeometry(sideRoadWidth, road.length);
+                    const roadMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x2a2a2a, // Same as main roads
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+                    roadMesh.rotation.x = -Math.PI / 2;
+                    roadMesh.position.set(road.x, -0.28, (road.startZ + road.endZ) / 2);
+                    roadMesh.receiveShadow = true;
+                    groundElements.add(roadMesh);
+                }
+            });
+            
+            // Create varied tree types with 8 different styles
+            const treeTypes = [
+                // Pine tree (cone)
+                { 
+                    trunkColor: 0x3d2817, 
+                    foliageColor: 0x1a5c2e,
+                    height: 0.9,
+                    foliageShape: 'cone',
+                    foliageSize: 0.55,
+                    foliageOffset: 0.3
+                },
+                // Round tree (sphere)
+                { 
+                    trunkColor: 0x4a3728, 
+                    foliageColor: 0x2d7a45,
+                    height: 0.65,
+                    foliageShape: 'sphere',
+                    foliageSize: 0.45,
+                    foliageOffset: 0.2
+                },
+                // Tall pine
+                { 
+                    trunkColor: 0x3a2815, 
+                    foliageColor: 0x1e4d2b,
+                    height: 1.1,
+                    foliageShape: 'cone',
+                    foliageSize: 0.45,
+                    foliageOffset: 0.35
+                },
+                // Small round bush tree
+                { 
+                    trunkColor: 0x4d3a2a, 
+                    foliageColor: 0x358f52,
+                    height: 0.5,
+                    foliageShape: 'sphere',
+                    foliageSize: 0.5,
+                    foliageOffset: 0.15
+                },
+                // Cypress (tall thin)
+                { 
+                    trunkColor: 0x3f2f1e, 
+                    foliageColor: 0x1c4825,
+                    height: 1.3,
+                    foliageShape: 'cone',
+                    foliageSize: 0.35,
+                    foliageOffset: 0.4
+                },
+                // Oak tree (wide sphere)
+                { 
+                    trunkColor: 0x3e2f1b, 
+                    foliageColor: 0x2a6b35,
+                    height: 0.85,
+                    foliageShape: 'sphere',
+                    foliageSize: 0.6,
+                    foliageOffset: 0.25
+                },
+                // Willow (droopy)
+                { 
+                    trunkColor: 0x4a3a2b, 
+                    foliageColor: 0x3d7a4a,
+                    height: 0.75,
+                    foliageShape: 'sphere',
+                    foliageSize: 0.55,
+                    foliageOffset: 0.15
+                },
+                // Maple (medium cone)
+                { 
+                    trunkColor: 0x3b291a, 
+                    foliageColor: 0x2f6540,
+                    height: 0.95,
+                    foliageShape: 'cone',
+                    foliageSize: 0.5,
+                    foliageOffset: 0.3
+                }
+            ];
+            
+            treeData.forEach((tree, idx) => {
+                const typeIndex = idx % 8; // Now 8 tree types
+                const treeType = treeTypes[typeIndex];
+                const scaledHeight = treeType.height * tree.scale;
+                
+                // Create individual tree trunk
+                const trunkGeometry = new THREE.BoxGeometry(0.08, treeType.height, 0.08);
+                const trunkMaterial = new THREE.MeshStandardMaterial({
+                    color: treeType.trunkColor,
+                    roughness: 0.95
+                });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.set(tree.x, -0.3 + scaledHeight/2, tree.z);
+                trunk.rotation.y = tree.rot;
+                trunk.scale.set(tree.scale, tree.scale, tree.scale);
+                trunk.castShadow = true;
+                groundElements.add(trunk);
+                
+                // Create foliage based on type
+                let foliageGeometry;
+                if (treeType.foliageShape === 'sphere') {
+                    foliageGeometry = new THREE.SphereGeometry(treeType.foliageSize, 8, 6);
+                } else {
+                    foliageGeometry = new THREE.ConeGeometry(treeType.foliageSize, treeType.height * 0.7, 8);
+                }
+                const foliageMaterial = new THREE.MeshStandardMaterial({
+                    color: treeType.foliageColor,
+                    roughness: 1.0
+                });
+                const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                // Position foliage at top of trunk with proper offset
+                const foliageY = -0.3 + scaledHeight + (treeType.foliageOffset * tree.scale);
+                foliage.position.set(tree.x, foliageY, tree.z);
+                foliage.rotation.y = tree.rot;
+                foliage.scale.set(tree.scale, tree.scale, tree.scale);
+                foliage.castShadow = true;
+                groundElements.add(foliage);
+            });
+            
+            // Setup matrix helpers for instanced meshes (bushes and rocks)
+            const matrix = new THREE.Matrix4();
+            const position = new THREE.Vector3();
+            const rotation = new THREE.Quaternion();
+            const scale = new THREE.Vector3();
+            
+            // Create bush instances (smaller)
+            const bushGeometry = new THREE.SphereGeometry(0.2, 8, 6);
+            const bushMaterial = new THREE.MeshStandardMaterial({
+                color: 0x3d6b1f,
+                roughness: 0.95
+            });
+            const bushMesh = new THREE.InstancedMesh(bushGeometry, bushMaterial, bushData.length);
+            bushMesh.castShadow = true;
+            
+            bushData.forEach((bush, i) => {
+                position.set(bush.x, -0.3 + 0.12, bush.z);
+                scale.set(bush.scale, bush.scale * 0.6, bush.scale);
+                matrix.compose(position, rotation, scale);
+                bushMesh.setMatrixAt(i, matrix);
+            });
+            
+            groundElements.add(bushMesh);
+            
+            // Create rock instances - smaller, more realistic
+            const rockGeometry = new THREE.DodecahedronGeometry(0.2, 0);
+            const rockMaterial = new THREE.MeshStandardMaterial({
+                color: 0x555555,
+                roughness: 0.95,
+                metalness: 0.15
+            });
+            const rockMesh = new THREE.InstancedMesh(rockGeometry, rockMaterial, rockData.length);
+            rockMesh.castShadow = true;
+            rockMesh.receiveShadow = true;
+            
+            rockData.forEach((rock, i) => {
+                position.set(rock.x, -0.3 + 0.1, rock.z);
+                scale.set(rock.scale, rock.scale * 0.6, rock.scale); // Flatter rocks
+                rotation.setFromEuler(new THREE.Euler(
+                    Math.random() * 0.3,
+                    Math.random() * Math.PI * 2,
+                    Math.random() * 0.3
+                ));
+                matrix.compose(position, rotation, scale);
+                rockMesh.setMatrixAt(i, matrix);
+            });
+            
+            groundElements.add(rockMesh);
+            
+            // Create 3 types of buildings: houses, buildings, skyscrapers
+            houseData.forEach((house, idx) => {
+                const buildingGroup = new THREE.Group();
+                const typeRand = Math.random();
+                
+                let buildingType, height, width, depth;
+                
+                if (typeRand < 0.4) {
+                    // HOUSE - low and wide
+                    buildingType = 'house';
+                    height = 1.5 + Math.random() * 1;
+                    width = 1.8 + Math.random() * 0.6;
+                    depth = 1.8 + Math.random() * 0.6;
+                } else if (typeRand < 0.75) {
+                    // BUILDING - medium
+                    buildingType = 'building';
+                    height = 2.5 + Math.random() * 2;
+                    width = 1.5 + Math.random() * 0.5;
+                    depth = 1.5 + Math.random() * 0.5;
+                } else {
+                    // SKYSCRAPER - tall and narrow
+                    buildingType = 'skyscraper';
+                    height = 4 + Math.random() * 3;
+                    width = 1.2 + Math.random() * 0.4;
+                    depth = 1.2 + Math.random() * 0.4;
+                }
+                
+                // Main building body
+                const buildingColors = [0xe8e8e8, 0xd4d4d4, 0xc8c8c8, 0xf0f0f0, 0xdcdcdc];
+                const buildingColor = buildingColors[idx % buildingColors.length];
+                
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const buildingMaterial = new THREE.MeshStandardMaterial({
+                    color: buildingColor,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                buildingGroup.add(building);
+                
+                // Windows (solid boxes slightly protruding)
+                const windowGeometry = new THREE.BoxGeometry(0.25, 0.35, 0.05);
+                const windowMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x1a1a2e,
+                    emissive: 0x4a4a6e,
+                    emissiveIntensity: 0.4,
+                    roughness: 0.3,
+                    metalness: 0.6
+                });
+                
+                // Windows based on building type
+                let numRows, windowSpacing;
+                if (buildingType === 'house') {
+                    numRows = Math.max(1, Math.floor(height / 0.9)); // At least 1 row, more for taller houses
+                    windowSpacing = 0.9;
+                } else if (buildingType === 'building') {
+                    numRows = Math.floor(height / 1.2);
+                    windowSpacing = 1.2;
+                } else {
+                    numRows = Math.floor(height / 0.8);
+                    windowSpacing = 0.8;
+                }
+                
+                for (let row = 0; row < numRows; row++) {
+                    const y = -height/2 + 0.4 + row * windowSpacing;
+                    
+                    // Front windows (skip on first row where door is for ALL buildings)
+                    const skipFrontWindows = (row === 0);
+                    if (!skipFrontWindows) {
+                        const numWindowsFront = buildingType === 'house' ? 2 : (buildingType === 'skyscraper' ? 2 : 2);
+                        const windowOffsetX = width * 0.25;
+                        for (let i = 0; i < numWindowsFront; i++) {
+                            const window1 = new THREE.Mesh(windowGeometry, windowMaterial.clone());
+                            window1.position.set((i - 0.5) * windowOffsetX, y, depth/2 + 0.025);
+                            buildingGroup.add(window1);
+                        }
+                    }
+                    
+                    // Side windows
+                    const numWindowsSide = buildingType === 'house' ? 1 : 2;
+                    const windowOffsetZ = depth * 0.25;
+                    for (let i = 0; i < numWindowsSide; i++) {
+                        const window2 = new THREE.Mesh(windowGeometry, windowMaterial.clone());
+                        window2.position.set(width/2 + 0.025, y, (i - 0.5) * windowOffsetZ);
+                        window2.rotation.y = Math.PI / 2;
+                        buildingGroup.add(window2);
+                    }
+                }
+                
+                // Door for ALL buildings
+                const doorHeight = buildingType === 'skyscraper' ? 0.9 : (buildingType === 'house' ? 0.8 : 0.7);
+                const doorWidth = buildingType === 'skyscraper' ? 0.7 : (buildingType === 'house' ? 0.6 : 0.5);
+                const doorGeometry = new THREE.BoxGeometry(doorWidth, doorHeight, 0.05);
+                const doorMaterial = new THREE.MeshStandardMaterial({
+                    color: buildingType === 'skyscraper' ? 0x1a1a1a : 0x3d2817,
+                    roughness: 0.8,
+                    metalness: buildingType === 'skyscraper' ? 0.3 : 0.1
+                });
+                const door = new THREE.Mesh(doorGeometry, doorMaterial);
+                door.position.set(0, -height/2 + doorHeight/2, depth/2 + 0.025);
+                buildingGroup.add(door);
+                
+                // Roof based on type
+                if (buildingType === 'house') {
+                    // Peaked roof
+                    const roofGeometry = new THREE.ConeGeometry(width * 0.8, 0.6, 4);
+                    const roofMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x8b4513,
+                        roughness: 0.9
+                    });
+                    const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                    roof.position.y = height/2 + 0.3;
+                    roof.rotation.y = Math.PI / 4;
+                    roof.castShadow = true;
+                    buildingGroup.add(roof);
+                } else if (buildingType === 'building') {
+                    // Flat roof
+                    const roofGeometry = new THREE.BoxGeometry(width + 0.2, 0.15, depth + 0.2);
+                    const roofMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x4a3728,
+                        roughness: 0.9
+                    });
+                    const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                    roof.position.y = height/2 + 0.075;
+                    roof.castShadow = true;
+                    buildingGroup.add(roof);
+                }
+                // Skyscrapers have no visible roof
+                
+                // Mark as building for fade exclusion
+                buildingGroup.userData = { type: 'building' };
+                
+                // Position the entire building group
+                buildingGroup.position.set(house.x, -0.3 + height/2, house.z);
+                buildingGroup.rotation.y = house.rot;
+                
+                groundElements.add(buildingGroup);
+            });
+            
+            scene.add(groundElements);
+            
+            // Stars (appear high up, beyond clouds) - more and brighter
+            const starsGroup = new THREE.Group();
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
+            
+            for (let i = 0; i < 2000; i++) {
+                let x = (Math.random() - 0.5) * 300;
+                const y = Math.random() * 120 + 28; // Stars start at height 28 (after clouds)
+                let z = (Math.random() - 0.5) * 300;
+                
+                // Only place stars behind tower (negative x OR negative z)
+                if (x >= 0 && z >= 0) {
+                    // Flip to behind tower
+                    if (Math.random() > 0.5) {
+                        x = -x;
+                    } else {
+                        z = -z;
+                    }
+                }
+                
+                starVertices.push(x, y, z);
+            }
+            
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 1.5,
+                transparent: true,
+                opacity: 0,
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending // Makes them glow
+            });
+            
+            stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+        
+        function updateEnvironment() {
+            if (!blocks.length) return;
+            
+            // Only count blocks above the base block
+            const stackedBlocks = Math.max(0, blocks.length - 1);
+            const towerHeight = stackedBlocks * CONFIG.blockSize.height;
+            
+            // Fade out ground gradually as we go up (slower, more gradual)
+            if (groundPlane) {
+                const groundFade = Math.max(0, 1 - (towerHeight / 28));
+                groundPlane.material.opacity = groundFade;
+                groundPlane.material.transparent = true;
+                // Hide completely when almost invisible to avoid edge artifacts
+                groundPlane.visible = groundFade > 0.03;
+            }
+            
+            // Fade all ground elements (trees/rocks/buildings) - very gradual fade
+            if (groundElements) {
+                groundElements.children.forEach(element => {
+                    // Different fade speeds for different element types
+                    let elementsFade;
+                    
+                    if (element.userData && element.userData.type === 'building') {
+                        // Buildings fade slower
+                        elementsFade = Math.max(0, 1 - (towerHeight / 35));
+                    } else if (element.material && element.material.color && element.material.color.getHex() === 0x2a2a2a) {
+                        // Roads fade with buildings
+                        elementsFade = Math.max(0, 1 - (towerHeight / 35));
+                    } else {
+                        // Natural elements fade faster
+                        elementsFade = Math.max(0, 1 - (towerHeight / 25));
+                    }
+                    
+                    // Smooth step function for more gradual fade
+                    const smoothFade = elementsFade * elementsFade * (3 - 2 * elementsFade);
+                    
+                    element.traverse(obj => {
+                        if (obj.material) {
+                            obj.material.opacity = smoothFade;
+                            obj.material.transparent = true;
+                        }
+                    });
+                });
+            }
+            
+            // Fade in clouds based on their individual height relative to tower
+            if (cloudLayer) {
+                cloudLayer.children.forEach(cloudCluster => {
+                    const cloudHeight = cloudCluster.userData.initialY;
+                    // Cloud appears early - when ground starts fading (around tower height 8-10)
+                    const heightDiff = towerHeight - cloudHeight;
+                    const cloudFade = Math.min(1, Math.max(0, (heightDiff + 20) / 15));
+                    
+                    // Update opacity for each puff in the cloud cluster
+                    cloudCluster.children.forEach(puff => {
+                        puff.material.opacity = 0.8 * cloudFade;
+                    });
+                });
+                // Rotate clouds slowly
+                cloudLayer.rotation.y += 0.0005;
+            }
+            
+            // Fade in stars very early - starting from height 4 (slower fade)
+            if (stars) {
+                const starFade = Math.min(1, Math.max(0, (towerHeight - 4) / 18));
+                // Add subtle twinkling with sine wave
+                const twinkle = 0.15 * Math.sin(Date.now() * 0.001);
+                stars.material.opacity = starFade * (0.9 + twinkle);
+            }
+            
+            // Change fog and background gradually based on height
+            if (scene.fog) {
+                // Gradual transition from dark to darker as we go up
+                // No sudden blue color change
+                const fogDarkness = Math.min(1, towerHeight / 50);
+                const r = Math.floor(26 - fogDarkness * 16); // 26 -> 10
+                const g = Math.floor(26 - fogDarkness * 16); // 26 -> 10
+                const b = Math.floor(46 - fogDarkness * 16); // 46 -> 30
+                scene.fog.color.setRGB(r/255, g/255, b/255);
+            }
         }
 
         function onWindowResize() {
@@ -923,7 +1872,7 @@
                 
                 // Make the block fall before ending game
                 if (currentBlock && currentBlock.mesh) {
-                    animateFallingPiece(currentBlock.mesh);
+                    animateFallingPiece(currentBlock.mesh, currentBlock.direction, 0);
                 }
                 
                 // End game after a short delay to see the block fall
@@ -1100,6 +2049,10 @@
             if (cutDirection === 'x') {
                 const overlapX = lastBlock.width - Math.abs(deltaX);
                 const fallWidth = lastBlock.width - overlapX;
+                
+                // Only create falling piece if it has significant size
+                if (fallWidth < 0.1) return;
+                
                 const fallX = deltaX > 0 
                     ? newX + overlapX / 2 + fallWidth / 2
                     : newX - overlapX / 2 - fallWidth / 2;
@@ -1115,10 +2068,15 @@
                 fallingPiece.castShadow = true;
                 scene.add(fallingPiece);
                 
-                animateFallingPiece(fallingPiece);
+                fallingPieces.push(fallingPiece);
+                animateFallingPiece(fallingPiece, 'x', deltaX);
             } else {
                 const overlapZ = lastBlock.depth - Math.abs(deltaZ);
                 const fallDepth = lastBlock.depth - overlapZ;
+                
+                // Only create falling piece if it has significant size
+                if (fallDepth < 0.1) return;
+                
                 const fallZ = deltaZ > 0
                     ? newZ + overlapZ / 2 + fallDepth / 2
                     : newZ - overlapZ / 2 - fallDepth / 2;
@@ -1134,7 +2092,8 @@
                 fallingPiece.castShadow = true;
                 scene.add(fallingPiece);
                 
-                animateFallingPiece(fallingPiece);
+                fallingPieces.push(fallingPiece);
+                animateFallingPiece(fallingPiece, 'z', deltaZ);
             }
         }
 
@@ -1203,24 +2162,63 @@
             animate();
         }
 
-        function animateFallingPiece(piece) {
-            let velocity = 0;
-            const gravity = 0.008;
-            const rotationSpeed = (Math.random() - 0.5) * 0.1;
+        function animateFallingPiece(piece, direction, velocity) {
+            let velocityY = -0.08; // Strong initial upward velocity (jump effect)
+            const gravity = 0.025;
+            const disappearLevel = -5; // Pieces disappear when they go below this level
+            
+            // Add strong lateral push away from tower
+            let velocityX = 0;
+            let velocityZ = 0;
+            const pushStrength = 0.04;
+            
+            // Add very strong rotation on the short axis
+            let rotationSpeedX = 0;
+            let rotationSpeedZ = 0;
+            
+            if (direction === 'x') {
+                // Falling in X direction - push in X direction, rotate around Z axis
+                velocityX = velocity > 0 ? pushStrength : -pushStrength;
+                rotationSpeedZ = (Math.random() - 0.5) * 0.5; // Much faster rotation
+            } else if (direction === 'z') {
+                // Falling in Z direction - push in Z direction, rotate around X axis
+                velocityZ = velocity > 0 ? pushStrength : -pushStrength;
+                rotationSpeedX = (Math.random() - 0.5) * 0.5; // Much faster rotation
+            }
+            
+            const rotationDamping = 0.99; // Slower damping = longer rotation
             
             const fall = () => {
-                velocity += gravity;
-                piece.position.y -= velocity;
-                piece.rotation.x += rotationSpeed;
-                piece.rotation.z += rotationSpeed * 0.7;
+                // Apply gravity
+                velocityY += gravity;
+                piece.position.y -= velocityY;
                 
-                if (piece.position.y > -15) {
-                    requestAnimationFrame(fall);
-                } else {
+                // Apply lateral movement
+                piece.position.x += velocityX;
+                piece.position.z += velocityZ;
+                
+                // Apply rotation on short axis
+                rotationSpeedX *= rotationDamping;
+                rotationSpeedZ *= rotationDamping;
+                piece.rotation.x += rotationSpeedX;
+                piece.rotation.z += rotationSpeedZ;
+                
+                // Check if piece has fallen below disappear level
+                if (piece.position.y < disappearLevel) {
+                    // Remove piece from scene
                     scene.remove(piece);
                     piece.geometry.dispose();
                     piece.material.dispose();
+                    
+                    // Remove from fallingPieces array
+                    const index = fallingPieces.indexOf(piece);
+                    if (index > -1) {
+                        fallingPieces.splice(index, 1);
+                    }
+                    return;
                 }
+                
+                requestAnimationFrame(fall);
             };
             
             fall();
@@ -1283,12 +2281,16 @@
                 }
             }
             
-            // Clear ALL objects from scene (including falling pieces)
+            // Clear ALL objects from scene EXCEPT environment elements
             const objectsToRemove = [];
             scene.traverse((object) => {
                 if (object instanceof THREE.Mesh && object !== scene) {
+                    // Don't remove ground plane
+                    if (object === groundPlane) return;
                     objectsToRemove.push(object);
                 }
+                // Don't remove cloud layer group, stars, or ground elements
+                if (object === cloudLayer || object === stars || object === groundElements) return;
             });
             
             objectsToRemove.forEach(obj => {
@@ -1565,6 +2567,7 @@
             requestAnimationFrame(animate);
             TWEEN.update();
             updateBlock();
+            updateEnvironment();
             
             // Smooth camera lookAt using animated target
             camera.lookAt(0, cameraLookTarget.y, 0);
@@ -1587,6 +2590,15 @@
         initThree();
         animate();
         initGame();
+        
+        // Hide loading screen after everything is initialized
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500); // Wait for fade out transition
+        }, 100);
         
         // Give focus to the window so keyboard events work immediately
         window.focus();

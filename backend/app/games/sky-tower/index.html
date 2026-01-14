@@ -835,7 +835,7 @@
         
         function createEnvironment() {
             // Ground plane (terrain) with color variation - completely flat
-            const groundGeometry = new THREE.PlaneGeometry(150, 150, 40, 40);
+            const groundGeometry = new THREE.PlaneGeometry(80, 80, 30, 30);
             
             // Add color variation for visual interest (NO height displacement)
             const positions = groundGeometry.attributes.position;
@@ -1022,9 +1022,9 @@
             const roadPositions = [];
             
             // Generate organic road positions with good coverage
-            for (let i = -7; i <= 2; i++) {
-                const basePos = i * 14; // Good spacing
-                const variation = (Math.random() - 0.5) * 6; // Some randomness
+            for (let i = -4; i <= 1; i++) {
+                const basePos = i * 12; // Reduced spacing
+                const variation = (Math.random() - 0.5) * 4; // Less randomness
                 const roadPos = basePos + variation;
                 
                 // Skip some roads randomly for less uniformity
@@ -1039,35 +1039,35 @@
                 if (Math.abs(pos) < 3) return;
                 
                 // Horizontal road (along Z axis)
-                if (isBehindTower(pos, -40)) {
-                    const zone = getZoneType(pos, -40);
+                if (isBehindTower(pos, -25)) {
+                    const zone = getZoneType(pos, -25);
                     if (zone !== 'forest' && zone !== 'nature') {
                         roads.push({
                             type: 'horizontal',
                             z: pos,
-                            startX: -80,
-                            endX: 20
+                            startX: -40,
+                            endX: 10
                         });
                     }
                 }
                 
                 // Vertical road (along X axis)
-                if (isBehindTower(-40, pos)) {
-                    const zone = getZoneType(-40, pos);
+                if (isBehindTower(-25, pos)) {
+                    const zone = getZoneType(-25, pos);
                     if (zone !== 'forest' && zone !== 'nature') {
                         roads.push({
                             type: 'vertical',
                             x: pos,
-                            startZ: -80,
-                            endZ: 20
+                            startZ: -40,
+                            endZ: 10
                         });
                     }
                 }
             });
             
             // Second: Place buildings and nature AWAY from roads
-            for (let x = -80; x <= 20; x += 2.5) {
-                for (let z = -80; z <= 20; z += 2.5) {
+            for (let x = -40; x <= 10; x += 3) { // Increased spacing from 2.5 to 3
+                for (let z = -40; z <= 10; z += 3) {
                     if (!isBehindTower(x, z)) continue;
                     
                     const distFromCenter = Math.sqrt(x * x + z * z);

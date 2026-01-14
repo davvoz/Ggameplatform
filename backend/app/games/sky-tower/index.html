@@ -800,7 +800,7 @@
                 powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio on mobile
+            renderer.setPixelRatio(window.devicePixelRatio); // Use native device pixel ratio for maximum quality
             renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
             if (!isMobile) {
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;

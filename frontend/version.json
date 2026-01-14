@@ -1,8 +1,17 @@
 {
-  "version": "3.9.7",
-  "timestamp": "2026-01-14T17:58:06.531Z",
-  "buildNumber": 245,
+  "version": "3.9.8",
+  "timestamp": "2026-01-14T18:03:09.700Z",
+  "buildNumber": 246,
   "changelog": [
+    {
+      "version": "3.9.8",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: Use native device pixel ratio for improved rendering quality on mobile",
+        "🔖 Bump version to 3.9.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.7",
       "date": "2026-01-14",
@@ -82,15 +91,6 @@
       "changes": [
         "refactor: remove background layers and implement fullscreen handling for desktop",
         "🔖 Bump version to 3.8.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.8.2",
-      "date": "2026-01-12",
-      "type": "patch",
-      "changes": [
-        "Add setup and reset scripts for Sky Tower game",
-        "🔖 Bump version to 3.8.1 [skip-version]"
       ]
     }
   ]

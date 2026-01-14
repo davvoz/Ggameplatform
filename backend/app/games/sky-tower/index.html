@@ -791,41 +791,52 @@
             camera.position.set(8, CONFIG.cameraHeight, 8);
             camera.lookAt(0, 0, 0);
 
+            // Detect mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
             renderer = new THREE.WebGLRenderer({ 
-                antialias: true,
-                alpha: true 
+                antialias: !isMobile, // Disable antialiasing on mobile
+                alpha: true,
+                powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio on mobile
+            renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
+            if (!isMobile) {
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.2;
             document.getElementById('gameContainer').appendChild(renderer.domElement);
 
             // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            const ambientLight = new THREE.AmbientLight(0xffffff, isMobile ? 0.9 : 0.7); // More ambient light on mobile
             scene.add(ambientLight);
 
-            const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            const mainLight = new THREE.DirectionalLight(0xffffff, isMobile ? 0.8 : 1.0);
             mainLight.position.set(8, 15, 8);
-            mainLight.castShadow = true;
-            mainLight.shadow.mapSize.width = 2048;
-            mainLight.shadow.mapSize.height = 2048;
-            mainLight.shadow.camera.near = 0.5;
-            mainLight.shadow.camera.far = 50;
-            mainLight.shadow.camera.left = -10;
-            mainLight.shadow.camera.right = 10;
-            mainLight.shadow.camera.top = 10;
-            mainLight.shadow.camera.bottom = -10;
+            if (!isMobile) {
+                mainLight.castShadow = true;
+                mainLight.shadow.mapSize.width = 1024; // Reduced from 2048
+                mainLight.shadow.mapSize.height = 1024;
+                mainLight.shadow.camera.near = 0.5;
+                mainLight.shadow.camera.far = 50;
+                mainLight.shadow.camera.left = -10;
+                mainLight.shadow.camera.right = 10;
+                mainLight.shadow.camera.top = 10;
+                mainLight.shadow.camera.bottom = -10;
+            }
             scene.add(mainLight);
 
-            const rimLight = new THREE.DirectionalLight(0x667eea, 0.4);
-            rimLight.position.set(-5, 5, -5);
-            scene.add(rimLight);
-            
-            const accentLight = new THREE.PointLight(0xf5576c, 0.3, 50);
-            accentLight.position.set(0, 10, 0);
-            scene.add(accentLight);
+            if (!isMobile) {
+                const rimLight = new THREE.DirectionalLight(0x667eea, 0.4);
+                rimLight.position.set(-5, 5, -5);
+                scene.add(rimLight);
+                
+                const accentLight = new THREE.PointLight(0xf5576c, 0.3, 50);
+                accentLight.position.set(0, 10, 0);
+                scene.add(accentLight);
+            }
             
             // Create environment
             createEnvironment();
@@ -835,7 +846,7 @@
         
         function createEnvironment() {
             // Ground plane (terrain) with color variation - completely flat
-            const groundGeometry = new THREE.PlaneGeometry(80, 80, 30, 30);
+            const groundGeometry = new THREE.PlaneGeometry(80, 80, isMobile ? 20 : 30, isMobile ? 20 : 30);
             
             // Add color variation for visual interest (NO height displacement)
             const positions = groundGeometry.attributes.position;
@@ -1066,8 +1077,9 @@
             });
             
             // Second: Place buildings and nature AWAY from roads
-            for (let x = -40; x <= 10; x += 3) { // Increased spacing from 2.5 to 3
-                for (let z = -40; z <= 10; z += 3) {
+            const spacing = isMobile ? 4 : 3; // More spacing on mobile
+            for (let x = -40; x <= 10; x += spacing) {
+                for (let z = -40; z <= 10; z += spacing) {
                     if (!isBehindTower(x, z)) continue;
                     
                     const distFromCenter = Math.sqrt(x * x + z * z);

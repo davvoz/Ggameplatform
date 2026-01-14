@@ -1,8 +1,17 @@
 {
-  "version": "3.9.2",
-  "timestamp": "2026-01-14T00:44:30.159Z",
-  "buildNumber": 240,
+  "version": "3.9.3",
+  "timestamp": "2026-01-14T01:29:32.156Z",
+  "buildNumber": 241,
   "changelog": [
+    {
+      "version": "3.9.3",
+      "date": "2026-01-14",
+      "type": "patch",
+      "changes": [
+        "fix: [RAB] Improve movement responsiveness and update celebration UI interactions",
+        "🔖 Bump version to 3.9.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.9.2",
       "date": "2026-01-14",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: use normalizedDelta for consistent timer updates across devices",
         "🔖 Bump version to 3.7.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.7.11",
-      "date": "2026-01-11",
-      "type": "patch",
-      "changes": [
-        "fix: reset train death counter on game start and restart",
-        "🔖 Bump version to 3.7.10 [skip-version]"
       ]
     }
   ]

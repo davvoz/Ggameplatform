@@ -1,8 +1,17 @@
 {
-  "version": "3.13.0",
-  "timestamp": "2026-01-15T23:37:12.729Z",
-  "buildNumber": 265,
+  "version": "3.13.1",
+  "timestamp": "2026-01-15T23:55:05.450Z",
+  "buildNumber": 266,
   "changelog": [
+    {
+      "version": "3.13.1",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar padding and menu positioning for iOS PWA compatibility",
+        "🔖 Bump version to 3.13.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.0",
       "date": "2026-01-15",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: implement game mode tabs with animations and filtering",
         "🔖 Bump version to 3.10.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.9",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: implement frame-rate independent movement for game elements",
-        "🔖 Bump version to 3.10.8 [skip-version]"
       ]
     }
   ]

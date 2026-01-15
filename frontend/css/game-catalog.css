@@ -2,6 +2,279 @@
    Game Catalog
    ======================================== */
 
+/* Game Mode Tabs */
+.game-mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: var(--spacing-sm);
+    padding: 4px;
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sliding indicator - base layer (ranked gradient) */
+.game-mode-tabs::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: calc(var(--radius-xl) - 2px);
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc02 100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s ease,
+                filter 0.3s ease;
+    z-index: 0;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(247, 147, 30, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Sliding indicator - overlay layer (fun gradient) */
+.game-mode-tabs::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: calc(var(--radius-xl) - 2px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s ease,
+                filter 0.3s ease;
+    z-index: 0;
+    opacity: 0;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(118, 75, 162, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Shine effect overlay */
+.game-mode-tabs .tab-shine {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: calc(var(--radius-xl) - 2px);
+    background: linear-gradient(
+        105deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.1) 35%,
+        rgba(255, 255, 255, 0.3) 38%,
+        rgba(255, 255, 255, 0.1) 41%,
+        transparent 60%
+    );
+    background-size: 250% 100%;
+    background-position: 100% 0;
+    z-index: 1;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-mode-tabs.mode-fun .tab-shine {
+    transform: translateX(100%);
+}
+
+/* Animate shine on transition */
+.game-mode-tabs.transitioning .tab-shine {
+    animation: shineSlide 0.6s ease-out;
+}
+
+@keyframes shineSlide {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+.game-mode-tabs.mode-fun::before {
+    transform: translateX(100%);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 10px rgba(247, 147, 30, 0);
+}
+
+.game-mode-tabs.mode-fun::after {
+    transform: translateX(100%);
+    opacity: 1;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 35px rgba(118, 75, 162, 0.6),
+        0 0 60px rgba(240, 147, 251, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Pulse effect on hover */
+.game-mode-tabs:hover::before,
+.game-mode-tabs:hover::after {
+    filter: brightness(1.1);
+}
+
+.game-mode-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.2s ease, text-shadow 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.game-mode-tab:hover {
+    color: var(--text-primary);
+}
+
+.game-mode-tab:active {
+    transform: scale(0.96);
+}
+
+.game-mode-tab.active {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+                 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.game-mode-tab .tab-icon,
+.game-mode-tab .tab-label {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+.game-mode-tab.active .tab-icon {
+    transform: scale(1.1);
+}
+
+.game-mode-tab .tab-icon {
+    font-size: 1.1rem;
+}
+
+/* Game grid transition container */
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    will-change: transform, opacity;
+}
+
+.game-grid.swipe-left {
+    animation: swipeOutLeft 0.2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.game-grid.swipe-right {
+    animation: swipeOutRight 0.2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.game-grid.swipe-in-left {
+    animation: swipeInLeft 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.game-grid.swipe-in-right {
+    animation: swipeInRight 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes swipeOutLeft {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-40px) scale(0.98);
+    }
+}
+
+@keyframes swipeOutRight {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.98);
+    }
+}
+
+@keyframes swipeInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes swipeInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(-40px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive tabs */
+@media (max-width: 480px) {
+    .game-mode-tabs {
+        max-width: 100%;
+    }
+    
+    .game-mode-tab {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+    }
+}
+
+/* No games message */
+.no-games-message {
+    grid-column: 1 / -1;
+    padding: var(--spacing-2xl);
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border);
+}
+
 .catalog-header {
     margin-bottom: var(--spacing-xl);
 }
@@ -402,7 +675,7 @@
 }
 
 .catalog {
-    padding-top: calc(var(--spacing-lg) + 10px);
+    padding-top: calc(var(--spacing-sm) );
 }
 
 /* Responsive Design */

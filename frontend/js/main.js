@@ -136,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Current game mode filter state
+let currentGameMode = 'ranked';
+
 /**
  * Render the game catalog page
  */
@@ -149,9 +152,12 @@ export async function renderCatalog(filters = {}) {
 
     // Set up filter event listeners
     setupFilters();
+    
+    // Set up game mode tabs
+    setupGameModeTabs();
 
-    // Load and display games
-    await loadGames(filters);
+    // Load and display games with current mode filter
+    await loadGames({ ...filters, mode: currentGameMode });
 }
 
 /**
@@ -163,7 +169,7 @@ function setupFilters() {
 
     if (categoryFilter) {
         categoryFilter.addEventListener('change', (e) => {
-            const filters = { category: e.target.value };
+            const filters = { category: e.target.value, mode: currentGameMode };
             loadGames(filters);
         });
     }
@@ -173,16 +179,145 @@ function setupFilters() {
         featuredFilter.addEventListener('click', () => {
             isFeaturedOnly = !isFeaturedOnly;
             featuredFilter.classList.toggle('active', isFeaturedOnly);
-            const filters = isFeaturedOnly ? { featured: true } : {};
+            const filters = isFeaturedOnly ? { featured: true, mode: currentGameMode } : { mode: currentGameMode };
             loadGames(filters);
         });
     }
 }
 
 /**
- * Load and display games
+ * Set up game mode tab event listeners
+ */
+function setupGameModeTabs() {
+    const tabs = document.querySelectorAll('.game-mode-tab');
+    const tabsContainer = document.querySelector('.game-mode-tabs');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', async () => {
+            const newMode = tab.dataset.mode;
+            const oldMode = currentGameMode;
+            
+            // Skip if same mode
+            if (newMode === oldMode) return;
+            
+            // Determine swipe direction
+            const isSwipingLeft = newMode === 'fun';
+            const swipeOutClass = isSwipingLeft ? 'swipe-left' : 'swipe-right';
+            const swipeInClass = isSwipingLeft ? 'swipe-in-left' : 'swipe-in-right';
+            
+            // PRE-FETCH: Load new games data BEFORE any animation
+            let newContent = null;
+            try {
+                newContent = await prepareGamesContent(newMode);
+            } catch (error) {
+                console.error('Error pre-loading games:', error);
+                return;
+            }
+            
+            // Update tabs container class for sliding indicator + shine animation
+            if (tabsContainer) {
+                // Trigger shine animation
+                tabsContainer.classList.add('transitioning');
+                tabsContainer.classList.toggle('mode-fun', newMode === 'fun');
+                
+                // Remove transitioning class after animation
+                setTimeout(() => {
+                    tabsContainer.classList.remove('transitioning');
+                }, 600);
+            }
+            
+            // Update active state on tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Now animate with pre-loaded content
+            const gameGrid = document.getElementById('game-grid');
+            if (gameGrid && newContent) {
+                // Start exit animation
+                gameGrid.classList.add(swipeOutClass);
+                
+                // Wait for exit, then swap and enter
+                setTimeout(() => {
+                    currentGameMode = newMode;
+                    gameGrid.classList.remove(swipeOutClass);
+                    
+                    // Instant content swap
+                    gameGrid.innerHTML = '';
+                    gameGrid.appendChild(newContent);
+                    
+                    // Enter animation
+                    gameGrid.classList.add(swipeInClass);
+                    setTimeout(() => {
+                        gameGrid.classList.remove(swipeInClass);
+                    }, 300);
+                }, 200);
+            } else {
+                currentGameMode = newMode;
+                loadGames({ mode: currentGameMode });
+            }
+        });
+    });
+}
+
+/**
+ * Pre-fetch and prepare games content without rendering
+ */
+async function prepareGamesContent(mode) {
+    const games = await fetchGames({ mode });
+    
+    // Filter games by mode
+    const filteredGames = games.filter(game => {
+        const statusCode = game.status?.status_code || '';
+        return statusCode === mode;
+    });
+    
+    // Sort games
+    filteredGames.sort((a, b) => {
+        const aSteemRewards = a.steem_rewards_enabled ? 1 : 0;
+        const bSteemRewards = b.steem_rewards_enabled ? 1 : 0;
+        if (aSteemRewards !== bSteemRewards) {
+            return bSteemRewards - aSteemRewards;
+        }
+        const aCount = a.session_count ?? 0;
+        const bCount = b.session_count ?? 0;
+        if (aCount !== bCount) {
+            return bCount - aCount;
+        }
+        const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
+        return aOrder - bOrder;
+    });
+    
+    // Build content fragment
+    const fragment = document.createDocumentFragment();
+    
+    if (filteredGames.length === 0) {
+        const modeLabel = mode === 'ranked' ? 'Ranked' : 'Fun';
+        const noGamesMsg = document.createElement('p');
+        noGamesMsg.className = 'text-center no-games-message';
+        noGamesMsg.textContent = `No ${modeLabel} games available yet.`;
+        fragment.appendChild(noGamesMsg);
+    } else {
+        filteredGames.forEach(game => {
+            const gameCard = createGameCard(game);
+            fragment.appendChild(gameCard);
+        });
+    }
+    
+    return fragment;
+}
+
+/**
+ * Load and display games (wrapper for backward compatibility)
  */
 async function loadGames(filters = {}) {
+    await loadGamesContent(filters);
+}
+
+/**
+ * Load and display games content
+ */
+async function loadGamesContent(filters = {}) {
     const gameGrid = document.getElementById('game-grid');
 
     if (!gameGrid) return;
@@ -192,10 +327,18 @@ async function loadGames(filters = {}) {
     try {
         const games = await fetchGames(filters);
 
+        // Filter games by mode (status_code)
+        const modeFilter = filters.mode || 'ranked';
+        const filteredGames = games.filter(game => {
+            const statusCode = game.status?.status_code || '';
+            return statusCode === modeFilter;
+        });
+
         gameGrid.innerHTML = '';
 
-        if (games.length === 0) {
-            gameGrid.innerHTML = '<p class="text-center">No games found.</p>';
+        if (filteredGames.length === 0) {
+            const modeLabel = modeFilter === 'ranked' ? 'Ranked' : 'Fun';
+            gameGrid.innerHTML = `<p class="text-center no-games-message">No ${modeLabel} games available yet.</p>`;
             return;
         }
 
@@ -203,7 +346,7 @@ async function loadGames(filters = {}) {
         // 1. Steem rewards enabled (1 first, 0 later)
         // 2. Status display_order (developed first, then others)
         // 3. Session count (most played first)
-        games.sort((a, b) => {
+        filteredGames.sort((a, b) => {
             // 1. Steem rewards (1 = true first, 0 = false later)
             const aSteemRewards = a.steem_rewards_enabled ? 1 : 0;
             const bSteemRewards = b.steem_rewards_enabled ? 1 : 0;
@@ -222,7 +365,7 @@ async function loadGames(filters = {}) {
             return aOrder - bOrder; // Lower first
         });
 
-        games.forEach(game => {
+        filteredGames.forEach(game => {
             const gameCard = createGameCard(game);
             gameGrid.appendChild(gameCard);
         });
@@ -249,30 +392,6 @@ function createGameCard(game) {
         : 'https://via.placeholder.com/400x300?text=No+Image';
     img.src = thumbnailUrl;
     img.alt = game.title;
-
-    // Add status ribbon if game has a status
-    console.log('Game:', game.game_id, 'Status:', game.status, 'Status ID:', game.status_id);
-    if (game.status) {
-        const ribbonContainer = card.querySelector('.game-thumbnail');
-        const ribbon = document.createElement('div');
-        ribbon.className = 'status-ribbon';
-        
-        const statusConfig = {
-            'developed': { text: 'Sviluppato', color: '#28a745' },
-            'in_development': { text: 'In Sviluppo', color: '#ffc107' },
-            'deprecated': { text: 'Deprecato', color: '#dc3545' },
-            'experimental': { text: 'Sperimentale', color: '#17a2b8' }
-        };
-        
-        const config = statusConfig[game.status.status_code] || { text: game.status.status_name, color: '#6c757d' };
-        ribbon.textContent = config.text;
-        ribbon.style.setProperty('--ribbon-color', config.color);
-        
-        ribbonContainer.appendChild(ribbon);
-        console.log('Added ribbon:', config.text, 'Color:', config.color);
-    } else {
-        console.log('No status found for game:', game.game_id);
-    }
 
     // Add STEEM rewards badge if enabled
     if (game.steem_rewards_enabled) {

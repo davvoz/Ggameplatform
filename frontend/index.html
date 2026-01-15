@@ -135,6 +135,17 @@
     <!-- Game Catalog Template -->
     <template id="catalog-template">
         <div class="catalog">
+            <div class="game-mode-tabs">
+                <div class="tab-shine"></div>
+                <button class="game-mode-tab active" data-mode="ranked">
+                    <span class="tab-icon">&#9733;</span>
+                    <span class="tab-label">Ranked</span>
+                </button>
+                <button class="game-mode-tab" data-mode="fun">
+                    <span class="tab-icon">&#9829;</span>
+                    <span class="tab-label">Fun</span>
+                </button>
+            </div>
             <div id="game-grid" class="game-grid">
                 <!-- Game cards will be inserted here -->
             </div>

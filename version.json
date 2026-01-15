@@ -1,8 +1,17 @@
 {
-  "version": "3.10.4",
-  "timestamp": "2026-01-15T14:44:03.622Z",
-  "buildNumber": 251,
+  "version": "3.10.5",
+  "timestamp": "2026-01-15T15:33:51.197Z",
+  "buildNumber": 252,
   "changelog": [
+    {
+      "version": "3.10.5",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD TUTORIAL] Update tutorial step positions and descriptions for clarity",
+        "🔖 Bump version to 3.10.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.10.4",
       "date": "2026-01-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Sky Tower, added terrain, city generation and UI",
         "🔖 Bump version to 3.9.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.9.4",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: [SkyTower] Implement audio system for block actions and game events",
-        "🔖 Bump version to 3.9.3 [skip-version]"
       ]
     }
   ]

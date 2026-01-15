@@ -61,6 +61,11 @@
             pointer-events: none;
         }
 
+        /* Extra offset for iOS PWA to avoid status bar overlap */
+        .ios-pwa #scoreDisplay {
+            top: calc(40px + env(safe-area-inset-top) + 12px);
+        }
+
         #scoreDisplay .main-score {
             font-size: 72px;
             font-weight: bold;
@@ -351,6 +356,10 @@
             display: none;
             z-index: 20;
             opacity: 0;
+        }
+
+        .ios-pwa #comboIndicator {
+            top: calc(150px + env(safe-area-inset-top) + 12px);
         }
         
         #comboIndicator.show {
@@ -1087,6 +1096,15 @@
             
             // Create environment
             createEnvironment();
+
+            // Detect iOS standalone (PWA) and add class to body so we can tweak safe-area offsets
+            try {
+                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                if (isiOS && isStandalone) {
+                    document.body.classList.add('ios-pwa');
+                }
+            } catch (e) { /* ignore */ }
 
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('orientationchange', onWindowResize);
@@ -2721,35 +2739,6 @@
 
         function requestFullscreen() {
             const elem = document.documentElement;
-            // iOS Safari does not support the Fullscreen API for documents.
-            // If running on iOS and not in standalone (PWA), suggest adding to Home Screen.
-            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            if (isiOS && !isStandalone) {
-                // Show small hint to user to add to Home Screen for fullscreen experience
-                try {
-                    let hint = document.getElementById('iosFullscreenHint');
-                    if (!hint) {
-                        hint = document.createElement('div');
-                        hint.id = 'iosFullscreenHint';
-                        hint.style.position = 'fixed';
-                        hint.style.left = '50%';
-                        hint.style.bottom = '20px';
-                        hint.style.transform = 'translateX(-50%)';
-                        hint.style.padding = '10px 14px';
-                        hint.style.background = 'rgba(0,0,0,0.7)';
-                        hint.style.color = 'white';
-                        hint.style.borderRadius = '12px';
-                        hint.style.zIndex = 9999;
-                        hint.style.fontSize = '14px';
-                        hint.textContent = 'Per una esperienza a schermo intero, aggiungi questa app alla schermata Home (Condividi → Aggiungi a Home).';
-                        document.body.appendChild(hint);
-                    }
-                    hint.style.display = 'block';
-                    setTimeout(() => { hint.style.display = 'none'; }, 5000);
-                } catch (e) { /* ignore */ }
-                return;
-            }
             if (elem.requestFullscreen) {
                 elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
             } else if (elem.webkitRequestFullscreen) {

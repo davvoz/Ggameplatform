@@ -98,7 +98,7 @@ export class TutorialManager {
                 description: 'In basso trovi i diversi tipi di torrette. Ogni tipo ha caratteristiche uniche!',
                 highlightArea: 'shop',
                 arrowDirection: 'down',
-                position: 'center',
+                position: 'bottom',
                 icon: '🏪'
             }),
 
@@ -109,7 +109,7 @@ export class TutorialManager {
                 description: 'Prima seleziona una torretta dal negozio in basso, poi tocca una cella verde!',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_tower',
-                position: 'top',
+                position: 'center',
                 icon: '👆',
                 showFirstTowerArrow: true, // Show exaggerated arrow on first tower
                 onEnter: (manager) => {
@@ -124,7 +124,7 @@ export class TutorialManager {
                 description: 'Piazza altre 2 torrette dello STESSO TIPO per poterle fondere!',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_multiple',
-                position: 'top',
+                position: 'center',
                 icon: '✌️',
                 condition: (manager) => {
                     const cannons = manager.game.entities.cannons;
@@ -178,7 +178,7 @@ export class TutorialManager {
                 title: '💰 Monete',
                 description: 'Guadagni monete eliminando nemici. Usale per comprare nuove torrette!',
                 highlightArea: 'topbar',
-                position: 'bottom',
+                position: 'top',
                 icon: '🪙'
             }),
 
@@ -186,7 +186,7 @@ export class TutorialManager {
             new TutorialStep({
                 id: 'abilities_intro',
                 title: '💥 Abilità Speciali',
-                description: 'In alto a sinistra trovi le abilità: Bomba esplode i nemici, Respingi li spinge indietro!',
+                description: 'In alto a sinistra trovi le abilità: Bomba esplode i nemici, Respingi li spinge indietro , lo stun li immobilizza!',
                 highlightArea: 'sidebar_abilities',
                 position: 'center',
                 icon: '🎯'
@@ -196,20 +196,10 @@ export class TutorialManager {
             new TutorialStep({
                 id: 'shop_items_intro',
                 title: '🛍️ Oggetti Acquistabili',
-                description: 'Sotto le abilità trovi oggetti speciali: Energia, Potenziamenti per danni, velocità e raggio!',
+                description: 'Sotto le abilità trovi oggetti speciali: Energia, Potenziamenti per danni, velocità e raggio!I boost durano N secondi e potenziano TUTTE le torrette. Usali nelle ondate difficili!',
                 highlightArea: 'sidebar_shop',
                 position: 'center',
                 icon: '✨'
-            }),
-
-            // Step 12: Explain boosts
-            new TutorialStep({
-                id: 'boosts_intro',
-                title: '⚡ Potenziamenti Temporanei',
-                description: 'I boost durano 30 secondi e potenziano TUTTE le torrette. Usali nelle ondate difficili!',
-                highlightArea: 'sidebar',
-                position: 'center',
-                icon: '🔥'
             }),
 
             // Step 13: Ready to play
@@ -685,7 +675,7 @@ export class TutorialManager {
                     x: gridOffsetX,
                     y: gridOffsetY + (CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS - 1) * cellSize,
                     width: CONFIG.COLS * cellSize,
-                    height: cellSize * 2
+                    height: cellSize 
                 };
                 
             case 'grid':

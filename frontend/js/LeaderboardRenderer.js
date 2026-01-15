@@ -119,7 +119,13 @@ class LeaderboardRenderer {
                         <span id="countdownTimer" class="countdown-value">--</span>
                     </div>
                 </div>
-
+                <!-- Game Filter -->
+                <div class="game-selector">
+                    
+                    <div class="game-cards-container">
+                        ${games.map((g, idx) => this.renderGameCard(g, idx === 0)).join('')}
+                    </div>
+                </div>
                 <!-- Tabs: Weekly / All-Time / Winners -->
                 <div class="leaderboard-tabs">
                     <button class="tab-btn active" data-tab="weekly" onclick="leaderboardRenderer.switchTab('weekly')">
@@ -132,13 +138,7 @@ class LeaderboardRenderer {
                         👑 Winners History
                     </button>
                 </div>
-                <!-- Game Filter -->
-                <div class="game-selector">
-                    <div class="game-selector-label">Select Game</div>
-                    <div class="game-cards-container">
-                        ${games.map((g, idx) => this.renderGameCard(g, idx === 0)).join('')}
-                    </div>
-                </div>
+                
                 <!-- Rewards Info (below tabs) -->
                 <div id="rewardsInfo" class="rewards-info">
                     ${this.renderRewardsInfo()}

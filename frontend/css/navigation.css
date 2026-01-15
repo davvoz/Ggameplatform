@@ -7,7 +7,10 @@
     border-bottom: 1px solid var(--border-light);
     padding: 0;
     position: sticky;
-    top: 0;
+    /* Respect iPhone safe-area (notch/status bar) */
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    top: 0; /* keep sticky behavior; actual visual offset provided by padding */
     z-index: 1000;
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
@@ -19,7 +22,8 @@
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-lg);
-    padding: var(--spacing-xs) var(--spacing-xs);
+    /* Add top padding equal to safe-area inset so inner content is tappable on iPhone */
+    padding: calc(var(--spacing-xs) + env(safe-area-inset-top, 0)) var(--spacing-xs) calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0));
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
@@ -957,4 +961,37 @@
 #userInfo * {
     display: none !important;
     visibility: hidden !important;
+}
+
+/* iOS PWA: ensure navbar sits above the status bar and is fully tappable */
+body.ios-pwa .navbar,
+html.ios-standalone .navbar,
+body.display-standalone .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 11000;
+    /* ensure the visual content is spaced below the notch/status bar */
+    padding-top: env(safe-area-inset-top, 0px);
+    min-height: calc(36px + env(safe-area-inset-top, 0px));
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+}
+
+/* keep inner content tappable inside the safe area */
+body.ios-pwa .navbar .container,
+html.ios-standalone .navbar .container,
+body.display-standalone .navbar .container {
+    padding-top: calc(var(--spacing-xs) + env(safe-area-inset-top, 0px));
+}
+
+/* ensure the hamburger/menu toggle is above overlays */
+.nav-toggle {
+    z-index: 11001;
+}
+
+/* slide-out menu should start below the navbar+safe-area */
+.nav-menu {
+    top: calc(36px + env(safe-area-inset-top, 0px));
 }

@@ -970,6 +970,9 @@
         let movingDirection = 'x';
         let currentHue = 180;
         let isFirstGame = true;
+        // Timing for frame-rate independent movement
+        let lastFrameTime = performance.now();
+        let frameDelta = 1; // Multiplier relative to 60fps (1 = 1 frame at 60fps)
         
         // Environment elements
         let groundPlane, cloudLayer, stars, groundElements;
@@ -2124,14 +2127,14 @@
             if (!currentBlock || !gameState.isPlaying || gameState.isPaused) return;
             
             if (currentBlock.direction === 'x') {
-                currentBlock.mesh.position.x += movingSpeed;
+                currentBlock.mesh.position.x += movingSpeed * frameDelta;
                 currentBlock.position.x = currentBlock.mesh.position.x;
                 
                 if (currentBlock.mesh.position.x > CONFIG.moveRange || currentBlock.mesh.position.x < -CONFIG.moveRange) {
                     movingSpeed *= -1;
                 }
             } else {
-                currentBlock.mesh.position.z += movingSpeed;
+                currentBlock.mesh.position.z += movingSpeed * frameDelta;
                 currentBlock.position.z = currentBlock.mesh.position.z;
                 
                 if (currentBlock.mesh.position.z > CONFIG.moveRange || currentBlock.mesh.position.z < -CONFIG.moveRange) {
@@ -2475,17 +2478,17 @@
             }
             
             const fall = () => {
-                // Apply gravity
-                velocityY += gravity;
-                piece.position.y -= velocityY;
-                
-                // Apply lateral movement
-                piece.position.x += velocityX;
-                piece.position.z += velocityZ;
-                
-                // Apply rotation
-                piece.rotation.x += (Math.random() - 0.5) * rotationSpeed;
-                piece.rotation.z += (Math.random() - 0.5) * rotationSpeed;
+                // Apply gravity (scaled by frameDelta)
+                velocityY += gravity * frameDelta;
+                piece.position.y -= velocityY * frameDelta;
+
+                // Apply lateral movement (scaled)
+                piece.position.x += velocityX * frameDelta;
+                piece.position.z += velocityZ * frameDelta;
+
+                // Apply rotation (scaled)
+                piece.rotation.x += (Math.random() - 0.5) * rotationSpeed * frameDelta;
+                piece.rotation.z += (Math.random() - 0.5) * rotationSpeed * frameDelta;
                 
                 // Check if piece has fallen below disappear level
                 if (piece.position.y < disappearLevel) {
@@ -2828,15 +2831,24 @@
         // ============================================
         // Animation Loop
         // ============================================
-        function animate() {
+        function animate(now) {
             requestAnimationFrame(animate);
+
+            // Calculate frame delta relative to 60fps baseline
+            if (!now) now = performance.now();
+            const dt = now - lastFrameTime;
+            // guard: clamp dt to avoid huge jumps after tab switching
+            const clampedDt = Math.min(100, dt);
+            frameDelta = clampedDt / (1000 / 60); // 16.666ms per 60fps frame
+            lastFrameTime = now;
+
             TWEEN.update();
             updateBlock();
             updateEnvironment();
-            
+
             // Smooth camera lookAt using animated target
             camera.lookAt(0, cameraLookTarget.y, 0);
-            
+
             renderer.render(scene, camera);
         }
 

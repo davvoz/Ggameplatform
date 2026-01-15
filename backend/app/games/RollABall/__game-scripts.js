@@ -1,11 +1,14 @@
+// ===== FOLLOW CAMERA SCRIPT =====
 var FollowCamera = pc.createScript("followCamera");
-FollowCamera.attributes.add("target",
-    { type: "entity", title: "Target", description: "The Entity to follow" }),
-    FollowCamera.attributes.add("distance",
-        {
-            type: "number", default: 4, title: "Distance",
-            description: "How far from the Entity should the follower be"
-        }),
+FollowCamera.attributes.add("target", {
+    type: "entity",
+    title: "Target",
+    description: "The Entity to follow"
+}),
+    FollowCamera.attributes.add("distance", {
+        type: "number", default: 4, title: "Distance",
+        description: "How far from the Entity should the follower be"
+    }),
     FollowCamera.prototype.initialize = function () {
         this.pos = new pc.Vec3,
             this.offset = new pc.Vec3,
@@ -15,10 +18,47 @@ FollowCamera.attributes.add("target",
             this.superCelebrateTime = 0,
             this.baseDistance = this.distance,
             this.app.on("ball:celebrate", this.startCelebrate, this),
-            this.app.on("ball:supercelebrate", this.startSuperCelebrate, this)
+            this.app.on("ball:supercelebrate", this.startSuperCelebrate, this);
+
+        // ===== SFONDO DINAMICO =====
+        // Colori del gradiente cosmico
+        this.bgColor1 = new pc.Color(0.06, 0.05, 0.16); // Viola scuro #0f0c29
+        this.bgColor2 = new pc.Color(0.19, 0.17, 0.39); // Viola medio #302b63
+        this.bgColor3 = new pc.Color(0.14, 0.14, 0.24); // Blu scuro #24243e
+        this.bgTime = 0;
+
+        // Imposta il colore iniziale della camera
+        if (this.entity && this.entity.camera) {
+            this.entity.camera.clearColor = this.bgColor1;
+        }
+
     },
-    FollowCamera.prototype.startCelebrate =
-    function () {
+    FollowCamera.prototype.updateBackground = function (dt) {
+        this.bgTime += dt * 0.3;
+
+        if (this.entity && this.entity.camera) {
+            // Transizione graduale tra i colori
+            var t = (Math.sin(this.bgTime) + 1) / 2;
+            var t2 = (Math.sin(this.bgTime * 0.7 + 1) + 1) / 2;
+
+            // Interpola tra i colori
+            var r = this.bgColor1.r + (this.bgColor2.r - this.bgColor1.r) * t + (this.bgColor3.r - this.bgColor2.r) * t2 * 0.3;
+            var g = this.bgColor1.g + (this.bgColor2.g - this.bgColor1.g) * t + (this.bgColor3.g - this.bgColor2.g) * t2 * 0.3;
+            var b = this.bgColor1.b + (this.bgColor2.b - this.bgColor1.b) * t + (this.bgColor3.b - this.bgColor2.b) * t2 * 0.3;
+
+            this.entity.camera.clearColor = new pc.Color(r, g, b);
+        }
+
+        // Anima le stelle (twinkle effect con le luci)
+        if (this.starLights) {
+            for (var i = 0; i < this.starLights.length; i++) {
+                var starData = this.starLights[i];
+                var twinkle = 0.5 + 0.5 * Math.sin(this.bgTime * 3 * starData.twinkleSpeed + starData.twinkleOffset);
+                starData.entity.light.intensity = starData.baseIntensity * twinkle;
+            }
+        }
+    },
+    FollowCamera.prototype.startCelebrate = function () {
         this.isCelebrating = true; this.celebrateTime = 0
     },
     FollowCamera.prototype.startSuperCelebrate = function () {
@@ -27,6 +67,9 @@ FollowCamera.attributes.add("target",
         this.isCelebrating = false;
     },
     FollowCamera.prototype.postUpdate = function (t) {
+        // Aggiorna lo sfondo dinamico
+        this.updateBackground(t);
+
         if (!this.target) return;
 
         // Super celebration for final level
@@ -88,7 +131,7 @@ Movement.attributes.add("speed", {
             this.introBounceCount = 0,
             this.introBounceVelocity = 0,
             this.introStartY = this.spawnPos.y + 3,
-            this.introCurrentY = this.spawnPos.y ,
+            this.introCurrentY = this.spawnPos.y,
             this.app.on("game:over",
                 function () { this.isGameOver = true },
                 this),
@@ -119,18 +162,18 @@ Movement.attributes.add("speed", {
     },
     Movement.prototype.updateIntro = function (dt) {
         if (!this.isIntroPlaying) return false;
-        
+
         this.introTime += dt;
         var groundY = this.spawnPos.y;
-        
+
         // Fase 0: Caduta con gravità
         if (this.introPhase === 0) {
             this.introBounceVelocity -= 25 * dt; // Gravità
             this.introCurrentY += this.introBounceVelocity * dt;
-            
+
             // Rotazione durante la caduta
             this.entity.rotate(dt * 100, dt * 50, 0);
-            
+
             // Tocca il suolo
             if (this.introCurrentY <= groundY) {
                 this.introCurrentY = groundY;
@@ -143,17 +186,17 @@ Movement.attributes.add("speed", {
         else if (this.introPhase === 1) {
             this.introBounceVelocity -= 20 * dt; // Gravità
             this.introCurrentY += this.introBounceVelocity * dt;
-            
+
             // Rotazione rallenta gradualmente
             var rotSpeed = Math.max(0, 150 - this.introBounceCount * 40);
             this.entity.rotate(dt * rotSpeed, 0, 0);
-            
+
             // Rimbalzo quando tocca il suolo
             if (this.introCurrentY <= groundY) {
                 this.introCurrentY = groundY;
                 this.introBounceCount++;
                 this.introBounceVelocity = Math.abs(this.introBounceVelocity) * 0.5; // Perde energia
-                
+
                 // Dopo abbastanza rimbalzi o velocità bassa, vai alla fase di settling
                 if (this.introBounceCount >= 5 || this.introBounceVelocity < 0.3) {
                     this.introPhase = 2;
@@ -165,7 +208,7 @@ Movement.attributes.add("speed", {
         else if (this.introPhase === 2) {
             this.introSettleTime += dt;
             this.introCurrentY = groundY;
-            
+
             // Interpola gradualmente la rotazione verso zero
             var currentRot = this.entity.getEulerAngles();
             var settleProgress = Math.min(this.introSettleTime / 0.3, 1);
@@ -175,7 +218,7 @@ Movement.attributes.add("speed", {
                 currentRot.y * (1 - easeOut),
                 currentRot.z * (1 - easeOut)
             );
-            
+
             // Dopo settling completo, termina intro
             if (this.introSettleTime >= 0.3) {
                 this.isIntroPlaying = false;
@@ -187,12 +230,12 @@ Movement.attributes.add("speed", {
                 return false;
             }
         }
-        
+
         var pos = this.spawnPos.clone();
         pos.y = this.introCurrentY;
         this.entity.rigidbody.teleport(pos);
         this.entity.rigidbody.linearVelocity = pc.Vec3.ZERO;
-        
+
         return true;
     },
     Movement.prototype.onTouchStart = function (e) {
@@ -238,22 +281,22 @@ Movement.attributes.add("speed", {
         this.superCelebrateTime += dt;
         var t = this.superCelebrateTime;
         var pos = this.celebrateBasePos.clone();
-        
+
         // Movimento fluido continuo
         var bounce = Math.abs(Math.sin(t * 8)) * 0.35;
         pos.y += bounce;
-        
+
         // Dopo 5 secondi inizia ad allontanarsi gradualmente
         if (t >= 5.0) {
             var escapeProgress = (t - 5.0) / 3.0;
             var distance = escapeProgress * escapeProgress * 12;
             pos.z -= distance;
-            
+
             // Si rimpicciolisce gradualmente mentre si allontana
             var scale = this.originalBallScale * (1 - escapeProgress * 0.7);
             this.entity.setLocalScale(scale, scale, scale);
         }
-        
+
         this.entity.rigidbody.teleport(pos);
         this.entity.rigidbody.linearVelocity = pc.Vec3.ZERO;
         this.entity.rotate(dt * 200, 0, 0);
@@ -284,10 +327,10 @@ Movement.attributes.add("speed", {
             this.introStarted = true;
             this.startFallIntro();
         }
-        
+
         // Animazione intro caduta
         if (this.updateIntro(e)) return;
-        
+
         this.updateCelebrate(e);
         if (this.isCelebrating || this.isSuperCelebrating || this.isGameOver)
             return;
@@ -385,24 +428,25 @@ GameManager.prototype.initialize = function () {
             this.onPlayerFall, this),
         this.app.on("level:celebration",
             this.onLevelCelebration, this)
-}, GameManager.prototype.onLevelCelebration = function (callback) {
-    if (this.isCelebrating) return; this.isCelebrating = true;
-    this.celebrationCallback = callback;
-
-    // Check if this is the final level
-    if (this.currentLevel >= this.maxLevel) {
-        this.celebrationTimer = 8.0; // Longer celebration for final level
-        this.isSuperCelebrating = true;
-        this.superCelebrationTimer = 0;
-        this.app.fire("ball:supercelebrate");
-        this.app.fire("ui:supercelebration", this.currentLevel);
-    } else {
-        this.celebrationTimer = 3.0;
-        this.app.fire("ball:celebrate");
-        this.app.fire("ui:celebration",
-            this.currentLevel, this.currentLevel + 1);
-    }
 },
+    GameManager.prototype.onLevelCelebration = function (callback) {
+        if (this.isCelebrating) return; this.isCelebrating = true;
+        this.celebrationCallback = callback;
+
+        // Check if this is the final level
+        if (this.currentLevel >= this.maxLevel) {
+            this.celebrationTimer = 8.0; // Longer celebration for final level
+            this.isSuperCelebrating = true;
+            this.superCelebrationTimer = 0;
+            this.app.fire("ball:supercelebrate");
+            this.app.fire("ui:supercelebration", this.currentLevel);
+        } else {
+            this.celebrationTimer = 3.0;
+            this.app.fire("ball:celebrate");
+            this.app.fire("ui:celebration",
+                this.currentLevel, this.currentLevel + 1);
+        }
+    },
     GameManager.prototype.update = function (dt) {
         if (this.isCelebrating) {
             this.celebrationTimer -= dt;
@@ -436,8 +480,8 @@ GameManager.prototype.initialize = function () {
         setTimeout(() => {
             window.location.reload();
         }, 500);
-    }
-    , GameManager.prototype.onPlayerFall = function () {
+    },
+    GameManager.prototype.onPlayerFall = function () {
         if (this.isGameOver) return;
         this.lives--, this.app.fire("lives:update", this.lives), this.lives <= 0 && (this.isGameOver = true, this.app.fire("game:over", this.score))
     },
@@ -455,16 +499,15 @@ GameManager.prototype.initialize = function () {
             this.currentLevel++, this.app.fire("level:update", this.currentLevel)
         }
     };
+    
 var Collectible = pc.createScript("collectible");
-Collectible.attributes.add("points",
-    {
-        type: "number",
-        default: 10,
-        title: "Points",
-        description: "Points awarded when collected"
-    }),
-    Collectible.attributes.add("rotateSpeed",
-        { type: "number", default: 90, title: "Rotate Speed" }),
+Collectible.attributes.add("points", {
+    type: "number",
+    default: 10,
+    title: "Points",
+    description: "Points awarded when collected"
+}),
+    Collectible.attributes.add("rotateSpeed", { type: "number", default: 90, title: "Rotate Speed" }),
     Collectible.prototype.initialize = function () {
         this.collected = false, this.collecting = false,
             this.collectTime = 0,
@@ -716,7 +759,7 @@ ScoreUI.prototype.initialize = function () {
             this.lifeBalls.push(ball)
         }
         // Ascolta fine intro
-        this.app.on("intro:complete", function() {
+        this.app.on("intro:complete", function () {
             if (this.livesContainer) this.livesContainer.enabled = true;
         }, this);
     },

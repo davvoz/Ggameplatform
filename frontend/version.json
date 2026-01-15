@@ -1,8 +1,26 @@
 {
-  "version": "3.10.7",
-  "timestamp": "2026-01-15T16:41:44.697Z",
-  "buildNumber": 254,
+  "version": "3.10.9",
+  "timestamp": "2026-01-15T21:26:27.494Z",
+  "buildNumber": 256,
   "changelog": [
+    {
+      "version": "3.10.9",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: implement frame-rate independent movement for game elements",
+        "🔖 Bump version to 3.10.8 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.10.8",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: SKY Tower refine cloud positioning and fade effects; remove unused perfect counter",
+        "🔖 Bump version to 3.10.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.10.7",
       "date": "2026-01-15",
@@ -73,24 +91,6 @@
       "changes": [
         "feat: Add XP and level-up notifications with animations and modal display",
         "🔖 Bump version to 3.9.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.9.8",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: Use native device pixel ratio for improved rendering quality on mobile",
-        "🔖 Bump version to 3.9.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.9.7",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance mobile performance with adaptive rendering and lighting adjustments",
-        "🔖 Bump version to 3.9.6 [skip-version]"
       ]
     }
   ]

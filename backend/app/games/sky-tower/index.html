@@ -621,10 +621,7 @@
             <div class="main-score" id="scoreValue">0</div>
         </div>
 
-        <div id="perfectCounter">
-            <div class="label">PERFECT</div>
-            <div class="value" id="perfectValue">0</div>
-        </div>
+        
 
         <div id="comboIndicator">
             COMBO: <span id="comboValue">0</span>x
@@ -973,9 +970,14 @@
         let movingDirection = 'x';
         let currentHue = 180;
         let isFirstGame = true;
+        // Timing for frame-rate independent movement
+        let lastFrameTime = performance.now();
+        let frameDelta = 1; // Multiplier relative to 60fps (1 = 1 frame at 60fps)
         
         // Environment elements
         let groundPlane, cloudLayer, stars, groundElements;
+        // Progress of restoring scene fade (0 = normal fade, 1 = fully restored)
+        let fadeRestoreProgress = 0;
 
         let gameState = {
             score: 0,
@@ -1143,16 +1145,16 @@
                     cloudCluster.add(puff);
                 }
                 
-                // Position cloud cluster behind tower only (negative x AND negative z)
+                // Position cloud cluster in front of camera (positive x, negative z)
                 const angle = Math.random() * Math.PI * 0.5; // Only 90 degrees quadrant
                 const radius = 15 + Math.random() * 25;
-                const x = -Math.abs(Math.cos(angle) * radius); // Force negative X
-                const z = -Math.abs(Math.sin(angle) * radius); // Force negative Z
+                const x = Math.abs(Math.cos(angle) * radius); // Force positive X (in front of camera)
+                const z = -Math.abs(Math.sin(angle) * radius); // Force negative Z (to the side)
                 
                 cloudCluster.position.x = x;
                 cloudCluster.position.z = z;
-                // Clouds at different heights from 15 to 40 (higher to avoid buildings)
-                cloudCluster.position.y = 15 + Math.random() * 25;
+                // Clouds at different heights from 10 to 40 (higher to avoid buildings)
+                cloudCluster.position.y = 10 + Math.random() * 30;
                 
                 // Overall cloud scale variation
                 const cloudScale = 0.6 + Math.random() * 0.8;
@@ -1884,10 +1886,12 @@
             // Fade out ground gradually as we go up (slower, more gradual)
             if (groundPlane) {
                 const groundFade = Math.max(0, 1 - (towerHeight / 28));
-                groundPlane.material.opacity = groundFade;
+                // Blend with fadeRestoreProgress so ground can be restored during end animation
+                const finalGroundFade = groundFade * (1 - fadeRestoreProgress) + 1 * fadeRestoreProgress;
+                groundPlane.material.opacity = finalGroundFade;
                 groundPlane.material.transparent = true;
                 // Hide completely when almost invisible to avoid edge artifacts
-                groundPlane.visible = groundFade > 0.03;
+                groundPlane.visible = finalGroundFade > 0.03;
             }
             
             // Fade all ground elements (trees/rocks/buildings) - very gradual fade
@@ -1912,7 +1916,8 @@
                     
                     element.traverse(obj => {
                         if (obj.material) {
-                            obj.material.opacity = smoothFade;
+                            const finalFade = smoothFade * (1 - fadeRestoreProgress) + 1 * fadeRestoreProgress;
+                            obj.material.opacity = finalFade;
                             obj.material.transparent = true;
                         }
                     });
@@ -1929,7 +1934,10 @@
                     
                     // Update opacity for each puff in the cloud cluster
                     cloudCluster.children.forEach(puff => {
-                        puff.material.opacity = 0.8 * cloudFade;
+                        const baseOpacity = 0.8;
+                        const finalCloudOpacity = baseOpacity * (cloudFade * (1 - fadeRestoreProgress) + fadeRestoreProgress);
+                        puff.material.opacity = finalCloudOpacity;
+                        puff.material.transparent = true;
                     });
                 });
                 // Rotate clouds slowly
@@ -1941,14 +1949,15 @@
                 const starFade = Math.min(1, Math.max(0, (towerHeight - 4) / 18));
                 // Add subtle twinkling with sine wave
                 const twinkle = 0.15 * Math.sin(Date.now() * 0.001);
-                stars.material.opacity = starFade * (0.9 + twinkle);
+                const finalStarFade = starFade * (1 - fadeRestoreProgress) + fadeRestoreProgress;
+                stars.material.opacity = finalStarFade * (0.9 + twinkle);
             }
             
             // Change fog and background gradually based on height
             if (scene.fog) {
                 // Gradual transition from dark to darker as we go up
                 // No sudden blue color change
-                const fogDarkness = Math.min(1, towerHeight / 50);
+                const fogDarkness = Math.min(1, towerHeight / 50) * (1 - fadeRestoreProgress);
                 const r = Math.floor(26 - fogDarkness * 16); // 26 -> 10
                 const g = Math.floor(26 - fogDarkness * 16); // 26 -> 10
                 const b = Math.floor(46 - fogDarkness * 16); // 46 -> 30
@@ -1960,7 +1969,7 @@
             const isFullscreen = !!(document.fullscreenElement || 
                                    document.webkitFullscreenElement || 
                                    document.mozFullScreenElement || 
-                                   document.msFullscreenElement);
+                                   document.msRequestFullscreenElement);
             
             if (isFullscreen && !isMobile()) {
                 // In fullscreen on desktop: maintain mobile aspect ratio
@@ -2118,14 +2127,14 @@
             if (!currentBlock || !gameState.isPlaying || gameState.isPaused) return;
             
             if (currentBlock.direction === 'x') {
-                currentBlock.mesh.position.x += movingSpeed;
+                currentBlock.mesh.position.x += movingSpeed * frameDelta;
                 currentBlock.position.x = currentBlock.mesh.position.x;
                 
                 if (currentBlock.mesh.position.x > CONFIG.moveRange || currentBlock.mesh.position.x < -CONFIG.moveRange) {
                     movingSpeed *= -1;
                 }
             } else {
-                currentBlock.mesh.position.z += movingSpeed;
+                currentBlock.mesh.position.z += movingSpeed * frameDelta;
                 currentBlock.position.z = currentBlock.mesh.position.z;
                 
                 if (currentBlock.mesh.position.z > CONFIG.moveRange || currentBlock.mesh.position.z < -CONFIG.moveRange) {
@@ -2453,42 +2462,33 @@
             let velocityY = -0.08; // Strong initial upward velocity (jump effect)
             const gravity = 0.025;
             const disappearLevel = -5; // Pieces disappear when they go below this level
+            const rotationSpeed = 0.3; // Rotation speed for falling pieces
             
             // Add strong lateral push away from tower
             let velocityX = 0;
             let velocityZ = 0;
             const pushStrength = 0.04;
             
-            // Add very strong rotation on the short axis
-            let rotationSpeedX = 0;
-            let rotationSpeedZ = 0;
-            
             if (direction === 'x') {
-                // Falling in X direction - push in X direction, rotate around Z axis
+                // Falling in X direction - push in X direction
                 velocityX = velocity > 0 ? pushStrength : -pushStrength;
-                rotationSpeedZ = (Math.random() - 0.5) * 0.5; // Much faster rotation
-            } else if (direction === 'z') {
-                // Falling in Z direction - push in Z direction, rotate around X axis
+            } else {
+                // Falling in Z direction - push in Z direction
                 velocityZ = velocity > 0 ? pushStrength : -pushStrength;
-                rotationSpeedX = (Math.random() - 0.5) * 0.5; // Much faster rotation
             }
             
-            const rotationDamping = 0.99; // Slower damping = longer rotation
-            
             const fall = () => {
-                // Apply gravity
-                velocityY += gravity;
-                piece.position.y -= velocityY;
-                
-                // Apply lateral movement
-                piece.position.x += velocityX;
-                piece.position.z += velocityZ;
-                
-                // Apply rotation on short axis
-                rotationSpeedX *= rotationDamping;
-                rotationSpeedZ *= rotationDamping;
-                piece.rotation.x += rotationSpeedX;
-                piece.rotation.z += rotationSpeedZ;
+                // Apply gravity (scaled by frameDelta)
+                velocityY += gravity * frameDelta;
+                piece.position.y -= velocityY * frameDelta;
+
+                // Apply lateral movement (scaled)
+                piece.position.x += velocityX * frameDelta;
+                piece.position.z += velocityZ * frameDelta;
+
+                // Apply rotation (scaled)
+                piece.rotation.x += (Math.random() - 0.5) * rotationSpeed * frameDelta;
+                piece.rotation.z += (Math.random() - 0.5) * rotationSpeed * frameDelta;
                 
                 // Check if piece has fallen below disappear level
                 if (piece.position.y < disappearLevel) {
@@ -2527,7 +2527,10 @@
 
         function updateUI() {
             document.getElementById('scoreValue').textContent = gameState.score;
-            document.getElementById('perfectValue').textContent = gameState.perfectStacks;
+            const perfectEl = document.getElementById('perfectValue');
+            if (perfectEl) {
+                perfectEl.textContent = gameState.perfectStacks;
+            }
         }
 
         // ============================================
@@ -2556,6 +2559,8 @@
             gameState.isPlaying = true;
             gameState.isPaused = false;
             gameState.gameStarted = false;
+            // Reset fade restore progress when starting a new game
+            fadeRestoreProgress = 0;
             
             // Notify platform that game has started - this will create the session
             if (typeof PlatformSDK !== 'undefined') {
@@ -2623,29 +2628,44 @@
             // Play game over sound
             audioSystem.playGameOver();
             
-            // Camera zoom out and up to show full tower including the top
+            // Camera scrolls down from current position to the base of the tower, with zoom out
             const towerHeight = blocks.length * CONFIG.blockSize.height;
-            const zoomDistance = Math.max(20, towerHeight * 0.9);
-            const zoomHeight = towerHeight * 0.5;
+            const currentCameraX = camera.position.x;
+            const currentCameraZ = camera.position.z;
+            const startY = camera.position.y;
+            const endY = CONFIG.cameraHeight;
+            const startDistance = Math.sqrt(currentCameraX * currentCameraX + currentCameraZ * currentCameraZ);
+            const endDistance = startDistance + Math.max(10, towerHeight * 0.5); // Zoom out by 10 or half tower height
             
-            // Look at the middle-top of the tower to keep the peak visible
-            const lookAtHeight = towerHeight * 0.6;
-            
-            new TWEEN.Tween(camera.position)
-                .to({ 
-                    x: zoomDistance * 0.7, 
-                    y: zoomHeight, 
-                    z: zoomDistance * 0.7 
-                }, 2000)
+            // Animate camera position: scroll down and zoom out
+            new TWEEN.Tween({ y: startY, d: startDistance })
+                .to({ y: endY, d: endDistance }, 2500)
                 .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(function(obj) {
+                    // Keep camera on same direction, but move further out and down
+                    const angle = Math.atan2(currentCameraZ, currentCameraX);
+                    camera.position.x = Math.cos(angle) * obj.d;
+                    camera.position.z = Math.sin(angle) * obj.d;
+                    camera.position.y = obj.y;
+                })
                 .start();
             
+            // Look at target scrolls down to base
             new TWEEN.Tween(cameraLookTarget)
-                .to({ y: lookAtHeight }, 2000)
+                .to({ y: 0 }, 2500)
                 .easing(TWEEN.Easing.Quadratic.InOut)
                 .onComplete(() => {
                     // Show stats and restart prompt after camera animation
                     document.getElementById('restartPrompt').classList.add('show');
+                })
+                .start();
+
+            // Gradually restore scene fade (so ground/city reappear while scrolling)
+            new TWEEN.Tween({ p: fadeRestoreProgress })
+                .to({ p: 1 }, 2500)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(function(obj) {
+                    fadeRestoreProgress = obj.p;
                 })
                 .start();
             
@@ -2687,51 +2707,6 @@
                 elem.msRequestFullscreen();
             }
         }
-
-        function handleFullscreenChange() {
-            const isFullscreen = !!(document.fullscreenElement || 
-                                   document.webkitFullscreenElement || 
-                                   document.mozFullScreenElement || 
-                                   document.msFullscreenElement);
-            
-            if (isFullscreen && !isMobile()) {
-                // Desktop in fullscreen: force mobile aspect ratio (9:16)
-                const height = window.innerHeight;
-                const width = Math.floor(height * 9 / 16);
-                
-                renderer.setSize(width, height);
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                
-                // Center canvas
-                renderer.domElement.style.position = 'fixed';
-                renderer.domElement.style.left = '50%';
-                renderer.domElement.style.top = '50%';
-                renderer.domElement.style.transform = 'translate(-50%, -50%)';
-                
-                document.body.style.background = '#000';
-                
-                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
-            } else {
-                // Exit fullscreen or mobile: restore normal size
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                
-                renderer.domElement.style.position = '';
-                renderer.domElement.style.left = '';
-                renderer.domElement.style.top = '';
-                renderer.domElement.style.transform = '';
-                
-                document.body.style.background = '';
-            }
-        }
-
-        // Listen for fullscreen changes
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
         function handleFullscreenChange() {
             const isFullscreen = !!(document.fullscreenElement || 
@@ -2856,15 +2831,24 @@
         // ============================================
         // Animation Loop
         // ============================================
-        function animate() {
+        function animate(now) {
             requestAnimationFrame(animate);
+
+            // Calculate frame delta relative to 60fps baseline
+            if (!now) now = performance.now();
+            const dt = now - lastFrameTime;
+            // guard: clamp dt to avoid huge jumps after tab switching
+            const clampedDt = Math.min(100, dt);
+            frameDelta = clampedDt / (1000 / 60); // 16.666ms per 60fps frame
+            lastFrameTime = now;
+
             TWEEN.update();
             updateBlock();
             updateEnvironment();
-            
+
             // Smooth camera lookAt using animated target
             camera.lookAt(0, cameraLookTarget.y, 0);
-            
+
             renderer.render(scene, camera);
         }
 

@@ -1,8 +1,17 @@
 {
-  "version": "3.10.5",
-  "timestamp": "2026-01-15T15:33:51.197Z",
-  "buildNumber": 252,
+  "version": "3.10.6",
+  "timestamp": "2026-01-15T16:23:18.155Z",
+  "buildNumber": 253,
   "changelog": [
+    {
+      "version": "3.10.6",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fIX:[MTD] add info pages system for encyclopedia of enemies, towers, abilities, and items",
+        "🔖 Bump version to 3.10.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.10.5",
       "date": "2026-01-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Adjust terrain and road generation parameters for improved gameplay experience",
         "🔖 Bump version to 3.9.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.9.5",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: Sky Tower, added terrain, city generation and UI",
-        "🔖 Bump version to 3.9.4 [skip-version]"
       ]
     }
   ]

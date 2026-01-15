@@ -1,8 +1,17 @@
 {
-  "version": "3.10.3",
-  "timestamp": "2026-01-15T11:15:34.044Z",
-  "buildNumber": 250,
+  "version": "3.10.4",
+  "timestamp": "2026-01-15T14:44:03.622Z",
+  "buildNumber": 251,
   "changelog": [
+    {
+      "version": "3.10.4",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix:[MTD](tutorial)implement comprehensive tutorial system with step-by-step guidance and interactive prompts",
+        "🔖 Bump version to 3.10.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.10.3",
       "date": "2026-01-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [SkyTower] Implement audio system for block actions and game events",
         "🔖 Bump version to 3.9.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.9.3",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: [RAB] Improve movement responsiveness and update celebration UI interactions",
-        "🔖 Bump version to 3.9.2 [skip-version]"
       ]
     }
   ]

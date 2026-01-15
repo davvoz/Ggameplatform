@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+    <!-- iOS PWA / fullscreen support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Sky Tower - Build to the Sky</title>
     <style>
         * {
@@ -21,12 +24,27 @@
             touch-action: none;
         }
 
+        :root {
+            /* dynamic viewport height for mobile browsers */
+            --vh: 1vh;
+        }
+
         #gameContainer {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            height: calc(var(--vh) * 100);
             display: flex;
             flex-direction: column;
+            /* Respect iPhone safe areas when running as PWA or with viewport-fit=cover */
+            padding-top: constant(safe-area-inset-top);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: constant(safe-area-inset-bottom);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: constant(safe-area-inset-left);
+            padding-left: env(safe-area-inset-left);
+            padding-right: constant(safe-area-inset-right);
+            padding-right: env(safe-area-inset-right);
+            box-sizing: border-box;
         }
 
         #topBar {
@@ -35,7 +53,7 @@
 
         #scoreDisplay {
             position: absolute;
-            top: 40px;
+            top: calc(40px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
@@ -136,7 +154,7 @@
 
         #startInstructions {
             position: absolute;
-            bottom: 120px;
+            bottom: calc(120px + env(safe-area-inset-bottom));
             left: 50%;
             transform: translateX(-50%);
             font-size: 36px;
@@ -320,7 +338,7 @@
 
         #comboIndicator {
             position: absolute;
-            top: 150px;
+            top: calc(150px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%) scale(0);
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -1027,6 +1045,8 @@
                 powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            // Set dynamic viewport CSS variable to handle iOS address bar and PWA safe-area
+            document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
             renderer.setPixelRatio(window.devicePixelRatio); // Use native device pixel ratio for maximum quality
             renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
             if (!isMobile) {
@@ -1069,6 +1089,8 @@
             createEnvironment();
 
             window.addEventListener('resize', onWindowResize);
+            window.addEventListener('orientationchange', onWindowResize);
+            window.addEventListener('fullscreenchange', onWindowResize);
         }
         
         function createEnvironment() {
@@ -1979,6 +2001,8 @@
                 camera.aspect = width / height;
             } else {
                 // Normal resize
+                // Update dynamic CSS variable for mobile viewport height (fixes iOS address bar and PWA safe-area)
+                document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 camera.aspect = window.innerWidth / window.innerHeight;
             }
@@ -2697,6 +2721,35 @@
 
         function requestFullscreen() {
             const elem = document.documentElement;
+            // iOS Safari does not support the Fullscreen API for documents.
+            // If running on iOS and not in standalone (PWA), suggest adding to Home Screen.
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (isiOS && !isStandalone) {
+                // Show small hint to user to add to Home Screen for fullscreen experience
+                try {
+                    let hint = document.getElementById('iosFullscreenHint');
+                    if (!hint) {
+                        hint = document.createElement('div');
+                        hint.id = 'iosFullscreenHint';
+                        hint.style.position = 'fixed';
+                        hint.style.left = '50%';
+                        hint.style.bottom = '20px';
+                        hint.style.transform = 'translateX(-50%)';
+                        hint.style.padding = '10px 14px';
+                        hint.style.background = 'rgba(0,0,0,0.7)';
+                        hint.style.color = 'white';
+                        hint.style.borderRadius = '12px';
+                        hint.style.zIndex = 9999;
+                        hint.style.fontSize = '14px';
+                        hint.textContent = 'Per una esperienza a schermo intero, aggiungi questa app alla schermata Home (Condividi → Aggiungi a Home).';
+                        document.body.appendChild(hint);
+                    }
+                    hint.style.display = 'block';
+                    setTimeout(() => { hint.style.display = 'none'; }, 5000);
+                } catch (e) { /* ignore */ }
+                return;
+            }
             if (elem.requestFullscreen) {
                 elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
             } else if (elem.webkitRequestFullscreen) {

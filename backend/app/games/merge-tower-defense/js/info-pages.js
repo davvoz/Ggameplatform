@@ -224,10 +224,48 @@ export class InfoPagesManager {
     }
     
     /**
+     * Start drag for scrolling (called when drag begins in content area)
+     */
+    startDrag(screenPos) {
+        if (!this.isOpen) return false;
+        
+        const width = this.canvas.width / (window.devicePixelRatio || 1);
+        const height = this.canvas.height / (window.devicePixelRatio || 1);
+        
+        const panelPadding = 15;
+        const panelWidth = width - panelPadding * 2;
+        const panelHeight = height - panelPadding * 2;
+        const panelX = panelPadding;
+        const panelY = panelPadding;
+        
+        const contentY = panelY + 120;
+        const contentHeight = panelHeight - 130;
+        
+        // Check if drag started in content area
+        if (Utils.pointInRect(screenPos.x, screenPos.y, panelX, contentY, panelWidth, contentHeight)) {
+            this.isDragging = true;
+            this.dragStartY = screenPos.y;
+            this.dragStartScroll = this.scrollOffset;
+            this.lastDragY = screenPos.y;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
      * Handle drag move for scrolling
      */
     handleDragMove(screenPos) {
-        if (!this.isOpen || !this.isDragging) return;
+        // If not already dragging, try to start drag
+        if (!this.isOpen) return false;
+        
+        if (!this.isDragging) {
+            // Try to start drag
+            if (!this.startDrag(screenPos)) {
+                return false;
+            }
+        }
         
         const deltaY = this.dragStartY - screenPos.y;
         this.scrollOffset = Math.max(0, Math.min(this.maxScrollOffset, this.dragStartScroll + deltaY));
@@ -235,6 +273,8 @@ export class InfoPagesManager {
         // Calculate velocity for momentum
         this.scrollVelocity = (this.lastDragY - screenPos.y) * 0.5;
         this.lastDragY = screenPos.y;
+        
+        return true;
     }
     
     /**

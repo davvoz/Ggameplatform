@@ -2091,9 +2091,8 @@ export class UIManager {
      * Handle drag move for info pages scrolling
      */
     handleDragMove(screenPos) {
-        if (this.infoPages && this.infoPages.isOpen && this.infoPages.isDragging) {
-            this.infoPages.handleDragMove(screenPos);
-            return true;
+        if (this.infoPages && this.infoPages.isOpen) {
+            return this.infoPages.handleDragMove(screenPos);
         }
         return false;
     }

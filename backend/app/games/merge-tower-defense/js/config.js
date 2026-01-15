@@ -354,7 +354,7 @@ export const ZOMBIE_TYPES = {
         invisDuration: 2500,  // Invisibile per 2.5 secondi
         invisCooldown: 5000,  // Cooldown tra invisibilità
         reward: 55,
-        color: '#1a1a2e',
+        color: '#484879',
         scale: 0.95,
         canInvis: true,
     },

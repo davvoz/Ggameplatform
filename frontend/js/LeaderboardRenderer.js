@@ -28,15 +28,20 @@ class LeaderboardRenderer {
             // Fetch initial data
             let games = await fetchGames();
             
-            // Sort games: STEEM rewards first, then alphabetically
-            games = games.sort((a, b) => {
-                // First priority: STEEM rewards enabled
-                if (a.steem_rewards_enabled !== b.steem_rewards_enabled) {
-                    return b.steem_rewards_enabled - a.steem_rewards_enabled;
-                }
-                // Second priority: alphabetical order
-                return a.title.localeCompare(b.title);
-            });
+            // Filter only ranked games and sort: STEEM rewards first, then alphabetically
+            games = games
+                .filter(g => g.status?.status_code === 'ranked')
+                .sort((a, b) => {
+                    // First priority: STEEM rewards enabled
+                    if (a.steem_rewards_enabled !== b.steem_rewards_enabled) {
+                        return b.steem_rewards_enabled - a.steem_rewards_enabled;
+                    }
+                    // Second priority: alphabetical order
+                    return a.title.localeCompare(b.title);
+                });
+            
+            // Store games for later use
+            this.games = games;
             
             // Set first game as default
             if (games.length > 0) {
@@ -127,19 +132,19 @@ class LeaderboardRenderer {
                         👑 Winners History
                     </button>
                 </div>
-
+                <!-- Game Filter -->
+                <div class="game-selector">
+                    <div class="game-selector-label">Select Game</div>
+                    <div class="game-cards-container">
+                        ${games.map((g, idx) => this.renderGameCard(g, idx === 0)).join('')}
+                    </div>
+                </div>
                 <!-- Rewards Info (below tabs) -->
                 <div id="rewardsInfo" class="rewards-info">
                     ${this.renderRewardsInfo()}
                 </div>
 
-                <!-- Game Filter -->
-                <div class="game-filter">
-                    <label for="gameSelect">Filter by game:</label>
-                    <select id="gameSelect" onchange="leaderboardRenderer.onGameChange(this.value)">
-                        ${games.map((g, idx) => `<option value="${g.game_id}" ${idx === 0 ? 'selected' : ''} style="background-color: #1a1a2e; color: #e0e0e0;">${g.title}</option>`).join('')}
-                    </select>
-                </div>
+
 
                 <!-- Leaderboard Content -->
                 <div id="leaderboardContent" class="leaderboard-content">
@@ -147,6 +152,56 @@ class LeaderboardRenderer {
                 </div>
             </div>
         `;
+        
+        // Attach click handlers to game cards
+        this.attachGameCardHandlers();
+    }
+
+    /**
+     * Render a game card for the selector
+     */
+    renderGameCard(game, isSelected = false) {
+        const thumbnailUrl = game.thumbnail
+            ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
+            : './icons/icon-192x192.png';
+        
+        const steemBadge = game.steem_rewards_enabled 
+            ? '<div class="game-card-steem"><img src="./icons/steem.png" alt="STEEM"></div>' 
+            : '';
+        
+        return `
+            <div class="game-selector-card ${isSelected ? 'active' : ''}" 
+                 data-game-id="${game.game_id}"
+                 onclick="leaderboardRenderer.selectGame('${game.game_id}')">
+                <div class="game-card-thumbnail">
+                    <img src="${thumbnailUrl}" alt="${game.title}" loading="lazy">
+                    ${steemBadge}
+                </div>
+                <div class="game-card-name">${game.title}</div>
+            </div>
+        `;
+    }
+
+    /**
+     * Attach click handlers to game cards
+     */
+    attachGameCardHandlers() {
+        // Handlers are attached via onclick in the HTML
+    }
+
+    /**
+     * Select a game from the cards
+     */
+    async selectGame(gameId) {
+        if (this.currentGameId === gameId) return;
+        
+        // Update visual state
+        document.querySelectorAll('.game-selector-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.gameId === gameId);
+        });
+        
+        // Call the existing change handler
+        await this.onGameChange(gameId);
     }
 
     /**

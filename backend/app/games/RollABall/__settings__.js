@@ -1,6 +1,6 @@
 window.ASSET_PREFIX = "";
 window.SCRIPT_PREFIX = "";
-window.SCENE_PATH = "2403097.json";
+window.SCENE_PATH = "2403097.json?v=" + Date.now();
 window.CONTEXT_OPTIONS = {
     'antialias': true,
     'alpha': false,

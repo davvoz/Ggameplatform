@@ -16,9 +16,10 @@ pc.script.createLoadingScreen((app) => {
 
             #application-splash {
                 position: absolute;
-                top: calc(50% - 28px);
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 width: 264px;
-                left: calc(50% - 132px);
             }
 
             #application-splash img {
@@ -41,7 +42,6 @@ pc.script.createLoadingScreen((app) => {
             @media (max-width: 480px) {
                 #application-splash {
                     width: 170px;
-                    left: calc(50% - 85px);
                 }
             }
         `;

@@ -1,8 +1,17 @@
 {
-  "version": "3.11.1",
-  "timestamp": "2026-01-15T22:24:24.496Z",
-  "buildNumber": 258,
+  "version": "3.11.2",
+  "timestamp": "2026-01-15T22:42:35.884Z",
+  "buildNumber": 259,
   "changelog": [
+    {
+      "version": "3.11.2",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: adjust iOS PWA layout for safe-area insets and enhance navigation responsiveness",
+        "🔖 Bump version to 3.11.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.11.1",
       "date": "2026-01-15",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[RAB]Add script to check and register RollABall thumbnail",
         "🔖 Bump version to 3.10.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.2",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix:[RAB]Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 3.10.1 [skip-version]"
       ]
     }
   ]

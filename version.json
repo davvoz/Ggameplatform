@@ -1,8 +1,18 @@
 {
-  "version": "3.11.5",
-  "timestamp": "2026-01-15T23:07:29.766Z",
-  "buildNumber": 262,
+  "version": "3.12.0",
+  "timestamp": "2026-01-15T23:17:37.096Z",
+  "buildNumber": 263,
   "changelog": [
+    {
+      "version": "3.12.0",
+      "date": "2026-01-15",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: add game selector cards with filtering functionality",
+        "🔖 Bump version to 3.11.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.11.5",
       "date": "2026-01-15",
@@ -84,15 +94,6 @@
       "changes": [
         "fix: [MTD]update color for zombie type and enhance drag handling for info pages",
         "🔖 Bump version to 3.10.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.6",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fIX:[MTD] add info pages system for encyclopedia of enemies, towers, abilities, and items",
-        "🔖 Bump version to 3.10.5 [skip-version]"
       ]
     }
   ]

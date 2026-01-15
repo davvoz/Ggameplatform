@@ -1,8 +1,17 @@
 {
-  "version": "3.12.1",
-  "timestamp": "2026-01-15T23:24:11.066Z",
-  "buildNumber": 264,
+  "version": "3.13.0",
+  "timestamp": "2026-01-15T23:37:12.729Z",
+  "buildNumber": 265,
   "changelog": [
+    {
+      "version": "3.13.0",
+      "date": "2026-01-15",
+      "type": "minor",
+      "changes": [
+        "feat: add game filter section to leaderboard with dynamic game cards",
+        "🔖 Bump version to 3.12.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.12.1",
       "date": "2026-01-15",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: implement frame-rate independent movement for game elements",
         "🔖 Bump version to 3.10.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.8",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: SKY Tower refine cloud positioning and fade effects; remove unused perfect counter",
-        "🔖 Bump version to 3.10.7 [skip-version]"
       ]
     }
   ]

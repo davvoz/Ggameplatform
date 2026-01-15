@@ -1,8 +1,17 @@
 {
-  "version": "3.12.0",
-  "timestamp": "2026-01-15T23:17:37.096Z",
-  "buildNumber": 263,
+  "version": "3.12.1",
+  "timestamp": "2026-01-15T23:24:11.066Z",
+  "buildNumber": 264,
   "changelog": [
+    {
+      "version": "3.12.1",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: remove iOS PWA specific styles for improved layout consistency",
+        "🔖 Bump version to 3.12.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.12.0",
       "date": "2026-01-15",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: SKY Tower refine cloud positioning and fade effects; remove unused perfect counter",
         "🔖 Bump version to 3.10.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.7",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]update color for zombie type and enhance drag handling for info pages",
-        "🔖 Bump version to 3.10.6 [skip-version]"
       ]
     }
   ]

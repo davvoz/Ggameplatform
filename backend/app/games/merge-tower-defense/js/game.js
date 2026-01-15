@@ -15,6 +15,9 @@ export class Game {
         this.graphics = graphics;
         this.input = input;
         this.ui = ui;
+        
+        // Tutorial system (will be set by main.js)
+        this.tutorial = null;
 
         this.entities = new EntityManager();
         this.particles = new ParticleSystem();
@@ -28,7 +31,7 @@ export class Game {
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
 
-        this.audio.play();
+        // Music will be started after tutorial prompt (in main.js)
     }
 
     createInitialState() {
@@ -60,6 +63,9 @@ export class Game {
             isPaused: false,
             isGameOver: false,
             playTime: 0,
+            
+            // Tutorial mode - prevents waves from starting
+            tutorialMode: false,
 
             // Merge system
             selectedCannons: [],
@@ -107,6 +113,19 @@ export class Game {
     setupInputHandlers() {
         // Tap handler
         this.input.onTap((gridPos, screenPos) => {
+            // Handle tutorial prompt tap first (if tutorialPrompt is active via main.js)
+            if (window.handleTutorialPromptTap && window.handleTutorialPromptTap(screenPos)) {
+                return;
+            }
+            
+            // Handle tutorial tap if active
+            if (this.tutorial && this.tutorial.isActive) {
+                if (this.tutorial.handleTap(screenPos)) {
+                    return; // Tutorial consumed the tap
+                }
+                // If tutorial didn't consume it, let it pass through for action steps
+            }
+            
             if (this.state.isGameOver) {
                 // Check if continue button was clicked
                 if (this.ui.isContinueButtonClicked(screenPos.x, screenPos.y)) {
@@ -143,7 +162,7 @@ export class Game {
                         this.audio.toggle();
                     } else if (uiAction.action === 'checkbox') {
                         // Checkbox toggled - handled in UI
-                    }
+                    } 
                     return;
                 }
                 
@@ -252,6 +271,11 @@ export class Game {
 
         // Track for XP system
         this.state.towersPlaced++;
+        
+        // Notify tutorial system
+        if (this.tutorial && this.tutorial.isActive) {
+            this.tutorial.onGameAction('tower_placed', { col, row, type: cannonType });
+        }
     }
 
     toggleCannonSelection(cannon) {
@@ -349,6 +373,11 @@ export class Game {
 
         // Track merges for XP system
         this.state.towerMerges++;
+        
+        // Notify tutorial system
+        if (this.tutorial && this.tutorial.isActive) {
+            this.tutorial.onGameAction('towers_merged', { col, row, type, newLevel });
+        }
 
         // Clear selection
         this.deselectAll();
@@ -394,6 +423,11 @@ export class Game {
     // ========== WAVE MANAGEMENT ==========
 
     updateWaveSystem(dt, currentTime) {
+        // Don't start waves during tutorial
+        if (this.state.tutorialMode) {
+            return;
+        }
+        
         // Start first wave
         if (!this.state.waveInProgress && this.state.wave === 1) {
             this.startWave();
@@ -1115,6 +1149,8 @@ export class Game {
     getState() {
         return this.state;
     }
+
+
 
     toggleFullscreen() {
         const isFullscreen = document.body.classList.contains('game-fullscreen');

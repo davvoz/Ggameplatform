@@ -1449,8 +1449,11 @@ export class UIManager {
         this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, fullscreenText, 'fullscreen');
         contentY += buttonHeight + 15;
         
+        // Reset Tutorial button
+       
+        
         // Close button
-        contentY += 15;
+        contentY += 5;
         this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight * 0.8, '✕ Close', 'close');
     }
     
@@ -1591,6 +1594,417 @@ export class UIManager {
     
     closeSettingsPopup() {
         this.showSettingsPopup = false;
+    }
+    
+    // ========== TUTORIAL UI ==========
+    
+    /**
+     * Render tutorial overlay
+     */
+    renderTutorial(game) {
+        if (!game.tutorial || !game.tutorial.isActive()) return;
+        
+        const ctx = this.graphics.ctx;
+        const canvas = this.canvas;
+        const width = canvas.width / (window.devicePixelRatio || 1);
+        const height = canvas.height / (window.devicePixelRatio || 1);
+        const currentStep = game.tutorial.getCurrentStep();
+        
+        if (!currentStep) return;
+        
+        // Dark overlay - but exclude shop buttons area if they're highlighted
+        if (currentStep.highlightShopButtons && this.shopButtons && this.shopButtons.length > 0) {
+            // Calculate shop area bounds
+            const firstButton = this.shopButtons[0];
+            const lastButton = this.shopButtons[this.shopButtons.length - 1];
+            const shopAreaX = firstButton.x - 10;
+            const shopAreaY = firstButton.y - 10;
+            const shopAreaWidth = (lastButton.x + lastButton.width) - firstButton.x + 20;
+            const shopAreaHeight = firstButton.height + 20;
+            
+            // Draw overlay in sections, excluding shop area
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.6 * game.tutorial.dialogAlpha})`;
+            
+            // Top section (above shop)
+            ctx.fillRect(0, 0, width, shopAreaY);
+            
+            // Left section
+            ctx.fillRect(0, shopAreaY, shopAreaX, shopAreaHeight);
+            
+            // Right section
+            ctx.fillRect(shopAreaX + shopAreaWidth, shopAreaY, width - (shopAreaX + shopAreaWidth), shopAreaHeight);
+            
+            // Bottom section (below shop) - minimal or none if dialog is there
+            const bottomStartY = shopAreaY + shopAreaHeight;
+            if (bottomStartY < height) {
+                ctx.fillRect(0, bottomStartY, width, height - bottomStartY);
+            }
+        } else {
+            // Normal dark overlay
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.6 * game.tutorial.dialogAlpha})`;
+            ctx.fillRect(0, 0, width, height);
+        }
+        
+        // Highlight area if specified
+        if (currentStep.highlightArea) {
+            const area = currentStep.highlightArea;
+            
+            // Clear the highlighted area
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.7 * game.tutorial.highlightAlpha})`;
+            Utils.drawRoundRect(ctx, area.x, area.y, area.width, area.height, 10);
+            ctx.fill();
+            ctx.restore();
+            
+            // Border around highlighted area
+            ctx.strokeStyle = `rgba(255, 215, 0, ${game.tutorial.highlightAlpha})`;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 5]);
+            Utils.drawRoundRect(ctx, area.x - 2, area.y - 2, area.width + 4, area.height + 4, 10);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // Highlight circle if specified
+        if (currentStep.highlightCircle) {
+            const circle = currentStep.highlightCircle;
+            const gridX = circle.col * CONFIG.CELL_SIZE + (CONFIG.SIDEBAR_WIDTH || 64);
+            const gridY = circle.row * CONFIG.CELL_SIZE + CONFIG.TOP_BAR_HEIGHT;
+            const radius = (circle.radius || 1) * CONFIG.CELL_SIZE;
+            
+            // Clear the highlighted circle
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(gridX + CONFIG.CELL_SIZE / 2, gridY + CONFIG.CELL_SIZE / 2, radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.7 * game.tutorial.highlightAlpha})`;
+            ctx.fill();
+            ctx.restore();
+            
+            // Border around circle
+            ctx.strokeStyle = `rgba(255, 215, 0, ${game.tutorial.highlightAlpha})`;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 5]);
+            ctx.beginPath();
+            ctx.arc(gridX + CONFIG.CELL_SIZE / 2, gridY + CONFIG.CELL_SIZE / 2, radius + 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // Highlight shop buttons if specified
+        if (currentStep.highlightShopButtons && this.shopButtons && game.state) {
+            const pulseScale = 1 + Math.sin(Date.now() * 0.008) * 0.15; // Pulse animation
+            const glowIntensity = 0.7 + Math.sin(Date.now() * 0.006) * 0.3; // Glow animation
+            const playerCoins = game.state.coins;
+            
+            this.shopButtons.forEach((button) => {
+                // Check if player can afford this tower
+                const cannonType = button.id; // Use button.id instead of button.cannonType
+                const cannonDef = button.cannon; // cannon data is in button.cannon
+                if (!cannonDef) return;
+                
+                // Calculate actual cost with multiplier
+                const baseCost = cannonDef.cost;
+                let actualCost = baseCost;
+                if (game.state.cannonPriceMultiplier && game.state.cannonPriceMultiplier[cannonType]) {
+                    actualCost = Math.floor(baseCost * game.state.cannonPriceMultiplier[cannonType]);
+                }
+                
+                const canAfford = playerCoins >= actualCost;
+                
+                // Only highlight affordable towers
+                if (!canAfford) {
+                    // Darken unaffordable towers
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, 8);
+                    ctx.fill();
+                    ctx.restore();
+                    return;
+                }
+                
+                const centerX = button.x + button.width / 2;
+                const centerY = button.y + button.height / 2;
+                
+                ctx.save();
+                
+                // Translate to center for scaling
+                ctx.translate(centerX, centerY);
+                ctx.scale(pulseScale, pulseScale);
+                ctx.translate(-centerX, -centerY);
+                
+                // Outer glow (multiple layers for stronger effect)
+                for (let i = 0; i < 3; i++) {
+                    ctx.shadowColor = `rgba(255, 215, 0, ${glowIntensity * 0.4})`;
+                    ctx.shadowBlur = 20 + i * 10;
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${glowIntensity * 0.6})`;
+                    ctx.lineWidth = 4;
+                    Utils.drawRoundRect(ctx, button.x - 3, button.y - 3, button.width + 6, button.height + 6, 8);
+                    ctx.stroke();
+                }
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                
+                // Bright border
+                ctx.strokeStyle = `rgba(255, 215, 0, ${game.tutorial.highlightAlpha})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.lineDashOffset = -Date.now() * 0.05; // Moving dashes
+                Utils.drawRoundRect(ctx, button.x - 2, button.y - 2, button.width + 4, button.height + 4, 8);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Sparkle effect at corners
+                const sparklePhase = (Date.now() * 0.01) % (Math.PI * 2);
+                const sparkleAlpha = Math.abs(Math.sin(sparklePhase));
+                ctx.fillStyle = `rgba(255, 255, 255, ${sparkleAlpha * 0.9})`;
+                
+                const sparkleSize = 6;
+                const corners = [
+                    {x: button.x, y: button.y},
+                    {x: button.x + button.width, y: button.y},
+                    {x: button.x, y: button.y + button.height},
+                    {x: button.x + button.width, y: button.y + button.height}
+                ];
+                
+                corners.forEach((corner, index) => {
+                    const phase = sparklePhase + (index * Math.PI / 2);
+                    if (Math.sin(phase) > 0.5) {
+                        ctx.beginPath();
+                        ctx.arc(corner.x, corner.y, sparkleSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Star rays
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${sparkleAlpha * 0.7})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(corner.x - sparkleSize * 1.5, corner.y);
+                        ctx.lineTo(corner.x + sparkleSize * 1.5, corner.y);
+                        ctx.moveTo(corner.x, corner.y - sparkleSize * 1.5);
+                        ctx.lineTo(corner.x, corner.y + sparkleSize * 1.5);
+                        ctx.stroke();
+                    }
+                });
+                
+                ctx.restore();
+            });
+        }
+        
+        // Arrow if specified
+        if (currentStep.arrow) {
+            const arrow = currentStep.arrow;
+            const arrowSize = 30;
+            let arrowX = arrow.x;
+            let arrowY = arrow.y;
+            
+            // Apply bounce animation
+            if (arrow.direction === 'down') {
+                arrowY += game.tutorial.arrowBounce;
+            } else if (arrow.direction === 'up') {
+                arrowY -= game.tutorial.arrowBounce;
+            } else if (arrow.direction === 'right') {
+                arrowX += game.tutorial.arrowBounce;
+            } else if (arrow.direction === 'left') {
+                arrowX -= game.tutorial.arrowBounce;
+            }
+            
+            // Draw arrow
+            ctx.save();
+            ctx.translate(arrowX, arrowY);
+            
+            // Rotate based on direction
+            if (arrow.direction === 'down') {
+                ctx.rotate(Math.PI);
+            } else if (arrow.direction === 'left') {
+                ctx.rotate(-Math.PI / 2);
+            } else if (arrow.direction === 'right') {
+                ctx.rotate(Math.PI / 2);
+            }
+            
+            ctx.fillStyle = `rgba(255, 215, 0, ${game.tutorial.highlightAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(0, -arrowSize);
+            ctx.lineTo(-arrowSize / 2, 0);
+            ctx.lineTo(arrowSize / 2, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Arrow shadow
+            ctx.strokeStyle = `rgba(0, 0, 0, ${0.5 * game.tutorial.highlightAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Tutorial dialog
+        if (game.tutorial.showDialog) {
+            const dialogWidth = Math.min(450, width - 40);
+            const dialogPadding = 20;
+            const maxContentWidth = dialogWidth - (dialogPadding * 2);
+            
+            // Calculate required height based on content
+            const titleHeight = 50;
+            const progressHeight = 30;
+            const continueHintHeight = currentStep.waitForAction === 'tap' ? 35 : 10;
+            const skipButtonHeight = 40;
+            
+            // Word wrap for description
+            ctx.font = '16px Arial';
+            const words = currentStep.description.split(' ');
+            const wrappedLines = [];
+            let currentLine = '';
+            
+            for (const word of words) {
+                // Check for manual line breaks
+                if (word.includes('\n')) {
+                    const parts = word.split('\n');
+                    for (let i = 0; i < parts.length; i++) {
+                        const testLine = currentLine + (currentLine ? ' ' : '') + parts[i];
+                        if (i < parts.length - 1) {
+                            wrappedLines.push(testLine);
+                            currentLine = '';
+                        } else {
+                            currentLine = parts[i];
+                        }
+                    }
+                } else {
+                    const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                    const metrics = ctx.measureText(testLine);
+                    
+                    if (metrics.width > maxContentWidth && currentLine) {
+                        wrappedLines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+            }
+            if (currentLine) {
+                wrappedLines.push(currentLine);
+            }
+            
+            const lineHeight = 22;
+            const descriptionHeight = wrappedLines.length * lineHeight + 20;
+            
+            const dialogHeight = titleHeight + descriptionHeight + progressHeight + continueHintHeight + skipButtonHeight;
+            const dialogX = (width - dialogWidth) / 2;
+            
+            // Position dialog between game grid and shop buttons
+            const shopButtonsY = height - UI_CONFIG.SHOP_HEIGHT + 10;
+            const gameGridBottom = CONFIG.TOP_BAR_HEIGHT + (CONFIG.ROWS * CONFIG.CELL_SIZE);
+            
+            // Center the dialog in the space between grid and shop buttons
+            const availableSpace = shopButtonsY - gameGridBottom;
+            const dialogY = gameGridBottom + (availableSpace - dialogHeight) / 2;
+            
+            // Dialog background
+            ctx.fillStyle = `rgba(26, 26, 46, ${0.95 * game.tutorial.dialogAlpha})`;
+            Utils.drawRoundRect(ctx, dialogX, dialogY, dialogWidth, dialogHeight, 15);
+            ctx.fill();
+            
+            // Dialog border
+            ctx.strokeStyle = `rgba(233, 69, 96, ${game.tutorial.dialogAlpha})`;
+            ctx.lineWidth = 3;
+            Utils.drawRoundRect(ctx, dialogX, dialogY, dialogWidth, dialogHeight, 15);
+            ctx.stroke();
+            
+            // Title
+            this.graphics.drawText(currentStep.title, dialogX + dialogWidth / 2, dialogY + 30, {
+                size: 22,
+                color: '#e94560',
+                align: 'center',
+                baseline: 'middle',
+                bold: true,
+                shadow: true,
+                alpha: game.tutorial.dialogAlpha
+            });
+            
+            // Description (wrapped lines)
+            const descStartY = dialogY + titleHeight + 10;
+            wrappedLines.forEach((line, index) => {
+                this.graphics.drawText(line, dialogX + dialogWidth / 2, descStartY + index * lineHeight, {
+                    size: 15,
+                    color: '#ffffff',
+                    align: 'center',
+                    baseline: 'middle',
+                    shadow: true,
+                    alpha: game.tutorial.dialogAlpha
+                });
+            });
+            
+            // Progress indicator
+            const currentIndex = game.tutorial.currentStepIndex + 1;
+            const totalSteps = game.tutorial.steps.length;
+            const progressText = `${currentIndex} / ${totalSteps}`;
+            
+            this.graphics.drawText(progressText, dialogX + dialogWidth - 15, dialogY + 15, {
+                size: 13,
+                color: '#a0a0a0',
+                align: 'right',
+                baseline: 'top',
+                alpha: game.tutorial.dialogAlpha
+            });
+            
+            // Continue hint (if waiting for tap)
+            if (currentStep.waitForAction === 'tap') {
+                const hintText = '[ Tocca per continuare ]';
+                const hintY = dialogY + dialogHeight - skipButtonHeight - 20;
+                
+                // Blinking effect
+                const blinkAlpha = 0.5 + Math.sin(Date.now() * 0.005) * 0.5;
+                
+                this.graphics.drawText(hintText, dialogX + dialogWidth / 2, hintY, {
+                    size: 13,
+                    color: '#ffd700',
+                    align: 'center',
+                    baseline: 'middle',
+                    alpha: blinkAlpha * game.tutorial.dialogAlpha
+                });
+            }
+            
+            // Skip button (small, in corner)
+            if (game.tutorial.currentStepIndex < game.tutorial.steps.length - 1) {
+                const skipBtnWidth = 80;
+                const skipBtnHeight = 30;
+                const skipButtonX = dialogX + 15;
+                const skipButtonY = dialogY + dialogHeight - skipBtnHeight - 15;
+                
+                ctx.fillStyle = `rgba(100, 100, 100, ${0.7 * game.tutorial.dialogAlpha})`;
+                Utils.drawRoundRect(ctx, skipButtonX, skipButtonY, skipBtnWidth, skipBtnHeight, 5);
+                ctx.fill();
+                
+                this.graphics.drawText('Salta', skipButtonX + skipBtnWidth / 2, skipButtonY + skipBtnHeight / 2, {
+                    size: 13,
+                    color: '#ffffff',
+                    align: 'center',
+                    baseline: 'middle',
+                    alpha: game.tutorial.dialogAlpha
+                });
+                
+                // Store button bounds for click detection
+                this.tutorialSkipButton = {
+                    x: skipButtonX,
+                    y: skipButtonY,
+                    width: skipBtnWidth,
+                    height: skipBtnHeight
+                };
+            }
+        }
+    }
+    
+    /**
+     * Check if tutorial skip button was clicked
+     */
+    isTutorialSkipButtonClicked(x, y) {
+        if (!this.tutorialSkipButton) return false;
+        
+        const btn = this.tutorialSkipButton;
+        return x >= btn.x && x <= btn.x + btn.width &&
+               y >= btn.y && y <= btn.y + btn.height;
     }
 }
 

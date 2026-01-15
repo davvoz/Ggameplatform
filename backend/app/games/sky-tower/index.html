@@ -61,11 +61,6 @@
             pointer-events: none;
         }
 
-        /* Extra offset for iOS PWA to avoid status bar overlap */
-        .ios-pwa #scoreDisplay {
-            top: calc(40px + env(safe-area-inset-top) + 12px);
-        }
-
         #scoreDisplay .main-score {
             font-size: 72px;
             font-weight: bold;
@@ -356,10 +351,6 @@
             display: none;
             z-index: 20;
             opacity: 0;
-        }
-
-        .ios-pwa #comboIndicator {
-            top: calc(150px + env(safe-area-inset-top) + 12px);
         }
         
         #comboIndicator.show {
@@ -1096,15 +1087,6 @@
             
             // Create environment
             createEnvironment();
-
-            // Detect iOS standalone (PWA) and add class to body so we can tweak safe-area offsets
-            try {
-                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-                if (isiOS && isStandalone) {
-                    document.body.classList.add('ios-pwa');
-                }
-            } catch (e) { /* ignore */ }
 
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('orientationchange', onWindowResize);

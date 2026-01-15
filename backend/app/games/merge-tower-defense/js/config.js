@@ -422,7 +422,7 @@ export const MERGE_LEVELS = (() => {
 
 // UI Configuration
 export const UI_CONFIG = {
-    TOP_BAR_HEIGHT: 80,
+    TOP_BAR_HEIGHT: 95,
     SHOP_HEIGHT: 90,
     SIDEBAR_WIDTH: 64,  // Left sidebar for abilities and shop items
     STAT_PANEL_WIDTH: 100,

@@ -166,6 +166,19 @@ export class Game {
                     return;
                 }
                 
+                // Handle info pages actions
+                if (uiAction.type === 'info') {
+                    if (uiAction.action === 'open') {
+                        // Pause game when opening info pages
+                        this.pause();
+                    } else if (uiAction.action === 'close') {
+                        // Resume game when closing info pages
+                        this.resume();
+                    }
+                    // Other info page actions like tab_switch, drag_start are handled internally
+                    return;
+                }
+                
                 // Other actions blocked when paused
                 if (this.state.isPaused) return;
                 
@@ -197,8 +210,18 @@ export class Game {
             }
         });
 
-        // Drag handler for merge system
+        // Drag handler for merge system and info pages scrolling
+        this.input.onDrag((gridPos, screenPos) => {
+            // Check if info pages need to handle the drag (for scrolling)
+            if (this.ui.handleDragMove(screenPos)) {
+                return; // Info pages consumed the drag
+            }
+        });
+        
         this.input.onDragEnd((startPos, endPos) => {
+            // Handle info pages drag end
+            this.ui.handleDragEnd();
+            
             if (this.state.isPaused || this.state.isGameOver) return;
 
             this.handleDragMerge(startPos, endPos);
@@ -956,6 +979,11 @@ export class Game {
     // ========== GAME FLOW ==========
 
     update(dt) {
+        // Always update UI (for info pages animations, settings, etc.) even when paused
+        if (this.ui && this.ui.update) {
+            this.ui.update(dt);
+        }
+        
         if (this.state.isPaused || this.state.isGameOver) return;
 
         const currentTime = performance.now();

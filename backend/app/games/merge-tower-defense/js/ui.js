@@ -5,6 +5,7 @@
 
 import { CONFIG, CANNON_TYPES, UI_CONFIG, SHOP_ITEMS, SPECIAL_ABILITIES } from './config.js';
 import { Utils } from './utils.js';
+import { InfoPagesManager } from './info-pages.js';
 
 export class UIManager {
     constructor(graphics, canvas, audio = null) {
@@ -33,6 +34,10 @@ export class UIManager {
         this.showSettingsPopup = false;
         this.settingsPopupButtons = [];
         this.settingsCheckboxes = [];
+        
+        // Info Pages (Encyclopedia)
+        this.infoButton = null;
+        this.infoPages = new InfoPagesManager(graphics, canvas);
         
         // Targeting mode for bomb ability
         this.bombTargetingMode = false;
@@ -196,6 +201,21 @@ export class UIManager {
         if (this.showSettingsPopup) {
             this.renderSettingsPopup();
         }
+        
+        // Info pages (Encyclopedia) - render on top of everything
+        if (this.infoPages && this.infoPages.isOpen) {
+            this.infoPages.render();
+        }
+    }
+    
+    /**
+     * Update UI components
+     */
+    update(dt) {
+        // Update info pages animations
+        if (this.infoPages) {
+            this.infoPages.update(dt);
+        }
     }
 
     renderTopBar(gameState) {
@@ -237,6 +257,41 @@ export class UIManager {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = CONFIG.COLORS.TEXT_PRIMARY;
         ctx.fillText('⚙️', gearX + gearSize/2, gearY + gearSize/2);
+        
+        // Info/Encyclopedia button (below settings gear)
+        const infoSize = 28;
+        const infoX = width - infoSize - 12;
+        const infoY = gearY + gearSize + 5;
+        
+        // Store info button position for click detection
+        this.infoButton = {
+            x: infoX,
+            y: infoY,
+            width: infoSize,
+            height: infoSize
+        };
+        
+        // Draw info button background with pulsing effect
+        const time = Date.now() * 0.003;
+        const pulse = 0.15 + Math.sin(time) * 0.05;
+        ctx.fillStyle = `rgba(100, 150, 255, ${pulse})`;
+        ctx.beginPath();
+        ctx.arc(infoX + infoSize/2, infoY + infoSize/2, infoSize/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw info button border
+        ctx.strokeStyle = 'rgba(100, 150, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(infoX + infoSize/2, infoY + infoSize/2, infoSize/2, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw info icon (book emoji)
+        ctx.font = `${infoSize * 0.6}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#88aaff';
+        ctx.fillText('📖', infoX + infoSize/2, infoY + infoSize/2);
         
         // Stats
         const stats = [
@@ -938,6 +993,15 @@ export class UIManager {
     }
 
     handleTap(gridPos, screenPos, gameState) {
+        // Check if info pages are open (highest priority)
+        if (this.infoPages && this.infoPages.isOpen) {
+            const result = this.infoPages.handleTap(screenPos);
+            if (result) {
+                return { type: 'info', action: result };
+            }
+            return null;
+        }
+        
         // Check if in bomb targeting mode
         if (this.bombTargetingMode) {
             // Check cancel button
@@ -971,6 +1035,12 @@ export class UIManager {
             // Click outside popup - close it
             this.closeSettingsPopup();
             return { type: 'settings', action: 'close' };
+        }
+        
+        // Check info button click
+        if (this.checkInfoButtonClick(screenPos.x, screenPos.y)) {
+            this.infoPages.open();
+            return { type: 'info', action: 'open' };
         }
         
         // Check sidebar button clicks (abilities and shop items)
@@ -1553,6 +1623,16 @@ export class UIManager {
                screenY <= this.settingsButton.y + this.settingsButton.height;
     }
     
+    // Check if info button was clicked
+    checkInfoButtonClick(screenX, screenY) {
+        if (!this.infoButton) return false;
+        
+        return screenX >= this.infoButton.x && 
+               screenX <= this.infoButton.x + this.infoButton.width &&
+               screenY >= this.infoButton.y && 
+               screenY <= this.infoButton.y + this.infoButton.height;
+    }
+    
     // Check if settings popup button was clicked
     checkSettingsPopupClick(screenX, screenY) {
         if (!this.showSettingsPopup) return null;
@@ -2005,6 +2085,33 @@ export class UIManager {
         const btn = this.tutorialSkipButton;
         return x >= btn.x && x <= btn.x + btn.width &&
                y >= btn.y && y <= btn.y + btn.height;
+    }
+    
+    /**
+     * Handle drag move for info pages scrolling
+     */
+    handleDragMove(screenPos) {
+        if (this.infoPages && this.infoPages.isOpen && this.infoPages.isDragging) {
+            this.infoPages.handleDragMove(screenPos);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Handle drag end for info pages scrolling
+     */
+    handleDragEnd() {
+        if (this.infoPages && this.infoPages.isOpen) {
+            this.infoPages.handleDragEnd();
+        }
+    }
+    
+    /**
+     * Check if info pages are currently open
+     */
+    isInfoPagesOpen() {
+        return this.infoPages && this.infoPages.isOpen;
     }
 }
 

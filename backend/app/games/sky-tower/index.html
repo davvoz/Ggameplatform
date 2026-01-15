@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+    <!-- iOS PWA / fullscreen support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Sky Tower - Build to the Sky</title>
     <style>
         * {
@@ -21,12 +24,27 @@
             touch-action: none;
         }
 
+        :root {
+            /* dynamic viewport height for mobile browsers */
+            --vh: 1vh;
+        }
+
         #gameContainer {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            height: calc(var(--vh) * 100);
             display: flex;
             flex-direction: column;
+            /* Respect iPhone safe areas when running as PWA or with viewport-fit=cover */
+            padding-top: constant(safe-area-inset-top);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: constant(safe-area-inset-bottom);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: constant(safe-area-inset-left);
+            padding-left: env(safe-area-inset-left);
+            padding-right: constant(safe-area-inset-right);
+            padding-right: env(safe-area-inset-right);
+            box-sizing: border-box;
         }
 
         #topBar {
@@ -35,12 +53,17 @@
 
         #scoreDisplay {
             position: absolute;
-            top: 40px;
+            top: calc(40px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
             z-index: 10;
             pointer-events: none;
+        }
+
+        /* Extra offset for iOS PWA to avoid status bar overlap */
+        .ios-pwa #scoreDisplay {
+            top: calc(40px + env(safe-area-inset-top) + 12px);
         }
 
         #scoreDisplay .main-score {
@@ -136,7 +159,7 @@
 
         #startInstructions {
             position: absolute;
-            bottom: 120px;
+            bottom: calc(120px + env(safe-area-inset-bottom));
             left: 50%;
             transform: translateX(-50%);
             font-size: 36px;
@@ -320,7 +343,7 @@
 
         #comboIndicator {
             position: absolute;
-            top: 150px;
+            top: calc(150px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%) scale(0);
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -333,6 +356,10 @@
             display: none;
             z-index: 20;
             opacity: 0;
+        }
+
+        .ios-pwa #comboIndicator {
+            top: calc(150px + env(safe-area-inset-top) + 12px);
         }
         
         #comboIndicator.show {
@@ -1027,6 +1054,8 @@
                 powerPreference: "high-performance"
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            // Set dynamic viewport CSS variable to handle iOS address bar and PWA safe-area
+            document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
             renderer.setPixelRatio(window.devicePixelRatio); // Use native device pixel ratio for maximum quality
             renderer.shadowMap.enabled = !isMobile; // Disable shadows on mobile
             if (!isMobile) {
@@ -1068,7 +1097,18 @@
             // Create environment
             createEnvironment();
 
+            // Detect iOS standalone (PWA) and add class to body so we can tweak safe-area offsets
+            try {
+                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                if (isiOS && isStandalone) {
+                    document.body.classList.add('ios-pwa');
+                }
+            } catch (e) { /* ignore */ }
+
             window.addEventListener('resize', onWindowResize);
+            window.addEventListener('orientationchange', onWindowResize);
+            window.addEventListener('fullscreenchange', onWindowResize);
         }
         
         function createEnvironment() {
@@ -1979,6 +2019,8 @@
                 camera.aspect = width / height;
             } else {
                 // Normal resize
+                // Update dynamic CSS variable for mobile viewport height (fixes iOS address bar and PWA safe-area)
+                document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 camera.aspect = window.innerWidth / window.innerHeight;
             }

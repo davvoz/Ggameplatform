@@ -1,8 +1,54 @@
 {
-  "version": "3.11.0",
-  "timestamp": "2026-01-15T21:53:41.042Z",
-  "buildNumber": 257,
+  "version": "3.11.5",
+  "timestamp": "2026-01-15T23:07:29.766Z",
+  "buildNumber": 262,
   "changelog": [
+    {
+      "version": "3.11.5",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: remove deprecated iOS PWA navbar styles for improved compatibility",
+        "🔖 Bump version to 3.11.4 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.11.4",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar padding and height for improved layout consistency",
+        "🔖 Bump version to 3.11.3 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.11.3",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar for iOS PWA safe-area insets and enhance tappability",
+        "🔖 Bump version to 3.11.2 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.11.2",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: adjust iOS PWA layout for safe-area insets and enhance navigation responsiveness",
+        "🔖 Bump version to 3.11.1 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.11.1",
+      "date": "2026-01-15",
+      "type": "patch",
+      "changes": [
+        "fix: enhance mobile experience with viewport adjustments and iOS fullscreen hint",
+        "🔖 Bump version to 3.11.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.11.0",
       "date": "2026-01-15",
@@ -47,51 +93,6 @@
       "changes": [
         "fIX:[MTD] add info pages system for encyclopedia of enemies, towers, abilities, and items",
         "🔖 Bump version to 3.10.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.5",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD TUTORIAL] Update tutorial step positions and descriptions for clarity",
-        "🔖 Bump version to 3.10.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.4",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD](tutorial)implement comprehensive tutorial system with step-by-step guidance and interactive prompts",
-        "🔖 Bump version to 3.10.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.3",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix:[RAB]Add script to check and register RollABall thumbnail",
-        "🔖 Bump version to 3.10.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.2",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix:[RAB]Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 3.10.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.10.1",
-      "date": "2026-01-14",
-      "type": "patch",
-      "changes": [
-        "fix: Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 3.10.0 [skip-version]"
       ]
     }
   ]

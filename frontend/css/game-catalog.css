@@ -12,7 +12,7 @@
     background: var(--surface);
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
-    max-width: 400px;
+   /* max-width: 400px; */
     margin-left: auto;
     margin-right: auto;
     position: relative;

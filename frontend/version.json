@@ -1,8 +1,17 @@
 {
-  "version": "3.13.13",
-  "timestamp": "2026-01-16T09:26:29.354Z",
-  "buildNumber": 278,
+  "version": "3.13.14",
+  "timestamp": "2026-01-16T09:37:43.537Z",
+  "buildNumber": 279,
   "changelog": [
+    {
+      "version": "3.13.14",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: adjust sticky navbar position for improved layout",
+        "🔖 Bump version to 3.13.13 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.13",
       "date": "2026-01-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: adjust catalog padding for improved layout and add iOS PWA detection script",
         "🔖 Bump version to 3.13.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.4",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust navbar padding to prevent overlap with notch/status bar",
-        "🔖 Bump version to 3.13.3 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "3.13.6",
-  "timestamp": "2026-01-16T00:40:47.578Z",
-  "buildNumber": 271,
+  "version": "3.13.7",
+  "timestamp": "2026-01-16T00:54:29.682Z",
+  "buildNumber": 272,
   "changelog": [
+    {
+      "version": "3.13.7",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar padding for improved compactness and safe area handling",
+        "🔖 Bump version to 3.13.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.6",
       "date": "2026-01-16",
@@ -83,16 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: add game selector cards with filtering functionality",
         "🔖 Bump version to 3.11.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.11.5",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: remove deprecated iOS PWA navbar styles for improved compatibility",
-        "🔖 Bump version to 3.11.4 [skip-version]"
       ]
     }
   ]

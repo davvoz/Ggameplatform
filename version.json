@@ -1,8 +1,18 @@
 {
-  "version": "3.13.16",
-  "timestamp": "2026-01-16T22:24:19.645Z",
-  "buildNumber": 281,
+  "version": "3.13.17",
+  "timestamp": "2026-01-16T22:44:21.675Z",
+  "buildNumber": 282,
   "changelog": [
+    {
+      "version": "3.13.17",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: add mobile adjustments for coin rewards badge to prevent overflow",
+        "🔖 Bump version to 3.13.16 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.16",
       "date": "2026-01-16",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: reduce navbar top padding for improved compactness",
         "🔖 Bump version to 3.13.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.7",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust navbar padding for improved compactness and safe area handling",
-        "🔖 Bump version to 3.13.6 [skip-version]"
       ]
     }
   ]

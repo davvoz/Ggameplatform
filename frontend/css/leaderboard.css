@@ -1217,7 +1217,7 @@
     }
 
     .leaderboard-page {
-        padding-top: calc(var(--spacing-xl) + 150px);
+        padding-top: calc(var(--spacing-xl) + 100px);
         padding-left: var(--spacing-xs) ;
         padding-right: var(--spacing-xs) ;
     }

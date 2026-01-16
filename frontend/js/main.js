@@ -150,6 +150,9 @@ export async function renderCatalog(filters = {}) {
     appContainer.innerHTML = '';
     appContainer.appendChild(catalogContent);
 
+    // Restore tab state from memory
+    restoreTabState();
+
     // Set up filter event listeners
     setupFilters();
     
@@ -158,6 +161,24 @@ export async function renderCatalog(filters = {}) {
 
     // Load and display games with current mode filter
     await loadGames({ ...filters, mode: currentGameMode });
+}
+
+/**
+ * Restore tab visual state from currentGameMode
+ */
+function restoreTabState() {
+    const tabsContainer = document.querySelector('.game-mode-tabs');
+    const tabs = document.querySelectorAll('.game-mode-tab');
+    
+    if (tabsContainer) {
+        // Set the mode-fun class if Fun is selected
+        tabsContainer.classList.toggle('mode-fun', currentGameMode === 'fun');
+    }
+    
+    // Update active state on tabs
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.mode === currentGameMode);
+    });
 }
 
 /**

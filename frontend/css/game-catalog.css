@@ -490,6 +490,18 @@
     object-fit: contain;
 }
 
+/* Mobile adjustments: prevent the large emoji from overflowing the badge */
+@media (max-width: 480px) {
+    .coin-rewards-icon {
+        font-size: 20px; /* smaller emoji on mobile */
+        transform: translateY(-1px);
+        margin-right: 6px;
+    }
+    .coin-rewards-badge {
+        overflow: hidden; /* clamp icon within badge */
+    }
+}
+
 @keyframes pulse-steem {
 
     0%,

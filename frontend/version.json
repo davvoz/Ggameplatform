@@ -1,8 +1,17 @@
 {
-  "version": "3.13.5",
-  "timestamp": "2026-01-16T00:35:19.306Z",
-  "buildNumber": 270,
+  "version": "3.13.6",
+  "timestamp": "2026-01-16T00:40:47.578Z",
+  "buildNumber": 271,
   "changelog": [
+    {
+      "version": "3.13.6",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: reduce navbar top padding for better alignment with safe area insets",
+        "🔖 Bump version to 3.13.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.5",
       "date": "2026-01-16",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: remove deprecated iOS PWA navbar styles for improved compatibility",
         "🔖 Bump version to 3.11.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.11.4",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: adjust navbar padding and height for improved layout consistency",
-        "🔖 Bump version to 3.11.3 [skip-version]"
       ]
     }
   ]

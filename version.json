@@ -1,8 +1,17 @@
 {
-  "version": "3.13.1",
-  "timestamp": "2026-01-15T23:55:05.450Z",
-  "buildNumber": 266,
+  "version": "3.13.2",
+  "timestamp": "2026-01-16T00:01:28.674Z",
+  "buildNumber": 267,
   "changelog": [
+    {
+      "version": "3.13.2",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar padding and min-height for improved layout on iOS PWA",
+        "🔖 Bump version to 3.13.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.1",
       "date": "2026-01-15",
@@ -84,16 +93,6 @@
       "changes": [
         "fix: enhance mobile experience with viewport adjustments and iOS fullscreen hint",
         "🔖 Bump version to 3.11.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.11.0",
-      "date": "2026-01-15",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: implement game mode tabs with animations and filtering",
-        "🔖 Bump version to 3.10.9 [skip-version]"
       ]
     }
   ]

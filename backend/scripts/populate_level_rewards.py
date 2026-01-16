@@ -1,6 +1,6 @@
 """
 Populate level_rewards table with progressive coin rewards
-From level 2 to 200 with special bonuses for multiples of 5
+From level 2 to 500 with special bonuses for multiples of 5
 """
 
 import sys
@@ -64,11 +64,11 @@ def populate_level_rewards():
     print("  Levels 2-20:   5 + level coins (6-30)")
     print("  Levels 21-50:  10 + level coins (31-60)")
     print("  Levels 51-100: 15 + level/2 coins (40-65)")
-    print("  Levels 101-200: 20 + level/3 coins (53-86)")
+    print("  Levels 101-500: 20 + level/3 coins (53-186)")
     print("  Bonus: Multiples of 5 get +5 coins")
     print("    Example: Level 10 = 5+10+5 = 20 coins")
     print("    Example: Level 50 = 10+50+5 = 65 coins")
-    print("    Example: Level 200 = 20+66+5 = 91 coins")
+    print("    Example: Level 500 = 20+166+5 = 191 coins")
     
     print("\n💰 Creating rewards...")
     
@@ -78,9 +78,9 @@ def populate_level_rewards():
             created_count = 0
             
             # Preview first few and some milestones
-            preview_levels = [2, 3, 4, 5, 9, 10, 11, 15, 20, 25, 50, 100, 150, 200]
-            
-            for level in range(2, 201):
+            preview_levels = [2, 3, 4, 5, 9, 10, 11, 15, 20, 25, 50, 100, 150, 200, 250, 300, 400, 500]
+
+            for level in range(2, 501):
                 coins = calculate_coins(level)
                 reward_id = str(uuid.uuid4())
                 
@@ -118,17 +118,19 @@ def populate_level_rewards():
             
             # Show summary statistics
             print("\n📈 Summary Statistics:")
-            
+
             total_coins_50 = sum(calculate_coins(l) for l in range(2, 51))
             total_coins_100 = sum(calculate_coins(l) for l in range(2, 101))
             total_coins_200 = sum(calculate_coins(l) for l in range(2, 201))
-            
-            print(f"  Total coins from level 2 to 50:  {total_coins_50:,} coins")
-            print(f"  Total coins from level 2 to 100: {total_coins_100:,} coins")
-            print(f"  Total coins from level 2 to 200: {total_coins_200:,} coins")
-            
+            total_coins_500 = sum(calculate_coins(l) for l in range(2, 501))
+
+            print(f"  Total coins from level 2 to 50:   {total_coins_50:,} coins")
+            print(f"  Total coins from level 2 to 100:  {total_coins_100:,} coins")
+            print(f"  Total coins from level 2 to 200:  {total_coins_200:,} coins")
+            print(f"  Total coins from level 2 to 500:  {total_coins_500:,} coins")
+
             print("\n💎 Special Milestones:")
-            special = [5, 10, 25, 50, 100, 150, 200]
+            special = [5, 10, 25, 50, 100, 150, 200, 250, 300, 400, 500]
             for level in special:
                 coins = calculate_coins(level)
                 print(f"  Level {level:3d}: {coins:3d} coins")

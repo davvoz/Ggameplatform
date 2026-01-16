@@ -1,8 +1,17 @@
 {
-  "version": "3.13.11",
-  "timestamp": "2026-01-16T01:22:39.520Z",
-  "buildNumber": 276,
+  "version": "3.13.12",
+  "timestamp": "2026-01-16T01:28:11.116Z",
+  "buildNumber": 277,
   "changelog": [
+    {
+      "version": "3.13.12",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: adjust leaderboard page top padding for better layout consistency",
+        "🔖 Bump version to 3.13.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.11",
       "date": "2026-01-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: update navbar links and remove icons for cleaner appearance",
         "🔖 Bump version to 3.13.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.2",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust navbar padding and min-height for improved layout on iOS PWA",
-        "🔖 Bump version to 3.13.1 [skip-version]"
       ]
     }
   ]

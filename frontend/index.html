@@ -589,6 +589,20 @@
     <!-- Scripts -->
     <!-- Load environment config first -->
     <script src="/env.js"></script>
+    <script>
+        (function() {
+            try {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                if (isIOS && isStandalone) {
+                    document.documentElement.classList.add('ios-standalone');
+                    document.body.classList.add('ios-pwa', 'display-standalone');
+                }
+            } catch (e) {
+                console.warn('PWA detection failed', e);
+            }
+        })();
+    </script>
     <script src="./js/nav.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/coinAPI.js"></script>

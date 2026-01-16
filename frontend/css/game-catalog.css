@@ -701,6 +701,13 @@
     .catalog {
         padding-top: calc(var(--spacing-lg) + 75px);
     }
+
+    /* iOS PWA: slightly increase top padding so catalog content clears the safe area and navbar */
+    body.ios-pwa .catalog,
+    html.ios-standalone .catalog,
+    body.display-standalone .catalog {
+        padding-top: calc(var(--spacing-lg) + 1.5rem + 75px);
+    }
 }
 
 @media (max-width: 480px) {

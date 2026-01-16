@@ -1,8 +1,17 @@
 {
-  "version": "3.13.10",
-  "timestamp": "2026-01-16T01:16:38.461Z",
-  "buildNumber": 275,
+  "version": "3.13.11",
+  "timestamp": "2026-01-16T01:22:39.520Z",
+  "buildNumber": 276,
   "changelog": [
+    {
+      "version": "3.13.11",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: unify top padding for iOS PWA across various components to ensure content clears status bar and navbar",
+        "🔖 Bump version to 3.13.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.10",
       "date": "2026-01-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: adjust navbar padding and min-height for improved layout on iOS PWA",
         "🔖 Bump version to 3.13.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.1",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: adjust navbar padding and menu positioning for iOS PWA compatibility",
-        "🔖 Bump version to 3.13.0 [skip-version]"
       ]
     }
   ]

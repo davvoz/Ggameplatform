@@ -1,8 +1,17 @@
 {
-  "version": "3.13.12",
-  "timestamp": "2026-01-16T01:28:11.116Z",
-  "buildNumber": 277,
+  "version": "3.13.13",
+  "timestamp": "2026-01-16T09:26:29.354Z",
+  "buildNumber": 278,
   "changelog": [
+    {
+      "version": "3.13.13",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: add restoreTabState function to maintain game mode tab visual state",
+        "🔖 Bump version to 3.13.12 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.12",
       "date": "2026-01-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: adjust navbar padding to prevent overlap with notch/status bar",
         "🔖 Bump version to 3.13.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.3",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: update navbar links and remove icons for cleaner appearance",
-        "🔖 Bump version to 3.13.2 [skip-version]"
       ]
     }
   ]

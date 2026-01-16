@@ -156,6 +156,38 @@
                 case 'showXPBanner':
                     // Forward to custom handler if game has implemented it
                     this.triggerEvent('showXPBanner', message.payload);
+                    // If any in-game handler exists, notify parent that game handled the banner
+                    try {
+                        const hasHandler = this.eventCallbacks.has('showXPBanner') && this.eventCallbacks.get('showXPBanner').length > 0;
+                        if (hasHandler && window.parent && window.parent !== window.self) {
+                            window.parent.postMessage({
+                                type: 'handled_showXPBanner',
+                                payload: { _messageId: message.payload?._messageId || null },
+                                timestamp: Date.now(),
+                                protocolVersion: PROTOCOL_VERSION
+                            }, '*');
+                        }
+                    } catch (err) {
+                        this.log('Error sending handled ack to parent:', err);
+                    }
+                    break;
+                case 'showLevelUpModal':
+                    // Forward to custom handler if game has implemented it
+                    this.triggerEvent('showLevelUpModal', message.payload);
+                    // Notify parent if handled in-game
+                    try {
+                        const hasHandler2 = this.eventCallbacks.has('showLevelUpModal') && this.eventCallbacks.get('showLevelUpModal').length > 0;
+                        if (hasHandler2 && window.parent && window.parent !== window.self) {
+                            window.parent.postMessage({
+                                type: 'handled_showLevelUpModal',
+                                payload: { _messageId: message.payload?._messageId || null },
+                                timestamp: Date.now(),
+                                protocolVersion: PROTOCOL_VERSION
+                            }, '*');
+                        }
+                    } catch (err) {
+                        this.log('Error sending handled ack to parent:', err);
+                    }
                     break;
                 
                 default:

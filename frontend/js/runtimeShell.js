@@ -966,156 +966,14 @@ export default class RuntimeShell {
      * @param {number} xpAmount - Total XP earned
      * @param {object} session - Full session object with breakdown details
      */
-    showCur8Notification(xpAmount, session = null) {
-        console.warn('🎁 SHOWING XP NOTIFICATION:', xpAmount, '- Stack trace:', new Error().stack);
-        
-        // Try to show notification inside the game iframe first (if game supports it)
+    async showCur8Notification(xpAmount, session = null) {
+        // Send the XP banner request to the game iframe only; do not render fallback here.
         const payload = {
             xp_earned: xpAmount,
             xp_breakdown: session?.xp_breakdown || [],
             extra_data: session?.metadata || session?.extra_data || null
         };
         this.sendMessage('showXPBanner', payload);
-        
-        // Also show in main page as fallback
-        const notification = document.createElement('div');
-        notification.className = 'xp-notification';
-        
-        // Build breakdown details if available
-        let breakdownHTML = '';
-        const sessionData = session?.metadata || session?.extra_data;
-        if (session && sessionData) {
-            const extraData = typeof sessionData === 'string' 
-                ? JSON.parse(sessionData) 
-                : sessionData;
-            
-            if (extraData.xp_breakdown && extraData.xp_breakdown.length > 0) {
-                breakdownHTML = '<div class="xp-breakdown">';
-                extraData.xp_breakdown.forEach(rule => {
-                    const isInactive = rule.xp_earned === 0;
-                    breakdownHTML += `
-                        <div class="xp-rule ${isInactive ? 'inactive' : ''}">
-                            <span class="rule-name">${rule.rule_name}</span>
-                            <span class="rule-xp">${isInactive ? '—' : '+' + rule.xp_earned.toFixed(2)}</span>
-                        </div>
-                    `;
-                });
-                const multiplier = extraData.user_multiplier || session.user_multiplier;
-                if (extraData.base_xp && multiplier && multiplier > 1) {
-                    breakdownHTML += `
-                        <div class="xp-rule multiplier">
-                            <span class="rule-name">CUR8 Multiplier (×${multiplier.toFixed(2)})</span>
-                            <span class="rule-xp">×${multiplier.toFixed(2)}</span>
-                        </div>
-                    `;
-                }
-                breakdownHTML += '</div>';
-            }
-        }
-        
-        notification.innerHTML = `
-            <div class="xp-badge">
-                <span class="xp-icon">⭐</span>
-                <span class="xp-amount">+${xpAmount.toFixed(2)} XP</span>
-            </div>
-            ${breakdownHTML}
-        `;
-        // Add styles
-        if (!document.getElementById('xp-notification-style')) {
-            const style = document.createElement('style');
-            style.id = 'xp-notification-style';
-            style.textContent = `
-            .xp-notification {
-                position: fixed !important;
-                top: 70px !important;
-                right: 20px !important;
-                z-index: 2147483647 !important;
-                animation: slideInRight 0.5s ease;
-                pointer-events: none;
-            }
-            .xp-notification.hiding {
-                animation: slideOutRight 0.5s ease forwards;
-            }
-            .xp-badge {
-                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-                padding: 16px 24px;
-                border-radius: 12px;
-                box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-            .xp-icon {
-                font-size: 1.5em;
-            }
-            .xp-amount {
-                font-size: 1.2em;
-                font-weight: bold;
-                color: #1a1a1a;
-            }
-            .xp-breakdown {
-                display: none;
-            }
-            .xp-rule {
-                display: flex;
-                justify-content: space-between;
-                padding: 4px 0;
-                color: #333;
-            }
-            .xp-rule.inactive {
-                opacity: 0.5;
-                color: #999;
-            }
-            .xp-rule.inactive .rule-xp {
-                color: #999;
-            }
-            .xp-rule.multiplier {
-                border-top: 1px solid #ddd;
-                margin-top: 4px;
-                padding-top: 8px;
-                font-weight: bold;
-                color: #ff6b35;
-            }
-            .rule-name {
-                flex: 1;
-            }
-            .rule-xp {
-                font-weight: bold;
-                color: #ffa500;
-            }
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            @keyframes slideOutRight {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-        }
-
-        document.body.appendChild(notification);
-
-        // Remove after 3.5 seconds (same duration as in-game banner)
-        setTimeout(() => {
-            notification.classList.add('hiding');
-            setTimeout(() => {
-                notification.remove();
-            }, 500);
-        }, 3500);
     }
 
     /**
@@ -1136,65 +994,8 @@ export default class RuntimeShell {
             }
         };
 
-        // Try to show notification inside the game iframe first (if game supports it)
+        // Send level-up event to the game iframe and do not render fallback here.
         this.sendMessage('showLevelUpModal', enrichedLevelUpData);
-
-        const modal = document.createElement('div');
-        modal.className = 'level-up-modal';
-        modal.innerHTML = `
-            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
-                <div class="level-up-animation">
-                    <div class="level-up-rays"></div>
-                    <div class="level-up-badge-container">
-                        <span class="level-up-badge">${badge}</span>
-                    </div>
-                </div>
-                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
-                <div class="level-up-levels">
-                    <span class="old-level">${old_level}</span>
-                    <span class="level-arrow">→</span>
-                    <span class="new-level">${new_level}</span>
-                </div>
-                <div class="level-up-new-title">${title}</div>
-                ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-                ${!isAnonymous && coins_awarded > 0 ? `
-                    <div class="level-up-reward">
-                        <span class="reward-icon">🪙</span>
-                        <span class="reward-amount">+${coins_awarded} Coins</span>
-                    </div>
-                ` : ''}
-                <button class="level-up-close">Continue</button>
-            </div>
-        `;
-
-        // Load level-up styles if not already loaded
-        if (!document.querySelector('#level-up-styles')) {
-            const link = document.createElement('link');
-            link.id = 'level-up-styles';
-            link.rel = 'stylesheet';
-            link.href = '/css/level-widget.css';
-            document.head.appendChild(link);
-        }
-
-        document.body.appendChild(modal);
-
-        // Trigger animation
-        setTimeout(() => modal.classList.add('show'), 10);
-
-        // Close handler
-        const closeBtn = modal.querySelector('.level-up-close');
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        });
-
-        // Auto-close after 6 seconds
-        setTimeout(() => {
-            if (modal.parentElement) {
-                modal.classList.remove('show');
-                setTimeout(() => modal.remove(), 300);
-            }
-        }, 6000);
     }
 
     /**

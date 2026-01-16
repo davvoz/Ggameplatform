@@ -139,6 +139,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Current game mode filter state
 let currentGameMode = 'ranked';
 
+// Helper: unified play count accessor (prefer metadata.playCount, then session_count)
+function getPlayCount(game) {
+    const metaCount = game?.metadata?.playCount;
+    if (typeof metaCount === 'number' && !isNaN(metaCount)) return metaCount;
+    if (typeof game?.session_count === 'number') return game.session_count;
+    if (typeof game?.play_count === 'number') return game.play_count;
+    return 0;
+}
+
 /**
  * Render the game catalog page
  */
@@ -292,18 +301,16 @@ async function prepareGamesContent(mode) {
         return statusCode === mode;
     });
     
-    // Sort games
+    // Sort games: primary by play count (most played first), then STEEM, then display order
     filteredGames.sort((a, b) => {
+        const aCount = getPlayCount(a);
+        const bCount = getPlayCount(b);
+        if (aCount !== bCount) return bCount - aCount;
+
         const aSteemRewards = a.steem_rewards_enabled ? 1 : 0;
         const bSteemRewards = b.steem_rewards_enabled ? 1 : 0;
-        if (aSteemRewards !== bSteemRewards) {
-            return bSteemRewards - aSteemRewards;
-        }
-        const aCount = a.session_count ?? 0;
-        const bCount = b.session_count ?? 0;
-        if (aCount !== bCount) {
-            return bCount - aCount;
-        }
+        if (aSteemRewards !== bSteemRewards) return bSteemRewards - aSteemRewards;
+
         const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
         const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
         return aOrder - bOrder;
@@ -363,27 +370,19 @@ async function loadGamesContent(filters = {}) {
             return;
         }
 
-        // Sort games by multiple criteria:
-        // 1. Steem rewards enabled (1 first, 0 later)
-        // 2. Status display_order (developed first, then others)
-        // 3. Session count (most played first)
+        // Sort games primarily by play count (most played first), then STEEM, then display order
         filteredGames.sort((a, b) => {
-            // 1. Steem rewards (1 = true first, 0 = false later)
+            const aCount = getPlayCount(a);
+            const bCount = getPlayCount(b);
+            if (aCount !== bCount) return bCount - aCount;
+
             const aSteemRewards = a.steem_rewards_enabled ? 1 : 0;
             const bSteemRewards = b.steem_rewards_enabled ? 1 : 0;
-            if (aSteemRewards !== bSteemRewards) {
-                return bSteemRewards - aSteemRewards; // Higher first (1 before 0)
-            }
-            // 2. Play count globale (session_count)
-            const aCount = a.session_count ?? 0;
-            const bCount = b.session_count ?? 0;
-            if (aCount !== bCount) {
-                return bCount - aCount; // Higher first
-            }
-            // 3. Status display_order (lower number = higher priority)
+            if (aSteemRewards !== bSteemRewards) return bSteemRewards - aSteemRewards;
+
             const aOrder = a.status?.display_order ?? Number.MAX_SAFE_INTEGER;
             const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
-            return aOrder - bOrder; // Lower first
+            return aOrder - bOrder;
         });
 
         filteredGames.forEach(game => {
@@ -416,7 +415,7 @@ function createGameCard(game) {
 
     // Add STEEM rewards badge if enabled
     if (game.steem_rewards_enabled) {
-        const gameInfo = card.querySelector('.game-info');
+        const badgesContainer = card.querySelector('.game-badges');
         const steemBadge = document.createElement('span');
         steemBadge.className = 'steem-rewards-badge';
         steemBadge.title = 'This game offers STEEM rewards';
@@ -426,8 +425,29 @@ function createGameCard(game) {
         steemImg.className = 'steem-rewards-icon';
         steemBadge.appendChild(steemImg);
         steemBadge.appendChild(document.createTextNode(' STEEM'));
-        gameInfo.insertBefore(steemBadge, gameInfo.firstChild);
+        if (badgesContainer) badgesContainer.appendChild(steemBadge);
         console.log('Added STEEM badge for', game.title);
+    }
+
+    // Add COIN badge for casino-category games
+    try {
+        if (game.category && String(game.category).toLowerCase() === 'casino') {
+            const badgesContainer = card.querySelector('.game-badges');
+            const coinBadge = document.createElement('span');
+            coinBadge.className = 'coin-rewards-badge';
+            coinBadge.title = 'This game offers COIN rewards';
+
+            // Use emoji for coin icon (large) — simpler and consistent across platforms
+            const coinIcon = document.createElement('span');
+            coinIcon.className = 'coin-rewards-icon';
+            coinIcon.textContent = '🪙';
+            coinBadge.appendChild(coinIcon);
+            coinBadge.appendChild(document.createTextNode(' COIN'));
+            if (badgesContainer) badgesContainer.appendChild(coinBadge);
+            console.log('Added COIN badge for', game.title);
+        }
+    } catch (e) {
+        console.warn('Failed to add COIN badge for', game.title, e);
     }
 
     // Set game info

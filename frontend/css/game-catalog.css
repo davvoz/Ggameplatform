@@ -431,10 +431,17 @@
 }
 
 /* STEEM Rewards Badge - Top right of game-info */
-.steem-rewards-badge {
+.game-badges {
     position: absolute;
     top: 12px;
     right: 12px;
+    z-index: 6;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.steem-rewards-badge {
     background: linear-gradient(180deg, #444ad4 101%, #8c8fe4 38%);
     color: white;
     padding: 4px 10px;
@@ -443,7 +450,44 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    z-index: 5;
+}
+
+/* COIN Rewards Badge - similar placement to STEEM but gold theme */
+.coin-rewards-badge {
+    background: linear-gradient(180deg, #ffd966 0%, #f7b733 100%);
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    height: 28px; /* keep badge height consistent with STEEM */
+    overflow: visible; /* allow larger icon to overflow visually */
+}
+
+/* If STEEM badge is present, push COIN left to avoid overlap */
+/* no absolute offsets needed when badges are inside .game-badges */
+
+.coin-rewards-icon {
+    /* Emoji styling: make the emoji large without enlarging the badge box */
+    font-size: 25px;
+    width: auto;
+    height: auto;
+    vertical-align: middle;
+  /*  margin-right: 6px;   match steem spacing */
+    line-height: 1;
+    display: inline-block;
+    transform: translateY(-2px);
+}
+
+/* If an <img> element is used instead, keep it sized to match the emoji */
+.coin-rewards-icon[src] {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
 }
 
 @keyframes pulse-steem {

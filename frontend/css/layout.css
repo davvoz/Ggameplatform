@@ -299,7 +299,7 @@ main {
     justify-content: center;
     align-items: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+   /* margin-bottom: var(--spacing-md);*/
     /*elementi MAI a capo*/
     flex-wrap: nowrap;
 

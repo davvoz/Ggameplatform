@@ -989,3 +989,25 @@ body.display-standalone .navbar .container {
 }
 
 /* slide-out menu positioning is default (no iOS-only overrides) */
+
+@media (max-width: 768px) {
+    /* Apply the same iOS-PWA top padding across the platform (catalog, games, pages)
+       so content clears the status bar and fixed navbar when running as a PWA on iOS. */
+    body.ios-pwa main,
+    html.ios-standalone main,
+    body.display-standalone main,
+    body.ios-pwa .content,
+    html.ios-standalone .content,
+    body.display-standalone .content,
+    body.ios-pwa .app,
+    html.ios-standalone .app,
+    body.display-standalone .app,
+    body.ios-pwa .game-player,
+    html.ios-standalone .game-player,
+    body.display-standalone .game-player,
+    body.ios-pwa .catalog,
+    html.ios-standalone .catalog,
+    body.display-standalone .catalog {
+        padding-top: calc(var(--spacing-lg) + 1.5rem + 100px) !important;
+    }
+}

@@ -970,7 +970,7 @@ body.display-standalone .navbar {
     right: 0;
     z-index: 11000;
     /* keep navbar itself compact; apply safe-area offset to inner container only */
-    padding-top: 2px;
+    padding-top: 0px;
     min-height: auto;
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);

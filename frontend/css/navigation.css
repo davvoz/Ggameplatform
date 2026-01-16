@@ -969,9 +969,9 @@ body.display-standalone .navbar {
     left: 0;
     right: 0;
     z-index: 11000;
-    /* add a small offset so navbar content doesn't touch the notch/status bar */
-    padding-top: calc(env(safe-area-inset-top, 0px) + 2px);
-    min-height: calc(12px + env(safe-area-inset-top, 0px));
+    /* keep navbar itself compact; apply safe-area offset to inner container only */
+    padding-top: 2px;
+    min-height: auto;
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
 }
@@ -980,7 +980,7 @@ body.display-standalone .navbar {
 body.ios-pwa .navbar .container,
 html.ios-standalone .navbar .container,
 body.display-standalone .navbar .container {
-    padding-top: calc(2px + env(safe-area-inset-top, 0px));
+    padding-top: calc(env(safe-area-inset-top, 0px) + 2px);
 }
 
 /* ensure the hamburger/menu toggle is above overlays */

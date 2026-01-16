@@ -1,8 +1,17 @@
 {
-  "version": "3.13.17",
-  "timestamp": "2026-01-16T22:44:21.675Z",
-  "buildNumber": 282,
+  "version": "3.13.18",
+  "timestamp": "2026-01-16T23:25:02.453Z",
+  "buildNumber": 283,
   "changelog": [
+    {
+      "version": "3.13.18",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: update level milestones and rewards to support levels up to 500",
+        "🔖 Bump version to 3.13.17 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.17",
       "date": "2026-01-16",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: adjust navbar top padding for safe area handling",
         "🔖 Bump version to 3.13.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.8",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: reduce navbar top padding for improved compactness",
-        "🔖 Bump version to 3.13.7 [skip-version]"
       ]
     }
   ]

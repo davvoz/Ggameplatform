@@ -752,7 +752,7 @@
         align-items: stretch;
         background: rgba(26, 26, 26, 0.98);
         backdrop-filter: blur(20px);
-        padding: var(--spacing-lg);
+        padding: 80px var(--spacing-lg) var(--spacing-lg);
         gap: 0;
         transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
@@ -974,7 +974,7 @@ body.display-standalone .navbar {
     z-index: 11000;
     /* ensure the visual content is spaced below the notch/status bar */
     padding-top: env(safe-area-inset-top, 0px);
-    min-height: calc(20px + env(safe-area-inset-top, 0px));
+    min-height: calc(12px + env(safe-area-inset-top, 0px));
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
 }
@@ -983,7 +983,7 @@ body.display-standalone .navbar {
 body.ios-pwa .navbar .container,
 html.ios-standalone .navbar .container,
 body.display-standalone .navbar .container {
-    padding-top: calc(var(--spacing-xs) + env(safe-area-inset-top, 0px));
+    padding-top: calc(4px + env(safe-area-inset-top, 0px));
 }
 
 /* ensure the hamburger/menu toggle is above overlays */
@@ -991,16 +991,4 @@ body.display-standalone .navbar .container {
     z-index: 11001;
 }
 
-/* slide-out menu should start below the navbar+safe-area (iOS PWA only) */
-body.ios-pwa .nav-menu,
-html.ios-standalone .nav-menu,
-body.display-standalone .nav-menu {
-    top: calc(10px + env(safe-area-inset-top, 0px));
-}
-
-/* iOS PWA: give slide-out menu extra top padding to avoid showing navbar underneath */
-body.ios-pwa .nav-menu,
-html.ios-standalone .nav-menu,
-body.display-standalone .nav-menu {
-    padding: calc(20px + env(safe-area-inset-top, 0px) + var(--spacing-lg)) var(--spacing-lg) var(--spacing-lg);
-}
+/* slide-out menu positioning is default (no iOS-only overrides) */

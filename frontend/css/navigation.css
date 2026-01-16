@@ -980,7 +980,7 @@ body.display-standalone .navbar {
 body.ios-pwa .navbar .container,
 html.ios-standalone .navbar .container,
 body.display-standalone .navbar .container {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 2px);
+    padding-top: calc(env(safe-area-inset-top, 0px));
 }
 
 /* ensure the hamburger/menu toggle is above overlays */

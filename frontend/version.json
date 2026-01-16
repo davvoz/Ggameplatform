@@ -1,8 +1,17 @@
 {
-  "version": "3.13.3",
-  "timestamp": "2026-01-16T00:10:21.795Z",
-  "buildNumber": 268,
+  "version": "3.13.4",
+  "timestamp": "2026-01-16T00:19:48.220Z",
+  "buildNumber": 269,
   "changelog": [
+    {
+      "version": "3.13.4",
+      "date": "2026-01-16",
+      "type": "patch",
+      "changes": [
+        "fix: adjust navbar padding to prevent overlap with notch/status bar",
+        "🔖 Bump version to 3.13.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.3",
       "date": "2026-01-16",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: adjust navbar for iOS PWA safe-area insets and enhance tappability",
         "🔖 Bump version to 3.11.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.11.2",
-      "date": "2026-01-15",
-      "type": "patch",
-      "changes": [
-        "fix: adjust iOS PWA layout for safe-area insets and enhance navigation responsiveness",
-        "🔖 Bump version to 3.11.1 [skip-version]"
       ]
     }
   ]

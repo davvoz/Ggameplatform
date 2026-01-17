@@ -1,8 +1,17 @@
 {
-  "version": "3.13.19",
-  "timestamp": "2026-01-17T01:18:14.013Z",
-  "buildNumber": 284,
+  "version": "3.13.20",
+  "timestamp": "2026-01-17T01:30:56.440Z",
+  "buildNumber": 285,
   "changelog": [
+    {
+      "version": "3.13.20",
+      "date": "2026-01-17",
+      "type": "patch",
+      "changes": [
+        "fix: add animated counters for hero statistics and improve total XP calculation",
+        "🔖 Bump version to 3.13.19 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.19",
       "date": "2026-01-17",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: unify top padding for iOS PWA across various components to ensure content clears status bar and navbar",
         "🔖 Bump version to 3.13.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.10",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: increase top padding for catalog in iOS PWA to clear safe area and navbar",
-        "🔖 Bump version to 3.13.9 [skip-version]"
       ]
     }
   ]

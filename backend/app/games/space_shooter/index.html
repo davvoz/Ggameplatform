@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Space Shooter</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Fullscreen Button -->
+        <button id="fullscreen-btn" title="Schermo intero" aria-label="Schermo intero">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+        </button>
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Settings Popup -->
+        <div id="settings-popup" class="hidden">
+            <div id="settings-content">
+                <h2>⚙️ SETTINGS</h2>
+                
+                <div class="setting-group">
+                    <span class="setting-label">🎵 Music</span>
+                    <button type="button" id="music-toggle" class="toggle-btn on">ON</button>
+                </div>
+                
+                <div class="setting-group">
+                    <span class="setting-label">🔊 Sound Effects</span>
+                    <button type="button" id="sfx-toggle" class="toggle-btn on">ON</button>
+                </div>
+                
+                <button id="resume-button">▶️ RESUME</button>
+            </div>
+        </div>
+        
+        <div id="touch-controls">
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-stick"></div>
+                </div>
+            </div>
+            <div id="ability-buttons">
+                <div id="heal-button" class="ability-button">
+                    <div class="ability-icon">💚</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-label">HEAL</div>
+                    <div class="ability-key">Q</div>
+                </div>
+                <div id="bomb-button" class="ability-button">
+                    <div class="ability-icon">💥</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-label">BOMB</div>
+                    <div class="ability-key">E</div>
+                </div>
+            </div>
+            <div id="fire-button">FIRE</div>
+        </div>
+        <div id="start-screen">
+            <h1>SPACE SHOOTER</h1>
+            <p>Touch to Start</p>
+            <p class="instructions">Mobile: Joystick + Fire<br>Desktop: WASD/Arrows + Space<br>Abilities: Q (Heal) + E (Bomb)<br>Pause: ESC</p>
+        </div>
+        <div id="game-over-screen" class="hidden">
+            <h1>GAME OVER</h1>
+            <p>Score: <span id="final-score">0</span></p>
+            <button id="restart-btn">RESTART</button>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="js/utils/Vector2.js"></script>
+    <script src="js/managers/AssetManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/SoundManager.js"></script>
+    <script src="js/effects/ParticleSystem.js"></script>
+    <script src="js/effects/PostProcessing.js"></script>
+    <script src="js/entities/GameObject.js"></script>
+    <script src="js/entities/Player.js"></script>
+    <script src="js/entities/Enemy.js"></script>
+    <script src="js/entities/Bullet.js"></script>
+    <script src="js/entities/Explosion.js"></script>
+    <script src="js/entities/PowerUp.js"></script>
+    <script src="js/entities/Star.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

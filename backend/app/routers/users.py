@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
 from app.database import (
@@ -338,7 +338,7 @@ async def get_user(user_id: str):
     }
 
 @router.get("/{user_id}/sessions")
-async def get_user_game_sessions(user_id: str, limit: int = 10):
+async def get_user_game_sessions(user_id: str, limit: int = Query(None)):
     """Get user's game sessions and total count.
 
     Returns a paginated list of recent sessions (limited by `limit`) and the
@@ -349,12 +349,24 @@ async def get_user_game_sessions(user_id: str, limit: int = 10):
     from sqlalchemy import func, desc
 
     with get_db_session() as session:
-        # Total sessions for this user (unlimited)
+        # If `limit` is not provided, return ALL sessions for the user
+        if limit is None:
+            sessions_q = session.query(GameSession).filter(
+                GameSession.user_id == user_id
+            ).order_by(desc(GameSession.started_at)).all()
+
+            sessions = [s.to_dict() for s in sessions_q]
+            return {
+                "success": True,
+                "count": len(sessions),
+                "sessions": sessions
+            }
+
+        # When limit is provided, behave as pagination (return count + limited list)
         total = session.query(func.count()).select_from(GameSession).filter(
             GameSession.user_id == user_id
         ).scalar() or 0
 
-        # Recent sessions limited by `limit`
         sessions_q = session.query(GameSession).filter(
             GameSession.user_id == user_id
         ).order_by(desc(GameSession.started_at)).limit(limit).all()

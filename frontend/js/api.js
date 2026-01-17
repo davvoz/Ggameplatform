@@ -147,14 +147,15 @@ export async function trackGamePlay(gameId) {
  * @param {number} limit - Number of sessions to retrieve
  * @returns {Promise<Object>} User sessions data
  */
-export async function getUserSessions(userId, limit = 50) {
+export async function getUserSessions(userId, limit) {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/${userId}/sessions?limit=${limit}`);
-        
+        const url = `${API_BASE_URL}/users/${userId}/sessions` + (typeof limit !== 'undefined' ? `?limit=${limit}` : '');
+        const response = await fetch(url);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         return await response.json();
     } catch (error) {
         console.error('Error fetching user sessions:', error);

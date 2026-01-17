@@ -564,11 +564,59 @@ class QuestStatistics {
         const heroReadyEl = document.getElementById('heroReadyCount');
         const heroClaimedEl = document.getElementById('heroClaimedCount');
         const heroTotalXPEl = document.getElementById('heroTotalXP');
-        
+
         if (heroActiveEl) heroActiveEl.textContent = String(this.activeCount);
         if (heroReadyEl) heroReadyEl.textContent = String(this.readyToClaimCount);
         if (heroClaimedEl) heroClaimedEl.textContent = String(this.claimedCount);
-        if (heroTotalXPEl) heroTotalXPEl.textContent = Math.floor(this.totalXP.toFixed(2));
+
+        // Compute Total XP coming from quests differently:
+        // Only this value is computed asynchronously so the rest of the page renders quickly.
+        (async () => {
+            // Start small animation while we compute the real value
+            let animInterval = null;
+            try {
+                if (heroTotalXPEl) {
+                    let display = 0;
+                    const placeholderTarget = Math.max(0, Math.floor(this.totalXP));
+                    heroTotalXPEl.textContent = String(display);
+                    animInterval = setInterval(() => {
+                        display += Math.max(1, Math.ceil(placeholderTarget / 20));
+                        if (display >= placeholderTarget) display = placeholderTarget;
+                        heroTotalXPEl.textContent = String(display);
+                    }, 30);
+                }
+
+                const user = window.AuthManager && window.AuthManager.getUser && window.AuthManager.getUser();
+                if (user && user.user_id && typeof user.total_xp_earned !== 'undefined') {
+                    const { getUserSessions } = await import('./api.js');
+
+                    // Request ALL sessions by omitting limit
+                    const all = await getUserSessions(user.user_id).catch(() => ({ sessions: [] }));
+                    const sessions = all && all.sessions ? all.sessions : [];
+                    const totalSessionXP = sessions.reduce((sum, s) => sum + (parseFloat(s.xp_earned) || 0), 0);
+
+                    const questXP = Math.max(0, (parseFloat(user.total_xp_earned) || 0) - totalSessionXP);
+
+                    if (animInterval) {
+                        clearInterval(animInterval);
+                        animInterval = null;
+                    }
+
+                    if (heroTotalXPEl) heroTotalXPEl.textContent = String(Math.floor(questXP));
+                    return;
+                }
+            } catch (e) {
+                console.error('Error computing total quest XP from sessions:', e);
+            } finally {
+                if (animInterval) {
+                    clearInterval(animInterval);
+                    animInterval = null;
+                }
+            }
+
+            // Fallback: previous behaviour (sum of claimed quest xp)
+            if (heroTotalXPEl) heroTotalXPEl.textContent = Math.floor(this.totalXP.toFixed(2));
+        })();
     }
 }
 /**

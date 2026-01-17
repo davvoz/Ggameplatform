@@ -565,15 +565,40 @@ class QuestStatistics {
         const heroClaimedEl = document.getElementById('heroClaimedCount');
         const heroTotalXPEl = document.getElementById('heroTotalXP');
 
-        if (heroActiveEl) heroActiveEl.textContent = String(this.activeCount);
-        if (heroReadyEl) heroReadyEl.textContent = String(this.readyToClaimCount);
-        if (heroClaimedEl) heroClaimedEl.textContent = String(this.claimedCount);
+        // Animate the three hero counters (Active / Ready / Claimed)
+        const animateCount = (el, target, duration = 600) => {
+            if (!el) return null;
+            let value = 0;
+            el.textContent = String(0);
+            const steps = Math.max(6, Math.floor(duration / 30));
+            const increment = Math.max(1, Math.ceil(target / steps));
+            const iv = setInterval(() => {
+                value += increment;
+                if (value >= target) {
+                    el.textContent = String(target);
+                    clearInterval(iv);
+                } else {
+                    el.textContent = String(value);
+                }
+            }, 30);
+            return iv;
+        };
+
+        const activeAnim = animateCount(heroActiveEl, this.activeCount);
+        const readyAnim = animateCount(heroReadyEl, this.readyToClaimCount);
+        const claimedAnim = animateCount(heroClaimedEl, this.claimedCount);
 
         // Compute Total XP coming from quests differently:
         // Only this value is computed asynchronously so the rest of the page renders quickly.
         (async () => {
             // Start small animation while we compute the real value
             let animInterval = null;
+            // Ensure we can clear the hero counters' animations if needed
+            const clearHeroAnims = () => {
+                try { if (activeAnim) clearInterval(activeAnim); } catch(e) {}
+                try { if (readyAnim) clearInterval(readyAnim); } catch(e) {}
+                try { if (claimedAnim) clearInterval(claimedAnim); } catch(e) {}
+            };
             try {
                 if (heroTotalXPEl) {
                     let display = 0;
@@ -601,6 +626,11 @@ class QuestStatistics {
                         clearInterval(animInterval);
                         animInterval = null;
                     }
+                    // Clear the hero counters' placeholder animations and set final values
+                    clearHeroAnims();
+                    if (heroActiveEl) heroActiveEl.textContent = String(this.activeCount);
+                    if (heroReadyEl) heroReadyEl.textContent = String(this.readyToClaimCount);
+                    if (heroClaimedEl) heroClaimedEl.textContent = String(this.claimedCount);
 
                     if (heroTotalXPEl) heroTotalXPEl.textContent = String(Math.floor(questXP));
                     return;
@@ -612,6 +642,9 @@ class QuestStatistics {
                     clearInterval(animInterval);
                     animInterval = null;
                 }
+                try { if (activeAnim) clearInterval(activeAnim); } catch(e) {}
+                try { if (readyAnim) clearInterval(readyAnim); } catch(e) {}
+                try { if (claimedAnim) clearInterval(claimedAnim); } catch(e) {}
             }
 
             // Fallback: previous behaviour (sum of claimed quest xp)

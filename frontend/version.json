@@ -1,8 +1,17 @@
 {
-  "version": "3.13.20",
-  "timestamp": "2026-01-17T01:30:56.440Z",
-  "buildNumber": 285,
+  "version": "3.14.0",
+  "timestamp": "2026-01-17T17:10:29.277Z",
+  "buildNumber": 286,
   "changelog": [
+    {
+      "version": "3.14.0",
+      "date": "2026-01-17",
+      "type": "minor",
+      "changes": [
+        "feat: NEW GAME space shooter [SS]",
+        "🔖 Bump version to 3.13.20 [skip-version]"
+      ]
+    },
     {
       "version": "3.13.20",
       "date": "2026-01-17",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: adjust leaderboard page top padding for better layout consistency",
         "🔖 Bump version to 3.13.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.11",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: unify top padding for iOS PWA across various components to ensure content clears status bar and navbar",
-        "🔖 Bump version to 3.13.10 [skip-version]"
       ]
     }
   ]

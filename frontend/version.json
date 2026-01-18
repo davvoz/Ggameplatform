@@ -1,8 +1,17 @@
 {
-  "version": "3.14.5",
-  "timestamp": "2026-01-18T21:28:40.589Z",
-  "buildNumber": 291,
+  "version": "3.14.6",
+  "timestamp": "2026-01-18T21:41:52.131Z",
+  "buildNumber": 292,
   "changelog": [
+    {
+      "version": "3.14.6",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS] CSS for improved readability and consistency",
+        "🔖 Bump version to 3.14.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.5",
       "date": "2026-01-18",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: update level milestones and rewards to support levels up to 500",
         "🔖 Bump version to 3.13.17 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.17",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: add mobile adjustments for coin rewards badge to prevent overflow",
-        "🔖 Bump version to 3.13.16 [skip-version]"
       ]
     }
   ]

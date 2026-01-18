@@ -1,8 +1,17 @@
 {
-  "version": "3.14.2",
-  "timestamp": "2026-01-18T11:22:04.236Z",
-  "buildNumber": 288,
+  "version": "3.14.3",
+  "timestamp": "2026-01-18T17:07:55.867Z",
+  "buildNumber": 289,
   "changelog": [
+    {
+      "version": "3.14.3",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]integrate Platform SDK for game session management and score reporting",
+        "🔖 Bump version to 3.14.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.2",
       "date": "2026-01-18",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: adjust sticky navbar top position for improved layout",
         "🔖 Bump version to 3.13.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.14",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust sticky navbar position for improved layout",
-        "🔖 Bump version to 3.13.13 [skip-version]"
       ]
     }
   ]

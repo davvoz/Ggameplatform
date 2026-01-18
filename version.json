@@ -1,8 +1,17 @@
 {
-  "version": "3.14.1",
-  "timestamp": "2026-01-18T01:17:40.648Z",
-  "buildNumber": 287,
+  "version": "3.14.2",
+  "timestamp": "2026-01-18T11:22:04.236Z",
+  "buildNumber": 288,
   "changelog": [
+    {
+      "version": "3.14.2",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]optimize explosion particle creation and rendering",
+        "🔖 Bump version to 3.14.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.1",
       "date": "2026-01-18",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: adjust sticky navbar position for improved layout",
         "🔖 Bump version to 3.13.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.13",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: add restoreTabState function to maintain game mode tab visual state",
-        "🔖 Bump version to 3.13.12 [skip-version]"
       ]
     }
   ]

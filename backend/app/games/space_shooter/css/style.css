@@ -5,7 +5,8 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html,
+body {
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -42,7 +43,7 @@ html, body {
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 #fullscreen-btn svg {
@@ -77,12 +78,12 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: 
-        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.5), transparent),
-        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.6), transparent),
-        radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.4), transparent),
-        radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.7), transparent);
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 160px 120px, rgba(255, 255, 255, 0.7), transparent);
     background-size: 200px 200px;
     animation: twinkle 5s ease-in-out infinite alternate;
     pointer-events: none;
@@ -90,8 +91,13 @@ html, body {
 }
 
 @keyframes twinkle {
-    0% { opacity: 0.3; }
-    100% { opacity: 0.6; }
+    0% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
 }
 
 #gameCanvas {
@@ -99,7 +105,7 @@ html, body {
     background: transparent;
     touch-action: none;
     border-radius: 8px;
-    box-shadow: 
+    box-shadow:
         0 0 50px rgba(0, 150, 255, 0.15),
         0 0 100px rgba(0, 100, 200, 0.1),
         inset 0 0 50px rgba(0, 50, 100, 0.05);
@@ -117,7 +123,7 @@ html, body {
     align-items: center;
     padding: 20px 30px;
     pointer-events: none;
-    background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
     z-index: 50;
 }
 
@@ -140,7 +146,7 @@ html, body {
     justify-content: center;
     align-items: center;
     position: relative;
-    box-shadow: 
+    box-shadow:
         0 0 20px rgba(0, 150, 255, 0.2),
         inset 0 0 30px rgba(0, 100, 200, 0.1);
 }
@@ -153,7 +159,7 @@ html, body {
     border-radius: 50%;
     position: absolute;
     transition: transform 0.05s ease-out;
-    box-shadow: 
+    box-shadow:
         0 0 15px rgba(0, 200, 255, 0.5),
         0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -174,7 +180,7 @@ html, body {
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(255, 100, 100, 0.8);
     pointer-events: auto;
-    box-shadow: 
+    box-shadow:
         0 0 25px rgba(255, 50, 50, 0.4),
         0 6px 12px rgba(0, 0, 0, 0.4),
         inset 0 -3px 10px rgba(0, 0, 0, 0.2);
@@ -184,7 +190,7 @@ html, body {
 #fire-button:active {
     background: radial-gradient(circle at 30% 30%, rgba(255, 180, 180, 1) 0%, rgba(255, 100, 100, 0.9) 50%, rgba(200, 50, 50, 0.9) 100%);
     transform: scale(0.95);
-    box-shadow: 
+    box-shadow:
         0 0 40px rgba(255, 100, 100, 0.6),
         0 3px 6px rgba(0, 0, 0, 0.3);
 }
@@ -210,7 +216,7 @@ html, body {
     position: relative;
     overflow: hidden;
     pointer-events: auto;
-    box-shadow: 
+    box-shadow:
         0 0 15px rgba(100, 150, 255, 0.2),
         0 4px 8px rgba(0, 0, 0, 0.4),
         inset 0 -2px 8px rgba(0, 0, 0, 0.2);
@@ -219,7 +225,7 @@ html, body {
 
 .ability-button:active:not(.on-cooldown) {
     transform: scale(0.9);
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(100, 200, 255, 0.5),
         0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -274,7 +280,7 @@ html, body {
 }
 
 #heal-button:active:not(.on-cooldown) {
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(100, 255, 150, 0.6),
         0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -285,13 +291,14 @@ html, body {
 }
 
 #bomb-button:active:not(.on-cooldown) {
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(255, 180, 100, 0.6),
         0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Screens - Ultra Styled */
-#start-screen, #game-over-screen {
+#start-screen,
+#game-over-screen {
     position: absolute;
     top: 0;
     left: 0;
@@ -301,7 +308,7 @@ html, body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: 
+    background:
         radial-gradient(circle at 20% 50%, rgba(0, 100, 200, 0.05) 0%, transparent 50%),
         radial-gradient(circle at 80% 50%, rgba(200, 0, 150, 0.05) 0%, transparent 50%),
         linear-gradient(180deg, rgba(5, 10, 25, 0.97) 0%, rgba(0, 5, 15, 0.99) 100%);
@@ -311,33 +318,42 @@ html, body {
 }
 
 /* Bordo animato per le modali */
-#start-screen::before, #game-over-screen::before {
+#start-screen::before,
+#game-over-screen::before {
     content: '';
     position: absolute;
     inset: 0;
     border: 2px solid transparent;
-    border-image: linear-gradient(45deg, 
-        rgba(0, 150, 255, 0.3), 
-        rgba(0, 200, 255, 0.5), 
-        rgba(100, 200, 255, 0.3),
-        rgba(0, 150, 255, 0.3)
-    ) 1;
+    border-image: linear-gradient(45deg,
+            rgba(0, 150, 255, 0.3),
+            rgba(0, 200, 255, 0.5),
+            rgba(100, 200, 255, 0.3),
+            rgba(0, 150, 255, 0.3)) 1;
     animation: borderGlow 3s linear infinite;
     pointer-events: none;
 }
 
 @keyframes borderGlow {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
 }
 
 /* Container centrale per contenuto */
-#start-screen > *, #game-over-screen > * {
+#start-screen>*,
+#game-over-screen>* {
     position: relative;
     z-index: 10;
 }
 
-#start-screen h1, #game-over-screen h1 {
+#start-screen h1,
+#game-over-screen h1 {
     font-size: clamp(2.5rem, 10vw, 5rem);
     margin-bottom: 30px;
     font-family: 'Orbitron', sans-serif;
@@ -352,7 +368,8 @@ html, body {
 }
 
 /* Effetto neon sul titolo */
-#start-screen h1::before, #game-over-screen h1::before {
+#start-screen h1::before,
+#game-over-screen h1::before {
     content: attr(data-text);
     position: absolute;
     left: 0;
@@ -367,13 +384,12 @@ html, body {
 }
 
 @keyframes titleGlow {
-    0% { 
-        filter: drop-shadow(0 0 20px rgba(0, 150, 255, 0.6)) 
-                drop-shadow(0 0 40px rgba(0, 100, 255, 0.3));
+    0% {
+        filter: drop-shadow(0 0 20px rgba(0, 150, 255, 0.6)) drop-shadow(0 0 40px rgba(0, 100, 255, 0.3));
     }
-    100% { 
-        filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.8)) 
-                drop-shadow(0 0 60px rgba(0, 150, 255, 0.5));
+
+    100% {
+        filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.8)) drop-shadow(0 0 60px rgba(0, 150, 255, 0.5));
     }
 }
 
@@ -391,12 +407,15 @@ html, body {
 }
 
 @keyframes pulse {
-    0%, 100% { 
-        opacity: 0.6; 
+
+    0%,
+    100% {
+        opacity: 0.6;
         transform: scale(1);
     }
-    50% { 
-        opacity: 1; 
+
+    50% {
+        opacity: 1;
         transform: scale(1.02);
     }
 }
@@ -425,13 +444,12 @@ html, body {
 }
 
 @keyframes gameOverGlow {
-    0% { 
-        filter: drop-shadow(0 0 20px rgba(255, 50, 50, 0.6)) 
-                drop-shadow(0 0 40px rgba(255, 0, 0, 0.3));
+    0% {
+        filter: drop-shadow(0 0 20px rgba(255, 50, 50, 0.6)) drop-shadow(0 0 40px rgba(255, 0, 0, 0.3));
     }
-    100% { 
-        filter: drop-shadow(0 0 30px rgba(255, 100, 100, 0.8)) 
-                drop-shadow(0 0 60px rgba(255, 50, 50, 0.5));
+
+    100% {
+        filter: drop-shadow(0 0 30px rgba(255, 100, 100, 0.8)) drop-shadow(0 0 60px rgba(255, 50, 50, 0.5));
     }
 }
 
@@ -455,20 +473,21 @@ html, body {
     background: rgba(0, 100, 200, 0.15);
     border-radius: 8px;
     border: 2px solid rgba(0, 150, 255, 0.3);
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(0, 200, 255, 0.8),
         0 0 40px rgba(0, 150, 255, 0.4);
     animation: scoreGlow 1s ease-in-out infinite alternate;
 }
 
 @keyframes scoreGlow {
-    0% { 
-        box-shadow: 
+    0% {
+        box-shadow:
             0 0 20px rgba(0, 150, 255, 0.3),
             inset 0 0 20px rgba(0, 100, 255, 0.1);
     }
-    100% { 
-        box-shadow: 
+
+    100% {
+        box-shadow:
             0 0 40px rgba(0, 200, 255, 0.5),
             inset 0 0 30px rgba(0, 150, 255, 0.2);
     }
@@ -481,7 +500,7 @@ html, body {
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     letter-spacing: 4px;
-    background: 
+    background:
         linear-gradient(180deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 128, 204, 0.3) 100%),
         linear-gradient(180deg, #00d4ff 0%, #0080cc 50%, #004488 100%);
     border: 2px solid rgba(0, 200, 255, 0.6);
@@ -489,7 +508,7 @@ html, body {
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(0, 150, 255, 0.4),
         0 8px 20px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -508,28 +527,31 @@ html, body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        transparent 70%
-    );
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 70%);
     transform: rotate(45deg);
     animation: buttonShine 3s linear infinite;
 }
 
 @keyframes buttonShine {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
 }
 
 #restart-btn:hover {
     transform: scale(1.08) translateY(-3px);
-    box-shadow: 
+    box-shadow:
         0 0 50px rgba(0, 200, 255, 0.6),
         0 12px 30px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    background: 
+    background:
         linear-gradient(180deg, rgba(50, 230, 255, 0.3) 0%, rgba(0, 160, 221, 0.4) 100%),
         linear-gradient(180deg, #33e0ff 0%, #00a0dd 50%, #0055aa 100%);
     border-color: rgba(50, 220, 255, 0.8);
@@ -537,7 +559,7 @@ html, body {
 
 #restart-btn:active {
     transform: scale(1.02) translateY(-1px);
-    box-shadow: 
+    box-shadow:
         0 0 30px rgba(0, 150, 255, 0.5),
         0 4px 15px rgba(0, 0, 0, 0.4);
 }
@@ -593,7 +615,7 @@ html, body {
 
 .go-stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     gap: 16px;
     width: 100%;
 }
@@ -722,7 +744,7 @@ html, body {
     min-width: 300px;
     max-width: 90%;
     pointer-events: auto;
-    box-shadow: 
+    box-shadow:
         0 0 50px rgba(0, 150, 255, 0.3),
         inset 0 0 30px rgba(0, 100, 200, 0.1);
 }
@@ -931,7 +953,7 @@ html, body {
     #touch-controls {
         display: flex;
     }
-    
+
     #gameCanvas {
         border-radius: 0;
         box-shadow: none;

@@ -1,8 +1,17 @@
 {
-  "version": "3.14.6",
-  "timestamp": "2026-01-18T21:41:52.131Z",
-  "buildNumber": 292,
+  "version": "3.14.7",
+  "timestamp": "2026-01-18T22:48:55.935Z",
+  "buildNumber": 293,
   "changelog": [
+    {
+      "version": "3.14.7",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]Remove touch controls from HTML and implement canvas-based controls",
+        "🔖 Bump version to 3.14.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.6",
       "date": "2026-01-18",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: enhance user session retrieval with optional pagination and total XP calculation",
         "🔖 Bump version to 3.13.18 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.18",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: update level milestones and rewards to support levels up to 500",
-        "🔖 Bump version to 3.13.17 [skip-version]"
       ]
     }
   ]

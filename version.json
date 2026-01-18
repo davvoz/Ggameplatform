@@ -1,8 +1,17 @@
 {
-  "version": "3.14.7",
-  "timestamp": "2026-01-18T22:48:55.935Z",
-  "buildNumber": 293,
+  "version": "3.14.8",
+  "timestamp": "2026-01-18T23:57:03.465Z",
+  "buildNumber": 294,
   "changelog": [
+    {
+      "version": "3.14.8",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]update UI layout for ability buttons and adjust positioning above fire button",
+        "🔖 Bump version to 3.14.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.7",
       "date": "2026-01-18",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: add animated counters for hero statistics and improve total XP calculation",
         "🔖 Bump version to 3.13.19 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.19",
-      "date": "2026-01-17",
-      "type": "patch",
-      "changes": [
-        "fix: enhance user session retrieval with optional pagination and total XP calculation",
-        "🔖 Bump version to 3.13.18 [skip-version]"
       ]
     }
   ]

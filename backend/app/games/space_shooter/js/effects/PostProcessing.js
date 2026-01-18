@@ -19,6 +19,7 @@ class PostProcessing {
         this.scanLinesOpacity = 0.05;
         this.chromaticAberrationEnabled = false;
         this.chromaticAberrationAmount = 2;
+        this.crtEnabled = true;
         
         // Screen shake
         this.shakeIntensity = 0;
@@ -32,7 +33,6 @@ class PostProcessing {
         
         this.resize();
     }
-
     resize() {
         this.bufferCanvas.width = this.canvas.width;
         this.bufferCanvas.height = this.canvas.height;
@@ -113,7 +113,9 @@ class PostProcessing {
         }
         
         // CRT curvature effect (subtle)
-        this.applyCRTEffect(ctx, w, h);
+        if (this.crtEnabled) {
+            this.applyCRTEffect(ctx, w, h);
+        }
     }
 
     applyCRTEffect(ctx, w, h) {

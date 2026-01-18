@@ -248,4 +248,39 @@ class StarField {
         // Render stars only (performance ottimizzata)
         this.stars.forEach(star => star.render(ctx, time));
     }
+    
+    /**
+     * Imposta la qualità del campo stellare
+     * @param {string} quality - 'high', 'medium', 'low'
+     */
+    setQuality(quality) {
+        // Rimuovi tutte le stelle esistenti
+        this.stars = [];
+        
+        let starCounts;
+        switch (quality) {
+            case 'high':
+                // Molte stelle, multi-layer, con glow
+                starCounts = { 1: 40, 2: 30, 3: 20 };
+                break;
+            case 'medium':
+                // Stelle moderate
+                starCounts = { 1: 20, 2: 15, 3: 8 };
+                break;
+            case 'low':
+                // Minimo di stelle
+                starCounts = { 1: 8, 2: 5, 3: 2 };
+                break;
+            default:
+                starCounts = { 1: 15, 2: 10, 3: 5 };
+        }
+        
+        for (const [layer, count] of Object.entries(starCounts)) {
+            for (let i = 0; i < count; i++) {
+                this.stars.push(new Star(this.canvasWidth, this.canvasHeight, parseInt(layer)));
+            }
+        }
+        
+        console.log(`🌟 StarField quality: ${quality} (${this.stars.length} stars)`);
+    }
 }

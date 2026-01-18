@@ -1,5 +1,6 @@
 /**
  * SoundManager - Gestisce effetti sonori e musica con Web Audio API
+ * Con fix specifici per iOS Safari
  */
 class SoundManager {
     constructor() {
@@ -10,6 +11,9 @@ class SoundManager {
         this.enabled = true;
         this.initialized = false;
         
+        // iOS detection
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         // Background music
         this.bgMusic = null;
         this.bgMusicSource = null;
@@ -32,6 +36,9 @@ class SoundManager {
         // Mute states
         this.musicMuted = false;
         this.sfxMuted = false;
+        
+        // iOS unlock state
+        this.unlocked = false;
     }
 
     /**
@@ -41,7 +48,9 @@ class SoundManager {
         if (this.initialized) return;
         
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Crea AudioContext
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContextClass();
             
             // Master gain
             this.masterGain = this.audioContext.createGain();
@@ -60,15 +69,53 @@ class SoundManager {
             
             this.initialized = true;
             
+            // iOS: Sblocca audio immediatamente
+            if (this.isIOS) {
+                this.unlockIOSAudio();
+            }
+            
             // Carica la traccia salvata o quella predefinita
             const savedTrack = localStorage.getItem('spaceShooter_musicTrack');
             if (savedTrack !== null) {
                 this.currentTrackIndex = parseInt(savedTrack, 10);
             }
             this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
+            
+            console.log(`🔊 Audio initialized (iOS: ${this.isIOS})`);
         } catch (e) {
-            console.warn('Web Audio API not supported');
+            console.warn('Web Audio API not supported:', e);
             this.enabled = false;
+        }
+    }
+    
+    /**
+     * Sblocca l'audio su iOS (deve essere chiamato durante un'interazione utente)
+     */
+    async unlockIOSAudio() {
+        if (this.unlocked) return;
+        
+        try {
+            // Resume AudioContext (necessario su iOS)
+            if (this.audioContext && this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+            
+            // Crea e riproduce un buffer silenzioso per sbloccare l'audio
+            const silentBuffer = this.audioContext.createBuffer(1, 1, 22050);
+            const source = this.audioContext.createBufferSource();
+            source.buffer = silentBuffer;
+            source.connect(this.audioContext.destination);
+            source.start(0);
+            
+            // Alcuni browser richiedono anche di "toccare" il GainNode
+            if (this.masterGain) {
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, this.audioContext.currentTime);
+            }
+            
+            this.unlocked = true;
+            console.log('🔓 iOS Audio unlocked');
+        } catch (e) {
+            console.warn('Failed to unlock iOS audio:', e);
         }
     }
     
@@ -87,13 +134,43 @@ class SoundManager {
             }
             
             const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const arrayBuffer = await response.arrayBuffer();
-            this.bgMusicBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-            this.trackBuffers[url] = this.bgMusicBuffer; // Salva nella cache
-            console.log('Background music loaded');
+            
+            // iOS fix: usa promise-based decodeAudioData
+            this.bgMusicBuffer = await this.decodeAudioDataSafe(arrayBuffer);
+            
+            if (this.bgMusicBuffer) {
+                this.trackBuffers[url] = this.bgMusicBuffer;
+                console.log('Background music loaded');
+            }
         } catch (e) {
             console.warn('Failed to load background music:', e);
         }
+    }
+    
+    /**
+     * Decode audio data con fallback per browser più vecchi
+     */
+    decodeAudioDataSafe(arrayBuffer) {
+        return new Promise((resolve, reject) => {
+            // Prima prova il metodo promise-based (moderno)
+            try {
+                this.audioContext.decodeAudioData(arrayBuffer)
+                    .then(resolve)
+                    .catch(reject);
+            } catch (e) {
+                // Fallback per browser più vecchi (callback-based)
+                this.audioContext.decodeAudioData(
+                    arrayBuffer,
+                    (buffer) => resolve(buffer),
+                    (error) => reject(error)
+                );
+            }
+        });
     }
     
     /**
@@ -144,17 +221,27 @@ class SoundManager {
         if (!this.initialized || this.musicPlaying) return;
         
         try {
+            // iOS: Assicurati che l'audio sia sbloccato
+            if (this.isIOS && !this.unlocked) {
+                await this.unlockIOSAudio();
+            }
+            
             // Ensure AudioContext is active (browsers may suspend it)
             if (this.audioContext && this.audioContext.state === 'suspended') {
                 await this.audioContext.resume();
+                console.log('AudioContext resumed');
             }
             
             // If buffer is not loaded yet, try to (re)load and bail out
             if (!this.bgMusicBuffer) {
                 await this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
-                if (!this.bgMusicBuffer) return;
+                if (!this.bgMusicBuffer) {
+                    console.warn('No audio buffer available');
+                    return;
+                }
             }
             
+            // Crea nuova source
             this.bgMusicSource = this.audioContext.createBufferSource();
             this.bgMusicSource.buffer = this.bgMusicBuffer;
             this.bgMusicSource.loop = true;
@@ -166,10 +253,18 @@ class SoundManager {
                 this.musicGain.gain.setValueAtTime(startVol, this.audioContext.currentTime);
             }
             
+            // iOS fix: usa start(0) con timing esplicito
             this.bgMusicSource.start(0);
             this.musicPlaying = true;
+            
+            console.log('🎵 Background music started');
         } catch (e) {
             console.warn('Failed to play background music:', e);
+            // Retry una volta su iOS
+            if (this.isIOS && !this.unlocked) {
+                this.unlocked = false;
+                await this.unlockIOSAudio();
+            }
         }
     }
     
@@ -177,15 +272,16 @@ class SoundManager {
      * Ferma la musica di background
      */
     stopBackgroundMusic() {
-        if (this.bgMusicSource && this.musicPlaying) {
+        if (this.bgMusicSource) {
             try {
                 this.bgMusicSource.stop();
+                this.bgMusicSource.disconnect();
             } catch (e) {
                 // Ignore if already stopped
             }
             this.bgMusicSource = null;
-            this.musicPlaying = false;
         }
+        this.musicPlaying = false;
     }
     
     /**
@@ -268,12 +364,26 @@ class SoundManager {
             this.sfxGain.gain.setTargetAtTime(this.sfxVolume, this.audioContext.currentTime, 0.05);
         }
     }
+    
+    /**
+     * Assicura che l'AudioContext sia attivo prima di riprodurre un suono
+     */
+    ensureAudioReady() {
+        if (!this.enabled || !this.initialized) return false;
+        if (this.sfxMuted) return false;
+        
+        // Resume suspended context
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        return true;
+    }
 
     /**
      * Genera un suono di sparo
      */
     playShoot() {
-        if (!this.enabled || !this.initialized) return;
+        if (!this.ensureAudioReady()) return;
         
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -296,7 +406,7 @@ class SoundManager {
      * Genera un suono di esplosione
      */
     playExplosion() {
-        if (!this.enabled || !this.initialized) return;
+        if (!this.ensureAudioReady()) return;
         
         const bufferSize = this.audioContext.sampleRate * 0.3;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
@@ -329,7 +439,7 @@ class SoundManager {
      * Genera un suono di power-up raccolto
      */
     playPowerUp() {
-        if (!this.enabled || !this.initialized) return;
+        if (!this.ensureAudioReady()) return;
         
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -353,7 +463,7 @@ class SoundManager {
      * Genera un suono di danno subito
      */
     playHit() {
-        if (!this.enabled || !this.initialized) return;
+        if (!this.ensureAudioReady()) return;
         
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -376,7 +486,7 @@ class SoundManager {
      * Genera un suono di game over
      */
     playGameOver() {
-        if (!this.enabled || !this.initialized) return;
+        if (!this.ensureAudioReady()) return;
         
         const notes = [440, 392, 349, 294];
         

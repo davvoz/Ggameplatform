@@ -127,14 +127,27 @@ class ParticleSystem {
     constructor() {
         this.particles = [];
         this.emitters = [];
+        this.maxParticles = 500;
+        this.particleMultiplier = 1.0;
+        this.glowEnabled = true;
+        this.trailEnabled = true;
     }
 
     emit(x, y, config = {}, count = 1) {
-        for (let i = 0; i < count; i++) {
+        // Applica moltiplicatore e limita al massimo
+        const adjustedCount = Math.ceil(count * this.particleMultiplier);
+        const actualCount = Math.min(adjustedCount, this.maxParticles - this.particles.length);
+        
+        if (actualCount <= 0) return;
+        
+        for (let i = 0; i < actualCount; i++) {
             const particle = new Particle(x, y, {
                 ...config,
                 vx: config.vx !== undefined ? config.vx : (Math.random() - 0.5) * (config.spread || 100),
                 vy: config.vy !== undefined ? config.vy : (Math.random() - 0.5) * (config.spread || 100),
+                // Applica impostazioni performance
+                glow: config.glow && this.glowEnabled,
+                trail: config.trail && this.trailEnabled,
             });
             this.particles.push(particle);
         }

@@ -157,6 +157,7 @@ class Game {
         this.resumeButton = document.getElementById('resume-button');
         this.musicToggle = document.getElementById('music-toggle');
         this.sfxToggle = document.getElementById('sfx-toggle');
+        this.trackButtons = document.querySelectorAll('.track-btn');
         
         // Click/touch sulla canvas per il bottone pausa
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
@@ -219,6 +220,26 @@ class Game {
             this.sfxToggle.addEventListener('click', handleSfxToggle);
             this.sfxToggle.addEventListener('touchend', handleSfxToggle, { passive: false });
         }
+        
+        // Track selector buttons - handler per click E touch
+        const handleTrackChange = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const trackIndex = parseInt(e.target.dataset.track, 10);
+            if (isNaN(trackIndex)) return;
+            
+            // Aggiorna UI
+            this.trackButtons.forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Cambia traccia
+            await this.sound.changeTrack(trackIndex);
+        };
+        
+        this.trackButtons.forEach(btn => {
+            btn.addEventListener('click', handleTrackChange);
+            btn.addEventListener('touchend', handleTrackChange, { passive: false });
+        });
         
         // ESC key for pause
         window.addEventListener('keydown', (e) => {
@@ -320,6 +341,19 @@ class Game {
                 this.sfxToggle.classList.add('on');
                 this.sfxToggle.textContent = 'ON';
             }
+        }
+        
+        // Aggiorna stato dei bottoni traccia
+        if (this.trackButtons) {
+            const currentTrack = this.sound.getCurrentTrackIndex();
+            this.trackButtons.forEach(btn => {
+                const trackIdx = parseInt(btn.dataset.track, 10);
+                if (trackIdx === currentTrack) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
     }
     

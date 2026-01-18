@@ -16,6 +16,15 @@ class SoundManager {
         this.bgMusicBuffer = null;
         this.musicPlaying = false;
         
+        // Music tracks
+        this.musicTracks = [
+            { id: 1, name: 'Cosmic Journey', file: 'assets/background.wav' },
+            { id: 2, name: 'Stellar Storm', file: 'assets/background2.wav' },
+            { id: 3, name: 'Nebula Dreams', file: 'assets/background3.wav' }
+        ];
+        this.currentTrackIndex = 0;
+        this.trackBuffers = {}; // Cache dei buffer audio
+        
         // Volume levels (0-1)
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
@@ -51,8 +60,12 @@ class SoundManager {
             
             this.initialized = true;
             
-            // Carica la musica di background
-            this.loadBackgroundMusic('assets/background.wav');
+            // Carica la traccia salvata o quella predefinita
+            const savedTrack = localStorage.getItem('spaceShooter_musicTrack');
+            if (savedTrack !== null) {
+                this.currentTrackIndex = parseInt(savedTrack, 10);
+            }
+            this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
         } catch (e) {
             console.warn('Web Audio API not supported');
             this.enabled = false;
@@ -66,13 +79,62 @@ class SoundManager {
         if (!this.initialized) return;
         
         try {
+            // Usa cache se disponibile
+            if (this.trackBuffers[url]) {
+                this.bgMusicBuffer = this.trackBuffers[url];
+                console.log('Background music loaded from cache');
+                return;
+            }
+            
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
             this.bgMusicBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+            this.trackBuffers[url] = this.bgMusicBuffer; // Salva nella cache
             console.log('Background music loaded');
         } catch (e) {
             console.warn('Failed to load background music:', e);
         }
+    }
+    
+    /**
+     * Ottieni la lista delle tracce disponibili
+     */
+    getMusicTracks() {
+        return this.musicTracks;
+    }
+    
+    /**
+     * Ottieni l'indice della traccia corrente
+     */
+    getCurrentTrackIndex() {
+        return this.currentTrackIndex;
+    }
+    
+    /**
+     * Cambia la traccia musicale
+     */
+    async changeTrack(index) {
+        if (index < 0 || index >= this.musicTracks.length) return;
+        if (index === this.currentTrackIndex && this.bgMusicBuffer) return;
+        
+        const wasPlaying = this.musicPlaying;
+        
+        // Ferma la musica corrente
+        this.stopBackgroundMusic();
+        
+        // Aggiorna l'indice e salva la preferenza
+        this.currentTrackIndex = index;
+        localStorage.setItem('spaceShooter_musicTrack', index.toString());
+        
+        // Carica la nuova traccia
+        await this.loadBackgroundMusic(this.musicTracks[index].file);
+        
+        // Riavvia se stava suonando
+        if (wasPlaying) {
+            await this.playBackgroundMusic();
+        }
+        
+        console.log('Changed to track:', this.musicTracks[index].name);
     }
     
     /**
@@ -89,7 +151,7 @@ class SoundManager {
             
             // If buffer is not loaded yet, try to (re)load and bail out
             if (!this.bgMusicBuffer) {
-                await this.loadBackgroundMusic('assets/background.wav');
+                await this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
                 if (!this.bgMusicBuffer) return;
             }
             

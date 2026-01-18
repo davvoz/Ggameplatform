@@ -662,6 +662,57 @@ html, body {
     transform: translateY(0);
 }
 
+/* Track Selector */
+.track-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.track-selector .setting-label {
+    margin-bottom: 5px;
+}
+
+.track-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+.track-btn {
+    width: 60px;
+    height: 50px;
+    background: linear-gradient(145deg, rgba(40, 60, 100, 0.8) 0%, rgba(20, 40, 70, 0.9) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 10px;
+    color: rgba(150, 180, 220, 0.8);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.track-btn:hover {
+    background: linear-gradient(145deg, rgba(60, 90, 140, 0.9) 0%, rgba(40, 60, 100, 1) 100%);
+    border-color: rgba(100, 180, 255, 0.5);
+    color: #aaccff;
+}
+
+.track-btn.active {
+    background: linear-gradient(145deg, rgba(0, 120, 200, 0.9) 0%, rgba(0, 80, 150, 1) 100%);
+    border-color: rgba(0, 200, 255, 0.7);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.4);
+}
+
+.track-btn:active {
+    transform: scale(0.95);
+}
+
 /* Mobile detection */
 @media (hover: none) and (pointer: coarse) {
     #touch-controls {

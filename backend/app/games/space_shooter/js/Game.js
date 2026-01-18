@@ -44,6 +44,8 @@ class Game {
         this.startScreen = document.getElementById('start-screen');
         this.gameOverScreen = document.getElementById('game-over-screen');
         this.finalScoreElement = document.getElementById('final-score');
+        this.finalLevelElement = document.getElementById('final-level');
+        this.finalBestElement = document.getElementById('final-best');
         this.restartBtn = document.getElementById('restart-btn');
 
         // Combo system
@@ -505,12 +507,20 @@ class Game {
             }
         }
 
-        if (this.score > this.highScore) {
+        const isNewHigh = this.score > this.highScore;
+        if (isNewHigh) {
             this.highScore = this.score;
             this.saveHighScore();
         }
 
         this.finalScoreElement.textContent = this.score.toLocaleString();
+        if (this.finalLevelElement) {
+            this.finalLevelElement.textContent = this.level.toString();
+        }
+        if (this.finalBestElement) {
+            this.finalBestElement.textContent = this.highScore.toLocaleString();
+            this.finalBestElement.classList.toggle('new', isNewHigh);
+        }
 
         // Invia score alla piattaforma
         if (typeof window.sendScoreToPlatform === 'function') {

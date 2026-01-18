@@ -88,9 +88,28 @@
             <p class="instructions">Mobile: Joystick + Fire<br>Desktop: WASD/Arrows + Space<br>Abilities: Q (Heal) + E (Bomb)<br>Pause: ESC</p>
         </div>
         <div id="game-over-screen" class="hidden">
-            <h1>GAME OVER</h1>
-            <p>Score: <span id="final-score">0</span></p>
-            <button id="restart-btn">RESTART</button>
+            <div class="go-card" role="dialog" aria-labelledby="go-title" aria-modal="true">
+                <div class="go-header">
+                    <h1 id="go-title" data-text="GAME OVER">GAME OVER</h1>
+                </div>
+                <div class="go-stats" aria-label="Game session summary">
+                    <div class="go-stat">
+                        <span class="label">Score</span>
+                        <span class="value score" id="final-score">0</span>
+                    </div>
+                    <div class="go-stat">
+                        <span class="label">Level</span>
+                        <span class="value level" id="final-level">1</span>
+                    </div>
+                    <div class="go-stat">
+                        <span class="label">Best</span>
+                        <span class="value best" id="final-best">0</span>
+                    </div>
+                </div>
+                <div class="go-actions">
+                    <button id="restart-btn">RESTART</button>
+                </div>
+            </div>
         </div>
     </div>
 

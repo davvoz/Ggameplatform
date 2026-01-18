@@ -377,6 +377,11 @@ class Game {
         this.startScreen.classList.add('hidden');
         this.resetGame();
         this.state = 'playing';
+        
+        // Notifica la piattaforma che il gioco è iniziato
+        if (typeof window.startGameSession === 'function') {
+            window.startGameSession();
+        }
     }
 
     resetGame() {
@@ -412,6 +417,11 @@ class Game {
         // Riavvia la musica
         this.sound.stopBackgroundMusic();
         this.sound.playBackgroundMusic();
+        
+        // Notifica la piattaforma di una nuova sessione
+        if (typeof window.startGameSession === 'function') {
+            window.startGameSession();
+        }
     }
 
     gameOver() {
@@ -453,6 +463,14 @@ class Game {
         }
         
         this.finalScoreElement.textContent = this.score.toLocaleString();
+        
+        // Invia score alla piattaforma
+        if (typeof window.sendScoreToPlatform === 'function') {
+            window.sendScoreToPlatform(this.score, {
+                level: this.level,
+                wave: this.waveNumber
+            });
+        }
     }
 
     gameLoop(currentTime) {

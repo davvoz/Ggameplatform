@@ -590,10 +590,13 @@ class AssetManager {
         ctx.shadowColor = finalC.primary;
         ctx.shadowBlur = 10;
         
-        if (type === 'health') {
+        switch (type) {
+            case 'health':
             ctx.fillRect(cx - 2, cy - 8, 4, 16);
             ctx.fillRect(cx - 8, cy - 2, 16, 4);
-        } else if (type === 'weapon') {
+            break;
+            case 'weapon':
+                
             ctx.beginPath();
             ctx.moveTo(cx, cy - 8);
             ctx.lineTo(cx + 7, cy + 4);
@@ -604,7 +607,8 @@ class AssetManager {
             ctx.lineTo(cx - 7, cy + 4);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'shield') {
+            break;
+            case 'shield':
             ctx.beginPath();
             ctx.moveTo(cx, cy - 8);
             ctx.lineTo(cx + 8, cy - 3);
@@ -614,7 +618,8 @@ class AssetManager {
             ctx.lineTo(cx - 8, cy - 3);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'speed') {
+            break;
+            case 'speed':
             // Fulmine per velocità
             ctx.beginPath();
             ctx.moveTo(cx + 2, cy - 8);
@@ -625,7 +630,8 @@ class AssetManager {
             ctx.lineTo(cx - 1, cy);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'rapid') {
+            break;
+            case 'rapid':
             // Frecce multiple per rapid fire
             ctx.beginPath();
             ctx.moveTo(cx - 4, cy - 6);
@@ -647,7 +653,8 @@ class AssetManager {
             ctx.lineTo(cx + 5, cy - 8);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'magnet') {
+            break;
+            case 'magnet':
             // U per magnete
             ctx.beginPath();
             ctx.arc(cx, cy + 2, 6, 0, Math.PI);
@@ -659,7 +666,8 @@ class AssetManager {
             ctx.lineTo(cx + 6, cy - 6);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'life') {
+            break;
+            case 'life':
             // Cuore per vita extra
             ctx.beginPath();
             ctx.moveTo(cx, cy + 6);
@@ -669,12 +677,14 @@ class AssetManager {
             ctx.bezierCurveTo(cx + 8, cy - 6, cx + 8, cy, cx, cy + 6);
             ctx.closePath();
             ctx.fill();
-        } else if (type === 'bomb') {
+            break;
+            case 'bomb':
             // Bomba
             ctx.beginPath();
             ctx.arc(cx, cy + 2, 7, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillRect(cx - 2, cy - 8, 4, 6);
+            break;
         }
         
         ctx.shadowBlur = 0;

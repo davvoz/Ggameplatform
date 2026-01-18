@@ -96,6 +96,12 @@ class Game {
         await this.assets.loadAll();
 
         this.input = new InputManager(this);
+        
+        // Aggiorna layout controlli touch dopo la creazione dell'input manager
+        if (this.input.isMobile) {
+            this.input.updateLayout(this.canvas.width, this.canvas.height);
+        }
+        
         this.postProcessing = new PostProcessing(this.canvas);
         this.starField = new StarField(this.canvas.width, this.canvas.height);
 
@@ -145,6 +151,11 @@ class Game {
         }
         if (this.postProcessing) {
             this.postProcessing.resize();
+        }
+        
+        // Aggiorna layout dei controlli touch
+        if (this.input && this.input.isMobile) {
+            this.input.updateLayout(width, height);
         }
     }
 
@@ -1009,6 +1020,11 @@ class Game {
 
         // Draw HUD (on top of everything)
         this.renderHUD();
+        
+        // Draw touch controls (mobile only, on top of everything)
+        if (this.input && this.input.isMobile && this.state === 'playing') {
+            this.input.renderTouchControls(ctx, this.player);
+        }
     }
 
     renderCelebration(ctx) {
@@ -1454,39 +1470,11 @@ class Game {
     }
 
     /**
-     * Aggiorna l'UI dei bottoni abilità (mobile)
+     * Aggiorna l'UI dei bottoni abilità (ora canvas-based, nessuna operazione necessaria)
      */
     updateAbilityUI() {
-        if (!this.player) return;
-
-        const healButton = document.getElementById('heal-button');
-        const bombButton = document.getElementById('bomb-button');
-
-        if (healButton) {
-            const healCooldownEl = healButton.querySelector('.ability-cooldown');
-            const healPercent = this.player.healCooldown / this.player.healMaxCooldown;
-
-            if (healPercent > 0) {
-                healButton.classList.add('on-cooldown');
-                healCooldownEl.style.transform = `scaleY(${healPercent})`;
-            } else {
-                healButton.classList.remove('on-cooldown');
-                healCooldownEl.style.transform = 'scaleY(0)';
-            }
-        }
-
-        if (bombButton) {
-            const bombCooldownEl = bombButton.querySelector('.ability-cooldown');
-            const bombPercent = this.player.bombCooldown / this.player.bombMaxCooldown;
-
-            if (bombPercent > 0) {
-                bombButton.classList.add('on-cooldown');
-                bombCooldownEl.style.transform = `scaleY(${bombPercent})`;
-            } else {
-                bombButton.classList.remove('on-cooldown');
-                bombCooldownEl.style.transform = 'scaleY(0)';
-            }
-        }
+        // I controlli touch sono ora renderizzati direttamente su canvas
+        // Non è più necessario aggiornare elementi HTML
     }
 
     /**

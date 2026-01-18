@@ -1,8 +1,17 @@
 {
-  "version": "3.14.3",
-  "timestamp": "2026-01-18T17:07:55.867Z",
-  "buildNumber": 289,
+  "version": "3.14.4",
+  "timestamp": "2026-01-18T18:56:21.874Z",
+  "buildNumber": 290,
   "changelog": [
+    {
+      "version": "3.14.4",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: Enhance particle system and post-processing effects",
+        "🔖 Bump version to 3.14.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.3",
       "date": "2026-01-18",
@@ -83,15 +92,6 @@
       "changes": [
         "Fix: Removed xp(ì/levelup notification outside Games",
         "🔖 Bump version to 3.13.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.15",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust sticky navbar top position for improved layout",
-        "🔖 Bump version to 3.13.14 [skip-version]"
       ]
     }
   ]

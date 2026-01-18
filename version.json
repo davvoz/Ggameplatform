@@ -1,8 +1,17 @@
 {
-  "version": "3.14.0",
-  "timestamp": "2026-01-17T17:10:29.277Z",
-  "buildNumber": 286,
+  "version": "3.14.1",
+  "timestamp": "2026-01-18T01:17:40.648Z",
+  "buildNumber": 287,
   "changelog": [
+    {
+      "version": "3.14.1",
+      "date": "2026-01-18",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]add music track selection and new background tracks",
+        "🔖 Bump version to 3.14.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.0",
       "date": "2026-01-17",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: add restoreTabState function to maintain game mode tab visual state",
         "🔖 Bump version to 3.13.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.12",
-      "date": "2026-01-16",
-      "type": "patch",
-      "changes": [
-        "fix: adjust leaderboard page top padding for better layout consistency",
-        "🔖 Bump version to 3.13.11 [skip-version]"
       ]
     }
   ]

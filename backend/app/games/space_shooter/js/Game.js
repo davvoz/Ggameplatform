@@ -1304,7 +1304,7 @@ class Game {
         ctx.fillText('LEVEL', this.canvas.width - padding, padding);
 
         ctx.font = 'bold 18px Orbitron, Arial';
-        ctx.fillStyle = '#ffaa00';
+        ctx.fillStyle = '#dddbd6';
         ctx.shadowColor = '#ff8800';
         ctx.shadowBlur = 8;
         ctx.fillText(this.level.toString(), this.canvas.width - padding, padding + 18);
@@ -1426,21 +1426,25 @@ class Game {
             ctx.fillStyle = this.player.overheated ? '#ff4444' : '#aabbcc';
             ctx.fillText(this.player.overheated ? 'HOT!' : 'HEAT', heatX + heatBarWidth / 2, heatY - 6);
 
-            // Icona fiamma se surriscaldato
+            // evidenzia se surriscaldato
             if (this.player.overheated) {
-                ctx.font = '14px Arial';
-                ctx.fillText('🔥', heatX + heatBarWidth / 2, heatY + heatBarHeight + 16);
+                ctx.shadowColor = '#ff4444';
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = '#f89090';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(heatX - 2, heatY - 2, heatBarWidth + 4, heatBarHeight + 4);
+                ctx.shadowBlur = 0;
             }
 
             // Combo indicator
             if (this.combo > 0) {
-                const comboX = this.canvas.width - padding;
-                const comboY = healthY + 5;
+                const comboX =  80;
+                const comboY = healthY + 50;
 
                 ctx.font = 'bold 12px Orbitron, Arial';
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#ffaa00';
-                ctx.shadowColor = '#ff8800';
+                ctx.shadowColor = '#00ff00';
                 ctx.shadowBlur = 10;
                 ctx.fillText(`${this.combo}x COMBO`, comboX, comboY);
 
@@ -1452,7 +1456,7 @@ class Game {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 ctx.fillRect(comboX - comboBarWidth, comboY + 5, comboBarWidth, comboBarHeight);
                 ctx.fillStyle = '#ffaa00';
-                ctx.fillRect(comboX - comboBarWidth, comboY + 5, comboBarWidth * comboProgress, comboBarHeight);
+                ctx.fillRect(comboX - comboBarWidth, comboY + 15, comboBarWidth * comboProgress, comboBarHeight);
 
                 ctx.shadowBlur = 0;
             }
@@ -1562,7 +1566,7 @@ class Game {
         // Posizione: in basso a destra, sopra la heat bar
         const width = 95;
         const height = 55;
-        const x = this.canvas.width - width - 10;
+        const x = this.canvas.width - width -150;
         const y = this.canvas.height - height - 10;
 
         ctx.save();

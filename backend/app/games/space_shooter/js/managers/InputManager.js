@@ -85,17 +85,22 @@ class InputManager {
             radius: 45
         };
         
-        // Ability buttons a sinistra del fire button
-        const abilitySize = 50;
+        // Ability buttons SOPRA il tasto fire (centrati orizzontalmente)
+        const abilitySize = 54;
         const abilityGap = 12;
+        const fireCenterX = this.fireButtonPos.x;
+        const fireCenterY = this.fireButtonPos.y;
+        
+        // Heal subito sopra il fire
         this.healButtonPos = {
-            x: this.fireButtonPos.x - this.fireButtonPos.radius - abilityGap - abilitySize,
-            y: canvasHeight - bottomMargin - abilitySize - 20,
+            x:( fireCenterX - abilitySize / 2 ) + 35,
+            y: fireCenterY - this.fireButtonPos.radius - abilityGap - abilitySize,
             size: abilitySize
         };
+        // Bomb sopra heal
         this.bombButtonPos = {
-            x: this.healButtonPos.x - abilitySize - abilityGap,
-            y: this.healButtonPos.y,
+            x:( fireCenterX - abilitySize / 2 ) + 35,
+            y: this.healButtonPos.y - abilityGap - abilitySize,
             size: abilitySize
         };
     }

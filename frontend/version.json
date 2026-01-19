@@ -1,8 +1,18 @@
 {
-  "version": "3.14.10",
-  "timestamp": "2026-01-19T00:44:28.529Z",
-  "buildNumber": 296,
+  "version": "3.14.11",
+  "timestamp": "2026-01-19T20:37:41.794Z",
+  "buildNumber": 297,
   "changelog": [
+    {
+      "version": "3.14.11",
+      "date": "2026-01-19",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: remove default calculation fallback when no XP rules are provided",
+        "🔖 Bump version to 3.14.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.10",
       "date": "2026-01-19",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: [SS]optimize explosion particle creation and rendering",
         "🔖 Bump version to 3.14.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.1",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]add music track selection and new background tracks",
-        "🔖 Bump version to 3.14.0 [skip-version]"
       ]
     }
   ]

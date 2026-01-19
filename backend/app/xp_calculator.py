@@ -581,9 +581,6 @@ class XPCalculator:
         Returns:
             Dictionary with total_xp, base_xp, and breakdown by rule
         """
-        if not rules:
-            logger.warning("No XP rules provided, using default calculation")
-            return self._default_calculation(context)
         
         base_xp = 0.0
         rule_breakdown = []

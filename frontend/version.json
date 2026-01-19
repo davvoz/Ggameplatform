@@ -1,8 +1,17 @@
 {
-  "version": "3.14.8",
-  "timestamp": "2026-01-18T23:57:03.465Z",
-  "buildNumber": 294,
+  "version": "3.14.9",
+  "timestamp": "2026-01-19T00:38:57.556Z",
+  "buildNumber": 295,
   "changelog": [
+    {
+      "version": "3.14.9",
+      "date": "2026-01-19",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]enhance game over screen with new title styling and background image",
+        "🔖 Bump version to 3.14.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.8",
       "date": "2026-01-18",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: NEW GAME space shooter [SS]",
         "🔖 Bump version to 3.13.20 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.13.20",
-      "date": "2026-01-17",
-      "type": "patch",
-      "changes": [
-        "fix: add animated counters for hero statistics and improve total XP calculation",
-        "🔖 Bump version to 3.13.19 [skip-version]"
       ]
     }
   ]

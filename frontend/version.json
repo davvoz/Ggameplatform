@@ -1,8 +1,17 @@
 {
-  "version": "3.14.9",
-  "timestamp": "2026-01-19T00:38:57.556Z",
-  "buildNumber": 295,
+  "version": "3.14.10",
+  "timestamp": "2026-01-19T00:44:28.529Z",
+  "buildNumber": 296,
   "changelog": [
+    {
+      "version": "3.14.10",
+      "date": "2026-01-19",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]remove unused styles for game over title in header",
+        "🔖 Bump version to 3.14.9 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.9",
       "date": "2026-01-19",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [SS]add music track selection and new background tracks",
         "🔖 Bump version to 3.14.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.0",
-      "date": "2026-01-17",
-      "type": "minor",
-      "changes": [
-        "feat: NEW GAME space shooter [SS]",
-        "🔖 Bump version to 3.13.20 [skip-version]"
       ]
     }
   ]

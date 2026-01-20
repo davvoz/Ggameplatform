@@ -1,8 +1,17 @@
 {
-  "version": "3.14.11",
-  "timestamp": "2026-01-19T20:37:41.794Z",
-  "buildNumber": 297,
+  "version": "3.15.0",
+  "timestamp": "2026-01-20T01:28:17.231Z",
+  "buildNumber": 298,
   "changelog": [
+    {
+      "version": "3.15.0",
+      "date": "2026-01-20",
+      "type": "minor",
+      "changes": [
+        "feat: [SS CROSS]add XP and stats banners, level-up notifications, and XP calculation strategies",
+        "🔖 Bump version to 3.14.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.14.11",
       "date": "2026-01-19",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SS]integrate Platform SDK for game session management and score reporting",
         "🔖 Bump version to 3.14.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.2",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]optimize explosion particle creation and rendering",
-        "🔖 Bump version to 3.14.1 [skip-version]"
       ]
     }
   ]

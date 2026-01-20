@@ -1,8 +1,17 @@
 {
-  "version": "3.15.0",
-  "timestamp": "2026-01-20T01:28:17.231Z",
-  "buildNumber": 298,
+  "version": "3.15.1",
+  "timestamp": "2026-01-20T02:55:52.486Z",
+  "buildNumber": 299,
   "changelog": [
+    {
+      "version": "3.15.1",
+      "date": "2026-01-20",
+      "type": "patch",
+      "changes": [
+        "refactor: remove game registration logic from XP rules script",
+        "🔖 Bump version to 3.15.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.0",
       "date": "2026-01-20",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Enhance particle system and post-processing effects",
         "🔖 Bump version to 3.14.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.3",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]integrate Platform SDK for game session management and score reporting",
-        "🔖 Bump version to 3.14.2 [skip-version]"
       ]
     }
   ]

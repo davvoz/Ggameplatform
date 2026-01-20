@@ -62,6 +62,7 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
             PlatformSDK.gameOver(finalScore, {
                 extra_data: {
                     level: window.game?.level || 1,
+                    wave: window.game?.waveNumber || 0,
                     ...extraData
                 }
             });
@@ -74,9 +75,33 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
     sessionStarted = false;
 }
 
+// Show XP banner (exposed globally for platform)
+function showXPBanner(xpAmount, extraData = null) {
+    if (window.game && typeof window.game.showXPBanner === 'function') {
+        window.game.showXPBanner(xpAmount, extraData);
+    }
+}
+
+// Show stats banner (exposed globally for platform)
+function showStatsBanner(stats) {
+    if (window.game && typeof window.game.showStatsBanner === 'function') {
+        window.game.showStatsBanner(stats);
+    }
+}
+
+// Show level up notification (exposed globally for platform)
+function showLevelUpNotification(levelUpData) {
+    if (window.game && typeof window.game.showLevelUpNotification === 'function') {
+        window.game.showLevelUpNotification(levelUpData);
+    }
+}
+
 // Export functions for Game.js to use
 window.startGameSession = startGameSession;
 window.sendScoreToPlatform = sendScoreToPlatform;
+window.showXPBanner = showXPBanner;
+window.showStatsBanner = showStatsBanner;
+window.showLevelUpNotification = showLevelUpNotification;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const canvas = document.getElementById('gameCanvas');

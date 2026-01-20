@@ -394,6 +394,71 @@ class AbsoluteImprovementStrategy(XPCalculationStrategy):
         return True
 
 
+class LevelScoreStrategy(XPCalculationStrategy):
+    """Calculate XP based on score and level with optional logarithmic scaling."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        XP = (score / score_divisor) * level_multiplier
+        
+        Expected parameters:
+            - score_divisor: float (default 100000)
+            - log_base: float or None (default None) - if set, uses logarithmic scaling
+            - max_xp: float or None (default None)
+        
+        Level is taken from extra_data['level'] or defaults to 1.
+        
+        Linear mode (log_base=None):
+            XP = (score / divisor) * level
+            
+        Logarithmic mode (log_base=6):
+            XP = (score / divisor) * (1 + log_base(level))
+            Level 1 → multiplier ≈ 1.0
+            Level 6 → multiplier ≈ 2.0
+            Level 36 → multiplier ≈ 3.0
+            Level 216 → multiplier ≈ 4.0
+        """
+        import math
+        
+        score_divisor = parameters.get('score_divisor', 100000)
+        log_base = parameters.get('log_base')
+        max_xp = parameters.get('max_xp')
+        
+        # Get level from extra_data
+        level = 1
+        if context.extra_data:
+            level = max(1, context.extra_data.get('level', 1))
+        
+        # Calculate level multiplier
+        if log_base and log_base > 1:
+            # Logarithmic scaling: 1 + log_base(level)
+            level_multiplier = 1 + (math.log(level) / math.log(log_base))
+        else:
+            # Linear scaling
+            level_multiplier = level
+        
+        # Calculate XP: (score / divisor) * level_multiplier
+        xp = (context.score / score_divisor) * level_multiplier
+        
+        if max_xp is not None and xp > max_xp:
+            xp = max_xp
+            
+        return xp
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate level_score parameters."""
+        if 'score_divisor' in parameters:
+            if not isinstance(parameters['score_divisor'], (int, float)) or parameters['score_divisor'] <= 0:
+                return False
+        if 'log_base' in parameters and parameters['log_base'] is not None:
+            if not isinstance(parameters['log_base'], (int, float)) or parameters['log_base'] <= 1:
+                return False
+        if 'max_xp' in parameters and parameters['max_xp'] is not None:
+            if not isinstance(parameters['max_xp'], (int, float)) or parameters['max_xp'] < 0:
+                return False
+        return True
+
+
 class CustomStrategy(XPCalculationStrategy):
     """Calculate XP using custom logic based on extra_data from session."""
     
@@ -525,6 +590,8 @@ class StrategyFactory:
         'level_progression': LevelProgressionStrategy(),
         'distance_bonus': DistanceBonusStrategy(),
         'absolute_improvement': AbsoluteImprovementStrategy(),
+        # Level-based score calculation: XP = (score / divisor) * level
+        'level_score': LevelScoreStrategy(),
         # Custom strategy for game-specific calculations
         'custom': CustomStrategy(),
     }

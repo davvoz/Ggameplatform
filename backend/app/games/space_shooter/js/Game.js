@@ -301,6 +301,199 @@ class Game {
                 }
             }
         });
+
+        // Setup window listeners for platform messages (XP banner, level-up, etc.)
+        this.setupWindowListeners();
+    }
+
+    /**
+     * Setup window listeners for platform messages
+     */
+    setupWindowListeners() {
+        // Register with PlatformSDK for XP banner events
+        if (window.PlatformSDK) {
+            window.PlatformSDK.on('showXPBanner', (payload) => {
+                console.log('🎁 [PlatformSDK Event] Showing XP banner inside game:', payload);
+                if (payload && payload.xp_earned !== undefined) {
+                    this.showXPBanner(payload.xp_earned, payload);
+                }
+            });
+        }
+        
+        // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+            
+            // Handle XP banner
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
+                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
+            }
+            
+            // Handle level-up notification
+            if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+                this.showLevelUpNotification(event.data.payload);
+            }
+        });
+    }
+
+    /**
+     * Show XP earned banner inside the game
+     * @param {number} xpAmount - Amount of XP earned
+     * @param {object|string} extraData - Extra data with XP breakdown
+     */
+    showXPBanner(xpAmount, extraData = null) {
+        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner';
+        banner.innerHTML = `
+            <div class="game-xp-badge">
+                <span class="game-xp-icon">⭐</span>
+                <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
+            </div>
+        `;
+        
+        document.body.appendChild(banner);
+        
+        // Remove after 3.5 seconds
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        }, 3500);
+    }
+
+    /**
+     * Show game statistics banner inside the game
+     * @param {object} stats - Game statistics to display
+     */
+    showStatsBanner(stats) {
+        console.log('📊 Showing stats banner inside game:', stats);
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-stats-banner';
+        
+        const statsHTML = `
+            <button class="stats-close-btn" aria-label="Close">✕</button>
+            <div class="stats-header">
+                <span class="stats-icon">🚀</span>
+                <span class="stats-title">Mission Report</span>
+            </div>
+            <div class="stats-xp-info">
+                <div class="stats-xp-title">💡 XP Formula: (score / 100,000) × level</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-main">
+                        <span class="stat-label">🎯 Score</span>
+                        <span class="stat-value">${stats.score?.toLocaleString() || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Base score for XP calculation</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-main">
+                        <span class="stat-label">🎖️ Level</span>
+                        <span class="stat-value">${stats.level || 1}</span>
+                    </div>
+                    <div class="stat-xp-contribution">XP multiplier for this run</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-main">
+                        <span class="stat-label">🌊 Waves</span>
+                        <span class="stat-value">${stats.wave || 0}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Enemy waves defeated</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-main">
+                        <span class="stat-label">⏱️ Time</span>
+                        <span class="stat-value">${stats.duration_seconds ? Math.floor(stats.duration_seconds / 60) + ':' + (stats.duration_seconds % 60).toString().padStart(2, '0') : '0:00'}</span>
+                    </div>
+                    <div class="stat-xp-contribution">Session duration</div>
+                </div>
+                ${stats.highest_combo > 0 ? `
+                <div class="stat-item highlight">
+                    <div class="stat-main">
+                        <span class="stat-label">🔥 Best Combo</span>
+                        <span class="stat-value">${stats.highest_combo}×</span>
+                    </div>
+                    <div class="stat-xp-contribution">Maximum hit streak</div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        banner.innerHTML = statsHTML;
+        
+        // Add close button handler
+        const closeBtn = banner.querySelector('.stats-close-btn');
+        closeBtn.addEventListener('click', () => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        });
+        
+        document.body.appendChild(banner);
+    }
+
+    /**
+     * Show level-up notification
+     */
+    showLevelUpNotification(levelUpData) {
+        const { old_level, new_level, title, badge, coins_awarded, is_milestone, user_data } = levelUpData;
+
+        // Check if user is anonymous
+        const isAnonymous = user_data?.is_anonymous === true;
+
+        const modal = document.createElement('div');
+        modal.className = 'level-up-modal';
+        modal.innerHTML = `
+            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+                <div class="level-up-animation">
+                    <div class="level-up-rays"></div>
+                    <div class="level-up-badge-container">
+                        <span class="level-up-badge">${badge}</span>
+                    </div>
+                </div>
+                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+                <div class="level-up-levels">
+                    <span class="old-level">${old_level}</span>
+                    <span class="level-arrow">→</span>
+                    <span class="new-level">${new_level}</span>
+                </div>
+                <div class="level-up-new-title">${title}</div>
+                ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+                ${!isAnonymous && coins_awarded > 0 ? `
+                    <div class="level-up-reward">
+                        <span class="reward-icon">🪙</span>
+                        <span class="reward-amount">+${coins_awarded} Coins</span>
+                    </div>
+                ` : ''}
+                <button class="level-up-close">Continue</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Trigger animation
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // Close handler
+        const closeBtn = modal.querySelector('.level-up-close');
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+
+        // Auto-close after 6 seconds
+        setTimeout(() => {
+            if (modal.parentElement) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }, 6000);
     }
 
     /**

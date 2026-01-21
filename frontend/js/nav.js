@@ -81,6 +81,29 @@ function updateQuestBadge(count) {
     
     badge.textContent = count > 9 ? '9+' : count;
     badge.classList.add('pulse-animation');
+
+    // Also show a small badge on the mobile menu toggle so users see it when
+    // the navbar is hidden on small screens. We clone the badge so both
+    // elements can exist independently in the DOM.
+    const navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+        let toggleBadge = navToggle.querySelector('.quest-notification-badge');
+        const label = count > 9 ? '9+ unclaimed quests' : `${count} unclaimed quests`;
+        if (!toggleBadge) {
+            // Create a small circular badge for the toggle without visible text
+            toggleBadge = document.createElement('span');
+            toggleBadge.className = 'quest-notification-badge';
+            toggleBadge.setAttribute('aria-label', label);
+            toggleBadge.title = label;
+            // no visible number inside the toggle badge
+            toggleBadge.textContent = '';
+            navToggle.appendChild(toggleBadge);
+        } else {
+            toggleBadge.setAttribute('aria-label', label);
+            toggleBadge.title = label;
+            toggleBadge.textContent = '';
+        }
+    }
 }
 
 /**
@@ -93,6 +116,13 @@ function removeQuestBadge() {
     const badge = questsLink.querySelector('.quest-notification-badge');
     if (badge) {
         badge.remove();
+    }
+
+    // Also remove any badge on the mobile nav toggle
+    const navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+        const toggleBadge = navToggle.querySelector('.quest-notification-badge');
+        if (toggleBadge) toggleBadge.remove();
     }
 }
 

@@ -673,12 +673,46 @@
     }
 }
 
+/* Box/inner glow animation used to illuminate the interior of the Quests button */
+@keyframes glow-box {
+    0%, 100% {
+        box-shadow: 0 0 6px rgba(255,193,7,0.28), inset 0 0 6px rgba(255,193,7,0.12);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255,193,7,0.7), inset 0 0 16px rgba(255,193,7,0.28);
+    }
+}
+
 .pulse-animation {
     animation: pulse 2s ease-in-out infinite;
 }
 
 #questsLink:has(.quest-notification-badge) {
+    /* existing text glow + a box/inner glow so the button itself lights up */
+    animation: glow-pulse 2s ease-in-out infinite, glow-box 2s ease-in-out infinite;
+    /* subtle tinted background so the inner glow is visible */
+    background: linear-gradient(135deg, rgba(255,193,7,0.04), rgba(255,193,7,0.015));
+    box-shadow: 0 0 6px rgba(255,193,7,0.28), inset 0 0 6px rgba(255,193,7,0.12);
+    border-radius: var(--radius-lg);
+    position: relative;
+    z-index: 2;
+}
+
+/* Also make the hamburger/menu toggle glow when quests are claimable
+   (matches when the nav menu contains the quests link with a badge). */
+.nav-menu:has(#questsLink:has(.quest-notification-badge)) + .nav-toggle,
+.nav-toggle:has(.quest-notification-badge) {
     animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.nav-menu:has(#questsLink:has(.quest-notification-badge)) + .nav-toggle {
+    box-shadow: 0 0 18px rgba(0, 212, 255, 0.12);
+}
+
+.nav-menu:has(#questsLink:has(.quest-notification-badge)) + .nav-toggle span {
+    /* tint the lines slightly and add soft glow */
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.18);
 }
 
 /* Hamburger Menu */
@@ -700,19 +734,44 @@
     height: 2px;
     background: var(--text-primary);
     border-radius: 2px;
-    transition: var(--transition);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease;
+    transform-origin: center;
+}
+
+/* Badge shown on the hamburger/menu toggle (mobile) */
+.nav-toggle .quest-notification-badge {
+    position: absolute;
+    /* tight top-right placement on the toggle */
+    top: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    background: linear-gradient(135deg, var(--secondary-color), #ff6b9d);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.55rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px rgba(255, 61, 113, 0.55);
+    border: 1px solid rgba(255,255,255,0.14);
+    z-index: 11002;
+    overflow: hidden;
 }
 
 .nav-toggle.active span:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
+    transform: translateY(6px) rotate(45deg);
 }
 
 .nav-toggle.active span:nth-child(2) {
     opacity: 0;
+    transform: scaleX(0);
 }
 
 .nav-toggle.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
+    transform: translateY(-6px) rotate(-45deg);
 }
 
 /* Mobile Navigation */
@@ -742,7 +801,11 @@
     .nav-menu {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: 0;
+        /* Use transform for GPU-accelerated sliding and opacity for a softer feel */
+        transform: translateX(100%);
+        will-change: transform, opacity;
+        opacity: 0;
         height: 100vh;
         width: 280px;
         flex-direction: column;
@@ -751,11 +814,12 @@
         backdrop-filter: blur(20px);
         padding: 80px var(--spacing-lg) var(--spacing-lg);
         gap: 0;
-        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;
         box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
         border-left: 1px solid var(--border);
         overflow-y: auto;
         z-index: 999;
+        pointer-events: none;
     }
     /* On mobile make nav-links stack vertically and not stretch horizontally */
     .nav-links {
@@ -798,7 +862,9 @@
     }
     
     .nav-menu.active {
-        right: 0;
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
     }
     
     .nav-link {
@@ -808,10 +874,21 @@
         border-radius: var(--radius-md);
     }
     
-    /* Quest notification badge adjustments for mobile */\n    .quest-notification-badge {
+    /* Quest notification badge adjustments for mobile */
+    .quest-notification-badge {
         top: 50%;
         right: 10px;
         transform: translateY(-50%);
+    }
+
+    /* Ensure badge inside nav toggle keeps a small circular appearance */
+    .nav-toggle .quest-notification-badge {
+        top: 4px;
+        right: 4px;
+        min-width: 12px;
+        height: 12px;
+        padding: 0;
+        font-size: 0.55rem;
     }
     
     .user-info {
@@ -932,13 +1009,19 @@
         font-size: 1.2rem;
     }
     
+    /* Keep the same transform-based slide animation on very small screens */
     .nav-menu {
         width: 100%;
-        right: -100%;
+        right: 0; /* anchor to right, but use transform to hide */
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
     }
-    
+
     .nav-menu.active {
-        right: 0;
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
     }
 
     /* ensure profile row stays compact on very small screens */

@@ -11,6 +11,153 @@ export class UIManager {
     this.elements = this._initializeElements();
   }
 
+  /**
+   * Show XP banner inside the game (platform-triggered)
+   * @param {number} xpAmount
+   * @param {object|null} payload
+   */
+  showXPBanner(xpAmount, payload = null) {
+    try {
+      // Ensure blocky-road XP banner styles are available in this game
+      if (!document.querySelector('#game-xp-styles')) {
+        const style = document.createElement('style');
+        style.id = 'game-xp-styles';
+        style.textContent = `
+          .game-xp-banner {
+              position: fixed;
+              top: 80px;
+              right: 20px;
+              z-index: 10000;
+              animation: xpSlideIn 0.5s ease;
+              pointer-events: none;
+          }
+          .game-xp-banner.hiding {
+              animation: xpSlideOut 0.5s ease forwards;
+          }
+          .game-xp-badge {
+              background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+              padding: 16px 24px;
+              border-radius: 12px;
+              box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+              display: flex;
+              align-items: center;
+              gap: 12px;
+          }
+          .game-xp-icon { font-size: 1.5em; }
+          .game-xp-amount { font-size: 1.2em; font-weight: bold; color: #1a1a1a; }
+          @keyframes xpSlideIn {
+              from { transform: translateX(400px); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes xpSlideOut {
+              from { transform: translateX(0); opacity: 1; }
+              to { transform: translateX(400px); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      // Create banner using shared game markup used by other games (game-xp-banner)
+      const banner = document.createElement('div');
+      banner.className = 'game-xp-banner';
+      banner.innerHTML = `
+        <div class="game-xp-badge">
+          <span class="game-xp-icon">⭐</span>
+          <span class="game-xp-amount">+${Number(xpAmount).toFixed(2)} XP</span>
+        </div>
+      `;
+
+      document.body.appendChild(banner);
+
+      // Trigger any CSS animations from existing styles
+      setTimeout(() => banner.classList.add('show'), 10);
+
+      // Hide using the same class other games use so CSS can animate out
+      setTimeout(() => {
+        banner.classList.add('hiding');
+        setTimeout(() => {
+          if (banner.parentElement) banner.remove();
+        }, 600);
+      }, 3500);
+    } catch (err) {
+      // Silent fail to avoid breaking game
+      console.error('[UIManager] showXPBanner error:', err);
+    }
+  }
+
+  /**
+   * Show level-up modal inside the game (platform-triggered)
+   * @param {object} levelUpData
+   */
+  showLevelUpModal(levelUpData = {}) {
+    try {
+      const { old_level, new_level, title = '', badge = '', coins_awarded = 0, is_milestone = false, user_data = {} } = levelUpData;
+
+      const isAnonymous = user_data?.is_anonymous === true;
+
+      const modal = document.createElement('div');
+      modal.className = 'level-up-modal';
+      modal.innerHTML = `
+        <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+          <div class="level-up-animation">
+            <div class="level-up-rays"></div>
+            <div class="level-up-badge-container">
+              <span class="level-up-badge">${badge || '🏅'}</span>
+            </div>
+          </div>
+          <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+          <div class="level-up-levels">
+            <span class="old-level">${old_level ?? '-'}</span>
+            <span class="level-arrow">→</span>
+            <span class="new-level">${new_level ?? '-'}</span>
+          </div>
+          <div class="level-up-new-title">${title}</div>
+          ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+          ${!isAnonymous && coins_awarded > 0 ? `
+            <div class="level-up-reward">
+              <span class="reward-icon">🪙</span>
+              <span class="reward-amount">+${coins_awarded} Coins</span>
+            </div>
+          ` : ''}
+          <button class="level-up-close">Continue</button>
+        </div>
+      `;
+
+
+      // Ensure shared level-up styles are loaded (same as quest.js)
+      if (!document.querySelector('#level-up-styles')) {
+        const link = document.createElement('link');
+        link.id = 'level-up-styles';
+        link.rel = 'stylesheet';
+        link.href = '/css/level-widget.css';
+        document.head.appendChild(link);
+      }
+
+      document.body.appendChild(modal);
+
+      // Small delay to allow CSS transitions
+      setTimeout(() => modal.classList.add('show'), 10);
+
+      const closeBtn = modal.querySelector('.level-up-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          modal.classList.remove('show');
+          setTimeout(() => modal.remove(), 300);
+        });
+      }
+
+      // Auto close after 6s
+      setTimeout(() => {
+        if (modal.parentElement) {
+          modal.classList.remove('show');
+          setTimeout(() => modal.remove(), 300);
+        }
+      }, 6000);
+    } catch (err) {
+      console.error('[UIManager] showLevelUpModal error:', err);
+    }
+  }
+
   _initializeElements() {
     return Object.freeze({
       canvas: document.getElementById('diceCanvas'),

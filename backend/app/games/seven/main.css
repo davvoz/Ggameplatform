@@ -381,6 +381,10 @@ body {
   cursor: not-allowed;
 }
 
+/* In-game XP banner and Level Up modal styles (platform messages) */
+
+
+
 .bet-low {
   background: var(--primary);
 }

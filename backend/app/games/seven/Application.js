@@ -25,6 +25,23 @@ export class Application {
 
     this._initializeComponents();
     
+    // Listen for platform messages (XP banner, level-up) and render them in-game
+    window.addEventListener('message', (event) => {
+      try {
+        if (!event.data || !event.data.type) return;
+
+        if (event.data.type === 'showXPBanner' && event.data.payload) {
+          this._gameController._ui.showXPBanner(event.data.payload.xp_earned, event.data.payload);
+        }
+
+        if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+          this._gameController._ui.showLevelUpModal(event.data.payload);
+        }
+      } catch (err) {
+        console.error('[Seven] Error handling platform message:', err);
+      }
+    });
+
     await this._initializePlatformSDK();
     
     // Load coins after platform is ready

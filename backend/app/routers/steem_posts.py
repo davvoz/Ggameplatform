@@ -14,6 +14,7 @@ from app.steem_post_service import SteemPostService
 from app.models import User, Leaderboard, Game
 from app.telegram_notifier import send_telegram_success
 from app.telegram_notifier import send_telegram_success
+import os
 
 
 router = APIRouter(prefix="/api/steem", tags=["Steem"])
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/api/steem", tags=["Steem"])
 class CreatePostRequest(BaseModel):
     user_id: str
     user_message: Optional[str] = None  # Personal message from user
+    beneficiaries: Optional[List[Dict[str, Any]]] = None
 
 
 class PostPreviewRequest(BaseModel):
@@ -48,6 +50,8 @@ class CreatePostResponse(BaseModel):
     title: Optional[str] = None
     body: Optional[str] = None
     tags: Optional[List[str]] = None
+    beneficiaries: Optional[List[Dict[str, Any]]] = None
+    keychain_operations: Optional[List[Any]] = None
 
 
 def get_coin_service(db: Session = Depends(get_db)) -> CoinService:
@@ -293,6 +297,67 @@ async def create_post(
             user_message=request.user_message
         )
         
+        # Generate permlink for Keychain
+        import time, re, random
+        timestamp = int(time.time())
+        random_suffix = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=6))
+        permlink = re.sub(r'[^a-z0-9\s-]', '', post_content['title'].lower())
+        permlink = re.sub(r'\s+', '-', permlink)
+        permlink = re.sub(r'-+', '-', permlink)
+        permlink = permlink[:100]
+        permlink = f"{permlink}-{random_suffix}"
+
+        # Prepare beneficiaries for Keychain: allow override from request, otherwise env/default
+        beneficiaries = None
+        if hasattr(request, 'beneficiaries') and request.beneficiaries:
+            beneficiaries = request.beneficiaries
+
+        if beneficiaries is None:
+            beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
+            beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
+            beneficiaries = [{
+                "account": beneficiary_account,
+                "weight": beneficiary_weight
+            }]
+
+        # Prepare metadata for post (include useful tracking)
+        metadata = post_service.prepare_post_metadata(
+            username=stats['username'],
+            user_id=request.user_id,
+            level=stats['level'],
+            total_xp=stats['total_xp']
+        )
+
+        json_metadata = { 'tags': post_content['tags'], **metadata }
+
+        # Build Keychain operations: 'comment' + 'comment_options' with beneficiaries
+        comment_op = [
+            'comment',
+            {
+                'parent_author': '',
+                'parent_permlink': 'cur8',
+                'author': stats['username'],
+                'permlink': permlink,
+                'title': post_content['title'],
+                'body': post_content['body'],
+                'json_metadata': json_metadata
+            }
+        ]
+
+        comment_options_op = [
+            'comment_options',
+            {
+                'author': stats['username'],
+                'permlink': permlink,
+                'max_accepted_payout': '1000000.000 SBD',
+                'allow_votes': True,
+                'allow_curation_rewards': True,
+                'extensions': [[0, { 'beneficiaries': beneficiaries }]]
+            }
+        ]
+
+        keychain_ops = [comment_op, comment_options_op]
+
         # NOTE: Coins are now deducted AFTER successful publication
         # (in confirm-post or publish-with-key endpoints)
         # This prevents coin loss if Keychain fails to open or other errors occur
@@ -304,10 +369,12 @@ async def create_post(
             message="Post data prepared. Please confirm publication via Steem Keychain.",
             transaction_id=None,  # No transaction yet - coins deducted after publication
             post_url=None,
-            permlink=None,
+            permlink=permlink,
             title=post_content['title'],
             body=post_content['body'],
-            tags=post_content['tags']
+            tags=post_content['tags'],
+            beneficiaries=beneficiaries,
+            keychain_operations=keychain_ops
         )
         
     except HTTPException:
@@ -551,17 +618,27 @@ async def publish_with_key(
         # Publish using beem
         try:
             from beem import Steem
-            
+
             # Create Steem instance with posting key
             steem = Steem(keys=[posting_key], node='https://api.steemit.com')
-            
+
             # Prepare metadata
             json_metadata = {
                 'tags': tags,
                 **metadata
             }
-            
-            # Post using steem.post() method
+
+            # Prepare beneficiaries: allow override from request, otherwise use env/default
+            beneficiaries = request.get('beneficiaries')
+            if beneficiaries is None:
+                beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
+                beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
+                beneficiaries = [{
+                    "account": beneficiary_account,
+                    "weight": beneficiary_weight
+                }]
+
+            # Post using steem.post() method (pass beneficiaries)
             steem.post(
                 title=title,
                 body=body,
@@ -569,6 +646,7 @@ async def publish_with_key(
                 permlink=permlink,
                 tags=tags,
                 json_metadata=json_metadata,
+                beneficiaries=beneficiaries,
                 self_vote=False
             )
             

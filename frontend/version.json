@@ -1,8 +1,17 @@
 {
-  "version": "3.15.1",
-  "timestamp": "2026-01-20T02:55:52.486Z",
-  "buildNumber": 299,
+  "version": "3.15.2",
+  "timestamp": "2026-01-21T21:57:58.313Z",
+  "buildNumber": 300,
   "changelog": [
+    {
+      "version": "3.15.2",
+      "date": "2026-01-21",
+      "type": "patch",
+      "changes": [
+        "fix: add quest notification badge to mobile menu toggle",
+        "🔖 Bump version to 3.15.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.1",
       "date": "2026-01-20",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[SS] Enhance game over screen with detailed stats and styling",
         "🔖 Bump version to 3.14.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.4",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance particle system and post-processing effects",
-        "🔖 Bump version to 3.14.3 [skip-version]"
       ]
     }
   ]

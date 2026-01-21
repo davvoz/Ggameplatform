@@ -123,16 +123,23 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
 def recalculate_weekly_ranks(session: Session, week_start: str):
     """
     Recalculate ranks for weekly leaderboard.
-    Ranks are calculated across all games for the week.
+    Ranks are calculated per game for the given week (each game's entries are
+    ordered by score DESC and assigned sequential ranks starting at 1).
     """
-    # Get all entries for this week, ordered by score (descending)
-    entries = session.query(WeeklyLeaderboard).filter(
+    # Get distinct games that have entries this week
+    game_rows = session.query(WeeklyLeaderboard.game_id).filter(
         WeeklyLeaderboard.week_start == week_start
-    ).order_by(WeeklyLeaderboard.score.desc()).all()
-    
-    # Update ranks
-    for idx, entry in enumerate(entries, start=1):
-        entry.rank = idx
+    ).distinct().all()
+
+    for (game_id,) in game_rows:
+        # For each game, get entries ordered by score desc and assign ranks
+        entries = session.query(WeeklyLeaderboard).filter(
+            WeeklyLeaderboard.week_start == week_start,
+            WeeklyLeaderboard.game_id == game_id
+        ).order_by(WeeklyLeaderboard.score.desc()).all()
+
+        for idx, entry in enumerate(entries, start=1):
+            entry.rank = idx
 
 
 def recalculate_ranks_for_game(session: Session, game_id: str):

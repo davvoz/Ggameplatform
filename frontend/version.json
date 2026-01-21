@@ -1,8 +1,17 @@
 {
-  "version": "3.15.2",
-  "timestamp": "2026-01-21T21:57:58.313Z",
-  "buildNumber": 300,
+  "version": "3.15.3",
+  "timestamp": "2026-01-21T22:22:59.712Z",
+  "buildNumber": 301,
   "changelog": [
+    {
+      "version": "3.15.3",
+      "date": "2026-01-21",
+      "type": "patch",
+      "changes": [
+        "fix: implement XP banner and level-up modal display for platform messages",
+        "🔖 Bump version to 3.15.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.2",
       "date": "2026-01-21",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SS] CSS for improved readability and consistency",
         "🔖 Bump version to 3.14.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.5",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix:[SS] Enhance game over screen with detailed stats and styling",
-        "🔖 Bump version to 3.14.4 [skip-version]"
       ]
     }
   ]

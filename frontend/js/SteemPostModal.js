@@ -31,10 +31,10 @@ class SteemPostModal {
         try {
             // Create modal HTML
             this.createModal();
-            
+
             // Load initial balance and authentication UI
             await this.loadInitialData();
-            
+
         } catch (error) {
             console.error('Error showing post modal:', error);
             alert(`Failed to open post creator: ${error.message}`);
@@ -139,12 +139,12 @@ class SteemPostModal {
      */
     async loadInitialData() {
         const user = this.authManager.getUser();
-        
+
         try {
             // Fetch user balance from coin API
             const data = await this.coinAPI.getUserBalance(user.user_id);
             const balance = data.balance || 0;
-            
+
             // Update balance display
             const balanceEl = document.getElementById('userBalanceDisplay');
             if (balanceEl) {
@@ -157,7 +157,7 @@ class SteemPostModal {
             // Update publish button state based on balance
             const publishBtn = document.getElementById('publishPostBtn');
             const canAfford = balance >= 500;
-            
+
             if (!canAfford) {
                 publishBtn.disabled = true;
                 publishBtn.innerHTML = `
@@ -205,104 +205,108 @@ class SteemPostModal {
         const postingKeyInput = document.getElementById('postingKeyForPost');
         const steemUsername = user.steem_username || user.username;
 
-        // Check if we have Keychain or posting key
         const hasKeychain = this.steemPostAPI.isKeychainAvailable();
-        const postingKey = !hasKeychain ? postingKeyInput?.value : null;
+        const postingKey = hasKeychain ? null : postingKeyInput?.value;
 
         if (!hasKeychain && !postingKey) {
             alert('Please enter your posting key to publish.');
             return;
         }
 
-        let postData = null;
-
         try {
-            // Disable button
-            publishBtn.disabled = true;
-            publishBtn.innerHTML = `
-                <div class="spinner-small"></div>
-                <span>Processing...</span>
-            `;
+            this.setButtonLoading(publishBtn, 'Processing...');
 
-            // Step 1: Generate post content (no coin deduction yet)
-            const response = await this.steemPostAPI.createPost(user.user_id, userMessage);
-            
-            // Debug log
-            console.log('Post data received:', response);
-            
-            // Extract post data (handle both nested and flat response)
-            postData = response.data || response;
-            
-            // Validate post data
-            if (!postData.title || !postData.body || !postData.tags) {
-                console.error('Invalid post data:', postData);
-                throw new Error('Invalid post data received from server. Missing title, body, or tags.');
-            }
+            const postData = await this.generatePostContent(user.user_id, userMessage);
+            const result = await this.publishToSteem(hasKeychain, steemUsername, postingKey, postData, user.user_id, publishBtn);
 
-            // Step 2: Publish via appropriate method
-            let result;
-            
-            if (hasKeychain) {
-                publishBtn.innerHTML = `
-                    <span class="btn-icon">🔐</span>
-                    <span>Waiting for Keychain...</span>
-                `;
-
-                result = await this.steemPostAPI.publishViaKeychain(
-                    steemUsername,
-                    postData.title,
-                    postData.body,
-                    postData.tags,
-                    {}
-                );
-            } else {
-                publishBtn.innerHTML = `
-                    <span class="btn-icon">📝</span>
-                    <span>Publishing with posting key...</span>
-                `;
-
-                result = await this.steemPostAPI.publishViaPostingKey(
-                    steemUsername,
-                    postingKey,
-                    postData.title,
-                    postData.body,
-                    postData.tags,
-                    { user_id: user.user_id }
-                );
-
-                // Clear posting key from input immediately after use
-                if (postingKeyInput) {
-                    postingKeyInput.value = '';
-                }
-            }
-
-            // Step 3: Confirm post publication, deduct coins, and update cooldown timer
-            try {
-                await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postData.title);
-                console.log('Post confirmed, coins deducted, cooldown timer updated');
-            } catch (confirmError) {
-                console.error('Failed to confirm post:', confirmError);
-                throw new Error(`Post was published but confirmation failed: ${confirmError.message}`);
-            }
-
-            // Success!
-            this.showSuccess(result.post_url);
-
-            // Refresh coin balance
-            if (window.coinBalanceWidget) {
-                await window.coinBalanceWidget.updateBalance();
-            }
+            this.clearPostingKeyInput(postingKeyInput);
+            await this.confirmAndFinalize(result);
 
         } catch (error) {
             console.error('Error publishing post:', error);
-            alert(`Failed to publish post:\n\n${error.message}`);
-            
-            // Re-enable button
-            publishBtn.disabled = false;
-            publishBtn.innerHTML = `
-                <span class="btn-icon">🚀</span>
-                <span class="btn-text">Publish Post (500 coins)</span>
-            `;
+            this.resetPublishButton(publishBtn);
+        }
+    }
+
+    /**
+     * Set button to loading state
+     */
+    setButtonLoading(button, message, icon = null) {
+        button.disabled = true;
+        const iconHtml = icon ? `<span class="btn-icon">${icon}</span>` : '<div class="spinner-small"></div>';
+        button.innerHTML = `${iconHtml}<span>${message}</span>`;
+    }
+
+    /**
+     * Reset publish button to default state
+     */
+    resetPublishButton(button) {
+        button.disabled = false;
+        button.innerHTML = `
+            <span class="btn-icon">🚀</span>
+            <span class="btn-text">Publish Post (500 coins)</span>
+        `;
+    }
+
+    /**
+     * Generate post content from API
+     */
+    async generatePostContent(userId, userMessage) {
+        const response = await this.steemPostAPI.createPost(userId, userMessage);
+        const postData = response.data || response;
+
+        if (!postData.title || !postData.body || !postData.tags) {
+            throw new Error('Invalid post data received from server. Missing title, body, or tags.');
+        }
+
+        return postData;
+    }
+
+    /**
+     * Publish post via Keychain or posting key
+     */
+    async publishToSteem(hasKeychain, steemUsername, postingKey, postData, userId, publishBtn) {
+        if (hasKeychain) {
+            this.setButtonLoading(publishBtn, 'Waiting for Keychain...', '🔐');
+            return this.steemPostAPI.publishViaKeychain(
+                steemUsername,
+                postData.title,
+                postData.body,
+                postData.tags,
+                {}
+            );
+        }
+
+        this.setButtonLoading(publishBtn, 'Publishing with posting key...', '📝');
+        return this.steemPostAPI.publishViaPostingKey(
+            steemUsername,
+            postingKey,
+            postData.title,
+            postData.body,
+            postData.tags,
+            { user_id: userId }
+        );
+    }
+
+    /**
+     * Clear posting key input for security
+     */
+    clearPostingKeyInput(inputElement) {
+        if (inputElement) {
+            inputElement.value = '';
+        }
+    }
+
+    /**
+     * Confirm post publication and finalize
+     */
+    async confirmAndFinalize(result) {
+
+
+        this.showSuccess(result.post_url);
+
+        if (window.coinBalanceWidget) {
+            await window.coinBalanceWidget.updateBalance();
         }
     }
 

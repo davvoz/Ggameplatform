@@ -1,8 +1,17 @@
 {
-  "version": "3.15.5",
-  "timestamp": "2026-01-21T23:50:42.272Z",
-  "buildNumber": 303,
+  "version": "3.15.6",
+  "timestamp": "2026-01-22T23:17:40.948Z",
+  "buildNumber": 304,
   "changelog": [
+    {
+      "version": "3.15.6",
+      "date": "2026-01-22",
+      "type": "patch",
+      "changes": [
+        "fix: refactor post publishing logic for improved clarity and error handling",
+        "🔖 Bump version to 3.15.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.5",
       "date": "2026-01-21",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SS]enhance game over screen with new title styling and background image",
         "🔖 Bump version to 3.14.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.8",
-      "date": "2026-01-18",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]update UI layout for ability buttons and adjust positioning above fire button",
-        "🔖 Bump version to 3.14.7 [skip-version]"
       ]
     }
   ]

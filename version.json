@@ -1,8 +1,18 @@
 {
-  "version": "3.16.5",
-  "timestamp": "2026-01-23T13:30:35.904Z",
-  "buildNumber": 312,
+  "version": "3.16.6",
+  "timestamp": "2026-01-23T13:55:33.492Z",
+  "buildNumber": 313,
   "changelog": [
+    {
+      "version": "3.16.6",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "refactor: enhance posting key form with improved accessibility and submission handling",
+        "🔖 Bump version to 3.16.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.5",
       "date": "2026-01-23",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: refactor post publishing logic for improved clarity and error handling",
         "🔖 Bump version to 3.15.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.15.5",
-      "date": "2026-01-21",
-      "type": "patch",
-      "changes": [
-        "fix: update weekly leaderboard rank calculation to handle distinct games",
-        "🔖 Bump version to 3.15.4 [skip-version]"
       ]
     }
   ]

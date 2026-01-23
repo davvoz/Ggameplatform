@@ -1,8 +1,17 @@
 {
-  "version": "3.15.7",
-  "timestamp": "2026-01-23T00:17:10.486Z",
-  "buildNumber": 305,
+  "version": "3.15.8",
+  "timestamp": "2026-01-23T00:55:05.570Z",
+  "buildNumber": 306,
   "changelog": [
+    {
+      "version": "3.15.8",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "debug: add logging for posting key details in publish_with_key function",
+        "🔖 Bump version to 3.15.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.7",
       "date": "2026-01-23",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: remove default calculation fallback when no XP rules are provided",
         "🔖 Bump version to 3.14.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.10",
-      "date": "2026-01-19",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]remove unused styles for game over title in header",
-        "🔖 Bump version to 3.14.9 [skip-version]"
       ]
     }
   ]

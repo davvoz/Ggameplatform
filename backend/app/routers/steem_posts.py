@@ -250,19 +250,19 @@ async def create_post(
             )
         
         # Check cooldown period (48 hours)
-        if user.last_steem_post:
-            from datetime import datetime, timedelta
-            last_post_time = datetime.fromisoformat(user.last_steem_post)
-            current_time = datetime.utcnow()
-            time_diff = current_time - last_post_time
-            cooldown_hours = 0
+        # if user.last_steem_post:
+        #     from datetime import datetime, timedelta
+        #     last_post_time = datetime.fromisoformat(user.last_steem_post)
+        #     current_time = datetime.utcnow()
+        #     time_diff = current_time - last_post_time
+        #     cooldown_hours = 0
             
-            if time_diff.total_seconds() < cooldown_hours * 3600:
-                hours_remaining = cooldown_hours - (time_diff.total_seconds() / 3600)
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=f"You can publish a new post in {hours_remaining:.1f} hours. Posts are limited to once every 48 hours."
-                )
+        #     if time_diff.total_seconds() < cooldown_hours * 3600:
+        #         hours_remaining = cooldown_hours - (time_diff.total_seconds() / 3600)
+        #         raise HTTPException(
+        #             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        #             detail=f"You can publish a new post in {hours_remaining:.1f} hours. Posts are limited to once every 48 hours."
+        #         )
         
         # Get user statistics
         stats = get_user_statistics(db, request.user_id)

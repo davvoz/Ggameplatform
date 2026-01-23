@@ -358,12 +358,26 @@ class ProfileRenderer {
      */
     _initStickyHero(user) {
         const profileHeader = document.querySelector('.profile-header');
-        if (!profileHeader) return;
+        if (!profileHeader) {
+            return;
+        }
 
-        // Get correct display name
+        const stickyNavbar = this._createStickyNavbar(user);
+        this._copyAvatarToStickyNavbar(stickyNavbar);
+        this._setupStickyNavbarClickHandlers(stickyNavbar, user);
+        this._insertStickyNavbar(stickyNavbar);
+        this._setupScrollBehavior(profileHeader, stickyNavbar);
+        this._setupStickyNavbarObservers(stickyNavbar);
+    }
+
+    /**
+     * Create sticky navbar element
+     * @private
+     */
+    _createStickyNavbar(user) {
         const displayName = this.getDisplayName(user);
+        const multiplierValue = (user?.cur8_multiplier || 1).toFixed(2);
 
-        // Create the compact sticky navbar clone
         const stickyNavbar = document.createElement('div');
         stickyNavbar.className = 'profile-sticky-navbar';
         stickyNavbar.innerHTML = `
@@ -373,145 +387,289 @@ class ProfileRenderer {
                     <span class="sticky-username">${displayName}</span>
                 </div>
                 <div class="sticky-stats">
-                    <span class="sticky-stat multiplier" id="stickyMultiplierValue">${(user?.cur8_multiplier || 1).toFixed(2)}x</span>
+                    <span class="sticky-stat multiplier" id="stickyMultiplierValue">${multiplierValue}x</span>
                     <span class="sticky-stat coins" id="stickyCoinsValue">🪙 --</span>
                 </div>
             </div>
         `;
 
-        // Copy avatar to sticky navbar
+        return stickyNavbar;
+    }
+
+    /**
+     * Copy avatar from main profile to sticky navbar
+     * @private
+     */
+    _copyAvatarToStickyNavbar(stickyNavbar) {
         const avatarIcon = document.querySelector('.avatar-icon');
         const stickyAvatar = stickyNavbar.querySelector('.sticky-avatar');
-        if (avatarIcon && stickyAvatar) {
-            if (avatarIcon.style.backgroundImage) {
-                stickyAvatar.style.backgroundImage = avatarIcon.style.backgroundImage;
-                stickyAvatar.style.backgroundSize = 'cover';
-                stickyAvatar.style.backgroundPosition = 'center';
-            } else {
-                stickyAvatar.textContent = avatarIcon.textContent;
-            }
+
+        if (!avatarIcon || !stickyAvatar) {
+            return;
         }
 
-        // Add click handlers for multiplier and coins
+        if (avatarIcon.style.backgroundImage) {
+            stickyAvatar.style.backgroundImage = avatarIcon.style.backgroundImage;
+            stickyAvatar.style.backgroundSize = 'cover';
+            stickyAvatar.style.backgroundPosition = 'center';
+        } else {
+            stickyAvatar.textContent = avatarIcon.textContent;
+        }
+    }
+
+    /**
+     * Setup click handlers for sticky navbar elements
+     * @private
+     */
+    _setupStickyNavbarClickHandlers(stickyNavbar, user) {
         const stickyMultiplier = stickyNavbar.querySelector('.sticky-stat.multiplier');
         const stickyCoins = stickyNavbar.querySelector('.sticky-stat.coins');
 
         if (stickyMultiplier) {
-            stickyMultiplier.style.cursor = 'pointer';
-            stickyMultiplier.addEventListener('click', async () => {
-                // Fetch and show multiplier modal
-                try {
-                    const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
-                    const response = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.showMultiplierModal(data.breakdown);
-                    }
-                } catch (e) {
-                    console.warn('Failed to fetch multiplier breakdown:', e);
-                }
-            });
-            stickyMultiplier.addEventListener('mouseenter', () => {
-                stickyMultiplier.style.transform = 'scale(1.05)';
-                stickyMultiplier.style.background = 'rgba(99, 102, 241, 0.25)';
-            });
-            stickyMultiplier.addEventListener('mouseleave', () => {
-                stickyMultiplier.style.transform = '';
-                stickyMultiplier.style.background = '';
-            });
+            this._setupStickyMultiplierHandler(stickyMultiplier, user);
         }
 
         if (stickyCoins) {
-            stickyCoins.style.cursor = 'pointer';
-            stickyCoins.addEventListener('click', () => {
-                window.location.hash = '#/wallet';
-            });
-            stickyCoins.addEventListener('mouseenter', () => {
-                stickyCoins.style.transform = 'scale(1.05)';
-                stickyCoins.style.background = 'rgba(234, 179, 8, 0.25)';
-            });
-            stickyCoins.addEventListener('mouseleave', () => {
-                stickyCoins.style.transform = '';
-                stickyCoins.style.background = '';
-            });
+            this._setupStickyCoinsHandler(stickyCoins);
         }
+    }
 
-        // Insert sticky navbar at the beginning of profile container
+    /**
+     * Setup multiplier click handler in sticky navbar
+     * @private
+     */
+    _setupStickyMultiplierHandler(element, user) {
+        element.style.cursor = 'pointer';
+
+        element.addEventListener('click', async () => {
+            await this._handleStickyMultiplierClick(user);
+        });
+
+        this._addHoverEffect(element, 'rgba(99, 102, 241, 0.25)');
+    }
+
+    /**
+     * Handle sticky multiplier click
+     * @private
+     */
+    async _handleStickyMultiplierClick(user) {
+        try {
+            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            const response = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
+
+            if (response.ok) {
+                const data = await response.json();
+                this.showMultiplierModal(data.breakdown);
+            }
+        } catch (error) {
+            console.warn('Failed to fetch multiplier breakdown:', error);
+        }
+    }
+
+    /**
+     * Setup coins click handler in sticky navbar
+     * @private
+     */
+    _setupStickyCoinsHandler(element) {
+        element.style.cursor = 'pointer';
+
+        element.addEventListener('click', () => {
+            window.location.hash = '#/wallet';
+        });
+
+        this._addHoverEffect(element, 'rgba(234, 179, 8, 0.25)');
+    }
+
+    /**
+     * Add hover effect to an element
+     * @private
+     */
+    _addHoverEffect(element, hoverBackground) {
+        element.addEventListener('mouseenter', () => {
+            element.style.transform = 'scale(1.05)';
+            element.style.background = hoverBackground;
+        });
+
+        element.addEventListener('mouseleave', () => {
+            element.style.transform = '';
+            element.style.background = '';
+        });
+    }
+
+    /**
+     * Insert sticky navbar into the DOM
+     * @private
+     */
+    _insertStickyNavbar(stickyNavbar) {
         const profileContainer = document.querySelector('.profile');
+
         if (profileContainer) {
             profileContainer.insertBefore(stickyNavbar, profileContainer.firstChild);
         }
+    }
 
-        // Get header position for scroll calculations
-        let headerRect = profileHeader.getBoundingClientRect();
-        let headerTop = headerRect.top + window.scrollY;
-        let headerHeight = headerRect.height;
+    /**
+     * Setup scroll behavior for sticky navbar
+     * @private
+     */
+    _setupScrollBehavior(profileHeader, stickyNavbar) {
+        const scrollState = this._createScrollState(profileHeader);
 
-        // Recalculate on resize
-        const recalculatePositions = () => {
-            headerRect = profileHeader.getBoundingClientRect();
-            headerTop = headerRect.top + window.scrollY;
-            headerHeight = headerRect.height;
-        };
+        window.addEventListener('resize', () => {
+            this._updateScrollState(scrollState, profileHeader);
+        }, { passive: true });
 
-        window.addEventListener('resize', recalculatePositions, { passive: true });
-
-        // Handle scroll behavior
         const handleScroll = () => {
-            const scrollY = window.scrollY;
-            const triggerPoint = headerTop + headerHeight * 0.5;
-            const fullCompressPoint = headerTop + headerHeight;
-
-            if (scrollY < triggerPoint) {
-                // Normal state - header fully visible
-                profileHeader.classList.remove('header-compressing', 'header-compressed');
-                stickyNavbar.classList.remove('visible');
-            } else if (scrollY < fullCompressPoint) {
-                // Compressing state
-                const progress = (scrollY - triggerPoint) / (fullCompressPoint - triggerPoint);
-                profileHeader.classList.add('header-compressing');
-                profileHeader.classList.remove('header-compressed');
-                profileHeader.style.setProperty('--compress-progress', progress);
-                stickyNavbar.classList.remove('visible');
-            } else {
-                // Fully compressed - show sticky navbar
-                profileHeader.classList.remove('header-compressing');
-                profileHeader.classList.add('header-compressed');
-                stickyNavbar.classList.add('visible');
-            }
+            this._handleStickyScroll(profileHeader, stickyNavbar, scrollState);
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
-
-        // Initial check
         handleScroll();
+    }
 
-        // Update sticky coins when coin balance updates
+    /**
+     * Create scroll state object
+     * @private
+     */
+    _createScrollState(profileHeader) {
+        const headerRect = profileHeader.getBoundingClientRect();
+
+        return {
+            headerTop: headerRect.top + window.scrollY,
+            headerHeight: headerRect.height
+        };
+    }
+
+    /**
+     * Update scroll state on resize
+     * @private
+     */
+    _updateScrollState(scrollState, profileHeader) {
+        const headerRect = profileHeader.getBoundingClientRect();
+        scrollState.headerTop = headerRect.top + window.scrollY;
+        scrollState.headerHeight = headerRect.height;
+    }
+
+    /**
+     * Handle sticky scroll behavior
+     * @private
+     */
+    _handleStickyScroll(profileHeader, stickyNavbar, scrollState) {
+        const scrollY = window.scrollY;
+        const triggerPoint = scrollState.headerTop + scrollState.headerHeight * 0.5;
+        const fullCompressPoint = scrollState.headerTop + scrollState.headerHeight;
+
+        if (scrollY < triggerPoint) {
+            this._setNormalScrollState(profileHeader, stickyNavbar);
+        } else if (scrollY < fullCompressPoint) {
+            this._setCompressingScrollState(profileHeader, stickyNavbar, scrollY, triggerPoint, fullCompressPoint);
+        } else {
+            this._setCompressedScrollState(profileHeader, stickyNavbar);
+        }
+    }
+
+    /**
+     * Set normal scroll state (header fully visible)
+     * @private
+     */
+    _setNormalScrollState(profileHeader, stickyNavbar) {
+        profileHeader.classList.remove('header-compressing', 'header-compressed');
+        stickyNavbar.classList.remove('visible');
+    }
+
+    /**
+     * Set compressing scroll state
+     * @private
+     */
+    _setCompressingScrollState(profileHeader, stickyNavbar, scrollY, triggerPoint, fullCompressPoint) {
+        const progress = (scrollY - triggerPoint) / (fullCompressPoint - triggerPoint);
+        profileHeader.classList.add('header-compressing');
+        profileHeader.classList.remove('header-compressed');
+        profileHeader.style.setProperty('--compress-progress', progress);
+        stickyNavbar.classList.remove('visible');
+    }
+
+    /**
+     * Set compressed scroll state (show sticky navbar)
+     * @private
+     */
+    _setCompressedScrollState(profileHeader, stickyNavbar) {
+        profileHeader.classList.remove('header-compressing');
+        profileHeader.classList.add('header-compressed');
+        stickyNavbar.classList.add('visible');
+    }
+
+    /**
+     * Setup mutation observers for sticky navbar updates
+     * @private
+     */
+    _setupStickyNavbarObservers(stickyNavbar) {
+        this._setupCoinBalanceObserver();
+        this._setupAvatarObserver(stickyNavbar);
+    }
+
+    /**
+     * Setup observer for coin balance updates
+     * @private
+     */
+    _setupCoinBalanceObserver() {
         const coinBalanceHeader = document.getElementById('coinBalanceHeader');
-        if (coinBalanceHeader) {
-            const observer = new MutationObserver(() => {
-                const stickyCoinsEl = document.getElementById('stickyCoinsValue');
-                if (stickyCoinsEl) {
-                    stickyCoinsEl.textContent = `🪙 ${coinBalanceHeader.textContent}`;
-                }
-            });
-            observer.observe(coinBalanceHeader, { childList: true, characterData: true, subtree: true });
+
+        if (!coinBalanceHeader) {
+            return;
         }
 
-        // Update sticky avatar when main avatar is loaded (for Steem profile image)
+        const observer = new MutationObserver(() => {
+            const stickyCoinsEl = document.getElementById('stickyCoinsValue');
+
+            if (stickyCoinsEl) {
+                stickyCoinsEl.textContent = `🪙 ${coinBalanceHeader.textContent}`;
+            }
+        });
+
+        observer.observe(coinBalanceHeader, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
+
+    /**
+     * Setup observer for avatar updates
+     * @private
+     */
+    _setupAvatarObserver(stickyNavbar) {
         const mainAvatarIcon = document.querySelector('.avatar-icon');
-        if (mainAvatarIcon) {
-            const avatarObserver = new MutationObserver(() => {
-                const stickyAvatarEl = document.querySelector('.profile-sticky-navbar .sticky-avatar');
-                if (stickyAvatarEl && mainAvatarIcon.style.backgroundImage) {
-                    stickyAvatarEl.style.backgroundImage = mainAvatarIcon.style.backgroundImage;
-                    stickyAvatarEl.style.backgroundSize = 'cover';
-                    stickyAvatarEl.style.backgroundPosition = 'center';
-                    stickyAvatarEl.textContent = '';
-                }
-            });
-            avatarObserver.observe(mainAvatarIcon, { attributes: true, attributeFilter: ['style'] });
+
+        if (!mainAvatarIcon) {
+            return;
         }
+
+        const avatarObserver = new MutationObserver(() => {
+            this._syncStickyAvatar(stickyNavbar, mainAvatarIcon);
+        });
+
+        avatarObserver.observe(mainAvatarIcon, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    }
+
+    /**
+     * Sync sticky avatar with main avatar
+     * @private
+     */
+    _syncStickyAvatar(stickyNavbar, mainAvatarIcon) {
+        const stickyAvatarEl = stickyNavbar.querySelector('.sticky-avatar');
+
+        if (!stickyAvatarEl || !mainAvatarIcon.style.backgroundImage) {
+            return;
+        }
+
+        stickyAvatarEl.style.backgroundImage = mainAvatarIcon.style.backgroundImage;
+        stickyAvatarEl.style.backgroundSize = 'cover';
+        stickyAvatarEl.style.backgroundPosition = 'center';
+        stickyAvatarEl.textContent = '';
     }
 
     /**
@@ -666,232 +824,356 @@ class ProfileRenderer {
 
         const multiplier = user.cur8_multiplier || 1.0;
         const totalXP = user.total_xp_earned || 0;
+        const API_URL = window.ENV?.API_URL || window.location.origin;
 
+        this._setupMultiplierBadge(content, user, multiplier, API_URL);
+        this._populateBasicStats(content, stats);
+        this._loadLevelInfo(user, totalXP, API_URL);
+        this._loadQuestsCount(content, user, API_URL);
+        this._loadGamesTried(content, user, API_URL);
+        this._calculateDaysMember(content, user);
+    }
+
+    /**
+     * Setup multiplier badge with click handler
+     * @private
+     */
+    _setupMultiplierBadge(content, user, fallbackMultiplier, apiUrl) {
         const multiplierEl = content.querySelector('.stat-value.multiplier');
-
-        if (multiplierEl) {
-            // Fetch multiplier breakdown in background
-            const API_URL = window.ENV?.API_URL || window.location.origin;
-            fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`)
-                .then(breakdownResponse => {
-                    if (breakdownResponse.ok) {
-                        return breakdownResponse.json();
-                    }
-                    throw new Error('Failed to fetch breakdown');
-                })
-                .then(breakdownData => {
-                    const breakdown = breakdownData.breakdown;
-
-                    // Find the parent stat-badge (it's in the header, not stat-card)
-                    const parentBadge = multiplierEl.closest('.stat-badge');
-
-                    if (parentBadge) {
-                        // Make it clickable
-                        parentBadge.style.cursor = 'pointer';
-                        parentBadge.style.transition = 'all 0.3s';
-
-                        // Set permanent indigo background with same border radius as coin badge
-                        parentBadge.style.borderRadius = '10px';
-                        parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
-                        parentBadge.style.border = '2px solid rgba(99, 102, 241, 0.3)';
-
-                        // Update the value
-                        multiplierEl.textContent = `${breakdown.final_multiplier.toFixed(2)}x`;
-                        multiplierEl.style.color = '#818cf8';
-                        multiplierEl.style.fontWeight = '700';
-
-                        // Add click handler
-                        parentBadge.onclick = () => {
-                            this.showMultiplierModal(breakdown);
-                        };
-
-                        // Add hover effect
-                        parentBadge.onmouseenter = () => {
-                            parentBadge.style.transform = 'scale(1.05)';
-                            parentBadge.style.background = 'rgba(99, 102, 241, 0.25)';
-                        };
-                        parentBadge.onmouseleave = () => {
-                            parentBadge.style.transform = 'scale(1)';
-                            parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
-                        };
-
-                        console.log('✅ Multiplier badge configured:', breakdown.final_multiplier.toFixed(2));
-                        // Sync multiplier to global AuthManager and notify other UI (navbar)
-                        try {
-                            const currentUser = this.authManager && this.authManager.getUser && this.authManager.getUser();
-                            if (currentUser && currentUser.user_id) {
-                                const updatedUser = Object.assign({}, currentUser, {
-                                    cur8_multiplier: Number(breakdown.final_multiplier),
-                                    votes_cur8_witness: (breakdown.witness_bonus && Number(breakdown.witness_bonus) > 0) ? true : (currentUser.votes_cur8_witness || false),
-                                    delegation_amount: Number(breakdown.delegation_amount || currentUser.delegation_amount || 0)
-                                });
-                                try {
-                                    if (this.authManager.setUser) this.authManager.setUser(updatedUser);
-                                } catch (e) {
-                                    console.warn('Failed to call authManager.setUser while syncing multiplier:', e);
-                                }
-                                try {
-                                    window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
-                                } catch (e) {
-                                    console.warn('Failed to dispatch multiplierUpdated after profile load:', e);
-                                }
-                            }
-                        } catch (e) {
-                            console.warn('Failed to sync nav multiplier from profile load', e);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Failed to load multiplier breakdown:', error);
-                    multiplierEl.textContent = `${multiplier}x`;
-                });
+        if (!multiplierEl) {
+            return;
         }
 
+        fetch(`${apiUrl}/users/multiplier-breakdown/${user.user_id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch breakdown');
+                }
+                return response.json();
+            })
+            .then(data => {
+                this._configureMultiplierBadge(multiplierEl, data.breakdown, user);
+            })
+            .catch(error => {
+                console.error('Failed to load multiplier breakdown:', error);
+                multiplierEl.textContent = `${fallbackMultiplier}x`;
+            });
+    }
 
-        // Get element references from content (DocumentFragment before it's appended to DOM)
+    /**
+     * Configure multiplier badge appearance and behavior
+     * @private
+     */
+    _configureMultiplierBadge(multiplierEl, breakdown, user) {
+        const parentBadge = multiplierEl.closest('.stat-badge');
+        if (!parentBadge) {
+            return;
+        }
+
+        this._applyMultiplierBadgeStyles(parentBadge, multiplierEl, breakdown);
+        this._attachMultiplierBadgeHandlers(parentBadge, breakdown);
+        this._syncMultiplierToAuthManager(breakdown, user);
+
+        console.log('✅ Multiplier badge configured:', breakdown.final_multiplier.toFixed(2));
+    }
+
+    /**
+     * Apply styles to multiplier badge
+     * @private
+     */
+    _applyMultiplierBadgeStyles(parentBadge, multiplierEl, breakdown) {
+        parentBadge.style.cursor = 'pointer';
+        parentBadge.style.transition = 'all 0.3s';
+        parentBadge.style.borderRadius = '10px';
+        parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
+        parentBadge.style.border = '2px solid rgba(99, 102, 241, 0.3)';
+
+        multiplierEl.textContent = `${breakdown.final_multiplier.toFixed(2)}x`;
+        multiplierEl.style.color = '#818cf8';
+        multiplierEl.style.fontWeight = '700';
+    }
+
+    /**
+     * Attach click and hover handlers to multiplier badge
+     * @private
+     */
+    _attachMultiplierBadgeHandlers(parentBadge, breakdown) {
+        parentBadge.onclick = () => {
+            this.showMultiplierModal(breakdown);
+        };
+
+        parentBadge.onmouseenter = () => {
+            parentBadge.style.transform = 'scale(1.05)';
+            parentBadge.style.background = 'rgba(99, 102, 241, 0.25)';
+        };
+
+        parentBadge.onmouseleave = () => {
+            parentBadge.style.transform = 'scale(1)';
+            parentBadge.style.background = 'rgba(99, 102, 241, 0.15)';
+        };
+    }
+
+    /**
+     * Sync multiplier data to AuthManager and dispatch event
+     * @private
+     */
+    _syncMultiplierToAuthManager(breakdown, user) {
+        try {
+            const currentUser = this.authManager?.getUser?.();
+            if (!currentUser?.user_id) {
+                return;
+            }
+
+            const updatedUser = {
+                ...currentUser,
+                cur8_multiplier: Number(breakdown.final_multiplier),
+                votes_cur8_witness: (breakdown.witness_bonus && Number(breakdown.witness_bonus) > 0) || currentUser.votes_cur8_witness || false,
+                delegation_amount: Number(breakdown.delegation_amount || currentUser.delegation_amount || 0)
+            };
+
+            this.authManager.setUser?.(updatedUser);
+            window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+        } catch (error) {
+            console.warn('Failed to sync nav multiplier from profile load', error);
+        }
+    }
+
+    /**
+     * Populate basic stats elements
+     * @private
+     */
+    _populateBasicStats(content, stats) {
         const gamesPlayedEl = content.querySelector('#gamesPlayed');
         const questsDoneEl = content.querySelector('#questsDone');
         const gamesTriedEl = content.querySelector('#gamesTried');
-        const daysMemberEl = content.querySelector('#daysMember');
-        const API_URL = window.ENV?.API_URL || window.location.origin;
 
-        if (gamesPlayedEl) gamesPlayedEl.textContent = stats.gamesPlayed;
+        if (gamesPlayedEl) {
+            gamesPlayedEl.textContent = stats.gamesPlayed;
+        }
 
-        // Show loading indicators for async stats
-        if (questsDoneEl) questsDoneEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
-        if (gamesTriedEl) gamesTriedEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
+        if (questsDoneEl) {
+            questsDoneEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
+        }
 
-        // Fetch and populate level info - ASYNC but search in DOM after render
-        fetch(`${API_URL}/api/levels/${user.user_id}`)
+        if (gamesTriedEl) {
+            gamesTriedEl.innerHTML = '<span style="opacity: 0.5;">⏳</span>';
+        }
+    }
+
+    /**
+     * Load and display level info
+     * @private
+     */
+    _loadLevelInfo(user, totalXP, apiUrl) {
+        fetch(`${apiUrl}/api/levels/${user.user_id}`)
             .then(response => response.ok ? response.json() : null)
             .then(levelInfo => {
                 if (levelInfo) {
-                    // NOW search in the actual DOM (not the DocumentFragment)
-                    const levelBadgeContainer = document.querySelector('#levelBadgeContainer'); // Navbar
-                    const levelCardContainer = document.querySelector('.profile .level-card-container#levelCardContainer'); // Profile page
-
-                    // Update navbar level badge
-                    if (levelBadgeContainer) {
-                        levelBadgeContainer.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}18, transparent); border-radius: 10px; border: 2px solid ${levelInfo.color || '#6366f1'}55;">
-                                <span style="font-size: 28px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
-                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <span style="font-weight: 800; font-size: 16px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3); letter-spacing: 0.5px;">Lv${levelInfo.current_level}</span>
-                                    <span style="font-size: 11px; opacity: 0.85; font-weight: 600;">${totalXP.toFixed(0)} XP</span>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Update profile page level card
-                    if (levelCardContainer) {
-                        // Compute XP per-level values with fallbacks
-                        const xp_in_level = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
-                        const xp_required_for_next = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
-                        const xp_to_next = levelInfo?.xp_to_next_level ?? Math.max(0, (xp_required_for_next || 0) - xp_in_level);
-
-                        // Build right column HTML
-                        const rightColumnHtml = xp_to_next > 0 ? `
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next lvl</span>
-                                <span style="font-size: 18px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${xp_to_next.toFixed(0)}</span>
-                            </div>
-                        ` : `
-                            <div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;">
-                                <span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span>
-                            </div>
-                        `;
-
-                        levelCardContainer.innerHTML = `
-                            <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}20, ${levelInfo.color || '#6366f1'}08); border-radius: var(--radius-md); border: 2px solid ${levelInfo.color || '#6366f1'}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
-                                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                                    <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${levelInfo.color || '#6366f1'}33, ${levelInfo.color || '#6366f1'}11); border-radius: 50%; border: 3px solid ${levelInfo.color || '#6366f1'}66; box-shadow: 0 4px 12px ${levelInfo.color || '#6366f1'}44;">
-                                        <span style="font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 24px; font-weight: 800; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; margin-bottom: 4px;">
-                                            Level ${levelInfo.current_level}
-                                        </div>
-                                        <div style="font-size: 15px; font-weight: 600; color: #fff; opacity: 0.95; text-transform: uppercase; letter-spacing: 1px;">
-                                            ${levelInfo.title}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="margin-bottom: 14px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px;">
-                                        <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Progress</span>
-                                        <span style="font-weight: 800; font-size: 14px; color: ${levelInfo.color || '#6366f1'}; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${levelInfo.progress_percent.toFixed(1)}%</span>
-                                    </div>
-                                    <div style="height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); position: relative;">
-                                        <div style="height: 100%; background: linear-gradient(90deg, ${levelInfo.color || '#6366f1'}, #8b5cf6, ${levelInfo.color || '#6366f1'}); width: ${levelInfo.progress_percent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px ${levelInfo.color || '#6366f1'}aa, inset 0 1px 0 rgba(255,255,255,0.2);"></div>
-                                    </div>
-                                </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                                        <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 Total XP</span>
-                                        <span style="font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
-                                    </div>
-                                    ${rightColumnHtml}
-                                </div>
-                            </div>
-                        `;
-                    }
+                    this._updateNavbarLevelBadge(levelInfo, totalXP);
+                    this._updateProfileLevelCard(levelInfo, totalXP);
                 }
             })
             .catch(error => console.error('Failed to load level info:', error));
+    }
 
-        // Calculate quests done (claimed) - async without blocking
-        if (questsDoneEl) {
-            (async () => {
-                try {
-                    let offset = 0;
-                    const limit = 1000;
-                    let totalQuestClaims = 0;
-                    let keepGoing = true;
-                    while (keepGoing) {
-                        const txResponse = await fetch(`${API_URL}/api/coins/${user.user_id}/transactions?limit=${limit}&offset=${offset}`);
-                        if (!txResponse.ok) break;
-                        const txData = await txResponse.json();
-                        const questClaims = txData.filter(tx => tx.transaction_type === 'quest_reward').length;
-                        totalQuestClaims += questClaims;
-                        if (txData.length < limit) {
-                            keepGoing = false;
-                        } else {
-                            offset += limit;
-                        }
-                    }
-                    questsDoneEl.textContent = totalQuestClaims;
-                } catch (error) {
-                    console.error('Failed to load quests count:', error);
-                    questsDoneEl.textContent = '0';
-                }
-            })();
+    /**
+     * Update navbar level badge
+     * @private
+     */
+    _updateNavbarLevelBadge(levelInfo, totalXP) {
+        const levelBadgeContainer = document.querySelector('#levelBadgeContainer');
+        if (!levelBadgeContainer) {
+            return;
         }
 
-        // Calculate games tried (unique games played) - async without blocking
-        if (gamesTriedEl) {
-            (async () => {
-                try {
-                    const sessionsResponse = await fetch(`${API_URL}/users/${user.user_id}/sessions?limit=1000`);
-                    if (sessionsResponse.ok) {
-                        const sessionsData = await sessionsResponse.json();
-                        const uniqueGames = new Set(sessionsData.sessions.map(s => s.game_id)).size;
-                        gamesTriedEl.textContent = uniqueGames;
-                    }
-                } catch (error) {
-                    console.error('Failed to load games tried:', error);
-                    gamesTriedEl.textContent = '0';
-                }
-            })();
+        const color = levelInfo.color || '#6366f1';
+        levelBadgeContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: linear-gradient(135deg, ${color}18, transparent); border-radius: 10px; border: 2px solid ${color}55;">
+                <span style="font-size: 28px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-weight: 800; font-size: 16px; color: ${color}; text-shadow: 0 1px 3px rgba(0,0,0,0.3); letter-spacing: 0.5px;">Lv${levelInfo.current_level}</span>
+                    <span style="font-size: 11px; opacity: 0.85; font-weight: 600;">${totalXP.toFixed(0)} XP</span>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Update profile level card
+     * @private
+     */
+    _updateProfileLevelCard(levelInfo, totalXP) {
+        const levelCardContainer = document.querySelector('.profile .level-card-container#levelCardContainer');
+        if (!levelCardContainer) {
+            return;
         }
 
-        // Calculate days member
-        if (daysMemberEl && user.created_at) {
-            const createdDate = new Date(user.created_at);
-            const now = new Date();
-            const daysDiff = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
-            daysMemberEl.textContent = daysDiff;
+        const xpData = this._calculateXpData(levelInfo);
+        const color = levelInfo.color || '#6366f1';
+        const rightColumnHtml = this._generateLevelCardRightColumn(xpData, color);
+
+        levelCardContainer.innerHTML = this._generateLevelCardHTML(levelInfo, totalXP, rightColumnHtml, color);
+    }
+
+    /**
+     * Calculate XP data for level card
+     * @private
+     */
+    _calculateXpData(levelInfo) {
+        const xpInLevel = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
+        const xpRequiredForNext = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
+        const xpToNext = levelInfo?.xp_to_next_level ?? Math.max(0, (xpRequiredForNext || 0) - xpInLevel);
+
+        return { xpInLevel, xpRequiredForNext, xpToNext };
+    }
+
+    /**
+     * Generate right column HTML for level card
+     * @private
+     */
+    _generateLevelCardRightColumn(xpData, color) {
+        if (xpData.xpToNext > 0) {
+            return `
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Next lvl</span>
+                    <span style="font-size: 18px; font-weight: 800; color: ${color}; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${xpData.xpToNext.toFixed(0)}</span>
+                </div>
+            `;
         }
+
+        return `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 8px; background: linear-gradient(135deg, #FFD70033, #FFA50033); border-radius: 6px; border: 1px solid #FFD70044;">
+                <span style="font-weight: 800; font-size: 14px; color: #FFD700; text-shadow: 0 1px 3px rgba(0,0,0,0.4); letter-spacing: 0.5px;">🏆 MAX LEVEL</span>
+            </div>
+        `;
+    }
+
+    /**
+     * Generate level card HTML
+     * @private
+     */
+    _generateLevelCardHTML(levelInfo, totalXP, rightColumnHtml, color) {
+        return `
+            <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${color}20, ${color}08); border-radius: var(--radius-md); border: 2px solid ${color}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${color}33, ${color}11); border-radius: 50%; border: 3px solid ${color}66; box-shadow: 0 4px 12px ${color}44;">
+                        <span style="font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 24px; font-weight: 800; color: ${color}; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; margin-bottom: 4px;">
+                            Level ${levelInfo.current_level}
+                        </div>
+                        <div style="font-size: 15px; font-weight: 600; color: #fff; opacity: 0.95; text-transform: uppercase; letter-spacing: 1px;">
+                            ${levelInfo.title}
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px;">
+                        <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Progress</span>
+                        <span style="font-weight: 800; font-size: 14px; color: ${color}; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${levelInfo.progress_percent.toFixed(1)}%</span>
+                    </div>
+                    <div style="height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); position: relative;">
+                        <div style="height: 100%; background: linear-gradient(90deg, ${color}, #8b5cf6, ${color}); width: ${levelInfo.progress_percent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px ${color}aa, inset 0 1px 0 rgba(255,255,255,0.2);"></div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">💰 Total XP</span>
+                        <span style="font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
+                    </div>
+                    ${rightColumnHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Load quests count from transactions
+     * @private
+     */
+    async _loadQuestsCount(content, user, apiUrl) {
+        const questsDoneEl = content.querySelector('#questsDone');
+        if (!questsDoneEl) {
+            return;
+        }
+
+        try {
+            const totalQuestClaims = await this._fetchAllQuestClaims(user.user_id, apiUrl);
+            questsDoneEl.textContent = totalQuestClaims;
+        } catch (error) {
+            console.error('Failed to load quests count:', error);
+            questsDoneEl.textContent = '0';
+        }
+    }
+
+    /**
+     * Fetch all quest claims with pagination
+     * @private
+     */
+    async _fetchAllQuestClaims(userId, apiUrl) {
+        const BATCH_SIZE = 1000;
+        let offset = 0;
+        let totalQuestClaims = 0;
+        let hasMoreData = true;
+
+        while (hasMoreData) {
+            const response = await fetch(`${apiUrl}/api/coins/${userId}/transactions?limit=${BATCH_SIZE}&offset=${offset}`);
+            
+            if (!response.ok) {
+                break;
+            }
+
+            const transactions = await response.json();
+            const questClaims = transactions.filter(tx => tx.transaction_type === 'quest_reward').length;
+            totalQuestClaims += questClaims;
+
+            hasMoreData = transactions.length >= BATCH_SIZE;
+            offset += BATCH_SIZE;
+        }
+
+        return totalQuestClaims;
+    }
+
+    /**
+     * Load games tried count
+     * @private
+     */
+    async _loadGamesTried(content, user, apiUrl) {
+        const gamesTriedEl = content.querySelector('#gamesTried');
+        if (!gamesTriedEl) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${apiUrl}/users/${user.user_id}/sessions?limit=1000`);
+            
+            if (response.ok) {
+                const sessionsData = await response.json();
+                const uniqueGames = new Set(sessionsData.sessions.map(session => session.game_id)).size;
+                gamesTriedEl.textContent = uniqueGames;
+            }
+        } catch (error) {
+            console.error('Failed to load games tried:', error);
+            gamesTriedEl.textContent = '0';
+        }
+    }
+
+    /**
+     * Calculate and display days member
+     * @private
+     */
+    _calculateDaysMember(content, user) {
+        const daysMemberEl = content.querySelector('#daysMember');
+        
+        if (!daysMemberEl || !user.created_at) {
+            return;
+        }
+
+        const createdDate = new Date(user.created_at);
+        const now = new Date();
+        const daysDiff = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+        daysMemberEl.textContent = daysDiff;
     }
 
     /**

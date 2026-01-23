@@ -584,6 +584,16 @@ async def publish_with_key(
     tags = request.get('tags', [])
     metadata = request.get('metadata', {})
     
+    # DEBUG: Log posting key details (RIMUOVERE DOPO DEBUG!)
+    logger.warning("[STEEM DEBUG] ========== POSTING KEY DEBUG ==========")
+    logger.warning("[STEEM DEBUG] Username: %s", username)
+    logger.warning("[STEEM DEBUG] Posting key received: %s", posting_key)
+    logger.warning("[STEEM DEBUG] Posting key length: %d", len(posting_key) if posting_key else 0)
+    logger.warning("[STEEM DEBUG] Posting key first 5 chars: %s", posting_key[:5] if posting_key else 'None')
+    logger.warning("[STEEM DEBUG] Posting key last 5 chars: %s", posting_key[-5:] if posting_key else 'None')
+    logger.warning("[STEEM DEBUG] Posting key repr: %s", repr(posting_key[:10]) if posting_key else 'None')
+    logger.warning("[STEEM DEBUG] ===========================================")
+    
     if not all([username, posting_key, title, body]):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -655,8 +665,8 @@ logger = logging.getLogger(__name__)
 
 # Steem API nodes with fallback support
 STEEM_NODES = [
-    'https://api.steemit.com',
     'https://api.moecki.online',
+    'https://api.steemit.com',
     'https://steemapi.boylikegirl.club',
     'https://steem.senior.workers.dev'
 ]

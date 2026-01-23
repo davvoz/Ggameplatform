@@ -1,8 +1,17 @@
 {
-  "version": "3.16.2",
-  "timestamp": "2026-01-23T10:10:49.347Z",
-  "buildNumber": 309,
+  "version": "3.16.3",
+  "timestamp": "2026-01-23T10:25:44.971Z",
+  "buildNumber": 310,
   "changelog": [
+    {
+      "version": "3.16.3",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "refactor: comment out posting key verification in publish_with_key function",
+        "🔖 Bump version to 3.16.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.2",
       "date": "2026-01-23",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: implement XP banner and level-up modal display for platform messages",
         "🔖 Bump version to 3.15.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.15.2",
-      "date": "2026-01-21",
-      "type": "patch",
-      "changes": [
-        "fix: add quest notification badge to mobile menu toggle",
-        "🔖 Bump version to 3.15.1 [skip-version]"
       ]
     }
   ]

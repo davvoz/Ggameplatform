@@ -1,8 +1,17 @@
 {
-  "version": "3.16.3",
-  "timestamp": "2026-01-23T10:25:44.971Z",
-  "buildNumber": 310,
+  "version": "3.16.4",
+  "timestamp": "2026-01-23T11:21:57.047Z",
+  "buildNumber": 311,
   "changelog": [
+    {
+      "version": "3.16.4",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "refactor: comment out cooldown period checks in create_post and post availability logic",
+        "🔖 Bump version to 3.16.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.3",
       "date": "2026-01-23",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: enhance post creation with beneficiaries and keychain operations",
         "🔖 Bump version to 3.15.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.15.3",
-      "date": "2026-01-21",
-      "type": "patch",
-      "changes": [
-        "fix: implement XP banner and level-up modal display for platform messages",
-        "🔖 Bump version to 3.15.2 [skip-version]"
       ]
     }
   ]

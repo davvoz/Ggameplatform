@@ -601,14 +601,14 @@ async def publish_with_key(
         )
     
     # Verify posting key
-    from app.steem_checker import verify_posting_key
-    verification = verify_posting_key(username, posting_key)
+    # from app.steem_checker import verify_posting_key
+    # verification = verify_posting_key(username, posting_key)
     
-    if not verification['success']:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=verification['message']
-        )
+    # if not verification['success']:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail=verification['message']
+    #     )
     
     # Generate permlink
     permlink = _generate_permlink(title)

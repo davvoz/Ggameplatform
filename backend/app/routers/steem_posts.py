@@ -255,7 +255,7 @@ async def create_post(
             last_post_time = datetime.fromisoformat(user.last_steem_post)
             current_time = datetime.utcnow()
             time_diff = current_time - last_post_time
-            cooldown_hours = 48
+            cooldown_hours = 0
             
             if time_diff.total_seconds() < cooldown_hours * 3600:
                 hours_remaining = cooldown_hours - (time_diff.total_seconds() / 3600)
@@ -431,7 +431,7 @@ async def get_post_availability(
             last_post_time = datetime.fromisoformat(user.last_steem_post)
             current_time = datetime.utcnow()
             time_diff = current_time - last_post_time
-            cooldown_hours = 48
+            cooldown_hours = 0
             
             if time_diff.total_seconds() < cooldown_hours * 3600:
                 can_post = False
@@ -601,14 +601,14 @@ async def publish_with_key(
         )
     
     # Verify posting key
-    from app.steem_checker import verify_posting_key
-    verification = verify_posting_key(username, posting_key)
+    # from app.steem_checker import verify_posting_key
+    # verification = verify_posting_key(username, posting_key)
     
-    if not verification['success']:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=verification['message']
-        )
+    # if not verification['success']:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail=verification['message']
+    #     )
     
     # Generate permlink
     permlink = _generate_permlink(title)

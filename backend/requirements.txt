@@ -11,7 +11,7 @@ python-jose[cryptography]==3.3.0
 PyJWT==2.8.0
 python-dotenv==1.0.0
 schedule==1.2.0
-beem==0.24.24
+beem==0.24.26
 Pillow==10.3.0
 requests==2.31.0
 base58==2.1.1

@@ -149,6 +149,7 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
     try:
         # Get account data first
         account = get_account_data(username)
+        print(f"🔍 Verifying posting key for {username}...")
         if not account:
             return {
                 "success": False,
@@ -158,6 +159,7 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
         
         # Validate posting key format (WIF format starts with '5')
         if not posting_key or len(posting_key) < 50:
+            print(f"❌ Invalid posting key format for {username}")
             return {
                 "success": False,
                 "message": "Invalid posting key format. Keys are typically 51 characters starting with '5'",
@@ -167,106 +169,43 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
         # Get the posting authority from account
         posting_auth = account.get("posting", {})
         key_auths = posting_auth.get("key_auths", [])
-        
+        print(f"🔑 Found {len(key_auths)} posting keys for account {username}")
         if not key_auths:
+            print(f"❌ No posting keys found for account {username}")
             return {
                 "success": False,
                 "message": "No posting keys found for this account",
                 "account": None
             }
         
-        # Try to derive public key from private key using steem library
-        try:
-            from beemgraphenebase.account import PrivateKey
-            
-            print(f"🔑 Using beemgraphenebase for key verification")
-            
-            # Create private key object
-            private_key = PrivateKey(posting_key)
-            
-            # Derive public key in WIF format
-            public_key = str(private_key.pubkey)
-            
-            # Check if this public key matches any of the account's posting keys
-            for auth in key_auths:
-                if auth[0] == public_key:
-                    return {
-                        "success": True,
-                        "message": f"Posting key verified successfully for @{username}",
-                        "account": account
-                    }
-            
-            return {
-                "success": False,
-                "message": "Posting key does not match this account. Please verify you are using the correct posting key.",
-                "account": None
-            }
-            
-        except ImportError:
-            # Fallback: Try using beem if beemgraphenebase is not available
-            print(f"⚠️ beemgraphenebase not available, trying beem fallback")
-            try:
-                from beem.steem import Steem
-                from beem.account import Account
-                from beembase import operations
-                from beemgraphenebase.account import PrivateKey as BeemPrivateKey
-                
-                print(f"🔑 Using beem for key verification")
-                
-                # Connect to Steem
-                steem = Steem(node=STEEM_API_URL)
-                
-                # Try to create account object with the key
-                _ = Account(username, steem_instance=steem)
-                
-                private_key = BeemPrivateKey(posting_key)
-                public_key = str(private_key.pubkey)
-                
-                for auth in key_auths:
-                    if auth[0] == public_key:
-                        return {
-                            "success": True,
-                            "message": f"Posting key verified successfully for @{username}",
-                            "account": account
-                        }
-                
+        
+        from beemgraphenebase.account import PrivateKey
+        
+        print(f"🔑 Using beemgraphenebase for key verification")
+        
+        # Create private key object
+        private_key = PrivateKey(posting_key)
+        print(f"🔑 Derived public key: {private_key.pubkey}")
+        # Derive public key in WIF format
+        public_key = str(private_key.pubkey)
+        print(f"🔑 Comparing derived public key with account posting keys...")
+        # Check if this public key matches any of the account's posting keys
+        for auth in key_auths:
+            print(f"🔑 Checking against account posting key: {auth[0]}")
+            if auth[0] == public_key:
+                print(f"✅ Posting key verified successfully for {username}")
                 return {
-                    "success": False,
-                    "message": "Posting key does not match this account",
-                    "account": None
+                    "success": True,
+                    "message": f"Posting key verified successfully for @{username}",
+                    "account": account
                 }
-                
-            except ImportError:
-                # If neither library is available, use basic validation
-                print(f"⚠️ beem/beemgraphenebase not installed. Using basic base58 validation fallback")
-                
-                # Basic WIF format validation
-                import base58
-                try:
-                    decoded = base58.b58decode(posting_key)
-                    if len(decoded) != 37:  # WIF private key length
-                        return {
-                            "success": False,
-                            "message": "Invalid posting key format",
-                            "account": None
-                        }
-                    
-                    # If we got here, the key format is valid
-                    # Since we can't verify cryptographically, we trust the key
-                    print(f"✓ Posting key format validated for @{username} (basic base58 validation only)")
-                    return {
-                        "success": True,
-                        "message": f"Posting key format validated for @{username} (basic validation)",
-                        "account": account
-                    }
-                    
-                except Exception as decode_error:
-                    return {
-                        "success": False,
-                        "message": f"Invalid posting key format: {str(decode_error)}",
-                        "account": None
-                    }
-                    
+        
+        print(f"❌ Posting key does not match this account for {username}")
+        return {
+            "success": False,
+            "message": "Posting key does not match this account. Please verify you are using the correct posting key.",
+            "account": None
+        }       
     except Exception as e:
         print(f"❌ Error verifying posting key for {username}: {e}")
         return {

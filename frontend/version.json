@@ -1,8 +1,17 @@
 {
-  "version": "3.15.8",
-  "timestamp": "2026-01-23T00:55:05.570Z",
-  "buildNumber": 306,
+  "version": "3.16.0",
+  "timestamp": "2026-01-23T01:28:23.243Z",
+  "buildNumber": 307,
   "changelog": [
+    {
+      "version": "3.16.0",
+      "date": "2026-01-23",
+      "type": "minor",
+      "changes": [
+        "feat: enhance posting key verification with detailed logging and fallback handling",
+        "🔖 Bump version to 3.15.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.15.8",
       "date": "2026-01-23",
@@ -82,16 +91,6 @@
       "changes": [
         "feat: [SS CROSS]add XP and stats banners, level-up notifications, and XP calculation strategies",
         "🔖 Bump version to 3.14.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.14.11",
-      "date": "2026-01-19",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: remove default calculation fallback when no XP rules are provided",
-        "🔖 Bump version to 3.14.10 [skip-version]"
       ]
     }
   ]

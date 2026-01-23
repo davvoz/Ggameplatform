@@ -131,6 +131,14 @@ export const Utils = {
     },
 
     /**
+     * Check if point is in rectangle with padding (larger hit area for touch)
+     */
+    pointInRectWithPadding(px, py, rx, ry, rw, rh, padding = 5) {
+        return px >= (rx - padding) && px <= (rx + rw + padding) && 
+               py >= (ry - padding) && py <= (ry + rh + padding);
+    },
+
+    /**
      * Check if two circles overlap
      */
     circlesOverlap(x1, y1, r1, x2, y2, r2) {

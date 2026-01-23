@@ -15,13 +15,19 @@ export class InputHandler {
         this.pointerY = 0;
         this.startX = 0;
         this.startY = 0;
-        this.dragThreshold = 10;
+        this.dragThreshold = 20; // Increased from 10 to reduce missed clicks
         this.isDragging = false;
         this.draggedCannon = null;
+        this.dragEnabled = true; // Can be disabled for targeting modes
         
         this.tapHandlers = [];
         this.dragHandlers = [];
         this.dragEndHandlers = [];
+        
+        // Prevent duplicate events (touch + mouse on hybrid devices)
+        this.lastEventTime = 0;
+        this.eventDebounce = 50; // ms to ignore duplicate events
+        this.lastEventType = null; // 'touch' or 'mouse'
         
         this.setupEvents();
     }
@@ -46,6 +52,20 @@ export class InputHandler {
     handleStart(e) {
         e.preventDefault();
         
+        // Detect event type and prevent duplicate handling
+        const eventType = e.type.startsWith('touch') ? 'touch' : 'mouse';
+        const now = Date.now();
+        
+        // If this is a mouse event shortly after a touch event, ignore it
+        // (hybrid devices often fire both)
+        if (eventType === 'mouse' && this.lastEventType === 'touch' && 
+            (now - this.lastEventTime) < this.eventDebounce) {
+            return;
+        }
+        
+        this.lastEventType = eventType;
+        this.lastEventTime = now;
+        
         const pos = this.getEventPosition(e);
         if (!pos) return;
         
@@ -56,6 +76,7 @@ export class InputHandler {
         this.pointerY = pos.y;
         this.isDragging = false;
         this.draggedCannon = null;
+        this.startTime = now; // Track start time for tap detection
     }
 
     handleMove(e) {
@@ -68,6 +89,9 @@ export class InputHandler {
         
         this.pointerX = pos.x;
         this.pointerY = pos.y;
+        
+        // Skip drag detection if disabled (targeting mode)
+        if (!this.dragEnabled) return;
         
         const dx = this.pointerX - this.startX;
         const dy = this.pointerY - this.startY;
@@ -98,6 +122,20 @@ export class InputHandler {
         
         if (!this.pointerDown) return;
         
+        // Detect event type and prevent duplicate handling
+        const eventType = e.type.startsWith('touch') ? 'touch' : 'mouse';
+        const now = Date.now();
+        
+        // If this is a mouse event shortly after a touch event, ignore it
+        if (eventType === 'mouse' && this.lastEventType === 'touch' && 
+            (now - this.lastEventTime) < this.eventDebounce) {
+            this.pointerDown = false;
+            this.isDragging = false;
+            return;
+        }
+        
+        this.lastEventTime = now;
+        
         const pos = this.getEventPosition(e) || { x: this.pointerX, y: this.pointerY };
         
         if (this.isDragging) {
@@ -109,11 +147,12 @@ export class InputHandler {
                 handler(startGridPos, endGridPos);
             });
         } else {
-            // Handle tap/click
-            const gridPos = this.graphics.screenToGrid(pos.x, pos.y);
+            // Handle tap/click - use start position for more accurate tap detection
+            // This prevents "drift" during the tap from changing the target
+            const gridPos = this.graphics.screenToGrid(this.startX, this.startY);
             
             this.tapHandlers.forEach(handler => {
-                handler(gridPos, { x: pos.x, y: pos.y });
+                handler(gridPos, { x: this.startX, y: this.startY });
             });
         }
         
@@ -166,8 +205,28 @@ export class InputHandler {
         return null;
     }
 
+    /**
+     * Get the grid position where the drag started
+     */
+    getDragStartGridPos() {
+        if (this.isDragging) {
+            return this.graphics.screenToGrid(this.startX, this.startY);
+        }
+        return null;
+    }
+
     isPointerDown() {
         return this.pointerDown;
+    }
+
+    /**
+     * Disable drag detection (useful for targeting modes)
+     */
+    setDragEnabled(enabled) {
+        this.dragEnabled = enabled;
+        if (!enabled) {
+            this.isDragging = false;
+        }
     }
 
     clear() {

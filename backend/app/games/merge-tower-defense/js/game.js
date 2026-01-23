@@ -86,6 +86,11 @@ export class Game {
             // Screen shake for explosions
             screenShake: { x: 0, y: 0, intensity: 0, duration: 0 },
 
+            // Tower drag state for visual feedback
+            draggingTower: null,      // The cannon being dragged
+            dragCurrentPos: null,     // Current screen position {x, y}
+            dragTargetGrid: null,     // Current target grid position {col, row}
+
             // Special Abilities System
             specialAbilities: {
                 BOMB: {
@@ -171,6 +176,10 @@ export class Game {
                     if (uiAction.action === 'open') {
                         // Pause game when opening info pages
                         this.pause();
+                        // Notify tutorial system
+                        if (this.tutorial && this.tutorial.isActive) {
+                            this.tutorial.onGameAction('mtdpedia_opened', {});
+                        }
                     } else if (uiAction.action === 'close') {
                         // Resume game when closing info pages
                         this.resume();
@@ -189,7 +198,8 @@ export class Game {
                     } else if (uiAction.action === 'bomb_placed') {
                         // Bomb placement is handled via callback
                     } else if (uiAction.action === 'cancel_targeting') {
-                        // Targeting cancelled - do nothing
+                        // Targeting cancelled - re-enable drag detection
+                        this.input.setDragEnabled(true);
                     }
                 } else if (uiAction.type === 'shop') {
                     // Handle shop actions
@@ -211,16 +221,42 @@ export class Game {
         });
 
         // Drag handler for merge system and info pages scrolling
-        this.input.onDrag((gridPos, screenPos) => {
+        this.input.onDrag((gridPos, screenPos, isFirstDrag) => {
             // Check if info pages need to handle the drag (for scrolling)
             if (this.ui.handleDragMove(screenPos)) {
                 return; // Info pages consumed the drag
+            }
+            
+            // Track tower dragging for visual feedback
+            if (this.state.isPaused || this.state.isGameOver) return;
+            
+            // Get the start grid position from input handler
+            const startGridPos = this.input.getDragStartGridPos();
+            if (!startGridPos) return;
+            
+            // Find the cannon at the start position (only on first drag)
+            if (!this.state.draggingTower) {
+                const cannon = this.entities.getCannon(startGridPos.col, startGridPos.row);
+                if (cannon) {
+                    this.state.draggingTower = cannon;
+                }
+            }
+            
+            // Update drag position
+            if (this.state.draggingTower) {
+                this.state.dragCurrentPos = { x: screenPos.x, y: screenPos.y };
+                this.state.dragTargetGrid = gridPos;
             }
         });
         
         this.input.onDragEnd((startPos, endPos) => {
             // Handle info pages drag end
             this.ui.handleDragEnd();
+            
+            // Clear drag state
+            this.state.draggingTower = null;
+            this.state.dragCurrentPos = null;
+            this.state.dragTargetGrid = null;
             
             if (this.state.isPaused || this.state.isGameOver) return;
 
@@ -252,6 +288,17 @@ export class Game {
         // Meccanica: prezzo che aumenta ogni volta che si piazza una torretta di quel tipo
         if (!this.state.cannonPriceMultiplier) this.state.cannonPriceMultiplier = {};
         if (!this.state.cannonPriceMultiplier[cannonType]) this.state.cannonPriceMultiplier[cannonType] = 1;
+
+        // Check if tutorial restricts this tower type
+        if (this.ui.tutorialAllowedTowers && 
+            this.ui.tutorialAllowedTowers.length > 0 && 
+            !this.ui.tutorialAllowedTowers.includes(cannonType)) {
+            // Force switch to allowed tower and show warning
+            this.ui.selectedCannonType = this.ui.tutorialAllowedTowers[0];
+            this.particles.createWarningEffect(col, row, '🔒 BASIC!');
+            this.audio.uiError();
+            return;
+        }
 
         // Check if in defense zone
         if (!this.ui.isInDefenseZone(row)) {
@@ -419,6 +466,9 @@ export class Game {
             // Move cannon to new position if valid
             if (this.ui.isInDefenseZone(endPos.row) &&
                 this.ui.isValidGridPos(endPos)) {
+                // Check if actually moved to a different position
+                const didMove = sourceCannon.col !== endPos.col || sourceCannon.row !== endPos.row;
+                
                 sourceCannon.col = endPos.col;
                 sourceCannon.row = endPos.row;
                 this.particles.emit(endPos.col, endPos.row, {
@@ -427,6 +477,15 @@ export class Game {
                     vy: -0.5,
                     life: 0.5
                 });
+                
+                // Notify tutorial system if tower was actually moved
+                if (didMove && this.tutorial && this.tutorial.isActive) {
+                    this.tutorial.onGameAction('tower_moved', { 
+                        from: startPos, 
+                        to: endPos, 
+                        type: sourceCannon.type 
+                    });
+                }
             }
         }
         // If targetCannon exists, do nothing - merge only via selection
@@ -1050,9 +1109,12 @@ export class Game {
             this.state.energy
         );
 
-        // Render game entities
-        this.entities.render(this.graphics, performance.now());
+        // Render game entities (pass dragging tower for visual feedback)
+        this.entities.render(this.graphics, performance.now(), this.state.draggingTower);
         this.particles.render(this.graphics);
+        
+        // Render tower drag ghost (before boost effects for proper layering)
+        this.renderDragGhost();
         
         // Render boost effects on towers
         this.renderBoostEffects();
@@ -1076,6 +1138,125 @@ export class Game {
         if (window.location.search.includes('debug')) {
             this.renderDebugInfo();
         }
+    }
+
+    /**
+     * Render the ghost/silhouette of a tower being dragged
+     */
+    renderDragGhost() {
+        const { draggingTower, dragCurrentPos, dragTargetGrid } = this.state;
+        
+        if (!draggingTower || !dragCurrentPos || !dragTargetGrid) return;
+        
+        const ctx = this.graphics.ctx;
+        const cellSize = this.graphics.getCellSize();
+        
+        // Check if target position is valid
+        const isValidTarget = this.ui.isValidGridPos(dragTargetGrid) && 
+                              this.ui.isInDefenseZone(dragTargetGrid.row);
+        const isOccupied = this.entities.getCannon(dragTargetGrid.col, dragTargetGrid.row) !== null &&
+                           this.entities.getCannon(dragTargetGrid.col, dragTargetGrid.row) !== draggingTower;
+        const canPlace = isValidTarget && !isOccupied;
+        
+        // Draw target cell highlight
+        if (isValidTarget) {
+            const targetScreenPos = this.graphics.gridToScreen(dragTargetGrid.col, dragTargetGrid.row);
+            
+            ctx.save();
+            
+            // Draw cell highlight
+            if (canPlace) {
+                // Valid placement - green highlight
+                ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.8)';
+            } else {
+                // Invalid (occupied) - red highlight
+                ctx.fillStyle = 'rgba(255, 80, 80, 0.3)';
+                ctx.strokeStyle = 'rgba(255, 80, 80, 0.8)';
+            }
+            
+            ctx.lineWidth = 2;
+            ctx.fillRect(
+                targetScreenPos.x - cellSize / 2,
+                targetScreenPos.y - cellSize / 2,
+                cellSize,
+                cellSize
+            );
+            ctx.strokeRect(
+                targetScreenPos.x - cellSize / 2,
+                targetScreenPos.y - cellSize / 2,
+                cellSize,
+                cellSize
+            );
+            
+            ctx.restore();
+        }
+        
+        // Draw ghost tower at cursor position
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        
+        // Draw tower silhouette following the cursor
+        if (draggingTower.multiSprite) {
+            // Use multi-part sprite
+            try {
+                draggingTower.multiSprite.render(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize);
+            } catch (e) {
+                // Fallback to simple shape
+                this.drawSimpleTowerGhost(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize, draggingTower.color);
+            }
+        } else if (draggingTower.sprite) {
+            // Use regular sprite
+            this.graphics.drawSpriteAt(draggingTower.sprite, dragCurrentPos.x, dragCurrentPos.y, {
+                scale: 1.0,
+                color: draggingTower.color
+            });
+        } else {
+            // Fallback to simple shape
+            this.drawSimpleTowerGhost(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize, draggingTower.color);
+        }
+        
+        // Draw level indicator on ghost if level > 1
+        if (draggingTower.level > 1) {
+            ctx.font = `bold ${cellSize * 0.25}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.strokeText(`Lv${draggingTower.level}`, dragCurrentPos.x, dragCurrentPos.y + cellSize * 0.35);
+            ctx.fillText(`Lv${draggingTower.level}`, dragCurrentPos.x, dragCurrentPos.y + cellSize * 0.35);
+        }
+        
+        ctx.restore();
+        
+        // Draw range preview at target position if valid
+        if (canPlace) {
+            this.graphics.drawRange(
+                dragTargetGrid.col, 
+                dragTargetGrid.row, 
+                draggingTower.range, 
+                'rgba(0, 255, 136, 0.1)'
+            );
+        }
+    }
+    
+    /**
+     * Draw a simple tower ghost shape as fallback
+     */
+    drawSimpleTowerGhost(ctx, x, y, cellSize, color) {
+        const size = cellSize * 0.7;
+        
+        // Draw base
+        ctx.fillStyle = color || '#00ff88';
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw outline
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     }
 
     renderDebugInfo() {
@@ -1637,8 +1818,13 @@ export class Game {
      * Activate Bomb ability - enters targeting mode
      */
     activateBombAbility(config, state) {
+        // Disable drag detection during targeting
+        this.input.setDragEnabled(false);
+        
         // Enter targeting mode
         this.ui.enterBombTargetingMode((gridPos) => {
+            // Re-enable drag detection
+            this.input.setDragEnabled(true);
             this.executeBomb(gridPos, config, state);
         });
 
@@ -1827,8 +2013,13 @@ export class Game {
      * Activate Stun ability - enters targeting mode
      */
     activateStunAbility(config, state) {
+        // Disable drag detection during targeting
+        this.input.setDragEnabled(false);
+        
         // Enter targeting mode (same as bomb)
         this.ui.enterBombTargetingMode((gridPos) => {
+            // Re-enable drag detection
+            this.input.setDragEnabled(true);
             this.executeStun(gridPos, config, state);
         });
 

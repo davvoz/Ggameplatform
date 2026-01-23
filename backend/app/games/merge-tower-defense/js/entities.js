@@ -217,7 +217,7 @@ function applyWaveScaling(baseConfig, waveNumber) {
         }
     }
 
-    render(graphics, currentTime) {
+    render(graphics, currentTime, isBeingDragged = false) {
         const recoilActive = currentTime < this.recoilTime;
         const bounce = recoilActive ? 0.5 : 0.2;
         const shake = recoilActive ? 0.3 : 0;
@@ -236,10 +236,15 @@ function applyWaveScaling(baseConfig, waveNumber) {
             const pos = graphics.gridToScreen(this.col, this.row);
             const cellSize = graphics.getCellSize();
             
-            // Apply visual effects for stunned/disabled state
-            if (isStunned || isDisabled) {
+            // Apply visual effects for stunned/disabled state or dragging
+            const needsAlphaChange = isStunned || isDisabled || isBeingDragged;
+            if (needsAlphaChange) {
                 graphics.ctx.save();
-                graphics.ctx.globalAlpha = 0.5 + Math.sin(currentTime * 0.01) * 0.2; // Flicker effect
+                if (isBeingDragged) {
+                    graphics.ctx.globalAlpha = 0.3; // Faded when being dragged
+                } else {
+                    graphics.ctx.globalAlpha = 0.5 + Math.sin(currentTime * 0.01) * 0.2; // Flicker effect
+                }
             }
             
             try {
@@ -259,18 +264,20 @@ function applyWaveScaling(baseConfig, waveNumber) {
             }
             
             // Restore alpha and draw status indicator
-            if (isStunned || isDisabled) {
+            if (needsAlphaChange) {
                 graphics.ctx.restore();
                 
-                // Draw status icon above tower
-                graphics.ctx.font = `${cellSize * 0.4}px Arial`;
-                graphics.ctx.textAlign = 'center';
-                graphics.ctx.textBaseline = 'middle';
-                graphics.ctx.fillText(
-                    isDisabled ? '🔇' : '💫',
-                    pos.x,
-                    pos.y - cellSize * 0.5
-                );
+                // Draw status icon above tower (only for stunned/disabled, not drag)
+                if ((isStunned || isDisabled) && !isBeingDragged) {
+                    graphics.ctx.font = `${cellSize * 0.4}px Arial`;
+                    graphics.ctx.textAlign = 'center';
+                    graphics.ctx.textBaseline = 'middle';
+                    graphics.ctx.fillText(
+                        isDisabled ? '🔇' : '💫',
+                        pos.x,
+                        pos.y - cellSize * 0.5
+                    );
+                }
             }
         } else if (this.sprite) {
             // Use professional sprite only
@@ -280,12 +287,13 @@ function applyWaveScaling(baseConfig, waveNumber) {
                 glow: this.selected,
                 glowColor: this.color,
                 bounce: bounce,
-                shake: shake
+                shake: shake,
+                opacity: isBeingDragged ? 0.3 : 1.0
             });
         }
         
-        // Draw level indicator
-        if (this.level > 1) {
+        // Draw level indicator (skip if being dragged)
+        if (this.level > 1 && !isBeingDragged) {
             graphics.drawLevel(this.col, this.row, this.level, this.levelIcon);
         }
         
@@ -1011,7 +1019,7 @@ export class EntityManager {
     }
 
     // Render all entities
-    render(graphics, currentTime) {
+    render(graphics, currentTime, draggingCannon = null) {
         // Render projectiles (behind zombies)
         this.projectilePool.active.forEach(proj => {
             proj.render(graphics);
@@ -1024,7 +1032,8 @@ export class EntityManager {
 
         // Render cannons
         this.cannons.forEach(cannon => {
-            cannon.render(graphics, currentTime);
+            const isBeingDragged = draggingCannon && cannon === draggingCannon;
+            cannon.render(graphics, currentTime, isBeingDragged);
         });
     }
 

@@ -216,6 +216,20 @@ export class Graphics {
     drawSprite(sprite, col, row, options = {}) {
         if (!sprite) return; // Skip if no sprite available
         
+        const pos = this.gridToScreen(col, row);
+        this.drawSpriteAt(sprite, pos.x, pos.y, options);
+    }
+    
+    /**
+     * Draw sprite at specific screen coordinates (pixel position)
+     * @param {Object|string} sprite - Sprite definition object or legacy emoji string
+     * @param {number} x - Screen X coordinate (pixels)
+     * @param {number} y - Screen Y coordinate (pixels)
+     * @param {Object} options - Rendering options
+     */
+    drawSpriteAt(sprite, x, y, options = {}) {
+        if (!sprite) return; // Skip if no sprite available
+        
         const {
             scale = 1.0,
             opacity = 1.0,
@@ -230,15 +244,13 @@ export class Graphics {
             tint = null
         } = options;
         
-        const pos = this.gridToScreen(col, row);
-        
         // Apply effects
-        let x = pos.x;
-        let y = pos.y + Math.sin(this.animationTime * 5 + col) * bounce * this.cellSize * 0.1;
+        let finalX = x;
+        let finalY = y + Math.sin(this.animationTime * 5) * bounce * this.cellSize * 0.1;
         
         if (shake > 0) {
-            x += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
-            y += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
+            finalX += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
+            finalY += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
         }
         
         const size = this.cellSize * 0.8;
@@ -249,8 +261,8 @@ export class Graphics {
             this.spriteRenderer.renderSprite(
                 this.ctx,
                 sprite,
-                x,
-                y,
+                finalX,
+                finalY,
                 size,
                 {
                     scale,
@@ -268,7 +280,7 @@ export class Graphics {
             // Legacy emoji rendering (fallback)
             this.ctx.save();
             this.ctx.globalAlpha = opacity;
-            this.ctx.translate(x, y);
+            this.ctx.translate(finalX, finalY);
             this.ctx.rotate(rotation);
             
             if (glow) {

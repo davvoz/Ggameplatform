@@ -18,6 +18,9 @@ export class UIManager {
         this.previewCol = 0;
         this.previewRow = 0;
         
+        // Tutorial restrictions
+        this.tutorialAllowedTowers = null; // Array of allowed tower types, null = all allowed
+        
         // Shop buttons (bottom bar for tower types)
         this.shopButtons = [];
         this.setupShopButtons();
@@ -860,11 +863,13 @@ export class UIManager {
      * Check if sidebar button was clicked (ability or shop item)
      */
     getClickedSidebarButton(screenPos) {
+        const touchPadding = 8; // Extra padding for easier touch targeting
         for (const button of this.sidebarButtons) {
-            if (Utils.pointInRect(
+            if (Utils.pointInRectWithPadding(
                 screenPos.x, screenPos.y,
                 button.x, button.y,
-                button.width, button.height
+                button.width, button.height,
+                touchPadding
             )) {
                 return button;
             }
@@ -917,6 +922,11 @@ export class UIManager {
         const cannon = button.cannon;
         const isSelected = button.id === this.selectedCannonType;
         
+        // Check if this tower is blocked by tutorial
+        const isBlockedByTutorial = this.tutorialAllowedTowers && 
+                                    this.tutorialAllowedTowers.length > 0 && 
+                                    !this.tutorialAllowedTowers.includes(button.id);
+        
         // Calcola il costo reale con il moltiplicatore dinamico
         let baseCost = typeof calculateTowerCost === 'function' ? 
                           calculateTowerCost(cannon.id, 1) : cannon.cost;
@@ -925,12 +935,15 @@ export class UIManager {
             multiplier = gameState.cannonPriceMultiplier[cannon.id];
         }
         const actualCost = Math.floor(baseCost * multiplier);
-        const canAfford = gameState.coins >= actualCost;
+        const canAfford = gameState.coins >= actualCost && !isBlockedByTutorial;
 
         const cornerRadius = Math.min(8, Math.floor(button.width * 0.12));
         
         // Button background
-        if (isSelected) {
+        if (isBlockedByTutorial) {
+            ctx.fillStyle = '#333333';
+            ctx.globalAlpha = 0.4;
+        } else if (isSelected) {
             ctx.fillStyle = CONFIG.COLORS.BUTTON_ACTIVE;
             ctx.globalAlpha = 0.2;
         } else {
@@ -972,15 +985,26 @@ export class UIManager {
         const costColor = canAfford ? CONFIG.COLORS.TEXT_WARNING : CONFIG.COLORS.TEXT_DANGER;
         this.graphics.drawText(`💰${actualCost}`, button.x + button.width / 2, button.y + button.height * 0.85, {
             size: costSize,
-            color: costColor,
+            color: isBlockedByTutorial ? '#555555' : costColor,
             align: 'center',
             baseline: 'middle',
             bold: true,
             shadow: false
         });
         
+        // Draw lock icon if blocked by tutorial
+        if (isBlockedByTutorial) {
+            ctx.save();
+            ctx.font = `${Math.floor(button.width * 0.35)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = 0.8;
+            ctx.fillText('🔒', button.x + button.width / 2, button.y + button.height / 2);
+            ctx.restore();
+        }
+        
         // Selection glow
-        if (isSelected) {
+        if (isSelected && !isBlockedByTutorial) {
             ctx.save();
             ctx.shadowColor = CONFIG.COLORS.BUTTON_ACTIVE;
             ctx.shadowBlur = Math.max(10, Math.floor(button.width * 0.18));
@@ -1004,20 +1028,31 @@ export class UIManager {
         
         // Check if in bomb targeting mode
         if (this.bombTargetingMode) {
-            // Check cancel button
+            // Check cancel button first
             if (this.isBombCancelButtonClicked(screenPos.x, screenPos.y)) {
                 this.exitBombTargetingMode();
                 return { type: 'ability', action: 'cancel_targeting' };
             }
             
-            // Valid grid position for bomb
-            if (this.isValidGridPos(gridPos)) {
+            // For bomb/stun targeting, be more permissive with grid position
+            // Clamp to valid grid bounds instead of rejecting
+            const clampedGridPos = {
+                col: Math.max(0, Math.min(CONFIG.COLS - 1, gridPos.col)),
+                row: Math.max(0, Math.min(CONFIG.ROWS - 1, gridPos.row))
+            };
+            
+            // Accept any tap that's reasonably close to the grid area
+            // (within 1 cell of the edges)
+            const isNearGrid = gridPos.col >= -1 && gridPos.col <= CONFIG.COLS &&
+                               gridPos.row >= -1 && gridPos.row <= CONFIG.ROWS;
+            
+            if (isNearGrid) {
                 const callback = this.targetingCallback;
                 this.exitBombTargetingMode();
                 if (callback) {
-                    callback(gridPos);
+                    callback(clampedGridPos);
                 }
-                return { type: 'ability', action: 'bomb_placed', gridPos: gridPos };
+                return { type: 'ability', action: 'bomb_placed', gridPos: clampedGridPos };
             }
             return null;
         }
@@ -1063,6 +1098,13 @@ export class UIManager {
         // Check shop button clicks (tower types)
         const clickedButton = this.getClickedShopButton(screenPos);
         if (clickedButton) {
+            // Check if tutorial restricts tower selection
+            if (this.tutorialAllowedTowers && this.tutorialAllowedTowers.length > 0) {
+                if (!this.tutorialAllowedTowers.includes(clickedButton.id)) {
+                    // Tower not allowed during this tutorial step - ignore click
+                    return null;
+                }
+            }
             this.selectedCannonType = clickedButton.id;
             return { type: 'shop', action: 'select', cannonType: clickedButton.id };
         }
@@ -1078,11 +1120,13 @@ export class UIManager {
     }
 
     getClickedShopButton(screenPos) {
+        const touchPadding = 6; // Extra padding for easier touch targeting
         for (const button of this.shopButtons) {
-            if (Utils.pointInRect(
+            if (Utils.pointInRectWithPadding(
                 screenPos.x, screenPos.y,
                 button.x, button.y,
-                button.width, button.height
+                button.width, button.height,
+                touchPadding
             )) {
                 return button;
             }
@@ -1094,6 +1138,13 @@ export class UIManager {
         this.showRangePreview = show;
         this.previewCol = col;
         this.previewRow = row;
+    }
+
+    /**
+     * Set allowed tower types for tutorial (null = all allowed)
+     */
+    setTutorialAllowedTowers(allowedTypes) {
+        this.tutorialAllowedTowers = allowedTypes;
     }
 
     isValidGridPos(gridPos) {

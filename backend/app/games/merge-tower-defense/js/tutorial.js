@@ -26,6 +26,8 @@ class TutorialStep {
         this.onExit = config.onExit || null; // Callback when step ends
         this.position = config.position || 'center'; // 'top' | 'center' | 'bottom'
         this.icon = config.icon || '💡';
+        this.allowedTowerTypes = config.allowedTowerTypes || null; // Array of allowed tower type IDs during this step
+        this.showFirstTowerArrow = config.showFirstTowerArrow || false; // Show exaggerated arrow pointing to first tower
     }
 }
 
@@ -47,10 +49,12 @@ export class TutorialManager {
         // Tutorial state tracking
         this.completedActions = {
             towerPlaced: false,
+            towerMoved: false,
             towersMerged: false,
             waveStarted: false,
             abilityUsed: false,
-            shopItemPurchased: false
+            shopItemPurchased: false,
+            mtdpediaOpened: false
         };
         
         // Visual state
@@ -106,26 +110,52 @@ export class TutorialManager {
             new TutorialStep({
                 id: 'place_tower',
                 title: '🔫 Piazza la Prima Torretta',
-                description: 'Prima seleziona una torretta dal negozio in basso, poi tocca una cella verde!',
+                description: 'La torretta Basic è già selezionata. Tocca una cella verde per piazzarla!',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_tower',
                 position: 'center',
                 icon: '👆',
                 showFirstTowerArrow: true, // Show exaggerated arrow on first tower
+                allowedTowerTypes: ['BASIC'], // Only allow BASIC tower during this step
                 onEnter: (manager) => {
                     manager.completedActions.towerPlaced = false;
+                    // Force BASIC tower selection
+                    if (manager.ui) {
+                        manager.ui.selectedCannonType = 'BASIC';
+                    }
                 }
             }),
 
-            // Step 5: Place more towers
+            // Step 5: Move tower by dragging
+            new TutorialStep({
+                id: 'move_tower',
+                title: '↔️ Sposta la Torretta',
+                description: 'Ora prova a spostare la torretta! Tieni premuto sulla torretta e trascinala in un\'altra cella vuota.',
+                highlightArea: 'defense_zone',
+                waitForAction: 'move_tower',
+                position: 'center',
+                icon: '👆',
+                onEnter: (manager) => {
+                    manager.completedActions.towerMoved = false;
+                }
+            }),
+
+            // Step 6: Place more towers
             new TutorialStep({
                 id: 'place_more',
                 title: '🔫 Piazza Altre Torrette',
-                description: 'Piazza altre 2 torrette dello STESSO TIPO per poterle fondere!',
+                description: 'Piazza altre 2 torrette BASIC per poterle fondere! (Usa solo torrette Basic)',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_multiple',
                 position: 'center',
                 icon: '✌️',
+                allowedTowerTypes: ['BASIC'], // Only allow BASIC tower during this step
+                onEnter: (manager) => {
+                    // Force BASIC tower selection
+                    if (manager.ui) {
+                        manager.ui.selectedCannonType = 'BASIC';
+                    }
+                },
                 condition: (manager) => {
                     const cannons = manager.game.entities.cannons;
                     if (cannons.length < 3) return false;
@@ -138,7 +168,7 @@ export class TutorialManager {
                 }
             }),
 
-            // Step 6: Explain merge system
+            // Step 7: Explain merge system
             new TutorialStep({
                 id: 'merge_intro',
                 title: '🔄 Sistema di Fusione',
@@ -202,6 +232,21 @@ export class TutorialManager {
                 icon: '✨'
             }),
 
+            // Step 12: Open MTDPEDIA
+            new TutorialStep({
+                id: 'open_mtdpedia',
+                title: '📖 MTD-Pedia',
+                description: 'Tocca il pulsante 📖 in alto a destra per aprire la MTD-Pedia. Troverai info su nemici, torrette, abilità e oggetti!',
+                highlightArea: 'info_button',
+                arrowDirection: 'right',
+                waitForAction: 'open_mtdpedia',
+                position: 'center',
+                icon: '📚',
+                onEnter: (manager) => {
+                    manager.completedActions.mtdpediaOpened = false;
+                }
+            }),
+
             // Step 13: Ready to play
             new TutorialStep({
                 id: 'ready',
@@ -261,6 +306,11 @@ export class TutorialManager {
         console.log('[Tutorial] Stopping tutorial...');
         this.isActive = false;
         
+        // Remove tower type restrictions
+        if (this.ui) {
+            this.ui.setTutorialAllowedTowers(null);
+        }
+        
         // Resume the game
         if (this.game) {
             this.game.state.tutorialMode = false;
@@ -292,6 +342,11 @@ export class TutorialManager {
         }
         
         console.log(`[Tutorial] Entering step: ${step.id}`);
+        
+        // Set tower type restrictions for this step
+        if (this.ui) {
+            this.ui.setTutorialAllowedTowers(step.allowedTowerTypes || null);
+        }
         
         // Call onEnter callback if exists
         if (step.onEnter) {
@@ -373,6 +428,13 @@ export class TutorialManager {
                     this.nextStep();
                 }
                 break;
+            
+            case 'tower_moved':
+                this.completedActions.towerMoved = true;
+                if (step.waitForAction === 'move_tower') {
+                    this.nextStep();
+                }
+                break;
                 
             case 'towers_merged':
                 this.completedActions.towersMerged = true;
@@ -388,6 +450,13 @@ export class TutorialManager {
             case 'shop_purchased':
                 this.completedActions.shopItemPurchased = true;
                 break;
+            
+            case 'mtdpedia_opened':
+                this.completedActions.mtdpediaOpened = true;
+                if (step.waitForAction === 'open_mtdpedia') {
+                    this.nextStep();
+                }
+                break;
         }
         
         // Check condition-based steps
@@ -401,6 +470,11 @@ export class TutorialManager {
      */
     handleTap(screenPos) {
         if (!this.isActive) return false;
+        
+        // Don't handle taps when MTDPedia is open - let it handle its own clicks
+        if (this.ui && this.ui.isInfoPagesOpen && this.ui.isInfoPagesOpen()) {
+            return false;
+        }
         
         const step = this.getCurrentStep();
         if (!step) return false;
@@ -460,6 +534,11 @@ export class TutorialManager {
      */
     render() {
         if (!this.isActive) return;
+        
+        // Don't render tutorial overlay when MTDPedia is open
+        if (this.ui && this.ui.isInfoPagesOpen && this.ui.isInfoPagesOpen()) {
+            return;
+        }
         
         const ctx = this.graphics.ctx;
         const width = this.graphics.canvas.width / (window.devicePixelRatio || 1);
@@ -703,6 +782,25 @@ export class TutorialManager {
                     width: sidebarWidth,
                     height: height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT - 180
                 };
+            
+            case 'info_button':
+                // Info/MTDPedia button in top right corner
+                const infoButton = this.ui?.infoButton;
+                if (infoButton) {
+                    return {
+                        x: infoButton.x - 5,
+                        y: infoButton.y - 5,
+                        width: infoButton.width + 10,
+                        height: infoButton.height + 10
+                    };
+                }
+                // Fallback position if infoButton not available
+                return {
+                    x: width - 45,
+                    y: 40,
+                    width: 38,
+                    height: 38
+                };
                 
             default:
                 if (typeof area === 'object') {
@@ -757,6 +855,7 @@ export class TutorialManager {
 
     /**
      * Render an exaggerated arrow pointing to the first tower in shop
+     * and another arrow pointing to a cell in the defense zone
      */
     renderFirstTowerArrow(ctx, step) {
         // Check if this step should show the arrow
@@ -847,6 +946,106 @@ export class TutorialManager {
             Math.PI * 2
         );
         ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.restore();
+        
+        // === Draw second arrow pointing to defense zone cell ===
+        this.renderDefenseZoneArrow(ctx, time, pulseScale, bounceAmount);
+    }
+    
+    /**
+     * Render arrow pointing to a cell in the defense zone
+     */
+    renderDefenseZoneArrow(ctx, time, pulseScale, bounceAmount) {
+        // Calculate position of a cell in the defense zone (center-ish cell)
+        const width = this.graphics.canvas.width / (window.devicePixelRatio || 1);
+        const height = this.graphics.canvas.height / (window.devicePixelRatio || 1);
+        
+        const cellSize = Math.floor(Math.min(
+            (width - UI_CONFIG.SIDEBAR_WIDTH) / CONFIG.COLS,
+            (height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT) / CONFIG.ROWS
+        ));
+        const gridOffsetX = UI_CONFIG.SIDEBAR_WIDTH + Math.floor((width - UI_CONFIG.SIDEBAR_WIDTH - CONFIG.COLS * cellSize) / 2);
+        const gridOffsetY = UI_CONFIG.TOP_BAR_HEIGHT + Math.floor((height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT - CONFIG.ROWS * cellSize) / 2);
+        
+        // Target cell: center column, middle of defense zone
+        const targetCol = Math.floor(CONFIG.COLS / 2);
+        const defenseStartRow = CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS;
+        const targetRow = defenseStartRow + Math.floor(CONFIG.DEFENSE_ZONE_ROWS / 2);
+        
+        const cellCenterX = gridOffsetX + targetCol * cellSize + cellSize / 2;
+        const cellCenterY = gridOffsetY + targetRow * cellSize + cellSize / 2;
+        
+        ctx.save();
+        
+        // Arrow pointing down to the cell (from above)
+        const arrowX = cellCenterX;
+        const arrowY = cellCenterY - cellSize / 2 - 10;
+        
+        // Draw glow layers
+        for (let i = 3; i >= 0; i--) {
+            ctx.globalAlpha = 0.3 - i * 0.05;
+            ctx.fillStyle = i === 0 ? '#00ff88' : '#00cc66';
+            
+            const glowScale = pulseScale * (1 + i * 0.15);
+            const size = 20 * glowScale;
+            
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowY + bounceAmount + size);
+            ctx.lineTo(arrowX - size, arrowY + bounceAmount);
+            ctx.lineTo(arrowX - size * 0.4, arrowY + bounceAmount);
+            ctx.lineTo(arrowX - size * 0.4, arrowY + bounceAmount - size * 1.2);
+            ctx.lineTo(arrowX + size * 0.4, arrowY + bounceAmount - size * 1.2);
+            ctx.lineTo(arrowX + size * 0.4, arrowY + bounceAmount);
+            ctx.lineTo(arrowX + size, arrowY + bounceAmount);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Main arrow (green for grid)
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 15;
+        
+        const size = 20 * pulseScale;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY + bounceAmount + size);
+        ctx.lineTo(arrowX - size, arrowY + bounceAmount);
+        ctx.lineTo(arrowX - size * 0.4, arrowY + bounceAmount);
+        ctx.lineTo(arrowX - size * 0.4, arrowY + bounceAmount - size * 1.2);
+        ctx.lineTo(arrowX + size * 0.4, arrowY + bounceAmount - size * 1.2);
+        ctx.lineTo(arrowX + size * 0.4, arrowY + bounceAmount);
+        ctx.lineTo(arrowX + size, arrowY + bounceAmount);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw "QUI!" text above arrow
+        const textY = arrowY + bounceAmount - size * 1.8;
+        ctx.font = `bold ${16 * pulseScale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText('QUI!', arrowX, textY);
+        
+        ctx.fillStyle = '#fff';
+        ctx.fillText('QUI!', arrowX, textY);
+        
+        // Highlight target cell with pulsing border
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.6 + Math.sin(time * 5) * 0.3;
+        ctx.setLineDash([6, 3]);
+        ctx.lineDashOffset = -time * 40;
+        ctx.strokeRect(
+            gridOffsetX + targetCol * cellSize + 2,
+            gridOffsetY + targetRow * cellSize + 2,
+            cellSize - 4,
+            cellSize - 4
+        );
         ctx.setLineDash([]);
         
         ctx.restore();

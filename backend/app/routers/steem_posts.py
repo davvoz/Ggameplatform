@@ -577,145 +577,390 @@ async def publish_with_key(
     Returns:
         Publication result with permlink and URL
     """
-    try:
-        username = request.get('username')
-        posting_key = request.get('posting_key')
-        title = request.get('title')
-        body = request.get('body')
-        tags = request.get('tags', [])
-        metadata = request.get('metadata', {})
+    username = request.get('username')
+    posting_key = request.get('posting_key')
+    title = request.get('title')
+    body = request.get('body')
+    tags = request.get('tags', [])
+    metadata = request.get('metadata', {})
+    
+    if not all([username, posting_key, title, body]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required fields: username, posting_key, title, body"
+        )
+    
+    # Verify posting key
+    from app.steem_checker import verify_posting_key
+    verification = verify_posting_key(username, posting_key)
+    
+    if not verification['success']:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=verification['message']
+        )
+    
+    # Generate permlink
+    permlink = _generate_permlink(title)
+    
+    # Publish using beem
+    post_url = _publish_to_steem(username, posting_key, title, body, tags, metadata, permlink, request)
+    
+    # Update user data and deduct coins
+    _update_user_after_publish(db, username, title, post_url, permlink, coin_service, post_service)
+    
+    # Send Telegram notification
+    _send_publish_notification(username, post_url, permlink)
+    
+    return {
+        "success": True,
+        "permlink": permlink,
+        "post_url": post_url,
+        "message": "Post published successfully on Steem blockchain"
+    }
+
+
+def _generate_permlink(title: str) -> str:
+    """Generate a unique permlink from the title"""
+    import re
+    import random
+    
+    random_suffix = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=6))
+    
+    # Convert title to URL-safe format
+    permlink = re.sub(r'[^a-z0-9\s-]', '', title.lower())
+    permlink = re.sub(r'\s+', '-', permlink)
+    permlink = re.sub(r'-+', '-', permlink)
+    permlink = permlink[:100]
+    return f"{permlink}-{random_suffix}"
+
+
+def _get_beneficiaries(request: dict) -> List[Dict[str, Any]]:
+    """Get beneficiaries from request or environment defaults"""
+    beneficiaries = request.get('beneficiaries')
+    if beneficiaries is None:
+        beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
+        beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
+        beneficiaries = [{
+            "account": beneficiary_account,
+            "weight": beneficiary_weight
+        }]
+    return beneficiaries
+
+
+import logging
+from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
+
+# Steem API nodes with fallback support
+STEEM_NODES = [
+    'https://api.steemit.com',
+    'https://api.moecki.online',
+    'https://steemapi.boylikegirl.club',
+    'https://steem.senior.workers.dev'
+]
+
+
+@dataclass
+class SteemPostData:
+    """Data class containing all information needed to publish a Steem post."""
+    username: str
+    posting_key: str
+    title: str
+    body: str
+    permlink: str
+    tags: List[str]
+    json_metadata: Dict[str, Any]
+    beneficiaries: List[Dict[str, Any]]
+    
+    def get_post_url(self) -> str:
+        """Generate the post URL after successful publication."""
+        return f"https://www.cur8.fun/app/@{self.username}/{self.permlink}"
+    
+    def log_summary(self) -> None:
+        """Log a summary of the post data for debugging."""
+        logger.info("[STEEM] Starting publication for @%s", self.username)
+        logger.info("[STEEM] Permlink: %s", self.permlink)
+        logger.info("[STEEM] Title: %s...", self.title[:50])
+        logger.debug("[STEEM] Posting key length: %d, starts with: %s...", 
+                     len(self.posting_key), self.posting_key[:3])
+        logger.debug("[STEEM] Beneficiaries: %s", self.beneficiaries)
+
+
+class SteemPublisher:
+    """
+    Handles publishing posts to the Steem blockchain with node fallback support.
+    
+    This class encapsulates the logic for publishing posts to Steem,
+    including error handling and automatic node failover.
+    """
+    
+    def __init__(self, nodes: List[str] = None):
+        """
+        Initialize the publisher with a list of Steem nodes.
         
-        if not all([username, posting_key, title, body]):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing required fields: username, posting_key, title, body"
-            )
+        Args:
+            nodes: List of Steem API node URLs. Defaults to STEEM_NODES.
+        """
+        self.nodes = nodes or STEEM_NODES
+    
+    @staticmethod
+    def _is_authority_error(error_message: str) -> bool:
+        """Check if error is related to posting authority/key issues."""
+        error_lower = error_message.lower()
+        has_authority = "authority" in error_lower
+        has_missing_posting = "missing" in error_lower and "posting" in error_lower
+        return has_authority or has_missing_posting
+    
+    @staticmethod
+    def _create_steem_instance(posting_key: str, node: str):
+        """Create a Steem instance with the given posting key and node."""
+        from beem import Steem
+        return Steem(keys=[posting_key], node=node)
+    
+    def _execute_post(self, steem_instance, post_data: SteemPostData) -> None:
+        """Execute the post operation on Steem blockchain."""
+        steem_instance.post(
+            title=post_data.title,
+            body=post_data.body,
+            author=post_data.username,
+            permlink=post_data.permlink,
+            tags=post_data.tags,
+            json_metadata=post_data.json_metadata,
+            beneficiaries=post_data.beneficiaries,
+            self_vote=False
+        )
+    
+    def _try_publish_on_node(self, node: str, post_data: SteemPostData) -> bool:
+        """
+        Attempt to publish post on a specific node.
         
-        # Verify posting key
-        from app.steem_checker import verify_posting_key
-        verification = verify_posting_key(username, posting_key)
+        Args:
+            node: The Steem API node URL to use
+            post_data: The post data to publish
+            
+        Returns:
+            True if successful, False if should retry on another node
+            
+        Raises:
+            HTTPException: If error is related to invalid posting key (no retry)
+        """
+        try:
+            logger.info("[STEEM] Trying node: %s", node)
+            
+            steem = self._create_steem_instance(post_data.posting_key, node)
+            logger.info("[STEEM] Steem instance created successfully")
+            
+            self._execute_post(steem, post_data)
+            
+            logger.info("[STEEM] Post published successfully on %s", node)
+            return True
+            
+        except Exception as node_error:
+            return self._handle_node_error(node, post_data.username, node_error)
+    
+    def _handle_node_error(self, node: str, username: str, error: Exception) -> bool:
+        """
+        Handle errors from a node publication attempt.
         
-        if not verification['success']:
+        Args:
+            node: The node that failed
+            username: The Steem username
+            error: The exception that occurred
+            
+        Returns:
+            False to indicate retry on next node
+            
+        Raises:
+            HTTPException: If error is an authority error (invalid key)
+        """
+        error_str = str(error)
+        logger.warning("[STEEM] Error on %s: %s", node, error_str)
+        
+        if self._is_authority_error(error_str):
+            logger.error("[STEEM] Authority error - invalid posting key for @%s", username)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=verification['message']
-            )
-        
-        # Generate permlink
-        import time
-        import re
-        import random
-        timestamp = int(time.time())
-        random_suffix = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=6))
-        
-        # Convert title to URL-safe format
-        permlink = re.sub(r'[^a-z0-9\s-]', '', title.lower())
-        permlink = re.sub(r'\s+', '-', permlink)
-        permlink = re.sub(r'-+', '-', permlink)
-        permlink = permlink[:100]
-        permlink = f"{permlink}-{random_suffix}"
-        
-        # Publish using beem
-        try:
-            from beem import Steem
-
-            # Create Steem instance with posting key
-            steem = Steem(keys=[posting_key], node='https://api.steemit.com')
-
-            # Prepare metadata
-            json_metadata = {
-                'tags': tags,
-                **metadata
-            }
-
-            # Prepare beneficiaries: allow override from request, otherwise use env/default
-            beneficiaries = request.get('beneficiaries')
-            if beneficiaries is None:
-                beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
-                beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
-                beneficiaries = [{
-                    "account": beneficiary_account,
-                    "weight": beneficiary_weight
-                }]
-
-            # Post using steem.post() method (pass beneficiaries)
-            steem.post(
-                title=title,
-                body=body,
-                author=username,
-                permlink=permlink,
-                tags=tags,
-                json_metadata=json_metadata,
-                beneficiaries=beneficiaries,
-                self_vote=False
-            )
-            
-            post_url = f"https://www.cur8.fun/app/@{username}/{permlink}"
-            
-            # Update last post timestamp and deduct coins
-            user = db.query(User).filter(User.steem_username == username).first()
-            if user:
-                # Deduct coins now that post is confirmed successful
-                transaction = coin_service.spend_coins(
-                    user_id=user.user_id,
-                    amount=post_service.POST_COST_COINS,
-                    transaction_type="steem_post_publish",
-                    source_id=None,
-                    description=f"Published post: {title[:50]}...",
-                    extra_data={
-                        "post_title": title,
-                        "post_url": post_url,
-                        "permlink": permlink
-                    }
+                detail=(
+                    f"Invalid posting key for @{username}. "
+                    "Please verify you're using the correct POSTING private key "
+                    "(starts with '5'), not your active key or master password."
                 )
-                
-                if not transaction:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Insufficient balance to complete publication"
-                    )
-                
-                from datetime import datetime
-                user.last_steem_post = datetime.utcnow().isoformat()
-                db.commit()
+            )
+        
+        logger.info("[STEEM] Will try next node...")
+        return False
+    
+    def publish(self, post_data: SteemPostData) -> str:
+        """
+        Publish post to Steem blockchain with automatic node fallback.
+        
+        Args:
+            post_data: The complete post data to publish
             
-            # Send Telegram notification
+        Returns:
+            Post URL on success
+            
+        Raises:
+            HTTPException: On authentication or publication failure
+        """
+        import traceback
+        
+        self._verify_beem_available()
+        post_data.log_summary()
+        logger.info("[STEEM] Will try %d nodes", len(self.nodes))
+        
+        last_error = None
+        
+        for node in self.nodes:
             try:
-                send_telegram_success(
-                    title="New Steem Post Published (Posting Key)",
-                    message=f"User @{username} published a new post using posting key!",
-                    stats={
-                        "User": username,
-                        "Post URL": post_url,
-                        "Permlink": permlink
-                    }
-                )
-            except Exception as telegram_error:
-                print(f"Failed to send Telegram notification: {telegram_error}")
-            
-            return {
-                "success": True,
-                "permlink": permlink,
-                "post_url": post_url,
-                "message": "Post published successfully on Steem blockchain"
-            }
-            
-        except Exception as beem_error:
-            print(f"Beem publication error: {beem_error}")
+                if self._try_publish_on_node(node, post_data):
+                    post_url = post_data.get_post_url()
+                    logger.info("[STEEM] Publication successful! URL: %s", post_url)
+                    return post_url
+                    
+            except HTTPException:
+                raise
+            except Exception as node_err:
+                last_error = node_err
+                logger.warning("[STEEM] Node %s failed: %s", node, str(node_err))
+                continue
+        
+        self._raise_all_nodes_failed(last_error)
+    
+    def _verify_beem_available(self) -> None:
+        """Verify that the beem library is available."""
+        try:
+            from beem import Steem  # noqa: F401
+        except ImportError as import_err:
+            logger.error("[STEEM] Failed to import beem library: %s", import_err)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to publish post: {str(beem_error)}"
+                detail="Steem library not available on server"
             )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
+    
+    def _raise_all_nodes_failed(self, last_error: Exception) -> None:
+        """Raise an exception when all nodes have failed."""
         import traceback
+        
+        logger.error("[STEEM] All %d nodes failed. Last error: %s", 
+                     len(self.nodes), last_error)
         traceback.print_exc()
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to publish post: {str(e)}"
+            detail=(
+                "Failed to publish post after trying all nodes. "
+                f"Please try again later. Error: {str(last_error)}"
+            )
         )
+
+
+# Module-level publisher instance for convenience
+_steem_publisher = SteemPublisher()
+
+
+def _publish_to_steem(
+    username: str,
+    posting_key: str,
+    title: str,
+    body: str,
+    tags: List[str],
+    metadata: Dict[str, Any],
+    permlink: str,
+    request: dict
+) -> str:
+    """
+    Publish post to Steem blockchain using beem with multiple node fallback.
+    
+    This is a convenience function that wraps the SteemPublisher class.
+    
+    Args:
+        username: Steem username
+        posting_key: User's posting private key
+        title: Post title
+        body: Post body content
+        tags: List of tags
+        metadata: Additional metadata
+        permlink: Unique post permlink
+        request: Original request dict for beneficiaries
+        
+    Returns:
+        Post URL on success
+        
+    Raises:
+        HTTPException: On authentication or publication failure
+    """
+    post_data = SteemPostData(
+        username=username,
+        posting_key=posting_key,
+        title=title,
+        body=body,
+        permlink=permlink,
+        tags=tags,
+        json_metadata={'tags': tags, **metadata},
+        beneficiaries=_get_beneficiaries(request)
+    )
+    
+    return _steem_publisher.publish(post_data)
+
+
+def _update_user_after_publish(
+    db: Session,
+    username: str,
+    title: str,
+    post_url: str,
+    permlink: str,
+    coin_service: CoinService,
+    post_service: SteemPostService
+) -> None:
+    """Update user data and deduct coins after successful publication"""
+    from datetime import datetime, timezone
+    
+    user = db.query(User).filter(User.steem_username == username).first()
+    if not user:
+        return
+    
+    # Deduct coins now that post is confirmed successful
+    transaction = coin_service.spend_coins(
+        user_id=user.user_id,
+        amount=post_service.POST_COST_COINS,
+        transaction_type="steem_post_publish",
+        source_id=None,
+        description=f"Published post: {title[:50]}...",
+        extra_data={
+            "post_title": title,
+            "post_url": post_url,
+            "permlink": permlink
+        }
+    )
+    
+    if not transaction:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient balance to complete publication"
+        )
+    
+    user.last_steem_post = datetime.now(timezone.utc).isoformat()
+    db.commit()
+
+
+def _send_publish_notification(username: str, post_url: str, permlink: str) -> None:
+    """Send Telegram notification for successful publication"""
+    try:
+        send_telegram_success(
+            title="New Steem Post Published (Posting Key)",
+            message=f"User @{username} published a new post using posting key!",
+            stats={
+                "User": username,
+                "Post URL": post_url,
+                "Permlink": permlink
+            }
+        )
+    except Exception as telegram_error:
+        print(f"Failed to send Telegram notification: {telegram_error}")
+
 
 
 @router.post("/refund-post")

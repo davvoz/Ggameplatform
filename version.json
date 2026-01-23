@@ -1,8 +1,17 @@
 {
-  "version": "3.16.0",
-  "timestamp": "2026-01-23T01:28:23.243Z",
-  "buildNumber": 307,
+  "version": "3.16.1",
+  "timestamp": "2026-01-23T09:56:27.360Z",
+  "buildNumber": 308,
   "changelog": [
+    {
+      "version": "3.16.1",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "fix: bump beem package version to 0.24.26",
+        "🔖 Bump version to 3.16.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.0",
       "date": "2026-01-23",
@@ -82,15 +91,6 @@
       "changes": [
         "refactor: remove game registration logic from XP rules script",
         "🔖 Bump version to 3.15.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.15.0",
-      "date": "2026-01-20",
-      "type": "minor",
-      "changes": [
-        "feat: [SS CROSS]add XP and stats banners, level-up notifications, and XP calculation strategies",
-        "🔖 Bump version to 3.14.11 [skip-version]"
       ]
     }
   ]

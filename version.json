@@ -1,8 +1,17 @@
 {
-  "version": "3.16.6",
-  "timestamp": "2026-01-23T13:55:33.492Z",
-  "buildNumber": 313,
+  "version": "3.16.7",
+  "timestamp": "2026-01-23T14:34:09.164Z",
+  "buildNumber": 314,
   "changelog": [
+    {
+      "version": "3.16.7",
+      "date": "2026-01-23",
+      "type": "patch",
+      "changes": [
+        "refactor: enhance sticky navbar functionality and improve code organization",
+        "🔖 Bump version to 3.16.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.6",
       "date": "2026-01-23",
@@ -83,15 +92,6 @@
       "changes": [
         "refactor: enhance post publishing logic with improved structure and error handling",
         "🔖 Bump version to 3.15.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.15.6",
-      "date": "2026-01-22",
-      "type": "patch",
-      "changes": [
-        "fix: refactor post publishing logic for improved clarity and error handling",
-        "🔖 Bump version to 3.15.5 [skip-version]"
       ]
     }
   ]

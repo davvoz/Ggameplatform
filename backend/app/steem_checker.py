@@ -179,6 +179,8 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
         try:
             from beemgraphenebase.account import PrivateKey
             
+            print(f"🔑 Using beemgraphenebase for key verification")
+            
             # Create private key object
             private_key = PrivateKey(posting_key)
             
@@ -202,19 +204,20 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
             
         except ImportError:
             # Fallback: Try using beem if beemgraphenebase is not available
+            print(f"⚠️ beemgraphenebase not available, trying beem fallback")
             try:
                 from beem.steem import Steem
                 from beem.account import Account
+                from beembase import operations
+                from beemgraphenebase.account import PrivateKey as BeemPrivateKey
+                
+                print(f"🔑 Using beem for key verification")
                 
                 # Connect to Steem
                 steem = Steem(node=STEEM_API_URL)
                 
                 # Try to create account object with the key
-                acc = Account(username, steem_instance=steem)
-                
-                # Verify the key by checking if it's valid for posting
-                from beembase import operations
-                from beemgraphenebase.account import PrivateKey as BeemPrivateKey
+                _ = Account(username, steem_instance=steem)
                 
                 private_key = BeemPrivateKey(posting_key)
                 public_key = str(private_key.pubkey)
@@ -235,8 +238,7 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
                 
             except ImportError:
                 # If neither library is available, use basic validation
-                # This is a fallback that just checks key format
-                print("⚠️ beem/beemgraphenebase not installed. Using basic validation only.")
+                print(f"⚠️ beem/beemgraphenebase not installed. Using basic base58 validation fallback")
                 
                 # Basic WIF format validation
                 import base58
@@ -251,7 +253,7 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
                     
                     # If we got here, the key format is valid
                     # Since we can't verify cryptographically, we trust the key
-                    # (In production, install beem for proper verification)
+                    print(f"✓ Posting key format validated for @{username} (basic base58 validation only)")
                     return {
                         "success": True,
                         "message": f"Posting key format validated for @{username} (basic validation)",

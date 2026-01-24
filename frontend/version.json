@@ -1,8 +1,17 @@
 {
-  "version": "3.16.10",
-  "timestamp": "2026-01-24T01:41:45.264Z",
-  "buildNumber": 317,
+  "version": "3.16.11",
+  "timestamp": "2026-01-24T02:44:02.381Z",
+  "buildNumber": 318,
   "changelog": [
+    {
+      "version": "3.16.11",
+      "date": "2026-01-24",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD]add tower info panel with sell and select options",
+        "🔖 Bump version to 3.16.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.10",
       "date": "2026-01-24",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: enable posting key verification in publish_with_key function",
         "🔖 Bump version to 3.16.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.1",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "fix: bump beem package version to 0.24.26",
-        "🔖 Bump version to 3.16.0 [skip-version]"
       ]
     }
   ]

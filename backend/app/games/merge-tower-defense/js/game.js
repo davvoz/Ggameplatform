@@ -153,6 +153,14 @@ export class Game {
             const uiAction = this.ui.handleTap(gridPos, screenPos, this.state);
 
             if (uiAction) {
+                // Handle tower info panel actions
+                if (uiAction.type === 'towerInfo') {
+                    if (uiAction.action === 'sell') {
+                        // Sell handled via callback
+                    }
+                    return;
+                }
+                
                 if (uiAction.type === 'settings') {
                     // Handle settings actions (always allowed)
                     if (uiAction.action === 'open') {
@@ -287,12 +295,127 @@ export class Game {
                 return;
             }
             
+            // If tapping on already selected cannon, show info panel
+            if (cannon.selected) {
+                this.showTowerInfoPanel(cannon);
+                return;
+            }
+            
             // Toggle cannon selection for merge
             this.toggleCannonSelection(cannon);
         } else {
             // Place new cannon
             this.placeCannon(gridPos.col, gridPos.row);
         }
+    }
+    
+    /**
+     * Show tower info panel with sell option
+     */
+    showTowerInfoPanel(cannon) {
+        // Deselect all cannons when showing info panel
+        this.deselectAll();
+        
+        // Show tower info with sell and select callbacks
+        this.ui.showTowerInfo(
+            cannon, 
+            // Sell callback
+            (tower, sellValue) => {
+                this.sellTower(tower, sellValue);
+            },
+            // Select for merge callback
+            (tower) => {
+                this.selectTowerForMerge(tower);
+            }
+        );
+    }
+    
+    /**
+     * Select a tower for merging (from info panel)
+     */
+    selectTowerForMerge(tower) {
+        // Toggle selection for merge system
+        this.toggleCannonSelection(tower);
+        
+        // Visual feedback
+        const screenPos = this.graphics.gridToScreen(tower.col, tower.row);
+        this.particles.emit(tower.col, tower.row, {
+            text: '🔗',
+            vy: -2,
+            life: 0.6,
+            scale: 0.8
+        });
+    }
+    
+    /**
+     * Sell a tower and get coins back
+     */
+    sellTower(tower, sellValue) {
+        // Save position before removing
+        const col = tower.col;
+        const row = tower.row;
+        const towerType = tower.type;
+        const towerLevel = tower.level;
+        
+        // Add coins
+        this.state.coins += sellValue;
+        
+        // Remove the tower FIRST so particles show on empty cell
+        this.entities.removeCannon(tower);
+        
+        // Create spectacular sell effect
+        // Big coin burst particles
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const speed = 3 + Math.random() * 2;
+            this.particles.emit(col, row, {
+                text: '💰',
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 3,
+                gravity: 0.15,
+                life: 1.0,
+                scale: 0.6 + Math.random() * 0.4
+            });
+        }
+        
+        // Sparkle effect
+        for (let i = 0; i < 6; i++) {
+            const delay = i * 50;
+            setTimeout(() => {
+                this.particles.emit(col, row, {
+                    text: '✨',
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -2 - Math.random() * 2,
+                    gravity: 0.05,
+                    life: 0.6,
+                    scale: 0.5
+                });
+            }, delay);
+        }
+        
+        // Show big sell value text with animation
+        this.particles.emit(col, row, {
+            text: `+${sellValue}`,
+            color: '#ffdd00',
+            fontSize: 24,
+            vx: 0,
+            vy: -2,
+            gravity: 0,
+            life: 1.2,
+            scale: 1.0
+        });
+        
+        // Play sell sound and coin collect
+        this.audio.towerSell();
+        this.audio.coinCollect();
+        
+        // Flash effect on coins in UI (visual feedback)
+        this.ui.flashCoins = true;
+        setTimeout(() => {
+            this.ui.flashCoins = false;
+        }, 300);
+        
+        console.log(`[GAME] Sold ${towerType} Lv.${towerLevel} for ${sellValue} coins`);
     }
 
     placeCannon(col, row) {

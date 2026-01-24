@@ -939,79 +939,163 @@ export class UIManager {
 
         const cornerRadius = Math.min(8, Math.floor(button.width * 0.12));
         
-        // Button background
+        // Button background with gradient for gaming feel
+        ctx.save();
+        const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
         if (isBlockedByTutorial) {
-            ctx.fillStyle = '#333333';
-            ctx.globalAlpha = 0.4;
+            bgGradient.addColorStop(0, '#2a2a2a');
+            bgGradient.addColorStop(1, '#1a1a1a');
+            ctx.globalAlpha = 0.5;
         } else if (isSelected) {
-            ctx.fillStyle = CONFIG.COLORS.BUTTON_ACTIVE;
-            ctx.globalAlpha = 0.2;
+            // Selected: vibrant glow with tower color
+            const towerColor = cannon.color || CONFIG.COLORS.BUTTON_ACTIVE;
+            bgGradient.addColorStop(0, Utils.colorWithAlpha(towerColor, 0.4));
+            bgGradient.addColorStop(0.5, Utils.colorWithAlpha(towerColor, 0.2));
+            bgGradient.addColorStop(1, Utils.colorWithAlpha(towerColor, 0.35));
         } else {
-            ctx.fillStyle = CONFIG.COLORS.BUTTON_BG;
-            ctx.globalAlpha = canAfford ? 0.8 : 0.3;
+            bgGradient.addColorStop(0, canAfford ? '#1e2832' : '#181818');
+            bgGradient.addColorStop(1, canAfford ? '#0f1418' : '#0d0d0d');
+            ctx.globalAlpha = canAfford ? 1.0 : 0.5;
         }
-        
+        ctx.fillStyle = bgGradient;
         Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
         ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.restore();
         
-        // Border
-        ctx.strokeStyle = isSelected ? CONFIG.COLORS.BUTTON_ACTIVE : 
-                         canAfford ? CONFIG.COLORS.BUTTON_BORDER : '#555555';
+        // Inner highlight for 3D effect
+        if (!isBlockedByTutorial && canAfford) {
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = '#ffffff';
+            Utils.drawRoundRect(ctx, button.x + 2, button.y + 2, button.width - 4, button.height * 0.3, cornerRadius - 1);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Border with glow effect for selected
+        ctx.save();
+        if (isSelected && !isBlockedByTutorial) {
+            ctx.shadowColor = cannon.color || CONFIG.COLORS.BUTTON_ACTIVE;
+            ctx.shadowBlur = 12;
+        }
+        ctx.strokeStyle = isSelected ? (cannon.color || CONFIG.COLORS.BUTTON_ACTIVE) : 
+                         canAfford ? CONFIG.COLORS.BUTTON_BORDER : '#444444';
         ctx.lineWidth = isSelected ? 3 : 2;
         Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
         ctx.stroke();
+        ctx.restore();
         
-        // Icon
-        ctx.font = `${Math.floor(button.width * 0.4)}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(cannon.icon, button.x + button.width / 2, button.y + button.height * 0.35);
+        // Render tower sprite instead of emoji icon
+        ctx.save();
+        const spriteSize = Math.floor(button.width * 0.65);
+        const spriteX = button.x + button.width / 2;
+        const spriteY = button.y + button.height * 0.38;
         
-        // Name
-        const labelSize = Math.max(8, Math.min(10, Math.floor(button.height * 0.14)));
-        const costSize = Math.max(8, Math.min(10, Math.floor(button.height * 0.14)));
+        // Apply effects for disabled/tutorial blocked
+        if (isBlockedByTutorial) {
+            ctx.globalAlpha = 0.3;
+        } else if (!canAfford) {
+            ctx.globalAlpha = 0.5;
+        }
+        
+        // Create and render the tower sprite
+        try {
+            if (cannon.sprite && typeof cannon.sprite === 'function') {
+                const towerSprite = cannon.sprite();
+                if (towerSprite && typeof towerSprite.render === 'function') {
+                    // Add subtle animation for selected tower
+                    if (isSelected && !isBlockedByTutorial) {
+                        const time = Date.now() * 0.003;
+                        const pulse = 1.0 + Math.sin(time) * 0.05;
+                        ctx.translate(spriteX, spriteY);
+                        ctx.scale(pulse, pulse);
+                        ctx.translate(-spriteX, -spriteY);
+                    }
+                    towerSprite.render(ctx, spriteX, spriteY, spriteSize, { opacity: 1.0 });
+                } else {
+                    // Fallback to emoji if sprite render not available
+                    ctx.font = `${Math.floor(button.width * 0.35)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(cannon.icon, spriteX, spriteY);
+                }
+            } else {
+                // Fallback to emoji
+                ctx.font = `${Math.floor(button.width * 0.35)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cannon.icon, spriteX, spriteY);
+            }
+        } catch (e) {
+            // Fallback to emoji on error
+            ctx.font = `${Math.floor(button.width * 0.35)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cannon.icon, spriteX, spriteY);
+        }
+        ctx.restore();
+        
+        // Name with better styling
+        const labelSize = Math.max(8, Math.min(11, Math.floor(button.height * 0.15)));
+        const costSize = Math.max(9, Math.min(11, Math.floor(button.height * 0.15)));
 
-        this.graphics.drawText(cannon.name.toUpperCase(), button.x + button.width / 2, button.y + button.height * 0.65, {
+        this.graphics.drawText(cannon.name.toUpperCase(), button.x + button.width / 2, button.y + button.height * 0.72, {
             size: labelSize,
-            color: canAfford ? CONFIG.COLORS.TEXT_PRIMARY : '#666666',
+            color: canAfford ? CONFIG.COLORS.TEXT_PRIMARY : '#555555',
             align: 'center',
             baseline: 'middle',
             bold: true,
-            shadow: false
+            shadow: true
         });
         
-        // Cost
-        const costColor = canAfford ? CONFIG.COLORS.TEXT_WARNING : CONFIG.COLORS.TEXT_DANGER;
-        this.graphics.drawText(`💰${actualCost}`, button.x + button.width / 2, button.y + button.height * 0.85, {
+        // Cost with coin icon
+        const costColor = canAfford ? '#ffcc00' : '#993333';
+        this.graphics.drawText(`💰 ${actualCost}`, button.x + button.width / 2, button.y + button.height * 0.88, {
             size: costSize,
-            color: isBlockedByTutorial ? '#555555' : costColor,
+            color: isBlockedByTutorial ? '#444444' : costColor,
             align: 'center',
             baseline: 'middle',
             bold: true,
-            shadow: false
+            shadow: true
         });
         
         // Draw lock icon if blocked by tutorial
         if (isBlockedByTutorial) {
             ctx.save();
-            ctx.font = `${Math.floor(button.width * 0.35)}px Arial`;
+            ctx.font = `${Math.floor(button.width * 0.4)}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.globalAlpha = 0.8;
-            ctx.fillText('🔒', button.x + button.width / 2, button.y + button.height / 2);
+            ctx.globalAlpha = 0.9;
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 4;
+            ctx.fillText('🔒', button.x + button.width / 2, button.y + button.height * 0.4);
             ctx.restore();
         }
         
-        // Selection glow
+        // Selection indicator (animated corner accent)
         if (isSelected && !isBlockedByTutorial) {
             ctx.save();
-            ctx.shadowColor = CONFIG.COLORS.BUTTON_ACTIVE;
-            ctx.shadowBlur = Math.max(10, Math.floor(button.width * 0.18));
-            ctx.strokeStyle = CONFIG.COLORS.BUTTON_ACTIVE;
-            ctx.lineWidth = 2;
-            Utils.drawRoundRect(ctx, button.x - 2, button.y - 2, button.width + 4, button.height + 4, cornerRadius + 2);
+            const time = Date.now() * 0.004;
+            const accentAlpha = 0.7 + Math.sin(time) * 0.3;
+            ctx.globalAlpha = accentAlpha;
+            ctx.strokeStyle = cannon.color || CONFIG.COLORS.BUTTON_ACTIVE;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            
+            // Top-left corner accent
+            ctx.beginPath();
+            ctx.moveTo(button.x + 3, button.y + cornerRadius + 8);
+            ctx.lineTo(button.x + 3, button.y + 3);
+            ctx.lineTo(button.x + cornerRadius + 8, button.y + 3);
             ctx.stroke();
+            
+            // Bottom-right corner accent
+            ctx.beginPath();
+            ctx.moveTo(button.x + button.width - 3, button.y + button.height - cornerRadius - 8);
+            ctx.lineTo(button.x + button.width - 3, button.y + button.height - 3);
+            ctx.lineTo(button.x + button.width - cornerRadius - 8, button.y + button.height - 3);
+            ctx.stroke();
+            
             ctx.restore();
         }
     }

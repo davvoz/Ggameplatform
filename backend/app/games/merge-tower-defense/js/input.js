@@ -23,6 +23,7 @@ export class InputHandler {
         this.tapHandlers = [];
         this.dragHandlers = [];
         this.dragEndHandlers = [];
+        this.moveHandlers = []; // For cursor tracking (targeting mode)
         
         // Prevent duplicate events (touch + mouse on hybrid devices)
         this.lastEventTime = 0;
@@ -77,18 +78,33 @@ export class InputHandler {
         this.isDragging = false;
         this.draggedCannon = null;
         this.startTime = now; // Track start time for tap detection
+        
+        // Notify move handlers with initial position (and touch indicator)
+        const isTouch = eventType === 'touch';
+        this.moveHandlers.forEach(handler => {
+            handler({ x: this.pointerX, y: this.pointerY, isTouch });
+        });
     }
 
     handleMove(e) {
         e.preventDefault();
         
-        if (!this.pointerDown) return;
-        
         const pos = this.getEventPosition(e);
         if (!pos) return;
         
+        // Detect if touch event
+        const isTouch = e.type.startsWith('touch');
+        
+        // Always track pointer position for cursor rendering
         this.pointerX = pos.x;
         this.pointerY = pos.y;
+        
+        // Notify move handlers (for targeting cursor)
+        this.moveHandlers.forEach(handler => {
+            handler({ x: this.pointerX, y: this.pointerY, isTouch });
+        });
+        
+        if (!this.pointerDown) return;
         
         // Skip drag detection if disabled (targeting mode)
         if (!this.dragEnabled) return;
@@ -135,6 +151,13 @@ export class InputHandler {
         }
         
         this.lastEventTime = now;
+        
+        // Notify move handlers that touch ended (for mobile targeting)
+        if (eventType === 'touch') {
+            this.moveHandlers.forEach(handler => {
+                handler({ x: this.pointerX, y: this.pointerY, isTouch: false, touchEnded: true });
+            });
+        }
         
         const pos = this.getEventPosition(e) || { x: this.pointerX, y: this.pointerY };
         
@@ -194,6 +217,10 @@ export class InputHandler {
         this.dragEndHandlers.push(handler);
     }
 
+    onMove(handler) {
+        this.moveHandlers.push(handler);
+    }
+
     getCurrentPointer() {
         if (this.pointerDown) {
             return {
@@ -233,6 +260,7 @@ export class InputHandler {
         this.tapHandlers = [];
         this.dragHandlers = [];
         this.dragEndHandlers = [];
+        this.moveHandlers = [];
     }
 }
 

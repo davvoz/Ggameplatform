@@ -262,6 +262,19 @@ export class Game {
 
             this.handleDragMerge(startPos, endPos);
         });
+        
+        // Mouse/touch move handler for targeting cursor
+        this.input.onMove((screenPos) => {
+            // Update targeting cursor position
+            if (this.ui.bombTargetingMode) {
+                this.ui.updateTargetingCursor(
+                    screenPos.x, 
+                    screenPos.y, 
+                    screenPos.isTouch || false,
+                    screenPos.touchEnded || false
+                );
+            }
+        });
     }
 
     handleGridTap(gridPos) {
@@ -1821,12 +1834,12 @@ export class Game {
         // Disable drag detection during targeting
         this.input.setDragEnabled(false);
         
-        // Enter targeting mode
+        // Enter targeting mode with BOMB type
         this.ui.enterBombTargetingMode((gridPos) => {
             // Re-enable drag detection
             this.input.setDragEnabled(true);
             this.executeBomb(gridPos, config, state);
-        });
+        }, 'BOMB');
 
         // Audio feedback
         this.audio.uiClick();
@@ -2016,12 +2029,12 @@ export class Game {
         // Disable drag detection during targeting
         this.input.setDragEnabled(false);
         
-        // Enter targeting mode (same as bomb)
+        // Enter targeting mode with STUN type
         this.ui.enterBombTargetingMode((gridPos) => {
             // Re-enable drag detection
             this.input.setDragEnabled(true);
             this.executeStun(gridPos, config, state);
-        });
+        }, 'STUN');
 
         // Audio feedback
         this.audio.uiClick();

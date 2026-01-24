@@ -42,9 +42,13 @@ export class UIManager {
         this.infoButton = null;
         this.infoPages = new InfoPagesManager(graphics, canvas);
         
-        // Targeting mode for bomb ability
+        // Targeting mode for abilities (bomb, stun, etc.)
         this.bombTargetingMode = false;
         this.targetingCallback = null;
+        this.targetingAbilityType = null; // 'BOMB', 'STUN', etc.
+        this.targetingCursorPos = { x: 0, y: 0 }; // Current cursor position
+        this.targetingHasTouch = false; // Whether user has touched during targeting (mobile)
+        this.targetingAnimTime = 0; // Animation timer
     }
 
     /**
@@ -509,17 +513,24 @@ export class UIManager {
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         const sidebarWidth = UI_CONFIG.SIDEBAR_WIDTH || 64;
         
-        // Draw sidebar background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        // Draw sidebar background with subtle gradient
+        const sidebarGradient = ctx.createLinearGradient(0, UI_CONFIG.TOP_BAR_HEIGHT, sidebarWidth, UI_CONFIG.TOP_BAR_HEIGHT);
+        sidebarGradient.addColorStop(0, 'rgba(10, 15, 20, 0.95)');
+        sidebarGradient.addColorStop(1, 'rgba(5, 10, 15, 0.9)');
+        ctx.fillStyle = sidebarGradient;
         ctx.fillRect(0, UI_CONFIG.TOP_BAR_HEIGHT, sidebarWidth, height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT);
         
-        // Draw sidebar border
+        // Draw sidebar border with glow
+        ctx.save();
+        ctx.shadowColor = CONFIG.COLORS.BUTTON_BORDER;
+        ctx.shadowBlur = 4;
         ctx.strokeStyle = CONFIG.COLORS.BUTTON_BORDER;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(sidebarWidth, UI_CONFIG.TOP_BAR_HEIGHT);
         ctx.lineTo(sidebarWidth, height - UI_CONFIG.SHOP_HEIGHT);
         ctx.stroke();
+        ctx.restore();
         
         // Get ability states
         const abilities = gameState.specialAbilities || {
@@ -528,150 +539,555 @@ export class UIManager {
         };
         
         this.sidebarButtons.forEach((button, index) => {
-            const cornerRadius = 6;
+            const cornerRadius = 8;
             const centerX = button.x + button.width / 2;
             const centerY = button.y + button.height / 2;
             
             if (button.type === 'ability') {
-                // Render ability button
-                const ability = button.data;
-                const abilityState = abilities[button.id] || { level: 1, lastUsed: 0, uses: 0 };
-                const level = abilityState.level;
-                const lastUsed = abilityState.lastUsed;
-                const cooldown = ability.baseCooldown;
-                const elapsed = now - lastUsed;
-                const isReady = elapsed >= cooldown;
-                const cooldownProgress = Math.min(1, elapsed / cooldown);
-                
-                // Button background
-                ctx.save();
-                if (isReady) {
-                    ctx.shadowColor = ability.glowColor;
-                    ctx.shadowBlur = 8;
-                }
-                
-                const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
-                if (isReady) {
-                    bgGradient.addColorStop(0, Utils.colorWithAlpha(ability.color, 0.9));
-                    bgGradient.addColorStop(1, Utils.colorWithAlpha(ability.color, 0.6));
-                } else {
-                    bgGradient.addColorStop(0, 'rgba(40, 40, 50, 0.9)');
-                    bgGradient.addColorStop(1, 'rgba(25, 25, 35, 0.9)');
-                }
-                ctx.fillStyle = bgGradient;
-                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
-                ctx.fill();
-                ctx.restore();
-                
-                // Cooldown overlay
-                if (!isReady) {
-                    ctx.save();
-                    ctx.globalAlpha = 0.7;
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    const startAngle = -Math.PI / 2;
-                    const endAngle = startAngle + (1 - cooldownProgress) * Math.PI * 2;
-                    ctx.arc(centerX, centerY, button.width / 2, startAngle, endAngle);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-                    
-                    // Cooldown timer
-                    const remainingSec = Math.ceil((cooldown - elapsed) / 1000);
-                    ctx.save();
-                    ctx.font = 'bold 12px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillText(`${remainingSec}s`, centerX, centerY + 12);
-                    ctx.restore();
-                }
-                
-                // Border
-                ctx.strokeStyle = isReady ? ability.glowColor : 'rgba(100, 100, 120, 0.6)';
-                ctx.lineWidth = isReady ? 2 : 1;
-                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
-                ctx.stroke();
-                
-                // Icon
-                ctx.save();
-                ctx.font = `${button.width * 0.45}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.globalAlpha = isReady ? 1.0 : 0.5;
-                ctx.fillText(ability.icon, centerX, centerY - 4);
-                ctx.restore();
-                
-                // Level indicator
-                ctx.save();
-                ctx.font = 'bold 9px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = isReady ? '#ffdd00' : '#888888';
-                ctx.fillText(`Lv${level}`, centerX, button.y + button.height - 6);
-                ctx.restore();
-                
+                this.renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY);
             } else if (button.type === 'shop') {
-                // Render shop item button
-                const item = button.data;
-                const canAfford = gameState.coins >= item.cost;
-                
-                // Check if temporary boost is already active
-                const isActive = item.type === 'temporary' && 
-                    gameState.activeBoosts?.some(b => b.type === item.effect.type);
-                const isDisabled = !canAfford || isActive;
-                
-                // Button background
-                ctx.save();
-                const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
-                if (isActive) {
-                    // Active boost - show with pulsing glow
-                    const pulse = Math.sin(time * 3) * 0.2 + 0.8;
-                    ctx.shadowColor = item.color;
-                    ctx.shadowBlur = 10 * pulse;
-                    bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.7));
-                    bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.4));
-                } else if (canAfford) {
-                    bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.4));
-                    bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.2));
-                } else {
-                    bgGradient.addColorStop(0, 'rgba(40, 40, 50, 0.8)');
-                    bgGradient.addColorStop(1, 'rgba(25, 25, 35, 0.8)');
-                }
-                ctx.fillStyle = bgGradient;
-                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
-                ctx.fill();
-                ctx.restore();
-                
-                // Border
-                ctx.strokeStyle = isActive ? item.color : (canAfford ? Utils.colorWithAlpha(item.color, 0.8) : 'rgba(80, 80, 100, 0.5)');
-                ctx.lineWidth = isActive ? 2 : 1;
-                Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
-                ctx.stroke();
-                
-                // Icon
-                ctx.save();
-                ctx.font = `${button.width * 0.4}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.globalAlpha = isDisabled && !isActive ? 0.4 : 1.0;
-                ctx.fillText(item.icon, centerX, centerY - 4);
-                ctx.restore();
-                
-                // Cost or "ACTIVE" label
-                ctx.save();
-                ctx.font = 'bold 8px Arial';
-                ctx.textAlign = 'center';
-                if (isActive) {
-                    ctx.fillStyle = '#00ff88';
-                    ctx.fillText('ACTIVE', centerX, button.y + button.height - 5);
-                } else {
-                    ctx.fillStyle = canAfford ? '#ffdd00' : '#666666';
-                    ctx.fillText(`${item.cost}`, centerX, button.y + button.height - 5);
-                }
-                ctx.restore();
+                this.renderShopItemButtonStyled(ctx, button, gameState, time, cornerRadius, centerX, centerY);
             }
         });
+    }
+    
+    /**
+     * Render styled ability button with custom vector graphics
+     */
+    renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY) {
+        const ability = button.data;
+        const abilityState = abilities[button.id] || { level: 1, lastUsed: 0, uses: 0 };
+        const level = abilityState.level;
+        const lastUsed = abilityState.lastUsed;
+        const cooldown = ability.baseCooldown;
+        const elapsed = now - lastUsed;
+        const isReady = elapsed >= cooldown;
+        const cooldownProgress = Math.min(1, elapsed / cooldown);
+        
+        // Button background with 3D gradient
+        ctx.save();
+        const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+        if (isReady) {
+            // Ready state - vibrant gradient
+            ctx.shadowColor = ability.glowColor;
+            ctx.shadowBlur = 10 + Math.sin(time * 4) * 4;
+            bgGradient.addColorStop(0, Utils.colorWithAlpha(ability.color, 0.85));
+            bgGradient.addColorStop(0.5, Utils.colorWithAlpha(ability.color, 0.6));
+            bgGradient.addColorStop(1, Utils.colorWithAlpha(ability.color, 0.75));
+        } else {
+            bgGradient.addColorStop(0, '#2a2a35');
+            bgGradient.addColorStop(0.5, '#1a1a22');
+            bgGradient.addColorStop(1, '#222228');
+        }
+        ctx.fillStyle = bgGradient;
+        Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+        ctx.fill();
+        ctx.restore();
+        
+        // Inner highlight for 3D effect
+        if (isReady) {
+            ctx.save();
+            ctx.globalAlpha = 0.25;
+            ctx.fillStyle = '#ffffff';
+            Utils.drawRoundRect(ctx, button.x + 2, button.y + 2, button.width - 4, button.height * 0.35, cornerRadius - 1);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Cooldown overlay with radial sweep
+        if (!isReady) {
+            ctx.save();
+            ctx.globalAlpha = 0.75;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + (1 - cooldownProgress) * Math.PI * 2;
+            ctx.arc(centerX, centerY, button.width / 2 + 2, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            
+            // Cooldown progress ring
+            ctx.save();
+            ctx.strokeStyle = ability.glowColor;
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, button.width / 2 - 2, -Math.PI / 2, -Math.PI / 2 + cooldownProgress * Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+            
+            // Cooldown timer with glow
+            const remainingSec = Math.ceil((cooldown - elapsed) / 1000);
+            ctx.save();
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 4;
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`${remainingSec}s`, centerX, centerY + 14);
+            ctx.restore();
+        }
+        
+        // Border with glow
+        ctx.save();
+        if (isReady) {
+            ctx.shadowColor = ability.glowColor;
+            ctx.shadowBlur = 6;
+        }
+        ctx.strokeStyle = isReady ? ability.glowColor : 'rgba(80, 80, 100, 0.5)';
+        ctx.lineWidth = isReady ? 2.5 : 1.5;
+        Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Draw custom ability icon sprite
+        ctx.save();
+        ctx.globalAlpha = isReady ? 1.0 : 0.4;
+        const iconSize = button.width * 0.55;
+        this.drawAbilitySprite(ctx, button.id, centerX, centerY - 3, iconSize, ability.color, isReady, time);
+        ctx.restore();
+        
+        // Level badge with glow
+        ctx.save();
+        const badgeX = button.x + button.width - 10;
+        const badgeY = button.y + button.height - 10;
+        const badgeRadius = 9;
+        
+        // Badge background
+        ctx.shadowColor = isReady ? '#ffdd00' : '#333333';
+        ctx.shadowBlur = isReady ? 4 : 0;
+        ctx.fillStyle = isReady ? '#ffdd00' : '#444444';
+        ctx.beginPath();
+        ctx.arc(badgeX, badgeY, badgeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Badge border
+        ctx.strokeStyle = isReady ? '#ffffff' : '#666666';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        // Level text
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isReady ? '#000000' : '#888888';
+        ctx.fillText(`${level}`, badgeX, badgeY);
+        ctx.restore();
+    }
+    
+    /**
+     * Draw custom vector sprite for abilities
+     */
+    drawAbilitySprite(ctx, abilityId, x, y, size, color, isReady, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        const s = size / 2; // half size for easier drawing
+        
+        switch(abilityId) {
+            case 'BOMB':
+                // Draw bomb body
+                ctx.fillStyle = '#333333';
+                ctx.beginPath();
+                ctx.arc(0, 2, s * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bomb highlight
+                ctx.fillStyle = '#555555';
+                ctx.beginPath();
+                ctx.arc(-s * 0.2, -s * 0.1, s * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Fuse holder
+                ctx.fillStyle = '#666666';
+                ctx.fillRect(-s * 0.12, -s * 0.5, s * 0.24, s * 0.3);
+                
+                // Fuse
+                ctx.strokeStyle = '#aa8844';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -s * 0.5);
+                ctx.quadraticCurveTo(s * 0.3, -s * 0.7, s * 0.2, -s * 0.9);
+                ctx.stroke();
+                
+                // Spark/flame at fuse tip
+                if (isReady) {
+                    const flicker = Math.sin(time * 15) * 0.3 + 0.7;
+                    ctx.fillStyle = `rgba(255, ${Math.floor(150 + flicker * 100)}, 0, ${flicker})`;
+                    ctx.beginPath();
+                    ctx.arc(s * 0.2, -s * 0.9, s * 0.15 + Math.sin(time * 20) * s * 0.05, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Inner spark
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(s * 0.2, -s * 0.9, s * 0.06, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+                
+            case 'PUSHBACK':
+                // Draw wave lines
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                
+                for (let i = 0; i < 3; i++) {
+                    const offset = isReady ? Math.sin(time * 4 + i * 0.5) * 2 : 0;
+                    const alpha = isReady ? 0.6 + i * 0.15 : 0.5;
+                    ctx.globalAlpha = alpha;
+                    ctx.beginPath();
+                    ctx.arc(offset - s * 0.3 + i * s * 0.35, 0, s * 0.4, -Math.PI * 0.6, Math.PI * 0.6);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+                
+                // Arrow indicator
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(s * 0.5, 0);
+                ctx.lineTo(s * 0.2, -s * 0.25);
+                ctx.lineTo(s * 0.2, s * 0.25);
+                ctx.closePath();
+                ctx.fill();
+                break;
+                
+            case 'STUN':
+                // Draw lightning bolt
+                ctx.fillStyle = color;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                
+                ctx.beginPath();
+                ctx.moveTo(-s * 0.1, -s * 0.8);
+                ctx.lineTo(s * 0.3, -s * 0.1);
+                ctx.lineTo(0, -s * 0.1);
+                ctx.lineTo(s * 0.2, s * 0.8);
+                ctx.lineTo(-s * 0.2, s * 0.1);
+                ctx.lineTo(s * 0.05, s * 0.1);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Electric sparks when ready
+                if (isReady) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    for (let i = 0; i < 4; i++) {
+                        const angle = (time * 3 + i * Math.PI / 2) % (Math.PI * 2);
+                        const sparkX = Math.cos(angle) * s * 0.6;
+                        const sparkY = Math.sin(angle) * s * 0.6;
+                        ctx.globalAlpha = 0.5 + Math.sin(time * 10 + i) * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(sparkX - 3, sparkY);
+                        ctx.lineTo(sparkX + 3, sparkY);
+                        ctx.moveTo(sparkX, sparkY - 3);
+                        ctx.lineTo(sparkX, sparkY + 3);
+                        ctx.stroke();
+                    }
+                }
+                break;
+                
+            default:
+                // Fallback circle
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(0, 0, s * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Render styled shop item button with custom vector graphics
+     */
+    renderShopItemButtonStyled(ctx, button, gameState, time, cornerRadius, centerX, centerY) {
+        const item = button.data;
+        const canAfford = gameState.coins >= item.cost;
+        
+        // Check if temporary boost is already active
+        const isActive = item.type === 'temporary' && 
+            gameState.activeBoosts?.some(b => b.type === item.effect.type);
+        const isDisabled = !canAfford || isActive;
+        
+        // Button background with 3D gradient
+        ctx.save();
+        const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+        if (isActive) {
+            // Active boost - pulsing glow
+            const pulse = Math.sin(time * 3) * 0.15 + 0.85;
+            ctx.shadowColor = item.color;
+            ctx.shadowBlur = 12 * pulse;
+            bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.7));
+            bgGradient.addColorStop(0.5, Utils.colorWithAlpha(item.color, 0.5));
+            bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.6));
+        } else if (canAfford) {
+            bgGradient.addColorStop(0, Utils.colorWithAlpha(item.color, 0.35));
+            bgGradient.addColorStop(0.5, Utils.colorWithAlpha(item.color, 0.15));
+            bgGradient.addColorStop(1, Utils.colorWithAlpha(item.color, 0.25));
+        } else {
+            bgGradient.addColorStop(0, '#252530');
+            bgGradient.addColorStop(0.5, '#1a1a20');
+            bgGradient.addColorStop(1, '#202025');
+        }
+        ctx.fillStyle = bgGradient;
+        Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+        ctx.fill();
+        ctx.restore();
+        
+        // Inner highlight
+        if (canAfford && !isDisabled) {
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = '#ffffff';
+            Utils.drawRoundRect(ctx, button.x + 2, button.y + 2, button.width - 4, button.height * 0.3, cornerRadius - 1);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Border with glow
+        ctx.save();
+        if (isActive || canAfford) {
+            ctx.shadowColor = item.color;
+            ctx.shadowBlur = isActive ? 8 : 3;
+        }
+        ctx.strokeStyle = isActive ? item.color : (canAfford ? Utils.colorWithAlpha(item.color, 0.7) : 'rgba(60, 60, 80, 0.5)');
+        ctx.lineWidth = isActive ? 2.5 : 1.5;
+        Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Draw custom shop item sprite
+        ctx.save();
+        ctx.globalAlpha = isDisabled && !isActive ? 0.35 : 1.0;
+        const iconSize = button.width * 0.5;
+        this.drawShopItemSprite(ctx, button.id, centerX, centerY - 4, iconSize, item.color, canAfford, isActive, time);
+        ctx.restore();
+        
+        // Cost badge or ACTIVE label
+        ctx.save();
+        const labelY = button.y + button.height - 8;
+        
+        if (isActive) {
+            // Active label with glow
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 4;
+            ctx.fillStyle = '#00ff88';
+            ctx.font = 'bold 8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ACTIVE', centerX, labelY);
+        } else {
+            // Cost with coin icon
+            ctx.font = 'bold 8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = canAfford ? '#ffcc00' : '#555555';
+            ctx.fillText(`💰${item.cost}`, centerX, labelY);
+        }
+        ctx.restore();
+    }
+    
+    /**
+     * Draw custom vector sprite for shop items
+     */
+    drawShopItemSprite(ctx, itemId, x, y, size, color, canAfford, isActive, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        const s = size / 2;
+        
+        switch(itemId) {
+            case 'ENERGY_SMALL':
+                // Lightning bolt (small energy)
+                ctx.fillStyle = canAfford ? '#00ffff' : '#446666';
+                ctx.beginPath();
+                ctx.moveTo(-s * 0.15, -s * 0.7);
+                ctx.lineTo(s * 0.4, -s * 0.05);
+                ctx.lineTo(s * 0.05, -s * 0.05);
+                ctx.lineTo(s * 0.25, s * 0.7);
+                ctx.lineTo(-s * 0.3, s * 0.05);
+                ctx.lineTo(0, s * 0.05);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Glow effect
+                if (canAfford) {
+                    ctx.shadowColor = '#00ffff';
+                    ctx.shadowBlur = 6;
+                    ctx.fill();
+                }
+                break;
+                
+            case 'ENERGY_LARGE':
+                // Battery icon
+                ctx.fillStyle = canAfford ? '#00ff88' : '#446655';
+                
+                // Battery body
+                ctx.fillRect(-s * 0.4, -s * 0.5, s * 0.8, s * 1.0);
+                
+                // Battery terminal
+                ctx.fillRect(-s * 0.15, -s * 0.7, s * 0.3, s * 0.2);
+                
+                // Energy level bars
+                ctx.fillStyle = canAfford ? '#88ffaa' : '#557766';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(-s * 0.3, s * 0.3 - i * s * 0.3, s * 0.6, s * 0.2);
+                }
+                
+                // Highlight
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(-s * 0.35, -s * 0.45, s * 0.15, s * 0.9);
+                break;
+                
+            case 'RANGE_BOOST':
+                // Radar dish
+                ctx.strokeStyle = canAfford ? '#4488ff' : '#334455';
+                ctx.lineWidth = 2;
+                
+                // Radar waves
+                for (let i = 0; i < 3; i++) {
+                    const waveOffset = isActive ? Math.sin(time * 4 + i) * 2 : 0;
+                    ctx.globalAlpha = isActive ? 0.4 + i * 0.2 : (canAfford ? 0.5 + i * 0.15 : 0.3);
+                    ctx.beginPath();
+                    ctx.arc(-s * 0.2 + waveOffset, 0, s * 0.3 + i * s * 0.25, -Math.PI * 0.4, Math.PI * 0.4);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+                
+                // Dish base
+                ctx.fillStyle = canAfford ? '#4488ff' : '#334455';
+                ctx.beginPath();
+                ctx.moveTo(-s * 0.5, -s * 0.3);
+                ctx.quadraticCurveTo(-s * 0.3, 0, -s * 0.5, s * 0.3);
+                ctx.lineTo(-s * 0.6, s * 0.2);
+                ctx.lineTo(-s * 0.6, -s * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Dish center
+                ctx.fillStyle = canAfford ? '#88aaff' : '#445566';
+                ctx.beginPath();
+                ctx.arc(-s * 0.45, 0, s * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+                
+            case 'FIRERATE_BOOST':
+                // Speed lines / turbo
+                ctx.fillStyle = canAfford ? '#ffcc00' : '#665533';
+                
+                // Arrow shape
+                ctx.beginPath();
+                ctx.moveTo(s * 0.5, 0);
+                ctx.lineTo(-s * 0.1, -s * 0.4);
+                ctx.lineTo(-s * 0.1, -s * 0.15);
+                ctx.lineTo(-s * 0.5, -s * 0.15);
+                ctx.lineTo(-s * 0.5, s * 0.15);
+                ctx.lineTo(-s * 0.1, s * 0.15);
+                ctx.lineTo(-s * 0.1, s * 0.4);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Speed lines
+                ctx.strokeStyle = canAfford ? '#ffee88' : '#554422';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    const lineY = -s * 0.3 + i * s * 0.3;
+                    const offset = isActive ? Math.sin(time * 8 + i) * 3 : 0;
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.7 + offset, lineY);
+                    ctx.lineTo(-s * 0.55 + offset, lineY);
+                    ctx.stroke();
+                }
+                break;
+                
+            case 'DAMAGE_BOOST':
+                // Explosion / power burst
+                ctx.fillStyle = canAfford ? '#ff4444' : '#553333';
+                
+                // Star burst shape
+                const points = 8;
+                ctx.beginPath();
+                for (let i = 0; i < points * 2; i++) {
+                    const angle = (i * Math.PI) / points - Math.PI / 2;
+                    const radius = i % 2 === 0 ? s * 0.7 : s * 0.35;
+                    const px = Math.cos(angle) * radius;
+                    const py = Math.sin(angle) * radius;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                // Inner glow
+                if (canAfford) {
+                    ctx.fillStyle = '#ff8866';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.25, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Animated pulse when active
+                if (isActive) {
+                    const pulse = Math.sin(time * 6) * 0.3 + 0.7;
+                    ctx.globalAlpha = pulse * 0.5;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+                
+            case 'TOWER_UPGRADE':
+                // Star with up arrow
+                ctx.fillStyle = canAfford ? '#ffdd00' : '#665522';
+                
+                // Star shape
+                const starPoints = 5;
+                ctx.beginPath();
+                for (let i = 0; i < starPoints * 2; i++) {
+                    const angle = (i * Math.PI) / starPoints - Math.PI / 2;
+                    const radius = i % 2 === 0 ? s * 0.65 : s * 0.3;
+                    const px = Math.cos(angle) * radius;
+                    const py = Math.sin(angle) * radius;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                // Up arrow in center
+                ctx.fillStyle = canAfford ? '#ffffff' : '#887744';
+                ctx.beginPath();
+                ctx.moveTo(0, -s * 0.25);
+                ctx.lineTo(s * 0.15, s * 0.05);
+                ctx.lineTo(-s * 0.15, s * 0.05);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillRect(-s * 0.06, s * 0.0, s * 0.12, s * 0.15);
+                
+                // Sparkle effect when affordable
+                if (canAfford) {
+                    ctx.fillStyle = '#ffffff';
+                    const sparkle = Math.sin(time * 5) * 0.5 + 0.5;
+                    ctx.globalAlpha = sparkle;
+                    ctx.beginPath();
+                    ctx.arc(s * 0.4, -s * 0.4, s * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+                
+            default:
+                // Fallback - simple circle
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(0, 0, s * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+        }
+        
+        ctx.restore();
     }
 
     /**
@@ -812,43 +1228,105 @@ export class UIManager {
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         const time = Date.now() * 0.001;
+        this.targetingAnimTime += 0.016; // ~60fps
         
-        // Semi-transparent overlay
-        ctx.fillStyle = 'rgba(255, 50, 0, 0.1)';
+        const abilityType = this.targetingAbilityType || 'BOMB';
+        const abilityConfig = SPECIAL_ABILITIES[abilityType];
+        const abilityColor = abilityConfig?.color || '#ff4400';
+        const glowColor = abilityConfig?.glowColor || '#ff8800';
+        
+        // Detect if on mobile (touch device)
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const hasTouchPosition = this.targetingHasTouch && this.targetingCursorPos.x > 0;
+        
+        // Semi-transparent overlay with ability color
+        ctx.fillStyle = Utils.colorWithAlpha(abilityColor, 0.08);
         ctx.fillRect(0, 0, width, height);
         
-        // Instruction text
+        // Animated border pulse
         ctx.save();
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ff4400';
-        ctx.shadowColor = '#000000';
-        ctx.shadowBlur = 6;
-        const pulse = Math.sin(time * 5) * 0.2 + 0.8;
-        ctx.globalAlpha = pulse;
-        ctx.fillText('💣 TAP TO DROP BOMB 💣', width / 2, UI_CONFIG.TOP_BAR_HEIGHT + 40);
+        const borderPulse = Math.sin(time * 4) * 0.3 + 0.7;
+        ctx.strokeStyle = Utils.colorWithAlpha(abilityColor, borderPulse * 0.5);
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, width - 4, height - 4);
         ctx.restore();
         
-        // Cancel button
-        const cancelBtnWidth = 120;
-        const cancelBtnHeight = 40;
-        const cancelBtnX = width / 2 - cancelBtnWidth / 2;
-        const cancelBtnY = height - UI_CONFIG.SHOP_HEIGHT - 60;
+        // Instruction text with icon
+        ctx.save();
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = abilityColor;
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 8;
+        const pulse = Math.sin(time * 5) * 0.2 + 0.8;
+        ctx.globalAlpha = pulse;
         
-        ctx.fillStyle = 'rgba(100, 30, 30, 0.9)';
-        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 8);
+        const instructionText = abilityType === 'BOMB' ? 
+            (isMobile ? '👆 TAP WHERE TO DROP BOMB' : 'TAP TO DROP BOMB') : 
+            abilityType === 'STUN' ? 
+            (isMobile ? '👆 TAP WHERE TO STUN' : 'TAP TO STUN ENEMIES') : 
+            'TAP TO ACTIVATE';
+        ctx.fillText(instructionText, width / 2, UI_CONFIG.TOP_BAR_HEIGHT + 35);
+        ctx.restore();
+        
+        // On mobile: show targeting reticle in center if no touch yet
+        if (isMobile && !hasTouchPosition) {
+            // Draw animated "tap here" indicator in the play area center
+            const gridCenterX = this.graphics.offsetX + (CONFIG.COLS * this.graphics.cellSize) / 2;
+            const gridCenterY = this.graphics.offsetY + (CONFIG.ROWS * this.graphics.cellSize) / 2;
+            
+            this.renderMobileTargetingHint(ctx, gridCenterX, gridCenterY, abilityType, time);
+        } else {
+            // Get cursor/touch grid position for area preview
+            const cursorGridPos = this.graphics.screenToGrid(this.targetingCursorPos.x, this.targetingCursorPos.y);
+            const cursorScreenPos = this.graphics.gridToScreen(cursorGridPos.col, cursorGridPos.row);
+            
+            // Draw targeting area preview on grid (always show when we have a position)
+            if (cursorGridPos.col >= 0 && cursorGridPos.col < CONFIG.COLS && 
+                cursorGridPos.row >= 0 && cursorGridPos.row < CONFIG.ROWS) {
+                this.renderTargetingAreaPreview(ctx, cursorScreenPos.x, cursorScreenPos.y, abilityType, time);
+                
+                // On mobile: show simplified touch indicator at touch position
+                if (isMobile && hasTouchPosition) {
+                    this.renderMobileTouchIndicator(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
+                }
+            }
+            
+            // On desktop: draw animated cursor sprite at actual cursor position
+            if (!isMobile) {
+                this.renderTargetingCursor(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
+            }
+        }
+        
+        // Cancel button
+        const cancelBtnWidth = 130;
+        const cancelBtnHeight = 44;
+        const cancelBtnX = width / 2 - cancelBtnWidth / 2;
+        const cancelBtnY = height - UI_CONFIG.SHOP_HEIGHT - 65;
+        
+        // Cancel button with gradient
+        ctx.save();
+        const cancelGradient = ctx.createLinearGradient(cancelBtnX, cancelBtnY, cancelBtnX, cancelBtnY + cancelBtnHeight);
+        cancelGradient.addColorStop(0, '#4a2020');
+        cancelGradient.addColorStop(0.5, '#2a1010');
+        cancelGradient.addColorStop(1, '#3a1515');
+        ctx.fillStyle = cancelGradient;
+        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 10);
         ctx.fill();
         
+        ctx.shadowColor = '#ff4444';
+        ctx.shadowBlur = 8;
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
-        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 8);
+        Utils.drawRoundRect(ctx, cancelBtnX, cancelBtnY, cancelBtnWidth, cancelBtnHeight, 10);
         ctx.stroke();
+        ctx.restore();
         
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 15px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('❌ CANCEL', width / 2, cancelBtnY + cancelBtnHeight / 2);
+        ctx.fillText('✕ CANCEL', width / 2, cancelBtnY + cancelBtnHeight / 2);
         
         // Store cancel button position for click detection
         this.bombCancelButton = {
@@ -857,6 +1335,511 @@ export class UIManager {
             width: cancelBtnWidth,
             height: cancelBtnHeight
         };
+    }
+    
+    /**
+     * Render mobile targeting hint (shown when no touch yet)
+     */
+    renderMobileTargetingHint(ctx, x, y, abilityType, time) {
+        const abilityConfig = SPECIAL_ABILITIES[abilityType];
+        const color = abilityConfig?.color || '#ff4400';
+        const cellSize = this.graphics.cellSize;
+        const radius = abilityConfig?.baseRadius || 2;
+        
+        ctx.save();
+        
+        // Pulsing circle showing potential area
+        const pulseScale = 1 + Math.sin(time * 3) * 0.1;
+        const areaRadius = radius * cellSize * pulseScale;
+        
+        // Outer dashed circle (animated)
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        ctx.lineDashOffset = -time * 40;
+        ctx.globalAlpha = 0.6 + Math.sin(time * 4) * 0.2;
+        ctx.beginPath();
+        ctx.arc(x, y, areaRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Inner glow fill
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, areaRadius);
+        gradient.addColorStop(0, Utils.colorWithAlpha(color, 0.25));
+        gradient.addColorStop(0.7, Utils.colorWithAlpha(color, 0.1));
+        gradient.addColorStop(1, Utils.colorWithAlpha(color, 0));
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, areaRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Animated finger icon (bouncing)
+        ctx.globalAlpha = 0.85 + Math.sin(time * 5) * 0.15;
+        ctx.font = `${cellSize * 1.5}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const bounce = Math.sin(time * 4) * 10;
+        const fingerY = y + bounce;
+        ctx.fillText('👆', x, fingerY);
+        
+        // Glowing ring around finger area
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(x, fingerY, cellSize * 0.9, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // "Tap to target" text below
+        ctx.shadowBlur = 10;
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.9;
+        ctx.fillText('TAP TO TARGET', x, y + cellSize * 2);
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Render mobile touch indicator (simplified, non-intrusive)
+     */
+    renderMobileTouchIndicator(ctx, x, y, abilityType, time) {
+        const abilityConfig = SPECIAL_ABILITIES[abilityType];
+        const color = abilityConfig?.color || '#ff4400';
+        
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // Larger pulsing outer ring for visibility
+        const pulseSize = 35 + Math.sin(time * 6) * 8;
+        
+        // Outer glow ring
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 25;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Secondary expanding ring
+        const expandRing = ((time * 1.5) % 1);
+        ctx.globalAlpha = 1 - expandRing;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, pulseSize * (0.5 + expandRing * 0.8), 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner crosshair
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        const crossSize = 15;
+        ctx.beginPath();
+        ctx.moveTo(-crossSize, 0);
+        ctx.lineTo(-8, 0);
+        ctx.moveTo(crossSize, 0);
+        ctx.lineTo(8, 0);
+        ctx.moveTo(0, -crossSize);
+        ctx.lineTo(0, -8);
+        ctx.moveTo(0, crossSize);
+        ctx.lineTo(0, 8);
+        ctx.stroke();
+        
+        // Center dot
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 1;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Ability icon floating above
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.9;
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const floatY = -pulseSize - 25 + Math.sin(time * 4) * 4;
+        const icon = abilityType === 'BOMB' ? '💣' : abilityType === 'STUN' ? '⚡' : '🎯';
+        ctx.fillText(icon, 0, floatY);
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Render targeting area preview on grid
+     */
+    renderTargetingAreaPreview(ctx, x, y, abilityType, time) {
+        const cellSize = this.graphics.cellSize;
+        const abilityConfig = SPECIAL_ABILITIES[abilityType];
+        const radius = abilityConfig?.baseRadius || 2;
+        const color = abilityConfig?.color || '#ff4400';
+        
+        ctx.save();
+        
+        // Pulsing area circle
+        const pulseScale = 1 + Math.sin(time * 6) * 0.08;
+        const areaRadius = radius * cellSize * pulseScale;
+        
+        // Outer glow
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20;
+        
+        // Fill with gradient
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, areaRadius);
+        gradient.addColorStop(0, Utils.colorWithAlpha(color, 0.4));
+        gradient.addColorStop(0.6, Utils.colorWithAlpha(color, 0.2));
+        gradient.addColorStop(1, Utils.colorWithAlpha(color, 0.05));
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, areaRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Animated ring
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.arc(x, y, areaRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner pulsing ring
+        const innerPulse = (time * 2) % 1;
+        ctx.globalAlpha = 1 - innerPulse;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, areaRadius * innerPulse, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Crosshair
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        const crossSize = cellSize * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(x - crossSize, y);
+        ctx.lineTo(x + crossSize, y);
+        ctx.moveTo(x, y - crossSize);
+        ctx.lineTo(x, y + crossSize);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Render animated targeting cursor sprite
+     */
+    renderTargetingCursor(ctx, x, y, abilityType, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        const size = 60; // Cursor size
+        const s = size / 2;
+        
+        // Rotation animation
+        const rotation = time * 0.5;
+        
+        switch(abilityType) {
+            case 'BOMB':
+                this.renderBombCursor(ctx, s, time, rotation);
+                break;
+            case 'STUN':
+                this.renderStunCursor(ctx, s, time, rotation);
+                break;
+            default:
+                this.renderGenericCursor(ctx, s, time, rotation);
+        }
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Render bomb targeting cursor with falling bomb animation
+     */
+    renderBombCursor(ctx, s, time, rotation) {
+        // Outer rotating danger rings
+        ctx.save();
+        ctx.rotate(rotation);
+        ctx.strokeStyle = '#ff4400';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.6 + Math.sin(time * 8) * 0.2;
+        
+        // Danger octagon
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI / 4) - Math.PI / 8;
+            const px = Math.cos(angle) * s * 1.1;
+            const py = Math.sin(angle) * s * 1.1;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+        
+        // Counter-rotating inner ring
+        ctx.save();
+        ctx.rotate(-rotation * 1.5);
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.75, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        
+        // Bomb body with bounce animation
+        const bounce = Math.sin(time * 10) * 3;
+        ctx.save();
+        ctx.translate(0, bounce);
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(2, s * 0.4, s * 0.35, s * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bomb body
+        ctx.fillStyle = '#222222';
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bomb highlight
+        ctx.fillStyle = '#444444';
+        ctx.beginPath();
+        ctx.arc(-s * 0.15, -s * 0.15, s * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Fuse holder
+        ctx.fillStyle = '#555555';
+        ctx.fillRect(-s * 0.08, -s * 0.55, s * 0.16, s * 0.15);
+        
+        // Animated fuse
+        ctx.strokeStyle = '#aa7744';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.55);
+        const fuseWave = Math.sin(time * 12) * s * 0.1;
+        ctx.quadraticCurveTo(fuseWave, -s * 0.7, s * 0.1 + fuseWave * 0.5, -s * 0.8);
+        ctx.stroke();
+        
+        // Animated spark/flame
+        const flameSize = s * 0.2 + Math.sin(time * 20) * s * 0.08;
+        const flameX = s * 0.1 + Math.sin(time * 12) * s * 0.05;
+        
+        // Outer flame
+        const flameGradient = ctx.createRadialGradient(flameX, -s * 0.8, 0, flameX, -s * 0.8, flameSize);
+        flameGradient.addColorStop(0, '#ffffff');
+        flameGradient.addColorStop(0.3, '#ffff00');
+        flameGradient.addColorStop(0.6, '#ff8800');
+        flameGradient.addColorStop(1, 'rgba(255, 50, 0, 0)');
+        ctx.fillStyle = flameGradient;
+        ctx.beginPath();
+        ctx.arc(flameX, -s * 0.8, flameSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Sparks
+        ctx.fillStyle = '#ffff88';
+        for (let i = 0; i < 5; i++) {
+            const sparkAngle = time * 15 + i * 1.2;
+            const sparkDist = s * 0.15 + Math.sin(time * 20 + i) * s * 0.1;
+            const sparkX = flameX + Math.cos(sparkAngle) * sparkDist;
+            const sparkY = -s * 0.8 + Math.sin(sparkAngle) * sparkDist - s * 0.1;
+            const sparkSize = 2 + Math.sin(time * 25 + i * 2) * 1.5;
+            ctx.beginPath();
+            ctx.arc(sparkX, sparkY, sparkSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+        
+        // Warning triangles rotating around
+        ctx.save();
+        ctx.rotate(rotation * 2);
+        ctx.fillStyle = '#ffcc00';
+        for (let i = 0; i < 3; i++) {
+            ctx.save();
+            ctx.rotate(i * Math.PI * 2 / 3);
+            ctx.translate(s * 0.9, 0);
+            ctx.beginPath();
+            ctx.moveTo(0, -6);
+            ctx.lineTo(5, 5);
+            ctx.lineTo(-5, 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('!', 0, 4);
+            ctx.fillStyle = '#ffcc00';
+            ctx.restore();
+        }
+        ctx.restore();
+    }
+    
+    /**
+     * Render stun targeting cursor with electric effect
+     */
+    renderStunCursor(ctx, s, time, rotation) {
+        // Electric field rings
+        ctx.save();
+        ctx.rotate(rotation * 0.8);
+        
+        // Outer electric ring
+        ctx.strokeStyle = '#ffee00';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ffff88';
+        ctx.shadowBlur = 15;
+        
+        // Pulsing hexagon
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI / 3) + Math.sin(time * 3) * 0.1;
+            const dist = s * (0.95 + Math.sin(time * 8 + i) * 0.1);
+            const px = Math.cos(angle) * dist;
+            const py = Math.sin(angle) * dist;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+        
+        // Inner rotating electric arcs
+        ctx.save();
+        ctx.rotate(-rotation * 1.2);
+        ctx.strokeStyle = '#88ddff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.7;
+        
+        for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.rotate(i * Math.PI / 2);
+            ctx.beginPath();
+            ctx.arc(0, 0, s * 0.6, -0.3, 0.3);
+            ctx.stroke();
+            ctx.restore();
+        }
+        ctx.restore();
+        
+        // Central lightning bolt
+        ctx.save();
+        const boltScale = 1 + Math.sin(time * 12) * 0.15;
+        ctx.scale(boltScale, boltScale);
+        
+        // Glow
+        ctx.shadowColor = '#ffff00';
+        ctx.shadowBlur = 20;
+        
+        ctx.fillStyle = '#ffee00';
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, -s * 0.55);
+        ctx.lineTo(s * 0.25, -s * 0.05);
+        ctx.lineTo(0, -s * 0.05);
+        ctx.lineTo(s * 0.15, s * 0.55);
+        ctx.lineTo(-s * 0.15, s * 0.05);
+        ctx.lineTo(s * 0.05, s * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Inner white
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.05, -s * 0.4);
+        ctx.lineTo(s * 0.12, -s * 0.02);
+        ctx.lineTo(-s * 0.02, -s * 0.02);
+        ctx.lineTo(s * 0.08, s * 0.4);
+        ctx.lineTo(-s * 0.08, s * 0.05);
+        ctx.lineTo(s * 0.02, s * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        
+        // Electric sparks around
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 8; i++) {
+            const sparkTime = time * 6 + i * 0.8;
+            const sparkAngle = sparkTime % (Math.PI * 2);
+            const sparkDist = s * (0.7 + Math.sin(sparkTime * 3) * 0.2);
+            const sparkX = Math.cos(sparkAngle) * sparkDist;
+            const sparkY = Math.sin(sparkAngle) * sparkDist;
+            
+            ctx.globalAlpha = 0.5 + Math.sin(sparkTime * 5) * 0.5;
+            ctx.beginPath();
+            ctx.arc(sparkX, sparkY, 2 + Math.sin(sparkTime * 8), 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mini lightning from spark
+            if (Math.sin(sparkTime * 10) > 0.7) {
+                ctx.strokeStyle = '#ffff88';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(sparkX, sparkY);
+                const endX = sparkX + (Math.random() - 0.5) * s * 0.3;
+                const endY = sparkY + (Math.random() - 0.5) * s * 0.3;
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            }
+        }
+        
+        // Circular pulse wave
+        ctx.globalAlpha = 1;
+        const pulsePhase = (time * 2) % 1;
+        ctx.strokeStyle = '#ffee00';
+        ctx.lineWidth = 3 * (1 - pulsePhase);
+        ctx.globalAlpha = 1 - pulsePhase;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * pulsePhase * 1.2, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    /**
+     * Render generic targeting cursor
+     */
+    renderGenericCursor(ctx, s, time, rotation) {
+        // Simple crosshair with pulse
+        ctx.save();
+        ctx.rotate(rotation);
+        
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 10;
+        
+        // Outer circle
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.9, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Cross
+        const crossSize = s * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(-crossSize, 0);
+        ctx.lineTo(-s * 0.3, 0);
+        ctx.moveTo(crossSize, 0);
+        ctx.lineTo(s * 0.3, 0);
+        ctx.moveTo(0, -crossSize);
+        ctx.lineTo(0, -s * 0.3);
+        ctx.moveTo(0, crossSize);
+        ctx.lineTo(0, s * 0.3);
+        ctx.stroke();
+        
+        // Center dot
+        ctx.fillStyle = '#00ff88';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
     }
 
     /**
@@ -903,9 +1886,34 @@ export class UIManager {
     /**
      * Enter bomb targeting mode
      */
-    enterBombTargetingMode(callback) {
+    enterBombTargetingMode(callback, abilityType = 'BOMB') {
         this.bombTargetingMode = true;
         this.targetingCallback = callback;
+        this.targetingAbilityType = abilityType;
+        this.targetingAnimTime = 0;
+        this.targetingHasTouch = false; // Reset touch state
+        this.targetingCursorPos = { x: 0, y: 0 }; // Reset position
+        // Hide default cursor on desktop
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isMobile) {
+            this.canvas.style.cursor = 'none';
+        }
+    }
+
+    /**
+     * Update targeting cursor position (called from input handler)
+     */
+    updateTargetingCursor(x, y, isTouch = false, touchEnded = false) {
+        this.targetingCursorPos.x = x;
+        this.targetingCursorPos.y = y;
+        
+        if (touchEnded) {
+            // Touch ended - hide mobile cursor
+            this.targetingHasTouch = false;
+        } else if (isTouch) {
+            // Touch active - show cursor at touch position
+            this.targetingHasTouch = true;
+        }
     }
 
     /**
@@ -914,7 +1922,11 @@ export class UIManager {
     exitBombTargetingMode() {
         this.bombTargetingMode = false;
         this.targetingCallback = null;
+        this.targetingAbilityType = null;
+        this.targetingHasTouch = false;
         this.bombCancelButton = null;
+        // Restore default cursor
+        this.canvas.style.cursor = 'default';
     }
 
     renderShopButton(button, gameState) {

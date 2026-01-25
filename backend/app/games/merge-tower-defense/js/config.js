@@ -26,7 +26,7 @@ export const CONFIG = {
     PARTICLE_POOL_SIZE: 300,
 
     // Continue system
-    CONTINUE_COST: 100,  // Cost in platform coins to continue
+    CONTINUE_COST: 20,  // Cost in platform coins to continue
 
     // Wave Mode Selection - User chooses difficulty at start
     WAVE_MODES: {

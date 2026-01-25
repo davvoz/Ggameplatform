@@ -11,7 +11,7 @@ from app.database import get_db
 from app.repositories import RepositoryFactory
 from app.services import CoinService
 from app.steem_post_service import SteemPostService
-from app.models import User, Leaderboard, Game
+from app.models import User, Leaderboard, Game, GameStatus
 from app.telegram_notifier import send_telegram_success
 from app.telegram_notifier import send_telegram_success
 import os
@@ -122,10 +122,13 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
         Game.title
     ).join(
         Game, WeeklyLeaderboard.game_id == Game.game_id
+    ).join(
+        GameStatus, Game.status_id == GameStatus.status_id
     ).filter(
         WeeklyLeaderboard.user_id == user_id,
         WeeklyLeaderboard.week_start == week_start,
-        WeeklyLeaderboard.rank.isnot(None)
+        WeeklyLeaderboard.rank.isnot(None),
+        GameStatus.status_code == 'ranked'
     ).order_by(
         WeeklyLeaderboard.rank.asc()
     ).limit(5).all()

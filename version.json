@@ -1,8 +1,17 @@
 {
-  "version": "3.16.11",
-  "timestamp": "2026-01-24T02:44:02.381Z",
-  "buildNumber": 318,
+  "version": "3.17.0",
+  "timestamp": "2026-01-25T14:09:53.061Z",
+  "buildNumber": 319,
   "changelog": [
+    {
+      "version": "3.17.0",
+      "date": "2026-01-25",
+      "type": "minor",
+      "changes": [
+        "feat:[MTD] implement wave mode selection with difficulty options and victory handling",
+        "🔖 Bump version to 3.16.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.16.11",
       "date": "2026-01-24",
@@ -85,15 +94,6 @@
       "changes": [
         "refactor: comment out posting key verification in publish_with_key function",
         "🔖 Bump version to 3.16.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.2",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "fix: enable posting key verification in publish_with_key function",
-        "🔖 Bump version to 3.16.1 [skip-version]"
       ]
     }
   ]

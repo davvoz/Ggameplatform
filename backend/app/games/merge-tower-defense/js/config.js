@@ -28,6 +28,31 @@ export const CONFIG = {
     // Continue system
     CONTINUE_COST: 100,  // Cost in platform coins to continue
 
+    // Wave Mode Selection - User chooses difficulty at start
+    WAVE_MODES: {
+        EASY: {
+            waves: 20,
+            reward: 20,
+            label: 'Easy',
+            description: '20 Waves',
+            color: '#00ff88'
+        },
+        MEDIUM: {
+            waves: 50,
+            reward: 50,
+            label: 'Medium',
+            description: '50 Waves',
+            color: '#ffaa00'
+        },
+        HARD: {
+            waves: 70,
+            reward: 70,
+            label: 'Hard',
+            description: '70 Waves',
+            color: '#ff4444'
+        }
+    },
+
     // Visual
     CELL_BORDER: 1,
     GRID_LINE_WIDTH: 1,

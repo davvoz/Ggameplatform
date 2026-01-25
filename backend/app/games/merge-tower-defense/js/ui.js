@@ -318,6 +318,11 @@ export class UIManager {
         ctx.fillText('📖', infoX + infoSize/2, infoY + infoSize/2);
         
         // Stats
+        // Show wave progress if target is set (e.g., "15/50" instead of just "15")
+        const waveDisplay = gameState.targetWaves > 0 
+            ? `${gameState.wave}/${gameState.targetWaves}` 
+            : gameState.wave;
+        
         const stats = [
             { 
                 label: '💰 COINS', 
@@ -332,7 +337,7 @@ export class UIManager {
             },
             { 
                 label: '🌊 WAVE', 
-                value: gameState.wave,
+                value: waveDisplay,
                 color: CONFIG.COLORS.TEXT_WARNING 
             },
             { 
@@ -3008,24 +3013,148 @@ export class UIManager {
         this.retryButton = null;
         this.continueButton = null;
         this.exitFullscreenButton = null;
+        this.victoryPlayAgainButton = null;
     }
 
-    // Victory screen (optional, for future waves)
-    showVictory(gameState) {
+    // Victory screen - player completed all waves
+    showVictory(gameState, coinReward = 0, rewardAwarded = false) {
         const ctx = this.graphics.ctx;
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         
-        ctx.fillStyle = 'rgba(0, 20, 0, 0.85)';
+        // Overlay with gold tint
+        ctx.fillStyle = 'rgba(20, 15, 0, 0.92)';
         ctx.fillRect(0, 0, width, height);
         
-        this.graphics.drawText('🎉 VICTORY! 🎉', width / 2, height * 0.4, {
-            size: 48,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
+        // Popup box
+        const popupWidth = Math.min(400, width * 0.85);
+        const popupHeight = Math.min(480, height * 0.7);
+        const popupX = (width - popupWidth) / 2;
+        const popupY = (height - popupHeight) / 2;
+        
+        // Popup background with gold theme
+        ctx.fillStyle = 'rgba(15, 12, 5, 0.98)';
+        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+        
+        // Gold border
+        ctx.strokeStyle = '#ffdd00';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        
+        ctx.strokeStyle = 'rgba(255, 221, 0, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(popupX + 6, popupY + 6, popupWidth - 12, popupHeight - 12);
+        
+        // Title
+        this.graphics.drawText('🏆 VICTORY! 🏆', width / 2, popupY + 55, {
+            size: 42,
+            color: '#ffdd00',
             align: 'center',
             bold: true,
             shadow: true
         });
+        
+        // Subtitle
+        this.graphics.drawText(`Completed ${gameState.targetWaves} Waves!`, width / 2, popupY + 95, {
+            size: 20,
+            color: CONFIG.COLORS.TEXT_PRIMARY,
+            align: 'center',
+            shadow: true
+        });
+        
+        // Stats section
+        const statsY = popupY + 130;
+        ctx.fillStyle = 'rgba(255, 221, 0, 0.1)';
+        ctx.fillRect(popupX + 20, statsY, popupWidth - 40, 140);
+        
+        ctx.strokeStyle = '#ffdd00';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(popupX + 20, statsY, popupWidth - 40, 140);
+        
+        const stats = [
+            `Score: ${Utils.formatNumber(gameState.score)}`,
+            `Kills: ${gameState.kills}`,
+            `Time: ${Utils.formatTime(gameState.playTime)}`,
+            `Highest Tower: Lv.${gameState.highestLevel}`
+        ];
+        
+        let y = statsY + 28;
+        stats.forEach(stat => {
+            this.graphics.drawText(stat, width / 2, y, {
+                size: 18,
+                color: CONFIG.COLORS.TEXT_PRIMARY,
+                align: 'center',
+                shadow: true
+            });
+            y += 30;
+        });
+        
+        // Reward section
+        const rewardY = statsY + 160;
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
+        ctx.fillRect(popupX + 20, rewardY, popupWidth - 40, 60);
+        
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(popupX + 20, rewardY, popupWidth - 40, 60);
+        
+        this.graphics.drawText('🎁 REWARD', width / 2, rewardY + 20, {
+            size: 14,
+            color: CONFIG.COLORS.TEXT_SECONDARY,
+            align: 'center',
+            bold: true
+        });
+        
+        const rewardText = rewardAwarded ? 
+            `+${coinReward} Platform Coins Awarded!` : 
+            `+${coinReward} Platform Coins`;
+        this.graphics.drawText(rewardText, width / 2, rewardY + 42, {
+            size: 22,
+            color: '#ffdd00',
+            align: 'center',
+            bold: true,
+            shadow: true
+        });
+        
+        // Play Again button
+        const buttonWidth = 180;
+        const buttonHeight = 50;
+        const buttonX = (width - buttonWidth) / 2;
+        const buttonY = popupY + popupHeight - 80;
+        
+        this.victoryPlayAgainButton = {
+            x: buttonX,
+            y: buttonY,
+            width: buttonWidth,
+            height: buttonHeight
+        };
+        
+        ctx.fillStyle = 'rgba(0, 200, 100, 0.9)';
+        Utils.drawRoundRect(ctx, buttonX, buttonY, buttonWidth, buttonHeight, 8);
+        ctx.fill();
+        
+        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
+        ctx.lineWidth = 2;
+        Utils.drawRoundRect(ctx, buttonX, buttonY, buttonWidth, buttonHeight, 8);
+        ctx.stroke();
+        
+        this.graphics.drawText('🔄 Play Again', width / 2, buttonY + buttonHeight / 2, {
+            size: 22,
+            color: '#ffffff',
+            align: 'center',
+            baseline: 'middle',
+            bold: true
+        });
+    }
+    
+    // Check if victory play again button was clicked
+    isVictoryPlayAgainClicked(screenX, screenY) {
+        if (!this.victoryPlayAgainButton) return false;
+        
+        return screenX >= this.victoryPlayAgainButton.x &&
+               screenX <= this.victoryPlayAgainButton.x + this.victoryPlayAgainButton.width &&
+               screenY >= this.victoryPlayAgainButton.y &&
+               screenY <= this.victoryPlayAgainButton.y + this.victoryPlayAgainButton.height;
     }
     
     // Settings popup

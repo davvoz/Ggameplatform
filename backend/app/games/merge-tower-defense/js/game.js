@@ -48,6 +48,13 @@ export class Game {
             lastSpawnTime: 0,
             waveClearBonus: 0,
 
+            // Wave Mode Selection (set by player at game start)
+            selectedWaveMode: null,  // 'EASY', 'MEDIUM', 'HARD'
+            targetWaves: 0,          // Total waves to complete (20, 50, 70)
+            coinReward: 0,           // Platform coins reward on victory
+            isVictory: false,        // True when player wins
+            waveModeSelected: false, // True after player selects mode
+
             // Scoring
             score: 0,
             kills: 0,
@@ -118,6 +125,11 @@ export class Game {
     setupInputHandlers() {
         // Tap handler
         this.input.onTap((gridPos, screenPos) => {
+            // Handle wave mode selector tap first (if visible via main.js)
+            if (window.handleWaveModeSelectorTap && window.handleWaveModeSelectorTap(screenPos)) {
+                return;
+            }
+            
             // Handle tutorial prompt tap first (if tutorialPrompt is active via main.js)
             if (window.handleTutorialPromptTap && window.handleTutorialPromptTap(screenPos)) {
                 return;
@@ -129,6 +141,16 @@ export class Game {
                     return; // Tutorial consumed the tap
                 }
                 // If tutorial didn't consume it, let it pass through for action steps
+            }
+            
+            // Handle victory screen
+            if (this.state.isVictory) {
+                // Check if play again button was clicked
+                if (this.ui.isVictoryPlayAgainClicked(screenPos.x, screenPos.y)) {
+                    this.restartWithModeSelection();
+                    return;
+                }
+                return;
             }
             
             if (this.state.isGameOver) {
@@ -645,6 +667,11 @@ export class Game {
         if (this.state.tutorialMode) {
             return;
         }
+
+        // Don't start waves until wave mode is selected
+        if (!this.state.waveModeSelected) {
+            return;
+        }
         
         // Start first wave
         if (!this.state.waveInProgress && this.state.wave === 1) {
@@ -819,13 +846,68 @@ export class Game {
         });
         this.audio.waveComplete();
 
+        // Check for victory - player completed all target waves
+        if (this.state.targetWaves > 0 && this.state.wave >= this.state.targetWaves) {
+            this.victory();
+            return;
+        }
+
         // Next wave after delay
         setTimeout(() => {
-            if (!this.state.isGameOver) {
+            if (!this.state.isGameOver && !this.state.isVictory) {
                 this.state.wave++;
                 this.startWave();
             }
         }, 1500); // Ridotto da 3000 a 1500ms - wave più veloci
+    }
+
+    /**
+     * Victory - player completed all waves in selected mode
+     */
+    victory() {
+        if (this.state.isVictory) return;
+
+        this.state.isVictory = true;
+        this.audio.stop();
+        
+        // Play victory sound (use wave complete as celebration)
+        this.audio.waveComplete();
+        
+        // Visual celebration
+        this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 2, {
+            text: '🏆 VICTORY! 🏆',
+            color: '#ffdd00',
+            vy: -0.3,
+            life: 4.0,
+            scale: 2.5,
+            glow: true
+        });
+
+        // Note: coin reward is handled by main.js which has access to PlatformSDK
+        if (window.handleVictory) {
+            window.handleVictory(this.state.coinReward);
+        }
+        
+        console.log(`[Game] Victory! Completed ${this.state.targetWaves} waves. Reward: ${this.state.coinReward} platform coins`);
+    }
+
+    /**
+     * Set the wave mode selected by player
+     */
+    setWaveMode(modeKey) {
+        const mode = CONFIG.WAVE_MODES[modeKey];
+        if (!mode) {
+            console.error('[Game] Invalid wave mode:', modeKey);
+            return false;
+        }
+
+        this.state.selectedWaveMode = modeKey;
+        this.state.targetWaves = mode.waves;
+        this.state.coinReward = mode.reward;
+        this.state.waveModeSelected = true;
+
+        console.log(`[Game] Wave mode set: ${modeKey} - ${mode.waves} waves, ${mode.reward} coins reward`);
+        return true;
     }
 
     // ========== COMBAT SYSTEM ==========
@@ -1488,6 +1570,28 @@ export class Game {
         // Reset session state (handled entirely in main.js)
         if (window.resetGameSession) {
             window.resetGameSession();
+        }
+    }
+
+    /**
+     * Restart game and show wave mode selection again
+     */
+    restartWithModeSelection() {
+        // Reset everything
+        this.state = this.createInitialState();
+        this.entities.clear();
+        this.particles.clear();
+        this.deselectAll();
+        this.ui.clearRetryButton();
+
+        // Reset session state (handled entirely in main.js)
+        if (window.resetGameSession) {
+            window.resetGameSession();
+        }
+
+        // Show wave mode selection again (handled in main.js)
+        if (window.showWaveModeSelection) {
+            window.showWaveModeSelection();
         }
     }
 

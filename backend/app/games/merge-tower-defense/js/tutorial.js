@@ -329,6 +329,11 @@ export class TutorialManager {
     complete() {
         console.log('[Tutorial] Tutorial completed!');
         this.stop();
+        
+        // Show wave mode selection after tutorial
+        if (window.showWaveModeSelection) {
+            window.showWaveModeSelection();
+        }
     }
 
     /**

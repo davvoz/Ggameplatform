@@ -1,8 +1,18 @@
 {
-  "version": "3.17.0",
-  "timestamp": "2026-01-25T14:09:53.061Z",
-  "buildNumber": 319,
+  "version": "3.17.1",
+  "timestamp": "2026-01-25T18:36:11.332Z",
+  "buildNumber": 320,
   "changelog": [
+    {
+      "version": "3.17.1",
+      "date": "2026-01-25",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [MTD]update continue cost for wave mode selection",
+        "🔖 Bump version to 3.17.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.0",
       "date": "2026-01-25",
@@ -85,15 +95,6 @@
       "changes": [
         "refactor: comment out cooldown period checks in create_post and post availability logic",
         "🔖 Bump version to 3.16.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.3",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "refactor: comment out posting key verification in publish_with_key function",
-        "🔖 Bump version to 3.16.2 [skip-version]"
       ]
     }
   ]

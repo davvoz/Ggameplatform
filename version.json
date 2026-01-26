@@ -1,8 +1,17 @@
 {
-  "version": "3.17.2",
-  "timestamp": "2026-01-25T22:15:28.566Z",
-  "buildNumber": 321,
+  "version": "3.17.3",
+  "timestamp": "2026-01-26T00:07:27.142Z",
+  "buildNumber": 322,
   "changelog": [
+    {
+      "version": "3.17.3",
+      "date": "2026-01-26",
+      "type": "patch",
+      "changes": [
+        "fix: Update Steem post publishing to use backend-prepared operations with beneficiaries, add image uploader",
+        "🔖 Bump version to 3.17.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.2",
       "date": "2026-01-25",
@@ -86,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "refactor: enhance posting key form with improved accessibility and submission handling",
         "🔖 Bump version to 3.16.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.5",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 3.16.4 [skip-version]"
       ]
     }
   ]

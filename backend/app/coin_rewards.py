@@ -35,7 +35,10 @@ class CoinRewardManager:
         # Get top players
         top_players = self.db.query(Leaderboard).filter(
             Leaderboard.game_id == game_id
-        ).order_by(Leaderboard.score.desc()).limit(top_n).all()
+        ).order_by(
+            Leaderboard.score.desc(),
+            Leaderboard.created_at.asc()
+        ).limit(top_n).all()
         
         awarded = []
         for entry in top_players:

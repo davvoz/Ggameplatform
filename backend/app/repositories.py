@@ -197,7 +197,10 @@ class LeaderboardRepository(BaseRepository[Leaderboard]):
         try:
             return self.db_session.query(Leaderboard).filter(
                 Leaderboard.game_id == game_id
-            ).order_by(Leaderboard.score.desc()).limit(limit).all()
+            ).order_by(
+                Leaderboard.score.desc(),
+                Leaderboard.created_at.asc()
+            ).limit(limit).all()
         except SQLAlchemyError as e:
             raise Exception(f"Error fetching leaderboard: {str(e)}")
     

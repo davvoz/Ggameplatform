@@ -265,7 +265,10 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         sessions = [s.to_dict() for s in sessions_query]
         
         # Get all leaderboard entries
-        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
+        leaderboard_query = session.query(Leaderboard).order_by(
+            desc(Leaderboard.score),
+            Leaderboard.created_at.asc()
+        ).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
         
         # Get all XP rules
@@ -301,7 +304,10 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         
         # Get weekly leaderboard data
         from app.models import WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
-        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(
+            desc(WeeklyLeaderboard.score),
+            WeeklyLeaderboard.created_at.asc()
+        ).all()
         weekly_leaderboards = [wl.to_dict() for wl in weekly_leaderboards_query]
         
         leaderboard_rewards_query = session.query(LeaderboardReward).order_by(LeaderboardReward.rank_start).all()
@@ -388,7 +394,10 @@ async def export_database():
         sessions = [s.to_dict() for s in sessions_query]
         
         # Export leaderboard using ORM
-        leaderboard_query = session.query(Leaderboard).order_by(desc(Leaderboard.score)).all()
+        leaderboard_query = session.query(Leaderboard).order_by(
+            desc(Leaderboard.score),
+            Leaderboard.created_at.asc()
+        ).all()
         leaderboard = [entry.to_dict() for entry in leaderboard_query]
         
         # Export XP rules using ORM
@@ -424,7 +433,10 @@ async def export_database():
         
         # Export weekly leaderboard data
         from app.models import WeeklyLeaderboard, LeaderboardReward, WeeklyWinner
-        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        weekly_leaderboards_query = session.query(WeeklyLeaderboard).order_by(
+            desc(WeeklyLeaderboard.score),
+            WeeklyLeaderboard.created_at.asc()
+        ).all()
         weekly_leaderboards = [wl.to_dict() for wl in weekly_leaderboards_query]
         
         leaderboard_rewards_query = session.query(LeaderboardReward).order_by(LeaderboardReward.rank_start).all()
@@ -1468,7 +1480,10 @@ async def get_weekly_leaderboards(db: Session = Depends(get_db)):
     """Get all weekly leaderboard entries"""
     try:
         from app.models import WeeklyLeaderboard
-        entries = db.query(WeeklyLeaderboard).order_by(desc(WeeklyLeaderboard.score)).all()
+        entries = db.query(WeeklyLeaderboard).order_by(
+            desc(WeeklyLeaderboard.score),
+            WeeklyLeaderboard.created_at.asc()
+        ).all()
         return {"success": True, "weekly_leaderboards": [e.to_dict() for e in entries]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

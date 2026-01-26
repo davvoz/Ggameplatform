@@ -165,7 +165,10 @@ class LeaderboardRepository:
         
         if game_id:
             query = query.filter(WeeklyLeaderboard.game_id == game_id)
-            query = query.order_by(desc(WeeklyLeaderboard.score))
+            query = query.order_by(
+                desc(WeeklyLeaderboard.score),
+                WeeklyLeaderboard.created_at.asc()  # Tiebreaker: chi arriva prima vince
+            )
         else:
             # Global: aggregate scores per user
             query = self.session.query(
@@ -236,7 +239,10 @@ class LeaderboardRepository:
         
         if game_id:
             query = query.filter(Leaderboard.game_id == game_id)
-            query = query.order_by(desc(Leaderboard.score))
+            query = query.order_by(
+                desc(Leaderboard.score),
+                Leaderboard.created_at.asc()  # Tiebreaker: chi arriva prima vince
+            )
         else:
             # Global: aggregate best scores per user
             query = self.session.query(
@@ -338,7 +344,8 @@ class LeaderboardRepository:
                     WeeklyLeaderboard.game_id == game_id
                 )
             ).order_by(
-                desc(WeeklyLeaderboard.score)
+                desc(WeeklyLeaderboard.score),
+                WeeklyLeaderboard.created_at.asc()  # Tiebreaker: chi arriva prima vince
             ).limit(10).all()  # Top 10
             
             for rank, player in enumerate(top_players, 1):

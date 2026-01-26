@@ -136,7 +136,10 @@ def recalculate_weekly_ranks(session: Session, week_start: str):
         entries = session.query(WeeklyLeaderboard).filter(
             WeeklyLeaderboard.week_start == week_start,
             WeeklyLeaderboard.game_id == game_id
-        ).order_by(WeeklyLeaderboard.score.desc()).all()
+        ).order_by(
+            WeeklyLeaderboard.score.desc(),
+            WeeklyLeaderboard.created_at.asc()
+        ).all()
 
         for idx, entry in enumerate(entries, start=1):
             entry.rank = idx
@@ -152,7 +155,10 @@ def recalculate_ranks_for_game(session: Session, game_id: str):
     # Get all entries for this game, ordered by score (descending)
     entries = session.query(Leaderboard).filter(
         Leaderboard.game_id == game_id
-    ).order_by(Leaderboard.score.desc()).all()
+    ).order_by(
+        Leaderboard.score.desc(),
+        Leaderboard.created_at.asc()
+    ).all()
     
     # Update ranks
     for idx, entry in enumerate(entries, start=1):

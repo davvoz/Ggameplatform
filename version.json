@@ -1,8 +1,17 @@
 {
-  "version": "3.17.4",
-  "timestamp": "2026-01-26T00:13:32.277Z",
-  "buildNumber": 323,
+  "version": "3.17.5",
+  "timestamp": "2026-01-26T00:17:13.194Z",
+  "buildNumber": 324,
   "changelog": [
+    {
+      "version": "3.17.5",
+      "date": "2026-01-26",
+      "type": "patch",
+      "changes": [
+        "fix: Update CSP policy to include additional backend URLs for improved security",
+        "🔖 Bump version to 3.17.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.4",
       "date": "2026-01-26",
@@ -85,15 +94,6 @@
       "changes": [
         "fix:[MTD]tutorial implement tower dragging functionality with visual feedback and tutorial integration",
         "🔖 Bump version to 3.16.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.7",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "refactor: enhance sticky navbar functionality and improve code organization",
-        "🔖 Bump version to 3.16.6 [skip-version]"
       ]
     }
   ]

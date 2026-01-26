@@ -61,9 +61,7 @@ class SteemPostService:
         body_parts.append(f"<h1>🏆 Gaming Milestone Reached!</h1>")
         body_parts.append(f"</center>\n")
         
-        # Cover image
-        body_parts.append(f"![coverart](https://cdn.steemitimages.com/DQmYHS6e195yMGWkZUjzg45b8epPRFJcv9GCDzvaeLmRieV/image.png)\n")
-        
+       
         # Personal message if provided
         if user_message and user_message.strip():
             body_parts.append(f"## 💭 My Thoughts\n")
@@ -101,6 +99,10 @@ class SteemPostService:
         body_parts.append(f"✅ **Connect your Steem account** for enhanced rewards  ")
         body_parts.append(f"")
         
+        # Cover image
+        body_parts.append(f"![coverart](https://cdn.steemitimages.com/DQmYHS6e195yMGWkZUjzg45b8epPRFJcv9GCDzvaeLmRieV/image.png)\n")
+        
+
         # CTA section
         body_parts.append(f"---\n")
         body_parts.append(f"## 🚀 Join the Gaming Revolution!\n")

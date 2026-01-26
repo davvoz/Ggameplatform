@@ -13,8 +13,8 @@ from app.services import CoinService
 from app.steem_post_service import SteemPostService
 from app.models import User, Leaderboard, Game, GameStatus
 from app.telegram_notifier import send_telegram_success
-from app.telegram_notifier import send_telegram_success
 import os
+import json
 
 
 router = APIRouter(prefix="/api/steem", tags=["Steem"])
@@ -313,18 +313,11 @@ async def create_post(
         permlink = permlink[:100]
         permlink = f"{permlink}-{random_suffix}"
 
-        # Prepare beneficiaries for Keychain: allow override from request, otherwise env/default
-        beneficiaries = None
-        if hasattr(request, 'beneficiaries') and request.beneficiaries:
-            beneficiaries = request.beneficiaries
-
-        if beneficiaries is None:
-            beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
-            beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
-            beneficiaries = [{
-                "account": beneficiary_account,
-                "weight": beneficiary_weight
-            }]
+        # Prepare beneficiaries for Keychain: always micro.cur8 at 5% (weight 500)
+        beneficiaries = [{
+            "account": "micro.cur8",
+            "weight": 500
+        }]
 
         # Prepare metadata for post (include useful tracking)
         metadata = post_service.prepare_post_metadata(
@@ -337,16 +330,17 @@ async def create_post(
         json_metadata = { 'tags': post_content['tags'], **metadata }
 
         # Build Keychain operations: 'comment' + 'comment_options' with beneficiaries
+        # parent_permlink must be the community ID to post in that community
         comment_op = [
             'comment',
             {
                 'parent_author': '',
-                'parent_permlink': 'cur8',
+                'parent_permlink': 'hive-120997',  # Cur8 community ID
                 'author': stats['username'],
                 'permlink': permlink,
                 'title': post_content['title'],
                 'body': post_content['body'],
-                'json_metadata': json_metadata
+                'json_metadata': json.dumps(json_metadata)  # Must be JSON string, not dict
             }
         ]
 
@@ -356,6 +350,7 @@ async def create_post(
                 'author': stats['username'],
                 'permlink': permlink,
                 'max_accepted_payout': '1000000.000 SBD',
+                'percent_steem_dollars': 10000,
                 'allow_votes': True,
                 'allow_curation_rewards': True,
                 'extensions': [[0, { 'beneficiaries': beneficiaries }]]
@@ -533,6 +528,7 @@ async def confirm_post(
         db.commit()
         
         # Send Telegram notification
+        print(f"[CONFIRM-POST] Sending Telegram notification for user {user.steem_username}")
         try:
             send_telegram_success(
                 title="New Steem Post Published (Keychain)",
@@ -540,11 +536,15 @@ async def confirm_post(
                 stats={
                     "User": user.steem_username,
                     "Platform User ID": user_id,
-                    "Post URL": post_url
+                    "Post URL": post_url,
+                    "Post Title": post_title
                 }
             )
+            print(f"[CONFIRM-POST] Telegram notification sent successfully")
         except Exception as telegram_error:
-            print(f"Failed to send Telegram notification: {telegram_error}")
+            print(f"[CONFIRM-POST] Failed to send Telegram notification: {telegram_error}")
+            import traceback
+            traceback.print_exc()
         
         return {
             "success": True,
@@ -655,16 +655,11 @@ def _generate_permlink(title: str) -> str:
 
 
 def _get_beneficiaries(request: dict) -> List[Dict[str, Any]]:
-    """Get beneficiaries from request or environment defaults"""
-    beneficiaries = request.get('beneficiaries')
-    if beneficiaries is None:
-        beneficiary_account = os.getenv('STEEM_BENEFICIARY_ACCOUNT', 'micro.cur8')
-        beneficiary_weight = int(os.getenv('STEEM_BENEFICIARY_WEIGHT', '500'))
-        beneficiaries = [{
-            "account": beneficiary_account,
-            "weight": beneficiary_weight
-        }]
-    return beneficiaries
+    """Get beneficiaries: always micro.cur8 at 5% (weight 500)"""
+    return [{
+        "account": "micro.cur8",
+        "weight": 500
+    }]
 
 
 import logging

@@ -165,7 +165,48 @@ class SteemPostAPI {
     }
 
     /**
-     * Publish post to Steem using Keychain
+     * Publish post to Steem using Keychain with pre-prepared operations (includes beneficiaries)
+     * @param {string} steemUsername - Steem username
+     * @param {array} operations - Pre-prepared Keychain operations from backend
+     * @param {string} permlink - Post permlink
+     * @param {string} title - Post title (for return data)
+     */
+    async publishViaKeychainOperations(steemUsername, operations, permlink, title) {
+        return new Promise((resolve, reject) => {
+            if (!window.steem_keychain) {
+                reject(new Error('Steem Keychain not found. Please install it first.'));
+                return;
+            }
+
+            console.log('[Keychain] Broadcasting with backend-prepared operations (includes beneficiaries)');
+            console.log('[Keychain] Operations:', operations);
+
+            // Request Keychain to broadcast with backend-prepared operations
+            window.steem_keychain.requestBroadcast(
+                steemUsername,
+                operations,
+                'Posting',
+                (response) => {
+                    console.log('Keychain broadcast response:', response);
+                    
+                    if (response.success) {
+                        resolve({
+                            success: true,
+                            permlink: permlink,
+                            post_url: `https://www.cur8.fun/app/@${steemUsername}/${permlink}`,
+                            post_title: title,
+                            transaction_id: response.result?.id
+                        });
+                    } else {
+                        reject(new Error(response.message || 'Post publication cancelled or failed'));
+                    }
+                }
+            );
+        });
+    }
+
+    /**
+     * Publish post to Steem using Keychain (legacy method - generates operations in frontend)
      * @param {string} steemUsername - Steem username
      * @param {string} title - Post title
      * @param {string} body - Post body (markdown)

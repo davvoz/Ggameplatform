@@ -1,8 +1,17 @@
 {
-  "version": "3.17.3",
-  "timestamp": "2026-01-26T00:07:27.142Z",
-  "buildNumber": 322,
+  "version": "3.17.4",
+  "timestamp": "2026-01-26T00:13:32.277Z",
+  "buildNumber": 323,
   "changelog": [
+    {
+      "version": "3.17.4",
+      "date": "2026-01-26",
+      "type": "patch",
+      "changes": [
+        "fix: Improve image compression by using FileReader for better performance and error handling",
+        "🔖 Bump version to 3.17.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.3",
       "date": "2026-01-26",
@@ -85,16 +94,6 @@
       "changes": [
         "refactor: enhance sticky navbar functionality and improve code organization",
         "🔖 Bump version to 3.16.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.6",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "refactor: enhance posting key form with improved accessibility and submission handling",
-        "🔖 Bump version to 3.16.5 [skip-version]"
       ]
     }
   ]

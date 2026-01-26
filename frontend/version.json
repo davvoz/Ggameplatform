@@ -1,8 +1,17 @@
 {
-  "version": "3.17.5",
-  "timestamp": "2026-01-26T00:17:13.194Z",
-  "buildNumber": 324,
+  "version": "3.17.6",
+  "timestamp": "2026-01-26T23:20:39.166Z",
+  "buildNumber": 325,
   "changelog": [
+    {
+      "version": "3.17.6",
+      "date": "2026-01-26",
+      "type": "patch",
+      "changes": [
+        "fix: Add tiebreaker for leaderboard ranking by including creation date in order by clause",
+        "🔖 Bump version to 3.17.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.5",
       "date": "2026-01-26",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[MTD]refactor: enhance button rendering with gradient backgrounds and improved visuals",
         "🔖 Bump version to 3.16.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.8",
-      "date": "2026-01-23",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD]tutorial implement tower dragging functionality with visual feedback and tutorial integration",
-        "🔖 Bump version to 3.16.7 [skip-version]"
       ]
     }
   ]

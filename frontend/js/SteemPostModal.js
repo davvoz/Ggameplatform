@@ -470,41 +470,48 @@ class SteemPostModal {
      */
     async compressImage(file, maxWidthHeight = 1920) {
         return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = URL.createObjectURL(file);
+            const reader = new FileReader();
             
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result; // Use data URL instead of blob URL
                 
-                if (width > maxWidthHeight || height > maxWidthHeight) {
-                    if (width > height) {
-                        height *= maxWidthHeight / width;
-                        width = maxWidthHeight;
-                    } else {
-                        width *= maxWidthHeight / height;
-                        height = maxWidthHeight;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidthHeight || height > maxWidthHeight) {
+                        if (width > height) {
+                            height *= maxWidthHeight / width;
+                            width = maxWidthHeight;
+                        } else {
+                            width *= maxWidthHeight / height;
+                            height = maxWidthHeight;
+                        }
                     }
-                }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const mimeType = file.type || 'image/jpeg';
+                    const quality = mimeType === 'image/png' ? 1.0 : 0.9;
+                    
+                    canvas.toBlob(
+                        blob => resolve(blob),
+                        mimeType,
+                        quality
+                    );
+                };
                 
-                canvas.width = width;
-                canvas.height = height;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                const mimeType = file.type || 'image/jpeg';
-                const quality = mimeType === 'image/png' ? 1.0 : 0.9;
-                
-                canvas.toBlob(
-                    blob => resolve(blob),
-                    mimeType,
-                    quality
-                );
+                img.onerror = () => reject(new Error('Error loading image'));
             };
             
-            img.onerror = () => reject(new Error('Error loading image'));
+            reader.onerror = () => reject(new Error('Error reading file'));
+            reader.readAsDataURL(file);
         });
     }
 

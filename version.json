@@ -1,8 +1,17 @@
 {
-  "version": "3.17.7",
-  "timestamp": "2026-01-27T00:01:31.937Z",
-  "buildNumber": 326,
+  "version": "3.17.8",
+  "timestamp": "2026-01-27T00:24:03.974Z",
+  "buildNumber": 327,
   "changelog": [
+    {
+      "version": "3.17.8",
+      "date": "2026-01-27",
+      "type": "patch",
+      "changes": [
+        "Translate game text from Italian to English across multiple files, enhancing accessibility for English-speaking players. Update UI elements, notifications, and gameplay instructions to reflect the new language. Ensure consistency in terminology and improve clarity in user interactions.",
+        "🔖 Bump version to 3.17.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.7",
       "date": "2026-01-27",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: [MTD]add tower info panel with sell and select options",
         "🔖 Bump version to 3.16.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.10",
-      "date": "2026-01-24",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[MTD] migliori animazioni e bottoni",
-        "🔖 Bump version to 3.16.9 [skip-version]"
       ]
     }
   ]

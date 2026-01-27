@@ -1,8 +1,17 @@
 {
-  "version": "3.17.9",
-  "timestamp": "2026-01-27T00:34:48.376Z",
-  "buildNumber": 328,
+  "version": "3.17.10",
+  "timestamp": "2026-01-27T00:45:53.585Z",
+  "buildNumber": 329,
   "changelog": [
+    {
+      "version": "3.17.10",
+      "date": "2026-01-27",
+      "type": "patch",
+      "changes": [
+        "fix: ST Clamp block position and reverse direction at boundaries for improved gameplay mechanics",
+        "🔖 Bump version to 3.17.9 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.9",
       "date": "2026-01-27",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [MTD]update continue cost for wave mode selection",
         "🔖 Bump version to 3.17.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.0",
-      "date": "2026-01-25",
-      "type": "minor",
-      "changes": [
-        "feat:[MTD] implement wave mode selection with difficulty options and victory handling",
-        "🔖 Bump version to 3.16.11 [skip-version]"
       ]
     }
   ]

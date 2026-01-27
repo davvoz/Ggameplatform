@@ -546,55 +546,259 @@
             }
         }
         
-        /* ============ MOVEMENT HINT ============ */
-        #movementHint {
+        /* ============ IN-GAME TUTORIAL ============ */
+        #tutorialOverlay {
             position: absolute;
-            bottom: 30%;
+            bottom: 15%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 150;
+            z-index: 100;
             pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        
+        #tutorialOverlay.show {
+            opacity: 1;
+        }
+        
+        #tutorialOverlay.hiding {
+            opacity: 0;
+            transition: opacity 1.2s ease;
+        }
+        
+        .tutorial-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        /* Mobile: Tap/Swipe hint */
+        .tutorial-mobile {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px;
+        }
+        
+        .tutorial-pc {
             display: none;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
         
-        #movementHint.show {
-            display: block;
-            animation: hintPulse 2s ease-in-out infinite;
+        /* Tap indicator - circle with dot */
+        .tap-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
         }
         
-        #movementHint h2 {
-            font-size: 28px;
-            margin: 0 0 15px 0;
-            color: #4CAF50;
-        }
-        
-        #movementHint p {
-            font-size: 20px;
-            margin: 8px 0;
+        .tap-circle {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            position: relative;
+            animation: tapPulse 1.5s ease-in-out infinite;
         }
         
-        #movementHint .icon {
-            font-size: 32px;
+        .tap-circle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: tapRippleOuter 1.5s ease-in-out infinite;
         }
         
-        @keyframes hintPulse {
-            0%, 100% {
-                transform: translateX(-50%) scale(1);
-                opacity: 1;
+        .tap-dot {
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            animation: tapDotPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes tapPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.92); }
+        }
+        
+        @keyframes tapRippleOuter {
+            0%, 100% { transform: scale(1); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 0.6; }
+        }
+        
+        @keyframes tapDotPulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(0.8); opacity: 1; }
+        }
+        
+        .tap-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        }
+        
+        /* Swipe indicator - moving dot with trail */
+        .swipe-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .swipe-track {
+            width: 60px;
+            height: 48px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .swipe-base {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+            position: relative;
+        }
+        
+        .swipe-dot {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            animation: swipeDotMove 2s ease-in-out infinite;
+        }
+        
+        .swipe-trail {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            transform: translateY(-50%);
+            height: 4px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0) 100%);
+            border-radius: 2px;
+            animation: swipeTrailMove 2s ease-in-out infinite;
+        }
+        
+        @keyframes swipeDotMove {
+            0%, 10% { left: 10%; }
+            45%, 55% { left: 90%; }
+            90%, 100% { left: 10%; }
+        }
+        
+        @keyframes swipeTrailMove {
+            0%, 10% { left: 10%; width: 0; opacity: 0; }
+            30% { left: 30%; width: 30px; opacity: 0.8; }
+            45%, 55% { left: 60%; width: 40px; opacity: 0; }
+            75% { left: 60%; width: 30px; opacity: 0.8; }
+            90%, 100% { left: 20%; width: 0; opacity: 0; }
+        }
+        
+        .swipe-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+        
+        /* PC: Arrow keys */
+        .keys-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .key-row {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .key-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+            animation: keyPulse 3s ease-in-out infinite;
+        }
+        
+        .key-icon.up {
+            animation-delay: 0s;
+        }
+        
+        .key-icon.left {
+            animation-delay: 0.5s;
+        }
+        
+        .key-icon.down {
+            animation-delay: 1s;
+        }
+        
+        .key-icon.right {
+            animation-delay: 1.5s;
+        }
+        
+        @keyframes keyPulse {
+            0%, 100% { 
+                background: rgba(255, 255, 255, 0.15);
+                transform: scale(1);
             }
-            50% {
-                transform: translateX(-50%) scale(1.05);
-                opacity: 0.9;
+            25% { 
+                background: rgba(255, 255, 255, 0.35);
+                transform: scale(1.05);
+            }
+        }
+        
+        .keys-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+            margin-top: 8px;
+        }
+        
+        /* PC mode: show keyboard controls */
+        @media (hover: hover) and (pointer: fine) {
+            .tutorial-mobile {
+                display: none !important;
+            }
+            
+            .tutorial-pc {
+                display: flex !important;
             }
         }
     </style>
@@ -607,10 +811,43 @@
     
     <button id="muteButton" title="Toggle sound">🔊</button>
     
-    <div id="movementHint">
-        <h2>How to Move</h2>
-        <p><span class="icon">👆</span> Tap to move forward</p>
-        <p><span class="icon">👉</span> Swipe to change direction</p>
+    <!-- In-Game Tutorial -->
+    <div id="tutorialOverlay">
+        <div class="tutorial-content">
+            <!-- Mobile Controls -->
+            <div class="tutorial-mobile">
+                <div class="tap-hint">
+                    <div class="tap-circle">
+                        <div class="tap-dot"></div>
+                    </div>
+                    <span class="tap-label">Tap</span>
+                </div>
+                <div class="swipe-hint">
+                    <div class="swipe-track">
+                        <div class="swipe-base">
+                            <div class="swipe-trail"></div>
+                            <div class="swipe-dot"></div>
+                        </div>
+                    </div>
+                    <span class="swipe-label">Swipe</span>
+                </div>
+            </div>
+            
+            <!-- PC Controls -->
+            <div class="tutorial-pc">
+                <div class="keys-hint">
+                    <div class="key-row">
+                        <div class="key-icon up">↑</div>
+                    </div>
+                    <div class="key-row">
+                        <div class="key-icon left">←</div>
+                        <div class="key-icon down">↓</div>
+                        <div class="key-icon right">→</div>
+                    </div>
+                </div>
+                <span class="keys-label">Arrow keys to move</span>
+            </div>
+        </div>
     </div>
 
     <div id="loadingScreen">

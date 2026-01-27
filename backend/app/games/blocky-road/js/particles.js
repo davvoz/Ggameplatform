@@ -94,23 +94,32 @@ class ParticleSystem {
     
     // Water splash particles (for drowning)
     createWaterSplash(position) {
-        const particleCount = 15;
+        const particleCount = 20;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const colors = [];
         const velocities = [];
         
         for (let i = 0; i < particleCount; i++) {
-            positions.push(position.x, position.y + 0.2, position.z);
+            // Spread particles in a ring around impact point
+            const angle = (i / particleCount) * Math.PI * 2;
+            const radius = 0.1;
+            positions.push(
+                position.x + Math.cos(angle) * radius,
+                position.y + 0.1,
+                position.z + Math.sin(angle) * radius
+            );
             
-            // Blue water particles
-            colors.push(0.3, 0.5, 1);
+            // Blue-white water particles
+            const brightness = 0.7 + Math.random() * 0.3;
+            colors.push(brightness * 0.6, brightness * 0.8, brightness);
             
-            // Splash outward and up
+            // Splash outward and up in a ring
+            const speed = 0.15 + Math.random() * 0.15;
             velocities.push(
-                (Math.random() - 0.5) * 0.25,
-                Math.random() * 0.2 + 0.1,
-                (Math.random() - 0.5) * 0.25
+                Math.cos(angle) * speed,
+                Math.random() * 0.25 + 0.15,
+                Math.sin(angle) * speed
             );
         }
         
@@ -118,7 +127,7 @@ class ParticleSystem {
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         
         const material = new THREE.PointsMaterial({
-            size: 0.15,
+            size: 0.12,
             vertexColors: true,
             transparent: true,
             opacity: 1
@@ -130,8 +139,59 @@ class ParticleSystem {
         this.particles.push({
             system: particleSystem,
             velocities: velocities,
-            life: 45,
-            maxLife: 45
+            life: 50,
+            maxLife: 50,
+            gravity: 0.012  // Water drops fall
+        });
+    }
+    
+    // Bubbles rising from underwater
+    createBubbles(position) {
+        const particleCount = 10;
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+        const velocities = [];
+        
+        for (let i = 0; i < particleCount; i++) {
+            // Spread bubbles randomly around position
+            positions.push(
+                position.x + (Math.random() - 0.5) * 0.4,
+                position.y + Math.random() * 0.2,
+                position.z + (Math.random() - 0.5) * 0.4
+            );
+            
+            // Light blue/white bubbles
+            const brightness = 0.8 + Math.random() * 0.2;
+            colors.push(brightness * 0.8, brightness * 0.9, brightness);
+            
+            // Bubbles float up with slight wobble
+            velocities.push(
+                (Math.random() - 0.5) * 0.02,
+                Math.random() * 0.08 + 0.05,  // Rise up
+                (Math.random() - 0.5) * 0.02
+            );
+        }
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        
+        const material = new THREE.PointsMaterial({
+            size: 0.08,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const particleSystem = new THREE.Points(geometry, material);
+        this.scene.add(particleSystem);
+        
+        this.particles.push({
+            system: particleSystem,
+            velocities: velocities,
+            life: 60,
+            maxLife: 60,
+            wobble: true  // Add wobble effect
         });
     }
     
@@ -193,12 +253,20 @@ class ParticleSystem {
                 
                 // Update particle positions
                 for (let j = 0; j < positions.length; j += 3) {
-                    positions[j] += particle.velocities[j];         // x
+                    // Add wobble effect for bubbles
+                    if (particle.wobble) {
+                        positions[j] += particle.velocities[j] + Math.sin(this.updateCounter * 0.3 + j) * 0.005;
+                    } else {
+                        positions[j] += particle.velocities[j];         // x
+                    }
                     positions[j + 1] += particle.velocities[j + 1]; // y
                     positions[j + 2] += particle.velocities[j + 2]; // z
                     
-                    // Gravity
-                    particle.velocities[j + 1] -= 0.01;
+                    // Gravity (use custom gravity if set, otherwise default)
+                    const gravity = particle.gravity || 0.01;
+                    if (!particle.wobble) {  // Bubbles don't have gravity
+                        particle.velocities[j + 1] -= gravity;
+                    }
                 }
                 
                 particle.system.geometry.attributes.position.needsUpdate = true;

@@ -35,10 +35,11 @@ class BlockyRoadGame {
         this.dangerZoneActive = false; // Activate after first move
         this.lastTime = null; // For delta time calculation
         
-        // Movement hint system
-        this.movementHintShown = false;
-        this.inactivityTimer = 0;
-        this.inactivityThreshold = 180; // Show hint after 3 seconds (180 frames @ 60fps)
+        // Tutorial overlay system
+        this.tutorialShown = false;
+        this.tutorialVisible = false;
+        this.tutorialMoveCount = 0;
+        this.tutorialMovesRequired = 3; // Hide after 3 movements
         
         // Setup window listeners for platform messages
         this.setupWindowListeners();
@@ -533,6 +534,11 @@ class BlockyRoadGame {
         
         // Reset per-session train death counter
         this.trainDeaths = 0;
+        // Show tutorial overlay at game start
+        if (!this.tutorialShown) {
+            this.showTutorial();
+        }
+        
         // Notify platform that game has started - this will create the session
         if (typeof PlatformSDK !== 'undefined') {
             try {
@@ -619,14 +625,13 @@ class BlockyRoadGame {
         });
         
         if (moved) {
-            // Hide movement hint on first move
-            if (!this.movementHintShown) {
-                this.hideMovementHint();
-                this.movementHintShown = true;
+            // Count moves and hide tutorial after a few movements
+            if (this.tutorialVisible) {
+                this.tutorialMoveCount++;
+                if (this.tutorialMoveCount >= this.tutorialMovesRequired) {
+                    this.hideTutorial();
+                }
             }
-            
-            // Reset inactivity timer
-            this.inactivityTimer = 0;
             
             // Score tracking: increment by 1 for each forward step
             if (dz > 0) {
@@ -776,13 +781,7 @@ class BlockyRoadGame {
         // This makes movement speed independent of frame rate
         const normalizedDelta = deltaTime / 16.67;
         
-        // Check for player inactivity and show hint
-        if (!this.movementHintShown && this.isStarted && !this.isGameOver) {
-            this.inactivityTimer++;
-            if (this.inactivityTimer >= this.inactivityThreshold) {
-                this.showMovementHint();
-            }
-        }
+        // Tutorial visibility is now controlled by movement count only
         
         // Update game systems
         const playerPos = this.player.getPosition();
@@ -977,19 +976,28 @@ class BlockyRoadGame {
         }
     }
     
-    showMovementHint() {
-        const hint = document.getElementById('movementHint');
-        if (hint && !this.movementHintShown) {
-            hint.classList.add('show');
-            console.log('💡 Showing movement hint');
+    showTutorial() {
+        const tutorial = document.getElementById('tutorialOverlay');
+        if (tutorial && !this.tutorialShown) {
+            tutorial.classList.add('show');
+            tutorial.classList.remove('hiding');
+            this.tutorialVisible = true;
+            this.tutorialAutoHideTimer = 0;
+            console.log('💡 Showing tutorial overlay');
         }
     }
     
-    hideMovementHint() {
-        const hint = document.getElementById('movementHint');
-        if (hint) {
-            hint.classList.remove('show');
-            console.log('✅ Movement hint hidden - player moved');
+    hideTutorial() {
+        const tutorial = document.getElementById('tutorialOverlay');
+        if (tutorial && this.tutorialVisible) {
+            tutorial.classList.add('hiding');
+            this.tutorialVisible = false;
+            this.tutorialShown = true;
+            // Remove show class after animation
+            setTimeout(() => {
+                tutorial.classList.remove('show');
+            }, 500);
+            console.log('✅ Tutorial hidden');
         }
     }
 }

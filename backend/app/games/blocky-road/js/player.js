@@ -219,25 +219,21 @@ class Player {
         this.isAlive = false;
         
         if (inWater) {
-            // Drowning animation - sink underwater with bubbles
+            // Simple drowning - splash and sink
             this.particleSystem.createWaterSplash(this.mesh.position);
             
-            // Sink down and spin slowly
+            // Sink down quickly
             new TWEEN.Tween(this.mesh.position)
-                .to({ y: -2 }, 1000)
+                .to({ y: -2 }, 600)
                 .easing(TWEEN.Easing.Quadratic.In)
                 .start();
             
+            // Slight tilt as sinking
             new TWEEN.Tween(this.mesh.rotation)
-                .to({ x: Math.PI, y: this.mesh.rotation.y, z: 0 }, 1000)
+                .to({ x: 0.5 }, 600)
                 .easing(TWEEN.Easing.Quadratic.In)
                 .start();
-            
-            // Scale down slightly as sinking
-            new TWEEN.Tween(this.mesh.scale)
-                .to({ x: 0.8, y: 0.8, z: 0.8 }, 1000)
-                .easing(TWEEN.Easing.Quadratic.In)
-                .start();
+                
         } else {
             // Death particles
             this.particleSystem.createDeathParticles(this.mesh.position);
@@ -272,7 +268,18 @@ class Player {
         // Move with platform while maintaining lateral offset
         if (this.isOnPlatform && this.currentPlatform && !this.isMoving) {
             // Keep player on platform with their offset position
-            this.mesh.position.x = this.currentPlatform.mesh.position.x + this.platformOffset;
+            // Smooth interpolation to avoid teleporting
+            const targetX = this.currentPlatform.mesh.position.x + this.platformOffset;
+            const currentX = this.mesh.position.x;
+            const diff = targetX - currentX;
+            
+            // If difference is large (just landed), lerp smoothly
+            if (Math.abs(diff) > 0.1) {
+                this.mesh.position.x += diff * 0.2; // Smooth catch-up
+            } else {
+                this.mesh.position.x = targetX; // Direct sync when close
+            }
+            
             this.gridX = Math.round(this.mesh.position.x);
             
             // Check if reached waterfall edges while on platform

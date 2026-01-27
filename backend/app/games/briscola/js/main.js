@@ -235,7 +235,7 @@ class BriscolaApp {
         const config = {
             mode: this.currentMode,
             difficulty: this.difficulty,
-            player1Name: this.platformBridge.getUsername() || 'Tu',
+            player1Name: this.platformBridge.getUsername() || 'You',
             player2Name: this.getOpponentName()
         };
         
@@ -258,14 +258,14 @@ class BriscolaApp {
     getOpponentName() {
         switch (this.currentMode) {
             case 'ai':
-                const names = ['CPU Facile', 'CPU Medio', 'CPU Difficile'];
+                const names = ['CPU Easy', 'CPU Medium', 'CPU Hard'];
                 return names[['easy', 'medium', 'hard'].indexOf(this.difficulty)];
             case 'local':
-                return 'Giocatore 2';
+                return 'Player 2';
             case 'online':
-                return this.multiplayerController.opponentName || 'Avversario';
+                return this.multiplayerController.opponentName || 'Opponent';
             default:
-                return 'Avversario';
+                return 'Opponent';
         }
     }
     
@@ -374,7 +374,7 @@ class BriscolaApp {
             // In modalità online, abilita per il rematch
             playAgainBtn.style.display = '';
             playAgainBtn.disabled = false;
-            playAgainBtn.innerHTML = '<span class="btn-icon-svg">↻</span> Gioca Ancora';
+            playAgainBtn.innerHTML = '<span class="btn-icon-svg">↻</span> Play Again';
         } else {
             playAgainBtn.style.display = '';
         }

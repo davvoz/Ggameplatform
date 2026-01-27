@@ -110,13 +110,13 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this.context.scoreSystem.bonusMultiplierDuration = 12.0;
 
                 this._handlePowerupCollection(multi, multiplierBonuses, i, entityManager, {
-                    text: '✖️3 PUNTI!',
+                    text: '✖️3 POINTS!',
                     color: multi.color,
                     sound: 'powerup'
                 });
 
                 this.context.scoreSystem.addPowerupCollected();
-                this.addNotification('💰 Moltiplicatore x3!', 'Tutti i punti triplicati per 12 secondi!', 'achievement');
+                this.addNotification('💰 x3 Multiplier!', 'All points tripled for 12 seconds!', 'achievement');
             }
         }
     }

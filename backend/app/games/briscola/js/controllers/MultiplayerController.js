@@ -155,7 +155,7 @@ export class MultiplayerController {
         if (roomCodeDisplay) roomCodeDisplay.style.display = 'none';
         if (joinRoomForm) joinRoomForm.style.display = 'none';
         if (lobbyOptions) lobbyOptions.style.display = 'flex';
-        if (waitingText) waitingText.textContent = 'In attesa di un avversario...';
+        if (waitingText) waitingText.textContent = 'Waiting for an opponent...';
         if (roomInput) roomInput.value = '';
         if (roomCode) roomCode.textContent = '----';
         
@@ -176,7 +176,7 @@ export class MultiplayerController {
             await this.connect();
             console.log('[Multiplayer] Connessione WebSocket riuscita');
             
-            const username = this.app.platformBridge.getUsername() || 'Giocatore';
+            const username = this.app.platformBridge.getUsername() || 'Player';
             console.log('[Multiplayer] Invio richiesta createRoom per utente:', username);
             
             this.send({
@@ -224,7 +224,7 @@ export class MultiplayerController {
             await this.connect();
             console.log('[Multiplayer] Connessione riuscita, invio joinRoom');
             
-            const username = this.app.platformBridge.getUsername() || 'Giocatore';
+            const username = this.app.platformBridge.getUsername() || 'Player';
             
             this.send({
                 type: 'joinRoom',
@@ -372,7 +372,7 @@ export class MultiplayerController {
         const config = {
             mode: 'online',
             player1Name: this.app.platformBridge.getUsername() || 'Tu',
-            player2Name: this.opponentName || 'Avversario'
+            player2Name: this.opponentName || 'Opponent'
         };
         
         // Initialize game engine
@@ -624,7 +624,7 @@ export class MultiplayerController {
         
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.error('[Multiplayer] Socket non connesso! readyState:', this.socket?.readyState);
-            this.app.showError('Connessione persa. Torna al menu e riconnettiti.');
+            this.app.showError('Connection lost. Return to menu and reconnect.');
             return;
         }
         
@@ -637,15 +637,15 @@ export class MultiplayerController {
         console.log('[Multiplayer] Messaggio rematch inviato');
         
         // Aggiorna UI SOLO se l'avversario non ha già richiesto
-        // Altrimenti aspetta il messaggio rematchStart dal server
+        // Otherwise wait for rematchStart message from server
         if (!this.opponentWantsRematch) {
             this.updateRematchUI();
         } else {
-            // Entrambi hanno cliccato, mostra "Avvio partita..."
+            // Both clicked, show "Starting game..."
             const playAgainBtn = document.getElementById('play-again');
             if (playAgainBtn) {
                 playAgainBtn.disabled = true;
-                playAgainBtn.textContent = 'Avvio partita...';
+                playAgainBtn.textContent = 'Starting game...';
             }
         }
     }
@@ -693,12 +693,12 @@ export class MultiplayerController {
             // Entrambi vogliono rigiocare - il server sta avviando il gioco
             console.log('[Multiplayer] Entrambi vogliono rematch - mostro Avvio partita...');
             playAgainBtn.disabled = true;
-            playAgainBtn.textContent = 'Avvio partita...';
+            playAgainBtn.textContent = 'Starting game...';
         } else if (this.waitingForRematch) {
             // Stiamo aspettando l'avversario
             console.log('[Multiplayer] In attesa avversario...');
             playAgainBtn.disabled = true;
-            playAgainBtn.textContent = 'In attesa avversario...';
+            playAgainBtn.textContent = 'Waiting for opponent...';
             
             if (announcement) {
                 const waitMsg = document.createElement('div');
@@ -713,7 +713,7 @@ export class MultiplayerController {
                     font-size: 14px;
                     text-align: center;
                 `;
-                waitMsg.textContent = "In attesa che l'avversario accetti il rematch...";
+                waitMsg.textContent = "Waiting for opponent to accept rematch...";
                 
                 // Rimuovi messaggio precedente se esiste
                 const oldMsg = document.getElementById('rematch-wait-msg');
@@ -740,7 +740,7 @@ export class MultiplayerController {
                     font-size: 14px;
                     text-align: center;
                 `;
-                acceptMsg.textContent = "L'avversario vuole giocare di nuovo!";
+                acceptMsg.textContent = "Opponent wants to play again!";
                 
                 // Rimuovi messaggio precedente se esiste
                 const oldMsg = document.getElementById('rematch-wait-msg');
@@ -782,13 +782,13 @@ export class MultiplayerController {
      */
     showConnectionError(code, details) {
         const errorMessages = {
-            'ROOM_NOT_FOUND': 'La stanza non esiste. Verifica il codice inserito.',
-            'ROOM_FULL': 'La stanza è già piena. Prova a crearne una nuova.',
-            'CREATE_ROOM_FAILED': 'Impossibile creare la stanza. Il server potrebbe non essere raggiungibile.',
-            'JOIN_ROOM_FAILED': 'Impossibile unirsi alla stanza. Controlla la connessione.',
-            'WEBSOCKET_ERROR': 'Errore di connessione WebSocket.',
-            'CONNECTION_CLOSED': 'La connessione è stata chiusa.',
-            'UNKNOWN': 'Si è verificato un errore imprevisto.'
+            'ROOM_NOT_FOUND': 'Room does not exist. Check the code entered.',
+            'ROOM_FULL': 'Room is already full. Try creating a new one.',
+            'CREATE_ROOM_FAILED': 'Unable to create room. Server may be unreachable.',
+            'JOIN_ROOM_FAILED': 'Unable to join room. Check your connection.',
+            'WEBSOCKET_ERROR': 'WebSocket connection error.',
+            'CONNECTION_CLOSED': 'Connection was closed.',
+            'UNKNOWN': 'An unexpected error occurred.'
         };
         
         const friendlyMessage = errorMessages[code] || errorMessages['UNKNOWN'];
@@ -806,15 +806,15 @@ export class MultiplayerController {
         banner.innerHTML = `
             <div class="mp-error-header">
                 <span class="mp-error-icon">⚠️</span>
-                <span class="mp-error-title">Errore Multiplayer</span>
+                <span class="mp-error-title">Multiplayer Error</span>
                 <button class="mp-error-close" onclick="this.parentElement.parentElement.remove()">✕</button>
             </div>
             <div class="mp-error-body">
                 <div class="mp-error-message">${friendlyMessage}</div>
                 <div class="mp-error-details">
-                    <strong>Codice:</strong> ${code}<br>
-                    <strong>URL Server:</strong> ${this.serverUrl}<br>
-                    ${errorDetail ? `<strong>Dettaglio:</strong> ${errorDetail}<br>` : ''}
+                    <strong>Code:</strong> ${code}<br>
+                    <strong>Server URL:</strong> ${this.serverUrl}<br>
+                    ${errorDetail ? `<strong>Detail:</strong> ${errorDetail}<br>` : ''}
                     <strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}
                 </div>
             </div>
@@ -896,7 +896,7 @@ export class MultiplayerController {
      */
     handleOpponentDisconnect() {
         console.log('[Multiplayer] Avversario disconnesso');
-        this.showConnectionError('OPPONENT_DISCONNECTED', 'L\'avversario ha abbandonato la partita');
+        this.showConnectionError('OPPONENT_DISCONNECTED', 'Opponent has left the game');
         setTimeout(() => {
             this.disconnect();
             this.cleanup();
@@ -912,7 +912,7 @@ export class MultiplayerController {
         
         if (this.app.currentMode === 'online') {
             console.error('[Multiplayer] Disconnessione durante partita online');
-            this.showConnectionError('CONNECTION_CLOSED', 'La connessione al server è stata interrotta');
+            this.showConnectionError('CONNECTION_CLOSED', 'Server connection was interrupted');
             setTimeout(() => {
                 this.cleanup();
                 this.app.backToMenu();

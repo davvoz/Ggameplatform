@@ -33,7 +33,7 @@ export class GameOverScreen {
     
     const subtitle = document.createElement('div');
     subtitle.className = 'skill-popup-subtitle';
-    subtitle.textContent = 'La tua base è stata distrutta!';
+    subtitle.textContent = 'Your base has been destroyed!';
     subtitle.style.fontSize = '1rem';
     subtitle.style.marginBottom = '2rem';
     
@@ -47,7 +47,7 @@ export class GameOverScreen {
     
     const restartBtn = document.createElement('button');
     restartBtn.className = 'tower-action-btn';
-    restartBtn.innerHTML = '<span>🔄</span> Rigioca';
+    restartBtn.innerHTML = '<span>🔄</span> Replay';
     restartBtn.style.width = '100%';
     restartBtn.style.justifyContent = 'center';
     restartBtn.style.padding = '1rem';
@@ -55,7 +55,7 @@ export class GameOverScreen {
     
     const menuBtn = document.createElement('button');
     menuBtn.className = 'skill-popup-close';
-    menuBtn.innerHTML = '<span>🏠</span> Menu Principale';
+    menuBtn.innerHTML = '<span>🏠</span> Main Menu';
     menuBtn.style.display = 'flex';
     menuBtn.style.alignItems = 'center';
     menuBtn.style.justifyContent = 'center';

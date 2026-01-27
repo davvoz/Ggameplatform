@@ -29,7 +29,7 @@ export class TargetingPolicy {
  */
 export class WeakestTargetPolicy extends TargetingPolicy {
   constructor() {
-    super('Weakest', 'Attacca il nemico più debole (HP minore)');
+    super('Weakest', 'Attack the weakest enemy (lowest HP)');
   }
 
   selectTarget(enemies, tower, gameWorld) {
@@ -54,7 +54,7 @@ export class WeakestTargetPolicy extends TargetingPolicy {
  */
 export class StrongestTargetPolicy extends TargetingPolicy {
   constructor() {
-    super('Strongest', 'Attacca il nemico più forte (HP maggiore)');
+    super('Strongest', 'Attack the strongest enemy (highest HP)');
   }
 
   selectTarget(enemies, tower, gameWorld) {
@@ -79,7 +79,7 @@ export class StrongestTargetPolicy extends TargetingPolicy {
  */
 export class ClosestTargetPolicy extends TargetingPolicy {
   constructor() {
-    super('Closest', 'Attacca il nemico più vicino alla torre');
+    super('Closest', 'Attack the closest enemy to the tower');
   }
 
   selectTarget(enemies, tower, gameWorld) {
@@ -112,7 +112,7 @@ export class ClosestTargetPolicy extends TargetingPolicy {
  */
 export class NearestToBasePolicy extends TargetingPolicy {
   constructor() {
-    super('Nearest to Base', 'Attacca il nemico più vicino alla base');
+    super('Nearest to Base', 'Attack the enemy closest to the base');
   }
 
   selectTarget(enemies, tower, gameWorld) {
@@ -147,7 +147,7 @@ export class NearestToBasePolicy extends TargetingPolicy {
  */
 export class FirstTargetPolicy extends TargetingPolicy {
   constructor() {
-    super('First', 'Attacca il primo nemico entrato (FIFO)');
+    super('First', 'Attack the first enemy entered (FIFO)');
   }
 
   selectTarget(enemies, tower, gameWorld) {
@@ -174,7 +174,7 @@ export class FirstTargetPolicy extends TargetingPolicy {
  */
 export class LastTargetPolicy extends TargetingPolicy {
   constructor() {
-    super('Last', 'Attacca l\'ultimo nemico entrato (LIFO)');
+    super('Last', 'Attack the last enemy entered (LIFO)');
   }
 
   selectTarget(enemies, tower, gameWorld) {

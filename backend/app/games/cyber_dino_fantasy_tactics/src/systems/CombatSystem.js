@@ -38,9 +38,9 @@ export class CombatSystem {
 
     this.eventBus.emit("log", {
       type: "damage",
-      text: `${attacker.name} colpisce ${defender.name} per ${Math.round(
+      text: `${attacker.name} hits ${defender.name} for ${Math.round(
         applied
-      )} danni${isCrit ? " (CRITICO)" : ""}.`,
+      )} damage${isCrit ? " (CRITICAL)" : ""}.`,
     });
 
     // trigger basic attack animation & floating text
@@ -54,7 +54,7 @@ export class CombatSystem {
     if (!defender.isAlive()) {
       this.eventBus.emit("log", {
         type: "system",
-        text: `${defender.name} è stato sconfitto.`,
+        text: `${defender.name} has been defeated.`,
       });
       this.eventBus.emit("character:dead", { character: defender });
     }

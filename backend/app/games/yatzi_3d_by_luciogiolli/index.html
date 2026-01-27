@@ -26,7 +26,7 @@
   <!-- Loading Screen -->
   <div id="loadingScreen">
     <div class="loading-title">🎲 YATZI 3D 🎲</div>
-    <div class="loading-subtitle">Caricamento in corso...</div>
+    <div class="loading-subtitle">Loading...</div>
     <div class="loading-spinner"></div>
   </div>
 
@@ -48,13 +48,13 @@
         </button>
       </div>
       <div class="difficulty-rules">
-        <div class="rules-title">regole del gioco</div>
+        <div class="rules-title">game rules</div>
         <div class="rules-text">
-          Lancia i dadi fino a 3 volte per turno. Clicca sui dadi per bloccarli.
-          Scegli una categoria per segnare i punti. Ogni categoria può essere usata una sola volta.
-          Completa tutte le 13 categorie per finire la partita. 
-          Totalizza 63+ punti nelle categorie superiori per ottenere 35 punti bonus.
-          Vince chi ottiene il punteggio più alto.
+          Roll the dice up to 3 times per turn. Click on dice to lock them.
+          Choose a category to score points. Each category can only be used once.
+          Complete all 13 categories to finish the game.
+          Score 63+ points in upper categories to get 35 bonus points.
+          The highest score wins.
         </div>
       </div>
     </div>
@@ -67,16 +67,16 @@
       <!-- Header Bar -->
       <div id="top-bar">
         <div id="status-box" data-tone="neutral">
-          <span id="status-line">Tuo turno: lancia i dadi</span>
+          <span id="status-line">Your turn: roll the dice</span>
         </div>
         
         <div class="info-box">
-          <span class="info-label">Mano</span>
+          <span class="info-label">Round</span>
           <span class="info-value" id="round-label">1/13</span>
         </div>
         
         <div class="info-box">
-          <span class="info-label">Lanci</span>
+          <span class="info-label">Rolls</span>
           <span class="info-value" id="roll-label">0/3</span>
         </div>
         
@@ -88,7 +88,7 @@
           </svg>
         </button>
         
-        <button id="fullscreen-btn" title="Schermo intero">
+        <button id="fullscreen-btn" title="Fullscreen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
           </svg>
@@ -106,13 +106,13 @@
             <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
             <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
           </svg>
-          Lancia
+          Roll
         </button>
         <button id="end-turn-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          Segna
+          Score
         </button>
       </div>
 
@@ -120,25 +120,25 @@
       <div id="score-wrapper">
         <!-- Player Column -->
         <div class="score-column">
-          <div class="score-header">👤 Tu</div>
+          <div class="score-header">👤 You</div>
           <div class="score-content">
-            <div class="section-header">Parte Alta</div>
+            <div class="section-header">Upper</div>
             <div id="player-score-list-upper" class="score-list"></div>
             <div class="summary-row">
-              Somma: <span id="player-upper-sum">0</span>
+              Sum: <span id="player-upper-sum">0</span>
             </div>
             <div class="summary-row">
               Bonus (≥63): <span id="player-bonus">0</span>
             </div>
 
-            <div class="section-header">Parte Bassa</div>
+            <div class="section-header">Lower</div>
             <div id="player-score-list-lower" class="score-list"></div>
             <div class="summary-row">
-              Somma: <span id="player-lower-sum">0</span>
+              Sum: <span id="player-lower-sum">0</span>
             </div>
           </div>
           <div class="total-row">
-            Totale: <span id="player-total">0</span>
+            Total: <span id="player-total">0</span>
           </div>
         </div>
 
@@ -146,23 +146,23 @@
         <div class="score-column">
           <div class="score-header">🤖 CPU</div>
           <div class="score-content">
-            <div class="section-header">Parte Alta</div>
+            <div class="section-header">Upper</div>
             <div id="ai-score-list-upper" class="score-list"></div>
             <div class="summary-row">
-              Somma: <span id="ai-upper-sum">0</span>
+              Sum: <span id="ai-upper-sum">0</span>
             </div>
             <div class="summary-row">
               Bonus (≥63): <span id="ai-bonus">0</span>
             </div>
 
-            <div class="section-header">Parte Bassa</div>
+            <div class="section-header">Lower</div>
             <div id="ai-score-list-lower" class="score-list"></div>
             <div class="summary-row">
-              Somma: <span id="ai-lower-sum">0</span>
+              Sum: <span id="ai-lower-sum">0</span>
             </div>
           </div>
           <div class="total-row">
-            Totale: <span id="ai-total">0</span>
+            Total: <span id="ai-total">0</span>
           </div>
         </div>
       </div>
@@ -174,10 +174,10 @@
     <!-- Game Over Overlay -->
     <div id="game-over-overlay">
       <div class="game-over-content">
-        <div class="game-over-title" id="game-over-title">Hai Vinto!</div>
+        <div class="game-over-title" id="game-over-title">You Won!</div>
         <div class="game-over-score" id="game-over-score">250 - 180</div>
         <div class="game-over-buttons">
-          <button class="game-over-btn primary" id="restart-btn">Nuova Partita</button>
+          <button class="game-over-btn primary" id="restart-btn">New Game</button>
         </div>
       </div>
     </div>

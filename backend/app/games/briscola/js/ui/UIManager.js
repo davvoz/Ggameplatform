@@ -276,7 +276,7 @@ export class UIManager {
         if (text) {
             indicator.textContent = text;
         } else {
-            indicator.textContent = isPlayerTurn ? 'Il tuo turno!' : 'Turno avversario...';
+            indicator.textContent = isPlayerTurn ? 'Your turn!' : 'Opponent\'s turn...';
         }
         
         indicator.classList.toggle('waiting', !isPlayerTurn);

@@ -330,7 +330,7 @@ export class UIController {
   buildControls() {
     this.controlsContainer.innerHTML = "";
 
-    const btnAttack = this.makeButton("Attacco", "btn-primary");
+    const btnAttack = this.makeButton("Attack", "btn-primary");
     btnAttack.dataset.icon = "⚔";
     btnAttack.onclick = () => {
       this.game.playerBasicAttack();
@@ -423,11 +423,11 @@ export class UIController {
       
       btnAttack.classList.toggle("btn-disabled", !canAttack);
       if (!isPlayerTurn) {
-        btnAttack.textContent = "Attacco (Attendi...)";
+        btnAttack.textContent = "Attack (Wait...)";
       } else if (!hasEnergy) {
-        btnAttack.textContent = "Attacco (No Energia)";
+        btnAttack.textContent = "Attack (No Energy)";
       } else {
-        btnAttack.textContent = "Attacco";
+        btnAttack.textContent = "Attack";
       }
     }
 
@@ -444,16 +444,16 @@ export class UIController {
       btnPass.classList.toggle("btn-highlight", noActionsAvailable && isPlayerTurn);
       
       if (noActionsAvailable && isPlayerTurn) {
-        btnPass.textContent = "⚠ Passa Turno";
+        btnPass.textContent = "⚠ End Turn";
       } else {
-        btnPass.textContent = "Passa";
+        btnPass.textContent = "Pass";
       }
     }
   }
 
   renderAll() {
-    this.renderHUDBox(this.hudPlayer, this.game.player, "Tu");
-    this.renderHUDBox(this.hudEnemy, this.game.enemy, "Nemico");
+    this.renderHUDBox(this.hudPlayer, this.game.player, "You");
+    this.renderHUDBox(this.hudEnemy, this.game.enemy, "Enemy");
     this.updateAbilityButtons();
     this.renderSprites();
   }
@@ -581,7 +581,7 @@ export class UIController {
 
     const header = document.createElement("div");
     header.className = "modal-header";
-    header.innerHTML = `<span>Build Tattica - Distribuisci 5 Punti</span>`;
+    header.innerHTML = `<span>Tactical Build - Distribute 5 Points</span>`;
 
     const content = document.createElement("div");
     content.style.display = "flex";
@@ -589,9 +589,9 @@ export class UIController {
     content.style.gap = "12px";
 
     const affinities = [
-      { key: "magic", label: "Magia (Arcane)", color: "#64d2ff", affinity: "ARCANE" },
-      { key: "tech", label: "Tecnologia (Tech)", color: "#ffd60a", affinity: "TECH" },
-      { key: "primal", label: "Spinta Vitale (Primal)", color: "#4cd964", affinity: "PRIMAL" },
+      { key: "magic", label: "Magic (Arcane)", color: "#64d2ff", affinity: "ARCANE" },
+      { key: "tech", label: "Technology (Tech)", color: "#ffd60a", affinity: "TECH" },
+      { key: "primal", label: "Life Force (Primal)", color: "#4cd964", affinity: "PRIMAL" },
     ];
 
     const MAX_POINTS = 5;
@@ -643,7 +643,7 @@ export class UIController {
       });
 
       // Update remaining points display
-      remainingDisplay.textContent = `Punti rimanenti: ${remainingPoints}`;
+      remainingDisplay.textContent = `Remaining points: ${remainingPoints}`;
       remainingDisplay.style.color = remainingPoints === 0 ? "#4cd964" : "#ff9500";
     };
 
@@ -729,18 +729,18 @@ export class UIController {
 
     const btnCancel = document.createElement("button");
     btnCancel.className = "btn";
-    btnCancel.textContent = "Chiudi";
+    btnCancel.textContent = "Close";
     btnCancel.onclick = () => {
       this.modalRoot.innerHTML = "";
     };
 
     const btnApply = document.createElement("button");
     btnApply.className = "btn btn-primary";
-    btnApply.textContent = "Applica";
+    btnApply.textContent = "Apply";
     btnApply.onclick = () => {
       const totalPoints = values.magic + values.tech + values.primal;
       if (totalPoints !== MAX_POINTS) {
-        alert(`Devi distribuire esattamente ${MAX_POINTS} punti!`);
+        alert(`You must distribute exactly ${MAX_POINTS} points!`);
         return;
       }
 
@@ -756,7 +756,7 @@ export class UIController {
       
       this.appendLog({
         type: "system",
-        text: "Nuova build applicata.",
+        text: "New build applied.",
       });
       this.modalRoot.innerHTML = "";
     };
@@ -865,7 +865,7 @@ export class UIController {
     };
 
     const affinityLabel = (focus) => {
-      if (focus === Affinity.ARCANE) return "Magico";
+      if (focus === Affinity.ARCANE) return "Magic";
       if (focus === Affinity.TECH) return "Cyber";
       if (focus === Affinity.PRIMAL) return "Bio";
       return "";
@@ -918,11 +918,11 @@ export class UIController {
         affinitySpan.style.borderColor = affinityColor(focus);
         affinitySpan.style.color = affinityColor(focus);
       } else if (item.type === ItemType.CONSUMABLE) {
-        affinitySpan.textContent = "Pozione";
+        affinitySpan.textContent = "Potion";
         affinitySpan.style.borderColor = "#4cd964";
         affinitySpan.style.color = "#4cd964";
       } else {
-        affinitySpan.textContent = "Ibrido";
+        affinitySpan.textContent = "Hybrid";
       }
 
       titleRow.appendChild(title);
@@ -941,7 +941,7 @@ export class UIController {
       } else if (item.type === ItemType.ARMOR) {
         metaLine.textContent = `ARM ${item.mitigation}`;
       } else {
-        metaLine.textContent = "Consumabile (cura immediata)";
+        metaLine.textContent = "Consumable (instant heal)";
       }
 
       info.appendChild(titleRow);
@@ -960,7 +960,7 @@ export class UIController {
       const btnBuy = document.createElement("button");
       btnBuy.className = isOwned ? "btn btn-disabled" : (canAfford ? "btn btn-primary" : "btn");
       btnBuy.style.minWidth = "70px";
-      btnBuy.textContent = isOwned ? "Posseduto" : `${price} C`;
+      btnBuy.textContent = isOwned ? "Owned" : `${price} C`;
       
       if (isOwned) {
         btnBuy.style.opacity = "0.5";
@@ -971,7 +971,7 @@ export class UIController {
         if (isOwned) {
           this.appendLog({
             type: "system",
-            text: "Hai già questo oggetto.",
+            text: "You already have this item.",
           });
           return;
         }
@@ -979,7 +979,7 @@ export class UIController {
         if ((player.credits ?? 0) < price) {
           this.appendLog({
             type: "system",
-            text: "Non hai abbastanza crediti.",
+            text: "Not enough credits.",
           });
           return;
         }
@@ -1020,7 +1020,7 @@ export class UIController {
 
         this.appendLog({
           type: "system",
-          text: `Hai comprato ${item.name}.`,
+          text: `Purchased ${item.name}.`,
         });
         
         // Update sprites to reflect new equipment
@@ -1042,7 +1042,7 @@ export class UIController {
 
     const btnClose = document.createElement("button");
     btnClose.className = "btn";
-    btnClose.textContent = "Chiudi";
+    btnClose.textContent = "Close";
     btnClose.onclick = () => {
       this.modalRoot.innerHTML = "";
     };

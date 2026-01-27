@@ -209,7 +209,7 @@ export class ProceduralGenerator {
       stats: new Stats(),
       charges: 2,
       tags: ["HEALING"],
-      description: "Rigenera HP e Scudi.",
+      description: "Regenerates HP and Shields.",
       effect: (ctx) => {
         const heal = 25 + level * 5;
         const restored = ctx.target.heal(heal);
@@ -459,9 +459,9 @@ export class ProceduralGenerator {
       const dmg = (15 + power * 1.1) * mult;
       const applied = target.applyDamage(Math.round(dmg));
       log?.(
-        `${actor.name} usa ${ability.name} su ${target.name} per ${Math.round(
+        `${actor.name} uses ${ability.name} on ${target.name} for ${Math.round(
           applied
-        )} danni.`
+        )} damage.`
       );
       return;
     }
@@ -472,7 +472,7 @@ export class ProceduralGenerator {
         actor.currentShield + amount,
         stats.maxShield + amount
       );
-      log?.(`${actor.name} genera ${Math.round(amount)} scudo.`);
+      log?.(`${actor.name} generates ${Math.round(amount)} shield.`);
       return;
     }
 
@@ -480,23 +480,23 @@ export class ProceduralGenerator {
       const heal = (12 + stats.vitality * 1.2) * mult;
       const restored = target.heal(Math.round(heal));
       log?.(
-        `${actor.name} potenzia ${target.name}: +${Math.round(
+        `${actor.name} empowers ${target.name}: +${Math.round(
           restored
-        )} salute.`
+        )} health.`
       );
       return;
     }
 
     if (category === "CONTROL") {
       log?.(
-        `${actor.name} lancia ${ability.name} su ${target.name}, indebolendolo.`
+        `${actor.name} casts ${ability.name} on ${target.name}, weakening them.`
       );
       return;
     }
 
     if (category === "SUMMON") {
       log?.(
-        `${actor.name} evoca un alleato temporaneo (${ability.name}).`
+        `${actor.name} summons a temporary ally (${ability.name}).`
       );
       return;
     }
@@ -522,9 +522,9 @@ export class ProceduralGenerator {
       const dmg = (15 + totalPower * 1.2) * mult;
       const applied = target.applyDamage(Math.round(dmg));
       log?.(
-        `${actor.name} usa ${ability.name} su ${target.name} per ${Math.round(
+        `${actor.name} uses ${ability.name} on ${target.name} for ${Math.round(
           applied
-        )} danni ibridi.`
+        )} hybrid damage.`
       );
       return;
     }
@@ -547,7 +547,7 @@ export class ProceduralGenerator {
         actor.heal(totalHeal);
       }
       
-      log?.(`${actor.name} genera ${totalShield} scudo e rigenera ${totalHeal} HP.`);
+      log?.(`${actor.name} generates ${totalShield} shield and regenerates ${totalHeal} HP.`);
       return;
     }
 
@@ -563,14 +563,14 @@ export class ProceduralGenerator {
       );
       
       log?.(
-        `${actor.name} potenzia ${target.name}: +${Math.round(restored)} HP e +${energyBoost} energia.`
+        `${actor.name} empowers ${target.name}: +${Math.round(restored)} HP and +${energyBoost} energy.`
       );
       return;
     }
 
     if (category === "CONTROL") {
       log?.(
-        `${actor.name} lancia ${ability.name} su ${target.name}, indebolendolo con potere ibrido.`
+        `${actor.name} casts ${ability.name} on ${target.name}, weakening them with hybrid power.`
       );
       return;
     }

@@ -218,14 +218,14 @@ export class UIManager {
 
   _getBetDisplayName(type) {
     const names = {
-      'exact_total': 'Totale Esatto',
-      'low_range': 'Totale Basso',
+      'exact_total': 'Exact Total',
+      'low_range': 'Low Total',
       'seven': 'Lucky Seven',
-      'high_range': 'Totale Alto',
-      'even': 'Pari',
-      'odd': 'Dispari',
-      'double': 'Doppio',
-      'sequence': 'Sequenza',
+      'high_range': 'High Total',
+      'even': 'Even',
+      'odd': 'Odd',
+      'double': 'Double',
+      'sequence': 'Sequence',
       'snake_eyes': 'Snake Eyes',
       'boxcars': 'Boxcars'
     };
@@ -234,7 +234,7 @@ export class UIManager {
 
   resetResult() {
     this.elements.resultSum.textContent = '—';
-    this.elements.resultDetail.textContent = 'Scegli Sopra o Sotto e lancia.';
+    this.elements.resultDetail.textContent = 'Choose Over or Under and roll.';
   }
 
   setControlsEnabled(enabled) {

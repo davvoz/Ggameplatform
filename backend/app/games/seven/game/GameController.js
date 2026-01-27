@@ -287,7 +287,7 @@ export class GameController {
     this._state._roundBudget = 0;
     
     this._ui.setNotice(
-      `Cash out completato! ${budgetRemaining} coins aggiunti al tuo saldo.`,
+      `Cash out completed! ${budgetRemaining} coins added to your balance.`,
       NOTIFICATION_TONE.OK
     );
     this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
@@ -302,7 +302,7 @@ export class GameController {
 
     this._state.reset();
     this._ui.resetResult();
-    this._ui.setNotice('Partita resettata.', NOTIFICATION_TONE.NEUTRAL);
+    this._ui.setNotice('Game reset.', NOTIFICATION_TONE.NEUTRAL);
     this._ui.updateHUD(this._state.rounds, this._state.bank, this._state.score);
 
     await this._platform.resetSession();

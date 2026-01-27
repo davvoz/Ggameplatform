@@ -139,7 +139,7 @@ function setDifficulty(newDifficulty, options = {}) {
 
   if (announce) {
     showToast(`AI: ${getDifficultyLabel(normalized)}`);
-    statusLine.textContent = `CPU ${getDifficultyLabel(normalized)} pronta a giocare`;
+    statusLine.textContent = `CPU ${getDifficultyLabel(normalized)} ready to play`;
   }
 
   if (startGame && !gameStarted) {
@@ -381,10 +381,10 @@ function updateUI() {
 
   if (isPlayerTurn()) {
     statusLine.textContent =
-      gameState.rollsUsed === 0 ? "Tuo turno: lancia i dadi" : "Tuo turno";
+      gameState.rollsUsed === 0 ? "Your turn: roll the dice" : "Your turn";
     statusBox.dataset.tone = "neutral";
   } else {
-    statusLine.textContent = "Turno CPU...";
+    statusLine.textContent = "CPU turn...";
     statusBox.dataset.tone = "warn";
   }
 
@@ -433,10 +433,10 @@ function handleCategoryClick(e) {
   row.classList.add("selected");
   gameState.selectedCategory = cat;
 
-  // Mostra il punteggio della categoria selezionata con i dadi attuali
+  // Show the score of the selected category with current dice
   const dice = diceMgr.values.slice();
   const s = scoreCategory(cat, dice);
-  showToast(`${cat}: ${s} punti`);
+  showToast(`${cat}: ${s} pts`);
 }
 
 function commitScore(playerId, category, diceValues) {
@@ -503,7 +503,7 @@ function nextTurn() {
 
 function handleEndTurn() {
   if (!gameState || !isPlayerTurn() || gameState.rollsUsed === 0 || !gameState.selectedCategory) {
-    showToast("Scegli una categoria");
+    showToast("Choose a category");
     return;
   }
   const cat = gameState.selectedCategory;
@@ -547,7 +547,7 @@ async function aiTurnStart() {
   for (let r = 0; r < 3; r++) {
     if (gameState.gameOver || isPlayerTurn()) return;
 
-    statusLine.textContent = `Turno CPU ${getDifficultyLabel(aiDifficulty)}... lancio ${r + 1}`;
+    statusLine.textContent = `CPU turn ${getDifficultyLabel(aiDifficulty)}... roll ${r + 1}`;
 
     const unheld = diceMgr.getUnheldIndices();
     // If everything is already held and it's not the very first roll, stop early
@@ -598,7 +598,7 @@ async function aiTurnStart() {
     aiDifficulty
   );
   commitScore("ai", category, diceMgr.values.slice());
-  statusLine.textContent = `CPU segna su ${category} (+${score})`;
+  statusLine.textContent = `CPU scores on ${category} (+${score})`;
   showToast(`🤖 CPU: ${category} +${score}`, 1200);
   updateUI();
   await waitMs(1000);
@@ -822,20 +822,20 @@ function animateCamera(target) {
 function showGameOver(playerScore, aiScore) {
   // Update title and class
   if (playerScore > aiScore) {
-    gameOverTitle.textContent = "🎉 Hai Vinto!";
+    gameOverTitle.textContent = "🎉 You Won!";
     gameOverTitle.className = "game-over-title win";
     statusBox.dataset.tone = "ok";
-    statusLine.textContent = "Congratulazioni!";
+    statusLine.textContent = "Congratulations!";
   } else if (aiScore > playerScore) {
-    gameOverTitle.textContent = "💔 Hai Perso";
+    gameOverTitle.textContent = "💔 You Lost";
     gameOverTitle.className = "game-over-title lose";
     statusBox.dataset.tone = "bad";
-    statusLine.textContent = "Ritenta!";
+    statusLine.textContent = "Try again!";
   } else {
-    gameOverTitle.textContent = "🤝 Pareggio";
+    gameOverTitle.textContent = "🤝 Draw";
     gameOverTitle.className = "game-over-title tie";
     statusBox.dataset.tone = "warn";
-    statusLine.textContent = "Bella partita!";
+    statusLine.textContent = "Good game!";
   }
   
   // Update score display
@@ -865,7 +865,7 @@ function handleRestart() {
   if (difficultyPanel) {
     difficultyPanel.classList.remove("hidden");
   }
-  statusLine.textContent = "Scegli la difficoltà";
+  statusLine.textContent = "Choose difficulty";
   rollBtn.disabled = true;
   endTurnBtn.disabled = true;
 }

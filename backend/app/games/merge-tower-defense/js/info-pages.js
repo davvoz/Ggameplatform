@@ -615,20 +615,20 @@ export class InfoPagesManager {
      */
     getEnemySpecialDescription(key, enemy) {
         const descriptions = {
-            NORMAL: 'Nemico base senza abilità speciali.',
-            TANK: 'Alta resistenza, lento ma difficile da abbattere.',
-            RUSHER: `Molto veloce! ${enemy.dodgeChance * 100}% di schivare i proiettili.`,
-            FLYER: 'Vola sopra gli ostacoli, ignora il terreno.',
-            SPLITTER: `Alla morte si divide in ${enemy.splitCount} nemici più piccoli!`,
-            ARMORED: `Armatura: riduce ogni danno di ${enemy.armor} punti.`,
-            BOSS: `Boss! Armatura ${enemy.armor}, molto resistente.`,
-            HEALER: `Cura ${enemy.healAmount} HP ogni ${enemy.healInterval/1000}s ai nemici vicini.`,
-            PHASER: `Ogni ${enemy.phaseInterval/1000}s si teletrasporta di ${enemy.phaseDistance} celle!`,
-            VAMPIRE: `Ruba ${enemy.lifesteal * 100}% del danno come HP.`,
-            BOMBER: `Esplode alla morte! Stordisce torri per ${enemy.stunDuration/1000}s.`,
-            SHADOW: `Invisibile per ${enemy.invisDuration/1000}s ogni ${enemy.invisCooldown/1000}s.`,
-            SIREN: `Disabilita le torri vicine per ${enemy.disableDuration/1000}s.`,
-            GOLEM: `Calpestando stordisce le torri per ${enemy.stompStunDuration/1000}s.`
+            NORMAL: 'Basic enemy with no special abilities.',
+            TANK: 'High resistance, slow but hard to take down.',
+            RUSHER: `Very fast! ${enemy.dodgeChance * 100}% chance to dodge projectiles.`,
+            FLYER: 'Flies over obstacles, ignores terrain.',
+            SPLITTER: `On death splits into ${enemy.splitCount} smaller enemies!`,
+            ARMORED: `Armor: reduces all damage by ${enemy.armor} points.`,
+            BOSS: `Boss! Armor ${enemy.armor}, very resistant.`,
+            HEALER: `Heals ${enemy.healAmount} HP every ${enemy.healInterval/1000}s to nearby enemies.`,
+            PHASER: `Every ${enemy.phaseInterval/1000}s teleports ${enemy.phaseDistance} cells!`,
+            VAMPIRE: `Steals ${enemy.lifesteal * 100}% of damage as HP.`,
+            BOMBER: `Explodes on death! Stuns towers for ${enemy.stunDuration/1000}s.`,
+            SHADOW: `Invisible for ${enemy.invisDuration/1000}s every ${enemy.invisCooldown/1000}s.`,
+            SIREN: `Disables nearby towers for ${enemy.disableDuration/1000}s.`,
+            GOLEM: `Stomping stuns towers for ${enemy.stompStunDuration/1000}s.`
         };
         return descriptions[key] || '';
     }

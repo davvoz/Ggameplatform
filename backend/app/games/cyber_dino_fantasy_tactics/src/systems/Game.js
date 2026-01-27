@@ -212,7 +212,7 @@ export class Game {
     ];
 
     const enemy = new Character({
-      name: "Nemico Ibrido",
+      name: "Hybrid Enemy",
       level: lvl,
       baseStats,
       affinities: {
@@ -333,15 +333,15 @@ export class Game {
     
     this.eventBus.emit("log", {
       type: "levelup",
-      text: `🎉 LEVEL UP! Livello ${newLevel} raggiunto!`,
+      text: `🎉 LEVEL UP! Level ${newLevel} reached!`,
     });
 
     // Log stat increases
     const statTexts = [];
-    if (statIncreases.maxHealth) statTexts.push(`Salute +${Math.floor(statIncreases.maxHealth)}`);
+    if (statIncreases.maxHealth) statTexts.push(`Health +${Math.floor(statIncreases.maxHealth)}`);
     if (statIncreases.maxMana) statTexts.push(`Mana +${Math.floor(statIncreases.maxMana)}`);
-    if (statIncreases.attackPower) statTexts.push(`Attacco +${Math.floor(statIncreases.attackPower)}`);
-    if (statIncreases.magicPower) statTexts.push(`Magia +${Math.floor(statIncreases.magicPower)}`);
+    if (statIncreases.attackPower) statTexts.push(`Attack +${Math.floor(statIncreases.attackPower)}`);
+    if (statIncreases.magicPower) statTexts.push(`Magic +${Math.floor(statIncreases.magicPower)}`);
     if (statIncreases.techPower) statTexts.push(`Tech +${Math.floor(statIncreases.techPower)}`);
     
     if (statTexts.length > 0) {

@@ -77,8 +77,8 @@ export class TutorialManager {
             // Step 1: Welcome
             new TutorialStep({
                 id: 'welcome',
-                title: '🏰 Benvenuto in Merge Tower Defense!',
-                description: 'Difendi la tua base dalle ondate di nemici costruendo e potenziando le torrette!',
+                title: '🏰 Welcome to Merge Tower Defense!',
+                description: 'Defend your base from waves of enemies by building and upgrading turrets!',
                 position: 'center',
                 icon: '👋',
                 autoAdvanceDelay: null
@@ -87,8 +87,8 @@ export class TutorialManager {
             // Step 2: Explain the grid
             new TutorialStep({
                 id: 'grid_intro',
-                title: '🎮 Il Campo di Battaglia',
-                description: 'I nemici arrivano dall\'alto. La zona verde in basso è dove puoi piazzare le torrette.',
+                title: '🎮 The Battlefield',
+                description: 'Enemies come from above. The green zone at the bottom is where you can place turrets.',
                 highlightArea: 'defense_zone',
                 arrowDirection: 'down',
                 position: 'top',
@@ -98,8 +98,8 @@ export class TutorialManager {
             // Step 3: Show the shop
             new TutorialStep({
                 id: 'shop_intro',
-                title: '🛒 Negozio Torrette',
-                description: 'In basso trovi i diversi tipi di torrette. Ogni tipo ha caratteristiche uniche!',
+                title: '🛒 Turret Shop',
+                description: 'At the bottom you find different turret types. Each type has unique characteristics!',
                 highlightArea: 'shop',
                 arrowDirection: 'down',
                 position: 'bottom',
@@ -109,8 +109,8 @@ export class TutorialManager {
             // Step 4: Place first tower
             new TutorialStep({
                 id: 'place_tower',
-                title: '🔫 Piazza la Prima Torretta',
-                description: 'La torretta Basic è già selezionata. Tocca una cella verde per piazzarla!',
+                title: '🔫 Place Your First Turret',
+                description: 'The Basic turret is already selected. Tap a green cell to place it!',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_tower',
                 position: 'center',
@@ -129,8 +129,8 @@ export class TutorialManager {
             // Step 5: Move tower by dragging
             new TutorialStep({
                 id: 'move_tower',
-                title: '↔️ Sposta la Torretta',
-                description: 'Ora prova a spostare la torretta! Tieni premuto sulla torretta e trascinala in un\'altra cella vuota.',
+                title: '↔️ Move the Turret',
+                description: 'Now try moving the turret! Hold on the turret and drag it to another empty cell.',
                 highlightArea: 'defense_zone',
                 waitForAction: 'move_tower',
                 position: 'center',
@@ -143,8 +143,8 @@ export class TutorialManager {
             // Step 6: Place more towers
             new TutorialStep({
                 id: 'place_more',
-                title: '🔫 Piazza Altre Torrette',
-                description: 'Piazza altre 2 torrette BASIC per poterle fondere! (Usa solo torrette Basic)',
+                title: '🔫 Place More Turrets',
+                description: 'Place 2 more BASIC turrets so you can merge them! (Use only Basic turrets)',
                 highlightAreas: ['defense_zone', 'shop'], // Multiple areas
                 waitForAction: 'place_multiple',
                 position: 'center',
@@ -171,8 +171,8 @@ export class TutorialManager {
             // Step 7: Explain merge system
             new TutorialStep({
                 id: 'merge_intro',
-                title: '🔄 Sistema di Fusione',
-                description: 'Tocca 3 torrette IDENTICHE (stesso tipo e livello) per fonderle in una più potente!',
+                title: '🔄 Merge System',
+                description: 'Tap 3 IDENTICAL turrets (same type and level) to merge them into a more powerful one!',
                 position: 'center',
                 icon: '⬆️'
             }),
@@ -180,8 +180,8 @@ export class TutorialManager {
             // Step 7: Perform merge
             new TutorialStep({
                 id: 'perform_merge',
-                title: '🔄 Fondi le Torrette!',
-                description: 'Seleziona 3 torrette dello stesso tipo toccandole una alla volta.',
+                title: '🔄 Merge the Turrets!',
+                description: 'Select 3 turrets of the same type by tapping them one at a time.',
                 highlightArea: 'defense_zone',
                 waitForAction: 'merge',
                 position: 'top',
@@ -194,8 +194,8 @@ export class TutorialManager {
             // Step 8: Explain energy
             new TutorialStep({
                 id: 'energy_intro',
-                title: '⚡ Energia e Muro',
-                description: 'Il muro di mattoni rappresenta la tua energia. Se i nemici lo raggiungono, perdi energia!',
+                title: '⚡ Energy and Wall',
+                description: 'The brick wall represents your energy. If enemies reach it, you lose energy!',
                 highlightArea: 'wall',
                 arrowDirection: 'up',
                 position: 'center',
@@ -205,8 +205,8 @@ export class TutorialManager {
             // Step 9: Explain coins
             new TutorialStep({
                 id: 'coins_intro',
-                title: '💰 Monete',
-                description: 'Guadagni monete eliminando nemici. Usale per comprare nuove torrette!',
+                title: '💰 Coins',
+                description: 'Earn coins by eliminating enemies. Use them to buy new turrets!',
                 highlightArea: 'topbar',
                 position: 'top',
                 icon: '🪙'
@@ -215,8 +215,8 @@ export class TutorialManager {
             // Step 10: Explain sidebar abilities
             new TutorialStep({
                 id: 'abilities_intro',
-                title: '💥 Abilità Speciali',
-                description: 'In alto a sinistra trovi le abilità: Bomba esplode i nemici, Respingi li spinge indietro , lo stun li immobilizza!',
+                title: '💥 Special Abilities',
+                description: 'Top left you find abilities: Bomb explodes enemies, Push knocks them back, Stun freezes them!',
                 highlightArea: 'sidebar_abilities',
                 position: 'center',
                 icon: '🎯'
@@ -225,8 +225,8 @@ export class TutorialManager {
             // Step 11: Explain shop items in sidebar
             new TutorialStep({
                 id: 'shop_items_intro',
-                title: '🛍️ Oggetti Acquistabili',
-                description: 'Sotto le abilità trovi oggetti speciali: Energia, Potenziamenti per danni, velocità e raggio!I boost durano N secondi e potenziano TUTTE le torrette. Usali nelle ondate difficili!',
+                title: '🛍️ Purchasable Items',
+                description: 'Below abilities you find special items: Energy, Damage/Speed/Range boosts! Boosts last N seconds and power up ALL turrets. Use them in tough waves!',
                 highlightArea: 'sidebar_shop',
                 position: 'center',
                 icon: '✨'
@@ -236,7 +236,7 @@ export class TutorialManager {
             new TutorialStep({
                 id: 'open_mtdpedia',
                 title: '📖 MTD-Pedia',
-                description: 'Tocca il pulsante 📖 in alto a destra per aprire la MTD-Pedia. Troverai info su nemici, torrette, abilità e oggetti!',
+                description: 'Tap the 📖 button at top right to open the MTD-Pedia. You\'ll find info on enemies, turrets, abilities and items!',
                 highlightArea: 'info_button',
                 arrowDirection: 'right',
                 waitForAction: 'open_mtdpedia',
@@ -250,8 +250,8 @@ export class TutorialManager {
             // Step 13: Ready to play
             new TutorialStep({
                 id: 'ready',
-                title: '⚔️ Sei Pronto!',
-                description: 'Le ondate inizieranno automaticamente. Buona fortuna, comandante!',
+                title: '⚔️ You\'re Ready!',
+                description: 'Waves will start automatically. Good luck, commander!',
                 position: 'center',
                 icon: '🚀'
             })
@@ -1162,12 +1162,12 @@ export class TutorialManager {
             ctx.font = 'italic 11px Arial';
             ctx.fillStyle = '#ffaa00';
             ctx.textAlign = 'center';
-            ctx.fillText('👆 Esegui l\'azione per continuare', dialogX + dialogWidth / 2, dialogY + dialogHeight - 12);
+            ctx.fillText('👆 Perform the action to continue', dialogX + dialogWidth / 2, dialogY + dialogHeight - 12);
         } else {
             ctx.font = '11px Arial';
             ctx.fillStyle = '#888888';
             ctx.textAlign = 'center';
-            ctx.fillText('Tocca per continuare →', dialogX + dialogWidth / 2, dialogY + dialogHeight - 12);
+            ctx.fillText('Tap to continue →', dialogX + dialogWidth / 2, dialogY + dialogHeight - 12);
         }
         
         ctx.restore();
@@ -1197,7 +1197,7 @@ export class TutorialManager {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ff6666';
-        ctx.fillText('Salta ⏭️', skipBtn.x + skipBtn.width / 2, skipBtn.y + skipBtn.height / 2);
+        ctx.fillText('Skip ⏭️', skipBtn.x + skipBtn.width / 2, skipBtn.y + skipBtn.height / 2);
         
         ctx.restore();
     }
@@ -1395,7 +1395,7 @@ export class TutorialPrompt {
         // Question
         ctx.font = '14px Arial';
         ctx.fillStyle = '#cccccc';
-        ctx.fillText('Vuoi vedere il tutorial?', dialogX + dialogWidth / 2, dialogY + 125);
+        ctx.fillText('Want to see the tutorial?', dialogX + dialogWidth / 2, dialogY + 125);
         
         // Buttons
         const yesBtn = this.getYesButtonBounds(width, height);
@@ -1417,7 +1417,7 @@ export class TutorialPrompt {
         
         ctx.font = 'bold 16px Arial';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Sì! 👍', yesBtn.x + yesBtn.width / 2, yesBtn.y + yesBtn.height / 2);
+        ctx.fillText('Yes! 👍', yesBtn.x + yesBtn.width / 2, yesBtn.y + yesBtn.height / 2);
         
         // No button
         ctx.fillStyle = 'rgba(80, 80, 100, 0.8)';
@@ -1431,7 +1431,7 @@ export class TutorialPrompt {
         
         ctx.font = 'bold 16px Arial';
         ctx.fillStyle = '#aaaaaa';
-        ctx.fillText('No, gioca! 🎮', noBtn.x + noBtn.width / 2, noBtn.y + noBtn.height / 2);
+        ctx.fillText('No, play! 🎮', noBtn.x + noBtn.width / 2, noBtn.y + noBtn.height / 2);
         
         ctx.restore();
     }

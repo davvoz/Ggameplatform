@@ -1,8 +1,17 @@
 {
-  "version": "3.17.6",
-  "timestamp": "2026-01-26T23:20:39.166Z",
-  "buildNumber": 325,
+  "version": "3.17.7",
+  "timestamp": "2026-01-27T00:01:31.937Z",
+  "buildNumber": 326,
   "changelog": [
+    {
+      "version": "3.17.7",
+      "date": "2026-01-27",
+      "type": "patch",
+      "changes": [
+        "fix: BR Implement in-game tutorial overlay and enhance particle effects for water splash and bubbles",
+        "🔖 Bump version to 3.17.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.6",
       "date": "2026-01-26",
@@ -84,16 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[MTD] migliori animazioni e bottoni",
         "🔖 Bump version to 3.16.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.9",
-      "date": "2026-01-24",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[MTD]refactor: enhance button rendering with gradient backgrounds and improved visuals",
-        "🔖 Bump version to 3.16.8 [skip-version]"
       ]
     }
   ]

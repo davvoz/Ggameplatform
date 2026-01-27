@@ -1,8 +1,17 @@
 {
-  "version": "3.17.8",
-  "timestamp": "2026-01-27T00:24:03.974Z",
-  "buildNumber": 327,
+  "version": "3.17.9",
+  "timestamp": "2026-01-27T00:34:48.376Z",
+  "buildNumber": 328,
   "changelog": [
+    {
+      "version": "3.17.9",
+      "date": "2026-01-27",
+      "type": "patch",
+      "changes": [
+        "fix: Translate game text from Italian to English for improved accessibility",
+        "🔖 Bump version to 3.17.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.8",
       "date": "2026-01-27",
@@ -83,15 +92,6 @@
       "changes": [
         "feat:[MTD] implement wave mode selection with difficulty options and victory handling",
         "🔖 Bump version to 3.16.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.16.11",
-      "date": "2026-01-24",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]add tower info panel with sell and select options",
-        "🔖 Bump version to 3.16.10 [skip-version]"
       ]
     }
   ]

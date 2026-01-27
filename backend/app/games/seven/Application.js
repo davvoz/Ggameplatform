@@ -91,12 +91,12 @@ export class Application {
       
       if (balance > 0) {
         this._gameController._ui.setNotice(
-          `Hai ${balance} coins disponibili.`,
+          `You have ${balance} coins available.`,
           NOTIFICATION_TONE.OK
         );
       } else {
         this._gameController._ui.setNotice(
-          'Balance: 0 coins. Vinci per guadagnare!',
+          'Balance: 0 coins. Win to earn more!',
           NOTIFICATION_TONE.NEUTRAL
         );
       }
@@ -149,7 +149,7 @@ export class Application {
     if (!platformAdapter.isAvailable()) {
       console.log('[Seven] Platform not available - running in standalone mode');
       this._gameController._ui.setNotice(
-        'Modalità offline: usa coins locali.',
+        'Offline mode: using local coins.',
         NOTIFICATION_TONE.NEUTRAL
       );
       return;
@@ -186,7 +186,7 @@ export class Application {
       gameState.enablePlatformCoins(false);
       gameState.setPlatformBalance(GAME_CONSTANTS.INITIAL_BANK);
       this._gameController._ui.setNotice(
-        'Modalità offline: usa coins locali.',
+        'Offline mode: using local coins.',
         NOTIFICATION_TONE.NEUTRAL
       );
     }

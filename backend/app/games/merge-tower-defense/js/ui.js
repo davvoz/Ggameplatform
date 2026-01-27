@@ -3733,7 +3733,7 @@ export class UIManager {
             
             // Continue hint (if waiting for tap)
             if (currentStep.waitForAction === 'tap') {
-                const hintText = '[ Tocca per continuare ]';
+                const hintText = '[ Tap to continue ]';
                 const hintY = dialogY + dialogHeight - skipButtonHeight - 20;
                 
                 // Blinking effect

@@ -31,24 +31,24 @@ export class GameLogic {
   static createResultMessage(sum, bet, outcomeKind) {
     if (outcomeKind === OUTCOME_KIND.WIN) {
       const betName = bet === BET_TYPE.UNDER ? '(< 7)' : '(> 7)';
-      return `Hai vinto: ${sum} ${betName}.`;
+      return `You won: ${sum} ${betName}.`;
     }
 
     if (outcomeKind === OUTCOME_KIND.SEVEN) {
-      return 'È uscito 7: perde sempre.';
+      return "It's 7: always loses.";
     }
 
-    const betName = bet === BET_TYPE.UNDER ? 'Sotto' : 'Sopra';
-    return `Hai perso: ${sum} non è ${betName} 7.`;
+    const betName = bet === BET_TYPE.UNDER ? 'Under' : 'Over';
+    return `You lost: ${sum} is not ${betName} 7.`;
   }
 
   static createBetHint(bet) {
     return bet === BET_TYPE.UNDER
-      ? 'Hai scelto Sotto: vinci se la somma è < 7.'
-      : 'Hai scelto Sopra: vinci se la somma è > 7.';
+      ? 'You chose Under: win if the sum is < 7.'
+      : 'You chose Over: win if the sum is > 7.';
   }
 
   static createBetLabel(bet) {
-    return bet === BET_TYPE.UNDER ? 'Sotto 7' : 'Sopra 7';
+    return bet === BET_TYPE.UNDER ? 'Under 7' : 'Over 7';
   }
 }

@@ -45,10 +45,10 @@ export class InfoPagesManager {
         
         // Tab configuration
         this.tabs = [
-            { id: 'enemies', label: '👹 Nemici', icon: '👹' },
-            { id: 'towers', label: '🗼 Torrette', icon: '🗼' },
-            { id: 'abilities', label: '💥 Abilità', icon: '💥' },
-            { id: 'items', label: '🛍️ Oggetti', icon: '🛍️' }
+            { id: 'enemies', label: '👹 Enemies', icon: '👹' },
+            { id: 'towers', label: '🗼 Turrets', icon: '🗼' },
+            { id: 'abilities', label: '💥 Abilities', icon: '💥' },
+            { id: 'items', label: '🛍️ Items', icon: '🛍️' }
         ];
         
         // Setup wheel scroll listener
@@ -984,19 +984,19 @@ export class InfoPagesManager {
         let effectText = '';
         switch (item.effect.type) {
             case 'energy':
-                effectText = `Ripristina ${item.effect.amount} energia`;
+                effectText = `Restores ${item.effect.amount} energy`;
                 break;
             case 'range_multiplier':
-                effectText = `Moltiplica il raggio di tutte le torri x${item.effect.multiplier}`;
+                effectText = `Multiplies range of all turrets x${item.effect.multiplier}`;
                 break;
             case 'firerate_multiplier':
-                effectText = `Moltiplica la cadenza di tutte le torri x${item.effect.multiplier}`;
+                effectText = `Multiplies fire rate of all turrets x${item.effect.multiplier}`;
                 break;
             case 'damage_multiplier':
-                effectText = `Moltiplica il danno di tutte le torri x${item.effect.multiplier}`;
+                effectText = `Multiplies damage of all turrets x${item.effect.multiplier}`;
                 break;
             case 'tower_upgrade':
-                effectText = `Potenzia una torretta selezionata di 1 livello`;
+                effectText = `Upgrades a selected turret by 1 level`;
                 break;
         }
         ctx.fillText(effectText, textX, y + 76);

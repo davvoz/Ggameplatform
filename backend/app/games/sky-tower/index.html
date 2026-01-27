@@ -2152,18 +2152,28 @@
             
             if (currentBlock.direction === 'x') {
                 currentBlock.mesh.position.x += movingSpeed * frameDelta;
-                currentBlock.position.x = currentBlock.mesh.position.x;
                 
-                if (currentBlock.mesh.position.x > CONFIG.moveRange || currentBlock.mesh.position.x < -CONFIG.moveRange) {
-                    movingSpeed *= -1;
+                // Clamp position and reverse direction at boundaries
+                if (currentBlock.mesh.position.x > CONFIG.moveRange) {
+                    currentBlock.mesh.position.x = CONFIG.moveRange;
+                    movingSpeed = -Math.abs(movingSpeed);
+                } else if (currentBlock.mesh.position.x < -CONFIG.moveRange) {
+                    currentBlock.mesh.position.x = -CONFIG.moveRange;
+                    movingSpeed = Math.abs(movingSpeed);
                 }
+                currentBlock.position.x = currentBlock.mesh.position.x;
             } else {
                 currentBlock.mesh.position.z += movingSpeed * frameDelta;
-                currentBlock.position.z = currentBlock.mesh.position.z;
                 
-                if (currentBlock.mesh.position.z > CONFIG.moveRange || currentBlock.mesh.position.z < -CONFIG.moveRange) {
-                    movingSpeed *= -1;
+                // Clamp position and reverse direction at boundaries
+                if (currentBlock.mesh.position.z > CONFIG.moveRange) {
+                    currentBlock.mesh.position.z = CONFIG.moveRange;
+                    movingSpeed = -Math.abs(movingSpeed);
+                } else if (currentBlock.mesh.position.z < -CONFIG.moveRange) {
+                    currentBlock.mesh.position.z = -CONFIG.moveRange;
+                    movingSpeed = Math.abs(movingSpeed);
                 }
+                currentBlock.position.z = currentBlock.mesh.position.z;
             }
         }
 

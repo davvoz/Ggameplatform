@@ -1,8 +1,17 @@
 {
-  "version": "3.17.17",
-  "timestamp": "2026-01-30T22:58:08.256Z",
-  "buildNumber": 336,
+  "version": "3.17.18",
+  "timestamp": "2026-01-30T23:04:51.601Z",
+  "buildNumber": 337,
   "changelog": [
+    {
+      "version": "3.17.18",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "fix: Update comment for desktop mode modals to clarify dynamic positioning",
+        "🔖 Bump version to 3.17.17 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.17",
       "date": "2026-01-30",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Translate game text from Italian to English for improved accessibility",
         "🔖 Bump version to 3.17.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.8",
-      "date": "2026-01-27",
-      "type": "patch",
-      "changes": [
-        "Translate game text from Italian to English across multiple files, enhancing accessibility for English-speaking players. Update UI elements, notifications, and gameplay instructions to reflect the new language. Ensure consistency in terminology and improve clarity in user interactions.",
-        "🔖 Bump version to 3.17.7 [skip-version]"
       ]
     }
   ]

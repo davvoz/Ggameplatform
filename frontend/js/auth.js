@@ -1,6 +1,7 @@
 // Authentication Manager
 const AuthManager = {
     currentUser: null,
+    platformEpoch: null,
 
     // Get API base URL from window.ENV (set by env.js)
     get apiBase() {
@@ -8,12 +9,26 @@ const AuthManager = {
         return `${apiUrl}/users`;
     },
 
-    init() {
+    // Get Platform API base URL
+    get platformApiBase() {
+        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        return `${apiUrl}/api/platform`;
+    },
+
+    async init() {
         // Pulisci eventuali banner residui da vecchie sessioni
         document.querySelectorAll('.auth-banner').forEach(el => el.remove());
         document.body.classList.remove('has-auth-banner');
 
         this.loadUserFromStorage();
+        
+        // Verifica platform epoch prima di continuare
+        const epochValid = await this.checkPlatformEpoch();
+        if (!epochValid) {
+            // L'utente è stato sloggato perché la piattaforma è stata resettata
+            return;
+        }
+        
         this.attachEventListeners();
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
@@ -22,6 +37,50 @@ const AuthManager = {
         setTimeout(() => {
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
         }, 100);
+    },
+
+    /**
+     * Verifica il platform epoch e fa logout se la piattaforma è stata resettata
+     * @returns {Promise<boolean>} true se l'epoch è valido, false se l'utente deve fare login
+     */
+    async checkPlatformEpoch() {
+        try {
+            const response = await fetch(`${this.platformApiBase}/info`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                const serverEpoch = data.platform_epoch;
+                const storedEpoch = localStorage.getItem('platformEpoch');
+                
+                // Se abbiamo un epoch salvato e un utente loggato, verifica
+                if (storedEpoch && serverEpoch && storedEpoch !== serverEpoch && this.currentUser) {
+                    console.log('🔄 Platform has been reset. Logging out user...');
+                    
+                    // Logout l'utente
+                    this.currentUser = null;
+                    localStorage.removeItem('gameplatform_user');
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('authMethod');
+                    
+                    // Salva il nuovo epoch
+                    localStorage.setItem('platformEpoch', serverEpoch);
+                    this.platformEpoch = serverEpoch;
+                    
+                    // Se non siamo sulla pagina auth, redirect
+                    if (!window.location.pathname.includes('auth.html')) {
+                        window.location.href = '/auth.html?reason=platform_reset';
+                        return false;
+                    }
+                }
+                
+                // Aggiorna l'epoch salvato
+                localStorage.setItem('platformEpoch', serverEpoch);
+                this.platformEpoch = serverEpoch;
+            }
+        } catch (e) {
+            console.warn('Failed to check platform epoch:', e);
+        }
+        return true;
     },
 
     attachEventListeners() {
@@ -240,7 +299,11 @@ const AuthManager = {
         // Usa la stessa chiave usata da authManager.js per compatibilità
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
-
+        
+        // Salva anche il platform epoch corrente per verifiche future
+        if (this.platformEpoch) {
+            localStorage.setItem('platformEpoch', this.platformEpoch);
+        }
 
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
@@ -249,6 +312,9 @@ const AuthManager = {
     },
 
     loadUserFromStorage() {
+        // Carica platform epoch salvato
+        this.platformEpoch = localStorage.getItem('platformEpoch');
+        
         // Prova prima con 'gameplatform_user', poi con 'currentUser' per compatibilità
         let stored = localStorage.getItem('gameplatform_user');
         if (!stored) {

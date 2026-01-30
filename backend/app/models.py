@@ -743,3 +743,25 @@ class AdminUser(Base):
     def __repr__(self) -> str:
         return f"<AdminUser {self.username}>"
 
+
+class PlatformConfig(Base):
+    """Platform configuration - stores platform-wide settings like reset epoch."""
+    __tablename__ = 'platform_config'
+    
+    key = Column(String(100), primary_key=True)
+    value = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    updated_at = Column(String, nullable=False)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert platform config to dictionary."""
+        return {
+            "key": self.key,
+            "value": self.value,
+            "description": self.description,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<PlatformConfig {self.key}={self.value}>"
+

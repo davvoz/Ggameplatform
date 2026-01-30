@@ -11,6 +11,7 @@ from app.routers import coins
 from app.routers import levels
 from app.routers import leaderboard
 from app.routers import steem_posts
+from app.routers import platform
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.games.briscola_be.router import router as briscola_router
 from app.database import init_db
@@ -167,6 +168,7 @@ app.include_router(coins.router, tags=["coins"])
 app.include_router(levels.router, tags=["levels"])
 app.include_router(leaderboard.router, tags=["leaderboard"])
 app.include_router(steem_posts.router, tags=["steem-posts"])
+app.include_router(platform.router, prefix="/api/platform", tags=["platform"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 app.include_router(briscola_router, tags=["Briscola Multiplayer"])
 

@@ -7,6 +7,7 @@ class AuthManager {
     constructor() {
         this.currentUser = null;
         this.authMethod = null;
+        this.platformEpoch = null;
         this.loadFromStorage();
     }
 
@@ -16,6 +17,7 @@ class AuthManager {
     loadFromStorage() {
         const userStr = localStorage.getItem('currentUser');
         const method = localStorage.getItem('authMethod');
+        this.platformEpoch = localStorage.getItem('platformEpoch');
         
         if (userStr) {
             try {
@@ -35,7 +37,45 @@ class AuthManager {
         if (this.currentUser) {
             localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
             localStorage.setItem('authMethod', this.authMethod);
+            if (this.platformEpoch) {
+                localStorage.setItem('platformEpoch', this.platformEpoch);
+            }
         }
+    }
+
+    /**
+     * Verifica il platform epoch e fa logout se la piattaforma è stata resettata
+     */
+    async checkPlatformEpoch() {
+        try {
+            const API_URL = window.ENV?.API_URL || window.config?.API_URL || window.location.origin;
+            const response = await fetch(`${API_URL}/api/platform/info`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                const serverEpoch = data.platform_epoch;
+                
+                // Se abbiamo un epoch salvato e è diverso da quello del server, logout
+                if (this.platformEpoch && serverEpoch && this.platformEpoch !== serverEpoch) {
+                    console.log('🔄 Platform has been reset. Logging out...');
+                    this.clearAuth();
+                    // Salva il nuovo epoch
+                    localStorage.setItem('platformEpoch', serverEpoch);
+                    // Redirect a login se non siamo già lì
+                    if (!window.location.pathname.includes('auth.html')) {
+                        window.location.href = '/auth.html?reason=platform_reset';
+                    }
+                    return false;
+                }
+                
+                // Aggiorna l'epoch salvato
+                this.platformEpoch = serverEpoch;
+                localStorage.setItem('platformEpoch', serverEpoch);
+            }
+        } catch (e) {
+            console.warn('Failed to check platform epoch:', e);
+        }
+        return true;
     }
 
     /**

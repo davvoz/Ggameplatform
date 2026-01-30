@@ -1,8 +1,17 @@
 {
-  "version": "3.17.12",
-  "timestamp": "2026-01-30T15:18:08.808Z",
-  "buildNumber": 331,
+  "version": "3.17.13",
+  "timestamp": "2026-01-30T17:17:30.158Z",
+  "buildNumber": 332,
   "changelog": [
+    {
+      "version": "3.17.13",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Refactor code structure for improved readability and maintainability",
+        "🔖 Bump version to 3.17.12 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.12",
       "date": "2026-01-30",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Improve image compression by using FileReader for better performance and error handling",
         "🔖 Bump version to 3.17.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.3",
-      "date": "2026-01-26",
-      "type": "patch",
-      "changes": [
-        "fix: Update Steem post publishing to use backend-prepared operations with beneficiaries, add image uploader",
-        "🔖 Bump version to 3.17.2 [skip-version]"
       ]
     }
   ]

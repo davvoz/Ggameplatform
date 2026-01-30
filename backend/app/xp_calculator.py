@@ -504,7 +504,7 @@ class CustomStrategy(XPCalculationStrategy):
             effective_wave = min(wave, max_waves)
             xp += effective_wave * xp_per_wave
         
-        # Kills bonus
+        # Kills bonus (per 10 kills)
         if 'xp_per_10_kills' in parameters:
             kills = context.extra_data.get('kills', 0)
             max_kills = parameters.get('max_kills', 999)
@@ -514,10 +514,22 @@ class CustomStrategy(XPCalculationStrategy):
             kill_groups = effective_kills / 10.0
             xp += kill_groups * xp_per_10
         
+        # Kills bonus (per single kill)
+        if 'xp_per_kill' in parameters:
+            kills = context.extra_data.get('kills', 0)
+            max_kills = parameters.get('max_kills', 999)
+            xp_per_kill = parameters['xp_per_kill']
+            
+            effective_kills = min(kills, max_kills)
+            xp += effective_kills * xp_per_kill
+        
         # Tower/Level achievement bonuses
         if 'level_bonuses' in parameters:
             level_bonuses = parameters['level_bonuses']
-            highest_level = context.extra_data.get('highest_tower_level', 0)
+            # Check for player_level first (for survivor-arena style games)
+            # then fall back to highest_tower_level (for tower defense games)
+            highest_level = context.extra_data.get('player_level', 
+                                                   context.extra_data.get('highest_tower_level', 0))
             
             # Award XP for the highest level reached
             for bonus in level_bonuses:
@@ -544,6 +556,15 @@ class CustomStrategy(XPCalculationStrategy):
             coin_groups = effective_coins / 100.0
             xp += coin_groups * xp_per_100
         
+        # Player level bonus (e.g., for RPG games)
+        if 'xp_per_level' in parameters:
+            level = context.extra_data.get('player_level', 0)
+            max_level = parameters.get('max_level', 999)
+            xp_per_level = parameters['xp_per_level']
+            
+            effective_level = min(level, max_level)
+            xp += effective_level * xp_per_level
+        
         return xp
     
     def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
@@ -556,6 +577,16 @@ class CustomStrategy(XPCalculationStrategy):
         # Kills bonus validation
         if 'xp_per_10_kills' in parameters:
             if not isinstance(parameters['xp_per_10_kills'], (int, float)) or parameters['xp_per_10_kills'] < 0:
+                return False
+        
+        # Level per kill validation (alternative kills calculation)
+        if 'xp_per_kill' in parameters:
+            if not isinstance(parameters['xp_per_kill'], (int, float)) or parameters['xp_per_kill'] < 0:
+                return False
+        
+        # Player level validation
+        if 'xp_per_level' in parameters:
+            if not isinstance(parameters['xp_per_level'], (int, float)) or parameters['xp_per_level'] < 0:
                 return False
         
         # Level bonuses validation

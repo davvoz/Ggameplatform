@@ -246,6 +246,12 @@ class QuestTracker:
             self._process_sky_tower_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Survivor Arena game quests
+        if game_id == 'survivor-arena' and tracking_type:
+            print(f"⚔️ [QuestTracker] Processing Survivor Arena quest: {quest.title} (type: {tracking_type})")
+            self._process_survivor_arena_quest(user_id, quest, quest_config, tracking_type, score, duration_seconds, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative or daily reset)
@@ -1190,6 +1196,118 @@ class QuestTracker:
         elif tracking_type == 'max_combo':
             # Check if max combo meets target
             if cumulative['max_combo'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+    
+    def _process_survivor_arena_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                       tracking_type: str, score: int, duration_seconds: int, extra_data: Dict):
+        """Process Survivor Arena game-specific quests."""
+        print(f"    ⚔️ [SurvivorArena] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}, duration: {duration_seconds}s")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        reset_on_complete = quest_config.get('reset_on_complete', False)
+        today = self._get_today_date()
+        
+        if reset_period == 'daily':
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # Only reset if quest WAS completed and it's a new day
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 Daily reset triggered for {quest.title}")
+                user_quest.current_progress = 0
+                user_quest.is_completed = 0
+                user_quest.is_claimed = 0
+                user_quest.completed_at = None
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = {
+                    'games_played': 0,
+                    'total_kills': 0,
+                    'total_time_survived': 0,
+                    'high_score': 0,
+                    'max_level': 0
+                }
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative data if not present
+        if not stored_data.get('cumulative'):
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'total_kills': 0,
+                'total_time_survived': 0,
+                'high_score': 0,
+                'max_level': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            # Get session stats
+            # The SDK sends: kills, level, time (in seconds), and game_data with more details
+            session_kills = extra_data.get('enemies_killed', 0) or extra_data.get('kills', 0)
+            session_time = extra_data.get('survival_time', 0) or extra_data.get('time', 0) or duration_seconds
+            session_level = extra_data.get('player_level', 0) or extra_data.get('level', 0)
+            
+            print(f"    ⚔️ [SurvivorArena] Session stats: kills={session_kills}, time={session_time}s, level={session_level}, score={score}")
+            
+            # Accumulate kills and time
+            cumulative['total_kills'] += session_kills
+            cumulative['total_time_survived'] += session_time
+            
+            # Track max level (best ever)
+            if session_level > cumulative['max_level']:
+                cumulative['max_level'] = session_level
+            
+            # Track high score (best ever)
+            if score > cumulative['high_score']:
+                cumulative['high_score'] = score
+            
+            print(f"    ⚔️ [SurvivorArena] Cumulative: games={cumulative['games_played']}, kills={cumulative['total_kills']}, time={cumulative['total_time_survived']}s")
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+        
+        elif tracking_type == 'kills_in_game':
+            # Track kills in a single game - accumulate across games until target reached
+            session_kills = extra_data.get('enemies_killed', 0) or extra_data.get('kills', 0) if extra_data else 0
+            new_progress = user_quest.current_progress + session_kills
+            self.update_quest_progress(user_id, quest, new_progress, user_quest)
+            print(f"    ⚔️ [SurvivorArena] kills_in_game: +{session_kills}, total {new_progress}, target {quest.target_value}")
+        
+        elif tracking_type == 'time_survived_in_game':
+            # Track time survived - accumulate across games until target reached
+            session_time = extra_data.get('survival_time', 0) or extra_data.get('time', 0) or duration_seconds if extra_data else duration_seconds
+            new_progress = user_quest.current_progress + session_time
+            self.update_quest_progress(user_id, quest, new_progress, user_quest)
+            print(f"    ⚔️ [SurvivorArena] time_survived_in_game: +{session_time}s, total {new_progress}s, target {quest.target_value}s")
+        
+        elif tracking_type == 'total_kills':
+            self.update_quest_progress(user_id, quest, cumulative['total_kills'], user_quest)
+        
+        elif tracking_type == 'total_time_survived':
+            self.update_quest_progress(user_id, quest, cumulative['total_time_survived'], user_quest)
+        
+        elif tracking_type == 'high_score':
+            if cumulative['high_score'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+        
+        elif tracking_type == 'max_level':
+            if cumulative['max_level'] >= quest.target_value:
                 self.update_quest_progress(user_id, quest, 1, user_quest)
     
     def check_leaderboard_quests(self, user_id: str):

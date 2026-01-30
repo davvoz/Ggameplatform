@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Survivor Arena</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Game Container -->
+    <div id="game-container">
+        <!-- Fullscreen Button -->
+        <button id="fullscreen-btn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+        </button>
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="screen">
+            <div class="loading-content">
+                <h1 class="game-title">⚔️ SURVIVOR ARENA ⚔️</h1>
+                <div class="loading-bar">
+                    <div id="loadingProgress" class="loading-progress"></div>
+                </div>
+            <p class="loading-text">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen hidden">
+        <div class="start-content">
+            <h1 class="game-title">⚔️ SURVIVOR ARENA ⚔️</h1>
+            <p class="game-subtitle">Survive the endless horde!</p>
+            <button id="startButton" class="btn-primary">
+                <span class="btn-icon">▶</span>
+                <span class="btn-text">PLAY</span>
+            </button>
+            <div class="controls-hint">
+                <p><strong>Mobile:</strong> Virtual joystick to move</p>
+                <p><strong>Desktop:</strong> WASD / Arrow keys</p>
+                <p>Weapons fire automatically!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Wrapper (canvas + UI) -->
+    <div id="game-wrapper">
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Game UI Overlay -->
+        <div id="gameUI" class="hidden">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="timer-container">
+                <span id="gameTimer" class="timer">00:00</span>
+            </div>
+            <div class="stats-container">
+                <div class="stat">
+                    <span class="stat-icon">💀</span>
+                    <span id="killCount" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">⭐</span>
+                    <span id="scoreDisplay" class="stat-value">0</span>
+                </div>
+            </div>
+            <button id="pauseButton" class="btn-icon-only">⏸</button>
+        </div>
+
+        <!-- XP Bar -->
+        <div class="xp-bar-container">
+            <div class="xp-bar">
+                <div id="xpProgress" class="xp-progress"></div>
+            </div>
+            <span id="levelDisplay" class="level-badge">Lv.1</span>
+        </div>
+
+        <!-- Health Bar -->
+        <div class="health-container">
+            <div class="health-bar">
+                <div id="healthProgress" class="health-progress"></div>
+            </div>
+            <span id="healthText" class="health-text">100/100</span>
+        </div>
+
+        <!-- Weapon Slots (bottom) -->
+        <div class="weapon-slots">
+            <div id="weaponSlot1" class="weapon-slot active">
+                <span class="weapon-icon">🔫</span>
+                <span class="weapon-level">1</span>
+                <div class="weapon-cooldown"></div>
+            </div>
+            <div id="weaponSlot2" class="weapon-slot">
+                <span class="weapon-icon">➕</span>
+                <div class="weapon-cooldown"></div>
+            </div>
+            <div id="weaponSlot3" class="weapon-slot">
+                <span class="weapon-icon">➕</span>
+                <div class="weapon-cooldown"></div>
+            </div>
+            <div id="weaponSlot4" class="weapon-slot">
+                <span class="weapon-icon">➕</span>
+                <div class="weapon-cooldown"></div>
+            </div>
+        </div>
+
+    <!-- Boss Warning -->
+    <div id="bossWarning" class="boss-warning hidden">
+        <span class="boss-warning-text">⚠️ BOSS INCOMING! ⚠️</span>
+    </div>
+
+        <!-- Mobile Joystick -->
+        <div id="joystickContainer" class="joystick-container">
+            <div id="joystickBase" class="joystick-base">
+                <div id="joystickThumb" class="joystick-thumb"></div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- #game-wrapper -->
+
+    <!-- Level Up Modal -->
+    <div id="levelUpModal" class="modal hidden">
+        <div class="modal-content level-up-content">
+            <h2 class="modal-title">🎉 LEVEL UP! 🎉</h2>
+            <p id="newLevelText" class="level-text">Level 2</p>
+            <p class="choose-text">Choose an upgrade:</p>
+            <div id="upgradeOptions" class="upgrade-options">
+                <!-- Options will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Modal -->
+    <div id="pauseModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">⏸ PAUSED</h2>
+            <button id="resumeButton" class="btn-primary">
+                <span class="btn-text">RESUME</span>
+            </button>
+            <button id="quitButton" class="btn-secondary">
+                <span class="btn-text">QUIT</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen hidden">
+        <div class="game-over-content">
+            <h1 class="game-over-title">💀 GAME OVER 💀</h1>
+            <div class="final-stats">
+                <div class="final-stat">
+                    <span class="final-stat-label">Score</span>
+                    <span id="finalScore" class="final-stat-value">0</span>
+                </div>
+                <div class="final-stat">
+                    <span class="final-stat-label">Time Survived</span>
+                    <span id="finalTime" class="final-stat-value">00:00</span>
+                </div>
+                <div class="final-stat">
+                    <span class="final-stat-label">Enemies Killed</span>
+                    <span id="finalKills" class="final-stat-value">0</span>
+                </div>
+                <div class="final-stat">
+                    <span class="final-stat-label">Level Reached</span>
+                    <span id="finalLevel" class="final-stat-value">1</span>
+                </div>
+            </div>
+            <button id="restartButton" class="btn-primary">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text">PLAY AGAIN</span>
+            </button>
+        </div>
+    </div>
+
+    </div> <!-- #game-container -->
+
+    <!-- Scripts -->
+    <script src="js/sdk.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/sprite-system.js"></script>
+    <script src="js/weapon-sprites.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/entity.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/pickups.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/spawner.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

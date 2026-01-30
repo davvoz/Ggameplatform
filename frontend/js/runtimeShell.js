@@ -292,7 +292,18 @@ export default class RuntimeShell {
         this.state.score = finalScore;
         
         // Extract extra_data for cumulative XP system (levels, distance, etc.)
-        const extraData = payload?.extra_data || {};
+        // Support both 'extra_data' and 'game_data' keys for compatibility
+        const extraData = payload?.extra_data || payload?.game_data || {};
+        
+        // Also merge top-level fields that games might send directly
+        if (payload) {
+            if (payload.kills !== undefined && !extraData.kills) extraData.kills = payload.kills;
+            if (payload.time !== undefined && !extraData.time) extraData.time = payload.time;
+            if (payload.level !== undefined && !extraData.level) extraData.level = payload.level;
+            if (payload.survival_time !== undefined && !extraData.survival_time) extraData.survival_time = payload.survival_time;
+            if (payload.enemies_killed !== undefined && !extraData.enemies_killed) extraData.enemies_killed = payload.enemies_killed;
+            if (payload.player_level !== undefined && !extraData.player_level) extraData.player_level = payload.player_level;
+        }
 
         this.log('💀 Game Over! Final score:', this.state.score);
         this.log('📊 Extra data:', extraData);

@@ -1,8 +1,17 @@
 {
-  "version": "3.17.10",
-  "timestamp": "2026-01-27T00:45:53.585Z",
-  "buildNumber": 329,
+  "version": "3.17.11",
+  "timestamp": "2026-01-30T14:57:10.710Z",
+  "buildNumber": 330,
   "changelog": [
+    {
+      "version": "3.17.11",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "refactor: Remove console log statements for cleaner production code",
+        "🔖 Bump version to 3.17.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.10",
       "date": "2026-01-27",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: Post, include GameStatus model in user statistics query for ranked games",
         "🔖 Bump version to 3.17.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.1",
-      "date": "2026-01-25",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD]update continue cost for wave mode selection",
-        "🔖 Bump version to 3.17.0 [skip-version]"
       ]
     }
   ]

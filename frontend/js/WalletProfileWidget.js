@@ -119,5 +119,4 @@ class WalletProfileWidget {
 // Export to global scope
 if (typeof window !== 'undefined') {
     window.WalletProfileWidget = WalletProfileWidget;
-    console.log('✅ WalletProfileWidget loaded and exported to window');
 }

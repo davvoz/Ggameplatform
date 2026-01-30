@@ -609,8 +609,7 @@
             if (window.dailyLoginBanner && user && user.user_id) {
                 window.dailyLoginBanner.init(user).then(() => {
                     // Don't auto-show banner, only show trigger button if can claim
-                    console.log('Daily login banner initialized - trigger button managed automatically');
-                }).catch(err => console.error('Failed to init daily login banner:', err));
+                }).catch(err => {});
             }
         }
         
@@ -642,7 +641,6 @@
                 if (window.AuthManager && window.AuthManager.isLoggedIn()) {
                     const user = window.AuthManager.getUser();
                     if (user && user.user_id) {
-                        console.log('User already logged in, initializing daily login banner...');
                         initDailyLoginBanner(user);
                     }
                 }

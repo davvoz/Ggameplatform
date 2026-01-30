@@ -608,7 +608,7 @@
             if (window.parent && window.parent !== window.self) {
                 window.parent.postMessage(message, '*');
             }
-            console.log('[PlatformSDK] Sent message to platform:', message);
+            
         }
         
         /**

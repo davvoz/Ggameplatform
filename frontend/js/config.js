@@ -50,11 +50,7 @@ export const config = {
 
 // Log configuration in development
 if (config.isDevelopment()) {
-    console.log('🔧 App Configuration:', {
-        API_URL: config.API_URL,
-        FRONTEND_URL: config.FRONTEND_URL,
-        MODE: config.getMode()
-    });
+   
 }
 
 export default config;

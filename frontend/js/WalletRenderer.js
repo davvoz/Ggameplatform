@@ -456,5 +456,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global export for non-module scripts
 if (typeof window !== 'undefined') {
     window.WalletRenderer = WalletRenderer;
-    console.log('✅ WalletRenderer loaded and exported to window');
 }

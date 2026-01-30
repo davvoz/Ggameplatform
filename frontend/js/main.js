@@ -426,7 +426,6 @@ function createGameCard(game) {
         steemBadge.appendChild(steemImg);
         steemBadge.appendChild(document.createTextNode(' STEEM'));
         if (badgesContainer) badgesContainer.appendChild(steemBadge);
-        console.log('Added STEEM badge for', game.title);
     }
 
     // Add COIN badge for casino-category games
@@ -444,10 +443,8 @@ function createGameCard(game) {
             coinBadge.appendChild(coinIcon);
             coinBadge.appendChild(document.createTextNode(' COIN'));
             if (badgesContainer) badgesContainer.appendChild(coinBadge);
-            console.log('Added COIN badge for', game.title);
         }
     } catch (e) {
-        console.warn('Failed to add COIN badge for', game.title, e);
     }
 
     // Set game info

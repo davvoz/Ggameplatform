@@ -16,8 +16,7 @@ const routes = {
     '/play/:id': renderGamePlayer
 };
 
-console.log('Routes configured:', routes);
-console.log('renderLeaderboard function:', renderLeaderboard);
+
 
 /**
  * Initialize the router
@@ -36,9 +35,6 @@ export function initRouter() {
 function handleRoute() {
     const hash = window.location.hash.slice(1) || '/';
     const route = matchRoute(hash);
-    
-    console.log('Handling route:', hash);
-    console.log('Matched route:', route);
     
     // Cleanup previous game runtime when navigating away from player
     if (!hash.startsWith('/play/') && window.currentGameRuntime) {

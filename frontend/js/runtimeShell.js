@@ -164,7 +164,7 @@ export default class RuntimeShell {
                 break;
 
             case GAME_MESSAGE_TYPES.LOG:
-                this.handleLog(message.payload);
+                //this.handleLog(message.payload);
                 break;
 
             case GAME_MESSAGE_TYPES.RESET_SESSION:
@@ -176,14 +176,10 @@ export default class RuntimeShell {
 
             case GAME_MESSAGE_TYPES.GAME_STARTED:
                 // Game has actually started (level selected) - create session now
-                console.log('🎮🎮🎮 [RuntimeShell] GAME_STARTED message received!');
-                console.log('🎮 Current sessionId:', this.sessionId);
                 this.log('🎮 Game started, creating session...');
                 if (!this.sessionId) {
-                    console.log('🎮 No sessionId, calling startGameSession()...');
                     this.startGameSession();
                 } else {
-                    console.log('🎮 SessionId already exists:', this.sessionId);
                 }
                 break;
 
@@ -203,7 +199,6 @@ export default class RuntimeShell {
     isValidOrigin(origin) {
         // Never allow wildcard in production
         if (this.config.allowedOrigins.includes('*')) {
-            console.warn('⚠️ Wildcard origin (*) is allowed - this is insecure!');
             return true;
         }
 
@@ -211,8 +206,6 @@ export default class RuntimeShell {
         const isAllowed = this.config.allowedOrigins.includes(origin);
 
         if (!isAllowed) {
-            console.warn('🔒 Rejected message from unauthorized origin:', origin);
-            console.log('Allowed origins:', this.config.allowedOrigins);
         }
 
         return isAllowed;
@@ -1011,9 +1004,9 @@ export default class RuntimeShell {
      * @param {...*} args - Arguments to log
      */
     log(...args) {
-        if (this.config.debug) {
-            console.log('[RuntimeShell]', ...args);
-        }
+        // if (this.config.debug) {
+        //     console.log('[RuntimeShell]', ...args);
+        // }
     }
 }
 

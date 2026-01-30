@@ -153,5 +153,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global export for non-module scripts
 if (typeof window !== 'undefined') {
     window.CoinAPI = CoinAPI;
-    console.log('✅ CoinAPI loaded and exported to window');
 }

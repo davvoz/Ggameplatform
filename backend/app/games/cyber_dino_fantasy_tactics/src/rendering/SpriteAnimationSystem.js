@@ -313,7 +313,7 @@ export class MultiPartSprite {
     play(animationName, restart = false) {
         const anim = this.animations.get(animationName);
         if (!anim) {
-            console.warn(`Animation '${animationName}' not found on sprite '${this.name}'`);
+
             return;
         }
 

@@ -178,8 +178,8 @@ class SteemPostAPI {
                 return;
             }
 
-            console.log('[Keychain] Broadcasting with backend-prepared operations (includes beneficiaries)');
-            console.log('[Keychain] Operations:', operations);
+
+
 
             // Request Keychain to broadcast with backend-prepared operations
             window.steem_keychain.requestBroadcast(
@@ -187,7 +187,7 @@ class SteemPostAPI {
                 operations,
                 'Posting',
                 (response) => {
-                    console.log('Keychain broadcast response:', response);
+
                     
                     if (response.success) {
                         resolve({
@@ -245,7 +245,7 @@ class SteemPostAPI {
                 operations,
                 'Posting',
                 (response) => {
-                    console.log('Keychain broadcast response:', response);
+
                     
                     if (response.success) {
                         resolve({
@@ -273,10 +273,10 @@ class SteemPostAPI {
      */
     async publishViaPostingKey(steemUsername, postingKey, title, body, tags, metadata = {}) {
         try {
-            console.log('Publishing via backend with beem...');
-            console.log('Username:', steemUsername);
-            console.log('Title:', title);
-            console.log('Tags:', tags);
+
+
+
+
             
             const response = await fetch(`${this.baseUrl}/api/steem/publish-with-key`, {
                 method: 'POST',

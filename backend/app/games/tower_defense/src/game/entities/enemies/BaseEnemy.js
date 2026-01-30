@@ -250,7 +250,7 @@ export class BaseEnemy extends BaseEntity {
     this.slowEffect = Math.max(this.slowEffect, slowAmount);
     this.slowTimer = Math.max(this.slowTimer, duration);
 
-    console.log(`[SLOW] Enemy slowed by ${(slowAmount * 100).toFixed(0)}% for ${duration}s (current: ${(this.slowEffect * 100).toFixed(0)}%)`);
+
 
     if (!this.freezeAura && this.slowEffect > 0) {
       this._createFreezeAura();
@@ -750,7 +750,7 @@ export class BaseEnemy extends BaseEntity {
 
     // Debug slow effect
     if (this.slowEffect > 0 && Math.random() < 0.01) {
-      console.log(`[MOVEMENT] Speed: ${this.speed.toFixed(2)} | SlowEffect: ${(this.slowEffect * 100).toFixed(0)}% | PhysicsSlowdown: ${physicsSlowdown.toFixed(2)} | Effective: ${effectiveSpeed.toFixed(2)}`);
+
     }
 
     const pathWorldLength = (pathLength - 1) * 1;

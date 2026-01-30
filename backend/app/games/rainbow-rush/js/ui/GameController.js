@@ -95,11 +95,11 @@ export class GameController {
     async initialize() {
         // Initialize AudioManager first
         await this.audioManager.initialize();
-        console.log('🔊 AudioManager initialized');
+
         
         // Initialize Platform SDK BEFORE RainbowRushSDK to get userId
         await this.sdkManager.initialize();
-        console.log('🎮 Platform SDK initialized');
+
         
         // NOW wait for platform config with userId (max 3 seconds)
         const maxWait = 3000;
@@ -110,19 +110,19 @@ export class GameController {
         
         // If we got userId from platform, update SDK
         if (window.platformConfig?.userId && this.rainbowRushSDK) {
-            console.log('[GameController] ✅ Got platform userId:', window.platformConfig.userId);
+
             this.rainbowRushSDK.userId = window.platformConfig.userId;
         } else {
-            console.warn('[GameController] ⚠️ No platform userId available, SDK will use fallback');
+
         }
         
         // NOW initialize Rainbow Rush SDK with correct userId
         if (this.rainbowRushSDK) {
             try {
                 await this.rainbowRushSDK.init();
-                console.log('🔒 Rainbow Rush SDK initialized - Secure backend enabled');
+
             } catch (error) {
-                console.warn('⚠️ Rainbow Rush SDK initialization failed, using localStorage fallback:', error);
+
             }
         }
         
@@ -155,7 +155,7 @@ export class GameController {
         const context = this._getGameContext();
         this.stateMachine.transitionTo(GameStates.MENU, context);
 
-        console.log('✅ GameController initialized');
+
     }
 
     /**
@@ -220,7 +220,7 @@ export class GameController {
         const goalToSpawn = this.levelManager.shouldSpawnGoal();
         if (goalToSpawn) {
             this.entityManager.addEntity('goals', goalToSpawn);
-            console.log('✅ Goal flag added to game!');
+
         }
         
         // Update level progress bar basata su DISTANZA
@@ -596,7 +596,7 @@ export class GameController {
     _startDeathSequence() {
         //chiudiamo la sessione
         this.sdkManager.gameOver(this.scoreSystem.getTotalScore(), this.scoreSystem.getGameStats());
-        console.log('💀 Player died, starting death sequence');
+
         this.animationController.isShowingDeathAnimation = true;
         this.animationController.startDeathSequence(
             this.player.x, this.player.y,

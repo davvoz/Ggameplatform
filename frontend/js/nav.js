@@ -175,7 +175,7 @@ function initMobileNav() {
     
     
     if (!navToggle || !navMenu) {
-        console.warn('Nav elements not found');
+
         return false;
     }
     

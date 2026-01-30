@@ -66,7 +66,7 @@ export class LevelOrchestrator {
      * @param {boolean} resetHealth - Se true, resetta la salute del player (default: true per lista livelli)
      */
     async loadLevel(levelId, dims, resetHealth = true) {
-        console.log(`📋 Loading level ${levelId} (resetHealth: ${resetHealth})`);
+
         
         // Session management:
         // - If resetHealth=true: NEW game session (from menu, restart, level select)
@@ -74,7 +74,7 @@ export class LevelOrchestrator {
         // - If resetHealth=false: CONTINUING game session (next level)
         //   → Keep session open, just update level if needed
         
-        console.log(`🎮 [LevelOrchestrator] loadLevel called - levelId: ${levelId}, resetHealth: ${resetHealth}`);
+
         
         if (this.gameController?.rainbowRushSDK) {
             try {
@@ -83,25 +83,25 @@ export class LevelOrchestrator {
                     if (this.gameController.rainbowRushSDK.sessionId) {
                         // Get current score before ending session
                         const currentScore = this.scoreSystem?.getScore() || 0;
-                        console.log(`🔚 [LevelOrchestrator] Ending previous session with score: ${currentScore}`);
+
                         await this.gameController.rainbowRushSDK.endSession(currentScore);
-                        console.log(`✅ Previous session ended (new game) with score: ${currentScore}`);
+
                     }
                     
                     // Start new game session for this level
-                    console.log(`🚀 [LevelOrchestrator] Starting Rainbow Rush session for level ${levelId}`);
+
                     await this.gameController.rainbowRushSDK.startSession(levelId);
-                    console.log(`✅ Game session started for level ${levelId}`);
+
                     
                     // Notify platform that game has started (triggers platform session creation)
                     if (this.gameController.sdkManager) {
-                        console.log(`📡 [LevelOrchestrator] Calling gameStarted() to notify platform`);
+
                         await this.gameController.sdkManager.gameStarted();
-                        console.log(`✅ [LevelOrchestrator] Platform notified of game start`);
+
                     }
                 } else {
                     // CONTINUING - Keep session open, player is progressing through levels
-                    console.log(`🎮 Continuing session for next level ${levelId}`);
+
                     // Optionally update session with new level info (without closing it)
                     if (this.gameController.rainbowRushSDK.sessionId) {
                         // You could add an updateSession call here if backend supports it
@@ -146,7 +146,7 @@ export class LevelOrchestrator {
             this.backgroundSystem.setLevel(levelId);
         }
         
-        console.log(`🎮 Level ${levelId} loaded!`);
+
     }
 
     /**
@@ -176,7 +176,7 @@ export class LevelOrchestrator {
      * @returns {Object} Level summary data
      */
     async onLevelComplete() {
-        console.log('🎉 Level Complete!');
+
         
         const currentLevel = this.levelManager.currentLevelId;
         
@@ -191,7 +191,7 @@ export class LevelOrchestrator {
                     coins: this.scoreSystem?.coins || 0
                 };
                 await this.gameController.rainbowRushSDK.endSession(finalScore, finalStats);
-                console.log(`✅ Game session ended on level complete with score: ${finalScore}`);
+
             } catch (error) {
                 console.error('❌ Failed to end game session:', error);
             }
@@ -225,7 +225,7 @@ export class LevelOrchestrator {
                 this.flightButtonUI.setUnlocked(true);
             }
             
-            console.log('✈️ Flight ability unlocked with animation!');
+
             
             // Start unlock animation
             if (this.abilityUnlockAnimation) {
@@ -244,7 +244,7 @@ export class LevelOrchestrator {
                 this.turboButtonUI.setUnlocked(true);
             }
             
-            console.log('🚀 Turbo ability unlocked with animation!');
+
             
             // Start unlock animation
             if (this.abilityUnlockAnimation) {
@@ -378,7 +378,7 @@ export class LevelOrchestrator {
             // resetHealth controlla se resettare anche la salute
             this.player.reset(playerX, playerY, resetHealth);
             
-            console.log(`👤 Player positioned on first platform at (${playerX.toFixed(0)}, ${playerY.toFixed(0)})`);
+
         }
     }
 

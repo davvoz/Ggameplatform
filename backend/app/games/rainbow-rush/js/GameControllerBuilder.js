@@ -86,7 +86,7 @@ export class GameControllerBuilder {
         let userId = null;
         if (window.platformConfig && window.platformConfig.userId) {
             userId = window.platformConfig.userId;
-            console.log('[GameControllerBuilder] Using platform userId:', userId);
+
         }
         
         // Initialize Rainbow Rush SDK with userId from platform
@@ -296,7 +296,7 @@ export class GameControllerBuilder {
         // Initialize system orchestrator
         await this.systemOrchestrator.initialize();
         
-        console.log('✅ GameController dependencies initialized');
+
     }
 }
 

@@ -29,7 +29,7 @@ export class PlatformSDKAdapter {
 
   sendGameStarted() {
     try {
-      console.log('[PlatformSDKAdapter] Sending gameStarted event');
+
       window.parent.postMessage({
         type: 'gameStarted',
         payload: {},
@@ -74,13 +74,13 @@ export class PlatformSDKAdapter {
 
     // Listen for config event to capture userId
     this._sdk.on('config', (config) => {
-      console.log('[PlatformSDKAdapter] Config received:', config);
+
       this._config = config;
       if (config && config.userId) {
         this._userId = config.userId;
-        console.log('[PlatformSDKAdapter] ✅ UserId saved:', this._userId);
+
       } else {
-        console.warn('[PlatformSDKAdapter] ⚠️ No userId in config');
+
       }
     });
 
@@ -92,7 +92,7 @@ export class PlatformSDKAdapter {
       if (window.platformConfig && window.platformConfig.userId) {
         this._userId = window.platformConfig.userId;
         this._config = window.platformConfig;
-        console.log('[PlatformSDKAdapter] ✅ UserId from window.platformConfig:', this._userId);
+
       }
       // Check if SDK has getConfig method
       else if (this._sdk.getConfig && typeof this._sdk.getConfig === 'function') {
@@ -100,7 +100,7 @@ export class PlatformSDKAdapter {
         if (config && config.userId) {
           this._userId = config.userId;
           this._config = config;
-          console.log('[PlatformSDKAdapter] ✅ UserId from SDK.getConfig():', this._userId);
+
         }
       }
       // Try localStorage
@@ -108,9 +108,9 @@ export class PlatformSDKAdapter {
         const storedUserId = localStorage.getItem('platformUserId');
         if (storedUserId) {
           this._userId = storedUserId;
-          console.log('[PlatformSDKAdapter] ✅ UserId from localStorage:', this._userId);
+
         } else {
-          console.warn('[PlatformSDKAdapter] ⚠️ Could not find userId from any source');
+
         }
       }
     }
@@ -150,14 +150,14 @@ export class PlatformSDKAdapter {
         return null;
       }
       
-      console.log('[PlatformSDKAdapter] Fetching balance for user:', userId);
+
       
       // Call platform coin API with actual user ID
       const response = await fetch(`/api/coins/${userId}/balance`, {
         credentials: 'include'
       });
       
-      console.log('[PlatformSDKAdapter] Balance response status:', response.status);
+
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -166,7 +166,7 @@ export class PlatformSDKAdapter {
       }
       
       const data = await response.json();
-      console.log('[PlatformSDKAdapter] Balance data received:', data);
+
       return data.balance;
     } catch (error) {
       console.error('[PlatformSDKAdapter] Exception getting user balance:', error);
@@ -195,7 +195,7 @@ export class PlatformSDKAdapter {
       });
       
       if (!response.ok) {
-        console.warn('Failed to spend coins, status:', response.status);
+
         return false;
       }
       
@@ -221,7 +221,7 @@ export class PlatformSDKAdapter {
         description: String(description)
       };
 
-      console.log('[PlatformSDKAdapter] Awarding coins:', payload);
+
       
       const response = await fetch(`/api/coins/${userId}/award`, {
         method: 'POST',
@@ -237,7 +237,7 @@ export class PlatformSDKAdapter {
       }
       
       const result = await response.json();
-      console.log('[PlatformSDKAdapter] Award successful:', result);
+
       return true;
     } catch (error) {
       console.error('Failed to award coins:', error);
@@ -253,7 +253,7 @@ export class PlatformSDKAdapter {
         return null;
       }
 
-      console.log('[PlatformSDKAdapter] Starting session for user:', userId);
+
 
       const response = await fetch('/users/sessions/start', {
         method: 'POST',
@@ -273,7 +273,7 @@ export class PlatformSDKAdapter {
 
       const result = await response.json();
       this._sessionId = result.session.session_id;
-      console.log('[PlatformSDKAdapter] Session started:', this._sessionId);
+
       return result.session;
     } catch (error) {
       console.error('[PlatformSDKAdapter] Exception starting session:', error);
@@ -284,11 +284,11 @@ export class PlatformSDKAdapter {
   async endSession(score, extraData = null) {
     try {
       if (!this._sessionId) {
-        console.warn('[PlatformSDKAdapter] No active session to end');
+
         return null;
       }
 
-      console.log('[PlatformSDKAdapter] Ending session:', this._sessionId, 'with score:', score);
+
 
       const payload = {
         session_id: this._sessionId,
@@ -297,7 +297,7 @@ export class PlatformSDKAdapter {
         extra_data: extraData || {}
       };
 
-      console.log('[PlatformSDKAdapter] Payload to send:', payload);
+
 
       const response = await fetch('/users/sessions/end', {
         method: 'POST',
@@ -313,7 +313,7 @@ export class PlatformSDKAdapter {
       }
 
       const result = await response.json();
-      console.log('[PlatformSDKAdapter] Session ended successfully');
+
       
       const sessionId = this._sessionId;
       this._sessionId = null;
@@ -331,7 +331,7 @@ export class PlatformSDKAdapter {
     }
 
     try {
-      console.log('[PlatformSDKAdapter] Showing XP notification:', xpAmount);
+
       
       // Send message to RuntimeShell to show XP banner
       window.parent.postMessage({

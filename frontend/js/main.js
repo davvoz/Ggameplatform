@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.AuthManager && !window.AuthManager.isLoggedIn()) {
         // Redirect to auth page if not on auth page
         if (!window.location.pathname.includes('auth.html')) {
-            console.log('No user logged in, redirecting to auth.html');
+
             window.location.href = '/auth.html';
             return;
         }
@@ -47,11 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 navAvatar.src = sp.profileImage;
                             }
                         }).catch(e => {
-                            console.warn('Could not fetch Steem profile for navbar avatar:', e);
+
                         });
                     }
                 } catch (e) {
-                    console.warn('Failed to init SteemProfileService:', e);
+
                 }
             }
             if (navMultiplier) navMultiplier.textContent = `${(user.cur8_multiplier || 1).toFixed(2)}x`;
@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const finalMult = json && json.breakdown && json.breakdown.final_multiplier;
                     if (navMultiplierEl && finalMult !== undefined) navMultiplierEl.textContent = `${Number(finalMult).toFixed(2)}x`;
                 } catch (e) {
-                    console.warn('Failed to refresh multiplier breakdown for nav:', e);
+
                 }
             })();
         } catch (err) {
-            console.warn('Failed to apply multiplierUpdated to nav:', err);
+
         }
     });
 
@@ -598,17 +598,17 @@ function setupPlayerControls(gameId, iframe) {
 
     // Listen for game events
     runtime.on('scoreUpdate', (data) => {
-        console.log('Score updated:', data);
+
     });
 
     runtime.on('gameOver', (data) => {
-        console.log('Game over:', data);
+
         // Optionally navigate back to game detail or show a summary
         
     });
 
     runtime.on('levelCompleted', (data) => {
-        console.log('Level completed:', data);
+
     });
 
     // Handle fullscreen exit (ESC key or native exit)
@@ -664,7 +664,7 @@ export async function renderAbout() {
             }
         }
     } catch (error) {
-        console.warn('Could not load version info:', error);
+
         const versionEl = document.getElementById('app-version');
         if (versionEl) {
             versionEl.textContent = 'v1.0.0';
@@ -676,7 +676,7 @@ export async function renderAbout() {
  * Render the quests page
  */
 export async function renderQuests() {
-    console.log('Rendering quests page...');
+
     const questRenderer = new QuestRenderer();
     await questRenderer.render();
 }

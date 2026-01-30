@@ -20,7 +20,7 @@ export class AudioSynthesizer {
             this.masterGain.gain.value = 0.3;
             this.initialized = true;
         } catch (e) {
-            console.warn('Web Audio API not supported');
+
         }
     }
 

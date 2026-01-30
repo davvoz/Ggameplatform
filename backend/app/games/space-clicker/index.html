@@ -242,7 +242,7 @@
         // Initialize Platform SDK
         PlatformSDK.init({ timeout: 10000 })
             .then(() => {
-                console.log('Platform SDK initialized');
+
                 showMessage('🎮 Connected to platform!');
                 
                 // Listen for platform events
@@ -265,7 +265,7 @@
                 });
             })
             .catch(err => {
-                console.log('Running in standalone mode');
+
                 showMessage('🎮 Standalone Mode');
             });
 

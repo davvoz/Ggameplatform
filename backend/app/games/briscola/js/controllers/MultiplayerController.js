@@ -41,7 +41,7 @@ export class MultiplayerController {
         }
         
         const wsUrl = `${wsProtocol}//${wsHost}/ws/briscola`;
-        console.log('[Multiplayer] WebSocket URL:', wsUrl);
+
         return wsUrl;
     }
     
@@ -50,7 +50,7 @@ export class MultiplayerController {
      */
     connect() {
         return new Promise((resolve, reject) => {
-            console.log('[Multiplayer] Tentativo connessione a:', this.serverUrl);
+
             
             try {
                 this.socket = new WebSocket(this.serverUrl);
@@ -64,14 +64,14 @@ export class MultiplayerController {
                 
                 this.socket.onopen = () => {
                     clearTimeout(connectionTimeout);
-                    console.log('[Multiplayer] Connessione WebSocket stabilita');
+
                     resolve();
                 };
                 
                 this.socket.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        console.log('[Multiplayer] Messaggio ricevuto:', data.type);
+
                         this.handleMessage(data);
                     } catch (e) {
                         console.error('[Multiplayer] Errore parsing messaggio:', e);
@@ -87,9 +87,9 @@ export class MultiplayerController {
                 
                 this.socket.onclose = (event) => {
                     clearTimeout(connectionTimeout);
-                    console.log('[Multiplayer] WebSocket chiuso - code:', event.code, 'reason:', event.reason);
+
                     if (event.code !== 1000) {
-                        console.warn('[Multiplayer] Chiusura anomala:', event.code);
+
                     }
                     this.handleDisconnect();
                 };
@@ -105,7 +105,7 @@ export class MultiplayerController {
      * Disconnect from server
      */
     disconnect() {
-        console.log('[Multiplayer] disconnect() chiamato');
+
         
         // Invia messaggio 'leave' al server prima di chiudere
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -113,9 +113,9 @@ export class MultiplayerController {
                 this.send({
                     type: 'leave'
                 });
-                console.log('[Multiplayer] Messaggio leave inviato al server');
+
             } catch (e) {
-                console.warn('[Multiplayer] Errore invio messaggio leave:', e);
+
             }
         }
         
@@ -133,7 +133,7 @@ export class MultiplayerController {
      * Resetta tutte le variabili e lo stato UI
      */
     cleanup() {
-        console.log('[Multiplayer] cleanup() - resetting all state');
+
         
         this.roomCode = null;
         this.isHost = false;
@@ -159,25 +159,25 @@ export class MultiplayerController {
         if (roomInput) roomInput.value = '';
         if (roomCode) roomCode.textContent = '----';
         
-        console.log('[Multiplayer] cleanup completato');
+
     }
     
     /**
      * Create a new room
      */
     async createRoom() {
-        console.log('[Multiplayer] Tentativo di creazione stanza...');
-        console.log('[Multiplayer] WebSocket URL:', this.serverUrl);
+
+
         
         // Pulisci lo stato precedente prima di creare una nuova stanza
         this.cleanup();
         
         try {
             await this.connect();
-            console.log('[Multiplayer] Connessione WebSocket riuscita');
+
             
             const username = this.app.platformBridge.getUsername() || 'Player';
-            console.log('[Multiplayer] Invio richiesta createRoom per utente:', username);
+
             
             this.send({
                 type: 'createRoom',
@@ -209,10 +209,10 @@ export class MultiplayerController {
      * Join an existing room
      */
     async joinRoom(code) {
-        console.log('[Multiplayer] Tentativo di unirsi alla stanza:', code);
+
         
         if (!code || code.length !== 4) {
-            console.warn('[Multiplayer] Codice stanza non valido:', code);
+
             this.showConnectionError('INVALID_CODE', 'Il codice deve essere di 4 caratteri');
             return;
         }
@@ -222,7 +222,7 @@ export class MultiplayerController {
         
         try {
             await this.connect();
-            console.log('[Multiplayer] Connessione riuscita, invio joinRoom');
+
             
             const username = this.app.platformBridge.getUsername() || 'Player';
             
@@ -233,7 +233,7 @@ export class MultiplayerController {
             });
             
             this.roomCode = code.toUpperCase();
-            console.log('[Multiplayer] Richiesta joinRoom inviata per stanza:', this.roomCode);
+
             
         } catch (error) {
             console.error('[Multiplayer] Errore join room:', error);
@@ -254,7 +254,7 @@ export class MultiplayerController {
      * Send play card to server
      */
     sendPlayCard(card) {
-        console.log('[Multiplayer] Sending play card:', card.id);
+
         this.send({
             type: 'playCard',
             card: {
@@ -269,7 +269,7 @@ export class MultiplayerController {
      * Handle incoming messages
      */
     handleMessage(message) {
-        console.log('[Multiplayer] Received:', message);
+
         
         switch (message.type) {
             case 'roomCreated':
@@ -346,8 +346,8 @@ export class MultiplayerController {
      * Handle game start
      */
     handleGameStart(message) {
-        console.log('[Multiplayer] handleGameStart - full message:', JSON.stringify(message));
-        console.log('[Multiplayer] gameState.is_your_turn:', message.gameState?.is_your_turn);
+
+
         
         // Store game state from server
         this.opponentName = message.opponentName;
@@ -363,7 +363,7 @@ export class MultiplayerController {
      * Start online game with server state
      */
     startOnlineGame(serverState) {
-        console.log('[Multiplayer] Starting online game with server state:', serverState);
+
         
         // Reset game engine but don't init new game
         this.app.gameEngine.reset();
@@ -407,7 +407,7 @@ export class MultiplayerController {
      * Apply server game state
      */
     applyServerState(serverState) {
-        console.log('[Multiplayer] Applying server state - is_your_turn:', serverState.is_your_turn, 'type:', typeof serverState.is_your_turn);
+
         
         const engine = this.app.gameEngine;
         
@@ -446,7 +446,7 @@ export class MultiplayerController {
         // Set current turn - be explicit about the boolean check
         const isMyTurn = serverState.is_your_turn === true;
         engine.currentPlayer = isMyTurn ? 1 : 2;
-        console.log('[Multiplayer] Set currentPlayer to:', engine.currentPlayer);
+
         
         // Set played cards
         engine.playedCard1 = serverState.played_card_1 ? engine.deserializeCard(serverState.played_card_1) : null;
@@ -460,21 +460,21 @@ export class MultiplayerController {
         const roundComplete = message.roundComplete === true;
         const isMyTurn = message.isYourTurn === true;
         
-        console.log('[Multiplayer] handleCardPlayed - playerId:', message.playerId, 'myId:', this.playerId, 'isYourTurn:', isMyTurn, 'roundComplete:', roundComplete);
+
         
         if (message.playerId === this.playerId) {
             // We played our card
             // If round is not complete, opponent will play next - show their turn
             // If round is complete, wait for stateUpdate
             if (!roundComplete) {
-                console.log('[Multiplayer] We played first card, waiting for opponent');
+
                 this.app.uiManager.updateTurnIndicator(false);
                 this.app.uiManager.disablePlayerHand();
             }
             // If roundComplete, don't update - stateUpdate will handle it
         } else {
             // Opponent played their card
-            console.log('[Multiplayer] Opponent played, roundComplete:', roundComplete);
+
             
             // Show opponent's card on table
             this.app.gameController.handleOnlineMove(2, message.card, !roundComplete);
@@ -488,7 +488,7 @@ export class MultiplayerController {
      * Handle round end from server
      */
     async handleRoundEnd(message) {
-        console.log('[Multiplayer] Round end:', message);
+
         
         this.isProcessingRound = true;
         
@@ -518,7 +518,7 @@ export class MultiplayerController {
         
         // Process pending state update if any
         if (this.pendingStateUpdate) {
-            console.log('[Multiplayer] Processing pending state update');
+
             this.applyStateUpdate(this.pendingStateUpdate);
             this.pendingStateUpdate = null;
         }
@@ -528,11 +528,11 @@ export class MultiplayerController {
      * Handle state update from server (after round end)
      */
     handleStateUpdate(message) {
-        console.log('[Multiplayer] State update received, isProcessingRound:', this.isProcessingRound);
+
         
         if (this.isProcessingRound) {
             // Store for later processing
-            console.log('[Multiplayer] Storing state update for later');
+
             this.pendingStateUpdate = message;
             return;
         }
@@ -547,27 +547,27 @@ export class MultiplayerController {
         const serverState = message.state;
         if (!serverState) return;
         
-        console.log('[Multiplayer] Applying state update:');
-        console.log('  - is_your_turn:', serverState.is_your_turn);
-        console.log('  - your_hand length:', serverState.your_hand?.length);
-        console.log('  - opponent_card_count:', serverState.opponent_card_count);
-        console.log('  - deck_remaining:', serverState.deck_remaining);
+
+
+
+
+
         
         // Apply the new state
         this.applyServerState(serverState);
         
         // Get state and log it
         const engineState = this.app.gameEngine.getState();
-        console.log('[Multiplayer] Engine state after apply:');
-        console.log('  - player1Hand:', engineState.player1Hand.length);
-        console.log('  - player2HandCount:', engineState.player2HandCount);
+
+
+
         
         // Render the updated game
         this.app.gameController.renderGameState(engineState);
         
         // Update turn indicator
         const isMyTurn = serverState.is_your_turn === true;
-        console.log('[Multiplayer] Setting turn indicator to:', isMyTurn);
+
         this.app.uiManager.updateTurnIndicator(isMyTurn);
         
         if (isMyTurn) {
@@ -616,11 +616,11 @@ export class MultiplayerController {
      * Request rematch
      */
     requestRematch() {
-        console.log('[Multiplayer] ===== REMATCH REQUEST START =====');
-        console.log('[Multiplayer] socket:', this.socket);
-        console.log('[Multiplayer] socket.readyState:', this.socket?.readyState);
-        console.log('[Multiplayer] roomCode:', this.roomCode);
-        console.log('[Multiplayer] opponentWantsRematch:', this.opponentWantsRematch);
+
+
+
+
+
         
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.error('[Multiplayer] Socket non connesso! readyState:', this.socket?.readyState);
@@ -634,7 +634,7 @@ export class MultiplayerController {
             type: 'rematch'
         });
         
-        console.log('[Multiplayer] Messaggio rematch inviato');
+
         
         // Aggiorna UI SOLO se l'avversario non ha già richiesto
         // Otherwise wait for rematchStart message from server
@@ -654,7 +654,7 @@ export class MultiplayerController {
      * Handle rematch requested by opponent
      */
     handleRematchRequested(message) {
-        console.log('[Multiplayer] Avversario ha richiesto rematch, waitingForRematch:', this.waitingForRematch);
+
         this.opponentWantsRematch = true;
         
         // Aggiorna sempre la UI per mostrare lo stato corretto
@@ -665,7 +665,7 @@ export class MultiplayerController {
      * Handle rematch start
      */
     handleRematchStart(message) {
-        console.log('[Multiplayer] Rematch avviato dal server');
+
         
         // Reset rematch flags
         this.waitingForRematch = false;
@@ -679,24 +679,24 @@ export class MultiplayerController {
      * Update rematch UI
      */
     updateRematchUI() {
-        console.log('[Multiplayer] updateRematchUI - waitingForRematch:', this.waitingForRematch, 'opponentWantsRematch:', this.opponentWantsRematch);
+
         
         const playAgainBtn = document.getElementById('play-again');
         const announcement = document.getElementById('winner-announcement');
         
         if (!playAgainBtn) {
-            console.warn('[Multiplayer] playAgainBtn non trovato!');
+
             return;
         }
         
         if (this.waitingForRematch && this.opponentWantsRematch) {
             // Entrambi vogliono rigiocare - il server sta avviando il gioco
-            console.log('[Multiplayer] Entrambi vogliono rematch - mostro Avvio partita...');
+
             playAgainBtn.disabled = true;
             playAgainBtn.textContent = 'Starting game...';
         } else if (this.waitingForRematch) {
             // Stiamo aspettando l'avversario
-            console.log('[Multiplayer] In attesa avversario...');
+
             playAgainBtn.disabled = true;
             playAgainBtn.textContent = 'Waiting for opponent...';
             
@@ -723,7 +723,7 @@ export class MultiplayerController {
             }
         } else if (this.opponentWantsRematch) {
             // L'avversario vuole rigiocare
-            console.log('[Multiplayer] Avversario vuole rigiocare - mostro Accetta Rematch');
+
             playAgainBtn.disabled = false;
             playAgainBtn.innerHTML = '<span class=\"btn-icon-svg\">↻</span> Accetta Rematch';
             
@@ -895,7 +895,7 @@ export class MultiplayerController {
      * Handle opponent disconnect
      */
     handleOpponentDisconnect() {
-        console.log('[Multiplayer] Avversario disconnesso');
+
         this.showConnectionError('OPPONENT_DISCONNECTED', 'Opponent has left the game');
         setTimeout(() => {
             this.disconnect();
@@ -908,7 +908,7 @@ export class MultiplayerController {
      * Handle our disconnect
      */
     handleDisconnect() {
-        console.log('[Multiplayer] handleDisconnect chiamato, currentMode:', this.app.currentMode);
+
         
         if (this.app.currentMode === 'online') {
             console.error('[Multiplayer] Disconnessione durante partita online');

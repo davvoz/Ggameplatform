@@ -576,7 +576,7 @@ export class Player {
 
         // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
         if (this.y > this.canvasHeight && !this.powerups.immortality) {
-            console.log('Player is dead! y:', this.y, 'canvasHeight:', this.canvasHeight);
+
             this.alive = false;
             // Azzera i cooldown e disattiva il turbo quando muori
             this.turboCooldownRemaining = 0;

@@ -537,6 +537,6 @@ export class RenderingSystem {
     resize(canvasWidth, canvasHeight) {
         // canvasWidth/canvasHeight are now LOGICAL pixels (no DPR)
         this.updateDimensions(canvasWidth, canvasHeight);
-        console.log(`📐 RenderingSystem resized: ${canvasWidth}x${canvasHeight}px`);
+
     }
 }

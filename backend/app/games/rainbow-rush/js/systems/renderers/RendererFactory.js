@@ -114,14 +114,14 @@ export class RendererFactory {
         }
         
         if (!entity || !entity.type) {
-            console.warn('RendererFactory: Invalid entity', entity);
+
             return null;
         }
 
         const renderer = this.renderers.get(entity.type);
         
         if (!renderer) {
-            console.warn(`RendererFactory: No renderer found for type "${entity.type}"`, entity);
+
             return null;
         }
 

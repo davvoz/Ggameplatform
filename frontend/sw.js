@@ -5,13 +5,13 @@ const SW_VERSION = '2.0.0-minimal';
 
 // Install - attiva immediatamente senza precaching
 self.addEventListener('install', event => {
-  console.log('[SW] Installing minimal service worker v' + SW_VERSION);
+
   self.skipWaiting();
 });
 
 // Activate - prendi il controllo immediatamente
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating minimal service worker');
+
   event.waitUntil(self.clients.claim());
 });
 

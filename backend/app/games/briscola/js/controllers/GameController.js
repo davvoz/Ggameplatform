@@ -74,7 +74,7 @@ export class GameController {
      */
     renderGameState(state) {
         const ui = this.app.uiManager;
-        console.log('[GameController] renderGameState - currentPlayer:', state.currentPlayer, 'player1Hand:', state.player1Hand.length);
+
         
         // Render hands
         if (this.app.currentMode === 'local') {
@@ -88,7 +88,7 @@ export class GameController {
         } else {
             // Normal mode - player 1 is the human
             const isPlayerTurn = state.currentPlayer === 1;
-            console.log('[GameController] Rendering player hand, interactive:', isPlayerTurn);
+
             ui.renderPlayerHand(state.player1Hand, isPlayerTurn, (card, el) => this.onCardClick(card, el));
             ui.renderOpponentHand(state.player2HandCount);
         }
@@ -133,7 +133,7 @@ export class GameController {
      */
     async onCardClick(card, element) {
         if (this.isProcessing) {
-            console.log('[GameController] Processing, ignoring click');
+
             return;
         }
         
@@ -148,7 +148,7 @@ export class GameController {
         // In online mode, check if card is enabled (the server controls turns)
         if (this.app.currentMode === 'online') {
             if (element.classList.contains('disabled')) {
-                console.log('[GameController] Card disabled, not your turn');
+
                 return;
             }
         } else {
@@ -157,13 +157,13 @@ export class GameController {
             
             // Check if it's this player's turn
             if (state.currentPlayer !== player) {
-                console.log('[GameController] Not your turn');
+
                 return;
             }
         }
         
         this.isProcessing = true;
-        console.log('[GameController] Player playing card:', card.name);
+
         
         // Disable hand immediately to prevent double clicks
         this.app.uiManager.disablePlayerHand();
@@ -227,28 +227,28 @@ export class GameController {
         
         const state = this.app.gameEngine.getState();
         if (state.currentPlayer !== 2) {
-            console.log('[GameController] AI turn called but not AI turn');
+
             return;
         }
         
         if (this.isProcessing) {
-            console.log('[GameController] Already processing, delaying AI turn');
+
             setTimeout(() => this.playAITurn(), 500);
             return;
         }
         
         this.isProcessing = true;
-        console.log('[GameController] AI playing...');
+
         
         // Get AI move
         const aiCard = this.app.gameEngine.getAIMove();
         if (!aiCard) {
-            console.log('[GameController] AI has no valid move');
+
             this.isProcessing = false;
             return;
         }
         
-        console.log('[GameController] AI plays:', aiCard.name);
+
         
         // Play card sound
         this.app.soundManager?.play('cardPlay');
@@ -268,7 +268,7 @@ export class GameController {
         if (result.success) {
             if (!result.isRoundComplete) {
                 // Player's turn - just enable the existing hand, don't re-render
-                console.log('[GameController] AI done, enabling player hand');
+
                 this.app.uiManager.updateTurnIndicator(true);
                 this.app.uiManager.enablePlayerHand();
             }
@@ -290,7 +290,7 @@ export class GameController {
      */
     async onRoundEnd(result) {
         this.isProcessing = true;
-        console.log('[GameController] Round ended, winner:', result.roundWinner, 'points:', result.pointsWon);
+
         
         const ui = this.app.uiManager;
         
@@ -325,7 +325,7 @@ export class GameController {
         
         // Render new state
         const newState = this.app.gameEngine.getState();
-        console.log('[GameController] New state - currentPlayer:', newState.currentPlayer, 'player1Hand:', newState.player1Hand.length);
+
         
         if (this.app.currentMode === 'local') {
             // In local mode, switch view to winner
@@ -341,7 +341,7 @@ export class GameController {
                 setTimeout(() => this.playAITurn(), 800);
             } else {
                 // Player's turn - enable hand
-                console.log('[GameController] Player turn - enabling hand');
+
                 this.isProcessing = false;
             }
         }
@@ -351,7 +351,7 @@ export class GameController {
      * Handle game over
      */
     onGameOver(result) {
-        console.log('[GameController] Game Over', result);
+
         
         // Play game over sound
         if (result.winner === 1) {
@@ -397,7 +397,7 @@ export class GameController {
             return;
         }
         
-        console.log('[GameController] Handling online move from opponent:', cardData, 'isMyTurn:', isMyTurn);
+
         
         // Don't set isProcessing for opponent moves - we need to allow player to click
         

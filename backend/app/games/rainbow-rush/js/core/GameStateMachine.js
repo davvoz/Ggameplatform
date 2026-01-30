@@ -21,11 +21,11 @@ class BaseGameState extends IGameState {
     }
 
     enter(context) {
-        console.log(`🎮 Entering state: ${this.name}`);
+
     }
 
     exit(context) {
-        console.log(`🎮 Exiting state: ${this.name}`);
+
     }
 
     update(deltaTime, context) {
@@ -212,7 +212,7 @@ class GoalReachedState extends BaseGameState {
             this.frozenPlayerX = player.x;
             this.frozenPlayerY = player.y;
             // Keep player's current expression from gameplay
-            console.log('🎯 Player frozen at:', this.frozenPlayerX, this.frozenPlayerY);
+
         }
         
         // Stop game physics
@@ -264,7 +264,7 @@ class GoalReachedState extends BaseGameState {
             }
         }
         
-        console.log('🎯 Goal reached - starting celebration animation');
+
     }
 
     startAnimationLoop(context) {
@@ -522,7 +522,7 @@ class LevelSummaryState extends BaseGameState {
         const isGameComplete = !summary.nextLevelId;
         
         if (isGameComplete) {
-            console.log('🏆 GAME COMPLETE! All 200 levels finished! Ending session...');
+
             
             // Build comprehensive final stats
             const finalStats = {
@@ -560,9 +560,9 @@ class LevelSummaryState extends BaseGameState {
             // End game session with final score
             if (context.gameController?.rainbowRushSDK?.sessionId) {
                 try {
-                    console.log('💾 Saving final session with score:', summary.score);
+
                     await context.gameController.rainbowRushSDK.endSession(summary.score, finalStats);
-                    console.log('✅ Game session ended on game completion');
+
                 } catch (error) {
                     console.error('❌ Failed to end game session:', error);
                 }
@@ -571,7 +571,7 @@ class LevelSummaryState extends BaseGameState {
             // Notify platform of game completion
             try {
                 if (typeof PlatformSDK !== 'undefined') {
-                    console.log('📡 Notifying Platform SDK of game completion');
+
                     await context.sdkManager.gameOver(summary.score, finalStats);
                 }
             } catch (e) {
@@ -579,7 +579,7 @@ class LevelSummaryState extends BaseGameState {
             }
         } else {
             // Session continues for next level
-            console.log('✅ Level completed - session continues for next level');
+
         }
 
         // Show HTML level summary screen
@@ -631,8 +631,8 @@ class GameOverState extends BaseGameState {
         const stats = context.scoreSystem.getGameStats();
         stats.level = context.levelManager.currentLevelId || 1;
         
-        console.log('🎯 [GameOverState] Final stats:', stats);
-        console.log('🏆 [GameOverState] Final score:', stats.score);
+
+
         
         // IMPORTANT: Send all score data BEFORE resetting anything
         // Store score before any async operations
@@ -660,7 +660,7 @@ class GameOverState extends BaseGameState {
             }
         };
         
-        console.log('📊 [GameOverState] Extra data for XP calculation:', finalStats.extra_data);
+
         
         // Show stats banner in game
         if (context.gameController?.showStatsBanner) {
@@ -674,9 +674,9 @@ class GameOverState extends BaseGameState {
         if (context.gameController?.rainbowRushSDK?.sessionId) {
             try {
                 // Pass final score and stats to endSession
-                console.log('💾 [GameOverState] Saving to Rainbow Rush session with score:', finalScore);
+
                 await context.gameController.rainbowRushSDK.endSession(finalScore, finalStats);
-                console.log('✅ Game session ended on game over with score:', finalScore);
+
             } catch (error) {
                 console.error('❌ Failed to end game session:', error);
             }
@@ -684,9 +684,9 @@ class GameOverState extends BaseGameState {
         
         // Submit score to Platform SDK
         try {
-            console.log('📤 [GameOverState] Submitting score to Platform SDK:', finalScore);
+
             await context.sdkManager.submitScore(finalScore);
-            console.log('✅ [GameOverState] Score submitted to Platform SDK:', finalScore);
+
         } catch (error) {
             console.error('❌ [GameOverState] Error submitting score:', error);
         }
@@ -694,9 +694,9 @@ class GameOverState extends BaseGameState {
         // Send gameOver to Platform SDK  
         try {
             if (typeof PlatformSDK !== 'undefined') {
-                console.log('📡 [GameOverState] Sending gameOver to Platform SDK with score:', finalScore);
+
                 await context.sdkManager.gameOver(finalScore, finalStats);
-                console.log(`✅ Game over sent to SDK: score=${finalScore}`);
+
             }
         } catch (e) {
             console.error('⚠️ Failed to send game over to SDK:', e);

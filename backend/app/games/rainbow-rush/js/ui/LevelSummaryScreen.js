@@ -60,9 +60,9 @@ export class LevelSummaryScreen {
             textCanvas.style.pointerEvents = 'auto';
         }
         
-        console.log('🎊 Level Summary shown:', summary);
+
         if (this.isGameComplete) {
-            console.log('🏆 GAME COMPLETE! Player finished all levels!');
+
         }
     }
     

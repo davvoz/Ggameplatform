@@ -34,13 +34,13 @@ class BriscolaApp {
     }
     
     async init() {
-        console.log('[Briscola] Initializing...');
+
         
         try {
             // Load sprite sheet
             this.spriteSheet = new SpriteSheet();
             await this.spriteSheet.load('assets/cards.jpg');
-            console.log('[Briscola] Sprite sheet loaded');
+
             
             // Initialize sound manager
             this.soundManager = new SoundManager();
@@ -66,7 +66,7 @@ class BriscolaApp {
             // Show menu
             this.showScreen('menu');
             
-            console.log('[Briscola] Initialization complete');
+
             
         } catch (error) {
             console.error('[Briscola] Initialization failed:', error);
@@ -109,7 +109,7 @@ class BriscolaApp {
                     // Reload sprite sheet with new deck
                     try {
                         await this.spriteSheet.changeDeck(this.selectedDeck);
-                        console.log(`[Briscola] Deck changed to: ${this.selectedDeck || 'piacentino'}`);
+
                     } catch (error) {
                         console.error('[Briscola] Failed to change deck:', error);
                     }
@@ -226,7 +226,7 @@ class BriscolaApp {
     }
     
     startGame() {
-        console.log(`[Briscola] Starting game - Mode: ${this.currentMode}, Difficulty: ${this.difficulty}`);
+
         
         // Reset game engine
         this.gameEngine.reset();
@@ -385,7 +385,7 @@ class BriscolaApp {
     playAgain() {
         // In modalità online, richiedi rematch
         if (this.currentMode === 'online') {
-            console.log('[Briscola] Richiesta rematch in modalità online');
+
             this.multiplayerController.requestRematch();
             return;
         }
@@ -399,7 +399,7 @@ class BriscolaApp {
         
         // Se siamo in modalità online, disconnetti e pulisci lo stato
         if (this.currentMode === 'online') {
-            console.log('[Briscola] Disconnessione multiplayer prima di tornare al menu');
+
             this.multiplayerController.disconnect();
         }
         

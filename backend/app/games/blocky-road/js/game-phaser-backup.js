@@ -224,12 +224,12 @@ class GameScene extends Phaser.Scene {
         if (typeof PlatformSDK !== 'undefined' && PlatformSDK.isInitialized) {
             try {
                 PlatformSDK.sendScore(this.score);
-                console.log('✅ Score sent to platform:', this.score);
+
             } catch (error) {
-                console.warn('Failed to send score:', error);
+
             }
         } else {
-            console.warn('PlatformSDK not available or not initialized');
+
         }
     }
 

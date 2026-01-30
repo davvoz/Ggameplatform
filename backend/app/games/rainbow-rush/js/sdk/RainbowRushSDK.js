@@ -47,17 +47,17 @@ export class RainbowRushSDK {
             // Only accept config messages
             if (event.data && event.data.type === 'config') {
                 const payload = event.data.payload;
-                console.log('[RainbowRushSDK] 📥 Received config from platform:', payload);
+
                 
                 // Store platform user data - THIS IS THE ONLY SOURCE OF TRUTH
                 if (payload.userId) {
                     this.userId = payload.userId; // Set userId from parent
                     this.platformUserId = payload.userId;
-                    console.log('[RainbowRushSDK] 📥 userId set to:', this.userId);
+
                 }
                 if (payload.username) {
                     this.username = payload.username;
-                    console.log('[RainbowRushSDK] 📥 username set to:', this.username);
+
                 }
                 
                 // Resolve the pending promise if waiting
@@ -75,15 +75,15 @@ export class RainbowRushSDK {
      */
     async init() {
         if (this.initialized) {
-            console.warn('[RainbowRushSDK] Already initialized');
+
             return;
         }
         
-        console.log('[RainbowRushSDK] Initializing...');
+
         
         // Wait for config message from parent if not already received
         if (!this.userId) {
-            console.log('[RainbowRushSDK] ⏳ Waiting for platform config...');
+
             await this.waitForConfig();
         }
         
@@ -94,8 +94,8 @@ export class RainbowRushSDK {
         }
         
         this.initialized = true;
-        console.log('[RainbowRushSDK] ✅ Initialized for user:', this.userId);
-        console.log('[RainbowRushSDK] Username:', this.username);
+
+
         
         // Load initial progress
         return await this.getProgress();
@@ -108,7 +108,7 @@ export class RainbowRushSDK {
     async waitForConfig() {
         // If userId is already set, return immediately
         if (this.userId) {
-            console.log('[RainbowRushSDK] ✅ Already have userId');
+
             return;
         }
         
@@ -130,7 +130,7 @@ export class RainbowRushSDK {
     async getProgress() {
         try {
             const response = await this.apiRequest('GET', `/api/rainbow-rush/progress/${this.userId}`);
-            console.log('[RainbowRushSDK] Progress loaded:', response);
+
             return response;
         } catch (error) {
             console.error('[RainbowRushSDK] Error loading progress:', error);
@@ -155,7 +155,7 @@ export class RainbowRushSDK {
                 coins: levelData.coins || 0
             });
             
-            console.log('[RainbowRushSDK] Level progress saved:', response);
+
             this.emit('progressSaved', response);
             return response;
         } catch (error) {
@@ -180,15 +180,15 @@ export class RainbowRushSDK {
             
             const response = await this.apiRequest('POST', `/api/rainbow-rush/completion/${this.userId}`, submission);
             
-            console.log('[RainbowRushSDK] Level completion submitted:', response);
+
             
             // Check validation result
             if (response.completion?.validation) {
                 const validation = response.completion.validation;
                 if (!validation.is_valid) {
-                    console.warn('[RainbowRushSDK] Completion flagged:', validation.anomalies);
+
                 }
-                console.log('[RainbowRushSDK] Validation score:', validation.validation_score);
+
             }
             
             this.emit('levelCompleted', response);
@@ -234,12 +234,12 @@ export class RainbowRushSDK {
                 const userEntry = response.leaderboard.find(entry => entry.user_id === this.userId);
                 
                 if (userEntry) {
-                    console.log('[RainbowRushSDK] 🏆 High score from backend:', userEntry.score);
+
                     return userEntry.score;
                 }
             }
             
-            console.log('[RainbowRushSDK] No high score found in leaderboard, returning 0');
+
             return 0;
         } catch (error) {
             console.error('[RainbowRushSDK] Error fetching high score from leaderboard:', error);
@@ -263,7 +263,7 @@ export class RainbowRushSDK {
             this.sessionId = response.session.session_id;
             this.sessionStartTime = Date.now();
             
-            console.log('[RainbowRushSDK] Session started:', this.sessionId);
+
             
             // Start heartbeat
             this.startHeartbeat();
@@ -283,7 +283,7 @@ export class RainbowRushSDK {
      */
     async updateSession(updateData = {}) {
         if (!this.sessionId) {
-            console.warn('[RainbowRushSDK] No active session');
+
             return null;
         }
         
@@ -304,7 +304,7 @@ export class RainbowRushSDK {
      */
     async endSession(finalScore = null, finalStats = null) {
         if (!this.sessionId) {
-            console.warn('[RainbowRushSDK] No active session to end');
+
             return null;
         }
         
@@ -317,17 +317,17 @@ export class RainbowRushSDK {
             const payload = {};
             if (finalScore !== null) {
                 payload.score = finalScore;
-                console.log(`[RainbowRushSDK] 🎯 Sending final score: ${finalScore}`);
+
             }
             if (finalStats !== null) {
                 payload.current_stats = finalStats;
-                console.log(`[RainbowRushSDK] 📊 Sending final stats:`, finalStats);
+
             }
             
-            console.log(`[RainbowRushSDK] 📤 Payload to send:`, payload);
+
             const response = await this.apiRequest('POST', `/api/rainbow-rush/session/${sessionId}/end`, payload);
             
-            console.log('[RainbowRushSDK] Rainbow Rush session ended:', sessionId);
+
             
             // DON'T request XP notification here - let the platform handle it when it receives gameOver
             // The platform (RuntimeShell) will show XP notification when it processes the gameOver message
@@ -374,7 +374,7 @@ export class RainbowRushSDK {
             this.sendHeartbeat();
         }, 10000);
         
-        console.log('[RainbowRushSDK] Heartbeat started');
+
     }
     
     /**
@@ -385,7 +385,7 @@ export class RainbowRushSDK {
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
             this.heartbeatInterval = null;
-            console.log('[RainbowRushSDK] Heartbeat stopped');
+
         }
     }
     
@@ -516,7 +516,7 @@ export class RainbowRushSDK {
         }
         this.listeners.clear();
         this.initialized = false;
-        console.log('[RainbowRushSDK] Destroyed');
+
     }
 }
 

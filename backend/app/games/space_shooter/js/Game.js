@@ -313,7 +313,7 @@ class Game {
         // Register with PlatformSDK for XP banner events
         if (window.PlatformSDK) {
             window.PlatformSDK.on('showXPBanner', (payload) => {
-                console.log('🎁 [PlatformSDK Event] Showing XP banner inside game:', payload);
+
                 if (payload && payload.xp_earned !== undefined) {
                     this.showXPBanner(payload.xp_earned, payload);
                 }
@@ -326,13 +326,13 @@ class Game {
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
-                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
             
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+
                 this.showLevelUpNotification(event.data.payload);
             }
         });
@@ -344,7 +344,7 @@ class Game {
      * @param {object|string} extraData - Extra data with XP breakdown
      */
     showXPBanner(xpAmount, extraData = null) {
-        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+
         
         // Create banner element
         const banner = document.createElement('div');
@@ -370,7 +370,7 @@ class Game {
      * @param {object} stats - Game statistics to display
      */
     showStatsBanner(stats) {
-        console.log('📊 Showing stats banner inside game:', stats);
+
         
         // Create banner element
         const banner = document.createElement('div');
@@ -2005,7 +2005,7 @@ class Game {
                 break;
         }
 
-        console.log(`⚡ Performance mode set to: ${mode}`);
+
     }
 
     /**

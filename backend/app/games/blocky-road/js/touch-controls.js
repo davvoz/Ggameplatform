@@ -230,7 +230,7 @@ class TouchControls {
         
         document.body.appendChild(container);
         
-        console.log('📱 Virtual buttons created for mobile');
+
     }
     
     destroy() {

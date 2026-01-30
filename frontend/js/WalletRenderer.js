@@ -127,7 +127,7 @@ class WalletRenderer {
         try {
             return await this.coinAPI.getDetailedStats(this.userId, 30);
         } catch (error) {
-            console.warn('Error fetching detailed stats:', error);
+
             return null;
         }
     }
@@ -266,7 +266,7 @@ class WalletRenderer {
         const listElement = document.getElementById('transactionList');
 
         if (!container || !listElement) {
-            console.warn('Transaction container not found');
+
             return;
         }
 

@@ -63,10 +63,10 @@ function showLevelUpModal(levelUpData) {
  */
 function highlightReadyFilter(quests) {
     const readyFilterBtn = document.querySelector('.quest-filter-btn[data-filter="ready"]');
-    console.log('🎁 highlightReadyFilter called - Button found:', !!readyFilterBtn);
+
     
     if (!readyFilterBtn) {
-        console.warn('Ready filter button not found!');
+
         return;
     }
     
@@ -76,18 +76,18 @@ function highlightReadyFilter(quests) {
         const isReady = progress.is_completed === true && 
                (progress.is_claimed === false || progress.is_claimed === 0);
         if (isReady) {
-            console.log('🎯 Quest ready to claim:', quest.title);
+
         }
         return isReady;
     }).length;
     
-    console.log('🎁 Unclaimed quests count:', unclaimedCount);
+
     
     if (unclaimedCount > 0) {
-        console.log('✅ Adding has-unclaimed class');
+
         readyFilterBtn.classList.add('has-unclaimed');
     } else {
-        console.log('❌ Removing has-unclaimed class');
+
         readyFilterBtn.classList.remove('has-unclaimed');
     }
 }
@@ -175,7 +175,7 @@ async function handleClaimReward(questId, userId) {
         const { claimQuestReward } = await import('./api.js');
         const result = await claimQuestReward(questId, userId);
 
-        console.log('[Quest Claim] Backend response:', result);
+
 
         // Success animation
         btn.classList.remove('claiming');
@@ -205,7 +205,7 @@ async function handleClaimReward(questId, userId) {
 
         // Check for level up and show animation
         if (result.level_up && result.level_info) {
-            console.log('🎉 Level up detected!', result);
+
             
             // Prepare level up data
             const levelUpData = {
@@ -257,7 +257,7 @@ async function reloadQuests(userId) {
         const { fetchUserQuests } = await import('./api.js');
         const quests = await fetchUserQuests(userId);
 
-        console.log('Quests reloaded after claim:', quests);
+
 
         // Update statistics
         const statistics = new QuestStatistics(quests);
@@ -302,9 +302,9 @@ function setupQuestFilters(quests) {
     applyFilter('platform', questsList);
     
     // Highlight "Da Claimare" filter if there are unclaimed rewards
-    console.log('🔥 CALLING highlightReadyFilter with quests:', quests);
+
     highlightReadyFilter(quests);
-    console.log('🔥 CALLED highlightReadyFilter');
+
 }
 
 async function applyFilter(filter, questsList) {
@@ -459,7 +459,7 @@ export class QuestRenderer {
             const { fetchUserQuests } = await import('./api.js');
             const quests = await fetchUserQuests(this.user.user_id);
 
-            console.log('Quests loaded:', quests);
+
 
             const statistics = new QuestStatistics(quests);
             statistics.render();
@@ -467,9 +467,9 @@ export class QuestRenderer {
             const questList = new QuestList(quests, this.user.user_id);
             questList.render();
 
-            console.log('🚀 ABOUT TO CALL setupQuestFilters');
+
             setupQuestFilters(quests);
-            console.log('🚀 FINISHED setupQuestFilters');
+
         } catch (error) {
             this.handleError(error);
         }
@@ -502,7 +502,7 @@ export class QuestRenderer {
     initScrollToTop() {
         const scrollBtn = document.getElementById('scrollToTopQuests');
         if (!scrollBtn) {
-            console.warn('Scroll to top button not found');
+
             return;
         }
         
@@ -888,7 +888,7 @@ class QuestCard {
 
 // Listen for game session end events to refresh quest progress
 window.addEventListener('gameSessionEnded', async (event) => {
-    console.log('🎮 Game session ended, refreshing quest progress...', event.detail);
+
     
     // Only refresh if we're on the quests page
     const questsList = document.getElementById('questsList');
@@ -923,7 +923,7 @@ window.addEventListener('gameSessionEnded', async (event) => {
         // Update highlight on ready filter
         highlightReadyFilter(quests);
         
-        console.log('✅ Quest progress refreshed after game session');
+
     } catch (error) {
         console.error('Error refreshing quest progress:', error);
     }

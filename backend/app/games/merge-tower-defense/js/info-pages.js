@@ -66,7 +66,7 @@ export class InfoPagesManager {
                     this.cachedSprites.enemies[key] = enemy.sprite();
                 }
             } catch (e) {
-                console.warn(`Failed to cache enemy sprite: ${key}`, e);
+
             }
         }
         
@@ -77,7 +77,7 @@ export class InfoPagesManager {
                     this.cachedSprites.towers[key] = tower.sprite();
                 }
             } catch (e) {
-                console.warn(`Failed to cache tower sprite: ${key}`, e);
+
             }
         }
     }

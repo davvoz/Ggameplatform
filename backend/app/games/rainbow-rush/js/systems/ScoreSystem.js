@@ -259,12 +259,12 @@ export class ScoreSystem {
         const now = Date.now();
         const levelTime = (now - this.levelStartTime) / 1000; // seconds
         
-        console.log('⏱️ Level', this.level, 'completed in', levelTime.toFixed(2), 'seconds');
-        console.log('   levelStartTime:', this.levelStartTime, 'now:', now);
+
+
         
         const bonus = this.calculateLevelTimeBonus(levelTime, this.level);
         
-        console.log('   Bonus:', bonus.rank, bonus.points, 'points');
+
         
         // Store bonus info for display
         this.levelTimeBonus.push({
@@ -392,10 +392,10 @@ export class ScoreSystem {
             try {
                 // Usa il nuovo metodo getUserHighScore per ottenere il vero high score dal backend
                 const highScore = await this.sdk.getUserHighScore();
-                console.log('🏆 High score loaded from backend leaderboard:', highScore);
+
                 return highScore;
             } catch (error) {
-                console.warn('Failed to load high score from SDK leaderboard:', error);
+
                 return this.loadHighScoreLocal();
             }
         } else {
@@ -425,7 +425,7 @@ export class ScoreSystem {
         if (this.sdkEnabled && this.sdk) {
             // SDK gestisce automaticamente l'aggiornamento del high score
             // tramite leaderboard quando si completa un livello
-            console.log('💾 High score managed by SDK (no action needed):', this.highScore);
+
         } else {
             this.saveHighScoreLocal();
         }
@@ -439,7 +439,7 @@ export class ScoreSystem {
         try {
             localStorage.setItem('rainbowRush_highScore', this.highScore.toString());
         } catch (error) {
-            console.warn('Failed to save high score locally:', error);
+
         }
     }
 

@@ -60,7 +60,7 @@ export class AudioManager {
       //this.soundsByChannel.set("music", []);
 
       this._initialized = true;
-      console.log("[AudioManager] Initialized successfully");
+
     } catch (error) {
       console.error("[AudioManager] Failed to initialize:", error);
     }
@@ -94,7 +94,7 @@ export class AudioManager {
    */
   playSound(channelName, soundSource, options = {}) {
     if (!this._initialized) {
-      console.warn("[AudioManager] Not initialized. Call initialize() first.");
+
       return null;
     }
 

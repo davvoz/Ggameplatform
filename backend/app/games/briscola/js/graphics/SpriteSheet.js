@@ -59,9 +59,9 @@ export class SpriteSheet {
                 this.cardHeight = this.image.height / this.rows;
                 
                 this.loaded = true;
-                console.log(`[SpriteSheet] Loaded: ${this.image.width}x${this.image.height}`);
-                console.log(`[SpriteSheet] Card size: ${this.cardWidth}x${this.cardHeight}`);
-                console.log(`[SpriteSheet] Deck: ${finalSrc}`);
+
+
+
                 resolve();
             };
             

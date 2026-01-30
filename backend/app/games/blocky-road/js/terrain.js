@@ -73,7 +73,7 @@ class TerrainGenerator {
     }
     
     initObjectPools() {
-        console.log('🔧 Initializing global InstancedMesh systems...');
+
         
         // =====================================================
         // TERRAIN TILES - InstancedMesh per tipo (colore fisso, no setColorAt)
@@ -104,7 +104,7 @@ class TerrainGenerator {
             this.terrainMeshes[type] = mesh;
             this.terrainTilePositions[type] = new Map();
         }
-        console.log(`✅ Terrain InstancedMesh created (4 types, ${this.maxTilesPerType} tiles each)`);
+
         
         // =====================================================
         // RAIL SLEEPERS - InstancedMesh globale
@@ -130,7 +130,7 @@ class TerrainGenerator {
         for (let i = 0; i < this.sleepersPerRow; i++) {
             this.sleeperOffsets.push(-12 + (i * 0.5));
         }
-        console.log(`✅ Rail InstancedMesh created (${totalSleepers} sleepers capacity)`);
+
         
         // =====================================================
         // WARNING LIGHTS - Pool di oggetti (reduced)
@@ -142,7 +142,7 @@ class TerrainGenerator {
             this.scene.add(light);
             this.warningLightPool.push(light);
         }
-        console.log(`✅ Pre-cached ${this.warningLightPool.length} warning lights`);
+
     }
     
     // NUOVO: Aggiorna la InstancedMesh globale delle rotaie
@@ -223,7 +223,7 @@ class TerrainGenerator {
             
             const index = mesh.count;
             if (index >= this.maxTilesPerType) {
-                console.warn(`⚠️ Max tiles reached for type ${type}`);
+
                 return;
             }
             
@@ -578,7 +578,7 @@ class TerrainGenerator {
                 }
             });
         } else {
-            console.warn('⚠️ Warning light pool exhausted, creating new lights');
+
             leftLight = Models.createTrainWarningLight();
             rightLight = Models.createTrainWarningLight();
             this.scene.add(leftLight);

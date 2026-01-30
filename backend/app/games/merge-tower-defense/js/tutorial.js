@@ -277,7 +277,7 @@ export class TutorialManager {
      * Start the tutorial
      */
     start() {
-        console.log('[Tutorial] Starting tutorial...');
+
         this.isActive = true;
         this.isPaused = false;
         this.currentStepIndex = 0;
@@ -303,7 +303,7 @@ export class TutorialManager {
      * Stop the tutorial
      */
     stop() {
-        console.log('[Tutorial] Stopping tutorial...');
+
         this.isActive = false;
         
         // Remove tower type restrictions
@@ -327,7 +327,7 @@ export class TutorialManager {
      * Complete the tutorial
      */
     complete() {
-        console.log('[Tutorial] Tutorial completed!');
+
         this.stop();
         
         // Show wave mode selection after tutorial
@@ -346,7 +346,7 @@ export class TutorialManager {
             return;
         }
         
-        console.log(`[Tutorial] Entering step: ${step.id}`);
+
         
         // Set tower type restrictions for this step
         if (this.ui) {

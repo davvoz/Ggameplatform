@@ -82,7 +82,7 @@ export class BackgroundSystem {
         }
         
         if (!this.themeFactory.hasTheme(newTheme)) {
-            console.warn(`Theme ${newTheme} not available`);
+
             return;
         }
 

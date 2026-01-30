@@ -50,7 +50,7 @@
          */
         async init(options = {}) {
             if (this.isInitialized) {
-                console.warn('[PlatformSDK] Already initialized');
+
                 return;
             }
             
@@ -58,7 +58,7 @@
             
             // Check if running in iframe
             if (window.self === window.top) {
-                console.warn('[PlatformSDK] Not running in iframe - platform features may not be available');
+
             }
             
             // Support legacy callback style (onPause, onResume, onExit, onStart)
@@ -98,7 +98,7 @@
             return new Promise((resolve, reject) => {
                 const timeoutId = setTimeout(() => {
                     if (!this.isPlatformReady) {
-                        console.warn('[PlatformSDK] Platform ready timeout');
+
                         resolve(); // Don't reject, just continue
                     }
                 }, timeout);
@@ -522,7 +522,7 @@
         log(message, data = null) {
             if (window.self === window.top) {
                 // Not in iframe, use console directly
-                console.log('[PlatformSDK]', message, data || '');
+
             } else {
                 // Send to platform
                 this.sendToPlatform('log', {

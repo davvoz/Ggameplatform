@@ -43,7 +43,7 @@ export class EntityManager {
     addEntity(type, entity) {
         const collection = this[type];
         if (!collection) {
-            console.warn(`Unknown entity type: ${type}`);
+
             return;
         }
         

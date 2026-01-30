@@ -28,13 +28,13 @@ export class GameEngine {
         
         // Handle WebGL context loss/restore
         this.canvas.addEventListener('webglcontextlost', (e) => {
-            console.warn('WebGL context lost');
+
             e.preventDefault();
             this.stop();
         }, false);
         
         this.canvas.addEventListener('webglcontextrestored', () => {
-            console.log('WebGL context restored');
+
             this.gl = this.initWebGL();
             if (this.running) {
                 this.start();
@@ -88,7 +88,7 @@ export class GameEngine {
             this.canvas.style.width = canvasWidth + 'px';
             this.canvas.style.height = canvasHeight + 'px';
             
-            console.log(`🖼️ Canvas resized: ${canvasWidth}x${canvasHeight}px | Mobile: ${isMobile}`);
+
             
             // Sync textCanvas dimensions
             const textCanvas = document.getElementById('textCanvas');
@@ -173,7 +173,7 @@ export class GameEngine {
         
         // Verify WebGL context is still valid
         if (!gl || gl.isContextLost()) {
-            console.warn('WebGL context lost, skipping render');
+
             return;
         }
         

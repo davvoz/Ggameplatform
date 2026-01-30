@@ -2,7 +2,7 @@
 
 class BlockyRoadGame {
     constructor() {
-        console.log('🎮 Blocky Road v2.1 - maxZ score fix loaded');
+
         this.scene = null;
         this.renderer = null;
         this.camera = null;
@@ -51,7 +51,7 @@ class BlockyRoadGame {
      * @param {object|string} extraData - Extra data with XP breakdown
      */
     showXPBanner(xpAmount, extraData = null) {
-        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+
         
         // Create banner element (without breakdown)
         const banner = document.createElement('div');
@@ -140,20 +140,20 @@ class BlockyRoadGame {
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
-                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
             
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+
                 this.showLevelUpNotification(event.data.payload);
             }
         });
     }
     
     async init() {
-        console.log('🎮 Initializing Blocky Road Three.js');
+
         
         const loadingProgress = document.getElementById('loadingProgress');
         const updateProgress = (percent) => {
@@ -182,9 +182,9 @@ class BlockyRoadGame {
         updateProgress(50);
         this.terrain.generateInitialTerrain();
         
-        console.log('🌍 Terrain generated, rows:', this.terrain.rows.length);
-        console.log('📷 Camera position:', this.camera.getCamera().position);
-        console.log('🎥 Scene children:', this.scene.children.length);
+
+
+
         
         // Setup input
         updateProgress(70);
@@ -235,7 +235,7 @@ class BlockyRoadGame {
             this.isLoaded = true; // Gioco caricato
         }, 500);
         
-        console.log('✅ Game initialized');
+
     }
     
     setupScene() {
@@ -257,7 +257,7 @@ class BlockyRoadGame {
         this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
         
-        console.log('🎨 Renderer created:', window.innerWidth, 'x', window.innerHeight);
+
     }
     
     setupLights() {
@@ -375,7 +375,7 @@ class BlockyRoadGame {
                     this.renderer.domElement.style.transform = 'translate(-50%, -50%)';
                 }
                 
-                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
+
             } else {
                 // Mobile: usa tutto lo schermo
                 if (this.camera) {
@@ -406,9 +406,9 @@ class BlockyRoadGame {
             } else if (elem.msRequestFullscreen) {
                 await elem.msRequestFullscreen();
             }
-            console.log('🖥️ Fullscreen activated');
+
         } catch (error) {
-            console.warn('⚠️ Fullscreen API failed:', error);
+
         }
     }
     
@@ -489,7 +489,7 @@ class BlockyRoadGame {
         let restartDebounce = false;
         document.getElementById('restartButton').addEventListener('click', () => {
             if (restartDebounce) {
-                console.log('⏳ Restart already in progress...');
+
                 return;
             }
             restartDebounce = true;
@@ -512,9 +512,9 @@ class BlockyRoadGame {
     async initSDK() {
         if (typeof PlatformSDK !== 'undefined') {
             await PlatformSDK.init();
-            console.log('📡 Platform SDK initialized');
+
         } else {
-            console.warn('⚠️ PlatformSDK not available');
+
         }
     }
     
@@ -548,13 +548,13 @@ class BlockyRoadGame {
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, '*');
-                console.log('🎮 Game started event sent to platform');
+
             } catch (e) {
                 console.error('⚠️ Failed to send game started event:', e);
             }
         }
         
-        console.log('🎮 Game started!');
+
     }
     
     restartGame() {
@@ -587,7 +587,7 @@ class BlockyRoadGame {
             this.scene.remove(this.player.mesh);
         }
         this.player = new Player(this.scene, this.particles);
-        console.log('🐰 Player rigenerato completamente');
+
         
         // Reset per-session train death counter on restart
         this.trainDeaths = 0;
@@ -595,7 +595,7 @@ class BlockyRoadGame {
         this.deathLineZ = -7; // Player spawns at 0, so death line at -7 maintains correct distance
         this.deathLineEnabled = false;
         
-        console.log('🔄 Game restarted');
+
         
         // Notify platform that a new game has started - create new session
         if (typeof PlatformSDK !== 'undefined') {
@@ -606,7 +606,7 @@ class BlockyRoadGame {
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, '*');
-                console.log('🎮 Game restart - new session creation requested');
+
             } catch (e) {
                 console.error('⚠️ Failed to send game started event on restart:', e);
             }
@@ -724,7 +724,7 @@ class BlockyRoadGame {
     gameOver(reason) {
         if (this.isGameOver) return;
         
-        console.log('💀 Game Over:', reason);
+
         this.isGameOver = true;
         
         // Send final score only at game over
@@ -760,7 +760,7 @@ class BlockyRoadGame {
                     reason: reason,
                     timestamp: Date.now()
                 });
-                console.log(`📡 Game over sent to SDK: score=${this.score}, coins=${this.coins}, train_deaths=${this.trainDeaths}`);
+
             } catch (e) {
                 console.error('⚠️ Failed to send game over to SDK:', e);
             }
@@ -813,7 +813,7 @@ class BlockyRoadGame {
         
         // Log slow frames (>16.67ms = below 60fps)
         if (totalUpdateTime > 16.67) {
-            console.warn(`⚠️ SLOW FRAME: ${totalUpdateTime.toFixed(2)}ms | Player: ${playerUpdateTime.toFixed(2)}ms | Terrain: ${terrainUpdateTime.toFixed(2)}ms | Obstacles: ${obstaclesUpdateTime.toFixed(2)}ms | Particles: ${particlesUpdateTime.toFixed(2)}ms`);
+
         }
         
         // Rising danger zone mechanic (like Crossy Road's water)
@@ -834,7 +834,7 @@ class BlockyRoadGame {
         // Enable death line when player moves forward past Z=2
         if (!this.deathLineEnabled && playerPos.z > 2) {
             this.deathLineEnabled = true;
-            console.log('💀 Death line activated!');
+
         }
         
         // Update death line (chases player from behind)
@@ -855,7 +855,7 @@ class BlockyRoadGame {
             
             // Check if death line caught the player
             if (playerPos.z < this.deathLineZ) {
-                console.log(`💀 Death! Player Z=${playerPos.z.toFixed(2)}, Death Line Z=${this.deathLineZ.toFixed(2)}`);
+
                 this.gameOver('Troppo lento! Sei stato raggiunto!');
             }
         }
@@ -890,7 +890,7 @@ class BlockyRoadGame {
             const particleCount = this.particles.particles.length;
             const terrainRowCount = this.terrain.rows.length;
             
-            console.warn(`⏱️ Slow frame: ${frameTime.toFixed(2)}ms | Obstacles:${obstacleCount} Platforms:${platformCount} Coins:${coinCount} Particles:${particleCount} TerrainRows:${terrainRowCount}`);
+
         }
         if (frameTime > 33) { // Slower than 30fps
             console.error(`🔴 VERY SLOW frame: ${frameTime.toFixed(2)}ms`);
@@ -966,12 +966,12 @@ class BlockyRoadGame {
         
         // Log every frame if slow (>16.67ms = below 60fps)
         if (totalFrameTime > 16.67) {
-            console.warn(`🎬 FRAME LAG: ${totalFrameTime.toFixed(2)}ms | TWEEN: ${tweenTime.toFixed(2)}ms | Update: ${updateTime.toFixed(2)}ms | Render: ${renderTime.toFixed(2)}ms | FPS: ${(1000/totalFrameTime).toFixed(0)}`);
+
             
             // If render is the bottleneck, log detailed info
             if (renderTime > 8) {
-                console.warn(`  🖼️ RENDER DETAILS: DrawCalls:${renderInfo.render.calls} | Triangles:${renderInfo.render.triangles} | Points:${renderInfo.render.points} | Lines:${renderInfo.render.lines}`);
-                console.warn(`  📦 MEMORY: Geometries:${renderInfo.memory.geometries} | Textures:${renderInfo.memory.textures} | Programs:${renderInfo.programs?.length || 0}`);
+
+
             }
         }
     }
@@ -983,7 +983,7 @@ class BlockyRoadGame {
             tutorial.classList.remove('hiding');
             this.tutorialVisible = true;
             this.tutorialAutoHideTimer = 0;
-            console.log('💡 Showing tutorial overlay');
+
         }
     }
     
@@ -997,7 +997,7 @@ class BlockyRoadGame {
             setTimeout(() => {
                 tutorial.classList.remove('show');
             }, 500);
-            console.log('✅ Tutorial hidden');
+
         }
     }
 }

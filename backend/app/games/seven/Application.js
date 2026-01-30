@@ -60,12 +60,12 @@ export class Application {
     const gameState = this._gameController._state;
     
     if (!platformAdapter.isAvailable()) {
-      console.log('[Seven] Platform SDK not available, running in offline mode');
+
       return;
     }
     
     // Aspetta che arrivi il config con userId (max 3 secondi)
-    console.log('[Seven] Waiting for platform config with userId...');
+
     const maxWait = 3000;
     const startWait = Date.now();
     while (!window.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
@@ -73,15 +73,15 @@ export class Application {
     }
     
     if (window.platformConfig?.userId) {
-      console.log('[Seven] ✅ Got userId from platform:', window.platformConfig.userId);
+
     } else {
-      console.warn('[Seven] ⚠️ No userId received from platform, staying in offline mode');
+
       return;
     }
     
-    console.log('[Seven] Loading user coin balance...');
+
     const balance = await platformAdapter.getUserBalance();
-    console.log('[Seven] Balance loaded:', balance);
+
     
     // Balance can be 0, so check for null/undefined specifically
     if (balance !== null && balance !== undefined && typeof balance === 'number') {
@@ -100,9 +100,9 @@ export class Application {
           NOTIFICATION_TONE.NEUTRAL
         );
       }
-      console.log('[Seven] ✅ Platform coins enabled with balance:', balance);
+
     } else {
-      console.warn('[Seven] ⚠️ Failed to load balance, staying in offline mode');
+
     }
   }
 
@@ -147,7 +147,7 @@ export class Application {
     this._gameController._ui.updateHUD(gameState.bank);
 
     if (!platformAdapter.isAvailable()) {
-      console.log('[Seven] Platform not available - running in standalone mode');
+
       this._gameController._ui.setNotice(
         'Offline mode: using local coins.',
         NOTIFICATION_TONE.NEUTRAL
@@ -158,20 +158,20 @@ export class Application {
     try {
       await platformAdapter.initialize({
         onStart: () => {
-          console.log('[Seven] Platform requested start');
+
           this._gameController.resume();
         },
         onPause: () => {
-          console.log('[Seven] Platform requested pause');
+
           this._gameController.pause();
         },
         onResume: () => {
-          console.log('[Seven] Platform requested resume');
+
           this._gameController.resume();
         },
         onExit: () => this._handleExit(),
         onConfig: () => {
-          console.log('[Seven] Config received, will load coins...');
+
         }
       });
 
@@ -181,7 +181,7 @@ export class Application {
         bank: gameState.bank
       });
       
-      console.log('[Seven] ✅ Platform SDK initialized successfully');
+
     } catch (error) {
       gameState.enablePlatformCoins(false);
       gameState.setPlatformBalance(GAME_CONSTANTS.INITIAL_BANK);

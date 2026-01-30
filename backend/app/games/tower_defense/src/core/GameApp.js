@@ -18,7 +18,7 @@ export class GameApp {
 
     // Performance profile - auto-detect ottimale
     this.performanceProfile = PerformanceProfileFactory.createOptimal();
-    console.log('[Performance] Profile:', this.performanceProfile);
+
 
     this.clock = new THREE.Clock();
     this.sceneManager = new SceneManager(config.rendering, this.performanceProfile);
@@ -112,30 +112,30 @@ export class GameApp {
   
   _initializePlatformSDK() {
     if (!this.platformSDK) {
-      console.log('[Tower Defense] Platform SDK not available');
+
       return;
     }
     
-    console.log('[Tower Defense] Initializing Platform SDK...');
+
     
     this.platformSDK.init().then(() => {
-      console.log('[Tower Defense] Platform SDK initialized');
+
       
       // Listen for pause event from platform
       this.platformSDK.on('pause', () => {
-        console.log('[Tower Defense] Pause event received from platform');
+
         this._pauseGame();
       });
       
       // Listen for resume event from platform
       this.platformSDK.on('resume', () => {
-        console.log('[Tower Defense] Resume event received from platform');
+
         this._resumeGame();
       });
       
       // Listen for exit event from platform
       this.platformSDK.on('exit', () => {
-        console.log('[Tower Defense] Exit event received from platform');
+
         this._exitGame();
       });
       
@@ -250,22 +250,22 @@ export class GameApp {
       this._raycaster.setFromCamera(this._ndc, this.sceneManager.camera);
 
       const pendingTypeId = this.levelManager.pendingTowerType;
-      console.log("[INTERACTION] pendingTowerType:", pendingTypeId);
+
 
       // If we are placing a tower, prefer placement interaction
       if (pendingTypeId) {
-        console.log("[INTERACTION] Tentativo placement torre:", pendingTypeId);
+
         const towerConfig = this.config.gameplay.towerTypes.find(
           (t) => t.id === pendingTypeId
         );
         if (!towerConfig) {
-          console.log("[INTERACTION] towerConfig NON TROVATO per:", pendingTypeId);
+
           return;
         }
         const affordable = this.levelManager.isTowerAffordable(pendingTypeId);
-        console.log("[INTERACTION] isAffordable:", affordable, "credits:", this.levelManager.credits, "cost:", towerConfig.baseCost);
+
         if (!affordable) {
-          console.log("[INTERACTION] NON affordable, ABORT");
+
           return;
         }
 
@@ -290,7 +290,7 @@ export class GameApp {
         }
 
         const position = new THREE.Vector3(snappedX, 0, snappedZ);
-        console.log("[PLACEMENT] Piazzo torre a:", snappedX, snappedZ);
+
         
         const placed = this.world.placeTowerAt(position, towerConfig);
         if (placed !== false) {
@@ -302,9 +302,9 @@ export class GameApp {
             this.uiManager.bottomBarView.setSelectedTower(null);
           }
           
-          console.log("[PLACEMENT] Torre piazzata, pendingTowerType cleared");
+
         } else {
-          console.log("[PLACEMENT] Piazzamento fallito - casella occupata");
+
         }
         return;
       }
@@ -605,21 +605,21 @@ export class GameApp {
 
   _setupGameOverListener() {
     window.addEventListener('gameOver', (event) => {
-      console.log('[Tower Defense] 💀 Game Over event received');
-      console.log('[Tower Defense] Final score:', this.gameScore);
-      console.log('[Tower Defense] Wave:', this.levelManager.currentWaveIndex + 1);
+
+
+
       
       // Send final score to platform
       if (this.platformSDK && this.platformSDK._instance && this.platformSDK._instance.isInitialized) {
-        console.log('[Tower Defense] Sending gameOver to platform...');
+
         this.platformSDK.gameOver(this.gameScore, {
           wave: this.levelManager.currentWaveIndex + 1,
           credits: this.levelManager.credits,
           finalWave: this.levelManager.currentWaveIndex + 1
         });
-        console.log('[Tower Defense] ✅ gameOver sent to platform');
+
       } else {
-        console.warn('[Tower Defense] Platform SDK not available for gameOver');
+
       }
       
       // Play game over sound
@@ -635,31 +635,31 @@ export class GameApp {
   }
 
   async _restartGame() {
-    console.log('[Tower Defense] 🔄 Restart Game requested');
+
     
     // Reset session on platform before restarting
     if (this.platformSDK && this.platformSDK._instance && this.platformSDK._instance.isInitialized) {
-      console.log('[Tower Defense] Resetting session before restart...');
+
       try {
         await this.platformSDK.resetSession();
-        console.log('[Tower Defense] ✅ Session reset complete');
+
       } catch (error) {
         console.error('[Tower Defense] ❌ Failed to reset session:', error);
       }
     } else {
-      console.warn('[Tower Defense] Platform SDK not available for session reset');
+
     }
     
     // Reset game score
     this.gameScore = 0;
-    console.log('[Tower Defense] Score reset to 0');
+
     
     // Reset game state
     this.world.resetGame();
     this.levelManager.startLevel("level-1");
     this.uiManager.showGameHud(this.levelManager, this.config.gameplay);
     
-    console.log('[Tower Defense] 🎮 Game restarted successfully');
+
   }
 
   loop() {

@@ -65,18 +65,18 @@ async function initSDK() {
     try {
       await PlatformSDK.init({
         onStart: () => {
-          console.log('[Yatzi 3D] Platform requested start');
+
         },
         onPause: () => {
-          console.log('[Yatzi 3D] Platform requested pause');
+
         }
       });
-      console.log('📡 Platform SDK initialized for Yatzi 3D');
+
     } catch (error) {
-      console.warn('⚠️ PlatformSDK init failed:', error);
+
     }
   } else {
-    console.warn('⚠️ PlatformSDK not available');
+
   }
 }
 
@@ -92,7 +92,7 @@ function startGameSession() {
         timestamp: Date.now(),
         protocolVersion: '1.0.0'
       }, '*');
-      console.log('🎮 Game session started for Yatzi 3D');
+
     } catch (error) {
       console.error('⚠️ Failed to start game session:', error);
     }
@@ -115,7 +115,7 @@ function sendScoreToPlatform(playerScore, aiScore) {
           upper_bonus: gameState.achievements?.upper_bonus || false
         }
       });
-      console.log(`📊 Score sent: Player=${playerScore}, AI=${aiScore}`, gameState.achievements);
+
     } catch (error) {
       console.error('⚠️ Failed to send score:', error);
     }
@@ -456,22 +456,22 @@ function commitScore(playerId, category, diceValues) {
   if (playerId === "player" && s > 0) {
     if (category === "Yatzi") {
       gameState.achievements.roll_yatzi = true;
-      console.log("🎯 Achievement: Yatzi!");
+
     }
     if (category === "Full") {
       gameState.achievements.full_house = true;
-      console.log("🎯 Achievement: Full House!");
+
     }
     if (category === "Scala lunga") {
       gameState.achievements.large_straight = true;
-      console.log("🎯 Achievement: Large Straight!");
+
     }
   }
   
   // Check for upper bonus achievement (player only)
   if (playerId === "player" && totals.bonus > 0 && !gameState.achievements.upper_bonus) {
     gameState.achievements.upper_bonus = true;
-    console.log("🎯 Achievement: Upper Bonus!");
+
   }
 
   return s;

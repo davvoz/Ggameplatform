@@ -6,22 +6,22 @@ let gameScene;
 async function initPlatformSDK() {
     try {
         await PlatformSDK.init();
-        console.log('✅ Platform SDK initialized');
+
         
         // Listen for platform events
         PlatformSDK.on('pause', () => {
-            console.log('Game paused by platform');
+
             if (gameScene) gameScene.pause();
         });
         
         PlatformSDK.on('resume', () => {
-            console.log('Game resumed by platform');
+
             if (gameScene) gameScene.resume();
         });
         
         return true;
     } catch (error) {
-        console.warn('Platform SDK not available:', error);
+
         return false;
     }
 }
@@ -61,7 +61,7 @@ function initGame() {
         loading.style.display = 'none';
     }
     
-    console.log('✅ Blocky Road initialized');
+
 }
 
 // Setup restart button
@@ -101,7 +101,7 @@ function handleVisibilityChange() {
 
 // Initialize everything when page loads
 window.addEventListener('load', async () => {
-    console.log('🎮 Starting Blocky Road...');
+
     
     // Initialize Platform SDK first
     await initPlatformSDK();
@@ -116,7 +116,7 @@ window.addEventListener('load', async () => {
     window.addEventListener('resize', handleResize);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    console.log('🎮 Blocky Road ready to play!');
+
 });
 
 // Cleanup on unload

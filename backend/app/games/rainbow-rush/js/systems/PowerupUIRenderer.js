@@ -377,7 +377,7 @@ export class PowerupUIRenderer {
     
     drawCooldownArc(x, y, radius, progress, color) {
         if (!this.ctx2d) {
-            console.warn('ctx2d not available for drawCooldownArc');
+
             return;
         }
         

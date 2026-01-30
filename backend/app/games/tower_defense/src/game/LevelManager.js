@@ -72,9 +72,9 @@ export class LevelManager {
   }
 
   requestTowerPlacement(towerTypeId) {
-    console.log("[LEVEL MGR] requestTowerPlacement:", towerTypeId);
+
     this.pendingTowerType = towerTypeId;
-    console.log("[LEVEL MGR] pendingTowerType SET to:", this.pendingTowerType);
+
     this.listeners.towerPlacementRequested.forEach((cb) =>
       cb(towerTypeId)
     );

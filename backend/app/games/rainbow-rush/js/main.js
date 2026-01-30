@@ -21,7 +21,7 @@ class RainbowRushApp {
             
             // Initialize Screen Manager first
             this.screenManager = new ScreenManager();
-            console.log('✅ ScreenManager initialized');
+
             
             // Get canvas element
             const canvas = document.getElementById('gameCanvas');
@@ -60,8 +60,8 @@ class RainbowRushApp {
             this.screenManager.updateDebugPanel(this.gameController?.rainbowRushSDK);
 
             this.initialized = true;
-            console.log('✅ Rainbow Rush initialized successfully!');
-            console.log('🔒 Backend integration:', this.gameController.rainbowRushSDK ? 'ENABLED (Secure)' : 'DISABLED (LocalStorage)');
+
+
         } catch (error) {
             console.error('❌ Failed to initialize game:', error);
             this.showError(error.message);
@@ -78,7 +78,7 @@ class RainbowRushApp {
                 gameId: 'rainbow-rush',
                 timestamp: Date.now()
             }, '*');
-            console.log('⚡ Fast game ready signal sent');
+
         }
     }
 
@@ -253,7 +253,7 @@ class RainbowRushApp {
      * @param {object} stats - Game statistics to display
      */
     showStatsBanner(stats) {
-        console.log('📊 Showing stats banner inside game:', stats);
+
         
         // Create banner element
         const banner = document.createElement('div');
@@ -348,7 +348,7 @@ class RainbowRushApp {
      * @param {object|string} extraData - Extra data with XP breakdown
      */
     showXPBanner(xpAmount, extraData = null) {
-        console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+
         
         // Create banner element (without breakdown)
         const banner = document.createElement('div');
@@ -373,7 +373,7 @@ class RainbowRushApp {
         // Register with PlatformSDK for XP banner events
         if (window.PlatformSDK) {
             window.PlatformSDK.on('showXPBanner', (payload) => {
-                console.log('🎁 [PlatformSDK Event] Showing XP banner inside game:', payload);
+
                 if (payload && payload.xp_earned !== undefined) {
                     this.showXPBanner(payload.xp_earned, payload);
                 }
@@ -383,7 +383,7 @@ class RainbowRushApp {
         // Listen for messages from platform (e.g., XP banner requests) - fallback
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
-                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
         });
@@ -406,7 +406,7 @@ class RainbowRushApp {
                     // Se utente esce dal fullscreen E il gioco sta giocando (non già in pausa)
                     if (!isFullscreen && this.gameController.stateMachine.isPlaying()) {
                         // Utente è uscito dal fullscreen mentre giocava - pausa automatica
-                        console.log('🔒 Fullscreen exited - auto pause');
+
                         this.gameController.pauseGame();
                         this.gameController.needsFullscreenRestore = true;
                         this.gameController.autoPausedFullscreen = true;
@@ -453,7 +453,7 @@ class RainbowRushApp {
                     `${this.gameController.rainbowRushSDK.apiBaseUrl}/api/rainbow-rush/session/${this.gameController.rainbowRushSDK.sessionId}/end`,
                     JSON.stringify({})
                 );
-                console.log('🚪 Session cleanup on page unload');
+
             }
         });
         
@@ -464,7 +464,7 @@ class RainbowRushApp {
                     `${this.gameController.rainbowRushSDK.apiBaseUrl}/api/rainbow-rush/session/${this.gameController.rainbowRushSDK.sessionId}/end`,
                     JSON.stringify({})
                 );
-                console.log('🚪 Session cleanup on page hide');
+
             }
         });
     }

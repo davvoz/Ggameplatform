@@ -37,7 +37,7 @@ export class UIManager {
      * @param {Function} onCardClick - Click handler
      */
     renderPlayerHand(cards, interactive = true, onCardClick = null) {
-        console.log('[UIManager] renderPlayerHand - cards:', cards.length, 'interactive:', interactive);
+
         this.elements.playerHand.innerHTML = '';
         
         cards.forEach((card, index) => {
@@ -58,7 +58,7 @@ export class UIManager {
                 if (element.classList.contains('disabled')) return;
                 e.preventDefault();
                 element.classList.remove('touch-active');
-                console.log('[UIManager] Card touched:', card.name);
+
                 if (onCardClick) onCardClick(card, element);
             });
             
@@ -69,10 +69,10 @@ export class UIManager {
             // Mouse support
             element.addEventListener('click', () => {
                 if (element.classList.contains('disabled')) {
-                    console.log('[UIManager] Card disabled, ignoring click');
+
                     return;
                 }
-                console.log('[UIManager] Card clicked:', card.name);
+
                 if (onCardClick) onCardClick(card, element);
             });
             
@@ -300,13 +300,13 @@ export class UIManager {
      */
     enablePlayerHand() {
         const cards = this.elements.playerHand.querySelectorAll('.card');
-        console.log('[UIManager] Enabling player hand, cards:', cards.length);
-        console.log('[UIManager] Card classes before:', cards[0]?.className);
+
+
         cards.forEach(card => {
             card.classList.add('playable');
             card.classList.remove('disabled');
         });
-        console.log('[UIManager] Card classes after:', cards[0]?.className);
+
     }
     
     /**

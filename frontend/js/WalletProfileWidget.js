@@ -12,18 +12,18 @@ class WalletProfileWidget {
      * Render wallet section in profile
      */
     async render() {
-        console.log('🎨 WalletProfileWidget.render() called for user:', this.userId);
+
         try {
-            console.log('📡 Fetching balance...');
+
             const balance = await this.coinAPI.getUserBalance(this.userId);
-            console.log('✅ Balance:', balance);
+
             
-            console.log('📡 Fetching transactions...');
+
             const transactions = await this.coinAPI.getUserTransactions(this.userId, 10);
-            console.log('✅ Transactions:', transactions.length);
+
 
             this.container.innerHTML = this.generateWalletHTML(balance, transactions);
-            console.log('✅ Wallet HTML rendered');
+
         } catch (error) {
             console.error('❌ Error rendering wallet widget:', error);
             this.container.innerHTML = this.generateErrorHTML();

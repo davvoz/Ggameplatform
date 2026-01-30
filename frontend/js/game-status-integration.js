@@ -129,10 +129,10 @@ function renderGameCard(game) {
     
     // Add STEEM rewards badge if enabled
     let steemBadgeHTML = '';
-    console.log('Game:', game.title, 'steem_rewards_enabled:', game.steem_rewards_enabled);
+
     if (game.steem_rewards_enabled) {
         steemBadgeHTML = `<span class="steem-rewards-badge" title="This game offers STEEM rewards"><img src="./icons/steem.png" alt="STEEM" class="steem-rewards-icon"> STEEM</span>`;
-        console.log('Adding STEEM badge for', game.title);
+
     }
     
     card.innerHTML = `
@@ -283,7 +283,7 @@ async function createGameStatus(statusData) {
         }
         
         const result = await response.json();
-        console.log('Status created:', result);
+
         
         return result.data;
     } catch (error) {
@@ -422,7 +422,7 @@ async function initGameStatusFeatures() {
         await renderStatusManagementPanel('status-management-container');
     }
     
-    console.log('✅ Game status features initialized');
+
 }
 
 // Auto-initialize when DOM is ready

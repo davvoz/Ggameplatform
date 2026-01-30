@@ -19,7 +19,7 @@ class DailyLoginBanner {
      */
     async init(user) {
         if (!user || !user.user_id) {
-            console.warn('DailyLoginBanner: No user provided');
+
             return;
         }
         
@@ -331,7 +331,7 @@ class DailyLoginBanner {
      * Show the banner
      */
     show() {
-        console.log('DailyLoginBanner: Showing banner');
+
         if (this.bannerElement) {
             // Show overlay
             const overlay = document.getElementById('daily-login-overlay');
@@ -352,7 +352,7 @@ class DailyLoginBanner {
                 trigger.style.display = 'none';
             }
         } else {
-            console.warn('DailyLoginBanner: Banner element not found!');
+
         }
     }
     
@@ -360,7 +360,7 @@ class DailyLoginBanner {
      * Hide the banner
      */
     hide() {
-        console.log('DailyLoginBanner: Hiding banner');
+
         if (this.bannerElement) {
             // Hide overlay
             const overlay = document.getElementById('daily-login-overlay');
@@ -405,7 +405,7 @@ class DailyLoginBanner {
     async quickClaim() {
         if (!this.currentUser) return;
         
-        console.log('DailyLoginBanner: Quick claim triggered');
+
         
         try {
             const trigger = document.getElementById('daily-login-trigger');
@@ -438,7 +438,7 @@ class DailyLoginBanner {
                     detail: data
                 }));
                 
-                console.log('✅ Quick claim successful:', data);
+
             } else {
                 throw new Error(data.detail || 'Failed to claim reward');
             }
@@ -499,7 +499,7 @@ class DailyLoginBanner {
      */
     async reloadProfileBadge(userId) {
         // Badge removed, this function is kept for compatibility
-        console.log('Profile badge reload skipped - badge removed from design');
+
     }
 }
 

@@ -82,6 +82,11 @@ body.desktop-mode #game-container {
     background: transparent !important;
 }
 
+/* Desktop mode: limita i modal all'area del canvas */
+body.desktop-mode .modal {
+    /* Verrà posizionato dinamicamente via JS */
+}
+
 /* ==========================================
    Canvas
    ========================================== */
@@ -551,15 +556,14 @@ body.desktop-mode #game-container {
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
-/* Level Up Modal */
-.level-up-content {
-    animation: levelUpBounce 0.5s ease;
+/* Upgrade Selection Modal (in-game) */
+.upgrade-content {
+    animation: upgradeFadeIn 0.3s ease;
 }
 
-@keyframes levelUpBounce {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); opacity: 1; }
+@keyframes upgradeFadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
 }
 
 .level-text {

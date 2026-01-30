@@ -1469,7 +1469,7 @@ class Game {
         // Generate upgrade options
         const options = this.generateUpgradeOptions();
         
-        this.ui.showLevelUpModal(this.player.level, options, (selected) => {
+        this.ui.showUpgradeModal(this.player.level, options, (selected) => {
             this.applyUpgrade(selected);
             this.state = GAME_STATE.PLAYING;
         });
@@ -1697,6 +1697,7 @@ class Game {
         const gameUI = document.getElementById('gameUI');
         const weaponSlots = document.querySelector('.weapon-slots');
         const healthContainer = document.querySelector('.health-container');
+        const modals = document.querySelectorAll('.modal');
         
         // Su desktop, mantieni sempre aspect ratio mobile (9:16)
         // Il fullscreen è gestito dalla piattaforma (iframe parent), quindi
@@ -1742,6 +1743,9 @@ class Game {
             const left = (screenWidth - width) / 2;
             const top = (screenHeight - height) / 2;
             
+            // Salva le dimensioni per uso globale (per i modal che appaiono dopo)
+            this.desktopBounds = { left, top, width, height };
+            
             if (gameUI) {
                 gameUI.style.left = left + 'px';
                 gameUI.style.top = top + 'px';
@@ -1758,6 +1762,14 @@ class Game {
                 healthContainer.style.left = left + 'px';
                 healthContainer.style.width = width + 'px';
             }
+            
+            // Posiziona i modal nell'area del canvas
+            modals.forEach(modal => {
+                modal.style.left = left + 'px';
+                modal.style.top = top + 'px';
+                modal.style.width = width + 'px';
+                modal.style.height = height + 'px';
+            });
         } else {
             // Mobile: usa tutto lo schermo
             this.canvas.width = window.innerWidth;
@@ -1773,6 +1785,9 @@ class Game {
             
             // Reset sfondo (rimuovi desktop mode)
             document.body.classList.remove('desktop-mode');
+            
+            // Clear desktop bounds
+            this.desktopBounds = null;
             
             // Reset UI positioning
             if (gameUI) {
@@ -1791,6 +1806,14 @@ class Game {
                 healthContainer.style.left = '';
                 healthContainer.style.width = '';
             }
+            
+            // Reset modal positioning
+            modals.forEach(modal => {
+                modal.style.left = '0';
+                modal.style.top = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+            });
         }
     }
 

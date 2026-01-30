@@ -41,7 +41,7 @@ class UIManager {
             ],
             
             // Modals
-            levelUpModal: document.getElementById('levelUpModal'),
+            upgradeModal: document.getElementById('upgradeModal'),
             newLevelText: document.getElementById('newLevelText'),
             upgradeOptions: document.getElementById('upgradeOptions'),
             pauseModal: document.getElementById('pauseModal'),
@@ -223,12 +223,12 @@ class UIManager {
     }
 
     /**
-     * Show level up modal with upgrade options
+     * Show upgrade selection modal (when player levels up in-game)
      * @param {number} newLevel 
      * @param {Array} options - Array of upgrade options
      * @param {Function} onSelect - Callback when option selected
      */
-    showLevelUpModal(newLevel, options, onSelect) {
+    showUpgradeModal(newLevel, options, onSelect) {
         if (this.elements.newLevelText) {
             this.elements.newLevelText.textContent = `Level ${newLevel}`;
         }
@@ -250,21 +250,21 @@ class UIManager {
                 
                 optionEl.addEventListener('click', () => {
                     onSelect(option);
-                    this.hideLevelUpModal();
+                    this.hideUpgradeModal();
                 });
                 
                 this.elements.upgradeOptions.appendChild(optionEl);
             }
         }
         
-        this.elements.levelUpModal?.classList.remove('hidden');
+        this.elements.upgradeModal?.classList.remove('hidden');
     }
 
     /**
-     * Hide level up modal
+     * Hide upgrade selection modal
      */
-    hideLevelUpModal() {
-        this.elements.levelUpModal?.classList.add('hidden');
+    hideUpgradeModal() {
+        this.elements.upgradeModal?.classList.add('hidden');
     }
 
     /**

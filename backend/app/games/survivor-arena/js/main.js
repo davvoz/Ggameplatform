@@ -139,56 +139,62 @@ function showXPBanner(xpAmount, extraData = null) {
     }, 3500);
 }
 
-// Show level-up notification
-function showLevelUpNotification(data) {
-    console.log('🎉 Showing level-up notification:', data);
+// Show level-up notification (platform level-up, not in-game level-up)
+function showLevelUpNotification(levelUpData) {
+    console.log('🎉 Showing level-up notification:', levelUpData);
     
-    const oldLevel = data.old_level || (data.new_level - 1) || '?';
-    const newLevel = data.new_level || '?';
-    const isMilestone = newLevel % 10 === 0;
-    
+    const { old_level, new_level, title, badge, coins_awarded, is_milestone, user_data } = levelUpData;
+
+    // Check if user is anonymous
+    const isAnonymous = user_data?.is_anonymous === true;
+
     const modal = document.createElement('div');
     modal.className = 'level-up-modal';
     modal.innerHTML = `
-        <div class="level-up-content ${isMilestone ? 'milestone' : ''}">
+        <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
             <div class="level-up-animation">
                 <div class="level-up-rays"></div>
                 <div class="level-up-badge-container">
-                    <span class="level-up-badge">${isMilestone ? '🏆' : '⬆️'}</span>
+                    <span class="level-up-badge">${badge}</span>
                 </div>
             </div>
-            <h2 class="level-up-title">LEVEL UP!</h2>
+            <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
             <div class="level-up-levels">
-                <span class="old-level">${oldLevel}</span>
+                <span class="old-level">${old_level}</span>
                 <span class="level-arrow">→</span>
-                <span class="new-level">${newLevel}</span>
+                <span class="new-level">${new_level}</span>
             </div>
-            ${isMilestone ? `<div class="level-up-milestone-badge">🌟 Milestone Reached!</div>` : ''}
+            <div class="level-up-new-title">${title}</div>
+            ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+            ${!isAnonymous && coins_awarded > 0 ? `
+                <div class="level-up-reward">
+                    <span class="reward-icon">🪙</span>
+                    <span class="reward-amount">+${coins_awarded} Coins</span>
+                </div>
+            ` : ''}
             <button class="level-up-close">Continue</button>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
-    // Trigger show animation
-    requestAnimationFrame(() => {
-        modal.classList.add('show');
-    });
-    
-    // Close on button click
+
+    // Trigger animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Close handler
     const closeBtn = modal.querySelector('.level-up-close');
     closeBtn.addEventListener('click', () => {
         modal.classList.remove('show');
         setTimeout(() => modal.remove(), 300);
     });
-    
-    // Auto-close after 5 seconds
+
+    // Auto-close after 6 seconds
     setTimeout(() => {
-        if (modal.parentNode) {
+        if (modal.parentElement) {
             modal.classList.remove('show');
             setTimeout(() => modal.remove(), 300);
         }
-    }, 5000);
+    }, 6000);
 }
 
 // Expose globally

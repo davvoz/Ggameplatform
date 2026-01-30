@@ -82,16 +82,13 @@ class SurvivorArenaSDK {
      * @param {Object} stats - Game statistics
      */
     sendGameOver(stats) {
+        // Send only essential data, similar to blocky-road pattern
         const payload = {
             score: stats.score,
-            time: Math.floor(stats.time),
-            kills: stats.kills,
-            level: stats.level,
-            game_data: {
-                final_score: stats.score,
-                survival_time: Math.floor(stats.time),
-                enemies_killed: stats.kills,
-                player_level: stats.level
+            extra_data: {
+                kills: stats.kills,
+                time: Math.floor(stats.time),
+                level: stats.level
             }
         };
         

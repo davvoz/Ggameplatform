@@ -69,7 +69,7 @@ def setup_survivor_arena():
                 game_id=game_id,
                 title='Survivor Arena',
                 description='Survive waves of enemies in a seamless toroidal arena! Collect weapons, level up, and face increasingly difficult hordes. How long can you survive?',
-                author='GamePlatform Team',
+                author='Cur8 Games',
                 version='1.0.0',
                 thumbnail='thumbnail.png',
                 entry_point='index.html',
@@ -102,12 +102,12 @@ def setup_survivor_arena():
                 rule_name="Survival Score",
                 rule_type="score_multiplier",
                 parameters={
-                    "multiplier": 0.05,
+                    "multiplier": 0.001,
                     "max_xp": 50.0
                 },
                 priority=10
             )
-            print("   ✅ Survival Score (0.05 XP per point, max 50)")
+            print("   ✅ Survival Score (0.001 XP per point, max 50)")
             
             # Rule 2: Kill count bonus (using custom strategy)
             create_xp_rule(
@@ -115,12 +115,12 @@ def setup_survivor_arena():
                 rule_name="Kill Count",
                 rule_type="custom",
                 parameters={
-                    "xp_per_kill": 0.1,
-                    "max_kills": 300
+                    "xp_per_kill": 0.01,
+                    "max_kills": 2000
                 },
                 priority=12
             )
-            print("   ✅ Kill Count (0.1 XP per kill, max 300)")
+            print("   ✅ Kill Count (0.01 XP per kill, max 2000)")
             
             # Rule 3: Player level bonus (using custom strategy)
             create_xp_rule(
@@ -195,8 +195,8 @@ def setup_survivor_arena():
                 'description': 'Play 5 games of Survivor Arena',
                 'quest_type': 'play_games',
                 'target_value': 5,
-                'xp_reward': 80,
-                'reward_coins': 20,
+                'xp_reward': 20,
+                'reward_coins': 5,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
@@ -209,34 +209,36 @@ def setup_survivor_arena():
             },
             {
                 'title': 'Survivor Arena: Slayer',
-                'description': 'Kill 100 enemies in a single game',
+                'description': 'Kill 1000 enemies total',
                 'quest_type': 'achievement',
-                'target_value': 100,
-                'xp_reward': 150,
-                'reward_coins': 40,
+                'target_value': 1000,
+                'xp_reward': 50,
+                'reward_coins': 10,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': game_id,
-                    'type': 'kills_in_game',
+                    'type': 'total_kills',
                     'category': 'combat',
-                    'reset_period': 'daily'
+                    'reset_period': 'daily',
+                    'reset_on_complete': True
                 })
             },
             {
                 'title': 'Survivor Arena: Endurance',
-                'description': 'Survive for 5 minutes in a single game',
+                'description': 'Survive 10 minutes total',
                 'quest_type': 'achievement',
-                'target_value': 300,  # 300 seconds = 5 minutes
-                'xp_reward': 180,
-                'reward_coins': 45,
+                'target_value': 600,  # 600 seconds = 10 minutes
+                'xp_reward': 25,
+                'reward_coins': 10,
                 'is_active': 1,
                 'created_at': now,
                 'config': json.dumps({
                     'game_id': game_id,
-                    'type': 'time_survived_in_game',
+                    'type': 'total_time_survived',
                     'category': 'survival',
-                    'reset_period': 'daily'
+                    'reset_period': 'daily',
+                    'reset_on_complete': True
                 })
             }
         ]

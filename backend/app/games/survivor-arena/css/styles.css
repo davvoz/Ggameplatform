@@ -82,10 +82,7 @@ body.desktop-mode #game-container {
     background: transparent !important;
 }
 
-/* Desktop mode: limita i modal all'area del canvas */
-body.desktop-mode .modal {
-    /* Verrà posizionato dinamicamente via JS */
-}
+/* Desktop mode: i modal verranno posizionati dinamicamente via JS */
 
 /* ==========================================
    Canvas

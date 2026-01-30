@@ -70,7 +70,7 @@ export class ActivateTurboCommand extends GameCommand {
         
         // Check if turbo is unlocked
         if (!unlockedAbilities.turbo) {
-            console.log('🔒 Turbo locked! Unlocks at level 20');
+
             return false;
         }
         
@@ -100,7 +100,7 @@ export class ActivateFlightCommand extends GameCommand {
         
         // Check if flight is unlocked
         if (!unlockedAbilities.flight) {
-            console.log('🔒 Flight locked! Unlocks at level 10');
+
             return false;
         }
         
@@ -231,7 +231,7 @@ export class InputCommandMapper {
         const command = this.commandMap.get(action);
         
         if (!command) {
-            console.warn(`No command mapped for action '${action}'`);
+
             return false;
         }
 

@@ -11,27 +11,27 @@ async function initSDK() {
         try {
             await PlatformSDK.init({
                 onStart: () => {
-                    console.log('[Space Shooter] Platform requested start');
+
                 },
                 onPause: () => {
-                    console.log('[Space Shooter] Platform requested pause');
+
                     if (window.game && window.game.state === 'playing') {
                         window.game.togglePause();
                     }
                 },
                 onResume: () => {
-                    console.log('[Space Shooter] Platform requested resume');
+
                     if (window.game && window.game.state === 'paused') {
                         window.game.togglePause();
                     }
                 }
             });
-            console.log('📡 Platform SDK initialized for Space Shooter');
+
         } catch (error) {
-            console.warn('⚠️ PlatformSDK init failed:', error);
+
         }
     } else {
-        console.warn('⚠️ PlatformSDK not available');
+
     }
 }
 
@@ -48,7 +48,7 @@ function startGameSession() {
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
             }, '*');
-            console.log('🎮 Game session started for Space Shooter');
+
         } catch (error) {
             console.error('⚠️ Failed to start game session:', error);
         }
@@ -66,7 +66,7 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
                     ...extraData
                 }
             });
-            console.log(`📊 Score sent: ${finalScore}`);
+
         } catch (error) {
             console.error('⚠️ Failed to send score:', error);
         }
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateFullscreenIcon();
 
-    console.log('🚀 Space Shooter initialized!');
+
 });
 
 // ===== FULLSCREEN FUNCTIONALITY =====
@@ -185,7 +185,7 @@ function toggleFullscreen() {
                     setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
                     updateFullscreenIcon();
                 }).catch((err) => {
-                    console.warn('Fullscreen request failed:', err);
+
                     // Fallback to iOS method if native fails
                     toggleIOSFullscreen();
                 });

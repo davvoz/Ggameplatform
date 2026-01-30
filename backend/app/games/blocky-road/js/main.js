@@ -1,7 +1,7 @@
 // main.js - Entry point
 
 window.addEventListener('load', async () => {
-    console.log('🚀 Starting Blocky Road...');
+
     
     // Create and initialize game (global for collision checks)
     window.game = new BlockyRoadGame();

@@ -161,7 +161,7 @@ Check if currently in fullscreen mode (works with both native and iOS CSS fullsc
 
 ```javascript
 if (PlatformSDK.isFullscreen()) {
-    console.log('Currently in fullscreen');
+
 }
 ```
 
@@ -196,7 +196,7 @@ PlatformSDK.on('resume', () => {
 });
 
 PlatformSDK.on('config', (config) => {
-    console.log('Platform config:', config);
+
 });
 ```
 
@@ -220,9 +220,9 @@ Get current SDK state.
 
 ```javascript
 const state = PlatformSDK.getState();
-console.log('Score:', state.score);
-console.log('Level:', state.level);
-console.log('Paused:', state.isPaused);
+
+
+
 ```
 
 **Returns:**

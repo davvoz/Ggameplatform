@@ -30,7 +30,7 @@ export class CollectibleRenderer extends IEntityRenderer {
 
             collectibleRenderer.render(entity, context);
         } catch (error) {
-            console.warn(`Failed to render collectible type "${type}":`, error);
+
         }
     }
 }

@@ -281,6 +281,6 @@ class StarField {
             }
         }
         
-        console.log(`🌟 StarField quality: ${quality} (${this.stars.length} stars)`);
+
     }
 }

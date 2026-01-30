@@ -34,14 +34,14 @@ export class PlatformBridge {
                 // Wait for config
                 await this.waitForConfig();
                 
-                console.log('[PlatformBridge] SDK initialized');
+
                 
             } catch (error) {
-                console.warn('[PlatformBridge] SDK init failed:', error);
+
                 this.isAvailable = false;
             }
         } else {
-            console.log('[PlatformBridge] SDK not available, running standalone');
+
             this.isAvailable = false;
         }
     }
@@ -61,7 +61,7 @@ export class PlatformBridge {
             this.config = window.platformConfig;
             this.userId = this.config.userId;
             this.username = this.config.username;
-            console.log('[PlatformBridge] Got config:', this.config);
+
         }
     }
     
@@ -86,7 +86,7 @@ export class PlatformBridge {
         if (!this.isAvailable) return;
         
         // Platform SDK handles session start via ready event
-        console.log('[PlatformBridge] Game started');
+
     }
     
     /**
@@ -112,7 +112,7 @@ export class PlatformBridge {
             this.sdk.gameOver(score, {
                 extra_data: extraData
             });
-            console.log('[PlatformBridge] Game over reported:', score, extraData);
+
         } catch (error) {
             console.error('[PlatformBridge] Failed to report game over:', error);
         }
@@ -122,14 +122,14 @@ export class PlatformBridge {
      * Report pause
      */
     reportPause() {
-        console.log('[PlatformBridge] Game paused');
+
     }
     
     /**
      * Report resume
      */
     reportResume() {
-        console.log('[PlatformBridge] Game resumed');
+
     }
     
     /**

@@ -128,7 +128,7 @@ export class GameController {
       );
       
       if (!spent) {
-        console.warn('Failed to spend coins via API');
+
         this._ui.setNotice('Errore nella spesa coins.', NOTIFICATION_TONE.BAD);
         return;
       }
@@ -233,7 +233,7 @@ export class GameController {
 
     // Send gameOver - Use winnings as score (0 if lost, amount if won)
     // XP system will reward based on coins won
-    console.log('[GameController] Roll complete - sending gameOver with score:', winnings);
+
     await this._platform.gameOver(winnings, {
       bet_type: bet.type,
       bet_amount: bet.amount,

@@ -17,7 +17,7 @@ class AudioManager {
             this.isMuted = savedMuted === 'true';
         }
         
-        console.log('🔊 AudioManager initialized');
+
     }
     
     // Initialize audio context (must be called after user interaction)
@@ -26,10 +26,10 @@ class AudioManager {
         
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('🔊 Audio context initialized');
+
             this.generateAllSounds();
         } catch (e) {
-            console.warn('⚠️ Web Audio API not supported:', e);
+
         }
     }
     
@@ -46,7 +46,7 @@ class AudioManager {
         // Death/crash - impact
         this.sounds.death = this.createDeathSound();
         
-        console.log('🔊 Essential sounds generated (jump, coin, death)');
+
     }
     
     // Create jump sound - realistic thud/footstep
@@ -162,7 +162,7 @@ class AudioManager {
         if (this.sounds[soundName]) {
             this.sounds[soundName]();
         } else {
-            console.warn(`⚠️ Sound not found: ${soundName}`);
+
         }
     }
     
@@ -171,7 +171,7 @@ class AudioManager {
         this.isMuted = !this.isMuted;
         localStorage.setItem('blockyRoadMuted', this.isMuted.toString());
         
-        console.log(`🔊 Audio ${this.isMuted ? 'muted' : 'unmuted'}`);
+
         return this.isMuted;
     }
     

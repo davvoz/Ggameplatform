@@ -263,7 +263,7 @@ const AuthManager = {
                 localStorage.removeItem('currentUser');
             }
         } else {
-            console.log('AuthManager: nessun utente salvato in localStorage');
+
         }
     },
 
@@ -308,7 +308,7 @@ const AuthManager = {
                     navMultiplierEl.textContent = `${mult}x`;
                 }
             } catch (e) {
-                console.warn('Could not update nav multiplier from AuthManager.updateUI:', e);
+
             }
 
             // Show profile link
@@ -327,7 +327,7 @@ const AuthManager = {
                     questsLink.style.display = 'inline-block';
                 }
             } else {
-                console.log('AuthManager: questsLink NON trovato nel DOM');
+
             }
 
             let displayName = '';
@@ -397,7 +397,7 @@ const AuthManager = {
                             }
                         }
                     } catch (e) {
-                        console.warn('Could not apply CSS vars for level badge', e);
+
                     }
                 } else {
                     // Fallback se API non risponde
@@ -438,7 +438,7 @@ const AuthManager = {
             // Aggiorna UI immediatamente
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
         } else {
-            console.warn('⚠️ updateCur8: Nessun utente loggato');
+
         }
     },
 
@@ -500,7 +500,7 @@ const AuthManager = {
                     localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
                 }
                 
-                console.log('✅ Daily access tracked:', data);
+
             }
         } catch (error) {
             console.error('Error tracking daily access:', error);

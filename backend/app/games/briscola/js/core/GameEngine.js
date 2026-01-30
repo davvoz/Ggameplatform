@@ -83,9 +83,9 @@ export class GameEngine {
         this.isGameOver = false;
         this.isPaused = false;
         
-        console.log('[GameEngine] Game initialized');
-        console.log('[GameEngine] Briscola:', this.briscolaCard?.name);
-        console.log('[GameEngine] First player:', this.currentPlayer);
+
+
+
     }
     
     /**
@@ -99,7 +99,7 @@ export class GameEngine {
         // Find the suit object
         const suit = SUIT_LIST.find(s => s.id === cardData.suit);
         if (!suit) {
-            console.warn('[GameEngine] Unknown suit:', cardData.suit);
+
             return null;
         }
         
@@ -193,7 +193,7 @@ export class GameEngine {
             this.player2HandsWon++;
         }
         
-        console.log(`[GameEngine] Round winner: Player ${roundWinner}, Points: ${pointsWon}`);
+
         
         // Draw new cards (winner draws first)
         this.drawCards(roundWinner);
@@ -215,7 +215,7 @@ export class GameEngine {
             const calculatedP1 = this.player1Captured.reduce((sum, c) => sum + c.points, 0);
             const calculatedP2 = this.player2Captured.reduce((sum, c) => sum + c.points, 0);
             
-            console.log(`[GameEngine] Final score verification - P1: ${this.player1Score} (calculated: ${calculatedP1}), P2: ${this.player2Score} (calculated: ${calculatedP2})`);
+
             
             // Usa i punteggi calcolati
             this.player1Score = calculatedP1;
@@ -264,7 +264,7 @@ export class GameEngine {
                 } else {
                     this.player2Hand.push(card);
                 }
-                console.log(`[GameEngine] Player ${firstDrawer} drew ${card.name}`);
+
             }
         }
         
@@ -277,7 +277,7 @@ export class GameEngine {
                 } else {
                     this.player2Hand.push(card);
                 }
-                console.log(`[GameEngine] Player ${secondDrawer} drew ${card.name}`);
+
             }
         }
         
@@ -302,8 +302,8 @@ export class GameEngine {
             this.winner = 0; // Draw (both have 60)
         }
         
-        console.log(`[GameEngine] Game Over - Winner: ${this.winner}`);
-        console.log(`[GameEngine] Final Score: ${this.player1Score} - ${this.player2Score}`);
+
+
         
         if (this.onGameOver) {
             this.onGameOver({

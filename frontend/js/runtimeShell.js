@@ -164,7 +164,7 @@ export default class RuntimeShell {
                 break;
 
             case GAME_MESSAGE_TYPES.LOG:
-                this.handleLog(message.payload);
+                //this.handleLog(message.payload);
                 break;
 
             case GAME_MESSAGE_TYPES.RESET_SESSION:
@@ -176,14 +176,10 @@ export default class RuntimeShell {
 
             case GAME_MESSAGE_TYPES.GAME_STARTED:
                 // Game has actually started (level selected) - create session now
-                console.log('🎮🎮🎮 [RuntimeShell] GAME_STARTED message received!');
-                console.log('🎮 Current sessionId:', this.sessionId);
                 this.log('🎮 Game started, creating session...');
                 if (!this.sessionId) {
-                    console.log('🎮 No sessionId, calling startGameSession()...');
                     this.startGameSession();
                 } else {
-                    console.log('🎮 SessionId already exists:', this.sessionId);
                 }
                 break;
 
@@ -203,7 +199,6 @@ export default class RuntimeShell {
     isValidOrigin(origin) {
         // Never allow wildcard in production
         if (this.config.allowedOrigins.includes('*')) {
-            console.warn('⚠️ Wildcard origin (*) is allowed - this is insecure!');
             return true;
         }
 
@@ -211,8 +206,6 @@ export default class RuntimeShell {
         const isAllowed = this.config.allowedOrigins.includes(origin);
 
         if (!isAllowed) {
-            console.warn('🔒 Rejected message from unauthorized origin:', origin);
-            console.log('Allowed origins:', this.config.allowedOrigins);
         }
 
         return isAllowed;
@@ -503,7 +496,7 @@ export default class RuntimeShell {
      */
     handleLog(payload) {
         if (payload && payload.message) {
-            console.log(`[Game ${this.gameId}]:`, payload.message, payload.data || '');
+
         }
     }
 
@@ -619,7 +612,7 @@ export default class RuntimeShell {
      * Exit the game
      */
     exit() {
-        console.warn('🚪 EXIT BUTTON PRESSED - Stack trace:', new Error().stack);
+
         this.log('Exiting game - no XP will be awarded');
         this.sendMessage(PLATFORM_MESSAGE_TYPES.EXIT, {
             timestamp: Date.now()
@@ -632,10 +625,10 @@ export default class RuntimeShell {
             document.body.style.overflow = '';
         }
 
-        console.warn('🚪 Calling cleanup(false, true) - skipSessionEnd=true');
+
         // Pass skipSessionEnd=true to prevent XP distribution on exit
         this.cleanup(false, true);
-        console.warn('🚪 Exit completed');
+
     }
 
     /**
@@ -754,20 +747,20 @@ export default class RuntimeShell {
      * @param {boolean} skipSessionEnd - If true, don't end session (used for Exit button)
      */
     cleanup(useBeacon = false, skipSessionEnd = false) {
-        console.warn('🧹 CLEANUP CALLED - useBeacon:', useBeacon, 'skipSessionEnd:', skipSessionEnd, 'sessionId:', this.sessionId);
+
         // End game session if active (unless skipSessionEnd is true for Exit)
         if (this.sessionId && !skipSessionEnd) {
-            console.warn('🧹 Branch 1: Will call endGameSession');
+
             this.log('Cleanup: Ending active session');
             this.endGameSession(useBeacon);
         } else if (this.sessionId && skipSessionEnd) {
-            console.warn('🧹 Branch 2: Skipping session end - clearing session locally');
+
             this.log('Cleanup: Skipping session end (Exit button pressed - no XP awarded)');
             // Just clear the session without saving
             this.sessionId = null;
             this.sessionStartTime = null;
         } else {
-            console.warn('🧹 Branch 3: No session or already cleared');
+
         }
 
         // Clean up iOS fullscreen if active
@@ -869,9 +862,9 @@ export default class RuntimeShell {
      * End game session and send stats
      */
     async endGameSession(useBeacon = false) {
-        console.warn('🔴 endGameSession CALLED - Stack trace:', new Error().stack);
+
         if (!this.sessionId) {
-            console.warn('🔴 endGameSession: No sessionId, returning');
+
             return;
         }
 
@@ -879,7 +872,7 @@ export default class RuntimeShell {
         const finalScore = this.state.score;
         const startTime = this.sessionStartTime; // Save before clearing
 
-        console.warn('🔴 endGameSession: Will end session', sessionToEnd, 'score:', finalScore);
+
 
         // Clear session immediately to prevent double-ending
         this.sessionId = null;
@@ -1022,9 +1015,9 @@ export default class RuntimeShell {
      * @param {...*} args - Arguments to log
      */
     log(...args) {
-        if (this.config.debug) {
-            console.log('[RuntimeShell]', ...args);
-        }
+        // if (this.config.debug) {
+        //     console.log('[RuntimeShell]', ...args);
+        // }
     }
 }
 

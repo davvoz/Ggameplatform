@@ -347,7 +347,7 @@ class SteemPostModal {
             try {
                 const postTitle = result.post_title || 'Gaming milestone post';
                 await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postTitle);
-                console.log('[SteemPostModal] Post confirmed on backend, coins deducted');
+
             } catch (error) {
                 console.error('[SteemPostModal] Failed to confirm post on backend:', error);
                 // Continue anyway - post was published successfully

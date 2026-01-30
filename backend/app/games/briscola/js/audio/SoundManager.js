@@ -46,7 +46,7 @@ export class SoundManager {
             source.start(0);
             
             this.isUnlocked = true;
-            console.log('[SoundManager] Audio unlocked');
+
             
             // Generate sounds
             this.generateSounds();

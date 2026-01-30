@@ -115,7 +115,7 @@ const endpoint = config.getApiEndpoint('/games/list');
 
 // Check environment
 if (config.isDevelopment()) {
-    console.log('Running in development mode');
+
 }
 ```
 
@@ -216,7 +216,7 @@ All HTML files must load `env.js` **first**:
 3. Use in your code:
    ```javascript
    import { config } from './config.js';
-   console.log(config.NEW_VARIABLE);
+
    ```
 
 ## 🆘 Support

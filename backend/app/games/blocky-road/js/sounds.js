@@ -11,7 +11,7 @@ class TrainSounds {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
-            console.log('Web Audio API not supported');
+
         }
     }
     

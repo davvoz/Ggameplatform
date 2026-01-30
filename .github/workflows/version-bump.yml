@@ -36,7 +36,7 @@ jobs:
             let versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
             const currentVersion = versionData.version;
             
-            console.log(`Current version: ${currentVersion}`);
+
             
             // Get commit messages since last version bump
             const { data: commits } = await github.rest.repos.listCommits({
@@ -105,8 +105,8 @@ jobs:
               newVersion = `${major}.${minor}.${patch + 1}`;
             }
             
-            console.log(`Bump type: ${bumpType}`);
-            console.log(`New version: ${newVersion}`);
+
+
             
             // Update version.json
             versionData.version = newVersion;
@@ -132,7 +132,7 @@ jobs:
             // Write updated version.json
             fs.writeFileSync(versionPath, JSON.stringify(versionData, null, 2) + '\n');
             
-            console.log('Version file updated successfully');
+
             
             // Set outputs
             core.setOutput('version', newVersion);

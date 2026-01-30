@@ -67,7 +67,7 @@ export class SkillColorSystem {
     
     // No skills unlocked - return default white
     if (!unlockedSkills || unlockedSkills.size === 0) {
-      console.log('[SKILL COLOR] No skills, returning white');
+
       return 0xffffff;
     }
 
@@ -82,36 +82,36 @@ export class SkillColorSystem {
       else if (skillId.startsWith('util_')) skillBranch = 'utility';
       
       if (!skillBranch) {
-        console.warn('[SKILL COLOR] Cannot detect branch for skill:', skillId);
+
         continue;
       }
       
       const branchTierColors = this.tierColors[skillBranch];
       if (!branchTierColors) {
-        console.warn('[SKILL COLOR] No tier colors for branch:', skillBranch);
+
         continue;
       }
       
       const tier = this.skillTiers[skillId];
       if (!tier || !branchTierColors[tier]) {
-        console.warn('[SKILL COLOR] Unknown tier for skill:', skillId);
+
         continue;
       }
       
       const color = new THREE.Color(branchTierColors[tier]);
       colorsToMix.push(color);
-      console.log(`[SKILL COLOR] Skill ${skillId} (${skillBranch}) tier ${tier} color: ${color.getHexString()}`);
+
     }
 
     // No valid skills found - return white
     if (colorsToMix.length === 0) {
-      console.log('[SKILL COLOR] No valid skills, returning white');
+
       return 0xffffff;
     }
 
     // Single color - return it directly
     if (colorsToMix.length === 1) {
-      console.log('[SKILL COLOR] Single color:', colorsToMix[0].getHexString());
+
       return colorsToMix[0].getHex();
     }
 
@@ -126,7 +126,7 @@ export class SkillColorSystem {
     const count = colorsToMix.length;
     const mixedColor = new THREE.Color(r / count, g / count, b / count);
     
-    console.log('[SKILL COLOR] Mixed', count, 'colors into:', mixedColor.getHexString());
+
     
     return mixedColor.getHex();
   }

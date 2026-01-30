@@ -431,5 +431,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global export for non-module scripts
 if (typeof window !== 'undefined') {
     window.WalletStatsRenderer = WalletStatsRenderer;
-    console.log('✅ WalletStatsRenderer loaded and exported to window');
 }

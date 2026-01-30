@@ -24,7 +24,7 @@ export class SystemOrchestrator {
      */
     registerSystem(name, system) {
         if (this.systems.has(name)) {
-            console.warn(`System '${name}' already registered, overwriting`);
+
         }
         
         this.systems.set(name, system);
@@ -77,7 +77,7 @@ export class SystemOrchestrator {
         
         await Promise.all(promises);
         this.initialized = true;
-        console.log(`✅ SystemOrchestrator initialized ${this.systems.size} systems`);
+
     }
 
     /**
@@ -106,7 +106,7 @@ export class SystemOrchestrator {
                 console.error(`Error resetting system '${name}':`, err);
             }
         }
-        console.log('🔄 All systems reset');
+
     }
 
     /**
@@ -124,7 +124,7 @@ export class SystemOrchestrator {
                 console.error(`Error resizing system '${name}':`, err);
             }
         }
-        console.log(`📐 Systems resized to ${width}x${height}`);
+
     }
 
     /**

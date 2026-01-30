@@ -24,7 +24,7 @@ export class AudioManager {
             await this.loadBackgroundMusic();
             this.initialized = true;
         } catch (error) {
-            console.warn('Web Audio API not supported:', error);
+
             this.enabled = false;
         }
     }
@@ -34,9 +34,9 @@ export class AudioManager {
             const response = await fetch('./assets/background_music.mp3');
             const arrayBuffer = await response.arrayBuffer();
             this.backgroundMusic = await this.audioContext.decodeAudioData(arrayBuffer);
-            console.log('Background music loaded successfully');
+
         } catch (error) {
-            console.warn('Failed to load background music:', error);
+
         }
     }
     
@@ -60,9 +60,9 @@ export class AudioManager {
             
             source.start(0);
             this.musicPlaying = true;
-            console.log('Background music started');
+
         } catch (error) {
-            console.warn('Failed to play background music:', error);
+
         }
     }
     
@@ -71,9 +71,9 @@ export class AudioManager {
             try {
                 this.musicSource.stop();
                 this.musicPlaying = false;
-                console.log('Background music stopped');
+
             } catch (error) {
-                console.warn('Failed to stop background music:', error);
+
             }
         }
     }

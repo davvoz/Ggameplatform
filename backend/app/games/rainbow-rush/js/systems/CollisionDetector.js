@@ -75,7 +75,7 @@ export class CollisionDetector {
         const goalLeftEdge = goalEntity.x;
 
         if (playerRightEdge >= goalLeftEdge) {
-            console.log(`🏁 GOAL REACHED! Player X: ${playerRightEdge.toFixed(0)} >= Goal X: ${goalLeftEdge.toFixed(0)}`);
+
             goalEntity.reached = true;
             return true;
         }
@@ -250,7 +250,7 @@ export class CollisionDetector {
         const goalLeftEdge = goalEntity.x;
 
         if (playerRightEdge >= goalLeftEdge) {
-            console.log(`🏁 GOAL REACHED! Player X: ${playerRightEdge.toFixed(0)} >= Goal X: ${goalLeftEdge.toFixed(0)}`);
+
             goalEntity.reached = true;
             return true;
         }

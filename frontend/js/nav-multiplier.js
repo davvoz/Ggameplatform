@@ -137,7 +137,7 @@
                     window.showCur8MultiplierModal(breakdown);
                     return;
                 } catch (e) {
-                    console.warn('showCur8MultiplierModal failed, falling back to nav modal:', e);
+
                 }
             }
             createModal(breakdown);

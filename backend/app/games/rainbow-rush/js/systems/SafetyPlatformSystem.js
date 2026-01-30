@@ -140,7 +140,7 @@ export class SafetyPlatformSystem {
         // Reset cracks when recharged
         this.crackProgress = 0;
         this.cracks = [];
-        console.log('⚡ RECHARGE BONUS! Animazione ricarica pallini!');
+
     }
     
     /**
@@ -154,7 +154,7 @@ export class SafetyPlatformSystem {
         
         // Dopo 15 secondi dall'ultimo uso, ricarica TUTTI i pallini
         if (timeSinceLastUse >= this.config.RECHARGE_WINDOW) {
-            console.log(`🔋 COOLDOWN FINITO! Animazione ricarica pallini!`);
+
             this.chargesBeforeRecharge = this.charges;
             this.isRecharging = true;
             this.rechargeAnimProgress = 0;
@@ -219,7 +219,7 @@ export class SafetyPlatformSystem {
         
         // After 3 seconds, safety dissolves completely - player dies
         if (this.timeOnPlatform >= this.config.TIME_BEFORE_DISSOLVE) {
-            console.log('💥 Safety timeout! Platform dissolved - player dies!');
+
             // Azzera i charges per far sparire completamente la safety
             this.charges = 0;
             // Torna a IDLE ma senza charges (piattaforma non collidibile)
@@ -239,7 +239,7 @@ export class SafetyPlatformSystem {
      * Activate platform when player lands (CONSUMES CHARGE)
      */
     activatePlatform(entityManager, scoreSystem) {
-        console.log('🟢 Player landed on safety! Consuming 1 charge. Charges before:', this.charges);
+
         
         // Traccia quale pallino sta per essere spento
         this.lastChargeConsumed = this.charges - 1;
@@ -252,7 +252,7 @@ export class SafetyPlatformSystem {
         this.lastUseTime = Date.now() / 1000;
         this.cooldownActive = true;
         
-        console.log('   Charges after:', this.charges, '/', this.config.MAX_CHARGES);
+
         
         // Transition to active state
         this.state = 'ACTIVE';
@@ -290,7 +290,7 @@ export class SafetyPlatformSystem {
      * Deactivate platform when player leaves before dissolve
      */
     deactivatePlatform() {
-        console.log('⚪ Player left safety platform (before timeout)');
+
         this.state = 'IDLE';
         this.timeOnPlatform = 0;
         this.rescueSpawnTimer = 0;

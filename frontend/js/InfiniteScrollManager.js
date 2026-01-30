@@ -286,5 +286,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global export for non-module scripts
 if (typeof window !== 'undefined') {
     window.InfiniteScrollManager = InfiniteScrollManager;
-    console.log('✅ InfiniteScrollManager loaded and exported to window');
 }

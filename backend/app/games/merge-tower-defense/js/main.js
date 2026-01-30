@@ -26,7 +26,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     const loadingScreen = document.getElementById('loadingScreen');
 
     // Initialize systems
-    console.log('[Merge Tower] Initializing game systems...');
+
 
     const graphics = new Graphics(canvas);
     const input = new InputHandler(canvas, graphics);
@@ -47,7 +47,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     let showWaveModeSelector = false;
     let victoryRewardAwarded = false;
 
-    console.log('[Merge Tower] Game systems initialized');
+
 
     // ========== DEV PANEL ==========
     let devGodMode = false;
@@ -80,19 +80,19 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             state.targetWaves = parseInt(document.getElementById('devTarget').value) || 20;
             state.waveModeSelected = true;
             state.selectedWaveMode = state.selectedWaveMode || 'EASY';
-            console.log('[DEV] Applied:', { coins: state.coins, energy: state.energy, wave: state.wave, target: state.targetWaves });
+
         };
         document.getElementById('devSkipWave').onclick = () => {
             const state = game.getState();
             [...game.entities.zombies].forEach(z => game.entities.removeZombie(z));
             state.waveZombiesSpawned = state.waveZombiesTotal;
-            console.log('[DEV] Wave skipped');
+
         };
         document.getElementById('devGodMode').onclick = (e) => {
             devGodMode = !devGodMode;
             e.target.style.background = devGodMode ? '#f00' : '#0f0';
             e.target.textContent = devGodMode ? 'God ON' : 'God Mode';
-            console.log('[DEV] God mode:', devGodMode);
+
         };
         // Expose for god mode check in game loop
         window.devGodMode = () => devGodMode;
@@ -106,21 +106,21 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     let platformBalance = 0;
 
     try {
-        console.log('[Merge Tower] Initializing Platform SDK...');
+
 
         await PlatformSDK.init({
             onPause: () => {
-                console.log('[Merge Tower] Game paused by platform');
+
                 game.pause();
             },
 
             onResume: () => {
-                console.log('[Merge Tower] Game resumed by platform');
+
                 game.resume();
             },
 
             onExit: () => {
-                console.log('[Merge Tower] Exit requested by platform');
+
                 if (sessionActive) {
                     endSession();
                 }
@@ -128,13 +128,13 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             },
 
             onStart: () => {
-                console.log('[Merge Tower] Start signal received from platform');
+
                 game.resume();
             }
         });
 
         platformReady = true;
-        console.log('[Merge Tower] Platform SDK ready');
+
 
         // Load user's coin balance using platform API (like seven does)
         try {
@@ -150,7 +150,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             }
 
             if (userId) {
-                console.log('[Merge Tower] Fetching balance for user:', userId);
+
                 const response = await fetch(`/api/coins/${userId}/balance`, {
                     credentials: 'include'
                 });
@@ -159,26 +159,26 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
                     const data = await response.json();
                     platformBalance = data.balance || 0;
                     window.platformBalance = platformBalance;
-                    console.log('[Merge Tower] Platform balance loaded:', platformBalance);
+
                 } else {
-                    console.warn('[Merge Tower] Failed to load balance, status:', response.status);
+
                     platformBalance = 0;
                     window.platformBalance = 0;
                 }
             } else {
-                console.warn('[Merge Tower] No userId available');
+
                 platformBalance = 0;
                 window.platformBalance = 0;
             }
         } catch (error) {
-            console.warn('[Merge Tower] Failed to load platform balance:', error);
+
             platformBalance = 0;
             window.platformBalance = 0;
         }
 
     } catch (error) {
-        console.warn('[Merge Tower] Platform SDK initialization failed:', error);
-        console.log('[Merge Tower] Running in standalone mode');
+
+
         platformBalance = 0;
         window.platformBalance = 0;
     }
@@ -199,7 +199,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
             }, '*');
-            console.log('[Merge Tower] Session started - gameStarted event sent');
+
         } catch (error) {
             console.error('[Merge Tower] Failed to send gameStarted:', error);
         }
@@ -227,7 +227,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
                         wave_mode: state.selectedWaveMode || 'NONE'
                     }
                 });
-                console.log('[Merge Tower] Session ended - gameOver sent with XP data');
+
             } catch (error) {
                 console.error('[Merge Tower] Failed to send gameOver:', error);
             }
@@ -239,7 +239,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     function resetSession() {
         // Close current session if active before resetting
         if (sessionActive) {
-            console.log('[Merge Tower] Closing active session before retry');
+
             endSession();
         }
 
@@ -249,14 +249,14 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
         lastSentScore = 0;
         sessionStartTime = 0;
         victoryRewardAwarded = false;
-        console.log('[Merge Tower] Session state reset - ready for new session');
+
     }
 
     // ========== CONTINUE SYSTEM ==========
 
     async function handleContinueGame() {
         if (!platformReady) {
-            console.warn('[Merge Tower] Platform not ready, cannot continue');
+
             return;
         }
 
@@ -264,7 +264,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
 
         // Check balance
         if (platformBalance < continueCost) {
-            console.warn('[Merge Tower] Insufficient balance to continue');
+
             return;
         }
 
@@ -299,21 +299,21 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             });
 
             if (!response.ok) {
-                console.warn('[Merge Tower] Failed to spend coins, status:', response.status);
+
                 return;
             }
 
             // Update balance
             platformBalance -= continueCost;
             window.platformBalance = platformBalance;
-            console.log('[Merge Tower] Continue purchased, new balance:', platformBalance);
+
 
             // Resume game
             game.resumeAfterContinue();
 
             // Restart session after continue
             startSession();
-            console.log('[Merge Tower] Game continued successfully, session restarted');
+
 
         } catch (error) {
             console.error('[Merge Tower] Error during continue:', error);
@@ -327,7 +327,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
 
     async function handleVictory(coinReward) {
         if (!platformReady || victoryRewardAwarded) {
-            console.log('[Merge Tower] Victory - reward already awarded or platform not ready');
+
             return;
         }
 
@@ -362,7 +362,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             });
 
             if (!response.ok) {
-                console.warn('[Merge Tower] Failed to award coins, status:', response.status);
+
                 return;
             }
 
@@ -371,7 +371,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             window.platformBalance = platformBalance;
             victoryRewardAwarded = true;
             
-            console.log(`[Merge Tower] Victory! Awarded ${coinReward} platform coins. New balance: ${platformBalance}`);
+
 
             // End session after victory
             endSession();
@@ -478,10 +478,10 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
         showTutorialPrompt = false;
 
         if (wantsTutorial) {
-            console.log('[Merge Tower] User chose to do the tutorial');
+
             tutorialManager.start();
         } else {
-            console.log('[Merge Tower] User skipped the tutorial');
+
             // Show wave mode selector instead of starting game directly
             showWaveModeSelection();
         }
@@ -490,7 +490,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     // ========== WAVE MODE SELECTION ==========
 
     function showWaveModeSelection() {
-        console.log('[Merge Tower] Showing wave mode selection');
+
         waveModeSelector = new WaveModeSelector(graphics, handleWaveModeSelected);
         waveModeSelector.show();
         showWaveModeSelector = true;
@@ -498,7 +498,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     }
 
     function handleWaveModeSelected(modeKey) {
-        console.log('[Merge Tower] Wave mode selected:', modeKey);
+
         showWaveModeSelector = false;
         
         // Set the wave mode in game
@@ -521,13 +521,13 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     window.resetGameSession = resetSession;
 
     function startGame() {
-        console.log('[Merge Tower] Starting game...');
+
 
         // Hide loading screen
         loadingScreen.classList.add('hidden');
 
 
-        console.log('[Merge Tower] First time player - showing tutorial prompt');
+
         tutorialPrompt = new TutorialPrompt(graphics, handleTutorialChoice);
         tutorialPrompt.show();
         showTutorialPrompt = true;
@@ -558,11 +558,11 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
         lastTime = performance.now();
         requestAnimationFrame(gameLoop);
 
-        console.log('[Merge Tower] Game started!');
+
     }
 
     // Just start the game
-    console.log('[Merge Tower] Starting game...');
+
     setTimeout(startGame, 500);
 
     // ========== ERROR HANDLING ==========
@@ -632,7 +632,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     // Lock orientation to portrait on mobile (if supported)
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('portrait').catch(() => {
-            console.log('[Merge Tower] Orientation lock not supported');
+
         });
     }
 
@@ -649,8 +649,8 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
             ZOMBIE_TYPES,
             Utils
         };
-        console.log('[Merge Tower] Debug mode enabled. Access via window.MergeTower');
+
     }
 
-    console.log('[Merge Tower] Initialization complete');
+
 })();

@@ -60,7 +60,7 @@ export class EnemySystem {
             this.entityManager.addEntity('enemies', enemy);
         });
 
-        console.log(`🎮 Loaded ${levelData.enemies.length} enemies from level`);
+
     }
 
     /**

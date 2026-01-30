@@ -40,11 +40,11 @@ export class SteemProfileService {
      */
     async fetchProfile(username) {
         if (!username) {
-            console.warn('SteemProfileService: username is required');
+
             return null;
         }
 
-        console.log('Fetching Steem profile for:', username);
+
 
         try {
             const accountData = await this._fetchAccountData(username);
@@ -81,7 +81,7 @@ export class SteemProfileService {
         }
 
         const data = await response.json();
-        console.log('Steem API response:', data);
+
 
         return data.result?.[0] || null;
     }
@@ -91,7 +91,7 @@ export class SteemProfileService {
      * @private
      */
     async _extractProfileData(account) {
-        console.log('Account data:', account);
+
 
         const metadata = this._parseMetadata(account);
         const profile = metadata.profile || {};
@@ -103,7 +103,7 @@ export class SteemProfileService {
         // Check if user uses a proxy for witness voting
         const proxy = account.proxy || '';
         if (proxy && !votesCur8Witness) {
-            console.log(`🔄 User ${account.name} uses voting proxy: ${proxy}`);
+
             // If using proxy, check if proxy votes for cur8.witness
             votesCur8Witness = await this._checkProxyVote(proxy);
         }
@@ -142,7 +142,7 @@ export class SteemProfileService {
             if (proxyAccount) {
                 const proxyWitnessVotes = proxyAccount.witness_votes || [];
                 const votesForCur8 = proxyWitnessVotes.includes('cur8.witness');
-                console.log(`${votesForCur8 ? '✅' : '❌'} Proxy ${proxyUsername} votes for cur8.witness: ${votesForCur8}`);
+
                 return votesForCur8;
             }
             return false;
@@ -247,10 +247,10 @@ export class SteemProfileService {
             }
 
             const metadata = JSON.parse(metadataString);
-            console.log('Parsed metadata:', metadata);
+
             return metadata;
         } catch (error) {
-            console.warn('Failed to parse Steem metadata:', error);
+
             return {};
         }
     }

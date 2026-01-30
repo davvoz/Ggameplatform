@@ -15,9 +15,9 @@ export class PlatformSDKManager {
                 // Initialize if needed
                 await window.PlatformSDK.init();
                 this.initialized = true;
-                console.log('Platform SDK initialized');
+
             } else {
-                console.warn('PlatformSDK not available - running in standalone mode');
+
             }
         } catch (error) {
             console.error('Failed to initialize Platform SDK:', error);
@@ -29,10 +29,10 @@ export class PlatformSDKManager {
         try {
             if (typeof window.PlatformSDK !== 'undefined') {
                 window.PlatformSDK.sendScore(score);
-                console.log('Score submitted:', score);
+
                 return { success: true, score };
             } else {
-                console.warn('PlatformSDK not available, score not submitted');
+
                 return { success: false, score: null };
             }
         } catch (error) {
@@ -42,16 +42,16 @@ export class PlatformSDKManager {
     }
 
     async gameOver(score, details) {
-        console.log('🎯 [PlatformSDKManager] gameOver called with score:', score, 'details:', details);
+
         
         try {
             // Primary: Use PlatformSDK if available
             if (typeof window.PlatformSDK !== 'undefined') {
-                console.log('📡 [PlatformSDKManager] Calling window.PlatformSDK.gameOver with score:', score);
+
                 window.PlatformSDK.gameOver(score, details);
-                console.log('✅ [PlatformSDKManager] Game over reported via PlatformSDK');
+
             } else {
-                console.warn('⚠️ PlatformSDK not available, using postMessage fallback');
+
             }
             
             // ALWAYS send postMessage as backup (critical for mobile)
@@ -65,7 +65,7 @@ export class PlatformSDKManager {
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, '*');
-                console.log('✅ [PlatformSDKManager] gameOver sent via postMessage (score:', score, ')');
+
             }
         } catch (error) {
             console.error('❌ [PlatformSDKManager] Failed to report game over:', error);
@@ -83,9 +83,9 @@ export class PlatformSDKManager {
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, '*');
-                console.log('🎮 Game started event sent to platform');
+
             } else {
-                console.warn('Parent window not available for gameStarted message');
+
             }
         } catch (error) {
             console.error('Failed to report game started:', error);
@@ -118,7 +118,7 @@ export class PlatformSDKManager {
         }
 
         try {
-            console.log('Event tracked:', eventName, eventData);
+
         } catch (error) {
             console.error('Failed to track event:', error);
         }

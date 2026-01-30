@@ -75,14 +75,14 @@ export class EventHandler {
     // Trova TUTTI i bottoni con data-bet-type in tutta la pagina
     const allBetButtons = document.querySelectorAll('[data-bet-type]');
     
-    console.log('[EventHandler] Found bet buttons:', allBetButtons.length);
+
     
     allBetButtons.forEach(button => {
       button.addEventListener('click', async () => {
         const betType = button.dataset.betType;
         const amount = this._ui.getBetAmount();
         
-        console.log('[EventHandler] Bet button clicked:', betType, 'Amount:', amount);
+
         
         // Tira subito i dadi con questa scommessa
         await this._controller.rollWithBet(betType, amount);

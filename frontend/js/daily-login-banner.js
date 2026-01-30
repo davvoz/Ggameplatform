@@ -19,17 +19,15 @@ class DailyLoginBanner {
      */
     async init(user) {
         if (!user || !user.user_id) {
-            console.warn('DailyLoginBanner: No user provided');
+
             return;
         }
         
         // Block anonymous users from daily login rewards
         if (user.is_anonymous) {
-            console.log('DailyLoginBanner: Skipping initialization for anonymous user');
             return;
         }
         
-        console.log('DailyLoginBanner: Initializing for user', user.user_id);
         this.currentUser = user;
         await this.createBanner();
         await this.updateStatus();
@@ -37,7 +35,6 @@ class DailyLoginBanner {
         // Check if should show trigger button (only if can claim)
         await this.updateTriggerButtonVisibility();
         
-        console.log('DailyLoginBanner: Initialization complete');
     }
     
     /**
@@ -67,7 +64,6 @@ class DailyLoginBanner {
         if (!this.currentUser) return;
         
         try {
-            console.log('DailyLoginBanner: Fetching status...');
             const response = await fetch(
                 `${this.apiUrl}/users/daily-login-status/${this.currentUser.user_id}`
             );
@@ -77,7 +73,6 @@ class DailyLoginBanner {
             }
             
             const data = await response.json();
-            console.log('DailyLoginBanner: Status received', data);
             
             if (data.success) {
                 // Update rewards config from backend
@@ -94,7 +89,6 @@ class DailyLoginBanner {
                 this.renderBanner(data);
             }
         } catch (error) {
-            console.error('Error fetching daily login status:', error);
         }
     }
     
@@ -227,7 +221,6 @@ class DailyLoginBanner {
                 throw new Error(data.detail || 'Failed to claim reward');
             }
         } catch (error) {
-            console.error('Error claiming daily reward:', error);
             alert(error.message || 'Failed to claim reward. Please try again.');
             
             // Re-enable button
@@ -338,7 +331,7 @@ class DailyLoginBanner {
      * Show the banner
      */
     show() {
-        console.log('DailyLoginBanner: Showing banner');
+
         if (this.bannerElement) {
             // Show overlay
             const overlay = document.getElementById('daily-login-overlay');
@@ -359,7 +352,7 @@ class DailyLoginBanner {
                 trigger.style.display = 'none';
             }
         } else {
-            console.warn('DailyLoginBanner: Banner element not found!');
+
         }
     }
     
@@ -367,7 +360,7 @@ class DailyLoginBanner {
      * Hide the banner
      */
     hide() {
-        console.log('DailyLoginBanner: Hiding banner');
+
         if (this.bannerElement) {
             // Hide overlay
             const overlay = document.getElementById('daily-login-overlay');
@@ -412,7 +405,7 @@ class DailyLoginBanner {
     async quickClaim() {
         if (!this.currentUser) return;
         
-        console.log('DailyLoginBanner: Quick claim triggered');
+
         
         try {
             const trigger = document.getElementById('daily-login-trigger');
@@ -445,7 +438,7 @@ class DailyLoginBanner {
                     detail: data
                 }));
                 
-                console.log('✅ Quick claim successful:', data);
+
             } else {
                 throw new Error(data.detail || 'Failed to claim reward');
             }
@@ -482,16 +475,13 @@ class DailyLoginBanner {
                     if (data.can_claim_today) {
                         trigger.style.display = 'flex';
                         trigger.classList.add('has-reward');
-                        console.log('DailyLoginBanner: Trigger button shown - can claim');
                     } else {
                         trigger.style.display = 'none';
                         trigger.classList.remove('has-reward');
-                        console.log('DailyLoginBanner: Trigger button hidden - already claimed');
                     }
                 }
             }
         } catch (error) {
-            console.error('Error updating trigger button visibility:', error);
         }
     }
     
@@ -509,7 +499,7 @@ class DailyLoginBanner {
      */
     async reloadProfileBadge(userId) {
         // Badge removed, this function is kept for compatibility
-        console.log('Profile badge reload skipped - badge removed from design');
+
     }
 }
 

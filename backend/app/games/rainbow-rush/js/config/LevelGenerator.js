@@ -536,7 +536,7 @@ class CollectibleSpawner {
             ));
         }
         
-        console.log(`💰 Level ${levelId}: ${coinBudget} coins spawned`);
+
         return collectibles;
     }
     

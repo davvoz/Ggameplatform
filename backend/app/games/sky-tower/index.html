@@ -633,7 +633,7 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
-    <script src="/sdk/platformsdk.js"></script>
+    <script src="/sdk/platformsdk.obf.js"></script>
     <div id="gameContainer">
         <div id="scoreDisplay">
             <div class="main-score" id="scoreValue">0</div>
@@ -701,7 +701,7 @@
         // XP Banner & Level-Up Functions
         // ============================================
         function showXPBanner(xpAmount, extraData = null) {
-            console.log('🎁 Showing XP banner inside game:', xpAmount, extraData);
+
             
             // Create banner element
             const banner = document.createElement('div');
@@ -782,13 +782,13 @@
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
-                console.log('🎁 [Window Message] Showing XP banner inside game:', event.data.payload.xp_earned, event.data.payload);
+
                 showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
             
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-                console.log('🎉 [Window Message] Showing level-up modal inside game:', event.data.payload);
+
                 showLevelUpNotification(event.data.payload);
             }
         });
@@ -2605,7 +2605,7 @@
                         timestamp: Date.now(),
                         protocolVersion: '1.0.0'
                     }, '*');
-                    console.log('🎮 Game started event sent to platform');
+
                 } catch (e) {
                     console.error('⚠️ Failed to send game started event:', e);
                 }
@@ -2765,7 +2765,7 @@
                 
                 document.body.style.background = '#000';
                 
-                console.log('🖥️ Fullscreen mobile aspect:', width, 'x', height);
+
             } else {
                 // Exit fullscreen or mobile: restore normal size
                 renderer.setSize(window.innerWidth, window.innerHeight);

@@ -83,15 +83,15 @@ export class PowerupSystem {
         
         // Validate duration and cooldown - se undefined, usa valori default
         if (duration === undefined || duration === null || isNaN(duration)) {
-            console.warn(`⚠️ Powerup ${type} has invalid duration:`, duration, '- using default 5000ms');
+
             duration = 5000;
         }
         if (cooldown === undefined || cooldown === null || isNaN(cooldown)) {
-            console.warn(`⚠️ Powerup ${type} has invalid cooldown:`, cooldown, '- using default 15000ms');
+
             cooldown = 15000;
         }
         
-        console.log(`✅ Activating powerup ${type} - duration: ${duration}ms, cooldown: ${cooldown}ms`);
+
         
         // Check if on cooldown
         const timer = this.powerupTimers.get(type);
@@ -106,7 +106,7 @@ export class PowerupSystem {
                 everActivated: false
             });
         } else if (timer.cooldown > 0) {
-            console.log(`❌ Powerup ${type} still on cooldown: ${timer.cooldown}ms remaining`);
+
             return false; // Still on cooldown
         }
         

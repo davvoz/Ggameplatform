@@ -200,7 +200,7 @@ class AuthManager {
                             created.style.setProperty('--progress-percent', `${percent}%`);
                         }
                     } catch (e) {
-                        console.warn('Could not apply CSS vars for level badge', e);
+
                     }
                 } else {
                     // Fallback to XP display
@@ -324,7 +324,7 @@ class AuthManager {
                     this.saveToStorage();
                 }
                 
-                console.log('✅ Daily access tracked:', data);
+
             }
         } catch (error) {
             console.error('Error tracking daily access:', error);

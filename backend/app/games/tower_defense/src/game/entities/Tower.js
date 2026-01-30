@@ -121,9 +121,9 @@ export class Tower extends BaseEntity {
     const policy = targetingPolicyFactory.getPolicy(policyName);
     if (policy) {
       this.targetingPolicy = policy;
-      console.log(`[TOWER] Changed targeting policy to: ${policyName}`);
+
     } else {
-      console.warn(`[TOWER] Unknown targeting policy: ${policyName}`);
+
     }
   }
 
@@ -210,7 +210,7 @@ export class Tower extends BaseEntity {
    */
   _buildTowerGeometry(turretGroup) {
     // Override in subclasses
-    console.warn("_buildTowerGeometry should be overridden");
+
   }
   
   /**
@@ -788,7 +788,7 @@ export class Tower extends BaseEntity {
     // Gain skill points on upgrade
     if (this.level >= 2) {
       this.skillPoints += 1;
-      console.log(`[TOWER] Gained 1 skill point! Total: ${this.skillPoints}`);
+
       
       // Show decorations on first upgrade (level 2)
       if (this.level === 2) {
@@ -826,7 +826,7 @@ export class Tower extends BaseEntity {
     this.skillBranch = branch;
     this.waitingForSkillChoice = false;
     
-    console.log(`[TOWER] Skill branch chosen: ${branch}`);
+
     
     // Update decoration colors with branch color
     this._updateDecorationColors();
@@ -987,7 +987,7 @@ export class Tower extends BaseEntity {
     this.unlockedSkills.add(skillId);
     this.skillPoints -= cost;
     
-    console.log(`[TOWER] Unlocked skill: ${skillId}`);
+
     this._applySkillEffects(skillId);
     
     // Update decoration colors based on new skill
@@ -1051,7 +1051,7 @@ export class Tower extends BaseEntity {
     const emissiveData = this.skillColorSystem.getEmissiveColor(this.unlockedSkills);
     const blendedColor = new THREE.Color(emissiveData.color);
     
-    console.log('[DECORATION] Blended color:', blendedColor.getHexString(), 'from', emissiveData.color.toString(16));
+
     
     // Update all decorative elements with flat color (MeshBasicMaterial)
     let decorationCount = 0;
@@ -1064,7 +1064,7 @@ export class Tower extends BaseEntity {
       }
     });
     
-    console.log('[DECORATION] Updated', decorationCount, 'decoration objects');
+
     
     // Update point light if present
     if (this.pointLight) {

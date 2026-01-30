@@ -104,7 +104,7 @@ class TextureCache {
     static isPreloaded = false;
     
     static async preloadAll() {
-        console.log('🎨 Preloading textures...');
+
         const loader = new THREE.TextureLoader();
         const textureConfigs = [
             { path: 'assets/steem.png', rotate: true, repeat: 0.7 },
@@ -125,12 +125,12 @@ class TextureCache {
                         texture.needsUpdate = true;
                         
                         this.textures.set(config.path, texture);
-                        console.log(`✅ Loaded: ${config.path}`);
+
                         resolve();
                     },
                     undefined,
                     (error) => {
-                        console.warn(`⚠️ Failed to load: ${config.path}`, error);
+
                         resolve(); // Continue even if failed
                     }
                 );
@@ -138,7 +138,7 @@ class TextureCache {
         ));
         
         this.isPreloaded = true;
-        console.log('✅ Texture preloading complete');
+
     }
     
     static get(path) {

@@ -76,7 +76,7 @@ function applyWaveScaling(baseConfig, waveNumber) {
 
     initMultiPartSprite() {
         if (!MultiPartTowerSprites) {
-            console.warn('[CANNON] MultiPartTowerSprites not available for', this.type);
+
             return;
         }
         
@@ -92,7 +92,7 @@ function applyWaveScaling(baseConfig, waveNumber) {
             }
             
             if (this.multiSprite) {
-                console.log('[CANNON] Multi-part sprite created for', this.type);
+
                 this.multiSprite.play('idle');
                 
                 this.multiSprite.onAnimationComplete = (name) => {

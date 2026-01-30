@@ -437,7 +437,7 @@ export class Game {
             this.ui.flashCoins = false;
         }, 300);
         
-        console.log(`[GAME] Sold ${towerType} Lv.${towerLevel} for ${sellValue} coins`);
+
     }
 
     placeCannon(col, row) {
@@ -888,7 +888,7 @@ export class Game {
             window.handleVictory(this.state.coinReward);
         }
         
-        console.log(`[Game] Victory! Completed ${this.state.targetWaves} waves. Reward: ${this.state.coinReward} platform coins`);
+
     }
 
     /**
@@ -906,7 +906,7 @@ export class Game {
         this.state.coinReward = mode.reward;
         this.state.waveModeSelected = true;
 
-        console.log(`[Game] Wave mode set: ${modeKey} - ${mode.waves} waves, ${mode.reward} coins reward`);
+
         return true;
     }
 
@@ -1554,7 +1554,7 @@ export class Game {
         // Resume audio
         this.audio.play();
 
-        console.log('[Game] Resumed after continue - wave restarted, zombies cleared:', zombiesToRemove.length);
+
     }
 
     restart() {

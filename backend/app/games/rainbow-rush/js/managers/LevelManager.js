@@ -71,7 +71,7 @@ export class LevelManager {
             return null;
         }
 
-        console.log(`🎮 Loading Level ${levelId}: ${this.currentLevel.name}`);
+
 
         // Reset stato livello
         this.levelStartTime = Date.now();
@@ -101,7 +101,7 @@ export class LevelManager {
      * Genera le entità del livello corrente
      */
     generateLevelEntities() {
-        console.log('Generating level entities...');
+
         if (!this.currentLevel) return { platforms: [], enemies: [], collectibles: [], obstacles: [], goalFlag: null };
 
         const entities = {
@@ -155,7 +155,7 @@ export class LevelManager {
         const targetLength = this.currentLevel.fineLivello || 3000;
         const loopCount = Math.max(1, Math.ceil(targetLength / baseMaxX));
 
-        console.log(`🔄 Will loop pattern ${loopCount} times to reach target ${targetLength}px (pattern length: ${baseMaxX}px)`);
+
 
         // STEP 3: Replica il pattern per raggiungere la lunghezza target
         let currentOffset = 0;
@@ -222,13 +222,13 @@ export class LevelManager {
         this.levelLength = targetLength;
         this.goalSpawned = false;
 
-        console.log(`📏 Level length set to ${this.levelLength} pixels (target from config).`);
+
 
         // STEP 5: Aggiorna il conteggio totale delle monete DOPO aver generato tutte le entità
         // Conta SOLO le monete che sono PRIMA della fine del livello (quelle effettivamente raggiungibili)
         // Le monete sono in entities.collectibles con type='collectible'
         this.totalCoins = entities.collectibles.filter(coin => coin.x < this.levelLength).length;
-        console.log(`🪙 Total coins in level (reachable before goal at ${this.levelLength}px): ${this.totalCoins}`);
+
         
         // Rimuovi le monete irraggiungibili (oltre la fine del livello) per non confondere il player
         entities.collectibles = entities.collectibles.filter(coin => coin.x < this.levelLength);
@@ -328,7 +328,7 @@ export class LevelManager {
     createEnemy(data, index) {
         const enemyConfig = getEnemyConfig(data.enemyId || data.type); // Support both field names
         if (!enemyConfig) {
-            console.warn('Enemy config not found for:', data);
+
             return null;
         }
 
@@ -672,7 +672,7 @@ export class LevelManager {
             const canvasWidth = this.canvasWidth || 800;
             const goalX = canvasWidth + 1500; // Più lontano per dare tempo di scorrere nella visuale
 
-            console.log(`🏁 Goal spawned OFF-SCREEN at ${goalX}px (distance: ${this.distanceTraveled.toFixed(0)}/${this.levelLength})`);
+
 
             return {
                 x: goalX,
@@ -753,11 +753,11 @@ export class LevelManager {
         this.levelCompleted = true;
         this.levelStars = this.calculateStars();
 
-        console.log(`🎉 LEVEL ${this.currentLevelId} COMPLETED!`);
-        console.log(`⭐ Stars: ${this.levelStars}/3`);
-        console.log(`⏱️ Time: ${this.levelElapsedTime.toFixed(2)}s`);
-        console.log(`💀 Enemies: ${this.enemiesKilled}/${this.totalEnemies}`);
-        console.log(`🪙 Coins: ${this.coinsCollected}/${this.totalCoins}`);
+
+
+
+
+
 
         // Salva progresso
         this.saveProgress();
@@ -844,12 +844,12 @@ export class LevelManager {
                 };
                 
                 await this.sdk.saveLevelProgress(this.currentLevelId, levelData);
-                console.log('💾 Progress saved via SDK for level', this.currentLevelId);
+
                 
                 // Aggiorna cache locale
                 this.savedProgress = await this.sdk.getProgress();
             } catch (error) {
-                console.warn('Failed to save via SDK, falling back to localStorage:', error);
+
                 this.saveProgressLocal();
             }
         } else {
@@ -884,9 +884,9 @@ export class LevelManager {
 
             localStorage.setItem(progressKey, JSON.stringify(progress));
             this.savedProgress = progress;
-            console.log('💾 Progress saved locally for level', this.currentLevelId);
+
         } catch (error) {
-            console.warn('Failed to save progress locally:', error);
+
         }
     }
 
@@ -905,10 +905,10 @@ export class LevelManager {
                 const progress = await this.sdk.getProgress();
                 this.savedProgress = progress.level_completions || {};
                 this.progressLoaded = true;
-                console.log('📂 Progress loaded via SDK:', Object.keys(this.savedProgress).length, 'levels');
+
                 return this.savedProgress;
             } catch (error) {
-                console.warn('Failed to load via SDK, falling back to localStorage:', error);
+
                 return this.loadProgressLocal();
             }
         } else {
@@ -927,10 +927,10 @@ export class LevelManager {
             const progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
             this.savedProgress = progress;
             this.progressLoaded = true;
-            console.log('📂 Progress loaded locally:', Object.keys(progress).length, 'levels');
+
             return progress;
         } catch (error) {
-            console.warn('Failed to load progress locally:', error);
+
             return {};
         }
     }

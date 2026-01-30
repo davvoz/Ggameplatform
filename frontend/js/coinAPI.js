@@ -134,12 +134,12 @@ class CoinAPI {
         try {
             const response = await fetch(`${this.baseUrl}/api/coins/${userId}/stats?days=${days}`);
             if (!response.ok) {
-                console.warn('Detailed stats not available:', response.status);
+
                 return null;
             }
             return await response.json();
         } catch (error) {
-            console.warn('Error fetching detailed stats:', error);
+
             return null;
         }
     }
@@ -153,5 +153,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global export for non-module scripts
 if (typeof window !== 'undefined') {
     window.CoinAPI = CoinAPI;
-    console.log('✅ CoinAPI loaded and exported to window');
 }

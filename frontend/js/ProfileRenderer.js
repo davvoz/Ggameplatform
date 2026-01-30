@@ -41,7 +41,7 @@ class ProfileRenderer {
                         try {
                             if (this.authManager.setUser) this.authManager.setUser(updatedUser);
                         } catch (e) {
-                            console.warn('AuthManager.setUser failed during multiplier sync:', e);
+
                         }
                         try {
                             window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
@@ -87,7 +87,7 @@ class ProfileRenderer {
                     this.updateProfileWithSteemData(user, steemProfile);
                 }
             }).catch(error => {
-                console.warn('Failed to load Steem profile:', error);
+
             });
 
         } catch (error) {
@@ -120,16 +120,16 @@ class ProfileRenderer {
      */
     async loadUserData() {
         const cachedUser = this.authManager.getUser();
-        console.log('📊 Loading user data for:', cachedUser?.user_id);
+
 
         try {
             const API_URL = window.ENV?.API_URL || config.API_URL;
             const url = `${API_URL}/users/${cachedUser.user_id}`;
-            console.log('🔗 Fetching from:', url);
+
             const response = await fetch(url);
             if (response.ok) {
                 const userData = await response.json();
-                console.log('✅ Fetched fresh user data from server:', userData);
+
                 return userData.user;
             }
             console.error('❌ Failed to fetch user data:', response.status, response.statusText);
@@ -137,7 +137,7 @@ class ProfileRenderer {
             console.error('❌ Error fetching fresh user data:', error);
         }
 
-        console.log('↩️ Using cached user data');
+
         return cachedUser;
     }
 
@@ -145,10 +145,10 @@ class ProfileRenderer {
      * Load user sessions
      */
     async loadUserSessions(userId) {
-        console.log('🎮 Loading sessions for user:', userId);
+
         try {
             const sessionsData = await getUserSessions(userId);
-            console.log('✅ Sessions loaded:', sessionsData?.sessions?.length || 0, 'total:', sessionsData?.count);
+
             // Return the full response so caller can access total count if API provides it
             return sessionsData || { count: 0, sessions: [] };
         } catch (error) {
@@ -161,7 +161,7 @@ class ProfileRenderer {
      * Calculate user statistics from sessions
      */
     calculateStats(sessions) {
-        console.log('📊 Calculating stats from', sessions.length, 'sessions');
+
         const stats = {
             gamesPlayed: sessions.length,
             totalPlayTimeSeconds: 0,
@@ -174,7 +174,7 @@ class ProfileRenderer {
         });
 
         stats.totalPlayTime = this.formatPlayTime(stats.totalPlayTimeSeconds);
-        console.log('✅ Stats calculated:', stats);
+
 
         return stats;
     }
@@ -239,17 +239,17 @@ class ProfileRenderer {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('✅ Multiplier updated from Steem profile:', result);
+
 
                     // Update user object with new multiplier
                     user.cur8_multiplier = result.cur8_multiplier;
                     user.votes_cur8_witness = result.votes_cur8_witness;
                     user.delegation_amount = result.delegation_amount;
                 } else {
-                    console.warn('Failed to update multiplier:', response.status);
+
                 }
             } catch (error) {
-                console.warn('Failed to update multiplier from Steem data:', error);
+
             }
         }
 
@@ -462,7 +462,7 @@ class ProfileRenderer {
                 this.showMultiplierModal(data.breakdown);
             }
         } catch (error) {
-            console.warn('Failed to fetch multiplier breakdown:', error);
+
         }
     }
 
@@ -819,8 +819,8 @@ class ProfileRenderer {
      * Populate profile statistics
      */
     async populateProfileStats(content, user, stats) {
-        console.log('📊 populateProfileStats called with:', { user, stats });
-        console.log('📄 Content element:', content);
+
+
 
         const multiplier = user.cur8_multiplier || 1.0;
         const totalXP = user.total_xp_earned || 0;
@@ -874,7 +874,7 @@ class ProfileRenderer {
         this._attachMultiplierBadgeHandlers(parentBadge, breakdown);
         this._syncMultiplierToAuthManager(breakdown, user);
 
-        console.log('✅ Multiplier badge configured:', breakdown.final_multiplier.toFixed(2));
+
     }
 
     /**
@@ -934,7 +934,7 @@ class ProfileRenderer {
             this.authManager.setUser?.(updatedUser);
             window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
         } catch (error) {
-            console.warn('Failed to sync nav multiplier from profile load', error);
+
         }
     }
 
@@ -1300,7 +1300,7 @@ class ProfileRenderer {
      * Load coin balance for header badge
      */
     async loadCoinBalanceHeader(userId) {
-        console.log('🪙 Loading coin balance for header');
+
         const coinBalanceEl = document.getElementById('coinBalanceHeader');
         const coinsBadge = document.getElementById('coinsQuickBadge');
         if (!coinBalanceEl) return;
@@ -1316,7 +1316,7 @@ class ProfileRenderer {
                         ${balance.toLocaleString()}
                     </span>
                 `;
-                console.log('✅ Coin balance loaded:', balance);
+
 
                 // Add hover and click effects to badge
                 if (coinsBadge) {
@@ -1372,7 +1372,7 @@ class ProfileRenderer {
                 if (typeof window.steem_keychain.requestWitnessVote === 'function') {
                     try {
                         window.steem_keychain.requestWitnessVote(steemUsername, 'cur8.witness', true, (response) => {
-                            console.log('Keychain.requestWitnessVote callback:', response);
+
 
                             // Handle common response shapes
                             if (response && (response.success === true || response.success === 'true')) return resolve(response);
@@ -1392,7 +1392,7 @@ class ProfileRenderer {
                         });
                         return; // exit; callback will resolve/reject
                     } catch (e) {
-                        console.warn('requestWitnessVote threw, falling back to requestBroadcast', e);
+
                         // fall through to broadcast
                     }
                 }
@@ -1404,7 +1404,7 @@ class ProfileRenderer {
                 ]];
 
                 window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
-                    console.log('Keychain.requestBroadcast callback result:', result);
+
 
                     if (result && (result.success === true || result.success === 'true')) return resolve(result);
                     if (result && result.result) return resolve(result);
@@ -1472,7 +1472,7 @@ class ProfileRenderer {
                 // Dispatch event in case other components listen for multiplier updates
                 window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
             } catch (e) {
-                console.warn('Failed to update multiplier badge DOM:', e);
+
             }
 
             return result;
@@ -1510,7 +1510,7 @@ class ProfileRenderer {
                 const multEl = document.querySelector('.stat-value.multiplier');
                 if (multEl) multEl.textContent = `${newMult.toFixed(2)}x`;
             } catch (e) {
-                console.warn('Failed to update multiplier badge DOM:', e);
+
             }
 
             return result;
@@ -1541,7 +1541,7 @@ class ProfileRenderer {
         try {
             vestsPerSteem = await steemProfileService._getVestsToSpRatio();
         } catch (e) {
-            console.warn('Could not get vests ratio, using fallback', e);
+
         }
 
         const vests = Number(amountSp) * Number(vestsPerSteem);
@@ -1558,18 +1558,18 @@ class ProfileRenderer {
                 if (typeof window.steem_keychain.requestDelegateVestingShares === 'function') {
                     try {
                         window.steem_keychain.requestDelegateVestingShares(steemUsername, 'cur8', vesting_shares, (resp) => {
-                            console.log('Keychain.requestDelegateVestingShares callback:', resp);
+
                             if (resp && (resp.success === true || resp.result)) return resolve(resp);
                             return reject(new Error((resp && resp.error && resp.error.message) || 'Delegation failed'));
                         });
                         return;
                     } catch (e) {
-                        console.warn('requestDelegateVestingShares threw, falling back to requestBroadcast', e);
+
                     }
                 }
 
                 window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
-                    console.log('Keychain.requestBroadcast delegation result:', result);
+
                     if (result && (result.success === true || result.result)) return resolve(result);
                     if (typeof result === 'string' && result.length > 0) return resolve({ tx: result });
                     return reject(new Error((result && result.error && result.error.message) || 'Delegation broadcast failed'));
@@ -1875,7 +1875,7 @@ class ProfileRenderer {
         try {
             await this.updateMultiplierBackend(true, currentDelegation);
         } catch (e) {
-            console.warn('Failed to update with preserved delegation, falling back to refresh:', e);
+
             await this.refreshMultiplierForCurrentUser();
         }
     }
@@ -1909,7 +1909,7 @@ class ProfileRenderer {
                 this.showMultiplierModal(json.breakdown);
             }
         } catch (e) {
-            console.warn('Could not reload multiplier breakdown:', e);
+
         }
     }
 
@@ -1931,7 +1931,7 @@ class ProfileRenderer {
 
             window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: this.authManager.getUser() }));
         } catch (e) {
-            console.warn('Error updating profile visuals after vote:', e);
+
         }
     }
 
@@ -1975,7 +1975,7 @@ class ProfileRenderer {
 
             breakdown.available_sp = Math.max(availableSp, delegatedAmount);
         } catch (e) {
-            console.warn('Error initializing delegation slider:', e);
+
         }
     }
 
@@ -2157,7 +2157,7 @@ class ProfileRenderer {
             breakdown.available_sp = availableSp;
             this._computeDelegationPreview(modal, slider, breakdown);
         } catch (e) {
-            console.warn('Could not load Steem profile for slider ticks:', e);
+
         }
     }
 
@@ -2196,7 +2196,7 @@ class ProfileRenderer {
                 return total;
             }, 0);
         } catch (e) {
-            console.warn('Could not fetch outgoing delegations:', e);
+
             return 0;
         }
     }
@@ -2285,7 +2285,7 @@ class ProfileRenderer {
         try {
             await this.updateMultiplierBackend(votesWitness, amount);
         } catch (e) {
-            console.warn('Failed to update backend with preserved vote flag, falling back to refresh:', e);
+
             await this.refreshMultiplierForCurrentUser();
         }
     }
@@ -2552,7 +2552,7 @@ try {
             const renderer = new ProfileRenderer();
             renderer.showMultiplierModal(breakdown);
         } catch (e) {
-            console.warn('showCur8MultiplierModal failed:', e);
+
         }
     };
 } catch (e) {

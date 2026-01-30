@@ -354,7 +354,7 @@ export class World {
   placeTowerAt(position, towerConfig) {
     // Check if tile is already occupied
     if (this.isTileOccupied(position)) {
-      console.warn("Cannot place tower: tile already occupied at", position);
+
       return false;
     }
     
@@ -371,7 +371,7 @@ export class World {
         tower = new PulseTower(position, towerConfig);
         break;
       default:
-        console.warn(`Unknown tower type: ${towerConfig.id}, defaulting to LaserTower`);
+
         tower = new LaserTower(position, towerConfig);
     }
     
@@ -396,17 +396,17 @@ export class World {
 
   tryUpgradeTower(tower, levelManager) {
     if (!tower || tower.level >= tower.maxLevel) {
-      console.log('[World] Cannot upgrade: tower missing or max level');
+
       return false;
     }
 
     const cost = tower.getUpgradeCost();
     if (!Number.isFinite(cost)) {
-      console.log('[World] Cannot upgrade: invalid cost');
+
       return false;
     }
     if (!levelManager.canAfford(cost)) {
-      console.log('[World] Cannot upgrade: insufficient funds');
+
       return false;
     }
 
@@ -420,7 +420,7 @@ export class World {
     floatingText.addToScene(this.scene);
     this.floatingTexts.push(floatingText);
     
-    console.log(`Tower upgraded to level ${tower.level} - particles: ${tower.upgradeParticles?.length || 0}`);
+
     return true;
   }
 
@@ -433,7 +433,7 @@ export class World {
     const waveScaling = this._calculateWaveScaling();
     const currentWaveNumber = (this.levelManager.currentWaveIndex || 0) + 1;
     
-    console.log(`[SPAWN] Wave ${currentWaveNumber}: HP x${waveScaling.hpMultiplier.toFixed(2)}, Speed x${waveScaling.speedMultiplier.toFixed(2)}, Reward x${waveScaling.rewardMultiplier.toFixed(2)}`);
+
     
     const scaledConfig = {
       ...waveConfig,
@@ -443,7 +443,7 @@ export class World {
       reward: Math.round(waveConfig.reward * waveScaling.rewardMultiplier)
     };
     
-    console.log(`[SPAWN] ${waveConfig.type}: Base HP ${waveConfig.baseHp} -> Scaled HP ${scaledConfig.baseHp}, Base Speed ${waveConfig.speed.toFixed(2)} -> Scaled Speed ${scaledConfig.speed.toFixed(2)}`);
+
     
     const enemy = new Enemy(lanePoints, scaledConfig);
     enemy.levelManager = this.levelManager;
@@ -527,7 +527,7 @@ export class World {
   }
 
   _triggerGameOver() {
-    console.log("[GAME] GAME OVER - Health depleted!");
+
     
     // Play game over sound
     if (this.soundLibrary) {

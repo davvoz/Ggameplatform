@@ -98,16 +98,16 @@ export class ScreenManager {
      * Aggiorna il pannello debug con le info utente
      */
     updateDebugPanel(rainbowRushSDK = null) {
-        console.log('[ScreenManager] 🔍 updateDebugPanel called');
+
         
         // Get all data from SDK only - NO localStorage, NO AuthManager
         const username = rainbowRushSDK?.username || 'N/A';
         const platformUserId = rainbowRushSDK?.platformUserId || 'N/A';
         const gameUserId = rainbowRushSDK?.userId || 'N/A';
         
-        console.log('[ScreenManager] username:', username);
-        console.log('[ScreenManager] platformUserId:', platformUserId);
-        console.log('[ScreenManager] gameUserId:', gameUserId);
+
+
+
         
         const usernameEl = document.getElementById('debug-username');
         const platformIdEl = document.getElementById('debug-platform-id');
@@ -148,7 +148,7 @@ export class ScreenManager {
                 const highScore = await scoreSystem.loadHighScore();
                 this.updateHighScore(highScore);
             } catch (error) {
-                console.warn('Failed to load high score for menu:', error);
+
             }
         }
         

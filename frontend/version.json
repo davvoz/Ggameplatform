@@ -1,8 +1,35 @@
 {
-  "version": "3.17.10",
-  "timestamp": "2026-01-27T00:45:53.585Z",
-  "buildNumber": 329,
+  "version": "3.17.13",
+  "timestamp": "2026-01-30T17:17:30.158Z",
+  "buildNumber": 332,
   "changelog": [
+    {
+      "version": "3.17.13",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Refactor code structure for improved readability and maintainability",
+        "🔖 Bump version to 3.17.12 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.17.12",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Refactor: Remove console logs from various files for cleaner output",
+        "🔖 Bump version to 3.17.11 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.17.11",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "refactor: Remove console log statements for cleaner production code",
+        "🔖 Bump version to 3.17.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.10",
       "date": "2026-01-27",
@@ -64,34 +91,6 @@
       "changes": [
         "fix: Improve image compression by using FileReader for better performance and error handling",
         "🔖 Bump version to 3.17.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.3",
-      "date": "2026-01-26",
-      "type": "patch",
-      "changes": [
-        "fix: Update Steem post publishing to use backend-prepared operations with beneficiaries, add image uploader",
-        "🔖 Bump version to 3.17.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.2",
-      "date": "2026-01-25",
-      "type": "patch",
-      "changes": [
-        "fix: Post, include GameStatus model in user statistics query for ranked games",
-        "🔖 Bump version to 3.17.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.1",
-      "date": "2026-01-25",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD]update continue cost for wave mode selection",
-        "🔖 Bump version to 3.17.0 [skip-version]"
       ]
     }
   ]

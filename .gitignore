@@ -290,3 +290,5 @@ start.bat
 bot/blocky_road_bot.py
 bot/requirements.txt
 bot/run_bot.bat
+backend/sdk/offusca_sdk.bat
+frontend/js/offusca_runtimeshell.bat

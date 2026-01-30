@@ -114,7 +114,7 @@ export class ThemeGeneratorFactory {
     async generateTheme(themeName) {
         const generator = await this.getGenerator(themeName);
         if (!generator) {
-            console.warn(`No generator found for theme: ${themeName}`);
+
             return null;
         }
         return generator.generate();

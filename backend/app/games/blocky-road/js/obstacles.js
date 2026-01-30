@@ -293,7 +293,7 @@ class ObstacleManager {
                     // Aggiungi 1-2 secondi di offset (60-120 frames)
                     const offsetFrames = 60 + Math.floor(Math.random() * 60);
                     initialDelay += offsetFrames;
-                    console.log(`🛤️ Rail Z=${z} close to last (${this.lastRailZ}), adding ${offsetFrames} frames offset`);
+
                 }
                 this.lastRailZ = z;
                 
@@ -481,7 +481,7 @@ class ObstacleManager {
 
     
     startWarningLights(lights) {
-        console.log('🚨 WARNING LIGHTS ACTIVATED!');
+
         const endFrame = this.frameCount + 120; // 2 seconds at 60fps
         
         lights.forEach(lightGroup => {

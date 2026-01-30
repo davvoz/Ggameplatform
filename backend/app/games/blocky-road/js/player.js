@@ -30,7 +30,7 @@ class Player {
         this.mesh.visible = true; // Fix invisibility bug
         this.scene.add(this.mesh);
 
-        console.log('🐰 Player spawned at:', this.mesh.position);
+
 
         // Grid position (logical)
         this.gridX = spawnX;
@@ -94,13 +94,13 @@ class Player {
             // Check boundaries - limit horizontal movement (±7 playable area)
             // Allow moves from -7 to +7 inclusive
             if (targetX < -7 || targetX > 7) {
-                console.log('⛔ Out of bounds:', targetX);
+
                 return false; // Out of playable area
             }
             
             // Block backward movement beyond spawn point (z=-2)
             if (targetZ < -2) {
-                console.log('⛔ Cannot move backward past spawn point');
+
                 return false; // Blocked by spawn barrier
             }
             
@@ -286,7 +286,7 @@ class Player {
             // Waterfalls are at ±7.5, check with small margin
             if (this.mesh.position.x <= -7.3 || this.mesh.position.x >= 7.3) {
                 // Player went too far on the log and reached the waterfall!
-                console.log('🌊 Player reached waterfall at x:', this.mesh.position.x);
+
                 this.fallInWaterfall();
             }
         }
@@ -346,7 +346,7 @@ class Player {
         // Assicura che il player sia nella scena (fix per restart veloce)
         if (!this.mesh.parent) {
             this.scene.add(this.mesh);
-            console.log('🔧 Player re-added to scene');
+
         }
     }
 }

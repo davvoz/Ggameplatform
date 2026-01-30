@@ -65,7 +65,7 @@ export class CollectibleCollisionHandler extends CollisionHandler {
         if (this.context.levelManager) {
             this.context.levelManager.recordCoinCollected();
             if (collectible.fromCoinRain) {
-                console.log(`🪙 BONUS COIN from rain collected! Total: ${this.context.levelManager.coinsCollected}/${this.context.levelManager.totalCoins}`);
+
             }
         }
 

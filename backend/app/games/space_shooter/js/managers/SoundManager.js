@@ -81,9 +81,9 @@ class SoundManager {
             }
             this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
             
-            console.log(`🔊 Audio initialized (iOS: ${this.isIOS})`);
+
         } catch (e) {
-            console.warn('Web Audio API not supported:', e);
+
             this.enabled = false;
         }
     }
@@ -113,9 +113,9 @@ class SoundManager {
             }
             
             this.unlocked = true;
-            console.log('🔓 iOS Audio unlocked');
+
         } catch (e) {
-            console.warn('Failed to unlock iOS audio:', e);
+
         }
     }
     
@@ -129,7 +129,7 @@ class SoundManager {
             // Usa cache se disponibile
             if (this.trackBuffers[url]) {
                 this.bgMusicBuffer = this.trackBuffers[url];
-                console.log('Background music loaded from cache');
+
                 return;
             }
             
@@ -145,10 +145,10 @@ class SoundManager {
             
             if (this.bgMusicBuffer) {
                 this.trackBuffers[url] = this.bgMusicBuffer;
-                console.log('Background music loaded');
+
             }
         } catch (e) {
-            console.warn('Failed to load background music:', e);
+
         }
     }
     
@@ -211,7 +211,7 @@ class SoundManager {
             await this.playBackgroundMusic();
         }
         
-        console.log('Changed to track:', this.musicTracks[index].name);
+
     }
     
     /**
@@ -229,14 +229,14 @@ class SoundManager {
             // Ensure AudioContext is active (browsers may suspend it)
             if (this.audioContext && this.audioContext.state === 'suspended') {
                 await this.audioContext.resume();
-                console.log('AudioContext resumed');
+
             }
             
             // If buffer is not loaded yet, try to (re)load and bail out
             if (!this.bgMusicBuffer) {
                 await this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
                 if (!this.bgMusicBuffer) {
-                    console.warn('No audio buffer available');
+
                     return;
                 }
             }
@@ -257,9 +257,9 @@ class SoundManager {
             this.bgMusicSource.start(0);
             this.musicPlaying = true;
             
-            console.log('🎵 Background music started');
+
         } catch (e) {
-            console.warn('Failed to play background music:', e);
+
             // Retry una volta su iOS
             if (this.isIOS && !this.unlocked) {
                 this.unlocked = false;

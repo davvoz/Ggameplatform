@@ -25,7 +25,7 @@ class CRUDManager {
                 this.formOptions = await response.json();
             }
         } catch (error) {
-            console.warn('Could not load form options:', error);
+
             // Fallback: generate from schema
             this.formOptions = this.generateFormOptionsFromSchema();
         }

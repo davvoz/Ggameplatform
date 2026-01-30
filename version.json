@@ -1,8 +1,17 @@
 {
-  "version": "3.17.14",
-  "timestamp": "2026-01-30T21:09:42.803Z",
-  "buildNumber": 333,
+  "version": "3.17.15",
+  "timestamp": "2026-01-30T22:15:53.831Z",
+  "buildNumber": 334,
   "changelog": [
+    {
+      "version": "3.17.15",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Refactor Survivor Arena SDK to send essential game over data and update setup script for improved XP rules and quest descriptions",
+        "🔖 Bump version to 3.17.14 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.14",
       "date": "2026-01-30",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Add tiebreaker for leaderboard ranking by including creation date in order by clause",
         "🔖 Bump version to 3.17.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.5",
-      "date": "2026-01-26",
-      "type": "patch",
-      "changes": [
-        "fix: Update CSP policy to include additional backend URLs for improved security",
-        "🔖 Bump version to 3.17.4 [skip-version]"
       ]
     }
   ]

@@ -54,7 +54,7 @@ Visit: http://localhost:3000
 ### Integrate Your Own Game
 
 ```html
-<script src="../../sdk/platformsdk.js"></script>
+<script src="../../sdk/platformsdk.obf.js"></script>
 <script>
   PlatformSDK.init().then(() => {
     PlatformSDK.sendScore(100);

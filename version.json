@@ -1,8 +1,17 @@
 {
-  "version": "3.17.15",
-  "timestamp": "2026-01-30T22:15:53.831Z",
-  "buildNumber": 334,
+  "version": "3.17.16",
+  "timestamp": "2026-01-30T22:27:04.346Z",
+  "buildNumber": 335,
   "changelog": [
+    {
+      "version": "3.17.16",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Enhance fullscreen experience with responsive canvas resizing and background adjustments for desktop and mobile modes",
+        "🔖 Bump version to 3.17.15 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.15",
       "date": "2026-01-30",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: BR Implement in-game tutorial overlay and enhance particle effects for water splash and bubbles",
         "🔖 Bump version to 3.17.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.6",
-      "date": "2026-01-26",
-      "type": "patch",
-      "changes": [
-        "fix: Add tiebreaker for leaderboard ranking by including creation date in order by clause",
-        "🔖 Bump version to 3.17.5 [skip-version]"
       ]
     }
   ]

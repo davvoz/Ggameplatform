@@ -85,6 +85,10 @@ class Game {
         this.handleResize();
         window.addEventListener('resize', this.handleResize);
         
+        // Setup fullscreen change listeners
+        document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+        document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
+        
         // Setup input
         this.setupInput();
         
@@ -1690,9 +1694,129 @@ class Game {
      * Handle canvas resize
      */
     handleResize() {
-        // Get container size - use full window
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const gameUI = document.getElementById('gameUI');
+        const weaponSlots = document.querySelector('.weapon-slots');
+        const healthContainer = document.querySelector('.health-container');
+        
+        // Su desktop, mantieni sempre aspect ratio mobile (9:16)
+        // Il fullscreen è gestito dalla piattaforma (iframe parent), quindi
+        // non possiamo usare document.fullscreenElement
+        if (!this.isMobile()) {
+            // Desktop: forza aspect ratio mobile (9:16)
+            const screenHeight = window.innerHeight;
+            const screenWidth = window.innerWidth;
+            
+            // Calcola dimensioni con aspect ratio 9:16
+            let width, height;
+            const targetRatio = 9 / 16;
+            const screenRatio = screenWidth / screenHeight;
+            
+            if (screenRatio > targetRatio) {
+                // Schermo più largo: limita per altezza
+                height = screenHeight;
+                width = Math.floor(height * targetRatio);
+            } else {
+                // Schermo più stretto: limita per larghezza
+                width = screenWidth;
+                height = Math.floor(width / targetRatio);
+            }
+            
+            // Imposta risoluzione canvas
+            this.canvas.width = width;
+            this.canvas.height = height;
+            
+            // Imposta dimensioni CSS (sovrascrive width:100% height:100%)
+            this.canvas.style.width = width + 'px';
+            this.canvas.style.height = height + 'px';
+            
+            // Centra il canvas
+            this.canvas.style.position = 'fixed';
+            this.canvas.style.left = '50%';
+            this.canvas.style.top = '50%';
+            this.canvas.style.transform = 'translate(-50%, -50%)';
+            
+            // Sfondo nero per le barre laterali
+            document.body.classList.add('desktop-mode');
+            
+            // Posiziona UI dentro l'area del canvas
+            const left = (screenWidth - width) / 2;
+            const top = (screenHeight - height) / 2;
+            
+            if (gameUI) {
+                gameUI.style.left = left + 'px';
+                gameUI.style.top = top + 'px';
+                gameUI.style.width = width + 'px';
+                gameUI.style.height = height + 'px';
+            }
+            
+            if (weaponSlots) {
+                weaponSlots.style.left = (left + 10) + 'px';
+                weaponSlots.style.top = (top + 130) + 'px';
+            }
+            
+            if (healthContainer) {
+                healthContainer.style.left = left + 'px';
+                healthContainer.style.width = width + 'px';
+            }
+        } else {
+            // Mobile: usa tutto lo schermo
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            
+            // Reset stili canvas
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.position = 'fixed';
+            this.canvas.style.left = '0';
+            this.canvas.style.top = '0';
+            this.canvas.style.transform = '';
+            
+            // Reset sfondo (rimuovi desktop mode)
+            document.body.classList.remove('desktop-mode');
+            
+            // Reset UI positioning
+            if (gameUI) {
+                gameUI.style.left = '0';
+                gameUI.style.top = '0';
+                gameUI.style.width = '100%';
+                gameUI.style.height = '100%';
+            }
+            
+            if (weaponSlots) {
+                weaponSlots.style.left = '';
+                weaponSlots.style.top = '';
+            }
+            
+            if (healthContainer) {
+                healthContainer.style.left = '';
+                healthContainer.style.width = '';
+            }
+        }
+    }
+
+    /**
+     * Check if device is mobile
+     */
+    isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (window.innerWidth <= 768);
+    }
+
+    /**
+     * Handle fullscreen change event
+     */
+    handleFullscreenChange() {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        
+        // Aggiungi/rimuovi classe per sfondo nero
+        if (isFullscreen) {
+            document.body.classList.add('fullscreen-active');
+        } else {
+            document.body.classList.remove('fullscreen-active');
+        }
+        
+        // Ridimensiona canvas
+        this.handleResize();
     }
 
     /**

@@ -1,8 +1,18 @@
 {
-  "version": "3.17.13",
-  "timestamp": "2026-01-30T17:17:30.158Z",
-  "buildNumber": 332,
+  "version": "3.17.14",
+  "timestamp": "2026-01-30T21:09:42.803Z",
+  "buildNumber": 333,
   "changelog": [
+    {
+      "version": "3.17.14",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "Add scripts for Survivor Arena setup and thumbnail creation",
+        "🔖 Bump version to 3.17.13 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.13",
       "date": "2026-01-30",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: Update CSP policy to include additional backend URLs for improved security",
         "🔖 Bump version to 3.17.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.4",
-      "date": "2026-01-26",
-      "type": "patch",
-      "changes": [
-        "fix: Improve image compression by using FileReader for better performance and error handling",
-        "🔖 Bump version to 3.17.3 [skip-version]"
       ]
     }
   ]

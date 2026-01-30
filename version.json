@@ -1,8 +1,17 @@
 {
-  "version": "3.17.16",
-  "timestamp": "2026-01-30T22:27:04.346Z",
-  "buildNumber": 335,
+  "version": "3.17.17",
+  "timestamp": "2026-01-30T22:58:08.256Z",
+  "buildNumber": 336,
   "changelog": [
+    {
+      "version": "3.17.17",
+      "date": "2026-01-30",
+      "type": "patch",
+      "changes": [
+        "fix: Refactor upgrade modals and notifications for improved clarity and functionality",
+        "🔖 Bump version to 3.17.16 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.16",
       "date": "2026-01-30",
@@ -83,15 +92,6 @@
       "changes": [
         "Translate game text from Italian to English across multiple files, enhancing accessibility for English-speaking players. Update UI elements, notifications, and gameplay instructions to reflect the new language. Ensure consistency in terminology and improve clarity in user interactions.",
         "🔖 Bump version to 3.17.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.7",
-      "date": "2026-01-27",
-      "type": "patch",
-      "changes": [
-        "fix: BR Implement in-game tutorial overlay and enhance particle effects for water splash and bubbles",
-        "🔖 Bump version to 3.17.6 [skip-version]"
       ]
     }
   ]

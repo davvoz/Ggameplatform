@@ -48,8 +48,8 @@ class Game {
         this.lastFrameTime = 0;
         this.animationFrameId = null;
         
-        // Camera
-        this.camera = { x: 0, y: 0 };
+        // Camera (with zoom for field of view control)
+        this.camera = { x: 0, y: 0, zoom: 0.75 }; // 0.75 = zoomed out, see more of the arena
         
         // Background scroll position (continuous, never wraps - for smooth scrolling)
         this.bgScrollX = 0;
@@ -283,9 +283,10 @@ class Game {
         // Get screen shake from UI system
         const shake = this.ui.updateScreenShake(1 / 60);
         
-        // Apply only shake (not camera translate - we use worldToScreen instead)
+        // Apply zoom and shake
         ctx.save();
         ctx.translate(shake.x, shake.y);
+        ctx.scale(this.camera.zoom, this.camera.zoom);
         
         // Draw arena background (seamless tiling around player)
         this.drawArenaBackground(ctx);
@@ -413,6 +414,10 @@ class Game {
     drawArenaBackground(ctx) {
         const gridSize = 64;
         
+        // Effective viewport size (zoomed)
+        const viewWidth = this.canvas.width / this.camera.zoom;
+        const viewHeight = this.canvas.height / this.camera.zoom;
+        
         // Use continuous scroll position (never wraps, so no jumps)
         const offsetX = -this.bgScrollX % gridSize;
         const offsetY = -this.bgScrollY % gridSize;
@@ -424,15 +429,15 @@ class Game {
         ctx.beginPath();
         
         // Vertical lines (scrolling smoothly)
-        for (let x = offsetX - gridSize; x <= this.canvas.width + gridSize; x += gridSize) {
+        for (let x = offsetX - gridSize; x <= viewWidth + gridSize; x += gridSize) {
             ctx.moveTo(x, 0);
-            ctx.lineTo(x, this.canvas.height);
+            ctx.lineTo(x, viewHeight);
         }
         
         // Horizontal lines (scrolling smoothly)
-        for (let y = offsetY - gridSize; y <= this.canvas.height + gridSize; y += gridSize) {
+        for (let y = offsetY - gridSize; y <= viewHeight + gridSize; y += gridSize) {
             ctx.moveTo(0, y);
-            ctx.lineTo(this.canvas.width, y);
+            ctx.lineTo(viewWidth, y);
         }
         
         ctx.stroke();
@@ -443,8 +448,8 @@ class Game {
         const dotOffsetX = -this.bgScrollX % dotSpacing;
         const dotOffsetY = -this.bgScrollY % dotSpacing;
         
-        for (let x = dotOffsetX; x <= this.canvas.width + dotSpacing; x += dotSpacing) {
-            for (let y = dotOffsetY; y <= this.canvas.height + dotSpacing; y += dotSpacing) {
+        for (let x = dotOffsetX; x <= viewWidth + dotSpacing; x += dotSpacing) {
+            for (let y = dotOffsetY; y <= viewHeight + dotSpacing; y += dotSpacing) {
                 ctx.beginPath();
                 ctx.arc(x, y, 3, 0, Math.PI * 2);
                 ctx.fill();
@@ -457,8 +462,8 @@ class Game {
         const bigOffsetX = (-this.bgScrollX * 0.5) % bigSpacing;
         const bigOffsetY = (-this.bgScrollY * 0.5) % bigSpacing;
         
-        for (let x = bigOffsetX; x <= this.canvas.width + bigSpacing; x += bigSpacing) {
-            for (let y = bigOffsetY; y <= this.canvas.height + bigSpacing; y += bigSpacing) {
+        for (let x = bigOffsetX; x <= viewWidth + bigSpacing; x += bigSpacing) {
+            for (let y = bigOffsetY; y <= viewHeight + bigSpacing; y += bigSpacing) {
                 ctx.beginPath();
                 ctx.arc(x, y, 20, 0, Math.PI * 2);
                 ctx.fill();
@@ -584,10 +589,14 @@ class Game {
         const W = CONFIG.ARENA.WIDTH;
         const H = CONFIG.ARENA.HEIGHT;
         
+        // Effective viewport size based on zoom
+        const viewWidth = this.canvas.width / this.camera.zoom;
+        const viewHeight = this.canvas.height / this.camera.zoom;
+        
         // Camera tracks player directly - no smoothing to avoid wrap issues
         // The camera position is simply centered on player
-        this.camera.x = this.player.x - this.canvas.width / 2;
-        this.camera.y = this.player.y - this.canvas.height / 2;
+        this.camera.x = this.player.x - viewWidth / 2;
+        this.camera.y = this.player.y - viewHeight / 2;
     }
     
     /**
@@ -599,6 +608,10 @@ class Game {
     worldToScreen(worldX, worldY) {
         const W = CONFIG.ARENA.WIDTH;
         const H = CONFIG.ARENA.HEIGHT;
+        
+        // Effective viewport size based on zoom
+        const viewWidth = this.canvas.width / this.camera.zoom;
+        const viewHeight = this.canvas.height / this.camera.zoom;
         
         // Get player position as reference
         const playerX = this.player.x;
@@ -614,14 +627,14 @@ class Game {
         if (dy > H / 2) dy -= H;
         if (dy < -H / 2) dy += H;
         
-        // Screen position relative to center
-        const screenX = this.canvas.width / 2 + dx;
-        const screenY = this.canvas.height / 2 + dy;
+        // Screen position relative to center (in zoomed coordinates)
+        const screenX = viewWidth / 2 + dx;
+        const screenY = viewHeight / 2 + dy;
         
-        // Check if visible on screen (with margin)
+        // Check if visible on screen (with margin) - use zoomed viewport
         const margin = 100;
-        const visible = screenX > -margin && screenX < this.canvas.width + margin &&
-                       screenY > -margin && screenY < this.canvas.height + margin;
+        const visible = screenX > -margin && screenX < viewWidth + margin &&
+                       screenY > -margin && screenY < viewHeight + margin;
         
         return { x: screenX, y: screenY, visible };
     }
@@ -1896,9 +1909,17 @@ class Game {
     }
 
     /**
-     * Setup virtual joystick
+     * Setup virtual joystick (floating - appears where user touches)
      */
     setupJoystick() {
+        // Create touch zone for capturing touches anywhere on screen
+        let touchZone = document.querySelector('.touch-zone');
+        if (!touchZone) {
+            touchZone = document.createElement('div');
+            touchZone.className = 'touch-zone';
+            document.body.appendChild(touchZone);
+        }
+        
         const joystick = this.ui.elements.joystickContainer;
         if (!joystick) return;
         
@@ -1907,15 +1928,21 @@ class Game {
         let centerY = 0;
         
         const handleStart = (e) => {
+            // Ignore if game is paused or not playing
+            if (this.state !== 'playing') return;
+            
             const touch = e.changedTouches ? e.changedTouches[0] : e;
             touchId = touch.identifier || 0;
             
-            const rect = joystick.getBoundingClientRect();
-            centerX = rect.left + rect.width / 2;
-            centerY = rect.top + rect.height / 2;
+            // Set center where user touched
+            centerX = touch.clientX;
+            centerY = touch.clientY;
+            
+            // Show joystick at touch position
+            this.ui.showJoystickAt(centerX, centerY);
             
             this.input.joystickActive = true;
-            handleMove(e);
+            e.preventDefault();
         };
         
         const handleMove = (e) => {
@@ -1943,20 +1970,28 @@ class Game {
             }
         };
         
-        const handleEnd = () => {
+        const handleEnd = (e) => {
+            // Check if this is the right touch
+            if (e.changedTouches) {
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
+                if (!touch) return;
+            }
+            
             touchId = null;
             this.input.joystickActive = false;
             this.input.movement.x = 0;
             this.input.movement.y = 0;
             this.ui.resetJoystick();
+            this.ui.hideJoystick();
         };
         
-        joystick.addEventListener('touchstart', handleStart);
-        joystick.addEventListener('touchmove', handleMove);
-        joystick.addEventListener('touchend', handleEnd);
-        joystick.addEventListener('touchcancel', handleEnd);
+        // Listen on touch zone instead of joystick
+        touchZone.addEventListener('touchstart', handleStart, { passive: false });
+        touchZone.addEventListener('touchmove', handleMove, { passive: false });
+        touchZone.addEventListener('touchend', handleEnd);
+        touchZone.addEventListener('touchcancel', handleEnd);
         
-        // Mouse support for testing
+        // Mouse support for testing (on joystick element for desktop)
         joystick.addEventListener('mousedown', handleStart);
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('mouseup', handleEnd);

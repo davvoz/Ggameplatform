@@ -130,7 +130,9 @@ function showXPBanner(xpAmount, extraData = null) {
         </div>
     `;
     
-    document.body.appendChild(banner);
+    // Append to game-container for fullscreen compatibility
+    const container = document.getElementById('game-container') || document.body;
+    container.appendChild(banner);
     
     // Remove after 3.5 seconds
     setTimeout(() => {
@@ -176,7 +178,9 @@ function showLevelUpNotification(levelUpData) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    // Append to game-container for fullscreen compatibility
+    const container = document.getElementById('game-container') || document.body;
+    container.appendChild(modal);
 
     // Trigger animation
     setTimeout(() => modal.classList.add('show'), 10);

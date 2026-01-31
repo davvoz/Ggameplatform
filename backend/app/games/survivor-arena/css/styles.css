@@ -461,15 +461,39 @@ body.desktop-mode #game-container {
     height: 0 !important;
 }
 
-/* Joystick */
+/* Joystick - Floating (appears where user touches) */
 .joystick-container {
     position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
     width: 140px;
     height: 140px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 200;
+    /* Will be positioned dynamically via JS */
+}
+
+.joystick-container.active {
+    opacity: 1;
+}
+
+/* Touch zone - invisible area to capture touches */
+.touch-zone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
     pointer-events: auto;
+    touch-action: none;
+}
+
+/* Hide touch zone on desktop */
+@media (hover: hover) and (pointer: fine) {
+    .touch-zone {
+        display: none;
+    }
 }
 
 .joystick-base {
@@ -497,7 +521,7 @@ body.desktop-mode #game-container {
 /* Hide joystick on desktop */
 @media (hover: hover) and (pointer: fine) {
     .joystick-container {
-        display: none;
+        display: none !important;
     }
 }
 

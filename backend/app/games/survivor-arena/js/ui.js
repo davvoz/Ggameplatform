@@ -475,6 +475,29 @@ class UIManager {
     }
 
     /**
+     * Show joystick at specific position (floating joystick)
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     */
+    showJoystickAt(x, y) {
+        if (!this.elements.joystickContainer) return;
+        
+        // Position joystick centered on touch point
+        this.elements.joystickContainer.style.left = `${x - 70}px`;
+        this.elements.joystickContainer.style.top = `${y - 70}px`;
+        this.elements.joystickContainer.classList.add('active');
+    }
+
+    /**
+     * Hide floating joystick
+     */
+    hideJoystick() {
+        if (this.elements.joystickContainer) {
+            this.elements.joystickContainer.classList.remove('active');
+        }
+    }
+
+    /**
      * Show XP banner (platform integration)
      * @param {number} xpAmount 
      */

@@ -1,8 +1,17 @@
 {
-  "version": "3.17.19",
-  "timestamp": "2026-01-30T23:36:37.676Z",
-  "buildNumber": 338,
+  "version": "3.17.20",
+  "timestamp": "2026-01-31T00:01:27.307Z",
+  "buildNumber": 339,
   "changelog": [
+    {
+      "version": "3.17.20",
+      "date": "2026-01-31",
+      "type": "patch",
+      "changes": [
+        "fix: Implement floating joystick and touch zone for improved mobile controls",
+        "🔖 Bump version to 3.17.19 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.19",
       "date": "2026-01-30",
@@ -83,15 +92,6 @@
       "changes": [
         "refactor: Remove console log statements for cleaner production code",
         "🔖 Bump version to 3.17.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.10",
-      "date": "2026-01-27",
-      "type": "patch",
-      "changes": [
-        "fix: ST Clamp block position and reverse direction at boundaries for improved gameplay mechanics",
-        "🔖 Bump version to 3.17.9 [skip-version]"
       ]
     }
   ]

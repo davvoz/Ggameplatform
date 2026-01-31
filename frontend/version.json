@@ -1,8 +1,17 @@
 {
-  "version": "3.17.22",
-  "timestamp": "2026-01-31T10:55:27.145Z",
-  "buildNumber": 341,
+  "version": "3.17.23",
+  "timestamp": "2026-01-31T11:07:35.636Z",
+  "buildNumber": 342,
   "changelog": [
+    {
+      "version": "3.17.23",
+      "date": "2026-01-31",
+      "type": "patch",
+      "changes": [
+        "anti conflict backup",
+        "🔖 Bump version to 3.17.22 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.22",
       "date": "2026-01-31",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "Add scripts for Survivor Arena setup and thumbnail creation",
         "🔖 Bump version to 3.17.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.13",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 3.17.12 [skip-version]"
       ]
     }
   ]

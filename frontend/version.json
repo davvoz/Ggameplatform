@@ -1,8 +1,18 @@
 {
-  "version": "3.17.20",
-  "timestamp": "2026-01-31T00:01:27.307Z",
-  "buildNumber": 339,
+  "version": "3.17.21",
+  "timestamp": "2026-01-31T00:24:35.416Z",
+  "buildNumber": 340,
   "changelog": [
+    {
+      "version": "3.17.21",
+      "date": "2026-01-31",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Adjust rendering calculations for zoomed viewport and improve touch zone setup for fullscreen compatibility",
+        "🔖 Bump version to 3.17.20 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.20",
       "date": "2026-01-31",
@@ -83,15 +93,6 @@
       "changes": [
         "Refactor: Remove console logs from various files for cleaner output",
         "🔖 Bump version to 3.17.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.11",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "refactor: Remove console log statements for cleaner production code",
-        "🔖 Bump version to 3.17.10 [skip-version]"
       ]
     }
   ]

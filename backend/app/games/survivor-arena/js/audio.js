@@ -1,6 +1,6 @@
 /**
  * Survivor Arena - Audio Manager
- * @fileoverview Handles all game audio with Web Audio API
+ * @fileoverview Handles all game audio with Web Audio API including background music
  */
 
 'use strict';
@@ -12,9 +12,36 @@ class AudioManager {
         this.sfxGain = null;
         this.musicGain = null;
         this.sounds = new Map();
-        this.currentMusic = null;
         this.initialized = false;
-        this.muted = false;
+        
+        // iOS detection
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        // Background music
+        this.bgMusicSource = null;
+        this.bgMusicBuffer = null;
+        this.musicPlaying = false;
+        
+        // Music tracks - will be set to actual files
+        this.musicTracks = [
+            { id: 1, name: 'Track 1', file: 'assets/music1.mp3' },
+            { id: 2, name: 'Track 2', file: 'assets/music2.mp3' },
+            { id: 3, name: 'Track 3', file: 'assets/music3.mp3' }
+        ];
+        this.currentTrackIndex = 0;
+        this.trackBuffers = {}; // Cache dei buffer audio
+        
+        // Volume levels (0-1)
+        this.musicVolume = 0.3;
+        this.sfxVolume = 0.5;
+        
+        // Mute states
+        this.musicMuted = false;
+        this.sfxMuted = false;
+        
+        // iOS unlock state
+        this.unlocked = false;
     }
 
     /**
@@ -33,12 +60,12 @@ class AudioManager {
             
             // SFX gain
             this.sfxGain = this.context.createGain();
-            this.sfxGain.gain.value = CONFIG.AUDIO.SFX_VOLUME;
+            this.sfxGain.gain.value = this.sfxVolume;
             this.sfxGain.connect(this.masterGain);
             
             // Music gain
             this.musicGain = this.context.createGain();
-            this.musicGain.gain.value = CONFIG.AUDIO.MUSIC_VOLUME;
+            this.musicGain.gain.value = this.musicVolume;
             this.musicGain.connect(this.masterGain);
             
             // Generate procedural sounds
@@ -46,8 +73,52 @@ class AudioManager {
             
             this.initialized = true;
             console.log('🔊 Audio initialized');
+            
+            // iOS: Sblocca audio immediatamente
+            if (this.isIOS) {
+                this.unlockIOSAudio();
+            }
+            
+            // Carica la traccia salvata o quella predefinita
+            const savedTrack = localStorage.getItem('survivorArena_musicTrack');
+            if (savedTrack !== null) {
+                this.currentTrackIndex = parseInt(savedTrack, 10);
+            }
+            
+            // Carica la musica di background
+            this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
+            
         } catch (error) {
             console.warn('⚠️ Audio initialization failed:', error);
+        }
+    }
+
+    /**
+     * Sblocca l'audio su iOS
+     */
+    async unlockIOSAudio() {
+        if (this.unlocked) return;
+        
+        try {
+            if (this.context && this.context.state === 'suspended') {
+                await this.context.resume();
+            }
+            
+            // Crea e riproduce un buffer silenzioso
+            const silentBuffer = this.context.createBuffer(1, 1, 22050);
+            const source = this.context.createBufferSource();
+            source.buffer = silentBuffer;
+            source.connect(this.context.destination);
+            source.start(0);
+            
+            if (this.masterGain) {
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, this.context.currentTime);
+            }
+            
+            this.unlocked = true;
+            console.log('🔊 iOS audio unlocked');
+        } catch (e) {
+            console.warn('⚠️ iOS audio unlock failed:', e);
         }
     }
 
@@ -55,176 +126,267 @@ class AudioManager {
      * Generate procedural sounds
      */
     generateSounds() {
-        // Shoot sound
-        this.sounds.set('shoot', this.createShootSound());
-        
-        // Hit sound
-        this.sounds.set('hit', this.createHitSound());
-        
-        // Explosion sound
         this.sounds.set('explosion', this.createExplosionSound());
-        
-        // Pickup sound
-        this.sounds.set('pickup', this.createPickupSound());
-        
-        // Level up sound
         this.sounds.set('levelUp', this.createLevelUpSound());
-        
-        // Player hurt sound
-        this.sounds.set('hurt', this.createHurtSound());
-        
-        // Death sound
         this.sounds.set('death', this.createDeathSound());
     }
 
+    // ==========================================
+    // Background Music Methods
+    // ==========================================
+
     /**
-     * Create shoot sound buffer
-     * @returns {AudioBuffer}
+     * Carica la musica di background
      */
-    createShootSound() {
-        const duration = 0.1;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
+    async loadBackgroundMusic(url) {
+        if (!this.initialized) return;
         
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.exp(-t * 30);
-            data[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+        try {
+            // Usa cache se disponibile
+            if (this.trackBuffers[url]) {
+                this.bgMusicBuffer = this.trackBuffers[url];
+                console.log('🎵 Music loaded from cache:', url);
+                return;
+            }
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const arrayBuffer = await response.arrayBuffer();
+            this.bgMusicBuffer = await this.decodeAudioDataSafe(arrayBuffer);
+            
+            if (this.bgMusicBuffer) {
+                this.trackBuffers[url] = this.bgMusicBuffer;
+                console.log('🎵 Music loaded:', url);
+            }
+        } catch (e) {
+            console.warn('⚠️ Failed to load music:', url, e);
         }
-        
-        return buffer;
     }
 
     /**
-     * Create hit sound buffer
-     * @returns {AudioBuffer}
+     * Decode audio data con fallback
      */
-    createHitSound() {
-        const duration = 0.15;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.exp(-t * 20);
-            const frequency = 200 - t * 100;
-            data[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.4;
-        }
-        
-        return buffer;
+    decodeAudioDataSafe(arrayBuffer) {
+        return new Promise((resolve, reject) => {
+            try {
+                this.context.decodeAudioData(arrayBuffer)
+                    .then(resolve)
+                    .catch(reject);
+            } catch (e) {
+                this.context.decodeAudioData(
+                    arrayBuffer,
+                    (buffer) => resolve(buffer),
+                    (error) => reject(error)
+                );
+            }
+        });
     }
 
     /**
-     * Create explosion sound buffer
-     * @returns {AudioBuffer}
+     * Ottieni la lista delle tracce
      */
-    createExplosionSound() {
-        const duration = 0.5;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.exp(-t * 5);
-            const noise = Math.random() * 2 - 1;
-            const lowFreq = Math.sin(2 * Math.PI * 50 * t);
-            data[i] = (noise * 0.7 + lowFreq * 0.3) * envelope * 0.5;
-        }
-        
-        return buffer;
+    getMusicTracks() {
+        return this.musicTracks;
     }
 
     /**
-     * Create pickup sound buffer
-     * @returns {AudioBuffer}
+     * Ottieni l'indice della traccia corrente
      */
-    createPickupSound() {
-        const duration = 0.2;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.sin(Math.PI * t / duration);
-            const frequency = 800 + t * 400;
-            data[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.3;
-        }
-        
-        return buffer;
+    getCurrentTrackIndex() {
+        return this.currentTrackIndex;
     }
 
     /**
-     * Create level up sound buffer
-     * @returns {AudioBuffer}
+     * Cambia la traccia musicale
      */
-    createLevelUpSound() {
-        const duration = 0.5;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
+    async changeTrack(index) {
+        if (index < 0 || index >= this.musicTracks.length) return;
+        if (index === this.currentTrackIndex && this.bgMusicBuffer) return;
         
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.sin(Math.PI * t / duration);
-            // Arpeggio effect
-            const note = Math.floor(t * 8) % 4;
-            const frequencies = [523, 659, 784, 1047]; // C5, E5, G5, C6
-            const frequency = frequencies[note];
-            data[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.3;
+        const wasPlaying = this.musicPlaying;
+        
+        // Ferma la musica corrente
+        this.stopBackgroundMusic();
+        
+        // Aggiorna l'indice e salva la preferenza
+        this.currentTrackIndex = index;
+        localStorage.setItem('survivorArena_musicTrack', index.toString());
+        
+        // Carica la nuova traccia
+        await this.loadBackgroundMusic(this.musicTracks[index].file);
+        
+        // Riavvia se stava suonando
+        if (wasPlaying) {
+            await this.playBackgroundMusic();
         }
         
-        return buffer;
+        console.log('🎵 Track changed to:', this.musicTracks[index].name);
     }
 
     /**
-     * Create hurt sound buffer
-     * @returns {AudioBuffer}
+     * Avvia la musica di background (loop)
      */
-    createHurtSound() {
-        const duration = 0.2;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
+    async playBackgroundMusic() {
+        if (!this.initialized || this.musicPlaying) return;
         
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.exp(-t * 15);
-            const frequency = 150 - t * 50;
-            data[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.4;
+        try {
+            // iOS: Assicurati che l'audio sia sbloccato
+            if (this.isIOS && !this.unlocked) {
+                await this.unlockIOSAudio();
+            }
+            
+            // Ensure AudioContext is active
+            if (this.context && this.context.state === 'suspended') {
+                await this.context.resume();
+            }
+            
+            // Se il buffer non è caricato, prova a caricarlo
+            if (!this.bgMusicBuffer) {
+                await this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
+                if (!this.bgMusicBuffer) {
+                    console.warn('⚠️ No music buffer available');
+                    return;
+                }
+            }
+            
+            // Crea nuova source
+            this.bgMusicSource = this.context.createBufferSource();
+            this.bgMusicSource.buffer = this.bgMusicBuffer;
+            this.bgMusicSource.loop = true;
+            this.bgMusicSource.connect(this.musicGain);
+            
+            // Rispetta lo stato mute
+            const startVol = this.musicMuted ? 0 : this.musicVolume;
+            if (this.musicGain) {
+                this.musicGain.gain.setValueAtTime(startVol, this.context.currentTime);
+            }
+            
+            this.bgMusicSource.start(0);
+            this.musicPlaying = true;
+            console.log('🎵 Music started');
+            
+        } catch (e) {
+            console.warn('⚠️ Failed to play music:', e);
+            if (this.isIOS && !this.unlocked) {
+                this.unlocked = false;
+                await this.unlockIOSAudio();
+            }
         }
-        
-        return buffer;
     }
 
     /**
-     * Create death sound buffer
-     * @returns {AudioBuffer}
+     * Ferma la musica di background
      */
-    createDeathSound() {
-        const duration = 0.8;
-        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < data.length; i++) {
-            const t = i / this.context.sampleRate;
-            const envelope = Math.exp(-t * 3);
-            const frequency = 200 - t * 150;
-            const noise = (Math.random() * 2 - 1) * 0.3;
-            data[i] = (Math.sin(2 * Math.PI * frequency * t) + noise) * envelope * 0.5;
+    stopBackgroundMusic() {
+        if (this.bgMusicSource) {
+            try {
+                this.bgMusicSource.stop();
+                this.bgMusicSource.disconnect();
+            } catch (e) {
+                // Ignore if already stopped
+            }
+            this.bgMusicSource = null;
         }
-        
-        return buffer;
+        this.musicPlaying = false;
     }
+
+    /**
+     * Pausa la musica (abbassa il volume)
+     */
+    pauseBackgroundMusic() {
+        if (this.musicGain && this.context) {
+            this.musicGain.gain.setTargetAtTime(0, this.context.currentTime, 0.1);
+        }
+    }
+
+    /**
+     * Riprendi la musica
+     */
+    resumeBackgroundMusic() {
+        if (this.musicGain && this.context) {
+            const targetVolume = this.musicMuted ? 0 : this.musicVolume;
+            this.musicGain.gain.setTargetAtTime(targetVolume, this.context.currentTime, 0.1);
+        }
+    }
+
+    // ==========================================
+    // Mute/Unmute Methods
+    // ==========================================
+
+    /**
+     * Mute musica
+     */
+    muteMusic() {
+        this.musicMuted = true;
+        if (this.musicGain && this.context) {
+            this.musicGain.gain.setTargetAtTime(0, this.context.currentTime, 0.05);
+        }
+    }
+
+    /**
+     * Unmute musica
+     */
+    unmuteMusic() {
+        this.musicMuted = false;
+        if (this.musicGain && this.context) {
+            this.musicGain.gain.setTargetAtTime(this.musicVolume, this.context.currentTime, 0.05);
+        }
+    }
+
+    /**
+     * Check if music is muted
+     */
+    isMusicMuted() {
+        return this.musicMuted;
+    }
+
+    /**
+     * Mute sound effects
+     */
+    muteSfx() {
+        this.sfxMuted = true;
+        if (this.sfxGain && this.context) {
+            this.sfxGain.gain.setTargetAtTime(0, this.context.currentTime, 0.05);
+        }
+    }
+
+    /**
+     * Unmute sound effects
+     */
+    unmuteSfx() {
+        this.sfxMuted = false;
+        if (this.sfxGain && this.context) {
+            this.sfxGain.gain.setTargetAtTime(this.sfxVolume, this.context.currentTime, 0.05);
+        }
+    }
+
+    /**
+     * Check if SFX is muted
+     */
+    isSfxMuted() {
+        return this.sfxMuted;
+    }
+
+    // ==========================================
+    // Sound Effects
+    // ==========================================
 
     /**
      * Play a sound effect
-     * @param {string} soundName 
-     * @param {number} volume - Volume multiplier (0-1)
-     * @param {number} pitch - Pitch multiplier
      */
     play(soundName, volume = 1, pitch = 1) {
-        if (!this.initialized || this.muted) return;
+        if (!this.initialized || this.sfxMuted) return;
         if (!this.sounds.has(soundName)) return;
 
         try {
+            // Resume suspended context
+            if (this.context && this.context.state === 'suspended') {
+                this.context.resume();
+            }
+            
             const source = this.context.createBufferSource();
             source.buffer = this.sounds.get(soundName);
             source.playbackRate.value = pitch;
@@ -242,34 +404,65 @@ class AudioManager {
     }
 
     /**
-     * Toggle mute
-     * @returns {boolean} New muted state
-     */
-    toggleMute() {
-        this.muted = !this.muted;
-        if (this.masterGain) {
-            this.masterGain.gain.value = this.muted ? 0 : CONFIG.AUDIO.MASTER_VOLUME;
-        }
-        return this.muted;
-    }
-
-    /**
-     * Set master volume
-     * @param {number} volume 
-     */
-    setMasterVolume(volume) {
-        if (this.masterGain) {
-            this.masterGain.gain.value = MathUtils.clamp(volume, 0, 1);
-        }
-    }
-
-    /**
-     * Resume audio context (for autoplay policy)
+     * Resume audio context
      */
     resume() {
         if (this.context && this.context.state === 'suspended') {
             this.context.resume();
         }
+    }
+
+    // ==========================================
+    // Procedural Sound Generation
+    // ==========================================
+
+    createExplosionSound() {
+        const duration = 0.5;
+        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < data.length; i++) {
+            const t = i / this.context.sampleRate;
+            const envelope = Math.exp(-t * 5);
+            const noise = Math.random() * 2 - 1;
+            const lowFreq = Math.sin(2 * Math.PI * 50 * t);
+            data[i] = (noise * 0.7 + lowFreq * 0.3) * envelope * 0.5;
+        }
+        
+        return buffer;
+    }
+
+    createLevelUpSound() {
+        const duration = 0.5;
+        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < data.length; i++) {
+            const t = i / this.context.sampleRate;
+            const envelope = Math.sin(Math.PI * t / duration);
+            const note = Math.floor(t * 8) % 4;
+            const frequencies = [523, 659, 784, 1047];
+            const frequency = frequencies[note];
+            data[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.3;
+        }
+        
+        return buffer;
+    }
+
+    createDeathSound() {
+        const duration = 0.8;
+        const buffer = this.context.createBuffer(1, this.context.sampleRate * duration, this.context.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < data.length; i++) {
+            const t = i / this.context.sampleRate;
+            const envelope = Math.exp(-t * 3);
+            const frequency = 200 - t * 150;
+            const noise = (Math.random() * 2 - 1) * 0.3;
+            data[i] = (Math.sin(2 * Math.PI * frequency * t) + noise) * envelope * 0.5;
+        }
+        
+        return buffer;
     }
 }
 

@@ -220,11 +220,6 @@ class Spawner {
             this.game.ui.showWaveAnnouncement('🧟 ZOMBIE HORDE! 🧟', hordeSize);
         }
         
-        // Play horde sound
-        if (this.game.audio) {
-            this.game.audio.play('horde');
-        }
-        
         // Spawn horde from all directions
         for (let i = 0; i < hordeSize; i++) {
             setTimeout(() => {

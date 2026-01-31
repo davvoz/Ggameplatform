@@ -341,13 +341,15 @@ class UIManager {
                 font-weight: bold;
                 color: #ff5722;
                 text-shadow: 0 0 20px rgba(255, 87, 34, 0.8), 2px 2px 0 #000;
-                z-index: 1000;
+                z-index: 1000001;
                 pointer-events: none;
                 opacity: 0;
                 transition: opacity 0.3s;
                 text-align: center;
             `;
-            document.body.appendChild(announcement);
+            // Append to game-container for fullscreen compatibility
+            const container = document.getElementById('game-container') || document.body;
+            container.appendChild(announcement);
         }
         
         announcement.innerHTML = `
@@ -401,8 +403,11 @@ class UIManager {
         el.textContent = isHeal ? `+${Math.round(damage)}` : `-${Math.round(damage)}`;
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
+        el.style.zIndex = '1000001';
         
-        document.body.appendChild(el);
+        // Append to game-container for fullscreen compatibility
+        const container = document.getElementById('game-container') || document.body;
+        container.appendChild(el);
         
         // Remove after animation
         setTimeout(() => el.remove(), 1000);
@@ -414,7 +419,11 @@ class UIManager {
     createDamageFlash() {
         const flash = document.createElement('div');
         flash.className = 'damage-flash';
-        document.body.appendChild(flash);
+        flash.style.zIndex = '1000001';
+        
+        // Append to game-container for fullscreen compatibility
+        const container = document.getElementById('game-container') || document.body;
+        container.appendChild(flash);
         
         setTimeout(() => flash.remove(), 200);
     }
@@ -510,8 +519,11 @@ class UIManager {
                 <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
         `;
+        banner.style.zIndex = '1000001';
         
-        document.body.appendChild(banner);
+        // Append to game-container for fullscreen compatibility
+        const container = document.getElementById('game-container') || document.body;
+        container.appendChild(banner);
         
         setTimeout(() => {
             banner.classList.add('hiding');

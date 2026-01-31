@@ -68,7 +68,7 @@
                     <span id="scoreDisplay" class="stat-value">0</span>
                 </div>
             </div>
-            <button id="pauseButton" class="btn-icon-only">⏸</button>
+            <button id="pauseButton" class="btn-icon-only">⚙️</button>
         </div>
 
         <!-- XP Bar -->
@@ -134,16 +134,32 @@
         </div>
     </div>
 
-    <!-- Pause Modal -->
-    <div id="pauseModal" class="modal hidden">
-        <div class="modal-content">
-            <h2 class="modal-title">⏸ PAUSED</h2>
-            <button id="resumeButton" class="btn-primary">
-                <span class="btn-text">RESUME</span>
-            </button>
-            <button id="quitButton" class="btn-secondary">
-                <span class="btn-text">QUIT</span>
-            </button>
+    <!-- Settings Popup (shown on pause) -->
+    <div id="settings-popup" class="hidden">
+        <div id="settings-content">
+            <h2>⚙️ SETTINGS</h2>
+            
+            <div class="setting-group">
+                <span class="setting-label">🎵 Music</span>
+                <button type="button" id="music-toggle" class="toggle-btn on">ON</button>
+            </div>
+            
+            <div class="setting-group">
+                <span class="setting-label">🔊 Sound Effects</span>
+                <button type="button" id="sfx-toggle" class="toggle-btn on">ON</button>
+            </div>
+            
+            <div class="setting-group track-selector">
+                <span class="setting-label">🎶 Music Track</span>
+                <div class="track-buttons">
+                    <button type="button" class="track-btn active" data-track="0">1</button>
+                    <button type="button" class="track-btn" data-track="1">2</button>
+                    <button type="button" class="track-btn" data-track="2">3</button>
+                </div>
+            </div>
+            
+            <button id="resume-button">▶️ RESUME</button>
+            <button id="quit-button">🚪 QUIT</button>
         </div>
     </div>
 

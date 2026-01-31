@@ -211,10 +211,52 @@ window.addEventListener('message', handleMessage);
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+        // Prevent default touch behaviors (exclude buttons and interactive elements)
+        document.body.addEventListener('touchstart', (e) => {
+            // Don't prevent on buttons, inputs, or interactive elements
+            if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+                return;
+            }
+            if (e.target.closest('#game-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.body.addEventListener('touchmove', (e) => {
+            // Don't prevent on buttons or interactive elements
+            if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+                return;
+            }
+            if (e.target.closest('#game-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
         initGame();
         setupFullscreen();
     });
 } else {
+    // Prevent default touch behaviors (exclude buttons and interactive elements)
+    document.body.addEventListener('touchstart', (e) => {
+        // Don't prevent on buttons, inputs, or interactive elements
+        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+            return;
+        }
+        if (e.target.closest('#game-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    document.body.addEventListener('touchmove', (e) => {
+        // Don't prevent on buttons or interactive elements
+        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+            return;
+        }
+        if (e.target.closest('#game-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
     initGame();
     setupFullscreen();
 }
@@ -237,8 +279,14 @@ function setupFullscreen() {
 }
 
 function toggleFullscreen() {
+    // Prefer Platform SDK if available (works on iOS!)
+    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+        window.PlatformSDK.toggleFullscreen();
+        return;
+    }
+
     // Use #game-container for fullscreen
-    const elem = document.getElementById('game-container');
+    const elem = document.getElementById('game-container') || document.documentElement;
     
     // iOS/iPadOS detection
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -260,16 +308,20 @@ function toggleFullscreen() {
             const promise = requestFs.call(elem);
             if (promise && promise.then) {
                 promise.then(() => {
+                    document.body.classList.add('game-fullscreen');
                     setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
                     updateFullscreenIcon();
                 }).catch((err) => {
                     console.warn('Fullscreen request failed:', err);
+                    // Fallback to iOS method if native fails
                     toggleIOSFullscreen();
                 });
             } else {
+                document.body.classList.add('game-fullscreen');
                 setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
             }
         } else {
+            // Fallback to iOS method
             toggleIOSFullscreen();
         }
     } else {
@@ -279,10 +331,12 @@ function toggleFullscreen() {
             const promise = exitFs.call(document);
             if (promise && promise.then) {
                 promise.then(() => {
+                    document.body.classList.remove('game-fullscreen');
                     setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
                     updateFullscreenIcon();
                 }).catch(() => {});
             } else {
+                document.body.classList.remove('game-fullscreen');
                 setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
             }
         }
@@ -345,6 +399,19 @@ function injectIOSFullscreenStyles() {
             min-height: 100dvh !important;
             min-height: -webkit-fill-available !important;
         }
+        .ios-game-fullscreen #game-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            height: -webkit-fill-available !important;
+            z-index: 999999 !important;
+            background: #000 !important;
+        }
         .ios-game-fullscreen #gameCanvas {
             position: fixed !important;
             top: 0 !important;
@@ -362,7 +429,9 @@ function injectIOSFullscreenStyles() {
         }
         .ios-game-fullscreen .screen,
         .ios-game-fullscreen #gameUI,
-        .ios-game-fullscreen #joystick-container {
+        .ios-game-fullscreen .joystick-container,
+        .ios-game-fullscreen .modal,
+        .ios-game-fullscreen #settings-popup {
             z-index: 1000000 !important;
         }
         #ios-fs-exit {

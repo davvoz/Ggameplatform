@@ -23,7 +23,7 @@ html, body {
 }
 
 /* Sfondo nero quando è in fullscreen (per le barre laterali su desktop) */
-body.fullscreen-active {
+body.game-fullscreen {
     background: #000000 !important;
 }
 
@@ -80,6 +80,25 @@ body.desktop-mode {
 
 body.desktop-mode #game-container {
     background: transparent !important;
+}
+
+/* Native fullscreen mode (Android/Desktop) */
+#game-container:fullscreen,
+#game-container:-webkit-full-screen,
+#game-container:-moz-full-screen,
+#game-container:-ms-fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+#game-container:fullscreen #gameCanvas,
+#game-container:-webkit-full-screen #gameCanvas,
+#game-container:-moz-full-screen #gameCanvas,
+#game-container:-ms-fullscreen #gameCanvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Desktop mode: i modal verranno posizionati dinamicamente via JS */
@@ -480,10 +499,10 @@ body.desktop-mode #game-container {
 /* Touch zone - invisible area to capture touches */
 .touch-zone {
     position: fixed;
-    top: 0;
+    top: 140px; /* Leave space for UI at top */
     left: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 140px);
     z-index: 50;
     pointer-events: auto;
     touch-action: none;
@@ -557,6 +576,191 @@ body.desktop-mode #game-container {
 
 .modal.hidden {
     display: none;
+}
+
+/* ==========================================
+   Settings Popup (Pause Menu)
+   ========================================== */
+#settings-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 30, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+#settings-popup.hidden {
+    display: none !important;
+}
+
+#settings-content {
+    background: linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.98) 100%);
+    border: 2px solid rgba(255, 0, 255, 0.4);
+    border-radius: 20px;
+    padding: 30px 40px;
+    min-width: 280px;
+    max-width: 90%;
+    pointer-events: auto;
+    box-shadow:
+        0 0 50px rgba(255, 0, 255, 0.3),
+        inset 0 0 30px rgba(255, 0, 255, 0.1);
+}
+
+#settings-content h2 {
+    color: #ff00ff;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.5rem;
+    text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+    letter-spacing: 3px;
+}
+
+.setting-group {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background: rgba(30, 30, 60, 0.5);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-label {
+    color: #aabbcc;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.toggle-btn {
+    padding: 12px 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid;
+    cursor: pointer;
+    min-width: 80px;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-btn.on {
+    background: linear-gradient(145deg, #00cc66 0%, #009944 100%);
+    border-color: rgba(0, 255, 100, 0.6);
+    color: white;
+    box-shadow: 0 0 15px rgba(0, 255, 100, 0.3);
+}
+
+.toggle-btn.off {
+    background: linear-gradient(145deg, #cc4444 0%, #992222 100%);
+    border-color: rgba(255, 100, 100, 0.6);
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 100, 100, 0.3);
+}
+
+.toggle-btn:active {
+    transform: scale(0.95);
+}
+
+#resume-button, #quit-button {
+    width: 100%;
+    padding: 15px 30px;
+    margin-top: 15px;
+    border: 2px solid;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#resume-button {
+    background: linear-gradient(145deg, rgba(0, 150, 100, 0.8) 0%, rgba(0, 100, 70, 0.9) 100%);
+    border-color: rgba(0, 255, 150, 0.4);
+    box-shadow: 0 0 20px rgba(0, 255, 150, 0.2);
+}
+
+#resume-button:hover {
+    background: linear-gradient(145deg, rgba(0, 200, 130, 0.9) 0%, rgba(0, 150, 100, 1) 100%);
+    box-shadow: 0 0 30px rgba(0, 255, 150, 0.4);
+    transform: translateY(-2px);
+}
+
+#quit-button {
+    background: linear-gradient(145deg, rgba(100, 50, 50, 0.8) 0%, rgba(70, 30, 30, 0.9) 100%);
+    border-color: rgba(255, 100, 100, 0.4);
+    box-shadow: 0 0 20px rgba(255, 100, 100, 0.2);
+}
+
+#quit-button:hover {
+    background: linear-gradient(145deg, rgba(130, 60, 60, 0.9) 0%, rgba(100, 40, 40, 1) 100%);
+    box-shadow: 0 0 30px rgba(255, 100, 100, 0.4);
+    transform: translateY(-2px);
+}
+
+#resume-button:active, #quit-button:active {
+    transform: translateY(0);
+}
+
+/* Track Selector */
+.track-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.track-selector .setting-label {
+    margin-bottom: 5px;
+}
+
+.track-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+.track-btn {
+    width: 60px;
+    height: 50px;
+    background: linear-gradient(145deg, rgba(40, 40, 80, 0.8) 0%, rgba(20, 20, 50, 0.9) 100%);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    border-radius: 10px;
+    color: rgba(200, 150, 255, 0.8);
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.track-btn:hover {
+    background: linear-gradient(145deg, rgba(60, 40, 100, 0.9) 0%, rgba(40, 30, 80, 1) 100%);
+    border-color: rgba(255, 100, 255, 0.5);
+    color: #ddaaff;
+}
+
+.track-btn.active {
+    background: linear-gradient(145deg, rgba(150, 0, 200, 0.9) 0%, rgba(100, 0, 150, 1) 100%);
+    border-color: rgba(255, 0, 255, 0.7);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+}
+
+.track-btn:active {
+    transform: scale(0.95);
 }
 
 .modal-content {

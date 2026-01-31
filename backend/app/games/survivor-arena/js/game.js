@@ -132,6 +132,14 @@ class Game {
     startGame() {
         console.log('[Game] Starting new game...');
         
+        // Initialize and start audio
+        this.audio.init();
+        
+        // Start background music after a short delay
+        setTimeout(() => {
+            this.audio.playBackgroundMusic();
+        }, 500);
+        
         // Reset state
         this.gameTime = 0;
         this.score = 0;
@@ -721,7 +729,7 @@ class Game {
             const projectiles = weapon.fire(deltaTime, this.player, nearestEnemy, this);
             if (projectiles) {
                 this.projectiles.push(...projectiles);
-                this.audio.play('shoot');
+                // Sound removed - too frequent
             }
             
             // Update continuous weapons
@@ -834,7 +842,7 @@ class Game {
                         
                         // Screen shake and sound
                         this.ui.triggerScreenShake(8, 200);
-                        this.audio.play('explosion');
+                        // Sound removed - too frequent
                     }
                 }
             }
@@ -1060,7 +1068,6 @@ class Game {
                     if (dist < this.player.size + proj.size) {
                         this.player.takeDamage(proj.damage);
                         this.ui.createDamageFlash();
-                        this.audio.play('hurt');
                         enemy.projectiles.splice(j, 1);
                     }
                 }
@@ -1073,7 +1080,7 @@ class Game {
                 if (dist < enemy.explosionRadius) {
                     this.player.takeDamage(enemy.damage * 2);
                     this.ui.createDamageFlash();
-                    this.audio.play('explosion');
+                    // Sound removed - too frequent
                 }
                 
                 this.particles.createExplosion(enemy.x, enemy.y, { color: '#ff4400', count: 30 });
@@ -1225,7 +1232,6 @@ class Game {
                 if (dist < this.player.radius + proj.radius) {
                     this.player.takeDamage(proj.damage);
                     this.ui.createDamageFlash();
-                    this.audio.play('hurt');
                     this.projectiles.splice(i, 1);
                     continue;
                 }
@@ -1239,7 +1245,7 @@ class Game {
                     if (dist < enemy.radius + proj.radius) {
                         enemy.takeDamage(proj.damage * this.player.stats.damageMultiplier);
                         this.particles.createHitEffect(proj.x, proj.y, '#ffffff');
-                        this.audio.play('hit');
+                        // Sound removed - too frequent
                         
                         if (!proj.piercing) {
                             proj.shouldRemove = true;
@@ -1254,7 +1260,7 @@ class Game {
                     if (dist < this.miniBoss.radius + proj.radius) {
                         this.miniBoss.takeDamage(proj.damage * this.player.stats.damageMultiplier);
                         this.particles.createHitEffect(proj.x, proj.y, '#ff8800');
-                        this.audio.play('hit');
+                        // Sound removed - too frequent
                         
                         if (!proj.piercing) {
                             proj.shouldRemove = true;
@@ -1268,7 +1274,7 @@ class Game {
                     if (dist < this.boss.radius + proj.radius) {
                         this.boss.takeDamage(proj.damage * this.player.stats.damageMultiplier);
                         this.particles.createHitEffect(proj.x, proj.y, '#ff0000');
-                        this.audio.play('hit');
+                        // Sound removed - too frequent
                         
                         if (!proj.piercing) {
                             proj.shouldRemove = true;
@@ -1284,7 +1290,6 @@ class Game {
             if (wrapped.distance < this.player.radius + enemy.radius) {
                 this.player.takeDamage(enemy.damage);
                 this.ui.createDamageFlash();
-                this.audio.play('hurt');
                 
                 // Push enemy back
                 const len = wrapped.distance || 1;
@@ -1303,7 +1308,6 @@ class Game {
             if (dist < this.player.radius + this.miniBoss.radius) {
                 this.player.takeDamage(this.miniBoss.damage);
                 this.ui.createDamageFlash();
-                this.audio.play('hurt');
             }
         }
         
@@ -1313,7 +1317,6 @@ class Game {
             if (dist < this.player.radius + this.boss.radius) {
                 this.player.takeDamage(this.boss.damage);
                 this.ui.createDamageFlash();
-                this.audio.play('hurt');
             }
         }
     }
@@ -1323,8 +1326,6 @@ class Game {
      * @param {Pickup} pickup 
      */
     collectPickup(pickup) {
-        this.audio.play('pickup');
-        
         switch (pickup.type) {
             case 'xp':
             case 'xpOrb':
@@ -1379,7 +1380,7 @@ class Game {
         // Visual effect
         this.particles.createExplosion(x, y, { color: '#ffff00', count: 50 });
         this.ui.triggerScreenShake(10, 300);
-        this.audio.play('explosion');
+        // Sound removed - too frequent
     }
 
     /**
@@ -1419,7 +1420,7 @@ class Game {
         
         // Particles
         this.particles.createDeathEffect(enemy.x, enemy.y, enemy.color);
-        this.audio.play('hit');
+        // Sound removed - too frequent
     }
 
     /**
@@ -1442,7 +1443,7 @@ class Game {
         
         this.particles.createExplosion(miniBoss.x, miniBoss.y, { color: '#ff6600', count: 40 });
         this.ui.triggerScreenShake(8, 300);
-        this.audio.play('explosion');
+        // Sound removed - too frequent
         
         this.miniBoss = null;
     }
@@ -1469,7 +1470,7 @@ class Game {
         this.particles.createBossDeathEffect(boss.x, boss.y);
         this.ui.triggerScreenShake(15, 500);
         this.ui.hideBossWarning();
-        this.audio.play('explosion');
+        // Sound removed - too frequent
         
         this.boss = null;
     }
@@ -1639,25 +1640,85 @@ class Game {
     }
 
     /**
-     * Pause game
+     * Pause game - shows settings popup
      */
     pauseGame() {
         if (this.state === GAME_STATE.PLAYING) {
             this.state = GAME_STATE.PAUSED;
-            this.ui.showPauseModal(
-                () => this.resumeGame(),
-                () => this.quitGame()
-            );
+            
+            // Show settings popup
+            const settingsPopup = document.getElementById('settings-popup');
+            if (settingsPopup) {
+                settingsPopup.classList.remove('hidden');
+            }
+            
+            // Pause music
+            if (this.audio) {
+                this.audio.pauseBackgroundMusic();
+            }
+            
+            // Update Music toggle button state
+            const musicToggle = document.getElementById('music-toggle');
+            if (musicToggle && this.audio) {
+                if (this.audio.isMusicMuted()) {
+                    musicToggle.classList.remove('on');
+                    musicToggle.classList.add('off');
+                    musicToggle.textContent = 'OFF';
+                } else {
+                    musicToggle.classList.remove('off');
+                    musicToggle.classList.add('on');
+                    musicToggle.textContent = 'ON';
+                }
+            }
+            
+            // Update SFX toggle button state
+            const sfxToggle = document.getElementById('sfx-toggle');
+            if (sfxToggle && this.audio) {
+                if (this.audio.isSfxMuted()) {
+                    sfxToggle.classList.remove('on');
+                    sfxToggle.classList.add('off');
+                    sfxToggle.textContent = 'OFF';
+                } else {
+                    sfxToggle.classList.remove('off');
+                    sfxToggle.classList.add('on');
+                    sfxToggle.textContent = 'ON';
+                }
+            }
+            
+            // Update track buttons state
+            const trackButtons = document.querySelectorAll('.track-btn');
+            if (trackButtons.length > 0 && this.audio) {
+                const currentTrack = this.audio.getCurrentTrackIndex();
+                trackButtons.forEach(btn => {
+                    const trackIdx = parseInt(btn.dataset.track, 10);
+                    if (trackIdx === currentTrack) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
         }
     }
 
     /**
-     * Resume game
+     * Resume game - hides settings popup
      */
     resumeGame() {
         if (this.state === GAME_STATE.PAUSED) {
             this.state = GAME_STATE.PLAYING;
             this.lastFrameTime = performance.now();
+            
+            // Hide settings popup
+            const settingsPopup = document.getElementById('settings-popup');
+            if (settingsPopup) {
+                settingsPopup.classList.add('hidden');
+            }
+            
+            // Resume music
+            if (this.audio) {
+                this.audio.resumeBackgroundMusic();
+            }
         }
     }
 
@@ -1665,6 +1726,17 @@ class Game {
      * Quit to menu
      */
     quitGame() {
+        // Hide settings popup
+        const settingsPopup = document.getElementById('settings-popup');
+        if (settingsPopup) {
+            settingsPopup.classList.add('hidden');
+        }
+        
+        // Stop music
+        if (this.audio) {
+            this.audio.stopBackgroundMusic();
+        }
+        
         this.stopGame();
         this.showMenu();
     }
@@ -1936,7 +2008,13 @@ class Game {
             // Ignore if game is paused or not playing
             if (this.state !== 'playing') return;
             
+            // Don't capture touches on UI elements (pause button, etc.)
             const touch = e.changedTouches ? e.changedTouches[0] : e;
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.closest('button, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #pauseBtn, #gameUI button')) {
+                return; // Let the button handle the touch
+            }
+            
             touchId = touch.identifier || 0;
             
             // Set center where user touched
@@ -2037,6 +2115,108 @@ class Game {
                 this.pauseGame();
             });
         }
+        
+        // Setup settings popup handlers
+        this.setupSettingsHandlers();
+    }
+
+    /**
+     * Setup settings popup event handlers
+     */
+    setupSettingsHandlers() {
+        const resumeButton = document.getElementById('resume-button');
+        const quitButton = document.getElementById('quit-button');
+        const musicToggle = document.getElementById('music-toggle');
+        const sfxToggle = document.getElementById('sfx-toggle');
+        const trackButtons = document.querySelectorAll('.track-btn');
+        
+        // Resume button - click and touch
+        if (resumeButton) {
+            const handleResume = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.resumeGame();
+            };
+            resumeButton.addEventListener('click', handleResume);
+            resumeButton.addEventListener('touchend', handleResume, { passive: false });
+        }
+        
+        // Quit button - click and touch
+        if (quitButton) {
+            const handleQuit = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.quitGame();
+            };
+            quitButton.addEventListener('click', handleQuit);
+            quitButton.addEventListener('touchend', handleQuit, { passive: false });
+        }
+        
+        // Music toggle - click and touch
+        if (musicToggle) {
+            const handleMusicToggle = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (musicToggle.classList.contains('on')) {
+                    musicToggle.classList.remove('on');
+                    musicToggle.classList.add('off');
+                    musicToggle.textContent = 'OFF';
+                    if (this.audio) this.audio.muteMusic();
+                } else {
+                    musicToggle.classList.remove('off');
+                    musicToggle.classList.add('on');
+                    musicToggle.textContent = 'ON';
+                    if (this.audio) this.audio.unmuteMusic();
+                }
+            };
+            musicToggle.addEventListener('click', handleMusicToggle);
+            musicToggle.addEventListener('touchend', handleMusicToggle, { passive: false });
+        }
+        
+        // SFX toggle - click and touch
+        if (sfxToggle) {
+            const handleSfxToggle = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (sfxToggle.classList.contains('on')) {
+                    sfxToggle.classList.remove('on');
+                    sfxToggle.classList.add('off');
+                    sfxToggle.textContent = 'OFF';
+                    if (this.audio) this.audio.muteSfx();
+                } else {
+                    sfxToggle.classList.remove('off');
+                    sfxToggle.classList.add('on');
+                    sfxToggle.textContent = 'ON';
+                    if (this.audio) this.audio.unmuteSfx();
+                }
+            };
+            sfxToggle.addEventListener('click', handleSfxToggle);
+            sfxToggle.addEventListener('touchend', handleSfxToggle, { passive: false });
+        }
+        
+        // Track selector buttons - click and touch
+        const handleTrackChange = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const trackIndex = parseInt(e.target.dataset.track, 10);
+            if (isNaN(trackIndex)) return;
+
+            // Aggiorna UI
+            trackButtons.forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Cambia traccia
+            if (this.audio) {
+                await this.audio.changeTrack(trackIndex);
+            }
+        };
+
+        trackButtons.forEach(btn => {
+            btn.addEventListener('click', handleTrackChange);
+            btn.addEventListener('touchend', handleTrackChange, { passive: false });
+        });
     }
 
     // ==========================================

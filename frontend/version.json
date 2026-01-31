@@ -1,8 +1,17 @@
 {
-  "version": "3.17.24",
-  "timestamp": "2026-01-31T19:17:16.979Z",
-  "buildNumber": 343,
+  "version": "3.17.25",
+  "timestamp": "2026-01-31T23:13:50.572Z",
+  "buildNumber": 344,
   "changelog": [
+    {
+      "version": "3.17.25",
+      "date": "2026-01-31",
+      "type": "patch",
+      "changes": [
+        "fix: SA: Implement settings popup and audio management features",
+        "🔖 Bump version to 3.17.24 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.24",
       "date": "2026-01-31",
@@ -83,15 +92,6 @@
       "changes": [
         "Enhance fullscreen experience with responsive canvas resizing and background adjustments for desktop and mobile modes",
         "🔖 Bump version to 3.17.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.15",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "Refactor Survivor Arena SDK to send essential game over data and update setup script for improved XP rules and quest descriptions",
-        "🔖 Bump version to 3.17.14 [skip-version]"
       ]
     }
   ]

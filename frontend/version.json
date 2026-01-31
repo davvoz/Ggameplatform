@@ -1,8 +1,17 @@
 {
-  "version": "3.17.23",
-  "timestamp": "2026-01-31T11:07:35.636Z",
-  "buildNumber": 342,
+  "version": "3.17.24",
+  "timestamp": "2026-01-31T19:17:16.979Z",
+  "buildNumber": 343,
   "changelog": [
+    {
+      "version": "3.17.24",
+      "date": "2026-01-31",
+      "type": "patch",
+      "changes": [
+        "obfuscated",
+        "🔖 Bump version to 3.17.23 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.23",
       "date": "2026-01-31",
@@ -83,16 +92,6 @@
       "changes": [
         "Refactor Survivor Arena SDK to send essential game over data and update setup script for improved XP rules and quest descriptions",
         "🔖 Bump version to 3.17.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.14",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "Add scripts for Survivor Arena setup and thumbnail creation",
-        "🔖 Bump version to 3.17.13 [skip-version]"
       ]
     }
   ]

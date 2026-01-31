@@ -877,8 +877,11 @@ class Game {
      * @param {CanvasRenderingContext2D} ctx
      */
     renderSpecialWeapons(ctx) {
-        const playerScreenX = this.canvas.width / 2;
-        const playerScreenY = this.canvas.height / 2;
+        // Use zoomed viewport center (since ctx is already scaled)
+        const viewWidth = this.canvas.width / this.camera.zoom;
+        const viewHeight = this.canvas.height / this.camera.zoom;
+        const playerScreenX = viewWidth / 2;
+        const playerScreenY = viewHeight / 2;
         
         for (const weapon of this.player.weapons) {
             if (!weapon) continue;
@@ -1913,11 +1916,13 @@ class Game {
      */
     setupJoystick() {
         // Create touch zone for capturing touches anywhere on screen
+        // Must be inside game-container for fullscreen compatibility
+        const gameContainer = document.getElementById('game-container');
         let touchZone = document.querySelector('.touch-zone');
-        if (!touchZone) {
+        if (!touchZone && gameContainer) {
             touchZone = document.createElement('div');
             touchZone.className = 'touch-zone';
-            document.body.appendChild(touchZone);
+            gameContainer.appendChild(touchZone);
         }
         
         const joystick = this.ui.elements.joystickContainer;

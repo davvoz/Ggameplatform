@@ -1,9 +1,12 @@
+import { Entity } from './entity.js';
+import { CONFIG } from './config.js';
+
 /**
  * Survivor Arena - Weapons System
  * @fileoverview Weapon classes and projectile management
  */
 
-'use strict';
+
 
 /**
  * Projectile class
@@ -999,7 +1002,4 @@ class Drone extends Entity {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Projectile, Weapon, Drone };
-}
+export { Weapon, Projectile, Drone };

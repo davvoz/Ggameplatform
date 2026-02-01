@@ -1,9 +1,12 @@
+import { formatTime } from './utils.js';
+import { MathUtils } from './utils.js';
+import { CONFIG } from './config.js';
 /**
  * Survivor Arena - UI Manager
  * @fileoverview Handles all UI updates and interactions
  */
 
-'use strict';
+
 
 class UIManager {
     constructor() {
@@ -532,7 +535,4 @@ class UIManager {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = UIManager;
-}
+export { UIManager };

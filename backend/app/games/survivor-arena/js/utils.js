@@ -3,7 +3,7 @@
  * @fileoverview Common utility functions used throughout the game
  */
 
-'use strict';
+
 
 /**
  * Vector2D class for 2D math operations
@@ -619,18 +619,15 @@ function throttle(func, limit) {
         }
     };
 }
+export {
+    Vector2,
+    MathUtils,
+    ObjectPool,
+    EventEmitter,
+    SpatialHash,
+    formatTime,
+    isMobile,
+    debounce,
+    throttle
+};
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        Vector2,
-        MathUtils,
-        ObjectPool,
-        EventEmitter,
-        SpatialHash,
-        formatTime,
-        isMobile,
-        debounce,
-        throttle
-    };
-}

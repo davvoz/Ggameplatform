@@ -1,9 +1,16 @@
+import { LivingEntity } from './entity.js';
+import { Projectile } from './weapons.js';
+import { Vector2 } from './utils.js';
+import { MathUtils } from './utils.js';
+import { CONFIG } from './config.js';
+import { spriteManager } from './sprite-system.js';
+
 /**
  * Survivor Arena - Enemy System
  * @fileoverview Enemy types and behaviors
  */
 
-'use strict';
+
 
 // Map enemy types to sprite types
 const ENEMY_SPRITE_MAP = {
@@ -1193,7 +1200,5 @@ class Boss extends MiniBoss {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Enemy, MiniBoss, Boss };
-}
+
+export { Enemy, MiniBoss, Boss };

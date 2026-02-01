@@ -4,7 +4,7 @@
  * Unique cyberpunk/neon aesthetic
  */
 
-'use strict';
+
 
 // ============================================================================
 // TRANSFORM - Hierarchical transform system
@@ -1422,14 +1422,4 @@ class SpriteManager {
 // Global instance
 const spriteManager = new SpriteManager();
 
-// Export for use
-if (typeof window !== 'undefined') {
-    window.Transform2D = Transform2D;
-    window.SpritePart = SpritePart;
-    window.AnimationClip = AnimationClip;
-    window.MultiPartSprite = MultiPartSprite;
-    window.SpriteRenderer = SpriteRenderer;
-    window.SpriteFactory = SpriteFactory;
-    window.SpriteManager = SpriteManager;
-    window.spriteManager = spriteManager;
-}
+export { spriteManager, SpriteFactory, MultiPartSprite, AnimationClip };

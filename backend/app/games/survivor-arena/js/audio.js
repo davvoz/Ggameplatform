@@ -1,9 +1,10 @@
+import { CONFIG } from './config.js';
 /**
  * Survivor Arena - Audio Manager
  * @fileoverview Handles all game audio with Web Audio API including background music
  */
 
-'use strict';
+
 
 class AudioManager {
     constructor() {
@@ -466,7 +467,4 @@ class AudioManager {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AudioManager;
-}
+export { AudioManager };

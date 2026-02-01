@@ -1,9 +1,13 @@
+import { Entity } from './entity.js';
+import { CONFIG } from './config.js';
+import { Player } from './player.js';
+import { MathUtils } from './utils.js';
 /**
  * Survivor Arena - Pickups System
  * @fileoverview XP orbs, health packs, and special pickups
  */
 
-'use strict';
+
 
 // Map pickup types to sprite types
 const PICKUP_SPRITE_MAP = {
@@ -738,7 +742,4 @@ class BombPickup extends Pickup {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Pickup, XPOrb, HealthPack, MagnetPickup, BombPickup };
-}
+export { Pickup, XPOrb, HealthPack, MagnetPickup, BombPickup ,PICKUP_SPRITE_MAP };

@@ -4,7 +4,7 @@
  * @fileoverview Centralized configuration for game balance and settings
  */
 
-'use strict';
+
 
 const CONFIG = Object.freeze({
     // Canvas & Rendering
@@ -464,7 +464,5 @@ const DIFFICULTY_SCALING = Object.freeze({
     480: { enemyHealth: 4.5, enemyDamage: 3.0, enemySpeed: 1.4, spawnRate: 3.5 }
 });
 
-// Export for module compatibility (if needed)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { CONFIG, DIFFICULTY_SCALING };
-}
+
+export { CONFIG, DIFFICULTY_SCALING };

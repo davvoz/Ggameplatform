@@ -3,17 +3,55 @@
  * @fileoverview Initializes the game when the page loads
  */
 
-'use strict';
+import { Game } from './game.js';
 
 // Game instance
 let game = null;
 
 /**
+ * Initialize Platform SDK
+ */
+async function initSDK() {
+    if (typeof PlatformSDK !== 'undefined') {
+        try {
+            await PlatformSDK.init({
+                onStart: () => {
+                    console.log('[SDK] Platform started');
+                },
+                onPause: () => {
+                    console.log('[SDK] Platform paused');
+                    if (game && game.state === 'playing') {
+                        game.pauseGame();
+                    }
+                },
+                onResume: () => {
+                    console.log('[SDK] Platform resumed');
+                    if (game && game.state === 'paused') {
+                        game.resumeGame();
+                    }
+                }
+            });
+            console.log('[SDK] Platform SDK initialized');
+            
+            // Register event listeners after SDK is initialized
+            registerPlatformSDKListeners();
+        } catch (error) {
+            console.warn('[SDK] Failed to initialize Platform SDK:', error);
+        }
+    } else {
+        console.log('[SDK] Platform SDK not available');
+    }
+}
+
+/**
  * Initialize game when DOM is ready
  */
-function initGame() {
+async function initGame() {
     console.log('[Main] Initializing Survivor Arena...');
     console.log('[Main] Version: 1.0.0');
+    
+    // Initialize SDK first
+    await initSDK();
     
     // Create game instance
     try {
@@ -208,6 +246,29 @@ window.showLevelUpNotification = showLevelUpNotification;
 // Listen for platform messages
 window.addEventListener('message', handleMessage);
 
+/**
+ * Register PlatformSDK event listeners
+ */
+function registerPlatformSDKListeners() {
+    if (typeof PlatformSDK !== 'undefined') {
+        PlatformSDK.on('showXPBanner', (payload) => {
+            console.log('🎁 [PlatformSDK] Received showXPBanner event:', payload);
+            if (payload && payload.xp_earned !== undefined) {
+                showXPBanner(payload.xp_earned, payload);
+            }
+        });
+        
+        PlatformSDK.on('showLevelUpModal', (payload) => {
+            console.log('🎉 [PlatformSDK] Received showLevelUpModal event:', payload);
+            if (payload) {
+                showLevelUpNotification(payload);
+            }
+        });
+        
+        console.log('[Main] PlatformSDK event listeners registered');
+    }
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -264,9 +325,15 @@ if (document.readyState === 'loading') {
 // ===== FULLSCREEN FUNCTIONALITY =====
 function setupFullscreen() {
     const fullscreenBtn = document.getElementById('fullscreen-btn');
+    console.log('[Fullscreen] Setting up fullscreen, button found:', !!fullscreenBtn);
     
     if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        fullscreenBtn.addEventListener('click', (e) => {
+            console.log('[Fullscreen] Button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFullscreen();
+        });
     }
 
     // Update icon when fullscreen changes
@@ -279,7 +346,9 @@ function setupFullscreen() {
 }
 
 function toggleFullscreen() {
-    // Use #game-container for fullscreen
+    console.log('[Fullscreen] toggleFullscreen called');
+    
+    // Use game-container for Android compatibility
     const elem = document.getElementById('game-container') || document.documentElement;
     
     // iOS/iPadOS detection

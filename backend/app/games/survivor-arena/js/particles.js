@@ -1,9 +1,11 @@
+import { MathUtils } from './utils.js';
+
 /**
  * Survivor Arena - Particle System
  * @fileoverview Visual effects and particles
  */
 
-'use strict';
+
 
 /**
  * Single particle
@@ -495,7 +497,4 @@ class ParticleSystem {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Particle, ParticleSystem };
-}
+export { ParticleSystem, Particle };

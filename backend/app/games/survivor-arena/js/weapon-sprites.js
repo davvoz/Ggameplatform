@@ -3,7 +3,7 @@
  * Unique animated weapons with professional visuals
  */
 
-'use strict';
+
 
 // ============================================================================
 // WEAPON SPRITES - Each weapon has unique visuals and projectiles

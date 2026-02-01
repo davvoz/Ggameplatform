@@ -1,9 +1,12 @@
+import { Vector2 } from './utils.js';
+import { MathUtils } from './utils.js';
+
 /**
  * Survivor Arena - Base Entity Class
  * @fileoverview Base class for all game entities (player, enemies, projectiles)
  */
 
-'use strict';
+
 
 /**
  * Base entity class
@@ -286,7 +289,4 @@ class LivingEntity extends Entity {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Entity, LivingEntity };
-}
+export { Entity, LivingEntity };

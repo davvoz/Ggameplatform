@@ -15,7 +15,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
 // import { PlatformSDK } from '../../sdk/platformsdk.js';
 
 (async function () {
-    'use strict';
+    
 
     // ========== DEV MODE (?dev=true) ==========
     const DEV_MODE = new URLSearchParams(window.location.search).has('dev');

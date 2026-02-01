@@ -1,9 +1,15 @@
+import { LivingEntity } from './entity.js';
+import { Weapon } from './weapons.js';
+import { spriteManager } from './sprite-system.js';
+import { CONFIG } from './config.js';
+import { Vector2 } from './utils.js';
+
 /**
  * Survivor Arena - Player Class
  * @fileoverview Player character with movement, weapons, and stats
  */
 
-'use strict';
+
 
 class Player extends LivingEntity {
     /**
@@ -549,7 +555,4 @@ class Player extends LivingEntity {
     }
 }
 
-// Export for module compatibility
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Player;
-}
+export { Player };

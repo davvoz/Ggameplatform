@@ -1,8 +1,17 @@
 {
-  "version": "3.17.26",
-  "timestamp": "2026-01-31T23:27:05.782Z",
-  "buildNumber": 345,
+  "version": "3.17.27",
+  "timestamp": "2026-02-01T02:07:33.999Z",
+  "buildNumber": 346,
   "changelog": [
+    {
+      "version": "3.17.27",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: Update music tracks to use new audio assets for Survivor Arena",
+        "🔖 Bump version to 3.17.26 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.26",
       "date": "2026-01-31",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Update comment for desktop mode modals to clarify dynamic positioning",
         "🔖 Bump version to 3.17.17 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.17",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "fix: Refactor upgrade modals and notifications for improved clarity and functionality",
-        "🔖 Bump version to 3.17.16 [skip-version]"
       ]
     }
   ]

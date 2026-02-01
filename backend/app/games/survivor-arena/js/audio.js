@@ -25,9 +25,9 @@ class AudioManager {
         
         // Music tracks - will be set to actual files
         this.musicTracks = [
-            { id: 1, name: 'Track 1', file: 'assets/ARENA1.mp3' },
-            { id: 2, name: 'Track 2', file: 'assets/ARENA2.mp3' },
-            { id: 3, name: 'Track 3', file: 'assets/ARENA3.mp3' }
+            { id: 1, name: 'Track 1', file: 'assets/ARENA1.wav' },
+            { id: 2, name: 'Track 2', file: 'assets/ARENA2.wav' },
+            { id: 3, name: 'Track 3', file: 'assets/ARENA3.wav' }
         ];
         this.currentTrackIndex = 0;
         this.trackBuffers = {}; // Cache dei buffer audio

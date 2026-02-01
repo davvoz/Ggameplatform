@@ -1,8 +1,17 @@
 {
-  "version": "3.17.28",
-  "timestamp": "2026-02-01T02:34:02.625Z",
-  "buildNumber": 347,
+  "version": "3.17.29",
+  "timestamp": "2026-02-01T10:38:51.807Z",
+  "buildNumber": 348,
   "changelog": [
+    {
+      "version": "3.17.29",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: [SA]Enhance iOS fullscreen styles for game wrapper and button positioning",
+        "🔖 Bump version to 3.17.28 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.28",
       "date": "2026-02-01",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Implement floating joystick and touch zone for improved mobile controls",
         "🔖 Bump version to 3.17.19 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.19",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "Add complete platform initialization script with backup, table recreation, and data population",
-        "🔖 Bump version to 3.17.18 [skip-version]"
       ]
     }
   ]

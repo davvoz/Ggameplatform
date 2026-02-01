@@ -1,8 +1,17 @@
 {
-  "version": "3.17.27",
-  "timestamp": "2026-02-01T02:07:33.999Z",
-  "buildNumber": 346,
+  "version": "3.17.28",
+  "timestamp": "2026-02-01T02:34:02.625Z",
+  "buildNumber": 347,
   "changelog": [
+    {
+      "version": "3.17.28",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: Update audio file formats from MP3 to WAV for music tracks",
+        "🔖 Bump version to 3.17.27 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.27",
       "date": "2026-02-01",
@@ -83,15 +92,6 @@
       "changes": [
         "Add complete platform initialization script with backup, table recreation, and data population",
         "🔖 Bump version to 3.17.18 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.18",
-      "date": "2026-01-30",
-      "type": "patch",
-      "changes": [
-        "fix: Update comment for desktop mode modals to clarify dynamic positioning",
-        "🔖 Bump version to 3.17.17 [skip-version]"
       ]
     }
   ]

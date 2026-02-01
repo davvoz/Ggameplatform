@@ -1,8 +1,17 @@
 {
-  "version": "3.17.32",
-  "timestamp": "2026-02-01T15:20:41.097Z",
-  "buildNumber": 351,
+  "version": "3.17.33",
+  "timestamp": "2026-02-01T15:40:25.046Z",
+  "buildNumber": 352,
   "changelog": [
+    {
+      "version": "3.17.33",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix:[SA] add weapon imports and enhance fullscreen toggle for iOS compatibility",
+        "🔖 Bump version to 3.17.32 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.32",
       "date": "2026-02-01",
@@ -82,15 +91,6 @@
       "changes": [
         "obfuscated",
         "🔖 Bump version to 3.17.23 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.23",
-      "date": "2026-01-31",
-      "type": "patch",
-      "changes": [
-        "anti conflict backup",
-        "🔖 Bump version to 3.17.22 [skip-version]"
       ]
     }
   ]

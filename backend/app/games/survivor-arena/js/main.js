@@ -348,6 +348,12 @@ function setupFullscreen() {
 function toggleFullscreen() {
     console.log('[Fullscreen] toggleFullscreen called');
     
+    // Prefer Platform SDK if available (works on iOS!)
+    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+        window.PlatformSDK.toggleFullscreen();
+        return;
+    }
+    
     // Use game-container for Android compatibility
     const elem = document.getElementById('game-container') || document.documentElement;
     

@@ -9,6 +9,7 @@ import { CONFIG } from './config.js';
 import { Vector2 } from './utils.js';
 import { MathUtils } from './utils.js';
 import { XPOrb , HealthPack , MagnetPickup , BombPickup  } from './pickups.js';
+import { Drone, Projectile } from './weapons.js';
 /**
  * Survivor Arena - Main Game Class
  * @fileoverview Core game controller handling game loop, state, and platform integration

@@ -1,8 +1,17 @@
 {
-  "version": "3.17.33",
-  "timestamp": "2026-02-01T15:40:25.046Z",
-  "buildNumber": 352,
+  "version": "3.17.34",
+  "timestamp": "2026-02-01T16:11:05.856Z",
+  "buildNumber": 353,
   "changelog": [
+    {
+      "version": "3.17.34",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: [SA]import MathUtils from utils.js in weapons.js for enhanced calculations",
+        "🔖 Bump version to 3.17.33 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.33",
       "date": "2026-02-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: SA: Implement settings popup and audio management features",
         "🔖 Bump version to 3.17.24 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.24",
-      "date": "2026-01-31",
-      "type": "patch",
-      "changes": [
-        "obfuscated",
-        "🔖 Bump version to 3.17.23 [skip-version]"
       ]
     }
   ]

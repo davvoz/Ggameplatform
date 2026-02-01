@@ -1,8 +1,17 @@
 {
-  "version": "3.17.31",
-  "timestamp": "2026-02-01T11:39:12.647Z",
-  "buildNumber": 350,
+  "version": "3.17.32",
+  "timestamp": "2026-02-01T15:20:41.097Z",
+  "buildNumber": 351,
   "changelog": [
+    {
+      "version": "3.17.32",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix:[SA]Refactor game codebase to use ES6 modules and improve SDK integration",
+        "🔖 Bump version to 3.17.31 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.31",
       "date": "2026-02-01",
@@ -82,15 +91,6 @@
       "changes": [
         "anti conflict backup",
         "🔖 Bump version to 3.17.22 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.22",
-      "date": "2026-01-31",
-      "type": "patch",
-      "changes": [
-        "backup first official release",
-        "🔖 Bump version to 3.17.21 [skip-version]"
       ]
     }
   ]

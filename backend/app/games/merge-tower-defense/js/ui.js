@@ -2759,7 +2759,11 @@ export class UIManager {
         // Buttons section
         const buttonWidth = 200;
         const buttonHeight = 55;
-        const isFullscreen = document.body.classList.contains('game-fullscreen');
+        // Check fullscreen state: prefer local tracking, then PlatformSDK, fallback to CSS classes
+        const isFullscreen = window._gameFullscreenState === true ||
+            ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function') 
+                ? window.PlatformSDK.isFullscreen() 
+                : (document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
         const spacing = 12;
         const canAffordContinue = platformBalance >= continueCost;
         
@@ -3216,7 +3220,11 @@ export class UIManager {
         
         // Fullscreen toggle button
         const buttonHeight = 50;
-        const isFullscreen = document.body.classList.contains('game-fullscreen');
+        // Check fullscreen state: prefer local tracking, then PlatformSDK, fallback to CSS classes
+        const isFullscreen = window._gameFullscreenState === true ||
+            ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function') 
+                ? window.PlatformSDK.isFullscreen() 
+                : (document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
         const fullscreenText = isFullscreen ? '🔲 Exit Fullscreen' : '⛶ Enter Fullscreen';
         this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, fullscreenText, 'fullscreen');
         contentY += buttonHeight + 15;

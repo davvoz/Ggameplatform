@@ -34,7 +34,11 @@ export class Graphics {
             // Portrait aspect ratio: 9:16 (width:height)
             const TARGET_ASPECT_RATIO = 9 / 16;
             const isDesktop = window.innerWidth >= 769;
-            const isFullscreen = document.fullscreenElement || document.body.classList.contains('game-fullscreen');
+            // Check fullscreen state: prefer local tracking, then PlatformSDK, fallback to native/CSS
+            const isFullscreen = window._gameFullscreenState === true ||
+                ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function') 
+                    ? window.PlatformSDK.isFullscreen() 
+                    : (document.fullscreenElement || document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
             
             let width, height;
             

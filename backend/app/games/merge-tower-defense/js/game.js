@@ -1602,6 +1602,32 @@ export class Game {
 
 
     toggleFullscreen() {
+        // Prefer Platform SDK if available (works on iOS!)
+        if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+            // Close settings popup and resume game before SDK handles fullscreen
+            this.ui.closeSettingsPopup();
+            this.resume();
+            this.isFullscreenTransition = true;
+            setTimeout(() => { this.isFullscreenTransition = false; }, 500);
+            
+            // Track fullscreen state locally since SDK manages parent frame
+            window._gameFullscreenState = !window._gameFullscreenState;
+            
+            window.PlatformSDK.toggleFullscreen();
+            return;
+        }
+        
+        // iOS/iPadOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+        
+        if ((isIOS || isIPadOS) && !fullscreenSupported) {
+            // iOS doesn't support Fullscreen API - use CSS workaround
+            this.toggleIOSFullscreen();
+            return;
+        }
+        
         const isFullscreen = document.body.classList.contains('game-fullscreen');
 
         if (isFullscreen) {
@@ -1609,6 +1635,117 @@ export class Game {
         } else {
             this.requestFullscreen();
         }
+    }
+    
+    toggleIOSFullscreen() {
+        const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
+        
+        // Close settings popup and resume game
+        this.ui.closeSettingsPopup();
+        this.resume();
+        
+        // Prevent pause during fullscreen transition
+        this.isFullscreenTransition = true;
+        setTimeout(() => { this.isFullscreenTransition = false; }, 500);
+        
+        if (isFullscreen) {
+            // Exit fullscreen
+            document.documentElement.classList.remove('ios-game-fullscreen');
+            document.body.classList.remove('ios-game-fullscreen');
+            document.body.classList.remove('game-fullscreen');
+            document.body.style.overflow = '';
+            const exitBtn = document.getElementById('ios-fs-exit');
+            if (exitBtn) exitBtn.remove();
+            setTimeout(() => {
+                this.graphics.setupCanvas();
+                this.ui.setupShopButtons();
+            }, 100);
+        } else {
+            // Enter fullscreen
+            this.injectIOSFullscreenStyles();
+            document.documentElement.classList.add('ios-game-fullscreen');
+            document.body.classList.add('ios-game-fullscreen');
+            document.body.classList.add('game-fullscreen');
+            document.body.style.overflow = 'hidden';
+            this.createIOSExitButton();
+            // Scroll to hide address bar on iOS
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+                this.graphics.setupCanvas();
+                this.ui.setupShopButtons();
+            }, 100);
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 300);
+        }
+    }
+    
+    injectIOSFullscreenStyles() {
+        if (document.getElementById('ios-fullscreen-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'ios-fullscreen-styles';
+        style.textContent = `
+            html.ios-game-fullscreen,
+            html.ios-game-fullscreen body {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                -webkit-overflow-scrolling: auto !important;
+            }
+            html.ios-game-fullscreen body {
+                min-height: 100vh !important;
+                min-height: 100dvh !important;
+                min-height: -webkit-fill-available !important;
+            }
+            .ios-game-fullscreen #gameCanvas {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                height: -webkit-fill-available !important;
+                z-index: 999999 !important;
+            }
+            #ios-fs-exit {
+                position: fixed !important;
+                top: max(10px, env(safe-area-inset-top)) !important;
+                right: max(10px, env(safe-area-inset-right)) !important;
+                z-index: 9999999 !important;
+                background: rgba(0,0,0,0.7) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 50% !important;
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 24px !important;
+                cursor: pointer !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                -webkit-tap-highlight-color: transparent;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    createIOSExitButton() {
+        if (document.getElementById('ios-fs-exit')) return;
+        const btn = document.createElement('button');
+        btn.id = 'ios-fs-exit';
+        btn.innerHTML = '✕';
+        btn.setAttribute('aria-label', 'Exit fullscreen');
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleIOSFullscreen();
+        });
+        document.body.appendChild(btn);
     }
 
     requestFullscreen() {
@@ -2377,6 +2514,12 @@ export class Game {
     }
 
     exitFullscreen() {
+        // Check if we're in iOS fullscreen mode
+        if (document.body.classList.contains('ios-game-fullscreen')) {
+            this.toggleIOSFullscreen();
+            return;
+        }
+        
         // Close settings popup and resume game
         this.ui.closeSettingsPopup();
         this.resume();

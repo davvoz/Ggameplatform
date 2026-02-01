@@ -2514,6 +2514,13 @@ export class Game {
     }
 
     exitFullscreen() {
+        // If using PlatformSDK, use toggleFullscreen (which handles exit too)
+        if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function' && window._gameFullscreenState) {
+            window._gameFullscreenState = false;
+            window.PlatformSDK.toggleFullscreen();
+            return;
+        }
+        
         // Check if we're in iOS fullscreen mode
         if (document.body.classList.contains('ios-game-fullscreen')) {
             this.toggleIOSFullscreen();

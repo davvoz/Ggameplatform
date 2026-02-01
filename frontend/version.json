@@ -1,8 +1,17 @@
 {
-  "version": "3.17.34",
-  "timestamp": "2026-02-01T16:11:05.856Z",
-  "buildNumber": 353,
+  "version": "3.17.35",
+  "timestamp": "2026-02-01T16:35:19.060Z",
+  "buildNumber": 354,
   "changelog": [
+    {
+      "version": "3.17.35",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD]enhance fullscreen handling for iOS and improve fullscreen state tracking",
+        "🔖 Bump version to 3.17.34 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.34",
       "date": "2026-02-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SA] Add new audio assets for Survivor Arena (ARENA1, ARENA2, ARENA3)",
         "🔖 Bump version to 3.17.25 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.25",
-      "date": "2026-01-31",
-      "type": "patch",
-      "changes": [
-        "fix: SA: Implement settings popup and audio management features",
-        "🔖 Bump version to 3.17.24 [skip-version]"
       ]
     }
   ]

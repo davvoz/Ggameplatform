@@ -412,6 +412,17 @@ function injectIOSFullscreenStyles() {
             z-index: 999999 !important;
             background: #000 !important;
         }
+        .ios-game-fullscreen #game-wrapper {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            height: -webkit-fill-available !important;
+        }
         .ios-game-fullscreen #gameCanvas {
             position: fixed !important;
             top: 0 !important;
@@ -424,7 +435,7 @@ function injectIOSFullscreenStyles() {
         .ios-game-fullscreen #fullscreen-btn {
             position: fixed !important;
             top: max(10px, env(safe-area-inset-top)) !important;
-            right: max(10px, env(safe-area-inset-right)) !important;
+            left: max(10px, env(safe-area-inset-left)) !important;
             z-index: 9999998 !important;
         }
         .ios-game-fullscreen .screen,

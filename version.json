@@ -1,8 +1,17 @@
 {
-  "version": "3.17.36",
-  "timestamp": "2026-02-01T16:50:56.541Z",
-  "buildNumber": 355,
+  "version": "3.17.37",
+  "timestamp": "2026-02-01T17:06:24.536Z",
+  "buildNumber": 356,
   "changelog": [
+    {
+      "version": "3.17.37",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD]update canvas positioning to absolute for better layout control",
+        "🔖 Bump version to 3.17.36 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.36",
       "date": "2026-02-01",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Update audio file formats from MP3 to WAV for music tracks",
         "🔖 Bump version to 3.17.27 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.27",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: Update music tracks to use new audio assets for Survivor Arena",
-        "🔖 Bump version to 3.17.26 [skip-version]"
       ]
     }
   ]

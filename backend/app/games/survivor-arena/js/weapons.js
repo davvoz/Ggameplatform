@@ -1,6 +1,6 @@
 import { Entity } from './entity.js';
 import { CONFIG } from './config.js';
-
+import { MathUtils } from './utils.js';
 /**
  * Survivor Arena - Weapons System
  * @fileoverview Weapon classes and projectile management

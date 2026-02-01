@@ -88,7 +88,7 @@ export class Graphics {
                 width = window.innerWidth;
                 height = window.innerHeight;
                 
-                this.canvas.style.position = 'fixed';
+                this.canvas.style.position = 'absolute';
                 this.canvas.style.left = '0px';
                 this.canvas.style.top = '0px';
                 this.canvas.style.width = width + 'px';

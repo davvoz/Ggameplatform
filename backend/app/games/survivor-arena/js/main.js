@@ -279,12 +279,6 @@ function setupFullscreen() {
 }
 
 function toggleFullscreen() {
-    // Prefer Platform SDK if available (works on iOS!)
-    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
-        window.PlatformSDK.toggleFullscreen();
-        return;
-    }
-
     // Use #game-container for fullscreen
     const elem = document.getElementById('game-container') || document.documentElement;
     
@@ -371,6 +365,7 @@ function toggleIOSFullscreen() {
             window.scrollTo(0, 1);
             try { game && game.handleResize(); } catch(e){}
         }, 100);
+        // Try again after a short delay
         setTimeout(() => {
             window.scrollTo(0, 1);
         }, 300);

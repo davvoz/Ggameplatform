@@ -1,8 +1,17 @@
 {
-  "version": "3.17.30",
-  "timestamp": "2026-02-01T11:16:30.961Z",
-  "buildNumber": 349,
+  "version": "3.17.31",
+  "timestamp": "2026-02-01T11:39:12.647Z",
+  "buildNumber": 350,
   "changelog": [
+    {
+      "version": "3.17.31",
+      "date": "2026-02-01",
+      "type": "patch",
+      "changes": [
+        "fix: [SA]remove unused fullscreen toggle for Platform SDK and add retry logic for iOS fullscreen",
+        "🔖 Bump version to 3.17.30 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.30",
       "date": "2026-02-01",
@@ -82,16 +91,6 @@
       "changes": [
         "backup first official release",
         "🔖 Bump version to 3.17.21 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.21",
-      "date": "2026-01-31",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Adjust rendering calculations for zoomed viewport and improve touch zone setup for fullscreen compatibility",
-        "🔖 Bump version to 3.17.20 [skip-version]"
       ]
     }
   ]

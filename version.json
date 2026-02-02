@@ -1,8 +1,17 @@
 {
-  "version": "3.17.39",
-  "timestamp": "2026-02-02T11:01:02.201Z",
-  "buildNumber": 358,
+  "version": "3.17.40",
+  "timestamp": "2026-02-02T11:18:04.579Z",
+  "buildNumber": 359,
   "changelog": [
+    {
+      "version": "3.17.40",
+      "date": "2026-02-02",
+      "type": "patch",
+      "changes": [
+        "fix: disable pointer events for joystick in desktop mode and move off-screen when hidden",
+        "🔖 Bump version to 3.17.39 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.39",
       "date": "2026-02-02",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SA]remove unused fullscreen toggle for Platform SDK and add retry logic for iOS fullscreen",
         "🔖 Bump version to 3.17.30 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.30",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: [SA]Update z-index values and styles for iOS fullscreen elements",
-        "🔖 Bump version to 3.17.29 [skip-version]"
       ]
     }
   ]

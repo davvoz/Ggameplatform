@@ -1,8 +1,17 @@
 {
-  "version": "3.17.37",
-  "timestamp": "2026-02-01T17:06:24.536Z",
-  "buildNumber": 356,
+  "version": "3.17.38",
+  "timestamp": "2026-02-02T10:05:04.170Z",
+  "buildNumber": 357,
   "changelog": [
+    {
+      "version": "3.17.38",
+      "date": "2026-02-02",
+      "type": "patch",
+      "changes": [
+        "fix: update community cur8 tag",
+        "🔖 Bump version to 3.17.37 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.37",
       "date": "2026-02-01",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SA]Enhance iOS fullscreen styles for game wrapper and button positioning",
         "🔖 Bump version to 3.17.28 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.28",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: Update audio file formats from MP3 to WAV for music tracks",
-        "🔖 Bump version to 3.17.27 [skip-version]"
       ]
     }
   ]

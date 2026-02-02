@@ -335,7 +335,7 @@ async def create_post(
             'comment',
             {
                 'parent_author': '',
-                'parent_permlink': 'hive-120997',  # Cur8 community ID
+                'parent_permlink': 'hive-159863',  # Cur8 community ID
                 'author': stats['username'],
                 'permlink': permlink,
                 'title': post_content['title'],

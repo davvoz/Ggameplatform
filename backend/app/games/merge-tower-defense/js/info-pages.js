@@ -571,11 +571,11 @@ export class InfoPagesManager {
         ctx.fillText(`❤️ HP: ${enemy.hp}`, textX, statsY);
         
         // Speed
-        const speedDesc = enemy.speed >= 1.0 ? 'Veloce' : enemy.speed >= 0.6 ? 'Medio' : 'Lento';
-        ctx.fillText(`⚡ Velocità: ${speedDesc}`, textX, statsY + 16);
+        const speedDesc = enemy.speed >= 1.0 ? 'Fast' : enemy.speed >= 0.6 ? 'Medium' : 'Slow';
+        ctx.fillText(`⚡ Speed: ${speedDesc}`, textX, statsY + 16);
         
         // Reward
-        ctx.fillText(`💰 Ricompensa: ${enemy.reward}`, textX, statsY + 32);
+        ctx.fillText(`💰 Reward: ${enemy.reward}`, textX, statsY + 32);
         
         // Special ability description
         const specialY = statsY + 52;
@@ -607,7 +607,7 @@ export class InfoPagesManager {
         ctx.font = '10px Arial';
         ctx.fillStyle = '#888888';
         ctx.textAlign = 'right';
-        ctx.fillText(`Scala: ${enemy.scale || 1.0}x`, x + width - 10, y + height - 8);
+        ctx.fillText(`Scale: ${enemy.scale || 1.0}x`, x + width - 10, y + height - 8);
     }
     
     /**
@@ -728,16 +728,16 @@ export class InfoPagesManager {
         ctx.fillStyle = '#cccccc';
         
         // Damage
-        ctx.fillText(`⚔️ Danno: ${tower.damage}`, textX, statsY);
+        ctx.fillText(`⚔️ Damage: ${tower.damage}`, textX, statsY);
         
         // Fire rate
-        const fireRateDesc = tower.fireRate <= 500 ? 'Molto veloce' : 
-                            tower.fireRate <= 1000 ? 'Veloce' : 
-                            tower.fireRate <= 1500 ? 'Medio' : 'Lento';
-        ctx.fillText(`🔥 Cadenza: ${fireRateDesc}`, textX, statsY + 14);
+        const fireRateDesc = tower.fireRate <= 500 ? 'Very Fast' : 
+                            tower.fireRate <= 1000 ? 'Fast' : 
+                            tower.fireRate <= 1500 ? 'Medium' : 'Slow';
+        ctx.fillText(`🔥 Fire Rate: ${fireRateDesc}`, textX, statsY + 14);
         
         // Range
-        ctx.fillText(`🎯 Raggio: ${tower.range} celle`, textX, statsY + 28);
+        ctx.fillText(`🎯 Range: ${tower.range} cells`, textX, statsY + 28);
         
         // Special properties
         let specialProps = [];
@@ -762,7 +762,7 @@ export class InfoPagesManager {
         if (bestAgainst) {
             ctx.font = '10px Arial';
             ctx.fillStyle = '#88ff88';
-            ctx.fillText(`✓ Efficace vs: ${bestAgainst}`, textX, statsY + 76);
+            ctx.fillText(`✓ Effective vs: ${bestAgainst}`, textX, statsY + 76);
         }
     }
     
@@ -867,13 +867,13 @@ export class InfoPagesManager {
         let specificStat = '';
         switch (key) {
             case 'BOMB':
-                specificStat = `💥 Danno: ${ability.baseDamage} (+${ability.damagePerLevel}/Lv) • Raggio: ${ability.baseRadius}`;
+                specificStat = `💥 Damage: ${ability.baseDamage} (+${ability.damagePerLevel}/Lv) • Radius: ${ability.baseRadius}`;
                 break;
             case 'PUSHBACK':
-                specificStat = `🌊 Spinta: ${ability.basePushDistance} celle (+${ability.pushDistancePerLevel}/Lv)`;
+                specificStat = `🌊 Push: ${ability.basePushDistance} cells (+${ability.pushDistancePerLevel}/Lv)`;
                 break;
             case 'STUN':
-                specificStat = `⚡ Stun: ${ability.baseStunDuration/1000}s (+${ability.stunDurationPerLevel/1000}s/Lv) • Raggio: ${ability.baseRadius}`;
+                specificStat = `⚡ Stun: ${ability.baseStunDuration/1000}s (+${ability.stunDurationPerLevel/1000}s/Lv) • Radius: ${ability.baseRadius}`;
                 break;
         }
         ctx.fillStyle = '#88ccff';
@@ -971,9 +971,9 @@ export class InfoPagesManager {
         
         // Type badge
         ctx.font = 'bold 10px Arial';
-        const typeBadge = item.type === 'instant' ? '⚡ Istantaneo' : 
-                         item.type === 'temporary' ? `⏱️ Durata: ${item.duration/1000}s` :
-                         '✨ Speciale';
+        const typeBadge = item.type === 'instant' ? '⚡ Instant' : 
+                         item.type === 'temporary' ? `⏱️ Duration: ${item.duration/1000}s` :
+                         '✨ Special';
         ctx.fillStyle = item.type === 'instant' ? '#88ff88' : 
                        item.type === 'temporary' ? '#88ccff' : '#ffcc88';
         ctx.fillText(typeBadge, textX, y + 60);

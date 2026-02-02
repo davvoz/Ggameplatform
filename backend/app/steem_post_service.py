@@ -131,7 +131,7 @@ class SteemPostService:
         body = "\n".join(body_parts)
         
         # Tags
-        tags = ["hive-120997", "cur8", "games", "steem", "gaming", "achievement"]
+        tags = ["hive-159863", "cur8", "games", "steem", "gaming", "achievement"]
         
         return {
             "title": title,

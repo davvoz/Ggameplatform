@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 
 def add_claim_columns():
-    # Get database path
+    # Get database path 
     db_path = Path(__file__).parent / "app" / "game_platform.db"
     
     print(f"Connecting to database: {db_path}")

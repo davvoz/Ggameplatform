@@ -1,8 +1,17 @@
 {
-  "version": "3.17.40",
-  "timestamp": "2026-02-02T11:18:04.579Z",
-  "buildNumber": 359,
+  "version": "3.17.41",
+  "timestamp": "2026-02-02T11:39:31.608Z",
+  "buildNumber": 360,
   "changelog": [
+    {
+      "version": "3.17.41",
+      "date": "2026-02-02",
+      "type": "patch",
+      "changes": [
+        "fix: remove unused weapon-sprites.js script from index.html",
+        "🔖 Bump version to 3.17.40 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.40",
       "date": "2026-02-02",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[SA]Refactor game codebase to use ES6 modules and improve SDK integration",
         "🔖 Bump version to 3.17.31 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.31",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: [SA]remove unused fullscreen toggle for Platform SDK and add retry logic for iOS fullscreen",
-        "🔖 Bump version to 3.17.30 [skip-version]"
       ]
     }
   ]

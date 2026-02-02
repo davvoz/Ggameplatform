@@ -519,6 +519,7 @@ body.desktop-mode #game-container {
     align-items: center;
     justify-content: center;
     position: relative;
+    pointer-events: none;
 }
 
 .joystick-thumb {
@@ -529,6 +530,7 @@ body.desktop-mode #game-container {
     border-radius: 50%;
     position: absolute;
     transition: none;
+    pointer-events: none;
 }
 
 /* Hide joystick on desktop */

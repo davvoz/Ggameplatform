@@ -506,6 +506,9 @@ class UIManager {
     hideJoystick() {
         if (this.elements.joystickContainer) {
             this.elements.joystickContainer.classList.remove('active');
+            // Move off-screen to prevent any touch blocking
+            this.elements.joystickContainer.style.left = '-200px';
+            this.elements.joystickContainer.style.top = '-200px';
         }
     }
 

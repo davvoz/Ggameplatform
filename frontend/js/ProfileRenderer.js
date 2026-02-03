@@ -11,9 +11,6 @@ class ProfileRenderer {
         this.authManager = window.AuthManager;
     }
 
-    /**
-     * Main render method
-     */
     async render() {
         if (!this.isUserAuthenticated()) {
             this.renderLoginRequired();
@@ -55,9 +52,6 @@ class ProfileRenderer {
         this.loadProfileDataAsync(cachedUser);
     }
 
-    /**
-     * Load profile data asynchronously and update UI progressively
-     */
     async loadProfileDataAsync(cachedUser) {
         try {
             // Load user data from server (fresher data)
@@ -95,16 +89,10 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Check if user is authenticated
-     */
     isUserAuthenticated() {
         return this.authManager && this.authManager.isLoggedIn();
     }
 
-    /**
-     * Render login required message
-     */
     renderLoginRequired() {
         this.appContainer.innerHTML = `
             <div class="about text-center">
@@ -115,9 +103,7 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Load user data from server
-     */
+
     async loadUserData() {
         const cachedUser = this.authManager.getUser();
 
@@ -141,9 +127,6 @@ class ProfileRenderer {
         return cachedUser;
     }
 
-    /**
-     * Load user sessions
-     */
     async loadUserSessions(userId) {
 
         try {
@@ -157,9 +140,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Calculate user statistics from sessions
-     */
     calculateStats(sessions) {
 
         const stats = {
@@ -179,9 +159,6 @@ class ProfileRenderer {
         return stats;
     }
 
-    /**
-     * Process individual session for statistics
-     */
     processSessionForStats(session, stats) {
         // Calculate session duration
         if (session.ended_at && session.started_at) {
@@ -206,18 +183,12 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Format play time from seconds to human readable string
-     */
     formatPlayTime(totalSeconds) {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     }
 
-    /**
-     * Load Steem profile if available
-     */
     async loadSteemProfile(user) {
         const steemUsername = this.extractSteemUsername(user);
 
@@ -256,9 +227,6 @@ class ProfileRenderer {
         return steemProfile;
     }
 
-    /**
-     * Extract Steem username from user data
-     */
     extractSteemUsername(user) {
         // Direct Steem username field
         if (user.steemUsername || user.steem_username) {
@@ -278,9 +246,6 @@ class ProfileRenderer {
         return null;
     }
 
-    /**
-     * Render complete profile page
-     */
     async renderProfilePage(user, stats, steemProfile) {
         const template = document.getElementById('profile-template');
         const profileContent = template.content.cloneNode(true);
@@ -299,9 +264,6 @@ class ProfileRenderer {
         this.loadCoinBalanceHeader(user.user_id);
     }
 
-    /**
-     * Render profile page skeleton with cached data
-     */
     async renderProfilePageSkeleton(user) {
         const template = document.getElementById('profile-template');
         const profileContent = template.content.cloneNode(true);
@@ -351,11 +313,6 @@ class ProfileRenderer {
         this.loadCoinBalanceHeader(user.user_id);
     }
 
-    /**
-     * Initialize sticky hero behavior
-     * The profile header collapses into a compact navbar when scrolling
-     * @private
-     */
     _initStickyHero(user) {
         const profileHeader = document.querySelector('.profile-header');
         if (!profileHeader) {
@@ -370,10 +327,6 @@ class ProfileRenderer {
         this._setupStickyNavbarObservers(stickyNavbar);
     }
 
-    /**
-     * Create sticky navbar element
-     * @private
-     */
     _createStickyNavbar(user) {
         const displayName = this.getDisplayName(user);
         const multiplierValue = (user?.cur8_multiplier || 1).toFixed(2);
@@ -396,10 +349,6 @@ class ProfileRenderer {
         return stickyNavbar;
     }
 
-    /**
-     * Copy avatar from main profile to sticky navbar
-     * @private
-     */
     _copyAvatarToStickyNavbar(stickyNavbar) {
         const avatarIcon = document.querySelector('.avatar-icon');
         const stickyAvatar = stickyNavbar.querySelector('.sticky-avatar');
@@ -417,10 +366,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup click handlers for sticky navbar elements
-     * @private
-     */
     _setupStickyNavbarClickHandlers(stickyNavbar, user) {
         const stickyMultiplier = stickyNavbar.querySelector('.sticky-stat.multiplier');
         const stickyCoins = stickyNavbar.querySelector('.sticky-stat.coins');
@@ -434,10 +379,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup multiplier click handler in sticky navbar
-     * @private
-     */
     _setupStickyMultiplierHandler(element, user) {
         element.style.cursor = 'pointer';
 
@@ -448,10 +389,6 @@ class ProfileRenderer {
         this._addHoverEffect(element, 'rgba(99, 102, 241, 0.25)');
     }
 
-    /**
-     * Handle sticky multiplier click
-     * @private
-     */
     async _handleStickyMultiplierClick(user) {
         try {
             const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
@@ -466,10 +403,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup coins click handler in sticky navbar
-     * @private
-     */
     _setupStickyCoinsHandler(element) {
         element.style.cursor = 'pointer';
 
@@ -480,10 +413,6 @@ class ProfileRenderer {
         this._addHoverEffect(element, 'rgba(234, 179, 8, 0.25)');
     }
 
-    /**
-     * Add hover effect to an element
-     * @private
-     */
     _addHoverEffect(element, hoverBackground) {
         element.addEventListener('mouseenter', () => {
             element.style.transform = 'scale(1.05)';
@@ -496,10 +425,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Insert sticky navbar into the DOM
-     * @private
-     */
     _insertStickyNavbar(stickyNavbar) {
         const profileContainer = document.querySelector('.profile');
 
@@ -508,10 +433,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup scroll behavior for sticky navbar
-     * @private
-     */
     _setupScrollBehavior(profileHeader, stickyNavbar) {
         const scrollState = this._createScrollState(profileHeader);
 
@@ -527,10 +448,6 @@ class ProfileRenderer {
         handleScroll();
     }
 
-    /**
-     * Create scroll state object
-     * @private
-     */
     _createScrollState(profileHeader) {
         const headerRect = profileHeader.getBoundingClientRect();
 
@@ -540,20 +457,12 @@ class ProfileRenderer {
         };
     }
 
-    /**
-     * Update scroll state on resize
-     * @private
-     */
     _updateScrollState(scrollState, profileHeader) {
         const headerRect = profileHeader.getBoundingClientRect();
         scrollState.headerTop = headerRect.top + window.scrollY;
         scrollState.headerHeight = headerRect.height;
     }
 
-    /**
-     * Handle sticky scroll behavior
-     * @private
-     */
     _handleStickyScroll(profileHeader, stickyNavbar, scrollState) {
         const scrollY = window.scrollY;
         const triggerPoint = scrollState.headerTop + scrollState.headerHeight * 0.5;
@@ -568,19 +477,11 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Set normal scroll state (header fully visible)
-     * @private
-     */
     _setNormalScrollState(profileHeader, stickyNavbar) {
         profileHeader.classList.remove('header-compressing', 'header-compressed');
         stickyNavbar.classList.remove('visible');
     }
 
-    /**
-     * Set compressing scroll state
-     * @private
-     */
     _setCompressingScrollState(profileHeader, stickyNavbar, scrollY, triggerPoint, fullCompressPoint) {
         const progress = (scrollY - triggerPoint) / (fullCompressPoint - triggerPoint);
         profileHeader.classList.add('header-compressing');
@@ -589,29 +490,17 @@ class ProfileRenderer {
         stickyNavbar.classList.remove('visible');
     }
 
-    /**
-     * Set compressed scroll state (show sticky navbar)
-     * @private
-     */
     _setCompressedScrollState(profileHeader, stickyNavbar) {
         profileHeader.classList.remove('header-compressing');
         profileHeader.classList.add('header-compressed');
         stickyNavbar.classList.add('visible');
     }
 
-    /**
-     * Setup mutation observers for sticky navbar updates
-     * @private
-     */
     _setupStickyNavbarObservers(stickyNavbar) {
         this._setupCoinBalanceObserver();
         this._setupAvatarObserver(stickyNavbar);
     }
 
-    /**
-     * Setup observer for coin balance updates
-     * @private
-     */
     _setupCoinBalanceObserver() {
         const coinBalanceHeader = document.getElementById('coinBalanceHeader');
 
@@ -634,10 +523,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Setup observer for avatar updates
-     * @private
-     */
     _setupAvatarObserver(stickyNavbar) {
         const mainAvatarIcon = document.querySelector('.avatar-icon');
 
@@ -655,10 +540,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Sync sticky avatar with main avatar
-     * @private
-     */
     _syncStickyAvatar(stickyNavbar, mainAvatarIcon) {
         const stickyAvatarEl = stickyNavbar.querySelector('.sticky-avatar');
 
@@ -672,9 +553,6 @@ class ProfileRenderer {
         stickyAvatarEl.textContent = '';
     }
 
-    /**
-     * Update stats section with fresh data
-     */
     updateStatsSection(user, stats) {
         // Update stat values using IDs (the data-stat attributes are added for future use)
         const gamesPlayedEl = document.getElementById('gamesPlayed');
@@ -691,9 +569,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Update profile with Steem data
-     */
     updateProfileWithSteemData(user, steemProfile) {
         // Update avatar if Steem profile has one
         const avatarCircle = document.querySelector('.avatar-circle');
@@ -715,9 +590,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Populate profile header section
-     */
     populateProfileHeader(content, user, steemProfile) {
         const profileHeader = content.querySelector('.profile-header');
         const avatarCircle = content.querySelector('.avatar-circle');
@@ -728,9 +600,6 @@ class ProfileRenderer {
         this.setUserInfo(content, user);
     }
 
-    /**
-     * Set user avatar
-     */
     setAvatar(avatarCircle, avatarIcon, user, steemProfile) {
         if (steemProfile && steemProfile.profileImage) {
             this.setSteemAvatar(avatarCircle, avatarIcon, steemProfile.profileImage);
@@ -739,9 +608,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Set Steem profile image as avatar
-     */
     setSteemAvatar(avatarCircle, avatarIcon, profileImage) {
         avatarIcon.style.backgroundImage = `url(${profileImage})`;
         avatarIcon.style.backgroundSize = 'cover';
@@ -753,9 +619,6 @@ class ProfileRenderer {
         avatarCircle.style.border = '4px solid rgba(255, 255, 255, 0.8)';
     }
 
-    /**
-     * Set emoji avatar based on user type
-     */
     setEmojiAvatar(avatarIcon, user) {
         const steemUsername = this.extractSteemUsername(user);
         let avatarEmoji = '🎮';
@@ -769,9 +632,6 @@ class ProfileRenderer {
         avatarIcon.textContent = avatarEmoji;
     }
 
-    /**
-     * Set header background image
-     */
     setHeaderBackground(profileHeader, steemProfile) {
         if (steemProfile && steemProfile.coverImage) {
             profileHeader.style.backgroundImage = `url(${steemProfile.coverImage})`;
@@ -780,9 +640,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Set user information
-     */
     setUserInfo(content, user) {
         const displayName = this.getDisplayName(user);
         const userType = this.getUserType(user);
@@ -791,9 +648,6 @@ class ProfileRenderer {
         content.querySelector('.profile-type').textContent = userType;
     }
 
-    /**
-     * Get display name for user
-     */
     getDisplayName(user) {
         if (user.is_anonymous) {
             return `Guest #${user.user_id.slice(-6)}`;
@@ -803,9 +657,6 @@ class ProfileRenderer {
         return steemUsername || user.username || 'User';
     }
 
-    /**
-     * Get user type label
-     */
     getUserType(user) {
         if (user.is_anonymous) {
             return '👤 Anonymous Player';
@@ -815,13 +666,7 @@ class ProfileRenderer {
         return steemUsername ? '⚡ Steem Verified Player' : '🎮 Registered Player';
     }
 
-    /**
-     * Populate profile statistics
-     */
     async populateProfileStats(content, user, stats) {
-
-
-
         const multiplier = user.cur8_multiplier || 1.0;
         const totalXP = user.total_xp_earned || 0;
         const API_URL = window.ENV?.API_URL || window.location.origin;
@@ -834,10 +679,6 @@ class ProfileRenderer {
         this._calculateDaysMember(content, user);
     }
 
-    /**
-     * Setup multiplier badge with click handler
-     * @private
-     */
     _setupMultiplierBadge(content, user, fallbackMultiplier, apiUrl) {
         const multiplierEl = content.querySelector('.stat-value.multiplier');
         if (!multiplierEl) {
@@ -860,10 +701,6 @@ class ProfileRenderer {
             });
     }
 
-    /**
-     * Configure multiplier badge appearance and behavior
-     * @private
-     */
     _configureMultiplierBadge(multiplierEl, breakdown, user) {
         const parentBadge = multiplierEl.closest('.stat-badge');
         if (!parentBadge) {
@@ -877,10 +714,6 @@ class ProfileRenderer {
 
     }
 
-    /**
-     * Apply styles to multiplier badge
-     * @private
-     */
     _applyMultiplierBadgeStyles(parentBadge, multiplierEl, breakdown) {
         parentBadge.style.cursor = 'pointer';
         parentBadge.style.transition = 'all 0.3s';
@@ -893,10 +726,6 @@ class ProfileRenderer {
         multiplierEl.style.fontWeight = '700';
     }
 
-    /**
-     * Attach click and hover handlers to multiplier badge
-     * @private
-     */
     _attachMultiplierBadgeHandlers(parentBadge, breakdown) {
         parentBadge.onclick = () => {
             this.showMultiplierModal(breakdown);
@@ -913,10 +742,6 @@ class ProfileRenderer {
         };
     }
 
-    /**
-     * Sync multiplier data to AuthManager and dispatch event
-     * @private
-     */
     _syncMultiplierToAuthManager(breakdown, user) {
         try {
             const currentUser = this.authManager?.getUser?.();
@@ -938,10 +763,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Populate basic stats elements
-     * @private
-     */
     _populateBasicStats(content, stats) {
         const gamesPlayedEl = content.querySelector('#gamesPlayed');
         const questsDoneEl = content.querySelector('#questsDone');
@@ -960,10 +781,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Load and display level info
-     * @private
-     */
     _loadLevelInfo(user, totalXP, apiUrl) {
         fetch(`${apiUrl}/api/levels/${user.user_id}`)
             .then(response => response.ok ? response.json() : null)
@@ -976,10 +793,6 @@ class ProfileRenderer {
             .catch(error => console.error('Failed to load level info:', error));
     }
 
-    /**
-     * Update navbar level badge
-     * @private
-     */
     _updateNavbarLevelBadge(levelInfo, totalXP) {
         const levelBadgeContainer = document.querySelector('#levelBadgeContainer');
         if (!levelBadgeContainer) {
@@ -998,10 +811,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Update profile level card
-     * @private
-     */
     _updateProfileLevelCard(levelInfo, totalXP) {
         const levelCardContainer = document.querySelector('.profile .level-card-container#levelCardContainer');
         if (!levelCardContainer) {
@@ -1015,10 +824,6 @@ class ProfileRenderer {
         levelCardContainer.innerHTML = this._generateLevelCardHTML(levelInfo, totalXP, rightColumnHtml, color);
     }
 
-    /**
-     * Calculate XP data for level card
-     * @private
-     */
     _calculateXpData(levelInfo) {
         const xpInLevel = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
         const xpRequiredForNext = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
@@ -1027,10 +832,6 @@ class ProfileRenderer {
         return { xpInLevel, xpRequiredForNext, xpToNext };
     }
 
-    /**
-     * Generate right column HTML for level card
-     * @private
-     */
     _generateLevelCardRightColumn(xpData, color) {
         if (xpData.xpToNext > 0) {
             return `
@@ -1048,10 +849,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate level card HTML
-     * @private
-     */
     _generateLevelCardHTML(levelInfo, totalXP, rightColumnHtml, color) {
         return `
             <div style="width: 100%; padding: 16px; background: linear-gradient(135deg, ${color}20, ${color}08); border-radius: var(--radius-md); border: 2px solid ${color}55; box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); box-sizing: border-box;">
@@ -1088,10 +885,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Load quests count from transactions
-     * @private
-     */
     async _loadQuestsCount(content, user, apiUrl) {
         const questsDoneEl = content.querySelector('#questsDone');
         if (!questsDoneEl) {
@@ -1107,10 +900,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Fetch all quest claims with pagination
-     * @private
-     */
     async _fetchAllQuestClaims(userId, apiUrl) {
         const BATCH_SIZE = 1000;
         let offset = 0;
@@ -1119,7 +908,7 @@ class ProfileRenderer {
 
         while (hasMoreData) {
             const response = await fetch(`${apiUrl}/api/coins/${userId}/transactions?limit=${BATCH_SIZE}&offset=${offset}`);
-            
+
             if (!response.ok) {
                 break;
             }
@@ -1135,10 +924,6 @@ class ProfileRenderer {
         return totalQuestClaims;
     }
 
-    /**
-     * Load games tried count
-     * @private
-     */
     async _loadGamesTried(content, user, apiUrl) {
         const gamesTriedEl = content.querySelector('#gamesTried');
         if (!gamesTriedEl) {
@@ -1147,7 +932,7 @@ class ProfileRenderer {
 
         try {
             const response = await fetch(`${apiUrl}/users/${user.user_id}/sessions?limit=1000`);
-            
+
             if (response.ok) {
                 const sessionsData = await response.json();
                 const uniqueGames = new Set(sessionsData.sessions.map(session => session.game_id)).size;
@@ -1159,13 +944,9 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Calculate and display days member
-     * @private
-     */
     _calculateDaysMember(content, user) {
         const daysMemberEl = content.querySelector('#daysMember');
-        
+
         if (!daysMemberEl || !user.created_at) {
             return;
         }
@@ -1176,9 +957,6 @@ class ProfileRenderer {
         daysMemberEl.textContent = daysDiff;
     }
 
-    /**
-     * Populate account settings
-     */
     populateAccountSettings(content, user) {
         content.querySelector('#userId').textContent = `#${user.user_id.slice(-8)}`;
         content.querySelector('#accountType').textContent = this.getAccountType(user);
@@ -1191,9 +969,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Get account type label
-     */
     getAccountType(user) {
         if (user.is_anonymous) {
             return 'Anonymous (Guest)';
@@ -1203,9 +978,6 @@ class ProfileRenderer {
         return steemUsername ? 'Steem Keychain' : 'Standard Account';
     }
 
-    /**
-     * Populate recent activity list
-     */
     populateRecentActivity(recentActivity) {
         const activityContainer = document.getElementById('recentActivityContainer');
         if (!activityContainer) return;
@@ -1223,9 +995,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Create activity item element
-     */
     createActivityItem(activity) {
         const activityItem = document.createElement('div');
         activityItem.className = 'activity-item';
@@ -1242,9 +1011,6 @@ class ProfileRenderer {
         return activityItem;
     }
 
-    /**
-     * Populate high scores list
-     */
     populateHighScores(gameScores) {
         const highScoresContainer = document.getElementById('highScoresContainer');
         if (!highScoresContainer) return;
@@ -1262,9 +1028,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Create high score item element
-     */
     createHighScoreItem(gameScore) {
         const highScoreItem = document.createElement('div');
         highScoreItem.className = 'high-score-item';
@@ -1283,9 +1046,6 @@ class ProfileRenderer {
         return highScoreItem;
     }
 
-    /**
-     * Get game thumbnail URL
-     */
     getGameThumbnailUrl(gameScore) {
         if (!gameScore.thumbnail) {
             return 'https://via.placeholder.com/100x75?text=No+Image';
@@ -1296,9 +1056,6 @@ class ProfileRenderer {
             : getGameResourceUrl(gameScore.game_id, gameScore.thumbnail);
     }
 
-    /**
-     * Load coin balance for header badge
-     */
     async loadCoinBalanceHeader(userId) {
 
         const coinBalanceEl = document.getElementById('coinBalanceHeader');
@@ -1354,9 +1111,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Broadcast a witness vote for @cur8.witness using Steem Keychain
-     */
     async voteCur8Witness() {
         const user = this.authManager.getUser();
         const steemUsername = this.extractSteemUsername(user);
@@ -1427,10 +1181,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Refresh multiplier information for the current user by re-fetching Steem profile
-     * and invoking backend update endpoint used elsewhere in the renderer.
-     */
     async refreshMultiplierForCurrentUser() {
         const user = this.authManager.getUser();
         if (!user || !user.user_id) throw new Error('No user logged in');
@@ -1482,10 +1232,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Directly call backend update endpoint with explicit votes_witness and delegation_amount values.
-     * Use this after a user-initiated vote to ensure the backend records the change immediately.
-     */
     async updateMultiplierBackend(votesWitness = false, delegationAmount = 0) {
         const user = this.authManager.getUser();
         if (!user || !user.user_id) throw new Error('No user logged in');
@@ -1520,10 +1266,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Delegate a given amount of STEEM Power to @cur8 using Keychain.
-     * amountSp: number (STEEM Power)
-     */
     async delegateToCur8(amountSp) {
         const user = this.authManager.getUser();
         const steemUsername = this.extractSteemUsername(user);
@@ -1580,9 +1322,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Show multiplier breakdown modal
-     */
     showMultiplierModal(breakdown) {
         const modal = this._createModalContainer();
         modal.innerHTML = this._generateModalContent(breakdown);
@@ -1591,10 +1330,6 @@ class ProfileRenderer {
         this._setupModalEventListeners(modal, breakdown);
     }
 
-    /**
-     * Create modal container element
-     * @private
-     */
     _createModalContainer() {
         const modal = document.createElement('div');
         modal.className = 'multiplier-modal-overlay';
@@ -1614,10 +1349,6 @@ class ProfileRenderer {
         return modal;
     }
 
-    /**
-     * Generate modal HTML content
-     * @private
-     */
     _generateModalContent(breakdown) {
         const witnessSection = this._generateWitnessSectionHTML(breakdown);
         const delegationSection = this._generateDelegationSectionHTML(breakdown);
@@ -1640,10 +1371,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate modal header HTML
-     * @private
-     */
     _generateModalHeader() {
         return `
             <div style="padding: 16px; border-bottom: 1px solid var(--border);">
@@ -1655,10 +1382,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate base multiplier HTML
-     * @private
-     */
     _generateBaseMultiplierHTML(breakdown) {
         return `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -1668,10 +1391,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate witness section HTML
-     * @private
-     */
     _generateWitnessSectionHTML(breakdown) {
         const hasWitnessBonus = breakdown.witness_bonus > 0;
         const bgColor = hasWitnessBonus ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)';
@@ -1698,10 +1417,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate delegation section HTML
-     * @private
-     */
     _generateDelegationSectionHTML(breakdown) {
         const hasDelegationBonus = breakdown.delegation_bonus > 0;
         const bgColor = hasDelegationBonus ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)';
@@ -1726,18 +1441,10 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate divider HTML
-     * @private
-     */
     _generateDivider() {
         return `<div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); margin: 12px 0;"></div>`;
     }
 
-    /**
-     * Generate total multiplier HTML
-     * @private
-     */
     _generateTotalMultiplierHTML(breakdown) {
         return `
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1747,10 +1454,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Generate boost tips HTML
-     * @private
-     */
     _generateBoostTipsHTML(breakdown) {
         if (breakdown.is_capped) {
             return '';
@@ -1777,20 +1480,12 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Setup modal event listeners
-     * @private
-     */
     _setupModalEventListeners(modal, breakdown) {
         this._setupModalCloseListeners(modal);
         this._setupVoteButton(modal, breakdown);
         this._setupDelegationControls(modal, breakdown);
     }
 
-    /**
-     * Setup modal close listeners
-     * @private
-     */
     _setupModalCloseListeners(modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1810,10 +1505,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup vote button functionality
-     * @private
-     */
     _setupVoteButton(modal, breakdown) {
         const voteBtn = modal.querySelector('#voteCur8Btn');
         if (!voteBtn) {
@@ -1823,10 +1514,6 @@ class ProfileRenderer {
         voteBtn.addEventListener('click', () => this._handleVoteClick(modal, voteBtn, breakdown));
     }
 
-    /**
-     * Handle vote button click
-     * @private
-     */
     async _handleVoteClick(modal, voteBtn, breakdown) {
         const statusEl = modal.querySelector('#multiplierStatus');
         voteBtn.disabled = true;
@@ -1865,10 +1552,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Update multiplier after vote
-     * @private
-     */
     async _updateMultiplierAfterVote(breakdown) {
         const currentDelegation = this._getCurrentDelegationAmount(breakdown);
 
@@ -1880,10 +1563,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Get current delegation amount from breakdown or user
-     * @private
-     */
     _getCurrentDelegationAmount(breakdown) {
         if (breakdown?.delegation_amount) {
             return Number(breakdown.delegation_amount) || 0;
@@ -1893,10 +1572,6 @@ class ProfileRenderer {
         return Number(user?.delegation_amount) || 0;
     }
 
-    /**
-     * Refresh modal with new breakdown data
-     * @private
-     */
     async _refreshModalWithNewBreakdown(modal) {
         try {
             const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
@@ -1913,10 +1588,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Update profile visuals after vote
-     * @private
-     */
     async _updateProfileVisualsAfterVote() {
         try {
             const updatedUser = this.authManager.getUser();
@@ -1935,10 +1606,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup delegation controls
-     * @private
-     */
     _setupDelegationControls(modal, breakdown) {
         const delegateBtn = modal.querySelector('#delegateCur8Btn');
         const slider = modal.querySelector('#delegateAmountSlider');
@@ -1953,10 +1620,6 @@ class ProfileRenderer {
         this._setupDelegateButton(modal, delegateBtn, slider, breakdown);
     }
 
-    /**
-     * Initialize delegation slider
-     * @private
-     */
     _initializeDelegationSlider(modal, slider, breakdown) {
         try {
             slider.value = Number(breakdown.delegation_amount || 0).toFixed(0);
@@ -1979,10 +1642,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Get available SP from breakdown or user
-     * @private
-     */
     _getAvailableSp(breakdown) {
         if (breakdown.available_sp !== undefined) {
             return Number(breakdown.available_sp) || 0;
@@ -1995,10 +1654,6 @@ class ProfileRenderer {
         return Number(user?.steem_power) || 0;
     }
 
-    /**
-     * Populate slider tick marks
-     * @private
-     */
     _populateSliderTicks(modal, maxValue, currentDelegation) {
         const datalist = modal.querySelector('#delegateTicks');
         if (!datalist) {
@@ -2028,10 +1683,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Setup delegation preview updater
-     * @private
-     */
     _setupDelegationPreviewUpdater(modal, slider, breakdown) {
         const updatePreview = () => this._computeDelegationPreview(modal, slider, breakdown);
 
@@ -2039,10 +1690,6 @@ class ProfileRenderer {
         updatePreview();
     }
 
-    /**
-     * Compute and display delegation preview
-     * @private
-     */
     _computeDelegationPreview(modal, slider, breakdown) {
         try {
             const sliderValue = Math.max(0, Number(slider?.value || 0));
@@ -2063,10 +1710,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Calculate per SP bonus rate
-     * @private
-     */
     _calculatePerSpBonus(breakdown) {
         if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
             return Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
@@ -2074,10 +1717,6 @@ class ProfileRenderer {
         return 0.0001; // Default: +0.1x per 1000 SP
     }
 
-    /**
-     * Get delegation cap based on witness vote status
-     * @private
-     */
     _getDelegationCap(breakdown) {
         if (breakdown.max_delegation_bonus !== undefined) {
             return Number(breakdown.max_delegation_bonus);
@@ -2087,10 +1726,6 @@ class ProfileRenderer {
         return hasWitnessBonus ? 2.5 : 3.0;
     }
 
-    /**
-     * Calculate base multiplier without delegation
-     * @private
-     */
     _calculateBaseWithoutDelegation(breakdown) {
         let base = breakdown.base !== undefined
             ? Number(breakdown.base)
@@ -2099,10 +1734,6 @@ class ProfileRenderer {
         return base + (Number(breakdown.witness_bonus) || 0);
     }
 
-    /**
-     * Update preview display elements
-     * @private
-     */
     _updatePreviewDisplay(modal, effectiveDelegationBonus, cappedTotal, sliderValue, breakdown) {
         const delegationBonusEl = modal.querySelector('#delegationBonusValue');
         const finalMultEl = modal.querySelector('#finalMultiplierValue');
@@ -2127,10 +1758,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Load Steem profile data for slider configuration
-     * @private
-     */
     async _loadSteemProfileForSlider(modal, slider, breakdown) {
         try {
             const user = this.authManager.getUser?.();
@@ -2161,10 +1788,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Calculate available SP from Steem profile
-     * @private
-     */
     async _calculateAvailableSp(spProfile) {
         const vestsPerSteem = await steemProfileService._getVestsToSpRatio();
         const vestingShares = parseFloat((spProfile.account.vesting_shares || '0 VESTS').split(' ')[0] || '0');
@@ -2177,10 +1800,6 @@ class ProfileRenderer {
         return Math.floor(availableVests / (vestsPerSteem || 1));
     }
 
-    /**
-     * Get amount delegated to cur8 in vests
-     * @private
-     */
     async _getDelegatedToCur8Vests(accountName) {
         try {
             const outgoing = await steemProfileService.getOutgoingVestingDelegations(accountName);
@@ -2201,20 +1820,12 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup delegate button click handler
-     * @private
-     */
     _setupDelegateButton(modal, delegateBtn, slider, breakdown) {
         delegateBtn.addEventListener('click', () => {
             this._handleDelegateClick(modal, delegateBtn, slider, breakdown);
         });
     }
 
-    /**
-     * Handle delegate button click
-     * @private
-     */
     async _handleDelegateClick(modal, delegateBtn, slider, breakdown) {
         delegateBtn.disabled = true;
         const amount = Number(slider?.value || 0);
@@ -2255,10 +1866,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Get or create delegate status element
-     * @private
-     */
     _getOrCreateDelegateStatusElement(modal) {
         let statusEl = modal.querySelector('#delegateStatus');
 
@@ -2275,10 +1882,6 @@ class ProfileRenderer {
         return statusEl;
     }
 
-    /**
-     * Update multiplier after delegation
-     * @private
-     */
     async _updateMultiplierAfterDelegation(breakdown, amount) {
         const votesWitness = this._hasWitnessVote(breakdown);
 
@@ -2290,10 +1893,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Check if user has witness vote
-     * @private
-     */
     _hasWitnessVote(breakdown) {
         if (breakdown && typeof breakdown.witness_bonus !== 'undefined') {
             return Number(breakdown.witness_bonus) > 0;
@@ -2303,14 +1902,11 @@ class ProfileRenderer {
         return Boolean(user?.votes_cur8_witness);
     }
 
-    /**
-     * Initialize Steem post button
-     */
-     initializeSteemPostButton(user) {
+    initializeSteemPostButton(user) {
         console.log('Initializing Steem post button for user:', user);
         const steemPostBanner = document.getElementById('steemPostBanner');
         const shareBtn = document.getElementById('shareOnSteemBtn');
-        
+
         // Only show for Steem users
         const steemUsername = user?.steem_username || user?.username;
         if (!steemUsername || !steemPostBanner) {
@@ -2325,10 +1921,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Initialize Steem post API if needed
-     * @private
-     */
     _initializeSteemPostAPI() {
         if (!window.steemPostAPI) {
             const API_URL = window.ENV?.API_URL || window.location.origin;
@@ -2336,10 +1928,6 @@ class ProfileRenderer {
         }
     }
 
-    /**
-     * Setup share button with availability check and click handler
-     * @private
-     */
     async _setupShareButton(shareBtn, user) {
         try {
             const availability = await window.steemPostAPI.checkPostAvailability(user.user_id);
@@ -2354,10 +1942,6 @@ class ProfileRenderer {
         this._attachShareButtonClickHandler(shareBtn);
     }
 
-    /**
-     * Format time remaining for display
-     * @private
-     */
     _formatTimeRemaining(hours, minutes, seconds) {
         if (hours >= 1) {
             return `${hours}h`;
@@ -2368,18 +1952,10 @@ class ProfileRenderer {
         return `${seconds}s`;
     }
 
-    /**
-     * Get update interval based on time remaining
-     * @private
-     */
     _getUpdateInterval(hoursRemaining) {
         return hoursRemaining >= 1 ? 60000 : 1000;
     }
 
-    /**
-     * Update button HTML for cooldown state
-     * @private
-     */
     _setButtonCooldownHTML(shareBtn, timeString) {
         shareBtn.innerHTML = `
             <span class="btn-icon">⏱️</span>
@@ -2388,10 +1964,6 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Update button HTML for enabled state
-     * @private
-     */
     _setButtonEnabledHTML(shareBtn) {
         shareBtn.innerHTML = `
             <span class="btn-icon">🚀</span>
@@ -2400,14 +1972,10 @@ class ProfileRenderer {
         `;
     }
 
-    /**
-     * Setup cooldown state for share button
-     * @private
-     */
     _setupCooldownState(shareBtn, availability, userId) {
         shareBtn.disabled = true;
         shareBtn.classList.add('disabled');
-        
+
         const timeString = this._formatTimeRemaining(
             availability.hours_remaining,
             availability.minutes_remaining,
@@ -2415,20 +1983,17 @@ class ProfileRenderer {
         );
         this._setButtonCooldownHTML(shareBtn, timeString);
 
-       // this._startCooldownUpdater(shareBtn, userId, availability.hours_remaining);
+        // this._startCooldownUpdater(shareBtn, userId, availability.hours_remaining);commentato perchè ci DDOSSAVA il server
     }
 
-    /**
-     * Start cooldown updater interval
-     * @private
-     */
+
     _startCooldownUpdater(shareBtn, userId, initialHoursRemaining) {
         let updateInterval = null;
 
         const updateCooldown = async () => {
             try {
                 const newAvailability = await window.steemPostAPI.checkPostAvailability(userId);
-                
+
                 if (newAvailability.can_post) {
                     this._enableShareButton(shareBtn);
                     if (updateInterval) {
@@ -2448,20 +2013,12 @@ class ProfileRenderer {
         updateInterval = setInterval(updateCooldown, initialInterval);
     }
 
-    /**
-     * Enable share button after cooldown
-     * @private
-     */
     _enableShareButton(shareBtn) {
         shareBtn.disabled = false;
         shareBtn.classList.remove('disabled');
         this._setButtonEnabledHTML(shareBtn);
     }
 
-    /**
-     * Update cooldown display on button
-     * @private
-     */
     _updateCooldownDisplay(shareBtn, availability) {
         const timeString = this._formatTimeRemaining(
             availability.hours_remaining,
@@ -2471,10 +2028,7 @@ class ProfileRenderer {
         this._setButtonCooldownHTML(shareBtn, timeString);
     }
 
-    /**
-     * Adjust update interval based on time remaining
-     * @private
-     */
+
     _adjustUpdateInterval(currentInterval, callback, hoursRemaining) {
         if (currentInterval) {
             clearInterval(currentInterval);
@@ -2483,10 +2037,6 @@ class ProfileRenderer {
         return setInterval(callback, newIntervalTime);
     }
 
-    /**
-     * Attach click handler to share button
-     * @private
-     */
     _attachShareButtonClickHandler(shareBtn) {
         shareBtn.addEventListener('click', async () => {
             if (shareBtn.disabled) {
@@ -2502,10 +2052,6 @@ class ProfileRenderer {
         });
     }
 
-    /**
-     * Initialize Coin API if needed
-     * @private
-     */
     _initializeCoinAPI() {
         if (!window.coinAPI) {
             const API_URL = window.ENV?.API_URL || window.location.origin;
@@ -2527,20 +2073,12 @@ class ProfileRenderer {
     }
 }
 
-/**
- * Fetch Steem user profile data
- * @param {string} username - Steem username
- * @returns {Promise<Object|null>} Profile data or null
- */
 export async function fetchSteemProfile(username) {
     return steemProfileService.fetchProfile(username);
 }
 
 export const steemProfileService = new SteemProfileService();
 
-/**
- * Exported render function for router
- */
 export async function renderProfile() {
     const renderer = new ProfileRenderer();
     await renderer.render();

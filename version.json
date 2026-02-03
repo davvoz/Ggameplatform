@@ -1,8 +1,17 @@
 {
-  "version": "3.17.44",
-  "timestamp": "2026-02-03T15:31:11.066Z",
-  "buildNumber": 363,
+  "version": "3.18.0",
+  "timestamp": "2026-02-03T16:14:26.707Z",
+  "buildNumber": 364,
   "changelog": [
+    {
+      "version": "3.18.0",
+      "date": "2026-02-03",
+      "type": "minor",
+      "changes": [
+        "Manual version bump",
+        "Manual bump from 3.17.44"
+      ]
+    },
     {
       "version": "3.17.44",
       "date": "2026-02-03",
@@ -86,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [MTD]enhance fullscreen handling for iOS and add PlatformSDK support for exiting fullscreen",
         "🔖 Bump version to 3.17.35 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.35",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]enhance fullscreen handling for iOS and improve fullscreen state tracking",
-        "🔖 Bump version to 3.17.34 [skip-version]"
       ]
     }
   ]

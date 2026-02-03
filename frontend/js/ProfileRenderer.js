@@ -2306,7 +2306,8 @@ class ProfileRenderer {
     /**
      * Initialize Steem post button
      */
-    async initializeSteemPostButton(user) {
+     initializeSteemPostButton(user) {
+        console.log('Initializing Steem post button for user:', user);
         const steemPostBanner = document.getElementById('steemPostBanner');
         const shareBtn = document.getElementById('shareOnSteemBtn');
         
@@ -2320,7 +2321,7 @@ class ProfileRenderer {
         this._initializeSteemPostAPI();
 
         if (shareBtn) {
-           // await this._setupShareButton(shareBtn, user);
+            this._setupShareButton(shareBtn, user);
         }
     }
 

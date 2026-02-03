@@ -1,0 +1,180 @@
+name: Manual Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Tipo di bump versione'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_message:
+        description: 'Messaggio changelog (opzionale)'
+        required: false
+        default: 'Manual version bump'
+
+permissions:
+  contents: write
+
+jobs:
+  manual-bump:
+    name: Manual Version Bump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Debug - Show current state
+        run: |
+          echo "=== Current version.json ==="
+          cat version.json
+          echo ""
+          echo "=== Git status ==="
+          git status
+          echo ""
+          echo "=== Last 5 commits ==="
+          git log --oneline -5
+          echo ""
+          echo "=== Workflow inputs ==="
+          echo "Bump type: ${{ inputs.bump_type }}"
+          echo "Message: ${{ inputs.custom_message }}"
+
+      - name: 🤖 Bump version
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            const bumpType = '${{ inputs.bump_type }}';
+            const customMessage = '${{ inputs.custom_message }}' || 'Manual version bump';
+            
+            // Read current version
+            const versionPath = 'version.json';
+            let versionData;
+            
+            try {
+              versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+            } catch (e) {
+              console.log('Creating new version.json');
+              versionData = {
+                version: '1.0.0',
+                buildNumber: 0,
+                changelog: []
+              };
+            }
+            
+            const currentVersion = versionData.version;
+            console.log(`Current version: ${currentVersion}`);
+            
+            // Parse current version
+            const [major, minor, patch] = currentVersion.split('.').map(Number);
+            
+            // Calculate new version
+            let newVersion;
+            if (bumpType === 'major') {
+              newVersion = `${major + 1}.0.0`;
+            } else if (bumpType === 'minor') {
+              newVersion = `${major}.${minor + 1}.0`;
+            } else {
+              newVersion = `${major}.${minor}.${patch + 1}`;
+            }
+            
+            console.log(`Bump type: ${bumpType}`);
+            console.log(`New version: ${newVersion}`);
+            
+            // Update version.json
+            versionData.version = newVersion;
+            versionData.timestamp = new Date().toISOString();
+            versionData.buildNumber = (versionData.buildNumber || 0) + 1;
+            
+            // Add to changelog
+            const changelogEntry = {
+              version: newVersion,
+              date: new Date().toISOString().split('T')[0],
+              type: bumpType,
+              changes: [customMessage, `Manual bump from ${currentVersion}`]
+            };
+            
+            versionData.changelog = versionData.changelog || [];
+            versionData.changelog.unshift(changelogEntry);
+            
+            // Keep only last 10 changelog entries
+            if (versionData.changelog.length > 10) {
+              versionData.changelog = versionData.changelog.slice(0, 10);
+            }
+            
+            // Write updated version.json
+            fs.writeFileSync(versionPath, JSON.stringify(versionData, null, 2) + '\n');
+            
+            console.log('Version file updated successfully');
+            
+            // Set outputs
+            core.setOutput('version', newVersion);
+            core.setOutput('old_version', currentVersion);
+            core.setOutput('bump_type', bumpType);
+
+      - name: 📝 Update manifest.json version
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.version }}"
+          
+          # Update frontend manifest.json if it exists
+          if [ -f "frontend/manifest.json" ]; then
+            if command -v jq &> /dev/null; then
+              jq --arg version "$NEW_VERSION" '.version = $version' frontend/manifest.json > frontend/manifest.json.tmp
+              mv frontend/manifest.json.tmp frontend/manifest.json
+            else
+              sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" frontend/manifest.json || true
+            fi
+            echo "✅ Updated frontend/manifest.json to version $NEW_VERSION"
+          fi
+          
+          # Copy version.json to frontend directory
+          if [ -d "frontend" ]; then
+            cp version.json frontend/version.json
+            echo "✅ Copied version.json to frontend directory"
+          fi
+          
+          echo ""
+          echo "=== Updated version.json ==="
+          cat version.json
+
+      - name: 📝 Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add version.json
+          git add frontend/manifest.json 2>/dev/null || true
+          git add frontend/version.json 2>/dev/null || true
+          
+          git status
+          
+          git commit -m "🔖 Manual bump: ${{ steps.bump.outputs.old_version }} → ${{ steps.bump.outputs.version }} [skip-version]"
+          git push
+          
+          echo "✅ Changes committed and pushed!"
+
+      - name: 📊 Version Summary
+        if: always()
+        run: |
+          echo "### 🔖 Manual Version Bump Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Old Version** | ${{ steps.bump.outputs.old_version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **New Version** | ${{ steps.bump.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Bump Type** | ${{ steps.bump.outputs.bump_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Message** | ${{ inputs.custom_message }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Timestamp** | $(date -u +"%Y-%m-%dT%H:%M:%SZ") |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Version bump completed successfully!" >> $GITHUB_STEP_SUMMARY

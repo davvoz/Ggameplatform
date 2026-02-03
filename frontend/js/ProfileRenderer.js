@@ -2084,7 +2084,7 @@ export async function renderProfile() {
     await renderer.render();
 }
 
-// A helper to open the canonical CUR8 multiplier modal from other scripts
+//helper to open the canonical CUR8 multiplier modal from other scripts
 try {
     window.showCur8MultiplierModal = function (breakdown) {
         try {

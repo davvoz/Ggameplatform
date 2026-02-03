@@ -14,7 +14,7 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
       version_changed: ${{ steps.bump.outputs.version_changed }}
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -36,6 +36,7 @@ jobs:
             let versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
             const currentVersion = versionData.version;
             
+            console.log(`Current version: ${currentVersion}`);
 
             
             // Get commit messages since last version bump
@@ -105,6 +106,8 @@ jobs:
               newVersion = `${major}.${minor}.${patch + 1}`;
             }
             
+            console.log(`Bump type: ${bumpType}`);
+            console.log(`New version: ${newVersion}`);
 
 
             
@@ -132,6 +135,7 @@ jobs:
             // Write updated version.json
             fs.writeFileSync(versionPath, JSON.stringify(versionData, null, 2) + '\n');
             
+            console.log('Version file updated successfully');
 
             
             // Set outputs

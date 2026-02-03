@@ -1,8 +1,18 @@
 {
-  "version": "3.17.42",
-  "timestamp": "2026-02-03T14:32:56.961Z",
-  "buildNumber": 361,
+  "version": "3.17.43",
+  "timestamp": "2026-02-03T14:52:24.787Z",
+  "buildNumber": 362,
   "changelog": [
+    {
+      "version": "3.17.43",
+      "date": "2026-02-03",
+      "type": "patch",
+      "changes": [
+        "fix:fake",
+        "fix: disable share button and update text to indicate temporary unavailability",
+        "🔖 Bump version to 3.17.42 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.42",
       "date": "2026-02-03",
@@ -84,15 +94,6 @@
       "changes": [
         "fix: [SA]import MathUtils from utils.js in weapons.js for enhanced calculations",
         "🔖 Bump version to 3.17.33 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.33",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix:[SA] add weapon imports and enhance fullscreen toggle for iOS compatibility",
-        "🔖 Bump version to 3.17.32 [skip-version]"
       ]
     }
   ]

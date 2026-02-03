@@ -2320,7 +2320,7 @@ class ProfileRenderer {
         this._initializeSteemPostAPI();
 
         if (shareBtn) {
-            await this._setupShareButton(shareBtn, user);
+           // await this._setupShareButton(shareBtn, user);
         }
     }
 

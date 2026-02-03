@@ -2095,5 +2095,4 @@ try {
         }
     };
 } catch (e) {
-    // ignore if window not writable
 }

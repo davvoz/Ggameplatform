@@ -2414,7 +2414,7 @@ class ProfileRenderer {
         );
         this._setButtonCooldownHTML(shareBtn, timeString);
 
-        this._startCooldownUpdater(shareBtn, userId, availability.hours_remaining);
+       // this._startCooldownUpdater(shareBtn, userId, availability.hours_remaining);
     }
 
     /**

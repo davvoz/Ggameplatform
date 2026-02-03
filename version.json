@@ -1,8 +1,17 @@
 {
-  "version": "3.18.0",
-  "timestamp": "2026-02-03T16:14:26.707Z",
-  "buildNumber": 364,
+  "version": "3.18.1",
+  "timestamp": "2026-02-03T16:49:56.415Z",
+  "buildNumber": 365,
   "changelog": [
+    {
+      "version": "3.18.1",
+      "date": "2026-02-03",
+      "type": "patch",
+      "changes": [
+        "Manual version bump",
+        "Manual bump from 3.18.0"
+      ]
+    },
     {
       "version": "3.18.0",
       "date": "2026-02-03",
@@ -85,16 +94,6 @@
       "changes": [
         "fix: [MTD]update canvas positioning to absolute for better layout control",
         "🔖 Bump version to 3.17.36 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.36",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [MTD]enhance fullscreen handling for iOS and add PlatformSDK support for exiting fullscreen",
-        "🔖 Bump version to 3.17.35 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,18 @@
 {
-  "version": "3.17.43",
-  "timestamp": "2026-02-03T14:52:24.787Z",
-  "buildNumber": 362,
+  "version": "3.17.44",
+  "timestamp": "2026-02-03T15:31:11.066Z",
+  "buildNumber": 363,
   "changelog": [
+    {
+      "version": "3.17.44",
+      "date": "2026-02-03",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: update share button text and enable functionality for sharing on Steem",
+        "🔖 Bump version to 3.17.43 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.43",
       "date": "2026-02-03",
@@ -85,15 +95,6 @@
       "changes": [
         "fix: [MTD]enhance fullscreen handling for iOS and improve fullscreen state tracking",
         "🔖 Bump version to 3.17.34 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.34",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: [SA]import MathUtils from utils.js in weapons.js for enhanced calculations",
-        "🔖 Bump version to 3.17.33 [skip-version]"
       ]
     }
   ]

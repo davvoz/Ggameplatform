@@ -1,8 +1,17 @@
 {
-  "version": "3.18.1",
-  "timestamp": "2026-02-03T16:49:56.415Z",
-  "buildNumber": 365,
+  "version": "3.18.2",
+  "timestamp": "2026-02-03T17:26:11.843Z",
+  "buildNumber": 366,
   "changelog": [
+    {
+      "version": "3.18.2",
+      "date": "2026-02-03",
+      "type": "patch",
+      "changes": [
+        "fix: remove leading space in comment for consistency",
+        "🔖 Manual bump: 3.18.0 → 3.18.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.18.1",
       "date": "2026-02-03",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: update community cur8 tag",
         "🔖 Bump version to 3.17.37 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.37",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]update canvas positioning to absolute for better layout control",
-        "🔖 Bump version to 3.17.36 [skip-version]"
       ]
     }
   ]

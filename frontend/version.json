@@ -1,8 +1,18 @@
 {
-  "version": "3.17.41",
-  "timestamp": "2026-02-02T11:39:31.608Z",
-  "buildNumber": 360,
+  "version": "3.17.42",
+  "timestamp": "2026-02-03T14:32:56.961Z",
+  "buildNumber": 361,
   "changelog": [
+    {
+      "version": "3.17.42",
+      "date": "2026-02-03",
+      "type": "patch",
+      "changes": [
+        "fix: comment out share button setup in profile renderer",
+        "fix: comment out cooldown updater for share button",
+        "🔖 Bump version to 3.17.41 [skip-version]"
+      ]
+    },
     {
       "version": "3.17.41",
       "date": "2026-02-02",
@@ -83,15 +93,6 @@
       "changes": [
         "fix:[SA] add weapon imports and enhance fullscreen toggle for iOS compatibility",
         "🔖 Bump version to 3.17.32 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.32",
-      "date": "2026-02-01",
-      "type": "patch",
-      "changes": [
-        "fix:[SA]Refactor game codebase to use ES6 modules and improve SDK integration",
-        "🔖 Bump version to 3.17.31 [skip-version]"
       ]
     }
   ]

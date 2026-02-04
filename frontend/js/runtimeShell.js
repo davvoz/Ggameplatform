@@ -1049,7 +1049,7 @@ export default class RuntimeShell {
   }, 1000);
 
   function onOpen() {
-    alert('NAH ! You shall not pass !');
+    
     //se una sessione di gioco è in corso, termina la sessione senza assegnare XP
     if (window.runtimeShellInstance) {
         //gameOver forzato con 0 punti

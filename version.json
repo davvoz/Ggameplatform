@@ -1,8 +1,17 @@
 {
-  "version": "3.18.2",
-  "timestamp": "2026-02-03T17:26:11.843Z",
-  "buildNumber": 366,
+  "version": "3.19.0",
+  "timestamp": "2026-02-04T10:13:25.100Z",
+  "buildNumber": 367,
   "changelog": [
+    {
+      "version": "3.19.0",
+      "date": "2026-02-04",
+      "type": "minor",
+      "changes": [
+        "feat: Add CommunityAPI and CommunityManager for real-time chat functionality,offusca MTD,blocca cheat",
+        "🔖 Bump version to 3.18.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.18.2",
       "date": "2026-02-03",
@@ -85,15 +94,6 @@
       "changes": [
         "db psw reset",
         "🔖 Bump version to 3.17.38 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.38",
-      "date": "2026-02-02",
-      "type": "patch",
-      "changes": [
-        "fix: update community cur8 tag",
-        "🔖 Bump version to 3.17.37 [skip-version]"
       ]
     }
   ]

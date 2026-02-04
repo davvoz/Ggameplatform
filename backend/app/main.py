@@ -13,6 +13,7 @@ from app.routers import leaderboard
 from app.routers import steem_posts
 from app.routers import platform
 from app.routers import community
+from app.routers import push_notifications
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.games.briscola_be.router import router as briscola_router
 from app.database import init_db
@@ -174,6 +175,7 @@ app.include_router(community.router, tags=["community"])
 app.include_router(community.rest_router, tags=["community-api"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 app.include_router(briscola_router, tags=["Briscola Multiplayer"])
+app.include_router(push_notifications.router, tags=["push-notifications"])
 
 # Scheduler startup/shutdown events
 @app.on_event("startup")

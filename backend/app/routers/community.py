@@ -197,6 +197,9 @@ class CommunityChatManager:
         
         # Broadcast to all connected users
         await self._broadcast_message(message)
+        
+        # Send push notifications to users who are NOT currently connected
+        await self._send_push_to_offline_users(message)
     
     async def _handle_history_request(self, user_id: str, data: dict):
         """Handle request for message history"""
@@ -294,6 +297,65 @@ class CommunityChatManager:
             "totalMembers": len(self.connections)  # Could be enhanced to track unique users
         }
     
+    async def _send_push_to_offline_users(self, message: ChatMessage):
+        """Send push notification to users who have subscriptions but are not connected"""
+        try:
+            from app.database import get_db_session
+            from app.models import PushSubscription
+            from app.push_notification_service import push_service
+            
+            # Get list of currently connected user IDs
+            connected_user_ids = set(self.connections.keys())
+            
+            with get_db_session() as db:
+                # Get all active push subscriptions for users NOT currently connected
+                subscriptions = db.query(PushSubscription).filter(
+                    PushSubscription.is_active == 1,
+                    ~PushSubscription.user_id.in_(connected_user_ids) if connected_user_ids else True
+                ).all()
+                
+                if not subscriptions:
+                    return
+                
+                # Truncate message text for notification
+                text_preview = message.text[:100] + "..." if len(message.text) > 100 else message.text
+                if not text_preview and message.image_url:
+                    text_preview = "📷 Ha inviato un'immagine"
+                elif not text_preview and message.gif_url:
+                    text_preview = "🎬 Ha inviato una GIF"
+                
+                # Build notification
+                title = f"💬 {message.username}"
+                body = text_preview
+                
+                # Send to each subscription (async in background to not block chat)
+                for sub in subscriptions:
+                    try:
+                        sub_info = sub.get_subscription_info()
+                        result = push_service.send_notification(
+                            subscription_info=sub_info,
+                            title=title,
+                            body=body,
+                            url="/#community",
+                            tag=f"chat-{message.user_id}",  # Group by sender
+                            ttl=300  # 5 minutes TTL for chat messages
+                        )
+                        
+                        # Mark expired subscriptions
+                        if result.get("expired"):
+                            sub.is_active = 0
+                            sub.updated_at = datetime.utcnow().isoformat()
+                            
+                    except Exception as e:
+                        logger.warning(f"[CommunityChat] Push failed for {sub.user_id}: {e}")
+                
+                db.commit()
+                
+                logger.info(f"[CommunityChat] Sent push notifications to {len(subscriptions)} offline users")
+                
+        except Exception as e:
+            logger.error(f"[CommunityChat] Error sending push notifications: {e}")
+
     def _is_valid_media_url(self, url: str) -> bool:
         """
         Validate media URL for security.

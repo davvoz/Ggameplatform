@@ -765,3 +765,50 @@ class PlatformConfig(Base):
     def __repr__(self) -> str:
         return f"<PlatformConfig {self.key}={self.value}>"
 
+
+class PushSubscription(Base):
+    """Push notification subscription model for Web Push API."""
+    __tablename__ = 'push_subscriptions'
+    
+    subscription_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
+    endpoint = Column(Text, nullable=False, unique=True)  # Push service endpoint URL
+    p256dh_key = Column(String(255), nullable=False)  # Client public key
+    auth_key = Column(String(255), nullable=False)  # Auth secret
+    user_agent = Column(String(500), nullable=True)  # Browser/device info
+    is_active = Column(Integer, default=1)  # 1 = active, 0 = unsubscribed/expired
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    last_used = Column(String, nullable=True)  # Last successful push timestamp
+    
+    # Create index for faster user lookups
+    __table_args__ = (
+        Index('idx_push_sub_user_active', 'user_id', 'is_active'),
+    )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert push subscription instance to dictionary."""
+        return {
+            "subscription_id": self.subscription_id,
+            "user_id": self.user_id,
+            "endpoint": self.endpoint,
+            "is_active": bool(self.is_active),
+            "user_agent": self.user_agent,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "last_used": self.last_used
+        }
+    
+    def get_subscription_info(self) -> Dict[str, Any]:
+        """Get subscription info in Web Push API format."""
+        return {
+            "endpoint": self.endpoint,
+            "keys": {
+                "p256dh": self.p256dh_key,
+                "auth": self.auth_key
+            }
+        }
+    
+    def __repr__(self) -> str:
+        return f"<PushSubscription {self.subscription_id} for user {self.user_id}>"
+

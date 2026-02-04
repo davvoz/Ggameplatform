@@ -248,7 +248,9 @@ class SteemPostModal {
             const result = await this.publishToSteem(hasKeychain, steemUsername, postingKey, postData, user.user_id, publishBtn);
 
             this.clearPostingKeyInput(postingKeyInput);
-            await this.confirmAndFinalize(result);
+            
+            // Pass the publish method to confirmAndFinalize
+            await this.confirmAndFinalize(result, hasKeychain ? 'keychain' : 'posting_key');
 
         } catch (error) {
             console.error('Error publishing post:', error);
@@ -339,15 +341,15 @@ class SteemPostModal {
     /**
      * Confirm post publication and finalize
      */
-    async confirmAndFinalize(result) {
+    async confirmAndFinalize(result, publishMethod = 'keychain') {
         const user = this.authManager.getUser();
         
         // Always confirm on backend to deduct coins and update cooldown
-        // This works for both Keychain and posting key methods
+        // Pass publishMethod to avoid duplicate Telegram notifications
         if (result.success && result.post_url) {
             try {
                 const postTitle = result.post_title || 'Gaming milestone post';
-                await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postTitle);
+                await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postTitle, publishMethod);
 
             } catch (error) {
                 console.error('[SteemPostModal] Failed to confirm post on backend:', error);

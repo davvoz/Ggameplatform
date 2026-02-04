@@ -107,8 +107,9 @@ class SteemPostAPI {
      * @param {string} userId - User ID
      * @param {string} postUrl - Published post URL
      * @param {string} postTitle - Post title
+     * @param {string} publishMethod - 'keychain' or 'posting_key'
      */
-    async confirmPost(userId, postUrl, postTitle = 'Gaming milestone post') {
+    async confirmPost(userId, postUrl, postTitle = 'Gaming milestone post', publishMethod = 'keychain') {
         try {
             const response = await fetch(`${this.baseUrl}/api/steem/confirm-post`, {
                 method: 'POST',
@@ -118,7 +119,8 @@ class SteemPostAPI {
                 body: JSON.stringify({
                     user_id: userId,
                     post_url: postUrl,
-                    post_title: postTitle
+                    post_title: postTitle,
+                    publish_method: publishMethod
                 })
             });
 

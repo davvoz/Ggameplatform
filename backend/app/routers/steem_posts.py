@@ -488,6 +488,7 @@ async def confirm_post(
         user_id = request.get('user_id')
         post_url = request.get('post_url')
         post_title = request.get('post_title', 'Gaming milestone post')
+        publish_method = request.get('publish_method', 'keychain')  # 'keychain' or 'posting_key'
         
         if not user_id:
             raise HTTPException(
@@ -527,24 +528,27 @@ async def confirm_post(
         user.last_steem_post = datetime.utcnow().isoformat()
         db.commit()
         
-        # Send Telegram notification
-        print(f"[CONFIRM-POST] Sending Telegram notification for user {user.steem_username}")
-        try:
-            send_telegram_success(
-                title="New Steem Post Published (Keychain)",
-                message=f"User @{user.steem_username} published a new post!",
-                stats={
-                    "User": user.steem_username,
-                    "Platform User ID": user_id,
-                    "Post URL": post_url,
-                    "Post Title": post_title
-                }
-            )
-            print(f"[CONFIRM-POST] Telegram notification sent successfully")
-        except Exception as telegram_error:
-            print(f"[CONFIRM-POST] Failed to send Telegram notification: {telegram_error}")
-            import traceback
-            traceback.print_exc()
+        # Send Telegram notification only for Keychain (posting_key already sent notification)
+        if publish_method == 'keychain':
+            print(f"[CONFIRM-POST] Sending Telegram notification for Keychain publication by {user.steem_username}")
+            try:
+                send_telegram_success(
+                    title="New Steem Post Published (Keychain)",
+                    message=f"User @{user.steem_username} published a new post!",
+                    stats={
+                        "User": user.steem_username,
+                        "Platform User ID": user_id,
+                        "Post URL": post_url,
+                        "Post Title": post_title
+                    }
+                )
+                print(f"[CONFIRM-POST] Telegram notification sent successfully")
+            except Exception as telegram_error:
+                print(f"[CONFIRM-POST] Failed to send Telegram notification: {telegram_error}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print(f"[CONFIRM-POST] Skipping Telegram notification (already sent by posting_key endpoint)")
         
         return {
             "success": True,
@@ -593,15 +597,6 @@ async def publish_with_key(
     tags = request.get('tags', [])
     metadata = request.get('metadata', {})
     
-    # DEBUG: Log posting key details (RIMUOVERE DOPO DEBUG!)
-    logger.warning("[STEEM DEBUG] ========== POSTING KEY DEBUG ==========")
-    logger.warning("[STEEM DEBUG] Username: %s", username)
-    logger.warning("[STEEM DEBUG] Posting key received: %s", posting_key)
-    logger.warning("[STEEM DEBUG] Posting key length: %d", len(posting_key) if posting_key else 0)
-    logger.warning("[STEEM DEBUG] Posting key first 5 chars: %s", posting_key[:5] if posting_key else 'None')
-    logger.warning("[STEEM DEBUG] Posting key last 5 chars: %s", posting_key[-5:] if posting_key else 'None')
-    logger.warning("[STEEM DEBUG] Posting key repr: %s", repr(posting_key[:10]) if posting_key else 'None')
-    logger.warning("[STEEM DEBUG] ===========================================")
     
     if not all([username, posting_key, title, body]):
         raise HTTPException(

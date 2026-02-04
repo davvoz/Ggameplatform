@@ -30,10 +30,67 @@ export class Game {
 
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
-
+        this.setupWindowListeners();
         // Music will be started after tutorial prompt (in main.js)
     }
+   /**
+     * Setup window listeners for platform messages
+     */
+    setupWindowListeners() {
+        // Register with PlatformSDK for XP banner events
+        if (window.PlatformSDK) {
+            window.PlatformSDK.on('showXPBanner', (payload) => {
 
+                if (payload && payload.xp_earned !== undefined) {
+                    this.showXPBanner(payload.xp_earned, payload);
+                }
+            });
+        }
+        
+        // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+            
+            // Handle XP banner
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
+
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
+            }
+            
+            // Handle level-up notification
+            if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+
+                this.showLevelUpNotification(event.data.payload);
+            }
+        });
+    }
+
+    /**
+     * Show XP earned banner inside the game
+     * @param {number} xpAmount - Amount of XP earned
+     * @param {object|string} extraData - Extra data with XP breakdown
+     */
+    showXPBanner(xpAmount, extraData = null) {
+
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner';
+        banner.innerHTML = `
+            <div class="game-xp-badge">
+                <span class="game-xp-icon">⭐</span>
+                <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
+            </div>
+        `;
+        
+        document.body.appendChild(banner);
+        
+        // Remove after 3.5 seconds
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        }, 5500);
+    }
     createInitialState() {
         return {
             // Resources
@@ -1882,8 +1939,7 @@ export class Game {
                 glow: true
             });
             
-            // Close shop popup to allow tower selection
-            this.ui.closeShopPopup();
+
         }
     }
 

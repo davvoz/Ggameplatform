@@ -7,7 +7,7 @@ import { Graphics } from './graphics.js';
 import { InputHandler } from './input.js';
 import { UIManager } from './ui.js';
 import { WaveModeSelector } from './WaveModeSelector.js';
-import { Game } from './game.js';
+import { Game } from './game.obf.js';
 import { CONFIG } from './config.js';
 import { TutorialManager, TutorialPrompt } from './tutorial.js';
 
@@ -105,80 +105,51 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
     let sessionStartTime = 0;
     let platformBalance = 0;
 
-    try {
+    async function loadUserBalance() {
+        let userId = window.platformConfig?.userId;
+        
+        if (!userId && typeof PlatformSDK.getConfig === 'function') {
+            userId = PlatformSDK.getConfig()?.userId;
+        }
 
+        if (!userId) {
+            return 0;
+        }
 
+        const response = await fetch(`/api/coins/${userId}/balance`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            return 0;
+        }
+
+        const data = await response.json();
+        return data.balance || 0;
+    }
+
+    async function initializePlatform() {
         await PlatformSDK.init({
-            onPause: () => {
-
-                game.pause();
-            },
-
-            onResume: () => {
-
-                game.resume();
-            },
-
+            onPause: () => game.pause(),
+            onResume: () => game.resume(),
             onExit: () => {
-
                 if (sessionActive) {
                     endSession();
                 }
                 game.gameOver();
             },
-
-            onStart: () => {
-
-                game.resume();
-            }
+            onStart: () => game.resume()
         });
 
         platformReady = true;
+        platformBalance = await loadUserBalance();
+        window.platformBalance = platformBalance;
+    }
 
-
-        // Load user's coin balance using platform API (like seven does)
-        try {
-            // Get userId from platform config
-            let userId = null;
-            if (window.platformConfig && window.platformConfig.userId) {
-                userId = window.platformConfig.userId;
-            } else if (PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
-                const config = PlatformSDK.getConfig();
-                if (config && config.userId) {
-                    userId = config.userId;
-                }
-            }
-
-            if (userId) {
-
-                const response = await fetch(`/api/coins/${userId}/balance`, {
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    platformBalance = data.balance || 0;
-                    window.platformBalance = platformBalance;
-
-                } else {
-
-                    platformBalance = 0;
-                    window.platformBalance = 0;
-                }
-            } else {
-
-                platformBalance = 0;
-                window.platformBalance = 0;
-            }
-        } catch (error) {
-
-            platformBalance = 0;
-            window.platformBalance = 0;
-        }
-
+    try {
+        await initializePlatform();
     } catch (error) {
-
-
+        console.error('[Merge Tower] Platform initialization failed:', error);
         platformBalance = 0;
         window.platformBalance = 0;
     }

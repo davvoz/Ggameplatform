@@ -46,6 +46,7 @@
     <link rel="stylesheet" href="./css/wallet-stats.css">
     <link rel="stylesheet" href="./css/utilities.css">
     <link rel="stylesheet" href="./css/quest-hero.css">
+    <link rel="stylesheet" href="./css/community.css">
     <link rel="stylesheet" href="./css/auth.css">
     <link rel="stylesheet" href="./css/daily-login-banner.css">
 
@@ -85,6 +86,7 @@
                     <a href="#/" class="nav-link active" data-route="/">Games</a>
                     <a href="#/leaderboard" class="nav-link" data-route="/leaderboard">Leaderboard</a>
                     <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">Quests</a>
+                    <!-- <a href="#/community" class="nav-link auth-required" data-route="/community" id="communityLink">Community</a> -->
                     <a href="#/wallet" class="nav-link auth-required" data-route="#/wallet" id="walletLink">Wallet</a>
                     <a href="#/about" class="nav-link" data-route="/about">About</a>
                     <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">Profile</a>
@@ -507,6 +509,85 @@
         </div>
     </template>
 
+    <!-- Community Template -->
+    <template id="community-template">
+        <div class="community">
+            <!-- Chat Section - Full Height Telegram/WhatsApp Style -->
+            <div class="chat-wrapper">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <div class="chat-header-avatar">💬</div>
+                        <div class="chat-header-details">
+                            <h2 class="chat-header-title">Community Chat</h2>
+                            <div class="chat-header-status">
+                                <span class="status-indicator" id="headerStatusIndicator"></span>
+                                <span class="status-text" id="headerStatusText">Connecting...</span>
+                                <span class="online-count" id="onlineCount">0 online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Area -->
+                <div class="chat-messages-area" id="chatMessagesArea">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Messages will be rendered here -->
+                    </div>
+                    
+                    <!-- Scroll to bottom fab (shown when scrolled up) -->
+                    <button class="scroll-bottom-fab" id="scrollBottomFab" style="display: none;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                        </svg>
+                        <span class="new-messages-badge" id="newMessagesBadge" style="display: none;">0</span>
+                    </button>
+                </div>
+
+                <!-- Input Area -->
+                <div class="chat-input-area">
+                    <!-- Media Preview -->
+                    <div class="media-preview-bar" id="mediaPreviewBar" style="display: none;">
+                        <div class="media-preview-content">
+                            <img id="mediaPreviewImg" src="" alt="Preview">
+                            <span class="media-preview-name" id="mediaPreviewName"></span>
+                        </div>
+                        <button class="media-preview-remove" id="mediaPreviewRemove">✕</button>
+                    </div>
+                    
+                    <!-- Input Row -->
+                    <div class="chat-input-row">
+                        <div class="chat-input-actions">
+                            <button class="chat-action-btn" id="emojiBtn" title="Emoji">
+                                <span>😊</span>
+                            </button>
+                            <button class="chat-action-btn" id="imageBtn" title="Send image">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                            </button>
+                            <button class="chat-action-btn" id="gifBtn" title="Send GIF">
+                                <span class="gif-label">GIF</span>
+                            </button>
+                        </div>
+                        <div class="chat-input-field">
+                            <input type="text" 
+                                   id="chatInput" 
+                                   placeholder="Message..." 
+                                   maxlength="500"
+                                   autocomplete="off">
+                        </div>
+                        <button class="chat-send-btn" id="sendBtn" title="Send">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Login/Register Modal -->
     <div id="authModal" class="modal">
         <div class="modal-content">
@@ -598,6 +679,8 @@
     <script src="./js/daily-login-banner.js"></script>
     <script src="./js/SteemPostAPI.js"></script>
     <script src="./js/SteemPostModal.js"></script>
+    <script src="./js/CommunityAPI.js"></script>
+    <script src="./js/CommunityManager.js"></script>
     <link rel="stylesheet" href="./css/steem-post-modal.css">
     <script type="module" src="./js/main.js"></script>
     <script src="./js/nav-multiplier.js"></script>

@@ -1,4 +1,4 @@
-import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404, renderWallet } from './main.js';
+import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404, renderWallet, renderCommunity } from './main.js';
 import { renderLeaderboard } from './LeaderboardRenderer.js';
 import { renderProfile } from './ProfileRenderer.js';
 
@@ -12,6 +12,7 @@ const routes = {
     '/wallet': renderWallet,
     '/leaderboard': renderLeaderboard,
     '/quests': renderQuests,
+    '/community': renderCommunity,
     '/game/:id': renderGameDetail,
     '/play/:id': renderGamePlayer
 };
@@ -41,6 +42,12 @@ function handleRoute() {
         // Skip session end when navigating away - no XP awarded
         window.currentGameRuntime.cleanup(false, true);
         window.currentGameRuntime = null;
+    }
+    
+    // Cleanup community manager when navigating away from community
+    if (hash !== '/community' && window.currentCommunityManager) {
+        window.currentCommunityManager.destroy();
+        window.currentCommunityManager = null;
     }
     
     if (route) {

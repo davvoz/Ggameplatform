@@ -1021,5 +1021,47 @@ export default class RuntimeShell {
     }
 }
 
+(function detectDevTools() {
+  let open = false;
+
+  function isDebuggerOpen() {
+    const t0 = performance.now();
+    debugger;
+    return performance.now() - t0 > 100;
+  }
+
+  function isConsoleDocked() {
+    return (
+      window.outerWidth - window.innerWidth > 160 ||
+      window.outerHeight - window.innerHeight > 160
+    );
+  }
+
+  setInterval(() => {
+    const detected = isDebuggerOpen() || isConsoleDocked();
+
+    if (detected && !open) {
+      open = true;
+      onOpen();
+    } else if (!detected) {
+      open = false;
+    }
+  }, 1000);
+
+  function onOpen() {
+    alert('NAH ! You shall not pass !');
+    //se una sessione di gioco è in corso, termina la sessione senza assegnare XP
+    if (window.runtimeShellInstance) {
+        //gameOver forzato con 0 punti
+        this.sendMessage(GAME_MESSAGE_TYPES.GAME_OVER, { score: 0, extra_data: {} });
+        //pulizia runtime shell senza assegnare XP
+        window.runtimeShellInstance.cleanup(false, true);
+        window.runtimeShellInstance.exit();
+        
+    }
+  }
+})();
+
+
 // Export message type constants for external use
 export { GAME_MESSAGE_TYPES, PLATFORM_MESSAGE_TYPES, PROTOCOL_VERSION };

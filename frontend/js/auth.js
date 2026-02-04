@@ -353,6 +353,7 @@ const AuthManager = {
         const levelBadgeContainer = document.getElementById('levelBadgeContainer');
         const profileLink = document.getElementById('profileLink');
         const questsLink = document.getElementById('questsLink');
+        const communityLink = document.getElementById('communityLink');
 
 
 
@@ -395,6 +396,19 @@ const AuthManager = {
             } else {
 
             }
+
+            // Show Community link only for non-anonymous users
+            if (communityLink) {
+                if (this.currentUser.is_anonymous) {
+                    communityLink.classList.add('auth-required');
+                    communityLink.style.display = 'none';
+                } else {
+                    communityLink.classList.remove('auth-required');
+                    communityLink.style.display = 'inline-block';
+                }
+            }
+
+
 
             let displayName = '';
             let badge = '';
@@ -489,6 +503,11 @@ const AuthManager = {
                 questsLink.classList.add('auth-required');
                 questsLink.style.display = 'none';
             }
+            if (communityLink) {
+                communityLink.classList.add('auth-required');
+                communityLink.style.display = 'none';
+            }
+
         }
     },
 

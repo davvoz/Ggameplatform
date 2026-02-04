@@ -751,3 +751,56 @@ export function render404() {
         </div>
     `;
 }
+
+/**
+ * Render community page
+ */
+export async function renderCommunity() {
+    const appContainer = document.getElementById('app');
+    
+    // Check if user is logged in
+    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+        appContainer.innerHTML = `
+            <div class="error text-center">
+                <h2>Please Log In</h2>
+                <p>You need to be logged in to access the community.</p>
+                <button class="play-game-btn" onclick="window.location.href='/auth.html'">Go to Login</button>
+            </div>
+        `;
+        return;
+    }
+
+    // Load community template
+    const template = document.getElementById('community-template');
+    if (!template) {
+        appContainer.innerHTML = `
+            <div class="error text-center">
+                <h2>Error</h2>
+                <p>Community template not found.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Clone and insert template
+    const communityContent = template.content.cloneNode(true);
+    appContainer.innerHTML = '';
+    appContainer.appendChild(communityContent);
+
+    // Initialize CommunityManager
+    try {
+        // Cleanup previous instance if exists
+        if (window.currentCommunityManager) {
+            window.currentCommunityManager.destroy();
+        }
+        
+        window.currentCommunityManager = new window.CommunityManager({
+            container: appContainer.querySelector('.community'),
+            authManager: window.AuthManager
+        });
+        
+        await window.currentCommunityManager.init();
+    } catch (error) {
+        console.error('Error initializing community:', error);
+    }
+}

@@ -625,8 +625,8 @@ async def publish_with_key(
     # Publish using beem
     post_url = _publish_to_steem(username, posting_key, title, body, tags, metadata, permlink, request)
     
-    # Update user data and deduct coins
-    _update_user_after_publish(db, username, title, post_url, permlink, coin_service, post_service)
+    # Note: Coins are NOT deducted here - they will be deducted by /confirm-post endpoint
+    # This ensures consistency between Keychain and posting key methods
     
     # Send Telegram notification
     _send_publish_notification(username, post_url, permlink)
@@ -635,6 +635,7 @@ async def publish_with_key(
         "success": True,
         "permlink": permlink,
         "post_url": post_url,
+        "post_title": title,
         "message": "Post published successfully on Steem blockchain"
     }
 

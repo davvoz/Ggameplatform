@@ -342,7 +342,8 @@ class SteemPostModal {
     async confirmAndFinalize(result) {
         const user = this.authManager.getUser();
         
-        // If published via Keychain, confirm on backend to deduct coins and update cooldown
+        // Always confirm on backend to deduct coins and update cooldown
+        // This works for both Keychain and posting key methods
         if (result.success && result.post_url) {
             try {
                 const postTitle = result.post_title || 'Gaming milestone post';

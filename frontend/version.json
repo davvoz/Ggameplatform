@@ -1,8 +1,17 @@
 {
-  "version": "3.20.0",
-  "timestamp": "2026-02-04T23:03:21.625Z",
-  "buildNumber": 370,
+  "version": "3.20.1",
+  "timestamp": "2026-02-04T23:27:40.875Z",
+  "buildNumber": 371,
   "changelog": [
+    {
+      "version": "3.20.1",
+      "date": "2026-02-04",
+      "type": "patch",
+      "changes": [
+        "fix : obf",
+        "🔖 Bump version to 3.20.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.0",
       "date": "2026-02-04",
@@ -84,16 +93,6 @@
         "fix:fake",
         "fix: disable share button and update text to indicate temporary unavailability",
         "🔖 Bump version to 3.17.42 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.42",
-      "date": "2026-02-03",
-      "type": "patch",
-      "changes": [
-        "fix: comment out share button setup in profile renderer",
-        "fix: comment out cooldown updater for share button",
-        "🔖 Bump version to 3.17.41 [skip-version]"
       ]
     }
   ]

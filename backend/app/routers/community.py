@@ -294,7 +294,7 @@ class CommunityChatManager:
         return {
             "onlineUsers": len(self.connections),
             "totalMessages": len(self.messages),
-            "totalMembers": len(self.connections)  # Could be enhanced to track unique users
+            "totalMembers": len(self.connections)  #  Could be enhanced to track unique users
         }
     
     async def _send_push_to_offline_users(self, message: ChatMessage):

@@ -1,8 +1,17 @@
 {
-  "version": "3.19.0",
-  "timestamp": "2026-02-04T10:13:25.100Z",
-  "buildNumber": 367,
+  "version": "3.19.1",
+  "timestamp": "2026-02-04T21:54:02.329Z",
+  "buildNumber": 368,
   "changelog": [
+    {
+      "version": "3.19.1",
+      "date": "2026-02-04",
+      "type": "patch",
+      "changes": [
+        "fix: Update  for clarity on coin deduction process in publish methods",
+        "🔖 Bump version to 3.19.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.19.0",
       "date": "2026-02-04",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: disable pointer events for joystick in desktop mode and move off-screen when hidden",
         "🔖 Bump version to 3.17.39 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.17.39",
-      "date": "2026-02-02",
-      "type": "patch",
-      "changes": [
-        "db psw reset",
-        "🔖 Bump version to 3.17.38 [skip-version]"
       ]
     }
   ]

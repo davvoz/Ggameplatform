@@ -1711,10 +1711,19 @@ class ProfileRenderer {
     }
 
     _calculatePerSpBonus(breakdown) {
+        // If backend provides the rate directly, use it
+        if (breakdown.delegation_bonus_per_sp !== undefined) {
+            return Number(breakdown.delegation_bonus_per_sp);
+        }
+        
+        // Calculate from existing delegation data if available
         if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
             return Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
         }
-        return 0.0001; // Default: +0.1x per 1000 SP
+        
+        // If no data available, return 0 - can't calculate without backend data
+        console.warn('Cannot calculate per-SP bonus: missing delegation data from backend');
+        return 0;
     }
 
     _getDelegationCap(breakdown) {

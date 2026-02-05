@@ -49,7 +49,7 @@ class Game {
         this.projectiles = [];
         this.pickups = [];
         this.drones = [];
-        this.boss = null;
+        this.bosses = []; // Multiple bosses support
         this.miniBoss = null;
 
         // Game state
@@ -160,7 +160,7 @@ class Game {
         this.projectiles = [];
         this.pickups = [];
         this.drones = [];
-        this.boss = null;
+        this.bosses = [];
         this.miniBoss = null;
         this.particles.clear();
 
@@ -341,11 +341,21 @@ class Game {
         // Draw mini-boss
         if (this.miniBoss && !this.miniBoss.isDead()) {
             this.renderSeamless(ctx, this.miniBoss);
+            // Draw AOE if active
+            if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
+                this.renderAOE(ctx, this.miniBoss.aoeData);
+            }
         }
 
-        // Draw boss
-        if (this.boss && !this.boss.isDead()) {
-            this.renderSeamless(ctx, this.boss);
+        // Draw all bosses
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                this.renderSeamless(ctx, boss);
+                // Draw AOE if active
+                if (boss.aoeActive && boss.aoeData) {
+                    this.renderAOE(ctx, boss.aoeData);
+                }
+            }
         }
 
         // Draw drones
@@ -546,14 +556,16 @@ class Game {
         }
 
         // Boss (large orange dot) - using wrapped distance
-        if (this.boss && !this.boss.isDead()) {
-            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.boss.x, this.boss.y);
-            ctx.fillStyle = '#ff8800';
-            const bx = centerX - wrapped.dx * scale;
-            const by = centerY - wrapped.dy * scale;
-            ctx.beginPath();
-            ctx.arc(bx, by, 5, 0, Math.PI * 2);
-            ctx.fill();
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                ctx.fillStyle = '#ff8800';
+                const bx = centerX - wrapped.dx * scale;
+                const by = centerY - wrapped.dy * scale;
+                ctx.beginPath();
+                ctx.arc(bx, by, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         // Mini-boss (orange dot) - using wrapped distance
@@ -726,11 +738,14 @@ class Game {
             }
         }
 
-        if (this.boss && !this.boss.isDead()) {
-            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.boss.x, this.boss.y);
-            if (wrapped.distance < nearestDist) {
-                nearestDist = wrapped.distance;
-                nearestEnemy = this.boss;
+        // Check all bosses
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                if (wrapped.distance < nearestDist) {
+                    nearestDist = wrapped.distance;
+                    nearestEnemy = boss;
+                }
             }
         }
 
@@ -738,7 +753,14 @@ class Game {
         for (const weapon of this.player.weapons) {
             if (!weapon) continue;
 
-            const projectiles = weapon.fire(deltaTime, this.player, nearestEnemy, this);
+            // Check if nearest enemy is within weapon range
+            let targetEnemy = null;
+            if (nearestEnemy && nearestDist <= weapon.range) {
+                targetEnemy = nearestEnemy;
+            }
+
+            // Only fire if there's an enemy in range
+            const projectiles = weapon.fire(deltaTime, this.player, targetEnemy, this);
             if (projectiles) {
                 this.projectiles.push(...projectiles);
                 // Sound removed - too frequent
@@ -808,11 +830,13 @@ class Game {
                     }
 
                     // Check boss
-                    if (this.boss && !this.boss.isDead()) {
-                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.boss.x, this.boss.y);
-                        if (wrapped.distance < nearestDist) {
-                            nearestDist = wrapped.distance;
-                            nearest = this.boss;
+                    for (const boss of this.bosses) {
+                        if (boss && !boss.isDead()) {
+                            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                            if (wrapped.distance < nearestDist) {
+                                nearestDist = wrapped.distance;
+                                nearest = boss;
+                            }
                         }
                     }
 
@@ -831,7 +855,9 @@ class Game {
                         // Check all enemies for beam collision
                         const allTargets = [...this.enemies];
                         if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
-                        if (this.boss && !this.boss.isDead()) allTargets.push(this.boss);
+                        for (const boss of this.bosses) {
+                            if (boss && !boss.isDead()) allTargets.push(boss);
+                        }
 
                         for (const enemy of allTargets) {
                             const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
@@ -881,11 +907,13 @@ class Game {
                     }
                 }
 
-                // Check boss
-                if (this.boss && !this.boss.isDead()) {
-                    const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.boss.x, this.boss.y);
-                    if (wrapped.distance < weapon.radius) {
-                        this.boss.takeDamage(weapon.damage * deltaTime * 10);
+                // Check all bosses
+                for (const boss of this.bosses) {
+                    if (boss && !boss.isDead()) {
+                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                        if (wrapped.distance < weapon.radius) {
+                            boss.takeDamage(weapon.damage * deltaTime * 10);
+                        }
                     }
                 }
             }
@@ -1026,6 +1054,79 @@ class Game {
     }
 
     /**
+     * Render AOE attack effect
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {Object} aoeData - {x, y, radius, damage, startTime}
+     */
+    renderAOE(ctx, aoeData) {
+        const screen = this.worldToScreen(aoeData.x, aoeData.y);
+        if (!screen.visible) return;
+
+        // Calculate animation progress
+        const elapsed = Date.now() - aoeData.startTime;
+        const progress = Math.min(elapsed / 800, 1); // 800ms duration
+        const pulseIntensity = Math.sin(progress * Math.PI); // Pulse in and out
+
+        ctx.save();
+
+        // Outer expanding ring
+        const outerRadius = aoeData.radius * (0.5 + progress * 0.5);
+        const outerAlpha = pulseIntensity * 0.4;
+        
+        ctx.strokeStyle = `rgba(255, 100, 0, ${outerAlpha})`;
+        ctx.lineWidth = 8;
+        ctx.setLineDash([20, 10]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, outerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Main AOE circle with gradient
+        const gradient = ctx.createRadialGradient(
+            screen.x, screen.y, 0,
+            screen.x, screen.y, aoeData.radius
+        );
+        gradient.addColorStop(0, `rgba(255, 50, 0, ${0.3 * pulseIntensity})`);
+        gradient.addColorStop(0.5, `rgba(255, 100, 0, ${0.2 * pulseIntensity})`);
+        gradient.addColorStop(1, `rgba(255, 150, 0, ${0.4 * pulseIntensity})`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Danger ring
+        ctx.strokeStyle = `rgba(255, 0, 0, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Rotating danger symbols
+        const symbolCount = 8;
+        ctx.fillStyle = `rgba(255, 255, 0, ${pulseIntensity})`;
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        for (let i = 0; i < symbolCount; i++) {
+            const angle = (Math.PI * 2 / symbolCount) * i + elapsed * 0.003;
+            const symbolX = screen.x + Math.cos(angle) * (aoeData.radius - 30);
+            const symbolY = screen.y + Math.sin(angle) * (aoeData.radius - 30);
+            ctx.fillText('⚠', symbolX, symbolY);
+        }
+
+        // Center warning
+        ctx.fillStyle = `rgba(255, 255, 255, ${pulseIntensity})`;
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('DANGER', screen.x, screen.y - 10);
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('ZONE', screen.x, screen.y + 10);
+
+        ctx.restore();
+    }
+
+    /**
      * Update projectiles
      * @param {number} deltaTime 
      */
@@ -1122,51 +1223,78 @@ class Game {
                 this.spawner.spawnSummonedEnemies(this.miniBoss.x, this.miniBoss.y, 3);
             }
 
+            // Handle AOE attack
+            if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
+                const aoe = this.miniBoss.aoeData;
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
+                if (dist < aoe.radius) {
+                    this.player.takeDamage(aoe.damage * deltaTime * 5);
+                    this.ui.createDamageFlash();
+                }
+            }
+
             if (this.miniBoss.isDead()) {
                 this.handleMiniBossDeath(this.miniBoss);
             }
         }
 
-        // Update boss
-        if (this.boss && !this.boss.isDead()) {
-            // Set target if not set
-            if (!this.boss.target) {
-                this.boss.setTarget(this.player);
+        // Update all bosses
+        for (let i = this.bosses.length - 1; i >= 0; i--) {
+            const boss = this.bosses[i];
+            if (!boss || boss.isDead()) {
+                // Remove dead boss
+                if (boss && boss.isDead()) {
+                    this.handleBossDeath(boss);
+                }
+                this.bosses.splice(i, 1);
+                continue;
             }
 
-            this.boss.update(deltaTime, arena);
+            // Set target if not set
+            if (!boss.target) {
+                boss.setTarget(this.player);
+            }
+
+            boss.update(deltaTime, arena);
 
             // Handle boss abilities
-            if (this.boss.summonEnemies) {
-                this.boss.summonEnemies = false;
-                this.spawner.spawnSummonedEnemies(this.boss.x, this.boss.y, 5);
+            if (boss.summonEnemies) {
+                boss.summonEnemies = false;
+                this.spawner.spawnSummonedEnemies(boss.x, boss.y, 5);
             }
 
-            if (this.boss.shootProjectiles) {
-                this.boss.shootProjectiles = false;
-                this.spawnBossProjectiles();
+            if (boss.shootProjectiles) {
+                boss.shootProjectiles = false;
+                this.spawnBossProjectiles(boss);
             }
 
-            if (this.boss.isDead()) {
-                this.handleBossDeath(this.boss);
+            // Handle AOE attack
+            if (boss.aoeActive && boss.aoeData) {
+                const aoe = boss.aoeData;
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
+                if (dist < aoe.radius) {
+                    this.player.takeDamage(aoe.damage * deltaTime * 5);
+                    this.ui.createDamageFlash();
+                }
             }
         }
     }
 
     /**
      * Spawn boss projectiles in pattern
+     * @param {Boss} boss - The boss spawning projectiles
      */
-    spawnBossProjectiles() {
-        const numProjectiles = 12;
+    spawnBossProjectiles(boss) {
+        const numProjectiles = 24;
         const angleStep = (Math.PI * 2) / numProjectiles;
 
         for (let i = 0; i < numProjectiles; i++) {
             const angle = angleStep * i;
             const proj = new Projectile(
-                this.boss.x,
-                this.boss.y,
+                boss.x,
+                boss.y,
                 angle,
-                200,
+                300, // Increased speed from 200 to 300
                 15,
                 '#ff0000',
                 10

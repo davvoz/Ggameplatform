@@ -721,6 +721,11 @@ class MiniBoss extends Enemy {
             case 'aoe':
                 this.aoeAttack();
                 break;
+            case 'shoot':
+                this.shootProjectiles = true;
+                this.currentAbility = 'shoot';
+                setTimeout(() => this.endAbility(), 500);
+                break;
         }
     }
 
@@ -753,8 +758,8 @@ class MiniBoss extends Enemy {
                 } else {
                     // Execute charge
                     this.velocity.set(
-                        this.chargeDirection.x * this.speed * 4,
-                        this.chargeDirection.y * this.speed * 4
+                        this.chargeDirection.x * this.speed * 8,
+                        this.chargeDirection.y * this.speed * 8
                     );
                     
                     // End charge after distance
@@ -767,42 +772,38 @@ class MiniBoss extends Enemy {
     }
 
     /**
-     * Summon minions (returns positions for game to spawn)
-     * @returns {Array<{x: number, y: number}>}
+     * Summon minions (sets flag for game to spawn)
      */
     summonMinions() {
         this.currentAbility = 'summon';
         this.summonCount++;
         
-        const positions = [];
-        for (let i = 0; i < 3; i++) {
-            const angle = (Math.PI * 2 / 3) * i;
-            positions.push({
-                x: this.x + Math.cos(angle) * 80,
-                y: this.y + Math.sin(angle) * 80
-            });
-        }
+        // Set flag for game.js to detect
+        this.summonEnemies = true;
         
         setTimeout(() => this.endAbility(), 500);
-        
-        return positions;
     }
 
     /**
-     * AOE attack (returns damage area)
-     * @returns {{x: number, y: number, radius: number, damage: number}}
+     * AOE attack (sets flag and stores area data)
      */
     aoeAttack() {
         this.currentAbility = 'aoe';
         
-        setTimeout(() => this.endAbility(), 500);
-        
-        return {
+        // Set flag and store AOE data
+        this.aoeActive = true;
+        this.aoeData = {
             x: this.x,
             y: this.y,
-            radius: 150,
-            damage: this.damage * 0.5
+            radius: 300,
+            damage: this.damage * 1.0,
+            startTime: Date.now()
         };
+        
+        setTimeout(() => {
+            this.endAbility();
+            this.aoeActive = false;
+        }, 800); // Longer duration for visibility
     }
 
     /**
@@ -953,6 +954,9 @@ class Boss extends MiniBoss {
         this.phase = 1;
         this.maxPhases = config.phases;
         this.phaseThresholds = [0.66, 0.33]; // Health % to trigger phase change
+        
+        // Boss has additional ability: shoot projectiles
+        this.abilities = ['charge', 'summon', 'aoe', 'shoot'];
         
         // More abilities
         this.abilityCooldown = 2000;
@@ -1105,7 +1109,7 @@ class Boss extends MiniBoss {
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`⚔️ BOSS - PHASE ${this.phase} ⚔️`, screenX, barY - 8);
+        ctx.fillText(`⚔️ BOSS ⚔️`, screenX, barY - 8);
 
         ctx.restore();
     }
@@ -1194,7 +1198,7 @@ class Boss extends MiniBoss {
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`⚔️ BOSS - PHASE ${this.phase} ⚔️`, this.x, barY - 8);
+        ctx.fillText(`⚔️ BOSS ⚔️`, this.x, barY - 8);
 
         ctx.restore();
     }

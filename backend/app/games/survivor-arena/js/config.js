@@ -16,8 +16,8 @@ const CONFIG = Object.freeze({
 
     // Arena Settings
     ARENA: {
-        WIDTH: 2000,
-        HEIGHT: 2000,
+        WIDTH: 1400,
+        HEIGHT: 1400,
         PADDING: 50,
         BORDER_COLOR: '#333355',
         BORDER_WIDTH: 4
@@ -46,8 +46,8 @@ const CONFIG = Object.freeze({
 
     // XP & Leveling
     LEVELING: {
-        BASE_XP_REQUIRED: 10,
-        XP_GROWTH_RATE: 1.2,        // Each level requires 20% more XP
+        BASE_XP_REQUIRED: 25,
+        XP_GROWTH_RATE: 1.35,       // Each level requires 35% more XP
         MAX_LEVEL: 50,
         XP_FROM_ENEMY: {
             basic: 1,
@@ -134,7 +134,7 @@ const CONFIG = Object.freeze({
         size: 60,
         speed: 50,
         color: '#e91e63',
-        abilities: ['charge', 'summon', 'aoe']
+        abilities: ['charge', 'summon']
     },
 
     // Boss Configuration
@@ -410,13 +410,13 @@ const CONFIG = Object.freeze({
     // Spawn Configuration
     SPAWNING: {
         INITIAL_SPAWN_RATE: 3500,   // ms between spawns (slower start)
-        MIN_SPAWN_RATE: 800,        // Minimum spawn rate (not too fast)
-        SPAWN_RATE_DECREASE: 15,    // Decrease per minute (much slower ramp)
+        MIN_SPAWN_RATE: 600,        // Faster minimum spawn rate
+        SPAWN_RATE_DECREASE: 15,    // Faster decrease per minute
         SPAWN_DISTANCE_MIN: 600,
         SPAWN_DISTANCE_MAX: 900,
-        MAX_ENEMIES: 60,            // Less max enemies
+        MAX_ENEMIES: 60,            // More max enemies
         WAVE_SIZE_BASE: 2,          // Start with fewer enemies
-        WAVE_SIZE_GROWTH: 0.2,      // Slower growth
+        WAVE_SIZE_GROWTH: 0.2,     // Faster growth
         
         // Wave system
         WAVE_INTERVAL: 60000,       // Special wave every 60 seconds
@@ -450,18 +450,25 @@ const CONFIG = Object.freeze({
     }
 });
 
-// Difficulty scaling based on game time
+// Difficulty scaling based on game time (spread over 30 minutes)
 const DIFFICULTY_SCALING = Object.freeze({
-    // Time in seconds -> multipliers
-    0:   { enemyHealth: 1.0, enemyDamage: 1.0, enemySpeed: 1.0, spawnRate: 1.0 },
-    60:  { enemyHealth: 1.1, enemyDamage: 1.1, enemySpeed: 1.05, spawnRate: 1.1 },
-    120: { enemyHealth: 1.3, enemyDamage: 1.2, enemySpeed: 1.1, spawnRate: 1.3 },
-    180: { enemyHealth: 1.5, enemyDamage: 1.3, enemySpeed: 1.15, spawnRate: 1.5 },
-    240: { enemyHealth: 1.8, enemyDamage: 1.5, enemySpeed: 1.2, spawnRate: 1.8 },
-    300: { enemyHealth: 2.2, enemyDamage: 1.7, enemySpeed: 1.25, spawnRate: 2.0 },
-    360: { enemyHealth: 2.8, enemyDamage: 2.0, enemySpeed: 1.3, spawnRate: 2.5 },
-    420: { enemyHealth: 3.5, enemyDamage: 2.5, enemySpeed: 1.35, spawnRate: 3.0 },
-    480: { enemyHealth: 4.5, enemyDamage: 3.0, enemySpeed: 1.4, spawnRate: 3.5 }
+    // Time in seconds -> multipliers (every 2 minutes)
+    0:    { enemyHealth: 1.0, enemyDamage: 1.0, enemySpeed: 1.0, spawnRate: 1.0 },
+    120:  { enemyHealth: 1.1, enemyDamage: 1.1, enemySpeed: 1.05, spawnRate: 1.1 },
+    240:  { enemyHealth: 1.2, enemyDamage: 1.15, enemySpeed: 1.08, spawnRate: 1.2 },
+    360:  { enemyHealth: 1.3, enemyDamage: 1.2, enemySpeed: 1.1, spawnRate: 1.3 },
+    480:  { enemyHealth: 1.4, enemyDamage: 1.25, enemySpeed: 1.12, spawnRate: 1.4 },
+    600:  { enemyHealth: 1.5, enemyDamage: 1.3, enemySpeed: 1.15, spawnRate: 1.5 },
+    720:  { enemyHealth: 1.8, enemyDamage: 1.5, enemySpeed: 1.2, spawnRate: 1.8 },
+    840:  { enemyHealth: 2.0, enemyDamage: 1.6, enemySpeed: 1.22, spawnRate: 1.9 },
+    960:  { enemyHealth: 2.2, enemyDamage: 1.7, enemySpeed: 1.25, spawnRate: 2.0 },
+    1080: { enemyHealth: 2.5, enemyDamage: 1.9, enemySpeed: 1.27, spawnRate: 2.2 },
+    1200: { enemyHealth: 2.8, enemyDamage: 2.0, enemySpeed: 1.3, spawnRate: 2.5 },
+    1320: { enemyHealth: 3.2, enemyDamage: 2.3, enemySpeed: 1.32, spawnRate: 2.8 },
+    1440: { enemyHealth: 3.5, enemyDamage: 2.5, enemySpeed: 1.35, spawnRate: 3.0 },
+    1560: { enemyHealth: 4.0, enemyDamage: 2.7, enemySpeed: 1.37, spawnRate: 3.2 },
+    1680: { enemyHealth: 4.5, enemyDamage: 3.0, enemySpeed: 1.4, spawnRate: 3.5 },
+    1800: { enemyHealth: 5.0, enemyDamage: 3.5, enemySpeed: 1.45, spawnRate: 4.0 }
 });
 
 

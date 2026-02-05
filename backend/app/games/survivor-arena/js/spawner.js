@@ -40,6 +40,7 @@ class Spawner {
         this.lastMiniBossTime = 0;
         this.lastBossTime = 0;
         this.bossWarningShown = false;
+        this.bossCount = 0; // Track number of bosses spawned
 
         // Enemy type weights (adjusted over time)
         this.enemyWeights = this.getInitialWeights();
@@ -160,26 +161,25 @@ class Spawner {
             this.lastMiniBossTime = this.gameTime * 1000;
         }
 
-        // Boss spawning (every 3 minutes after 2.5min)
+// Boss spawning (every 3 minutes after 2.5min) - continuous spawning
         const timeSinceBoss = (this.gameTime * 1000) - this.lastBossTime;
-
+        
         // Boss warning 3 seconds before spawn
-        if (timeSinceBoss >= CONFIG.BOSS.spawnInterval - CONFIG.BOSS.warningDuration &&
+        if (timeSinceBoss >= CONFIG.BOSS.spawnInterval - CONFIG.BOSS.warningDuration && 
             timeSinceBoss < CONFIG.BOSS.spawnInterval &&
             this.gameTime > 150 &&
-            !this.bossWarningShown &&
-            !this.game.boss) {
+            !this.bossWarningShown) {
             this.game.ui.showBossWarning();
             this.game.events.emit('bossSpawn');
             this.bossWarningShown = true;
         }
-
-        if (timeSinceBoss >= CONFIG.BOSS.spawnInterval &&
-            this.gameTime > 150 &&
-            !this.game.boss) {
+        
+        if (timeSinceBoss >= CONFIG.BOSS.spawnInterval && 
+            this.gameTime > 150) {
             this.spawnBoss();
             this.lastBossTime = this.gameTime * 1000;
             this.bossWarningShown = false;
+            this.bossCount++;
         }
     }
 
@@ -437,13 +437,22 @@ class Spawner {
         x = this.wrapCoordinate(x, this.arenaWidth);
         y = this.wrapCoordinate(y, this.arenaHeight);
 
-        const boss = new Boss(x, y);
-        boss.health *= this.difficultyMultipliers.enemyHealth;
+        // Progressive scaling based on boss count
+        const bossScaling = 1 + (this.bossCount * 0.3); // Each boss +30% stronger
+        
+        const boss = new Boss(x, y, this.difficultyMultipliers);
+        boss.health *= bossScaling;
         boss.maxHealth = boss.health;
-        boss.damage *= this.difficultyMultipliers.enemyDamage;
+        boss.damage *= bossScaling;
+        boss.speed *= (1 + this.bossCount * 0.05); // Each boss +5% faster
         boss.setTarget(this.game.player);
-
-        this.game.boss = boss;
+        
+        // Add to bosses array instead of single boss
+        if (!this.game.bosses) {
+            this.game.bosses = [];
+        }
+        this.game.bosses.push(boss);
+        
         this.game.ui.hideBossWarning();
     }
 
@@ -457,7 +466,7 @@ class Spawner {
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 / count) * i;
             const dist = 50 + Math.random() * 30;
-
+            
             const enemy = new Enemy(
                 x + Math.cos(angle) * dist,
                 y + Math.sin(angle) * dist,
@@ -494,6 +503,7 @@ class Spawner {
         this.difficultyMultipliers = { ...DIFFICULTY_SCALING[0] };
         this.lastMiniBossTime = 0;
         this.lastBossTime = 0;
+        this.bossCount = 0;
         this.enemyWeights = this.getInitialWeights();
         this.specialWaveTimer = 0;
         this.hordeTimer = 0;

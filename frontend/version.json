@@ -1,8 +1,17 @@
 {
-  "version": "3.20.5",
-  "timestamp": "2026-02-05T01:28:54.008Z",
-  "buildNumber": 375,
+  "version": "3.20.6",
+  "timestamp": "2026-02-05T12:22:14.344Z",
+  "buildNumber": 376,
   "changelog": [
+    {
+      "version": "3.20.6",
+      "date": "2026-02-05",
+      "type": "patch",
+      "changes": [
+        "fix: enhance AOE attack with charging phase and visual effects; add weapon level display",
+        "🔖 Bump version to 3.20.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.5",
       "date": "2026-02-05",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Add CommunityAPI and CommunityManager for real-time chat functionality,offusca MTD,blocca cheat",
         "🔖 Bump version to 3.18.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.18.2",
-      "date": "2026-02-03",
-      "type": "patch",
-      "changes": [
-        "fix: remove leading space in comment for consistency",
-        "🔖 Manual bump: 3.18.0 → 3.18.1 [skip-version]"
       ]
     }
   ]

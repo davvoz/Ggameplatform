@@ -1,8 +1,17 @@
 {
-  "version": "3.20.4",
-  "timestamp": "2026-02-05T01:13:17.290Z",
-  "buildNumber": 374,
+  "version": "3.20.5",
+  "timestamp": "2026-02-05T01:28:54.008Z",
+  "buildNumber": 375,
   "changelog": [
+    {
+      "version": "3.20.5",
+      "date": "2026-02-05",
+      "type": "patch",
+      "changes": [
+        "fix: Deleted Phaser backup in Blocky Road",
+        "🔖 Bump version to 3.20.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.4",
       "date": "2026-02-05",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: remove leading space in comment for consistency",
         "🔖 Manual bump: 3.18.0 → 3.18.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.18.1",
-      "date": "2026-02-03",
-      "type": "patch",
-      "changes": [
-        "Manual version bump",
-        "Manual bump from 3.18.0"
       ]
     }
   ]

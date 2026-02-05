@@ -785,25 +785,44 @@ class MiniBoss extends Enemy {
     }
 
     /**
-     * AOE attack (sets flag and stores area data)
+     * AOE attack with charging phase
      */
     aoeAttack() {
         this.currentAbility = 'aoe';
         
-        // Set flag and store AOE data
-        this.aoeActive = true;
+        // Start charging phase (1.5 seconds warning)
+        this.aoeCharging = true;
+        this.aoeChargingStart = Date.now();
+        this.aoeChargingDuration = 1500; // 1.5 seconds to charge
+        
+        // Store AOE data for preview
         this.aoeData = {
             x: this.x,
             y: this.y,
             radius: 300,
-            damage: this.damage * 1.0,
-            startTime: Date.now()
+            damage: this.damage * 1.5,
+            startTime: null, // Set when charging completes
+            charging: true
         };
         
+        // After charging, execute the AOE
         setTimeout(() => {
-            this.endAbility();
-            this.aoeActive = false;
-        }, 800); // Longer duration for visibility
+            if (this.currentAbility === 'aoe') {
+                this.aoeCharging = false;
+                this.aoeActive = true;
+                this.aoeData.startTime = Date.now();
+                this.aoeData.charging = false;
+                this.aoeData.x = this.x; // Update position to current
+                this.aoeData.y = this.y;
+                
+                // AOE lasts 0.8 seconds
+                setTimeout(() => {
+                    this.endAbility();
+                    this.aoeActive = false;
+                    this.aoeCharging = false;
+                }, 800);
+            }
+        }, this.aoeChargingDuration);
     }
 
     /**

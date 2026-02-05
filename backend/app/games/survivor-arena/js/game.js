@@ -341,9 +341,9 @@ class Game {
         // Draw mini-boss
         if (this.miniBoss && !this.miniBoss.isDead()) {
             this.renderSeamless(ctx, this.miniBoss);
-            // Draw AOE if active
-            if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
-                this.renderAOE(ctx, this.miniBoss.aoeData);
+            // Draw AOE if charging or active
+            if ((this.miniBoss.aoeCharging || this.miniBoss.aoeActive) && this.miniBoss.aoeData) {
+                this.renderAOE(ctx, this.miniBoss.aoeData, this.miniBoss);
             }
         }
 
@@ -351,9 +351,9 @@ class Game {
         for (const boss of this.bosses) {
             if (boss && !boss.isDead()) {
                 this.renderSeamless(ctx, boss);
-                // Draw AOE if active
-                if (boss.aoeActive && boss.aoeData) {
-                    this.renderAOE(ctx, boss.aoeData);
+                // Draw AOE if charging or active
+                if ((boss.aoeCharging || boss.aoeActive) && boss.aoeData) {
+                    this.renderAOE(ctx, boss.aoeData, boss);
                 }
             }
         }
@@ -793,9 +793,12 @@ class Game {
                     weapon.laserTarget = null;
                 }
 
-                // Update cooldown
+                // Update cooldown (sync with weapon.cooldown for UI)
                 if (weapon.laserCooldown > 0) {
                     weapon.laserCooldown -= deltaTime * 1000;
+                    weapon.cooldown = weapon.laserCooldown; // Sync for UI display
+                } else {
+                    weapon.cooldown = 0;
                 }
 
                 // Update firing animation
@@ -1054,20 +1057,95 @@ class Game {
     }
 
     /**
-     * Render AOE attack effect
+     * Render AOE attack effect (charging or active)
      * @param {CanvasRenderingContext2D} ctx
-     * @param {Object} aoeData - {x, y, radius, damage, startTime}
+     * @param {Object} aoeData - {x, y, radius, damage, startTime, charging}
+     * @param {Object} enemy - The enemy performing the AOE (for charging effect)
      */
-    renderAOE(ctx, aoeData) {
+    renderAOE(ctx, aoeData, enemy = null) {
         const screen = this.worldToScreen(aoeData.x, aoeData.y);
         if (!screen.visible) return;
 
-        // Calculate animation progress
+        ctx.save();
+
+        // CHARGING PHASE - Warning before attack
+        if (aoeData.charging && enemy) {
+            const chargeElapsed = Date.now() - enemy.aoeChargingStart;
+            const chargeProgress = Math.min(chargeElapsed / enemy.aoeChargingDuration, 1);
+            
+            // Pulsing warning circle that grows
+            const warningRadius = aoeData.radius * chargeProgress;
+            const pulseSpeed = 5 + chargeProgress * 10; // Faster pulse as charging completes
+            const pulse = Math.sin(chargeElapsed / 100 * pulseSpeed) * 0.3 + 0.7;
+            
+            // Warning zone preview (yellow/orange)
+            ctx.strokeStyle = `rgba(255, 200, 0, ${0.6 * pulse})`;
+            ctx.lineWidth = 4 + chargeProgress * 4;
+            ctx.setLineDash([15, 10]);
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Inner charging circle
+            const innerGradient = ctx.createRadialGradient(
+                screen.x, screen.y, 0,
+                screen.x, screen.y, warningRadius
+            );
+            innerGradient.addColorStop(0, `rgba(255, 150, 0, ${0.2 * pulse})`);
+            innerGradient.addColorStop(0.7, `rgba(255, 100, 0, ${0.1 * pulse})`);
+            innerGradient.addColorStop(1, 'rgba(255, 50, 0, 0)');
+            
+            ctx.fillStyle = innerGradient;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Converging particles effect
+            const particleCount = 12;
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 / particleCount) * i + chargeElapsed * 0.002;
+                const particleDist = aoeData.radius * (1 - chargeProgress * 0.7);
+                const particleX = screen.x + Math.cos(angle) * particleDist;
+                const particleY = screen.y + Math.sin(angle) * particleDist;
+                
+                ctx.fillStyle = `rgba(255, 200, 50, ${0.8 * pulse})`;
+                ctx.beginPath();
+                ctx.arc(particleX, particleY, 4 + chargeProgress * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Warning text
+            ctx.fillStyle = `rgba(255, 255, 0, ${pulse})`;
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚠ WARNING ⚠', screen.x, screen.y - 20);
+            
+            // Charging bar
+            const barWidth = 80;
+            const barHeight = 8;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(screen.x - barWidth/2, screen.y + 10, barWidth, barHeight);
+            ctx.fillStyle = `rgba(255, ${200 - chargeProgress * 150}, 0, 1)`;
+            ctx.fillRect(screen.x - barWidth/2, screen.y + 10, barWidth * chargeProgress, barHeight);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(screen.x - barWidth/2, screen.y + 10, barWidth, barHeight);
+            
+            ctx.restore();
+            return; // Don't render the damage effect during charging
+        }
+
+        // ACTIVE PHASE - Actual damage
+        if (!aoeData.startTime) {
+            ctx.restore();
+            return;
+        }
+        
         const elapsed = Date.now() - aoeData.startTime;
         const progress = Math.min(elapsed / 800, 1); // 800ms duration
         const pulseIntensity = Math.sin(progress * Math.PI); // Pulse in and out
-
-        ctx.save();
 
         // Outer expanding ring
         const outerRadius = aoeData.radius * (0.5 + progress * 0.5);
@@ -1209,30 +1287,33 @@ class Game {
         }
 
         // Update mini-boss
-        if (this.miniBoss && !this.miniBoss.isDead()) {
-            // Set target if not set
-            if (!this.miniBoss.target) {
-                this.miniBoss.setTarget(this.player);
-            }
+        if (this.miniBoss) {
+            if (!this.miniBoss.isDead()) {
+                // Set target if not set
+                if (!this.miniBoss.target) {
+                    this.miniBoss.setTarget(this.player);
+                }
 
-            this.miniBoss.update(deltaTime, arena);
+                this.miniBoss.update(deltaTime, arena);
 
-            // Handle abilities
-            if (this.miniBoss.summonEnemies) {
-                this.miniBoss.summonEnemies = false;
-                this.spawner.spawnSummonedEnemies(this.miniBoss.x, this.miniBoss.y, 3);
-            }
+                // Handle abilities
+                if (this.miniBoss.summonEnemies) {
+                    this.miniBoss.summonEnemies = false;
+                    this.spawner.spawnSummonedEnemies(this.miniBoss.x, this.miniBoss.y, 3);
+                }
 
-            // Handle AOE attack
-            if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
-                const aoe = this.miniBoss.aoeData;
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
-                if (dist < aoe.radius) {
-                    this.player.takeDamage(aoe.damage * deltaTime * 5);
-                    this.ui.createDamageFlash();
+                // Handle AOE attack
+                if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
+                    const aoe = this.miniBoss.aoeData;
+                    const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
+                    if (dist < aoe.radius) {
+                        this.player.takeDamage(aoe.damage * deltaTime * 5);
+                        this.ui.createDamageFlash();
+                    }
                 }
             }
 
+            // Check if miniboss died (separate check so it always runs)
             if (this.miniBoss.isDead()) {
                 this.handleMiniBossDeath(this.miniBoss);
             }

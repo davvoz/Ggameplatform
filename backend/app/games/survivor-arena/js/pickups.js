@@ -333,6 +333,15 @@ class XPOrb extends Pickup {
 
         ctx.save();
 
+        // Fade out near end of lifetime
+        if (this.age > this.lifetime - 3000) {
+            const fadeProgress = (this.age - (this.lifetime - 3000)) / 3000;
+            ctx.globalAlpha = 1 - fadeProgress;
+            if (this.isAttracted) {
+                ctx.globalAlpha *= 0.5;
+            }
+        }
+
         // Particle trail when attracted
         if (this.isAttracted) {
             ctx.fillStyle = `${this.color}44`;

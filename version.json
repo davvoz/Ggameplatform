@@ -1,8 +1,17 @@
 {
-  "version": "3.20.2",
-  "timestamp": "2026-02-04T23:44:19.960Z",
-  "buildNumber": 372,
+  "version": "3.20.3",
+  "timestamp": "2026-02-05T00:52:41.682Z",
+  "buildNumber": 373,
   "changelog": [
+    {
+      "version": "3.20.3",
+      "date": "2026-02-05",
+      "type": "patch",
+      "changes": [
+        "fix: add proxy support for push notification routes",
+        "🔖 Bump version to 3.20.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.2",
       "date": "2026-02-04",
@@ -82,16 +91,6 @@
       "changes": [
         "Manual version bump",
         "Manual bump from 3.17.44"
-      ]
-    },
-    {
-      "version": "3.17.44",
-      "date": "2026-02-03",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: update share button text and enable functionality for sharing on Steem",
-        "🔖 Bump version to 3.17.43 [skip-version]"
       ]
     }
   ]

@@ -4,6 +4,9 @@
 export class SteemProfileService {
     constructor(apiUrl = 'https://api.steemit.com') {
         this.apiUrl = apiUrl;
+        this.vestsToSpCache = null; // Cache for VESTS to SP ratio
+        this.cacheTimestamp = null;
+        this.cacheMaxAge = 3600000; // 1 hour in milliseconds
     }
 
     /**
@@ -157,6 +160,12 @@ export class SteemProfileService {
      * @private
      */
     async _getVestsToSpRatio() {
+        // Check if cache is valid
+        const now = Date.now();
+        if (this.vestsToSpCache && this.cacheTimestamp && (now - this.cacheTimestamp < this.cacheMaxAge)) {
+            return this.vestsToSpCache;
+        }
+
         try {
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
@@ -170,7 +179,8 @@ export class SteemProfileService {
             });
 
             if (!response.ok) {
-                return 2000.0; // Fallback
+                console.warn('Failed to fetch VESTS to SP ratio, using cached value if available');
+                return this.vestsToSpCache; // Return cached value or null
             }
 
             const data = await response.json();
@@ -179,14 +189,19 @@ export class SteemProfileService {
             const totalVestingFundSteem = parseFloat(props.total_vesting_fund_steem.split(' ')[0] || '0');
             const totalVestingShares = parseFloat(props.total_vesting_shares.split(' ')[0] || '0');
             
-            if (totalVestingShares > 0) {
-                return totalVestingShares / totalVestingFundSteem;
+            if (totalVestingShares > 0 && totalVestingFundSteem > 0) {
+                const ratio = totalVestingShares / totalVestingFundSteem;
+                // Update cache
+                this.vestsToSpCache = ratio;
+                this.cacheTimestamp = now;
+                return ratio;
             }
             
-            return 2000.0; // Fallback
+            console.warn('Invalid VESTS to SP calculation, using cached value if available');
+            return this.vestsToSpCache; // Return cached value or null
         } catch (error) {
             console.error('Error fetching VESTS to SP ratio:', error);
-            return 2000.0; // Fallback
+            return this.vestsToSpCache; // Return cached value or null
         }
     }
 
@@ -198,6 +213,12 @@ export class SteemProfileService {
         try {
             // Get conversion ratio
             const vestsPerSteem = await this._getVestsToSpRatio();
+            
+            // If we can't get the ratio, we can't calculate delegation accurately
+            if (!vestsPerSteem) {
+                console.error('Cannot calculate delegation: VESTS to SP ratio unavailable');
+                return 0;
+            }
             
             const response = await fetch(this.apiUrl, {
                 method: 'POST',

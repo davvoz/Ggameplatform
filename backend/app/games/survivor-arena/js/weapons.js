@@ -533,6 +533,11 @@ class Weapon {
     fire(deltaTime, player, target = null, game = null) {
         if (this.cooldown > 0) return null;
         
+        // Don't fire if no target (except special weapons handled separately)
+        if (!target && this.type !== 'laser' && this.type !== 'forcefield' && this.type !== 'drone') {
+            return null;
+        }
+        
         // Special weapons don't fire projectiles normally - they have their own logic
         if (this.type === 'laser' || this.type === 'forcefield' || this.type === 'drone') {
             return null;

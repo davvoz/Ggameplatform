@@ -814,79 +814,36 @@ export async function renderCommunity() {
  * Non-blocking - runs in background without affecting page load.
  */
 async function initPushNotifications() {
-    // Skip if disabled in environment
-    if (window.ENV && window.ENV.PUSH_NOTIFICATIONS_ENABLED === false) {
-        console.log('📴 Push notifications disabled in environment');
-        return;
-    }
-
     try {
+        // Inizializza push manager
         const initialized = await pushManager.init();
         if (!initialized) {
-            console.log('📴 Push notifications not available');
+            console.log('Push non supportate');
             return;
         }
 
+        // Recupera utente
         const user = window.AuthManager?.currentUser || window.AuthManager?.getUser?.();
         if (!user?.user_id) {
-            console.log('📴 No user for push notifications');
+            console.log('Nessun utente loggato');
             return;
         }
 
-        // Check if already subscribed
+        // Se già iscritto → aggiorna comunque la subscription sul backend
         const isSubscribed = await pushManager.isSubscribed();
         if (isSubscribed) {
-            console.log('📬 User already subscribed to push notifications');
-            // Re-register to ensure backend has current subscription
             await pushManager.subscribe(user.user_id);
+            console.log('Già iscritto, subscription aggiornata');
             return;
         }
 
-        // Check if we've already asked (don't spam user on every page load)
-        const askedBefore = localStorage.getItem('pushNotificationAsked');
-        const lastAsked = localStorage.getItem('pushNotificationLastAsked');
-        const daysSinceAsked = lastAsked ? (Date.now() - parseInt(lastAsked)) / (1000 * 60 * 60 * 24) : Infinity;
+        // Chiede SUBITO il permesso e registra
+        const result = await pushManager.promptForSubscription(user.user_id);
+        console.log('Risultato subscription:', result);
 
-        // Only auto-prompt if:
-        // 1. Never asked before, OR
-        // 2. Asked more than 7 days ago and permission is still 'default'
-        if (askedBefore && daysSinceAsked < 7) {
-            console.log('📴 Already asked for push permission recently');
-            return;
-        }
-
-        // Don't prompt if denied (user must manually enable)
-        if (pushManager.isDenied()) {
-            console.log('📴 Push notifications denied by user');
-            return;
-        }
-
-        // In development, prompt faster
-        const isDev = window.ENV?.MODE === 'development' || window.location.hostname === 'localhost';
-        
-        // Wait a bit before prompting (let page load first)
-        setTimeout(async () => {
-            // Mark that we asked
-            localStorage.setItem('pushNotificationAsked', 'true');
-            localStorage.setItem('pushNotificationLastAsked', Date.now().toString());
-
-            // Only prompt on subsequent visits (better UX) - skip in development
-            const visitCount = parseInt(localStorage.getItem('visitCount') || '0') + 1;
-            localStorage.setItem('visitCount', visitCount.toString());
-
-            // In development, prompt immediately. In production, wait for 3 visits
-            if (isDev || visitCount >= 3) {
-                const result = await pushManager.promptForSubscription(user.user_id);
-                console.log('📬 Push notification prompt result:', result);
-            } else {
-                console.log(`📴 Waiting for more visits before prompting (${visitCount}/3)`);
-            }
-        }, isDev ? 2000 : 5000); // Faster in dev
-
-    } catch (error) {
-        console.error('❌ Error initializing push notifications:', error);
+    } catch (err) {
+        console.error('Errore push:', err);
     }
 }
-
 // Expose pushManager globally for settings/profile page usage
 window.pushManager = pushManager;

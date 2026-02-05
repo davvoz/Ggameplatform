@@ -1,8 +1,17 @@
 {
-  "version": "3.20.3",
-  "timestamp": "2026-02-05T00:52:41.682Z",
-  "buildNumber": 373,
+  "version": "3.20.4",
+  "timestamp": "2026-02-05T01:13:17.290Z",
+  "buildNumber": 374,
   "changelog": [
+    {
+      "version": "3.20.4",
+      "date": "2026-02-05",
+      "type": "patch",
+      "changes": [
+        "fix: simplify push notification initialization and subscription logic",
+        "🔖 Bump version to 3.20.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.3",
       "date": "2026-02-05",
@@ -82,15 +91,6 @@
       "changes": [
         "Manual version bump",
         "Manual bump from 3.18.0"
-      ]
-    },
-    {
-      "version": "3.18.0",
-      "date": "2026-02-03",
-      "type": "minor",
-      "changes": [
-        "Manual version bump",
-        "Manual bump from 3.17.44"
       ]
     }
   ]

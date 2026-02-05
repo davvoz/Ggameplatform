@@ -1,8 +1,18 @@
 {
-  "version": "3.20.6",
-  "timestamp": "2026-02-05T12:22:14.344Z",
-  "buildNumber": 376,
+  "version": "3.20.7",
+  "timestamp": "2026-02-05T22:23:51.226Z",
+  "buildNumber": 377,
   "changelog": [
+    {
+      "version": "3.20.7",
+      "date": "2026-02-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: restore Community link in navigation",
+        "🔖 Bump version to 3.20.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.6",
       "date": "2026-02-05",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: Update  for clarity on coin deduction process in publish methods",
         "🔖 Bump version to 3.19.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.19.0",
-      "date": "2026-02-04",
-      "type": "minor",
-      "changes": [
-        "feat: Add CommunityAPI and CommunityManager for real-time chat functionality,offusca MTD,blocca cheat",
-        "🔖 Bump version to 3.18.2 [skip-version]"
       ]
     }
   ]

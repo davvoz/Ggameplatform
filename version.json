@@ -1,8 +1,17 @@
 {
-  "version": "3.20.7",
-  "timestamp": "2026-02-05T22:23:51.226Z",
-  "buildNumber": 377,
+  "version": "3.20.8",
+  "timestamp": "2026-02-06T00:03:59.283Z",
+  "buildNumber": 378,
   "changelog": [
+    {
+      "version": "3.20.8",
+      "date": "2026-02-06",
+      "type": "patch",
+      "changes": [
+        "fix : obf",
+        "🔖 Bump version to 3.20.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.7",
       "date": "2026-02-05",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Enhance confirm post functionality to handle multiple publish methods and avoid duplicate notifications",
         "🔖 Bump version to 3.19.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.19.1",
-      "date": "2026-02-04",
-      "type": "patch",
-      "changes": [
-        "fix: Update  for clarity on coin deduction process in publish methods",
-        "🔖 Bump version to 3.19.0 [skip-version]"
       ]
     }
   ]

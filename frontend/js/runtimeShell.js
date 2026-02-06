@@ -120,10 +120,10 @@ export default class RuntimeShell {
     handleMessage(event) {
         // Ignore MetaMask messages
         const message = event.data;
-        if (message && typeof message === 'object' && 
-            (message.target === 'metamask-inpage' || 
-             message.target === 'metamask-provider' ||
-             message.name === 'metamask-provider')) {
+        if (message && typeof message === 'object' &&
+            (message.target === 'metamask-inpage' ||
+                message.target === 'metamask-provider' ||
+                message.name === 'metamask-provider')) {
             return; // Silently ignore MetaMask messages
         }
 
@@ -283,11 +283,11 @@ export default class RuntimeShell {
         // Get score from payload, fallback to current state
         const finalScore = payload?.score ?? this.state.score ?? 0;
         this.state.score = finalScore;
-        
+
         // Extract extra_data for cumulative XP system (levels, distance, etc.)
         // Support both 'extra_data' and 'game_data' keys for compatibility
         const extraData = payload?.extra_data || payload?.game_data || {};
-        
+
         // Also merge top-level fields that games might send directly
         if (payload) {
             if (payload.kills !== undefined && !extraData.kills) extraData.kills = payload.kills;
@@ -348,18 +348,18 @@ export default class RuntimeShell {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        
+
         // Check if Fullscreen API is actually supported (iOS Safari returns false)
-        const fullscreenSupported = document.fullscreenEnabled || 
-                                     document.webkitFullscreenEnabled || 
-                                     document.msFullscreenEnabled;
-        
+        const fullscreenSupported = document.fullscreenEnabled ||
+            document.webkitFullscreenEnabled ||
+            document.msFullscreenEnabled;
+
         // Check if already in fullscreen (native or CSS)
-        const isInNativeFullscreen = document.fullscreenElement || 
-                                      document.webkitFullscreenElement || 
-                                      document.msFullscreenElement;
+        const isInNativeFullscreen = document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement;
         const isInCSSFullscreen = targetElement.classList.contains('ios-fullscreen');
-        
+
         if ((isIOS || isIPadOS) && !fullscreenSupported) {
             // iOS/iPadOS Safari doesn't support Fullscreen API
             // Use CSS-based fullscreen fallback (already toggles)
@@ -403,7 +403,7 @@ export default class RuntimeShell {
     enableIOSFullscreenFallback(container, gamePlayer) {
         const targetElement = gamePlayer || container;
         const isFullscreen = targetElement.classList.contains('ios-fullscreen');
-        
+
         if (isFullscreen) {
             // Exit fullscreen
             this.exitIOSFullscreen(targetElement);
@@ -420,21 +420,21 @@ export default class RuntimeShell {
         element.classList.add('ios-fullscreen');
         document.body.classList.add('ios-fullscreen-active');
         document.body.style.overflow = 'hidden';
-        
+
         // Hide the navbar
         const navbar = document.querySelector('.navbar');
         if (navbar) {
             navbar.style.display = 'none';
         }
-        
+
         // Create exit button for iOS
         this.createIOSExitButton(element);
-        
+
         // Try to scroll to hide Safari address bar (works in PWA mode)
         setTimeout(() => {
             window.scrollTo(0, 1);
         }, 100);
-        
+
         this.log('Entered iOS fullscreen mode');
     }
 
@@ -445,16 +445,16 @@ export default class RuntimeShell {
         element.classList.remove('ios-fullscreen');
         document.body.classList.remove('ios-fullscreen-active');
         document.body.style.overflow = '';
-        
+
         // Show the navbar again
         const navbar = document.querySelector('.navbar');
         if (navbar) {
             navbar.style.display = '';
         }
-        
+
         // Remove exit button
         this.removeIOSExitButton();
-        
+
         this.log('Exited iOS fullscreen mode');
     }
 
@@ -464,19 +464,19 @@ export default class RuntimeShell {
     createIOSExitButton(container) {
         // Remove existing button if any
         this.removeIOSExitButton();
-        
+
         const exitBtn = document.createElement('button');
         exitBtn.id = 'ios-fullscreen-exit-btn';
         exitBtn.className = 'ios-fullscreen-exit-btn';
         exitBtn.innerHTML = '✕';
         exitBtn.setAttribute('aria-label', 'Exit fullscreen');
-        
+
         exitBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.exitIOSFullscreen(container);
         });
-        
+
         document.body.appendChild(exitBtn);
     }
 
@@ -554,7 +554,7 @@ export default class RuntimeShell {
             userId = user?.user_id || null;
             username = user?.username || user?.account_name || null;
         }
-        
+
         this.sendMessage(PLATFORM_MESSAGE_TYPES.CONFIG, {
             gameId: this.gameId,
             platformVersion: PROTOCOL_VERSION,
@@ -942,7 +942,7 @@ export default class RuntimeShell {
                 }
 
                 this.showCur8Notification(data.session.xp_earned, data.session);
-                
+
                 // Check for level up
                 if (data.session.level_up) {
                     this.showLevelUpNotification(data.session.level_up);
@@ -1022,44 +1022,44 @@ export default class RuntimeShell {
 }
 
 (function detectDevTools() {
-  let open = false;
+    let open = false;
 
-  function isDebuggerOpen() {
-    const t0 = performance.now();
-    //debugger;
-    return performance.now() - t0 > 100;
-  }
-
-  function isConsoleDocked() {
-    return (
-      window.outerWidth - window.innerWidth > 160 ||
-      window.outerHeight - window.innerHeight > 160
-    );
-  }
-
-  setInterval(() => {
-    const detected = isDebuggerOpen() || isConsoleDocked();
-
-    if (detected && !open) {
-      open = true;
-      onOpen();
-    } else if (!detected) {
-      open = false;
+    function isDebuggerOpen() {
+        const t0 = performance.now();
+        debugger;
+        return performance.now() - t0 > 100;
     }
-  }, 1000);
 
-  function onOpen() {
-    
-    //se una sessione di gioco è in corso, termina la sessione senza assegnare XP
-    if (window.runtimeShellInstance) {
-        //gameOver forzato con 0 punti
-        this.sendMessage(GAME_MESSAGE_TYPES.GAME_OVER, { score: 0, extra_data: {} });
-        //pulizia runtime shell senza assegnare XP
-        window.runtimeShellInstance.cleanup(false, true);
-        window.runtimeShellInstance.exit();
-        
+    function isConsoleDocked() {
+        return (
+            window.outerWidth - window.innerWidth > 160 ||
+            window.outerHeight - window.innerHeight > 160
+        );
     }
-  }
+
+    setInterval(() => {
+        const detected = isDebuggerOpen() || isConsoleDocked();
+
+        if (detected && !open) {
+            open = true;
+            onOpen();
+        } else if (!detected) {
+            open = false;
+        }
+    }, 1000);
+
+    function onOpen() {
+
+        //se una sessione di gioco è in corso, termina la sessione senza assegnare XP
+        if (window.runtimeShellInstance) {
+            //gameOver forzato con 0 punti
+            this.sendMessage(GAME_MESSAGE_TYPES.GAME_OVER, { score: 0, extra_data: {} });
+            //pulizia runtime shell senza assegnare XP
+            window.runtimeShellInstance.cleanup(false, true);
+            window.runtimeShellInstance.exit();
+
+        }
+    }
 })();
 
 

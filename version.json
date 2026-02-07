@@ -1,8 +1,17 @@
 {
-  "version": "3.20.8",
-  "timestamp": "2026-02-06T00:03:59.283Z",
-  "buildNumber": 378,
+  "version": "3.20.9",
+  "timestamp": "2026-02-07T10:42:09.153Z",
+  "buildNumber": 379,
   "changelog": [
+    {
+      "version": "3.20.9",
+      "date": "2026-02-07",
+      "type": "patch",
+      "changes": [
+        "fix:[SS]Add upgrade system with Energy Barrier, Smart Missiles, and Protector Drones",
+        "🔖 Bump version to 3.20.8 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.8",
       "date": "2026-02-06",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: Implement Web Push Notifications",
         "🔖 Bump version to 3.19.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.19.2",
-      "date": "2026-02-04",
-      "type": "patch",
-      "changes": [
-        "fix: Enhance confirm post functionality to handle multiple publish methods and avoid duplicate notifications",
-        "🔖 Bump version to 3.19.1 [skip-version]"
       ]
     }
   ]

@@ -1092,8 +1092,8 @@ class Game {
                 this.player.heal(1);
             }
 
-            // Check for upgrade selection every 10 levels
-            if (this.level % 10 === 0 && this.level > this.lastUpgradeLevel) {
+            // Check for upgrade selection every 7 levels
+            if (this.level % 7 === 0 && this.level > this.lastUpgradeLevel) {
                 this.showUpgradeModal();
             }
         }

@@ -49,14 +49,14 @@ class UpgradeManager {
         // Missiles option
         if (this.missileLevel < this.maxLevel) {
             const isNew = this.missileLevel === 0;
-            const missilesCount = 2 + this.missileLevel * 2;
+            const missilesCount = 1 + this.missileLevel;
             options.push({
                 type: 'missile',
                 icon: '🚀',
                 name: isNew ? 'Smart Missiles' : `Missiles Lv.${this.missileLevel + 1}`,
                 description: isNew 
-                    ? 'Homing missiles that seek and destroy enemies (2 missiles)'
-                    : `${missilesCount + 2} missiles per wave, +${15}% damage`,
+                    ? 'Homing missile that seeks and destroys enemies (1 missile)'
+                    : `${missilesCount + 1} missiles per wave, +${15}% damage`,
                 level: this.missileLevel + 1,
                 rarity: this.getRarity(this.missileLevel)
             });
@@ -154,7 +154,7 @@ class UpgradeManager {
     fireMissiles() {
         if (this.missileLevel === 0) return;
         
-        const missileCount = 2 + (this.missileLevel - 1) * 2;
+        const missileCount = this.missileLevel;
         const player = this.game.player;
         
         if (!player || !player.active) return;
@@ -749,10 +749,10 @@ class ProtectorDrone {
         this.size = 16;
         
         // Stats (level 1)
-        this.damage = 1.5;
-        this.fireRate = 0.4; // Seconds between shots
+        this.damage = 1.2;
+        this.fireRate = 0.40; // Seconds between shots
         this.fireCooldown = 0;
-        this.range = 200;
+        this.range = 260;
         
         // Bullets
         this.bullets = [];
@@ -769,9 +769,9 @@ class ProtectorDrone {
     upgrade() {
         const level = this.manager.droneLevel;
         
-        this.damage = 1.5 + level * 0.8;
-        this.fireRate = Math.max(0.15, 0.4 - level * 0.03);
-        this.range = 200 + level * 15;
+        this.damage = 1.2 + level * 0.6;
+        this.fireRate = Math.max(0.18, 0.40 - level * 0.03);
+        this.range = 260 + level * 25;
     }
     
     update(deltaTime, game) {
@@ -941,8 +941,8 @@ class DroneBullet {
         this.angle = angle;
         this.damage = damage;
         this.range = range;
-        this.speed = 400;
-        this.size = 5;
+        this.speed = 500;
+        this.size = 6;
         this.active = true;
         this.distanceTraveled = 0;
         

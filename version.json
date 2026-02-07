@@ -1,8 +1,17 @@
 {
-  "version": "3.20.11",
-  "timestamp": "2026-02-07T15:09:00.421Z",
-  "buildNumber": 381,
+  "version": "3.20.12",
+  "timestamp": "2026-02-07T23:34:09.115Z",
+  "buildNumber": 382,
   "changelog": [
+    {
+      "version": "3.20.12",
+      "date": "2026-02-07",
+      "type": "patch",
+      "changes": [
+        "fix:[SS]Enhance gameplay with new enemy types and upgrade adjustments",
+        "🔖 Bump version to 3.20.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.11",
       "date": "2026-02-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: add proxy support for push notification routes",
         "🔖 Bump version to 3.20.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.2",
-      "date": "2026-02-04",
-      "type": "patch",
-      "changes": [
-        "fix: fake",
-        "🔖 Bump version to 3.20.1 [skip-version]"
       ]
     }
   ]

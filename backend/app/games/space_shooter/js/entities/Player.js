@@ -189,6 +189,13 @@ class Player extends GameObject {
     takeDamage(amount, game) {
         if (this.invincible) return false;
         
+        // Check if barrier can block the damage
+        if (game.upgrades && game.upgrades.tryBlockDamage(amount)) {
+            // Barrier absorbed the damage - visual feedback
+            game.postProcessing.flash({ r: 0, g: 150, b: 255 }, 0.1);
+            return false;
+        }
+        
         this.health -= amount;
         game.sound.playHit();
         

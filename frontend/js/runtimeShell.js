@@ -1026,7 +1026,7 @@ export default class RuntimeShell {
 
     function isDebuggerOpen() {
         const t0 = performance.now();
-        debugger;
+        //debugger;
         return performance.now() - t0 > 100;
     }
 

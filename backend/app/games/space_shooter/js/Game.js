@@ -86,6 +86,18 @@ class Game {
         this.frameTimeHistory = [];
         this.showPerfMonitor = true;
 
+        // Upgrade system
+        this.upgrades = null;
+        this.lastUpgradeLevel = 0;
+        this.upgradeModalOpen = false;
+        this.missileTimer = 0;
+        this.missileInterval = 5; // Seconds between missile volleys
+
+        // Upgrade modal elements (cached later)
+        this.upgradeModal = null;
+        this.upgradeOptions = null;
+        this.upgradeLevelBadge = null;
+
         this.init();
     }
 
@@ -104,6 +116,14 @@ class Game {
         
         this.postProcessing = new PostProcessing(this.canvas);
         this.starField = new StarField(this.canvas.width, this.canvas.height);
+
+        // Initialize upgrade system
+        this.upgrades = new UpgradeManager(this);
+
+        // Cache upgrade modal elements
+        this.upgradeModal = document.getElementById('upgrade-modal');
+        this.upgradeOptions = document.getElementById('upgrade-options');
+        this.upgradeLevelBadge = document.getElementById('upgrade-level-badge');
 
         this.setupEventListeners();
 
@@ -657,6 +677,19 @@ class Game {
         this.scorePopups = [];
         this.particles.clear();
 
+        // Reset upgrade system
+        if (this.upgrades) {
+            this.upgrades.reset();
+        }
+        this.lastUpgradeLevel = 0;
+        this.missileTimer = 0;
+        this.upgradeModalOpen = false;
+        
+        // Hide upgrade modal if visible
+        if (this.upgradeModal) {
+            this.upgradeModal.classList.add('hidden');
+        }
+
         this.player = new Player(
             this.canvas.width / 2 - 24,
             this.canvas.height / 2 - 24
@@ -794,10 +827,19 @@ class Game {
             }
         }
 
-        if (this.state !== 'playing') {
+        if (this.state !== 'playing' && this.state !== 'upgrading') {
             // Aggiorna animazione game over
             if (this.state === 'gameover' && this.gameOverAnimating) {
                 this.updateGameOverAnimation(deltaTime);
+            }
+            return;
+        }
+
+        // If upgrading, only update particles for visual effect
+        if (this.state === 'upgrading') {
+            // Keep particles updating for visual feedback
+            if (this.upgrades) {
+                this.upgrades.update(deltaTime);
             }
             return;
         }
@@ -834,6 +876,20 @@ class Game {
                     this.player.position.y + this.player.height,
                     1 + this.player.velocity.magnitude() / 300
                 );
+            }
+        }
+
+        // Update upgrades (barrier, drones, missiles)
+        if (this.upgrades) {
+            this.upgrades.update(deltaTime);
+            
+            // Fire missiles periodically if unlocked
+            if (this.upgrades.missileLevel > 0) {
+                this.missileTimer += deltaTime;
+                if (this.missileTimer >= this.missileInterval) {
+                    this.missileTimer = 0;
+                    this.upgrades.fireMissiles();
+                }
             }
         }
 
@@ -1035,6 +1091,108 @@ class Game {
             if (this.player && this.player.active) {
                 this.player.heal(1);
             }
+
+            // Check for upgrade selection every 10 levels
+            if (this.level % 10 === 0 && this.level > this.lastUpgradeLevel) {
+                this.showUpgradeModal();
+            }
+        }
+    }
+
+    /**
+     * Show upgrade selection modal
+     */
+    showUpgradeModal() {
+        this.state = 'upgrading';
+        this.upgradeModalOpen = true;
+        this.lastUpgradeLevel = this.level;
+
+        // Pause music slightly
+        this.sound.pauseBackgroundMusic();
+
+        // Update level badge
+        if (this.upgradeLevelBadge) {
+            this.upgradeLevelBadge.textContent = `LEVEL ${this.level}`;
+        }
+
+        // Get upgrade options
+        const options = this.upgrades.getUpgradeOptions();
+
+        // Populate options
+        if (this.upgradeOptions) {
+            this.upgradeOptions.innerHTML = '';
+
+            options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = `upgrade-option ${option.rarity}`;
+                optionEl.style.animationDelay = `${index * 0.1}s`;
+                optionEl.innerHTML = `
+                    <div class="upgrade-icon">${option.icon}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${option.name}</div>
+                        <div class="upgrade-desc">${option.description}</div>
+                    </div>
+                    <span class="upgrade-rarity ${option.rarity}">${option.rarity}</span>
+                `;
+
+                optionEl.addEventListener('click', () => {
+                    this.selectUpgrade(option);
+                });
+
+                // Touch support
+                optionEl.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.selectUpgrade(option);
+                });
+
+                this.upgradeOptions.appendChild(optionEl);
+            });
+        }
+
+        // Show modal
+        if (this.upgradeModal) {
+            this.upgradeModal.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Select and apply an upgrade
+     * @param {Object} upgrade 
+     */
+    selectUpgrade(upgrade) {
+        // Apply the upgrade
+        this.upgrades.applyUpgrade(upgrade);
+
+        // Hide modal
+        if (this.upgradeModal) {
+            this.upgradeModal.classList.add('hidden');
+        }
+
+        // Resume game
+        this.upgradeModalOpen = false;
+        this.state = 'playing';
+        this.sound.resumeBackgroundMusic();
+
+        // Play upgrade sound
+        this.sound.playPowerUp();
+
+        // Visual feedback
+        this.postProcessing.flash({ r: 100, g: 200, b: 255 }, 0.3);
+
+        // Create celebration particles at player position
+        if (this.player) {
+            this.particles.emit(
+                this.player.position.x + this.player.width / 2,
+                this.player.position.y + this.player.height / 2,
+                20,
+                {
+                    color: upgrade.type === 'barrier' ? '#00aaff' : 
+                           upgrade.type === 'missile' ? '#ff6600' : '#00ffaa',
+                    speed: 150,
+                    life: 1,
+                    size: 5
+                }
+            );
         }
     }
 
@@ -1196,6 +1354,11 @@ class Game {
             this.renderCelebration(ctx);
         } else if (this.player && this.player.active) {
             this.player.render(ctx, this.assets);
+        }
+
+        // Render upgrade system (barrier, drones, missiles)
+        if (this.upgrades) {
+            this.upgrades.render(ctx);
         }
 
         this.explosions.forEach(e => e.render(ctx, this.assets));
@@ -1654,6 +1817,11 @@ class Game {
                 ctx.shadowBlur = 0;
             }
 
+            // Render upgrade indicators
+            if (this.upgrades) {
+                this.renderUpgradeHUD(ctx);
+            }
+
             // Indicatori abilità per desktop (in basso a sinistra)
             if (!this.input.isMobile) {
                 this.renderAbilityHUD(ctx);
@@ -1672,6 +1840,79 @@ class Game {
     updateAbilityUI() {
         // I controlli touch sono ora renderizzati direttamente su canvas
         // Non è più necessario aggiornare elementi HTML
+    }
+
+    /**
+     * Renderizza HUD degli upgrade attivi
+     */
+    renderUpgradeHUD(ctx) {
+        const levels = this.upgrades.getUpgradeLevels();
+        const padding = 12;
+        const iconSize = 22;
+        const gap = 4;
+        // Posizionato in alto a sinistra, sotto WEAPON - layout verticale
+        const startX = padding;
+        const startY = 140;
+
+        const upgradeTypes = [
+            { type: 'barrier', icon: '🛡️', color: '#00aaff', level: levels.barrier },
+            { type: 'missile', icon: '🚀', color: '#ff6600', level: levels.missile },
+            { type: 'drone', icon: '🔮', color: '#00ffaa', level: levels.drone }
+        ];
+
+        let drawIndex = 0;
+        upgradeTypes.forEach((upgrade) => {
+            if (upgrade.level > 0) {
+                const x = startX;
+                const y = startY + drawIndex * (iconSize + gap + 4);
+
+                // Background circle
+                ctx.beginPath();
+                ctx.arc(x + iconSize / 2, y + iconSize / 2, iconSize / 2 + 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fill();
+                ctx.strokeStyle = upgrade.color;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Icon
+                ctx.font = `${iconSize - 6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(upgrade.icon, x + iconSize / 2, y + iconSize / 2);
+
+                // Level badge (to the right of icon)
+                ctx.font = 'bold 10px Orbitron, Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = upgrade.color;
+                ctx.shadowColor = upgrade.color;
+                ctx.shadowBlur = 5;
+                ctx.fillText(`Lv.${upgrade.level}`, x + iconSize + 6, y + iconSize / 2);
+                ctx.shadowBlur = 0;
+
+                // Barrier health bar inline
+                if (upgrade.type === 'barrier' && this.upgrades.barrier) {
+                    const barrier = this.upgrades.barrier;
+                    const barWidth = 40;
+                    const barHeight = 3;
+                    const barX = x + iconSize + 38;
+                    const barY = y + iconSize / 2 - barHeight / 2;
+
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+
+                    const barrierPercent = barrier.currentShield / barrier.maxShield;
+                    const barrierGrad = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+                    barrierGrad.addColorStop(0, '#00aaff');
+                    barrierGrad.addColorStop(1, '#0066cc');
+                    ctx.fillStyle = barrierGrad;
+                    ctx.fillRect(barX, barY, barWidth * barrierPercent, barHeight);
+                }
+
+                drawIndex++;
+            }
+        });
     }
 
     /**

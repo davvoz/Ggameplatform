@@ -2,7 +2,7 @@ import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay } from
 import { SteemProfileService } from './SteemProfileService.js';
 import { QuestRenderer } from './quest.js';
 import { navigateTo, initRouter } from './router.js';
-import RuntimeShell from './runtimeShell.js';
+import RuntimeShell from './runtimeShell.obf.js';
 import { pushManager } from './PushNotificationManager.js';
 
 

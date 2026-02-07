@@ -1,8 +1,17 @@
 {
-  "version": "3.20.10",
-  "timestamp": "2026-02-07T13:45:45.985Z",
-  "buildNumber": 380,
+  "version": "3.20.11",
+  "timestamp": "2026-02-07T15:09:00.421Z",
+  "buildNumber": 381,
   "changelog": [
+    {
+      "version": "3.20.11",
+      "date": "2026-02-07",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]adjust upgrade selection frequency to every 7 levels",
+        "🔖 Bump version to 3.20.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.20.10",
       "date": "2026-02-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: fake",
         "🔖 Bump version to 3.20.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.1",
-      "date": "2026-02-04",
-      "type": "patch",
-      "changes": [
-        "fix : obf",
-        "🔖 Bump version to 3.20.0 [skip-version]"
       ]
     }
   ]

@@ -1,4 +1,5 @@
 import { fetchGames, getGameResourceUrl } from './api.js';
+import { steemAvatarService } from './SteemAvatarService.js';
 
 // Use LeaderboardAPI from global scope
 const LeaderboardAPI = window.LeaderboardAPI;
@@ -427,11 +428,42 @@ class LeaderboardRenderer {
     }
 
     /**
+     * Build the player cell HTML with avatar and username.
+     * @param {Object} entry - Leaderboard entry data
+     * @returns {string} HTML for the player cell content
+     */
+    buildPlayerCellHTML(entry) {
+        const username = entry.username || 'Anonymous';
+        const steemUsername = entry.steem_username || null;
+        const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
+            size: 'small',
+            cssClass: 'leaderboard-avatar',
+            width: 40,
+            height: 40
+        });
+
+        return `<div class="player-cell">${avatarHTML}<span class="player-name-text">${username}</span></div>`;
+    }
+
+    /**
+     * Navigate to a user's public profile page.
+     * @param {string} userId - The user ID to navigate to
+     */
+    navigateToUserProfile(userId) {
+        if (!userId) {
+            return;
+        }
+        window.location.hash = `#/user/${userId}`;
+    }
+
+    /**
      * Render single leaderboard row
      */
     renderLeaderboardRow(entry, hasGames = false, showRewards = true) {
         const rankClass = entry.rank <= 3 ? `top-${entry.rank}` : '';
         const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
+        const userId = entry.user_id || '';
+        const playerCellHTML = this.buildPlayerCellHTML(entry);
 
         // If entry is from winners history, show actual sent rewards
         let rewardContent = '';
@@ -463,9 +495,9 @@ class LeaderboardRenderer {
         }
 
         return `
-            <div class="table-row ${rowClass}">
+            <div class="table-row ${rowClass} clickable-row" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
                 <div class="col-rank">#${entry.rank}</div>
-                <div class="col-player">${entry.username || 'Anonymous'}</div>
+                <div class="col-player">${playerCellHTML}</div>
                 <div class="col-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
                 ${hasGames ? `<div class="col-games">${entry.games_played || 0}</div>` : ''}
                 ${showRewards ? `<div class="col-rewards">${rewardContent ? `<div class="inline-reward-badge">${rewardContent}</div>` : ''}</div>` : ''}

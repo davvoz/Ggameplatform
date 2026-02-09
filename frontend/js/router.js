@@ -1,6 +1,7 @@
 import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQuests, render404, renderWallet, renderCommunity } from './main.js';
 import { renderLeaderboard } from './LeaderboardRenderer.js';
 import { renderProfile } from './ProfileRenderer.js';
+import { renderUserProfile } from './UserProfileRenderer.js';
 
 /**
  * Router configuration
@@ -14,7 +15,8 @@ const routes = {
     '/quests': renderQuests,
     '/community': renderCommunity,
     '/game/:id': renderGameDetail,
-    '/play/:id': renderGamePlayer
+    '/play/:id': renderGamePlayer,
+    '/user/:id': renderUserProfile
 };
 
 

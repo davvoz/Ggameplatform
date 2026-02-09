@@ -115,7 +115,6 @@
     border-radius: 12px;
     padding: 10px 12px;
     box-shadow: 0 8px 30px rgba(2,6,23,0.6), 0 2px 8px rgba(0,0,0,0.6);
-    backdrop-filter: blur(6px) saturate(120%);
 }
 
 /* hover effects removed for static cards */
@@ -192,9 +191,10 @@
 /* subtle pulse when XP increases can be triggered by adding .xp-pulse */
 .xp-pulse { animation: pulse 1.2s ease-in-out; }
 
-.user-info #userName {
+.user-info #userName,
+.nav-username {
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95rem;
 }
 
@@ -274,7 +274,6 @@
     border: 1px solid color-mix(in srgb, var(--level-color, #6366f1) 30%, transparent) !important;
     box-shadow: 0 8px 30px color-mix(in srgb, var(--level-color, #6366f1) 12%, rgba(2,6,23,0.6)), 
                 0 2px 8px rgba(0,0,0,0.6) !important;
-    backdrop-filter: blur(6px) saturate(140%);
     position: relative;
 }
 
@@ -348,7 +347,6 @@
         rgba(12,14,23,0.6) 100%) !important;
     border: 1px solid rgba(0, 200, 255, 0.3) !important;
     box-shadow: 0 8px 30px rgba(0, 200, 255, 0.15), 0 2px 8px rgba(0,0,0,0.6) !important;
-    backdrop-filter: blur(6px) saturate(140%);
     position: relative;
 }
 
@@ -386,8 +384,17 @@
     font-weight: 800;
     letter-spacing: 0.4px;
     text-transform: uppercase;
+    line-height: 1;
     position: relative;
     z-index: 1;
+}
+
+.nav-multiplier-card .multiplier-title span:first-child {
+    font-size: 12px;
+}
+
+.nav-multiplier-card .multiplier-title span:last-child {
+    font-weight: 700;
 }
 
 .nav-multiplier-card .multiplier-value {
@@ -580,6 +587,21 @@
         min-width: 36px;
         font-size: 10px;
     }
+}
+
+/* Nav Logout section */
+.nav-logout {
+    margin-left: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-username-top {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
 }
 
 .user-info #logoutBtn,
@@ -811,7 +833,6 @@
         flex-direction: column;
         align-items: stretch;
         background: rgba(26, 26, 26, 0.98);
-        backdrop-filter: blur(20px);
         padding: 80px var(--spacing-lg) var(--spacing-lg);
         gap: 0;
         transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;

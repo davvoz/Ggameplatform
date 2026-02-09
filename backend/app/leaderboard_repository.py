@@ -153,7 +153,8 @@ class LeaderboardRepository:
             WeeklyLeaderboard,
             User.username,
             User.is_anonymous,
-            Game.title
+            Game.title,
+            User.steem_username
         ).join(
             User, WeeklyLeaderboard.user_id == User.user_id
         ).join(
@@ -176,7 +177,8 @@ class LeaderboardRepository:
                 User.username,
                 User.is_anonymous,
                 func.sum(WeeklyLeaderboard.score).label('total_score'),
-                func.count(WeeklyLeaderboard.game_id).label('games_played')
+                func.count(WeeklyLeaderboard.game_id).label('games_played'),
+                User.steem_username
             ).join(
                 User, WeeklyLeaderboard.user_id == User.user_id
             ).filter(
@@ -196,11 +198,13 @@ class LeaderboardRepository:
                 # Single game leaderboard
                 entry = row[0]
                 username = row[1] if not row[2] else f"Anonymous #{row[0].user_id[-6:]}"
+                steem_username = row[4] if not row[2] else None
                 leaderboard.append({
                     'rank': idx,
                     'entry_id': entry.entry_id,
                     'user_id': entry.user_id,
                     'username': username,
+                    'steem_username': steem_username,
                     'score': entry.score,
                     'game_title': row[3],
                     'created_at': entry.created_at
@@ -208,10 +212,12 @@ class LeaderboardRepository:
             else:
                 # Global leaderboard
                 username = row[1] if not row[2] else f"Anonymous #{row[0][-6:]}"
+                steem_username = row[5] if not row[2] else None
                 leaderboard.append({
                     'rank': idx,
                     'user_id': row[0],
                     'username': username,
+                    'steem_username': steem_username,
                     'total_score': int(row[3]),
                     'games_played': row[4]
                 })
@@ -228,7 +234,8 @@ class LeaderboardRepository:
             Leaderboard,
             User.username,
             User.is_anonymous,
-            Game.title
+            Game.title,
+            User.steem_username
         ).join(
             User, Leaderboard.user_id == User.user_id
         ).join(
@@ -250,7 +257,8 @@ class LeaderboardRepository:
                 User.username,
                 User.is_anonymous,
                 func.sum(Leaderboard.score).label('total_score'),
-                func.count(Leaderboard.game_id).label('games_played')
+                func.count(Leaderboard.game_id).label('games_played'),
+                User.steem_username
             ).join(
                 User, Leaderboard.user_id == User.user_id
             ).filter(
@@ -269,11 +277,13 @@ class LeaderboardRepository:
                 # Single game leaderboard
                 entry = row[0]
                 username = row[1] if not row[2] else f"Anonymous #{row[0].user_id[-6:]}"
+                steem_username = row[4] if not row[2] else None
                 leaderboard.append({
                     'rank': idx,
                     'entry_id': entry.entry_id,
                     'user_id': entry.user_id,
                     'username': username,
+                    'steem_username': steem_username,
                     'score': entry.score,
                     'game_title': row[3],
                     'achieved_at': entry.created_at  # created_at is when record was achieved
@@ -281,10 +291,12 @@ class LeaderboardRepository:
             else:
                 # Global leaderboard
                 username = row[1] if not row[2] else f"Anonymous #{row[0][-6:]}"
+                steem_username = row[5] if not row[2] else None
                 leaderboard.append({
                     'rank': idx,
                     'user_id': row[0],
                     'username': username,
+                    'steem_username': steem_username,
                     'total_score': int(row[3]),
                     'games_played': row[4]
                 })

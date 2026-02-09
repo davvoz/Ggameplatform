@@ -167,7 +167,12 @@
 
 
 
+.scroll-bottom-fab {
+    display: none;
+}
+
 .new-messages-badge {
+    display: none;
     position: absolute;
     top: -6px;
     right: -6px;
@@ -179,7 +184,6 @@
     font-size: 0.7rem;
     font-weight: 700;
     color: white;
-    display: flex;
     align-items: center;
     justify-content: center;
 }
@@ -392,7 +396,7 @@
 
 /* Media Preview Bar */
 .media-preview-bar {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: space-between;
     background: rgba(14, 165, 233, 0.1);

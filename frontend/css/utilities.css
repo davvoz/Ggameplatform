@@ -43,6 +43,86 @@
 }
 
 /* ========================================
+   Inline Style Extractions
+   ======================================== */
+
+.steem-rewards-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* PWA Install Button */
+.pwa-install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    z-index: 9999;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+}
+
+.pwa-install-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+/* PWA Update Banner */
+@keyframes pwa-slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+.update-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.update-content p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.btn-update, .btn-dismiss {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.btn-update {
+    background: white;
+    color: #667eea;
+}
+
+.btn-dismiss {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.btn-update:hover, .btn-dismiss:hover {
+    opacity: 0.9;
+}
+
+/* ========================================
    Responsive Utilities
    ======================================== */
 

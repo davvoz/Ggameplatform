@@ -308,6 +308,7 @@
 
 /* Floating button to reopen banner */
 .daily-login-trigger {
+    display: none;
     position: fixed;
     bottom: 100px;
     right: 20px;

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Cur8 Game Platform - Play amazing browser games and earn rewards">
 
     <!-- Performance Optimization -->
@@ -13,7 +13,9 @@
     <link rel="preconnect" href="http://localhost:8000" crossorigin>
 
     <!-- PWA Meta Tags -->
+    <!-- theme-color: supported in Chrome, Edge, Safari (improves PWA experience) -->
     <meta name="theme-color" content="#667eea">
+    <meta name="color-scheme" content="light dark">
     <link rel="manifest" href="/manifest.json">
 
     <!-- iOS Web App Meta Tags -->
@@ -50,14 +52,6 @@
     <link rel="stylesheet" href="./css/auth.css">
     <link rel="stylesheet" href="./css/daily-login-banner.css">
 
-    <style>
-        .steem-rewards-icon {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-            margin-right: 4px;
-        }
-    </style>
 </head>
 
 <body>
@@ -65,7 +59,7 @@
     <div id="daily-login-overlay" class="daily-login-overlay" onclick="dailyLoginBanner.hide()"></div>
     
     <!-- Floating button to open daily reward banner (shown only when can claim) -->
-    <button id="daily-login-trigger" class="daily-login-trigger" onclick="dailyLoginBanner.show()" style="display:none;" title="Open Daily Rewards">
+    <button id="daily-login-trigger" class="daily-login-trigger" onclick="dailyLoginBanner.show()" title="Open Daily Rewards">
         🎁
     </button>
     
@@ -92,27 +86,27 @@
                     <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">Profile</a>
                 </div>
             <!-- Multiplier card placed before level/profile for requested order -->
-            <div id="multiplierCard" class="nav-multiplier-card" style="display:flex;align-items:center;margin-left:8px;gap:6px;cursor:pointer;">
-                <div class="multiplier-title" style="display:flex;flex-direction:column;line-height:1;text-transform:uppercase;">
-                    <span style="font-size:12px;">CUR8 XP</span>
-                    <span style="font-weight:700;">MULTIPLIER</span>
+            <div id="multiplierCard" class="nav-multiplier-card">
+                <div class="multiplier-title">
+                    <span>CUR8 XP</span>
+                    <span>MULTIPLIER</span>
                 </div>
                 <div class="multiplier-value" id="navMultiplier">1.00x</div>
             </div>
-            <div id="levelCardContainer" class="nav-level-card" style="display:flex; align-items:center; margin-left:8px; gap:8px;">
+            <div id="levelCardContainer" class="nav-level-card">
                 <div id="levelBadgeContainer"></div>
             </div>
             <!-- Minimal `userInfo` placeholder (hidden via CSS) - required by JS to populate level badge and auth links -->
             <div id="userInfo" class="user-info">
                 <div class="nav-user-card">
                     <div class="nav-user-meta">
-                        <span id="userName" class="nav-username" style="font-weight:700;color:var(--text-primary);"></span>
+                        <span id="userName" class="nav-username"></span>
                     </div>
                 </div>
             </div>
             <!-- Logout moved out of the profile card to be the last visible control in the navbar -->
-            <div class="nav-logout" style="margin-left:8px; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                <span id="navUserNameTop" class="nav-username-top" style="font-size:0.85rem; color:rgba(255,255,255,0.9); font-weight:600;"></span>
+            <div class="nav-logout">
+                <span id="navUserNameTop" class="nav-username-top"></span>
                 <button id="logoutBtn" class="btn-logout">Logout</button>
             </div>
             </div>
@@ -222,8 +216,7 @@
                 <iframe id="game-iframe"
                     sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups"
                     allow="gamepad; fullscreen; xr-spatial-tracking; autoplay" allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    style="will-change: transform; border: 0;"></iframe>
+                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
             </div>
         </div>
     </template>
@@ -414,7 +407,7 @@
 
             <div class="profile-content">
                 <!-- Steem Post Button -->
-                <div class="steem-post-banner" id="steemPostBanner" style="display: none;">
+                <div class="steem-post-banner" id="steemPostBanner">
                     <div class="banner-content">
                         <div class="banner-icon">
                             <img src="./icons/steem.png" alt="Steem Logo">
@@ -536,18 +529,18 @@
                     </div>
                     
                     <!-- Scroll to bottom fab (shown when scrolled up) -->
-                    <button class="scroll-bottom-fab" id="scrollBottomFab" style="display: none;">
+                    <button class="scroll-bottom-fab" id="scrollBottomFab">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
                         </svg>
-                        <span class="new-messages-badge" id="newMessagesBadge" style="display: none;">0</span>
+                        <span class="new-messages-badge" id="newMessagesBadge">0</span>
                     </button>
                 </div>
 
                 <!-- Input Area -->
                 <div class="chat-input-area">
                     <!-- Media Preview -->
-                    <div class="media-preview-bar" id="mediaPreviewBar" style="display: none;">
+                    <div class="media-preview-bar" id="mediaPreviewBar">
                         <div class="media-preview-content">
                             <img id="mediaPreviewImg" src="" alt="Preview">
                             <span class="media-preview-name" id="mediaPreviewName"></span>
@@ -618,7 +611,7 @@
 
                 <div class="form-group">
                     <label>CUR8 Multiplier (1.0 - 5.0)</label>
-                    <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1">
+                    <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1" title="CUR8 Multiplier value between 1.0 and 5.0">
                     <small>Higher multipliers = more XP per game!</small>
                 </div>
 
@@ -749,32 +742,6 @@
             const installBtn = document.createElement('button');
             installBtn.className = 'pwa-install-btn';
             installBtn.innerHTML = '📱 Install App';
-            installBtn.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 24px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-                z-index: 9999;
-                transition: transform 0.2s, box-shadow 0.2s;
-            `;
-
-            installBtn.addEventListener('mouseover', () => {
-                installBtn.style.transform = 'translateY(-2px)';
-                installBtn.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
-            });
-
-            installBtn.addEventListener('mouseout', () => {
-                installBtn.style.transform = 'translateY(0)';
-                installBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-            });
 
             installBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
@@ -800,59 +767,6 @@
 
             deferredPrompt = null;
         });
-
-        // Add slideDown animation
-        if (!document.getElementById('pwa-install-style')) {
-            const style = document.createElement('style');
-            style.id = 'pwa-install-style';
-            style.textContent = `
-            @keyframes slideDown {
-                from {
-                    transform: translate(-50%, -100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translate(-50%, 0);
-                    opacity: 1;
-                }
-            }
-            
-            .update-content {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
-            
-            .update-content p {
-                margin: 0;
-                font-weight: 600;
-            }
-            
-            .btn-update, .btn-dismiss {
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: 600;
-                transition: opacity 0.2s;
-            }
-            
-            .btn-update {
-                background: white;
-                color: #667eea;
-            }
-            
-            .btn-dismiss {
-                background: rgba(255,255,255,0.2);
-                color: white;
-            }
-            
-            .btn-update:hover, .btn-dismiss:hover {
-                opacity: 0.9;
-            }
-        `;
-            document.head.appendChild(style);
-        }
     </script>
 </body>
 

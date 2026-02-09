@@ -94,6 +94,7 @@
     width: auto;
     aspect-ratio: 9 / 16;
     display: block;
+    will-change: transform;
 }
 
 

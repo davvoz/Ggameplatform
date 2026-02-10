@@ -413,6 +413,146 @@
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
+/* Cur8 × Steem Social Profile Link */
+.steem-profile-link {
+    display: none; /* hidden by default, shown via JS for steem users */
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    width: fit-content;
+    margin-bottom: var(--spacing-md);
+    background: linear-gradient(135deg, rgba(0, 200, 255, 0.12) 0%, rgba(99, 102, 241, 0.12) 50%, rgba(6, 167, 125, 0.12) 100%);
+    border: 1px solid rgba(0, 200, 255, 0.25);
+    border-radius: 14px;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.steem-profile-link-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.steem-profile-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 200, 255, 0.08), rgba(99, 102, 241, 0.08), rgba(6, 167, 125, 0.08));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.steem-profile-link:hover {
+    border-color: rgba(0, 200, 255, 0.5);
+    box-shadow: 0 4px 24px rgba(0, 200, 255, 0.2), 0 0 40px rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
+    color: white;
+    text-decoration: none;
+}
+
+.steem-profile-link:hover::before {
+    opacity: 1;
+}
+
+.steem-profile-link-logos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.steem-profile-link-cur8 {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.steem-profile-link-x {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
+}
+
+.steem-profile-link-steem {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.steem-profile-link-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 0 1 auto;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.steem-profile-link-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+}
+
+.steem-profile-link-url {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #00d4ff;
+    text-shadow: 0 1px 6px rgba(0, 212, 255, 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.steem-profile-link-arrow {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform 0.3s ease, color 0.3s ease;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.steem-profile-link:hover .steem-profile-link-arrow {
+    transform: translateX(4px);
+    color: #00d4ff;
+}
+
+.steem-profile-link.visible {
+    display: flex;
+}
+
+@media (max-width: 480px) {
+    .steem-profile-link {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+    .steem-profile-link-cur8 {
+        width: 22px;
+        height: 22px;
+    }
+    .steem-profile-link-steem {
+        width: 20px;
+        height: 20px;
+    }
+    .steem-profile-link-url {
+        font-size: 0.8rem;
+    }
+}
+
 .profile-stats-quick {
     display: flex;
     gap: var(--spacing-md);

@@ -48,6 +48,9 @@ class UserProfileRenderer {
 
             this.renderProfilePage(user, stats, levelInfo);
 
+            // Load coin balance in background
+            this.loadCoinBalanceAsync();
+
             // Load Steem profile in background (slowest call)
             this.loadSteemProfileAsync(user);
         } catch (error) {
@@ -108,6 +111,24 @@ class UserProfileRenderer {
             console.error('Error fetching level info:', error);
         }
         return null;
+    }
+
+    /**
+     * Load coin balance for the visited user and update the UI.
+     */
+    async loadCoinBalanceAsync() {
+        try {
+            const API_URL = this.getApiUrl();
+            const response = await fetch(`${API_URL}/api/coins/${this.userId}/balance`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const coinEl = document.getElementById('publicCoinBalance');
+            if (coinEl && data.balance !== undefined) {
+                coinEl.textContent = Number(data.balance).toLocaleString();
+            }
+        } catch (error) {
+            console.error('Error loading coin balance:', error);
+        }
     }
 
     /**
@@ -229,10 +250,28 @@ class UserProfileRenderer {
                     <div class="profile-info">
                         <h2 class="profile-username">${this.escapeHTML(displayName)}</h2>
                         <p class="profile-type">${userType}</p>
+                        ${steemUsername ? `
+                        <a class="steem-profile-link visible" href="https://www.cur8.fun/app/@${this.escapeHTML(steemUsername)}" target="_blank" rel="noopener noreferrer">
+                            <div class="steem-profile-link-logos">
+                                <img src="./icons/icon-72x72.png" alt="Cur8" class="steem-profile-link-cur8">
+                                <span class="steem-profile-link-x">\u00d7</span>
+                                <img src="./icons/steem.png" alt="Steem" class="steem-profile-link-steem">
+                            </div>
+                            <div class="steem-profile-link-text">
+                                <span class="steem-profile-link-label">View Social Profile</span>
+                                <span class="steem-profile-link-url">cur8.fun/@${this.escapeHTML(steemUsername)}</span>
+                            </div>
+                            <span class="steem-profile-link-arrow">\u2192</span>
+                        </a>
+                        ` : ''}
                         <div class="profile-stats-quick">
                             <div class="stat-badge">
                                 <span class="stat-label">CUR8 Multiplier</span>
                                 <span class="stat-value multiplier">${multiplier.toFixed(2)}x</span>
+                            </div>
+                            <div class="stat-badge" id="publicCoinsBadge">
+                                <span class="stat-label">🪙 Coins</span>
+                                <span class="stat-value" id="publicCoinBalance">--</span>
                             </div>
                         </div>
                     </div>

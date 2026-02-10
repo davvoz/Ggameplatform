@@ -646,6 +646,17 @@ class ProfileRenderer {
 
         content.querySelector('.profile-username').textContent = displayName;
         content.querySelector('.profile-type').textContent = userType;
+
+        // Populate Steem social profile link
+        const steemUsername = this.extractSteemUsername(user);
+        const steemLink = content.querySelector('#steemProfileLink') || content.getElementById('steemProfileLink');
+        if (steemLink && steemUsername) {
+            const profileUrl = `https://www.cur8.fun/app/@${steemUsername}`;
+            steemLink.href = profileUrl;
+            const urlLabel = steemLink.querySelector('.steem-profile-link-url');
+            if (urlLabel) urlLabel.textContent = `cur8.fun/@${steemUsername}`;
+            steemLink.classList.add('visible');
+        }
     }
 
     getDisplayName(user) {

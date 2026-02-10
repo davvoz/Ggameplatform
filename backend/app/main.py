@@ -22,10 +22,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import mimetypes
 import time
 import os
 import logging
 from dotenv import load_dotenv
+
+# Register WebP MIME type (not recognized by default on Windows)
+mimetypes.add_type('image/webp', '.webp')
 
 # Load environment variables from .env file
 load_dotenv()

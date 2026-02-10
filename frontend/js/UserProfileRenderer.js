@@ -1,4 +1,4 @@
-import { getGameResourceUrl } from './api.js';
+import { getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import { config } from './config.js';
@@ -369,7 +369,7 @@ class UserProfileRenderer {
 
         return gameScores.map(gs => {
             const thumbnailUrl = gs.thumbnail
-                ? (gs.thumbnail.startsWith('http') ? gs.thumbnail : getGameResourceUrl(gs.game_id, gs.thumbnail))
+                ? getGamePreviewUrl(gs.game_id, gs.thumbnail)
                 : 'https://via.placeholder.com/100x75?text=No+Image';
 
             return `

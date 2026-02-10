@@ -1,4 +1,4 @@
-import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay } from './api.js';
+import { fetchGames, fetchGameMetadata, getGameResourceUrl, getGamePreviewUrl, trackGamePlay } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { QuestRenderer } from './quest.js';
 import { navigateTo, initRouter } from './router.js';
@@ -413,11 +413,9 @@ function createGameCard(game) {
     const cardElement = card.querySelector('.game-card');
     cardElement.dataset.gameId = game.game_id;
 
-    // Set thumbnail
+    // Set thumbnail (use lightweight preview for card grid)
     const img = card.querySelector('.game-thumbnail img');
-    const thumbnailUrl = game.thumbnail
-        ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
-        : 'https://via.placeholder.com/400x300?text=No+Image';
+    const thumbnailUrl = getGamePreviewUrl(game.game_id, game.thumbnail);
     img.src = thumbnailUrl;
     img.alt = game.title;
 

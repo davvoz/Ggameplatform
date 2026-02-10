@@ -1,4 +1,4 @@
-import { getUserSessions, getGameResourceUrl } from './api.js';
+import { getUserSessions, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { config } from './config.js';
 
@@ -1062,9 +1062,7 @@ class ProfileRenderer {
             return 'https://via.placeholder.com/100x75?text=No+Image';
         }
 
-        return gameScore.thumbnail.startsWith('http')
-            ? gameScore.thumbnail
-            : getGameResourceUrl(gameScore.game_id, gameScore.thumbnail);
+        return getGamePreviewUrl(gameScore.game_id, gameScore.thumbnail);
     }
 
     async loadCoinBalanceHeader(userId) {

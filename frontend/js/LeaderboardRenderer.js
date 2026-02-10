@@ -1,4 +1,4 @@
-import { fetchGames, getGameResourceUrl } from './api.js';
+import { fetchGames, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 
 // Use LeaderboardAPI from global scope
@@ -163,7 +163,7 @@ class LeaderboardRenderer {
      */
     renderGameCard(game, isSelected = false) {
         const thumbnailUrl = game.thumbnail
-            ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
+            ? getGamePreviewUrl(game.game_id, game.thumbnail)
             : './icons/icon-192x192.png';
         
         const steemBadge = game.steem_rewards_enabled 

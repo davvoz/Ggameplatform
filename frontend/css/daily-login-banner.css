@@ -323,7 +323,6 @@
     box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
     transition: all 0.3s ease;
     z-index: 9999;
-    display: flex;
     align-items: center;
     justify-content: center;
 }

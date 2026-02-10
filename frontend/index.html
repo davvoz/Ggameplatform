@@ -695,7 +695,16 @@
     <script>
         // Function to initialize daily login banner
         function initDailyLoginBanner(user) {
-            if (window.dailyLoginBanner && user && user.user_id) {
+            const trigger = document.getElementById('daily-login-trigger');
+            if (!user || user.is_anonymous) {
+                // Ensure trigger is hidden for anonymous/no user
+                if (trigger) trigger.style.display = 'none';
+                if (window.dailyLoginBanner) {
+                    window.dailyLoginBanner.currentUser = null;
+                }
+                return;
+            }
+            if (window.dailyLoginBanner && user.user_id) {
                 window.dailyLoginBanner.init(user).then(() => {
                     // Don't auto-show banner, only show trigger button if can claim
                 }).catch(err => {});
@@ -734,6 +743,14 @@
                     }
                 }
             }, 1000); // Wait for AuthManager to be ready
+        });
+
+        // Re-check on every login event (covers anonymous → steem and steem → anonymous)
+        window.addEventListener('userLogin', () => {
+            if (window.AuthManager) {
+                const user = window.AuthManager.getUser();
+                initDailyLoginBanner(user);
+            }
         });
     </script>
 

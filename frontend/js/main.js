@@ -129,6 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('userLogout', () => {
         const navMultiplierEl = document.getElementById('navMultiplier');
         if (navMultiplierEl) navMultiplierEl.textContent = `1.00x`;
+
+        // Hide daily login trigger button on logout
+        const trigger = document.getElementById('daily-login-trigger');
+        if (trigger) trigger.style.display = 'none';
     });
 
     // Cleanup game session on page unload (browser close/refresh)

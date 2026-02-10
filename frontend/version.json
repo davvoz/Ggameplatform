@@ -1,8 +1,17 @@
 {
-  "version": "3.21.0",
-  "timestamp": "2026-02-09T23:28:12.472Z",
-  "buildNumber": 383,
+  "version": "3.22.0",
+  "timestamp": "2026-02-10T00:27:04.960Z",
+  "buildNumber": 384,
   "changelog": [
+    {
+      "version": "3.22.0",
+      "date": "2026-02-10",
+      "type": "minor",
+      "changes": [
+        "feat: Add Steem social profile link to user profiles and enhance UI with coin balance display",
+        "🔖 Bump version to 3.21.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.21.0",
       "date": "2026-02-09",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Deleted Phaser backup in Blocky Road",
         "🔖 Bump version to 3.20.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.4",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "fix: simplify push notification initialization and subscription logic",
-        "🔖 Bump version to 3.20.3 [skip-version]"
       ]
     }
   ]

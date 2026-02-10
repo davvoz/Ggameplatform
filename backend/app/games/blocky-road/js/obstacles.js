@@ -409,6 +409,10 @@ class ObstacleManager {
         // Face the direction of travel (rotate 90° based on direction)
         vehicle.rotation.y = (Math.PI / 2) * direction;
         
+        // Slightly shrink perpendicular to road so wheels stay inside lane markings
+        // After 90° Y rotation, local X maps to world Z (cross-road axis)
+        vehicle.scale.x = 0.9;
+        
         this.scene.add(vehicle);
         
         this.obstacles.push({

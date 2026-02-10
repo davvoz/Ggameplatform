@@ -175,10 +175,10 @@ const Models = {
         const rimMaterial = MaterialPool.getMaterial(0x666666, { poolable: true });
         
         const wheels = [
-            { x: -0.5, z: 0.6 },
-            { x: 0.5, z: 0.6 },
-            { x: -0.5, z: -0.6 },
-            { x: 0.5, z: -0.6 }
+            { x: -0.40, z: 0.6 },
+            { x: 0.40, z: 0.6 },
+            { x: -0.40, z: -0.6 },
+            { x: 0.40, z: -0.6 }
         ];
         
         wheels.forEach(pos => {
@@ -187,6 +187,10 @@ const Models = {
             wheel.castShadow = true;
             wheel.userData.isWheel = true;
             group.add(wheel);
+            
+            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+            rim.position.set(pos.x, 0.12, pos.z);
+            group.add(rim);
         });
         
         return group;
@@ -274,10 +278,10 @@ const Models = {
         const fenderMaterial = MaterialPool.getMaterial(fenderColor, { poolable: true });
         
         const wheels = [
-            { x: -0.55, z: 0.7 },
-            { x: 0.55, z: 0.7 },
-            { x: -0.55, z: -0.8 },
-            { x: 0.55, z: -0.8 }
+            { x: -0.40, z: 0.7 },
+            { x: 0.40, z: 0.7 },
+            { x: -0.40, z: -0.8 },
+            { x: 0.40, z: -0.8 }
         ];
         
         wheels.forEach(pos => {

@@ -1,8 +1,17 @@
 {
-  "version": "3.23.0",
-  "timestamp": "2026-02-10T07:56:29.735Z",
-  "buildNumber": 385,
+  "version": "3.23.1",
+  "timestamp": "2026-02-10T23:25:13.696Z",
+  "buildNumber": 386,
   "changelog": [
+    {
+      "version": "3.23.1",
+      "date": "2026-02-10",
+      "type": "patch",
+      "changes": [
+        "fix:",
+        "🔖 Bump version to 3.23.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.23.0",
       "date": "2026-02-10",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: restore Community link in navigation",
         "🔖 Bump version to 3.20.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.6",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "fix: enhance AOE attack with charging phase and visual effects; add weapon level display",
-        "🔖 Bump version to 3.20.5 [skip-version]"
       ]
     }
   ]

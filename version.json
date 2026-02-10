@@ -1,8 +1,17 @@
 {
-  "version": "3.22.0",
-  "timestamp": "2026-02-10T00:27:04.960Z",
-  "buildNumber": 384,
+  "version": "3.23.0",
+  "timestamp": "2026-02-10T07:56:29.735Z",
+  "buildNumber": 385,
   "changelog": [
+    {
+      "version": "3.23.0",
+      "date": "2026-02-10",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance daily login banner visibility management for anonymous users and on logout",
+        "🔖 Bump version to 3.22.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.22.0",
       "date": "2026-02-10",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: enhance AOE attack with charging phase and visual effects; add weapon level display",
         "🔖 Bump version to 3.20.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.5",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "fix: Deleted Phaser backup in Blocky Road",
-        "🔖 Bump version to 3.20.4 [skip-version]"
       ]
     }
   ]

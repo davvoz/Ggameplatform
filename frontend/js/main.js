@@ -179,6 +179,25 @@ export async function renderCatalog(filters = {}) {
 
     // Load and display games with current mode filter
     await loadGames({ ...filters, mode: currentGameMode });
+
+    // Load version into footer
+    loadCatalogFooterVersion();
+}
+
+/**
+ * Load version info into the catalog footer
+ */
+function loadCatalogFooterVersion() {
+    const el = document.getElementById('catalogVersion');
+    if (!el) return;
+    fetch('/version.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && data.version) {
+                el.textContent = `v${data.version}`;
+            }
+        })
+        .catch(() => {});
 }
 
 /**

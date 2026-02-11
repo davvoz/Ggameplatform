@@ -988,3 +988,230 @@
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
+
+/* ─── Weekly Standings Section ─── */
+.weekly-standings-section h3 {
+    margin-bottom: var(--spacing-md);
+}
+
+.ws-container {
+    background: var(--background-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.ws-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.06));
+    border-bottom: 1px solid var(--border);
+}
+
+.ws-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.ws-days-left {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.12);
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.ws-table {
+    width: 100%;
+}
+
+.ws-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 90px 150px;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.2s ease;
+}
+
+.ws-row:last-child {
+    border-bottom: none;
+}
+
+.ws-row:not(.ws-row-header):hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ws-row-header {
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 8px 18px;
+}
+
+.ws-rank-col {
+    text-align: center;
+}
+
+.ws-rank {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.ws-rank-1 { font-size: 1.3rem; }
+.ws-rank-2 { font-size: 1.2rem; }
+.ws-rank-3 { font-size: 1.1rem; }
+
+.ws-game-col {
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ws-score-col {
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ws-rewards-col {
+    display: flex;
+    justify-content: center;
+}
+
+.ws-rewards {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.ws-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+}
+
+.ws-badge-steem {
+    color: #3fa7ff;
+    background: rgba(0, 150, 255, 0.12);
+    border: 1px solid rgba(0, 150, 255, 0.25);
+}
+
+.ws-badge-coin {
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.ws-badge-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
+.ws-badge-lg {
+    font-size: 0.95rem;
+    padding: 5px 12px;
+}
+
+.ws-badge-lg .ws-badge-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.ws-no-reward {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.ws-totals {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04));
+    border-top: 1px solid var(--border);
+}
+
+.ws-totals-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.ws-totals-badges {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .ws-row {
+        grid-template-columns: 45px 1fr 65px 90px;
+        padding: 8px 12px;
+        gap: 4px;
+    }
+
+    .ws-row-header {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
+
+    .ws-header {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+        padding: 10px 14px;
+    }
+
+    .ws-game-col {
+        font-size: 0.88rem;
+    }
+
+    .ws-score-col {
+        font-size: 0.9rem;
+    }
+
+    .ws-rewards {
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .ws-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+
+    .ws-badge-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .ws-totals {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        padding: 12px 14px;
+    }
+}

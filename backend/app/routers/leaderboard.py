@@ -260,3 +260,32 @@ async def get_rewards_configuration(
         "count": len(rewards),
         "rewards": [r.to_dict() for r in rewards]
     }
+
+
+@router.get("/user-weekly-standings/{user_id}")
+async def get_user_weekly_standings(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a user's current weekly leaderboard standings across all games.
+    Returns their rank, score, and projected rewards for each game.
+    """
+    lb_repo = LeaderboardRepository(db)
+    week_start, week_end = lb_repo.get_current_week()
+    standings = lb_repo.get_user_weekly_standings(user_id)
+
+    # Calculate totals
+    total_steem = sum(s['steem_reward'] for s in standings)
+    total_coins = sum(s['coin_reward'] for s in standings)
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "week_start": week_start,
+        "week_end": week_end,
+        "games_count": len(standings),
+        "total_projected_steem": total_steem,
+        "total_projected_coins": total_coins,
+        "standings": standings
+    }

@@ -1594,19 +1594,20 @@
     /* List rows on mobile: grid for consistent alignment */
     .gdl-list-row {
         display: grid;
-        grid-template-columns: 32px 1fr 60px;
-        gap: 6px;
+        grid-template-columns: 28px 1fr 50px;
+        gap: 4px;
         align-items: center;
         padding: 8px var(--spacing-sm);
     }
 
     .gdl-list-row.has-rewards {
-        grid-template-columns: 32px 1fr 60px 80px;
+        grid-template-columns: 28px 1fr 50px 48px;
     }
 
     .gdl-list-rank {
         width: auto;
         text-align: center;
+        font-size: 0.85rem;
     }
 
     .gdl-list-player {
@@ -1615,12 +1616,12 @@
 
     .gdl-list-score {
         text-align: right;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
     }
 
     .gdl-list-reward {
         justify-content: center;
-        padding-left: 6px;
+        padding-left: 4px;
     }
 
     .gdl-list-reward .gdl-reward-badges {
@@ -1638,11 +1639,11 @@
     }
 
     .gdl-list-row.has-games-col {
-        grid-template-columns: 32px 1fr 60px;
+        grid-template-columns: 28px 1fr 50px;
     }
 
     .gdl-list-row.has-games-col.has-rewards {
-        grid-template-columns: 32px 1fr 60px 80px;
+        grid-template-columns: 28px 1fr 50px 56px;
     }
 
     .gdl-list-games {
@@ -1650,12 +1651,17 @@
     }
 
     .gdl-list-avatar {
-        width: 30px;
-        height: 30px;
+        width: 26px;
+        height: 26px;
+    }
+
+    .gdl-list-player {
+        min-width: 0;
+        gap: 6px;
     }
 
     .gdl-list-name {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .gdl-list-score {
@@ -1687,13 +1693,14 @@
 
     .gdl-reward-steem,
     .gdl-reward-coin {
-        font-size: 0.7rem;
-        padding: 2px 6px;
+        font-size: 0.65rem;
+        padding: 2px 4px;
+        gap: 2px;
     }
 
     .gdl-reward-icon {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
     }
 }
 

@@ -1,8 +1,17 @@
 {
-  "version": "3.23.1",
-  "timestamp": "2026-02-10T23:25:13.696Z",
-  "buildNumber": 386,
+  "version": "3.23.2",
+  "timestamp": "2026-02-10T23:42:11.325Z",
+  "buildNumber": 387,
   "changelog": [
+    {
+      "version": "3.23.2",
+      "date": "2026-02-10",
+      "type": "patch",
+      "changes": [
+        "fix: Add script to generate WebP thumbnail previews for games, full images now appears only in game details page.",
+        "🔖 Bump version to 3.23.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.23.1",
       "date": "2026-02-10",
@@ -82,16 +91,6 @@
       "changes": [
         "fix : obf",
         "🔖 Bump version to 3.20.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.7",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: restore Community link in navigation",
-        "🔖 Bump version to 3.20.6 [skip-version]"
       ]
     }
   ]

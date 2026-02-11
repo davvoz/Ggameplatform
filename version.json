@@ -1,8 +1,18 @@
 {
-  "version": "3.23.2",
-  "timestamp": "2026-02-10T23:42:11.325Z",
-  "buildNumber": 387,
+  "version": "3.23.3",
+  "timestamp": "2026-02-11T00:36:31.229Z",
+  "buildNumber": 388,
   "changelog": [
+    {
+      "version": "3.23.3",
+      "date": "2026-02-11",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Implement weekly leaderboard for game details with podium and rewards display",
+        "🔖 Bump version to 3.23.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.23.2",
       "date": "2026-02-10",
@@ -82,15 +92,6 @@
       "changes": [
         "fix:[SS]Add upgrade system with Energy Barrier, Smart Missiles, and Protector Drones",
         "🔖 Bump version to 3.20.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.8",
-      "date": "2026-02-06",
-      "type": "patch",
-      "changes": [
-        "fix : obf",
-        "🔖 Bump version to 3.20.7 [skip-version]"
       ]
     }
   ]

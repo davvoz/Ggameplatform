@@ -1,8 +1,17 @@
 {
-  "version": "3.23.3",
-  "timestamp": "2026-02-11T00:36:31.229Z",
-  "buildNumber": 388,
+  "version": "3.24.0",
+  "timestamp": "2026-02-11T01:10:48.285Z",
+  "buildNumber": 389,
   "changelog": [
+    {
+      "version": "3.24.0",
+      "date": "2026-02-11",
+      "type": "minor",
+      "changes": [
+        "feat: Add weekly leaderboard standings feature for user profiles, moved About section on footer",
+        "🔖 Bump version to 3.23.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.23.3",
       "date": "2026-02-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: obf",
         "🔖 Bump version to 3.20.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.9",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix:[SS]Add upgrade system with Energy Barrier, Smart Missiles, and Protector Drones",
-        "🔖 Bump version to 3.20.8 [skip-version]"
       ]
     }
   ]

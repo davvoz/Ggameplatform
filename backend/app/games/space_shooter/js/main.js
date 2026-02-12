@@ -4,6 +4,31 @@
 
 // Track if game session has been started
 let sessionStarted = false;
+let platformBalance = 0;
+const CONTINUE_COST = 50;
+
+// Load user's coin balance
+async function loadUserBalance() {
+    let userId = window.platformConfig?.userId;
+    
+    if (!userId && typeof PlatformSDK !== 'undefined' && typeof PlatformSDK.getConfig === 'function') {
+        userId = PlatformSDK.getConfig()?.userId;
+    }
+
+    if (!userId) return 0;
+
+    try {
+        const response = await fetch(`/api/coins/${userId}/balance`, {
+            credentials: 'include'
+        });
+        if (!response.ok) return 0;
+        const data = await response.json();
+        return data.balance || 0;
+    } catch (e) {
+        console.error('Failed to load balance:', e);
+        return 0;
+    }
+}
 
 // Initialize Platform SDK
 async function initSDK() {
@@ -103,6 +128,139 @@ window.showXPBanner = showXPBanner;
 window.showStatsBanner = showStatsBanner;
 window.showLevelUpNotification = showLevelUpNotification;
 
+// ========== CONTINUE SYSTEM ==========
+
+async function handleContinueGame() {
+    if (typeof PlatformSDK === 'undefined') return;
+
+    if (platformBalance < CONTINUE_COST) {
+        console.warn('[Space Shooter] Not enough coins to continue');
+        return;
+    }
+
+    try {
+        // Get userId
+        let userId = null;
+        if (window.platformConfig && window.platformConfig.userId) {
+            userId = window.platformConfig.userId;
+        } else if (typeof PlatformSDK !== 'undefined' && PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
+            const config = PlatformSDK.getConfig();
+            if (config && config.userId) {
+                userId = config.userId;
+            }
+        }
+
+        if (!userId) {
+            console.error('[Space Shooter] No userId available for spending');
+            return;
+        }
+
+        // Spend coins via platform API
+        const response = await fetch(`/api/coins/${userId}/spend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                amount: CONTINUE_COST,
+                transaction_type: 'game_continue',
+                source_id: 'space-shooter',
+                description: `Space Shooter continue: ${CONTINUE_COST} coins`
+            })
+        });
+
+        if (!response.ok) {
+            console.error('[Space Shooter] Failed to spend coins:', response.status);
+            return;
+        }
+
+        // Update balance
+        platformBalance -= CONTINUE_COST;
+        window.platformBalance = platformBalance;
+
+        // Reset session for new continue segment
+        sessionStarted = false;
+
+        // Resume game
+        if (window.game) {
+            window.game.resumeAfterContinue();
+        }
+
+    } catch (error) {
+        console.error('[Space Shooter] Error during continue:', error);
+    }
+}
+
+window.handleContinueGame = handleContinueGame;
+
+// ========== PRE-GAME SHOP SYSTEM ==========
+
+const SHOP_UPGRADE_COST = 50;
+
+async function handleShopUpgradePurchase(cost) {
+    if (typeof PlatformSDK === 'undefined') return false;
+
+    if (platformBalance < cost) {
+        console.warn('[Space Shooter] Not enough coins for shop upgrade');
+        return false;
+    }
+
+    try {
+        let userId = null;
+        if (window.platformConfig && window.platformConfig.userId) {
+            userId = window.platformConfig.userId;
+        } else if (typeof PlatformSDK !== 'undefined' && PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
+            const config = PlatformSDK.getConfig();
+            if (config && config.userId) {
+                userId = config.userId;
+            }
+        }
+
+        if (!userId) {
+            console.error('[Space Shooter] No userId available for shop purchase');
+            return false;
+        }
+
+        const response = await fetch(`/api/coins/${userId}/spend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                amount: cost,
+                transaction_type: 'pregame_upgrade',
+                source_id: 'space-shooter',
+                description: `Space Shooter pre-game upgrade: ${cost} coins`
+            })
+        });
+
+        if (!response.ok) {
+            console.error('[Space Shooter] Failed to spend coins for shop:', response.status);
+            return false;
+        }
+
+        platformBalance -= cost;
+        window.platformBalance = platformBalance;
+        return true;
+
+    } catch (error) {
+        console.error('[Space Shooter] Error during shop purchase:', error);
+        return false;
+    }
+}
+
+window.handleShopUpgradePurchase = handleShopUpgradePurchase;
+
+// Refresh balance from server (used before showing shop on restart)
+async function refreshPlatformBalance() {
+    try {
+        platformBalance = await loadUserBalance();
+        window.platformBalance = platformBalance;
+    } catch (e) {
+        // Keep existing balance
+    }
+}
+
+window.refreshPlatformBalance = refreshPlatformBalance;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const canvas = document.getElementById('gameCanvas');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
@@ -114,6 +272,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize SDK first
     await initSDK();
+    
+    // Load user balance for continue system
+    try {
+        platformBalance = await loadUserBalance();
+        window.platformBalance = platformBalance;
+    } catch (e) {
+        platformBalance = 0;
+        window.platformBalance = 0;
+    }
     
     // Prevent default touch behaviors (exclude fullscreen button)
     document.body.addEventListener('touchstart', (e) => {

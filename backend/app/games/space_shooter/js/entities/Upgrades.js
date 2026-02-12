@@ -21,7 +21,7 @@ class UpgradeManager {
         this.drones = [];
         
         // Constants
-        this.maxLevel = 10;
+        this.maxLevel = Infinity; // No cap on upgrades
     }
     
     /**

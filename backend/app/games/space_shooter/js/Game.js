@@ -18,6 +18,7 @@ class Game {
         // Game state
         this.state = 'loading';
         this.score = 0;
+        this.lastSentScore = 0;
         this.highScore = this.loadHighScore();
         this.level = 1;
         this.time = 0;
@@ -47,6 +48,23 @@ class Game {
         this.finalLevelElement = document.getElementById('final-level');
         this.finalBestElement = document.getElementById('final-best');
         this.restartBtn = document.getElementById('restart-btn');
+        this.continueBtn = document.getElementById('continue-btn');
+        this.continueSection = document.getElementById('continue-section');
+        this.continueBalanceEl = document.getElementById('continue-balance');
+
+        // Continue system
+        this.CONTINUE_COST = 50;
+        this.hasContinued = false;
+
+        // Pre-game shop
+        this.SHOP_UPGRADE_COST = 50;
+        this.MAX_SHOP_UPGRADES = 3;
+        this.shopUpgradesPurchased = 0;
+        this.pregameShop = null;
+        this.shopOptions = null;
+        this.shopBalanceEl = null;
+        this.shopPurchasedCountEl = null;
+        this.shopStartBtn = null;
 
         // Combo system
         this.combo = 0;
@@ -125,6 +143,13 @@ class Game {
         this.upgradeOptions = document.getElementById('upgrade-options');
         this.upgradeLevelBadge = document.getElementById('upgrade-level-badge');
 
+        // Cache pre-game shop elements
+        this.pregameShop = document.getElementById('pregame-shop');
+        this.shopOptions = document.getElementById('shop-options');
+        this.shopBalanceEl = document.getElementById('shop-balance');
+        this.shopPurchasedCountEl = document.getElementById('shop-purchased-count');
+        this.shopStartBtn = document.getElementById('shop-start-btn');
+
         this.setupEventListeners();
 
         // Applica performance mode salvato
@@ -191,6 +216,24 @@ class Game {
             e.preventDefault();
             this.restartGame();
         });
+
+        // Shop start button
+        if (this.shopStartBtn) {
+            this.shopStartBtn.addEventListener('click', () => this.launchFromShop());
+            this.shopStartBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.launchFromShop();
+            });
+        }
+
+        // Continue button
+        if (this.continueBtn) {
+            this.continueBtn.addEventListener('click', () => this.handleContinue());
+            this.continueBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.handleContinue();
+            });
+        }
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && this.state === 'playing') {
@@ -643,16 +686,139 @@ class Game {
         if (this.state !== 'menu') return;
 
         this.sound.init();
-        // Avvia la musica dopo un piccolo delay per assicurarsi che sia caricata
-        setTimeout(() => {
-            this.sound.playBackgroundMusic();
-        }, 500);
 
         this.startScreen.classList.add('hidden');
         this.resetGame();
+
+        // Show pre-game shop instead of starting directly
+        this.showPregameShop();
+    }
+
+    /**
+     * Show the pre-game upgrade shop
+     */
+    showPregameShop() {
+        this.state = 'shop';
+        this.shopUpgradesPurchased = 0;
+
+        if (this.pregameShop) {
+            this.pregameShop.classList.remove('hidden');
+        }
+
+        this.updateShopUI();
+    }
+
+    /**
+     * Update shop UI: balance, options, counter
+     */
+    updateShopUI() {
+        const balance = window.platformBalance || 0;
+        const canAfford = balance >= this.SHOP_UPGRADE_COST;
+        const slotsLeft = this.MAX_SHOP_UPGRADES - this.shopUpgradesPurchased;
+
+        // Update balance display
+        if (this.shopBalanceEl) {
+            this.shopBalanceEl.textContent = balance;
+        }
+
+        // Update counter
+        if (this.shopPurchasedCountEl) {
+            this.shopPurchasedCountEl.textContent = this.shopUpgradesPurchased;
+        }
+
+        // Update options
+        if (this.shopOptions) {
+            this.shopOptions.innerHTML = '';
+
+            if (slotsLeft <= 0) {
+                // Max upgrades purchased
+                const msgEl = document.createElement('div');
+                msgEl.className = 'shop-maxed-msg';
+                msgEl.innerHTML = '✅ Maximum upgrades acquired!';
+                this.shopOptions.appendChild(msgEl);
+                return;
+            }
+
+            const options = this.upgrades.getUpgradeOptions();
+
+            options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = `upgrade-option shop-option ${option.rarity} ${(!canAfford) ? 'shop-disabled' : ''}`;
+                optionEl.style.animationDelay = `${index * 0.1}s`;
+                optionEl.innerHTML = `
+                    <div class="upgrade-icon">${option.icon}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${option.name}</div>
+                        <div class="upgrade-desc">${option.description}</div>
+                    </div>
+                    <div class="shop-price-tag">
+                        <span class="shop-price-icon">💎</span>
+                        <span class="shop-price-amount">${this.SHOP_UPGRADE_COST}</span>
+                    </div>
+                `;
+
+                if (canAfford) {
+                    optionEl.addEventListener('click', () => this.purchasePregameUpgrade(option));
+                    optionEl.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.purchasePregameUpgrade(option);
+                    });
+                }
+
+                this.shopOptions.appendChild(optionEl);
+            });
+
+            if (!canAfford) {
+                const msgEl = document.createElement('div');
+                msgEl.className = 'shop-insufficient-msg';
+                msgEl.innerHTML = `⚠️ Need ${this.SHOP_UPGRADE_COST} coins per upgrade`;
+                this.shopOptions.appendChild(msgEl);
+            }
+        }
+    }
+
+    /**
+     * Purchase a pre-game upgrade
+     */
+    async purchasePregameUpgrade(option) {
+        if (this.shopUpgradesPurchased >= this.MAX_SHOP_UPGRADES) return;
+
+        const balance = window.platformBalance || 0;
+        if (balance < this.SHOP_UPGRADE_COST) return;
+
+        // Spend coins via main.js handler
+        if (window.handleShopUpgradePurchase) {
+            const success = await window.handleShopUpgradePurchase(this.SHOP_UPGRADE_COST);
+            if (!success) return;
+        }
+
+        // Apply the upgrade
+        this.upgrades.applyUpgrade(option);
+        this.shopUpgradesPurchased++;
+
+        // Sound feedback
+        this.sound.playPowerUp();
+
+        // Update the shop UI
+        this.updateShopUI();
+    }
+
+    /**
+     * Launch the game from the shop
+     */
+    launchFromShop() {
+        if (this.pregameShop) {
+            this.pregameShop.classList.add('hidden');
+        }
+
+        // Start music
+        setTimeout(() => {
+            this.sound.playBackgroundMusic();
+        }, 300);
+
         this.state = 'playing';
 
-        // Notifica la piattaforma che il gioco è iniziato
+        // Notify platform
         if (typeof window.startGameSession === 'function') {
             window.startGameSession();
         }
@@ -660,6 +826,7 @@ class Game {
 
     resetGame() {
         this.score = 0;
+        this.lastSentScore = 0;
         this.level = 1;
         this.time = 0;
         this.waveNumber = 0;
@@ -699,16 +866,90 @@ class Game {
     restartGame() {
         this.gameOverScreen.classList.add('hidden');
         this.resetGame();
-        this.state = 'playing';
+        this.hasContinued = false;
 
         // Riavvia la musica
         this.sound.stopBackgroundMusic();
-        this.sound.playBackgroundMusic();
 
-        // Notifica la piattaforma di una nuova sessione
+        // Reload balance before showing shop
+        if (window.refreshPlatformBalance) {
+            window.refreshPlatformBalance().then(() => {
+                this.showPregameShop();
+            });
+        } else {
+            this.showPregameShop();
+        }
+    }
+
+    /**
+     * Handle continue button click - delegates to main.js
+     */
+    handleContinue() {
+        if (window.handleContinueGame) {
+            window.handleContinueGame();
+        }
+    }
+
+    /**
+     * Resume game after paid continue
+     */
+    resumeAfterContinue() {
+        this.gameOverScreen.classList.add('hidden');
+
+        // Save evolved stats before creating new player
+        const evolvedMaxHealth = this.player ? this.player.maxHealth : 3;
+        const evolvedWeaponLevel = this.player ? this.player.weaponLevel : 1;
+
+        // Restore player with evolved health
+        this.player = new Player(
+            this.canvas.width / 2 - 24,
+            this.canvas.height - 100
+        );
+        this.player.maxHealth = evolvedMaxHealth;
+        this.player.health = this.player.maxHealth;
+        this.player.weaponLevel = evolvedWeaponLevel;
+        this.player.invincible = true;
+        this.player.invincibleTime = this.player.invincibleDuration * 2.5; // Extended invincibility on revive
+
+        // Clear all enemies and enemy bullets
+        this.enemies = [];
+        this.bullets = [];
+        this.explosions = [];
+        this.powerUps = [];
+
+        // Restart from the beginning of the current level
+        this.waveNumber = 0;
+        this.waveTimer = 3;
+        this.bossSpawned = false;
+
+        // Reset game over animation state
+        this.gameOverAnimating = false;
+        this.gameOverTimer = 0;
+        this.gameOverExplosions = [];
+        this.celebrating = false;
+        this.celebrationTimer = 0;
+        this.celebrationZoom = 1;
+
+        // Update upgrade references to new player
+        if (this.upgrades) {
+            if (this.upgrades.barrier) {
+                this.upgrades.barrier.player = this.player;
+            }
+            this.upgrades.drones.forEach(drone => {
+                drone.player = this.player;
+            });
+        }
+
+        // Flash effect to show revival
+        this.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.8);
+
+        // Restart session tracking
         if (typeof window.startGameSession === 'function') {
             window.startGameSession();
         }
+
+        // Show upgrade selection before resuming gameplay
+        this.showUpgradeModal();
     }
 
     gameOver() {
@@ -759,12 +1000,47 @@ class Game {
             this.finalBestElement.classList.toggle('new', isNewHigh);
         }
 
-        // Invia score alla piattaforma
-        if (typeof window.sendScoreToPlatform === 'function') {
-            window.sendScoreToPlatform(this.score, {
+        // Invia solo il delta score alla piattaforma (evita XP duplicati con continue)
+        const deltaScore = this.score - this.lastSentScore;
+        if (deltaScore > 0 && typeof window.sendScoreToPlatform === 'function') {
+            window.sendScoreToPlatform(deltaScore, {
                 level: this.level,
                 wave: this.waveNumber
             });
+        }
+        this.lastSentScore = this.score;
+
+        // Update continue button visibility
+        this.updateContinueUI();
+    }
+
+    /**
+     * Update continue section UI based on balance
+     */
+    async updateContinueUI() {
+        if (!this.continueSection) return;
+
+        // Refresh balance from server before showing
+        if (window.refreshPlatformBalance) {
+            await window.refreshPlatformBalance();
+        }
+
+        // Load user balance
+        const platformBalance = window.platformBalance || 0;
+        const canAfford = platformBalance >= this.CONTINUE_COST;
+
+        this.continueSection.style.display = 'flex';
+
+        if (canAfford) {
+            this.continueBtn.disabled = false;
+            this.continueBtn.classList.remove('disabled');
+            this.continueBalanceEl.textContent = `Your balance: ${platformBalance} coins`;
+            this.continueBalanceEl.className = 'continue-balance';
+        } else {
+            this.continueBtn.disabled = true;
+            this.continueBtn.classList.add('disabled');
+            this.continueBalanceEl.textContent = `You have ${platformBalance} coins • Need ${this.CONTINUE_COST}`;
+            this.continueBalanceEl.className = 'continue-balance insufficient';
         }
     }
 

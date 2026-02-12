@@ -415,7 +415,6 @@ body {
         0 24px 60px rgba(0, 0, 0, 0.6),
         0 0 40px rgba(0, 150, 255, 0.20),
         inset 0 0 24px rgba(0, 100, 200, 0.08);
-    backdrop-filter: blur(6px);
 }
 
 .go-header h1 {
@@ -535,6 +534,121 @@ body {
 
 .go-actions #restart-btn {
     width: min(320px, 100%);
+}
+
+/* Continue Section */
+.go-continue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+#continue-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 14px 40px;
+    width: min(320px, 100%);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    background: linear-gradient(180deg, rgba(0, 220, 100, 0.3) 0%, rgba(0, 160, 80, 0.5) 100%),
+                linear-gradient(180deg, #00dc64 0%, #00a040 50%, #006828 100%);
+    border: 2px solid rgba(0, 255, 136, 0.6);
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+        0 0 30px rgba(0, 255, 136, 0.3),
+        0 8px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+#continue-btn .continue-icon {
+    font-size: 1.1rem;
+}
+
+#continue-btn .continue-text {
+    font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+#continue-btn .continue-cost {
+    font-size: clamp(0.65rem, 2.5vw, 0.8rem);
+    font-weight: 400;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+#continue-btn .continue-bonus {
+    display: block;
+    font-size: clamp(0.6rem, 2.2vw, 0.75rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    margin-top: 2px;
+}
+
+#continue-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 70%);
+    transform: rotate(45deg);
+    animation: buttonShine 3s linear infinite;
+}
+
+#continue-btn:hover:not(.disabled) {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow:
+        0 0 50px rgba(0, 255, 136, 0.5),
+        0 12px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(0, 255, 180, 0.8);
+}
+
+#continue-btn:active:not(.disabled) {
+    transform: scale(0.98) translateY(0);
+}
+
+#continue-btn.disabled {
+    background: linear-gradient(180deg, rgba(80, 80, 80, 0.3) 0%, rgba(50, 50, 50, 0.5) 100%),
+                linear-gradient(180deg, #555 0%, #333 50%, #222 100%);
+    border-color: rgba(100, 100, 100, 0.4);
+    box-shadow:
+        0 0 10px rgba(100, 100, 100, 0.15),
+        0 4px 10px rgba(0, 0, 0, 0.4);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+#continue-btn.disabled::before {
+    display: none;
+}
+
+.continue-balance {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(150, 200, 255, 0.7);
+    letter-spacing: 1px;
+}
+
+.continue-balance.insufficient {
+    color: rgba(255, 170, 0, 0.85);
 }
 
 @media (max-width: 520px) {
@@ -1297,6 +1411,214 @@ body {
 }
 
 
+/* ============ PRE-GAME UPGRADE SHOP ============ */
+#pregame-shop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    background: radial-gradient(ellipse at center, rgba(0, 20, 50, 0.95) 0%, rgba(0, 5, 15, 0.98) 100%);
+}
+
+.shop-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 18px 28px;
+    width: min(480px, 94%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(145deg, rgba(8, 16, 35, 0.92) 0%, rgba(3, 10, 22, 0.96) 100%);
+    border-radius: 16px;
+    border: 2px solid rgba(0, 200, 255, 0.3);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(0, 180, 255, 0.15),
+        inset 0 0 30px rgba(0, 100, 200, 0.06);
+}
+
+.shop-header {
+    text-align: center;
+    width: 100%;
+}
+
+.shop-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.2rem, 5vw, 1.6rem);
+    font-weight: 800;
+    color: #00e5ff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0, 200, 255, 0.6), 0 0 40px rgba(0, 150, 255, 0.3);
+    margin: 0 0 4px 0;
+}
+
+.shop-subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    color: #88aacc;
+    letter-spacing: 1px;
+    margin: 0 0 12px 0;
+}
+
+.shop-balance-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 80, 150, 0.15);
+    border: 1px solid rgba(0, 150, 255, 0.2);
+    border-radius: 8px;
+    margin: 0 auto 8px auto;
+    width: fit-content;
+}
+
+.shop-balance-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    color: #aaccee;
+    letter-spacing: 1px;
+}
+
+.shop-balance-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.shop-counter {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    color: #00e5ff;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+}
+
+.shop-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.shop-option {
+    position: relative;
+}
+
+.shop-option.shop-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.shop-price-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, rgba(255, 200, 0, 0.2) 0%, rgba(200, 150, 0, 0.3) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.shop-price-icon {
+    font-size: 0.9rem;
+}
+
+.shop-price-amount {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+.shop-insufficient-msg {
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    color: rgba(255, 170, 0, 0.85);
+    letter-spacing: 1px;
+    padding: 8px;
+}
+
+.shop-maxed-msg {
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    color: #00ff88;
+    letter-spacing: 1px;
+    padding: 16px;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+.shop-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#shop-start-btn {
+    padding: 16px 50px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(0.95rem, 3.5vw, 1.2rem);
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: white;
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 128, 204, 0.3) 100%),
+                linear-gradient(180deg, #00d4ff 0%, #0080cc 50%, #004488 100%);
+    border: 2px solid rgba(0, 200, 255, 0.6);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+        0 0 30px rgba(0, 150, 255, 0.4),
+        0 8px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+    width: min(300px, 100%);
+}
+
+#shop-start-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 70%);
+    transform: rotate(45deg);
+    animation: buttonShine 3s linear infinite;
+}
+
+#shop-start-btn:hover {
+    transform: scale(1.06) translateY(-2px);
+    box-shadow:
+        0 0 50px rgba(0, 200, 255, 0.6),
+        0 12px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(50, 220, 255, 0.8);
+}
+
+#shop-start-btn:active {
+    transform: scale(1.02) translateY(0);
+}
+
+
 /* ============ UPGRADE SELECTION MODAL ============ */
 #upgrade-modal {
     position: absolute;
@@ -1315,11 +1637,9 @@ body {
 @keyframes upgradeModalFadeIn {
     from {
         opacity: 0;
-        backdrop-filter: blur(0px);
     }
     to {
         opacity: 1;
-        backdrop-filter: blur(8px);
     }
 }
 

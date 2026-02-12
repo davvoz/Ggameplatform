@@ -68,6 +68,29 @@
         </div>
 
 
+        <!-- Pre-Game Upgrade Shop -->
+        <div id="pregame-shop" class="hidden">
+            <div class="shop-card" role="dialog" aria-labelledby="shop-title" aria-modal="true">
+                <div class="shop-header">
+                    <h1 id="shop-title">⚡ UPGRADE SHOP ⚡</h1>
+                    <p class="shop-subtitle">Power up before launch! Max 3 upgrades</p>
+                    <div class="shop-balance-row">
+                        <span class="shop-balance-label">💎 Your Coins:</span>
+                        <span class="shop-balance-value" id="shop-balance">0</span>
+                    </div>
+                    <div class="shop-counter">
+                        <span id="shop-purchased-count">0</span> / 3 upgrades
+                    </div>
+                </div>
+                <div class="shop-options" id="shop-options">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+                <div class="shop-actions">
+                    <button id="shop-start-btn">🚀 LAUNCH MISSION</button>
+                </div>
+            </div>
+        </div>
+
         <div id="game-over-screen" class="hidden">
             <div class="go-card" role="dialog" aria-labelledby="go-title" aria-modal="true">
                 <div class="go-header">
@@ -86,6 +109,15 @@
                         <span class="label">Best</span>
                         <span class="value best" id="final-best">0</span>
                     </div>
+                </div>
+                <div class="go-continue" id="continue-section">
+                    <button id="continue-btn">
+                        <span class="continue-icon">💎</span>
+                        <span class="continue-text">CONTINUE</span>
+                        <span class="continue-cost">50 Coins</span>
+                        <span class="continue-bonus">+ 🎁 Free Upgrade!</span>
+                    </button>
+                    <div class="continue-balance" id="continue-balance"></div>
                 </div>
                 <div class="go-actions">
                     <button id="restart-btn">RESTART</button>

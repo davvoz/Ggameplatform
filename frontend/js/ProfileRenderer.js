@@ -1,4 +1,4 @@
-import { getUserSessions, getGameResourceUrl } from './api.js';
+import { getUserSessions, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { config } from './config.js';
 
@@ -74,6 +74,9 @@ class ProfileRenderer {
             this.updateStatsSection(user, stats);
             this.populateRecentActivity(stats.recentActivity);
             this.populateHighScores(user.game_scores_enriched);
+
+            // Load weekly leaderboard standings in background
+            this.loadWeeklyStandingsAsync(user.user_id);
 
             // Load Steem profile in background (slowest operation)
             this.loadSteemProfile(user).then(steemProfile => {
@@ -1062,9 +1065,7 @@ class ProfileRenderer {
             return 'https://via.placeholder.com/100x75?text=No+Image';
         }
 
-        return gameScore.thumbnail.startsWith('http')
-            ? gameScore.thumbnail
-            : getGameResourceUrl(gameScore.game_id, gameScore.thumbnail);
+        return getGamePreviewUrl(gameScore.game_id, gameScore.thumbnail);
     }
 
     async loadCoinBalanceHeader(userId) {
@@ -1120,6 +1121,108 @@ class ProfileRenderer {
             console.error('❌ Error loading coin balance:', error);
             coinBalanceEl.textContent = '--';
         }
+    }
+
+    /**
+     * Load weekly leaderboard standings for the user and render into the profile.
+     */
+    async loadWeeklyStandingsAsync(userId) {
+        try {
+            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            const response = await fetch(`${API_URL}/api/leaderboard/user-weekly-standings/${userId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+
+            if (!data.success || !data.standings || data.standings.length === 0) return;
+
+            const section = document.getElementById('weeklyStandingsSection');
+            if (!section) return;
+
+            section.style.display = 'block';
+            section.innerHTML = this.buildWeeklyStandingsHTML(data);
+        } catch (error) {
+            console.error('Error loading weekly standings:', error);
+        }
+    }
+
+    /**
+     * Build the HTML for weekly leaderboard standings.
+     */
+    buildWeeklyStandingsHTML(data) {
+        const weekEnd = new Date(data.week_end);
+        const now = new Date();
+        const daysLeft = Math.max(0, Math.ceil((weekEnd - now) / (1000 * 60 * 60 * 24)));
+
+        const standingsRows = data.standings.map(s => {
+            const rankBadge = s.rank <= 3
+                ? `<span class="ws-rank ws-rank-${s.rank}">${['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'][s.rank - 1]}</span>`
+                : `<span class="ws-rank">#${s.rank}</span>`;
+
+            const rewardBadges = [];
+            if (s.steem_reward > 0) {
+                rewardBadges.push(`<span class="ws-badge ws-badge-steem"><img src="./icons/steem.png" class="ws-badge-icon" alt="S"> ${s.steem_reward}</span>`);
+            }
+            if (s.coin_reward > 0) {
+                rewardBadges.push(`<span class="ws-badge ws-badge-coin"><img src="./icons/coin.png" class="ws-badge-icon" alt="C"> ${s.coin_reward}</span>`);
+            }
+            const rewardsHTML = rewardBadges.length > 0
+                ? `<div class="ws-rewards">${rewardBadges.join('')}</div>`
+                : `<div class="ws-rewards"><span class="ws-no-reward">\u2014</span></div>`;
+
+            return `
+                <div class="ws-row">
+                    <div class="ws-rank-col">${rankBadge}</div>
+                    <div class="ws-game-col">${this.escapeHTML(s.game_title)}</div>
+                    <div class="ws-score-col">${s.score.toLocaleString()}</div>
+                    <div class="ws-rewards-col">${rewardsHTML}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Totals
+        const totalSteem = data.total_projected_steem;
+        const totalCoins = data.total_projected_coins;
+        const totalBadges = [];
+        if (totalSteem > 0) {
+            totalBadges.push(`<span class="ws-badge ws-badge-steem ws-badge-lg"><img src="./icons/steem.png" class="ws-badge-icon" alt="S"> ${totalSteem}</span>`);
+        }
+        if (totalCoins > 0) {
+            totalBadges.push(`<span class="ws-badge ws-badge-coin ws-badge-lg"><img src="./icons/coin.png" class="ws-badge-icon" alt="C"> ${totalCoins}</span>`);
+        }
+
+        return `
+            <h3>\ud83d\udcca Weekly Results</h3>
+            <div class="ws-container">
+                <div class="ws-header">
+                    <span class="ws-subtitle">Current positions & projected rewards</span>
+                    <span class="ws-days-left">\u23f3 ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>
+                </div>
+                <div class="ws-table">
+                    <div class="ws-row ws-row-header">
+                        <div class="ws-rank-col">Rank</div>
+                        <div class="ws-game-col">Game</div>
+                        <div class="ws-score-col">Score</div>
+                        <div class="ws-rewards-col">Rewards</div>
+                    </div>
+                    ${standingsRows}
+                </div>
+                ${totalBadges.length > 0 ? `
+                <div class="ws-totals">
+                    <span class="ws-totals-label">Total projected rewards:</span>
+                    <div class="ws-totals-badges">${totalBadges.join('')}</div>
+                </div>` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Escape HTML to prevent XSS.
+     */
+    escapeHTML(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     async voteCur8Witness() {

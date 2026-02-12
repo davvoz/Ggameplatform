@@ -779,3 +779,40 @@
         font-size: 1.5rem;
     }
 }
+
+/* ─── Catalog Footer ─── */
+.catalog-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 0 12px;
+    margin-top: var(--spacing-lg);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.catalog-footer:hover {
+    opacity: 1;
+}
+
+.catalog-footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.catalog-footer-link:hover {
+    color: var(--primary-color);
+}
+
+.catalog-footer-sep {
+    font-size: 0.6rem;
+}
+
+.catalog-footer-version {
+    font-variant-numeric: tabular-nums;
+}

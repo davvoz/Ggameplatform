@@ -1,4 +1,4 @@
-import { fetchGames, getGameResourceUrl } from './api.js';
+import { fetchGames, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 
 // Use LeaderboardAPI from global scope
@@ -116,7 +116,7 @@ class LeaderboardRenderer {
                         <span class="week-range">${this.formatWeekRange()}</span>
                     </div>
                     <div class="week-countdown">
-                        <span class="countdown-label">Reset in:</span>
+                        <span class="countdown-label">Ends in:</span>
                         <span id="countdownTimer" class="countdown-value">--</span>
                     </div>
                 </div>
@@ -139,13 +139,6 @@ class LeaderboardRenderer {
                         👑 Winners History
                     </button>
                 </div>
-                
-                <!-- Rewards Info (below tabs) -->
-                <div id="rewardsInfo" class="rewards-info">
-                    ${this.renderRewardsInfo()}
-                </div>
-
-
 
                 <!-- Leaderboard Content -->
                 <div id="leaderboardContent" class="leaderboard-content">
@@ -163,7 +156,7 @@ class LeaderboardRenderer {
      */
     renderGameCard(game, isSelected = false) {
         const thumbnailUrl = game.thumbnail
-            ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
+            ? getGamePreviewUrl(game.game_id, game.thumbnail)
             : './icons/icon-192x192.png';
         
         const steemBadge = game.steem_rewards_enabled 
@@ -264,61 +257,6 @@ class LeaderboardRenderer {
     }
 
     /**
-     * Render rewards information
-     */
-    renderRewardsInfo() {
-        // Only show rewards on weekly tab
-        if (this.currentTab !== 'weekly') {
-            return '';
-        }
-
-        if (!this.rewards || this.rewards.length === 0) {
-            return '<p class="text-muted">No rewards configured</p>';
-        }
-
-        // Filter rewards by current game
-        const relevantRewards = this.currentGameId
-            ? this.rewards.filter(r => r.game_id === this.currentGameId || r.game_id === null)
-            : this.rewards.filter(r => r.game_id === null); // Only global for global view
-
-        if (relevantRewards.length === 0) {
-            return '<p class="text-muted">No specific rewards for this game</p>';
-        }
-
-        return `
-            <h3>💰 Weekly Rewards</h3>
-            <div class="rewards-grid">
-                ${relevantRewards.map(r => this.renderRewardBadge(r)).join('')}
-            </div>
-        `;
-    }
-
-    /**
-     * Render single reward badge
-     */
-    renderRewardBadge(reward) {
-        const rankText = reward.rank_start === reward.rank_end
-            ? `#${reward.rank_start}`
-            : `#${reward.rank_start}-${reward.rank_end}`;
-        
-        const medal = reward.rank_start === 1 ? '🥇' : reward.rank_start === 2 ? '🥈' : reward.rank_start === 3 ? '🥉' : '🏅';
-
-        // Show STEEM rewards only if enabled for this game
-        const showSteemReward = this.steemEnabled && reward.steem_reward > 0;
-
-        return `
-            <div class="reward-badge">
-                <div class="reward-rank">${medal} ${rankText}</div>
-                <div class="reward-amounts">
-                    ${showSteemReward ? `<span class="steem-reward steem-blue">${reward.steem_reward} <img src="./icons/steem.png" alt="STEEM" class="steem-rewards-icon"></span>` : ''}
-                    ${reward.coin_reward > 0 ? `<span class="coin-reward">${reward.coin_reward} 🪙</span>` : ''}
-                </div>
-                ${reward.description ? `<div class="reward-desc">${reward.description}</div>` : ''}
-            </div>
-        `;
-    }
-
-    /**
      * Switch between tabs
      */
     async switchTab(tab) {
@@ -328,13 +266,6 @@ class LeaderboardRenderer {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tab);
         });
-
-        // Update rewards display (only show on weekly tab)
-        const rewardsInfoEl = document.getElementById('rewardsInfo');
-        if (rewardsInfoEl) {
-            rewardsInfoEl.innerHTML = this.renderRewardsInfo();
-            rewardsInfoEl.style.display = (tab === 'weekly') ? 'block' : 'none';
-        }
 
         // Load appropriate content
         if (tab === 'winners') {
@@ -355,10 +286,6 @@ class LeaderboardRenderer {
             const rewardsData = await LeaderboardAPI.getRewardsConfig(this.currentGameId);
             this.rewards = rewardsData.rewards || [];
             this.steemEnabled = rewardsData.steem_rewards_enabled || false;
-            const rewardsInfoEl = document.getElementById('rewardsInfo');
-            rewardsInfoEl.innerHTML = this.renderRewardsInfo();
-            // Maintain visibility based on current tab
-            rewardsInfoEl.style.display = (this.currentTab === 'weekly') ? 'block' : 'none';
         } catch (error) {
             console.error('Error loading rewards:', error);
         }
@@ -369,6 +296,29 @@ class LeaderboardRenderer {
         } else {
             await this.loadLeaderboard();
         }
+    }
+
+    /**
+     * Get the reward config for a given rank
+     */
+    getRewardForRank(rank) {
+        if (!this.rewards || this.rewards.length === 0) return null;
+        return this.rewards.find(r => rank >= r.rank_start && rank <= r.rank_end) || null;
+    }
+
+    /**
+     * Render reward badge HTML for a given reward object
+     */
+    renderRewardBadgesInline(reward) {
+        if (!reward) return '';
+        const parts = [];
+        if (this.steemEnabled && reward.steem_reward > 0) {
+            parts.push(`<span class="gdl-reward-steem"><img src="./icons/steem.png" alt="STEEM" class="gdl-reward-icon"> ${reward.steem_reward}</span>`);
+        }
+        if (reward.coin_reward > 0) {
+            parts.push(`<span class="gdl-reward-coin">🪙 ${reward.coin_reward}</span>`);
+        }
+        return parts.length > 0 ? `<div class="gdl-reward-badges">${parts.join('')}</div>` : '';
     }
 
     /**
@@ -392,12 +342,94 @@ class LeaderboardRenderer {
                 return;
             }
 
-            container.innerHTML = this.renderLeaderboardTable(data.leaderboard);
+            container.innerHTML = this.renderPodiumLeaderboard(data.leaderboard);
 
         } catch (error) {
             console.error('Error loading leaderboard:', error);
             container.innerHTML = '<div class="error-message">Failed to load leaderboard</div>';
         }
+    }
+
+    /**
+     * Render leaderboard with podium (top 3) + list (rest)
+     */
+    renderPodiumLeaderboard(entries) {
+        const top3 = entries.slice(0, 3);
+        const rest = entries.slice(3);
+        const hasGames = !this.currentGameId;
+        const showRewards = this.currentTab === 'weekly';
+
+        // Build podium (reorder: 2nd, 1st, 3rd)
+        const podiumOrder = [];
+        if (top3[1]) podiumOrder.push({ ...top3[1], podiumPos: 2 });
+        if (top3[0]) podiumOrder.push({ ...top3[0], podiumPos: 1 });
+        if (top3[2]) podiumOrder.push({ ...top3[2], podiumPos: 3 });
+
+        const podiumHTML = podiumOrder.map(entry => {
+            const medal = entry.podiumPos === 1 ? '🥇' : entry.podiumPos === 2 ? '🥈' : '🥉';
+            const username = entry.username || 'Anonymous';
+            const steemUsername = entry.steem_username || null;
+            const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
+                size: 'medium',
+                cssClass: 'gdl-podium-avatar',
+                width: entry.podiumPos === 1 ? 80 : 64,
+                height: entry.podiumPos === 1 ? 80 : 64
+            });
+            const userId = entry.user_id || '';
+            const score = (entry.score || entry.total_score || 0).toLocaleString();
+            const reward = showRewards ? this.getRewardForRank(entry.rank) : null;
+            const rewardHTML = this.renderRewardBadgesInline(reward);
+            const gamesInfo = hasGames && entry.games_played ? `<div class="gdl-podium-games">${entry.games_played} games</div>` : '';
+
+            return `
+                <div class="gdl-podium-player gdl-podium-${entry.podiumPos}" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
+                    <div class="gdl-podium-medal">${medal}</div>
+                    <div class="gdl-podium-avatar-wrap">${avatarHTML}</div>
+                    <div class="gdl-podium-name">${username}</div>
+                    <div class="gdl-podium-score">${score}</div>
+                    ${gamesInfo}
+                    ${rewardHTML}
+                    <div class="gdl-podium-bar"></div>
+                </div>
+            `;
+        }).join('');
+
+        // Build rest of list
+        const hasAnyListReward = showRewards && rest.some(e => this.getRewardForRank(e.rank));
+        const restHTML = rest.map(entry => {
+            const username = entry.username || 'Anonymous';
+            const steemUsername = entry.steem_username || null;
+            const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
+                size: 'small',
+                cssClass: 'gdl-list-avatar',
+                width: 40,
+                height: 40
+            });
+            const userId = entry.user_id || '';
+            const score = (entry.score || entry.total_score || 0).toLocaleString();
+            const reward = showRewards ? this.getRewardForRank(entry.rank) : null;
+            const rewardHTML = this.renderRewardBadgesInline(reward);
+            const gamesCell = hasGames ? `<span class="gdl-list-games">${entry.games_played || 0}</span>` : '';
+            const rewardsClass = hasAnyListReward ? 'has-rewards' : '';
+            const gamesClass = hasGames ? 'has-games-col' : '';
+
+            return `
+                <div class="gdl-list-row ${rewardsClass} ${gamesClass} clickable-row" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
+                    <span class="gdl-list-rank">#${entry.rank}</span>
+                    <div class="gdl-list-player">${avatarHTML}<span class="gdl-list-name">${username}</span></div>
+                    <span class="gdl-list-score">${score}</span>
+                    ${gamesCell}
+                    ${hasAnyListReward ? `<div class="gdl-list-reward">${rewardHTML}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="gdl-section gdl-section--page">
+                <div class="gdl-podium">${podiumHTML}</div>
+                ${rest.length > 0 ? `<div class="gdl-list">${restHTML}</div>` : ''}
+            </div>
+        `;
     }
 
     /**

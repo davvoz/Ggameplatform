@@ -62,6 +62,9 @@ class Player extends LivingEntity {
         this.dodgeTimer = 0;
         this.dodgeDirection = new Vector2(0, 0);
         
+        // Invincibility frames (after taking damage)
+        this.invincibilityTimer = 0;
+        
         // Health regen timer
         this.regenTimer = 0;
         
@@ -120,6 +123,9 @@ class Player extends LivingEntity {
         if (this.dodgeCooldown > 0) {
             this.dodgeCooldown -= deltaTime * 1000;
         }
+
+        // Update invincibility frames
+        this.updateInvincibility(deltaTime);
 
         // Health regeneration
         if (this.stats.healthRegen > 0 && this.health < this.maxHealth) {
@@ -204,17 +210,39 @@ class Player extends LivingEntity {
     }
 
     /**
-     * Take damage with armor reduction
+     * Take damage with armor reduction and invincibility frames
      * @param {number} amount 
      * @param {Entity} source 
      * @returns {boolean}
      */
     takeDamage(amount, source = null) {
-        if (this.isDodging) return false;
+        if (this.isDodging || this.invincible) return false;
 
         // Apply armor reduction
         const reducedDamage = amount * (1 - this.stats.armor);
-        return super.takeDamage(reducedDamage, source);
+        const result = super.takeDamage(reducedDamage, source);
+        
+        // Apply invincibility frames after taking damage (500ms)
+        if (result && !this.isDead()) {
+            this.invincible = true;
+            this.invincibilityTimer = 500; // 500ms of invincibility
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Update invincibility timer
+     * @param {number} deltaTime
+     */
+    updateInvincibility(deltaTime) {
+        if (this.invincibilityTimer > 0) {
+            this.invincibilityTimer -= deltaTime * 1000;
+            if (this.invincibilityTimer <= 0) {
+                this.invincible = false;
+                this.invincibilityTimer = 0;
+            }
+        }
     }
 
     /**

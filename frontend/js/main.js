@@ -1,5 +1,6 @@
-import { fetchGames, fetchGameMetadata, getGameResourceUrl, trackGamePlay } from './api.js';
+import { fetchGames, fetchGameMetadata, getGameResourceUrl, getGamePreviewUrl, trackGamePlay } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
+import { steemAvatarService } from './SteemAvatarService.js';
 import { QuestRenderer } from './quest.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.obf.js';
@@ -178,6 +179,25 @@ export async function renderCatalog(filters = {}) {
 
     // Load and display games with current mode filter
     await loadGames({ ...filters, mode: currentGameMode });
+
+    // Load version into footer
+    loadCatalogFooterVersion();
+}
+
+/**
+ * Load version info into the catalog footer
+ */
+function loadCatalogFooterVersion() {
+    const el = document.getElementById('catalogVersion');
+    if (!el) return;
+    fetch('/version.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && data.version) {
+                el.textContent = `v${data.version}`;
+            }
+        })
+        .catch(() => {});
 }
 
 /**
@@ -413,11 +433,9 @@ function createGameCard(game) {
     const cardElement = card.querySelector('.game-card');
     cardElement.dataset.gameId = game.game_id;
 
-    // Set thumbnail
+    // Set thumbnail (use lightweight preview for card grid)
     const img = card.querySelector('.game-thumbnail img');
-    const thumbnailUrl = game.thumbnail
-        ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(game.game_id, game.thumbnail))
-        : 'https://via.placeholder.com/400x300?text=No+Image';
+    const thumbnailUrl = getGamePreviewUrl(game.game_id, game.thumbnail);
     img.src = thumbnailUrl;
     img.alt = game.title;
 
@@ -548,9 +566,182 @@ export async function renderGameDetail(params) {
             navigateTo(`/play/${gameId}`);
         });
 
+        // Load weekly leaderboard for ranked games
+        const isRanked = game.status?.status_code === 'ranked';
+        if (isRanked) {
+            loadGameDetailLeaderboard(gameId);
+        }
+
     } catch (error) {
         appContainer.innerHTML = '<div class="error-message">Failed to load game details.</div>';
         console.error('Error loading game detail:', error);
+    }
+}
+
+/**
+ * Load and render weekly leaderboard for a game in the detail page
+ * Shows a podium for top 3 and a list for the rest
+ */
+async function loadGameDetailLeaderboard(gameId) {
+    const container = document.getElementById('game-detail-leaderboard');
+    if (!container) return;
+
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div class="gdl-section">
+            <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
+            <div class="gdl-loading">Loading leaderboard...</div>
+        </div>
+    `;
+
+    try {
+        const LeaderboardAPI = window.LeaderboardAPI;
+        if (!LeaderboardAPI) {
+            container.style.display = 'none';
+            return;
+        }
+
+        const [data, weekInfo, rewardsData] = await Promise.all([
+            LeaderboardAPI.getWeeklyLeaderboard(gameId, 20),
+            LeaderboardAPI.getWeekInfo(),
+            LeaderboardAPI.getRewardsConfig(gameId).catch(() => ({ rewards: [], steem_rewards_enabled: false }))
+        ]);
+
+        const rewards = rewardsData.rewards || [];
+        const steemEnabled = rewardsData.steem_rewards_enabled || false;
+
+        // Helper: find reward for a given rank
+        const getRewardForRank = (rank) => {
+            return rewards.find(r => rank >= r.rank_start && rank <= r.rank_end) || null;
+        };
+
+        // Helper: render reward badges HTML
+        const renderRewardBadges = (reward) => {
+            if (!reward) return '';
+            const parts = [];
+            if (steemEnabled && reward.steem_reward > 0) {
+                parts.push(`<span class="gdl-reward-steem"><img src="./icons/steem.png" alt="STEEM" class="gdl-reward-icon"> ${reward.steem_reward}</span>`);
+            }
+            if (reward.coin_reward > 0) {
+                parts.push(`<span class="gdl-reward-coin">🪙 ${reward.coin_reward}</span>`);
+            }
+            return parts.length > 0 ? `<div class="gdl-reward-badges">${parts.join('')}</div>` : '';
+        };
+
+        if (!data.success || !data.leaderboard || data.leaderboard.length === 0) {
+            container.innerHTML = `
+                <div class="gdl-section">
+                    <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
+                    <div class="gdl-empty">
+                        <p>No scores this week yet. Be the first to play!</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const entries = data.leaderboard;
+        const top3 = entries.slice(0, 3);
+        const rest = entries.slice(3);
+
+        // Format week range
+        let weekRangeText = '';
+        if (weekInfo) {
+            const start = new Date(weekInfo.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const end = new Date(weekInfo.week_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            weekRangeText = `${start} – ${end}`;
+        }
+
+        // Build podium HTML (reorder: 2nd, 1st, 3rd)
+        const podiumOrder = [];
+        if (top3[1]) podiumOrder.push({ ...top3[1], podiumPos: 2 });
+        if (top3[0]) podiumOrder.push({ ...top3[0], podiumPos: 1 });
+        if (top3[2]) podiumOrder.push({ ...top3[2], podiumPos: 3 });
+
+        const podiumHTML = podiumOrder.map(entry => {
+            const medal = entry.podiumPos === 1 ? '🥇' : entry.podiumPos === 2 ? '🥈' : '🥉';
+            const username = entry.username || 'Anonymous';
+            const steemUsername = entry.steem_username || null;
+            const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
+                size: 'medium',
+                cssClass: 'gdl-podium-avatar',
+                width: entry.podiumPos === 1 ? 72 : 56,
+                height: entry.podiumPos === 1 ? 72 : 56
+            });
+            const userId = entry.user_id || '';
+            const reward = getRewardForRank(entry.rank);
+            const rewardHTML = renderRewardBadges(reward);
+
+            return `
+                <div class="gdl-podium-player gdl-podium-${entry.podiumPos}" data-user-id="${userId}">
+                    <div class="gdl-podium-medal">${medal}</div>
+                    <div class="gdl-podium-avatar-wrap">${avatarHTML}</div>
+                    <div class="gdl-podium-name">${username}</div>
+                    <div class="gdl-podium-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
+                    ${rewardHTML}
+                    <div class="gdl-podium-bar"></div>
+                </div>
+            `;
+        }).join('');
+
+        // Build rest of list
+        const hasAnyListReward = rest.some(e => getRewardForRank(e.rank));
+        const restHTML = rest.map(entry => {
+            const username = entry.username || 'Anonymous';
+            const steemUsername = entry.steem_username || null;
+            const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
+                size: 'small',
+                cssClass: 'gdl-list-avatar',
+                width: 40,
+                height: 40
+            });
+            const userId = entry.user_id || '';
+            const reward = getRewardForRank(entry.rank);
+            const rewardHTML = renderRewardBadges(reward);
+
+            return `
+                <div class="gdl-list-row ${hasAnyListReward ? 'has-rewards' : ''}" data-user-id="${userId}">
+                    <span class="gdl-list-rank">#${entry.rank}</span>
+                    <div class="gdl-list-player">${avatarHTML}<span class="gdl-list-name">${username}</span></div>
+                    <span class="gdl-list-score">${(entry.score || entry.total_score || 0).toLocaleString()}</span>
+                    ${hasAnyListReward ? `<div class="gdl-list-reward">${rewardHTML}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="gdl-section">
+                <div class="gdl-header">
+                    <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
+                    ${weekRangeText ? `<span class="gdl-week-range">${weekRangeText}</span>` : ''}
+                </div>
+                <div class="gdl-podium">${podiumHTML}</div>
+                ${rest.length > 0 ? `<div class="gdl-list">${restHTML}</div>` : ''}
+                <div class="gdl-footer">
+                    <a href="#/leaderboard" class="gdl-see-all">View Full Leaderboard →</a>
+                </div>
+            </div>
+        `;
+
+        // Add click handlers for navigating to user profiles
+        container.querySelectorAll('[data-user-id]').forEach(el => {
+            const userId = el.dataset.userId;
+            if (userId) {
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', () => {
+                    window.location.hash = `#/user/${userId}`;
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading game detail leaderboard:', error);
+        container.innerHTML = `
+            <div class="gdl-section">
+                <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
+                <div class="gdl-empty"><p>Failed to load leaderboard.</p></div>
+            </div>
+        `;
     }
 }
 

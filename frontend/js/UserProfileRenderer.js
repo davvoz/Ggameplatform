@@ -1,4 +1,4 @@
-import { getGameResourceUrl } from './api.js';
+import { getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import { config } from './config.js';
@@ -47,6 +47,9 @@ class UserProfileRenderer {
             }
 
             this.renderProfilePage(user, stats, levelInfo);
+
+            // Load weekly leaderboard standings in background
+            this.loadWeeklyStandingsAsync();
 
             // Load coin balance in background
             this.loadCoinBalanceAsync();
@@ -152,6 +155,98 @@ class UserProfileRenderer {
         } catch (error) {
             console.error('Error loading Steem profile:', error);
         }
+    }
+
+    /**
+     * Load weekly leaderboard standings and render into the profile page.
+     */
+    async loadWeeklyStandingsAsync() {
+        try {
+            const API_URL = this.getApiUrl();
+            const response = await fetch(`${API_URL}/api/leaderboard/user-weekly-standings/${this.userId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+
+            if (!data.success || !data.standings || data.standings.length === 0) return;
+
+            const section = document.getElementById('weeklyStandingsSection');
+            if (!section) return;
+
+            section.style.display = 'block';
+            section.innerHTML = this.buildWeeklyStandingsHTML(data);
+        } catch (error) {
+            console.error('Error loading weekly standings:', error);
+        }
+    }
+
+    /**
+     * Build the HTML for weekly leaderboard standings.
+     */
+    buildWeeklyStandingsHTML(data) {
+        const weekEnd = new Date(data.week_end);
+        const now = new Date();
+        const daysLeft = Math.max(0, Math.ceil((weekEnd - now) / (1000 * 60 * 60 * 24)));
+
+        const standingsRows = data.standings.map(s => {
+            const rankBadge = s.rank <= 3
+                ? `<span class="ws-rank ws-rank-${s.rank}">${['🥇','🥈','🥉'][s.rank - 1]}</span>`
+                : `<span class="ws-rank">#${s.rank}</span>`;
+
+            const rewardBadges = [];
+            if (s.steem_reward > 0) {
+                rewardBadges.push(`<span class="ws-badge ws-badge-steem"><img src="./icons/steem.png" class="ws-badge-icon" alt="S"> ${s.steem_reward}</span>`);
+            }
+            if (s.coin_reward > 0) {
+                rewardBadges.push(`<span class="ws-badge ws-badge-coin"><img src="./icons/coin.png" class="ws-badge-icon" alt="C"> ${s.coin_reward}</span>`);
+            }
+            const rewardsHTML = rewardBadges.length > 0
+                ? `<div class="ws-rewards">${rewardBadges.join('')}</div>`
+                : `<div class="ws-rewards"><span class="ws-no-reward">—</span></div>`;
+
+            return `
+                <div class="ws-row">
+                    <div class="ws-rank-col">${rankBadge}</div>
+                    <div class="ws-game-col">${this.escapeHTML(s.game_title)}</div>
+                    <div class="ws-score-col">${s.score.toLocaleString()}</div>
+                    <div class="ws-rewards-col">${rewardsHTML}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Totals
+        const totalSteem = data.total_projected_steem;
+        const totalCoins = data.total_projected_coins;
+        const totalBadges = [];
+        if (totalSteem > 0) {
+            totalBadges.push(`<span class="ws-badge ws-badge-steem ws-badge-lg"><img src="./icons/steem.png" class="ws-badge-icon" alt="S"> ${totalSteem}</span>`);
+        }
+        if (totalCoins > 0) {
+            totalBadges.push(`<span class="ws-badge ws-badge-coin ws-badge-lg"><img src="./icons/coin.png" class="ws-badge-icon" alt="C"> ${totalCoins}</span>`);
+        }
+
+        return `
+            <h3>📊 Weekly Results</h3>
+            <div class="ws-container">
+                <div class="ws-header">
+                    <span class="ws-subtitle">Current positions &amp; projected rewards</span>
+                    <span class="ws-days-left">⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>
+                </div>
+                <div class="ws-table">
+                    <div class="ws-row ws-row-header">
+                        <div class="ws-rank-col">Rank</div>
+                        <div class="ws-game-col">Game</div>
+                        <div class="ws-score-col">Score</div>
+                        <div class="ws-rewards-col">Rewards</div>
+                    </div>
+                    ${standingsRows}
+                </div>
+                ${totalBadges.length > 0 ? `
+                <div class="ws-totals">
+                    <span class="ws-totals-label">Total projected rewards:</span>
+                    <div class="ws-totals-badges">${totalBadges.join('')}</div>
+                </div>` : ''}
+            </div>
+        `;
     }
 
     // ───────── Stats Calculation ─────────
@@ -314,6 +409,8 @@ class UserProfileRenderer {
                         </div>
                     </div>
 
+                    <div id="weeklyStandingsSection" class="weekly-standings-section" style="display:none;"></div>
+
                     <h3>🏆 High Scores by Game</h3>
                     <div class="high-scores-list">
                         <div id="publicHighScoresContainer">
@@ -369,7 +466,7 @@ class UserProfileRenderer {
 
         return gameScores.map(gs => {
             const thumbnailUrl = gs.thumbnail
-                ? (gs.thumbnail.startsWith('http') ? gs.thumbnail : getGameResourceUrl(gs.game_id, gs.thumbnail))
+                ? getGamePreviewUrl(gs.game_id, gs.thumbnail)
                 : 'https://via.placeholder.com/100x75?text=No+Image';
 
             return `

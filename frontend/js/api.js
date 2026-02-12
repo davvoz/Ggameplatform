@@ -91,6 +91,19 @@ export function getGameResourceUrl(gameId, path) {
 }
 
 /**
+ * Get the lightweight preview thumbnail URL for a game (WebP, ~400px).
+ * Falls back to the original thumbnail if the game uses an external URL.
+ * @param {string} gameId - The game ID
+ * @param {string} thumbnail - Original thumbnail path from game metadata
+ * @returns {string} URL to the preview image
+ */
+export function getGamePreviewUrl(gameId, thumbnail) {
+    if (!thumbnail) return 'https://via.placeholder.com/400x300?text=No+Image';
+    if (thumbnail.startsWith('http')) return thumbnail;
+    return `${API_BASE_URL}/games/${gameId}/thumbnail_preview.webp`;
+}
+
+/**
  * Get the full URL for a static resource
  * @param {string} path - Resource path relative to static directory
  * @returns {string} Full URL to the resource
@@ -283,6 +296,7 @@ export default {
     fetchGameMetadata,
     registerGame,
     getGameResourceUrl,
+    getGamePreviewUrl,
     getStaticResourceUrl,
     healthCheck,
     trackGamePlay,

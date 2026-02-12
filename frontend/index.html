@@ -82,7 +82,6 @@
                     <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">Quests</a>
                      <a href="#/community" class="nav-link auth-required" data-route="/community" id="communityLink">Community</a>
                     <a href="#/wallet" class="nav-link auth-required" data-route="#/wallet" id="walletLink">Wallet</a>
-                    <a href="#/about" class="nav-link" data-route="/about">About</a>
                     <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">Profile</a>
                 </div>
             <!-- Multiplier card placed before level/profile for requested order -->
@@ -145,6 +144,11 @@
             <div id="game-grid" class="game-grid">
                 <!-- Game cards will be inserted here -->
             </div>
+            <footer class="catalog-footer">
+                <a href="#/about" class="catalog-footer-link">About</a>
+                <span class="catalog-footer-sep">•</span>
+                <span class="catalog-footer-version" id="catalogVersion"></span>
+            </footer>
         </div>
     </template>
 
@@ -204,6 +208,8 @@
                         <span class="stat-value"></span>
                     </div>
                 </div>
+                <!-- Weekly Leaderboard (only for ranked games) -->
+                <div id="game-detail-leaderboard" class="game-detail-leaderboard" style="display:none;"></div>
             </div>
         </div>
     </template>
@@ -475,6 +481,8 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="weeklyStandingsSection" class="weekly-standings-section" style="display:none;"></div>
 
                 <h3>🏆 High Scores by Game</h3>
                 <div class="high-scores-list" id="highScoresList">

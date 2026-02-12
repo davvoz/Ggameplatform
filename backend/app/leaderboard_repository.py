@@ -449,3 +449,76 @@ class LeaderboardRepository:
         
         self.session.commit()
         return deleted
+
+    def get_user_weekly_standings(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        Get the user's current weekly standings across all games.
+        Returns a list of games the user is participating in, their rank,
+        score, and potential rewards.
+        """
+        week_start, week_end = self.get_current_week()
+
+        # Get all entries for this user in the current week
+        user_entries = self.session.query(
+            WeeklyLeaderboard,
+            Game.title,
+            Game.game_id,
+            Game.steem_rewards_enabled
+        ).join(
+            Game, WeeklyLeaderboard.game_id == Game.game_id
+        ).filter(
+            WeeklyLeaderboard.user_id == user_id,
+            WeeklyLeaderboard.week_start == week_start
+        ).all()
+
+        standings = []
+        for entry, game_title, game_id, steem_enabled in user_entries:
+            # Compute rank: count how many users have a higher score in this game
+            higher_count = self.session.query(
+                func.count(WeeklyLeaderboard.entry_id)
+            ).join(
+                User, WeeklyLeaderboard.user_id == User.user_id
+            ).filter(
+                WeeklyLeaderboard.game_id == game_id,
+                WeeklyLeaderboard.week_start == week_start,
+                User.is_anonymous == 0,
+                WeeklyLeaderboard.score > entry.score
+            ).scalar()
+
+            # Tiebreaker: count users with the same score but earlier entry
+            same_score_earlier = self.session.query(
+                func.count(WeeklyLeaderboard.entry_id)
+            ).join(
+                User, WeeklyLeaderboard.user_id == User.user_id
+            ).filter(
+                WeeklyLeaderboard.game_id == game_id,
+                WeeklyLeaderboard.week_start == week_start,
+                User.is_anonymous == 0,
+                WeeklyLeaderboard.score == entry.score,
+                WeeklyLeaderboard.created_at < entry.created_at
+            ).scalar()
+
+            rank = (higher_count or 0) + (same_score_earlier or 0) + 1
+
+            # Get reward for this rank
+            reward = self.get_rewards_for_rank(game_id, rank)
+            steem_reward = 0.0
+            coin_reward = 0
+            if reward:
+                if steem_enabled:
+                    steem_reward = reward.steem_reward or 0.0
+                coin_reward = reward.coin_reward or 0
+
+            standings.append({
+                'game_id': game_id,
+                'game_title': game_title,
+                'score': entry.score,
+                'rank': rank,
+                'steem_reward': steem_reward,
+                'coin_reward': coin_reward,
+                'steem_rewards_enabled': bool(steem_enabled)
+            })
+
+        # Sort by rank
+        standings.sort(key=lambda x: x['rank'])
+        return standings

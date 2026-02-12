@@ -1489,16 +1489,19 @@ class Game {
                     }
                 }
 
-                // Check boss
-                if (this.boss && !this.boss.isDead()) {
-                    const dist = this.getWrappedDistance(proj.x, proj.y, this.boss.x, this.boss.y).distance;
-                    if (dist < this.boss.radius + proj.radius) {
-                        this.boss.takeDamage(proj.damage * this.player.stats.damageMultiplier);
-                        this.particles.createHitEffect(proj.x, proj.y, '#ff0000');
-                        // Sound removed - too frequent
+                // Check all bosses
+                for (const boss of this.bosses) {
+                    if (boss && !boss.isDead()) {
+                        const dist = this.getWrappedDistance(proj.x, proj.y, boss.x, boss.y).distance;
+                        if (dist < boss.radius + proj.radius) {
+                            boss.takeDamage(proj.damage * this.player.stats.damageMultiplier);
+                            this.particles.createHitEffect(proj.x, proj.y, '#ff0000');
+                            // Sound removed - too frequent
 
-                        if (!proj.piercing) {
-                            proj.shouldRemove = true;
+                            if (!proj.piercing) {
+                                proj.shouldRemove = true;
+                            }
+                            break;
                         }
                     }
                 }
@@ -1532,12 +1535,14 @@ class Game {
             }
         }
 
-        // Boss vs Player
-        if (this.boss && !this.boss.isDead()) {
-            const dist = this.getWrappedDistance(this.player.x, this.player.y, this.boss.x, this.boss.y).distance;
-            if (dist < this.player.radius + this.boss.radius) {
-                this.player.takeDamage(this.boss.damage);
-                this.ui.createDamageFlash();
+        // Boss vs Player (check all bosses)
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
+                if (dist < this.player.radius + boss.radius) {
+                    this.player.takeDamage(boss.damage);
+                    this.ui.createDamageFlash();
+                }
             }
         }
     }
@@ -1692,8 +1697,7 @@ class Game {
         this.ui.triggerScreenShake(15, 500);
         this.ui.hideBossWarning();
         // Sound removed - too frequent
-
-        this.boss = null;
+        // Boss is removed from array in updateEnemies
     }
 
     /**

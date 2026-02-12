@@ -1,8 +1,54 @@
 {
-  "version": "3.23.0",
-  "timestamp": "2026-02-10T07:56:29.735Z",
-  "buildNumber": 385,
+  "version": "3.24.1",
+  "timestamp": "2026-02-12T13:06:58.105Z",
+  "buildNumber": 390,
   "changelog": [
+    {
+      "version": "3.24.1",
+      "date": "2026-02-12",
+      "type": "patch",
+      "changes": [
+        "fix: Update leaderboard avatar sizes and countdown label for consistency",
+        "🔖 Bump version to 3.24.0 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.24.0",
+      "date": "2026-02-11",
+      "type": "minor",
+      "changes": [
+        "feat: Add weekly leaderboard standings feature for user profiles, moved About section on footer",
+        "🔖 Bump version to 3.23.3 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.23.3",
+      "date": "2026-02-11",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: Implement weekly leaderboard for game details with podium and rewards display",
+        "🔖 Bump version to 3.23.2 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.23.2",
+      "date": "2026-02-10",
+      "type": "patch",
+      "changes": [
+        "fix: Add script to generate WebP thumbnail previews for games, full images now appears only in game details page.",
+        "🔖 Bump version to 3.23.1 [skip-version]"
+      ]
+    },
+    {
+      "version": "3.23.1",
+      "date": "2026-02-10",
+      "type": "patch",
+      "changes": [
+        "fix:",
+        "🔖 Bump version to 3.23.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.23.0",
       "date": "2026-02-10",
@@ -46,52 +92,6 @@
       "changes": [
         "fix: [SS]adjust upgrade selection frequency to every 7 levels",
         "🔖 Bump version to 3.20.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.10",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix: obf",
-        "🔖 Bump version to 3.20.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.9",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix:[SS]Add upgrade system with Energy Barrier, Smart Missiles, and Protector Drones",
-        "🔖 Bump version to 3.20.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.8",
-      "date": "2026-02-06",
-      "type": "patch",
-      "changes": [
-        "fix : obf",
-        "🔖 Bump version to 3.20.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.7",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: restore Community link in navigation",
-        "🔖 Bump version to 3.20.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.6",
-      "date": "2026-02-05",
-      "type": "patch",
-      "changes": [
-        "fix: enhance AOE attack with charging phase and visual effects; add weapon level display",
-        "🔖 Bump version to 3.20.5 [skip-version]"
       ]
     }
   ]

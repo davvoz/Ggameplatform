@@ -692,8 +692,8 @@ async function loadGameDetailLeaderboard(gameId) {
             const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
                 size: 'small',
                 cssClass: 'gdl-list-avatar',
-                width: 36,
-                height: 36
+                width: 40,
+                height: 40
             });
             const userId = entry.user_id || '';
             const reward = getRewardForRank(entry.rank);

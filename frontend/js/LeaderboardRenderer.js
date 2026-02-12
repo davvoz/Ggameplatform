@@ -116,7 +116,7 @@ class LeaderboardRenderer {
                         <span class="week-range">${this.formatWeekRange()}</span>
                     </div>
                     <div class="week-countdown">
-                        <span class="countdown-label">Reset in:</span>
+                        <span class="countdown-label">Ends in:</span>
                         <span id="countdownTimer" class="countdown-value">--</span>
                     </div>
                 </div>
@@ -402,8 +402,8 @@ class LeaderboardRenderer {
             const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
                 size: 'small',
                 cssClass: 'gdl-list-avatar',
-                width: 36,
-                height: 36
+                width: 40,
+                height: 40
             });
             const userId = entry.user_id || '';
             const score = (entry.score || entry.total_score || 0).toLocaleString();

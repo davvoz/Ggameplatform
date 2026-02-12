@@ -1,8 +1,18 @@
 {
-  "version": "3.24.1",
-  "timestamp": "2026-02-12T13:06:58.105Z",
-  "buildNumber": 390,
+  "version": "3.24.2",
+  "timestamp": "2026-02-12T17:09:40.623Z",
+  "buildNumber": 391,
   "changelog": [
+    {
+      "version": "3.24.2",
+      "date": "2026-02-12",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [SS]Implement pre-game upgrade shop and continue system with coin management",
+        "🔖 Bump version to 3.24.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.24.1",
       "date": "2026-02-12",
@@ -83,15 +93,6 @@
       "changes": [
         "fix:[SS]Enhance gameplay with new enemy types and upgrade adjustments",
         "🔖 Bump version to 3.20.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.11",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]adjust upgrade selection frequency to every 7 levels",
-        "🔖 Bump version to 3.20.10 [skip-version]"
       ]
     }
   ]

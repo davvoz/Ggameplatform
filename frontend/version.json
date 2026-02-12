@@ -1,8 +1,17 @@
 {
-  "version": "3.24.0",
-  "timestamp": "2026-02-11T01:10:48.285Z",
-  "buildNumber": 389,
+  "version": "3.24.1",
+  "timestamp": "2026-02-12T13:06:58.105Z",
+  "buildNumber": 390,
   "changelog": [
+    {
+      "version": "3.24.1",
+      "date": "2026-02-12",
+      "type": "patch",
+      "changes": [
+        "fix: Update leaderboard avatar sizes and countdown label for consistency",
+        "🔖 Bump version to 3.24.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.24.0",
       "date": "2026-02-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SS]adjust upgrade selection frequency to every 7 levels",
         "🔖 Bump version to 3.20.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.10",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix: obf",
-        "🔖 Bump version to 3.20.9 [skip-version]"
       ]
     }
   ]

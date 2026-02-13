@@ -1,8 +1,17 @@
 {
-  "version": "3.24.3",
-  "timestamp": "2026-02-13T00:37:31.999Z",
-  "buildNumber": 392,
+  "version": "3.24.4",
+  "timestamp": "2026-02-13T00:54:44.427Z",
+  "buildNumber": 393,
   "changelog": [
+    {
+      "version": "3.24.4",
+      "date": "2026-02-13",
+      "type": "patch",
+      "changes": [
+        "fix:[ST]obf",
+        "🔖 Bump version to 3.24.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.24.3",
       "date": "2026-02-13",
@@ -84,15 +93,6 @@
       "changes": [
         "feat: Add Steem social profile link to user profiles and enhance UI with coin balance display",
         "🔖 Bump version to 3.21.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.21.0",
-      "date": "2026-02-09",
-      "type": "minor",
-      "changes": [
-        "feat: Enhance user profile page with Steem avatar integration and improved UI",
-        "🔖 Bump version to 3.20.12 [skip-version]"
       ]
     }
   ]

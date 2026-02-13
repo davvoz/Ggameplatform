@@ -1,8 +1,18 @@
 {
-  "version": "3.24.4",
-  "timestamp": "2026-02-13T00:54:44.427Z",
-  "buildNumber": 393,
+  "version": "3.24.5",
+  "timestamp": "2026-02-13T17:35:20.003Z",
+  "buildNumber": 394,
   "changelog": [
+    {
+      "version": "3.24.5",
+      "date": "2026-02-13",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[SS]ES6",
+        "🔖 Bump version to 3.24.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.24.4",
       "date": "2026-02-13",
@@ -84,15 +94,6 @@
       "changes": [
         "feat: Enhance daily login banner visibility management for anonymous users and on logout",
         "🔖 Bump version to 3.22.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.22.0",
-      "date": "2026-02-10",
-      "type": "minor",
-      "changes": [
-        "feat: Add Steem social profile link to user profiles and enhance UI with coin balance display",
-        "🔖 Bump version to 3.21.0 [skip-version]"
       ]
     }
   ]

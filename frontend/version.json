@@ -1,8 +1,17 @@
 {
-  "version": "3.24.2",
-  "timestamp": "2026-02-12T17:09:40.623Z",
-  "buildNumber": 391,
+  "version": "3.24.3",
+  "timestamp": "2026-02-13T00:37:31.999Z",
+  "buildNumber": 392,
   "changelog": [
+    {
+      "version": "3.24.3",
+      "date": "2026-02-13",
+      "type": "patch",
+      "changes": [
+        "fix:[SS]livelli discreti",
+        "🔖 Bump version to 3.24.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.24.2",
       "date": "2026-02-12",
@@ -84,15 +93,6 @@
       "changes": [
         "feat: Enhance user profile page with Steem avatar integration and improved UI",
         "🔖 Bump version to 3.20.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.20.12",
-      "date": "2026-02-07",
-      "type": "patch",
-      "changes": [
-        "fix:[SS]Enhance gameplay with new enemy types and upgrade adjustments",
-        "🔖 Bump version to 3.20.11 [skip-version]"
       ]
     }
   ]

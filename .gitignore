@@ -295,3 +295,4 @@ frontend/js/offusca_runtimeshell.bat
 backend/app/games/merge-tower-defense/js/offusca_game.bat
 istruzionipushnotification.png
 backend/app/games/sky-tower/offusca_game.bat
+backend/app/games/space_shooter/js/offusca_game.bat

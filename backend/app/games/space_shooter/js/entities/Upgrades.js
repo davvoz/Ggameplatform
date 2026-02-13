@@ -1,3 +1,5 @@
+import GameObject from './GameObject.js';
+import Vector2 from '../utils/Vector2.js';
 /**
  * Upgrades - Sistema di upgrade per Space Shooter
  * Include: Barrier, SmartMissile, e ProtectorDrone
@@ -1020,3 +1022,5 @@ class DroneBullet {
         ctx.restore();
     }
 }
+
+export { UpgradeManager, EnergyBarrier, SmartMissile, ProtectorDrone, DroneBullet };

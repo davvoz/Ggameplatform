@@ -1,3 +1,5 @@
+import GameObject from './GameObject.js';
+import Vector2 from '../utils/Vector2.js';
 /**
  * Enemy - Classe base per i nemici
  */
@@ -553,15 +555,24 @@ class Enemy extends GameObject {
             const explosionSize = this.isBoss() ? 'large' : 'medium';
             game.spawnExplosion(this.getCenter().x, this.getCenter().y, explosionSize);
 
-            // Boss death: extra explosions for dramatic effect
+            // Boss death: dramatic staggered explosions
             if (this.isBoss()) {
-                for (let i = 0; i < 4; i++) {
+                const cx = this.getCenter().x;
+                const cy = this.getCenter().y;
+                const hw = this.width * 0.4;
+                const hh = this.height * 0.4;
+                // Secondary medium explosions at offset positions
+                const offsets = [
+                    { dx: -hw, dy: -hh, delay: 100 },
+                    { dx:  hw, dy:  0,  delay: 220 },
+                    { dx: -hw * 0.5, dy: hh, delay: 350 },
+                    { dx:  hw * 0.7, dy: -hh * 0.8, delay: 480 },
+                ];
+                offsets.forEach(o => {
                     setTimeout(() => {
-                        const ox = (Math.random() - 0.5) * this.width;
-                        const oy = (Math.random() - 0.5) * this.height;
-                        game.spawnExplosion(this.getCenter().x + ox, this.getCenter().y + oy, 'medium');
-                    }, i * 150);
-                }
+                        game.spawnExplosion(cx + o.dx, cy + o.dy, 'medium');
+                    }, o.delay);
+                });
             }
             
             // Chance di drop power-up
@@ -1021,3 +1032,5 @@ class EnemyFactory {
         return boss;
     }
 }
+
+export { Enemy, EnemyFactory };

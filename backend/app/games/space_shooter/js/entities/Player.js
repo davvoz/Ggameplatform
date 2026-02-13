@@ -1,3 +1,5 @@
+import GameObject from './GameObject.js';
+
 /**
  * Player - Navicella del giocatore
  */
@@ -485,3 +487,5 @@ class Player extends GameObject {
         return true;
     }
 }
+
+export default Player;

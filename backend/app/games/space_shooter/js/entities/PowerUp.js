@@ -1,3 +1,4 @@
+import GameObject from './GameObject.js';
 /**
  * PowerUp - Potenziamenti raccoglibili con effetti avanzati
  */
@@ -244,3 +245,5 @@ class PowerUp extends GameObject {
         }
     }
 }
+
+export default PowerUp;

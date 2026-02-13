@@ -1,3 +1,4 @@
+import Vector2 from '../utils/Vector2.js';
 /**
  * GameObject - Classe base per tutti gli oggetti di gioco
  */
@@ -93,3 +94,5 @@ class GameObject {
         this.active = false;
     }
 }
+
+export default GameObject;

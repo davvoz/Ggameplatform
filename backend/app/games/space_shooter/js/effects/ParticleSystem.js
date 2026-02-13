@@ -168,70 +168,25 @@ class ParticleSystem {
         }, Math.floor(2 * intensity));
     }
 
-    // Preset: Explosion
+    // Preset: Explosion (complementary to Explosion entity - sparks only)
     emitExplosion(x, y, size = 'medium') {
-        const counts = { small: 15, medium: 30, large: 50 };
-        const count = counts[size] || 30;
-        
-        // Core flash
-        this.emit(x, y, {
-            vx: 0, vy: 0,
-            size: size === 'large' ? 60 : size === 'medium' ? 40 : 20,
-            life: 0.15,
-            decay: 5,
-            color: { r: 255, g: 255, b: 255 },
-            endColor: { r: 255, g: 200, b: 100 },
-            glow: true
-        }, 1);
-        
-        // Fire particles
+        const counts = { small: 4, medium: 6, large: 10 };
+        const count = counts[size] || 6;
+
+        // A few fast debris sparks - no circles, just trails
         for (let i = 0; i < count; i++) {
-            const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-            const speed = 50 + Math.random() * 200;
+            const angle = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+            const speed = 150 + Math.random() * 250;
             this.emit(x, y, {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 3 + Math.random() * 6,
-                life: 0.5 + Math.random() * 0.5,
-                decay: 1.5,
-                color: { r: 255, g: 200, b: 50 },
-                endColor: { r: 255, g: 50, b: 0 },
-                gravity: 50,
-                friction: 0.95,
-                glow: true
-            });
-        }
-        
-        // Smoke
-        for (let i = 0; i < count / 2; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 20 + Math.random() * 60;
-            this.emit(x, y, {
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 30,
-                size: 8 + Math.random() * 12,
-                life: 0.8 + Math.random() * 0.5,
-                decay: 1,
-                color: { r: 100, g: 100, b: 100 },
-                endColor: { r: 50, g: 50, b: 50 },
-                gravity: -20,
-                friction: 0.98
-            });
-        }
-        
-        // Sparks
-        for (let i = 0; i < count / 3; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 100 + Math.random() * 300;
-            this.emit(x, y, {
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                size: 2,
-                life: 0.3 + Math.random() * 0.4,
-                decay: 2,
-                color: { r: 255, g: 255, b: 200 },
-                endColor: { r: 255, g: 150, b: 0 },
-                gravity: 200,
+                size: 1 + Math.random(),
+                life: 0.2 + Math.random() * 0.25,
+                decay: 2.5,
+                color: { r: 255, g: 220, b: 140 },
+                endColor: { r: 255, g: 80, b: 0 },
+                gravity: 180,
+                friction: 0.97,
                 trail: true,
                 shape: 'circle'
             });
@@ -305,3 +260,5 @@ class ParticleSystem {
         this.particles = [];
     }
 }
+
+export default ParticleSystem;

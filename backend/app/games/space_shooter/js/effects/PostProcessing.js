@@ -143,3 +143,5 @@ class PostProcessing {
         ctx.fill();
     }
 }
+
+export default PostProcessing;

@@ -1,3 +1,16 @@
+import AssetManager from './managers/AssetManager.js';
+import InputManager from './managers/InputManager.js';
+import SoundManager from './managers/SoundManager.js';
+import ParticleSystem from './effects/ParticleSystem.js';
+import PostProcessing from './effects/PostProcessing.js';
+import StarField from './entities/Star.js';
+import Player from './entities/Player.js';
+import { UpgradeManager } from './entities/Upgrades.js';
+import { getLevelData } from './LevelData.obf.js';
+import Bullet from './entities/Bullet.js';
+import {EnemyFactory} from './entities/Enemy.js';
+import Explosion from './entities/Explosion.js';
+import PowerUp from './entities/PowerUp.js';
 /**
  * Game - Classe principale del gioco con effetti avanzati
  */
@@ -126,12 +139,12 @@ class Game {
         await this.assets.loadAll();
 
         this.input = new InputManager(this);
-        
+
         // Aggiorna layout controlli touch dopo la creazione dell'input manager
         if (this.input.isMobile) {
             this.input.updateLayout(this.canvas.width, this.canvas.height);
         }
-        
+
         this.postProcessing = new PostProcessing(this.canvas);
         this.starField = new StarField(this.canvas.width, this.canvas.height);
 
@@ -197,7 +210,7 @@ class Game {
         if (this.postProcessing) {
             this.postProcessing.resize();
         }
-        
+
         // Aggiorna layout dei controlli touch
         if (this.input && this.input.isMobile) {
             this.input.updateLayout(width, height);
@@ -382,17 +395,17 @@ class Game {
                 }
             });
         }
-        
+
         // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
-            
+
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
 
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
-            
+
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
 
@@ -408,7 +421,7 @@ class Game {
      */
     showXPBanner(xpAmount, extraData = null) {
 
-        
+
         // Create banner element
         const banner = document.createElement('div');
         banner.className = 'game-xp-banner';
@@ -418,9 +431,9 @@ class Game {
                 <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
             </div>
         `;
-        
+
         document.body.appendChild(banner);
-        
+
         // Remove after 3.5 seconds
         setTimeout(() => {
             banner.classList.add('hiding');
@@ -434,11 +447,11 @@ class Game {
      */
     showStatsBanner(stats) {
 
-        
+
         // Create banner element
         const banner = document.createElement('div');
         banner.className = 'game-stats-banner';
-        
+
         const statsHTML = `
             <button class="stats-close-btn" aria-label="Close">✕</button>
             <div class="stats-header">
@@ -488,16 +501,16 @@ class Game {
                 ` : ''}
             </div>
         `;
-        
+
         banner.innerHTML = statsHTML;
-        
+
         // Add close button handler
         const closeBtn = banner.querySelector('.stats-close-btn');
         closeBtn.addEventListener('click', () => {
             banner.classList.add('hiding');
             setTimeout(() => banner.remove(), 500);
         });
-        
+
         document.body.appendChild(banner);
     }
 
@@ -851,7 +864,7 @@ class Game {
         this.lastUpgradeLevel = 0;
         this.missileTimer = 0;
         this.upgradeModalOpen = false;
-        
+
         // Hide upgrade modal if visible
         if (this.upgradeModal) {
             this.upgradeModal.classList.add('hidden');
@@ -1158,7 +1171,7 @@ class Game {
         // Update upgrades (barrier, drones, missiles)
         if (this.upgrades) {
             this.upgrades.update(deltaTime);
-            
+
             // Fire missiles periodically if unlocked
             if (this.upgrades.missileLevel > 0) {
                 this.missileTimer += deltaTime;
@@ -1461,8 +1474,8 @@ class Game {
                 this.player.position.y + this.player.height / 2,
                 20,
                 {
-                    color: upgrade.type === 'barrier' ? '#00aaff' : 
-                           upgrade.type === 'missile' ? '#ff6600' : '#00ffaa',
+                    color: upgrade.type === 'barrier' ? '#00aaff' :
+                        upgrade.type === 'missile' ? '#ff6600' : '#00ffaa',
                     speed: 150,
                     life: 1,
                     size: 5
@@ -1693,7 +1706,7 @@ class Game {
 
         // Draw HUD (on top of everything)
         this.renderHUD();
-        
+
         // Draw touch controls (mobile only, on top of everything)
         if (this.input && this.input.isMobile && this.state === 'playing') {
             this.input.renderTouchControls(ctx, this.player);
@@ -2111,7 +2124,7 @@ class Game {
 
             // Combo indicator
             if (this.combo > 0) {
-                const comboX =  80;
+                const comboX = 80;
                 const comboY = healthY + 50;
 
                 ctx.font = 'bold 12px Orbitron, Arial';
@@ -2317,7 +2330,7 @@ class Game {
         // Posizione: in basso a destra, sopra la heat bar
         const width = 95;
         const height = 55;
-        const x = this.canvas.width - width -150;
+        const x = this.canvas.width - width - 150;
         const y = this.canvas.height - height - 10;
 
         ctx.save();
@@ -2584,3 +2597,5 @@ class Game {
         }
     }
 }
+
+export default Game;

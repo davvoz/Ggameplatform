@@ -1187,3 +1187,5 @@ function getLevelData(level) {
     const index = Math.min(level, LEVEL_DATA.length) - 1;
     return LEVEL_DATA[Math.max(0, index)];
 }
+
+export { getLevelData };

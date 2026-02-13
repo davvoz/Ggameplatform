@@ -529,3 +529,5 @@ class SoundManager {
         }
     }
 }
+
+export default SoundManager;

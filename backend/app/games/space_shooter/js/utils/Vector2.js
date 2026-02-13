@@ -97,3 +97,5 @@ class Vector2 {
         return new Vector2(0, 0);
     }
 }
+
+export default Vector2;

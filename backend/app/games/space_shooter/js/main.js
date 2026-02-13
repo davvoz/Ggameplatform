@@ -1,3 +1,4 @@
+import Game from './Game.obf.js';
 /**
  * Main entry point
  */

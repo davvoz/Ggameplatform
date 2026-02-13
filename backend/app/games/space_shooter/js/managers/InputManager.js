@@ -1,3 +1,5 @@
+import Vector2 from '../utils/Vector2.js';
+
 /**
  * InputManager - Gestisce input da tastiera e touch (Canvas-based)
  */
@@ -581,3 +583,5 @@ class InputManager {
         }
     }
 }
+
+export default InputManager;

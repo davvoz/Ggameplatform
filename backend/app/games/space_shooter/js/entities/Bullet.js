@@ -1,3 +1,5 @@
+import GameObject from './GameObject.js';
+import Vector2 from '../utils/Vector2.js';
 /**
  * Bullet - Proiettile con effetti avanzati
  */
@@ -125,3 +127,5 @@ class Bullet extends GameObject {
         };
     }
 }
+
+export default Bullet;

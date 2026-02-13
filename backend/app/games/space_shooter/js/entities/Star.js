@@ -284,3 +284,5 @@ class StarField {
 
     }
 }
+
+export default StarField;

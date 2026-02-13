@@ -1295,17 +1295,12 @@ class Game {
     updateWaves(deltaTime) {
         this.waveTimer -= deltaTime;
 
-        // Max nemici: crescita gentile primi 10 livelli, poi accelera
-        const maxEnemies = this.level <= 10
-            ? Math.min(15, 5 + this.level * 1.5)  // 6.5 → 20 (livelli 1-10)
-            : Math.min(25, 15 + (this.level - 10) * 2); // 17 → 25 (livelli 11+)
+        // Usa definizioni discrete dal LevelData
+        const ld = getLevelData(this.level);
 
-        if (this.waveTimer <= 0 && this.enemies.length < maxEnemies) {
+        if (this.waveTimer <= 0 && this.enemies.length < ld.maxEnemies) {
             this.spawnWave();
-            // Intervallo wave: più lento nei primi 10 livelli
-            this.waveTimer = this.level <= 10
-                ? Math.max(2.5, 5 - this.level * 0.25)  // 4.75s → 2.5s (livelli 1-10)
-                : Math.max(1.2, 2.5 - (this.level - 10) * 0.15); // 2.35s → 1.2s (livelli 11+)
+            this.waveTimer = ld.waveInterval;
         }
 
         // Magnet timer
@@ -1504,46 +1499,31 @@ class Game {
     spawnWave() {
         this.waveNumber++;
 
-        const patterns = ['straight', 'sine', 'zigzag', 'dive', 'phantom', 'sentinel', 'swarm'];
-        const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+        // Usa definizioni discrete dal LevelData
+        const ld = getLevelData(this.level);
 
-        // Tipi nemici basati sul livello (nerfati per i primi 10 livelli)
-        let enemyType = 'enemy1';
-        const roll = Math.random();
-        if (this.level >= 3) {
-            if (roll < 0.15 + (this.level - 2) * 0.05) enemyType = 'enemy2';
-        }
-        if (this.level >= 6) {
-            if (roll < 0.08 + (this.level - 5) * 0.03) enemyType = 'enemy3';
-        }
-        // New enemy types unlock at higher levels
-        if (this.level >= 15) {
-            const specialRoll = Math.random();
-            if (specialRoll < 0.15 + (this.level - 14) * 0.03) {
-                enemyType = 'enemy4'; // Phantom
-            }
-        }
-        if (this.level >= 20) {
-            const specialRoll = Math.random();
-            if (specialRoll < 0.10 + (this.level - 19) * 0.03) {
-                enemyType = 'enemy5'; // Sentinel
-            }
-        }
-        if (this.level >= 5) {
-            const specialRoll = Math.random();
-            if (specialRoll < 0.08 + (this.level - 4) * 0.02) {
-                enemyType = 'enemy6'; // Swarm (force swarm pattern)
+        // Pattern casuale dai disponibili per questo livello
+        const pattern = ld.patterns[Math.floor(Math.random() * ld.patterns.length)];
+
+        // Weighted random pick dal pool nemici del livello
+        const totalWeight = ld.enemyPool.reduce((sum, e) => sum + e.weight, 0);
+        let r = Math.random() * totalWeight;
+        let enemyType = ld.enemyPool[0].type;
+        for (const entry of ld.enemyPool) {
+            r -= entry.weight;
+            if (r <= 0) {
+                enemyType = entry.type;
+                break;
             }
         }
 
-        // Swarm enemies come in larger numbers with their own pattern
+        // Swarm enemies - proprio pattern e conteggio dal livello
         if (enemyType === 'enemy6') {
-            const swarmCount = Math.min(12, 4 + Math.floor(this.level / 2) + Math.floor(this.waveNumber / 3));
             const swarmFormations = ['v', 'wall', 'arrow', 'spiral'];
             const formation = swarmFormations[Math.floor(Math.random() * swarmFormations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
             enemies.forEach(e => {
-                e.speed *= (this.level <= 1 ? 1 : 1 + Math.min(0.5, (this.level - 2) * 0.1));
+                e.speed *= ld.speedMultiplier;
                 e.setMovementPattern('swarm');
                 e.applyLevelScaling(this.level);
             });
@@ -1551,22 +1531,19 @@ class Game {
             return;
         }
 
-        // Phantom enemies use their own movement
+        // Phantom enemies - proprio movement e conteggio dal livello
         if (enemyType === 'enemy4') {
-            const pCount = Math.min(4, 2 + Math.floor(this.level / 3));
-            const enemies = EnemyFactory.createWave(enemyType, pCount, this, 'phantom');
-            const speedMultiplier = this.level <= 1 ? 1 : 1 + Math.min(0.6, (this.level - 2) * 0.1);
+            const enemies = EnemyFactory.createWave(enemyType, ld.phantomCount, this, 'phantom');
             enemies.forEach(e => {
-                e.speed *= speedMultiplier;
+                e.speed *= ld.speedMultiplier;
                 e.applyLevelScaling(this.level);
             });
             this.enemies.push(...enemies);
             return;
         }
 
-        // Sentinel enemies use their own movement
+        // Sentinel enemies - proprio movement e conteggio dal livello
         if (enemyType === 'enemy5') {
-            const sCount = Math.min(3, 1 + Math.floor(this.level / 4));
             const sentinelFormations = ['line', 'cross', 'pincer'];
             const formation = sentinelFormations[Math.floor(Math.random() * sentinelFormations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
@@ -1578,30 +1555,19 @@ class Game {
             return;
         }
 
-        // Nemici per wave: crescita graduale
-        const count = this.level <= 10
-            ? Math.min(5, 2 + Math.floor(this.level / 3))  // 2 → 5 (livelli 1-10)
-            : Math.min(8, 5 + Math.floor((this.level - 10) / 3)); // 5 → 8 (livelli 11+)
-
-        // Boost velocità col livello: gentile nei primi 10, poi accelera
-        const speedMultiplier = this.level <= 1 ? 1 :
-            this.level <= 10 ? 1 + Math.min(0.35, (this.level - 1) * 0.04) :  // max +35% al liv 10
-            1.35 + Math.min(0.45, (this.level - 10) * 0.08);                  // max +80% totale
-
-        // Probabilità formazione aumenta col livello
-        if (Math.random() < 0.25 + this.level * 0.08) {
-            const formations = ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'];
-            const formation = formations[Math.floor(Math.random() * formations.length)];
+        // Nemici standard (enemy1/2/3) - formazione o wave
+        if (Math.random() < ld.formationChance) {
+            const formation = ld.formations[Math.floor(Math.random() * ld.formations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
             enemies.forEach(e => {
-                e.speed *= speedMultiplier;
+                e.speed *= ld.speedMultiplier;
                 e.applyLevelScaling(this.level);
             });
             this.enemies.push(...enemies);
         } else {
-            const enemies = EnemyFactory.createWave(enemyType, count, this, pattern);
+            const enemies = EnemyFactory.createWave(enemyType, ld.waveSize, this, pattern);
             enemies.forEach(e => {
-                e.speed *= speedMultiplier;
+                e.speed *= ld.speedMultiplier;
                 e.applyLevelScaling(this.level);
             });
             this.enemies.push(...enemies);

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Space Shooter 2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="/sdk/platformsdk.obf.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Fullscreen Button -->
+        <button id="fullscreen-btn" title="Fullscreen" aria-label="Fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+        </button>
+
+        <!-- HUD Buttons (visible during gameplay) -->
+        <button id="hud-settings-btn" class="hud-btn hidden" title="Settings" aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+        </button>
+        <button id="hud-ship-btn" class="hud-btn hidden" title="Ship Details" aria-label="Ship Details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L8 10h8l-4-8z"/>
+                <path d="M8 10l-4 8h16l-4-8"/>
+                <path d="M12 10v12"/>
+            </svg>
+        </button>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- ========== START SCREEN ========== -->
+        <div id="start-screen" class="ui-screen">
+            <div class="screen-content">
+                <h1 class="game-title">SPACE SHOOTER <span class="title-accent">2</span></h1>
+                <p class="game-subtitle">Tactical Evolution</p>
+                <button id="btn-start" class="btn-primary">START GAME</button>
+            </div>
+        </div>
+
+        <!-- ========== DIFFICULTY SELECTION ========== -->
+        <div id="difficulty-select-screen" class="ui-screen hidden">
+            <div class="screen-content">
+                <h2>SELECT DIFFICULTY</h2>
+                <p class="diff-subtitle">Higher difficulty = higher score multiplier</p>
+                <div class="difficulty-grid">
+                    <div class="diff-card selected" data-difficulty="boring">
+                        <div class="diff-emoji">😴</div>
+                        <div class="diff-label">BORING</div>
+                        <div class="diff-desc">Relaxing ride. Enemies are weak and slow.</div>
+                        <div class="diff-mult">×0.25 score</div>
+                    </div>
+                    <div class="diff-card" data-difficulty="normal">
+                        <div class="diff-emoji">⚔️</div>
+                        <div class="diff-label">NORMAL</div>
+                        <div class="diff-desc">Balanced challenge for most pilots.</div>
+                        <div class="diff-mult">×1 score</div>
+                    </div>
+                    <div class="diff-card" data-difficulty="hard">
+                        <div class="diff-emoji">💀</div>
+                        <div class="diff-label">HARD</div>
+                        <div class="diff-desc">Punishing. Enemies hit harder and faster.</div>
+                        <div class="diff-mult">×2 score</div>
+                    </div>
+                    <div class="diff-card" data-difficulty="panic">
+                        <div class="diff-emoji">🔥</div>
+                        <div class="diff-label">PANIC</div>
+                        <div class="diff-desc">Pure chaos. Only for the brave.</div>
+                        <div class="diff-mult">×4 score</div>
+                    </div>
+                </div>
+                <div class="screen-actions">
+                    <button id="btn-back-to-start" class="btn-secondary">← BACK</button>
+                    <button id="btn-select-difficulty" class="btn-primary">CONFIRM →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SHIP SELECTION ========== -->
+        <div id="ship-select-screen" class="ui-screen hidden">
+            <div class="screen-content">
+                <h2>SELECT YOUR SHIP</h2>
+                <div class="selection-grid">
+                    <!-- Vanguard -->
+                    <div class="ship-card selected" data-ship-id="vanguard">
+                        <div class="card-preview" id="preview-vanguard"><canvas width="128" height="128"></canvas></div>
+                        <div class="card-info">
+                            <div class="card-name">Vanguard</div>
+                            <div class="card-desc">Balanced all-rounder</div>
+                        </div>
+                        <div class="stat-bars">
+                            <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill hp" style="width:50%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill spd" style="width:50%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">RES</span><div class="stat-bar"><div class="stat-fill res" style="width:50%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">ROF</span><div class="stat-bar"><div class="stat-fill rof" style="width:50%"></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Interceptor -->
+                    <div class="ship-card" data-ship-id="interceptor">
+                        <div class="card-preview" id="preview-interceptor"><canvas width="128" height="128"></canvas></div>
+                        <div class="card-info">
+                            <div class="card-name">Interceptor</div>
+                            <div class="card-desc">Fast &amp; agile</div>
+                        </div>
+                        <div class="stat-bars">
+                            <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill hp" style="width:30%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill spd" style="width:80%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">RES</span><div class="stat-bar"><div class="stat-fill res" style="width:20%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">ROF</span><div class="stat-bar"><div class="stat-fill rof" style="width:70%"></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Fortress -->
+                    <div class="ship-card" data-ship-id="fortress">
+                        <div class="card-preview" id="preview-fortress"><canvas width="128" height="128"></canvas></div>
+                        <div class="card-info">
+                            <div class="card-name">Fortress</div>
+                            <div class="card-desc">Heavy tank</div>
+                        </div>
+                        <div class="stat-bars">
+                            <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill hp" style="width:80%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill spd" style="width:30%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">RES</span><div class="stat-bar"><div class="stat-fill res" style="width:80%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">ROF</span><div class="stat-bar"><div class="stat-fill rof" style="width:30%"></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Striker -->
+                    <div class="ship-card" data-ship-id="striker">
+                        <div class="card-preview" id="preview-striker"><canvas width="128" height="128"></canvas></div>
+                        <div class="card-info">
+                            <div class="card-name">Striker</div>
+                            <div class="card-desc">Rapid fire</div>
+                        </div>
+                        <div class="stat-bars">
+                            <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill hp" style="width:40%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill spd" style="width:60%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">RES</span><div class="stat-bar"><div class="stat-fill res" style="width:30%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">ROF</span><div class="stat-bar"><div class="stat-fill rof" style="width:80%"></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Titan -->
+                    <div class="ship-card" data-ship-id="titan">
+                        <div class="card-preview" id="preview-titan"><canvas width="128" height="128"></canvas></div>
+                        <div class="card-info">
+                            <div class="card-name">Titan</div>
+                            <div class="card-desc">Ultimate fortress</div>
+                        </div>
+                        <div class="stat-bars">
+                            <div class="stat-row"><span class="stat-label">HP</span><div class="stat-bar"><div class="stat-fill hp" style="width:90%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">SPD</span><div class="stat-bar"><div class="stat-fill spd" style="width:20%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">RES</span><div class="stat-bar"><div class="stat-fill res" style="width:90%"></div></div></div>
+                            <div class="stat-row"><span class="stat-label">ROF</span><div class="stat-bar"><div class="stat-fill rof" style="width:20%"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-actions">
+                    <button id="btn-back-to-menu" class="btn-secondary">← BACK</button>
+                    <button id="btn-select-ship" class="btn-primary">CONFIRM →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ULTIMATE SELECTION ========== -->
+        <div id="ultimate-select-screen" class="ui-screen hidden">
+            <div class="screen-content">
+                <h2>SELECT YOUR ULTIMATE</h2>
+                <div class="selection-grid ultimates">
+                    <div class="ultimate-card selected" data-ultimate-id="nova_blast">
+                        <div class="ult-icon">💥</div>
+                        <div class="card-name">Nova Blast</div>
+                        <div class="card-desc">Massive AoE explosion that damages all visible enemies</div>
+                    </div>
+                    <div class="ultimate-card" data-ultimate-id="shield_dome">
+                        <div class="ult-icon">🛡️</div>
+                        <div class="card-name">Shield Dome</div>
+                        <div class="card-desc">6 second invincibility shield</div>
+                    </div>
+                    <div class="ultimate-card" data-ultimate-id="time_warp">
+                        <div class="ult-icon">⏳</div>
+                        <div class="card-name">Time Warp</div>
+                        <div class="card-desc">Slows all enemies to 25% speed for 5 seconds</div>
+                    </div>
+                    <div class="ultimate-card" data-ultimate-id="missile_storm">
+                        <div class="ult-icon">🚀</div>
+                        <div class="card-name">Missile Storm</div>
+                        <div class="card-desc">Launches 12 homing missiles at enemies</div>
+                    </div>
+                    <div class="ultimate-card" data-ultimate-id="quantum_shift">
+                        <div class="ult-icon">⚡</div>
+                        <div class="card-name">Quantum Shift</div>
+                        <div class="card-desc">Teleport forward, damaging everything in your path</div>
+                    </div>
+                </div>
+                <div class="screen-actions">
+                    <button id="btn-back-to-ships" class="btn-secondary">← BACK</button>
+                    <button id="btn-select-ultimate" class="btn-primary">LAUNCH! 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== LEVEL COMPLETE ========== -->
+        <div id="level-complete-screen" class="ui-screen hidden">
+            <div class="screen-content summary-panel">
+                <h2 class="lc-title">LEVEL COMPLETE!</h2>
+                <div id="lc-stars" class="lc-stars"></div>
+                <div class="lc-level-name" id="lc-level-name"></div>
+                <div class="summary-grid">
+                    <div class="summary-row">
+                        <span class="summary-label">Enemies Killed</span>
+                        <span class="summary-value" id="lc-enemies-killed">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Damage Taken</span>
+                        <span class="summary-value" id="lc-damage-taken">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Max Combo</span>
+                        <span class="summary-value" id="lc-max-combo">0x</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Time</span>
+                        <span class="summary-value" id="lc-time">0s</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">HP Status</span>
+                        <span class="summary-value" id="lc-hp-status">0/0</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-row highlight">
+                        <span class="summary-label">Points Earned</span>
+                        <span class="summary-value gold" id="lc-points-earned">0</span>
+                    </div>
+                    <div class="summary-row highlight">
+                        <span class="summary-label">Bonus</span>
+                        <span class="summary-value gold" id="lc-bonus">+0</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span class="summary-label">Total Score</span>
+                        <span class="summary-value" id="lc-total-score">0</span>
+                    </div>
+                </div>
+                <div class="screen-actions">
+                    <button id="btn-next-level" class="btn-primary">CONTINUE →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SHOP (legacy, hidden) ========== -->
+        <div id="shop-screen" class="ui-screen hidden">
+            <div class="screen-content shop-panel">
+                <h2>🛒 ARMORY</h2>
+                <div class="shop-balance">
+                    Points: <span id="shop-points" class="gold">0</span>
+                </div>
+                <div id="shop-items-container" class="shop-items-container"></div>
+                <div class="screen-actions">
+                    <button id="btn-shop-continue" class="btn-primary">CONTINUE →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PERK SELECTION ========== -->
+        <div id="perk-select-screen" class="ui-screen hidden">
+            <div class="screen-content perk-panel">
+                <h2 class="perk-title">CHOOSE YOUR UPGRADE</h2>
+                <p class="perk-subtitle">Select one perk to enhance your build</p>
+                <div id="perk-cards-container" class="perk-cards"></div>
+            </div>
+        </div>
+
+        <!-- ========== GAME OVER ========== -->
+        <div id="game-over-screen" class="ui-screen hidden">
+            <div class="screen-content">
+                <h2 class="go-title">GAME OVER</h2>
+                <div class="summary-grid">
+                    <div class="summary-row">
+                        <span class="summary-label">Final Score</span>
+                        <span class="summary-value" id="go-final-score">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Level Reached</span>
+                        <span class="summary-value" id="go-level-reached">1</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Enemies Killed</span>
+                        <span class="summary-value" id="go-enemies-killed">0</span>
+                    </div>
+                </div>
+                <div class="screen-actions center">
+                    <button id="btn-restart" class="btn-primary">TRY AGAIN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== VICTORY ========== -->
+        <div id="victory-screen" class="ui-screen hidden">
+            <div class="screen-content">
+                <h2 class="victory-title">🏆 VICTORY! 🏆</h2>
+                <p class="victory-subtitle">You conquered all 30 levels!</p>
+                <div class="summary-grid">
+                    <div class="summary-row">
+                        <span class="summary-label">Final Score</span>
+                        <span class="summary-value gold" id="vic-score">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Enemies Destroyed</span>
+                        <span class="summary-value" id="vic-enemies">0</span>
+                    </div>
+                </div>
+                <div class="screen-actions center">
+                    <button id="btn-victory-restart" class="btn-primary">PLAY AGAIN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SETTINGS / PAUSE ========== -->
+        <div id="settings-popup" class="ui-screen hidden">
+            <div class="screen-content settings-panel">
+                <h2>⚙️ SETTINGS</h2>
+                <div class="settings-buttons">
+                    <div class="setting-row">
+                        <span class="setting-label">🎵 Music</span>
+                        <button id="btn-toggle-music" class="toggle-btn on">ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">🔊 Sound FX</span>
+                        <button id="btn-toggle-sfx" class="toggle-btn on">ON</button>
+                    </div>
+                    <button id="btn-resume" class="btn-primary settings-resume">▶ RESUME</button>
+                    <button id="btn-quit" class="btn-danger">✕ QUIT TO MENU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SHIP DETAILS ========== -->
+        <div id="ship-detail-popup" class="ui-screen hidden">
+            <div class="screen-content ship-detail-panel">
+                <h2>🚀 SHIP PROFILE</h2>
+                <div class="ship-detail-header">
+                    <canvas id="ship-detail-preview" width="96" height="96"></canvas>
+                    <div class="ship-detail-info">
+                        <div class="ship-detail-name" id="detail-ship-name">—</div>
+                        <div class="ship-detail-desc" id="detail-ship-desc">—</div>
+                    </div>
+                </div>
+                <div class="ship-detail-section">
+                    <div class="section-title">BASE STATS</div>
+                    <div class="detail-stat-bars" id="detail-base-stats"></div>
+                </div>
+                <div class="ship-detail-section">
+                    <div class="section-title">EFFECTIVE STATS</div>
+                    <div class="detail-stat-bars" id="detail-effective-stats"></div>
+                </div>
+                <div class="ship-detail-section">
+                    <div class="section-title">WEAPON</div>
+                    <div class="detail-weapon-info" id="detail-weapon-info"></div>
+                </div>
+                <div class="ship-detail-section">
+                    <div class="section-title">ULTIMATE</div>
+                    <div class="detail-ultimate-info" id="detail-ultimate-info"></div>
+                </div>
+                <div class="ship-detail-section" id="detail-perks-section" style="display:none;">
+                    <div class="section-title">ACTIVE PERKS</div>
+                    <div class="detail-perks-list" id="detail-perks-list"></div>
+                </div>
+                <button id="btn-close-detail" class="btn-primary settings-resume">▶ RESUME</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

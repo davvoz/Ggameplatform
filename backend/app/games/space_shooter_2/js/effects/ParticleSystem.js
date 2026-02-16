@@ -87,29 +87,36 @@ class ParticleSystem {
     constructor() {
         this.particles = [];
         this.maxParticles = 500;
+        this.particleMultiplier = 1;
+        this.glowEnabled = true;
+        this.trailEnabled = true;
     }
 
     emit(x, y, preset, count = 10) {
         const configs = ParticleSystem.PRESETS[preset] || ParticleSystem.PRESETS.explosion;
-        for (let i = 0; i < count; i++) {
+        const scaledCount = Math.max(1, Math.round(count * this.particleMultiplier));
+        for (let i = 0; i < scaledCount; i++) {
             if (this.particles.length >= this.maxParticles) {
                 const idx = this.particles.findIndex(p => !p.active);
                 if (idx === -1) return;
                 this.particles.splice(idx, 1);
             }
             const cfg = typeof configs === 'function' ? configs() : { ...configs };
+            if (!this.glowEnabled) cfg.glow = false;
             this.particles.push(new Particle(x, y, cfg));
         }
     }
 
     emitCustom(x, y, config, count = 1) {
-        for (let i = 0; i < count; i++) {
+        const scaledCount = Math.max(1, Math.round(count * this.particleMultiplier));
+        for (let i = 0; i < scaledCount; i++) {
             if (this.particles.length >= this.maxParticles) {
                 const idx = this.particles.findIndex(p => !p.active);
                 if (idx === -1) return;
                 this.particles.splice(idx, 1);
             }
             const cfg = typeof config === 'function' ? config() : { ...config };
+            if (!this.glowEnabled) cfg.glow = false;
             this.particles.push(new Particle(x, y, cfg));
         }
     }

@@ -35,7 +35,8 @@ class Game {
         this.state = 'menu';
         this.timeScale = 1;
         this.gameTime = 0;
-        this.performanceMode = 'high';
+        this.performanceMode = this._loadPerformanceMode();
+        this.explosionScale = 1.5;
 
         this.selectedShipId = null;
         this.selectedUltimateId = null;
@@ -72,6 +73,8 @@ class Game {
 
         this.starField = new StarField(this.canvas.width, this.canvas.height, this.performanceMode);
         this.starField.setLevel(1);
+
+        this.setPerformanceMode(this.performanceMode);
 
         this.lastTime = performance.now();
         this.gameLoop(this.lastTime);
@@ -122,14 +125,17 @@ class Game {
 
         if (this.state === 'levelIntro') {
             this.cinematicManager.updateLevelIntro(deltaTime);
+            this.updateEntitiesPassive(deltaTime);
         }
 
         if (this.state === 'levelOutro') {
             this.cinematicManager.updateLevelOutro(deltaTime);
+            this.updateEntitiesPassive(deltaTime);
         }
 
         if (this.state === 'deathCinematic') {
             this.cinematicManager.updateDeathCinematic(deltaTime);
+            this.updateEntitiesPassive(deltaTime);
         }
 
         if (this.state === 'playing') {
@@ -218,6 +224,62 @@ class Game {
         this.waveManager.updateWaves(deltaTime);
     }
 
+    /**
+     * Aggiorna le entità in modo passivo (solo visuale, niente collisioni/input/wave spawning).
+     * Usato durante levelIntro, levelOutro, deathCinematic per mantenere le animazioni vive.
+     */
+    updateEntitiesPassive(deltaTime) {
+        const em = this.entityManager;
+
+        // Player thruster particles (no input, no firing)
+        if (em.player && em.player.active && this.performanceMode !== 'low') {
+            this.particles.emitCustom(
+                em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
+                em.player.position.y + em.player.height,
+                ParticleSystem.PRESETS.thruster,
+                1
+            );
+        }
+
+        // Enemies keep drifting / animating
+        const enemyDt = deltaTime * this.timeScale;
+        for (const enemy of em.enemies) {
+            enemy.update(enemyDt, this);
+        }
+
+        if (em.boss && em.boss.active) {
+            em.boss.update(enemyDt, this);
+        }
+
+        if (em.miniBoss && em.miniBoss.active) {
+            em.miniBoss.update(enemyDt, this);
+        }
+
+        // Bullets keep flying
+        for (const bullet of em.bullets) {
+            const bulletDt = bullet.owner === 'enemy' ? enemyDt : deltaTime;
+            bullet.update(bulletDt, this);
+        }
+
+        em.updateHomingMissiles(deltaTime);
+
+        // Power-ups drift
+        for (const pu of em.powerUps) {
+            pu.update(deltaTime, this);
+        }
+
+        // Explosions animate out
+        for (const exp of em.explosions) {
+            exp.update(deltaTime);
+        }
+
+        // Cleanup off-screen entities
+        em.cleanup();
+
+        // Keep perk visual effects running (drones, etc.)
+        this.perkEffectsManager.updatePerkEffects(deltaTime);
+    }
+
     render() {
         const ctx = this.ctx;
         const w = this.canvas.width;
@@ -275,12 +337,15 @@ class Game {
             this.particles.render(ctx);
 
             this.hudRenderer.renderHUD(ctx);
-
-            this.input.renderTouchControls(ctx);
         }
 
         if (_outroZoomActive) {
             ctx.restore();
+        }
+
+        // Touch controls rendered AFTER zoom restore, hidden during cinematics
+        if (this.state === 'playing' || this.state === 'paused') {
+            this.input.renderTouchControls(ctx);
         }
 
         if (this.state === 'cinematic' && this.cinematicManager.cinematic) {
@@ -421,6 +486,59 @@ class Game {
 
     showLevelUpNotification(levelUpData) {
         this.hudRenderer.showLevelUpNotification(levelUpData);
+    }
+
+    // ── Performance Mode ──
+
+    _loadPerformanceMode() {
+        try {
+            const saved = localStorage.getItem('spaceShooter2Performance');
+            if (saved && ['high', 'medium', 'low'].includes(saved)) return saved;
+        } catch (e) { /* ignore */ }
+        return 'high';
+    }
+
+    _savePerformanceMode(mode) {
+        try { localStorage.setItem('spaceShooter2Performance', mode); } catch (e) { /* ignore */ }
+    }
+
+    setPerformanceMode(mode) {
+        this.performanceMode = mode;
+        this._savePerformanceMode(mode);
+
+        // PostProcessing
+        this.postProcessing.setQuality(mode);
+
+        // ParticleSystem
+        if (mode === 'high') {
+            this.particles.maxParticles = 500;
+            this.particles.particleMultiplier = 1;
+            this.particles.glowEnabled = true;
+            this.particles.trailEnabled = true;
+        } else if (mode === 'medium') {
+            this.particles.maxParticles = 250;
+            this.particles.particleMultiplier = 0.5;
+            this.particles.glowEnabled = false;
+            this.particles.trailEnabled = true;
+        } else {
+            this.particles.maxParticles = 100;
+            this.particles.particleMultiplier = 0.3;
+            this.particles.glowEnabled = false;
+            this.particles.trailEnabled = false;
+        }
+
+        // StarField
+        if (this.starField) {
+            this.starField.setQuality(mode);
+        }
+
+        // Explosion scale
+        this.explosionScale = mode === 'high' ? 1.5 : mode === 'medium' ? 1.0 : 0.6;
+
+        // Update UI buttons
+        document.querySelectorAll('.perf-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.perf === mode);
+        });
     }
 
     // ── Entity delegates (used by Player.js, Enemy.js, PowerUp.js) ──

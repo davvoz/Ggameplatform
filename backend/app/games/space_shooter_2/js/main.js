@@ -305,6 +305,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.sound.playMenuClick();
     });
 
+    // ========== PERFORMANCE BUTTONS ==========
+    document.querySelectorAll('.perf-btn').forEach(btn => {
+        const handler = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const mode = btn.dataset.perf;
+            if (mode) {
+                game.setPerformanceMode(mode);
+                game.sound.playMenuClick();
+            }
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', handler);
+    });
+
+    // Sync perf button active state on load
+    const savedPerf = game.performanceMode || 'high';
+    document.querySelectorAll('.perf-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.perf === savedPerf);
+    });
+
     // HUD buttons
     document.getElementById('hud-settings-btn')?.addEventListener('click', () => {
         if (game.state === 'playing') {

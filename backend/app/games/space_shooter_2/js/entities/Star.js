@@ -518,6 +518,12 @@ class StarField {
         this._buildForTheme(theme);
     }
 
+    /** Change quality setting and rebuild */
+    setQuality(quality) {
+        this.quality = quality;
+        this._buildForTheme(this.currentTheme);
+    }
+
     _buildForTheme(theme) {
         this.currentTheme = theme;
         this.bgColor = theme.bg;

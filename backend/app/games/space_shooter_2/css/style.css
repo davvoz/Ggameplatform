@@ -57,6 +57,108 @@ html, body {
     height: 20px;
 }
 
+/* ===== LOADING SCREEN ===== */
+.loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #06060f;
+    overflow: hidden;
+    transition: opacity 0.6s ease;
+}
+.loading-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Animated star background */
+.loading-stars {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 50% 10%, rgba(150,200,255,0.9), transparent),
+        radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 20% 90%, rgba(100,180,255,0.8), transparent),
+        radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 40% 45%, rgba(200,220,255,0.7), transparent),
+        radial-gradient(1px 1px at 15% 55%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 85% 50%, rgba(120,200,255,0.7), transparent),
+        radial-gradient(1px 1px at 55% 35%, rgba(255,255,255,0.5), transparent);
+    animation: loadingStarsScroll 8s linear infinite;
+}
+@keyframes loadingStarsScroll {
+    from { transform: translateY(-20%); }
+    to   { transform: translateY(20%); }
+}
+
+.loading-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Ship icon with thruster */
+.loading-spinner {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+}
+.spin-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+}
+.ring-1 {
+    width: 90px; height: 90px;
+    margin: -45px 0 0 -45px;
+    border-top-color: #4af;
+    border-right-color: #4af;
+    filter: drop-shadow(0 0 6px rgba(80, 180, 255, 0.7));
+    animation: spinCW 1.4s linear infinite;
+}
+.ring-2 {
+    width: 68px; height: 68px;
+    margin: -34px 0 0 -34px;
+    border-bottom-color: #8df;
+    border-left-color: #8df;
+    filter: drop-shadow(0 0 5px rgba(140, 210, 255, 0.6));
+    animation: spinCCW 1.0s linear infinite;
+}
+.ring-3 {
+    width: 46px; height: 46px;
+    margin: -23px 0 0 -23px;
+    border-top-color: #06f;
+    border-width: 2px;
+    filter: drop-shadow(0 0 4px rgba(0, 100, 255, 0.8));
+    animation: spinCW 0.7s linear infinite;
+}
+.ring-4 {
+    width: 24px; height: 24px;
+    margin: -12px 0 0 -12px;
+    border-right-color: #aef;
+    border-bottom-color: #aef;
+    border-width: 1.5px;
+    filter: drop-shadow(0 0 3px rgba(170, 230, 255, 0.5));
+    animation: spinCCW 1.8s linear infinite;
+}
+@keyframes spinCW  { to { transform: rotate(360deg); } }
+@keyframes spinCCW { to { transform: rotate(-360deg); } }
+
+/* Thruster hidden during spin */
+.loading-thruster {
+    display: none;
+}
+
 /* ===== UI SCREENS (overlay) ===== */
 .ui-screen {
     position: absolute;

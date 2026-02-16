@@ -76,8 +76,19 @@ class Game {
 
         this.setPerformanceMode(this.performanceMode);
 
+        this._hideLoading();
+
         this.lastTime = performance.now();
         this.gameLoop(this.lastTime);
+    }
+
+    _hideLoading() {
+        const overlay = document.getElementById('loading-screen');
+        if (!overlay) return;
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 600);
     }
 
     resize() {

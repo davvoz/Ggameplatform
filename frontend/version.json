@@ -1,8 +1,17 @@
 {
-  "version": "3.25.0",
-  "timestamp": "2026-02-15T21:30:45.796Z",
-  "buildNumber": 395,
+  "version": "3.25.1",
+  "timestamp": "2026-02-16T00:05:44.251Z",
+  "buildNumber": 396,
   "changelog": [
+    {
+      "version": "3.25.1",
+      "date": "2026-02-16",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] Implement performance mode settings and UI controls",
+        "🔖 Bump version to 3.25.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.25.0",
       "date": "2026-02-15",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: Add script to generate WebP thumbnail previews for games, full images now appears only in game details page.",
         "🔖 Bump version to 3.23.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.23.1",
-      "date": "2026-02-10",
-      "type": "patch",
-      "changes": [
-        "fix:",
-        "🔖 Bump version to 3.23.0 [skip-version]"
       ]
     }
   ]

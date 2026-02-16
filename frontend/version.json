@@ -1,8 +1,17 @@
 {
-  "version": "3.25.1",
-  "timestamp": "2026-02-16T00:05:44.251Z",
-  "buildNumber": 396,
+  "version": "3.25.2",
+  "timestamp": "2026-02-16T01:13:10.162Z",
+  "buildNumber": 397,
   "changelog": [
+    {
+      "version": "3.25.2",
+      "date": "2026-02-16",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]Add loading screen with animated stars and spinner",
+        "🔖 Bump version to 3.25.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.25.1",
       "date": "2026-02-16",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: Implement weekly leaderboard for game details with podium and rewards display",
         "🔖 Bump version to 3.23.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.23.2",
-      "date": "2026-02-10",
-      "type": "patch",
-      "changes": [
-        "fix: Add script to generate WebP thumbnail previews for games, full images now appears only in game details page.",
-        "🔖 Bump version to 3.23.1 [skip-version]"
       ]
     }
   ]

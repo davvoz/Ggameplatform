@@ -385,12 +385,14 @@ class CommunityStatsRenderer {
                 ? `<span class="cs-rank-medal">${['🥇','🥈','🥉'][u.rank - 1]}</span>`
                 : `<span class="cs-rank-num">#${u.rank}</span>`;
 
+            const avatarHTML = this._renderAvatar(u.steem_username);
+
             return `
             <tr class="cs-user-row cs-fade-in" style="animation-delay:${i * 30}ms" data-user-id="${u.user_id}">
                 <td class="cs-td-rank">${rankBadge}</td>
                 <td class="cs-td-user">
                     <div class="cs-user-cell">
-                        <span class="cs-user-badge" style="color:${u.level_color}">${u.level_badge}</span>
+                        ${avatarHTML}
                         <div class="cs-user-info">
                             <span class="cs-user-name">${this._escapeHtml(u.username || 'Unknown')}</span>
                             <span class="cs-user-title" style="color:${u.level_color}">Lv.${u.level} ${u.level_title}</span>
@@ -747,12 +749,14 @@ class CommunityStatsRenderer {
             ? `<span class="cs-rank-medal">${['🥇','🥈','🥉'][u.rank - 1]}</span>`
             : `<span class="cs-rank-num">#${u.rank}</span>`;
 
-        return `
+            const avatarHTML = this._renderAvatar(u.steem_username);
+
+            return `
         <tr class="cs-user-row cs-fade-in" style="animation-delay:${i * 30}ms" data-user-id="${u.user_id}">
             <td class="cs-td-rank">${rankBadge}</td>
             <td class="cs-td-user">
                 <div class="cs-user-cell">
-                    <span class="cs-user-badge" style="color:${u.level_color}">${u.level_badge}</span>
+                    ${avatarHTML}
                     <div class="cs-user-info">
                         <span class="cs-user-name">${this._escapeHtml(u.username || 'Unknown')}</span>
                         <span class="cs-user-title" style="color:${u.level_color}">Lv.${u.level} ${u.level_title}</span>
@@ -812,6 +816,25 @@ class CommunityStatsRenderer {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Render a user avatar using SteemAvatarService (or fallback emoji).
+     * @param {string|null} steemUsername
+     * @returns {string} HTML string
+     * @private
+     */
+    _renderAvatar(steemUsername) {
+        if (window.steemAvatarService) {
+            return window.steemAvatarService.renderAvatarImg(steemUsername, {
+                size: 'small',
+                cssClass: 'cs-user-avatar',
+                width: 32,
+                height: 32
+            });
+        }
+        // Fallback if service not loaded yet
+        return `<span class="cs-user-avatar cs-user-avatar--fallback" style="width:32px;height:32px;">🎮</span>`;
     }
 
     /** Init fade-in and count-up animations. @private */

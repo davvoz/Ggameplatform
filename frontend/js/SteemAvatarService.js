@@ -74,3 +74,8 @@ export class SteemAvatarService {
 
 /** Singleton instance for global use */
 export const steemAvatarService = new SteemAvatarService();
+
+// Also expose globally for non-module scripts (e.g. CommunityStatsRenderer)
+if (typeof window !== 'undefined') {
+    window.steemAvatarService = steemAvatarService;
+}

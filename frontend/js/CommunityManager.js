@@ -92,6 +92,12 @@ class CommunityManager {
         
         this.isInitialized = true;
         console.log('[CommunityManager] Initialized');
+
+        // Restore previously active tab (if any)
+        const savedSection = sessionStorage.getItem('community_active_tab');
+        if (savedSection && savedSection !== this.currentSection) {
+            this._switchSection(savedSection);
+        }
     }
 
     /**
@@ -908,6 +914,9 @@ class CommunityManager {
      */
     _switchSection(section) {
         this.currentSection = section;
+
+        // Persist choice for navigation back
+        sessionStorage.setItem('community_active_tab', section);
 
         // Update tab active state
         this.elements.navTabs?.forEach(tab => {

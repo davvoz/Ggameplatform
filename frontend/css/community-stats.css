@@ -468,6 +468,25 @@
     gap: 10px;
 }
 
+.cs-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+}
+
+.cs-user-avatar--fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-elevated);
+    font-size: 1rem;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+}
+
 .cs-user-badge {
     font-size: 1.3rem;
     flex-shrink: 0;

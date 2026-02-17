@@ -1,8 +1,17 @@
 {
-  "version": "3.27.1",
-  "timestamp": "2026-02-17T15:15:58.470Z",
-  "buildNumber": 401,
+  "version": "3.28.0",
+  "timestamp": "2026-02-17T15:38:22.857Z",
+  "buildNumber": 402,
   "changelog": [
+    {
+      "version": "3.28.0",
+      "date": "2026-02-17",
+      "type": "minor",
+      "changes": [
+        "feat: add user avatar rendering and session storage for active tab in CommunityManager",
+        "🔖 Bump version to 3.27.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.27.1",
       "date": "2026-02-17",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[ST]obf",
         "🔖 Bump version to 3.24.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.24.3",
-      "date": "2026-02-13",
-      "type": "patch",
-      "changes": [
-        "fix:[SS]livelli discreti",
-        "🔖 Bump version to 3.24.2 [skip-version]"
       ]
     }
   ]

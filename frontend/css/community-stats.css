@@ -1,0 +1,812 @@
+/* ========================================
+   Community Stats - Infographics & Charts
+   Dark gaming theme, responsive, pure CSS
+   ======================================== */
+
+/* ========== Community Tabs ========== */
+.community-nav-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 var(--spacing-md);
+    background: var(--background-light);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.community-nav-tab {
+    flex: 1;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.community-nav-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: transparent;
+    transition: var(--transition);
+}
+
+.community-nav-tab:hover {
+    color: var(--text-secondary);
+    background: var(--surface);
+}
+
+.community-nav-tab.active {
+    color: var(--primary-color);
+}
+
+.community-nav-tab.active::after {
+    background: var(--primary-color);
+    left: 10%;
+    right: 10%;
+}
+
+.community-nav-icon {
+    font-size: 1.1rem;
+}
+
+/* ========== Section Containers ========== */
+.community-chat-section,
+.community-stats-section {
+    flex: 1;
+    display: none;
+    min-height: 0;
+}
+
+.community-chat-section.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.community-stats-section.active {
+    display: block;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+}
+
+/* ========== Stats Sections ========== */
+.cs-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.cs-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cs-section-title small {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-left: 4px;
+}
+
+.cs-icon {
+    font-size: 1.2rem;
+}
+
+/* ========== KPI Hero Cards ========== */
+.cs-hero-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.cs-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.cs-kpi-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-md);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: var(--transition);
+}
+
+.cs-kpi-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+.cs-kpi-icon {
+    font-size: 1.5rem;
+}
+
+.cs-kpi-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.cs-kpi-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+}
+
+/* ========== Bar Chart ========== */
+.cs-chart-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.cs-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 180px;
+    padding-bottom: 24px;
+    position: relative;
+    min-width: 100%;
+}
+
+.cs-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    min-width: 18px;
+    position: relative;
+}
+
+.cs-bar-stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
+    flex: 1;
+}
+
+.cs-bar-seg {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    min-height: 0;
+    transition: opacity 0.2s;
+}
+
+.cs-bar-seg:hover {
+    opacity: 0.8;
+    outline: 1px solid rgba(255,255,255,0.3);
+}
+
+.cs-bar-label {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    position: absolute;
+    bottom: 0;
+    white-space: nowrap;
+    transform: rotate(-35deg);
+    transform-origin: top right;
+}
+
+.cs-bar-value {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    position: absolute;
+    top: -14px;
+    font-weight: 600;
+}
+
+/* ========== Chart Legend ========== */
+.cs-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+}
+
+.cs-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.cs-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ========== Line / Area Chart ========== */
+.cs-line-chart {
+    position: relative;
+    height: 160px;
+    width: 100%;
+}
+
+.cs-line-svg {
+    width: 100%;
+    height: 140px;
+    display: block;
+}
+
+.cs-dot {
+    transition: r 0.2s;
+    cursor: pointer;
+}
+
+.cs-dot:hover {
+    r: 3;
+}
+
+.cs-line-labels {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.cs-line-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+/* ========== Pie / Donut Chart ========== */
+.cs-pie-container {
+    display: flex;
+    justify-content: center;
+}
+
+.cs-pie-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.cs-pie-donut {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.cs-pie-hole {
+    position: absolute;
+    width: 55%;
+    height: 55%;
+    background: var(--background);
+    border-radius: 50%;
+    top: 22.5%;
+    left: 22.5%;
+}
+
+.cs-pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.cs-pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+}
+
+.cs-pie-legend-label {
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cs-pie-legend-val {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+}
+
+/* ========== Tables ========== */
+.cs-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    margin-top: var(--spacing-md);
+}
+
+.cs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.cs-table thead {
+    background: var(--background-light);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.cs-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.cs-table td {
+    padding: 10px 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.cs-table tbody tr {
+    transition: background 0.15s;
+}
+
+.cs-table tbody tr:hover {
+    background: var(--surface);
+}
+
+.cs-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* -- Game breakdown table -- */
+.cs-td-game {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cs-game-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* -- User ranked table -- */
+.cs-users-table .cs-td-rank {
+    width: 50px;
+    text-align: center;
+}
+
+.cs-rank-medal {
+    font-size: 1.3rem;
+}
+
+.cs-rank-num {
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.cs-user-row {
+    cursor: pointer;
+}
+
+.cs-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cs-user-badge {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.cs-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cs-user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cs-user-title {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.cs-td-xp {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.cs-td-coins {
+    font-weight: 600;
+}
+
+.cs-td-streak {
+    font-weight: 600;
+}
+
+.cs-th-rank {
+    width: 50px;
+    text-align: center;
+}
+
+/* ========== Economy Tabs ========== */
+.cs-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--spacing-md);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 3px;
+    width: fit-content;
+}
+
+.cs-tab {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.cs-tab:hover {
+    color: var(--text-secondary);
+}
+
+.cs-tab.active {
+    background: var(--primary-color);
+    color: #000;
+}
+
+/* ========== Economy Charts Layout ========== */
+.cs-economy-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.cs-economy-chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-md);
+    overflow: hidden;
+}
+
+.cs-chart-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* ========== Economy Summary Cards ========== */
+.cs-summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.cs-summary-card {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm) var(--spacing-xs);
+}
+
+.cs-sum-val {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.cs-sum-lbl {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
+/* ========== Historical page ========== */
+.cs-historical-totals {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.cs-hist-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-md);
+    text-align: center;
+}
+
+.cs-hist-icon {
+    font-size: 1.5rem;
+}
+
+.cs-hist-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.cs-hist-lbl {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ========== Load More ========== */
+.cs-load-more-wrap {
+    text-align: center;
+    margin-top: var(--spacing-md);
+}
+
+.cs-load-more-btn {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    color: var(--primary-color);
+    padding: 10px 32px;
+    border-radius: var(--radius-xl);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.cs-load-more-btn:hover {
+    background: rgba(0, 217, 255, 0.08);
+    border-color: var(--primary-color);
+}
+
+.cs-load-more-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========== States: Empty / Error / Loading ========== */
+.cs-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.cs-error {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--error);
+}
+
+.cs-error-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: var(--spacing-sm);
+}
+
+.cs-loading-inline {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-xl);
+}
+
+.cs-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: cs-spin 0.8s linear infinite;
+}
+
+@keyframes cs-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== Skeleton Loading ========== */
+.cs-skeleton {
+    padding: var(--spacing-md);
+}
+
+.cs-skel-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.cs-skel-title {
+    height: 20px;
+    width: 180px;
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    animation: cs-pulse 1.4s ease-in-out infinite;
+}
+
+.cs-skel-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.cs-skel-kpi {
+    height: 80px;
+    background: var(--surface-elevated);
+    border-radius: var(--radius-xl);
+    animation: cs-pulse 1.4s ease-in-out infinite;
+}
+
+.cs-skel-chart {
+    height: 180px;
+    background: var(--surface-elevated);
+    border-radius: var(--radius-lg);
+    animation: cs-pulse 1.4s ease-in-out infinite;
+}
+
+.cs-skel-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.cs-skel-row {
+    height: 40px;
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    animation: cs-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes cs-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ========== Animations ========== */
+.cs-fade-in {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cs-fade-in.cs-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .cs-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cs-economy-charts {
+        grid-template-columns: 1fr;
+    }
+
+    .cs-summary-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cs-historical-totals {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cs-pie-wrapper {
+        flex-direction: column;
+    }
+
+    .cs-pie-donut {
+        width: 130px;
+        height: 130px;
+    }
+
+    .cs-bar-chart {
+        height: 140px;
+    }
+
+    .cs-users-table .cs-td-games,
+    .cs-users-table .cs-td-streak {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .cs-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cs-kpi-card {
+        padding: var(--spacing-sm);
+    }
+
+    .cs-kpi-value {
+        font-size: 1.1rem;
+    }
+
+    .cs-kpi-label {
+        font-size: 0.6rem;
+    }
+
+    .cs-summary-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cs-table th,
+    .cs-table td {
+        padding: 8px 6px;
+        font-size: 0.75rem;
+    }
+
+    .cs-users-table .cs-td-coins {
+        display: none;
+    }
+
+    .community-nav-tab {
+        font-size: 0.85rem;
+        padding: 12px 8px;
+    }
+}

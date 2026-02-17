@@ -17,11 +17,13 @@ class CommunityManager {
         // Services
         this.communityAPI = null;
         this.scrollManager = null;
+        this.statsRenderer = null;
         
         // State
         this.messages = [];
         this.currentSection = 'chat';
         this.isInitialized = false;
+        this.statsLoaded = false;
         this.stats = {
             onlineUsers: 0,
             totalMessages: 0,
@@ -98,6 +100,11 @@ class CommunityManager {
      */
     _cacheElements() {
         this.elements = {
+            // Navigation tabs
+            navTabs: this.container?.querySelectorAll('.community-nav-tab'),
+            chatSection: this.container?.querySelector('.community-chat-section'),
+            statsSection: this.container?.querySelector('.community-stats-section'),
+            
             // Header
             headerStatus: document.querySelector('.chat-header-status'),
             statusIndicator: document.getElementById('headerStatusIndicator'),
@@ -132,6 +139,16 @@ class CommunityManager {
      * @private
      */
     _setupEventListeners() {
+        // Navigation tabs (Chat / Stats)
+        this.elements.navTabs?.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const section = tab.dataset.section;
+                if (section && section !== this.currentSection) {
+                    this._switchSection(section);
+                }
+            });
+        });
+
         // Chat input
         if (this.elements.chatInput) {
             this.elements.chatInput.addEventListener('keypress', (e) => {
@@ -880,6 +897,62 @@ class CommunityManager {
         }, 3000);
     }
 
+    // ========================================================================
+    // Section Switching (Chat / Stats)
+    // ========================================================================
+
+    /**
+     * Switch between chat and stats sections
+     * @param {string} section - 'chat' or 'stats'
+     * @private
+     */
+    _switchSection(section) {
+        this.currentSection = section;
+
+        // Update tab active state
+        this.elements.navTabs?.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.section === section);
+        });
+
+        // Toggle section visibility
+        if (this.elements.chatSection) {
+            this.elements.chatSection.classList.toggle('active', section === 'chat');
+        }
+        if (this.elements.statsSection) {
+            this.elements.statsSection.classList.toggle('active', section === 'stats');
+        }
+
+        // Lazy-load stats on first switch
+        if (section === 'stats' && !this.statsLoaded) {
+            this._initStats();
+        }
+
+        console.log(`[CommunityManager] Switched to section: ${section}`);
+    }
+
+    /**
+     * Initialize the stats renderer (lazy, first time only)
+     * @private
+     */
+    async _initStats() {
+        if (this.statsLoaded) return;
+        this.statsLoaded = true;
+
+        try {
+            this.statsRenderer = new CommunityStatsRenderer();
+            await this.statsRenderer.mount(this.elements.statsSection);
+        } catch (err) {
+            console.error('[CommunityManager] Stats init error:', err);
+            if (this.elements.statsSection) {
+                this.elements.statsSection.innerHTML = `
+                    <div class="cs-error">
+                        <span class="cs-error-icon">⚠️</span>
+                        <p>Failed to load community stats.</p>
+                    </div>`;
+            }
+        }
+    }
+
     /**
      * Cleanup and destroy manager
      */
@@ -897,10 +970,17 @@ class CommunityManager {
             this.scrollManager.destroy();
             this.scrollManager = null;
         }
+
+        // Destroy stats renderer
+        if (this.statsRenderer) {
+            this.statsRenderer.destroy();
+            this.statsRenderer = null;
+        }
         
         // Clear state
         this.messages = [];
         this.isInitialized = false;
+        this.statsLoaded = false;
         this.elements = {};
     }
 }

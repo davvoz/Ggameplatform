@@ -526,7 +526,18 @@
     <!-- Community Template -->
     <template id="community-template">
         <div class="community">
+            <!-- Tab Navigation -->
+            <div class="community-nav-tabs">
+                <button class="community-nav-tab active" data-section="chat">
+                    <span class="community-nav-icon">💬</span> Chat
+                </button>
+                <button class="community-nav-tab" data-section="stats">
+                    <span class="community-nav-icon">📊</span> Stats
+                </button>
+            </div>
+
             <!-- Chat Section - Full Height Telegram/WhatsApp Style -->
+            <div class="community-chat-section active">
             <div class="chat-wrapper">
                 <!-- Chat Header -->
                 <div class="chat-header">
@@ -598,6 +609,12 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            </div> <!-- /community-chat-section -->
+
+            <!-- Stats Section -->
+            <div class="community-stats-section" id="communityStatsSection">
+                <!-- CommunityStatsRenderer mounts here -->
             </div>
         </div>
     </template>
@@ -694,7 +711,10 @@
     <script src="./js/SteemPostAPI.js"></script>
     <script src="./js/SteemPostModal.js"></script>
     <script src="./js/CommunityAPI.js"></script>
+    <script src="./js/CommunityStatsAPI.js"></script>
+    <script src="./js/CommunityStatsRenderer.js"></script>
     <script src="./js/CommunityManager.js"></script>
+    <link rel="stylesheet" href="./css/community-stats.css">
     <link rel="stylesheet" href="./css/steem-post-modal.css">
     <script type="module" src="./js/main.js"></script>
     <script src="./js/nav-multiplier.js"></script>

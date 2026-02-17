@@ -26,6 +26,9 @@ class CommunityStatsRenderer {
         /** Set of hidden game names (legend filter) */
         this._hiddenGames = new Set();
 
+        /** Stable game → color mapping (built once from full game list) */
+        this._gameColorMap = {};
+
         /** Active economy period */
         this.economyPeriod = 'daily'; // 'daily' | 'weekly' | 'historical'
 
@@ -166,6 +169,13 @@ class CommunityStatsRenderer {
         // Group data by date for stacked view
         const { dateLabels, gameNames, seriesMap } = this._groupByDate(d.data);
 
+        // Build stable color map (once) from the full game list
+        if (Object.keys(this._gameColorMap).length === 0) {
+            gameNames.forEach((g, i) => {
+                this._gameColorMap[g] = this.palette[i % this.palette.length];
+            });
+        }
+
         return `
         <section class="cs-section">
             <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity <small>Last 30 days</small></h3>
@@ -173,9 +183,9 @@ class CommunityStatsRenderer {
                 ${this._renderBarChart(dateLabels, gameNames, seriesMap, 'sessions_count', 'Sessions')}
             </div>
             <div class="cs-chart-legend" id="csGameLegend">
-                ${gameNames.map((g, i) => `
+                ${gameNames.map((g) => `
                     <button class="cs-legend-btn${this._hiddenGames.has(g) ? ' cs-legend-hidden' : ''}" data-game="${this._escapeHtml(g)}">
-                        <span class="cs-legend-dot" style="background:${this.palette[i % this.palette.length]}"></span>
+                        <span class="cs-legend-dot" style="background:${this._gameColorMap[g] || '#888'}"></span>
                         ${this._escapeHtml(g)}
                     </button>
                 `).join('')}
@@ -192,7 +202,7 @@ class CommunityStatsRenderer {
         const rows = h.games.map((g, i) => `
             <tr class="cs-fade-in" style="animation-delay:${i * 40}ms">
                 <td class="cs-td-game">
-                    <span class="cs-game-dot" style="background:${this.palette[i % this.palette.length]}"></span>
+                    <span class="cs-game-dot" style="background:${this._gameColorMap[g.game_title] || this.palette[i % this.palette.length]}"></span>
                     ${this._escapeHtml(g.game_title)}
                 </td>
                 <td>${g.total_sessions.toLocaleString()}</td>
@@ -450,10 +460,11 @@ class CommunityStatsRenderer {
                 total += (seriesMap[game]?.[date]?.[valueKey] || 0);
             });
 
-            const segments = gameNames.map((game, gi) => {
+            const segments = gameNames.map((game) => {
                 const val = seriesMap[game]?.[date]?.[valueKey] || 0;
                 const pct = (val / maxTotal) * 100;
-                return `<div class="cs-bar-seg" style="height:${pct}%;background:${this.palette[gi % this.palette.length]}" title="${game}: ${val}"></div>`;
+                const color = this._gameColorMap[game] || '#888';
+                return `<div class="cs-bar-seg" style="height:${pct}%;background:${color}" title="${game}: ${val}"></div>`;
             }).join('');
 
             return `

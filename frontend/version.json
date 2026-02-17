@@ -1,8 +1,17 @@
 {
-  "version": "3.25.2",
-  "timestamp": "2026-02-16T01:13:10.162Z",
-  "buildNumber": 397,
+  "version": "3.25.3",
+  "timestamp": "2026-02-17T08:46:01.620Z",
+  "buildNumber": 398,
   "changelog": [
+    {
+      "version": "3.25.3",
+      "date": "2026-02-17",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]logical canvas dimension , spatial grid , performnce mode",
+        "🔖 Bump version to 3.25.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.25.2",
       "date": "2026-02-16",
@@ -84,16 +93,6 @@
       "changes": [
         "feat: Add weekly leaderboard standings feature for user profiles, moved About section on footer",
         "🔖 Bump version to 3.23.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.23.3",
-      "date": "2026-02-11",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: Implement weekly leaderboard for game details with podium and rewards display",
-        "🔖 Bump version to 3.23.2 [skip-version]"
       ]
     }
   ]

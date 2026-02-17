@@ -174,3 +174,22 @@ class CommunityStatsService:
             "game_id": game_id,
             **data,
         }
+
+    # =========================================================================
+    # Top Achievers
+    # =========================================================================
+
+    def get_top_achievers(self) -> Dict[str, Any]:
+        """
+        Get the top XP and coins earners for today, this week, and all-time.
+        Each includes user details and a breakdown of how they achieved it.
+
+        Returns:
+            Response dict with 6 achiever slots (some may be None)
+        """
+        data = self.repository.get_top_achievers()
+
+        return {
+            "success": True,
+            **data,
+        }

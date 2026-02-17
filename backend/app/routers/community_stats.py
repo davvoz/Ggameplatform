@@ -166,6 +166,47 @@ class EconomyHistoricalResponse(BaseModel):
     games: List[GameBreakdownItem]
 
 
+class AchieverBreakdownItem(BaseModel):
+    """Single breakdown entry for an achiever (game or source)."""
+    game_title: Optional[str] = None
+    source: Optional[str] = None
+    value: float
+    sessions: Optional[int] = None
+    best_score: Optional[int] = None
+    duration: Optional[int] = None
+    count: Optional[int] = None
+
+
+class AchieverItem(BaseModel):
+    """A top achiever user with details and breakdown."""
+    user_id: str
+    username: Optional[str]
+    steem_username: Optional[str]
+    level: int
+    level_title: str
+    level_badge: str
+    level_color: str
+    total_xp_earned: float
+    coin_balance: int
+    login_streak: int
+    metric_value: float
+    sessions: int
+    unique_games: int
+    total_duration: int
+    breakdown: List[AchieverBreakdownItem]
+
+
+class TopAchieversResponse(BaseModel):
+    """Response for top achievers endpoint."""
+    success: bool
+    xp_daily: Optional[AchieverItem] = None
+    xp_weekly: Optional[AchieverItem] = None
+    xp_alltime: Optional[AchieverItem] = None
+    coins_daily: Optional[AchieverItem] = None
+    coins_weekly: Optional[AchieverItem] = None
+    coins_alltime: Optional[AchieverItem] = None
+
+
 # =============================================================================
 # API Endpoints
 # =============================================================================
@@ -294,4 +335,26 @@ async def get_economy_historical(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch historical economy stats: {str(e)}"
+        )
+
+
+@router.get("/top-achievers", response_model=TopAchieversResponse)
+async def get_top_achievers(
+    service: CommunityStatsService = Depends(get_community_stats_service)
+):
+    """
+    Get the top XP and coins earners for today, this week, and all-time.
+
+    Returns the champion user for each metric/period with details on how
+    they reached that result (game breakdown for XP, source breakdown for coins).
+    Ideal for "Hall of Fame" / "Top Achievers" infographic cards.
+    """
+    try:
+        result = service.get_top_achievers()
+        return result
+    except Exception as e:
+        logger.error(f"[CommunityStats] Error fetching top achievers: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch top achievers: {str(e)}"
         )

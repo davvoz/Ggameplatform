@@ -77,22 +77,102 @@
 .community-stats-section.active {
     display: block;
     overflow-y: auto;
-    padding: var(--spacing-md);
 }
 
 /* ========== Stats Sections ========== */
+
+/* Dashboard container — consistent vertical rhythm */
+.cs-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== Anchor Navigation ========== */
+.cs-anchor-nav {
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    overflow-x: auto;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.cs-anchor-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.cs-anchor-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-lg);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: var(--transition);
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.cs-anchor-link:hover {
+    color: var(--text-secondary);
+    background: var(--surface-elevated);
+}
+
+.cs-anchor-link.active {
+    color: #000;
+    background: var(--primary-color);
+}
+
+.cs-anchor-icon {
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.cs-anchor-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Scroll offset for sticky nav */
+.cs-dashboard .cs-section-card {
+    scroll-margin-top: 52px;
+}
+
 .cs-section {
-    margin-bottom: var(--spacing-xl);
+    position: relative;
+}
+
+/* Section card — consistent bordered panel for every section */
+.cs-section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
 }
 
 .cs-section-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;
     gap: 8px;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border);
 }
 
 .cs-section-title small {
@@ -108,7 +188,29 @@
 
 /* ========== KPI Hero Cards ========== */
 .cs-hero-section {
-    margin-bottom: var(--spacing-xl);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 217, 255, 0.02) 100%);
+}
+
+/* Two-row KPI layout: Engagement | Economy */
+.cs-kpi-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.cs-kpi-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.cs-kpi-group-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding-left: 2px;
 }
 
 .cs-kpi-grid {
@@ -134,6 +236,19 @@
     border-color: var(--primary-color);
     box-shadow: 0 0 20px rgba(0, 217, 255, 0.08);
     transform: translateY(-2px);
+}
+
+/* KPI accent borders (subtle, left-border highlight) */
+.cs-kpi-card--xp {
+    border-left: 3px solid rgba(105, 240, 174, 0.4);
+}
+
+.cs-kpi-card--coins {
+    border-left: 3px solid rgba(255, 193, 7, 0.4);
+}
+
+.cs-kpi-card--spent {
+    border-left: 3px solid rgba(255, 61, 113, 0.4);
 }
 
 .cs-kpi-icon {
@@ -534,7 +649,7 @@
     display: flex;
     gap: 4px;
     margin-bottom: var(--spacing-md);
-    background: var(--surface);
+    background: var(--surface-elevated);
     border-radius: var(--radius-lg);
     padding: 3px;
     width: fit-content;
@@ -569,7 +684,7 @@
 }
 
 .cs-economy-chart-box {
-    background: var(--surface);
+    background: var(--surface-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: var(--spacing-md);
@@ -593,7 +708,7 @@
 
 .cs-summary-card {
     text-align: center;
-    background: var(--surface);
+    background: var(--surface-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-sm) var(--spacing-xs);
@@ -650,6 +765,252 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+
+/* ========== Hall of Fame — Top Achievers ========== */
+
+.cs-hall-of-fame {
+    position: relative;
+    overflow: visible;
+}
+
+.cs-hall-of-fame::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -10%;
+    width: 120%;
+    height: 180%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(105, 240, 174, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(255, 193, 7, 0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cs-hall-of-fame > * {
+    position: relative;
+    z-index: 1;
+}
+
+.cs-achiever-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+/* — Champion Card — */
+.cs-champion-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cs-champion-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cs-champion-card:hover {
+    transform: translateY(-3px);
+}
+
+.cs-champion-card--xp {
+    border-color: rgba(105, 240, 174, 0.2);
+}
+
+.cs-champion-card--xp::after {
+    box-shadow: inset 0 0 30px rgba(105, 240, 174, 0.05), 0 4px 24px rgba(105, 240, 174, 0.08);
+}
+
+.cs-champion-card--xp:hover::after {
+    opacity: 1;
+}
+
+.cs-champion-card--coins {
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.cs-champion-card--coins::after {
+    box-shadow: inset 0 0 30px rgba(255, 193, 7, 0.05), 0 4px 24px rgba(255, 193, 7, 0.08);
+}
+
+.cs-champion-card--coins:hover::after {
+    opacity: 1;
+}
+
+.cs-champion-card--empty {
+    opacity: 0.5;
+    min-height: 180px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* — Header — */
+.cs-champion-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.cs-champion-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+/* — Identity Row: avatar ring + name + big metric — */
+.cs-champion-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.cs-champion-avatar-ring {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    background: conic-gradient(from 180deg, var(--ring-color), transparent 60%, var(--ring-color));
+    animation: cs-ring-spin 4s linear infinite;
+}
+
+.cs-champion-avatar-ring .cs-user-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+}
+
+@keyframes cs-ring-spin {
+    from { background: conic-gradient(from 0deg, var(--ring-color), transparent 60%, var(--ring-color)); }
+    to   { background: conic-gradient(from 360deg, var(--ring-color), transparent 60%, var(--ring-color)); }
+}
+
+.cs-champion-user {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cs-champion-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cs-champion-level {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.cs-champion-metric {
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 70px;
+    line-height: 1.1;
+}
+
+/* — Stat Pills — */
+.cs-champion-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cs-champ-pill {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* — Breakdown — */
+.cs-champion-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.cs-breakdown-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.cs-breakdown-row {
+    display: grid;
+    grid-template-columns: minmax(80px, 1fr) 2fr auto auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+}
+
+.cs-breakdown-label {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cs-breakdown-bar-track {
+    height: 6px;
+    background: var(--surface-elevated);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.cs-breakdown-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.cs-breakdown-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 36px;
+}
+
+.cs-breakdown-detail {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-align: right;
+    min-width: 60px;
 }
 
 /* ========== Load More ========== */
@@ -721,11 +1082,17 @@
 
 /* ========== Skeleton Loading ========== */
 .cs-skeleton {
-    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    padding: 0;
 }
 
 .cs-skel-section {
-    margin-bottom: var(--spacing-xl);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
 }
 
 .cs-skel-title {
@@ -789,8 +1156,41 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
+    .cs-section-card {
+        padding: var(--spacing-md);
+    }
+
+    .cs-anchor-link {
+        padding: 7px 10px;
+        font-size: 0.72rem;
+    }
+
+    .cs-anchor-label {
+        display: none;
+    }
+
+    .cs-anchor-link.active .cs-anchor-label {
+        display: inline;
+    }
+
     .cs-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .cs-achiever-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cs-champion-metric {
+        font-size: 1.2rem;
+    }
+
+    .cs-breakdown-row {
+        grid-template-columns: minmax(60px, 1fr) 1.5fr auto;
+    }
+
+    .cs-breakdown-detail {
+        display: none;
     }
 
     .cs-economy-charts {
@@ -825,8 +1225,38 @@
 }
 
 @media (max-width: 480px) {
+    .cs-section-card {
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-lg);
+    }
+
+    .cs-dashboard {
+        gap: var(--spacing-md);
+    }
+
     .cs-kpi-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cs-champion-identity {
+        flex-wrap: wrap;
+    }
+
+    .cs-champion-avatar-ring {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+
+    .cs-champion-avatar-ring .cs-user-avatar {
+        width: 38px !important;
+        height: 38px !important;
+    }
+
+    .cs-champion-metric {
+        width: 100%;
+        text-align: left;
+        font-size: 1.3rem;
     }
 
     .cs-kpi-card {

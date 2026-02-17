@@ -32,8 +32,17 @@ class CommunityStatsRenderer {
         /** Active economy period */
         this.economyPeriod = 'daily'; // 'daily' | 'weekly' | 'historical'
 
+        /** Active achiever period */
+        this.achieverPeriod = 'daily'; // 'daily' | 'weekly' | 'alltime'
+
         /** Animation duration (ms) */
         this.animDuration = 800;
+
+        /** @type {Function|null} Bound scroll handler for cleanup */
+        this._scrollHandler = null;
+
+        /** @type {boolean} Suppresses scroll spy briefly after a click */
+        this._scrollSpyLocked = false;
     }
 
     // ========================================================================
@@ -54,6 +63,7 @@ class CommunityStatsRenderer {
      * Teardown
      */
     destroy() {
+        this._removeScrollSpy();
         this._cache = {};
         if (this.container) this.container.innerHTML = '';
         this.container = null;
@@ -69,17 +79,19 @@ class CommunityStatsRenderer {
      */
     async _loadAll() {
         try {
-            const [historical, gamesDaily, usersRanked, economyDaily] = await Promise.all([
+            const [historical, gamesDaily, usersRanked, economyDaily, topAchievers] = await Promise.all([
                 CommunityStatsAPI.getEconomyHistorical(),
                 CommunityStatsAPI.getGamesDailyActivity(30),
                 CommunityStatsAPI.getUsersRanked(50, 0),
                 CommunityStatsAPI.getEconomyDaily(30),
+                CommunityStatsAPI.getTopAchievers(),
             ]);
 
             this._cache.historical = historical;
             this._cache.gamesDaily = gamesDaily;
             this._cache.usersRanked = usersRanked;
             this._cache.economyDaily = economyDaily;
+            this._cache.topAchievers = topAchievers;
 
             this._renderAll();
         } catch (err) {
@@ -105,16 +117,21 @@ class CommunityStatsRenderer {
         const h = this._cache.historical;
 
         this.container.innerHTML = `
-            ${this._renderPlatformHero(h)}
-            ${this._renderGameActivitySection()}
-            ${this._renderEconomySection()}
-            ${this._renderUsersRankedSection()}
+            <div class="cs-dashboard">
+                ${this._renderAnchorNav()}
+                ${this._renderPlatformHero(h)}
+                ${this._renderGameActivitySection()}
+                ${this._renderEconomySection()}
+                ${this._renderTopAchieversSection()}
+                ${this._renderUsersRankedSection()}
+            </div>
         `;
 
         // Post-render: animations + event listeners
         requestAnimationFrame(() => {
             this._initAnimations();
             this._bindEvents();
+            this._initScrollSpy();
         });
     }
 
@@ -122,31 +139,76 @@ class CommunityStatsRenderer {
     // 1. Platform Hero (KPI cards)
     // ========================================================================
 
+    /**
+     * Navigation anchors — definitions used by nav, section IDs, and scroll spy.
+     * @private
+     */
+    _getSectionAnchors() {
+        return [
+            { id: 'cs-sec-overview',  icon: '\ud83d\udcca', label: 'Overview' },
+            { id: 'cs-sec-games',     icon: '\ud83c\udfae', label: 'Games' },
+            { id: 'cs-sec-economy',   icon: '\ud83d\udcb0', label: 'Economy' },
+            { id: 'cs-sec-fame',      icon: '\ud83c\udfc5', label: 'Fame' },
+            { id: 'cs-sec-leaderboard', icon: '\ud83c\udfc6', label: 'Board' },
+        ];
+    }
+
+    /**
+     * Render sticky anchor navigation bar.
+     * @private
+     */
+    _renderAnchorNav() {
+        const anchors = this._getSectionAnchors();
+        const items = anchors.map((a, i) =>
+            `<a href="#${a.id}" class="cs-anchor-link${i === 0 ? ' active' : ''}" data-target="${a.id}">
+                <span class="cs-anchor-icon">${a.icon}</span>
+                <span class="cs-anchor-label">${a.label}</span>
+            </a>`
+        ).join('');
+
+        return `<nav class="cs-anchor-nav" id="csAnchorNav">${items}</nav>`;
+    }
+
     /** @private */
     _renderPlatformHero(data) {
         if (!data?.platform) return '';
         const p = data.platform;
 
-        const kpis = [
-            { icon: '👥', label: 'Registered Users', value: p.total_registered_users },
-            { icon: '🎮', label: 'Total Games', value: p.total_games },
-            { icon: '🕹️', label: 'Total Sessions', value: p.total_sessions },
-            { icon: '⭐', label: 'XP Distributed', value: this._fmtNum(p.total_xp_distributed) },
-            { icon: '🪙', label: 'Coins Earned', value: this._fmtNum(p.total_coins_earned) },
-            { icon: '💸', label: 'Coins Spent', value: this._fmtNum(p.total_coins_spent) },
+        const engagement = [
+            { icon: '👥', label: 'Registered Users', value: p.total_registered_users, accent: '' },
+            { icon: '🎮', label: 'Total Games',      value: p.total_games,           accent: '' },
+            { icon: '🕹️', label: 'Total Sessions',   value: p.total_sessions,        accent: '' },
         ];
 
+        const economy = [
+            { icon: '⭐', label: 'XP Distributed', value: this._fmtNum(p.total_xp_distributed), accent: 'xp' },
+            { icon: '🪙', label: 'Coins Earned',   value: this._fmtNum(p.total_coins_earned),   accent: 'coins' },
+            { icon: '💸', label: 'Coins Spent',    value: this._fmtNum(p.total_coins_spent),    accent: 'spent' },
+        ];
+
+        const renderKpi = (k) => `
+            <div class="cs-kpi-card cs-kpi-card--${k.accent || 'default'} cs-fade-in">
+                <span class="cs-kpi-icon">${k.icon}</span>
+                <span class="cs-kpi-value" data-target="${typeof k.value === 'number' ? k.value : 0}">${k.value}</span>
+                <span class="cs-kpi-label">${k.label}</span>
+            </div>`;
+
         return `
-        <section class="cs-section cs-hero-section">
+        <section class="cs-section cs-section-card cs-hero-section" id="cs-sec-overview">
             <h3 class="cs-section-title"><span class="cs-icon">📊</span> Platform Overview</h3>
-            <div class="cs-kpi-grid">
-                ${kpis.map(k => `
-                    <div class="cs-kpi-card cs-fade-in">
-                        <span class="cs-kpi-icon">${k.icon}</span>
-                        <span class="cs-kpi-value" data-target="${typeof k.value === 'number' ? k.value : 0}">${k.value}</span>
-                        <span class="cs-kpi-label">${k.label}</span>
+            <div class="cs-kpi-groups">
+                <div class="cs-kpi-group">
+                    <span class="cs-kpi-group-label">Engagement</span>
+                    <div class="cs-kpi-grid">
+                        ${engagement.map(renderKpi).join('')}
                     </div>
-                `).join('')}
+                </div>
+                <div class="cs-kpi-group">
+                    <span class="cs-kpi-group-label">Economy</span>
+                    <div class="cs-kpi-grid">
+                        ${economy.map(renderKpi).join('')}
+                    </div>
+                </div>
             </div>
         </section>`;
     }
@@ -160,7 +222,7 @@ class CommunityStatsRenderer {
         const d = this._cache.gamesDaily;
         if (!d?.data?.length) {
             return `
-            <section class="cs-section">
+            <section class="cs-section cs-section-card" id="cs-sec-games">
                 <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity</h3>
                 <div class="cs-empty">No game activity data yet.</div>
             </section>`;
@@ -177,7 +239,7 @@ class CommunityStatsRenderer {
         }
 
         return `
-        <section class="cs-section">
+        <section class="cs-section cs-section-card" id="cs-sec-games">
             <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity <small>Last 30 days</small></h3>
             <div class="cs-chart-container cs-fade-in">
                 ${this._renderBarChart(dateLabels, gameNames, seriesMap, 'sessions_count', 'Sessions')}
@@ -238,8 +300,8 @@ class CommunityStatsRenderer {
     /** @private */
     _renderEconomySection() {
         return `
-        <section class="cs-section" id="csEconomySection">
-            <h3 class="cs-section-title"><span class="cs-icon">💰</span> Economy</h3>
+        <section class="cs-section cs-section-card" id="cs-sec-economy">
+            <h3 class="cs-section-title"><span class="cs-icon">💰</span> Economy Trends</h3>
             <div class="cs-tabs" id="csEconomyTabs">
                 <button class="cs-tab active" data-period="daily">Daily</button>
                 <button class="cs-tab" data-period="weekly">Weekly</button>
@@ -366,16 +428,158 @@ class CommunityStatsRenderer {
     }
 
     // ========================================================================
-    // 4. Users Ranked Table
+    // 4. Top Achievers — Hall of Fame
     // ========================================================================
 
     /** @private */
+    _renderTopAchieversSection() {
+        const d = this._cache.topAchievers;
+        if (!d?.success) return '';
+
+        const periods = [
+            { key: 'daily',   label: 'Today',    icon: '📅' },
+            { key: 'weekly',  label: 'This Week', icon: '📆' },
+            { key: 'alltime', label: 'All Time',  icon: '♾️' },
+        ];
+
+        const tabs = periods.map(p =>
+            `<button class="cs-tab cs-achiever-tab${p.key === this.achieverPeriod ? ' active' : ''}"
+                     data-period="${p.key}">${p.icon} ${p.label}</button>`
+        ).join('');
+
+        return `
+        <section class="cs-section cs-section-card cs-hall-of-fame cs-fade-in" id="cs-sec-fame">
+            <h3 class="cs-section-title"><span class="cs-icon">🏅</span> Hall of Fame</h3>
+            <div class="cs-tabs" id="csAchieverTabs">${tabs}</div>
+            <div id="csAchieverContent">
+                ${this._renderAchieverPeriodContent(this.achieverPeriod)}
+            </div>
+        </section>`;
+    }
+
+    /**
+     * Render the two champion cards (XP + Coins) for a given period.
+     * @param {'daily'|'weekly'|'alltime'} period
+     * @private
+     */
+    _renderAchieverPeriodContent(period) {
+        const d = this._cache.topAchievers;
+        const xpKey = `xp_${period}`;
+        const coinsKey = `coins_${period}`;
+        const xpChamp = d[xpKey];
+        const coinsChamp = d[coinsKey];
+
+        if (!xpChamp && !coinsChamp) {
+            return `<div class="cs-empty cs-fade-in">No champions yet for this period.</div>`;
+        }
+
+        return `
+        <div class="cs-achiever-grid cs-fade-in">
+            ${xpChamp ? this._renderChampionCard(xpChamp, 'xp') : this._renderEmptyCard('xp')}
+            ${coinsChamp ? this._renderChampionCard(coinsChamp, 'coins') : this._renderEmptyCard('coins')}
+        </div>`;
+    }
+
+    /**
+     * Render a single champion card with avatar, stats ring, and breakdown bars.
+     * @param {Object} champ - achiever data
+     * @param {'xp'|'coins'} metric
+     * @private
+     */
+    _renderChampionCard(champ, metric) {
+        const isXp = metric === 'xp';
+        const accent = isXp ? '#69f0ae' : '#ffc107';
+        const icon = isXp ? '⭐' : '🪙';
+        const metricLabel = isXp ? 'XP Earned' : 'Coins Earned';
+
+        const avatarHTML = this._renderAvatar(champ.steem_username);
+
+        // Breakdown mini-bars
+        const breakdownMax = Math.max(...champ.breakdown.map(b => b.value), 1);
+        const breakdownRows = champ.breakdown.slice(0, 6).map((b, i) => {
+            const pct = Math.max(2, (b.value / breakdownMax) * 100);
+            const label = b.game_title || b.source || '—';
+            const detail = isXp
+                ? `${b.sessions || 0} sessions · best ${this._fmtNum(b.best_score || 0)}`
+                : `${b.count || 0}×`;
+            return `
+            <div class="cs-breakdown-row cs-fade-in" style="animation-delay:${(i + 1) * 80}ms">
+                <div class="cs-breakdown-label">${this._escapeHtml(label)}</div>
+                <div class="cs-breakdown-bar-track">
+                    <div class="cs-breakdown-bar-fill" style="width:${pct}%;background:${accent}"></div>
+                </div>
+                <div class="cs-breakdown-value">${this._fmtNum(b.value)}</div>
+                <div class="cs-breakdown-detail">${detail}</div>
+            </div>`;
+        }).join('');
+
+        // Stats pills
+        const pills = [
+            { icon: '🎮', val: champ.sessions },
+            { icon: '🕹️', val: `${champ.unique_games} games` },
+            { icon: '⏱️', val: this._fmtDuration(champ.total_duration) },
+        ];
+        if (champ.login_streak > 0) pills.push({ icon: '🔥', val: champ.login_streak });
+
+        const pillsHtml = pills.map(p =>
+            `<span class="cs-champ-pill">${p.icon} ${p.val}</span>`
+        ).join('');
+
+        return `
+        <div class="cs-champion-card cs-champion-card--${metric}">
+            <div class="cs-champion-header">
+                <span class="cs-champion-badge">${icon} ${metricLabel}</span>
+            </div>
+            <div class="cs-champion-identity">
+                <div class="cs-champion-avatar-ring" style="--ring-color:${accent}">
+                    ${avatarHTML}
+                </div>
+                <div class="cs-champion-user">
+                    <span class="cs-champion-name">${this._escapeHtml(champ.username || 'Unknown')}</span>
+                    <span class="cs-champion-level" style="color:${champ.level_color}">
+                        ${champ.level_badge} Lv.${champ.level} ${champ.level_title}
+                    </span>
+                </div>
+                <div class="cs-champion-metric" style="color:${accent}">
+                    ${this._fmtNum(champ.metric_value)}
+                </div>
+            </div>
+            <div class="cs-champion-pills">${pillsHtml}</div>
+            <div class="cs-champion-breakdown">
+                <span class="cs-breakdown-title">Breakdown</span>
+                ${breakdownRows}
+            </div>
+        </div>`;
+    }
+
+    /**
+     * Render placeholder when no champion exists for a metric.
+     * @param {'xp'|'coins'} metric
+     * @private
+     */
+    _renderEmptyCard(metric) {
+        const isXp = metric === 'xp';
+        const icon = isXp ? '⭐' : '🪙';
+        const label = isXp ? 'XP Champion' : 'Coins Champion';
+        return `
+        <div class="cs-champion-card cs-champion-card--empty">
+            <div class="cs-champion-header">
+                <span class="cs-champion-badge">${icon} ${label}</span>
+            </div>
+            <div class="cs-empty">No data yet</div>
+        </div>`;
+    }
+
+    // ========================================================================
+    // 5. Top Players (ranked table)
+    // ========================================================================
+
     _renderUsersRankedSection() {
         const d = this._cache.usersRanked;
         if (!d?.data?.length) {
             return `
-            <section class="cs-section">
-                <h3 class="cs-section-title"><span class="cs-icon">🏆</span> Top Players</h3>
+            <section class="cs-section cs-section-card" id="cs-sec-leaderboard">
+                <h3 class="cs-section-title"><span class="cs-icon">🏆</span> Leaderboard</h3>
                 <div class="cs-empty">No ranked users yet.</div>
             </section>`;
         }
@@ -407,8 +611,8 @@ class CommunityStatsRenderer {
         }).join('');
 
         return `
-        <section class="cs-section">
-            <h3 class="cs-section-title"><span class="cs-icon">🏆</span> Top Players <small>${d.total} total</small></h3>
+        <section class="cs-section cs-section-card" id="cs-sec-leaderboard">
+            <h3 class="cs-section-title"><span class="cs-icon">🏆</span> Leaderboard <small>${d.total} players</small></h3>
             <div class="cs-table-wrapper cs-fade-in">
                 <table class="cs-table cs-users-table">
                     <thead>
@@ -601,10 +805,37 @@ class CommunityStatsRenderer {
 
     /** @private */
     _bindEvents() {
+        // Anchor nav: click → highlight + smooth scroll (lock scroll spy during animation)
+        const anchorLinks = this.container?.querySelectorAll('#csAnchorNav .cs-anchor-link');
+        anchorLinks?.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Highlight clicked button immediately
+                anchorLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                // Lock scroll spy so it won't override during smooth scroll
+                this._scrollSpyLocked = true;
+                // Scroll to section
+                const targetId = link.dataset.target;
+                const target = this.container?.querySelector(`#${targetId}`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                // Unlock after scroll animation completes
+                setTimeout(() => { this._scrollSpyLocked = false; }, 800);
+            });
+        });
+
         // Game legend filter buttons
         const legendBtns = this.container?.querySelectorAll('#csGameLegend .cs-legend-btn');
         legendBtns?.forEach(btn => {
             btn.addEventListener('click', () => this._handleLegendToggle(btn));
+        });
+
+        // Achiever period tabs
+        const achieverTabs = this.container?.querySelectorAll('#csAchieverTabs .cs-achiever-tab');
+        achieverTabs?.forEach(tab => {
+            tab.addEventListener('click', () => this._handleAchieverTab(tab));
         });
 
         // Economy tabs
@@ -644,6 +875,26 @@ class CommunityStatsRenderer {
         }
 
         this._refreshBarChart();
+    }
+
+    /**
+     * Switch the Hall of Fame period tab.
+     * @private
+     */
+    _handleAchieverTab(tab) {
+        const period = tab.dataset.period;
+        if (!period || period === this.achieverPeriod) return;
+
+        this.container.querySelectorAll('#csAchieverTabs .cs-achiever-tab')
+            .forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.achieverPeriod = period;
+
+        const contentEl = this.container.querySelector('#csAchieverContent');
+        if (contentEl) {
+            contentEl.innerHTML = this._renderAchieverPeriodContent(period);
+            this._initAnimations();
+        }
     }
 
     /**
@@ -850,6 +1101,72 @@ class CommunityStatsRenderer {
         }, { threshold: 0.1 });
 
         this.container?.querySelectorAll('.cs-fade-in').forEach(el => observer.observe(el));
+    }
+
+    // ========================================================================
+    // Scroll Spy — highlight active anchor link on scroll
+    // ========================================================================
+
+    /** @private */
+    _initScrollSpy() {
+        this._removeScrollSpy();
+
+        const scrollEl = this.container;
+        if (!scrollEl) return;
+
+        const anchors = this._getSectionAnchors();
+        const nav = scrollEl.querySelector('#csAnchorNav');
+        if (!nav) return;
+
+        let activeId = anchors[0].id;
+
+        this._scrollHandler = () => {
+            // Skip while a click-scroll animation is in progress
+            if (this._scrollSpyLocked) return;
+
+            const navRect = nav.getBoundingClientRect();
+            const threshold = navRect.bottom + 20; // just below the sticky nav
+
+            // Bottom detection: if user scrolled to the very bottom, activate last
+            const atBottom = Math.abs(scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight) < 2;
+            if (atBottom) {
+                const lastId = anchors[anchors.length - 1].id;
+                if (lastId !== activeId) {
+                    activeId = lastId;
+                    nav.querySelectorAll('.cs-anchor-link').forEach(l =>
+                        l.classList.toggle('active', l.dataset.target === lastId)
+                    );
+                }
+                return;
+            }
+
+            // Normal detection: last section whose top passed the threshold
+            let newActive = anchors[0].id;
+            for (const a of anchors) {
+                const sec = scrollEl.querySelector(`#${a.id}`);
+                if (!sec) continue;
+                if (sec.getBoundingClientRect().top <= threshold) {
+                    newActive = a.id;
+                }
+            }
+
+            if (newActive !== activeId) {
+                activeId = newActive;
+                nav.querySelectorAll('.cs-anchor-link').forEach(l =>
+                    l.classList.toggle('active', l.dataset.target === newActive)
+                );
+            }
+        };
+
+        scrollEl.addEventListener('scroll', this._scrollHandler, { passive: true });
+    }
+
+    /** @private */
+    _removeScrollSpy() {
+        if (this._scrollHandler && this.container) {
+            this.container.removeEventListener('scroll', this._scrollHandler);
+        }
+        this._scrollHandler = null;
     }
 }
 

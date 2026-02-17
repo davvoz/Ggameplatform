@@ -110,6 +110,22 @@ class CommunityStatsAPI {
             throw error;
         }
     }
+
+    /**
+     * Fetch top achievers (XP & coins leaders for today, week, all-time).
+     * @returns {Promise<Object>} Top achievers data with 6 slots
+     */
+    static async getTopAchievers() {
+        try {
+            const url = `${STATS_API_URL}/api/community/stats/top-achievers`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch top achievers');
+            return await response.json();
+        } catch (error) {
+            console.error('[CommunityStatsAPI] Error fetching top achievers:', error);
+            throw error;
+        }
+    }
 }
 
 // Global export

@@ -504,6 +504,233 @@ class CommunityStatsRepository:
     # Economy Stats - Per Game (XP & Coins daily/weekly)
     # =========================================================================
 
+    def get_top_achievers(self) -> Dict[str, Any]:
+        """
+        Get top XP and coins earners for today, this week, and all-time.
+        Each achiever includes user details + game-by-game breakdown.
+
+        Returns:
+            Dict with keys: xp_daily, xp_weekly, xp_alltime,
+                            coins_daily, coins_weekly, coins_alltime
+            Each value is a dict with user info + games breakdown, or None.
+        """
+        try:
+            from datetime import datetime, timedelta
+            from app.level_system import LevelSystem
+
+            today = datetime.utcnow().strftime("%Y-%m-%d")
+            week_start = (datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())).strftime("%Y-%m-%d")
+
+            result = {}
+
+            # ----- XP achievers (from GameSession.xp_earned) -----
+            for period_key, cutoff in [("xp_daily", today), ("xp_weekly", week_start), ("xp_alltime", None)]:
+                result[period_key] = self._get_top_xp_user(cutoff, LevelSystem)
+
+            # ----- Coins achievers (from CoinTransaction positive amounts) -----
+            for period_key, cutoff in [("coins_daily", today), ("coins_weekly", week_start), ("coins_alltime", None)]:
+                result[period_key] = self._get_top_coins_user(cutoff, LevelSystem)
+
+            return result
+
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching top achievers: {str(e)}")
+
+    def _get_top_xp_user(self, cutoff: Optional[str], LevelSystem) -> Optional[Dict[str, Any]]:
+        """
+        Find the user who earned the most XP in sessions since cutoff date.
+        Includes per-game breakdown of their XP.
+        """
+        date_expr = func.substr(GameSession.started_at, 1, 10)
+
+        # Find top user by XP sum
+        top_query = self.db_session.query(
+            GameSession.user_id,
+            func.coalesce(func.sum(GameSession.xp_earned), 0).label("total_xp"),
+            func.count(GameSession.session_id).label("sessions"),
+            func.count(func.distinct(GameSession.game_id)).label("unique_games"),
+            func.coalesce(func.sum(GameSession.duration_seconds), 0).label("total_duration"),
+        ).join(
+            User, GameSession.user_id == User.user_id
+        ).filter(
+            User.is_anonymous == 0
+        )
+
+        if cutoff:
+            top_query = top_query.filter(date_expr >= cutoff)
+
+        top_row = top_query.group_by(
+            GameSession.user_id
+        ).order_by(
+            desc(func.sum(GameSession.xp_earned))
+        ).first()
+
+        if not top_row or float(top_row.total_xp) <= 0:
+            return None
+
+        user_id = top_row.user_id
+        user = self.db_session.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return None
+
+        # Game breakdown for this user in the same period
+        breakdown_query = self.db_session.query(
+            Game.title.label("game_title"),
+            func.coalesce(func.sum(GameSession.xp_earned), 0).label("xp"),
+            func.count(GameSession.session_id).label("sessions"),
+            func.coalesce(func.max(GameSession.score), 0).label("best_score"),
+            func.coalesce(func.sum(GameSession.duration_seconds), 0).label("duration"),
+        ).join(
+            Game, GameSession.game_id == Game.game_id
+        ).filter(
+            GameSession.user_id == user_id
+        )
+
+        if cutoff:
+            breakdown_query = breakdown_query.filter(date_expr >= cutoff)
+
+        breakdown = breakdown_query.group_by(
+            Game.title
+        ).order_by(
+            desc(func.sum(GameSession.xp_earned))
+        ).all()
+
+        return self._build_achiever_dict(
+            user, LevelSystem,
+            metric_value=round(float(top_row.total_xp), 2),
+            sessions=top_row.sessions,
+            unique_games=top_row.unique_games,
+            total_duration=top_row.total_duration,
+            breakdown=[{
+                "game_title": r.game_title,
+                "value": round(float(r.xp), 2),
+                "sessions": r.sessions,
+                "best_score": r.best_score,
+                "duration": r.duration,
+            } for r in breakdown]
+        )
+
+    def _get_top_coins_user(self, cutoff: Optional[str], LevelSystem) -> Optional[Dict[str, Any]]:
+        """
+        Find the user who earned the most coins since cutoff date.
+        Includes per-transaction-type breakdown.
+        """
+        date_expr = func.substr(CoinTransaction.created_at, 1, 10)
+
+        # Find top user by coins earned (positive transactions only)
+        top_query = self.db_session.query(
+            CoinTransaction.user_id,
+            func.sum(CoinTransaction.amount).label("total_coins"),
+            func.count(CoinTransaction.transaction_id).label("transactions"),
+        ).join(
+            User, CoinTransaction.user_id == User.user_id
+        ).filter(
+            User.is_anonymous == 0,
+            CoinTransaction.amount > 0
+        )
+
+        if cutoff:
+            top_query = top_query.filter(date_expr >= cutoff)
+
+        top_row = top_query.group_by(
+            CoinTransaction.user_id
+        ).order_by(
+            desc(func.sum(CoinTransaction.amount))
+        ).first()
+
+        if not top_row or int(top_row.total_coins) <= 0:
+            return None
+
+        user_id = top_row.user_id
+        user = self.db_session.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            return None
+
+        # Breakdown by transaction_type for this user in the same period
+        breakdown_query = self.db_session.query(
+            CoinTransaction.transaction_type.label("source"),
+            func.sum(CoinTransaction.amount).label("coins"),
+            func.count(CoinTransaction.transaction_id).label("count"),
+        ).filter(
+            CoinTransaction.user_id == user_id,
+            CoinTransaction.amount > 0
+        )
+
+        if cutoff:
+            breakdown_query = breakdown_query.filter(date_expr >= cutoff)
+
+        breakdown = breakdown_query.group_by(
+            CoinTransaction.transaction_type
+        ).order_by(
+            desc(func.sum(CoinTransaction.amount))
+        ).all()
+
+        # Also get session stats for this user in this period
+        sess_date_expr = func.substr(GameSession.started_at, 1, 10)
+        sess_stats = self.db_session.query(
+            func.count(GameSession.session_id).label("sessions"),
+            func.count(func.distinct(GameSession.game_id)).label("unique_games"),
+            func.coalesce(func.sum(GameSession.duration_seconds), 0).label("total_duration"),
+        ).filter(
+            GameSession.user_id == user_id
+        )
+        if cutoff:
+            sess_stats = sess_stats.filter(sess_date_expr >= cutoff)
+        sess_row = sess_stats.first()
+
+        return self._build_achiever_dict(
+            user, LevelSystem,
+            metric_value=int(top_row.total_coins),
+            sessions=sess_row.sessions if sess_row else 0,
+            unique_games=sess_row.unique_games if sess_row else 0,
+            total_duration=sess_row.total_duration if sess_row else 0,
+            breakdown=[{
+                "source": r.source,
+                "value": int(r.coins),
+                "count": r.count,
+            } for r in breakdown]
+        )
+
+    def _build_achiever_dict(
+        self, user, LevelSystem, *,
+        metric_value, sessions, unique_games, total_duration, breakdown
+    ) -> Dict[str, Any]:
+        """Build a standardized achiever dict with user info + breakdown."""
+        level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
+        level_title = "Novizio"
+        level_badge = "🌱"
+        level_color = "#A0A0A0"
+        for ml in sorted(LevelSystem.LEVEL_MILESTONES.keys(), reverse=True):
+            if level >= ml:
+                info = LevelSystem.LEVEL_MILESTONES[ml]
+                level_title = info["title"]
+                level_badge = info["badge"]
+                level_color = info["color"]
+                break
+
+        # Get coin balance
+        coins_row = self.db_session.query(UserCoins).filter(
+            UserCoins.user_id == user.user_id
+        ).first()
+
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "steem_username": user.steem_username,
+            "level": level,
+            "level_title": level_title,
+            "level_badge": level_badge,
+            "level_color": level_color,
+            "total_xp_earned": round(float(user.total_xp_earned or 0), 2),
+            "coin_balance": coins_row.balance if coins_row else 0,
+            "login_streak": user.login_streak or 0,
+            "metric_value": metric_value,
+            "sessions": sessions,
+            "unique_games": unique_games,
+            "total_duration": total_duration,
+            "breakdown": breakdown,
+        }
+
     def get_daily_economy_per_game(
         self,
         game_id: str,

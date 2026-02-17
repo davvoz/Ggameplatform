@@ -1,9 +1,33 @@
 /**
- * ParticleSystem - Particle effects engine
+ * ParticleSystem - Particle effects engine (performance-optimised)
+ *
+ * Key optimisations vs previous version:
+ *  • update() uses swap-and-pop instead of splice (O(1) per removal vs O(n))
+ *  • emit() recycles dead particles via a free-list cursor instead of findIndex
+ *  • render() batches particles to minimise ctx.save()/restore() calls
+ *  • shadowBlur (glow) skipped entirely when glowEnabled === false
  */
 
 class Particle {
-    constructor(x, y, config = {}) {
+    constructor() {
+        // All fields pre-allocated; reset() initialises them
+        this.x = 0; this.y = 0;
+        this.vx = 0; this.vy = 0;
+        this.life = 0; this.maxLife = 1;
+        this.size = 3; this.endSize = 0;
+        this.color = { r: 255, g: 255, b: 255 };
+        this.endColor = null;
+        this.alpha = 1;
+        this.gravity = 0;
+        this.friction = 1;
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+        this.shape = 'circle';
+        this.glow = false;
+        this.active = false;
+    }
+
+    reset(x, y, config) {
         this.x = x;
         this.y = y;
         this.vx = config.vx || 0;
@@ -19,7 +43,7 @@ class Particle {
         this.friction = config.friction || 1;
         this.rotation = config.rotation || 0;
         this.rotationSpeed = config.rotationSpeed || 0;
-        this.shape = config.shape || 'circle'; // circle, square, spark
+        this.shape = config.shape || 'circle';
         this.glow = config.glow || false;
         this.active = true;
     }
@@ -38,49 +62,6 @@ class Particle {
         this.y += this.vy * dt;
         this.rotation += this.rotationSpeed * dt;
     }
-
-    render(ctx) {
-        const t = 1 - (this.life / this.maxLife);
-        const size = this.size + (this.endSize - this.size) * t;
-        let alpha = this.alpha * (this.life / this.maxLife);
-
-        let r = this.color.r, g = this.color.g, b = this.color.b;
-        if (this.endColor) {
-            r = Math.floor(this.color.r + (this.endColor.r - this.color.r) * t);
-            g = Math.floor(this.color.g + (this.endColor.g - this.color.g) * t);
-            b = Math.floor(this.color.b + (this.endColor.b - this.color.b) * t);
-        }
-
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        if (this.glow) {
-            ctx.shadowColor = `rgb(${r},${g},${b})`;
-            ctx.shadowBlur = size * 2;
-        }
-
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-
-        if (this.shape === 'circle') {
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.5, size), 0, Math.PI * 2);
-            ctx.fill();
-        } else if (this.shape === 'square') {
-            ctx.fillRect(-size / 2, -size / 2, size, size);
-        } else if (this.shape === 'spark') {
-            ctx.beginPath();
-            ctx.moveTo(-size, 0);
-            ctx.lineTo(0, -size * 0.3);
-            ctx.lineTo(size, 0);
-            ctx.lineTo(0, size * 0.3);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        ctx.restore();
-    }
 }
 
 class ParticleSystem {
@@ -90,54 +71,151 @@ class ParticleSystem {
         this.particleMultiplier = 1;
         this.glowEnabled = true;
         this.trailEnabled = true;
+        // Ring-buffer cursor for recycling dead particles
+        this._recycleCursor = 0;
+    }
+
+    /** Acquire a particle slot — recycles dead ones or grows array up to maxParticles */
+    _acquire(x, y, cfg) {
+        // 1) Try to recycle a dead particle near the cursor (amortised O(1))
+        const len = this.particles.length;
+        if (len >= this.maxParticles) {
+            for (let attempts = 0; attempts < len; attempts++) {
+                const idx = this._recycleCursor % len;
+                this._recycleCursor++;
+                if (!this.particles[idx].active) {
+                    this.particles[idx].reset(x, y, cfg);
+                    return;
+                }
+            }
+            // All particles active, cannot emit
+            return;
+        }
+        // 2) Array not full — push a new pre-allocated Particle
+        const p = new Particle();
+        p.reset(x, y, cfg);
+        this.particles.push(p);
     }
 
     emit(x, y, preset, count = 10) {
         const configs = ParticleSystem.PRESETS[preset] || ParticleSystem.PRESETS.explosion;
         const scaledCount = Math.max(1, Math.round(count * this.particleMultiplier));
         for (let i = 0; i < scaledCount; i++) {
-            if (this.particles.length >= this.maxParticles) {
-                const idx = this.particles.findIndex(p => !p.active);
-                if (idx === -1) return;
-                this.particles.splice(idx, 1);
-            }
             const cfg = typeof configs === 'function' ? configs() : { ...configs };
             if (!this.glowEnabled) cfg.glow = false;
-            this.particles.push(new Particle(x, y, cfg));
+            this._acquire(x, y, cfg);
         }
     }
 
     emitCustom(x, y, config, count = 1) {
         const scaledCount = Math.max(1, Math.round(count * this.particleMultiplier));
         for (let i = 0; i < scaledCount; i++) {
-            if (this.particles.length >= this.maxParticles) {
-                const idx = this.particles.findIndex(p => !p.active);
-                if (idx === -1) return;
-                this.particles.splice(idx, 1);
-            }
             const cfg = typeof config === 'function' ? config() : { ...config };
             if (!this.glowEnabled) cfg.glow = false;
-            this.particles.push(new Particle(x, y, cfg));
+            this._acquire(x, y, cfg);
         }
     }
 
     update(dt) {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            this.particles[i].update(dt);
-            if (!this.particles[i].active) {
-                this.particles.splice(i, 1);
+        // Swap-and-pop: O(1) removal per dead particle, no array shifts
+        let i = 0;
+        let len = this.particles.length;
+        while (i < len) {
+            const p = this.particles[i];
+            p.update(dt);
+            if (!p.active) {
+                // Swap with last element and shrink
+                len--;
+                this.particles[i] = this.particles[len];
+                this.particles[len] = p; // keep dead particle for reuse
+                this.particles.length = len;
+                // Don't increment i — need to check the swapped element
+            } else {
+                i++;
             }
         }
     }
 
     render(ctx) {
-        for (const p of this.particles) {
-            p.render(ctx);
+        const particles = this.particles;
+        const len = particles.length;
+        if (len === 0) return;
+
+        // Single save/restore for all particles instead of per-particle
+        ctx.save();
+        ctx.shadowBlur = 0; // will be set per-particle only when needed
+
+        for (let i = 0; i < len; i++) {
+            const p = particles[i];
+            if (!p.active) continue;
+
+            const t = 1 - (p.life / p.maxLife);
+            const size = p.size + (p.endSize - p.size) * t;
+            const alpha = p.alpha * (p.life / p.maxLife);
+            if (alpha <= 0.01 || size <= 0.2) continue;
+
+            let r = p.color.r, g = p.color.g, b = p.color.b;
+            if (p.endColor) {
+                r = (p.color.r + (p.endColor.r - p.color.r) * t) | 0;
+                g = (p.color.g + (p.endColor.g - p.color.g) * t) | 0;
+                b = (p.color.b + (p.endColor.b - p.color.b) * t) | 0;
+            }
+
+            ctx.globalAlpha = alpha;
+
+            if (p.glow) {
+                ctx.shadowColor = `rgb(${r},${g},${b})`;
+                ctx.shadowBlur = size * 2;
+            }
+
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+            if (p.rotation !== 0 || p.shape === 'spark') {
+                // Only use translate+rotate for particles that need rotation
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+
+                if (p.shape === 'spark') {
+                    ctx.beginPath();
+                    ctx.moveTo(-size, 0);
+                    ctx.lineTo(0, -size * 0.3);
+                    ctx.lineTo(size, 0);
+                    ctx.lineTo(0, size * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (p.shape === 'square') {
+                    ctx.fillRect(-size * 0.5, -size * 0.5, size, size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.max(0.5, size), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            } else {
+                // No rotation — draw directly without translate (cheaper)
+                if (p.shape === 'square') {
+                    ctx.fillRect(p.x - size * 0.5, p.y - size * 0.5, size, size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, Math.max(0.5, size), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Reset shadow after glow particle to avoid bleeding into next one
+            if (p.glow) {
+                ctx.shadowBlur = 0;
+            }
         }
+
+        ctx.restore();
     }
 
     clear() {
-        this.particles = [];
+        this.particles.length = 0;
+        this._recycleCursor = 0;
     }
 }
 

@@ -7,6 +7,8 @@ import StarField from './entities/Star.js';
 import { Player } from './entities/Player.js';
 import Bullet from './entities/Bullet.js';
 import { PerkSystem } from './PerkSystem.js';
+import { Enemy } from './entities/Enemy.js';
+import Explosion from './entities/Explosion.js';
 
 import { DIFFICULTY_CONFIG } from './DifficultyConfig.js';
 import EntityManager from './managers/EntityManager.js';
@@ -66,8 +68,11 @@ class Game {
         this.fpsTimer = 0;
         this.lastTime = 0;
 
-        // FPS Monitor
-        this.fpsHistory = [];
+        // FPS Monitor — circular buffer (avoids shift() every frame)
+        this._fpsRingBuf = new Float32Array(60);
+        this._fpsRingIdx = 0;
+        this._fpsRingCount = 0;
+        this.fpsHistory = []; // kept for compatibility
         this.fpsUpdateTimer = 0;
         this.currentFPS = 60;
         this.avgFPS = 60;
@@ -202,14 +207,12 @@ class Game {
         if (em.player && em.player.active) {
             em.player.update(deltaTime, this);
 
-            if (this.performanceMode !== 'low') {
-                this.particles.emitCustom(
-                    em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
-                    em.player.position.y + em.player.height,
-                    ParticleSystem.PRESETS.thruster,
-                    1
-                );
-            }
+            this.particles.emitCustom(
+                em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
+                em.player.position.y + em.player.height,
+                ParticleSystem.PRESETS.thruster,
+                1
+            );
 
             if (em.player.ultimateCharge >= 100 && Math.random() < 0.15) {
                 this.particles.emit(
@@ -277,7 +280,7 @@ class Game {
         const em = this.entityManager;
 
         // Player thruster particles (no input, no firing)
-        if (em.player && em.player.active && this.performanceMode !== 'low') {
+        if (em.player && em.player.active) {
             this.particles.emitCustom(
                 em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
                 em.player.position.y + em.player.height,
@@ -373,42 +376,8 @@ class Game {
                 this.hudRenderer.renderMiniBossNotification(ctx, w, h);
             }
 
-            // ── Bullet rendering with batching for low perf ──
-            if (this.performanceMode === 'low' && em.bullets.length > 0) {
-                // Batch all bullets by color to minimize fillStyle changes
-                let pIdx = 0, eIdx = 0;
-                const pBullets = [];
-                const eBullets = [];
-                for (let i = 0, len = em.bullets.length; i < len; i++) {
-                    const b = em.bullets[i];
-                    if (b.owner === 'player') pBullets.push(b);
-                    else eBullets.push(b);
-                }
-                if (pBullets.length) {
-                    ctx.fillStyle = '#66ccff';
-                    for (let i = 0; i < pBullets.length; i++) {
-                        const b = pBullets[i];
-                        ctx.fillRect(
-                            b.position.x + b.width / 2 - b.boltWidth * 0.5,
-                            b.position.y + b.height / 2 - b.boltLength * 0.5,
-                            b.boltWidth, b.boltLength
-                        );
-                    }
-                }
-                if (eBullets.length) {
-                    ctx.fillStyle = '#ff6644';
-                    for (let i = 0; i < eBullets.length; i++) {
-                        const b = eBullets[i];
-                        ctx.fillRect(
-                            b.position.x + b.width / 2 - b.boltWidth * 0.5,
-                            b.position.y + b.height / 2 - b.boltLength * 0.5,
-                            b.boltWidth, b.boltLength
-                        );
-                    }
-                }
-            } else {
-                for (const bullet of em.bullets) bullet.render(ctx);
-            }
+            // Render all bullets through their own render() (consistent visuals)
+            for (const bullet of em.bullets) bullet.render(ctx);
 
             em.renderHomingMissiles(ctx);
 
@@ -588,15 +557,23 @@ class Game {
     _updateFPSMonitor(deltaTime) {
         if (deltaTime > 0) {
             this.currentFPS = Math.round(1 / deltaTime);
-            this.fpsHistory.push(this.currentFPS);
-            if (this.fpsHistory.length > 60) this.fpsHistory.shift();
+            // Circular buffer — no array shifts, O(1)
+            this._fpsRingBuf[this._fpsRingIdx] = this.currentFPS;
+            this._fpsRingIdx = (this._fpsRingIdx + 1) % 60;
+            if (this._fpsRingCount < 60) this._fpsRingCount++;
         }
         this.fpsUpdateTimer += deltaTime;
         if (this.fpsUpdateTimer >= 0.5) {
             this.fpsUpdateTimer = 0;
-            if (this.fpsHistory.length > 0) {
-                this.avgFPS = Math.round(this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length);
-                this.minFPS = Math.min(...this.fpsHistory);
+            if (this._fpsRingCount > 0) {
+                let sum = 0, min = Infinity;
+                for (let i = 0; i < this._fpsRingCount; i++) {
+                    const v = this._fpsRingBuf[i];
+                    sum += v;
+                    if (v < min) min = v;
+                }
+                this.avgFPS = Math.round(sum / this._fpsRingCount);
+                this.minFPS = min;
             }
         }
     }
@@ -620,25 +597,32 @@ class Game {
         // Bullet rendering quality
         Bullet.setPerformanceMode(mode);
 
+        // Enemy glow quality
+        Enemy.setPerformanceMode(mode);
+
+        // Explosion detail
+        Explosion.setPerformanceMode(mode);
+
         // PostProcessing
         this.postProcessing.setQuality(mode);
 
-        // ParticleSystem
+        // ParticleSystem — reduce counts, but never disable glow/trail entirely
+        // (shadowBlur glow in ParticleSystem is the main perf cost from particles)
         if (mode === 'high') {
             this.particles.maxParticles = 500;
             this.particles.particleMultiplier = 1;
             this.particles.glowEnabled = true;
             this.particles.trailEnabled = true;
         } else if (mode === 'medium') {
-            this.particles.maxParticles = 250;
-            this.particles.particleMultiplier = 0.5;
-            this.particles.glowEnabled = false;
+            this.particles.maxParticles = 300;
+            this.particles.particleMultiplier = 0.6;
+            this.particles.glowEnabled = false;  // skip shadowBlur (biggest perf gain)
             this.particles.trailEnabled = true;
         } else {
-            this.particles.maxParticles = 100;
-            this.particles.particleMultiplier = 0.3;
+            this.particles.maxParticles = 200;
+            this.particles.particleMultiplier = 0.4;
             this.particles.glowEnabled = false;
-            this.particles.trailEnabled = false;
+            this.particles.trailEnabled = true;   // keep trails for visual consistency
         }
 
         // StarField
@@ -646,8 +630,8 @@ class Game {
             this.starField.setQuality(mode);
         }
 
-        // Explosion scale
-        this.explosionScale = mode === 'high' ? 1.5 : mode === 'medium' ? 1.0 : 0.6;
+        // Explosion scale — keep consistent across modes (no shrinking)
+        this.explosionScale = mode === 'high' ? 1.5 : mode === 'medium' ? 1.2 : 1.0;
 
         // Update UI buttons
         document.querySelectorAll('.perf-btn').forEach(btn => {

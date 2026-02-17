@@ -19,6 +19,8 @@ class EntityManager {
     }
 
     spawnBullet(x, y, vx, vy, owner, damage = 1) {
+        // Cap total bullets to prevent lag during intense boss fights
+        if (this.bullets.length >= 200) return;
         const bullet = new Bullet(x, y, vx, vy, owner, damage);
         this.bullets.push(bullet);
     }
@@ -79,8 +81,12 @@ class EntityManager {
                 }
             }
 
-            m.trail.push({ x: m.x, y: m.y });
-            if (m.trail.length > 8) m.trail.shift();
+            // Flat trail: [x0,y0, x1,y1, ...] — max 8 points (16 floats)
+            m.trail.push(m.x, m.y);
+            while (m.trail.length > 16) {
+                m.trail.shift();
+                m.trail.shift();
+            }
 
             m.x += m.vx * dt;
             m.y += m.vy * dt;
@@ -159,20 +165,24 @@ class EntityManager {
         for (const m of this.homingMissiles) {
             if (!m.active) continue;
             ctx.save();
-            for (let i = 0; i < m.trail.length - 1; i++) {
-                const t = i / m.trail.length;
-                ctx.globalAlpha = t * 0.5;
+            // Flat trail: [x0,y0, x1,y1, ...]
+            if (m.trail.length >= 4) {
+                ctx.globalAlpha = 0.4;
                 ctx.strokeStyle = '#ff6644';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(m.trail[i].x, m.trail[i].y);
-                ctx.lineTo(m.trail[i + 1].x, m.trail[i + 1].y);
+                ctx.moveTo(m.trail[0], m.trail[1]);
+                for (let i = 2; i < m.trail.length; i += 2) {
+                    ctx.lineTo(m.trail[i], m.trail[i + 1]);
+                }
                 ctx.stroke();
             }
             ctx.globalAlpha = 1;
             ctx.fillStyle = '#ff4422';
-            ctx.shadowColor = '#ff6644';
-            ctx.shadowBlur = 6;
+            if (this.game.performanceMode === 'high') {
+                ctx.shadowColor = '#ff6644';
+                ctx.shadowBlur = 6;
+            }
             ctx.beginPath();
             ctx.arc(m.x, m.y, 3, 0, Math.PI * 2);
             ctx.fill();

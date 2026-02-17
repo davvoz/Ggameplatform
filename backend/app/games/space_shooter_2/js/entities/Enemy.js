@@ -1,5 +1,8 @@
 import GameObject from './GameObject.js';
 
+// Shared performance mode (set once via Enemy.setPerformanceMode)
+let _enemyPerfMode = 'high';
+
 /**
  * Enemy types configuration
  */
@@ -201,6 +204,8 @@ const FORMATIONS = {
  * Enemy - All enemy entities
  */
 class Enemy extends GameObject {
+    static setPerformanceMode(mode) { _enemyPerfMode = mode; }
+
     constructor(x, y, type, pattern, canvasWidth, difficultyConfig, level = 1) {
         const config = ENEMY_TYPES[type] || ENEMY_TYPES.scout;
         super(x, y, config.width, config.height);
@@ -303,15 +308,26 @@ class Enemy extends GameObject {
         const cx = this.position.x + this.width / 2;
         const cy = this.position.y + this.height / 2;
 
-        ctx.save();
-        ctx.globalAlpha = 0.15;
-        ctx.shadowColor = this.config.color;
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = this.config.color;
-        ctx.beginPath();
-        ctx.arc(cx, cy, this.width * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // Glow aura — always rendered, shadowBlur only on high
+        if (_enemyPerfMode === 'high') {
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            ctx.shadowColor = this.config.color;
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = this.config.color;
+            ctx.beginPath();
+            ctx.arc(cx, cy, this.width * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else {
+            // Cheap glow: semi-transparent circle, no shadowBlur (visually close)
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = this.config.color;
+            ctx.beginPath();
+            ctx.arc(cx, cy, this.width * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = this.alpha;
+        }
 
         const sprite = assets.getSprite(`enemy_${this.type}`);
         const pad = 8;

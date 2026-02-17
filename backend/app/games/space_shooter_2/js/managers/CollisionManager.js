@@ -84,7 +84,8 @@ class CollisionManager {
                     if (pierceLeft > 0) {
                         pierceLeft--;
                         bullet._pierceLeft = pierceLeft;
-                        bullet._hitIds = bullet._hitIds || new Set();
+                        // Reuse existing Set to avoid per-frame allocation
+                        if (!bullet._hitIds) bullet._hitIds = new Set();
                         bullet._hitIds.add(enemy);
                     } else {
                         bullet.destroy();

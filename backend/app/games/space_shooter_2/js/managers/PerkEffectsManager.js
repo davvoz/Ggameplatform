@@ -208,12 +208,15 @@ class PerkEffectsManager {
             const dy = pcy + Math.sin(angle) * orbitR;
 
             ctx.fillStyle = '#88bbff';
-            ctx.shadowColor = '#4488ff';
-            ctx.shadowBlur = 8;
+            // Skip expensive shadowBlur on low/medium
+            if (g.performanceMode === 'high') {
+                ctx.shadowColor = '#4488ff';
+                ctx.shadowBlur = 8;
+            }
             ctx.beginPath();
             ctx.arc(dx, dy, 6, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+            if (ctx.shadowBlur > 0) ctx.shadowBlur = 0;
 
             ctx.strokeStyle = 'rgba(100,150,255,0.2)';
             ctx.lineWidth = 1;

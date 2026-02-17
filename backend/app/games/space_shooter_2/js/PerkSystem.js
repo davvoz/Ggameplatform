@@ -238,6 +238,11 @@ const PERK_CATALOG = [
 ];
 
 
+// ─── Fast lookup map: perkId → perk object (O(1) vs O(n) find) ───
+const PERK_MAP = new Map();
+for (const p of PERK_CATALOG) PERK_MAP.set(p.id, p);
+
+
 /**
  * PerkSystem - Manages active perks, selection, and modifier calculations
  */
@@ -251,6 +256,8 @@ class PerkSystem {
         this.droneFireTimers = [];
         this.thornsAngle = 0;
         this.thornsTime = 0;
+        // Cache for getActivePerks() — invalidated on activatePerk/reset
+        this._activePerkCache = null;
     }
 
     // ══════════════════════════════════
@@ -287,11 +294,12 @@ class PerkSystem {
 
     /** Activate a perk, returns stat deltas (or null) */
     activatePerk(perkId) {
-        const perk = PERK_CATALOG.find(p => p.id === perkId);
+        const perk = PERK_MAP.get(perkId);
         if (!perk) return null;
         const cur = this.activePerks.get(perkId) || 0;
         if (cur >= perk.maxStacks) return null;
         this.activePerks.set(perkId, cur + 1);
+        this._activePerkCache = null; // invalidate cache
 
         // Initialise extra drone timer if needed
         if (perkId === 'orbital_drone') {
@@ -309,11 +317,13 @@ class PerkSystem {
     getStacks(id) { return this.activePerks.get(id) || 0; }
 
     getActivePerks() {
+        if (this._activePerkCache) return this._activePerkCache;
         const out = [];
         for (const [id, stacks] of this.activePerks) {
-            const p = PERK_CATALOG.find(x => x.id === id);
+            const p = PERK_MAP.get(id);
             if (p) out.push({ ...p, stacks, rarityData: PERK_RARITY[p.rarity], categoryData: PERK_CATEGORIES[p.category] });
         }
+        this._activePerkCache = out;
         return out;
     }
 
@@ -367,6 +377,7 @@ class PerkSystem {
     /** Full reset for new game */
     reset() {
         this.activePerks.clear();
+        this._activePerkCache = null;
         this.vampireKillCount = 0;
         this.emergencyUsedThisLevel = false;
         this.autoShieldTimer = 0;

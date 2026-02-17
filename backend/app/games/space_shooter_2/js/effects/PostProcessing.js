@@ -18,6 +18,11 @@ class PostProcessing {
 
         // Performance mode
         this.quality = 'high'; // high, medium, low
+
+        // Cached vignette gradient (re-created on resize)
+        this._vignetteGrad = null;
+        this._vignetteW = 0;
+        this._vignetteH = 0;
     }
 
     setQuality(quality) {
@@ -73,11 +78,15 @@ class PostProcessing {
 
         if (this.quality === 'low') return;
 
-        // Vignette
-        const gradient = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.8);
-        gradient.addColorStop(0, 'rgba(0,0,0,0)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0.4)');
-        ctx.fillStyle = gradient;
+        // Vignette (cached gradient — only recreated on resize)
+        if (!this._vignetteGrad || this._vignetteW !== w || this._vignetteH !== h) {
+            this._vignetteGrad = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.8);
+            this._vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            this._vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.4)');
+            this._vignetteW = w;
+            this._vignetteH = h;
+        }
+        ctx.fillStyle = this._vignetteGrad;
         ctx.fillRect(0, 0, w, h);
 
         if (this.quality === 'medium') return;

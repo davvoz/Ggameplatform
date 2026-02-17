@@ -1,8 +1,17 @@
 {
-  "version": "3.25.3",
-  "timestamp": "2026-02-17T08:46:01.620Z",
-  "buildNumber": 398,
+  "version": "3.26.0",
+  "timestamp": "2026-02-17T13:49:01.694Z",
+  "buildNumber": 399,
   "changelog": [
+    {
+      "version": "3.26.0",
+      "date": "2026-02-17",
+      "type": "minor",
+      "changes": [
+        "feat: add CommunityStatsAPI and CommunityStatsRenderer for community analytics",
+        "🔖 Bump version to 3.25.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.25.3",
       "date": "2026-02-17",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: Update leaderboard avatar sizes and countdown label for consistency",
         "🔖 Bump version to 3.24.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.24.0",
-      "date": "2026-02-11",
-      "type": "minor",
-      "changes": [
-        "feat: Add weekly leaderboard standings feature for user profiles, moved About section on footer",
-        "🔖 Bump version to 3.23.3 [skip-version]"
       ]
     }
   ]

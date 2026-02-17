@@ -1,8 +1,17 @@
 {
-  "version": "3.29.0",
-  "timestamp": "2026-02-17T21:44:19.257Z",
-  "buildNumber": 403,
+  "version": "3.29.1",
+  "timestamp": "2026-02-17T23:03:40.718Z",
+  "buildNumber": 404,
   "changelog": [
+    {
+      "version": "3.29.1",
+      "date": "2026-02-17",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2]Optimize performance across various systems",
+        "🔖 Bump version to 3.29.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.29.0",
       "date": "2026-02-17",
@@ -82,16 +91,6 @@
       "changes": [
         "feat:Add Space Shooter 2",
         "🔖 Bump version to 3.24.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.24.5",
-      "date": "2026-02-13",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[SS]ES6",
-        "🔖 Bump version to 3.24.4 [skip-version]"
       ]
     }
   ]

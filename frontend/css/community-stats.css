@@ -236,6 +236,37 @@
     color: var(--text-secondary);
 }
 
+.cs-legend-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.cs-legend-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(0, 217, 255, 0.06);
+}
+
+.cs-legend-btn.cs-legend-hidden {
+    opacity: 0.35;
+    text-decoration: line-through;
+    border-color: transparent;
+}
+
+.cs-legend-btn.cs-legend-hidden .cs-legend-dot {
+    opacity: 0.3;
+}
+
 .cs-legend-dot {
     width: 10px;
     height: 10px;

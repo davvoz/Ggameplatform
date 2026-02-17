@@ -23,6 +23,9 @@ class CommunityStatsRenderer {
         /** Active game filter */
         this.gameFilter = null;
 
+        /** Set of hidden game names (legend filter) */
+        this._hiddenGames = new Set();
+
         /** Active economy period */
         this.economyPeriod = 'daily'; // 'daily' | 'weekly' | 'historical'
 
@@ -171,10 +174,10 @@ class CommunityStatsRenderer {
             </div>
             <div class="cs-chart-legend" id="csGameLegend">
                 ${gameNames.map((g, i) => `
-                    <span class="cs-legend-item">
+                    <button class="cs-legend-btn${this._hiddenGames.has(g) ? ' cs-legend-hidden' : ''}" data-game="${this._escapeHtml(g)}">
                         <span class="cs-legend-dot" style="background:${this.palette[i % this.palette.length]}"></span>
                         ${this._escapeHtml(g)}
-                    </span>
+                    </button>
                 `).join('')}
             </div>
             ${this._renderGameBreakdownTable()}
@@ -585,6 +588,12 @@ class CommunityStatsRenderer {
 
     /** @private */
     _bindEvents() {
+        // Game legend filter buttons
+        const legendBtns = this.container?.querySelectorAll('#csGameLegend .cs-legend-btn');
+        legendBtns?.forEach(btn => {
+            btn.addEventListener('click', () => this._handleLegendToggle(btn));
+        });
+
         // Economy tabs
         const tabs = this.container?.querySelectorAll('#csEconomyTabs .cs-tab');
         tabs?.forEach(tab => {
@@ -603,6 +612,42 @@ class CommunityStatsRenderer {
                 if (userId) window.location.hash = `/user/${userId}`;
             });
         });
+    }
+
+    /**
+     * Toggle a game on/off in the bar chart via legend button.
+     * @private
+     */
+    _handleLegendToggle(btn) {
+        const game = btn.dataset.game;
+        if (!game) return;
+
+        if (this._hiddenGames.has(game)) {
+            this._hiddenGames.delete(game);
+            btn.classList.remove('cs-legend-hidden');
+        } else {
+            this._hiddenGames.add(game);
+            btn.classList.add('cs-legend-hidden');
+        }
+
+        this._refreshBarChart();
+    }
+
+    /**
+     * Re-render only the bar chart container with current filters applied.
+     * @private
+     */
+    _refreshBarChart() {
+        const d = this._cache.gamesDaily;
+        if (!d?.data?.length) return;
+
+        const { dateLabels, gameNames, seriesMap } = this._groupByDate(d.data);
+        const visibleGames = gameNames.filter(g => !this._hiddenGames.has(g));
+
+        const chartEl = this.container?.querySelector('.cs-chart-container');
+        if (chartEl) {
+            chartEl.innerHTML = this._renderBarChart(dateLabels, visibleGames, seriesMap, 'sessions_count', 'Sessions');
+        }
     }
 
     /** @private */

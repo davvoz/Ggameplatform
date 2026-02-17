@@ -1,8 +1,17 @@
 {
-  "version": "3.27.0",
-  "timestamp": "2026-02-17T15:05:53.268Z",
-  "buildNumber": 400,
+  "version": "3.27.1",
+  "timestamp": "2026-02-17T15:15:58.470Z",
+  "buildNumber": 401,
   "changelog": [
+    {
+      "version": "3.27.1",
+      "date": "2026-02-17",
+      "type": "patch",
+      "changes": [
+        "fix: implement stable game color mapping for improved legend display in CommunityStatsRenderer",
+        "🔖 Bump version to 3.27.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.27.0",
       "date": "2026-02-17",
@@ -83,16 +92,6 @@
       "changes": [
         "fix:[SS]livelli discreti",
         "🔖 Bump version to 3.24.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.24.2",
-      "date": "2026-02-12",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [SS]Implement pre-game upgrade shop and continue system with coin management",
-        "🔖 Bump version to 3.24.1 [skip-version]"
       ]
     }
   ]

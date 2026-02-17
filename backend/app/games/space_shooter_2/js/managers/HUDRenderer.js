@@ -11,14 +11,15 @@ class HUDRenderer {
         if (!g.entityManager.player || g.state === 'gameover' || g.state === 'deathCinematic' || g.state === 'levelIntro' || g.state === 'levelOutro') return;
 
         const player = g.entityManager.player;
-        const w = g.canvas.width;
+        const w = g.logicalWidth;
+        const fs = g.fontScale;
         ctx.save();
 
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.fillRect(0, 0, w, 36);
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx.font = `bold ${14 * fs}px "Segoe UI", Arial, sans-serif`;
         ctx.textAlign = 'left';
         ctx.fillText(`SCORE: ${g.scoreManager.score.toLocaleString()}`, 10, 24);
 
@@ -41,12 +42,12 @@ class HUDRenderer {
         ctx.lineWidth = 1;
         ctx.strokeRect(hpBarX, hpBarY, hpBarW, hpBarH);
         ctx.fillStyle = '#fff';
-        ctx.font = '9px Arial';
+        ctx.font = `${9 * fs}px Arial`;
         ctx.textAlign = 'center';
         ctx.fillText(`${player.health}/${player.maxHealth}`, hpBarX + hpBarW / 2, hpBarY + 9);
 
         const wpnY = hpBarY + hpBarH + 12;
-        ctx.font = '8px Arial';
+        ctx.font = `${8 * fs}px Arial`;
         ctx.textAlign = 'right';
         ctx.fillStyle = '#668899';
 
@@ -56,7 +57,7 @@ class HUDRenderer {
             ctx.fillStyle = filled ? '#ffaa00' : '#333344';
             ctx.shadowColor = filled ? '#ff8800' : 'transparent';
             ctx.shadowBlur = filled ? 5 : 0;
-            ctx.font = '11px Arial';
+            ctx.font = `${11 * fs}px Arial`;
             ctx.textAlign = 'left';
             ctx.fillText('★', starX, wpnY + 2);
         }
@@ -64,7 +65,7 @@ class HUDRenderer {
 
         if (g.scoreManager.combo > 1) {
             ctx.textAlign = 'center';
-            ctx.font = `bold ${16 + Math.min(g.scoreManager.combo, 10)}px Arial`;
+            ctx.font = `bold ${(16 + Math.min(g.scoreManager.combo, 10)) * fs}px Arial`;
             ctx.fillStyle = `rgba(255,${Math.max(100, 255 - g.scoreManager.combo * 15)},50,${0.7 + g.scoreManager.comboTimer * 0.15})`;
             ctx.shadowColor = '#ff8800';
             ctx.shadowBlur = 8;
@@ -76,7 +77,7 @@ class HUDRenderer {
             const ultBarW = 120;
             const ultBarH = 8;
             const ultBarX = w / 2 - ultBarW / 2;
-            const ultBarY = g.canvas.height - 30;
+            const ultBarY = g.logicalHeight - 30;
             const charge = player.ultimateCharge / 100;
 
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -89,7 +90,7 @@ class HUDRenderer {
             ctx.lineWidth = 1;
             ctx.strokeRect(ultBarX, ultBarY, ultBarW, ultBarH);
 
-            ctx.font = '9px Arial';
+            ctx.font = `${9 * fs}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillStyle = '#fff';
             ctx.fillText(
@@ -104,7 +105,7 @@ class HUDRenderer {
             const perkGap = 4;
             const perkX = 8;
             let perkY = 42;
-            ctx.font = 'bold 11px Arial';
+            ctx.font = `bold ${11 * fs}px Arial`;
             ctx.textAlign = 'center';
             for (const perk of activePerks) {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -115,10 +116,10 @@ class HUDRenderer {
                 ctx.fillStyle = perk.rarityData.color;
                 ctx.fillText(perk.icon, perkX + perkSize / 2, perkY + 15);
                 if (perk.stacks > 1) {
-                    ctx.font = 'bold 8px Arial';
+                    ctx.font = `bold ${8 * fs}px Arial`;
                     ctx.fillStyle = '#fff';
                     ctx.fillText(`×${perk.stacks}`, perkX + perkSize - 2, perkY + 8);
-                    ctx.font = 'bold 11px Arial';
+                    ctx.font = `bold ${11 * fs}px Arial`;
                 }
                 perkY += perkSize + perkGap;
             }
@@ -127,9 +128,72 @@ class HUDRenderer {
         ctx.restore();
     }
 
+    /**
+     * Compact FPS monitor – always visible during gameplay.
+     * Positioned bottom-left to avoid HUD (top bar), HP (top-right),
+     * perks (left column), ultimate bar (bottom-center), and touch controls (bottom-right).
+     */
+    renderFPSMonitor(ctx) {
+        const g = this.game;
+        if (!g.showFPSMonitor) return;
+        // Only show during active game states
+        if (g.state !== 'playing' && g.state !== 'paused' &&
+            g.state !== 'levelIntro' && g.state !== 'levelOutro' &&
+            g.state !== 'deathCinematic') return;
+
+        const w = g.canvas.width;
+        const h = g.canvas.height;
+        const boxW = 90;
+        const boxH = 50;
+        // Bottom-left, small margin – away from touch controls (right) and ult bar (center)
+        const x = 8;
+        const y = h - boxH - 10;
+
+        ctx.save();
+
+        // Semi-transparent background
+        ctx.fillStyle = 'rgba(0, 8, 16, 0.65)';
+        ctx.beginPath();
+        ctx.roundRect(x, y, boxW, boxH, 5);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 150, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // FPS number with dynamic color
+        let fpsColor = '#00ff88';
+        if (g.currentFPS < 30) fpsColor = '#ff4444';
+        else if (g.currentFPS < 50) fpsColor = '#ffaa00';
+
+        ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = fpsColor;
+        ctx.fillText(`${g.currentFPS}`, x + 6, y + 18);
+        ctx.font = '9px "Segoe UI", Arial, sans-serif';
+        ctx.fillStyle = '#668899';
+        ctx.fillText('FPS', x + 48, y + 18);
+
+        // AVG / MIN
+        ctx.font = '8px "Segoe UI", Arial, sans-serif';
+        ctx.fillStyle = '#889999';
+        ctx.fillText(`AVG ${g.avgFPS} | MIN ${g.minFPS}`, x + 6, y + 30);
+
+        // Bullet count + perf mode
+        const bulletCount = g.entityManager.bullets.length;
+        const modeIcons = { high: '🚀', medium: '⚖️', low: '🐢' };
+        const modeColors = { high: '#00aaff', medium: '#ffaa00', low: '#88ff88' };
+        ctx.fillStyle = '#778888';
+        ctx.fillText(`B:${bulletCount}`, x + 6, y + 42);
+        ctx.fillStyle = modeColors[g.performanceMode] || '#fff';
+        ctx.fillText(`${modeIcons[g.performanceMode] || ''}${g.performanceMode.toUpperCase()}`, x + 38, y + 42);
+
+        ctx.restore();
+    }
+
     renderBossWarningOverlay(ctx, w, h) {
         const boss = this.game.entityManager.boss;
         if (!boss) return;
+        const fs = this.game.fontScale;
         const phase = boss.enterPhase;
         const t = boss.enterTime;
 
@@ -186,7 +250,7 @@ class HUDRenderer {
             ctx.globalAlpha = flash;
             ctx.shadowColor = '#ff0000';
             ctx.shadowBlur = 20;
-            ctx.font = 'bold 36px monospace';
+            ctx.font = `bold ${36 * fs}px monospace`;
             ctx.fillStyle = '#ff2222';
             ctx.fillText('⚠ WARNING ⚠', w / 2, h / 2 - 60);
 
@@ -195,7 +259,7 @@ class HUDRenderer {
                 ctx.globalAlpha = nameAlpha;
                 ctx.shadowColor = boss.def.color;
                 ctx.shadowBlur = 15;
-                ctx.font = 'bold 22px monospace';
+                ctx.font = `bold ${22 * fs}px monospace`;
                 ctx.fillStyle = boss.def.color;
                 ctx.fillText(boss.name.toUpperCase(), w / 2, h / 2);
             }
@@ -204,7 +268,7 @@ class HUDRenderer {
                 const subAlpha = Math.min(1, (progress - 0.6) / 0.3);
                 ctx.globalAlpha = subAlpha * 0.7;
                 ctx.shadowBlur = 0;
-                ctx.font = '14px monospace';
+                ctx.font = `${14 * fs}px monospace`;
                 ctx.fillStyle = '#ff8888';
                 ctx.fillText('INCOMING THREAT DETECTED', w / 2, h / 2 + 30);
             }
@@ -280,7 +344,7 @@ class HUDRenderer {
         ctx.textBaseline = 'middle';
 
         ctx.fillStyle = '#000';
-        ctx.font = 'bold 13px monospace';
+        ctx.font = `bold ${13 * this.game.fontScale}px monospace`;
         ctx.fillText(n.text, w / 2 + 1, bannerY + bannerH / 2 + 1);
 
         ctx.fillStyle = n.color;
@@ -295,7 +359,7 @@ class HUDRenderer {
             subtext: extraData?.levelUp ? `Level Up! → ${extraData.newLevel}` : null,
             life: 3,
             maxLife: 3,
-            y: this.game.canvas.height * 0.15
+            y: g.logicalHeight * 0.15
         });
     }
 
@@ -308,7 +372,7 @@ class HUDRenderer {
             subtext: levelUpData.message || 'Level Up!',
             life: 4,
             maxLife: 4,
-            y: this.game.canvas.height * 0.2
+            y: g.logicalHeight * 0.2
         });
     }
 
@@ -325,16 +389,16 @@ class HUDRenderer {
             const alpha = Math.min(1, banner.life / (banner.maxLife * 0.3));
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.font = 'bold 22px Arial';
+            ctx.font = `bold ${22 * this.game.fontScale}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillStyle = banner.color || '#ffd700';
             ctx.shadowColor = banner.color ? banner.color : '#ff8800';
             ctx.shadowBlur = 10;
-            ctx.fillText(banner.text, this.game.canvas.width / 2, banner.y);
+            ctx.fillText(banner.text, this.game.logicalWidth / 2, banner.y);
             if (banner.subtext) {
-                ctx.font = '14px Arial';
+                ctx.font = `${14 * this.game.fontScale}px Arial`;
                 ctx.fillStyle = '#88ff88';
-                ctx.fillText(banner.subtext, this.game.canvas.width / 2, banner.y + 22);
+                ctx.fillText(banner.subtext, this.game.logicalWidth / 2, banner.y + 22);
             }
             ctx.restore();
         }

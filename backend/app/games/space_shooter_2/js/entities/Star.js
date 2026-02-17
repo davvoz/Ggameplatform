@@ -73,12 +73,12 @@ class Star {
         this.color = (theme && theme.stars) ? theme.stars[layer] : ['#8899bb','#aabbdd','#ddeeff'][layer];
     }
 
-    update(dt, canvasHeight) {
+    update(dt, canvasWidth, canvasHeight) {
         this.y += this.speed * dt;
         this.twinklePhase += this.twinkleSpeed * dt;
         if (this.y > canvasHeight + 5) {
             this.y = -5;
-            this.x = Math.random() * 1000;
+            this.x = Math.random() * canvasWidth;
         }
     }
 
@@ -118,11 +118,11 @@ class Nebula {
         this.alpha = 0.03 + Math.random() * 0.04;
     }
 
-    update(dt, canvasHeight) {
+    update(dt, canvasWidth, canvasHeight) {
         this.y += this.speed * dt;
         if (this.y > canvasHeight + this.radius) {
             this.y = -this.radius * 2;
-            this.x = Math.random() * 1000;
+            this.x = Math.random() * canvasWidth;
         }
     }
 
@@ -560,12 +560,10 @@ class StarField {
 
     update(dt) {
         for (const star of this.stars) {
-            star.update(dt, this.canvasHeight);
-            if (star.x > this.canvasWidth) star.x = Math.random() * this.canvasWidth;
+            star.update(dt, this.canvasWidth, this.canvasHeight);
         }
         for (const nebula of this.nebulae) {
-            nebula.update(dt, this.canvasHeight);
-            if (nebula.x > this.canvasWidth) nebula.x = Math.random() * this.canvasWidth;
+            nebula.update(dt, this.canvasWidth, this.canvasHeight);
         }
         const time = performance.now() * 0.001;
         for (const fx of this.fxParticles) {

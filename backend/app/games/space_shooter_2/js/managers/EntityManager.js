@@ -128,7 +128,7 @@ class EntityManager {
                 }
             }
 
-            if (m.x < -50 || m.x > g.canvas.width + 50 || m.y < -50 || m.y > g.canvas.height + 50) {
+            if (m.x < -50 || m.x > g.logicalWidth + 50 || m.y < -50 || m.y > g.logicalHeight + 50) {
                 m.active = false;
             }
         }

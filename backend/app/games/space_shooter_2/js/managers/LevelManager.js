@@ -84,8 +84,8 @@ class LevelManager {
             entities.player.recalculateStats();
             g.perkEffectsManager.applyPerkModifiersToPlayer();
             entities.player.health = entities.player.maxHealth;
-            entities.player.position.x = g.canvas.width / 2 - entities.player.width / 2;
-            entities.player.position.y = g.canvas.height - 100;
+            entities.player.position.x = g.logicalWidth / 2 - entities.player.width / 2;
+            entities.player.position.y = g.logicalHeight - 100;
         }
 
         if (g.starField) g.starField.setLevel(this.currentLevel);

@@ -211,9 +211,9 @@ class Player extends GameObject {
         this.position.x += this.velocity.x * deltaTime;
         this.position.y += this.velocity.y * deltaTime;
 
-        // Clamp to screen
-        this.position.x = Math.max(0, Math.min(game.canvas.width - this.width, this.position.x));
-        this.position.y = Math.max(0, Math.min(game.canvas.height - this.height, this.position.y));
+        // Clamp to screen (logical coordinates)
+        this.position.x = Math.max(0, Math.min(game.logicalWidth - this.width, this.position.x));
+        this.position.y = Math.max(0, Math.min(game.logicalHeight - this.height, this.position.y));
 
         // Fire cooldown & heat (cool_exhaust perk speeds dissipation)
         this.fireCooldown -= deltaTime;

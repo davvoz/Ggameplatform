@@ -52,7 +52,7 @@ class PowerUp extends GameObject {
         }
 
         // Expire
-        if (this.lifeTimer > this.lifeTime || this.position.y > game.canvas.height + 30) {
+        if (this.lifeTimer > this.lifeTime || this.position.y > game.logicalHeight + 30) {
             this.destroy();
         }
     }

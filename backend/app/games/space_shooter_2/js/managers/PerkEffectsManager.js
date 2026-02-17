@@ -41,7 +41,7 @@ class PerkEffectsManager {
                         subtext: null,
                         life: 2,
                         maxLife: 2,
-                        y: g.canvas.height * 0.18,
+                        y: g.logicalHeight * 0.18,
                         color: '#44aaff'
                     });
                 }

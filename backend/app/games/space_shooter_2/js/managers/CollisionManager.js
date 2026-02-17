@@ -1,9 +1,31 @@
 import Explosion from '../entities/Explosion.js';
 import { MultiBoss } from '../entities/Enemy.js';
+import SpatialGrid from '../utils/SpatialGrid.js';
 
 class CollisionManager {
     constructor(game) {
         this.game = game;
+        // Spatial grid for enemy collision lookups – cell size tuned for typical entity sizes
+        this._enemyGrid = new SpatialGrid(120, game.logicalWidth, game.logicalHeight);
+        // Cache logical size to detect resizes
+        this._lastW = game.logicalWidth;
+        this._lastH = game.logicalHeight;
+    }
+
+    /** Rebuild the spatial grid with current active enemies. */
+    _rebuildEnemyGrid(entities) {
+        const w = this.game.logicalWidth;
+        const h = this.game.logicalHeight;
+        if (w !== this._lastW || h !== this._lastH) {
+            this._enemyGrid.resize(w, h);
+            this._lastW = w;
+            this._lastH = h;
+        }
+        this._enemyGrid.clear();
+        for (let i = 0, len = entities.enemies.length; i < len; i++) {
+            const e = entities.enemies[i];
+            if (e.active) this._enemyGrid.insert(e);
+        }
     }
 
     checkCollisions() {
@@ -11,18 +33,39 @@ class CollisionManager {
         const entities = g.entityManager;
         const perks = g.perkSystem;
 
+        // ── Build spatial grid for enemies once per frame ──
+        this._rebuildEnemyGrid(entities);
+        const grid = this._enemyGrid;
+
+        // ── Pre-compute per-frame perk values (avoid repeated virtual calls) ──
+        const piercePerk = perks.getPierceCount();
+        const dmgMult = perks.getDamageMultiplier();
+        const critChance = perks.getCritChance();
+        const critMult = perks.getCritMultiplier();
+        const hasExplosive = perks.hasExplosiveRounds();
+
         for (const bullet of entities.bullets) {
             if (!bullet.active || bullet.owner !== 'player') continue;
 
-            let pierceLeft = bullet._pierceLeft ?? perks.getPierceCount();
+            let pierceLeft = bullet._pierceLeft ?? piercePerk;
 
-            for (const enemy of entities.enemies) {
+            // ── Spatial query: only check enemies near this bullet ──
+            const margin = 30; // collision search margin
+            const nearby = grid.query(
+                bullet.position.x - margin,
+                bullet.position.y - margin,
+                bullet.width + margin * 2,
+                bullet.height + margin * 2
+            );
+
+            for (let i = 0, len = nearby.length; i < len; i++) {
+                const enemy = nearby[i];
                 if (!enemy.active) continue;
                 if (bullet._hitIds && bullet._hitIds.has(enemy)) continue;
                 if (bullet.collidesWithCircle(enemy)) {
-                    let dmg = bullet.damage * perks.getDamageMultiplier();
-                    const isCrit = Math.random() < perks.getCritChance();
-                    if (isCrit) dmg = Math.ceil(dmg * perks.getCritMultiplier());
+                    let dmg = bullet.damage * dmgMult;
+                    const isCrit = Math.random() < critChance;
+                    if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const killed = enemy.takeDamage(Math.ceil(dmg), g);
                     if (killed) g.waveManager.onEnemyKilled(enemy);
@@ -32,7 +75,7 @@ class CollisionManager {
                         g.postProcessing.flash({ r: 255, g: 200, b: 50 }, 0.05);
                     }
 
-                    if (perks.hasExplosiveRounds()) {
+                    if (hasExplosive) {
                         g.perkEffectsManager.applyExplosiveAoE(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 50, Math.ceil(dmg * 0.5));
                     }
 
@@ -56,9 +99,9 @@ class CollisionManager {
                 const hitIdx = (entities.boss instanceof MultiBoss) ? entities.boss.getHitPart(bCX, bCY) : -1;
                 const hitBoss = hitIdx >= 0 || (!(entities.boss instanceof MultiBoss) && bullet.collidesWithCircle(entities.boss));
                 if (hitBoss) {
-                    let dmg = bullet.damage * perks.getDamageMultiplier();
-                    const isCrit = Math.random() < perks.getCritChance();
-                    if (isCrit) dmg = Math.ceil(dmg * perks.getCritMultiplier());
+                    let dmg = bullet.damage * dmgMult;
+                    const isCrit = Math.random() < critChance;
+                    if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     let killed = false;
                     if (hitIdx >= 0) {
@@ -82,7 +125,7 @@ class CollisionManager {
                     if (isCrit) {
                         g.particles.emit(px, py, 'explosion', 6);
                     }
-                    if (perks.hasExplosiveRounds()) {
+                    if (hasExplosive) {
                         g.perkEffectsManager.applyExplosiveAoE(px, py, 50, Math.ceil(dmg * 0.3));
                     }
 
@@ -96,9 +139,9 @@ class CollisionManager {
                 const bCY = bullet.position.y + bullet.height / 2;
                 const hitIdx = entities.miniBoss.getHitPart(bCX, bCY);
                 if (hitIdx >= 0) {
-                    let dmg = bullet.damage * perks.getDamageMultiplier();
-                    const isCrit = Math.random() < perks.getCritChance();
-                    if (isCrit) dmg = Math.ceil(dmg * perks.getCritMultiplier());
+                    let dmg = bullet.damage * dmgMult;
+                    const isCrit = Math.random() < critChance;
+                    if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const res = entities.miniBoss.damagepart(hitIdx, Math.ceil(dmg), g);
                     if (res.partDestroyed) {
@@ -115,7 +158,7 @@ class CollisionManager {
                     if (isCrit) {
                         g.particles.emit(px, py, 'explosion', 5);
                     }
-                    if (perks.hasExplosiveRounds()) {
+                    if (hasExplosive) {
                         g.perkEffectsManager.applyExplosiveAoE(px, py, 40, Math.ceil(dmg * 0.3));
                     }
 
@@ -126,22 +169,41 @@ class CollisionManager {
         }
 
         if (entities.player && entities.player.active) {
+            // Pre-compute player AABB for fast reject
+            const player = entities.player;
+            const pcx = player.position.x + player.width / 2;
+            const pcy = player.position.y + player.height / 2;
+            const playerRadius = Math.min(player.width, player.height) * player.scale / 2;
+            const phaseChance = perks.getPhaseChance();
+            const dmgConverterRate = perks.getDamageConverterRate();
+
             for (const bullet of entities.bullets) {
                 if (!bullet.active || bullet.owner !== 'enemy') continue;
-                if (bullet.collidesWithCircle(entities.player)) {
-                    if (Math.random() < perks.getPhaseChance()) {
+
+                // ── Fast distance pre-check: skip expensive circle if way too far ──
+                const bcx = bullet.position.x + bullet.width / 2;
+                const bcy = bullet.position.y + bullet.height / 2;
+                const dx = bcx - pcx;
+                const dy = bcy - pcy;
+                const bulletRadius = Math.min(bullet.width, bullet.height) * bullet.scale / 2;
+                const maxDist = playerRadius + bulletRadius;
+                // Manhattan pre-reject (cheaper than sqrt)
+                if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) continue;
+
+                if (bullet.collidesWithCircle(player)) {
+                    if (Math.random() < phaseChance) {
                         bullet.destroy();
-                        g.particles.emit(entities.player.position.x + entities.player.width / 2, entities.player.position.y + entities.player.height / 2, 'shield', 3);
+                        g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
                         continue;
                     }
                     bullet.destroy();
-                    const died = entities.player.takeDamage(1, g);
+                    const died = player.takeDamage(1, g);
                     if (died) {
                         this.onPlayerDeath();
                     } else {
                         g.levelManager.levelDamageTaken++;
-                        if (perks.getDamageConverterRate() > 0 && entities.player.active) {
-                            entities.player.ultimateCharge = Math.min(100, entities.player.ultimateCharge + 100 * perks.getDamageConverterRate());
+                        if (dmgConverterRate > 0 && player.active) {
+                            player.ultimateCharge = Math.min(100, player.ultimateCharge + 100 * dmgConverterRate);
                         }
                     }
                 }
@@ -149,7 +211,7 @@ class CollisionManager {
 
             for (const enemy of entities.enemies) {
                 if (!enemy.active) continue;
-                if (enemy.collidesWithCircle(entities.player)) {
+                if (enemy.collidesWithCircle(player)) {
                     if (perks.hasThorns()) {
                         const thKilled = enemy.takeDamage(3, g);
                         if (thKilled) g.waveManager.onEnemyKilled(enemy);
@@ -157,48 +219,48 @@ class CollisionManager {
                         const killed = enemy.takeDamage(enemy.health, g);
                         if (killed) g.waveManager.onEnemyKilled(enemy);
                     }
-                    if (Math.random() < perks.getPhaseChance()) {
-                        g.particles.emit(entities.player.position.x + entities.player.width / 2, entities.player.position.y + entities.player.height / 2, 'shield', 3);
+                    if (Math.random() < phaseChance) {
+                        g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
                     } else {
-                        const died = entities.player.takeDamage(1, g);
+                        const died = player.takeDamage(1, g);
                         if (died) this.onPlayerDeath();
                         else {
                             g.levelManager.levelDamageTaken++;
-                            if (perks.getDamageConverterRate() > 0 && entities.player.active) {
-                                entities.player.ultimateCharge = Math.min(100, entities.player.ultimateCharge + 100 * perks.getDamageConverterRate());
+                            if (dmgConverterRate > 0 && player.active) {
+                                player.ultimateCharge = Math.min(100, player.ultimateCharge + 100 * dmgConverterRate);
                             }
                         }
                     }
                 }
             }
 
-            if (entities.boss && entities.boss.active && !entities.boss.entering && entities.boss.collidesWithCircle(entities.player)) {
-                if (Math.random() >= perks.getPhaseChance()) {
-                    const died = entities.player.takeDamage(2, g);
+            if (entities.boss && entities.boss.active && !entities.boss.entering && entities.boss.collidesWithCircle(player)) {
+                if (Math.random() >= phaseChance) {
+                    const died = player.takeDamage(2, g);
                     if (died) this.onPlayerDeath();
                     else {
                         g.levelManager.levelDamageTaken += 2;
-                        if (perks.getDamageConverterRate() > 0 && entities.player.active) {
-                            entities.player.ultimateCharge = Math.min(100, entities.player.ultimateCharge + 200 * perks.getDamageConverterRate());
+                        if (dmgConverterRate > 0 && player.active) {
+                            player.ultimateCharge = Math.min(100, player.ultimateCharge + 200 * dmgConverterRate);
                         }
                     }
                 } else {
-                    g.particles.emit(entities.player.position.x + entities.player.width / 2, entities.player.position.y + entities.player.height / 2, 'shield', 5);
+                    g.particles.emit(pcx, pcy, 'shield', 5);
                 }
             }
 
-            if (entities.miniBoss && entities.miniBoss.active && !entities.miniBoss.entering && entities.miniBoss.collidesWithCircle(entities.player)) {
-                if (Math.random() >= perks.getPhaseChance()) {
-                    const died = entities.player.takeDamage(1, g);
+            if (entities.miniBoss && entities.miniBoss.active && !entities.miniBoss.entering && entities.miniBoss.collidesWithCircle(player)) {
+                if (Math.random() >= phaseChance) {
+                    const died = player.takeDamage(1, g);
                     if (died) this.onPlayerDeath();
                     else {
                         g.levelManager.levelDamageTaken++;
-                        if (perks.getDamageConverterRate() > 0 && entities.player.active) {
-                            entities.player.ultimateCharge = Math.min(100, entities.player.ultimateCharge + 100 * perks.getDamageConverterRate());
+                        if (dmgConverterRate > 0 && player.active) {
+                            player.ultimateCharge = Math.min(100, player.ultimateCharge + 100 * dmgConverterRate);
                         }
                     }
                 } else {
-                    g.particles.emit(entities.player.position.x + entities.player.width / 2, entities.player.position.y + entities.player.height / 2, 'shield', 4);
+                    g.particles.emit(pcx, pcy, 'shield', 4);
                 }
             }
 
@@ -206,8 +268,8 @@ class CollisionManager {
             for (const pu of entities.powerUps) {
                 if (!pu.active) continue;
                 if (magnetRange > 0) {
-                    const dx = (entities.player.position.x + entities.player.width / 2) - (pu.position.x + pu.width / 2);
-                    const dy = (entities.player.position.y + entities.player.height / 2) - (pu.position.y + pu.height / 2);
+                    const dx = pcx - (pu.position.x + pu.width / 2);
+                    const dy = pcy - (pu.position.y + pu.height / 2);
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < magnetRange && dist > 5) {
                         const pull = 300 / dist;
@@ -215,8 +277,8 @@ class CollisionManager {
                         pu.position.y += (dy / dist) * pull * 0.016;
                     }
                 }
-                if (pu.collidesWithCircle(entities.player)) {
-                    pu.apply(entities.player, g);
+                if (pu.collidesWithCircle(player)) {
+                    pu.apply(player, g);
                     pu.destroy();
                     g.sound.playPowerUp();
                     g.particles.emit(

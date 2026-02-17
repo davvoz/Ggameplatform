@@ -88,7 +88,7 @@ class WaveManager {
 
     spawnWave(wave, speedMult) {
         const g = this.game;
-        const spawned = EnemyFactory.spawnFormationWave(wave, g.canvas.width, speedMult, g.difficulty, g.levelManager.currentLevel);
+        const spawned = EnemyFactory.spawnFormationWave(wave, g.logicalWidth, speedMult, g.difficulty, g.levelManager.currentLevel);
         g.entityManager.enemies.push(...spawned);
     }
 
@@ -96,8 +96,8 @@ class WaveManager {
         const g = this.game;
         const entities = g.entityManager;
         entities.bossActive = true;
-        const x = g.canvas.width / 2 - 95;
-        entities.boss = EnemyFactory.createBoss(x, -200, bossLevel, g.canvas.width, g.difficulty, g.levelManager.currentLevel);
+        const x = g.logicalWidth / 2 - 95;
+        entities.boss = EnemyFactory.createBoss(x, -200, bossLevel, g.logicalWidth, g.difficulty, g.levelManager.currentLevel);
         g.sound.playBossWarning();
         g.postProcessing.shake(3, 2.0);
     }
@@ -106,8 +106,8 @@ class WaveManager {
         const g = this.game;
         const entities = g.entityManager;
         entities.miniBossActive = true;
-        const x = g.canvas.width / 2 - 55;
-        entities.miniBoss = EnemyFactory.createMiniBoss(x, -120, miniBossType, g.canvas.width, g.difficulty, g.levelManager.currentLevel);
+        const x = g.logicalWidth / 2 - 55;
+        entities.miniBoss = EnemyFactory.createMiniBoss(x, -120, miniBossType, g.logicalWidth, g.difficulty, g.levelManager.currentLevel);
         this.miniBossNotification = {
             text: `★ ${entities.miniBoss.name.toUpperCase()} ★`,
             timer: 2.0,

@@ -5,6 +5,7 @@ import ParticleSystem from './effects/ParticleSystem.js';
 import PostProcessing from './effects/PostProcessing.js';
 import StarField from './entities/Star.js';
 import { Player } from './entities/Player.js';
+import Bullet from './entities/Bullet.js';
 import { PerkSystem } from './PerkSystem.js';
 
 import { DIFFICULTY_CONFIG } from './DifficultyConfig.js';
@@ -18,10 +19,27 @@ import HUDRenderer from './managers/HUDRenderer.js';
 import UIManager from './managers/UIManager.js';
 import PerkEffectsManager from './managers/PerkEffectsManager.js';
 
+// ── Virtual resolution ──
+// All game logic and rendering use a fixed logical width.
+// Height adapts to the device's aspect ratio.
+// ctx.scale() maps logical → physical pixels each frame.
+// Mobile gets a tighter view (bigger sprites relative to screen).
+const _isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const REFERENCE_WIDTH = _isMobileDevice ? 310 : 410;
+
 class Game {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+
+        // Virtual resolution (set in resize())
+        this.scale = 1;
+        this.logicalWidth = REFERENCE_WIDTH;
+        this.logicalHeight = 800;
+
+        // Font compensation: on mobile the lower REFERENCE_WIDTH makes everything
+        // bigger, including text. fontScale shrinks fonts back to a readable size.
+        this.fontScale = _isMobileDevice ? 0.75 : 1;
 
         this.input = new InputManager(this);
         this.sound = new SoundManager();
@@ -48,6 +66,14 @@ class Game {
         this.fpsTimer = 0;
         this.lastTime = 0;
 
+        // FPS Monitor
+        this.fpsHistory = [];
+        this.fpsUpdateTimer = 0;
+        this.currentFPS = 60;
+        this.avgFPS = 60;
+        this.minFPS = 60;
+        this.showFPSMonitor = true;
+
         this.animFrame = null;
 
         this.entityManager = new EntityManager(this);
@@ -71,7 +97,7 @@ class Game {
         this.uiManager.populateShipPreviews();
         await this.sound.init();
 
-        this.starField = new StarField(this.canvas.width, this.canvas.height, this.performanceMode);
+        this.starField = new StarField(this.logicalWidth, this.logicalHeight, this.performanceMode);
         this.starField.setLevel(1);
 
         this.setPerformanceMode(this.performanceMode);
@@ -97,9 +123,15 @@ class Game {
         const rect = container.getBoundingClientRect();
         this.canvas.width = rect.width;
         this.canvas.height = rect.height;
+
+        // Compute virtual-resolution scale
+        this.scale = this.canvas.width / REFERENCE_WIDTH;
+        this.logicalWidth = REFERENCE_WIDTH;
+        this.logicalHeight = this.canvas.height / this.scale;
+
         this.input.updateLayout(this.canvas.width, this.canvas.height);
         if (this.starField) {
-            this.starField.resize(this.canvas.width, this.canvas.height);
+            this.starField.resize(this.logicalWidth, this.logicalHeight);
         }
     }
 
@@ -114,6 +146,8 @@ class Game {
             this.frameCount = 0;
             this.fpsTimer = 0;
         }
+
+        this._updateFPSMonitor(deltaTime);
 
         this.update(deltaTime);
         this.render();
@@ -293,9 +327,13 @@ class Game {
 
     render() {
         const ctx = this.ctx;
-        const w = this.canvas.width;
-        const h = this.canvas.height;
+        const w = this.logicalWidth;
+        const h = this.logicalHeight;
         const em = this.entityManager;
+
+        // ── Begin logical (virtual) coordinate space ──
+        ctx.save();
+        ctx.scale(this.scale, this.scale);
 
         if (this.starField) this.starField.render(ctx, this.gameTime);
 
@@ -335,7 +373,42 @@ class Game {
                 this.hudRenderer.renderMiniBossNotification(ctx, w, h);
             }
 
-            for (const bullet of em.bullets) bullet.render(ctx);
+            // ── Bullet rendering with batching for low perf ──
+            if (this.performanceMode === 'low' && em.bullets.length > 0) {
+                // Batch all bullets by color to minimize fillStyle changes
+                let pIdx = 0, eIdx = 0;
+                const pBullets = [];
+                const eBullets = [];
+                for (let i = 0, len = em.bullets.length; i < len; i++) {
+                    const b = em.bullets[i];
+                    if (b.owner === 'player') pBullets.push(b);
+                    else eBullets.push(b);
+                }
+                if (pBullets.length) {
+                    ctx.fillStyle = '#66ccff';
+                    for (let i = 0; i < pBullets.length; i++) {
+                        const b = pBullets[i];
+                        ctx.fillRect(
+                            b.position.x + b.width / 2 - b.boltWidth * 0.5,
+                            b.position.y + b.height / 2 - b.boltLength * 0.5,
+                            b.boltWidth, b.boltLength
+                        );
+                    }
+                }
+                if (eBullets.length) {
+                    ctx.fillStyle = '#ff6644';
+                    for (let i = 0; i < eBullets.length; i++) {
+                        const b = eBullets[i];
+                        ctx.fillRect(
+                            b.position.x + b.width / 2 - b.boltWidth * 0.5,
+                            b.position.y + b.height / 2 - b.boltLength * 0.5,
+                            b.boltWidth, b.boltLength
+                        );
+                    }
+                }
+            } else {
+                for (const bullet of em.bullets) bullet.render(ctx);
+            }
 
             em.renderHomingMissiles(ctx);
 
@@ -354,11 +427,7 @@ class Game {
             ctx.restore();
         }
 
-        // Touch controls rendered AFTER zoom restore, hidden during cinematics
-        if (this.state === 'playing' || this.state === 'paused') {
-            this.input.renderTouchControls(ctx);
-        }
-
+        // Cinematics (in logical space)
         if (this.state === 'cinematic' && this.cinematicManager.cinematic) {
             this.cinematicManager.renderCinematic(ctx, w, h);
         }
@@ -375,9 +444,24 @@ class Game {
             this.cinematicManager.renderDeathCinematic(ctx, w, h);
         }
 
+        // Banners (in logical space)
+        this.hudRenderer.renderBanners(ctx);
+
+        // ── End logical coordinate space ──
+        ctx.restore();
+
+        // ── Physical coordinate space below ──
+
+        // Touch controls (physical coords – match finger position)
+        if (this.state === 'playing' || this.state === 'paused') {
+            this.input.renderTouchControls(ctx);
+        }
+
+        // PostProcessing (physical coords – full canvas overlay)
         this.postProcessing.render(ctx);
 
-        this.hudRenderer.renderBanners(ctx);
+        // FPS monitor (physical coords – fixed screen position)
+        this.hudRenderer.renderFPSMonitor(ctx);
     }
 
     startGame(shipId, ultimateId, difficultyId) {
@@ -400,8 +484,8 @@ class Game {
         this.levelManager.levelStartTime = performance.now();
 
         this.entityManager.player = new Player(
-            this.canvas.width / 2 - 32,
-            this.canvas.height - 100,
+            this.logicalWidth / 2 - 32,
+            this.logicalHeight - 100,
             shipId,
             ultimateId
         );
@@ -501,6 +585,22 @@ class Game {
 
     // ── Performance Mode ──
 
+    _updateFPSMonitor(deltaTime) {
+        if (deltaTime > 0) {
+            this.currentFPS = Math.round(1 / deltaTime);
+            this.fpsHistory.push(this.currentFPS);
+            if (this.fpsHistory.length > 60) this.fpsHistory.shift();
+        }
+        this.fpsUpdateTimer += deltaTime;
+        if (this.fpsUpdateTimer >= 0.5) {
+            this.fpsUpdateTimer = 0;
+            if (this.fpsHistory.length > 0) {
+                this.avgFPS = Math.round(this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length);
+                this.minFPS = Math.min(...this.fpsHistory);
+            }
+        }
+    }
+
     _loadPerformanceMode() {
         try {
             const saved = localStorage.getItem('spaceShooter2Performance');
@@ -516,6 +616,9 @@ class Game {
     setPerformanceMode(mode) {
         this.performanceMode = mode;
         this._savePerformanceMode(mode);
+
+        // Bullet rendering quality
+        Bullet.setPerformanceMode(mode);
 
         // PostProcessing
         this.postProcessing.setQuality(mode);

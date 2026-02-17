@@ -20,8 +20,8 @@ class CinematicManager {
 
     _beginCinematic() {
         const g = this.game;
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
 
         const ships = Object.values(SHIP_DATA);
         const bosses = Object.values(BOSS_DEFS).map((b, i) => ({ ...b, id: i + 1 }));
@@ -92,10 +92,10 @@ class CinematicManager {
             }
         }
 
-        const h = g.canvas.height;
+        const h = g.logicalHeight;
         for (const s of c.bgStars) {
             s.y += s.speed * dt;
-            if (s.y > h) { s.y = 0; s.x = Math.random() * g.canvas.width; }
+            if (s.y > h) { s.y = 0; s.x = Math.random() * g.logicalWidth; }
         }
 
         const t = c.timer;
@@ -663,8 +663,8 @@ class CinematicManager {
     beginLevelIntro() {
         const g = this.game;
         const levelData = getLevelData(g.levelManager.currentLevel);
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
 
         const warpStars = [];
         for (let i = 0; i < 80; i++) {
@@ -707,8 +707,8 @@ class CinematicManager {
         const g = this.game;
         this.levelIntro.timer += dt;
 
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
         for (const s of this.levelIntro.warpStars) {
             s.y += s.z * 900 * dt;
             if (s.y > h + s.len) {
@@ -914,8 +914,8 @@ class CinematicManager {
 
     beginLevelOutro() {
         const g = this.game;
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
         const entities = g.entityManager;
         const pcx = entities.player ? entities.player.position.x + entities.player.width / 2 : w / 2;
         const pcy = entities.player ? entities.player.position.y + entities.player.height / 2 : h * 0.8;
@@ -1100,8 +1100,8 @@ class CinematicManager {
 
     beginDeathCinematic(deathX, deathY) {
         const g = this.game;
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
 
         const rings = [];
         for (let i = 0; i < 5; i++) {
@@ -1189,8 +1189,8 @@ class CinematicManager {
         const cine = this._deathCine;
         cine.timer += dt;
         const t = cine.timer;
-        const w = g.canvas.width;
-        const h = g.canvas.height;
+        const w = g.logicalWidth;
+        const h = g.logicalHeight;
 
         for (const ring of cine.rings) {
             if (t < ring.delay) continue;

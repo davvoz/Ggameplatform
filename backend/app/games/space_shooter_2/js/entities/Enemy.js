@@ -263,7 +263,7 @@ class Enemy extends GameObject {
 
         if (this.hitFlash > 0) this.hitFlash -= deltaTime * 5;
 
-        if (this.position.y > game.canvas.height + 50) {
+        if (this.position.y > game.logicalHeight + 50) {
             this.destroy();
         }
     }

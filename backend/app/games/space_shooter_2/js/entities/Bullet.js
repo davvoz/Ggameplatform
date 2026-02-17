@@ -1,9 +1,18 @@
 import GameObject from './GameObject.js';
 
 /**
- * Bullet - Energy bolt projectile with thick cartoon trail
- * Player bullets are large cyan energy bolts, enemy bullets are red orbs
+ * Bullet - Energy bolt projectile with performance-aware rendering.
+ *
+ * HIGH   → Full glowing bolt with bezier body, radial glow, sparkling tip, thick trails.
+ * MEDIUM → Simple colored oval/ellipse, thin line trail, no shadows or gradients.
+ * LOW    → Tiny filled rect, no trail at all, minimal draw calls.
+ *
+ * The active performanceMode is set once via Bullet.setPerformanceMode() (called by Game).
  */
+
+// Shared performance state (avoids per-bullet property overhead)
+let _perfMode = 'high';
+
 class Bullet extends GameObject {
     constructor(x, y, vx, vy, owner = 'player', damage = 1) {
         super(x, y, 12, 20);
@@ -12,9 +21,14 @@ class Bullet extends GameObject {
         this.owner = owner;
         this.damage = damage;
         this.tag = 'bullet';
-        this.trail = [];
-        this.maxTrailLength = owner === 'player' ? 8 : 5;
         this.age = 0;
+
+        // Trail – length adjusted per perf mode
+        this.trail = _perfMode === 'low' ? null : [];
+        this.maxTrailLength = _perfMode === 'low' ? 0
+            : (_perfMode === 'medium'
+                ? (owner === 'player' ? 4 : 3)
+                : (owner === 'player' ? 8 : 5));
 
         if (owner === 'player') {
             this.color = { r: 80, g: 200, b: 255 };
@@ -31,49 +45,134 @@ class Bullet extends GameObject {
             this.boltLength = 10;
             this.boltWidth = 4;
         }
+
+        // Pre-compute direction angle (most bullets fly straight, so cache it)
+        const speed = Math.sqrt(vx * vx + vy * vy);
+        this._dirAngle = speed > 0 ? Math.atan2(vy / speed, vx / speed) - Math.PI / 2 : 0;
+        this._speed = speed;
+    }
+
+    /**
+     * Global setter – call from Game.setPerformanceMode().
+     * Avoids passing performanceMode every frame or per-bullet.
+     */
+    static setPerformanceMode(mode) {
+        _perfMode = mode;
     }
 
     update(deltaTime, game) {
         this.age += deltaTime;
 
-        // Store trail positions
-        this.trail.push({
-            x: this.position.x + this.width / 2,
-            y: this.position.y + this.height / 2,
-            age: 0
-        });
-        if (this.trail.length > this.maxTrailLength) {
-            this.trail.shift();
+        // Trail (skip entirely on low)
+        if (this.trail) {
+            this.trail.push(
+                this.position.x + this.width / 2,
+                this.position.y + this.height / 2
+            );
+            // Each entry is 2 floats (x, y) → maxTrailLength * 2
+            const maxLen = this.maxTrailLength * 2;
+            while (this.trail.length > maxLen) {
+                this.trail.shift();
+                this.trail.shift();
+            }
         }
 
         // Move
         this.position.x += this.velocity.x * deltaTime;
         this.position.y += this.velocity.y * deltaTime;
 
-        // Check bounds
-        if (this.isOffScreen(game.canvas.width, game.canvas.height)) {
+        // Bounds check
+        if (this.isOffScreen(game.logicalWidth, game.logicalHeight)) {
             this.destroy();
         }
     }
 
+    // ────────────────────── RENDER DISPATCHER ──────────────────────
+
     render(ctx) {
+        if (_perfMode === 'low') {
+            this._renderLow(ctx);
+        } else if (_perfMode === 'medium') {
+            this._renderMedium(ctx);
+        } else {
+            this._renderHigh(ctx);
+        }
+    }
+
+    // ────────────────────── LOW: absolute minimum ──────────────────────
+
+    _renderLow(ctx) {
+        const cx = this.position.x + this.width / 2;
+        const cy = this.position.y + this.height / 2;
+        const bW = this.boltWidth;
+        const bL = this.boltLength;
+
+        // Single filled rect, no state changes beyond fillStyle
+        ctx.fillStyle = this.midColor;
+        ctx.fillRect(cx - bW * 0.5, cy - bL * 0.5, bW, bL);
+    }
+
+    // ────────────────────── MEDIUM: simple trail + oval ──────────────────────
+
+    _renderMedium(ctx) {
+        const cx = this.position.x + this.width / 2;
+        const cy = this.position.y + this.height / 2;
+
+        // Trail – single thin line from oldest to newest
+        if (this.trail && this.trail.length >= 4) {
+            ctx.globalAlpha = 0.4;
+            ctx.strokeStyle = this.midColor;
+            ctx.lineWidth = this.boltWidth * 0.6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(this.trail[0], this.trail[1]);
+            for (let i = 2; i < this.trail.length; i += 2) {
+                ctx.lineTo(this.trail[i], this.trail[i + 1]);
+            }
+            ctx.lineTo(cx, cy);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // Simple oval body
+        const bL = this.boltLength;
+        const bW = this.boltWidth;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(this._dirAngle);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bW * 0.6, bL * 0.7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = this.outerColor;
+        ctx.fill();
+        // Bright core
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bW * 0.3, bL * 0.4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = this.coreColor;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // ────────────────────── HIGH: full effects (previous code) ──────────────────────
+
+    _renderHigh(ctx) {
         const cx = this.position.x + this.width / 2;
         const cy = this.position.y + this.height / 2;
 
         ctx.save();
 
         // === TRAIL: thick glowing tapered line ===
-        if (this.trail.length > 1) {
-            for (let i = 0; i < this.trail.length - 1; i++) {
-                const t = (i + 1) / this.trail.length;
+        if (this.trail && this.trail.length >= 4) {
+            const segs = this.trail.length / 2;
+            for (let i = 0; i < this.trail.length - 2; i += 2) {
+                const t = (i / 2 + 1) / segs;
                 const width = this.boltWidth * t * 1.5;
                 ctx.globalAlpha = t * 0.5;
                 ctx.strokeStyle = this.midColor;
                 ctx.lineWidth = width + 2;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
-                ctx.moveTo(this.trail[i].x, this.trail[i].y);
-                ctx.lineTo(this.trail[i + 1].x, this.trail[i + 1].y);
+                ctx.moveTo(this.trail[i], this.trail[i + 1]);
+                ctx.lineTo(this.trail[i + 2], this.trail[i + 3]);
                 ctx.stroke();
                 // Inner bright core trail
                 ctx.globalAlpha = t * 0.7;
@@ -95,23 +194,18 @@ class Bullet extends GameObject {
         ctx.arc(cx, cy, 14, 0, Math.PI * 2);
         ctx.fill();
 
-        // === BOLT BODY: elongated energy shape ===
+        // === BOLT BODY ===
         ctx.globalAlpha = 1;
         ctx.shadowBlur = 10;
 
-        // Direction of travel for orientation
-        const speed = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
-        const dirX = speed > 0 ? this.velocity.x / speed : 0;
-        const dirY = speed > 0 ? this.velocity.y / speed : -1;
-        const angle = Math.atan2(dirY, dirX);
+        const bL = this.boltLength;
+        const bW = this.boltWidth;
 
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(angle - Math.PI / 2);
+        ctx.rotate(this._dirAngle);
 
         // Outer bolt shape (elongated diamond)
-        const bL = this.boltLength;
-        const bW = this.boltWidth;
         ctx.beginPath();
         ctx.moveTo(0, -bL);
         ctx.bezierCurveTo(bW, -bL * 0.3, bW, bL * 0.2, 0, bL * 0.6);
@@ -144,14 +238,15 @@ class Bullet extends GameObject {
         ctx.restore();
 
         // === SPARKLE at tip ===
+        const dirX = this._speed > 0 ? this.velocity.x / this._speed : 0;
+        const dirY = this._speed > 0 ? this.velocity.y / this._speed : -1;
         const pulse = 0.8 + Math.sin(this.age * 20) * 0.2;
         ctx.globalAlpha = 0.7 * pulse;
         ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        // Cross sparkle
         const sparkSize = 3 * pulse;
         const tipX = cx + dirX * bL * 0.8;
         const tipY = cy + dirY * bL * 0.8;
+        ctx.beginPath();
         ctx.moveTo(tipX, tipY - sparkSize);
         ctx.lineTo(tipX + 1, tipY);
         ctx.lineTo(tipX, tipY + sparkSize);

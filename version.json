@@ -1,8 +1,17 @@
 {
-  "version": "3.26.0",
-  "timestamp": "2026-02-17T13:49:01.694Z",
-  "buildNumber": 399,
+  "version": "3.27.0",
+  "timestamp": "2026-02-17T15:05:53.268Z",
+  "buildNumber": 400,
   "changelog": [
+    {
+      "version": "3.27.0",
+      "date": "2026-02-17",
+      "type": "minor",
+      "changes": [
+        "feat: add game legend filter buttons and functionality to CommunityStatsRenderer",
+        "🔖 Bump version to 3.26.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.26.0",
       "date": "2026-02-17",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [SS]Implement pre-game upgrade shop and continue system with coin management",
         "🔖 Bump version to 3.24.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.24.1",
-      "date": "2026-02-12",
-      "type": "patch",
-      "changes": [
-        "fix: Update leaderboard avatar sizes and countdown label for consistency",
-        "🔖 Bump version to 3.24.0 [skip-version]"
       ]
     }
   ]

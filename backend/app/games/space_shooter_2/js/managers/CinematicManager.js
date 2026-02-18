@@ -1,6 +1,74 @@
 import { SHIP_DATA } from '../entities/Player.js';
 import { BOSS_DEFS, MINIBOSS_DEFS } from '../entities/Enemy.js';
 import { getLevelData } from '../LevelData.js';
+import { PERK_CATALOG, PERK_CATEGORIES } from '../PerkSystem.js';
+
+/**
+ * Render all parts of a boss/mini-boss definition at (centerX, centerY)
+ * with a given scale, spread (0=collapsed, 1=fully deployed), and time for orbiting/bob.
+ * Renders in correct draw order: arm → shield → turret → weakpoint → core.
+ */
+function renderBossPartsAtPosition(ctx, assets, def, centerX, centerY, scale, spread, time) {
+    const order = ['arm', 'shield', 'turret', 'weakpoint', 'core'];
+    for (const role of order) {
+        for (const p of def.parts) {
+            if (p.role !== role) continue;
+
+            let ox = p.offsetX || 0;
+            let oy = p.offsetY || 0;
+
+            // Orbit
+            if (p.orbitRadius > 0) {
+                const angle = (p.orbitAngle || 0) + (p.orbitSpeed || 0) * time;
+                ox = Math.cos(angle) * p.orbitRadius;
+                oy = Math.sin(angle) * p.orbitRadius;
+            }
+
+            // Bob
+            if (p.bobAmplitude > 0) {
+                oy += Math.sin(time * (p.bobSpeed || 1) + (p.offsetX || 0)) * p.bobAmplitude;
+            }
+
+            // Apply spread (collapse towards center when spread < 1)
+            ox *= spread;
+            oy *= spread;
+
+            const pw = p.width * scale;
+            const ph = p.height * scale;
+            const px = centerX + ox * scale - pw / 2;
+            const py = centerY + oy * scale - ph / 2;
+
+            ctx.save();
+
+            // Part rotation
+            const rot = (p.rotationSpeed || 0) * time;
+            if (rot !== 0) {
+                ctx.translate(px + pw / 2, py + ph / 2);
+                ctx.rotate(rot);
+                ctx.translate(-(px + pw / 2), -(py + ph / 2));
+            }
+
+            const sprite = p.spriteKey && assets ? assets.getSprite(p.spriteKey) : null;
+            if (sprite) {
+                ctx.drawImage(sprite, px - 2 * scale, py - 2 * scale, pw + 4 * scale, ph + 4 * scale);
+            } else {
+                // Fallback colored shape
+                const partCX = px + pw / 2;
+                const partCY = py + ph / 2;
+                ctx.fillStyle = p.role === 'core' ? '#ff2244' : p.role === 'turret' ? '#ffaa33' :
+                    p.role === 'shield' ? '#4488ff' : '#cc6633';
+                ctx.beginPath();
+                ctx.arc(partCX, partCY, pw / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#111';
+                ctx.lineWidth = 1.5 * scale;
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
+}
 
 class CinematicManager {
     constructor(game) {
@@ -40,7 +108,7 @@ class CinematicManager {
 
         this.cinematic = {
             timer: 0,
-            duration: 52.0,
+            duration: 56.0,
             ships,
             bosses,
             miniBosses,
@@ -320,7 +388,7 @@ class CinematicManager {
 
                 const enter = easeOut(Math.min(1, shipT / 0.35));
                 const exit = shipT > 2.5 ? easeOut((shipT - 2.5) / 0.5) : 0;
-                const xPos = cx - 30 + (enter - exit) * 0 + (1 - enter) * (-w * 0.4) + exit * (w * 0.4);
+                const xPos = cx + (1 - enter) * (-w * 0.4) + exit * (w * 0.4);
                 const yPos = cy - 15;
                 const alpha = Math.min(enter, 1 - exit);
 
@@ -410,7 +478,6 @@ class CinematicManager {
                 if (mbT < 0 || mbT > 3.4) continue;
 
                 const mb = c.miniBosses[i];
-                const sprite = g.assets.getSprite(`mboss${mb.id}_core`);
 
                 const enter = easeOut(Math.min(1, mbT / 0.3));
                 const exit = mbT > 2.5 ? easeOut((mbT - 2.5) / 0.5) : 0;
@@ -435,10 +502,11 @@ class CinematicManager {
                     ctx.fillRect(xPos - glowR, yPos - glowR, glowR * 2, glowR * 2);
 
                     ctx.globalAlpha = alpha;
-                    if (sprite) {
-                        const sz = 80;
-                        ctx.drawImage(sprite, xPos - sz / 2, yPos - sz / 2, sz, sz);
-                    }
+                    // Render all multi-parts with assembly animation
+                    const mbDef = MINIBOSS_DEFS[mb.id] || MINIBOSS_DEFS[1];
+                    const mbSpread = easeOut(Math.min(1, mbT / 0.6));
+                    const mbScale = 1.1;
+                    renderBossPartsAtPosition(ctx, g.assets, mbDef, xPos, yPos, mbScale, mbSpread, mbT);
 
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
@@ -447,14 +515,14 @@ class CinematicManager {
                     ctx.shadowColor = mb.color;
                     ctx.shadowBlur = 14;
                     ctx.fillStyle = mb.color;
-                    ctx.fillText(mb.name.toUpperCase(), xPos, yPos + 48);
+                    ctx.fillText(mb.name.toUpperCase(), xPos, yPos + 58);
 
                     ctx.shadowBlur = 0;
                     ctx.globalAlpha = alpha * 0.5;
                     const patSize = Math.min(13, w * 0.028);
                     ctx.font = `${patSize}px monospace`;
                     ctx.fillStyle = '#888';
-                    ctx.fillText(`pattern: ${mb.movePattern}`, xPos, yPos + 74);
+                    ctx.fillText(`pattern: ${mb.movePattern}`, xPos, yPos + 84);
 
                     ctx.restore();
                 }
@@ -502,7 +570,6 @@ class CinematicManager {
                 if (bT < 0 || bT > bossInterval + 0.4) continue;
 
                 const boss = c.bosses[i];
-                const sprite = g.assets.getSprite(`boss${boss.id}_core`);
 
                 const enter = easeOut(Math.min(1, bT / 0.3));
                 const exit = bT > bossInterval - 0.2 ? easeOut((bT - (bossInterval - 0.2)) / 0.4) : 0;
@@ -539,10 +606,10 @@ class CinematicManager {
                     ctx.beginPath(); ctx.moveTo(brx - cLen, bry); ctx.lineTo(brx, bry); ctx.lineTo(brx, bry - cLen); ctx.stroke();
 
                     ctx.globalAlpha = alpha;
-                    if (sprite) {
-                        const sz = 110 * scale;
-                        ctx.drawImage(sprite, cx - sz / 2, yPos - sz / 2, sz, sz);
-                    }
+                    // Render all multi-parts with assembly animation
+                    const bossDef = BOSS_DEFS[boss.id] || BOSS_DEFS[1];
+                    const bossSpread = easeOut(Math.min(1, bT / 0.8));
+                    renderBossPartsAtPosition(ctx, g.assets, bossDef, cx, yPos, scale, bossSpread, bT);
 
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
@@ -551,14 +618,14 @@ class CinematicManager {
                     ctx.shadowColor = boss.color;
                     ctx.shadowBlur = 18;
                     ctx.fillStyle = boss.color;
-                    ctx.fillText(boss.name.toUpperCase(), cx, yPos + 64 * scale);
+                    ctx.fillText(boss.name.toUpperCase(), cx, yPos + 74 * scale);
 
                     ctx.shadowBlur = 0;
                     ctx.globalAlpha = alpha * 0.6;
                     const lvlSize = Math.min(14, w * 0.03);
                     ctx.font = `${lvlSize}px monospace`;
                     ctx.fillStyle = '#cc6655';
-                    ctx.fillText(`LEVEL ${boss.id * 5}`, cx, yPos + 88 * scale);
+                    ctx.fillText(`LEVEL ${boss.id * 5}`, cx, yPos + 98 * scale);
 
                     ctx.restore();
 
@@ -569,12 +636,13 @@ class CinematicManager {
             }
         }
 
-        if (t >= 49.2 && t < 52.0) {
+        if (t >= 49.2 && t < 55.5) {
             const phaseT = t - 49.5;
+            const phaseDuration = 5.5;
 
             if (phaseT >= 0) {
-                const fadeOut = phaseT > 1.0 ? Math.max(0, 1 - (phaseT - 1.0) / 0.6) : 1;
-                const fadeIn = easeOut(Math.min(1, phaseT / 0.3));
+                const fadeIn = easeOut(Math.min(1, phaseT / 0.4));
+                const fadeOut = phaseT > phaseDuration - 1.0 ? Math.max(0, 1 - (phaseT - (phaseDuration - 1.0)) / 0.8) : 1;
                 const alpha = fadeIn * fadeOut;
 
                 ctx.save();
@@ -582,41 +650,113 @@ class CinematicManager {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const txtSize = Math.min(26, w * 0.058);
-                ctx.font = `bold ${txtSize}px 'Orbitron', 'Segoe UI', monospace`;
-                ctx.shadowColor = 'rgba(100,255,200,0.7)';
-                ctx.shadowBlur = 15;
-                ctx.fillStyle = '#88ffcc';
-                ctx.fillText('UPGRADE YOUR SHIP', cx, cy - 30);
-
-                const perkIcons = ['➤', '✦', '◉', '⚡', '◎', '◌', '✴', '⊛', '★', '❆'];
+                // Layout: compute total content height then center vertically
+                const perks = PERK_CATALOG;
                 const cols = 5;
-                const iconSpacing = Math.min(50, w * 0.1);
-                const startX = cx - ((cols - 1) * iconSpacing) / 2;
-                const startY = cy + 10;
+                const rows = Math.ceil(perks.length / cols);
+                const txtSize = Math.min(26, w * 0.058);
+                const iconSpacingX = Math.min(55, w * 0.12);
+                const iconSpacingY = Math.min(42, h * 0.08);
+                const gridW = (cols - 1) * iconSpacingX;
+                const gridH = (rows - 1) * iconSpacingY;
+                const titleToGridGap = 35;
+                const gridToSubGap = 30;
+                const subSize = Math.min(13, w * 0.028);
+                const totalContentH = txtSize + titleToGridGap + gridH + gridToSubGap + subSize;
+                const contentTop = cy - totalContentH / 2;
+
+                // Title — white/grey palette
+                const titleY = contentTop + txtSize / 2;
+                ctx.font = `bold ${txtSize}px 'Orbitron', 'Segoe UI', monospace`;
+                ctx.shadowColor = 'rgba(255,255,255,0.5)';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('UPGRADE YOUR SHIP', cx, titleY);
                 ctx.shadowBlur = 0;
 
-                for (let i = 0; i < perkIcons.length; i++) {
+                // Grid starting position
+                const startX = cx - gridW / 2;
+                const startY = contentTop + txtSize + titleToGridGap;
+
+                // Sequential light-up timing
+                const lightUpDelay = 0.08;
+                const lightUpDuration = 0.25;
+                const lightUpStart = 0.5;
+
+                for (let i = 0; i < perks.length; i++) {
+                    const perk = perks[i];
                     const col = i % cols;
                     const row = Math.floor(i / cols);
-                    const ix = startX + col * iconSpacing;
-                    const iy = startY + row * iconSpacing;
+                    const ix = startX + col * iconSpacingX;
+                    const iy = startY + row * iconSpacingY;
 
-                    const delay = i * 0.04;
-                    const iAlpha = easeOut(Math.max(0, (phaseT - delay) / 0.15)) * fadeOut;
+                    // Time since this perk's light-up trigger
+                    const perkTrigger = lightUpStart + i * lightUpDelay;
+                    const timeSinceTrigger = phaseT - perkTrigger;
 
-                    ctx.globalAlpha = iAlpha * 0.7;
-                    const iSize = Math.min(26, w * 0.055);
+                    // Base dim alpha (perk not yet lit)
+                    let perkAlpha = 0.15;
+                    let glowAmount = 0;
+                    let iconScale = 1.0;
+
+                    if (timeSinceTrigger >= 0) {
+                        const flashProgress = Math.min(1, timeSinceTrigger / lightUpDuration);
+                        const flash = flashProgress < 0.3 ? easeOut(flashProgress / 0.3) : 1.0;
+                        const settle = flashProgress < 0.3 ? 1.0 : 1 - (flashProgress - 0.3) / 0.7 * 0.4;
+                        perkAlpha = 0.15 + 0.85 * flash * settle;
+                        glowAmount = flashProgress < 0.4 ? (1 - flashProgress / 0.4) : 0;
+                        iconScale = 1.0 + glowAmount * 0.4;
+                    }
+
+                    ctx.save();
+                    ctx.globalAlpha = alpha * perkAlpha;
+
+                    // Glow burst — white
+                    if (glowAmount > 0.01) {
+                        ctx.save();
+                        ctx.globalAlpha = alpha * glowAmount * 0.5;
+                        const glowR = 22;
+                        const glowGrd = ctx.createRadialGradient(ix, iy, 0, ix, iy, glowR);
+                        glowGrd.addColorStop(0, '#ffffff');
+                        glowGrd.addColorStop(0.4, '#bbbbbb');
+                        glowGrd.addColorStop(1, 'transparent');
+                        ctx.fillStyle = glowGrd;
+                        ctx.beginPath();
+                        ctx.arc(ix, iy, glowR, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    // Icon — white when lit, dark grey when dim
+                    const iSize = Math.min(22, w * 0.048) * iconScale;
                     ctx.font = `${iSize}px monospace`;
-                    ctx.fillStyle = '#aaddff';
-                    ctx.fillText(perkIcons[i], ix, iy);
+                    ctx.fillStyle = timeSinceTrigger >= 0 ? '#ffffff' : '#333333';
+                    if (timeSinceTrigger >= 0 && glowAmount > 0.1) {
+                        ctx.shadowColor = '#ffffff';
+                        ctx.shadowBlur = 12 * glowAmount;
+                    }
+                    ctx.fillText(perk.icon, ix, iy);
+                    ctx.shadowBlur = 0;
+
+                    // Perk name — light grey
+                    if (timeSinceTrigger >= lightUpDuration * 0.5) {
+                        const nameAlpha = easeOut(Math.min(1, (timeSinceTrigger - lightUpDuration * 0.5) / 0.3));
+                        ctx.globalAlpha = alpha * nameAlpha * 0.45;
+                        const pNameSize = Math.min(7, w * 0.016);
+                        ctx.font = `${pNameSize}px 'Segoe UI', sans-serif`;
+                        ctx.fillStyle = '#999999';
+                        ctx.fillText(perk.name, ix, iy + 14);
+                    }
+
+                    ctx.restore();
                 }
 
+                // Subtitle — grey
                 ctx.globalAlpha = alpha * 0.4;
-                const subSize = Math.min(14, w * 0.03);
+                const subtitleY = startY + gridH + gridToSubGap;
                 ctx.font = `${subSize}px 'Segoe UI', sans-serif`;
-                ctx.fillStyle = '#667788';
-                ctx.fillText('20 tactical perks to discover', cx, cy + 80);
+                ctx.fillStyle = '#888888';
+                ctx.fillText(`${perks.length} tactical perks to discover`, cx, subtitleY);
 
                 ctx.restore();
             }
@@ -647,8 +787,8 @@ class CinematicManager {
             ctx.restore();
         }
 
-        if (t > 51.0) {
-            const fadeAlpha = Math.min(1, (t - 51.0) / 1.0);
+        if (t > 55.0) {
+            const fadeAlpha = Math.min(1, (t - 55.0) / 1.0);
             ctx.fillStyle = `rgba(0,0,0,${fadeAlpha.toFixed(3)})`;
             ctx.fillRect(0, 0, w, h);
         }

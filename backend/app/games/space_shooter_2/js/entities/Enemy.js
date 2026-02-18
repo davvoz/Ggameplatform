@@ -919,6 +919,9 @@ class MultiBoss {
         // Phase tracking (enrage when HP low)
         this.enraged = false;
         this.dropChance = 1;
+
+        // Initialize part positions so they don't flash at (0,0) on the first render frame
+        this._updatePartPositions();
     }
 
     get health() {

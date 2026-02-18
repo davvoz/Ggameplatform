@@ -1,8 +1,18 @@
 {
-  "version": "3.29.3",
-  "timestamp": "2026-02-18T22:14:31.751Z",
-  "buildNumber": 406,
+  "version": "3.29.4",
+  "timestamp": "2026-02-18T22:56:10.208Z",
+  "buildNumber": 407,
   "changelog": [
+    {
+      "version": "3.29.4",
+      "date": "2026-02-18",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [SS2]Enhance boss and mini-boss rendering with assembly animations and perk display",
+        "🔖 Bump version to 3.29.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.29.3",
       "date": "2026-02-18",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: [SS2]logical canvas dimension , spatial grid , performnce mode",
         "🔖 Bump version to 3.25.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.25.2",
-      "date": "2026-02-16",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]Add loading screen with animated stars and spinner",
-        "🔖 Bump version to 3.25.1 [skip-version]"
       ]
     }
   ]

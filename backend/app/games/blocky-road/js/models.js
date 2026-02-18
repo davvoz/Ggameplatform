@@ -463,7 +463,15 @@ const Models = {
             const texture = TextureCache.get(texturePath);
             if (texture) {
                 // Crea NUOVO materiale per ogni moneta (texture già configurata al preload)
-                faceMaterial = new THREE.MeshLambertMaterial({ map: texture });
+                // IMPORTANTE: transparent + depthWrite evitano monete invisibili
+                // quando la rotazione causa rendering order errato col depth buffer
+                faceMaterial = new THREE.MeshLambertMaterial({ 
+                    map: texture,
+                    transparent: true,
+                    alphaTest: 0.5,
+                    depthWrite: true,
+                    side: THREE.DoubleSide
+                });
             } else {
                 // Fallback if texture not loaded
                 faceMaterial = MaterialPool.getMaterial(0xFFFFFF);
@@ -476,6 +484,7 @@ const Models = {
         const coin = new THREE.Mesh(coinGeometry, materials);
         coin.rotation.x = Math.PI / 2;
         coin.castShadow = true;
+        coin.renderOrder = 10; // Render coins after opaque terrain to avoid depth conflicts
         group.add(coin);
 
         // Make it rotate

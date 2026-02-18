@@ -1,8 +1,17 @@
 {
-  "version": "3.29.2",
-  "timestamp": "2026-02-18T00:55:48.608Z",
-  "buildNumber": 405,
+  "version": "3.29.3",
+  "timestamp": "2026-02-18T22:14:31.751Z",
+  "buildNumber": 406,
   "changelog": [
+    {
+      "version": "3.29.3",
+      "date": "2026-02-18",
+      "type": "patch",
+      "changes": [
+        "fix: [Blocky Road] Improve coin spawning logic and rendering for better visibility",
+        "🔖 Bump version to 3.29.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.29.2",
       "date": "2026-02-18",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [SS2]Add loading screen with animated stars and spinner",
         "🔖 Bump version to 3.25.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.25.1",
-      "date": "2026-02-16",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2] Implement performance mode settings and UI controls",
-        "🔖 Bump version to 3.25.0 [skip-version]"
       ]
     }
   ]

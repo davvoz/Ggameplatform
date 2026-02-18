@@ -594,38 +594,60 @@ class ObstacleManager {
     
     trySpawnCoins(playerZ) {
         // Nuova logica: spawn per zona di grass consecutiva
+        // maxSpawnDistance MUST be <= terrain generationDistance (15) to avoid scanning non-existent rows
         const minSpawnDistance = 5;
-        const maxSpawnDistance = 20;
+        const maxSpawnDistance = 14; // Stay within terrain generation range
         if (!this.furthestCoinZ) this.furthestCoinZ = playerZ;
         const startZ = Math.max(Math.floor(playerZ) + minSpawnDistance, this.furthestCoinZ);
 
-        // Rileva zone di grass consecutive
-        let zone = [];
+        // Rileva zone di grass consecutive e righe road per spawn monete
+        let grassZone = [];
+        let lastValidZ = startZ; // Track the last row that actually exists
         for (let z = startZ; z < playerZ + maxSpawnDistance; z++) {
             const row = this.terrain.getRowAt(z);
-            if (row && row.type === 'grass') {
-                zone.push(z);
+            if (!row) break; // Stop at non-generated terrain - don't skip it!
+            lastValidZ = z + 1;
+            
+            if (row.type === 'grass') {
+                grassZone.push(z);
             } else {
-                if (zone.length > 0) {
-                    this.spawnCoinsInGrassZone(zone);
-                    zone = [];
+                if (grassZone.length > 0) {
+                    this.spawnCoinsInGrassZone(grassZone);
+                    grassZone = [];
+                }
+                // Spawn coins on road rows too (less frequently)
+                if (row.type === 'road') {
+                    this.trySpawnCoinOnRoad(z);
                 }
             }
         }
         // Se la zona arriva fino in fondo
-        if (zone.length > 0) {
-            this.spawnCoinsInGrassZone(zone);
+        if (grassZone.length > 0) {
+            this.spawnCoinsInGrassZone(grassZone);
         }
-        this.furthestCoinZ = playerZ + maxSpawnDistance;
+        // Only advance furthestCoinZ to rows we actually checked
+        this.furthestCoinZ = lastValidZ;
     }
 
     // Spawna monete in una zona di grass consecutiva
     spawnCoinsInGrassZone(zone) {
         if (zone.length === 0) return;
-        // Solo probabilità di una moneta singola nella zona
-        const spawnRate = 0.18; // 18% di spawn zona
+        // Probabilità di una moneta nella zona - aumenta con la difficoltà
+        // per compensare il minor numero di zone grass
+        const basRate = 0.18;
+        const difficultyBonus = this.currentScore > 150 ? 0.15 : (this.currentScore > 50 ? 0.07 : 0);
+        const spawnRate = Math.min(basRate + difficultyBonus, 0.45);
         if (Math.random() < spawnRate) {
             const z = zone[Math.floor(Math.random() * zone.length)];
+            this.spawnCoin(z);
+        }
+    }
+    
+    // Spawna monete su righe road (meno frequente)
+    trySpawnCoinOnRoad(z) {
+        // Probabilità più bassa rispetto al grass, ma garantisce monete anche in zone dense di strade
+        const spawnRate = 0.06; // 6% per riga road
+        if (Math.random() < spawnRate) {
             this.spawnCoin(z);
         }
     }

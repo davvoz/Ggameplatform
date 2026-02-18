@@ -1406,3 +1406,40 @@ body.game-fullscreen #game-container {
         max-width: 260px;
     }
 }
+
+/* ============ XP & LEVEL-UP NOTIFICATIONS ============ */
+.game-xp-banner {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10000;
+    animation: xpSlideIn 0.5s ease;
+    pointer-events: none;
+}
+
+.game-xp-banner.hiding {
+    animation: xpSlideOut 0.5s ease forwards;
+}
+
+.game-xp-badge {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.game-xp-icon { font-size: 1.5em; }
+.game-xp-amount { font-size: 1.2em; font-weight: bold; color: #1a1a1a; }
+
+@keyframes xpSlideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes xpSlideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(400px); opacity: 0; }
+}

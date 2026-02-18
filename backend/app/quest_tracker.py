@@ -252,6 +252,12 @@ class QuestTracker:
             self._process_survivor_arena_quest(user_id, quest, quest_config, tracking_type, score, duration_seconds, extra_data)
             return
         
+        # Space Shooter 2 game quests
+        if game_id == 'space_shooter_2' and tracking_type:
+            print(f"🚀 [QuestTracker] Processing Space Shooter 2 quest: {quest.title} (type: {tracking_type})")
+            self._process_space_shooter_2_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative or daily reset)
@@ -1310,6 +1316,113 @@ class QuestTracker:
             if cumulative['max_level'] >= quest.target_value:
                 self.update_quest_progress(user_id, quest, 1, user_quest)
     
+    def _process_space_shooter_2_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
+                                        tracking_type: str, score: int, extra_data: Dict):
+        """Process Space Shooter 2 game-specific quests."""
+        print(f"    🚀 [SpaceShooter2] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset (only if quest was completed AND it's a new day)
+        reset_period = quest_config.get('reset_period')
+        today = self._get_today_date()
+        
+        if reset_period == 'daily':
+            last_completion_date = stored_data.get('last_completion_date')
+            
+            # Only reset if quest WAS completed and it's a new day
+            if user_quest.is_completed and last_completion_date and last_completion_date != today:
+                print(f"    🔄 Daily reset triggered for {quest.title}")
+                user_quest.current_progress = 0
+                user_quest.is_completed = 0
+                user_quest.is_claimed = 0
+                user_quest.completed_at = None
+                user_quest.claimed_at = None
+                # Reset cumulative data for the new day
+                stored_data['cumulative'] = {
+                    'games_played': 0,
+                    'total_kills': 0,
+                    'max_level': 0,
+                    'high_score': 0,
+                    'max_combo': 0
+                }
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative data if not present
+        if not stored_data.get('cumulative'):
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'total_kills': 0,
+                'max_level': 0,
+                'high_score': 0,
+                'max_combo': 0
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            # Increment games played
+            cumulative['games_played'] += 1
+            
+            # Get session stats
+            session_kills = extra_data.get('enemiesKilled', 0)
+            session_level = extra_data.get('level', 0)
+            session_combo = extra_data.get('maxCombo', 0)
+            
+            print(f"    🚀 [SpaceShooter2] Session stats: kills={session_kills}, level={session_level}, combo={session_combo}, score={score}")
+            
+            # Accumulate kills
+            cumulative['total_kills'] += session_kills
+            
+            # Track max level (best in period)
+            if session_level > cumulative['max_level']:
+                cumulative['max_level'] = session_level
+            
+            # Track high score (best in period)
+            if score > cumulative['high_score']:
+                cumulative['high_score'] = score
+            
+            # Track max combo (best in period)
+            if session_combo > cumulative['max_combo']:
+                cumulative['max_combo'] = session_combo
+            
+            print(f"    🚀 [SpaceShooter2] Cumulative: games={cumulative['games_played']}, kills={cumulative['total_kills']}, max_level={cumulative['max_level']}")
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Now update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+        
+        elif tracking_type == 'total_kills':
+            self.update_quest_progress(user_id, quest, cumulative['total_kills'], user_quest)
+        
+        elif tracking_type == 'reach_level':
+            # Check if the player reached the target level in any session this period
+            if cumulative['max_level'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+        
+        elif tracking_type == 'high_score':
+            if cumulative['high_score'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+        
+        elif tracking_type == 'max_combo':
+            if cumulative['max_combo'] >= quest.target_value:
+                self.update_quest_progress(user_id, quest, 1, user_quest)
+        
+        # Save last_completion_date if quest was just completed
+        if user_quest.is_completed and not stored_data.get('last_completion_date'):
+            stored_data['last_completion_date'] = today
+            self._set_quest_extra_data(user_quest, stored_data)
+            self.db.flush()
+
     def check_leaderboard_quests(self, user_id: str):
         """Check and update leaderboard position quests."""
         from app.models import WeeklyLeaderboard

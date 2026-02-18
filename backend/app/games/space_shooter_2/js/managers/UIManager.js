@@ -148,6 +148,7 @@ class UIManager {
             window.sendScoreToPlatform(g.scoreManager.score, {
                 level: g.levelManager.currentLevel,
                 enemiesKilled: g.scoreManager.totalEnemiesKilled,
+                maxCombo: g.scoreManager.maxCombo,
                 ship: g.selectedShipId,
                 ultimate: g.selectedUltimateId,
                 victory: true,

@@ -36,14 +36,6 @@ class PerkEffectsManager {
                     );
                     g.sound.playPowerUp();
                     g.postProcessing.flash({ r: 60, g: 160, b: 255 }, 0.12);
-                    g.hudRenderer.xpBanners.push({
-                        text: '🛡 AUTO SHIELD',
-                        subtext: null,
-                        life: 2,
-                        maxLife: 2,
-                        y: g.logicalHeight * 0.18,
-                        color: '#44aaff'
-                    });
                 }
             }
         }

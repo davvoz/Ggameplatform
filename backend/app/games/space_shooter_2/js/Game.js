@@ -109,6 +109,8 @@ class Game {
 
         this._hideLoading();
 
+        this.setupWindowListeners();
+
         this.lastTime = performance.now();
         this.gameLoop(this.lastTime);
     }
@@ -541,15 +543,99 @@ class Game {
     }
 
     showXPBanner(xpAmount, extraData = null) {
-        this.hudRenderer.showXPBanner(xpAmount, extraData);
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner';
+        banner.innerHTML = `
+            <div class="game-xp-badge">
+                <span class="game-xp-icon">⭐</span>
+                <span class="game-xp-amount">+${Number(xpAmount).toFixed(2)} XP</span>
+            </div>
+        `;
+
+        document.body.appendChild(banner);
+
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
+        }, 3500);
     }
 
     showStatsBanner(stats) {
-        this.hudRenderer.showStatsBanner(stats);
+        // Stats banner not used in this game (handled by platform)
     }
 
     showLevelUpNotification(levelUpData) {
-        this.hudRenderer.showLevelUpNotification(levelUpData);
+        const { old_level, new_level, title, badge, coins_awarded, is_milestone, user_data } = levelUpData;
+
+        const isAnonymous = user_data?.is_anonymous === true;
+
+        // Ensure shared level-up styles are loaded
+        if (!document.querySelector('#level-up-styles')) {
+            const link = document.createElement('link');
+            link.id = 'level-up-styles';
+            link.rel = 'stylesheet';
+            link.href = '/css/level-widget.css';
+            document.head.appendChild(link);
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'level-up-modal';
+        modal.innerHTML = `
+            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
+                <div class="level-up-animation">
+                    <div class="level-up-rays"></div>
+                    <div class="level-up-badge-container">
+                        <span class="level-up-badge">${badge || '🏅'}</span>
+                    </div>
+                </div>
+                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
+                <div class="level-up-levels">
+                    <span class="old-level">${old_level ?? '-'}</span>
+                    <span class="level-arrow">→</span>
+                    <span class="new-level">${new_level ?? '-'}</span>
+                </div>
+                <div class="level-up-new-title">${title}</div>
+                ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
+                ${!isAnonymous && coins_awarded > 0 ? `
+                    <div class="level-up-reward">
+                        <span class="reward-icon">🪙</span>
+                        <span class="reward-amount">+${coins_awarded} Coins</span>
+                    </div>
+                ` : ''}
+                <button class="level-up-close">Continue</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        const closeBtn = modal.querySelector('.level-up-close');
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+
+        setTimeout(() => {
+            if (modal.parentElement) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }, 6000);
+    }
+
+    setupWindowListeners() {
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
+                this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
+            }
+
+            if (event.data.type === 'showLevelUpModal' && event.data.payload) {
+                this.showLevelUpNotification(event.data.payload);
+            }
+        });
     }
 
     // ── Performance Mode ──

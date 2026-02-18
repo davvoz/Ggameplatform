@@ -3,7 +3,6 @@ import { getLevelData } from '../LevelData.js';
 class HUDRenderer {
     constructor(game) {
         this.game = game;
-        this.xpBanners = [];
     }
 
     renderHUD(ctx) {
@@ -353,59 +352,14 @@ class HUDRenderer {
         ctx.restore();
     }
 
-    showXPBanner(xpAmount, extraData = null) {
-        this.xpBanners.push({
-            text: `+${xpAmount} XP`,
-            subtext: extraData?.levelUp ? `Level Up! → ${extraData.newLevel}` : null,
-            life: 3,
-            maxLife: 3,
-            y: g.logicalHeight * 0.15
-        });
-    }
-
-    showStatsBanner(stats) {
-    }
-
-    showLevelUpNotification(levelUpData) {
-        this.xpBanners.push({
-            text: `🎉 Level ${levelUpData.newLevel}!`,
-            subtext: levelUpData.message || 'Level Up!',
-            life: 4,
-            maxLife: 4,
-            y: g.logicalHeight * 0.2
-        });
-    }
-
-    updateBanners(dt) {
-        for (const banner of this.xpBanners) {
-            banner.life -= dt;
-            banner.y -= 15 * dt;
-        }
-        this.xpBanners = this.xpBanners.filter(b => b.life > 0);
-    }
-
-    renderBanners(ctx) {
-        for (const banner of this.xpBanners) {
-            const alpha = Math.min(1, banner.life / (banner.maxLife * 0.3));
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.font = `bold ${22 * this.game.fontScale}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillStyle = banner.color || '#ffd700';
-            ctx.shadowColor = banner.color ? banner.color : '#ff8800';
-            ctx.shadowBlur = 10;
-            ctx.fillText(banner.text, this.game.logicalWidth / 2, banner.y);
-            if (banner.subtext) {
-                ctx.font = `${14 * this.game.fontScale}px Arial`;
-                ctx.fillStyle = '#88ff88';
-                ctx.fillText(banner.subtext, this.game.logicalWidth / 2, banner.y + 22);
-            }
-            ctx.restore();
-        }
-    }
+    // Banner methods moved to Game.js (DOM-based)
+    showXPBanner() {}
+    showStatsBanner() {}
+    showLevelUpNotification() {}
+    updateBanners() {}
+    renderBanners() {}
 
     reset() {
-        this.xpBanners = [];
     }
 }
 

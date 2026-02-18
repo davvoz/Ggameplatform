@@ -292,8 +292,8 @@
                 depth: 3
             },
             initialSpeed: 0.05,
-            speedIncrease: 0.0015,
-            maxSpeed: 0.15,
+            speedIncrease: 0.001,
+            maxSpeed: 0.5,
             moveRange: 4.5,
             perfectThreshold: 0.15,
             cameraHeight: 10

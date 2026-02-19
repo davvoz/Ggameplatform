@@ -1,8 +1,18 @@
 {
-  "version": "3.31.0",
-  "timestamp": "2026-02-19T01:12:17.801Z",
-  "buildNumber": 409,
+  "version": "3.32.0",
+  "timestamp": "2026-02-19T10:48:42.612Z",
+  "buildNumber": 410,
   "changelog": [
+    {
+      "version": "3.32.0",
+      "date": "2026-02-19",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: implement community chat notification system with badge updates",
+        "🔖 Bump version to 3.31.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.31.0",
       "date": "2026-02-19",
@@ -84,15 +94,6 @@
       "changes": [
         "fix: implement stable game color mapping for improved legend display in CommunityStatsRenderer",
         "🔖 Bump version to 3.27.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.27.0",
-      "date": "2026-02-17",
-      "type": "minor",
-      "changes": [
-        "feat: add game legend filter buttons and functionality to CommunityStatsRenderer",
-        "🔖 Bump version to 3.26.0 [skip-version]"
       ]
     }
   ]

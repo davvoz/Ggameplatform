@@ -564,7 +564,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         )
         
         xp_earned = xp_result['total_xp']
-        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)})")
+        map_mult = xp_result.get('map_multiplier', 1.0)
+        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)}, user_mult: {multiplier}, map_mult: {map_mult})")
         print(f"[DB] Metrics: levels={session_extra_data.get('levels_completed', 0)}, distance={session_extra_data.get('distance', 0)}")
         
         # Update session
@@ -579,6 +580,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         extra_data['previous_high_score'] = previous_high_score
         extra_data['xp_breakdown'] = xp_result['rule_breakdown']
         extra_data['base_xp'] = xp_result['base_xp']
+        extra_data['map_multiplier'] = xp_result.get('map_multiplier', 1.0)
         game_session.extra_data = json.dumps(extra_data)
         
         # Update user's total XP and check for level up

@@ -459,6 +459,42 @@ async def award_my_coins(
         )
 
 
+@router.get("/{user_id}/purchases/{game}")
+async def get_user_purchases(
+    user_id: str,
+    game: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get purchased items for a user in a specific game by checking coin transactions.
+    Looks for spend transactions with source_id matching '{game}_theme_%'.
+    
+    Returns:
+        List of purchased theme IDs
+    """
+    try:
+        prefix = f"{game}_theme_"
+        transactions = db.query(CoinTransaction).filter(
+            CoinTransaction.user_id == user_id,
+            CoinTransaction.transaction_type == 'shop_purchase',
+            CoinTransaction.source_id.like(f"{prefix}%"),
+            CoinTransaction.amount < 0  # Only actual spends
+        ).all()
+        
+        # Extract theme IDs from source_id (e.g. "blockyroad_theme_neon" -> "neon")
+        purchased = list(set(
+            tx.source_id[len(prefix):] for tx in transactions
+            if tx.source_id and tx.source_id.startswith(prefix)
+        ))
+        
+        return {"user_id": user_id, "game": game, "purchased_themes": purchased}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get purchases: {str(e)}"
+        )
+
+
 @router.post("/{user_id}/spend", response_model=CoinTransactionResponse)
 async def spend_coins(
     user_id: str,

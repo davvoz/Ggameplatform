@@ -80,12 +80,13 @@ class TerrainGenerator {
         // =====================================================
         const tileGeometry = GeometryPool.getBoxGeometry(1, 0.5, 1);
         
-        // Colori fissi per ogni tipo (evita creazione di nuovi shader)
+        // Colori da tema attivo
+        const theme = themeManager.getTheme();
         this.terrainColors = {
-            grass: 0x5FAD56,  // Verde
-            road: 0x555555,   // Asfalto grigio
-            water: 0x2196F3,  // Blu
-            rail: 0x8B7355    // Ghiaia/sabbia
+            grass: theme.terrain.grass,
+            road: theme.terrain.road,
+            water: theme.terrain.water,
+            rail: theme.terrain.rail
         };
         
         for (const type of this.terrainTypes) {
@@ -421,7 +422,8 @@ class TerrainGenerator {
         const endX = 12.0;
 
         const geom = GeometryPool.getBoxGeometry(segmentLength, segmentHeight, segmentDepth);
-        const mat = MaterialPool.getMaterial(0xFFFFFF, { poolable: true });
+        const markingColor = themeManager.getTheme().terrain.roadMarkings;
+        const mat = MaterialPool.getMaterial(markingColor);
 
         // Place dashes centered on X; raise slightly above ground to avoid z-fighting
         const yPos = 0.255;
@@ -476,8 +478,12 @@ class TerrainGenerator {
             // Decorazioni fuori dall'area giocabile - alberi, rocce e fiori
             else if (isOutside && Math.random() < 0.25) {
                 const rand = Math.random();
+                const isChristmas = themeManager.getTheme().id === 'christmas';
                 let decoration;
-                if (rand < 0.4) {
+                if (isChristmas && rand < 0.08) {
+                    // Snowmen only in Christmas map
+                    decoration = Models.createSnowman();
+                } else if (rand < 0.4) {
                     decoration = Models.createTree();
                 } else if (rand < 0.7) {
                     decoration = Models.createRock();
@@ -516,6 +522,12 @@ class TerrainGenerator {
                 } else if (rand < 0.35) {
                     // Alberi come ostacoli
                     decoration = Models.createTree();
+                    decoration.userData.isObstacle = true;
+                    decoration.userData.gridX = roundedX;
+                    decoration.userData.gridZ = row.z;
+                } else if (rand < 0.39 && themeManager.getTheme().id === 'christmas') {
+                    // Pupazzi di neve (solo mappa Christmas) — ostacolo
+                    decoration = Models.createSnowman();
                     decoration.userData.isObstacle = true;
                     decoration.userData.gridX = roundedX;
                     decoration.userData.gridZ = row.z;
@@ -618,17 +630,20 @@ class TerrainGenerator {
     }
     
     createWaterfall() {
-        // OTTIMIZZATO: Usa materiali condivisi (creati una sola volta)
-        if (!TerrainGenerator.waterfallMaterial) {
+        // Usa materiali condivisi ma ricostruisci se tema cambia
+        const theme = themeManager.getTheme();
+        const themeId = theme.id;
+        if (!TerrainGenerator.waterfallMaterial || TerrainGenerator._waterfallTheme !== themeId) {
+            TerrainGenerator._waterfallTheme = themeId;
             TerrainGenerator.waterfallMaterial = new THREE.MeshBasicMaterial({
-                color: 0xaaddff,
+                color: theme.water.waterfallColor,
                 transparent: true,
                 opacity: 0.7,
                 side: THREE.DoubleSide
             });
             TerrainGenerator.waterfallGeometry = new THREE.PlaneGeometry(2, 1);
             TerrainGenerator.foamMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
+                color: theme.water.foamColor,
                 transparent: true,
                 opacity: 0.9
             });
@@ -836,6 +851,28 @@ class TerrainGenerator {
         return false;
     }
     
+    // Update terrain InstancedMesh materials when theme changes
+    updateThemeColors() {
+        const theme = themeManager.getTheme();
+        this.terrainColors = {
+            grass: theme.terrain.grass,
+            road: theme.terrain.road,
+            water: theme.terrain.water,
+            rail: theme.terrain.rail
+        };
+        
+        for (const type of this.terrainTypes) {
+            const mesh = this.terrainMeshes[type];
+            if (mesh && mesh.material) {
+                mesh.material.color.setHex(this.terrainColors[type]);
+                if (type === 'water') {
+                    mesh.material.opacity = theme.water ? theme.water.opacity : 0.9;
+                }
+                mesh.material.needsUpdate = true;
+            }
+        }
+    }
+
     clear() {
         this.rows.forEach(row => {
             // Non più necessario rimuovere tiles individuali - usiamo InstancedMesh

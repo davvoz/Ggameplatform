@@ -214,7 +214,11 @@ class BlockyRoadGame {
         
         // Gestione resize
         window.addEventListener('resize', () => {
-            if (this.camera) {
+            const isFS = document.fullscreenElement || document.webkitFullscreenElement;
+            if (isFS) {
+                // Re-apply fullscreen constraints on resize
+                this.handleFullscreenChange();
+            } else if (this.camera) {
                 this.camera.onResize();
             }
         });
@@ -233,6 +237,9 @@ class BlockyRoadGame {
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
             this.isLoaded = true; // Gioco caricato
+            
+            // Initialize map selector UI
+            themeManager.initUI();
         }, 500);
         
 
@@ -241,7 +248,16 @@ class BlockyRoadGame {
     setupScene() {
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
+        const theme = themeManager.getTheme();
+        this.scene.background = new THREE.Color(theme.sky.background);
+        
+        // Fog from theme
+        if (theme.sky.fog) {
+            this.scene.fog = new THREE.Fog(theme.sky.fog.color, theme.sky.fog.near, theme.sky.fog.far);
+        }
+        
+        // Body background
+        document.body.style.background = theme.sky.bodyBackground;
         
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -256,8 +272,6 @@ class BlockyRoadGame {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.domElement.style.display = 'block';
         document.body.appendChild(this.renderer.domElement);
-        
-
     }
     
     setupLights() {
@@ -271,23 +285,74 @@ class BlockyRoadGame {
         this.dirLight.castShadow = true;
         
         // Shadow camera settings - only playable area for better performance
-        this.dirLight.shadow.camera.left = -10;   // Slightly wider than playable area (-7 to 7)
+        this.dirLight.shadow.camera.left = -10;
         this.dirLight.shadow.camera.right = 10;
-        this.dirLight.shadow.camera.top = 25;     // Forward visibility
-        this.dirLight.shadow.camera.bottom = -15; // Behind player
+        this.dirLight.shadow.camera.top = 25;
+        this.dirLight.shadow.camera.bottom = -15;
         this.dirLight.shadow.camera.near = 1;
-        this.dirLight.shadow.camera.far = 50;     // Reduced from 150
-        this.dirLight.shadow.mapSize.width = 2048; // Reduced from 4096 for softer edges
+        this.dirLight.shadow.camera.far = 50;
+        this.dirLight.shadow.mapSize.width = 2048;
         this.dirLight.shadow.mapSize.height = 2048;
-        this.dirLight.shadow.bias = -0.0005; // Less bias for softer shadows
-        this.dirLight.shadow.normalBias = 0.05; // Higher for smoother edges
-        this.dirLight.shadow.radius = 8; // Very soft blur
+        this.dirLight.shadow.bias = -0.0005;
+        this.dirLight.shadow.normalBias = 0.05;
+        this.dirLight.shadow.radius = 8;
         
         this.scene.add(this.dirLight);
         
-        // Hemisphere light for better ambient
-        const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x5FAD56, 0.5);
-        this.scene.add(hemiLight);
+        // Hemisphere light for better ambient — themed
+        const theme = themeManager.getTheme();
+        this.hemiLight = new THREE.HemisphereLight(
+            theme.sky.hemiSkyColor, theme.sky.hemiGroundColor, 0.5
+        );
+        this.scene.add(this.hemiLight);
+    }
+    
+    // Apply current theme to scene (sky, fog, lights, body background)
+    applyTheme() {
+        const theme = themeManager.getTheme();
+        
+        // Sky
+        if (this.scene) {
+            this.scene.background = new THREE.Color(theme.sky.background);
+            
+            // Fog
+            if (theme.sky.fog) {
+                this.scene.fog = new THREE.Fog(theme.sky.fog.color, theme.sky.fog.near, theme.sky.fog.far);
+            } else {
+                this.scene.fog = null;
+            }
+        }
+        
+        // Hemisphere light
+        if (this.hemiLight) {
+            this.hemiLight.color.setHex(theme.sky.hemiSkyColor);
+            this.hemiLight.groundColor.setHex(theme.sky.hemiGroundColor);
+        }
+        
+        // Body background
+        document.body.style.background = theme.sky.bodyBackground;
+        
+        // Terrain tile colors
+        if (this.terrain && this.terrain.updateThemeColors) {
+            this.terrain.updateThemeColors();
+        }
+
+        // Full scene rebuild: clear all themed 3D objects and regenerate
+        // so the new theme is fully applied (decorations, player, obstacles, etc.)
+        if (this.terrain && this.obstacles && this.player) {
+            this.terrain.clear();
+            this.obstacles.clear();
+            if (this.particles) this.particles.clear();
+
+            this.terrain.updateScore(this.score || 0);
+            this.obstacles.updateScore(this.score || 0);
+
+            this.terrain.generateInitialTerrain();
+
+            // Recreate player with new theme's character
+            this.scene.remove(this.player.mesh);
+            this.player = new Player(this.scene, this.particles);
+        }
     }
     
     createDangerZone() {
@@ -350,6 +415,11 @@ class BlockyRoadGame {
             if (!this.isMobile()) {
                 const height = window.innerHeight;
                 const width = Math.floor(height * 9 / 16);
+                const margin = Math.floor((window.innerWidth - width) / 2);
+                
+                // Set CSS variables so all UI elements can constrain to game bounds
+                document.body.style.setProperty('--game-width', width + 'px');
+                document.body.style.setProperty('--game-margin', margin + 'px');
                 
                 // Ridimensiona renderer con aspect ratio mobile
                 if (this.renderer) {
@@ -374,7 +444,6 @@ class BlockyRoadGame {
                     this.renderer.domElement.style.top = '50%';
                     this.renderer.domElement.style.transform = 'translate(-50%, -50%)';
                 }
-                
 
             } else {
                 // Mobile: usa tutto lo schermo
@@ -384,6 +453,14 @@ class BlockyRoadGame {
             }
         } else {
             // Uscito da fullscreen: ripristina dimensioni normali
+            document.body.style.removeProperty('--game-width');
+            document.body.style.removeProperty('--game-margin');
+            if (this.renderer) {
+                this.renderer.domElement.style.position = '';
+                this.renderer.domElement.style.left = '';
+                this.renderer.domElement.style.top = '';
+                this.renderer.domElement.style.transform = '';
+            }
             if (this.camera) {
                 this.camera.onResize();
             }
@@ -454,10 +531,14 @@ class BlockyRoadGame {
     setupUI() {
         // Start button
         document.getElementById('startButton').addEventListener('click', () => {
-            // Chiudi sempre la finestra start screen
+            // Animate out the start screen
             const startScreen = document.getElementById('startScreen');
             if (startScreen) {
-                startScreen.style.display = 'none';
+                startScreen.classList.add('hiding');
+                startScreen.addEventListener('animationend', () => {
+                    startScreen.style.display = 'none';
+                    startScreen.classList.remove('hiding');
+                }, { once: true });
             }
             // Fullscreen su tutti i dispositivi
             this.enterFullscreen();
@@ -523,10 +604,14 @@ class BlockyRoadGame {
         
         this.isStarted = true;
         
-        // Nascondi sempre lo start screen
+        // Animate out start screen
         const startScreen = document.getElementById('startScreen');
-        if (startScreen) {
-            startScreen.style.display = 'none';
+        if (startScreen && startScreen.style.display !== 'none') {
+            startScreen.classList.add('hiding');
+            startScreen.addEventListener('animationend', () => {
+                startScreen.style.display = 'none';
+                startScreen.classList.remove('hiding');
+            }, { once: true });
         }
         
         // Initialize audio (requires user interaction)
@@ -754,13 +839,15 @@ class BlockyRoadGame {
         // Send to SDK - grant XP every game
         if (typeof PlatformSDK !== 'undefined') {
             try {
+                const currentTheme = themeManager.getTheme();
                 PlatformSDK.gameOver(this.score, {
                     coins: this.coins,
                     train_deaths: this.trainDeaths,
                     reason: reason,
+                    map_theme: currentTheme.id,
+                    xp_multiplier: currentTheme.xpMultiplier || 1.0,
                     timestamp: Date.now()
                 });
-
             } catch (e) {
                 console.error('⚠️ Failed to send game over to SDK:', e);
             }

@@ -718,13 +718,15 @@ class XPCalculator:
                 logger.error(f"Error calculating XP for rule {rule.get('rule_id')}: {e}")
                 continue
         
-        # Apply user multiplier
-        total_xp = base_xp * context.user_multiplier
+        # Apply user multiplier and map multiplier
+        map_multiplier = float(context.extra_data.get('xp_multiplier', 1.0))
+        total_xp = base_xp * context.user_multiplier * map_multiplier
         
         return {
             'total_xp': round(total_xp, 2),
             'base_xp': round(base_xp, 2),
             'user_multiplier': context.user_multiplier,
+            'map_multiplier': map_multiplier,
             'rule_breakdown': rule_breakdown
         }
     
@@ -752,12 +754,14 @@ class XPCalculator:
         highscore_xp = 10.0 if context.is_new_high_score else 0.0
         base_xp += highscore_xp
         
-        total_xp = base_xp * context.user_multiplier
+        map_multiplier = float(context.extra_data.get('xp_multiplier', 1.0))
+        total_xp = base_xp * context.user_multiplier * map_multiplier
         
         return {
             'total_xp': round(total_xp, 2),
             'base_xp': round(base_xp, 2),
             'user_multiplier': context.user_multiplier,
+            'map_multiplier': map_multiplier,
             'rule_breakdown': [
                 {'rule_name': 'Default Score', 'xp_earned': score_xp},
                 {'rule_name': 'Default Time', 'xp_earned': time_xp},

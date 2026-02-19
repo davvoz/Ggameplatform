@@ -214,7 +214,7 @@ class BlockyRoadGame {
         
         // Gestione resize
         window.addEventListener('resize', () => {
-            const isFS = document.fullscreenElement || document.webkitFullscreenElement;
+            const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.body.classList.contains('ios-game-fullscreen');
             if (isFS) {
                 // Re-apply fullscreen constraints on resize
                 this.handleFullscreenChange();
@@ -230,6 +230,17 @@ class BlockyRoadGame {
         document.addEventListener('webkitfullscreenchange', () => {
             this.handleFullscreenChange();
         });
+        document.addEventListener('mozfullscreenchange', () => {
+            this.handleFullscreenChange();
+        });
+        document.addEventListener('MSFullscreenChange', () => {
+            this.handleFullscreenChange();
+        });
+        
+        // Initial fullscreen icon state
+        if (this.updateFullscreenIcon) {
+            this.updateFullscreenIcon();
+        }
         
         // Hide loading, show start screen
         updateProgress(100);
@@ -401,7 +412,7 @@ class BlockyRoadGame {
     }
     
     handleFullscreenChange() {
-        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.body.classList.contains('ios-game-fullscreen');
         
         // Aggiungi classe per sfondo nero
         if (isFullscreen) {
@@ -409,6 +420,9 @@ class BlockyRoadGame {
         } else {
             document.body.classList.remove('fullscreen-active');
         }
+        
+        // Update fullscreen button icon
+        this.updateFullscreenIcon();
         
         if (isFullscreen) {
             // In fullscreen: forza aspect ratio mobile (9:16) su desktop
@@ -467,26 +481,130 @@ class BlockyRoadGame {
         }
     }
     
-    async enterFullscreen() {
-        // Scroll to top per nascondere la barra degli indirizzi su mobile
-        window.scrollTo(0, 0);
-        
-        // Prova API fullscreen
-        try {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                await elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                await elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                await elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-                await elem.msRequestFullscreen();
-            }
-
-        } catch (error) {
-
+    toggleFullscreen() {
+        // Prefer Platform SDK if available (works on iOS!)
+        if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+            window.PlatformSDK.toggleFullscreen();
+            return;
         }
+
+        const elem = document.documentElement;
+        
+        // iOS/iPadOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+        
+        if ((isIOS || isIPadOS) && !fullscreenSupported) {
+            // iOS doesn't support Fullscreen API - use CSS workaround
+            this.toggleIOSFullscreen();
+            return;
+        }
+        
+        const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+        if (!fsElement) {
+            // Enter fullscreen
+            const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+            if (requestFs) {
+                const promise = requestFs.call(elem);
+                if (promise && promise.then) {
+                    promise.then(() => {
+                        document.body.classList.add('game-fullscreen');
+                        this.handleFullscreenChange();
+                    }).catch(() => {
+                        // Fallback to iOS method if native fails
+                        this.toggleIOSFullscreen();
+                    });
+                } else {
+                    document.body.classList.add('game-fullscreen');
+                    this.handleFullscreenChange();
+                }
+            } else {
+                // Fallback to iOS method
+                this.toggleIOSFullscreen();
+            }
+        } else {
+            // Exit fullscreen
+            const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+            if (exitFs) {
+                const promise = exitFs.call(document);
+                if (promise && promise.then) {
+                    promise.then(() => {
+                        document.body.classList.remove('game-fullscreen');
+                        this.handleFullscreenChange();
+                    }).catch(() => {});
+                } else {
+                    document.body.classList.remove('game-fullscreen');
+                    this.handleFullscreenChange();
+                }
+            }
+        }
+    }
+
+    // iOS Fullscreen CSS workaround (since iOS Safari doesn't support Fullscreen API)
+    toggleIOSFullscreen() {
+        const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
+        
+        if (isFullscreen) {
+            // Exit fullscreen
+            document.documentElement.classList.remove('ios-game-fullscreen');
+            document.body.classList.remove('ios-game-fullscreen');
+            document.body.classList.remove('game-fullscreen');
+            document.body.classList.remove('fullscreen-active');
+            document.body.style.overflow = '';
+            const exitBtn = document.getElementById('ios-fs-exit');
+            if (exitBtn) exitBtn.remove();
+            this.updateFullscreenIcon();
+            if (this.camera) {
+                setTimeout(() => this.camera.onResize(), 100);
+            }
+        } else {
+            // Enter fullscreen
+            document.documentElement.classList.add('ios-game-fullscreen');
+            document.body.classList.add('ios-game-fullscreen');
+            document.body.classList.add('game-fullscreen');
+            document.body.classList.add('fullscreen-active');
+            document.body.style.overflow = 'hidden';
+            this.createIOSExitButton();
+            this.updateFullscreenIcon();
+            // Scroll to hide address bar on iOS
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+                if (this.camera) this.camera.onResize();
+            }, 100);
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 300);
+        }
+    }
+
+    createIOSExitButton() {
+        if (document.getElementById('ios-fs-exit')) return;
+        const btn = document.createElement('button');
+        btn.id = 'ios-fs-exit';
+        btn.innerHTML = '✕';
+        btn.setAttribute('aria-label', 'Exit fullscreen');
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleIOSFullscreen();
+        });
+        document.body.appendChild(btn);
+    }
+
+    updateFullscreenIcon() {
+        const btn = document.getElementById('fullscreen-btn');
+        if (!btn) return;
+        // Check both native fullscreen and iOS CSS fullscreen
+        const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body.classList.contains('ios-game-fullscreen');
+        btn.innerHTML = isFs
+          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+             </svg>`
+          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+             </svg>`;
     }
     
     setupInput() {
@@ -540,31 +658,17 @@ class BlockyRoadGame {
                     startScreen.classList.remove('hiding');
                 }, { once: true });
             }
-            // Fullscreen su tutti i dispositivi
-            this.enterFullscreen();
             this.startGame();
         });
         
-        // Touch per entrare in fullscreen e avviare il gioco
-        document.addEventListener('touchstart', (e) => {
-            // Solo se il gioco è caricato
-            if (this.isLoaded) {
-                // Touch = sempre mobile, entra sempre in fullscreen
-                this.enterFullscreen();
-                
-                if (!this.isStarted) {
-                    this.startGame();
-                }
-            }
-        }, { once: false, passive: true });
-        
-        // Click per entrare in fullscreen (desktop)
-        document.addEventListener('click', (e) => {
-            // Entra in fullscreen ogni volta che si clicca sul gioco
-            if (this.isLoaded) {
-                this.enterFullscreen();
-            }
-        }, { passive: true });
+        // Fullscreen button
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleFullscreen();
+            });
+        }
         
         // Restart button with debounce to prevent rapid clicks
         let restartDebounce = false;

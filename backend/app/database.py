@@ -90,7 +90,7 @@ def create_game(game_data: dict) -> dict:
         return game.to_dict()
 
 def get_all_games() -> List[dict]:
-    """Retrieve all games from the database with session count."""
+    """Retrieve all games from the database with session count and active campaigns."""
     with get_db_session() as session:
         # Query games with session count
         games_with_counts = session.query(
@@ -106,11 +106,35 @@ def get_all_games() -> List[dict]:
             desc(Game.created_at)
         ).all()
         
-        # Convert to dict and add session_count
+        # Get all currently active campaigns
+        from app.models import Campaign
+        now = datetime.utcnow().isoformat()
+        active_campaigns = session.query(Campaign).filter(
+            Campaign.is_active == 1,
+            Campaign.start_date <= now,
+            Campaign.end_date >= now
+        ).all()
+        
+        # Build lookup: game_id -> campaign info
+        campaign_map = {}
+        for c in active_campaigns:
+            if c.game_id not in campaign_map or c.xp_multiplier > campaign_map[c.game_id]['xp_multiplier']:
+                campaign_map[c.game_id] = {
+                    'campaign_id': c.campaign_id,
+                    'name': c.name,
+                    'description': c.description,
+                    'xp_multiplier': c.xp_multiplier,
+                    'badge_label': c.badge_label,
+                    'badge_color': c.badge_color,
+                    'end_date': c.end_date
+                }
+        
+        # Convert to dict and add session_count + campaign
         result = []
         for game, session_count in games_with_counts:
             game_dict = game.to_dict()
             game_dict['session_count'] = session_count
+            game_dict['active_campaign'] = campaign_map.get(game.game_id)
             result.append(game_dict)
         
         return result
@@ -564,8 +588,26 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         )
         
         xp_earned = xp_result['total_xp']
+        
+        # Apply campaign XP multiplier if game is in an active campaign
+        campaign_multiplier = 1.0
+        from app.models import Campaign
+        active_campaigns = session.query(Campaign).filter(
+            Campaign.game_id == game_id,
+            Campaign.is_active == 1,
+            Campaign.start_date <= datetime.utcnow().isoformat(),
+            Campaign.end_date >= datetime.utcnow().isoformat()
+        ).all()
+        if active_campaigns:
+            campaign_multiplier = max(c.xp_multiplier for c in active_campaigns)
+            xp_earned = round(xp_earned * campaign_multiplier, 2)
+            print(f"[DB] \U0001f3af Campaign active! Multiplier: {campaign_multiplier}x \u2192 XP: {xp_earned}")
+        
+        xp_result['campaign_multiplier'] = campaign_multiplier
+        xp_result['total_xp'] = xp_earned
+        
         map_mult = xp_result.get('map_multiplier', 1.0)
-        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)}, user_mult: {multiplier}, map_mult: {map_mult})")
+        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)}, user_mult: {multiplier}, map_mult: {map_mult}, campaign_mult: {campaign_multiplier})")
         print(f"[DB] Metrics: levels={session_extra_data.get('levels_completed', 0)}, distance={session_extra_data.get('distance', 0)}")
         
         # Update session
@@ -579,6 +621,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         extra_data['is_new_high_score'] = is_new_high_score
         extra_data['previous_high_score'] = previous_high_score
         extra_data['xp_breakdown'] = xp_result['rule_breakdown']
+        extra_data['campaign_multiplier'] = campaign_multiplier
         extra_data['base_xp'] = xp_result['base_xp']
         extra_data['map_multiplier'] = xp_result.get('map_multiplier', 1.0)
         game_session.extra_data = json.dumps(extra_data)
@@ -684,7 +727,6 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
     # No need to manually recalculate ranks here
     
     print(f"[DB] end_game_session completed successfully - XP earned: {xp_earned}")
-    return result
     return result
 
 def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:

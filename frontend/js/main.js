@@ -473,6 +473,52 @@ function createGameCard(game) {
     } catch (e) {
     }
 
+    // Add Campaign badge if game has an active campaign
+    if (game.active_campaign) {
+        const campaignColor = game.active_campaign.badge_color || '#ff6b00';
+        
+        // Badge in top-right corner
+        const badgesContainer = card.querySelector('.game-badges');
+        if (badgesContainer) {
+            const campaignBadge = document.createElement('span');
+            campaignBadge.className = 'campaign-badge';
+            campaignBadge.title = `${game.active_campaign.name} — ${game.active_campaign.xp_multiplier}x XP`;
+            campaignBadge.style.setProperty('--campaign-color', campaignColor);
+            campaignBadge.innerHTML = `🎯 ${game.active_campaign.badge_label || 'CAMPAIGN'}`;
+            badgesContainer.appendChild(campaignBadge);
+        }
+
+        // XP multiplier ribbon on thumbnail
+        const thumbnailContainer = card.querySelector('.game-thumbnail');
+        if (thumbnailContainer) {
+            const xpRibbon = document.createElement('div');
+            xpRibbon.className = 'campaign-xp-ribbon';
+            xpRibbon.style.setProperty('--campaign-color', campaignColor);
+            xpRibbon.innerHTML = `<span class="campaign-xp-value">×${game.active_campaign.xp_multiplier} XP</span>`;
+            thumbnailContainer.appendChild(xpRibbon);
+        }
+
+        // Campaign banner: description + countdown
+        const gameInfo = card.querySelector('.game-info');
+        if (gameInfo) {
+            const banner = document.createElement('div');
+            banner.className = 'campaign-banner';
+            banner.style.setProperty('--campaign-color', campaignColor);
+            const description = game.active_campaign.description;
+            banner.innerHTML = `<span class="campaign-banner-icon">🎯</span><span class="campaign-banner-desc">${description}</span><span class="campaign-banner-countdown" data-end="${game.active_campaign.end_date}">⏳</span>`;
+            gameInfo.appendChild(banner);
+            // Register countdown (lightweight shared timer)
+            const countdownEl = banner.querySelector('.campaign-banner-countdown');
+            if (countdownEl && game.active_campaign.end_date) {
+                CampaignCountdown.register(countdownEl, game.active_campaign.end_date);
+            }
+        }
+
+        // Add glow effect to the card
+        cardElement.classList.add('campaign-active');
+        cardElement.style.setProperty('--campaign-color', campaignColor);
+    }
+
     // Set game info
     card.querySelector('.game-title').textContent = game.title;
     card.querySelector('.game-description').textContent = game.description || 'No description available.';

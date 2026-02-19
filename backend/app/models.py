@@ -812,3 +812,43 @@ class PushSubscription(Base):
     def __repr__(self) -> str:
         return f"<PushSubscription {self.subscription_id} for user {self.user_id}>"
 
+
+class Campaign(Base):
+    """Campaign model - associates games with XP bonus periods."""
+    __tablename__ = 'campaigns'
+    
+    campaign_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, default='')
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False, index=True)
+    xp_multiplier = Column(Float, nullable=False, default=1.5)  # e.g. 1.5 = +50% XP
+    start_date = Column(String, nullable=False)  # ISO datetime
+    end_date = Column(String, nullable=False)    # ISO datetime
+    is_active = Column(Integer, default=1)
+    badge_label = Column(String(30), default='CAMPAIGN')  # Label shown on game card
+    badge_color = Column(String(7), default='#ff6b00')    # Hex color for badge
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    
+    # Relationships
+    game = relationship("Game", backref="campaigns")
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert campaign instance to dictionary."""
+        return {
+            "campaign_id": self.campaign_id,
+            "name": self.name,
+            "description": self.description,
+            "game_id": self.game_id,
+            "xp_multiplier": self.xp_multiplier,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "is_active": bool(self.is_active),
+            "badge_label": self.badge_label,
+            "badge_color": self.badge_color,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<Campaign {self.campaign_id}: {self.name} ({self.game_id})>"

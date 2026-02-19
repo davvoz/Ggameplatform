@@ -8,7 +8,7 @@ from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from abc import ABC, abstractmethod
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, Campaign
 
 # Generic type for models
 ModelType = TypeVar("ModelType", bound=Base)
@@ -402,6 +402,40 @@ class CoinTransactionRepository(BaseRepository[CoinTransaction]):
             raise Exception(f"Error calculating spendings: {str(e)}")
 
 
+class CampaignRepository(BaseRepository[Campaign]):
+    """Repository for Campaign entities"""
+    
+    def __init__(self, db_session: Session):
+        super().__init__(Campaign, db_session, id_field="campaign_id")
+    
+    def get_active_for_game(self, game_id: str) -> List[Campaign]:
+        """Get currently active campaigns for a specific game"""
+        from datetime import datetime
+        now = datetime.utcnow().isoformat()
+        try:
+            return self.db_session.query(Campaign).filter(
+                Campaign.game_id == game_id,
+                Campaign.is_active == 1,
+                Campaign.start_date <= now,
+                Campaign.end_date >= now
+            ).all()
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching active campaigns: {str(e)}")
+    
+    def get_all_active(self) -> List[Campaign]:
+        """Get all currently active campaigns"""
+        from datetime import datetime
+        now = datetime.utcnow().isoformat()
+        try:
+            return self.db_session.query(Campaign).filter(
+                Campaign.is_active == 1,
+                Campaign.start_date <= now,
+                Campaign.end_date >= now
+            ).all()
+        except SQLAlchemyError as e:
+            raise Exception(f"Error fetching active campaigns: {str(e)}")
+
+
 class RepositoryFactory:
     """
     Factory Pattern for creating repositories
@@ -447,3 +481,7 @@ class RepositoryFactory:
     @staticmethod
     def create_cointransaction_repository(db_session: Session) -> CoinTransactionRepository:
         return CoinTransactionRepository(db_session)
+    
+    @staticmethod
+    def create_campaign_repository(db_session: Session) -> CampaignRepository:
+        return CampaignRepository(db_session)

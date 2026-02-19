@@ -14,7 +14,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser, Campaign
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -32,7 +32,8 @@ from app.schemas import (
     LevelRewardCreate, LevelRewardUpdate,
     WeeklyLeaderboardCreate, WeeklyLeaderboardUpdate,
     LeaderboardRewardCreate, LeaderboardRewardUpdate,
-    WeeklyWinnerCreate, WeeklyWinnerUpdate
+    WeeklyWinnerCreate, WeeklyWinnerUpdate,
+    CampaignCreate, CampaignUpdate
 )
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
@@ -172,6 +173,7 @@ async def get_form_options(db: Session = Depends(get_db)):
                 "quest_ids": [{"value": q.quest_id, "label": f"{q.title} (ID: {q.quest_id})"} for q in quests],
                 "status_ids": [{"value": s.status_id, "label": f"{s.status_name} ({s.status_code})"} for s in statuses],
                 "session_ids": [{"value": s.session_id, "label": f"{s.session_id} - {s.game_id}"} for s in sessions[:100]],  # Limit for performance
+                "campaign_ids": [{"value": c.campaign_id, "label": f"{c.name} ({c.game_id})"} for c in RepositoryFactory.create_campaign_repository(db).get_all()],
                 "categories": list(set([g.category for g in games if g.category])),
                 "quest_types": [
                     "play_games",
@@ -324,6 +326,10 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         daily_login_reward_config_query = session.query(DailyLoginRewardConfig).order_by(DailyLoginRewardConfig.day).all()
         daily_login_reward_config = [dlrc.to_dict() for dlrc in daily_login_reward_config_query]
         
+        # Get campaigns
+        campaigns_query = session.query(Campaign).order_by(desc(Campaign.created_at)).all()
+        campaigns = [c.to_dict() for c in campaigns_query]
+        
         # Calculate total coins in circulation
         total_coins_circulation = sum([uc.balance for uc in user_coins_query])
     
@@ -344,6 +350,7 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "total_weekly_winners": len(weekly_winners),
         "total_user_login_streak": len(user_login_streak),
         "total_daily_login_reward_config": len(daily_login_reward_config),
+        "total_campaigns": len(campaigns),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -363,6 +370,7 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "weekly_winners": weekly_winners,
         "user_login_streak": user_login_streak,
         "daily_login_reward_config": daily_login_reward_config,
+        "campaigns": campaigns,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -452,6 +460,10 @@ async def export_database():
         
         daily_login_reward_config_query = session.query(DailyLoginRewardConfig).order_by(DailyLoginRewardConfig.day).all()
         daily_login_reward_config = [dlrc.to_dict() for dlrc in daily_login_reward_config_query]
+        
+        # Export campaigns
+        campaigns_query = session.query(Campaign).order_by(desc(Campaign.created_at)).all()
+        campaigns = [c.to_dict() for c in campaigns_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -472,6 +484,7 @@ async def export_database():
         "total_weekly_winners": len(weekly_winners),
         "total_user_login_streak": len(user_login_streak),
         "total_daily_login_reward_config": len(daily_login_reward_config),
+        "total_campaigns": len(campaigns),
         "games": games,
         "users": users,
         "sessions": sessions,
@@ -488,7 +501,8 @@ async def export_database():
         "leaderboard_rewards": leaderboard_rewards,
         "weekly_winners": weekly_winners,
         "daily_login_rewards": daily_login_rewards,
-        "daily_login_reward_config": daily_login_reward_config
+        "daily_login_reward_config": daily_login_reward_config,
+        "campaigns": campaigns
     }
 
 @router.get("/sessions/open")
@@ -1919,6 +1933,83 @@ async def delete_daily_login_reward_config(day: int, db: Session = Depends(get_d
         db.delete(reward)
         db.commit()
         return {"success": True, "message": "Daily login reward deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== CAMPAIGNS CRUD ENDPOINTS ==========
+
+@router.post("/campaigns", status_code=201)
+async def create_campaign(campaign_data: CampaignCreate, db: Session = Depends(get_db)):
+    """Create a new campaign"""
+    try:
+        repo = RepositoryFactory.create_campaign_repository(db)
+        service = ServiceFactory.create_campaign_service(repo)
+        
+        campaign = service.create(campaign_data.dict())
+        return {"success": True, "data": campaign}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/campaigns/{campaign_id}")
+async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
+    """Get a campaign by ID"""
+    try:
+        repo = RepositoryFactory.create_campaign_repository(db)
+        service = ServiceFactory.create_campaign_service(repo)
+        
+        campaign = service.get(campaign_id)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return {"success": True, "data": campaign}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/campaigns/{campaign_id}")
+async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: Session = Depends(get_db)):
+    """Update a campaign"""
+    try:
+        repo = RepositoryFactory.create_campaign_repository(db)
+        service = ServiceFactory.create_campaign_service(repo)
+        
+        update_data = {k: v for k, v in campaign_data.dict().items() if v is not None}
+        
+        campaign = service.update(campaign_id, update_data)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return {"success": True, "data": campaign}
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
+    """Delete a campaign"""
+    try:
+        repo = RepositoryFactory.create_campaign_repository(db)
+        service = ServiceFactory.create_campaign_service(repo)
+        
+        success = service.delete(campaign_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return {"success": True, "message": "Campaign deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:

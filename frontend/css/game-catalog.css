@@ -12,7 +12,7 @@
     background: var(--surface);
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
-   /* max-width: 400px; */
+    /* max-width: 400px; */
     margin-left: auto;
     margin-right: auto;
     position: relative;
@@ -30,10 +30,10 @@
     border-radius: calc(var(--radius-xl) - 2px);
     background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc02 100%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.4s ease,
-                filter 0.3s ease;
+        box-shadow 0.4s ease,
+        filter 0.3s ease;
     z-index: 0;
-    box-shadow: 
+    box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 30px rgba(247, 147, 30, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -50,12 +50,12 @@
     border-radius: calc(var(--radius-xl) - 2px);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.4s ease,
-                filter 0.3s ease;
+        opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.4s ease,
+        filter 0.3s ease;
     z-index: 0;
     opacity: 0;
-    box-shadow: 
+    box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 30px rgba(118, 75, 162, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -69,14 +69,12 @@
     width: calc(50% - 4px);
     height: calc(100% - 8px);
     border-radius: calc(var(--radius-xl) - 2px);
-    background: linear-gradient(
-        105deg,
-        transparent 20%,
-        rgba(255, 255, 255, 0.1) 35%,
-        rgba(255, 255, 255, 0.3) 38%,
-        rgba(255, 255, 255, 0.1) 41%,
-        transparent 60%
-    );
+    background: linear-gradient(105deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.1) 35%,
+            rgba(255, 255, 255, 0.3) 38%,
+            rgba(255, 255, 255, 0.1) 41%,
+            transparent 60%);
     background-size: 250% 100%;
     background-position: 100% 0;
     z-index: 1;
@@ -97,6 +95,7 @@
     0% {
         background-position: 100% 0;
     }
+
     100% {
         background-position: -100% 0;
     }
@@ -104,7 +103,7 @@
 
 .game-mode-tabs.mode-fun::before {
     transform: translateX(100%);
-    box-shadow: 
+    box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 10px rgba(247, 147, 30, 0);
 }
@@ -112,7 +111,7 @@
 .game-mode-tabs.mode-fun::after {
     transform: translateX(100%);
     opacity: 1;
-    box-shadow: 
+    box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 35px rgba(118, 75, 162, 0.6),
         0 0 60px rgba(240, 147, 251, 0.3),
@@ -155,7 +154,7 @@
 .game-mode-tab.active {
     color: #fff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
-                 0 0 20px rgba(255, 255, 255, 0.3);
+        0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .game-mode-tab .tab-icon,
@@ -202,6 +201,7 @@
         opacity: 1;
         transform: translateX(0) scale(1);
     }
+
     100% {
         opacity: 0;
         transform: translateX(-40px) scale(0.98);
@@ -213,6 +213,7 @@
         opacity: 1;
         transform: translateX(0) scale(1);
     }
+
     100% {
         opacity: 0;
         transform: translateX(40px) scale(0.98);
@@ -224,6 +225,7 @@
         opacity: 0;
         transform: translateX(40px) scale(0.98);
     }
+
     100% {
         opacity: 1;
         transform: translateX(0) scale(1);
@@ -235,6 +237,7 @@
         opacity: 0;
         transform: translateX(-40px) scale(0.98);
     }
+
     100% {
         opacity: 1;
         transform: translateX(0) scale(1);
@@ -246,6 +249,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -257,7 +261,7 @@
     .game-mode-tabs {
         max-width: 100%;
     }
-    
+
     .game-mode-tab {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: 0.9rem;
@@ -412,7 +416,6 @@
     align-items: center;
     gap: 6px;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
     font-size: 0.75rem;
@@ -464,8 +467,10 @@
     letter-spacing: 0.5px;
     display: inline-flex;
     align-items: center;
-    height: 28px; /* keep badge height consistent with STEEM */
-    overflow: visible; /* allow larger icon to overflow visually */
+    height: 28px;
+    /* keep badge height consistent with STEEM */
+    overflow: visible;
+    /* allow larger icon to overflow visually */
 }
 
 /* If STEEM badge is present, push COIN left to avoid overlap */
@@ -477,7 +482,7 @@
     width: auto;
     height: auto;
     vertical-align: middle;
-  /*  margin-right: 6px;   match steem spacing */
+    /*  margin-right: 6px;   match steem spacing */
     line-height: 1;
     display: inline-block;
     transform: translateY(-2px);
@@ -493,12 +498,15 @@
 /* Mobile adjustments: prevent the large emoji from overflowing the badge */
 @media (max-width: 480px) {
     .coin-rewards-icon {
-        font-size: 20px; /* smaller emoji on mobile */
+        font-size: 20px;
+        /* smaller emoji on mobile */
         transform: translateY(-1px);
         margin-right: 6px;
     }
+
     .coin-rewards-badge {
-        overflow: hidden; /* clamp icon within badge */
+        overflow: hidden;
+        /* clamp icon within badge */
     }
 }
 
@@ -511,6 +519,185 @@
 
     50% {
         box-shadow: 0 4px 16px #e48cd5;
+    }
+}
+
+/* ===== CAMPAIGN BADGE & CARD GLOW ===== */
+
+.campaign-badge {
+    background: linear-gradient(135deg, var(--campaign-color, #ff6b00), #ff9500);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: pulse-campaign 2s ease-in-out infinite;
+    white-space: nowrap;
+}
+
+@keyframes pulse-campaign {
+
+    0%,
+    100% {
+        box-shadow: 0 2px 8px var(--campaign-color, #ff6b00);
+    }
+
+    50% {
+        box-shadow: 0 6px 20px var(--campaign-color, #ff6b00);
+    }
+}
+
+/* XP Multiplier Ribbon on thumbnail */
+.campaign-xp-ribbon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, var(--campaign-color, #ff6b00), #ff9500, var(--campaign-color, #ff6b00));
+    background-size: 200% 100%;
+    animation: campaign-ribbon-shimmer 3s linear infinite;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.campaign-xp-value {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    text-transform: uppercase;
+}
+
+@keyframes campaign-ribbon-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Campaign name banner at card bottom */
+.campaign-banner {
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--campaign-color, #ff6b00) 15%, transparent),
+            color-mix(in srgb, var(--campaign-color, #ff6b00) 8%, transparent));
+    border-top: 1px solid color-mix(in srgb, var(--campaign-color, #ff6b00) 30%, transparent);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.campaign-banner-icon {
+    font-size: 0.9rem;
+    animation: campaign-icon-bounce 2s ease-in-out infinite;
+}
+
+@keyframes campaign-icon-bounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.campaign-banner-desc {
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    flex: 1;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.campaign-banner-countdown {
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--campaign-color, #ff6b00), color-mix(in srgb, var(--campaign-color, #ff6b00) 70%, #000));
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--campaign-color, #ff6b00) 50%, transparent),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+    animation: countdown-glow 2s ease-in-out infinite;
+}
+
+@keyframes countdown-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px color-mix(in srgb, var(--campaign-color, #ff6b00) 50%, transparent),
+                    inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 14px color-mix(in srgb, var(--campaign-color, #ff6b00) 70%, transparent),
+                    inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+}
+
+/* Card glow for campaign games */
+.game-card.campaign-active {
+    border: 1px solid color-mix(in srgb, var(--campaign-color, #ff6b00) 50%, transparent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--campaign-color, #ff6b00) 25%, transparent),
+        inset 0 0 12px color-mix(in srgb, var(--campaign-color, #ff6b00) 5%, transparent);
+    position: relative;
+}
+
+.game-card.campaign-active:hover {
+    box-shadow: 0 0 24px color-mix(in srgb, var(--campaign-color, #ff6b00) 45%, transparent),
+        0 8px 32px rgba(0, 0, 0, 0.3);
+    border-color: var(--campaign-color, #ff6b00);
+    transform: translateY(-6px);
+}
+
+.game-card.campaign-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--campaign-color, #ff6b00) 8%, transparent), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@media (max-width: 480px) {
+    .campaign-badge {
+        font-size: 0.6rem;
+        padding: 3px 8px;
+    }
+
+    .campaign-xp-ribbon {
+        padding: 4px 8px;
+    }
+
+    .campaign-xp-value {
+        font-size: 0.75rem;
+    }
+
+    .campaign-banner {
+        padding: 6px 10px;
     }
 }
 
@@ -731,7 +918,7 @@
 }
 
 .catalog {
-    padding-top: calc(var(--spacing-sm) );
+    padding-top: calc(var(--spacing-sm));
 }
 
 /* Responsive Design */

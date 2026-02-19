@@ -61,6 +61,36 @@
     font-size: 1.1rem;
 }
 
+/* Notification dot on Chat tab when viewing Stats */
+.chat-tab-badge {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #00d4aa, #00b4d8);
+    border-radius: 50%;
+    border: 2px solid var(--background-light);
+    box-shadow: 0 0 8px rgba(0, 212, 170, 0.6),
+                0 0 16px rgba(0, 212, 170, 0.3);
+    z-index: 5;
+    animation: chat-tab-badge-pulse 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes chat-tab-badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(0, 212, 170, 0.6),
+                    0 0 16px rgba(0, 212, 170, 0.3);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 14px rgba(0, 212, 170, 0.8),
+                    0 0 28px rgba(0, 212, 170, 0.4);
+    }
+}
+
 /* ========== Section Containers ========== */
 .community-chat-section,
 .community-stats-section {

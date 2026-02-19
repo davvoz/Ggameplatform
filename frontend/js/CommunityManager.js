@@ -291,13 +291,17 @@ class CommunityManager {
         this.stats.totalMessages++;
         this._updateStats();
 
-        // Keep the nav badge in sync – user is viewing the chat right now,
-        // so mark the latest message as seen.
-        if (message && message.id) {
-            localStorage.setItem('community_last_seen_msg', message.id);
-            if (window._communityWS) {
-                window._communityWS._lastKnownMsgId = message.id;
+        // If the user is viewing the chat tab, mark as seen immediately.
+        // Otherwise (e.g. on Stats tab) show a badge on the Chat tab.
+        if (this.currentSection === 'chat') {
+            if (message && message.id) {
+                localStorage.setItem('community_last_seen_msg', message.id);
+                if (window._communityWS) {
+                    window._communityWS._lastKnownMsgId = message.id;
+                }
             }
+        } else {
+            this._showChatTabBadge();
         }
     }
     
@@ -958,6 +962,26 @@ class CommunityManager {
     // ========================================================================
 
     /**
+     * Show a notification dot on the Chat tab when user is on another tab
+     * @private
+     */
+    _showChatTabBadge() {
+        const chatTab = this.container?.querySelector('.community-nav-tab[data-section="chat"]');
+        if (!chatTab || chatTab.querySelector('.chat-tab-badge')) return;
+        const dot = document.createElement('span');
+        dot.className = 'chat-tab-badge';
+        chatTab.appendChild(dot);
+    }
+
+    /**
+     * Remove the Chat tab notification dot
+     * @private
+     */
+    _hideChatTabBadge() {
+        this.container?.querySelectorAll('.chat-tab-badge').forEach(b => b.remove());
+    }
+
+    /**
      * Switch between chat and stats sections
      * @param {string} section - 'chat' or 'stats'
      * @private
@@ -984,6 +1008,19 @@ class CommunityManager {
         // Lazy-load stats on first switch
         if (section === 'stats' && !this.statsLoaded) {
             this._initStats();
+        }
+
+        // Switching to chat → clear the tab badge and mark messages as seen
+        if (section === 'chat') {
+            this._hideChatTabBadge();
+            const latest = this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
+            if (latest && latest.id) {
+                localStorage.setItem('community_last_seen_msg', latest.id);
+                if (window._communityWS) {
+                    window._communityWS._lastKnownMsgId = latest.id;
+                }
+            }
+            if (window.removeCommunityBadge) window.removeCommunityBadge();
         }
 
         console.log(`[CommunityManager] Switched to section: ${section}`);

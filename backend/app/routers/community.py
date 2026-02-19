@@ -291,10 +291,12 @@ class CommunityChatManager:
     
     def _get_stats(self) -> dict:
         """Get current chat statistics"""
+        latest_id = self.messages[-1].id if self.messages else None
         return {
             "onlineUsers": len(self.connections),
             "totalMessages": len(self.messages),
-            "totalMembers": len(self.connections)  #  Could be enhanced to track unique users
+            "totalMembers": len(self.connections),  #  Could be enhanced to track unique users
+            "latestMessageId": latest_id
         }
     
     async def _send_push_to_offline_users(self, message: ChatMessage):
@@ -336,7 +338,7 @@ class CommunityChatManager:
                             subscription_info=sub_info,
                             title=title,
                             body=body,
-                            url="/#community",
+                            url="/#/community",
                             tag=f"chat-{message.user_id}",  # Group by sender
                             ttl=300  # 5 minutes TTL for chat messages
                         )

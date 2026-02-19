@@ -720,6 +720,79 @@
     z-index: 2;
 }
 
+/* ── Community Chat Notification Badge ──────────────────────────────────── */
+#communityLink {
+    position: relative;
+}
+
+.community-notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: linear-gradient(135deg, #00d4aa, #00b4d8);
+    color: white;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 212, 170, 0.6),
+                0 0 30px rgba(0, 212, 170, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 10;
+    animation: badge-appear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.community-notification-badge.pulse-animation {
+    animation: community-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes community-badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(0, 212, 170, 0.6),
+                    0 0 30px rgba(0, 212, 170, 0.3);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 25px rgba(0, 212, 170, 0.8),
+                    0 0 50px rgba(0, 212, 170, 0.5),
+                    0 0 75px rgba(0, 212, 170, 0.2);
+    }
+}
+
+@keyframes community-glow-pulse {
+    0%, 100% {
+        text-shadow: 0 0 5px rgba(0, 212, 170, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 15px rgba(0, 212, 170, 0.8),
+                     0 0 25px rgba(0, 212, 170, 0.5);
+    }
+}
+
+@keyframes community-glow-box {
+    0%, 100% {
+        box-shadow: 0 0 6px rgba(0, 212, 170, 0.28), inset 0 0 6px rgba(0, 212, 170, 0.12);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 212, 170, 0.7), inset 0 0 16px rgba(0, 212, 170, 0.28);
+    }
+}
+
+#communityLink:has(.community-notification-badge) {
+    animation: community-glow-pulse 2s ease-in-out infinite, community-glow-box 2s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(0, 212, 170, 0.04), rgba(0, 212, 170, 0.015));
+    box-shadow: 0 0 6px rgba(0, 212, 170, 0.28), inset 0 0 6px rgba(0, 212, 170, 0.12);
+    border-radius: var(--radius-lg);
+    position: relative;
+    z-index: 2;
+}
+
 /* Also make the hamburger/menu toggle glow when quests are claimable
    (matches when the nav menu contains the quests link with a badge). */
 .nav-menu:has(#questsLink:has(.quest-notification-badge)) + .nav-toggle,
@@ -735,6 +808,21 @@
     /* tint the lines slightly and add soft glow */
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     box-shadow: 0 0 8px rgba(0, 212, 255, 0.18);
+}
+
+/* Also make the hamburger/menu toggle glow when community has unread messages */
+.nav-menu:has(#communityLink:has(.community-notification-badge)) + .nav-toggle,
+.nav-toggle:has(.community-notification-badge) {
+    animation: community-glow-pulse 2s ease-in-out infinite;
+}
+
+.nav-menu:has(#communityLink:has(.community-notification-badge)) + .nav-toggle {
+    box-shadow: 0 0 18px rgba(0, 212, 170, 0.12);
+}
+
+.nav-menu:has(#communityLink:has(.community-notification-badge)) + .nav-toggle span {
+    background: linear-gradient(135deg, #00d4aa, #00b4d8);
+    box-shadow: 0 0 8px rgba(0, 212, 170, 0.18);
 }
 
 /* Hamburger Menu */

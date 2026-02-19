@@ -69,29 +69,57 @@ class CommunityManager {
         
         // Get user info
         const user = this.authManager?.getUser();
-        
-        // Initialize WebSocket API
-        this.communityAPI = new CommunityAPI({
-            userId: user?.user_id || `anon_${Date.now()}`,
-            username: user?.username || 'Anonymous',
-            onMessage: this._boundHandlers.onMessage,
-            onConnect: this._boundHandlers.onConnect,
-            onDisconnect: this._boundHandlers.onDisconnect,
-            onError: this._boundHandlers.onError,
-            onHistoryLoad: this._boundHandlers.onHistoryLoad,
-            onStatsUpdate: this._boundHandlers.onStatsUpdate
-        });
-        
-        // Connect to WebSocket
-        try {
-            await this.communityAPI.connect();
-        } catch (error) {
-            console.error('[CommunityManager] Failed to connect:', error);
-            this._updateConnectionStatus('disconnected', 'Connection failed');
+
+        // ── Reuse the global CommunityAPI WebSocket if available ──
+        if (window._communityWS && window._communityWS.isConnected) {
+            // Take over the existing connection
+            this.communityAPI = window._communityWS;
+            this._ownsWS = false; // we must NOT disconnect on destroy
+
+            // Swap callbacks to the full CommunityManager handlers
+            this.communityAPI.onMessage    = this._boundHandlers.onMessage;
+            this.communityAPI.onConnect    = this._boundHandlers.onConnect;
+            this.communityAPI.onDisconnect = this._boundHandlers.onDisconnect;
+            this.communityAPI.onError      = this._boundHandlers.onError;
+            this.communityAPI.onHistoryLoad = this._boundHandlers.onHistoryLoad;
+            this.communityAPI.onStatsUpdate = this._boundHandlers.onStatsUpdate;
+
+            console.log('[CommunityManager] Reusing global CommunityAPI WebSocket');
+
+            // Trigger the connect handler manually (WS is already open)
+            this._boundHandlers.onConnect();
+        } else {
+            // Fallback: create a new connection (first visit / not logged in)
+            this.communityAPI = new CommunityAPI({
+                userId: user?.user_id || `anon_${Date.now()}`,
+                username: user?.username || 'Anonymous',
+                onMessage: this._boundHandlers.onMessage,
+                onConnect: this._boundHandlers.onConnect,
+                onDisconnect: this._boundHandlers.onDisconnect,
+                onError: this._boundHandlers.onError,
+                onHistoryLoad: this._boundHandlers.onHistoryLoad,
+                onStatsUpdate: this._boundHandlers.onStatsUpdate
+            });
+            this._ownsWS = true;
+
+            try {
+                await this.communityAPI.connect();
+                // Store as global so future navigations can reuse it
+                window._communityWS = this.communityAPI;
+                this.communityAPI._lastKnownMsgId = null;
+            } catch (error) {
+                console.error('[CommunityManager] Failed to connect:', error);
+                this._updateConnectionStatus('disconnected', 'Connection failed');
+            }
         }
-        
+
         this.isInitialized = true;
         console.log('[CommunityManager] Initialized');
+
+        // Mark community messages as seen (clears the nav badge)
+        if (window.markCommunityAsSeen) {
+            window.markCommunityAsSeen();
+        }
 
         // Restore previously active tab (if any)
         const savedSection = sessionStorage.getItem('community_active_tab');
@@ -262,6 +290,15 @@ class CommunityManager {
         // Update stats
         this.stats.totalMessages++;
         this._updateStats();
+
+        // Keep the nav badge in sync – user is viewing the chat right now,
+        // so mark the latest message as seen.
+        if (message && message.id) {
+            localStorage.setItem('community_last_seen_msg', message.id);
+            if (window._communityWS) {
+                window._communityWS._lastKnownMsgId = message.id;
+            }
+        }
     }
     
     /**
@@ -291,6 +328,19 @@ class CommunityManager {
         if (messages.length === 0) {
             this._showEmptyState();
         }
+
+        // Mark the latest message as seen so the nav badge clears
+        if (this.messages.length > 0) {
+            const latest = this.messages[this.messages.length - 1];
+            if (latest && latest.id) {
+                localStorage.setItem('community_last_seen_msg', latest.id);
+                if (window._communityWS) {
+                    window._communityWS._lastKnownMsgId = latest.id;
+                }
+            }
+        }
+        // Remove any existing community badge since we're viewing the page
+        if (window.removeCommunityBadge) window.removeCommunityBadge();
     }
 
     /**
@@ -967,10 +1017,29 @@ class CommunityManager {
      */
     destroy() {
         console.log('[CommunityManager] Destroying...');
-        
-        // Disconnect WebSocket
+
+        // Hand the WebSocket back to the global nav notifier instead of
+        // disconnecting it, so we keep receiving messages for the badge.
         if (this.communityAPI) {
-            this.communityAPI.disconnect();
+            if (this._ownsWS) {
+                // Rare fallback path – we created the WS ourselves
+                this.communityAPI.disconnect();
+                // Clear the global reference so bootCommunityWS can create a fresh one
+                if (window._communityWS === this.communityAPI) {
+                    window._communityWS = null;
+                }
+                // Schedule a global WS boot so badge notifications resume
+                setTimeout(() => {
+                    if (!window.currentCommunityManager && window.bootCommunityWS) {
+                        window.bootCommunityWS();
+                    }
+                }, 100);
+            } else {
+                // Restore lightweight nav handlers (badge-only)
+                if (window.installNavCommunityHandlers) {
+                    window.installNavCommunityHandlers();
+                }
+            }
             this.communityAPI = null;
         }
         

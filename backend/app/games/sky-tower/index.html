@@ -7,6 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Sky Tower - Build to the Sky</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -607,17 +610,17 @@
             }
         }
         
-        /* Level Up Modal */
+        /* ============ LEVEL UP MODAL ============ */
         .level-up-modal {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 10, 30, 0.85);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 10000;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -628,14 +631,14 @@
         }
         
         .level-up-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 40px;
+            background: linear-gradient(135deg, rgba(10, 30, 60, 0.95) 0%, rgba(5, 20, 45, 0.98) 100%);
+            border-radius: 24px;
+            padding: 32px;
             text-align: center;
-            color: white;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 200, 255, 0.6);
+            box-shadow: 0 0 60px rgba(0, 150, 255, 0.4);
             transform: scale(0.8);
             transition: transform 0.3s ease;
         }
@@ -643,61 +646,130 @@
         .level-up-modal.show .level-up-content {
             transform: scale(1);
         }
+
+        .level-up-content.milestone {
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 80px rgba(255, 215, 0, 0.5);
+        }
         
         .level-up-animation {
             position: relative;
             margin-bottom: 20px;
         }
         
-        .level-up-badge-container {
-            font-size: 80px;
-            animation: badgePop 0.6s ease-out;
+        .level-up-rays {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.3) 0%, transparent 70%);
+            animation: raysRotate 3s linear infinite;
         }
-        
-        @keyframes badgePop {
-            0% { transform: scale(0); }
+
+        @keyframes raysRotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .level-up-badge-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .level-up-badge {
+            font-size: 4em;
+            display: block;
+            animation: badgeBounce 0.5s ease;
+        }
+
+        @keyframes badgeBounce {
+            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
         }
         
         .level-up-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-size: 1.8em;
+            color: #00d4ff;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 16px;
+            text-shadow: 0 0 20px rgba(0, 200, 255, 0.6);
         }
         
         .level-up-levels {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 15px;
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .old-level {
+            font-size: 2em;
+            color: rgba(150, 180, 200, 0.6);
+        }
+
+        .level-arrow {
+            font-size: 1.5em;
+            color: #00d4ff;
+        }
+
+        .new-level {
+            font-size: 2.5em;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 200, 255, 0.8);
         }
         
         .level-up-new-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
+            font-size: 1.2em;
             color: #ffd700;
+            font-family: 'Rajdhani', sans-serif;
+            margin-bottom: 12px;
+        }
+
+        .level-up-milestone-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #1a1a1a;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: inline-block;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .level-up-reward {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+            color: #ffd700;
+        }
+
+        .reward-icon {
+            font-size: 1.5em;
         }
         
         .level-up-close {
-            background: white;
-            color: #667eea;
+            background: linear-gradient(145deg, #00a8ff 0%, #0066cc 100%);
             border: none;
-            padding: 12px 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 50px;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-family: 'Orbitron', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4);
         }
         
         .level-up-close:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 25px rgba(0, 150, 255, 0.6);
         }
 
         @media (max-width: 768px) {

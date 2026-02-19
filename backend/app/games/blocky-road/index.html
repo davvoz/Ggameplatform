@@ -6,6 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Blocky Road - Three.js</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -716,17 +719,17 @@
             margin-left: 8px;
         }
         
-        /* Level Up Modal - Identical to platform level-widget.css */
+        /* ============ LEVEL UP MODAL ============ */
         .level-up-modal {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 10, 30, 0.85);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 20000;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -737,211 +740,145 @@
         }
 
         .level-up-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(10, 30, 60, 0.95) 0%, rgba(5, 20, 45, 0.98) 100%);
             border-radius: 24px;
-            padding: 48px 32px;
-            max-width: 500px;
-            width: 90%;
+            padding: 32px;
             text-align: center;
-            color: white;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid rgba(0, 200, 255, 0.6);
+            box-shadow: 0 0 60px rgba(0, 150, 255, 0.4);
             transform: scale(0.8);
-            animation: levelUpPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transition: transform 0.3s ease;
+        }
+
+        .level-up-modal.show .level-up-content {
+            transform: scale(1);
         }
 
         .level-up-content.milestone {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        @keyframes levelUpPop {
-            0% {
-                transform: scale(0.8) rotate(-5deg);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.1) rotate(2deg);
-            }
-            100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
+            border-color: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 80px rgba(255, 215, 0, 0.5);
         }
 
         .level-up-animation {
             position: relative;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .level-up-rays {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
             width: 200px;
             height: 200px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-            animation: levelUpPulse 2s ease-in-out infinite;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.3) 0%, transparent 70%);
+            animation: raysRotate 3s linear infinite;
         }
 
-        @keyframes levelUpPulse {
-            0%, 100% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 0.5;
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.2);
-                opacity: 0.8;
-            }
+        @keyframes raysRotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         .level-up-badge-container {
             position: relative;
-            display: inline-block;
-            animation: levelUpBounce 1s ease-in-out infinite;
-        }
-
-        @keyframes levelUpBounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
+            z-index: 1;
         }
 
         .level-up-badge {
-            font-size: 96px;
-            line-height: 1;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            font-size: 4em;
+            display: block;
+            animation: badgeBounce 0.5s ease;
+        }
+
+        @keyframes badgeBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .level-up-title {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 0 0 16px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            animation: levelUpShake 0.5s ease-in-out;
-        }
-
-        @keyframes levelUpShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            font-size: 1.8em;
+            color: #00d4ff;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 16px;
+            text-shadow: 0 0 20px rgba(0, 200, 255, 0.6);
         }
 
         .level-up-levels {
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             gap: 16px;
-            margin-bottom: 16px;
-            font-size: 48px;
-            font-weight: bold;
+            margin-bottom: 12px;
+            font-family: 'Orbitron', sans-serif;
         }
 
         .old-level {
-            opacity: 0.6;
+            font-size: 2em;
+            color: rgba(150, 180, 200, 0.6);
         }
 
         .level-arrow {
-            font-size: 32px;
-            animation: levelUpArrowSlide 1s ease-in-out infinite;
-        }
-
-        @keyframes levelUpArrowSlide {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(8px); }
+            font-size: 1.5em;
+            color: #00d4ff;
         }
 
         .new-level {
-            color: #fbbf24;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+            font-size: 2.5em;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 200, 255, 0.8);
         }
 
         .level-up-new-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            font-size: 1.2em;
+            color: #ffd700;
+            font-family: 'Rajdhani', sans-serif;
+            margin-bottom: 12px;
         }
 
         .level-up-milestone-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 24px;
-            border-radius: 24px;
-            font-size: 14px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #1a1a1a;
+            padding: 8px 16px;
+            border-radius: 20px;
             font-weight: bold;
             margin-bottom: 16px;
-            animation: levelUpGlow 1.5s ease-in-out infinite;
-        }
-
-        @keyframes levelUpGlow {
-            0%, 100% {
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-            }
-            50% {
-                box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-            }
+            display: inline-block;
+            font-family: 'Orbitron', sans-serif;
         }
 
         .level-up-reward {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 16px 32px;
-            border-radius: 16px;
-            margin: 24px 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* More visible card for milestone */
-        .level-up-content.milestone .level-up-reward {
-            background: rgba(255, 255, 255, 0.35);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+            color: #ffd700;
         }
 
         .reward-icon {
-            font-size: 36px;
-            animation: levelUpSpin 2s linear infinite;
-        }
-
-        @keyframes levelUpSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .reward-amount {
-            color: #fbbf24;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.5em;
         }
 
         .level-up-close {
-            background: rgba(255, 255, 255, 0.9);
-            color: #667eea;
+            background: linear-gradient(145deg, #00a8ff 0%, #0066cc 100%);
             border: none;
-            padding: 16px 48px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-family: 'Orbitron', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4);
         }
 
         .level-up-close:hover {
-            background: white;
             transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .level-up-close:active {
-            transform: scale(0.95);
+            box-shadow: 0 6px 25px rgba(0, 150, 255, 0.6);
         }
         
         @keyframes xpSlideIn {

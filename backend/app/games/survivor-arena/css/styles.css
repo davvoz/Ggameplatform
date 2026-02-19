@@ -1,6 +1,7 @@
 /* ==========================================
    SURVIVOR ARENA - Main Styles
    ========================================== */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
 
 /* Reset & Base */
 * {
@@ -1091,6 +1092,7 @@ body.desktop-mode #game-container {
 .level-up-title {
     font-size: 1.8em;
     color: #00d4ff;
+    font-family: 'Orbitron', sans-serif;
     margin-bottom: 16px;
     text-shadow: 0 0 20px rgba(0, 200, 255, 0.6);
 }
@@ -1101,6 +1103,7 @@ body.desktop-mode #game-container {
     align-items: center;
     gap: 16px;
     margin-bottom: 12px;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .old-level {
@@ -1122,6 +1125,7 @@ body.desktop-mode #game-container {
 .level-up-new-title {
     font-size: 1.2em;
     color: #ffd700;
+    font-family: 'Rajdhani', sans-serif;
     margin-bottom: 12px;
 }
 
@@ -1133,6 +1137,7 @@ body.desktop-mode #game-container {
     font-weight: bold;
     margin-bottom: 16px;
     display: inline-block;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .level-up-reward {
@@ -1156,6 +1161,7 @@ body.desktop-mode #game-container {
     padding: 12px 32px;
     border-radius: 25px;
     font-size: 1.1em;
+    font-family: 'Orbitron', sans-serif;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4);

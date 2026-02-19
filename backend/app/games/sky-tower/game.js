@@ -1311,7 +1311,8 @@
             const isFullscreen = !!(document.fullscreenElement || 
                                    document.webkitFullscreenElement || 
                                    document.mozFullScreenElement || 
-                                   document.msRequestFullscreenElement);
+                                   document.msFullscreenElement ||
+                                   document.body.classList.contains('ios-game-fullscreen'));
             
             if (isFullscreen && !isMobile()) {
                 // In fullscreen on desktop: maintain mobile aspect ratio
@@ -2049,24 +2050,127 @@
                    (window.innerWidth <= 768);
         }
 
-        function requestFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
+        function toggleFullscreen() {
+            // Prefer Platform SDK if available (works on iOS!)
+            if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+                window.PlatformSDK.toggleFullscreen();
+                return;
             }
+
+            const elem = document.documentElement;
+            
+            // iOS/iPadOS detection
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+            const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+            
+            if ((isIOS || isIPadOS) && !fullscreenSupported) {
+                toggleIOSFullscreen();
+                return;
+            }
+            
+            const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+            if (!fsElement) {
+                const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+                if (requestFs) {
+                    const promise = requestFs.call(elem);
+                    if (promise && promise.then) {
+                        promise.then(() => {
+                            document.body.classList.add('game-fullscreen');
+                            handleFullscreenChange();
+                        }).catch(() => {
+                            toggleIOSFullscreen();
+                        });
+                    } else {
+                        document.body.classList.add('game-fullscreen');
+                        handleFullscreenChange();
+                    }
+                } else {
+                    toggleIOSFullscreen();
+                }
+            } else {
+                const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                if (exitFs) {
+                    const promise = exitFs.call(document);
+                    if (promise && promise.then) {
+                        promise.then(() => {
+                            document.body.classList.remove('game-fullscreen');
+                            handleFullscreenChange();
+                        }).catch(() => {});
+                    } else {
+                        document.body.classList.remove('game-fullscreen');
+                        handleFullscreenChange();
+                    }
+                }
+            }
+        }
+
+        // iOS Fullscreen CSS workaround
+        function toggleIOSFullscreen() {
+            const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
+            
+            if (isFullscreen) {
+                document.documentElement.classList.remove('ios-game-fullscreen');
+                document.body.classList.remove('ios-game-fullscreen');
+                document.body.classList.remove('game-fullscreen');
+                document.body.style.overflow = '';
+                const exitBtn = document.getElementById('ios-fs-exit');
+                if (exitBtn) exitBtn.remove();
+                updateFullscreenIcon();
+                onWindowResize();
+            } else {
+                document.documentElement.classList.add('ios-game-fullscreen');
+                document.body.classList.add('ios-game-fullscreen');
+                document.body.classList.add('game-fullscreen');
+                document.body.style.overflow = 'hidden';
+                createIOSExitButton();
+                updateFullscreenIcon();
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                    onWindowResize();
+                }, 100);
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                }, 300);
+            }
+        }
+
+        function createIOSExitButton() {
+            if (document.getElementById('ios-fs-exit')) return;
+            const btn = document.createElement('button');
+            btn.id = 'ios-fs-exit';
+            btn.innerHTML = '✕';
+            btn.setAttribute('aria-label', 'Exit fullscreen');
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleIOSFullscreen();
+            });
+            document.body.appendChild(btn);
+        }
+
+        function updateFullscreenIcon() {
+            const btn = document.getElementById('fullscreen-btn');
+            if (!btn) return;
+            const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body.classList.contains('ios-game-fullscreen');
+            btn.innerHTML = isFs
+              ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                 </svg>`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                 </svg>`;
         }
 
         function handleFullscreenChange() {
             const isFullscreen = !!(document.fullscreenElement || 
                                    document.webkitFullscreenElement || 
                                    document.mozFullScreenElement || 
-                                   document.msFullscreenElement);
+                                   document.msFullscreenElement ||
+                                   document.body.classList.contains('ios-game-fullscreen'));
+            
+            updateFullscreenIcon();
             
             if (isFullscreen && !isMobile()) {
                 // Desktop in fullscreen: force mobile aspect ratio (9:16)
@@ -2084,7 +2188,6 @@
                 renderer.domElement.style.transform = 'translate(-50%, -50%)';
                 
                 document.body.style.background = '#000';
-                
 
             } else {
                 // Exit fullscreen or mobile: restore normal size
@@ -2101,11 +2204,22 @@
             }
         }
 
+        // Fullscreen button
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+            });
+        }
+
         // Listen for fullscreen changes
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
+        updateFullscreenIcon();
 
         // ============================================
         // Input Handlers
@@ -2114,8 +2228,6 @@
             // Start game on first click
             if (!gameState.isPlaying && !event.target.closest('button')) {
                 startGame();
-                // Request fullscreen after starting game
-                setTimeout(() => requestFullscreen(), 100);
                 return;
             }
             
@@ -2137,8 +2249,6 @@
             if (!gameState.isPlaying && !event.target.closest('button')) {
                 event.preventDefault();
                 startGame();
-                // Request fullscreen after starting game
-                setTimeout(() => requestFullscreen(), 100);
                 return;
             }
             
@@ -2164,7 +2274,6 @@
                 // Start game if not playing
                 if (!gameState.isPlaying) {
                     startGame();
-                    setTimeout(() => requestFullscreen(), 100);
                     return;
                 }
                 

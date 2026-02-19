@@ -482,9 +482,7 @@ class ThemeManager {
     constructor() {
         this.currentTheme = MapThemes.classic;
         this.unlockedThemes = ['classic']; // Always includes classic
-        // Trust localStorage preference immediately so setupScene() uses correct theme
-        this.loadSelectedThemeFromCache();
-        // Load purchases from backend (source of truth) — async, will re-validate + apply
+        // Load purchases from backend (source of truth) — async, will re-validate
         this.syncPurchasesFromBackend();
     }
 
@@ -533,16 +531,10 @@ class ThemeManager {
             });
 
             // Re-validate selected theme against actual ownership
-            const prevThemeId = this.currentTheme.id;
-            this.loadSelectedTheme();
+            // Always start from classic map (don't restore last selected)
+            this.currentTheme = MapThemes.classic;
             console.log('[ThemeManager] Loaded purchases from backend:', this.unlockedThemes);
 
-            // If backend validation changed the theme (e.g. not actually owned), apply to live game
-            if (this.currentTheme.id !== prevThemeId) {
-                if (window.game && window.game.applyTheme) {
-                    window.game.applyTheme();
-                }
-            }
             this.updateStartScreenThemeInfo();
         } catch (e) {
             console.warn('[ThemeManager] Failed to load purchases from backend:', e);

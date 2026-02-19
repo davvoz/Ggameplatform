@@ -67,6 +67,108 @@
             letter-spacing: 2px;
         }
 
+        /* Fullscreen button */
+        #fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 6px;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        #fullscreen-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+            box-shadow: none;
+        }
+
+        #fullscreen-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ============ iOS Fullscreen CSS Fallback ============ */
+        html.ios-game-fullscreen,
+        html.ios-game-fullscreen body {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            -webkit-overflow-scrolling: auto !important;
+        }
+        html.ios-game-fullscreen body {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            min-height: -webkit-fill-available !important;
+        }
+        .ios-game-fullscreen canvas {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            height: -webkit-fill-available !important;
+        }
+        .ios-game-fullscreen #fullscreen-btn {
+            position: fixed !important;
+            top: max(10px, env(safe-area-inset-top)) !important;
+            right: max(10px, env(safe-area-inset-right)) !important;
+            z-index: 9999998 !important;
+        }
+        .ios-game-fullscreen #gameContainer,
+        .ios-game-fullscreen #scoreDisplay,
+        .ios-game-fullscreen #gameStats,
+        .ios-game-fullscreen #startInstructions,
+        .ios-game-fullscreen #restartPrompt,
+        .ios-game-fullscreen #comboIndicator {
+            z-index: 1000000 !important;
+        }
+        .ios-game-fullscreen .game-xp-banner {
+            z-index: 1000000 !important;
+        }
+        .ios-game-fullscreen .level-up-modal {
+            z-index: 1000000 !important;
+        }
+        #ios-fs-exit {
+            position: fixed !important;
+            top: max(10px, env(safe-area-inset-top)) !important;
+            right: max(55px, calc(env(safe-area-inset-right) + 50px)) !important;
+            z-index: 9999999 !important;
+            background: rgba(0,0,0,0.7) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 50% !important;
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 24px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            -webkit-tap-highlight-color: transparent;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+
         #perfectCounter {
             position: absolute;
             top: 30px;
@@ -630,6 +732,13 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@23.1.1/dist/tween.umd.js"></script>
     <script src="/sdk/platformsdk.obf.js"></script>
+    <!-- Fullscreen Button -->
+    <button id="fullscreen-btn" title="Fullscreen" aria-label="Fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+    </button>
+    
     <div id="gameContainer">
         <div id="scoreDisplay">
             <div class="main-score" id="scoreValue">0</div>

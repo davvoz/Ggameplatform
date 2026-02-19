@@ -160,6 +160,7 @@ async def list_games(
                 tags=game['tags'],
                 status_id=game.get('status_id'),
                 status=game.get('status'),
+                active_campaign=game.get('active_campaign'),
                 created_at=game['created_at'],
                 updated_at=game['updated_at'],
                 metadata=game['metadata']

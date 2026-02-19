@@ -142,6 +142,7 @@ class GameResponse(BaseModel):
     status_id: Optional[int]
     status: Optional[GameStatusResponse]
     steem_rewards_enabled: bool = False
+    active_campaign: Optional[Dict[str, Any]] = None
     created_at: str
     updated_at: str
     metadata: Dict[str, Any]
@@ -670,3 +671,49 @@ class WeeklyWinnerResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
+# ==================== CAMPAIGNS ====================
+
+class CampaignCreate(BaseModel):
+    """Schema for creating a campaign."""
+    name: str = Field(..., max_length=100)
+    description: Optional[str] = ''
+    game_id: str
+    xp_multiplier: float = Field(1.5, ge=1.0)
+    start_date: str
+    end_date: str
+    is_active: Optional[bool] = True
+    badge_label: Optional[str] = Field('CAMPAIGN', max_length=30)
+    badge_color: Optional[str] = Field('#ff6b00', max_length=7)
+
+
+class CampaignUpdate(BaseModel):
+    """Schema for updating a campaign."""
+    name: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = None
+    game_id: Optional[str] = None
+    xp_multiplier: Optional[float] = Field(None, ge=1.0)
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    is_active: Optional[bool] = None
+    badge_label: Optional[str] = Field(None, max_length=30)
+    badge_color: Optional[str] = Field(None, max_length=7)
+
+
+class CampaignResponse(BaseModel):
+    """Schema for campaign response."""
+    campaign_id: int
+    name: str
+    description: str
+    game_id: str
+    xp_multiplier: float
+    start_date: str
+    end_date: str
+    is_active: bool
+    badge_label: str
+    badge_color: str
+    created_at: str
+    updated_at: str
+    
+    class Config:
+        orm_mode = True

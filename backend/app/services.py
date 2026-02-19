@@ -22,9 +22,9 @@ from app.repositories import (
     GameStatusRepository,
     UserCoinsRepository,
     CoinTransactionRepository,
-
+    CampaignRepository,
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, Campaign
 
 
 class ValidationError(Exception):
@@ -652,6 +652,71 @@ class CoinService:
         return None
 
 
+class CampaignService(BaseService):
+    """Service for Campaign business logic"""
+    
+    def __init__(self, repository: CampaignRepository):
+        super().__init__(repository)
+        self.repository: CampaignRepository = repository
+    
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new campaign with validation"""
+        required_fields = ['name', 'game_id', 'start_date', 'end_date']
+        for field in required_fields:
+            if field not in data:
+                raise ValidationError(f"Missing required field: {field}")
+        
+        if data.get('xp_multiplier', 1.0) < 1.0:
+            raise ValidationError("XP multiplier must be >= 1.0")
+        
+        now = datetime.utcnow().isoformat()
+        campaign = Campaign(
+            name=data['name'],
+            description=data.get('description', ''),
+            game_id=data['game_id'],
+            xp_multiplier=data.get('xp_multiplier', 1.5),
+            start_date=data['start_date'],
+            end_date=data['end_date'],
+            is_active=1 if data.get('is_active', True) else 0,
+            badge_label=data.get('badge_label', 'CAMPAIGN'),
+            badge_color=data.get('badge_color', '#ff6b00'),
+            created_at=now,
+            updated_at=now
+        )
+        created = self.repository.create(campaign)
+        return created.to_dict()
+    
+    def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update a campaign"""
+        if 'xp_multiplier' in data and data['xp_multiplier'] < 1.0:
+            raise ValidationError("XP multiplier must be >= 1.0")
+        
+        data['updated_at'] = datetime.utcnow().isoformat()
+        if 'is_active' in data:
+            data['is_active'] = 1 if data['is_active'] else 0
+        
+        obj = self.repository.update(id_value, data)
+        return obj.to_dict() if obj else None
+    
+    def get_active_for_game(self, game_id: str) -> List[Dict[str, Any]]:
+        """Get currently active campaigns for a game"""
+        campaigns = self.repository.get_active_for_game(game_id)
+        return [c.to_dict() for c in campaigns]
+    
+    def get_all_active(self) -> List[Dict[str, Any]]:
+        """Get all currently active campaigns"""
+        campaigns = self.repository.get_all_active()
+        return [c.to_dict() for c in campaigns]
+    
+    def get_campaign_multiplier(self, game_id: str) -> float:
+        """Get combined XP multiplier for a game from active campaigns.
+        Returns the highest multiplier among active campaigns (no stacking)."""
+        campaigns = self.repository.get_active_for_game(game_id)
+        if not campaigns:
+            return 1.0
+        return max(c.xp_multiplier for c in campaigns)
+
+
 class ServiceFactory:
     """
     Factory Pattern for creating services
@@ -696,3 +761,7 @@ class ServiceFactory:
         transaction_repository: CoinTransactionRepository
     ) -> CoinService:
         return CoinService(coins_repository, transaction_repository)
+    
+    @staticmethod
+    def create_campaign_service(repository: CampaignRepository) -> CampaignService:
+        return CampaignService(repository)

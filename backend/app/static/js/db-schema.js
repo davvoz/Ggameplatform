@@ -871,6 +871,52 @@ const DB_SCHEMA = {
         },
         
         erPosition: { x: 50, y: 650 }
+    },
+    
+    campaigns: {
+        tableName: 'campaigns',
+        label: 'Campagne',
+        icon: '🎯',
+        color: '#ff6b00',
+        apiEndpoint: 'campaigns',
+        dataKey: 'campaigns',
+        
+        primaryKey: 'campaign_id',
+        foreignKeys: {
+            game_id: { table: 'games', field: 'game_id' }
+        },
+        
+        fields: {
+            campaign_id: { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            name: { ...FIELD_TYPES.STRING, label: 'Nome', required: true },
+            description: { ...FIELD_TYPES.TEXT, label: 'Descrizione' },
+            game_id: { ...FIELD_TYPES.STRING, label: 'Gioco', required: true, fk: 'games.game_id' },
+            xp_multiplier: { ...FIELD_TYPES.FLOAT, label: 'XP Multiplier', default: 1.5 },
+            start_date: { ...FIELD_TYPES.DATETIME, label: 'Inizio', required: true },
+            end_date: { ...FIELD_TYPES.DATETIME, label: 'Fine', required: true },
+            is_active: { ...FIELD_TYPES.IS_ACTIVE, label: 'Attiva' },
+            badge_label: { ...FIELD_TYPES.STRING, label: 'Badge Label', default: 'CAMPAIGN' },
+            badge_color: { ...FIELD_TYPES.STRING, label: 'Badge Color', default: '#ff6b00' },
+            created_at: { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' },
+            updated_at: { ...FIELD_TYPES.UPDATED_AT, label: 'Aggiornato il' }
+        },
+        
+        tableColumns: ['campaign_id', 'name', 'game_id', 'xp_multiplier', 'is_active', 'start_date', 'end_date', 'actions'],
+        
+        columnConfig: {
+            campaign_id: { width: '60px' },
+            name: { searchable: true, style: 'font-weight: 600;' },
+            game_id: { searchable: true },
+            xp_multiplier: { type: 'custom', render: (value) => ({
+                type: 'html',
+                content: `<span style="color: #ff6b00; font-weight: bold;">×${value}</span>`
+            })},
+            is_active: { type: 'custom', render: RENDERERS.booleanStatus('✅ Attiva', '❌ Inattiva') },
+            start_date: { type: 'date' },
+            end_date: { type: 'date' }
+        },
+        
+        erPosition: { x: 400, y: 50 }
     }
 };
 

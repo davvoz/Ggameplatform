@@ -1,8 +1,17 @@
 {
-  "version": "3.32.4",
-  "timestamp": "2026-02-19T21:24:28.596Z",
-  "buildNumber": 414,
+  "version": "3.32.5",
+  "timestamp": "2026-02-19T21:55:39.376Z",
+  "buildNumber": 415,
   "changelog": [
+    {
+      "version": "3.32.5",
+      "date": "2026-02-19",
+      "type": "patch",
+      "changes": [
+        "fix: [Space Shooter] update coin icon from diamond to coin in shop and continue button",
+        "🔖 Bump version to 3.32.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.4",
       "date": "2026-02-19",
@@ -87,15 +96,6 @@
       "changes": [
         "fix: [Blocky Road] Improve coin spawning logic and rendering for better visibility",
         "🔖 Bump version to 3.29.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.29.2",
-      "date": "2026-02-18",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]implement XP and level-up notifications in Space Shooter 2",
-        "🔖 Bump version to 3.29.1 [skip-version]"
       ]
     }
   ]

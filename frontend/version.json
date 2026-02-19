@@ -1,8 +1,18 @@
 {
-  "version": "3.30.0",
-  "timestamp": "2026-02-19T00:43:09.950Z",
-  "buildNumber": 408,
+  "version": "3.31.0",
+  "timestamp": "2026-02-19T01:12:17.801Z",
+  "buildNumber": 409,
   "changelog": [
+    {
+      "version": "3.31.0",
+      "date": "2026-02-19",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "feat: [Blocky Road] Implement theme management and customization for Blocky Road",
+        "🔖 Bump version to 3.30.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.30.0",
       "date": "2026-02-19",
@@ -83,15 +93,6 @@
       "changes": [
         "feat: add game legend filter buttons and functionality to CommunityStatsRenderer",
         "🔖 Bump version to 3.26.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.26.0",
-      "date": "2026-02-17",
-      "type": "minor",
-      "changes": [
-        "feat: add CommunityStatsAPI and CommunityStatsRenderer for community analytics",
-        "🔖 Bump version to 3.25.3 [skip-version]"
       ]
     }
   ]

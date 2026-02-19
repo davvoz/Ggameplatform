@@ -601,12 +601,13 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         if active_campaigns:
             campaign_multiplier = max(c.xp_multiplier for c in active_campaigns)
             xp_earned = round(xp_earned * campaign_multiplier, 2)
-            print(f"[DB] 🎯 Campaign active! Multiplier: {campaign_multiplier}x → XP: {xp_earned}")
+            print(f"[DB] \U0001f3af Campaign active! Multiplier: {campaign_multiplier}x \u2192 XP: {xp_earned}")
         
         xp_result['campaign_multiplier'] = campaign_multiplier
         xp_result['total_xp'] = xp_earned
         
-        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)})")
+        map_mult = xp_result.get('map_multiplier', 1.0)
+        print(f"[DB] XP calculated: {xp_earned} (base: {xp_result.get('base_xp', 0)}, user_mult: {multiplier}, map_mult: {map_mult}, campaign_mult: {campaign_multiplier})")
         print(f"[DB] Metrics: levels={session_extra_data.get('levels_completed', 0)}, distance={session_extra_data.get('distance', 0)}")
         
         # Update session
@@ -622,6 +623,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         extra_data['xp_breakdown'] = xp_result['rule_breakdown']
         extra_data['campaign_multiplier'] = campaign_multiplier
         extra_data['base_xp'] = xp_result['base_xp']
+        extra_data['map_multiplier'] = xp_result.get('map_multiplier', 1.0)
         game_session.extra_data = json.dumps(extra_data)
         
         # Update user's total XP and check for level up
@@ -725,7 +727,6 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
     # No need to manually recalculate ranks here
     
     print(f"[DB] end_game_session completed successfully - XP earned: {xp_earned}")
-    return result
     return result
 
 def get_user_sessions(user_id: str, limit: int = 10) -> List[dict]:

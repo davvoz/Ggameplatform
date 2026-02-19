@@ -433,7 +433,7 @@ class ObstacleManager {
         // OTTIMIZZAZIONE: Crea un gruppo per tutto il treno (1 scene.add invece di 12)
         const trainGroup = new THREE.Group();
         const totalCars = 8; // reduced from 12 to lower per-train cost on mobile
-        const carSpacing = 1.5;
+        const carSpacing = 2.3; // Must be >= car body length (2.0) after 90° rotation to avoid overlap
         
         // Crea locomotiva
         const locomotive = Models.createTrain(trainColor);

@@ -1,8 +1,17 @@
 {
-  "version": "3.32.1",
-  "timestamp": "2026-02-19T11:21:28.754Z",
-  "buildNumber": 411,
+  "version": "3.32.2",
+  "timestamp": "2026-02-19T11:53:42.631Z",
+  "buildNumber": 412,
   "changelog": [
+    {
+      "version": "3.32.2",
+      "date": "2026-02-19",
+      "type": "patch",
+      "changes": [
+        "fix: add notification badge to Chat tab and improve message visibility handling",
+        "🔖 Bump version to 3.32.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.1",
       "date": "2026-02-19",
@@ -86,15 +95,6 @@
       "changes": [
         "feat: add top achievers feature with detailed breakdown",
         "🔖 Bump version to 3.28.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.28.0",
-      "date": "2026-02-17",
-      "type": "minor",
-      "changes": [
-        "feat: add user avatar rendering and session storage for active tab in CommunityManager",
-        "🔖 Bump version to 3.27.1 [skip-version]"
       ]
     }
   ]

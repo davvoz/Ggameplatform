@@ -1,8 +1,17 @@
 {
-  "version": "3.32.2",
-  "timestamp": "2026-02-19T11:53:42.631Z",
-  "buildNumber": 412,
+  "version": "3.32.3",
+  "timestamp": "2026-02-19T19:17:51.701Z",
+  "buildNumber": 413,
   "changelog": [
+    {
+      "version": "3.32.3",
+      "date": "2026-02-19",
+      "type": "patch",
+      "changes": [
+        "fix: [Blocky Road] implement fullscreen functionality and improve UI responsiveness",
+        "🔖 Bump version to 3.32.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.2",
       "date": "2026-02-19",
@@ -86,15 +95,6 @@
       "changes": [
         "fix:[SS2]Optimize performance across various systems",
         "🔖 Bump version to 3.29.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.29.0",
-      "date": "2026-02-17",
-      "type": "minor",
-      "changes": [
-        "feat: add top achievers feature with detailed breakdown",
-        "🔖 Bump version to 3.28.0 [skip-version]"
       ]
     }
   ]

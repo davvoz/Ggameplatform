@@ -765,7 +765,7 @@ class Game {
                         <div class="upgrade-desc">${option.description}</div>
                     </div>
                     <div class="shop-price-tag">
-                        <span class="shop-price-icon">💎</span>
+                        <span class="shop-price-icon">🪙</span>
                         <span class="shop-price-amount">${this.SHOP_UPGRADE_COST}</span>
                     </div>
                 `;

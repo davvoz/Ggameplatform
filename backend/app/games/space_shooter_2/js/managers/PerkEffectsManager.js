@@ -60,9 +60,10 @@ class PerkEffectsManager {
                 if (!perks.droneFireTimers[i]) perks.droneFireTimers[i] = 0;
                 perks.droneFireTimers[i] -= deltaTime;
                 if (perks.droneFireTimers[i] <= 0) {
-                    perks.droneFireTimers[i] = 1.2;
+                    perks.droneFireTimers[i] = 2.5; // slower fire rate for missiles
+                    // Find nearest enemy at any range
                     let nearest = null;
-                    let nearDist = 200;
+                    let nearDist = Infinity;
                     for (const e of g.entityManager.enemies) {
                         if (!e.active) continue;
                         const ex = e.position.x + e.width / 2;
@@ -86,8 +87,7 @@ class PerkEffectsManager {
                         const tx = nearest.position.x + nearest.width / 2;
                         const ty = nearest.position.y + nearest.height / 2;
                         const a = Math.atan2(ty - dy, tx - dx);
-                        const speed = 400;
-                        g.entityManager.spawnBullet(dx, dy, Math.cos(a) * speed, Math.sin(a) * speed, 'player', 1);
+                        g.entityManager.spawnHomingMissile(dx, dy, a);
                     }
                 }
             }

@@ -18,6 +18,7 @@ from app.routers import push_notifications
 from app.routers import campaigns
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.games.briscola_be.router import router as briscola_router
+#from app.games.city_world_be.router import router as city_world_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -182,6 +183,7 @@ app.include_router(community.rest_router, tags=["community-api"])
 app.include_router(community_stats.router, tags=["community-stats"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 app.include_router(briscola_router, tags=["Briscola Multiplayer"])
+#app.include_router(city_world_router, tags=["City World"])
 app.include_router(push_notifications.router, tags=["push-notifications"])
 app.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])
 

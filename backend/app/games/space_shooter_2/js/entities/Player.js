@@ -55,23 +55,23 @@ import GameObject from './GameObject.js';
     nova_blast: {
         id: 'nova_blast',
         name: 'Nova Blast',
-        icon: '💥',
+        icon: '✸',
         description: 'Releases a devastating explosion that damages all enemies on screen.',
         color: '#ff6600',
         chargeNeeded: 100
     },
     shield_dome: {
         id: 'shield_dome',
-        name: 'Shield Dome',
-        icon: '🛡️',
-        description: 'Deploys an invincible energy dome for 6 seconds.',
-        color: '#44aaff',
+        name: 'Invincibility',
+        icon: '◆',
+        description: 'Become invincible for 6 seconds. Charge freezes during effect.',
+        color: '#ffd700',
         chargeNeeded: 100
     },
     time_warp: {
         id: 'time_warp',
         name: 'Time Warp',
-        icon: '⏳',
+        icon: '⧖',
         description: 'Slows all enemies to 25% speed for 5 seconds.',
         color: '#aa44ff',
         chargeNeeded: 100
@@ -79,17 +79,17 @@ import GameObject from './GameObject.js';
     missile_storm: {
         id: 'missile_storm',
         name: 'Missile Storm',
-        icon: '🚀',
-        description: 'Launches 12 homing missiles that seek out enemies.',
+        icon: '☄',
+        description: 'Launches 16 homing missiles that seek out enemies.',
         color: '#ff4444',
         chargeNeeded: 100
     },
     quantum_shift: {
         id: 'quantum_shift',
-        name: 'Quantum Shift',
-        icon: '⚡',
-        description: 'Teleport forward dealing massive damage to all enemies in path.',
-        color: '#ffdd00',
+        name: 'Bullet Reflect',
+        icon: '⟲',
+        description: 'All enemy bullets bounce back for 4 seconds, damaging enemies.',
+        color: '#00ddff',
         chargeNeeded: 100
     }
 };
@@ -157,12 +157,11 @@ class Player extends GameObject {
         const base = this.shipData.stats;
         const bonus = this.bonusStats;
 
-        const effectiveHP = base.hp + bonus.hp;
         const effectiveSpeed = base.speed + bonus.speed;
         const effectiveResist = base.resist + bonus.resist;
         const effectiveFireRate = base.fireRate + bonus.fireRate;
 
-        this.maxHealth = Math.floor(2 + effectiveHP * 0.8); // 2-10 HP range
+        this.maxHealth = Math.floor(2 + base.hp * 0.8) + bonus.hp; // base 2-10 HP + flat bonus
         this.baseSpeed = 150 + effectiveSpeed * 25;         // 175-400 speed
         this.speed = this.baseSpeed;
         this.resistance = Math.min(0.6, effectiveResist * 0.04); // 0-60% damage reduction
@@ -190,9 +189,27 @@ class Player extends GameObject {
         // Ultimate timer
         if (this.ultimateActive) {
             this.ultimateTimer -= deltaTime;
+
+            // Nova Blast: track animation time
+            if (this.ultimateId === 'nova_blast') {
+                this._novaTime = (this._novaTime || 0) + deltaTime;
+            }
+
+            // Bullet Reflect: track animation time
+            if (this.ultimateId === 'quantum_shift' && this._bulletReflectActive) {
+                this._bulletReflectTime = (this._bulletReflectTime || 0) + deltaTime;
+            }
+
             if (this.ultimateTimer <= 0) {
                 this.endUltimate(game);
             }
+        }
+
+        // Time-based ultimate cooldown: 30 seconds base, affected by Ultimate Engine perk
+        // Charge accumulates always EXCEPT during Invincibility ultimate (frozen while active)
+        if (this.ultimateCharge < 100 && !(this._invincibilityUlt && this.ultimateActive)) {
+            const chargeRate = (100 / 30) * (game.perkSystem ? game.perkSystem.getUltChargeMultiplier() : 1);
+            this.ultimateCharge = Math.min(100, this.ultimateCharge + chargeRate * deltaTime);
         }
 
         // Shield timer
@@ -260,7 +277,7 @@ class Player extends GameObject {
             this.speedBoostTime -= deltaTime;
             if (this.speedBoostTime <= 0) {
                 this.speedBoost = false;
-                this.speed = this.baseSpeed;
+                this.speed = this.baseSpeed * (game.perkSystem ? game.perkSystem.getSpeedMultiplier() : 1);
             }
         }
 
@@ -340,6 +357,7 @@ class Player extends GameObject {
             }
             return false;
         }
+        // Invincibility ultimate blocks all damage
         if (this.ultimateActive && this.ultimateId === 'shield_dome') return false;
 
         // Apply resistance
@@ -383,7 +401,8 @@ class Player extends GameObject {
 
         switch (this.ultimateId) {
             case 'nova_blast':
-                this.ultimateTimer = 0.5;
+                this.ultimateTimer = 1.2;
+                this._novaTime = 0; // track animation progress
                 // Damage all enemies on screen
                 for (const enemy of game.enemies) {
                     if (enemy.active) {
@@ -401,12 +420,18 @@ class Player extends GameObject {
                     game.boss.takeDamage(10, game);
                     game.particles.emit(game.boss.position.x + game.boss.width / 2, game.boss.position.y + game.boss.height / 2, 'explosion', 15);
                 }
-                game.postProcessing.shake(12, 0.4);
-                // Nova visual ring will be rendered in render()
+                game.postProcessing.shake(15, 0.8);
+                game.postProcessing.flash({ r: 255, g: 120, b: 0 }, 0.6);
                 break;
 
             case 'shield_dome':
+                // Invincibility: 6 seconds, charge is frozen during effect
                 this.ultimateTimer = 6;
+                this.invincible = true;
+                this.invincibleTime = 6;
+                this._invincibilityUlt = true; // flag for visual + charge freeze
+                game.postProcessing.flash({ r: 255, g: 215, b: 0 }, 0.5);
+                game.postProcessing.shake(6, 0.3);
                 break;
 
             case 'time_warp':
@@ -415,10 +440,10 @@ class Player extends GameObject {
                 break;
 
             case 'missile_storm':
-                this.ultimateTimer = 1;
-                // Spawn 12 homing missiles
-                for (let i = 0; i < 12; i++) {
-                    const angle = -Math.PI / 2 + (i - 5.5) * 0.15;
+                this.ultimateTimer = 1.2;
+                // Spawn 16 homing missiles with shorter delay
+                for (let i = 0; i < 16; i++) {
+                    const angle = -Math.PI / 2 + (i - 7.5) * 0.12;
                     setTimeout(() => {
                         if (game.player && game.player.active) {
                             game.spawnHomingMissile(
@@ -427,38 +452,17 @@ class Player extends GameObject {
                                 angle
                             );
                         }
-                    }, i * 60);
+                    }, i * 40); // 40ms instead of 60ms
                 }
                 break;
 
             case 'quantum_shift':
-                this.ultimateTimer = 0.3;
-                this.invincible = true;
-                this.invincibleTime = 0.5;
-                // Teleport forward and damage in path
-                const startY = this.position.y;
-                const endY = 50;
-                for (const enemy of game.enemies) {
-                    if (enemy.active &&
-                        Math.abs(enemy.position.x + enemy.width / 2 - this.position.x - this.width / 2) < 60 &&
-                        enemy.position.y > endY && enemy.position.y < startY) {
-                        enemy.takeDamage(8, game);
-                        game.particles.emit(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 'spark', 10);
-                    }
-                }
-                // Also damage mini-boss in path
-                if (game.miniBoss && game.miniBoss.active && !game.miniBoss.entering) {
-                    const mbCX = game.miniBoss.position.x + game.miniBoss.width / 2;
-                    const mbCY = game.miniBoss.position.y + game.miniBoss.height / 2;
-                    if (Math.abs(mbCX - this.position.x - this.width / 2) < 80 && mbCY > endY && mbCY < startY) {
-                        game.miniBoss.takeDamage(8, game);
-                        game.particles.emit(mbCX, mbCY, 'spark', 10);
-                    }
-                }
-                // Teleport effect
-                game.particles.emit(this.position.x + this.width / 2, this.position.y + this.height / 2, 'spark', 20);
-                this.position.y = endY;
-                game.particles.emit(this.position.x + this.width / 2, this.position.y + this.height / 2, 'spark', 20);
+                // Bullet Reflect: 4 seconds of reflecting enemy bullets
+                this.ultimateTimer = 4;
+                this._bulletReflectActive = true;
+                this._bulletReflectTime = 0;
+                game.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.4);
+                game.postProcessing.shake(6, 0.3);
                 break;
         }
     }
@@ -466,8 +470,19 @@ class Player extends GameObject {
     endUltimate(game) {
         this.ultimateActive = false;
         if (this.ultimateId === 'time_warp') {
-            game.timeScale = 1;
+            // Only reset timeScale if emergency protocol slow-mo isn't active
+            if (!game.perkEffectsManager || game.perkEffectsManager._emergencySlowTimer <= 0) {
+                game.timeScale = 1;
+            }
         }
+        if (this.ultimateId === 'shield_dome') {
+            this._invincibilityUlt = false;
+            // Don't cancel invincible immediately; let natural timer run out
+        }
+        if (this.ultimateId === 'quantum_shift') {
+            this._bulletReflectActive = false;
+        }
+        this._novaTime = 0;
     }
 
     render(ctx, assets, perkSystem) {
@@ -622,13 +637,12 @@ class Player extends GameObject {
         }
 
         // ── SHIELD VISUAL ──
-        if (this.shieldActive || (this.ultimateActive && this.ultimateId === 'shield_dome')) {
+        if (this.shieldActive) {
             ctx.save();
             const now = Date.now();
             const shieldPulse = 0.45 + 0.2 * Math.sin(now * 0.005);
-            const isUlt = this.ultimateActive && this.ultimateId === 'shield_dome';
-            const shieldColor = isUlt ? '#ffd700' : '#44aaff';
-            const shieldColorInner = isUlt ? 'rgba(255,215,0,' : 'rgba(68,170,255,';
+            const shieldColor = '#44aaff';
+            const shieldColorInner = 'rgba(68,170,255,';
             const shieldR = 54;
 
             // Outer glow ring
@@ -685,13 +699,225 @@ class Player extends GameObject {
             }
 
             // Shield about to expire warning — blink faster in last 2s
-            if (this.shieldActive && this.shieldTime <= 2) {
+            if (this.shieldTime <= 2) {
                 const blinkRate = 0.5 + 0.5 * Math.sin(now * 0.02);
                 ctx.globalAlpha = blinkRate * 0.3;
                 ctx.strokeStyle = '#ff6644';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(cx, cy, shieldR + 4, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // ── INVINCIBILITY ULTIMATE VISUAL ──
+        if (this._invincibilityUlt && this.ultimateActive && this.ultimateId === 'shield_dome') {
+            ctx.save();
+            const now = Date.now();
+            const pulse = 0.6 + 0.3 * Math.sin(now * 0.008);
+            const auraPulse = 0.8 + 0.2 * Math.sin(now * 0.006);
+            const auraR = 50 + 8 * auraPulse;
+
+            // Golden radial glow
+            const goldGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, auraR);
+            goldGrad.addColorStop(0, 'rgba(255,215,0,0.25)');
+            goldGrad.addColorStop(0.5, 'rgba(255,180,0,0.10)');
+            goldGrad.addColorStop(1, 'rgba(255,150,0,0)');
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = goldGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outer golden ring
+            ctx.globalAlpha = pulse * 0.9;
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Spinning golden arcs
+            ctx.shadowBlur = 10;
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i < 4; i++) {
+                const aStart = (i * Math.PI / 2) + now * 0.004;
+                const aEnd = aStart + Math.PI * 0.3;
+                ctx.globalAlpha = pulse * 0.8;
+                ctx.strokeStyle = '#ffe066';
+                ctx.beginPath();
+                ctx.arc(cx, cy, auraR - 4, aStart, aEnd);
+                ctx.stroke();
+            }
+
+            // Rising golden particles
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + now * 0.002;
+                const dist = 30 + 15 * Math.sin(now * 0.005 + i * 0.8);
+                const px = cx + Math.cos(angle) * dist;
+                const py = cy + Math.sin(angle) * dist - 5 * Math.sin(now * 0.003 + i);
+                ctx.globalAlpha = pulse * 0.7;
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(px, py, 1.5 + Math.sin(now * 0.01 + i) * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Timer warning: blink in last 2s
+            if (this.ultimateTimer <= 2) {
+                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
+                ctx.globalAlpha = blink * 0.4;
+                ctx.strokeStyle = '#ff4400';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, auraR + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // ── NOVA BLAST SHOCKWAVE VISUAL ──
+        if (this.ultimateActive && this.ultimateId === 'nova_blast' && this._novaTime > 0) {
+            ctx.save();
+            const t = this._novaTime;
+            const duration = 1.2;
+            const progress = Math.min(t / duration, 1);
+
+            // Multiple expanding rings
+            for (let ring = 0; ring < 3; ring++) {
+                const ringDelay = ring * 0.15;
+                const ringProgress = Math.max(0, Math.min((t - ringDelay) / (duration - ringDelay), 1));
+                if (ringProgress <= 0) continue;
+
+                const maxRadius = 400 + ring * 80;
+                const radius = ringProgress * maxRadius;
+                const alpha = (1 - ringProgress) * (0.7 - ring * 0.15);
+
+                // Ring glow
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = ring === 0 ? '#ff6600' : ring === 1 ? '#ff4400' : '#ff2200';
+                ctx.lineWidth = (8 - ring * 2) * (1 - ringProgress * 0.5);
+                ctx.shadowColor = '#ff8800';
+                ctx.shadowBlur = 20 - ring * 5;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Inner fill for first ring
+                if (ring === 0 && ringProgress < 0.5) {
+                    const fillGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    fillGrad.addColorStop(0, 'rgba(255,200,50,0.3)');
+                    fillGrad.addColorStop(0.7, 'rgba(255,100,0,0.1)');
+                    fillGrad.addColorStop(1, 'rgba(255,60,0,0)');
+                    ctx.globalAlpha = alpha * 0.5;
+                    ctx.fillStyle = fillGrad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Central flash (bright white → orange fade)
+            if (progress < 0.3) {
+                const flashAlpha = (1 - progress / 0.3) * 0.8;
+                const flashR = 30 + progress * 200;
+                const flashGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashR);
+                flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
+                flashGrad.addColorStop(0.4, `rgba(255,200,50,${flashAlpha * 0.5})`);
+                flashGrad.addColorStop(1, 'rgba(255,100,0,0)');
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = flashGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, flashR, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // ── BULLET REFLECT VISUAL ──
+        if (this._bulletReflectActive && this.ultimateActive && this.ultimateId === 'quantum_shift') {
+            ctx.save();
+            const now = Date.now();
+            const t = this._bulletReflectTime || 0;
+            const pulse = 0.5 + 0.3 * Math.sin(now * 0.007);
+            const reflectR = 48 + 4 * Math.sin(now * 0.005);
+
+            // Cyan energy field
+            const fieldGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, reflectR);
+            fieldGrad.addColorStop(0, 'rgba(0,220,255,0.05)');
+            fieldGrad.addColorStop(0.6, 'rgba(0,180,255,0.08)');
+            fieldGrad.addColorStop(1, 'rgba(0,150,255,0.15)');
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = fieldGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outer cyan ring
+            ctx.strokeStyle = '#00ddff';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#00ccff';
+            ctx.shadowBlur = 12;
+            ctx.globalAlpha = pulse * 0.9;
+            ctx.beginPath();
+            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Counter-rotating arc pairs
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                // Clockwise arcs
+                const a1 = (i * Math.PI * 2 / 3) + now * 0.005;
+                ctx.globalAlpha = pulse * 0.7;
+                ctx.strokeStyle = '#66eeff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, reflectR - 3, a1, a1 + Math.PI * 0.3);
+                ctx.stroke();
+                // Counter-clockwise arcs
+                const a2 = (i * Math.PI * 2 / 3) - now * 0.003;
+                ctx.globalAlpha = pulse * 0.5;
+                ctx.strokeStyle = '#00aadd';
+                ctx.beginPath();
+                ctx.arc(cx, cy, reflectR + 4, a2, a2 + Math.PI * 0.25);
+                ctx.stroke();
+            }
+
+            // Reflect arrow indicators
+            ctx.shadowBlur = 0;
+            const arrowCount = 6;
+            for (let i = 0; i < arrowCount; i++) {
+                const angle = (i / arrowCount) * Math.PI * 2 + now * 0.002;
+                const ar = reflectR - 8;
+                const ax = cx + Math.cos(angle) * ar;
+                const ay = cy + Math.sin(angle) * ar;
+                const inAngle = angle + Math.PI; // pointing inward then reversing
+                ctx.globalAlpha = pulse * 0.6;
+                ctx.fillStyle = '#00ffff';
+                ctx.beginPath();
+                // Small arrow pointing outward (reflected)
+                const aLen = 5;
+                ctx.moveTo(ax + Math.cos(angle) * aLen, ay + Math.sin(angle) * aLen);
+                ctx.lineTo(ax + Math.cos(angle + 2.5) * 3, ay + Math.sin(angle + 2.5) * 3);
+                ctx.lineTo(ax + Math.cos(angle - 2.5) * 3, ay + Math.sin(angle - 2.5) * 3);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Timer warning: blink in last 1.5s
+            if (this.ultimateTimer <= 1.5) {
+                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
+                ctx.globalAlpha = blink * 0.4;
+                ctx.strokeStyle = '#ff4400';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, reflectR + 6, 0, Math.PI * 2);
                 ctx.stroke();
             }
 

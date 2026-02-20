@@ -29,7 +29,6 @@ class LevelManager {
 
         g.scoreManager.totalPoints += bonusPoints;
         g.scoreManager.score += bonusPoints;
-        this.levelPointsEarned += bonusPoints;
 
         this.summaryData = {
             level: this.currentLevel,

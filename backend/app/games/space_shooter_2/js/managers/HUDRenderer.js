@@ -92,10 +92,15 @@ class HUDRenderer {
             ctx.font = `${9 * fs}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillStyle = '#fff';
-            ctx.fillText(
-                charge >= 1 ? `${player.ultimateData.icon} READY! [Q]` : `${player.ultimateData.icon} ${Math.floor(player.ultimateCharge)}%`,
-                w / 2, ultBarY - 3
-            );
+            let ultLabel;
+            if (charge >= 1) {
+                ultLabel = `${player.ultimateData.icon} READY! [Q]`;
+            } else {
+                const chargeRate = (100 / 30) * (g.perkSystem ? g.perkSystem.getUltChargeMultiplier() : 1);
+                const secsLeft = Math.ceil((100 - player.ultimateCharge) / chargeRate);
+                ultLabel = `${player.ultimateData.icon} ${secsLeft}s`;
+            }
+            ctx.fillText(ultLabel, w / 2, ultBarY - 3);
         }
 
         const activePerks = g.perkSystem.getActivePerks();

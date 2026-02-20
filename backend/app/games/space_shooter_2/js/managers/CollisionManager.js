@@ -177,9 +177,30 @@ class CollisionManager {
             const playerRadius = Math.min(player.width, player.height) * player.scale / 2;
             const phaseChance = perks.getPhaseChance();
             const dmgConverterRate = perks.getDamageConverterRate();
+            const bulletReflectActive = player._bulletReflectActive && player.ultimateActive && player.ultimateId === 'quantum_shift';
+            const reflectRadius = 52; // slightly larger than the visual
 
             for (const bullet of entities.bullets) {
                 if (!bullet.active || bullet.owner !== 'enemy') continue;
+
+                // ── Bullet Reflect: reflect enemy bullets within radius ──
+                if (bulletReflectActive) {
+                    const bcx = bullet.position.x + bullet.width / 2;
+                    const bcy = bullet.position.y + bullet.height / 2;
+                    const dx = bcx - pcx;
+                    const dy = bcy - pcy;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < reflectRadius) {
+                        // Reflect: reverse velocity and change owner to player
+                        bullet.velocity.x = -bullet.velocity.x;
+                        bullet.velocity.y = -bullet.velocity.y;
+                        bullet.owner = 'player';
+                        bullet.damage = 2; // reflected bullets deal 2 damage
+                        // Visual feedback
+                        g.particles.emit(bcx, bcy, 'shield', 3);
+                        continue;
+                    }
+                }
 
                 // ── Fast distance pre-check: skip expensive circle if way too far ──
                 const bcx = bullet.position.x + bullet.width / 2;
@@ -214,21 +235,23 @@ class CollisionManager {
                 if (!enemy.active) continue;
                 if (enemy.collidesWithCircle(player)) {
                     if (perks.hasThorns()) {
+                        // Thorns: enemy takes 3 damage, player is immune to contact damage
                         const thKilled = enemy.takeDamage(3, g);
                         if (thKilled) g.waveManager.onEnemyKilled(enemy);
+                        g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'hit', 5);
                     } else {
                         const killed = enemy.takeDamage(enemy.health, g);
                         if (killed) g.waveManager.onEnemyKilled(enemy);
-                    }
-                    if (Math.random() < phaseChance) {
-                        g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
-                    } else {
-                        const died = player.takeDamage(1, g);
-                        if (died) this.onPlayerDeath();
-                        else {
-                            g.levelManager.levelDamageTaken++;
-                            if (dmgConverterRate > 0 && player.active) {
-                                player.ultimateCharge = Math.min(100, player.ultimateCharge + 100 * dmgConverterRate);
+                        if (Math.random() < phaseChance) {
+                            g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
+                        } else {
+                            const died = player.takeDamage(1, g);
+                            if (died) this.onPlayerDeath();
+                            else {
+                                g.levelManager.levelDamageTaken++;
+                                if (dmgConverterRate > 0 && player.active) {
+                                    player.ultimateCharge = Math.min(100, player.ultimateCharge + 100 * dmgConverterRate);
+                                }
                             }
                         }
                     }

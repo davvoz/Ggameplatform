@@ -266,7 +266,7 @@ class PowerUp extends GameObject {
             case 'speed':
                 player.speedBoost = true;
                 player.speedBoostTime = 6;
-                player.speed = player.baseSpeed * 1.5;
+                player.speed = player.baseSpeed * (game.perkSystem ? game.perkSystem.getSpeedMultiplier() : 1) * 1.5;
                 break;
             case 'rapid':
                 player.rapidFire = true;

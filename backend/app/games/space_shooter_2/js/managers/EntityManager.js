@@ -165,27 +165,78 @@ class EntityManager {
         for (const m of this.homingMissiles) {
             if (!m.active) continue;
             ctx.save();
-            // Flat trail: [x0,y0, x1,y1, ...]
+
+            // Trail particles (orange fading circles like space_shooter)
             if (m.trail.length >= 4) {
-                ctx.globalAlpha = 0.4;
-                ctx.strokeStyle = '#ff6644';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(m.trail[0], m.trail[1]);
-                for (let i = 2; i < m.trail.length; i += 2) {
-                    ctx.lineTo(m.trail[i], m.trail[i + 1]);
+                const trailLen = m.trail.length / 2;
+                for (let i = 0; i < m.trail.length; i += 2) {
+                    const progress = (i / 2) / trailLen; // 0 = oldest, 1 = newest
+                    const alpha = progress * 0.6;
+                    ctx.fillStyle = `rgba(255, 150, 50, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(m.trail[i], m.trail[i + 1], 4 * progress, 0, Math.PI * 2);
+                    ctx.fill();
                 }
-                ctx.stroke();
             }
+
+            // Missile body — rotated to face movement direction
+            const angle = Math.atan2(m.vy, m.vx);
+            const w = 12;
+            const h = 20;
+            ctx.translate(m.x, m.y);
+            ctx.rotate(angle + Math.PI / 2); // nose points along velocity
+
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#ff4422';
-            if (this.game.performanceMode === 'high') {
-                ctx.shadowColor = '#ff6644';
-                ctx.shadowBlur = 6;
-            }
+
+            // Missile body (metallic gray like space_shooter)
+            ctx.fillStyle = '#8a8a8a';
             ctx.beginPath();
-            ctx.arc(m.x, m.y, 3, 0, Math.PI * 2);
+            ctx.moveTo(0, -h / 2);           // nose tip
+            ctx.lineTo(-w / 3, h / 3);
+            ctx.lineTo(w / 3, h / 3);
+            ctx.closePath();
             ctx.fill();
+
+            // Nose cone (red)
+            ctx.fillStyle = '#ff4444';
+            ctx.beginPath();
+            ctx.moveTo(0, -h / 2);
+            ctx.lineTo(-w / 4, -h / 4);
+            ctx.lineTo(w / 4, -h / 4);
+            ctx.closePath();
+            ctx.fill();
+
+            // Fins (dark gray)
+            ctx.fillStyle = '#666666';
+            ctx.fillRect(-w / 2, h / 4, w / 4, h / 4);
+            ctx.fillRect(w / 4, h / 4, w / 4, h / 4);
+
+            // Exhaust flame with gradient
+            const flicker = Math.random() * 0.3 + 0.7;
+            const flameGrad = ctx.createLinearGradient(0, h / 3, 0, h / 2 + 10);
+            flameGrad.addColorStop(0, `rgba(255, 200, 50, ${flicker})`);
+            flameGrad.addColorStop(0.5, `rgba(255, 100, 0, ${flicker * 0.7})`);
+            flameGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+
+            ctx.fillStyle = flameGrad;
+            ctx.beginPath();
+            ctx.moveTo(-w / 4, h / 3);
+            ctx.lineTo(0, h / 2 + 8 + Math.random() * 5);
+            ctx.lineTo(w / 4, h / 3);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glow (high perf only)
+            if (this.game.performanceMode === 'high') {
+                ctx.globalAlpha = 0.3;
+                ctx.shadowColor = '#ff6644';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#ff4422';
+                ctx.beginPath();
+                ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             ctx.restore();
         }
     }

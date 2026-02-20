@@ -43,10 +43,7 @@ class ScoreManager {
         const points = Math.floor(enemy.score * comboMultiplier * perks.getPointMultiplier());
         this.addScore(points);
 
-        if (entities.player) {
-            const chargeAmount = 5 * perks.getUltChargeMultiplier();
-            entities.player.ultimateCharge = Math.min(100, entities.player.ultimateCharge + chargeAmount);
-        }
+        // Ultimate charge is now time-based (no kill-based charge)
 
         if (perks.hasPerk('vampire_rounds') && entities.player && entities.player.active) {
             perks.vampireKillCount++;

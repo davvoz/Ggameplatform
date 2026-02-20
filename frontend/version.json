@@ -1,8 +1,17 @@
 {
-  "version": "3.32.6",
-  "timestamp": "2026-02-20T15:17:03.075Z",
-  "buildNumber": 416,
+  "version": "3.32.7",
+  "timestamp": "2026-02-20T17:05:31.885Z",
+  "buildNumber": 417,
   "changelog": [
+    {
+      "version": "3.32.7",
+      "date": "2026-02-20",
+      "type": "patch",
+      "changes": [
+        "fix : level milestone , add xp_score",
+        "🔖 Bump version to 3.32.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.6",
       "date": "2026-02-20",
@@ -86,16 +95,6 @@
       "changes": [
         "feat: add Campaign model and CRUD functionality",
         "🔖 Bump version to 3.29.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.29.4",
-      "date": "2026-02-18",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: [SS2]Enhance boss and mini-boss rendering with assembly animations and perk display",
-        "🔖 Bump version to 3.29.3 [skip-version]"
       ]
     }
   ]

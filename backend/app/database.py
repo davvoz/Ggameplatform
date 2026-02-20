@@ -576,10 +576,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         session_extra_data = json.loads(game_session.extra_data) if game_session.extra_data else {}
         
         # Calculate XP using the new rules system
-        print(f"[DB] Calculating XP...")
+        # Se extra_data contiene xp_score, usalo per gli XP (continue: XP solo sul delta)
+        xp_score = session_extra_data.get('xp_score', score) if session_extra_data else score
+        print(f"[DB] Calculating XP... (score={score}, xp_score={xp_score})")
         xp_result = calculate_session_xp(
             game_id=game_id,
-            score=score,
+            score=xp_score,
             duration_seconds=duration_seconds,
             is_new_high_score=is_new_high_score,
             user_multiplier=multiplier,

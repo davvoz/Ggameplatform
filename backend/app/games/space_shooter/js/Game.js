@@ -956,7 +956,8 @@ class Game {
         // Flash effect to show revival
         this.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.8);
 
-        // Restart session tracking
+        // Riavvia la sessione per il continue
+        this.hasContinued = true;
         if (typeof window.startGameSession === 'function') {
             window.startGameSession();
         }
@@ -1013,12 +1014,15 @@ class Game {
             this.finalBestElement.classList.toggle('new', isNewHigh);
         }
 
-        // Invia solo il delta score alla piattaforma (evita XP duplicati con continue)
+        // Invia lo score TOTALE accumulato alla piattaforma (per la leaderboard)
+        // ma passa il delta come xp_score (per calcolare XP solo sui punti nuovi)
         const deltaScore = this.score - this.lastSentScore;
-        if (deltaScore > 0 && typeof window.sendScoreToPlatform === 'function') {
-            window.sendScoreToPlatform(deltaScore, {
+        if (typeof window.sendScoreToPlatform === 'function') {
+            window.sendScoreToPlatform(this.score, {
                 level: this.level,
-                wave: this.waveNumber
+                wave: this.waveNumber,
+                continued: this.hasContinued,
+                xp_score: deltaScore > 0 ? deltaScore : this.score
             });
         }
         this.lastSentScore = this.score;

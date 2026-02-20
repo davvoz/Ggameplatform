@@ -15,17 +15,22 @@ class LevelSystem:
     This creates a smooth exponential curve that's not too punishing.
     """
     
-    # Level thresholds and titles
+    # Level thresholds and titles (fallback - authoritative data is in DB level_milestones table)
     LEVEL_MILESTONES = {
-        1: {"title": "Novizio", "badge": "🌱", "color": "#A0A0A0"},
-        5: {"title": "Esploratore", "badge": "🎮", "color": "#4A90E2"},
-        10: {"title": "Avventuriero", "badge": "⚔️", "color": "#50C878"},
-        20: {"title": "Veterano", "badge": "🛡️", "color": "#9B59B6"},
-        30: {"title": "Maestro", "badge": "👑", "color": "#F39C12"},
-        40: {"title": "Campione", "badge": "🏆", "color": "#E74C3C"},
-        50: {"title": "Leggenda", "badge": "⭐", "color": "#FFD700"},
-        75: {"title": "Eroe", "badge": "💎", "color": "#00D4FF"},
-        100: {"title": "Immortale", "badge": "🔥", "color": "#FF1493"}
+        1: {"title": "Novice", "badge": "🌱", "color": "#10b981"},
+        2: {"title": "Beginner", "badge": "🎮", "color": "#87CEEB"},
+        3: {"title": "Player", "badge": "🎯", "color": "#FFD700"},
+        4: {"title": "Gamer", "badge": "🎲", "color": "#FF6347"},
+        5: {"title": "Explorer", "badge": "🧭", "color": "#3b82f6"},
+        10: {"title": "Adventurer", "badge": "🗡️", "color": "#8b5cf6"},
+        15: {"title": "Expert", "badge": "💎", "color": "#4169E1"},
+        20: {"title": "Specialist", "badge": "🔰", "color": "#14b8a6"},
+        25: {"title": "Champion", "badge": "🏆", "color": "#FF1493"},
+        30: {"title": "Veteran", "badge": "🛡️", "color": "#f97316"},
+        40: {"title": "Advanced Veteran", "badge": "🏅", "color": "#0ea5e9"},
+        50: {"title": "Champion", "badge": "🏆", "color": "#ef4444"},
+        75: {"title": "Elite", "badge": "⭐", "color": "#f59e0b"},
+        100: {"title": "Master", "badge": "👑", "color": "#a78bfa"}
     }
     
     # Coin rewards for level milestones

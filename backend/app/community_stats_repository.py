@@ -153,6 +153,20 @@ class CommunityStatsRepository:
 
             # Build ranked list
             from app.level_system import LevelSystem
+            from app.models import LevelMilestone
+
+            # Load all milestones from DB once for efficient lookup
+            db_milestones = self.db_session.query(LevelMilestone).filter(
+                LevelMilestone.is_active == True
+            ).order_by(LevelMilestone.level).all()
+            milestone_map = {m.level: {"title": m.title, "badge": m.badge, "color": m.color} for m in db_milestones}
+            milestone_levels = sorted(milestone_map.keys(), reverse=True)
+
+            def resolve_milestone(level):
+                for ml in milestone_levels:
+                    if level >= ml:
+                        return milestone_map[ml]
+                return {"title": "Novice", "badge": "\U0001f331", "color": "#10b981"}
 
             ranked_users = []
             for idx, row in enumerate(results):
@@ -163,19 +177,12 @@ class CommunityStatsRepository:
                 coins_total_earned = row.coins_total_earned
 
                 level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
-                milestone = LevelSystem.get_level_info(level) if hasattr(LevelSystem, 'get_level_info') else None
 
-                # Get milestone info manually from LEVEL_MILESTONES
-                level_title = "Novizio"
-                level_badge = "🌱"
-                level_color = "#A0A0A0"
-                for milestone_level in sorted(LevelSystem.LEVEL_MILESTONES.keys(), reverse=True):
-                    if level >= milestone_level:
-                        info = LevelSystem.LEVEL_MILESTONES[milestone_level]
-                        level_title = info["title"]
-                        level_badge = info["badge"]
-                        level_color = info["color"]
-                        break
+                # Get milestone info from pre-loaded DB milestones
+                info = resolve_milestone(level)
+                level_title = info["title"]
+                level_badge = info["badge"]
+                level_color = info["color"]
 
                 ranked_users.append({
                     "rank": offset + idx + 1,
@@ -697,16 +704,22 @@ class CommunityStatsRepository:
     ) -> Dict[str, Any]:
         """Build a standardized achiever dict with user info + breakdown."""
         level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
-        level_title = "Novizio"
-        level_badge = "🌱"
-        level_color = "#A0A0A0"
-        for ml in sorted(LevelSystem.LEVEL_MILESTONES.keys(), reverse=True):
-            if level >= ml:
-                info = LevelSystem.LEVEL_MILESTONES[ml]
-                level_title = info["title"]
-                level_badge = info["badge"]
-                level_color = info["color"]
-                break
+
+        # Get milestone info from database
+        from app.models import LevelMilestone
+        db_milestones = self.db_session.query(LevelMilestone).filter(
+            LevelMilestone.is_active == True,
+            LevelMilestone.level <= level
+        ).order_by(LevelMilestone.level.desc()).first()
+
+        if db_milestones:
+            level_title = db_milestones.title
+            level_badge = db_milestones.badge
+            level_color = db_milestones.color
+        else:
+            level_title = "Novice"
+            level_badge = "\U0001f331"
+            level_color = "#10b981"
 
         # Get coin balance
         coins_row = self.db_session.query(UserCoins).filter(

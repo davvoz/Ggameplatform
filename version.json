@@ -1,8 +1,17 @@
 {
-  "version": "3.32.5",
-  "timestamp": "2026-02-19T21:55:39.376Z",
-  "buildNumber": 415,
+  "version": "3.32.6",
+  "timestamp": "2026-02-20T15:17:03.075Z",
+  "buildNumber": 416,
   "changelog": [
+    {
+      "version": "3.32.6",
+      "date": "2026-02-20",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] perk bugs, buff, nerf",
+        "🔖 Bump version to 3.32.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.5",
       "date": "2026-02-19",
@@ -87,15 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [SS2]Enhance boss and mini-boss rendering with assembly animations and perk display",
         "🔖 Bump version to 3.29.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.29.3",
-      "date": "2026-02-18",
-      "type": "patch",
-      "changes": [
-        "fix: [Blocky Road] Improve coin spawning logic and rendering for better visibility",
-        "🔖 Bump version to 3.29.2 [skip-version]"
       ]
     }
   ]

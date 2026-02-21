@@ -1,8 +1,17 @@
 {
-  "version": "3.32.7",
-  "timestamp": "2026-02-20T17:05:31.885Z",
-  "buildNumber": 417,
+  "version": "3.33.0",
+  "timestamp": "2026-02-21T15:10:36.875Z",
+  "buildNumber": 418,
   "changelog": [
+    {
+      "version": "3.33.0",
+      "date": "2026-02-21",
+      "type": "minor",
+      "changes": [
+        "feat: add score power strategy for XP calculation and migrate SS2 XP rules",
+        "🔖 Bump version to 3.32.7 [skip-version]"
+      ]
+    },
     {
       "version": "3.32.7",
       "date": "2026-02-20",
@@ -86,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: [Blocky Road] Implement theme management and customization for Blocky Road",
         "🔖 Bump version to 3.30.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.30.0",
-      "date": "2026-02-19",
-      "type": "minor",
-      "changes": [
-        "feat: add Campaign model and CRUD functionality",
-        "🔖 Bump version to 3.29.4 [skip-version]"
       ]
     }
   ]

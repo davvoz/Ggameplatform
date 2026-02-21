@@ -107,6 +107,7 @@
 .community-stats-section.active {
     display: block;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 /* ========== Stats Sections ========== */

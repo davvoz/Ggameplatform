@@ -990,6 +990,18 @@ class CommunityStatsRenderer {
             endMessage: 'All players loaded'
         });
 
+        // Move loader and end-message OUTSIDE the <table> to prevent invalid HTML
+        // (InfiniteScrollManager places them after listElement = tbody, which is inside <table>)
+        const tableWrapper = this.container?.querySelector('.cs-table-wrapper');
+        if (tableWrapper) {
+            if (this._usersScrollManager.loaderElement) {
+                tableWrapper.after(this._usersScrollManager.loaderElement);
+            }
+            if (this._usersScrollManager.endMessageElement) {
+                this._usersScrollManager.loaderElement.after(this._usersScrollManager.endMessageElement);
+            }
+        }
+
         // Set offset to current data length (initial batch already rendered server-side)
         this._usersScrollManager.offset = initialData.length;
         this._usersScrollManager.items = [...initialData];

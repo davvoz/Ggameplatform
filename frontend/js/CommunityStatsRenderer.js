@@ -43,6 +43,9 @@ class CommunityStatsRenderer {
 
         /** @type {boolean} Suppresses scroll spy briefly after a click */
         this._scrollSpyLocked = false;
+
+        /** @type {InfiniteScrollManager|null} Scroll manager for users ranked table */
+        this._usersScrollManager = null;
     }
 
     // ========================================================================
@@ -64,6 +67,10 @@ class CommunityStatsRenderer {
      */
     destroy() {
         this._removeScrollSpy();
+        if (this._usersScrollManager) {
+            this._usersScrollManager.destroy();
+            this._usersScrollManager = null;
+        }
         this._cache = {};
         if (this.container) this.container.innerHTML = '';
         this.container = null;
@@ -628,12 +635,6 @@ class CommunityStatsRenderer {
                     <tbody>${rows}</tbody>
                 </table>
             </div>
-            ${d.total > d.data.length ? `
-            <div class="cs-load-more-wrap">
-                <button class="cs-load-more-btn" id="csLoadMoreUsers" data-offset="${d.data.length}">
-                    Load more players
-                </button>
-            </div>` : ''}
         </section>`;
     }
 
@@ -844,18 +845,18 @@ class CommunityStatsRenderer {
             tab.addEventListener('click', () => this._handleEconomyTab(tab));
         });
 
-        // Load more users
-        const loadMoreBtn = this.container?.querySelector('#csLoadMoreUsers');
-        loadMoreBtn?.addEventListener('click', () => this._handleLoadMoreUsers(loadMoreBtn));
-
-        // User row click → navigate to profile
-        const userRows = this.container?.querySelectorAll('.cs-user-row');
-        userRows?.forEach(row => {
-            row.addEventListener('click', () => {
+        // User row click → navigate to profile (use event delegation on the table)
+        const usersTable = this.container?.querySelector('.cs-users-table');
+        usersTable?.addEventListener('click', (e) => {
+            const row = e.target.closest('.cs-user-row');
+            if (row) {
                 const userId = row.dataset.userId;
                 if (userId) window.location.hash = `/user/${userId}`;
-            });
+            }
         });
+
+        // Initialize infinite scroll for users ranked table
+        this._initUsersInfiniteScroll();
     }
 
     /**
@@ -955,55 +956,75 @@ class CommunityStatsRenderer {
         }
     }
 
-    /** @private */
-    async _handleLoadMoreUsers(btn) {
-        const offset = parseInt(btn.dataset.offset) || 0;
-        btn.textContent = 'Loading...';
-        btn.disabled = true;
+    /**
+     * Initialize infinite scroll for the users ranked table.
+     * Follows the same pattern as WalletRenderer._initInfiniteScroll.
+     * @private
+     */
+    _initUsersInfiniteScroll() {
+        const tbody = this.container?.querySelector('.cs-users-table tbody');
+        if (!tbody) return;
 
-        try {
-            const moreData = await CommunityStatsAPI.getUsersRanked(50, offset);
-            if (moreData?.data?.length) {
-                // Append to cache
-                this._cache.usersRanked.data.push(...moreData.data);
-
-                // Append rows to table
-                const tbody = this.container.querySelector('.cs-users-table tbody');
-                if (tbody) {
-                    moreData.data.forEach((u, i) => {
-                        const row = this._createUserRow(u, i);
-                        tbody.insertAdjacentHTML('beforeend', row);
-                    });
-                }
-
-                // Update offset or hide button
-                const newOffset = offset + moreData.data.length;
-                if (newOffset >= (moreData.total || 0)) {
-                    btn.parentElement?.remove();
-                } else {
-                    btn.dataset.offset = newOffset;
-                    btn.textContent = 'Load more players';
-                    btn.disabled = false;
-                }
-            } else {
-                btn.parentElement?.remove();
-            }
-        } catch (err) {
-            btn.textContent = 'Retry';
-            btn.disabled = false;
+        // Clean up previous scroll manager if exists
+        if (this._usersScrollManager) {
+            this._usersScrollManager.destroy();
+            this._usersScrollManager = null;
         }
+
+        const initialData = this._cache.usersRanked?.data || [];
+        const total = this._cache.usersRanked?.total || 0;
+
+        // Nothing to scroll
+        if (initialData.length >= total) return;
+
+        // The stats section has overflow-y: auto, so it's the actual scroll container
+        const scrollContainer = this.container?.closest('.community-stats-section') || document.documentElement;
+
+        this._usersScrollManager = new InfiniteScrollManager({
+            container: scrollContainer,
+            listElement: tbody,
+            loadMore: this._loadMoreUsers.bind(this),
+            renderItem: this._renderUserRowElement.bind(this),
+            threshold: 300,
+            pageSize: 50,
+            endMessage: 'All players loaded'
+        });
+
+        // Set offset to current data length (initial batch already rendered server-side)
+        this._usersScrollManager.offset = initialData.length;
+        this._usersScrollManager.items = [...initialData];
     }
 
-    /** @private */
-    _createUserRow(u, i) {
+    /**
+     * Load more ranked users for infinite scroll.
+     * @private
+     */
+    async _loadMoreUsers(offset, limit) {
+        const moreData = await CommunityStatsAPI.getUsersRanked(limit, offset);
+        if (moreData?.data?.length) {
+            // Keep cache in sync
+            this._cache.usersRanked.data.push(...moreData.data);
+            return moreData.data;
+        }
+        return [];
+    }
+
+    /**
+     * Render a single user row as a DOM element for InfiniteScrollManager.
+     * @private
+     */
+    _renderUserRowElement(u, index) {
         const rankBadge = u.rank <= 3
             ? `<span class="cs-rank-medal">${['🥇','🥈','🥉'][u.rank - 1]}</span>`
             : `<span class="cs-rank-num">#${u.rank}</span>`;
 
-            const avatarHTML = this._renderAvatar(u.steem_username);
+        const avatarHTML = this._renderAvatar(u.steem_username);
 
-            return `
-        <tr class="cs-user-row cs-fade-in" style="animation-delay:${i * 30}ms" data-user-id="${u.user_id}">
+        const tr = document.createElement('tr');
+        tr.className = 'cs-user-row cs-fade-in';
+        tr.style.animationDelay = `${(index % 50) * 30}ms`;
+        tr.dataset.userId = u.user_id;
+        tr.innerHTML = `
             <td class="cs-td-rank">${rankBadge}</td>
             <td class="cs-td-user">
                 <div class="cs-user-cell">
@@ -1018,7 +1039,8 @@ class CommunityStatsRenderer {
             <td class="cs-td-coins">🪙 ${u.coin_balance.toLocaleString()}</td>
             <td class="cs-td-games">${u.games_played} <small>(${u.unique_games} games)</small></td>
             <td class="cs-td-streak">${u.login_streak > 0 ? '🔥 ' + u.login_streak : '-'}</td>
-        </tr>`;
+        `;
+        return tr;
     }
 
     // ========================================================================

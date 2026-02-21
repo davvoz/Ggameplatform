@@ -21,6 +21,7 @@ class InfiniteScrollManager {
         this.renderItem = options.renderItem;
         this.threshold = options.threshold || 200;
         this.pageSize = options.pageSize || 20;
+        this.endMessage = options.endMessage || "You've seen all transactions";
         
         this.offset = 0;
         this.isLoading = false;
@@ -71,7 +72,7 @@ class InfiniteScrollManager {
         this.endMessageElement.innerHTML = `
             <div class="end-message">
                 <span class="end-icon">✓</span>
-                <span>You've seen all transactions</span>
+                <span>${this.endMessage}</span>
             </div>
         `;
         this.endMessageElement.style.display = 'none';

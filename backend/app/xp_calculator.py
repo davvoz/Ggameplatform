@@ -607,11 +607,68 @@ class CustomStrategy(XPCalculationStrategy):
         return True
 
 
+class ScorePowerStrategy(XPCalculationStrategy):
+    """Calculate XP using a power function of the score (e.g. square root)."""
+    
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        XP = multiplier * score^power (capped at max_xp if specified).
+        
+        Use power < 1 for diminishing returns (e.g. 0.5 = square root).
+        This is useful when score already incorporates a difficulty multiplier
+        and you want XP to scale sub-linearly.
+        
+        Expected parameters:
+            - multiplier: float (default 1.0)
+            - power: float (default 0.5)
+            - max_xp: float or None (default None)
+        
+        Example with power=0.5, multiplier=0.9:
+            Score  20,000 → 0.9 * √20000  ≈ 127 XP
+            Score  80,000 → 0.9 * √80000  ≈ 255 XP
+            Score 160,000 → 0.9 * √160000 ≈ 360 XP
+            Score 320,000 → 0.9 * √320000 ≈ 509 XP
+        """
+        import math
+        
+        multiplier = parameters.get('multiplier', 1.0)
+        power = parameters.get('power', 0.5)
+        max_xp = parameters.get('max_xp')
+        
+        if context.score <= 0:
+            return 0.0
+        
+        xp = multiplier * math.pow(context.score, power)
+        
+        if max_xp is not None and xp > max_xp:
+            xp = max_xp
+            
+        return xp
+    
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        """Validate score power parameters."""
+        if 'multiplier' in parameters:
+            if not isinstance(parameters['multiplier'], (int, float)) or parameters['multiplier'] < 0:
+                return False
+        
+        if 'power' in parameters:
+            if not isinstance(parameters['power'], (int, float)) or parameters['power'] <= 0:
+                return False
+        
+        if 'max_xp' in parameters:
+            max_xp = parameters['max_xp']
+            if max_xp is not None and (not isinstance(max_xp, (int, float)) or max_xp < 0):
+                return False
+        
+        return True
+
+
 class StrategyFactory:
     """Factory for creating XP calculation strategies (Factory Pattern)."""
     
     _strategies: Dict[str, XPCalculationStrategy] = {
         'score_multiplier': ScoreMultiplierStrategy(),
+        'score_power': ScorePowerStrategy(),
         'time_bonus': TimeBonusStrategy(),
         'threshold': ThresholdStrategy(),
         'high_score_bonus': HighScoreBonusStrategy(),

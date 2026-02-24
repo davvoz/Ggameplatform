@@ -3,7 +3,7 @@ import SoundManager from './managers/SoundManager.js';
 import AssetManager from './managers/AssetManager.js';
 import ParticleSystem from './effects/ParticleSystem.js';
 import PostProcessing from './effects/PostProcessing.js';
-import StarField from './entities/Star.js';
+import BackgroundFacade from "./entities/BackgroundFacade.js";
 import { Player } from './entities/Player.js';
 import Bullet from './entities/Bullet.js';
 import { PerkSystem } from './PerkSystem.js';
@@ -20,6 +20,8 @@ import CinematicManager from './managers/CinematicManager.js';
 import HUDRenderer from './managers/HUDRenderer.js';
 import UIManager from './managers/UIManager.js';
 import PerkEffectsManager from './managers/PerkEffectsManager.js';
+
+
 
 // ── Virtual resolution ──
 // All game logic and rendering use a fixed logical width.
@@ -55,13 +57,16 @@ class Game {
         this.state = 'menu';
         this.timeScale = 1;
         this.gameTime = 0;
+        // World 2: Bullet time power-up
+        this.bulletTimeActive = false;
+        this.bulletTimeTimer = 0;
         this.performanceMode = this._loadPerformanceMode();
         this.explosionScale = 1.5;
 
         this.selectedShipId = null;
         this.selectedUltimateId = null;
 
-        this.starField = null;
+        this.backgroundFacade = null;
 
         this.fps = 60;
         this.frameCount = 0;
@@ -102,8 +107,8 @@ class Game {
         this.uiManager.populateShipPreviews();
         await this.sound.init();
 
-        this.starField = new StarField(this.logicalWidth, this.logicalHeight, this.performanceMode);
-        this.starField.setLevel(1);
+        this.backgroundFacade = new BackgroundFacade(this.logicalWidth, this.logicalHeight, this.performanceMode);
+        this.backgroundFacade.setLevel(1);
 
         this.setPerformanceMode(this.performanceMode);
 
@@ -137,8 +142,8 @@ class Game {
         this.logicalHeight = this.canvas.height / this.scale;
 
         this.input.updateLayout(this.canvas.width, this.canvas.height);
-        if (this.starField) {
-            this.starField.resize(this.logicalWidth, this.logicalHeight);
+        if (this.backgroundFacade) {
+            this.backgroundFacade.resize(this.logicalWidth, this.logicalHeight);
         }
     }
 
@@ -165,7 +170,7 @@ class Game {
     update(deltaTime) {
         this.gameTime += deltaTime;
 
-        if (this.starField) this.starField.update(deltaTime);
+        if (this.backgroundFacade) this.backgroundFacade.update(deltaTime);
         this.postProcessing.update(deltaTime);
         this.particles.update(deltaTime);
 
@@ -190,7 +195,18 @@ class Game {
             this.updateEntitiesPassive(deltaTime);
         }
 
+        if (this.state === 'worldTransition') {
+            this.cinematicManager.updateWorldTransition(deltaTime);
+            this.updateEntitiesPassive(deltaTime);
+        }
+
         if (this.state === 'playing') {
+            // DEBUG: skip level immediately to test transition
+            if (window.DEBUG_SKIP_LEVEL) {
+                window.DEBUG_SKIP_LEVEL = false;
+                this.levelManager.onLevelComplete();
+                return;
+            }
             this.updatePlaying(deltaTime);
         }
 
@@ -222,6 +238,17 @@ class Game {
                     em.player.position.y + Math.random() * em.player.height,
                     'ultimateCharged', 1
                 );
+            }
+        }
+
+        // ─── Bullet Time power-up ───
+        if (this.bulletTimeActive) {
+            this.bulletTimeTimer -= deltaTime;
+            this.timeScale = 0.35;
+            if (this.bulletTimeTimer <= 0) {
+                this.bulletTimeActive = false;
+                this.bulletTimeTimer = 0;
+                this.timeScale = 1;
             }
         }
 
@@ -275,8 +302,8 @@ class Game {
     }
 
     /**
-     * Aggiorna le entità in modo passivo (solo visuale, niente collisioni/input/wave spawning).
-     * Usato durante levelIntro, levelOutro, deathCinematic per mantenere le animazioni vive.
+     * Updates entities passively (visual only, no collisions/input/wave spawning).
+     * Used during levelIntro, levelOutro, deathCinematic to keep animations alive.
      */
     updateEntitiesPassive(deltaTime) {
         const em = this.entityManager;
@@ -340,7 +367,15 @@ class Game {
         ctx.save();
         ctx.scale(this.scale, this.scale);
 
-        if (this.starField) this.starField.render(ctx, this.gameTime);
+        // Solid black when in menu / gameover so canvas never peeks through UI overlays
+        if (this.state === 'menu' || this.state === 'gameover') {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, w, h);
+            ctx.restore();
+            return;
+        }
+
+        if (this.backgroundFacade) this.backgroundFacade.render(ctx, this.gameTime);
 
         const _outroZoomActive = this.state === 'levelOutro' && this.cinematicManager.levelOutro;
         if (_outroZoomActive) {
@@ -360,7 +395,7 @@ class Game {
         if (this.state === 'playing' || this.state === 'paused' ||
             this.state === 'levelComplete' || this.state === 'gameover' ||
             this.state === 'levelIntro' || this.state === 'levelOutro' ||
-            this.state === 'deathCinematic') {
+            this.state === 'deathCinematic' || this.state === 'worldTransition') {
 
             for (const pu of em.powerUps) pu.render(ctx);
 
@@ -386,6 +421,7 @@ class Game {
             if (em.player && em.player.active) em.player.render(ctx, this.assets, this.perkSystem);
 
             this.perkEffectsManager.renderDrones(ctx);
+            this.perkEffectsManager.renderFireTrail(ctx);
 
             for (const exp of em.explosions) exp.render(ctx);
 
@@ -415,6 +451,10 @@ class Game {
             this.cinematicManager.renderDeathCinematic(ctx, w, h);
         }
 
+        if (this.state === 'worldTransition' && this.cinematicManager._worldTransition) {
+            this.cinematicManager.renderWorldTransition(ctx, w, h);
+        }
+
         // Banners (in logical space)
         this.hudRenderer.renderBanners(ctx);
 
@@ -435,7 +475,7 @@ class Game {
         this.hudRenderer.renderFPSMonitor(ctx);
     }
 
-    startGame(shipId, ultimateId, difficultyId) {
+    startGame(shipId, ultimateId, difficultyId, startWorld = 1) {
         this.selectedShipId = shipId;
         this.selectedUltimateId = ultimateId;
         this.difficulty = DIFFICULTY_CONFIG[difficultyId] || DIFFICULTY_CONFIG.boring;
@@ -449,8 +489,18 @@ class Game {
         this.entityManager.clearAll();
 
         this.timeScale = 1;
+        this.bulletTimeActive = false;
+        this.bulletTimeTimer = 0;
 
         this.perkSystem.reset();
+
+        // Set starting level based on selected world (each world = 30 levels)
+       // window.DEBUG_START_LEVEL = 56; // TODO: TEMP TEST — remove after testing
+        if (window.DEBUG_START_LEVEL && window.DEBUG_START_LEVEL > 1) {
+            this.levelManager.currentLevel = window.DEBUG_START_LEVEL;
+        } else if (startWorld > 1) {
+            this.levelManager.currentLevel = (startWorld - 1) * 30 + 1;
+        }
 
         this.levelManager.levelStartTime = performance.now();
 
@@ -470,9 +520,15 @@ class Game {
             this.sound.playGameMusic();
         }
 
-        if (this.starField) this.starField.setLevel(1);
+        const startLvl = this.levelManager.currentLevel;
+        if (this.backgroundFacade) this.backgroundFacade.setLevel(startLvl);
 
-        this.cinematicManager.beginLevelIntro();
+        // DEBUG: skip straight to World 2 transition cinematic
+        if (window.DEBUG_START_LEVEL === 31) {
+            this.cinematicManager.beginWorldTransition(null, 2);
+        } else {
+            this.cinematicManager.beginLevelIntro();
+        }
     }
 
     togglePause() {
@@ -493,8 +549,12 @@ class Game {
         }
     }
 
-    startCinematic(onComplete) {
-        this.cinematicManager.startCinematic(onComplete);
+    startCinematic(onComplete, worldNum = 1) {
+        this.cinematicManager.startCinematic(onComplete, worldNum);
+    }
+
+    startWorldCinematic(onComplete, worldNum = 2) {
+        this.cinematicManager.startCinematic(onComplete, worldNum);
     }
 
     get currentLevel() {
@@ -712,8 +772,8 @@ class Game {
         }
 
         // StarField
-        if (this.starField) {
-            this.starField.setQuality(mode);
+        if (this.backgroundFacade) {
+            this.backgroundFacade.setQuality(mode);
         }
 
         // Explosion scale — keep consistent across modes (no shrinking)

@@ -25,6 +25,10 @@ class Bullet extends GameObject {
         this.tag = 'bullet';
         this.age = 0;
 
+        // Bouncing bullets (set externally after spawn)
+        this.bounces = 0;
+        this.maxBounces = 0;
+
         // Trail — always present, just shorter on lower modes
         this.trail = [];
         this.maxTrailLength = _perfMode === 'low' ? 3
@@ -76,8 +80,36 @@ class Bullet extends GameObject {
         this.position.x += this.velocity.x * deltaTime;
         this.position.y += this.velocity.y * deltaTime;
 
-        // Bounds check
-        if (this.isOffScreen(game.logicalWidth, game.logicalHeight)) {
+        // Bounds check with optional bouncing
+        const W = game.logicalWidth;
+        const H = game.logicalHeight;
+        if (this.maxBounces > 0 && this.bounces < this.maxBounces) {
+            let bounced = false;
+            if (this.position.x < 0) {
+                this.position.x = 0;
+                this.velocity.x = Math.abs(this.velocity.x);
+                bounced = true;
+            } else if (this.position.x + this.width > W) {
+                this.position.x = W - this.width;
+                this.velocity.x = -Math.abs(this.velocity.x);
+                bounced = true;
+            }
+            if (this.position.y < 0) {
+                this.position.y = 0;
+                this.velocity.y = Math.abs(this.velocity.y);
+                bounced = true;
+            } else if (this.position.y + this.height > H) {
+                this.position.y = H - this.height;
+                this.velocity.y = -Math.abs(this.velocity.y);
+                bounced = true;
+            }
+            if (bounced) {
+                this.bounces++;
+                // Recalculate direction angle
+                const spd = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+                this._dirAngle = spd > 0 ? Math.atan2(this.velocity.y / spd, this.velocity.x / spd) - Math.PI / 2 : 0;
+            }
+        } else if (this.isOffScreen(W, H)) {
             this.destroy();
         }
     }

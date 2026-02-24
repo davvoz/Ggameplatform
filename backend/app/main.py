@@ -81,21 +81,21 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             csp = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                 "img-src 'self' data: https:; "
                 "connect-src 'self'; "
-                "font-src 'self' data:;"
+                "font-src 'self' data: https://fonts.gstatic.com;"
             )
         elif request.url.path.startswith('/games/'):
             # Very permissive CSP for game iframes - allow CDN scripts, source maps, and WebSocket
             csp = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh https:; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https:; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https: https://fonts.googleapis.com; "
                 "img-src 'self' data: https: http:; "
                 "connect-src 'self' ws: wss: https://esm.sh http://localhost:3000 http://localhost:8000; "
                 "frame-src 'self'; "
-                "font-src 'self' data:; "
+                "font-src 'self' data: https://fonts.gstatic.com; "
                 "media-src 'self' data: blob:;"
             )
         else:
@@ -103,11 +103,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             csp = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                 "img-src 'self' data: https:; "
                 "connect-src 'self' ws: wss: https://esm.sh https://api.steemit.com https://sds.steemworld.org; "
                 "frame-src 'self'; "
-                "font-src 'self' data:;"
+                "font-src 'self' data: https://fonts.gstatic.com;"
             )
         response.headers['Content-Security-Policy'] = csp
         

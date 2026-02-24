@@ -1,4 +1,5 @@
 import Vector2 from '../utils/Vector2.js';
+import { ui } from '../FontConfig.js';
 
 /**
  * InputManager - Keyboard + Canvas-based touch input
@@ -309,7 +310,7 @@ class InputManager {
         ctx.stroke();
 
         ctx.globalAlpha = 0.8;
-        ctx.font = '18px Arial';
+        ctx.font = ui(18, 'bold');
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#fff';
@@ -343,7 +344,7 @@ class InputManager {
         }
 
         ctx.globalAlpha = ultReady ? 0.9 : 0.5;
-        ctx.font = '11px Arial';
+        ctx.font = ui(11, 'bold');
         ctx.fillStyle = '#fff';
         ctx.fillText('ULT', ultCx, ultCy);
 

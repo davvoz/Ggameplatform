@@ -2,7 +2,7 @@ const DIFFICULTY_CONFIG = {
     boring: {
         id: 'boring',
         label: 'BORING',
-        emoji: '😴',
+        icon: '◌',
         desc: 'Relaxing ride. Enemies are weak and slow.',
         color: '#66bb6a',
         scoreMultiplier: 0.25,
@@ -16,7 +16,7 @@ const DIFFICULTY_CONFIG = {
     normal: {
         id: 'normal',
         label: 'NORMAL',
-        emoji: '⚔️',
+        icon: '⚔',
         desc: 'Balanced challenge for most pilots.',
         color: '#42a5f5',
         scoreMultiplier: 1,
@@ -30,7 +30,7 @@ const DIFFICULTY_CONFIG = {
     hard: {
         id: 'hard',
         label: 'HARD',
-        emoji: '💀',
+        icon: '☠',
         desc: 'Punishing. Enemies hit harder and faster.',
         color: '#ef5350',
         scoreMultiplier: 2,
@@ -44,7 +44,7 @@ const DIFFICULTY_CONFIG = {
     panic: {
         id: 'panic',
         label: 'PANIC',
-        emoji: '🔥',
+        icon: '♨',
         desc: 'Pure chaos. Only for the brave.',
         color: '#ff6f00',
         scoreMultiplier: 4,

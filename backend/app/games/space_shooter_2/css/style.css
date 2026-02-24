@@ -10,7 +10,7 @@ html, body {
     height: 100%;
     overflow: hidden;
     background: #000;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     color: #fff;
     -webkit-tap-highlight-color: transparent;
 }
@@ -170,17 +170,39 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(5, 5, 20, 0.92);
-    animation: fadeIn 0.3s ease;
+    background: rgba(3, 3, 14, 0.94);
+    animation: screenIn 0.25s ease-out;
     overflow: hidden;
+}
+/* Subtle grid overlay */
+.ui-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(68,136,255,0.015) 2px, rgba(68,136,255,0.015) 3px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(68,136,255,0.015) 2px, rgba(68,136,255,0.015) 3px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+/* Top/bottom edge glow */
+.ui-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(68,136,255,0.06) 0%, transparent 15%, transparent 85%, rgba(68,136,255,0.04) 100%);
+    pointer-events: none;
+    z-index: 0;
 }
 .ui-screen.hidden {
     display: none !important;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@keyframes screenIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .screen-content {
@@ -190,15 +212,19 @@ html, body {
     max-width: 560px;
     max-height: 92vh;
     overflow-y: auto;
-    padding: 20px 14px;
+    padding: 24px 18px;
     text-align: center;
 }
 
 .screen-content h2 {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
     font-size: 22px;
+    font-weight: 700;
     margin-bottom: 16px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-transform: uppercase;
+    color: #c8deff;
+    text-shadow: 0 0 20px rgba(68,136,255,0.3), 0 0 40px rgba(68,136,255,0.1);
 }
 
 /* ===== BUTTONS ===== */
@@ -206,42 +232,75 @@ html, body {
     display: inline-block;
     padding: 12px 28px;
     border: none;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: 4px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
+    position: relative;
+}
+/* Corner accents */
+.btn-primary::before, .btn-primary::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: rgba(136,200,255,0.5);
+    border-style: solid;
+    transition: border-color 0.2s;
+}
+.btn-primary::before {
+    top: -1px; left: -1px;
+    border-width: 2px 0 0 2px;
+}
+.btn-primary::after {
+    bottom: -1px; right: -1px;
+    border-width: 0 2px 2px 0;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4488ff, #2266dd);
+    background: linear-gradient(135deg, #3366cc 0%, #2255bb 50%, #1a44aa 100%);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(68, 136, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(68,136,255,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(68,136,255,0.4);
 }
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5599ff, #3377ee);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(68, 136, 255, 0.4);
+    background: linear-gradient(135deg, #4477dd 0%, #3366cc 50%, #2255bb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(68,136,255,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+    border-color: rgba(100,180,255,0.6);
+}
+.btn-primary:hover::before, .btn-primary:hover::after {
+    border-color: rgba(136,200,255,0.9);
+}
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(68,136,255,0.3), inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: #aaccff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    color: #8aaddd;
+    border: 1px solid rgba(100,150,220,0.25);
 }
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba(68,136,255,0.1);
+    border-color: rgba(100,150,220,0.5);
+    color: #aaccff;
 }
 
 .btn-danger {
-    background: rgba(255, 50, 50, 0.2);
-    color: #ff6666;
+    background: rgba(255, 40, 40, 0.12);
+    color: #ff5555;
     border: 1px solid rgba(255, 50, 50, 0.3);
 }
 .btn-danger:hover {
-    background: rgba(255, 50, 50, 0.35);
+    background: rgba(255, 40, 40, 0.25);
+    border-color: rgba(255, 50, 50, 0.5);
+    box-shadow: 0 0 16px rgba(255,50,50,0.2);
 }
 
 .screen-actions {
@@ -257,20 +316,25 @@ html, body {
 
 /* ===== START SCREEN ===== */
 .game-title {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
     font-size: 36px;
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: 6px;
     margin-bottom: 4px;
-    text-shadow: 0 0 20px rgba(68, 136, 255, 0.5);
+    color: #e0ecff;
+    text-shadow: 0 0 30px rgba(68,136,255,0.5), 0 0 60px rgba(68,136,255,0.2), 0 2px 0 rgba(0,0,0,0.3);
 }
 .title-accent {
     color: #4488ff;
-    font-size: 44px;
+    font-size: 46px;
+    text-shadow: 0 0 30px rgba(68,136,255,0.8), 0 0 60px rgba(68,136,255,0.3);
 }
 .game-subtitle {
-    font-size: 14px;
-    color: #8899bb;
-    letter-spacing: 3px;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: #6688aa;
+    letter-spacing: 5px;
     text-transform: uppercase;
     margin-bottom: 32px;
 }
@@ -404,9 +468,10 @@ html, body {
     padding: 5px 8px 3px;
 }
 .card-name {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 1px;
     color: #d8dff0;
@@ -417,6 +482,7 @@ html, body {
     text-shadow: 0 0 8px rgba(68,136,255,0.35);
 }
 .card-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 8px;
     color: #5a6d94;
     margin-bottom: 0;
@@ -438,8 +504,9 @@ html, body {
     gap: 4px;
 }
 .stat-label {
+    font-family: 'Space Mono', Consolas, monospace;
     font-size: 7px;
-    font-weight: 800;
+    font-weight: 700;
     color: #4a5c80;
     width: 22px;
     text-align: right;
@@ -470,27 +537,52 @@ html, body {
 }
 
 .ultimate-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    background: rgba(15, 15, 30, 0.85);
+    border: 2px solid rgba(136,102,204,0.15);
+    border-radius: 6px;
     padding: 14px 10px 12px;
     cursor: pointer;
     transition: all 0.25s;
     text-align: center;
+    position: relative;
+}
+.ultimate-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(136,102,204,0.4), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
 }
 .ultimate-card:hover {
-    background: rgba(136, 102, 204, 0.1);
-    border-color: rgba(136, 102, 204, 0.3);
+    background: rgba(136, 102, 204, 0.08);
+    border-color: rgba(136, 102, 204, 0.4);
 }
+.ultimate-card:hover::before { opacity: 1; }
 .ultimate-card.selected {
-    background: rgba(136, 102, 204, 0.15);
+    background: rgba(136, 102, 204, 0.12);
     border-color: #8866cc;
-    box-shadow: 0 0 16px rgba(136, 102, 204, 0.3);
+    box-shadow: 0 0 20px rgba(136, 102, 204, 0.25), inset 0 0 30px rgba(136,102,204,0.05);
+}
+.ultimate-card.selected::before { opacity: 1; background: linear-gradient(90deg, transparent, #8866cc, transparent); }
+
+.ultimate-card .card-name {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    color: #d0c8e8;
+}
+.ultimate-card .card-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    color: #8888aa;
 }
 
 .ult-icon {
     font-size: 28px;
     margin-bottom: 6px;
+    filter: drop-shadow(0 0 8px currentColor);
 }
 
 /* ===== LEVEL COMPLETE SUMMARY ===== */
@@ -498,20 +590,27 @@ html, body {
     max-width: 400px;
 }
 .lc-title {
-    color: #44ff44;
-    text-shadow: 0 0 20px rgba(68, 255, 68, 0.4);
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    color: #44ff88;
+    text-shadow: 0 0 24px rgba(68,255,100,0.5), 0 0 60px rgba(68,255,100,0.15);
+    letter-spacing: 4px;
 }
 .lc-stars {
     font-size: 28px;
     margin: 8px 0 4px;
+    filter: drop-shadow(0 0 6px rgba(255,200,0,0.5));
 }
 .lc-stars .star.empty {
     opacity: 0.2;
+    filter: none;
 }
 .lc-level-name {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 13px;
-    color: #8899bb;
+    font-weight: 300;
+    color: #7799bb;
     margin-bottom: 16px;
+    letter-spacing: 1px;
 }
 
 .summary-grid {
@@ -523,32 +622,48 @@ html, body {
 .summary-row {
     display: flex;
     justify-content: space-between;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
+    padding: 7px 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: 4px;
+    border-left: 2px solid rgba(68,136,255,0.15);
+    transition: border-color 0.2s, background 0.2s;
+}
+.summary-row:hover {
+    border-left-color: rgba(68,136,255,0.4);
+    background: rgba(68,136,255,0.04);
 }
 .summary-row.highlight {
-    background: rgba(255, 215, 0, 0.06);
+    background: rgba(255, 215, 0, 0.05);
+    border-left-color: rgba(255,215,0,0.3);
+}
+.summary-row.highlight:hover {
+    border-left-color: rgba(255,215,0,0.6);
 }
 .summary-row.total {
-    background: rgba(68, 136, 255, 0.1);
+    background: rgba(68, 136, 255, 0.08);
     border: 1px solid rgba(68, 136, 255, 0.2);
+    border-left: 3px solid rgba(68,136,255,0.6);
     font-weight: 700;
 }
 .summary-label {
-    color: #8899bb;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    color: #7799bb;
     font-size: 13px;
+    font-weight: 300;
 }
 .summary-value {
+    font-family: 'Space Mono', Consolas, monospace;
     font-weight: 700;
     font-size: 13px;
+    color: #d0e0ff;
 }
 .summary-value.gold {
     color: #ffd700;
+    text-shadow: 0 0 8px rgba(255,215,0,0.3);
 }
 .summary-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(90deg, transparent, rgba(68,136,255,0.15), transparent);
     margin: 4px 0;
 }
 
@@ -593,13 +708,15 @@ html, body {
     align-items: center;
     gap: 8px;
     padding: 6px 10px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 6px 6px 0 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    background: rgba(15,20,40,0.6);
+    border-radius: 4px 4px 0 0;
+    border-bottom: 1px solid rgba(68,136,255,0.1);
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 2px;
     text-transform: uppercase;
+    color: #8aaddd;
 }
 .cat-icon {
     font-size: 16px;
@@ -637,12 +754,15 @@ html, body {
     text-align: left;
 }
 .shop-item-name {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 13px;
     font-weight: 700;
 }
 .shop-item-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 10px;
-    color: #8899bb;
+    font-weight: 300;
+    color: #7799bb;
     margin-top: 1px;
 }
 .shop-item-level {
@@ -709,19 +829,26 @@ html, body {
 
 /* ===== GAME OVER ===== */
 .go-title {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
     color: #ff4444;
-    text-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+    letter-spacing: 4px;
+    text-shadow: 0 0 24px rgba(255,68,68,0.5), 0 0 60px rgba(255,68,68,0.15);
 }
 
 /* ===== VICTORY ===== */
 .victory-title {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
     color: #ffd700;
     font-size: 28px;
-    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    letter-spacing: 4px;
+    text-shadow: 0 0 30px rgba(255,215,0,0.5), 0 0 60px rgba(255,215,0,0.15);
 }
 .victory-subtitle {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     color: #88aacc;
     font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 1px;
     margin-bottom: 20px;
 }
 
@@ -736,43 +863,52 @@ html, body {
 }
 .settings-buttons button {
     width: 100%;
-    font-size: 15px;
+    font-size: 12px;
 }
 .setting-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    background: rgba(10,15,30,0.7);
+    border: 1px solid rgba(68,136,255,0.12);
+    border-radius: 6px;
+    transition: border-color 0.2s;
+}
+.setting-row:hover {
+    border-color: rgba(68,136,255,0.3);
 }
 .setting-label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #ccddef;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #b0c8e8;
+    letter-spacing: 0.5px;
 }
 .toggle-btn {
     padding: 8px 24px;
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     transition: all 0.2s;
     min-width: 70px;
 }
 .toggle-btn.on {
-    background: linear-gradient(135deg, #44cc88, #22aa66);
+    background: linear-gradient(135deg, #22aa66, #1a8855);
     color: #fff;
-    box-shadow: 0 0 12px rgba(68, 204, 136, 0.3);
+    border: 1px solid rgba(68,204,136,0.4);
+    box-shadow: 0 0 14px rgba(68,204,136,0.3);
 }
 .toggle-btn.off {
-    background: linear-gradient(135deg, #cc4444, #aa2222);
+    background: linear-gradient(135deg, #aa2222, #882222);
     color: #fff;
-    box-shadow: 0 0 12px rgba(204, 68, 68, 0.3);
+    border: 1px solid rgba(204,68,68,0.4);
+    box-shadow: 0 0 14px rgba(204,68,68,0.3);
 }
 .toggle-btn:hover {
     transform: scale(1.05);
@@ -795,20 +931,24 @@ html, body {
 }
 .perf-btn {
     width: 70px;
-    height: 50px;
-    background: linear-gradient(145deg, rgba(40, 60, 100, 0.8) 0%, rgba(20, 40, 70, 0.9) 100%);
-    border: 2px solid rgba(100, 150, 255, 0.3);
-    border-radius: 10px;
-    color: rgba(150, 180, 220, 0.8);
-    font-size: 1.4rem;
+    height: 42px;
+    background: linear-gradient(145deg, rgba(20, 30, 55, 0.9) 0%, rgba(12, 20, 40, 0.95) 100%);
+    border: 1px solid rgba(68, 120, 200, 0.2);
+    border-radius: 4px;
+    color: rgba(140, 170, 210, 0.7);
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.2s ease;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
 .perf-btn:hover {
-    background: linear-gradient(145deg, rgba(60, 90, 140, 0.9) 0%, rgba(40, 60, 100, 1) 100%);
-    border-color: rgba(100, 180, 255, 0.5);
+    background: linear-gradient(145deg, rgba(30, 50, 80, 0.9) 0%, rgba(20, 35, 60, 1) 100%);
+    border-color: rgba(80, 150, 255, 0.4);
+    color: rgba(180, 200, 240, 0.9);
 }
 .perf-btn[data-perf="low"].active {
     background: linear-gradient(145deg, rgba(100, 150, 80, 0.9) 0%, rgba(70, 110, 50, 1) 100%);
@@ -878,6 +1018,7 @@ html, body {
 .ship-detail-panel h2 {
     text-align: center;
     margin-bottom: 16px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
 }
 .ship-detail-header {
     display: flex;
@@ -902,30 +1043,35 @@ html, body {
     min-width: 0;
 }
 .ship-detail-name {
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 1px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    color: #fff;
+    color: #d0e4ff;
     margin-bottom: 4px;
+    text-shadow: 0 0 10px rgba(68,136,255,0.2);
 }
 .ship-detail-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 12px;
-    color: #8899bb;
+    font-weight: 300;
+    color: #7799bb;
     line-height: 1.4;
 }
 .ship-detail-section {
     margin-bottom: 12px;
 }
 .section-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    color: #6688aa;
+    color: #5580aa;
     margin-bottom: 8px;
     padding-bottom: 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(68,136,255,0.1);
 }
 .detail-stat-bars {
     display: flex;
@@ -938,9 +1084,10 @@ html, body {
     gap: 10px;
 }
 .detail-stat-label {
-    font-size: 12px;
+    font-family: 'Space Mono', Consolas, monospace;
+    font-size: 11px;
     font-weight: 700;
-    color: #aabbcc;
+    color: #8899bb;
     width: 34px;
     text-align: right;
     flex-shrink: 0;
@@ -972,12 +1119,13 @@ html, body {
     border-radius: 0 5px 5px 0;
 }
 .detail-stat-value {
-    font-size: 12px;
+    font-family: 'Space Mono', Consolas, monospace;
+    font-size: 11px;
     font-weight: 700;
     width: 42px;
     text-align: left;
     flex-shrink: 0;
-    color: #fff;
+    color: #d0e0ff;
 }
 .detail-stat-bonus {
     color: #88ff88;
@@ -1000,13 +1148,17 @@ html, body {
     flex: 1;
 }
 .detail-weapon-name, .detail-ult-name {
-    font-size: 14px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 13px;
     font-weight: 700;
-    color: #fff;
+    color: #d0e4ff;
+    letter-spacing: 1px;
 }
 .detail-weapon-desc, .detail-ult-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 11px;
-    color: #8899bb;
+    font-weight: 300;
+    color: #7799bb;
     margin-top: 2px;
 }
 .detail-perks-list {
@@ -1076,19 +1228,24 @@ html, body {
     .screen-content {
         padding: 14px 8px;
     }
+    .screen-content h2 {
+        font-size: 16px;
+        letter-spacing: 2px;
+    }
     .game-title {
-        font-size: 28px;
+        font-size: 26px;
+        letter-spacing: 3px;
     }
     .title-accent {
-        font-size: 34px;
+        font-size: 32px;
     }
     .selection-grid {
         gap: 6px;
     }
     .ship-card {
-        border-radius: 10px;
+        border-radius: 6px;
     }
-    .card-name { font-size: 10px; }
+    .card-name { font-size: 9px; }
     .card-desc { font-size: 7px; }
     .stat-label { font-size: 6px; width: 18px; }
     .stat-bar { height: 3px; }
@@ -1096,7 +1253,7 @@ html, body {
     .card-info { padding: 4px 6px 2px; }
     .btn-primary, .btn-secondary, .btn-danger {
         padding: 10px 20px;
-        font-size: 13px;
+        font-size: 11px;
     }
 }
 
@@ -1137,14 +1294,20 @@ body.game-fullscreen #game-container {
     text-align: center;
 }
 .perk-title {
-    font-size: 24px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
     color: #ffd700;
-    text-shadow: 0 0 20px rgba(255,215,0,0.4);
+    letter-spacing: 3px;
+    text-shadow: 0 0 24px rgba(255,215,0,0.4), 0 0 60px rgba(255,215,0,0.12);
     margin-bottom: 4px;
 }
 .perk-subtitle {
-    color: #aaa;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    color: #8899aa;
     font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 1px;
     margin-bottom: 16px;
 }
 .perk-cards {
@@ -1222,19 +1385,24 @@ body.game-fullscreen #game-container {
     line-height: 1;
 }
 .perk-name {
-    font-size: 15px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 13px;
     font-weight: 700;
-    color: #fff;
-}
-.perk-category {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
+    color: #e0ecff;
     letter-spacing: 0.5px;
 }
+.perk-category {
+    font-family: 'Space Mono', Consolas, monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 .perk-desc {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
     font-size: 11px;
-    color: #bbb;
+    font-weight: 300;
+    color: #99aabb;
     line-height: 1.4;
     margin-top: 2px;
 }
@@ -1286,11 +1454,13 @@ body.game-fullscreen #game-container {
 
 /* ========== DIFFICULTY SELECTION ========== */
 .diff-subtitle {
-    color: #8899aa;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    color: #7799aa;
     font-size: 13px;
+    font-weight: 300;
     margin-bottom: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .difficulty-grid {
@@ -1302,9 +1472,9 @@ body.game-fullscreen #game-container {
 }
 
 .diff-card {
-    background: rgba(20, 30, 50, 0.85);
-    border: 2px solid rgba(100, 120, 150, 0.3);
-    border-radius: 12px;
+    background: rgba(12, 18, 35, 0.9);
+    border: 2px solid rgba(80, 110, 160, 0.2);
+    border-radius: 6px;
     padding: 14px 10px 12px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -1317,7 +1487,7 @@ body.game-fullscreen #game-container {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 12px;
+    border-radius: 5px;
     opacity: 0;
     transition: opacity 0.2s;
     pointer-events: none;
@@ -1343,9 +1513,9 @@ body.game-fullscreen #game-container {
 .diff-card:hover::before { opacity: 1; }
 
 .diff-card.selected {
-    border-color: rgba(100, 200, 255, 0.7);
-    background: rgba(30, 50, 80, 0.9);
-    box-shadow: 0 0 20px rgba(100, 200, 255, 0.15), inset 0 0 30px rgba(100, 200, 255, 0.05);
+    border-color: rgba(100, 200, 255, 0.6);
+    background: rgba(18, 35, 60, 0.95);
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.12), inset 0 0 30px rgba(100, 200, 255, 0.04);
 }
 .diff-card.selected::before { opacity: 1; }
 
@@ -1366,14 +1536,14 @@ body.game-fullscreen #game-container {
     box-shadow: 0 0 20px rgba(255, 111, 0, 0.15), inset 0 0 30px rgba(255, 111, 0, 0.05);
 }
 
-.diff-emoji {
-    font-size: 32px;
+.diff-icon {
+    font-size: 28px;
     margin-bottom: 6px;
     filter: drop-shadow(0 0 6px rgba(255,255,255,0.2));
 }
 
 .diff-label {
-    font-family: 'Orbitron', 'Segoe UI', monospace;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -1386,14 +1556,16 @@ body.game-fullscreen #game-container {
 .diff-card[data-difficulty="panic"] .diff-label { color: #ff6f00; }
 
 .diff-desc {
-    color: #8899aa;
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    color: #7799aa;
     font-size: 11px;
+    font-weight: 300;
     line-height: 1.3;
     margin-bottom: 6px;
 }
 
 .diff-mult {
-    font-family: 'Orbitron', 'Segoe UI', monospace;
+    font-family: 'Space Mono', Consolas, monospace;
     font-size: 13px;
     font-weight: 600;
     color: #ffd740;
@@ -1405,6 +1577,50 @@ body.game-fullscreen #game-container {
         grid-template-columns: 1fr;
         max-width: 260px;
     }
+}
+
+/* ============ WORLD CARDS ============ */
+.world-card {
+    cursor: pointer;
+    position: relative;
+    background: rgba(12, 18, 35, 0.9);
+    border: 2px solid rgba(80, 120, 180, 0.2);
+    border-radius: 6px;
+    padding: 14px 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.world-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.world-card[data-world="1"]::before {
+    background: linear-gradient(135deg, rgba(100,180,255,0.12), rgba(50,80,180,0.08));
+}
+.world-card[data-world="2"]::before {
+    background: linear-gradient(135deg, rgba(100,220,150,0.12), rgba(40,120,80,0.08));
+}
+.world-card:hover:not(.locked) { transform: translateY(-2px); border-color: rgba(100,180,255,0.6); }
+.world-card:hover:not(.locked)::before { opacity: 1; }
+.world-card.selected {
+    border-color: rgba(100,200,255,0.8);
+    box-shadow: 0 0 12px rgba(100,180,255,0.25);
+}
+.world-card.selected::before { opacity: 1; }
+.world-card.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.world-lock-label {
+    font-size: 10px;
+    color: #ff8866;
+    margin-top: 4px;
+    font-style: italic;
 }
 
 /* ============ XP & LEVEL-UP NOTIFICATIONS ============ */

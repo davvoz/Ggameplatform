@@ -67,7 +67,18 @@ class WaveManager {
                     this.currentWaveIndex++;
                     this.waveCleared = false;
                 } else if (enemiesAlive === 0) {
-                    const miniBossType = levelData.miniboss || (((g.levelManager.currentLevel - 1) % 4) + 1);
+                    // Miniboss alternation: cycle through available types per world
+                    const lvl = g.levelManager.currentLevel;
+                    let miniBossType;
+                    if (levelData.miniboss) {
+                        miniBossType = levelData.miniboss;
+                    } else if (lvl > 30) {
+                        // World 2: cycle through types 5-8
+                        miniBossType = 5 + (((lvl - 31) % 4));
+                    } else {
+                        // World 1: cycle through types 1-4
+                        miniBossType = ((lvl - 1) % 4) + 1;
+                    }
                     this.spawnMiniBoss(miniBossType);
                 }
             }

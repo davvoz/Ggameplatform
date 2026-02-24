@@ -11,7 +11,11 @@ const POWERUP_TYPES = {
     speed: { icon: '💨', color: { r: 100, g: 255, b: 150 }, label: 'Speed' },
     rapid: { icon: '🔥', color: { r: 255, g: 150, b: 50 }, label: 'Rapid' },
     points: { icon: '⭐', color: { r: 255, g: 215, b: 0 }, label: 'Points' },
-    ultimate: { icon: '💎', color: { r: 180, g: 100, b: 255 }, label: 'ULT+' }
+    ultimate: { icon: '💎', color: { r: 180, g: 100, b: 255 }, label: 'ULT+' },
+    // ─── World 2 Power-ups ───
+    drone_companion: { icon: '🤖', color: { r: 100, g: 220, b: 255 }, label: 'Drone' },
+    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' },
+    bouncing_bullets:{ icon: '🔮', color: { r: 255, g: 160, b: 40 }, label: 'Bounce' }
 };
 
 class PowerUp extends GameObject {
@@ -245,6 +249,78 @@ class PowerUp extends GameObject {
                 ctx.fill();
                 break;
             }
+            // ─── World 2 Power-up Icons ───
+            case 'drone_companion': {
+                // Small satellite/drone shape
+                const s = size * 0.7;
+                // Body square
+                ctx.beginPath();
+                ctx.roundRect(cx - s * 0.35, cy - s * 0.35, s * 0.7, s * 0.7, 2);
+                ctx.fill();
+                ctx.stroke();
+                // Solar panels
+                ctx.beginPath();
+                ctx.roundRect(cx - s, cy - s * 0.15, s * 0.5, s * 0.3, 1);
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.roundRect(cx + s * 0.5, cy - s * 0.15, s * 0.5, s * 0.3, 1);
+                ctx.fill();
+                ctx.stroke();
+                // Eye
+                ctx.fillStyle = '#66ddff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            }
+            case 'bullet_time': {
+                // Clock/stopwatch shape
+                const s = size * 0.7;
+                ctx.beginPath();
+                ctx.arc(cx, cy, s, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // Clock hands
+                ctx.strokeStyle = 'rgba(100,80,200,0.8)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx, cy - s * 0.65);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + s * 0.45, cy + s * 0.1);
+                ctx.stroke();
+                // Ticks
+                for (let i = 0; i < 12; i++) {
+                    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(cx + Math.cos(a) * s * 0.82, cy + Math.sin(a) * s * 0.82, 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+            }
+            case 'bouncing_bullets': {
+                // Bouncing orb with arrows
+                const s = size * 0.6;
+                ctx.beginPath();
+                ctx.arc(cx, cy, s, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // Ricochet arrows
+                ctx.strokeStyle = '#ff8800';
+                ctx.lineWidth = 1.5;
+                const dirs = [[1, -1], [-1, 1], [1, 1]];
+                for (const [dx, dy] of dirs) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.lineTo(cx + dx * s * 0.7, cy + dy * s * 0.7);
+                    ctx.stroke();
+                }
+                break;
+            }
         }
         ctx.restore();
     }
@@ -278,6 +354,20 @@ class PowerUp extends GameObject {
                 break;
             case 'ultimate':
                 player.ultimateCharge = Math.min(player.ultimateCharge + 25, 100);
+                break;
+            // ─── World 2 Power-ups ───
+            case 'drone_companion':
+                player.droneActive = true;
+                player.droneTime = 10;
+                player.droneFireTimer = 0;
+                break;
+            case 'bullet_time':
+                game.bulletTimeActive = true;
+                game.bulletTimeTimer = 6;
+                break;
+            case 'bouncing_bullets':
+                player.bouncingBullets = true;
+                player.bouncingBulletsTime = 8;
                 break;
         }
     }

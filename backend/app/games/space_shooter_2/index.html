@@ -7,6 +7,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Space Shooter 2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="/sdk/platformsdk.obf.js"></script>
 </head>
@@ -54,6 +57,25 @@
             <div class="screen-content">
                 <h1 class="game-title">SPACE SHOOTER <span class="title-accent">2</span></h1>
                 <p class="game-subtitle">Tactical Evolution</p>
+
+                <!-- World selection (shown only when 2+ worlds unlocked) -->
+                <div id="world-select-panel" class="hidden">
+                    <p class="diff-subtitle" style="margin-bottom:10px;">Select World</p>
+                    <div class="difficulty-grid">
+                        <div class="world-card selected" data-world="1">
+                            <div class="diff-label">WORLD 1</div>
+                            <div class="diff-desc">Deep Space</div>
+                            <div class="diff-mult">Levels 1-30</div>
+                        </div>
+                        <div class="world-card locked" data-world="2">
+                            <div class="diff-label">WORLD 2</div>
+                            <div class="diff-desc">Planetary Flyover</div>
+                            <div class="diff-mult">Levels 31-60</div>
+                            <div class="world-lock-label">Complete World 1</div>
+                        </div>
+                    </div>
+                </div>
+
                 <button id="btn-start" class="btn-primary">START GAME</button>
             </div>
         </div>
@@ -65,25 +87,25 @@
                 <p class="diff-subtitle">Higher difficulty = higher score multiplier</p>
                 <div class="difficulty-grid">
                     <div class="diff-card selected" data-difficulty="boring">
-                        <div class="diff-emoji">😴</div>
+                        <div class="diff-icon">◌</div>
                         <div class="diff-label">BORING</div>
                         <div class="diff-desc">Relaxing ride. Enemies are weak and slow.</div>
                         <div class="diff-mult">×0.25 score</div>
                     </div>
                     <div class="diff-card" data-difficulty="normal">
-                        <div class="diff-emoji">⚔️</div>
+                        <div class="diff-icon">⚔</div>
                         <div class="diff-label">NORMAL</div>
                         <div class="diff-desc">Balanced challenge for most pilots.</div>
                         <div class="diff-mult">×1 score</div>
                     </div>
                     <div class="diff-card" data-difficulty="hard">
-                        <div class="diff-emoji">💀</div>
+                        <div class="diff-icon">☠</div>
                         <div class="diff-label">HARD</div>
                         <div class="diff-desc">Punishing. Enemies hit harder and faster.</div>
                         <div class="diff-mult">×2 score</div>
                     </div>
                     <div class="diff-card" data-difficulty="panic">
-                        <div class="diff-emoji">🔥</div>
+                        <div class="diff-icon">♨</div>
                         <div class="diff-label">PANIC</div>
                         <div class="diff-desc">Pure chaos. Only for the brave.</div>
                         <div class="diff-mult">×4 score</div>
@@ -95,6 +117,8 @@
                 </div>
             </div>
         </div>
+
+
 
         <!-- ========== SHIP SELECTION ========== -->
         <div id="ship-select-screen" class="ui-screen hidden">
@@ -212,7 +236,7 @@
                 </div>
                 <div class="screen-actions">
                     <button id="btn-back-to-ships" class="btn-secondary">← BACK</button>
-                    <button id="btn-select-ultimate" class="btn-primary">LAUNCH! 🚀</button>
+                    <button id="btn-select-ultimate" class="btn-primary">LAUNCH →</button>
                 </div>
             </div>
         </div>
@@ -267,7 +291,7 @@
         <!-- ========== SHOP (legacy, hidden) ========== -->
         <div id="shop-screen" class="ui-screen hidden">
             <div class="screen-content shop-panel">
-                <h2>🛒 ARMORY</h2>
+                <h2>ARMORY</h2>
                 <div class="shop-balance">
                     Points: <span id="shop-points" class="gold">0</span>
                 </div>
@@ -314,8 +338,8 @@
         <!-- ========== VICTORY ========== -->
         <div id="victory-screen" class="ui-screen hidden">
             <div class="screen-content">
-                <h2 class="victory-title">🏆 VICTORY! 🏆</h2>
-                <p class="victory-subtitle">You conquered all 30 levels!</p>
+                <h2 class="victory-title">★ VICTORY ★</h2>
+                <p class="victory-subtitle" id="victory-subtitle">You completed all the levels!</p>
                 <div class="summary-grid">
                     <div class="summary-row">
                         <span class="summary-label">Final Score</span>
@@ -335,26 +359,26 @@
         <!-- ========== SETTINGS / PAUSE ========== -->
         <div id="settings-popup" class="ui-screen hidden">
             <div class="screen-content settings-panel">
-                <h2>⚙️ SETTINGS</h2>
+                <h2>SETTINGS</h2>
                 <div class="settings-buttons">
                     <div class="setting-row">
-                        <span class="setting-label">🎵 Music</span>
+                        <span class="setting-label">Music</span>
                         <button id="btn-toggle-music" class="toggle-btn on">ON</button>
                     </div>
                     <div class="setting-row">
-                        <span class="setting-label">🔊 Sound FX</span>
+                        <span class="setting-label">Sound FX</span>
                         <button id="btn-toggle-sfx" class="toggle-btn on">ON</button>
                     </div>
                     <div class="setting-row performance-selector">
-                        <span class="setting-label">⚡ Performance</span>
+                        <span class="setting-label">Performance</span>
                         <div class="performance-buttons">
-                            <button type="button" class="perf-btn" data-perf="low" title="Low - Max compatibility">💩</button>
-                            <button type="button" class="perf-btn" data-perf="medium" title="Medium - Balanced">⚖️</button>
-                            <button type="button" class="perf-btn active" data-perf="high" title="High - All effects">👑</button>
+                            <button type="button" class="perf-btn" data-perf="low" title="Low - Max compatibility">LOW</button>
+                            <button type="button" class="perf-btn" data-perf="medium" title="Medium - Balanced">MED</button>
+                            <button type="button" class="perf-btn active" data-perf="high" title="High - All effects">MAX</button>
                         </div>
                     </div>
-                    <button id="btn-resume" class="btn-primary settings-resume">▶ RESUME</button>
-                    <button id="btn-quit" class="btn-danger">✕ QUIT TO MENU</button>
+                    <button id="btn-resume" class="btn-primary settings-resume">RESUME</button>
+                    <button id="btn-quit" class="btn-danger">QUIT TO MENU</button>
                 </div>
             </div>
         </div>
@@ -362,7 +386,7 @@
         <!-- ========== SHIP DETAILS ========== -->
         <div id="ship-detail-popup" class="ui-screen hidden">
             <div class="screen-content ship-detail-panel">
-                <h2>🚀 SHIP PROFILE</h2>
+                <h2>SHIP PROFILE</h2>
                 <div class="ship-detail-header">
                     <canvas id="ship-detail-preview" width="96" height="96"></canvas>
                     <div class="ship-detail-info">
@@ -390,7 +414,7 @@
                     <div class="section-title">ACTIVE PERKS</div>
                     <div class="detail-perks-list" id="detail-perks-list"></div>
                 </div>
-                <button id="btn-close-detail" class="btn-primary settings-resume">▶ RESUME</button>
+                <button id="btn-close-detail" class="btn-primary settings-resume">RESUME</button>
             </div>
         </div>
     </div>

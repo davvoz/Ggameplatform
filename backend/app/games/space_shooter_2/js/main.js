@@ -157,6 +157,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncToggleStates();
     });
 
+    // ========== WORLD PROGRESS ==========
+    let unlockedWorlds = 1; // default: only world 1 unlocked
+    let selectedWorld = 1;
+
+    // Load progress from DB when SDK is ready
+    async function loadWorldProgress() {
+        if (typeof PlatformSDK !== 'undefined' && PlatformSDK.loadProgress) {
+            try {
+                const data = await PlatformSDK.loadProgress();
+                if (data && data.worlds_unlocked) {
+                    unlockedWorlds = data.worlds_unlocked;
+                }
+            } catch (e) {
+                console.warn('[SS2] Failed to load progress:', e);
+            }
+        }
+        updateWorldCards();
+    }
+
+    function updateWorldCards() {
+        const panel = document.getElementById('world-select-panel');
+        document.querySelectorAll('.world-card').forEach(card => {
+            const worldNum = parseInt(card.dataset.world);
+            const isLocked = worldNum > unlockedWorlds;
+            card.classList.toggle('locked', isLocked);
+            const icon = card.querySelector('.diff-icon');
+            const lockLabel = card.querySelector('.world-lock-label');
+            if (isLocked) {
+                if (icon) icon.textContent = '▣';
+                if (lockLabel) lockLabel.style.display = '';
+                card.classList.remove('selected');
+            } else {
+                // Restore original icon
+                if (icon) {
+                    if (worldNum === 1) icon.textContent = '◆';
+                    else if (worldNum === 2) icon.textContent = '◇';
+                }
+                if (lockLabel) lockLabel.style.display = 'none';
+            }
+        });
+        // Ensure a valid world is selected
+        const anySelected = document.querySelector('.world-card.selected:not(.locked)');
+        if (!anySelected) {
+            const first = document.querySelector('.world-card:not(.locked)');
+            if (first) { first.classList.add('selected'); selectedWorld = parseInt(first.dataset.world); }
+        }
+        // Show world panel only if 2+ worlds are unlocked
+        if (panel) {
+            if (unlockedWorlds > 1) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+                selectedWorld = 1;
+            }
+        }
+    }
+
+    // Save progress when a world is completed
+    window.saveWorldProgress = function(worldCompleted) {
+        const newUnlock = Math.max(unlockedWorlds, worldCompleted + 1);
+        if (newUnlock > unlockedWorlds) {
+            unlockedWorlds = newUnlock;
+            if (typeof PlatformSDK !== 'undefined' && PlatformSDK.saveProgress) {
+                PlatformSDK.saveProgress({ worlds_unlocked: unlockedWorlds });
+            }
+        }
+    };
+
+    // Load progress on startup
+    loadWorldProgress();
+
     // ========== DIFFICULTY SELECTION ==========
     const diffCards = document.querySelectorAll('.diff-card');
     let selectedDifficulty = 'boring';
@@ -166,6 +237,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             diffCards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedDifficulty = card.dataset.difficulty;
+            game.sound.playMenuClick();
+        });
+    });
+
+    // ========== WORLD SELECTION ==========
+    document.querySelectorAll('.world-card').forEach(card => {
+        card.addEventListener('click', () => {
+            if (card.classList.contains('locked')) return;
+            document.querySelectorAll('.world-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedWorld = parseInt(card.dataset.world);
             game.sound.playMenuClick();
         });
     });
@@ -200,10 +282,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.sound.playMenuClick();
         game.sound.resume();
         game.sound.playIntroMusic();
-        game.startCinematic(() => {
-            // Cinematic finished or skipped → show difficulty select
+        const onCinematicDone = () => {
             showScreen('difficulty-select-screen');
-        });
+        };
+        // Play world-specific opening cinematic (World 1: game intro, World 2+: world intro)
+        game.startCinematic(onCinematicDone, selectedWorld);
     });
 
     // Difficulty select → Ship select
@@ -223,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Ultimate select → Start game
     document.getElementById('btn-select-ultimate')?.addEventListener('click', () => {
         hideScreen('ultimate-select-screen');
-        game.startGame(selectedShip, selectedUltimate, selectedDifficulty);
+        game.startGame(selectedShip, selectedUltimate, selectedDifficulty, selectedWorld);
         game.sound.playMenuClick();
     });
 
@@ -248,8 +331,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-next-level')?.addEventListener('click', () => {
         game.hideLevelCompleteScreen();
         game.sound.playMenuClick();
-        // If last level completed, skip perk screen and go to victory
-        if (game.currentLevel >= 30) {
+        // Skip perk screen on world-end levels (30, 60) — world transition or victory follows
+        const isWorldEnd = (game.currentLevel % 30 === 0);
+        if (isWorldEnd) {
             game.startNextLevel();
         } else {
             game.showPerkScreen();
@@ -265,19 +349,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ========== GAME OVER ==========
     document.getElementById('btn-restart')?.addEventListener('click', () => {
-        hideScreen('game-over-screen');
         game.state = 'menu';
         game.clearAllEntities();
-        showScreen('difficulty-select-screen');
+        loadWorldProgress();
+        showScreen('start-screen', false);
+        hideScreen('game-over-screen');
+        game.sound.playIntroMusic();
         game.sound.playMenuClick();
     });
 
     // ========== VICTORY ==========
     document.getElementById('btn-victory-restart')?.addEventListener('click', () => {
-        hideScreen('victory-screen');
         game.state = 'menu';
         game.clearAllEntities();
-        showScreen('difficulty-select-screen');
+        loadWorldProgress();
+        showScreen('start-screen', false);
+        hideScreen('victory-screen');
+        game.sound.playIntroMusic();
         game.sound.playMenuClick();
     });
 
@@ -297,9 +385,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.sound.playMenuClick();
     });
     document.getElementById('btn-quit')?.addEventListener('click', () => {
-        hideScreen('settings-popup');
-        showScreen('start-screen', false);
         game.state = 'menu';
+        showScreen('start-screen', false);
+        hideScreen('settings-popup');
         game._hideHudButtons();
         game.sound.playIntroMusic();
         game.sound.playMenuClick();

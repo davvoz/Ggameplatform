@@ -1,4 +1,5 @@
 import { getLevelData } from '../LevelData.js';
+import { title, ui, mono } from '../FontConfig.js';
 
 class HUDRenderer {
     constructor(game) {
@@ -18,7 +19,7 @@ class HUDRenderer {
         ctx.fillRect(0, 0, w, 36);
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${14 * fs}px "Segoe UI", Arial, sans-serif`;
+        ctx.font = ui(14 * fs, 'bold');
         ctx.textAlign = 'left';
         ctx.fillText(`SCORE: ${g.scoreManager.score.toLocaleString()}`, 10, 24);
 
@@ -41,12 +42,12 @@ class HUDRenderer {
         ctx.lineWidth = 1;
         ctx.strokeRect(hpBarX, hpBarY, hpBarW, hpBarH);
         ctx.fillStyle = '#fff';
-        ctx.font = `${9 * fs}px Arial`;
+        ctx.font = ui(9 * fs);
         ctx.textAlign = 'center';
         ctx.fillText(`${player.health}/${player.maxHealth}`, hpBarX + hpBarW / 2, hpBarY + 9);
 
         const wpnY = hpBarY + hpBarH + 12;
-        ctx.font = `${8 * fs}px Arial`;
+        ctx.font = ui(8 * fs);
         ctx.textAlign = 'right';
         ctx.fillStyle = '#668899';
 
@@ -56,7 +57,7 @@ class HUDRenderer {
             ctx.fillStyle = filled ? '#ffaa00' : '#333344';
             ctx.shadowColor = filled ? '#ff8800' : 'transparent';
             ctx.shadowBlur = filled ? 5 : 0;
-            ctx.font = `${11 * fs}px Arial`;
+            ctx.font = ui(11 * fs);
             ctx.textAlign = 'left';
             ctx.fillText('★', starX, wpnY + 2);
         }
@@ -64,7 +65,7 @@ class HUDRenderer {
 
         if (g.scoreManager.combo > 1) {
             ctx.textAlign = 'center';
-            ctx.font = `bold ${(16 + Math.min(g.scoreManager.combo, 10)) * fs}px Arial`;
+            ctx.font = ui((16 + Math.min(g.scoreManager.combo, 10)) * fs, 'bold');
             ctx.fillStyle = `rgba(255,${Math.max(100, 255 - g.scoreManager.combo * 15)},50,${0.7 + g.scoreManager.comboTimer * 0.15})`;
             ctx.shadowColor = '#ff8800';
             ctx.shadowBlur = 8;
@@ -89,7 +90,7 @@ class HUDRenderer {
             ctx.lineWidth = 1;
             ctx.strokeRect(ultBarX, ultBarY, ultBarW, ultBarH);
 
-            ctx.font = `${9 * fs}px Arial`;
+            ctx.font = ui(9 * fs);
             ctx.textAlign = 'center';
             ctx.fillStyle = '#fff';
             let ultLabel;
@@ -109,7 +110,7 @@ class HUDRenderer {
             const perkGap = 4;
             const perkX = 8;
             let perkY = 42;
-            ctx.font = `bold ${11 * fs}px Arial`;
+            ctx.font = ui(11 * fs, 'bold');
             ctx.textAlign = 'center';
             for (const perk of activePerks) {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -120,10 +121,10 @@ class HUDRenderer {
                 ctx.fillStyle = perk.rarityData.color;
                 ctx.fillText(perk.icon, perkX + perkSize / 2, perkY + 15);
                 if (perk.stacks > 1) {
-                    ctx.font = `bold ${8 * fs}px Arial`;
+                    ctx.font = ui(8 * fs, 'bold');
                     ctx.fillStyle = '#fff';
                     ctx.fillText(`×${perk.stacks}`, perkX + perkSize - 2, perkY + 8);
-                    ctx.font = `bold ${11 * fs}px Arial`;
+                    ctx.font = ui(11 * fs, 'bold');
                 }
                 perkY += perkSize + perkGap;
             }
@@ -169,16 +170,16 @@ class HUDRenderer {
         if (g.currentFPS < 30) fpsColor = '#ff4444';
         else if (g.currentFPS < 50) fpsColor = '#ffaa00';
 
-        ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
+        ctx.font = ui(16, 'bold');
         ctx.textAlign = 'left';
         ctx.fillStyle = fpsColor;
         ctx.fillText(`${g.currentFPS}`, x + 6, y + 18);
-        ctx.font = '9px "Segoe UI", Arial, sans-serif';
+        ctx.font = ui(9);
         ctx.fillStyle = '#668899';
         ctx.fillText('FPS', x + 48, y + 18);
 
         // AVG / MIN
-        ctx.font = '8px "Segoe UI", Arial, sans-serif';
+        ctx.font = ui(8);
         ctx.fillStyle = '#889999';
         ctx.fillText(`AVG ${g.avgFPS} | MIN ${g.minFPS}`, x + 6, y + 30);
 
@@ -254,7 +255,7 @@ class HUDRenderer {
             ctx.globalAlpha = flash;
             ctx.shadowColor = '#ff0000';
             ctx.shadowBlur = 20;
-            ctx.font = `bold ${36 * fs}px monospace`;
+            ctx.font = mono(36 * fs);
             ctx.fillStyle = '#ff2222';
             ctx.fillText('⚠ WARNING ⚠', w / 2, h / 2 - 60);
 
@@ -263,7 +264,7 @@ class HUDRenderer {
                 ctx.globalAlpha = nameAlpha;
                 ctx.shadowColor = boss.def.color;
                 ctx.shadowBlur = 15;
-                ctx.font = `bold ${22 * fs}px monospace`;
+                ctx.font = mono(22 * fs);
                 ctx.fillStyle = boss.def.color;
                 ctx.fillText(boss.name.toUpperCase(), w / 2, h / 2);
             }
@@ -272,7 +273,7 @@ class HUDRenderer {
                 const subAlpha = Math.min(1, (progress - 0.6) / 0.3);
                 ctx.globalAlpha = subAlpha * 0.7;
                 ctx.shadowBlur = 0;
-                ctx.font = `${14 * fs}px monospace`;
+                ctx.font = mono(14 * fs, 400);
                 ctx.fillStyle = '#ff8888';
                 ctx.fillText('INCOMING THREAT DETECTED', w / 2, h / 2 + 30);
             }
@@ -348,7 +349,7 @@ class HUDRenderer {
         ctx.textBaseline = 'middle';
 
         ctx.fillStyle = '#000';
-        ctx.font = `bold ${13 * this.game.fontScale}px monospace`;
+        ctx.font = mono(13 * this.game.fontScale);
         ctx.fillText(n.text, w / 2 + 1, bannerY + bannerH / 2 + 1);
 
         ctx.fillStyle = n.color;

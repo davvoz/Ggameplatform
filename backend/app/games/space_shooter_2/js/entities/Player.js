@@ -141,6 +141,15 @@ class Player extends GameObject {
         this.rapidFire = false;
         this.rapidFireTime = 0;
 
+        // ─── World 2 Power-up temporaries ───
+        this.droneActive = false;
+        this.droneTime = 0;
+        this.droneFireTimer = 0;
+        this.droneAngle = 0;
+
+        this.bouncingBullets = false;
+        this.bouncingBulletsTime = 0;
+
         // Ultimate system
         this.ultimateCharge = 0;
         this.ultimateActive = false;
@@ -287,6 +296,34 @@ class Player extends GameObject {
             if (this.rapidFireTime <= 0) {
                 this.rapidFire = false;
                 this.fireRate = this.baseFireRate;
+            }
+        }
+
+        // ─── World 2 Power-up Timers ───
+
+        // Drone companion
+        if (this.droneActive) {
+            this.droneTime -= deltaTime;
+            this.droneAngle += deltaTime * 2.5;
+            this.droneFireTimer -= deltaTime;
+            // Drone auto-fires
+            if (this.droneFireTimer <= 0) {
+                this.droneFireTimer = 0.5;
+                const dAngle = this.droneAngle;
+                const cx = this.position.x + this.width / 2 + Math.cos(dAngle) * 35;
+                const cy = this.position.y + this.height / 2 + Math.sin(dAngle) * 35;
+                game.spawnBullet(cx, cy, 0, -500, 'player');
+            }
+            if (this.droneTime <= 0) {
+                this.droneActive = false;
+            }
+        }
+
+        // Bouncing bullets
+        if (this.bouncingBullets) {
+            this.bouncingBulletsTime -= deltaTime;
+            if (this.bouncingBulletsTime <= 0) {
+                this.bouncingBullets = false;
             }
         }
 
@@ -633,6 +670,54 @@ class Player extends GameObject {
                 ctx.arc(startX + i * dotSpacing, dotY, 2, 0, Math.PI * 2);
                 ctx.fill();
             }
+            ctx.restore();
+        }
+
+        // ── DRONE COMPANION VISUAL ──
+        if (this.droneActive) {
+            ctx.save();
+            const drCx = cx + Math.cos(this.droneAngle) * 35;
+            const drCy = cy + Math.sin(this.droneAngle) * 35;
+            // Drone body
+            const droneGrad = ctx.createRadialGradient(drCx, drCy, 0, drCx, drCy, 8);
+            droneGrad.addColorStop(0, '#aaeeff');
+            droneGrad.addColorStop(0.5, '#44aadd');
+            droneGrad.addColorStop(1, '#115577');
+            ctx.fillStyle = droneGrad;
+            ctx.beginPath();
+            ctx.arc(drCx, drCy, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // Drone eye
+            ctx.fillStyle = '#66ffff';
+            ctx.beginPath();
+            ctx.arc(drCx, drCy, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Energy trail
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = '#66ddff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const trailAngle = this.droneAngle - 0.4;
+            ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
+            ctx.lineTo(drCx, drCy);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // ── BOUNCING BULLETS VISUAL ──
+        if (this.bouncingBullets) {
+            ctx.save();
+            ctx.globalAlpha = 0.25 + 0.1 * Math.sin(Date.now() * 0.006);
+            ctx.strokeStyle = '#ffaa22';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
             ctx.restore();
         }
 

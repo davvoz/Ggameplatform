@@ -190,6 +190,11 @@
                     }
                     break;
                 
+                case 'progressLoaded':
+                    // Response from platform with loaded progress data
+                    this.triggerEvent('progressLoaded', message.payload);
+                    break;
+                
                 default:
                     this.log('Unknown message type:', message.type);
             }
@@ -657,6 +662,53 @@
         }
         
         /**
+         * Save game progress data to the platform (persisted per-user per-game)
+         * @param {Object} data - Progress data to save (arbitrary JSON)
+         */
+        saveProgress(data) {
+            if (!data || typeof data !== 'object') {
+                console.error('[PlatformSDK] Progress data must be an object');
+                return;
+            }
+            this.sendToPlatform('saveProgress', {
+                progress_data: data,
+                timestamp: Date.now()
+            });
+            this.log('Progress save requested', data);
+        }
+
+        /**
+         * Load game progress data from the platform
+         * @returns {Promise<Object|null>} Resolves with progress data or null if none saved
+         */
+        loadProgress() {
+            return new Promise((resolve) => {
+                const requestId = 'lp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                
+                // Set up one-time listener for response
+                const handler = (payload) => {
+                    if (payload && payload._requestId === requestId) {
+                        this.off('progressLoaded', handler);
+                        resolve(payload.progress_data || null);
+                    }
+                };
+                this.on('progressLoaded', handler);
+                
+                // Timeout after 5s — resolve null if no response
+                setTimeout(() => {
+                    this.off('progressLoaded', handler);
+                    resolve(null);
+                }, 5000);
+                
+                this.sendToPlatform('loadProgress', {
+                    _requestId: requestId,
+                    timestamp: Date.now()
+                });
+                this.log('Progress load requested', requestId);
+            });
+        }
+
+        /**
          * Cleanup SDK resources
          */
         cleanup() {
@@ -682,6 +734,8 @@
         toggleFullscreen: () => sdk.toggleFullscreen(),
         isFullscreen: () => sdk.isFullscreen(),
         resetSession: () => sdk.resetSession(),
+        saveProgress: (data) => sdk.saveProgress(data),
+        loadProgress: () => sdk.loadProgress(),
         on: (eventType, callback) => sdk.on(eventType, callback),
         off: (eventType, callback) => sdk.off(eventType, callback),
         getState: () => sdk.getState(),

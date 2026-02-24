@@ -34,7 +34,8 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'common',
         maxStacks: 3,
-        icon: '➤'
+        icon: '➤',
+        world: 1
     },
     {
         id: 'critical_strike',
@@ -44,7 +45,8 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'common',
         maxStacks: 3,
-        icon: '✦'
+        icon: '✦',
+        world: 1
     },
     {
         id: 'explosive_rounds',
@@ -53,7 +55,8 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'epic',
         maxStacks: 1,
-        icon: '◉'
+        icon: '◉',
+        world: 1
     },
     {
         id: 'chain_lightning',
@@ -63,7 +66,8 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '⚡'
+        icon: '↯',
+        world: 1
     },
     {
         id: 'vampire_rounds',
@@ -73,7 +77,8 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'common',
         maxStacks: 3,
-        icon: '♥'
+        icon: '♥',
+        world: 1
     },
     {
         id: 'double_barrel',
@@ -84,7 +89,8 @@ const PERK_CATALOG = [
         maxStacks: 1,
         icon: '⫸',
         stats: { fireRate: 1 },
-        tradeoff: '+30% heat per shot'
+        tradeoff: '+30% heat per shot',
+        world: 1
     },
     {
         id: 'glass_cannon',
@@ -95,7 +101,8 @@ const PERK_CATALOG = [
         maxStacks: 1,
         icon: '☠',
         stats: { hp: -1 },
-        tradeoff: '−1 HP, −25% resist'
+        tradeoff: '−1 HP, −25% resist',
+        world: 1
     },
 
     // ══════════ DEFENSIVE ══════════
@@ -108,7 +115,8 @@ const PERK_CATALOG = [
         category: 'defensive',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '◎'
+        icon: '◎',
+        world: 1
     },
     {
         id: 'phase_dodge',
@@ -118,7 +126,8 @@ const PERK_CATALOG = [
         category: 'defensive',
         rarity: 'common',
         maxStacks: 3,
-        icon: '◌'
+        icon: '◌',
+        world: 1
     },
     {
         id: 'emergency_protocol',
@@ -127,7 +136,8 @@ const PERK_CATALOG = [
         category: 'defensive',
         rarity: 'epic',
         maxStacks: 1,
-        icon: '!'
+        icon: '!',
+        world: 1
     },
     {
         id: 'damage_converter',
@@ -137,7 +147,8 @@ const PERK_CATALOG = [
         category: 'defensive',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '⟳'
+        icon: '⟳',
+        world: 1
     },
     {
         id: 'thorns',
@@ -147,7 +158,8 @@ const PERK_CATALOG = [
         rarity: 'epic',
         maxStacks: 1,
         icon: '✴',
-        stats: { resist: 1 }
+        stats: { resist: 1 },
+        world: 1
     },
     {
         id: 'fortress_mode',
@@ -159,7 +171,8 @@ const PERK_CATALOG = [
         maxStacks: 3,
         icon: '▣',
         stats: { hp: 2 },
-        tradeoff: '−15% speed'
+        tradeoff: '−15% speed',
+        world: 1
     },
 
     // ══════════ UTILITY ══════════
@@ -172,7 +185,8 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'common',
         maxStacks: 3,
-        icon: '⊕'
+        icon: '⊕',
+        world: 1
     },
     {
         id: 'combo_master',
@@ -182,7 +196,8 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'common',
         maxStacks: 2,
-        icon: '✕'
+        icon: '✕',
+        world: 1
     },
     {
         id: 'ultimate_engine',
@@ -192,7 +207,8 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '★'
+        icon: '★',
+        world: 1
     },
     {
         id: 'cool_exhaust',
@@ -203,7 +219,8 @@ const PERK_CATALOG = [
         rarity: 'common',
         maxStacks: 2,
         icon: '❆',
-        stats: { fireRate: 1 }
+        stats: { fireRate: 1 },
+        world: 1
     },
     {
         id: 'lucky_drops',
@@ -213,7 +230,8 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '♣'
+        icon: '♣',
+        world: 1
     },
     {
         id: 'point_multiplier',
@@ -223,7 +241,8 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'common',
         maxStacks: 3,
-        icon: '◆'
+        icon: '◆',
+        world: 1
     },
     {
         id: 'orbital_drone',
@@ -233,7 +252,86 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'epic',
         maxStacks: 2,
-        icon: '⊛'
+        icon: '⊛',
+        world: 1
+    },
+
+    // ═══════════════════════════════════════
+    //  WORLD 2 — PLANETARY FLYOVER PERKS
+    // ═══════════════════════════════════════
+
+    // ── Offensive ──
+
+    {
+        id: 'ricochet_master',
+        name: 'Ricochet Master',
+        description: 'All bullets bounce off screen edges up to 2 times.',
+        stackDesc: '+1 max bounce per stack',
+        category: 'offensive',
+        rarity: 'rare',
+        maxStacks: 3,
+        icon: '↯',
+        world: 2
+    },
+    {
+        id: 'predatore',
+        name: 'Predator',
+        description: '+50% damage against stealth enemies. Reveals cloaked targets.',
+        stackDesc: '+25% stealth damage per stack',
+        category: 'offensive',
+        rarity: 'rare',
+        maxStacks: 2,
+        icon: '◈',
+        world: 2
+    },
+    {
+        id: 'colpo_critico',
+        name: 'Critical Hit',
+        description: 'Crits deal AoE shockwave (80px). +5% crit chance.',
+        stackDesc: '+5% crit chance, +20px AoE range per stack',
+        category: 'offensive',
+        rarity: 'epic',
+        maxStacks: 2,
+        icon: '◊',
+        world: 2
+    },
+
+    // ── Defensive ──
+
+    {
+        id: 'scia_infuocata',
+        name: 'Fire Trail',
+        description: 'Leave a fire trail that damages enemies (2 dmg/s, 1s duration).',
+        stackDesc: '+1 dmg/s, +0.5s duration per stack',
+        category: 'defensive',
+        rarity: 'epic',
+        maxStacks: 2,
+        icon: '♨',
+        world: 2
+    },
+
+    // ── Utility ──
+
+    {
+        id: 'esploratore',
+        name: 'Explorer',
+        description: '+30% power-up magnet range. Reveals all stealthed enemies within 220px.',
+        stackDesc: '+20% magnet and +40px reveal per stack',
+        category: 'utility',
+        rarity: 'common',
+        maxStacks: 3,
+        icon: '⊙',
+        world: 2
+    },
+    {
+        id: 'sovraccarico',
+        name: 'Overload',
+        description: 'Overheating triggers a damage pulse (120px, 5 dmg) instead of jamming.',
+        category: 'utility',
+        rarity: 'legendary',
+        maxStacks: 1,
+        icon: '⚛',
+        world: 2
     }
 ];
 
@@ -256,6 +354,10 @@ class PerkSystem {
         this.droneFireTimers = [];
         this.thornsAngle = 0;
         this.thornsTime = 0;
+        // World 2 perk state
+        this.fireTrailSegments = [];
+        this.fireTrailTimer = 0;
+        this.sovraccaricoCooldown = 0;
         // Cache for getActivePerks() — invalidated on activatePerk/reset
         this._activePerkCache = null;
     }
@@ -357,6 +459,17 @@ class PerkSystem {
     getChainTargets()      { return this.getStacks('chain_lightning'); }
     getDroneCount()        { return this.getStacks('orbital_drone'); }
 
+    // ── World 2 Perk Getters ──
+    getRicochetBounces()   { return this.hasPerk('ricochet_master') ? 2 + (this.getStacks('ricochet_master') - 1) : 0; }
+    getStealthDamageBonus(){ return this.hasPerk('predatore') ? 0.50 + (this.getStacks('predatore') - 1) * 0.25 : 0; }
+    getRevealRange()       { return this.hasPerk('esploratore') ? 220 + (this.getStacks('esploratore') - 1) * 40 : (this.hasPerk('predatore') ? 180 : 0); }
+    getExplorerMagnetBonus() { return this.hasPerk('esploratore') ? 0.30 + (this.getStacks('esploratore') - 1) * 0.20 : 0; }
+    getCritAoeRange()      { return this.hasPerk('colpo_critico') ? 80 + (this.getStacks('colpo_critico') - 1) * 20 : 0; }
+    getCritAoeBonusChance(){ return this.hasPerk('colpo_critico') ? 0.05 * this.getStacks('colpo_critico') : 0; }
+    getFireTrailDmg()      { return this.hasPerk('scia_infuocata') ? 2 + (this.getStacks('scia_infuocata') - 1) : 0; }
+    getFireTrailDuration() { return this.hasPerk('scia_infuocata') ? 1 + (this.getStacks('scia_infuocata') - 1) * 0.5 : 0; }
+    hasSovraccarico()      { return this.hasPerk('sovraccarico'); }
+
     //  Boolean shortcuts
     hasExplosiveRounds()   { return this.hasPerk('explosive_rounds'); }
     hasThorns()            { return this.hasPerk('thorns'); }
@@ -385,6 +498,9 @@ class PerkSystem {
         this.droneFireTimers = [];
         this.thornsAngle = 0;
         this.thornsTime = 0;
+        this.fireTrailSegments = [];
+        this.fireTrailTimer = 0;
+        this.sovraccaricoCooldown = 0;
     }
 }
 

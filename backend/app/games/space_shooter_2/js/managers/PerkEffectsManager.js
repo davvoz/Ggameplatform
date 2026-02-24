@@ -118,6 +118,84 @@ class PerkEffectsManager {
                 }
             }
         }
+
+        // ─── World 2 Perk Effects ───
+
+        // Ricochet Master: make all player bullets bounce
+        if (perks.getRicochetBounces() > 0) {
+            for (const b of g.entityManager.bullets) {
+                if (b.owner === 'player' && b.maxBounces === 0) {
+                    b.maxBounces = perks.getRicochetBounces();
+                }
+            }
+        }
+
+        // Scia Infuocata (Fire Trail)
+        if (perks.getFireTrailDmg() > 0) {
+            perks.fireTrailTimer -= deltaTime;
+            if (perks.fireTrailTimer <= 0) {
+                perks.fireTrailTimer = 0.15; // drop a trail segment every 150ms
+                perks.fireTrailSegments.push({
+                    x: player.position.x + player.width / 2,
+                    y: player.position.y + player.height,
+                    timer: perks.getFireTrailDuration()
+                });
+            }
+            const dmgPerSec = perks.getFireTrailDmg();
+            for (let i = perks.fireTrailSegments.length - 1; i >= 0; i--) {
+                const seg = perks.fireTrailSegments[i];
+                seg.timer -= deltaTime;
+                if (seg.timer <= 0) {
+                    perks.fireTrailSegments.splice(i, 1);
+                    continue;
+                }
+                // Damage enemies touching this trail segment
+                for (const e of g.entityManager.enemies) {
+                    if (!e.active) continue;
+                    const ex = e.position.x + e.width / 2;
+                    const ey = e.position.y + e.height / 2;
+                    const d = Math.sqrt((ex - seg.x) ** 2 + (ey - seg.y) ** 2);
+                    if (d < 20) {
+                        const killed = e.takeDamage(dmgPerSec * deltaTime, g);
+                        if (killed) g.scoreManager.onEnemyKilled(e);
+                    }
+                }
+            }
+        }
+
+        // Sovraccarico: overheat pulse instead of jam
+        if (perks.hasSovraccarico()) {
+            if (perks.sovraccaricoCooldown > 0) perks.sovraccaricoCooldown -= deltaTime;
+            if (player.overheated && perks.sovraccaricoCooldown <= 0) {
+                perks.sovraccaricoCooldown = 2; // cooldown to prevent spam
+                player.heat = 0;
+                player.overheated = false;
+                // Damage pulse
+                this.applyExplosiveAoE(
+                    player.position.x + player.width / 2,
+                    player.position.y + player.height / 2,
+                    120, 5
+                );
+                g.postProcessing.flash({ r: 255, g: 200, b: 50 }, 0.2);
+                g.postProcessing.shake(5, 0.3);
+            }
+        }
+
+        // Esploratore: reveal stealth enemies
+        if (perks.getRevealRange() > 0) {
+            const revealRange = perks.getRevealRange();
+            const pcx = player.position.x + player.width / 2;
+            const pcy = player.position.y + player.height / 2;
+            for (const e of g.entityManager.enemies) {
+                if (!e.active || !e.config?.stealth) continue;
+                const ex = e.position.x + e.width / 2;
+                const ey = e.position.y + e.height / 2;
+                const d = Math.sqrt((ex - pcx) ** 2 + (ey - pcy) ** 2);
+                if (d < revealRange) {
+                    e.alpha = Math.max(e.alpha, 0.6); // force reveal
+                }
+            }
+        }
     }
 
     applyChainLightning(fromX, fromY, targets, damage) {
@@ -220,6 +298,28 @@ class PerkEffectsManager {
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(dx, dy, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    /** Render fire trail segments (Scia Infuocata) */
+    renderFireTrail(ctx) {
+        const segments = this.game.perkSystem.fireTrailSegments;
+        if (!segments || segments.length === 0) return;
+
+        ctx.save();
+        for (const seg of segments) {
+            const t = seg.timer / this.game.perkSystem.getFireTrailDuration();
+            const alpha = t * 0.6;
+            ctx.globalAlpha = alpha;
+            const grad = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, 14);
+            grad.addColorStop(0, `rgba(255,200,50,${alpha})`);
+            grad.addColorStop(0.4, `rgba(255,100,20,${alpha * 0.6})`);
+            grad.addColorStop(1, `rgba(200,30,0,0)`);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(seg.x, seg.y, 14, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();

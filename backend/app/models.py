@@ -852,3 +852,30 @@ class Campaign(Base):
     
     def __repr__(self) -> str:
         return f"<Campaign {self.campaign_id}: {self.name} ({self.game_id})>"
+
+
+class GameProgress(Base):
+    """Per-user per-game progress data (world unlocks, save state, etc.)."""
+    __tablename__ = 'game_progress'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    progress_data = Column(Text, default='{}')  # JSON blob
+    updated_at = Column(String, nullable=False)
+    
+    __table_args__ = (
+        UniqueConstraint('user_id', 'game_id', name='uq_user_game_progress'),
+    )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "progress_data": json.loads(self.progress_data) if self.progress_data else {},
+            "updated_at": self.updated_at
+        }
+    
+    def __repr__(self) -> str:
+        return f"<GameProgress user={self.user_id} game={self.game_id}>"

@@ -1,1 +1,751 @@
-function a0_0x5746(){const _0x492f63=['string','ChQnA','XQnJQ','body','Skyem','has','handlePlatformMessage','undefined','pULWV','aria-label','LohEL','0|3|4|1|2','sKcek','start','sendScore','toggleFullscreen','onResume','exit','927087bjdPTN','eventCallbacks','CGxQN','yZdip','self','innerHTML','gacTn','state','Jdemi','PGbHM','41268007lgnnRY','number','9vCeQPP','handleStart','Exit\x20fullscreen','resetSession','function','addEventListener','tZTUi','YiDAn','platformConfig','ios-fs-exit','handlePause','handled_showXPBanner','sendToPlatform','fGOfQ','ios-fullscreen-styles','amd','sETEK','wphJO','97092TRgaJn','type','10FSLmCM','getState','lEreT','aUGiz','add','timeout','fdHJt','top','ljtah','4|1|3|0|5|2','createElement','handled_showLevelUpModal','QGFUR','clear','ATiSm','_messageId','injectIOSFullscreenStyles','webkitFullscreenElement','init','WKWnf','ZXquB','showLevelUpModal','forEach','zhmUj','scrollTo','TpQXj','Entered\x20iOS\x20fullscreen','waitForPlatform','userAgent','head','pLAlt','NiIXS','requestFullScreen','webkitRequestFullscreen','extra_data','off','yYnpZ','split','score','Received\x20platform\x20message:','toggleIOSFullscreen','now','Error\x20sending\x20handled\x20ack\x20to\x20parent:','exports','HoYKx','createIOSExitButton','getElementById','onExit','cQRcj','bJvlK','data','701427zbWVhv','5473968xiEZTF','push','fullscreenElement','ftJUG','shift','BaAsc','protocolVersion','KAgvT','bind','level','Unknown\x20message\x20type:','kbfFt','sendReady','SDK\x20cleaned\x20up','WaStJ','1072lZqSBk','[PlatformSDK]\x20Callback\x20must\x20be\x20a\x20function','handleResume','MnDKH','ibcaX','config','TqTaR','textContent','payload','stopPropagation','appendChild','isValidMessage','kBsFM','Resetting\x20session\x20for\x20restart','mDHKn','msExitFullscreen','vlswu','ready','click','handleExit','get','requestFullscreen','handleConfig','message','qZvkk','LotyS','WjJBu','overflow','qqeES','yoykI','Exited\x20iOS\x20fullscreen','documentElement','[PlatformSDK]\x20Score\x20must\x20be\x20a\x20number','parent','7399290nkxInw','Platform\x20ready\x20with\x20config:','rttNa','maxTouchPoints','NIVdS','BhDDE','18035izMTQE','Wcccn','NoDRP','postMessage','processMessageQueue','isPaused','messageQueue','wmgGU','pause','classList','dTlon','object','isInitialized','DFfUQ','SrnuM','indexOf','MacIntel','webkitExitFullscreen','log','MmELM','12qwimrE','error','18qgYTtT','isFullscreen','isPlatformReady','showXPBanner','remove','length','levelCompleted','qLIgb','VYuwd','resume','Game\x20start\x20signal\x20received','triggerEvent','msRequestFullscreen','1|0|5|2|3|4','set','cleanup','contains','gameOver','[PlatformSDK]\x20Final\x20score\x20must\x20be\x20a\x20number','YsRvN','onPause','1.0.0','ios-game-fullscreen','exitFullscreen','akxPN','0|3|8|2|7|9|5|4|6|11|1|10','eiEzD','preventDefault','Game\x20exit\x20signal\x20received','boundMessageHandler','zJgSJ','setAttribute','fullscreenEnabled'];a0_0x5746=function(){return _0x492f63;};return a0_0x5746();}function a0_0x1e80(_0x34a357,_0x3bd8fd){_0x34a357=_0x34a357-0x108;const _0x574629=a0_0x5746();let _0x1e8032=_0x574629[_0x34a357];return _0x1e8032;}(function(_0x2c0938,_0x51045c){const _0x4bb767=a0_0x1e80,_0x23e043=_0x2c0938();while(!![]){try{const _0x1c8dcb=parseInt(_0x4bb767(0x18d))/0x1+parseInt(_0x4bb767(0x18f))/0x2*(-parseInt(_0x4bb767(0x1c2))/0x3)+-parseInt(_0x4bb767(0x1d2))/0x4*(parseInt(_0x4bb767(0x126))/0x5)+parseInt(_0x4bb767(0x13c))/0x6*(parseInt(_0x4bb767(0x16f))/0x7)+-parseInt(_0x4bb767(0x1c3))/0x8+parseInt(_0x4bb767(0x17b))/0x9*(-parseInt(_0x4bb767(0x120))/0xa)+parseInt(_0x4bb767(0x179))/0xb*(parseInt(_0x4bb767(0x13a))/0xc);if(_0x1c8dcb===_0x51045c)break;else _0x23e043['push'](_0x23e043['shift']());}catch(_0x5ec1ff){_0x23e043['push'](_0x23e043['shift']());}}}(a0_0x5746,0xa784c),function(_0x5ef2d9,_0x1a1b0b){const _0x12a706=a0_0x1e80,_0x19cc68={'lEreT':function(_0x57a02f,_0x44a38f){return _0x57a02f===_0x44a38f;},'PGbHM':_0x12a706(0x131),'zhmUj':function(_0x4323d4,_0x570d44){return _0x4323d4!==_0x570d44;},'mDHKn':_0x12a706(0x164),'qLIgb':function(_0x4bac08){return _0x4bac08();},'BhDDE':function(_0xbe4e35,_0x2f4a9e){return _0xbe4e35(_0x2f4a9e);},'bhiiy':function(_0x4b4819,_0x445492){return _0x4b4819||_0x445492;}};_0x19cc68[_0x12a706(0x191)](typeof exports,_0x19cc68[_0x12a706(0x178)])&&_0x19cc68[_0x12a706(0x1a6)](typeof module,_0x19cc68[_0x12a706(0x10c)])?module[_0x12a706(0x1ba)]=_0x19cc68[_0x12a706(0x143)](_0x1a1b0b):typeof define===_0x12a706(0x17f)&&define[_0x12a706(0x18a)]?_0x19cc68[_0x12a706(0x125)](define,_0x1a1b0b):(_0x5ef2d9=_0x19cc68['zhmUj'](typeof globalThis,_0x19cc68[_0x12a706(0x10c)])?globalThis:_0x19cc68['bhiiy'](_0x5ef2d9,self),_0x5ef2d9['PlatformSDK']=_0x19cc68[_0x12a706(0x143)](_0x1a1b0b));}(this,function(){'use strict';const _0x1c7155=a0_0x1e80,_0x23fc0c={'czNsJ':'1|6|5|2|0|3|4','kBsFM':_0x1c7155(0x155),'MnDKH':'Platform\x20SDK\x20initialized\x20successfully','VeDGG':_0x1c7155(0x12e),'rttNa':'Initializing\x20Platform\x20SDK...','fdHJt':_0x1c7155(0x115),'EiGsZ':_0x1c7155(0x16a),'NIVdS':'resume','TqTaR':function(_0x2498b3,_0x4cd21a){return _0x2498b3===_0x4cd21a;},'ZXquB':_0x1c7155(0x16e),'pLAlt':function(_0x2add13,_0x398773,_0x4e6466){return _0x2add13(_0x398773,_0x4e6466);},'YiDAn':function(_0x93382c){return _0x93382c();},'NoDRP':_0x1c7155(0x1d7),'cQRcj':_0x1c7155(0x13f),'bJvlK':function(_0x46a711,_0x167900){return _0x46a711>_0x167900;},'wphJO':_0x1c7155(0x186),'ftJUG':_0x1c7155(0x1a4),'WjJBu':function(_0xb0c202,_0x1fc408){return _0xb0c202!==_0x1fc408;},'XQnJQ':_0x1c7155(0x19a),'tZTUi':_0x1c7155(0x1cd),'yYnpZ':'object','eiEzD':function(_0x46efc8,_0x28b2b9){return _0x46efc8===_0x28b2b9;},'ATiSm':_0x1c7155(0x15d),'CGxQN':_0x1c7155(0x168),'vlswu':_0x1c7155(0x121),'KAgvT':_0x1c7155(0x146),'akxPN':'Game\x20pause\x20signal\x20received','FYyBk':'Game\x20resume\x20signal\x20received','MmELM':_0x1c7155(0x158),'qZvkk':_0x1c7155(0x10f),'dTlon':function(_0x4cda13,_0x1ef68a){return _0x4cda13!==_0x1ef68a;},'sETEK':_0x1c7155(0x11e),'SrnuM':function(_0x56c8aa,_0x4bdfe5){return _0x56c8aa!==_0x4bdfe5;},'zJgSJ':'number','BaAsc':_0x1c7155(0x14e),'aUGiz':_0x1c7155(0x14d),'Wcccn':'[PlatformSDK]\x20Level\x20must\x20be\x20a\x20number','WKWnf':'requestFullScreen','VSdBa':function(_0x56c62c,_0x51b02a){return _0x56c62c!==_0x51b02a;},'Skyem':_0x1c7155(0x136),'HoYKx':function(_0x44ec1d,_0x12c866){return _0x44ec1d||_0x12c866;},'Jdemi':_0x1c7155(0x152),'ZxMfI':_0x1c7155(0x198),'fGOfQ':'hidden','gacTn':_0x1c7155(0x1a9),'WaStJ':_0x1c7155(0x189),'wmgGU':'style','ljtah':_0x1c7155(0x184),'qqeES':'button','TpQXj':_0x1c7155(0x166),'DFfUQ':_0x1c7155(0x17d),'QGFUR':function(_0x351dca,_0x129d9a){return _0x351dca===_0x129d9a;},'kbfFt':_0x1c7155(0x138),'ibcaX':function(_0x4412f0,_0x33dfca){return _0x4412f0!==_0x33dfca;},'ChQnA':'function','GpDjD':_0x1c7155(0x1d3),'CPzAU':function(_0x33e9a3,_0x51e9ea){return _0x33e9a3(_0x51e9ea);},'pULWV':'[PlatformSDK]\x20Error\x20in\x20event\x20callback:','LotyS':function(_0x1b7fd1,_0x3421cc){return _0x1b7fd1!==_0x3421cc;},'VYuwd':_0x1c7155(0x10b),'sKcek':'resetSession','LohEL':_0x1c7155(0x149),'yoykI':_0x1c7155(0x1d0),'NiIXS':_0x1c7155(0x151)};const _0x3efba4=_0x23fc0c[_0x1c7155(0x1ae)];class _0x5283e2{constructor(){const _0x52821a=_0x1c7155,_0x1b215a=_0x23fc0c['czNsJ'][_0x52821a(0x1b4)]('|');let _0x2a2946=0x0;while(!![]){switch(_0x1b215a[_0x2a2946++]){case'0':this[_0x52821a(0x1d7)]=null;continue;case'1':this['isInitialized']=![];continue;case'2':this[_0x52821a(0x12c)]=[];continue;case'3':this[_0x52821a(0x176)]={'score':0x0,'level':0x1,'isPaused':![]};continue;case'4':this[_0x52821a(0x159)]=this[_0x52821a(0x163)][_0x52821a(0x1cb)](this);continue;case'5':this['eventCallbacks']=new Map();continue;case'6':this[_0x52821a(0x13e)]=![];continue;}break;}}async[_0x1c7155(0x1a1)](_0x4e468b={}){const _0xdac723=_0x1c7155,_0x17b698=_0x23fc0c[_0xdac723(0x10a)]['split']('|');let _0x1ce431=0x0;while(!![]){switch(_0x17b698[_0x1ce431++]){case'0':if(this[_0xdac723(0x132)])return;continue;case'1':this[_0xdac723(0x138)](_0x23fc0c[_0xdac723(0x1d5)]);continue;case'2':_0x4e468b[_0xdac723(0x150)]&&this['on'](_0x23fc0c['VeDGG'],_0x4e468b[_0xdac723(0x150)]);continue;case'3':this[_0xdac723(0x138)](_0x23fc0c[_0xdac723(0x122)]);continue;case'4':window[_0xdac723(0x180)](_0x23fc0c[_0xdac723(0x195)],this['boundMessageHandler']);continue;case'5':_0x4e468b['onStart']&&this['on'](_0x23fc0c['EiGsZ'],_0x4e468b['onStart']);continue;case'6':this[_0xdac723(0x132)]=!![];continue;case'7':_0x4e468b[_0xdac723(0x16d)]&&this['on'](_0x23fc0c[_0xdac723(0x124)],_0x4e468b[_0xdac723(0x16d)]);continue;case'8':if(_0x23fc0c[_0xdac723(0x1d8)](window[_0xdac723(0x173)],window[_0xdac723(0x196)])){}continue;case'9':_0x4e468b[_0xdac723(0x1be)]&&this['on'](_0x23fc0c[_0xdac723(0x1a3)],_0x4e468b[_0xdac723(0x1be)]);continue;case'10':return this[_0xdac723(0x1aa)](_0x4e468b[_0xdac723(0x194)]||0x1388);case'11':this['sendReady']();continue;}break;}}[_0x1c7155(0x1aa)](_0x1976d2){const _0x28b88c={'yZdip':function(_0x258d1b,_0xb0e830){return _0x258d1b(_0xb0e830);},'YsRvN':function(_0x53527b){return _0x23fc0c['YiDAn'](_0x53527b);}};return new Promise((_0x301ad0,_0x404db5)=>{const _0x48ad96=a0_0x1e80,_0x56712c=_0x23fc0c[_0x48ad96(0x1ad)](setTimeout,()=>{const _0x31c97b=_0x48ad96;!this[_0x31c97b(0x13e)]&&_0x301ad0();},_0x1976d2),_0xcb88f3=()=>{const _0x53d62d=_0x48ad96;this[_0x53d62d(0x13e)]?(_0x28b88c[_0x53d62d(0x172)](clearTimeout,_0x56712c),_0x28b88c[_0x53d62d(0x14f)](_0x301ad0)):setTimeout(_0xcb88f3,0x64);};_0x23fc0c[_0x48ad96(0x182)](_0xcb88f3);});}[_0x1c7155(0x163)](_0x5f1ff0){const _0x5cddab=_0x1c7155,_0x26a9b8=_0x5f1ff0[_0x5cddab(0x1c1)];if(!this[_0x5cddab(0x109)](_0x26a9b8))return;this[_0x5cddab(0x138)](_0x5cddab(0x1b6),_0x26a9b8);switch(_0x26a9b8['type']){case _0x23fc0c[_0x5cddab(0x128)]:this[_0x5cddab(0x114)](_0x26a9b8['payload']);break;case _0x23fc0c['EiGsZ']:this[_0x5cddab(0x17c)](_0x26a9b8[_0x5cddab(0x1da)]);break;case _0x5cddab(0x12e):this[_0x5cddab(0x185)](_0x26a9b8[_0x5cddab(0x1da)]);break;case _0x5cddab(0x145):this['handleResume'](_0x26a9b8[_0x5cddab(0x1da)]);break;case _0x23fc0c[_0x5cddab(0x1a3)]:this[_0x5cddab(0x111)](_0x26a9b8['payload']);break;case _0x23fc0c[_0x5cddab(0x1bf)]:this[_0x5cddab(0x147)](_0x23fc0c[_0x5cddab(0x1bf)],_0x26a9b8[_0x5cddab(0x1da)]);try{const _0x1cbbcc=this[_0x5cddab(0x170)][_0x5cddab(0x162)]('showXPBanner')&&_0x23fc0c['bJvlK'](this[_0x5cddab(0x170)]['get'](_0x23fc0c[_0x5cddab(0x1bf)])[_0x5cddab(0x141)],0x0);_0x1cbbcc&&window[_0x5cddab(0x11f)]&&window[_0x5cddab(0x11f)]!==window[_0x5cddab(0x173)]&&window['parent']['postMessage']({'type':_0x23fc0c[_0x5cddab(0x18c)],'payload':{'_messageId':_0x26a9b8['payload']?.['_messageId']||null},'timestamp':Date[_0x5cddab(0x1b8)](),'protocolVersion':_0x3efba4},'*');}catch(_0x2142d3){this['log'](_0x5cddab(0x1b9),_0x2142d3);}break;case _0x23fc0c[_0x5cddab(0x1c6)]:this['triggerEvent'](_0x23fc0c[_0x5cddab(0x1c6)],_0x26a9b8[_0x5cddab(0x1da)]);try{const _0x2e6b9d=this[_0x5cddab(0x170)][_0x5cddab(0x162)](_0x5cddab(0x1a4))&&this['eventCallbacks'][_0x5cddab(0x112)](_0x23fc0c[_0x5cddab(0x1c6)])[_0x5cddab(0x141)]>0x0;_0x2e6b9d&&window[_0x5cddab(0x11f)]&&_0x23fc0c[_0x5cddab(0x118)](window[_0x5cddab(0x11f)],window['self'])&&window[_0x5cddab(0x11f)][_0x5cddab(0x129)]({'type':_0x23fc0c[_0x5cddab(0x15f)],'payload':{'_messageId':_0x26a9b8[_0x5cddab(0x1da)]?.[_0x5cddab(0x19e)]||null},'timestamp':Date['now'](),'protocolVersion':_0x3efba4},'*');}catch(_0x25ac27){this[_0x5cddab(0x138)](_0x5cddab(0x1b9),_0x25ac27);}break;default:this[_0x5cddab(0x138)](_0x23fc0c[_0x5cddab(0x181)],_0x26a9b8[_0x5cddab(0x18e)]);}this[_0x5cddab(0x147)](_0x26a9b8[_0x5cddab(0x18e)],_0x26a9b8['payload']);}[_0x1c7155(0x109)](_0x3bbf05){const _0x485b82=_0x1c7155;return _0x3bbf05&&_0x23fc0c[_0x485b82(0x1d8)](typeof _0x3bbf05,_0x23fc0c[_0x485b82(0x1b3)])&&_0x23fc0c[_0x485b82(0x156)](typeof _0x3bbf05[_0x485b82(0x18e)],_0x23fc0c[_0x485b82(0x19d)])&&_0x23fc0c[_0x485b82(0x156)](_0x3bbf05[_0x485b82(0x1c9)],_0x3efba4);}['handleConfig'](_0x5cd5e1){const _0x587d91=_0x1c7155,_0x285e59=_0x23fc0c[_0x587d91(0x171)][_0x587d91(0x1b4)]('|');let _0x2a2a6f=0x0;while(!![]){switch(_0x285e59[_0x2a2a6f++]){case'0':this[_0x587d91(0x1d7)]=_0x5cd5e1;continue;case'1':window[_0x587d91(0x183)]=_0x5cd5e1;continue;case'2':this[_0x587d91(0x12a)]();continue;case'3':this[_0x587d91(0x13e)]=!![];continue;case'4':this[_0x587d91(0x138)](_0x23fc0c[_0x587d91(0x10e)],_0x5cd5e1);continue;}break;}}[_0x1c7155(0x17c)](_0x331b09){const _0x54602e=_0x1c7155;this[_0x54602e(0x138)](_0x23fc0c[_0x54602e(0x1ca)]);}[_0x1c7155(0x185)](_0x3a435a){const _0x2a4e15=_0x1c7155;this[_0x2a4e15(0x176)]['isPaused']=!![],this[_0x2a4e15(0x138)](_0x23fc0c[_0x2a4e15(0x154)]);}[_0x1c7155(0x1d4)](_0x439868){const _0xe73d0=_0x1c7155;this[_0xe73d0(0x176)][_0xe73d0(0x12b)]=![],this['log'](_0x23fc0c['FYyBk']);}[_0x1c7155(0x111)](_0x1da9c0){const _0x52bc8b=_0x1c7155;this[_0x52bc8b(0x138)](_0x23fc0c[_0x52bc8b(0x139)]),this[_0x52bc8b(0x14b)]();}[_0x1c7155(0x1cf)](){const _0x259a64=_0x1c7155;this[_0x259a64(0x187)](_0x23fc0c[_0x259a64(0x116)],{'sdkVersion':_0x3efba4,'timestamp':Date[_0x259a64(0x1b8)]()});}[_0x1c7155(0x16b)](_0x53c224,_0x4037cf={}){const _0x3b8dab=_0x1c7155;if(_0x23fc0c[_0x3b8dab(0x130)](typeof _0x53c224,_0x3b8dab(0x17a))){console[_0x3b8dab(0x13b)](_0x23fc0c[_0x3b8dab(0x18b)]);return;}this[_0x3b8dab(0x176)][_0x3b8dab(0x1b5)]=_0x53c224,this[_0x3b8dab(0x187)]('scoreUpdate',{'score':_0x53c224,..._0x4037cf,'timestamp':Date['now']()});}['gameOver'](_0x4ec795,_0x1d8962={}){const _0x2b8f71=_0x1c7155;if(_0x23fc0c[_0x2b8f71(0x134)](typeof _0x4ec795,_0x23fc0c[_0x2b8f71(0x15a)])){console[_0x2b8f71(0x13b)](_0x23fc0c[_0x2b8f71(0x1c8)]);return;}this[_0x2b8f71(0x176)][_0x2b8f71(0x1b5)]=_0x4ec795;const _0x2e5069=_0x1d8962[_0x2b8f71(0x1b1)]||_0x1d8962;this['sendToPlatform'](_0x23fc0c[_0x2b8f71(0x192)],{'score':_0x4ec795,'extra_data':_0x2e5069,'timestamp':Date[_0x2b8f71(0x1b8)]()});}['levelCompleted'](_0x3f7b15,_0x1b318d={}){const _0x297313=_0x1c7155;if(_0x23fc0c[_0x297313(0x134)](typeof _0x3f7b15,_0x23fc0c['zJgSJ'])){console['error'](_0x23fc0c[_0x297313(0x127)]);return;}this['state'][_0x297313(0x1cc)]=_0x3f7b15,this[_0x297313(0x187)](_0x297313(0x142),{'level':_0x3f7b15,..._0x1b318d,'timestamp':Date[_0x297313(0x1b8)]()});}['requestFullScreen'](){const _0x59fd71=_0x1c7155;this[_0x59fd71(0x187)](_0x23fc0c[_0x59fd71(0x1a2)],{'timestamp':Date[_0x59fd71(0x1b8)]()});}[_0x1c7155(0x16c)](){const _0x20d95c=_0x1c7155;if(_0x23fc0c['VSdBa'](window[_0x20d95c(0x173)],window['top'])){this['requestFullScreen']();return;}const _0x612769=document[_0x20d95c(0x11d)],_0x193cc7=/iPad|iPhone|iPod/['test'](navigator[_0x20d95c(0x1ab)])&&!window['MSStream'],_0x5df8d9=navigator['platform']===_0x23fc0c[_0x20d95c(0x161)]&&_0x23fc0c[_0x20d95c(0x1c0)](navigator[_0x20d95c(0x123)],0x1),_0x2fe4ff=document[_0x20d95c(0x15c)]||document['webkitFullscreenEnabled'];if(_0x23fc0c[_0x20d95c(0x1bb)](_0x193cc7,_0x5df8d9)&&!_0x2fe4ff)this[_0x20d95c(0x1b7)]();else{if(!document[_0x20d95c(0x1c5)]&&!document[_0x20d95c(0x1a0)]){if(_0x612769[_0x20d95c(0x113)])_0x612769[_0x20d95c(0x113)]();else{if(_0x612769[_0x20d95c(0x1b0)])_0x612769['webkitRequestFullscreen']();else _0x612769[_0x20d95c(0x148)]?_0x612769[_0x20d95c(0x148)]():this['toggleIOSFullscreen']();}}else{if(document['exitFullscreen'])document[_0x20d95c(0x153)]();else{if(document[_0x20d95c(0x137)])document['webkitExitFullscreen']();else document[_0x20d95c(0x10d)]&&document[_0x20d95c(0x10d)]();}}}}[_0x1c7155(0x1b7)](){const _0x2ebbf3=_0x1c7155,_0x227351=document[_0x2ebbf3(0x160)][_0x2ebbf3(0x12f)][_0x2ebbf3(0x14c)](_0x23fc0c['Jdemi']);if(_0x227351){document['body'][_0x2ebbf3(0x12f)][_0x2ebbf3(0x140)](_0x2ebbf3(0x152)),document[_0x2ebbf3(0x160)]['style'][_0x2ebbf3(0x119)]='';const _0x2c0b87=document[_0x2ebbf3(0x1bd)](_0x2ebbf3(0x184));if(_0x2c0b87)_0x2c0b87['remove']();this[_0x2ebbf3(0x138)](_0x2ebbf3(0x11c));}else{const _0x251d22=_0x23fc0c['ZxMfI'][_0x2ebbf3(0x1b4)]('|');let _0x58fc3e=0x0;while(!![]){switch(_0x251d22[_0x58fc3e++]){case'0':this[_0x2ebbf3(0x1bc)]();continue;case'1':document[_0x2ebbf3(0x160)]['style'][_0x2ebbf3(0x119)]=_0x23fc0c[_0x2ebbf3(0x188)];continue;case'2':this[_0x2ebbf3(0x138)](_0x23fc0c[_0x2ebbf3(0x175)]);continue;case'3':this[_0x2ebbf3(0x19f)]();continue;case'4':document[_0x2ebbf3(0x160)][_0x2ebbf3(0x12f)][_0x2ebbf3(0x193)](_0x23fc0c[_0x2ebbf3(0x177)]);continue;case'5':setTimeout(()=>window[_0x2ebbf3(0x1a7)](0x0,0x1),0x64);continue;}break;}}}[_0x1c7155(0x19f)](){const _0x13ede6=_0x1c7155;if(document[_0x13ede6(0x1bd)](_0x23fc0c[_0x13ede6(0x1d1)]))return;const _0x4e6ef4=document[_0x13ede6(0x199)](_0x23fc0c[_0x13ede6(0x12d)]);_0x4e6ef4['id']=_0x23fc0c[_0x13ede6(0x1d1)],_0x4e6ef4[_0x13ede6(0x1d9)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20.ios-game-fullscreen\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20position:\x20fixed\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20top:\x200\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20left:\x200\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20width:\x20100vw\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100vh\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100dvh\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20overflow:\x20hidden\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20z-index:\x20999999\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20.ios-game-fullscreen\x20>\x20*\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20width:\x20100%\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100%\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20.ios-game-fullscreen\x20canvas\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20width:\x20100vw\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100vh\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100dvh\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20#ios-fs-exit\x20{\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20position:\x20fixed\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20top:\x20max(10px,\x20env(safe-area-inset-top))\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20right:\x20max(10px,\x20env(safe-area-inset-right))\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20z-index:\x209999999\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20background:\x20rgba(0,0,0,0.7)\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20color:\x20white\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20border:\x20none\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20border-radius:\x2050%\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20width:\x2044px\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x2044px\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-size:\x2024px\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20cursor:\x20pointer\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20display:\x20flex\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20align-items:\x20center\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20justify-content:\x20center\x20!important;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20-webkit-tap-highlight-color:\x20transparent;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20}\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',document[_0x13ede6(0x1ac)][_0x13ede6(0x108)](_0x4e6ef4);}[_0x1c7155(0x1bc)](){const _0x425fd8=_0x1c7155;if(document['getElementById'](_0x23fc0c[_0x425fd8(0x197)]))return;const _0x4fa1f7=document['createElement'](_0x23fc0c[_0x425fd8(0x11a)]);_0x4fa1f7['id']=_0x23fc0c[_0x425fd8(0x197)],_0x4fa1f7[_0x425fd8(0x174)]='✕',_0x4fa1f7[_0x425fd8(0x15b)](_0x23fc0c[_0x425fd8(0x1a8)],_0x23fc0c[_0x425fd8(0x133)]),_0x4fa1f7[_0x425fd8(0x180)](_0x425fd8(0x110),_0x5722bf=>{const _0x312e89=_0x425fd8;_0x5722bf[_0x312e89(0x157)](),_0x5722bf[_0x312e89(0x1db)](),this['toggleIOSFullscreen']();}),document[_0x425fd8(0x160)]['appendChild'](_0x4fa1f7);}['isFullscreen'](){const _0x3d6604=_0x1c7155;if(document['fullscreenElement']||document[_0x3d6604(0x1a0)])return!![];return document['body'][_0x3d6604(0x12f)]['contains'](_0x23fc0c['Jdemi']);}[_0x1c7155(0x138)](_0x2d5412,_0x140453=null){const _0x36783d=_0x1c7155;if(_0x23fc0c[_0x36783d(0x19b)](window['self'],window[_0x36783d(0x196)])){}else this[_0x36783d(0x187)](_0x23fc0c[_0x36783d(0x1ce)],{'message':_0x2d5412,'data':_0x140453,'timestamp':Date[_0x36783d(0x1b8)]()});}['on'](_0x1ee44b,_0x89157f){const _0x5270e6=_0x1c7155;if(_0x23fc0c[_0x5270e6(0x1d6)](typeof _0x89157f,_0x23fc0c[_0x5270e6(0x15e)])){console['error'](_0x23fc0c['GpDjD']);return;}!this[_0x5270e6(0x170)][_0x5270e6(0x162)](_0x1ee44b)&&this['eventCallbacks'][_0x5270e6(0x14a)](_0x1ee44b,[]),this['eventCallbacks'][_0x5270e6(0x112)](_0x1ee44b)[_0x5270e6(0x1c4)](_0x89157f);}[_0x1c7155(0x1b2)](_0x22c080,_0x3c6133){const _0x3e3ca7=_0x1c7155;if(!this[_0x3e3ca7(0x170)][_0x3e3ca7(0x162)](_0x22c080))return;const _0x243c0f=this[_0x3e3ca7(0x170)][_0x3e3ca7(0x112)](_0x22c080),_0x1122ab=_0x243c0f[_0x3e3ca7(0x135)](_0x3c6133);_0x23fc0c[_0x3e3ca7(0x118)](_0x1122ab,-0x1)&&_0x243c0f['splice'](_0x1122ab,0x1);}['triggerEvent'](_0x176bc4,_0x2909f8){const _0x4fd283=_0x1c7155;if(!this[_0x4fd283(0x170)]['has'](_0x176bc4))return;const _0x597ddd=this['eventCallbacks'][_0x4fd283(0x112)](_0x176bc4);_0x597ddd[_0x4fd283(0x1a5)](_0xa7f908=>{const _0x3f32c2=_0x4fd283;try{_0x23fc0c['CPzAU'](_0xa7f908,_0x2909f8);}catch(_0x36341b){console[_0x3f32c2(0x13b)](_0x23fc0c[_0x3f32c2(0x165)],_0x36341b);}});}['sendToPlatform'](_0x591aea,_0x54374d={}){const _0x2e2066=_0x1c7155,_0xf41cf3={'type':_0x591aea,'payload':_0x54374d,'timestamp':Date[_0x2e2066(0x1b8)](),'protocolVersion':_0x3efba4};if(!this[_0x2e2066(0x13e)]&&_0x591aea!==_0x23fc0c[_0x2e2066(0x116)]){this['messageQueue']['push'](_0xf41cf3);return;}window['parent']&&_0x23fc0c[_0x2e2066(0x117)](window['parent'],window[_0x2e2066(0x173)])&&window[_0x2e2066(0x11f)]['postMessage'](_0xf41cf3,'*');}[_0x1c7155(0x12a)](){const _0x3ba425=_0x1c7155;while(_0x23fc0c[_0x3ba425(0x1c0)](this[_0x3ba425(0x12c)][_0x3ba425(0x141)],0x0)){const _0x22f7fe=this[_0x3ba425(0x12c)][_0x3ba425(0x1c7)]();window[_0x3ba425(0x11f)][_0x3ba425(0x129)](_0x22f7fe,'*');}}[_0x1c7155(0x190)](){const _0xf930b2=_0x1c7155;return{...this[_0xf930b2(0x176)]};}[_0x1c7155(0x12b)](){const _0x56e23f=_0x1c7155;return this[_0x56e23f(0x176)][_0x56e23f(0x12b)];}async['resetSession'](){const _0x155d45=_0x1c7155;return this['log'](_0x23fc0c[_0x155d45(0x144)]),this[_0x155d45(0x187)](_0x23fc0c[_0x155d45(0x169)],{'timestamp':Date[_0x155d45(0x1b8)]()}),new Promise(_0x96ce0e=>{setTimeout(_0x96ce0e,0x3e8);});}[_0x1c7155(0x14b)](){const _0x21a61f=_0x1c7155,_0x52bbc8=_0x23fc0c[_0x21a61f(0x167)][_0x21a61f(0x1b4)]('|');let _0xdbd11b=0x0;while(!![]){switch(_0x52bbc8[_0xdbd11b++]){case'0':this[_0x21a61f(0x170)][_0x21a61f(0x19c)]();continue;case'1':window['removeEventListener'](_0x23fc0c[_0x21a61f(0x195)],this[_0x21a61f(0x159)]);continue;case'2':this[_0x21a61f(0x132)]=![];continue;case'3':this['isPlatformReady']=![];continue;case'4':this[_0x21a61f(0x138)](_0x23fc0c[_0x21a61f(0x11b)]);continue;case'5':this[_0x21a61f(0x12c)]=[];continue;}break;}}}const _0x42ca89=new _0x5283e2();return{'init':_0x5d9fb4=>_0x42ca89['init'](_0x5d9fb4),'sendScore':(_0x4d148f,_0x5abaca)=>_0x42ca89[_0x1c7155(0x16b)](_0x4d148f,_0x5abaca),'gameOver':(_0x502bba,_0xa93c9f)=>_0x42ca89[_0x1c7155(0x14d)](_0x502bba,_0xa93c9f),'levelCompleted':(_0x40189f,_0x1b5df4)=>_0x42ca89[_0x1c7155(0x142)](_0x40189f,_0x1b5df4),'requestFullScreen':()=>_0x42ca89[_0x1c7155(0x1af)](),'toggleFullscreen':()=>_0x42ca89['toggleFullscreen'](),'isFullscreen':()=>_0x42ca89[_0x1c7155(0x13d)](),'resetSession':()=>_0x42ca89[_0x1c7155(0x17e)](),'on':(_0x551a7f,_0x254fd3)=>_0x42ca89['on'](_0x551a7f,_0x254fd3),'off':(_0x5a1058,_0x58d3e7)=>_0x42ca89['off'](_0x5a1058,_0x58d3e7),'getState':()=>_0x42ca89['getState'](),'isPaused':()=>_0x42ca89['isPaused'](),'log':(_0x56bc78,_0x53196e)=>_0x42ca89[_0x1c7155(0x138)](_0x56bc78,_0x53196e),'version':_0x3efba4,'_instance':_0x42ca89};}));
+/**
+ * Platform SDK - Integration Library for Game Developers
+ * Version: 1.0.0
+ * 
+ * A universal, framework-agnostic SDK for integrating games with the HTML5 Game Platform.
+ * Works with Phaser, Unity WebGL, Godot, Three.js, Vanilla JS, and any other web-based game framework.
+ * 
+ * Usage:
+ *   import PlatformSDK from './platformsdk.js';
+ *   
+ *   PlatformSDK.init();
+ *   PlatformSDK.sendScore(100);
+ *   PlatformSDK.on('pause', () => { /* pause game logic *\/ });
+ */
+
+(function (global, factory) {
+    // UMD pattern - supports CommonJS, AMD, and browser globals
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.PlatformSDK = factory());
+})(this, (function () {
+    'use strict';
+
+    const PROTOCOL_VERSION = '1.0.0';
+    
+    /**
+     * Platform SDK Class
+     */
+    class PlatformSDK {
+        constructor() {
+            this.isInitialized = false;
+            this.isPlatformReady = false;
+            this.eventCallbacks = new Map();
+            this.messageQueue = [];
+            this.config = null;
+            this.state = {
+                score: 0,
+                level: 1,
+                isPaused: false
+            };
+            
+            // Bind message handler
+            this.boundMessageHandler = this.handlePlatformMessage.bind(this);
+        }
+        
+        /**
+         * Initialize the SDK
+         * @param {Object} options - Configuration options
+         * @returns {Promise<void>}
+         */
+        async init(options = {}) {
+            if (this.isInitialized) {
+
+                return;
+            }
+            
+            this.log('Initializing Platform SDK...');
+            
+            // Check if running in iframe
+            if (window.self === window.top) {
+
+            }
+            
+            // Support legacy callback style (onPause, onResume, onExit, onStart)
+            if (options.onPause) {
+                this.on('pause', options.onPause);
+            }
+            if (options.onResume) {
+                this.on('resume', options.onResume);
+            }
+            if (options.onExit) {
+                this.on('exit', options.onExit);
+            }
+            if (options.onStart) {
+                this.on('start', options.onStart);
+            }
+            
+            // Listen for messages from platform
+            window.addEventListener('message', this.boundMessageHandler);
+            
+            this.isInitialized = true;
+            
+            // Send ready signal to platform
+            this.sendReady();
+            
+            this.log('Platform SDK initialized successfully');
+            
+            // Wait for platform config (with timeout)
+            return this.waitForPlatform(options.timeout || 5000);
+        }
+        
+        /**
+         * Wait for platform to be ready
+         * @param {number} timeout - Timeout in milliseconds
+         * @returns {Promise<void>}
+         */
+        waitForPlatform(timeout) {
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    if (!this.isPlatformReady) {
+
+                        resolve(); // Don't reject, just continue
+                    }
+                }, timeout);
+                
+                // Listen for config message
+                const checkReady = () => {
+                    if (this.isPlatformReady) {
+                        clearTimeout(timeoutId);
+                        resolve();
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+                
+                checkReady();
+            });
+        }
+        
+        /**
+         * Handle incoming messages from platform
+         * @param {MessageEvent} event - The message event
+         */
+        handlePlatformMessage(event) {
+            const message = event.data;
+            
+            // Validate message format
+            if (!this.isValidMessage(message)) {
+                return;
+            }
+            
+            this.log('Received platform message:', message);
+            
+            // Handle message based on type
+            switch (message.type) {
+                case 'config':
+                    this.handleConfig(message.payload);
+                    break;
+                
+                case 'start':
+                    this.handleStart(message.payload);
+                    break;
+                
+                case 'pause':
+                    this.handlePause(message.payload);
+                    break;
+                
+                case 'resume':
+                    this.handleResume(message.payload);
+                    break;
+                
+                case 'exit':
+                    this.handleExit(message.payload);
+                    break;
+                
+                case 'showXPBanner':
+                    // Forward to custom handler if game has implemented it
+                    this.triggerEvent('showXPBanner', message.payload);
+                    // If any in-game handler exists, notify parent that game handled the banner
+                    try {
+                        const hasHandler = this.eventCallbacks.has('showXPBanner') && this.eventCallbacks.get('showXPBanner').length > 0;
+                        if (hasHandler && window.parent && window.parent !== window.self) {
+                            window.parent.postMessage({
+                                type: 'handled_showXPBanner',
+                                payload: { _messageId: message.payload?._messageId || null },
+                                timestamp: Date.now(),
+                                protocolVersion: PROTOCOL_VERSION
+                            }, '*');
+                        }
+                    } catch (err) {
+                        this.log('Error sending handled ack to parent:', err);
+                    }
+                    break;
+                case 'showLevelUpModal':
+                    // Forward to custom handler if game has implemented it
+                    this.triggerEvent('showLevelUpModal', message.payload);
+                    // Notify parent if handled in-game
+                    try {
+                        const hasHandler2 = this.eventCallbacks.has('showLevelUpModal') && this.eventCallbacks.get('showLevelUpModal').length > 0;
+                        if (hasHandler2 && window.parent && window.parent !== window.self) {
+                            window.parent.postMessage({
+                                type: 'handled_showLevelUpModal',
+                                payload: { _messageId: message.payload?._messageId || null },
+                                timestamp: Date.now(),
+                                protocolVersion: PROTOCOL_VERSION
+                            }, '*');
+                        }
+                    } catch (err) {
+                        this.log('Error sending handled ack to parent:', err);
+                    }
+                    break;
+                
+                case 'progressLoaded':
+                    // Response from platform with loaded progress data
+                    this.triggerEvent('progressLoaded', message.payload);
+                    break;
+                
+                default:
+                    this.log('Unknown message type:', message.type);
+            }
+            
+            // Trigger registered callbacks
+            this.triggerEvent(message.type, message.payload);
+        }
+        
+        /**
+         * Validate message format
+         * @param {*} message - The message to validate
+         * @returns {boolean}
+         */
+        isValidMessage(message) {
+            return message && 
+                   typeof message === 'object' && 
+                   typeof message.type === 'string' &&
+                   message.protocolVersion === PROTOCOL_VERSION;
+        }
+        
+        /**
+         * Handle platform config
+         * @param {Object} config - Platform configuration
+         */
+        handleConfig(config) {
+            this.config = config;
+            this.isPlatformReady = true;
+            this.log('Platform ready with config:', config);
+            
+            // Store config globally for RainbowRushSDK access
+            window.platformConfig = config;
+            
+            // Process queued messages
+            this.processMessageQueue();
+        }
+        
+        /**
+         * Handle start event
+         * @param {Object} payload - Event payload
+         */
+        handleStart(payload) {
+            this.log('Game start signal received');
+        }
+        
+        /**
+         * Handle pause event
+         * @param {Object} payload - Event payload
+         */
+        handlePause(payload) {
+            this.state.isPaused = true;
+            this.log('Game pause signal received');
+        }
+        
+        /**
+         * Handle resume event
+         * @param {Object} payload - Event payload
+         */
+        handleResume(payload) {
+            this.state.isPaused = false;
+            this.log('Game resume signal received');
+        }
+        
+        /**
+         * Handle exit event
+         * @param {Object} payload - Event payload
+         */
+        handleExit(payload) {
+            this.log('Game exit signal received');
+            this.cleanup();
+        }
+        
+        /**
+         * Send ready signal to platform
+         */
+        sendReady() {
+            this.sendToPlatform('ready', {
+                sdkVersion: PROTOCOL_VERSION,
+                timestamp: Date.now()
+            });
+        }
+        
+        /**
+         * Send score update to platform
+         * @param {number} score - The current score
+         * @param {Object} metadata - Optional additional metadata
+         */
+        sendScore(score, metadata = {}) {
+            if (typeof score !== 'number') {
+                console.error('[PlatformSDK] Score must be a number');
+                return;
+            }
+            
+            this.state.score = score;
+            
+            this.sendToPlatform('scoreUpdate', {
+                score,
+                ...metadata,
+                timestamp: Date.now()
+            });
+        }
+        
+        /**
+         * Send game over event to platform
+         * @param {number} finalScore - The final score
+         * @param {Object} metadata - Optional additional metadata (stats, achievements, etc.)
+         *                            Can include extra_data for cumulative XP system:
+         *                            - levels_completed: number
+         *                            - distance: number
+         *                            - coins_collected: number
+         *                            - powerups_collected: number
+         *                            - enemies_defeated: number
+         */
+        gameOver(finalScore, metadata = {}) {
+            if (typeof finalScore !== 'number') {
+                console.error('[PlatformSDK] Final score must be a number');
+                return;
+            }
+            
+            this.state.score = finalScore;
+            
+            // Extract extra_data if provided
+            const extra_data = metadata.extra_data || metadata;
+            
+            this.sendToPlatform('gameOver', {
+                score: finalScore,
+                extra_data,
+                timestamp: Date.now()
+            });
+        }
+        
+        /**
+         * Send level completed event to platform
+         * @param {number} level - The completed level number
+         * @param {Object} metadata - Optional additional metadata (time, stars, etc.)
+         */
+        levelCompleted(level, metadata = {}) {
+            if (typeof level !== 'number') {
+                console.error('[PlatformSDK] Level must be a number');
+                return;
+            }
+            
+            this.state.level = level;
+            
+            this.sendToPlatform('levelCompleted', {
+                level,
+                ...metadata,
+                timestamp: Date.now()
+            });
+        }
+        
+        /**
+         * Request fullscreen mode (via platform)
+         * This sends a message to the platform to handle fullscreen
+         */
+        requestFullScreen() {
+            this.sendToPlatform('requestFullScreen', {
+                timestamp: Date.now()
+            });
+        }
+        
+        /**
+         * Toggle fullscreen mode (works on iOS too!)
+         * This is a convenience method that works directly in the game
+         * Use this instead of native requestFullscreen() for iOS compatibility
+         */
+        toggleFullscreen() {
+            // Check if we're in an iframe (platform context)
+            if (window.self !== window.top) {
+                // In iframe - request via platform for best iOS support
+                this.requestFullScreen();
+                return;
+            }
+            
+            // Standalone mode - handle directly
+            const elem = document.documentElement;
+            
+            // iOS/iPadOS detection
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+            const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+            
+            if ((isIOS || isIPadOS) && !fullscreenSupported) {
+                // iOS doesn't support Fullscreen API - use CSS workaround
+                this.toggleIOSFullscreen();
+            } else {
+                // Standard fullscreen API
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    // Enter fullscreen
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen();
+                    } else if (elem.webkitRequestFullscreen) {
+                        elem.webkitRequestFullscreen();
+                    } else if (elem.msRequestFullscreen) {
+                        elem.msRequestFullscreen();
+                    } else {
+                        // Fallback to iOS method
+                        this.toggleIOSFullscreen();
+                    }
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+        }
+        
+        /**
+         * iOS fullscreen toggle using CSS (since iOS doesn't support Fullscreen API)
+         */
+        toggleIOSFullscreen() {
+            const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
+            
+            if (isFullscreen) {
+                // Exit fullscreen
+                document.body.classList.remove('ios-game-fullscreen');
+                document.body.style.overflow = '';
+                
+                // Remove exit button
+                const exitBtn = document.getElementById('ios-fs-exit');
+                if (exitBtn) exitBtn.remove();
+                
+                this.log('Exited iOS fullscreen');
+            } else {
+                // Enter fullscreen
+                document.body.classList.add('ios-game-fullscreen');
+                document.body.style.overflow = 'hidden';
+                
+                // Add styles if not present
+                this.injectIOSFullscreenStyles();
+                
+                // Create exit button
+                this.createIOSExitButton();
+                
+                // Try to hide Safari address bar
+                setTimeout(() => window.scrollTo(0, 1), 100);
+                
+                this.log('Entered iOS fullscreen');
+            }
+        }
+        
+        /**
+         * Inject iOS fullscreen CSS styles
+         */
+        injectIOSFullscreenStyles() {
+            if (document.getElementById('ios-fullscreen-styles')) return;
+            
+            const style = document.createElement('style');
+            style.id = 'ios-fullscreen-styles';
+            style.textContent = `
+                .ios-game-fullscreen {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    height: 100dvh !important;
+                    overflow: hidden !important;
+                    z-index: 999999 !important;
+                }
+                .ios-game-fullscreen > * {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                .ios-game-fullscreen canvas {
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    height: 100dvh !important;
+                }
+                #ios-fs-exit {
+                    position: fixed !important;
+                    top: max(10px, env(safe-area-inset-top)) !important;
+                    right: max(10px, env(safe-area-inset-right)) !important;
+                    z-index: 9999999 !important;
+                    background: rgba(0,0,0,0.7) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 50% !important;
+                    width: 44px !important;
+                    height: 44px !important;
+                    font-size: 24px !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    -webkit-tap-highlight-color: transparent;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        /**
+         * Create iOS fullscreen exit button
+         */
+        createIOSExitButton() {
+            if (document.getElementById('ios-fs-exit')) return;
+            
+            const btn = document.createElement('button');
+            btn.id = 'ios-fs-exit';
+            btn.innerHTML = '✕';
+            btn.setAttribute('aria-label', 'Exit fullscreen');
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleIOSFullscreen();
+            });
+            document.body.appendChild(btn);
+        }
+        
+        /**
+         * Check if currently in fullscreen mode
+         */
+        isFullscreen() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                return true;
+            }
+            // Check iOS CSS fullscreen
+            return document.body.classList.contains('ios-game-fullscreen');
+        }
+        
+        /**
+         * Send log message to platform
+         * @param {string} message - Log message
+         * @param {*} data - Optional data to log
+         */
+        log(message, data = null) {
+            if (window.self === window.top) {
+                // Not in iframe, use console directly
+
+            } else {
+                // Send to platform
+                this.sendToPlatform('log', {
+                    message,
+                    data,
+                    timestamp: Date.now()
+                });
+            }
+        }
+        
+        /**
+         * Register an event callback
+         * @param {string} eventType - The event type (start, pause, resume, exit, config)
+         * @param {Function} callback - The callback function
+         */
+        on(eventType, callback) {
+            if (typeof callback !== 'function') {
+                console.error('[PlatformSDK] Callback must be a function');
+                return;
+            }
+            
+            if (!this.eventCallbacks.has(eventType)) {
+                this.eventCallbacks.set(eventType, []);
+            }
+            
+            this.eventCallbacks.get(eventType).push(callback);
+        }
+        
+        /**
+         * Unregister an event callback
+         * @param {string} eventType - The event type
+         * @param {Function} callback - The callback function to remove
+         */
+        off(eventType, callback) {
+            if (!this.eventCallbacks.has(eventType)) return;
+            
+            const callbacks = this.eventCallbacks.get(eventType);
+            const index = callbacks.indexOf(callback);
+            
+            if (index !== -1) {
+                callbacks.splice(index, 1);
+            }
+        }
+        
+        /**
+         * Trigger event callbacks
+         * @param {string} eventType - The event type
+         * @param {*} data - The event data
+         */
+        triggerEvent(eventType, data) {
+            if (!this.eventCallbacks.has(eventType)) return;
+            
+            const callbacks = this.eventCallbacks.get(eventType);
+            callbacks.forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error('[PlatformSDK] Error in event callback:', error);
+                }
+            });
+        }
+        
+        /**
+         * Send message to platform
+         * @param {string} type - Message type
+         * @param {Object} payload - Message payload
+         */
+        sendToPlatform(type, payload = {}) {
+            const message = {
+                type,
+                payload,
+                timestamp: Date.now(),
+                protocolVersion: PROTOCOL_VERSION
+            };
+            
+            // Queue message if platform is not ready (except for 'ready' message)
+            if (!this.isPlatformReady && type !== 'ready') {
+                this.messageQueue.push(message);
+                return;
+            }
+            
+            // Send to parent window
+            if (window.parent && window.parent !== window.self) {
+                window.parent.postMessage(message, '*');
+            }
+            
+        }
+        
+        /**
+         * Process queued messages
+         */
+        processMessageQueue() {
+            while (this.messageQueue.length > 0) {
+                const message = this.messageQueue.shift();
+                window.parent.postMessage(message, '*');
+            }
+        }
+        
+        /**
+         * Get current SDK state
+         * @returns {Object} Current state
+         */
+        getState() {
+            return { ...this.state };
+        }
+        
+        /**
+         * Check if game is paused
+         * @returns {boolean}
+         */
+        isPaused() {
+            return this.state.isPaused;
+        }
+        
+        /**
+         * Reset session for game restart
+         * Notifies the platform that the game is restarting
+         * Returns a promise that resolves when the reset is complete
+         */
+        async resetSession() {
+            this.log('Resetting session for restart');
+            
+            // Send reset message to platform
+            this.sendToPlatform('resetSession', {
+                timestamp: Date.now()
+            });
+            
+            // Wait for the platform to process (give it time to end session and start new one)
+            return new Promise(resolve => {
+                setTimeout(resolve, 1000);
+            });
+        }
+        
+        /**
+         * Save game progress data to the platform (persisted per-user per-game)
+         * @param {Object} data - Progress data to save (arbitrary JSON)
+         */
+        saveProgress(data) {
+            if (!data || typeof data !== 'object') {
+                console.error('[PlatformSDK] Progress data must be an object');
+                return;
+            }
+            this.sendToPlatform('saveProgress', {
+                progress_data: data,
+                timestamp: Date.now()
+            });
+            this.log('Progress save requested', data);
+        }
+
+        /**
+         * Load game progress data from the platform
+         * @returns {Promise<Object|null>} Resolves with progress data or null if none saved
+         */
+        loadProgress() {
+            return new Promise((resolve) => {
+                const requestId = 'lp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                
+                // Set up one-time listener for response
+                const handler = (payload) => {
+                    if (payload && payload._requestId === requestId) {
+                        this.off('progressLoaded', handler);
+                        resolve(payload.progress_data || null);
+                    }
+                };
+                this.on('progressLoaded', handler);
+                
+                // Timeout after 5s — resolve null if no response
+                setTimeout(() => {
+                    this.off('progressLoaded', handler);
+                    resolve(null);
+                }, 5000);
+                
+                this.sendToPlatform('loadProgress', {
+                    _requestId: requestId,
+                    timestamp: Date.now()
+                });
+                this.log('Progress load requested', requestId);
+            });
+        }
+
+        /**
+         * Cleanup SDK resources
+         */
+        cleanup() {
+            window.removeEventListener('message', this.boundMessageHandler);
+            this.eventCallbacks.clear();
+            this.messageQueue = [];
+            this.isInitialized = false;
+            this.isPlatformReady = false;
+            this.log('SDK cleaned up');
+        }
+    }
+    
+    // Create singleton instance
+    const sdk = new PlatformSDK();
+    
+    // Export as ES module default and as properties
+    return {
+        init: (options) => sdk.init(options),
+        sendScore: (score, metadata) => sdk.sendScore(score, metadata),
+        gameOver: (finalScore, metadata) => sdk.gameOver(finalScore, metadata),
+        levelCompleted: (level, metadata) => sdk.levelCompleted(level, metadata),
+        requestFullScreen: () => sdk.requestFullScreen(),
+        toggleFullscreen: () => sdk.toggleFullscreen(),
+        isFullscreen: () => sdk.isFullscreen(),
+        resetSession: () => sdk.resetSession(),
+        saveProgress: (data) => sdk.saveProgress(data),
+        loadProgress: () => sdk.loadProgress(),
+        on: (eventType, callback) => sdk.on(eventType, callback),
+        off: (eventType, callback) => sdk.off(eventType, callback),
+        getState: () => sdk.getState(),
+        isPaused: () => sdk.isPaused(),
+        log: (message, data) => sdk.log(message, data),
+        
+        // Version info
+        version: PROTOCOL_VERSION,
+        
+        // Access to SDK instance (advanced usage)
+        _instance: sdk
+    };
+}));

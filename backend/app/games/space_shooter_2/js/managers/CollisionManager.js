@@ -43,6 +43,9 @@ class CollisionManager {
         const critChance = perks.getCritChance();
         const critMult = perks.getCritMultiplier();
         const hasExplosive = perks.hasExplosiveRounds();
+        const critAoeRange = perks.getCritAoeRange();
+        const critAoeBonusChance = perks.getCritAoeBonusChance();
+        const stealthDmgBonus = perks.getStealthDamageBonus();
 
         for (const bullet of entities.bullets) {
             if (!bullet.active || bullet.owner !== 'player') continue;
@@ -64,19 +67,29 @@ class CollisionManager {
                 if (bullet._hitIds && bullet._hitIds.has(enemy)) continue;
                 if (bullet.collidesWithCircle(enemy)) {
                     let dmg = bullet.damage * dmgMult;
-                    const isCrit = Math.random() < critChance;
+                    // Predatore: bonus damage vs stealth enemies
+                    if (stealthDmgBonus > 0 && enemy.config && enemy.config.stealth) {
+                        dmg *= (1 + stealthDmgBonus);
+                    }
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const killed = enemy.takeDamage(Math.ceil(dmg), g);
                     if (killed) g.waveManager.onEnemyKilled(enemy);
 
+                    const eCX = enemy.position.x + enemy.width / 2;
+                    const eCY = enemy.position.y + enemy.height / 2;
                     if (isCrit) {
-                        g.particles.emit(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 'explosion', 6);
+                        g.particles.emit(eCX, eCY, 'explosion', 6);
                         g.postProcessing.flash({ r: 255, g: 200, b: 50 }, 0.05);
+                        // Colpo Critico: AoE shockwave on crit
+                        if (critAoeRange > 0) {
+                            g.perkEffectsManager.applyExplosiveAoE(eCX, eCY, critAoeRange, Math.ceil(dmg * 0.4));
+                        }
                     }
 
                     if (hasExplosive) {
-                        g.perkEffectsManager.applyExplosiveAoE(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 50, Math.ceil(dmg * 0.5));
+                        g.perkEffectsManager.applyExplosiveAoE(eCX, eCY, 50, Math.ceil(dmg * 0.5));
                     }
 
                     g.sound.playHit();
@@ -101,7 +114,7 @@ class CollisionManager {
                 const hitBoss = hitIdx >= 0 || (!(entities.boss instanceof MultiBoss) && bullet.collidesWithCircle(entities.boss));
                 if (hitBoss) {
                     let dmg = bullet.damage * dmgMult;
-                    const isCrit = Math.random() < critChance;
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     let killed = false;
@@ -125,6 +138,9 @@ class CollisionManager {
                     const py = hitPart && hitPart.active !== false ? hitPart.worldY + hitPart.height / 2 : (entities.boss.position.y + entities.boss.height / 2);
                     if (isCrit) {
                         g.particles.emit(px, py, 'explosion', 6);
+                        if (critAoeRange > 0) {
+                            g.perkEffectsManager.applyExplosiveAoE(px, py, critAoeRange, Math.ceil(dmg * 0.35));
+                        }
                     }
                     if (hasExplosive) {
                         g.perkEffectsManager.applyExplosiveAoE(px, py, 50, Math.ceil(dmg * 0.3));
@@ -141,7 +157,7 @@ class CollisionManager {
                 const hitIdx = entities.miniBoss.getHitPart(bCX, bCY);
                 if (hitIdx >= 0) {
                     let dmg = bullet.damage * dmgMult;
-                    const isCrit = Math.random() < critChance;
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const res = entities.miniBoss.damagepart(hitIdx, Math.ceil(dmg), g);
@@ -158,6 +174,9 @@ class CollisionManager {
                     const py = hitPart && hitPart.active !== false ? hitPart.worldY + hitPart.height / 2 : (entities.miniBoss.position.y + entities.miniBoss.height / 2);
                     if (isCrit) {
                         g.particles.emit(px, py, 'explosion', 5);
+                        if (critAoeRange > 0) {
+                            g.perkEffectsManager.applyExplosiveAoE(px, py, critAoeRange, Math.ceil(dmg * 0.35));
+                        }
                     }
                     if (hasExplosive) {
                         g.perkEffectsManager.applyExplosiveAoE(px, py, 40, Math.ceil(dmg * 0.3));

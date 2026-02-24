@@ -444,7 +444,16 @@ class AssetManager {
             { name: 'heavy',    color: '#ddaa00', accent: '#ffdd44', dark: '#886600', size: 80 },
             { name: 'phantom',  color: '#9933ee', accent: '#cc77ff', dark: '#551199', size: 60 },
             { name: 'sentinel', color: '#2288ee', accent: '#55bbff', dark: '#114488', size: 72 },
-            { name: 'swarm',    color: '#33cc44', accent: '#77ff88', dark: '#117722', size: 44 }
+            { name: 'swarm',    color: '#33cc44', accent: '#77ff88', dark: '#117722', size: 44 },
+            // ── WORLD 2 ENEMIES ──
+            { name: 'stalker',         color: '#228844', accent: '#55cc77', dark: '#115522', size: 58 },
+            { name: 'nest',            color: '#886633', accent: '#bbaa66', dark: '#553311', size: 72 },
+            { name: 'jungle_vine',     color: '#33bb55', accent: '#66ee88', dark: '#117733', size: 60 },
+            { name: 'lava_golem',      color: '#dd4400', accent: '#ff7733', dark: '#882200', size: 74 },
+            { name: 'frost_elemental', color: '#44bbff', accent: '#88ddff', dark: '#2266aa', size: 64 },
+            { name: 'sand_wurm',       color: '#ccaa44', accent: '#eedd88', dark: '#886622', size: 76 },
+            { name: 'mech_drone',      color: '#7799bb', accent: '#aaccdd', dark: '#445566', size: 56 },
+            { name: 'toxic_blob',      color: '#88ee22', accent: '#bbff66', dark: '#449911', size: 62 }
         ];
         for (const cfg of configs) {
             this.sprites[`enemy_${cfg.name}`] = this.createEnemySprite(cfg);
@@ -634,6 +643,242 @@ class AssetManager {
             }
             break;
         }
+
+        // ═══════════════════════════════════════
+        //  WORLD 2 ENEMY SPRITES
+        // ═══════════════════════════════════════
+
+        case 'stalker': {
+            // Sleek stealth hunter — angular, low-profile, chameleon-like
+            ctx.save();
+            ctx.globalAlpha = 0.88;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + r);
+            ctx.lineTo(cx - r * 0.95, cy + r * 0.15);
+            ctx.lineTo(cx - r * 0.6, cy - r * 0.7);
+            ctx.bezierCurveTo(cx - r * 0.2, cy - r, cx + r * 0.2, cy - r, cx + r * 0.6, cy - r * 0.7);
+            ctx.lineTo(cx + r * 0.95, cy + r * 0.15);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#11332288', 2.5);
+            ctx.restore();
+            // Camo stripe pattern
+            ctx.strokeStyle = cfg.dark; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5;
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.6, cy - r * 0.2); ctx.lineTo(cx + r * 0.3, cy - r * 0.4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.3, cy + r * 0.1); ctx.lineTo(cx + r * 0.7, cy); ctx.stroke();
+            ctx.globalAlpha = 1;
+            // Predator eyes — twin glowing slits
+            for (const sx of [-1, 1]) {
+                ctx.save();
+                ctx.shadowColor = '#44ff88'; ctx.shadowBlur = 8;
+                ctx.fillStyle = '#44ff88';
+                ctx.beginPath();
+                ctx.ellipse(cx + sx * r * 0.25, cy - r * 0.2, r * 0.12, r * 0.06, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(cx + sx * r * 0.25, cy - r * 0.2, r * 0.04, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            break;
+        }
+
+        case 'nest': {
+            // Organic spawner hive — bulbous, textured, with spawn ports
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, r * 0.9, r * 0.85, 0, 0, Math.PI * 2);
+            this.outlineAndFill(ctx, cfg.color, '#111', 3);
+            // Organic texture rings
+            ctx.strokeStyle = cfg.dark; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.ellipse(cx, cy, r * 0.6, r * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(cx, cy, r * 0.3, r * 0.28, 0, 0, Math.PI * 2); ctx.stroke();
+            // Spawn ports (3 glowing holes)
+            for (let i = 0; i < 3; i++) {
+                const a = (Math.PI * 2 / 3) * i - Math.PI / 2;
+                const px = cx + Math.cos(a) * r * 0.5, py = cy + Math.sin(a) * r * 0.5;
+                ctx.save();
+                ctx.shadowColor = '#ffaa44'; ctx.shadowBlur = 6;
+                ctx.fillStyle = '#ffaa44';
+                ctx.beginPath(); ctx.arc(px, py, r * 0.12, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#fff8e0';
+                ctx.beginPath(); ctx.arc(px, py, r * 0.06, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+            this.drawHighlight(ctx, cx - r * 0.4, cy - r * 0.7, r * 0.8, r * 0.4, 0.12);
+            this.drawEnemyEye(ctx, cx, cy, r * 0.18, cfg.accent);
+            break;
+        }
+
+        case 'jungle_vine': {
+            // Whip-like vine creature — elongated, organic
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + r);
+            ctx.bezierCurveTo(cx - r * 0.4, cy + r * 0.6, cx - r * 0.7, cy, cx - r * 0.5, cy - r * 0.5);
+            ctx.bezierCurveTo(cx - r * 0.3, cy - r * 0.9, cx + r * 0.3, cy - r * 0.9, cx + r * 0.5, cy - r * 0.5);
+            ctx.bezierCurveTo(cx + r * 0.7, cy, cx + r * 0.4, cy + r * 0.6, cx, cy + r);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#111', 2.5);
+            // Leaf veins
+            ctx.strokeStyle = cfg.dark; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(cx, cy - r * 0.7); ctx.lineTo(cx, cy + r * 0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.4, cy - r * 0.1); ctx.lineTo(cx, cy - r * 0.35); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx + r * 0.4, cy - r * 0.1); ctx.lineTo(cx, cy - r * 0.35); ctx.stroke();
+            // Thorn tips
+            for (const sx of [-1, 1]) {
+                ctx.fillStyle = '#446633';
+                ctx.beginPath();
+                ctx.moveTo(cx + sx * r * 0.55, cy); ctx.lineTo(cx + sx * r * 0.8, cy - r * 0.15);
+                ctx.lineTo(cx + sx * r * 0.6, cy + r * 0.1); ctx.closePath(); ctx.fill();
+            }
+            this.drawHighlight(ctx, cx - r * 0.3, cy - r * 0.7, r * 0.6, r * 0.4);
+            this.drawEnemyEye(ctx, cx, cy - r * 0.15, r * 0.2, '#66ff44');
+            break;
+        }
+
+        case 'lava_golem': {
+            // Bulky molten rock creature — angular, glowing cracks
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - r);
+            ctx.lineTo(cx + r * 0.8, cy - r * 0.5);
+            ctx.lineTo(cx + r, cy + r * 0.2);
+            ctx.lineTo(cx + r * 0.7, cy + r * 0.8);
+            ctx.lineTo(cx + r * 0.2, cy + r);
+            ctx.lineTo(cx - r * 0.2, cy + r);
+            ctx.lineTo(cx - r * 0.7, cy + r * 0.8);
+            ctx.lineTo(cx - r, cy + r * 0.2);
+            ctx.lineTo(cx - r * 0.8, cy - r * 0.5);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#111', 3);
+            // Lava crack lines (glowing)
+            ctx.save(); ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 5;
+            ctx.strokeStyle = '#ffcc33'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.3, cy - r * 0.6); ctx.lineTo(cx + r * 0.1, cy + r * 0.2);
+            ctx.lineTo(cx - r * 0.2, cy + r * 0.7); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx + r * 0.4, cy - r * 0.3); ctx.lineTo(cx + r * 0.5, cy + r * 0.5); ctx.stroke();
+            ctx.restore();
+            this.drawHighlight(ctx, cx - r * 0.4, cy - r * 0.8, r * 0.8, r * 0.4, 0.1);
+            this.drawEnemyEye(ctx, cx, cy - r * 0.1, r * 0.25, '#ff6600');
+            break;
+        }
+
+        case 'frost_elemental': {
+            // Crystalline ice entity — geometric, translucent
+            ctx.save(); ctx.globalAlpha = 0.9;
+            // Main crystal body
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - r);
+            ctx.lineTo(cx + r * 0.6, cy - r * 0.4);
+            ctx.lineTo(cx + r * 0.8, cy + r * 0.3);
+            ctx.lineTo(cx + r * 0.3, cy + r);
+            ctx.lineTo(cx - r * 0.3, cy + r);
+            ctx.lineTo(cx - r * 0.8, cy + r * 0.3);
+            ctx.lineTo(cx - r * 0.6, cy - r * 0.4);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#111', 2.5);
+            ctx.restore();
+            // Ice facet lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r * 0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.6, cy - r * 0.4); ctx.lineTo(cx + r * 0.3, cy + r * 0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx + r * 0.6, cy - r * 0.4); ctx.lineTo(cx - r * 0.3, cy + r * 0.5); ctx.stroke();
+            // Frost shimmer
+            const fg = ctx.createRadialGradient(cx, cy - r * 0.2, 0, cx, cy, r * 0.6);
+            fg.addColorStop(0, 'rgba(255,255,255,0.2)'); fg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = fg;
+            ctx.beginPath(); ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2); ctx.fill();
+            this.drawEnemyEye(ctx, cx, cy - r * 0.1, r * 0.22, '#88eeff');
+            break;
+        }
+
+        case 'sand_wurm': {
+            // Segmented burrowing worm — elongated, ridged
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - r);
+            ctx.bezierCurveTo(cx + r * 0.8, cy - r * 0.7, cx + r * 0.9, cy - r * 0.1, cx + r * 0.7, cy + r * 0.5);
+            ctx.bezierCurveTo(cx + r * 0.4, cy + r * 0.9, cx - r * 0.4, cy + r * 0.9, cx - r * 0.7, cy + r * 0.5);
+            ctx.bezierCurveTo(cx - r * 0.9, cy - r * 0.1, cx - r * 0.8, cy - r * 0.7, cx, cy - r);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#111', 3);
+            // Segment ridges
+            ctx.strokeStyle = cfg.dark; ctx.lineWidth = 2;
+            for (let i = 0; i < 4; i++) {
+                const sy = cy - r * 0.5 + i * r * 0.35;
+                const sw = r * (0.6 + i * 0.05);
+                ctx.beginPath(); ctx.moveTo(cx - sw, sy); ctx.lineTo(cx + sw, sy); ctx.stroke();
+            }
+            // Mandible jaws at top
+            for (const sx of [-1, 1]) {
+                ctx.fillStyle = '#776633';
+                ctx.beginPath();
+                ctx.moveTo(cx + sx * r * 0.15, cy - r * 0.8);
+                ctx.lineTo(cx + sx * r * 0.45, cy - r * 1.05);
+                ctx.lineTo(cx + sx * r * 0.35, cy - r * 0.7);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5; ctx.stroke();
+            }
+            this.drawHighlight(ctx, cx - r * 0.3, cy - r * 0.6, r * 0.6, r * 0.4, 0.12);
+            this.drawEnemyEye(ctx, cx, cy - r * 0.3, r * 0.22, '#ffdd44');
+            break;
+        }
+
+        case 'mech_drone': {
+            // Compact military drone — boxy, antennae, thruster
+            ctx.beginPath();
+            ctx.roundRect(cx - r * 0.65, cy - r * 0.55, r * 1.3, r * 1.1, r * 0.15);
+            this.outlineAndFill(ctx, cfg.color, '#111', 2.5);
+            // Panel lines
+            ctx.strokeStyle = cfg.dark; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(cx, cy - r * 0.55); ctx.lineTo(cx, cy + r * 0.55); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - r * 0.65, cy); ctx.lineTo(cx + r * 0.65, cy); ctx.stroke();
+            // Antennae
+            for (const sx of [-1, 1]) {
+                ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + sx * r * 0.4, cy - r * 0.55);
+                ctx.lineTo(cx + sx * r * 0.55, cy - r * 0.85);
+                ctx.stroke();
+                ctx.fillStyle = '#ff3333'; ctx.beginPath();
+                ctx.arc(cx + sx * r * 0.55, cy - r * 0.85, r * 0.06, 0, Math.PI * 2); ctx.fill();
+            }
+            // Thruster vents bottom
+            for (const sx of [-1, 0, 1]) {
+                ctx.fillStyle = '#444'; ctx.beginPath();
+                ctx.roundRect(cx + sx * r * 0.35 - 3, cy + r * 0.4, 6, 10, 2); ctx.fill();
+                ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.stroke();
+            }
+            this.drawHighlight(ctx, cx - r * 0.3, cy - r * 0.4, r * 0.6, r * 0.3, 0.15);
+            this.drawEnemyEye(ctx, cx, cy - r * 0.1, r * 0.2, '#88ccff');
+            break;
+        }
+
+        case 'toxic_blob': {
+            // Amorphous toxic mass — blobby, dripping, splits on death
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.moveTo(cx + r * 0.6, cy - r * 0.5);
+            ctx.bezierCurveTo(cx + r, cy - r * 0.2, cx + r * 0.9, cy + r * 0.5, cx + r * 0.4, cy + r * 0.8);
+            ctx.bezierCurveTo(cx + r * 0.1, cy + r, cx - r * 0.3, cy + r * 0.9, cx - r * 0.6, cy + r * 0.6);
+            ctx.bezierCurveTo(cx - r, cy + r * 0.3, cx - r * 0.9, cy - r * 0.3, cx - r * 0.5, cy - r * 0.6);
+            ctx.bezierCurveTo(cx - r * 0.2, cy - r, cx + r * 0.3, cy - r * 0.8, cx + r * 0.6, cy - r * 0.5);
+            ctx.closePath();
+            this.outlineAndFill(ctx, cfg.color, '#33660088', 2.5);
+            ctx.restore();
+            // Toxic glow
+            const tg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.6);
+            tg.addColorStop(0, 'rgba(200,255,100,0.25)'); tg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = tg;
+            ctx.beginPath(); ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2); ctx.fill();
+            // Drip bubbles
+            for (let i = 0; i < 3; i++) {
+                const bx = cx + (i - 1) * r * 0.35, by = cy + r * 0.4 + i * r * 0.15;
+                ctx.fillStyle = 'rgba(150,255,50,0.4)';
+                ctx.beginPath(); ctx.arc(bx, by, r * 0.1, 0, Math.PI * 2); ctx.fill();
+            }
+            // Menacing eye
+            this.drawEnemyEye(ctx, cx, cy - r * 0.1, r * 0.22, '#ccff33');
+            break;
+        }
         }
         return cv;
     }
@@ -674,6 +919,13 @@ class AssetManager {
         this._genBoss4Sprites();
         this._genBoss5Sprites();
         this._genBoss6Sprites();
+        // World 2 bosses
+        this._genBoss7Sprites();
+        this._genBoss8Sprites();
+        this._genBoss9Sprites();
+        this._genBoss10Sprites();
+        this._genBoss11Sprites();
+        this._genBoss12Sprites();
     }
 
     // Helper: make a canvas of given size
@@ -1087,6 +1339,499 @@ class AssetManager {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  WORLD 2 BOSSES — 6 planetary guardians (Bosses 7–12)
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── BOSS 7: Titanus Rex (green, organic, jungle guardian) ──
+    _genBoss7Sprites() {
+        const color = '#22cc44', accent = '#55ee77', dark = '#117722';
+        // Core (85x85 → pad=10 → 105)
+        { const S=105, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=42;
+          // Massive reptilian skull
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-r);
+          ctx.bezierCurveTo(cx+r*0.7, cy-r, cx+r, cy-r*0.4, cx+r*0.9, cy+r*0.1);
+          ctx.lineTo(cx+r*0.7, cy+r*0.7);
+          ctx.bezierCurveTo(cx+r*0.3, cy+r, cx-r*0.3, cy+r, cx-r*0.7, cy+r*0.7);
+          ctx.lineTo(cx-r*0.9, cy+r*0.1);
+          ctx.bezierCurveTo(cx-r, cy-r*0.4, cx-r*0.7, cy-r, cx, cy-r);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3.5);
+          // Scale texture
+          ctx.strokeStyle=dark; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.5,cy-r*0.4); ctx.lineTo(cx-r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.5,cy-r*0.4); ctx.lineTo(cx+r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-r*0.7,cy+r*0.1); ctx.lineTo(cx+r*0.7,cy+r*0.1); ctx.stroke();
+          // Rex teeth at bottom
+          ctx.fillStyle='#fff';
+          for (let i=-2;i<=2;i++) {
+            ctx.beginPath();
+            ctx.moveTo(cx+i*10-4, cy+r*0.65); ctx.lineTo(cx+i*10, cy+r*0.9);
+            ctx.lineTo(cx+i*10+4, cy+r*0.65); ctx.closePath(); ctx.fill();
+          }
+          // Twin predator eyes
+          this._drawPartEye(ctx, cx-14, cy-10, 10, '#44ff66');
+          this._drawPartEye(ctx, cx+14, cy-10, 10, '#44ff66');
+          this.drawHighlight(ctx, cx-20, cy-r*0.9, 40, 18, 0.12);
+          this.sprites['boss7_core'] = cv;
+        }
+        // Turret (32x32 → 44)
+        { const S=44, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2);
+          this.outlineAndFill(ctx, accent, '#111', 2.5);
+          // Thorn barrel
+          ctx.fillStyle='#446633'; ctx.beginPath();
+          ctx.moveTo(cx-2, cy-20); ctx.lineTo(cx+2, cy-20); ctx.lineTo(cx+4, cy-6); ctx.lineTo(cx-4, cy-6); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+          this._drawPartEye(ctx, cx, cy+2, 5, '#66ff88');
+          this.sprites['boss7_turret'] = cv;
+        }
+        // Arm (40x55 → 52x67)
+        { const cv=this._mkCanvas(52,67), ctx=cv.getContext('2d'), cx=26, cy=67/2;
+          // Muscular claw arm
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-28); ctx.lineTo(cx+20, cy-12); ctx.lineTo(cx+18, cy+22);
+          ctx.lineTo(cx+8, cy+30); ctx.lineTo(cx-8, cy+30);
+          ctx.lineTo(cx-18, cy+22); ctx.lineTo(cx-20, cy-12); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2.5);
+          // Claw tips
+          ctx.fillStyle=accent;
+          ctx.beginPath(); ctx.moveTo(cx-5,cy+30); ctx.lineTo(cx-8,cy+28); ctx.lineTo(cx-2,cy+30); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(cx+5,cy+30); ctx.lineTo(cx+8,cy+28); ctx.lineTo(cx+2,cy+30); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle=color; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(cx-10,cy-5); ctx.lineTo(cx+10,cy-5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-8,cy+10); ctx.lineTo(cx+8,cy+10); ctx.stroke();
+          this.sprites['boss7_arm'] = cv;
+        }
+        // Shield (90x22 → 102x34)
+        { const cv=this._mkCanvas(102,34), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(6,17); ctx.lineTo(16,4); ctx.lineTo(86,4);
+          ctx.lineTo(96,17); ctx.lineTo(86,30); ctx.lineTo(16,30); ctx.closePath();
+          this.outlineAndFill(ctx, '#338844', '#111', 2.5);
+          // Vine pattern
+          ctx.strokeStyle='#55bb66'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+          ctx.beginPath(); ctx.moveTo(20,17); ctx.bezierCurveTo(35,8,55,26,80,17); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.drawHighlight(ctx, 20, 6, 60, 10, 0.12);
+          this.sprites['boss7_shield'] = cv;
+        }
+    }
+
+    // ── BOSS 8: Magma Colossus (orange/red, volcanic, massive) ──
+    _genBoss8Sprites() {
+        const color = '#ff5500', accent = '#ff8833', dark = '#992200';
+        // Core (90x90 → 110)
+        { const S=110, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=45;
+          // Bulky volcanic body
+          ctx.beginPath();
+          ctx.moveTo(cx-r*0.6, cy-r); ctx.lineTo(cx+r*0.6, cy-r);
+          ctx.lineTo(cx+r, cy-r*0.2); ctx.lineTo(cx+r*0.85, cy+r*0.6);
+          ctx.lineTo(cx+r*0.4, cy+r); ctx.lineTo(cx-r*0.4, cy+r);
+          ctx.lineTo(cx-r*0.85, cy+r*0.6); ctx.lineTo(cx-r, cy-r*0.2);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3.5);
+          // Lava veins (glowing)
+          ctx.save(); ctx.shadowColor='#ff6600'; ctx.shadowBlur=6;
+          ctx.strokeStyle='#ffaa33'; ctx.lineWidth=2.5;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.4,cy-r*0.7); ctx.lineTo(cx-r*0.1,cy); ctx.lineTo(cx-r*0.3,cy+r*0.6); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.3,cy-r*0.5); ctx.lineTo(cx+r*0.2,cy+r*0.4); ctx.stroke();
+          ctx.restore();
+          // Armor plates
+          ctx.strokeStyle=dark; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.3,cy-r); ctx.lineTo(cx-r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.3,cy-r); ctx.lineTo(cx+r*0.3,cy+r*0.5); ctx.stroke();
+          this._drawPartEye(ctx, cx, cy-8, 13, '#ff4400');
+          this.drawHighlight(ctx, cx-22, cy-r*0.9, 44, 18, 0.1);
+          this.sprites['boss8_core'] = cv;
+        }
+        // Turret (35x35 → 47)
+        { const S=47, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI*2);
+          this.outlineAndFill(ctx, accent, '#111', 2.5);
+          // Flame barrel
+          for (const sx of [-1,1]) {
+            ctx.fillStyle='#555'; ctx.beginPath();
+            ctx.roundRect(cx+sx*6-3, cy-20, 6, 14, 2); ctx.fill();
+            ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+          }
+          this._drawPartEye(ctx, cx, cy+2, 5, '#ff7700');
+          this.sprites['boss8_turret'] = cv;
+        }
+        // Orb (28x28 → 40) — orbiting magma ball
+        { const S=40, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          const g = ctx.createRadialGradient(cx,cy,2,cx,cy,14);
+          g.addColorStop(0, '#ffdd66'); g.addColorStop(0.5, '#ff6600'); g.addColorStop(1, dark);
+          ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI*2);
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx-3, cy-3, 3, 0, Math.PI*2);
+          ctx.fillStyle='rgba(255,255,200,0.5)'; ctx.fill();
+          this.sprites['boss8_orb'] = cv;
+        }
+        // Arm (45x60 → 57x72)
+        { const cv=this._mkCanvas(57,72), ctx=cv.getContext('2d'), cx=57/2, cy=72/2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-32); ctx.lineTo(cx+22, cy-16); ctx.lineTo(cx+20, cy+32);
+          ctx.lineTo(cx-20, cy+32); ctx.lineTo(cx-22, cy-16); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2.5);
+          // Lava glow segments
+          ctx.save(); ctx.shadowColor='#ff4400'; ctx.shadowBlur=4;
+          ctx.fillStyle='#ff8833'; ctx.globalAlpha=0.4;
+          for (let i=0;i<3;i++) {
+            ctx.beginPath(); ctx.arc(cx, cy-18+i*16, 5, 0, Math.PI*2); ctx.fill();
+          }
+          ctx.globalAlpha=1; ctx.restore();
+          this.sprites['boss8_arm'] = cv;
+        }
+        // Shield (110x25 → 122x37)
+        { const cv=this._mkCanvas(122,37), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(8,18); ctx.lineTo(18,4); ctx.lineTo(104,4);
+          ctx.lineTo(114,18); ctx.lineTo(104,32); ctx.lineTo(18,32); ctx.closePath();
+          this.outlineAndFill(ctx, '#cc4400', '#111', 2.5);
+          ctx.strokeStyle='#ff7744'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+          ctx.beginPath(); ctx.moveTo(25,18); ctx.lineTo(97,18); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.drawHighlight(ctx, 22, 6, 78, 12, 0.12);
+          this.sprites['boss8_shield'] = cv;
+        }
+    }
+
+    // ── BOSS 9: Frost Sovereign (ice blue, crystalline, regal) ──
+    _genBoss9Sprites() {
+        const color = '#44bbff', accent = '#88ddff', dark = '#2266aa';
+        // Core (80x80 → 100)
+        { const S=100, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=40;
+          // Crown-like crystal shape
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.35, cy-r*0.55);
+          ctx.lineTo(cx+r*0.65, cy-r*0.85); ctx.lineTo(cx+r*0.55, cy-r*0.25);
+          ctx.lineTo(cx+r, cy+r*0.1); ctx.lineTo(cx+r*0.6, cy+r*0.7);
+          ctx.lineTo(cx+r*0.2, cy+r); ctx.lineTo(cx-r*0.2, cy+r);
+          ctx.lineTo(cx-r*0.6, cy+r*0.7); ctx.lineTo(cx-r, cy+r*0.1);
+          ctx.lineTo(cx-r*0.55, cy-r*0.25); ctx.lineTo(cx-r*0.65, cy-r*0.85);
+          ctx.lineTo(cx-r*0.35, cy-r*0.55);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3);
+          // Ice facets
+          ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-r*0.5,cy); ctx.lineTo(cx+r*0.5,cy); ctx.stroke();
+          // Frost aura
+          const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.6);
+          fg.addColorStop(0,'rgba(200,240,255,0.2)'); fg.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fill();
+          this._drawPartEye(ctx, cx, cy-5, 12, '#aaeeff');
+          this.drawHighlight(ctx, cx-18, cy-r*0.85, 36, 16, 0.15);
+          this.sprites['boss9_core'] = cv;
+        }
+        // Orb (26x26 → 38) — orbiting ice crystal
+        { const S=38, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          const g=ctx.createRadialGradient(cx,cy,2,cx,cy,14);
+          g.addColorStop(0,'#eeffff'); g.addColorStop(0.5,accent); g.addColorStop(1,dark);
+          ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI*2);
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          // Sparkle
+          ctx.fillStyle='rgba(255,255,255,0.6)';
+          ctx.beginPath(); ctx.arc(cx-3, cy-3, 3, 0, Math.PI*2); ctx.fill();
+          this.sprites['boss9_orb'] = cv;
+        }
+        // Shield (35x18 → 47x30)
+        { const cv=this._mkCanvas(47,30), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(5,15); ctx.lineTo(12,3); ctx.lineTo(35,3);
+          ctx.lineTo(42,15); ctx.lineTo(35,27); ctx.lineTo(12,27); ctx.closePath();
+          this.outlineAndFill(ctx, '#66ccee', '#111', 2);
+          ctx.strokeStyle='#aaeeff'; ctx.lineWidth=1; ctx.globalAlpha=0.4;
+          ctx.beginPath(); ctx.moveTo(15,15); ctx.lineTo(32,15); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.sprites['boss9_shield'] = cv;
+        }
+        // Arm (38x50 → 50x62)
+        { const cv=this._mkCanvas(50,62), ctx=cv.getContext('2d'), cx=25, cy=31;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-28); ctx.lineTo(cx+18, cy-12); ctx.lineTo(cx+15, cy+28);
+          ctx.lineTo(cx-15, cy+28); ctx.lineTo(cx-18, cy-12); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2.5);
+          // Icicle detail
+          ctx.fillStyle=accent; ctx.globalAlpha=0.3;
+          for (let i=0;i<3;i++) { ctx.beginPath(); ctx.arc(cx, cy-15+i*14, 4, 0,Math.PI*2); ctx.fill(); }
+          ctx.globalAlpha=1;
+          this.sprites['boss9_arm'] = cv;
+        }
+    }
+
+    // ── BOSS 10: Sandstorm Leviathan (gold/sand, desert titan) ──
+    _genBoss10Sprites() {
+        const color = '#ddaa33', accent = '#eedd88', dark = '#886622';
+        // Core (85x85 → 105)
+        { const S=105, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=42;
+          // Massive sand serpent head
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-r);
+          ctx.bezierCurveTo(cx+r*0.8, cy-r*0.8, cx+r, cy-r*0.2, cx+r*0.8, cy+r*0.3);
+          ctx.bezierCurveTo(cx+r*0.6, cy+r*0.8, cx+r*0.2, cy+r, cx, cy+r*0.9);
+          ctx.bezierCurveTo(cx-r*0.2, cy+r, cx-r*0.6, cy+r*0.8, cx-r*0.8, cy+r*0.3);
+          ctx.bezierCurveTo(cx-r, cy-r*0.2, cx-r*0.8, cy-r*0.8, cx, cy-r);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3.5);
+          // Desert markings
+          ctx.strokeStyle=dark; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.4,cy-r*0.5); ctx.lineTo(cx-r*0.2,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.4,cy-r*0.5); ctx.lineTo(cx+r*0.2,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(cx,cy+r*0.1,r*0.5,r*0.15,0,0,Math.PI*2); ctx.stroke();
+          // Twin golden eyes
+          this._drawPartEye(ctx, cx-13, cy-8, 10, '#ffcc00');
+          this._drawPartEye(ctx, cx+13, cy-8, 10, '#ffcc00');
+          this.drawHighlight(ctx, cx-20, cy-r*0.9, 40, 18, 0.1);
+          this.sprites['boss10_core'] = cv;
+        }
+        // Turret (35x35 → 47)
+        { const S=47, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-17); ctx.lineTo(cx+17, cy-3); ctx.lineTo(cx+12, cy+17);
+          ctx.lineTo(cx-12, cy+17); ctx.lineTo(cx-17, cy-3); ctx.closePath();
+          this.outlineAndFill(ctx, accent, '#111', 2.5);
+          ctx.fillStyle='#555'; ctx.beginPath();
+          ctx.roundRect(cx-3, cy-23, 6, 12, 2); ctx.fill();
+          ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+          this._drawPartEye(ctx, cx, cy+2, 5, '#ffaa00');
+          this.sprites['boss10_turret'] = cv;
+        }
+        // Orb (30x30 → 42)
+        { const S=42, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          const g=ctx.createRadialGradient(cx,cy,2,cx,cy,15);
+          g.addColorStop(0,'#ffeeaa'); g.addColorStop(0.5,accent); g.addColorStop(1,dark);
+          ctx.beginPath(); ctx.arc(cx,cy,13,0,Math.PI*2);
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx-3,cy-3,3,0,Math.PI*2);
+          ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fill();
+          this.sprites['boss10_orb'] = cv;
+        }
+        // Weakpoint (24x24 → 36)
+        { const S=36, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx,cy,11,0,Math.PI*2);
+          const g=ctx.createRadialGradient(cx,cy,2,cx,cy,11);
+          g.addColorStop(0,'#ffff66'); g.addColorStop(0.5,'#ff8800'); g.addColorStop(1,'#884400');
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2);
+          ctx.fillStyle='#ffff88'; ctx.fill();
+          this.sprites['boss10_weak'] = cv;
+        }
+        // Arm (42x60 → 54x72)
+        { const cv=this._mkCanvas(54,72), ctx=cv.getContext('2d'), cx=27, cy=36;
+          ctx.beginPath();
+          ctx.moveTo(cx,cy-32); ctx.lineTo(cx+20,cy-15); ctx.lineTo(cx+18,cy+32);
+          ctx.lineTo(cx-18,cy+32); ctx.lineTo(cx-20,cy-15); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2.5);
+          ctx.strokeStyle=color; ctx.lineWidth=1.5;
+          for (let i=0;i<3;i++) {
+            ctx.beginPath(); ctx.moveTo(cx-12,cy-15+i*16); ctx.lineTo(cx+12,cy-15+i*16); ctx.stroke();
+          }
+          this.sprites['boss10_arm'] = cv;
+        }
+    }
+
+    // ── BOSS 11: Omega Construct (metallic blue-grey, mechanical titan) ──
+    _genBoss11Sprites() {
+        const color = '#7799bb', accent = '#aaccdd', dark = '#445566';
+        // Core (90x90 → 110)
+        { const S=110, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=45;
+          // Heavy industrial mech body
+          ctx.beginPath();
+          ctx.moveTo(cx-r*0.65, cy-r); ctx.lineTo(cx+r*0.65, cy-r);
+          ctx.lineTo(cx+r, cy-r*0.35); ctx.lineTo(cx+r*0.95, cy+r*0.55);
+          ctx.lineTo(cx+r*0.5, cy+r); ctx.lineTo(cx-r*0.5, cy+r);
+          ctx.lineTo(cx-r*0.95, cy+r*0.55); ctx.lineTo(cx-r, cy-r*0.35);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3.5);
+          // Rivets & panel lines
+          ctx.strokeStyle=dark; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.3,cy-r); ctx.lineTo(cx-r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.3,cy-r); ctx.lineTo(cx+r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-r*0.6,cy-r*0.1); ctx.lineTo(cx+r*0.6,cy-r*0.1); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-r*0.5,cy+r*0.3); ctx.lineTo(cx+r*0.5,cy+r*0.3); ctx.stroke();
+          // Rivets
+          ctx.fillStyle='#556677';
+          for (let i=-1;i<=1;i+=2) {
+            for (let j=-1;j<=1;j+=2) {
+              ctx.beginPath(); ctx.arc(cx+i*r*0.5,cy+j*r*0.3,3,0,Math.PI*2); ctx.fill();
+            }
+          }
+          this._drawPartEye(ctx, cx, cy-12, 14, '#88ccff');
+          this.drawHighlight(ctx, cx-22, cy-r*0.9, 44, 18, 0.1);
+          // Exhaust vents
+          for (let i=-1;i<=1;i++) {
+            ctx.fillStyle='#333'; ctx.beginPath();
+            ctx.roundRect(cx+i*16-5, cy+r-8, 10, 12, 2); ctx.fill();
+          }
+          this.sprites['boss11_core'] = cv;
+        }
+        // Turret (35x35 → 47)
+        { const S=47, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.roundRect(cx-16, cy-16, 32, 32, 6);
+          this.outlineAndFill(ctx, accent, '#111', 2.5);
+          for (const sx of [-1,1]) {
+            ctx.fillStyle='#555'; ctx.beginPath();
+            ctx.roundRect(cx+sx*8-3, cy-22, 6, 15, 2); ctx.fill();
+            ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+          }
+          this._drawPartEye(ctx, cx, cy+3, 6, '#88bbff');
+          this.sprites['boss11_turret'] = cv;
+        }
+        // Turret2 (28x28 → 40) — smaller secondary
+        { const S=40, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI*2);
+          this.outlineAndFill(ctx, dark, '#111', 2);
+          ctx.fillStyle='#666'; ctx.beginPath();
+          ctx.roundRect(cx-2, cy-18, 4, 12, 1); ctx.fill();
+          ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          this._drawPartEye(ctx, cx, cy+2, 4, '#99ccee');
+          this.sprites['boss11_turret2'] = cv;
+        }
+        // Shield (130x25 → 142x37)
+        { const cv=this._mkCanvas(142,37), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(8,18); ctx.lineTo(20,4); ctx.lineTo(122,4);
+          ctx.lineTo(134,18); ctx.lineTo(122,32); ctx.lineTo(20,32); ctx.closePath();
+          this.outlineAndFill(ctx, '#5577aa', '#111', 2.5);
+          ctx.strokeStyle='#88aacc'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+          ctx.beginPath(); ctx.moveTo(28,18); ctx.lineTo(114,18); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.drawHighlight(ctx, 28, 6, 86, 10, 0.12);
+          this.sprites['boss11_shield'] = cv;
+        }
+        // Shield2 (30x18 → 42x30) — mini side shields
+        { const cv=this._mkCanvas(42,30), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(4,15); ctx.lineTo(10,3); ctx.lineTo(32,3);
+          ctx.lineTo(38,15); ctx.lineTo(32,27); ctx.lineTo(10,27); ctx.closePath();
+          this.outlineAndFill(ctx, '#6688aa', '#111', 2);
+          this.sprites['boss11_shield2'] = cv;
+        }
+        // Arm (45x65 → 57x77)
+        { const cv=this._mkCanvas(57,77), ctx=cv.getContext('2d'), cx=57/2, cy=77/2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-35); ctx.lineTo(cx+22, cy-18); ctx.lineTo(cx+20, cy+35);
+          ctx.lineTo(cx-20, cy+35); ctx.lineTo(cx-22, cy-18); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 3);
+          // Hydraulic details
+          ctx.strokeStyle=color; ctx.lineWidth=1.5;
+          for (let i=0;i<4;i++) {
+            ctx.beginPath(); ctx.moveTo(cx-14,cy-20+i*14); ctx.lineTo(cx+14,cy-20+i*14); ctx.stroke();
+          }
+          // Rivets
+          ctx.fillStyle='#889';
+          for (let i=0;i<3;i++) {
+            ctx.beginPath(); ctx.arc(cx, cy-18+i*16, 2.5, 0, Math.PI*2); ctx.fill();
+          }
+          this.sprites['boss11_arm'] = cv;
+        }
+    }
+
+    // ── BOSS 12: Toxin Emperor (toxic green, final W2 boss, massive) ──
+    _genBoss12Sprites() {
+        const color = '#88ee00', accent = '#bbff44', dark = '#449911';
+        // Core (95x95 → 115)
+        { const S=115, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=47;
+          // Menacing toxic skull
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-r);
+          ctx.bezierCurveTo(cx+r*0.7, cy-r, cx+r, cy-r*0.4, cx+r, cy);
+          ctx.bezierCurveTo(cx+r, cy+r*0.5, cx+r*0.6, cy+r*0.8, cx+r*0.4, cy+r);
+          ctx.lineTo(cx+r*0.15, cy+r*0.7);
+          ctx.lineTo(cx, cy+r*0.9);
+          ctx.lineTo(cx-r*0.15, cy+r*0.7);
+          ctx.lineTo(cx-r*0.4, cy+r);
+          ctx.bezierCurveTo(cx-r*0.6, cy+r*0.8, cx-r, cy+r*0.5, cx-r, cy);
+          ctx.bezierCurveTo(cx-r, cy-r*0.4, cx-r*0.7, cy-r, cx, cy-r);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 4);
+          // Toxic vein network
+          ctx.save(); ctx.shadowColor='#aaff00'; ctx.shadowBlur=6;
+          ctx.strokeStyle='#ccff66'; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.5,cy-r*0.3); ctx.bezierCurveTo(cx-r*0.2,cy,cx+r*0.1,cy-r*0.2,cx+r*0.4,cy+r*0.3); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.5,cy-r*0.4); ctx.lineTo(cx+r*0.2,cy+r*0.5); ctx.stroke();
+          ctx.restore();
+          // Twin toxic eyes
+          this._drawPartEye(ctx, cx-14, cy-8, 10, '#aaff00');
+          this._drawPartEye(ctx, cx+14, cy-8, 10, '#aaff00');
+          // Toxic drip from jaw
+          ctx.fillStyle='rgba(180,255,50,0.5)';
+          ctx.beginPath(); ctx.ellipse(cx,cy+r*0.75,6,10,0,0,Math.PI*2); ctx.fill();
+          this.drawHighlight(ctx, cx-25, cy-r*0.9, 50, 20, 0.1);
+          this.sprites['boss12_core'] = cv;
+        }
+        // Turret (38x38 → 50)
+        { const S=50, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-18); ctx.lineTo(cx+18, cy-5); ctx.lineTo(cx+13, cy+18);
+          ctx.lineTo(cx-13, cy+18); ctx.lineTo(cx-18, cy-5); ctx.closePath();
+          this.outlineAndFill(ctx, accent, '#111', 2.5);
+          // Quad toxin nozzles
+          for (const off of [-8,0,8]) {
+            ctx.fillStyle='#556633'; ctx.beginPath();
+            ctx.roundRect(cx+off-2, cy-26, 4, 13, 1); ctx.fill();
+            ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          }
+          this._drawPartEye(ctx, cx, cy+3, 5, '#88ff00');
+          this.sprites['boss12_turret'] = cv;
+        }
+        // Orb (30x30 → 42) — orbiting toxic sphere
+        { const S=42, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          const g=ctx.createRadialGradient(cx,cy,2,cx,cy,15);
+          g.addColorStop(0,'#eeffaa'); g.addColorStop(0.4,accent); g.addColorStop(1,dark);
+          ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2);
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          // Bubbles
+          ctx.fillStyle='rgba(255,255,255,0.4)';
+          ctx.beginPath(); ctx.arc(cx-3,cy-4,3,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx+4,cy+2,2,0,Math.PI*2); ctx.fill();
+          this.sprites['boss12_orb'] = cv;
+        }
+        // Shield (130x28 → 142x40)
+        { const cv=this._mkCanvas(142,40), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(8,20); ctx.lineTo(20,4); ctx.lineTo(122,4);
+          ctx.lineTo(134,20); ctx.lineTo(122,36); ctx.lineTo(20,36); ctx.closePath();
+          this.outlineAndFill(ctx, '#668800', '#111', 2.5);
+          ctx.strokeStyle='#aadd33'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+          ctx.beginPath(); ctx.moveTo(28,20); ctx.lineTo(114,20); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.drawHighlight(ctx, 28, 6, 86, 12, 0.12);
+          this.sprites['boss12_shield'] = cv;
+        }
+        // Weakpoint (24x24 → 36)
+        { const S=36, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx,cy,11,0,Math.PI*2);
+          const g=ctx.createRadialGradient(cx,cy,2,cx,cy,11);
+          g.addColorStop(0,'#ffff66'); g.addColorStop(0.5,'#88ee00'); g.addColorStop(1,'#336600');
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2);
+          ctx.fillStyle='#eeff88'; ctx.fill();
+          this.sprites['boss12_weak'] = cv;
+        }
+        // Arm (48x68 → 60x80)
+        { const cv=this._mkCanvas(60,80), ctx=cv.getContext('2d'), cx=30, cy=40;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-38); ctx.lineTo(cx+24, cy-20); ctx.lineTo(cx+22, cy+38);
+          ctx.lineTo(cx-22, cy+38); ctx.lineTo(cx-24, cy-20); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 3);
+          // Toxic glow segments
+          ctx.save(); ctx.shadowColor='#88ff00'; ctx.shadowBlur=4;
+          ctx.fillStyle=accent; ctx.globalAlpha=0.35;
+          for (let i=0;i<4;i++) {
+            ctx.beginPath(); ctx.arc(cx, cy-22+i*14, 5, 0, Math.PI*2); ctx.fill();
+          }
+          ctx.globalAlpha=1; ctx.restore();
+          ctx.strokeStyle=color; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx-16,cy-5); ctx.lineTo(cx+16,cy-5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-18,cy+12); ctx.lineTo(cx+18,cy+12); ctx.stroke();
+          this.sprites['boss12_arm'] = cv;
+        }
+    }
+
     // ================================================================
     //  MINI-BOSS SPRITES — 4 unique mini-boss types
     // ================================================================
@@ -1096,6 +1841,11 @@ class AssetManager {
         this._genMiniBoss2Sprites(); // Garrison Turret (bronze/orange, heavy)
         this._genMiniBoss3Sprites(); // Phantom Wraith (purple, orbiting)
         this._genMiniBoss4Sprites(); // Inferno Striker (crimson, aggressive)
+        // World 2 mini-bosses
+        this._genMiniBoss5Sprites(); // Vine Sentinel (jungle green)
+        this._genMiniBoss6Sprites(); // Magma Sprite (fiery orange)
+        this._genMiniBoss7Sprites(); // Cryo Colossus (ice blue)
+        this._genMiniBoss8Sprites(); // Rust Hulk (rusty bronze)
     }
 
     // ── MINI-BOSS 1: Scarab Drone (teal, insectoid, agile) ──
@@ -1294,6 +2044,204 @@ class AssetManager {
         }
     }
 
+    // ═══════════════════════════════════════════════════
+    //  WORLD 2 MINI-BOSSES — 4 unique planetary types
+    // ═══════════════════════════════════════════════════
+
+    // ── MINI-BOSS 5: Vine Sentinel (green, organic, jungle) ──
+    _genMiniBoss5Sprites() {
+        const color = '#33aa55', accent = '#66dd88', dark = '#117733';
+        // Core (55x55, pad=8 → 71x71)
+        { const S=71, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=28;
+          // Organic rounded body with leaf-like extensions
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, r, r*0.85, 0, 0, Math.PI*2);
+          this.outlineAndFill(ctx, color, '#111', 2.5);
+          // Bark texture lines
+          ctx.strokeStyle=dark; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.5,cy-r*0.4); ctx.lineTo(cx-r*0.3,cy+r*0.5); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.5,cy-r*0.4); ctx.lineTo(cx+r*0.3,cy+r*0.5); ctx.stroke();
+          // Leaf crown
+          for (const sx of [-1,1]) {
+            ctx.fillStyle=accent; ctx.beginPath();
+            ctx.ellipse(cx+sx*r*0.5, cy-r*0.6, r*0.25, r*0.15, sx*0.4, 0, Math.PI*2);
+            ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          }
+          this._drawPartEye(ctx, cx, cy-4, 8, '#44ff66');
+          this.drawHighlight(ctx, cx-14, cy-r*0.7, 28, 12, 0.12);
+          this.sprites['mboss5_core'] = cv;
+        }
+        // Vine (22x35, pad=5 → 32x45) — whip tendril
+        { const cv=this._mkCanvas(32,45), ctx=cv.getContext('2d'), cx=16, cy=45/2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-20);
+          ctx.bezierCurveTo(cx+12, cy-10, cx-8, cy+5, cx+6, cy+20);
+          ctx.lineTo(cx-6, cy+20);
+          ctx.bezierCurveTo(cx-4, cy+5, cx+8, cy-10, cx, cy-20);
+          ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2);
+          // Thorn tips
+          ctx.fillStyle=accent;
+          ctx.beginPath(); ctx.moveTo(cx+6,cy+20); ctx.lineTo(cx+3,cy+18); ctx.lineTo(cx+8,cy+16); ctx.closePath(); ctx.fill();
+          // Glow vein
+          ctx.strokeStyle='#88ffaa'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+          ctx.beginPath(); ctx.moveTo(cx,cy-15); ctx.bezierCurveTo(cx+6,cy-5,cx-4,cy+5,cx+2,cy+15); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.sprites['mboss5_vine'] = cv;
+        }
+    }
+
+    // ── MINI-BOSS 6: Magma Sprite (orange, fiery, fast) ──
+    _genMiniBoss6Sprites() {
+        const color = '#ff6600', accent = '#ff9944', dark = '#aa3300';
+        // Core (50x50, pad=8 → 66x66)
+        { const S=66, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=25;
+          // Flame-shaped body
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-r);
+          ctx.bezierCurveTo(cx+r*0.6, cy-r*0.6, cx+r, cy-r*0.1, cx+r*0.7, cy+r*0.4);
+          ctx.bezierCurveTo(cx+r*0.5, cy+r*0.8, cx+r*0.2, cy+r, cx, cy+r*0.8);
+          ctx.bezierCurveTo(cx-r*0.2, cy+r, cx-r*0.5, cy+r*0.8, cx-r*0.7, cy+r*0.4);
+          ctx.bezierCurveTo(cx-r, cy-r*0.1, cx-r*0.6, cy-r*0.6, cx, cy-r);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 2.5);
+          // Inner magma glow
+          const mg=ctx.createRadialGradient(cx,cy+r*0.1,0,cx,cy,r*0.6);
+          mg.addColorStop(0,'rgba(255,200,100,0.3)'); mg.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fill();
+          // Cracks (glowing)
+          ctx.save(); ctx.shadowColor='#ff6600'; ctx.shadowBlur=4;
+          ctx.strokeStyle='#ffcc44'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.3,cy-r*0.3); ctx.lineTo(cx+r*0.1,cy+r*0.3); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.3,cy-r*0.2); ctx.lineTo(cx+r*0.2,cy+r*0.4); ctx.stroke();
+          ctx.restore();
+          this._drawPartEye(ctx, cx, cy-6, 7, '#ff4400');
+          this.drawHighlight(ctx, cx-10, cy-r*0.7, 20, 10, 0.1);
+          this.sprites['mboss6_core'] = cv;
+        }
+        // Orb (20x20, pad=5 → 30x30) — orbiting fire ball
+        { const S=30, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          const g=ctx.createRadialGradient(cx,cy,1,cx,cy,11);
+          g.addColorStop(0,'#ffee88'); g.addColorStop(0.5,accent); g.addColorStop(1,dark);
+          ctx.beginPath(); ctx.arc(cx,cy,10,0,Math.PI*2);
+          ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+          ctx.fillStyle='rgba(255,255,200,0.5)';
+          ctx.beginPath(); ctx.arc(cx-2,cy-2,2.5,0,Math.PI*2); ctx.fill();
+          this.sprites['mboss6_orb'] = cv;
+        }
+    }
+
+    // ── MINI-BOSS 7: Cryo Colossus (ice blue, slow, fortified) ──
+    _genMiniBoss7Sprites() {
+        const color = '#55ccff', accent = '#88eeff', dark = '#2277aa';
+        // Core (60x60, pad=8 → 76x76)
+        { const S=76, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=30;
+          // Heavy ice golem — blocky hexagonal
+          ctx.beginPath();
+          for (let i=0;i<6;i++) {
+            const a = Math.PI/6 + i*Math.PI/3;
+            const px=cx+Math.cos(a)*r, py=cy+Math.sin(a)*r;
+            if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+          }
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 3);
+          // Ice plate lines
+          ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-r*0.85,cy); ctx.lineTo(cx+r*0.85,cy); ctx.stroke();
+          // Frost aura
+          const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.7);
+          fg.addColorStop(0,'rgba(200,240,255,0.2)'); fg.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx,cy,r*0.7,0,Math.PI*2); ctx.fill();
+          this._drawPartEye(ctx, cx, cy-4, 9, '#aaeeff');
+          this.drawHighlight(ctx, cx-15, cy-r*0.8, 30, 14, 0.12);
+          this.sprites['mboss7_core'] = cv;
+        }
+        // Shield (65x18, pad=4 → 73x26)
+        { const cv=this._mkCanvas(73,26), ctx=cv.getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(6,13); ctx.lineTo(14,3); ctx.lineTo(59,3);
+          ctx.lineTo(67,13); ctx.lineTo(59,23); ctx.lineTo(14,23); ctx.closePath();
+          this.outlineAndFill(ctx, '#66ccee', '#111', 2);
+          ctx.strokeStyle='#aaeeff'; ctx.lineWidth=1; ctx.globalAlpha=0.4;
+          ctx.beginPath(); ctx.moveTo(18,13); ctx.lineTo(55,13); ctx.stroke();
+          ctx.globalAlpha=1;
+          this.sprites['mboss7_shield'] = cv;
+        }
+        // Turret (24x24, pad=5 → 34x34)
+        { const S=34, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI*2);
+          this.outlineAndFill(ctx, accent, '#111', 2);
+          ctx.fillStyle='#556'; ctx.beginPath();
+          ctx.roundRect(cx-2, cy-17, 4, 12, 1); ctx.fill();
+          ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          this._drawPartEye(ctx, cx, cy+2, 4, '#88ddff');
+          this.sprites['mboss7_turret'] = cv;
+        }
+    }
+
+    // ── MINI-BOSS 8: Rust Hulk (rusty brown, mechanical junk titan) ──
+    _genMiniBoss8Sprites() {
+        const color = '#99775a', accent = '#ccaa88', dark = '#664433';
+        // Core (55x55, pad=8 → 71x71)
+        { const S=71, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2, r=28;
+          // Rough junk-metal body
+          ctx.beginPath();
+          ctx.moveTo(cx-r*0.6, cy-r); ctx.lineTo(cx+r*0.7, cy-r*0.9);
+          ctx.lineTo(cx+r, cy-r*0.2); ctx.lineTo(cx+r*0.8, cy+r*0.6);
+          ctx.lineTo(cx+r*0.3, cy+r); ctx.lineTo(cx-r*0.4, cy+r*0.9);
+          ctx.lineTo(cx-r, cy+r*0.3); ctx.lineTo(cx-r*0.8, cy-r*0.4);
+          ctx.closePath();
+          this.outlineAndFill(ctx, color, '#111', 2.5);
+          // Rust patches
+          ctx.fillStyle='rgba(180,100,50,0.3)';
+          ctx.beginPath(); ctx.arc(cx-r*0.3,cy-r*0.2,r*0.25,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx+r*0.2,cy+r*0.3,r*0.2,0,Math.PI*2); ctx.fill();
+          // Spot welds / rivets
+          ctx.fillStyle='#887766';
+          for (let i=0;i<5;i++) {
+            const rx=cx+(Math.random()-0.5)*r*1.2, ry=cy+(Math.random()-0.5)*r*1.2;
+            ctx.beginPath(); ctx.arc(rx,ry,2,0,Math.PI*2); ctx.fill();
+          }
+          // Panel lines
+          ctx.strokeStyle=dark; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx-r*0.3,cy-r*0.7); ctx.lineTo(cx-r*0.1,cy+r*0.6); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx+r*0.4,cy-r*0.5); ctx.lineTo(cx+r*0.2,cy+r*0.5); ctx.stroke();
+          this._drawPartEye(ctx, cx, cy-6, 8, '#ffaa44');
+          this.drawHighlight(ctx, cx-14, cy-r*0.8, 28, 12, 0.1);
+          this.sprites['mboss8_core'] = cv;
+        }
+        // Claw (24x32, pad=5 → 34x42) — scrap claw arm
+        { const cv=this._mkCanvas(34,42), ctx=cv.getContext('2d'), cx=17, cy=21;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy-18); ctx.lineTo(cx+13, cy-6);
+          ctx.lineTo(cx+10, cy+18); ctx.lineTo(cx-10, cy+18);
+          ctx.lineTo(cx-13, cy-6); ctx.closePath();
+          this.outlineAndFill(ctx, dark, '#111', 2);
+          // Claw pincers
+          for (const sx of [-1,1]) {
+            ctx.fillStyle=accent;
+            ctx.beginPath();
+            ctx.moveTo(cx+sx*5,cy+18); ctx.lineTo(cx+sx*10,cy+15);
+            ctx.lineTo(cx+sx*4,cy+14); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          }
+          ctx.strokeStyle=color; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(cx-6,cy); ctx.lineTo(cx+6,cy); ctx.stroke();
+          this.sprites['mboss8_claw'] = cv;
+        }
+        // Turret (22x22, pad=5 → 32x32)
+        { const S=32, cv=this._mkCanvas(S,S), ctx=cv.getContext('2d'), cx=S/2, cy=S/2;
+          ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2);
+          this.outlineAndFill(ctx, accent, '#111', 2);
+          ctx.fillStyle='#555'; ctx.beginPath();
+          ctx.roundRect(cx-2, cy-16, 4, 12, 1); ctx.fill();
+          ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+          this._drawPartEye(ctx, cx, cy+2, 4, '#ddaa66');
+          this.sprites['mboss8_turret'] = cv;
+        }
+    }
+
     getSprite(name) {
         return this.sprites[name] || null;
     }
@@ -1329,6 +2277,13 @@ class AssetManager {
             { id:'lucky_drops',      draw: this._drawDev_luckyDrops },
             { id:'point_multiplier', draw: this._drawDev_pointMultiplier },
             { id:'orbital_drone',    draw: this._drawDev_orbitalDrone },
+            // ── WORLD 2 PERKS ──
+            { id:'ricochet_master',  draw: this._drawDev_ricochetMaster },
+            { id:'predatore',        draw: this._drawDev_predatore },
+            { id:'colpo_critico',    draw: this._drawDev_colpoCritico },
+            { id:'scia_infuocata',   draw: this._drawDev_sciaInfuocata },
+            { id:'esploratore',      draw: this._drawDev_esploratore },
+            { id:'sovraccarico',     draw: this._drawDev_sovraccarico },
         ];
 
         for (const def of defs) {
@@ -1724,6 +2679,144 @@ class AssetManager {
         ctx.strokeStyle='#aaa'; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.moveTo(cx,cy-r*0.4); ctx.lineTo(cx,cy-r*0.8); ctx.stroke();
         ctx.fillStyle='#ff4444'; ctx.beginPath(); ctx.arc(cx,cy-r*0.8,r*0.12,0,Math.PI*2); ctx.fill();
+    }
+
+    // ═══════════════════════════════════════
+    //  WORLD 2 PERK DEVICE DRAW METHODS
+    // ═══════════════════════════════════════
+
+    /** Ricochet Master: angular bouncing arrow */
+    _drawDev_ricochetMaster(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Bouncing path arrows
+        ctx.strokeStyle='#ff8800'; ctx.lineWidth=2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx-r*0.8, cy-r*0.6);
+        ctx.lineTo(cx-r*0.1, cy+r*0.3);
+        ctx.lineTo(cx+r*0.5, cy-r*0.5);
+        ctx.lineTo(cx+r*0.9, cy+r*0.6);
+        ctx.stroke();
+        // Arrow tip
+        ctx.fillStyle='#ff8800';
+        ctx.beginPath();
+        ctx.moveTo(cx+r*0.9, cy+r*0.6);
+        ctx.lineTo(cx+r*0.5, cy+r*0.4);
+        ctx.lineTo(cx+r*0.7, cy+r*0.2);
+        ctx.closePath(); ctx.fill();
+        // Bounce dots at vertices
+        ctx.fillStyle='#ffcc44';
+        ctx.beginPath(); ctx.arc(cx-r*0.1, cy+r*0.3, r*0.12, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx+r*0.5, cy-r*0.5, r*0.12, 0, Math.PI*2); ctx.fill();
+    }
+
+    /** Predatore: hunter eye / targeting scope */
+    _drawDev_predatore(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Scope ring
+        ctx.strokeStyle='#22cc66'; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+        // Crosshair
+        ctx.strokeStyle='#33ff88'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(cx-r*1.1,cy); ctx.lineTo(cx-r*0.3,cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx+r*0.3,cy); ctx.lineTo(cx+r*1.1,cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx,cy-r*1.1); ctx.lineTo(cx,cy-r*0.3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx,cy+r*0.3); ctx.lineTo(cx,cy+r*1.1); ctx.stroke();
+        // Predator eye center
+        ctx.fillStyle='#44ff88';
+        ctx.beginPath(); ctx.ellipse(cx,cy,r*0.25,r*0.15,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#111';
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.08,0,Math.PI*2); ctx.fill();
+    }
+
+    /** Colpo Critico: shockwave explosion ring */
+    _drawDev_colpoCritico(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.35;
+        // Impact star burst
+        ctx.fillStyle='#ff6644';
+        ctx.beginPath();
+        for (let i=0;i<6;i++) {
+            const a=i*Math.PI*2/6-Math.PI/2;
+            const ir=r*0.3, or=r*1.05;
+            ctx.lineTo(cx+Math.cos(a)*or, cy+Math.sin(a)*or);
+            const a2=a+Math.PI/6;
+            ctx.lineTo(cx+Math.cos(a2)*ir, cy+Math.sin(a2)*ir);
+        }
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+        // Shockwave ring
+        ctx.strokeStyle='#ffaa44'; ctx.lineWidth=2; ctx.globalAlpha=0.6;
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.7,0,Math.PI*2); ctx.stroke();
+        ctx.globalAlpha=1;
+        // Center
+        ctx.fillStyle='#ffdd44';
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.2,0,Math.PI*2); ctx.fill();
+    }
+
+    /** Scia Infuocata: fire trail flame */
+    _drawDev_sciaInfuocata(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.38;
+        // Flame shape
+        ctx.beginPath();
+        ctx.moveTo(cx, cy-r);
+        ctx.bezierCurveTo(cx+r*0.5,cy-r*0.4, cx+r*0.7,cy+r*0.2, cx+r*0.3,cy+r*0.7);
+        ctx.bezierCurveTo(cx+r*0.1,cy+r, cx-r*0.1,cy+r, cx-r*0.3,cy+r*0.7);
+        ctx.bezierCurveTo(cx-r*0.7,cy+r*0.2, cx-r*0.5,cy-r*0.4, cx,cy-r);
+        ctx.closePath();
+        const fg=ctx.createLinearGradient(cx,cy-r,cx,cy+r);
+        fg.addColorStop(0,'#ffee44'); fg.addColorStop(0.4,'#ff6600'); fg.addColorStop(1,'#cc2200');
+        ctx.fillStyle=fg; ctx.fill();
+        ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+        // Inner flame
+        ctx.fillStyle='rgba(255,255,200,0.5)';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy-r*0.2, r*0.2, r*0.4, 0, 0, Math.PI*2); ctx.fill();
+    }
+
+    /** Esploratore: compass / radar scanner */
+    _drawDev_esploratore(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.35;
+        // Radar circle
+        ctx.strokeStyle='#44aadd'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+        // Sweep arc
+        ctx.fillStyle='rgba(68,170,221,0.3)';
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r*0.9,-Math.PI/2,0); ctx.closePath(); ctx.fill();
+        // Rings
+        ctx.strokeStyle='rgba(68,170,221,0.4)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.3,0,Math.PI*2); ctx.stroke();
+        // Crosshair lines
+        ctx.strokeStyle='rgba(68,170,221,0.5)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r); ctx.stroke();
+        // Sweep line
+        ctx.strokeStyle='#88ddff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+r*0.7,cy-r*0.7); ctx.stroke();
+        // Center dot
+        ctx.fillStyle='#88ddff';
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.1,0,Math.PI*2); ctx.fill();
+    }
+
+    /** Sovraccarico: overload energy pulse */
+    _drawDev_sovraccarico(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Lightning bolt center
+        ctx.fillStyle='#ffdd00';
+        ctx.beginPath();
+        ctx.moveTo(cx-r*0.15, cy-r*0.9);
+        ctx.lineTo(cx+r*0.4, cy-r*0.1);
+        ctx.lineTo(cx+r*0.05, cy-r*0.05);
+        ctx.lineTo(cx+r*0.3, cy+r*0.9);
+        ctx.lineTo(cx-r*0.25, cy+r*0.15);
+        ctx.lineTo(cx-r*0.05, cy+r*0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.stroke();
+        // Pulse rings
+        ctx.strokeStyle='rgba(255,220,0,0.4)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.8,0,Math.PI*2); ctx.stroke();
+        ctx.strokeStyle='rgba(255,220,0,0.25)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(cx,cy,r*1.1,0,Math.PI*2); ctx.stroke();
     }
 }
 

@@ -685,3 +685,28 @@ async def claim_daily_login_reward(user_id: str):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== GAME PROGRESS ==========
+
+@router.get("/game-progress/{user_id}/{game_id}")
+async def get_game_progress(user_id: str, game_id: str):
+    """Get saved game progress for a user."""
+    from app.database import get_game_progress as db_get_progress
+    try:
+        progress = db_get_progress(user_id, game_id)
+        return {"success": True, "progress": progress}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/game-progress/{user_id}/{game_id}")
+async def save_game_progress(user_id: str, game_id: str, body: dict):
+    """Save game progress for a user (upsert)."""
+    from app.database import save_game_progress as db_save_progress
+    try:
+        progress_data = body.get("progress_data", body)
+        result = db_save_progress(user_id, game_id, progress_data)
+        return {"success": True, "progress": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

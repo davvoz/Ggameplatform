@@ -36,7 +36,7 @@ class SoundManager {
             this.initialized = true;
 
             // Load music tracks (0=game, 1=intro)
-            const tracks = ['assets/background.wav', 'assets/intro.wav'];
+            const tracks = ['assets/background.mp3', 'assets/intro.mp3'];
             for (const track of tracks) {
                 try {
                     const response = await fetch(track);

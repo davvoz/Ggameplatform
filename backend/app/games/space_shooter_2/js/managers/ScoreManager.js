@@ -81,6 +81,11 @@ class ScoreManager {
         if (Math.random() < dropChance) {
             const types = ['health', 'shield', 'weapon', 'speed', 'rapid', 'points', 'ultimate'];
             const weights = [15, 10, 20, 8, 8, 20, 5];
+            // W2 power-ups available from Level 31+
+            if (g.levelManager.currentLevel >= 31) {
+                types.push('drone_companion', 'bullet_time', 'bouncing_bullets');
+                weights.push(6, 5, 5);
+            }
             const type = this.weightedRandom(types, weights);
             entities.powerUps.push(new PowerUp(
                 enemy.position.x + enemy.width / 2 - 17,
@@ -118,7 +123,9 @@ class ScoreManager {
         this.totalEnemiesKilled++;
 
         for (let i = 0; i < 3; i++) {
-            const types = ['health', 'points', 'ultimate'];
+            const types = g.levelManager.currentLevel >= 31
+                ? ['health', 'drone_companion', 'ultimate']
+                : ['health', 'points', 'ultimate'];
             entities.powerUps.push(new PowerUp(
                 cx + (i - 1) * 40 - 17,
                 cy - 17,
@@ -153,12 +160,14 @@ class ScoreManager {
         g.levelManager.levelEnemiesKilled++;
         this.totalEnemiesKilled++;
 
-        const types = ['health', 'points'];
+        const mbTypes = g.levelManager.currentLevel >= 31
+            ? ['health', 'bouncing_bullets']
+            : ['health', 'points'];
         for (let i = 0; i < 2; i++) {
             entities.powerUps.push(new PowerUp(
                 cx + (i - 0.5) * 30 - 17,
                 cy - 17,
-                types[i]
+                mbTypes[i]
             ));
         }
     }

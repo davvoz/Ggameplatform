@@ -1,14 +1,42 @@
 import { getLevelData, getTotalLevels } from '../LevelData.js';
+import {
+    LEVELS_PER_WORLD,
+    getWorldForLevel,
+    getWorldLevel   as _getWorldLevel,
+    getPlanetIndex  as _getPlanetIndex,
+    getPlanetName   as _getPlanetName
+} from '../WorldConfig.js';
 
 class LevelManager {
     constructor(game) {
         this.game = game;
         this.currentLevel = 1;
+        this.currentWorld = 1;
         this.levelEnemiesKilled = 0;
         this.levelDamageTaken = 0;
         this.levelPointsEarned = 0;
         this.levelStartTime = 0;
         this.summaryData = {};
+    }
+
+    /** Returns the current world number (data-driven via WorldConfig) */
+    getCurrentWorld() {
+        return getWorldForLevel(this.currentLevel);
+    }
+
+    /** Returns the level number within the current world (1-based) */
+    getWorldLevel() {
+        return _getWorldLevel(this.currentLevel);
+    }
+
+    /** Returns the planet index within the current world (-1 for World 1) */
+    getPlanetIndex() {
+        return _getPlanetIndex(this.currentLevel);
+    }
+
+    /** Planet name for the current level (null for World 1) */
+    getPlanetName() {
+        return _getPlanetName(this.currentLevel);
     }
 
     onLevelComplete() {
@@ -51,12 +79,20 @@ class LevelManager {
 
     startNextLevel() {
         const g = this.game;
+        const prevLevel = this.currentLevel;
         this.currentLevel++;
+
         if (this.currentLevel > getTotalLevels()) {
+            // Final world completed — save progress
+            const completedWorld = Math.ceil(prevLevel / LEVELS_PER_WORLD);
+            if (window.saveWorldProgress) window.saveWorldProgress(completedWorld);
             g.state = 'victory';
             g.uiManager.showVictoryScreen();
             return;
         }
+
+        // Update current world
+        this.currentWorld = this.getCurrentWorld();
 
         this.levelEnemiesKilled = 0;
         this.levelDamageTaken = 0;
@@ -79,6 +115,14 @@ class LevelManager {
         entities.miniBossActive = false;
         entities.miniBoss = null;
 
+        // ── World Transition: reset perks when entering a new world ──
+        if (prevLevel % LEVELS_PER_WORLD === 0 && this.currentLevel === prevLevel + 1) {
+            // World completed — save progress
+            const completedWorld = prevLevel / LEVELS_PER_WORLD;
+            if (window.saveWorldProgress) window.saveWorldProgress(completedWorld);
+            g.perkSystem.reset();
+        }
+
         if (entities.player) {
             entities.player.recalculateStats();
             g.perkEffectsManager.applyPerkModifiersToPlayer();
@@ -87,16 +131,22 @@ class LevelManager {
             entities.player.position.y = g.logicalHeight - 100;
         }
 
-        if (g.starField) g.starField.setLevel(this.currentLevel);
+        if (g.backgroundFacade) g.backgroundFacade.setLevel(this.currentLevel);
 
         g.perkSystem.onLevelStart();
         g.sound.playGameMusic();
 
-        g.cinematicManager.beginLevelIntro();
+        // ── World Transition Cinematic ──
+        if (prevLevel % LEVELS_PER_WORLD === 0 && this.currentLevel === prevLevel + 1) {
+            g.cinematicManager.beginWorldTransition(null, this.getCurrentWorld());
+        } else {
+            g.cinematicManager.beginLevelIntro();
+        }
     }
 
     reset() {
         this.currentLevel = 1;
+        this.currentWorld = 1;
         this.levelEnemiesKilled = 0;
         this.levelDamageTaken = 0;
         this.levelPointsEarned = 0;

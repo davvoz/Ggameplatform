@@ -10,7 +10,7 @@ import bcrypt
 from jose import JWTError, jwt
 import secrets
 
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus, UserCoins
+from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus, UserCoins, GameProgress
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
@@ -936,4 +936,46 @@ def get_active_game_statuses() -> List[dict]:
             GameStatus.is_active == 1
         ).order_by(GameStatus.display_order).all()
         return [status.to_dict() for status in statuses]
+
+
+# ========== GAME PROGRESS ==========
+
+def get_game_progress(user_id: str, game_id: str) -> Optional[dict]:
+    """Get saved progress for a user in a specific game."""
+    with get_db_session() as session:
+        progress = session.query(GameProgress).filter(
+            GameProgress.user_id == user_id,
+            GameProgress.game_id == game_id
+        ).first()
+        if progress:
+            return progress.to_dict()
+        return None
+
+
+def save_game_progress(user_id: str, game_id: str, progress_data: dict) -> dict:
+    """Save or update progress for a user in a specific game (upsert)."""
+    with get_db_session() as session:
+        progress = session.query(GameProgress).filter(
+            GameProgress.user_id == user_id,
+            GameProgress.game_id == game_id
+        ).first()
+        
+        now = datetime.now().isoformat()
+        data_json = json.dumps(progress_data)
+        
+        if progress:
+            progress.progress_data = data_json
+            progress.updated_at = now
+        else:
+            progress = GameProgress(
+                user_id=user_id,
+                game_id=game_id,
+                progress_data=data_json,
+                updated_at=now
+            )
+            session.add(progress)
+        
+        session.commit()
+        session.refresh(progress)
+        return progress.to_dict()
 

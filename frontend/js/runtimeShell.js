@@ -26,7 +26,9 @@ const GAME_MESSAGE_TYPES = {
     LOG: 'log',
     READY: 'ready',
     RESET_SESSION: 'resetSession',
-    GAME_STARTED: 'gameStarted'
+    GAME_STARTED: 'gameStarted',
+    SAVE_PROGRESS: 'saveProgress',
+    LOAD_PROGRESS: 'loadProgress'
 };
 
 // Allowed platform message types (Platform → Game)
@@ -181,6 +183,14 @@ export default class RuntimeShell {
                     this.startGameSession();
                 } else {
                 }
+                break;
+
+            case GAME_MESSAGE_TYPES.SAVE_PROGRESS:
+                this.handleSaveProgress(message.payload);
+                break;
+
+            case GAME_MESSAGE_TYPES.LOAD_PROGRESS:
+                this.handleLoadProgress(message.payload);
                 break;
 
             default:
@@ -856,6 +866,69 @@ export default class RuntimeShell {
         } catch (error) {
             this.log('❌ Exception in startGameSession:', error);
         }
+    }
+
+    /**
+     * Handle saveProgress message from game — persist to backend
+     */
+    async handleSaveProgress(payload) {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) { this.log('❌ No user, cannot save progress'); return; }
+            if (typeof config === 'undefined' || !config.API_URL) { this.log('❌ No API_URL'); return; }
+
+            const response = await fetch(`${config.API_URL}/users/game-progress/${currentUser.user_id}/${this.gameId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ progress_data: payload.progress_data })
+            });
+            const data = await response.json();
+            this.log(data.success ? '✅ Progress saved' : '❌ Save progress failed', data);
+        } catch (error) {
+            this.log('❌ Exception saving progress:', error);
+        }
+    }
+
+    /**
+     * Handle loadProgress message from game — fetch from backend and respond
+     */
+    async handleLoadProgress(payload) {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                this.sendProgressResponse(payload._requestId, null);
+                return;
+            }
+            if (typeof config === 'undefined' || !config.API_URL) {
+                this.sendProgressResponse(payload._requestId, null);
+                return;
+            }
+
+            const response = await fetch(`${config.API_URL}/users/game-progress/${currentUser.user_id}/${this.gameId}`);
+            const data = await response.json();
+
+            if (data.success && data.progress) {
+                this.sendProgressResponse(payload._requestId, data.progress.progress_data);
+            } else {
+                this.sendProgressResponse(payload._requestId, null);
+            }
+        } catch (error) {
+            this.log('❌ Exception loading progress:', error);
+            this.sendProgressResponse(payload._requestId, null);
+        }
+    }
+
+    /**
+     * Send progress data back to the game iframe
+     */
+    sendProgressResponse(requestId, progressData) {
+        if (!this.iframe || !this.iframe.contentWindow) return;
+        this.iframe.contentWindow.postMessage({
+            type: 'progressLoaded',
+            payload: { _requestId: requestId, progress_data: progressData },
+            protocolVersion: PROTOCOL_VERSION,
+            timestamp: Date.now()
+        }, '*');
     }
 
     /**

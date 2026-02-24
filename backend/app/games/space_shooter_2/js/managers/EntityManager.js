@@ -22,6 +22,10 @@ class EntityManager {
         // Cap total bullets to prevent lag during intense boss fights
         if (this.bullets.length >= 200) return;
         const bullet = new Bullet(x, y, vx, vy, owner, damage);
+        // World 2 bouncing bullets power-up
+        if (owner === 'player' && this.player && this.player.bouncingBullets) {
+            bullet.maxBounces = 2;
+        }
         this.bullets.push(bullet);
     }
 

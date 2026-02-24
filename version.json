@@ -1,8 +1,17 @@
 {
-  "version": "3.33.2",
-  "timestamp": "2026-02-24T23:33:33.477Z",
-  "buildNumber": 420,
+  "version": "3.33.3",
+  "timestamp": "2026-02-24T23:52:38.057Z",
+  "buildNumber": 421,
   "changelog": [
+    {
+      "version": "3.33.3",
+      "date": "2026-02-24",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]enhance perk selection to consider current world context",
+        "🔖 Bump version to 3.33.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.2",
       "date": "2026-02-24",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: add notification badge to Chat tab and improve message visibility handling",
         "🔖 Bump version to 3.32.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.32.1",
-      "date": "2026-02-19",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: add community notification badge to mobile menu toggle",
-        "🔖 Bump version to 3.32.0 [skip-version]"
       ]
     }
   ]

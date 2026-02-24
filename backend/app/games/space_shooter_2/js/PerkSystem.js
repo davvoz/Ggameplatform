@@ -366,10 +366,12 @@ class PerkSystem {
     //  SELECTION
     // ══════════════════════════════════
 
-    /** Return `count` random perks (weighted by rarity), no duplicates */
-    getRandomSelection(count = 3) {
+    /** Return `count` random perks (weighted by rarity), no duplicates.
+     *  Only perks whose `world` ≤ currentWorld are eligible. */
+    getRandomSelection(count = 3, currentWorld = 1) {
         const pool = [];
         for (const perk of PERK_CATALOG) {
+            if ((perk.world || 1) > currentWorld) continue;
             const cur = this.activePerks.get(perk.id) || 0;
             if (cur >= perk.maxStacks) continue;
             const w = PERK_RARITY[perk.rarity].weight;

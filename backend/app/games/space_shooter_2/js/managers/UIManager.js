@@ -53,7 +53,8 @@ class UIManager {
         if (!screen) return;
 
         g.state = 'perkSelect';
-        const perks = g.perkSystem.getRandomSelection(3);
+        const currentWorld = g.levelManager ? g.levelManager.getCurrentWorld() : 1;
+        const perks = g.perkSystem.getRandomSelection(3, currentWorld);
         const container = document.getElementById('perk-cards-container');
         if (!container) return;
         container.innerHTML = '';

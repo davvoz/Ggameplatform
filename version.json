@@ -1,8 +1,17 @@
 {
-  "version": "3.33.1",
-  "timestamp": "2026-02-21T17:30:59.202Z",
-  "buildNumber": 419,
+  "version": "3.33.2",
+  "timestamp": "2026-02-24T23:33:33.477Z",
+  "buildNumber": 420,
   "changelog": [
+    {
+      "version": "3.33.2",
+      "date": "2026-02-24",
+      "type": "patch",
+      "changes": [
+        "feat : [SS2] add new world , total refractor",
+        "🔖 Bump version to 3.33.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.1",
       "date": "2026-02-21",
@@ -84,16 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: add community notification badge to mobile menu toggle",
         "🔖 Bump version to 3.32.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.32.0",
-      "date": "2026-02-19",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "feat: implement community chat notification system with badge updates",
-        "🔖 Bump version to 3.31.0 [skip-version]"
       ]
     }
   ]

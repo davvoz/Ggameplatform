@@ -1,8 +1,17 @@
 {
-  "version": "3.33.4",
-  "timestamp": "2026-02-25T21:39:27.248Z",
-  "buildNumber": 422,
+  "version": "3.33.5",
+  "timestamp": "2026-02-25T21:52:22.004Z",
+  "buildNumber": 423,
   "changelog": [
+    {
+      "version": "3.33.5",
+      "date": "2026-02-25",
+      "type": "patch",
+      "changes": [
+        "fix: move check_world_progress script for game_progress table validation",
+        "🔖 Bump version to 3.33.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.4",
       "date": "2026-02-25",
@@ -83,15 +92,6 @@
         "fix: update styles and add font imports for improved UI consistency across games",
         "Fix: [Sky Tower] Add fullscreen button and styles for iOS fullscreen support in Sky Tower game",
         "🔖 Bump version to 3.32.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.32.3",
-      "date": "2026-02-19",
-      "type": "patch",
-      "changes": [
-        "fix: [Blocky Road] implement fullscreen functionality and improve UI responsiveness",
-        "🔖 Bump version to 3.32.2 [skip-version]"
       ]
     }
   ]

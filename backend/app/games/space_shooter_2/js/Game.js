@@ -367,6 +367,9 @@ class Game {
         ctx.save();
         ctx.scale(this.scale, this.scale);
 
+        // Clear canvas before each frame to prevent artifacts from previous renders
+        ctx.clearRect(0, 0, w, h);
+
         // Solid black when in menu / gameover so canvas never peeks through UI overlays
         if (this.state === 'menu' || this.state === 'gameover') {
             ctx.fillStyle = '#000';

@@ -3,7 +3,10 @@ import sqlite3
 import json
 import os
 
-db_path = os.path.join('backend', 'data', 'game_platform.db')
+# Get the correct DB path relative to this script location
+script_dir = os.path.dirname(os.path.abspath(__file__))  # backend/scripts
+backend_dir = os.path.dirname(script_dir)  # backend
+db_path = os.path.join(backend_dir, 'data', 'game_platform.db')
 print(f"DB path: {os.path.abspath(db_path)}")
 print(f"DB exists: {os.path.exists(db_path)}")
 print(f"DB size: {os.path.getsize(db_path) if os.path.exists(db_path) else 'N/A'} bytes")

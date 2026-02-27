@@ -1,8 +1,17 @@
 {
-  "version": "3.33.6",
-  "timestamp": "2026-02-27T01:32:09.725Z",
-  "buildNumber": 424,
+  "version": "3.33.7",
+  "timestamp": "2026-02-27T09:57:37.968Z",
+  "buildNumber": 425,
   "changelog": [
+    {
+      "version": "3.33.7",
+      "date": "2026-02-27",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD]enhance WaveModeSelector UI and add EXTREME difficulty mode",
+        "🔖 Bump version to 3.33.6 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.6",
       "date": "2026-02-27",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SS2] perk bugs, buff, nerf",
         "🔖 Bump version to 3.32.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.32.5",
-      "date": "2026-02-19",
-      "type": "patch",
-      "changes": [
-        "fix: [Space Shooter] update coin icon from diamond to coin in shop and continue button",
-        "🔖 Bump version to 3.32.4 [skip-version]"
       ]
     }
   ]

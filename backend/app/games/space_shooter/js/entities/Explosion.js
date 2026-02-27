@@ -3,8 +3,8 @@ import GameObject from './GameObject.js';
  * Explosion - Organic fireball with debris and smoke
  */
 class Explosion extends GameObject {
-    constructor(x, y, size = 'medium') {
-        const SIZE_MAP = { small: 44, medium: 80, large: 130 };
+    constructor(x, y, size = 'medium', scale = 1) {
+        const SIZE_MAP = { small: Math.round(44 * scale), medium: Math.round(80 * scale), large: Math.round(130 * scale) };
         const s = SIZE_MAP[size] || SIZE_MAP.medium;
 
         super(x - s / 2, y - s / 2, s, s);

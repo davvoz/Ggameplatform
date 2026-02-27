@@ -4,14 +4,16 @@ import GameObject from './GameObject.js';
  * Player - Navicella del giocatore
  */
 class Player extends GameObject {
-    constructor(x, y) {
-        super(x, y, 48, 48);
+    constructor(x, y, scale = 1) {
+        const size = Math.round(48 * scale);
+        super(x, y, size, size);
+        this._scale = scale;
         this.tag = 'player';
         
         // Stats
         this.maxHealth = 3; // Vita base ridotta
         this.health = this.maxHealth;
-        this.baseSpeed = 300;
+        this.baseSpeed = 300 * scale;
         this.speed = this.baseSpeed;
         this.baseFireRate = 0.28; // Fire rate più lento per bilanciamento
         this.fireRate = this.baseFireRate;
@@ -143,6 +145,7 @@ class Player extends GameObject {
     }
 
     fire(game) {
+        const s = this._scale || 1;
         const bulletSpeed = -500;
         const centerX = this.position.x + this.width / 2;
         const topY = this.position.y;
@@ -153,37 +156,37 @@ class Player extends GameObject {
         switch (this.weaponLevel) {
             case 1:
                 // Singolo proiettile centrale
-                game.spawnBullet(centerX - 4, topY, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 4 * s, topY, 0, bulletSpeed, 'player');
                 break;
                 
             case 2:
                 // Due proiettili
-                game.spawnBullet(centerX - 12, topY + 5, 0, bulletSpeed, 'player');
-                game.spawnBullet(centerX + 4, topY + 5, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 12 * s, topY + 5 * s, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX + 4 * s, topY + 5 * s, 0, bulletSpeed, 'player');
                 break;
                 
             case 3:
                 // Tre proiettili (spread)
-                game.spawnBullet(centerX - 4, topY, 0, bulletSpeed, 'player');
-                game.spawnBullet(centerX - 16, topY + 10, -50, bulletSpeed, 'player');
-                game.spawnBullet(centerX + 8, topY + 10, 50, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 4 * s, topY, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 16 * s, topY + 10 * s, -50, bulletSpeed, 'player');
+                game.spawnBullet(centerX + 8 * s, topY + 10 * s, 50, bulletSpeed, 'player');
                 break;
                 
             case 4:
                 // Quattro proiettili
-                game.spawnBullet(centerX - 16, topY + 5, -30, bulletSpeed, 'player');
-                game.spawnBullet(centerX - 6, topY, 0, bulletSpeed, 'player');
-                game.spawnBullet(centerX + 2, topY, 0, bulletSpeed, 'player');
-                game.spawnBullet(centerX + 12, topY + 5, 30, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 16 * s, topY + 5 * s, -30, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 6 * s, topY, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX + 2 * s, topY, 0, bulletSpeed, 'player');
+                game.spawnBullet(centerX + 12 * s, topY + 5 * s, 30, bulletSpeed, 'player');
                 break;
                 
             case 5:
                 // Cinque proiettili (full spread)
-                game.spawnBullet(centerX - 4, topY, 0, bulletSpeed * 1.2, 'player');
-                game.spawnBullet(centerX - 14, topY + 5, -40, bulletSpeed, 'player');
-                game.spawnBullet(centerX + 6, topY + 5, 40, bulletSpeed, 'player');
-                game.spawnBullet(centerX - 22, topY + 10, -80, bulletSpeed * 0.9, 'player');
-                game.spawnBullet(centerX + 14, topY + 10, 80, bulletSpeed * 0.9, 'player');
+                game.spawnBullet(centerX - 4 * s, topY, 0, bulletSpeed * 1.2, 'player');
+                game.spawnBullet(centerX - 14 * s, topY + 5 * s, -40, bulletSpeed, 'player');
+                game.spawnBullet(centerX + 6 * s, topY + 5 * s, 40, bulletSpeed, 'player');
+                game.spawnBullet(centerX - 22 * s, topY + 10 * s, -80, bulletSpeed * 0.9, 'player');
+                game.spawnBullet(centerX + 14 * s, topY + 10 * s, 80, bulletSpeed * 0.9, 'player');
                 break;
         }
     }
@@ -239,17 +242,18 @@ class Player extends GameObject {
         ctx.save();
         ctx.globalAlpha = this.alpha;
         
+        const s = this._scale || 1;
         const centerX = this.position.x + this.width / 2;
         const bottomY = this.position.y + this.height;
         
         // Main thruster glow effect
         const thrusterIntensity = 0.6 + Math.sin(this.thrusterFlicker) * 0.3;
-        const thrusterSize = 12 + Math.sin(this.thrusterFlicker * 2) * 4;
+        const thrusterSize = (12 + Math.sin(this.thrusterFlicker * 2) * 4) * s;
         
         // Outer glow
         const glowGrad = ctx.createRadialGradient(
-            centerX, bottomY + 8, 0,
-            centerX, bottomY + 8, thrusterSize * 2.5
+            centerX, bottomY + 8 * s, 0,
+            centerX, bottomY + 8 * s, thrusterSize * 2.5
         );
         glowGrad.addColorStop(0, `rgba(0, 200, 255, ${thrusterIntensity * 0.5})`);
         glowGrad.addColorStop(0.4, `rgba(0, 150, 255, ${thrusterIntensity * 0.3})`);
@@ -257,13 +261,13 @@ class Player extends GameObject {
         
         ctx.fillStyle = glowGrad;
         ctx.beginPath();
-        ctx.ellipse(centerX, bottomY + 8, thrusterSize * 2, thrusterSize * 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(centerX, bottomY + 8 * s, thrusterSize * 2, thrusterSize * 3, 0, 0, Math.PI * 2);
         ctx.fill();
         
         // Inner flame core
         const coreGrad = ctx.createRadialGradient(
-            centerX, bottomY + 5, 0,
-            centerX, bottomY + 15, thrusterSize
+            centerX, bottomY + 5 * s, 0,
+            centerX, bottomY + 15 * s, thrusterSize
         );
         coreGrad.addColorStop(0, `rgba(255, 255, 255, ${thrusterIntensity})`);
         coreGrad.addColorStop(0.3, `rgba(150, 220, 255, ${thrusterIntensity})`);
@@ -273,9 +277,9 @@ class Player extends GameObject {
         ctx.fillStyle = coreGrad;
         ctx.beginPath();
         ctx.ellipse(
-            centerX, bottomY + 10,
-            6 + Math.sin(this.thrusterFlicker * 3) * 2,
-            thrusterSize + Math.sin(this.thrusterFlicker) * 4,
+            centerX, bottomY + 10 * s,
+            (6 + Math.sin(this.thrusterFlicker * 3) * 2) * s,
+            thrusterSize + Math.sin(this.thrusterFlicker) * 4 * s,
             0, 0, Math.PI * 2
         );
         ctx.fill();
@@ -287,26 +291,26 @@ class Player extends GameObject {
             
             // Left thruster
             const leftGrad = ctx.createRadialGradient(
-                this.position.x + 8, bottomY - 5, 0,
-                this.position.x + 8, bottomY + 5, 8
+                this.position.x + 8 * s, bottomY - 5 * s, 0,
+                this.position.x + 8 * s, bottomY + 5 * s, 8 * s
             );
             leftGrad.addColorStop(0, `rgba(0, 200, 255, ${sideIntensity})`);
             leftGrad.addColorStop(1, 'rgba(0, 100, 200, 0)');
             ctx.fillStyle = leftGrad;
             ctx.beginPath();
-            ctx.ellipse(this.position.x + 8, bottomY, 4, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(this.position.x + 8 * s, bottomY, 4 * s, 8 * s, 0, 0, Math.PI * 2);
             ctx.fill();
             
             // Right thruster
             const rightGrad = ctx.createRadialGradient(
-                this.position.x + this.width - 8, bottomY - 5, 0,
-                this.position.x + this.width - 8, bottomY + 5, 8
+                this.position.x + this.width - 8 * s, bottomY - 5 * s, 0,
+                this.position.x + this.width - 8 * s, bottomY + 5 * s, 8 * s
             );
             rightGrad.addColorStop(0, `rgba(0, 200, 255, ${sideIntensity})`);
             rightGrad.addColorStop(1, 'rgba(0, 100, 200, 0)');
             ctx.fillStyle = rightGrad;
             ctx.beginPath();
-            ctx.ellipse(this.position.x + this.width - 8, bottomY, 4, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(this.position.x + this.width - 8 * s, bottomY, 4 * s, 8 * s, 0, 0, Math.PI * 2);
             ctx.fill();
         }
         

@@ -3,11 +3,12 @@ import GameObject from './GameObject.js';
  * PowerUp - Potenziamenti raccoglibili con effetti avanzati
  */
 class PowerUp extends GameObject {
-    constructor(x, y, type = 'weapon') {
-        super(x - 16, y - 16, 32, 32);
+    constructor(x, y, type = 'weapon', scale = 1) {
+        const baseSize = Math.round(32 * scale);
+        super(x - baseSize / 2, y - baseSize / 2, baseSize, baseSize);
         this.tag = 'powerup';
         this.type = type;
-        this.speed = 70;
+        this.speed = 70 * scale;
         
         // Animation
         this.bobTimer = Math.random() * Math.PI * 2;

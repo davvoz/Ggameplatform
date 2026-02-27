@@ -4,8 +4,8 @@ import Vector2 from '../utils/Vector2.js';
  * Bullet - Proiettile con effetti avanzati
  */
 class Bullet extends GameObject {
-    constructor(x, y, velocityX, velocityY, owner = 'player') {
-        super(x, y, 8, 24);
+    constructor(x, y, velocityX, velocityY, owner = 'player', scale = 1) {
+        super(x, y, Math.round(8 * scale), Math.round(24 * scale));
         this.tag = 'bullet';
         this.owner = owner;
         this.velocity = new Vector2(velocityX, velocityY);

@@ -180,25 +180,19 @@ class Game {
         // Rileva se è mobile
         const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-        const targetAspect = 9 / 16;
         let width, height;
 
         if (isMobile) {
             // Mobile: occupa tutto lo schermo
             width = containerWidth;
             height = containerHeight;
+            this.gameScale = 1;
         } else {
-            // Desktop: mantiene aspect ratio con limiti
-            if (containerWidth / containerHeight < targetAspect) {
-                width = containerWidth;
-                height = containerWidth / targetAspect;
-            } else {
-                height = containerHeight;
-                width = containerHeight * targetAspect;
-            }
-
-            width = Math.min(width, 450);
-            height = Math.min(height, 800);
+            // Desktop: always fill full height, compute width from aspect
+            const targetAspect = 2 / 3;
+            height = containerHeight;
+            width = Math.min(containerHeight * targetAspect, containerWidth);
+            this.gameScale = width / 450;
         }
 
         this.canvas.width = width;
@@ -255,7 +249,7 @@ class Game {
         });
 
         // Pause button (canvas-based)
-        this.pauseButtonRect = { x: 0, y: 140, width: 40, height: 40 }; // y: 140 = sotto heat bar (70 + 60 + 10)
+        this.pauseButtonRect = { x: 0, y: 140, width: 40, height: 40, baseY: 140, baseW: 40, baseH: 40 }; // y: 140 = sotto heat bar (70 + 60 + 10)
         this.pauseButtonHover = false;
 
         this.settingsPopup = document.getElementById('settings-popup');
@@ -618,8 +612,7 @@ class Game {
      */
     isPointInPauseButton(x, y) {
         const btn = this.pauseButtonRect;
-        const btnX = this.canvas.width - btn.width - 12; // Posizione X dinamica
-        return x >= btnX && x <= btnX + btn.width &&
+        return x >= btn.x && x <= btn.x + btn.width &&
             y >= btn.y && y <= btn.y + btn.height;
     }
 
@@ -870,9 +863,11 @@ class Game {
             this.upgradeModal.classList.add('hidden');
         }
 
+        const s = this.gameScale || 1;
         this.player = new Player(
-            this.canvas.width / 2 - 24,
-            this.canvas.height / 2 - 24
+            this.canvas.width / 2 - 24 * s,
+            this.canvas.height / 2 - 24 * s,
+            s
         );
     }
 
@@ -914,9 +909,11 @@ class Game {
         const evolvedWeaponLevel = this.player ? this.player.weaponLevel : 1;
 
         // Restore player with evolved health
+        const s = this.gameScale || 1;
         this.player = new Player(
-            this.canvas.width / 2 - 24,
-            this.canvas.height - 100
+            this.canvas.width / 2 - 24 * s,
+            this.canvas.height - 100 * s,
+            s
         );
         this.player.maxHealth = evolvedMaxHealth;
         this.player.health = this.player.maxHealth;
@@ -1597,20 +1594,22 @@ class Game {
     }
 
     spawnBullet(x, y, vx, vy, owner) {
-        const bullet = new Bullet(x, y, vx, vy, owner);
+        const s = this.gameScale || 1;
+        const bullet = new Bullet(x, y, vx * s, vy * s, owner, s);
         this.bullets.push(bullet);
         return bullet;
     }
 
     spawnExplosion(x, y, size = 'medium') {
-        const explosion = new Explosion(x, y, size);
+        const s = this.gameScale || 1;
+        const explosion = new Explosion(x, y, size, s);
         this.explosions.push(explosion);
 
         // Advanced particle explosion
         this.particles.emitExplosion(x, y, size);
 
         // Screen effects
-        const shakeIntensity = size === 'large' ? 15 : size === 'medium' ? 8 : 4;
+        const shakeIntensity = (size === 'large' ? 15 : size === 'medium' ? 8 : 4) * s;
         this.postProcessing.shake(shakeIntensity, 0.2);
 
         this.sound.playExplosion();
@@ -1618,7 +1617,8 @@ class Game {
     }
 
     spawnPowerUp(x, y, type) {
-        const powerUp = new PowerUp(x, y, type);
+        const s = this.gameScale || 1;
+        const powerUp = new PowerUp(x, y, type, s);
         this.powerUps.push(powerUp);
         return powerUp;
     }
@@ -1630,9 +1630,10 @@ class Game {
 
         // Score popup
         if (this.player) {
+            const gs = this.gameScale || 1;
             this.scorePopups.push({
                 x: this.player.position.x + this.player.width / 2,
-                y: this.player.position.y - 20,
+                y: this.player.position.y - 20 * gs,
                 value: finalPoints,
                 life: 1,
                 combo: this.combo
@@ -1721,6 +1722,7 @@ class Game {
         const progress = this.celebrationTimer / this.celebrationDuration;
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 3;
+        const s = this.gameScale || 1;
 
         ctx.save();
 
@@ -1735,7 +1737,7 @@ class Game {
             const rayCount = 12;
             for (let i = 0; i < rayCount; i++) {
                 const angle = (i / rayCount) * Math.PI * 2 + this.time * 0.5;
-                const rayLength = 300 + Math.sin(this.time * 3 + i) * 50;
+                const rayLength = (300 + Math.sin(this.time * 3 + i) * 50) * s;
 
                 const rayGrad = ctx.createLinearGradient(
                     centerX, centerY,
@@ -1746,7 +1748,7 @@ class Game {
                 rayGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
 
                 ctx.strokeStyle = rayGrad;
-                ctx.lineWidth = 20 + Math.sin(this.time * 5 + i * 2) * 10;
+                ctx.lineWidth = (20 + Math.sin(this.time * 5 + i * 2) * 10) * s;
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
                 ctx.lineTo(
@@ -1768,21 +1770,21 @@ class Game {
 
         // Ombra/glow del testo
         ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 30;
+        ctx.shadowBlur = 30 * s;
 
         // LEVEL X COMPLETE!
-        ctx.font = `bold ${Math.floor(28 * textScale)}px Orbitron, Arial`;
+        ctx.font = `bold ${Math.floor(28 * textScale * s)}px Orbitron, Arial`;
         ctx.fillStyle = `rgba(255, 215, 0, ${textAlpha})`;
-        ctx.fillText(this.celebrationText, centerX, centerY - 20);
+        ctx.fillText(this.celebrationText, centerX, centerY - 20 * s);
 
         // Sottotitolo
         if (progress > 0.3) {
             const subAlpha = Math.min(1, (progress - 0.3) * 5);
-            ctx.font = `bold ${Math.floor(16)}px Orbitron, Arial`;
+            ctx.font = `bold ${Math.floor(16 * s)}px Orbitron, Arial`;
             ctx.shadowColor = '#00ffff';
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 15 * s;
             ctx.fillStyle = `rgba(0, 255, 255, ${subAlpha})`;
-            ctx.fillText(`+${1000 * (this.level + 1)} BONUS`, centerX, centerY + 25);
+            ctx.fillText(`+${1000 * (this.level + 1)} BONUS`, centerX, centerY + 25 * s);
         }
 
         // Stelle/particelle decorative
@@ -1791,10 +1793,10 @@ class Game {
             ctx.shadowBlur = 0;
             for (let i = 0; i < 20; i++) {
                 const starAngle = (i / 20) * Math.PI * 2 + this.time * 2;
-                const starDist = 80 + Math.sin(this.time * 4 + i) * 30;
+                const starDist = (80 + Math.sin(this.time * 4 + i) * 30) * s;
                 const starX = centerX + Math.cos(starAngle) * starDist;
                 const starY = centerY + Math.sin(starAngle) * starDist;
-                const starSize = 3 + Math.sin(this.time * 6 + i * 3) * 2;
+                const starSize = (3 + Math.sin(this.time * 6 + i * 3) * 2) * s;
 
                 ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha * 0.8})`;
                 ctx.beginPath();
@@ -1806,11 +1808,11 @@ class Game {
         // Testo "GET READY" verso la fine
         if (progress > 0.7) {
             const readyAlpha = Math.sin((progress - 0.7) / 0.3 * Math.PI * 4) * 0.5 + 0.5;
-            ctx.font = 'bold 20px Orbitron, Arial';
+            ctx.font = `bold ${Math.floor(20 * s)}px Orbitron, Arial`;
             ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 20 * s;
             ctx.fillStyle = `rgba(255, 100, 0, ${readyAlpha})`;
-            ctx.fillText('GET READY!', centerX, centerY + 70);
+            ctx.fillText('GET READY!', centerX, centerY + 70 * s);
         }
 
         ctx.restore();
@@ -1820,6 +1822,7 @@ class Game {
         const progress = this.gameOverTimer / this.gameOverDuration;
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
+        const s = this.gameScale || 1;
 
         ctx.save();
 
@@ -1839,7 +1842,7 @@ class Game {
 
             for (let i = 0; i < 10; i++) {
                 const y = Math.random() * this.canvas.height;
-                const height = 2 + Math.random() * 4;
+                const height = (2 + Math.random() * 4) * s;
                 ctx.fillStyle = `rgba(255, 0, 0, ${glitchIntensity * 0.3 * (1 - progress)})`;
                 ctx.fillRect(0, y, this.canvas.width, height);
             }
@@ -1859,37 +1862,37 @@ class Game {
 
             // Ombra multipla per effetto profondità
             ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 30 + Math.sin(this.time * 5) * 10;
+            ctx.shadowBlur = (30 + Math.sin(this.time * 5) * 10) * s;
 
             // Testo principale
-            ctx.font = `bold ${Math.floor(40 * textScale)}px Orbitron, Arial`;
+            ctx.font = `bold ${Math.floor(40 * textScale * s)}px Orbitron, Arial`;
 
             // Effetto glitch sul testo
-            const glitchOffset = Math.sin(this.time * 25) * 3 * (1 - textProgress);
+            const glitchOffset = Math.sin(this.time * 25) * 3 * s * (1 - textProgress);
 
             // Layer rosso
             ctx.fillStyle = `rgba(255, 0, 0, ${textAlpha * 0.5})`;
-            ctx.fillText('GAME OVER', centerX + glitchOffset, centerY - 30);
+            ctx.fillText('GAME OVER', centerX + glitchOffset, centerY - 30 * s);
 
             // Layer principale
             ctx.fillStyle = `rgba(255, 255, 255, ${textAlpha})`;
-            ctx.fillText('GAME OVER', centerX, centerY - 30);
+            ctx.fillText('GAME OVER', centerX, centerY - 30 * s);
 
             // Sottotitolo con punteggio
             if (progress > 0.6) {
                 const subAlpha = Math.min(1, (progress - 0.6) * 4);
-                ctx.font = 'bold 16px Orbitron, Arial';
+                ctx.font = `bold ${Math.floor(16 * s)}px Orbitron, Arial`;
                 ctx.shadowColor = '#ffaa00';
-                ctx.shadowBlur = 15;
+                ctx.shadowBlur = 15 * s;
                 ctx.fillStyle = `rgba(255, 170, 0, ${subAlpha})`;
-                ctx.fillText(`FINAL SCORE: ${this.score.toLocaleString()}`, centerX, centerY + 20);
+                ctx.fillText(`FINAL SCORE: ${this.score.toLocaleString()}`, centerX, centerY + 20 * s);
 
                 // High score
                 if (this.score >= this.highScore && this.highScore > 0) {
-                    ctx.font = 'bold 14px Orbitron, Arial';
+                    ctx.font = `bold ${Math.floor(14 * s)}px Orbitron, Arial`;
                     ctx.shadowColor = '#ffff00';
                     ctx.fillStyle = `rgba(255, 255, 0, ${subAlpha * Math.abs(Math.sin(this.time * 4))})`;
-                    ctx.fillText('★ NEW HIGH SCORE! ★', centerX, centerY + 50);
+                    ctx.fillText('★ NEW HIGH SCORE! ★', centerX, centerY + 50 * s);
                 }
             }
         }
@@ -1901,9 +1904,9 @@ class Game {
 
             for (let i = 0; i < 30; i++) {
                 const seed = i * 1234.5678;
-                const debrisX = centerX + Math.sin(seed) * 150 + Math.sin(this.time * 2 + i) * 20;
-                const debrisY = centerY - 100 + (this.gameOverTimer * 100 * (0.5 + Math.sin(seed * 2) * 0.5)) % (this.canvas.height + 100);
-                const debrisSize = 2 + Math.sin(seed * 3) * 2;
+                const debrisX = centerX + Math.sin(seed) * 150 * s + Math.sin(this.time * 2 + i) * 20 * s;
+                const debrisY = centerY - 100 * s + (this.gameOverTimer * 100 * s * (0.5 + Math.sin(seed * 2) * 0.5)) % (this.canvas.height + 100);
+                const debrisSize = (2 + Math.sin(seed * 3) * 2) * s;
                 const rotation = this.time * (2 + Math.sin(seed) * 3);
 
                 ctx.save();
@@ -1923,13 +1926,14 @@ class Game {
     }
 
     renderScorePopups(ctx) {
+        const gs = this.gameScale || 1;
         ctx.save();
         this.scorePopups.forEach(popup => {
             const alpha = popup.life;
             const scale = 1 + (1 - popup.life) * 0.5;
 
             ctx.globalAlpha = alpha;
-            ctx.font = `bold ${Math.floor(14 * scale)}px Orbitron, Arial`;
+            ctx.font = `bold ${Math.floor(14 * scale * gs)}px Orbitron, Arial`;
             ctx.textAlign = 'center';
 
             // Glow effect
@@ -1940,9 +1944,9 @@ class Game {
             ctx.fillText(`+${popup.value}`, popup.x, popup.y);
 
             if (popup.combo > 1) {
-                ctx.font = `bold ${Math.floor(10 * scale)}px Orbitron, Arial`;
+                ctx.font = `bold ${Math.floor(10 * scale * gs)}px Orbitron, Arial`;
                 ctx.fillStyle = '#ff8800';
-                ctx.fillText(`x${popup.combo} COMBO!`, popup.x, popup.y - 15);
+                ctx.fillText(`x${popup.combo} COMBO!`, popup.x, popup.y - 15 * gs);
             }
         });
         ctx.restore();
@@ -1950,62 +1954,63 @@ class Game {
 
     renderHUD() {
         const ctx = this.ctx;
-        const padding = 12;
+        const s = this.gameScale || 1;
+        const padding = Math.round(12 * s);
 
         ctx.save();
 
         // HUD background
-        const hudGrad = ctx.createLinearGradient(0, 0, 0, 60);
+        const hudGrad = ctx.createLinearGradient(0, 0, 0, Math.round(60 * s));
         hudGrad.addColorStop(0, 'rgba(0, 20, 40, 0.8)');
         hudGrad.addColorStop(1, 'rgba(0, 10, 20, 0)');
         ctx.fillStyle = hudGrad;
-        ctx.fillRect(0, 0, this.canvas.width, 60);
+        ctx.fillRect(0, 0, this.canvas.width, Math.round(60 * s));
 
         // Pause Button (disegnato sulla canvas)
         this.renderPauseButton(ctx);
 
         // Score
-        ctx.font = 'bold 14px Orbitron, Arial';
+        ctx.font = `bold ${Math.round(14 * s)}px Orbitron, Arial`;
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
         ctx.fillStyle = '#88ccff';
         ctx.fillText('SCORE', padding, padding);
 
-        ctx.font = 'bold 18px Orbitron, Arial';
+        ctx.font = `bold ${Math.round(18 * s)}px Orbitron, Arial`;
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#00aaff';
         ctx.shadowBlur = 10;
-        ctx.fillText(this.score.toLocaleString(), padding, padding + 18);
+        ctx.fillText(this.score.toLocaleString(), padding, padding + Math.round(18 * s));
         ctx.shadowBlur = 0;
 
         // High Score
-        ctx.font = '10px Rajdhani, Arial';
+        ctx.font = `${Math.round(10 * s)}px Rajdhani, Arial`;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#668899';
         ctx.fillText('BEST', this.canvas.width / 2, padding);
-        ctx.font = '14px Orbitron, Arial';
+        ctx.font = `${Math.round(14 * s)}px Orbitron, Arial`;
         ctx.fillStyle = '#aabbcc';
-        ctx.fillText(this.highScore.toLocaleString(), this.canvas.width / 2, padding + 14);
+        ctx.fillText(this.highScore.toLocaleString(), this.canvas.width / 2, padding + Math.round(14 * s));
 
         // Level
-        ctx.font = 'bold 14px Orbitron, Arial';
+        ctx.font = `bold ${Math.round(14 * s)}px Orbitron, Arial`;
         ctx.textAlign = 'right';
         ctx.fillStyle = '#88ccff';
         ctx.fillText('LEVEL', this.canvas.width - padding, padding);
 
-        ctx.font = 'bold 18px Orbitron, Arial';
+        ctx.font = `bold ${Math.round(18 * s)}px Orbitron, Arial`;
         ctx.fillStyle = '#dddbd6';
         ctx.shadowColor = '#ff8800';
         ctx.shadowBlur = 8;
-        ctx.fillText(this.level.toString(), this.canvas.width - padding, padding + 18);
+        ctx.fillText(this.level.toString(), this.canvas.width - padding, padding + Math.round(18 * s));
         ctx.shadowBlur = 0;
 
         // Health bar
         if (this.player) {
-            const healthBarWidth = 120;
-            const healthBarHeight = 8;
+            const healthBarWidth = Math.round(120 * s);
+            const healthBarHeight = Math.round(8 * s);
             const healthX = padding;
-            const healthY = padding + 45;
+            const healthY = padding + Math.round(45 * s);
 
             // Background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -2045,28 +2050,28 @@ class Game {
             }
 
             // Weapon level indicator
-            const wpnY = healthY + healthBarHeight + 8;
-            ctx.font = '10px Rajdhani, Arial';
+            const wpnY = healthY + healthBarHeight + Math.round(8 * s);
+            ctx.font = `${Math.round(10 * s)}px Rajdhani, Arial`;
             ctx.textAlign = 'left';
             ctx.fillStyle = '#668899';
             ctx.fillText('WEAPON', padding, wpnY);
 
             // Weapon level stars
             for (let i = 0; i < this.player.maxWeaponLevel; i++) {
-                const starX = padding + 50 + i * 14;
+                const starX = padding + Math.round(50 * s) + i * Math.round(14 * s);
                 ctx.fillStyle = i < this.player.weaponLevel ? '#ffaa00' : '#333344';
                 ctx.shadowColor = i < this.player.weaponLevel ? '#ff8800' : 'transparent';
                 ctx.shadowBlur = i < this.player.weaponLevel ? 5 : 0;
-                ctx.font = '12px Arial';
+                ctx.font = `${Math.round(12 * s)}px Arial`;
                 ctx.fillText('★', starX, wpnY);
             }
             ctx.shadowBlur = 0;
 
             // Heat bar VERTICALE (barra surriscaldamento)
-            const heatBarWidth = 12;
-            const heatBarHeight = 60;
+            const heatBarWidth = Math.round(12 * s);
+            const heatBarHeight = Math.round(60 * s);
             const heatX = this.canvas.width - padding - heatBarWidth;
-            const heatY = 70;
+            const heatY = Math.round(70 * s);
             const heatPercent = this.player.heat / this.player.maxHeat;
 
             // Background con bordo
@@ -2111,10 +2116,10 @@ class Game {
             }
 
             // Label
-            ctx.font = '9px Rajdhani, Arial';
+            ctx.font = `${Math.round(9 * s)}px Rajdhani, Arial`;
             ctx.textAlign = 'center';
             ctx.fillStyle = this.player.overheated ? '#ff4444' : '#aabbcc';
-            ctx.fillText(this.player.overheated ? 'HOT!' : 'HEAT', heatX + heatBarWidth / 2, heatY - 6);
+            ctx.fillText(this.player.overheated ? 'HOT!' : 'HEAT', heatX + heatBarWidth / 2, heatY - Math.round(6 * s));
 
             // evidenzia se surriscaldato
             if (this.player.overheated) {
@@ -2128,10 +2133,10 @@ class Game {
 
             // Combo indicator
             if (this.combo > 0) {
-                const comboX = 80;
-                const comboY = healthY + 50;
+                const comboX = Math.round(80 * s);
+                const comboY = healthY + Math.round(50 * s);
 
-                ctx.font = 'bold 12px Orbitron, Arial';
+                ctx.font = `bold ${Math.round(12 * s)}px Orbitron, Arial`;
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#ffaa00';
                 ctx.shadowColor = '#00ff00';
@@ -2139,8 +2144,8 @@ class Game {
                 ctx.fillText(`${this.combo}x COMBO`, comboX, comboY);
 
                 // Combo timer bar
-                const comboBarWidth = 60;
-                const comboBarHeight = 3;
+                const comboBarWidth = Math.round(60 * s);
+                const comboBarHeight = Math.round(3 * s);
                 const comboProgress = this.comboTimer / this.comboDuration;
 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -2181,12 +2186,13 @@ class Game {
      */
     renderUpgradeHUD(ctx) {
         const levels = this.upgrades.getUpgradeLevels();
-        const padding = 12;
-        const iconSize = 22;
-        const gap = 4;
+        const s = this.gameScale || 1;
+        const padding = Math.round(12 * s);
+        const iconSize = Math.round(22 * s);
+        const gap = Math.round(4 * s);
         // Posizionato in alto a sinistra, sotto WEAPON - layout verticale
         const startX = padding;
-        const startY = 140;
+        const startY = Math.round(140 * s);
 
         const upgradeTypes = [
             { type: 'barrier', icon: '🛡️', color: '#00aaff', level: levels.barrier },
@@ -2198,7 +2204,7 @@ class Game {
         upgradeTypes.forEach((upgrade) => {
             if (upgrade.level > 0) {
                 const x = startX;
-                const y = startY + drawIndex * (iconSize + gap + 4);
+                const y = startY + drawIndex * (iconSize + gap + Math.round(4 * s));
 
                 // Background circle
                 ctx.beginPath();
@@ -2210,27 +2216,27 @@ class Game {
                 ctx.stroke();
 
                 // Icon
-                ctx.font = `${iconSize - 6}px Arial`;
+                ctx.font = `${iconSize - Math.round(6 * s)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(upgrade.icon, x + iconSize / 2, y + iconSize / 2);
 
                 // Level badge (to the right of icon)
-                ctx.font = 'bold 10px Orbitron, Arial';
+                ctx.font = `bold ${Math.round(10 * s)}px Orbitron, Arial`;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = upgrade.color;
                 ctx.shadowColor = upgrade.color;
                 ctx.shadowBlur = 5;
-                ctx.fillText(`Lv.${upgrade.level}`, x + iconSize + 6, y + iconSize / 2);
+                ctx.fillText(`Lv.${upgrade.level}`, x + iconSize + Math.round(6 * s), y + iconSize / 2);
                 ctx.shadowBlur = 0;
 
                 // Barrier health bar inline
                 if (upgrade.type === 'barrier' && this.upgrades.barrier) {
                     const barrier = this.upgrades.barrier;
-                    const barWidth = 40;
-                    const barHeight = 3;
-                    const barX = x + iconSize + 38;
+                    const barWidth = Math.round(40 * s);
+                    const barHeight = Math.round(3 * s);
+                    const barX = x + iconSize + Math.round(38 * s);
                     const barY = y + iconSize / 2 - barHeight / 2;
 
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -2253,9 +2259,10 @@ class Game {
      * Renderizza HUD abilità per desktop
      */
     renderAbilityHUD(ctx) {
-        const padding = 12;
-        const buttonSize = 50;
-        const gap = 10;
+        const s = this.gameScale || 1;
+        const padding = Math.round(12 * s);
+        const buttonSize = Math.round(50 * s);
+        const gap = Math.round(10 * s);
         const baseY = this.canvas.height - padding - buttonSize;
 
         // Heal ability (Q)
@@ -2275,6 +2282,7 @@ class Game {
     renderAbilityIcon(ctx, x, y, size, icon, key, color, cooldown, maxCooldown) {
         const cooldownPercent = cooldown / maxCooldown;
         const isReady = cooldown <= 0;
+        const s = this.gameScale || 1;
 
         // Background
         ctx.fillStyle = isReady ? 'rgba(40, 40, 60, 0.8)' : 'rgba(20, 20, 30, 0.8)';
@@ -2294,23 +2302,23 @@ class Game {
                 size - 4, (size - 4) * cooldownPercent);
 
             // Tempo rimanente
-            ctx.font = 'bold 14px Orbitron, Arial';
+            ctx.font = `bold ${Math.round(14 * s)}px Orbitron, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#ffffff';
             ctx.fillText(Math.ceil(cooldown).toString(), x + size / 2, y + size / 2);
         } else {
             // Icona
-            ctx.font = '24px Arial';
+            ctx.font = `${Math.round(24 * s)}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(icon, x + size / 2, y + size / 2 - 4);
+            ctx.fillText(icon, x + size / 2, y + size / 2 - 4 * s);
         }
 
         // Key hint
-        ctx.font = '10px Orbitron, Arial';
+        ctx.font = `${Math.round(10 * s)}px Orbitron, Arial`;
         ctx.fillStyle = isReady ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)';
-        ctx.fillText(key, x + size / 2, y + size - 8);
+        ctx.fillText(key, x + size / 2, y + size - 8 * s);
 
         // Glow when ready
         if (isReady) {
@@ -2331,11 +2339,12 @@ class Game {
     renderPerfMonitor(ctx) {
         if (!this.showPerfMonitor) return;
 
+        const s = this.gameScale || 1;
         // Posizione: in basso a destra, sopra la heat bar
-        const width = 95;
-        const height = 55;
-        const x = this.canvas.width - width - 150;
-        const y = this.canvas.height - height - 10;
+        const width = Math.round(95 * s);
+        const height = Math.round(55 * s);
+        const x = this.canvas.width - width - Math.round(150 * s);
+        const y = this.canvas.height - height - Math.round(10 * s);
 
         ctx.save();
 
@@ -2353,29 +2362,29 @@ class Game {
         if (this.currentFPS < 30) fpsColor = '#ff4444';
         else if (this.currentFPS < 50) fpsColor = '#ffaa00';
 
-        ctx.font = 'bold 18px Orbitron, Arial';
+        ctx.font = `bold ${Math.round(18 * s)}px Orbitron, Arial`;
         ctx.textAlign = 'left';
         ctx.fillStyle = fpsColor;
-        ctx.fillText(`${this.currentFPS}`, x + 6, y + 20);
-        ctx.font = '10px Rajdhani, Arial';
+        ctx.fillText(`${this.currentFPS}`, x + Math.round(6 * s), y + Math.round(20 * s));
+        ctx.font = `${Math.round(10 * s)}px Rajdhani, Arial`;
         ctx.fillStyle = '#668899';
-        ctx.fillText('FPS', x + 50, y + 20);
+        ctx.fillText('FPS', x + Math.round(50 * s), y + Math.round(20 * s));
 
         // Stats compatte
-        ctx.font = '9px Rajdhani, Arial';
+        ctx.font = `${Math.round(9 * s)}px Rajdhani, Arial`;
         ctx.fillStyle = '#889999';
-        ctx.fillText(`AVG ${this.avgFPS} | MIN ${this.minFPS}`, x + 6, y + 33);
+        ctx.fillText(`AVG ${this.avgFPS} | MIN ${this.minFPS}`, x + Math.round(6 * s), y + Math.round(33 * s));
 
         // Particelle e Mode su stessa riga
         const particleCount = this.particles ? this.particles.particles.length : 0;
         const modeIcons = { high: '🚀', medium: '⚖️', low: '🐢' };
         ctx.fillStyle = '#778888';
-        ctx.fillText(`P:${particleCount}`, x + 6, y + 46);
+        ctx.fillText(`P:${particleCount}`, x + Math.round(6 * s), y + Math.round(46 * s));
 
         // Mode indicator con colore
         const modeColors = { high: '#00aaff', medium: '#ffaa00', low: '#88ff88' };
         ctx.fillStyle = modeColors[this.performanceMode] || '#fff';
-        ctx.fillText(`${modeIcons[this.performanceMode]}${this.performanceMode.toUpperCase()}`, x + 40, y + 46);
+        ctx.fillText(`${modeIcons[this.performanceMode]}${this.performanceMode.toUpperCase()}`, x + Math.round(40 * s), y + Math.round(46 * s));
 
         ctx.restore();
     }
@@ -2384,11 +2393,18 @@ class Game {
      * Renderizza il bottone pausa sulla canvas
      */
     renderPauseButton(ctx) {
+        const s = this.gameScale || 1;
         const btn = this.pauseButtonRect;
-        const x = this.canvas.width - btn.width - 12;
-        const y = btn.y;
-        const w = btn.width;
-        const h = btn.height;
+        const w = Math.round(btn.baseW * s);
+        const h = Math.round(btn.baseH * s);
+        const x = this.canvas.width - w - Math.round(12 * s);
+        const y = Math.round(btn.baseY * s);
+
+        // Update actual rect for hit testing
+        btn.x = x;
+        btn.y = y;
+        btn.width = w;
+        btn.height = h;
 
         ctx.save();
 

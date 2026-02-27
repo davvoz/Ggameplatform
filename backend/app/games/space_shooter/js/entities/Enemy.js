@@ -4,7 +4,7 @@ import Vector2 from '../utils/Vector2.js';
  * Enemy - Classe base per i nemici
  */
 class Enemy extends GameObject {
-    constructor(x, y, type = 'enemy1') {
+    constructor(x, y, type = 'enemy1', scale = 1) {
         const sizes = {
             'enemy1': { w: 48, h: 48 },
             'enemy2': { w: 56, h: 56 },
@@ -19,10 +19,11 @@ class Enemy extends GameObject {
         };
         
         const size = sizes[type] || sizes['enemy1'];
-        super(x, y, size.w, size.h);
+        super(x, y, Math.round(size.w * scale), Math.round(size.h * scale));
         
         this.tag = 'enemy';
         this.type = type;
+        this._scale = scale;
         
         // Stats basati sul tipo
         this.initStats();
@@ -43,17 +44,18 @@ class Enemy extends GameObject {
     }
 
     initStats() {
+        const s = this._scale || 1;
         const stats = {
-            'enemy1': { health: 1, speed: 75, score: 100, shootInterval: 4.0 },
-            'enemy2': { health: 2, speed: 70, score: 200, shootInterval: 3.2 },
-            'enemy3': { health: 4, speed: 65, score: 400, shootInterval: 2.2 },
-            'enemy4': { health: 2, speed: 95, score: 300, shootInterval: 3.5 },  // Phantom: fast, elusive
-            'enemy5': { health: 7, speed: 45, score: 500, shootInterval: 1.8 },  // Sentinel: tanky, slow
-            'enemy6': { health: 1, speed: 120, score: 80, shootInterval: 5.0 },  // Swarm: fragile, fast
-            'boss': { health: 70, speed: 50, score: 5000, shootInterval: 0.5 },
-            'boss_hydra': { health: 50, speed: 45, score: 7000, shootInterval: 0.4 },
-            'boss_fortress': { health: 70, speed: 35, score: 9000, shootInterval: 0.3 },
-            'boss_void': { health: 70, speed: 55, score: 8000, shootInterval: 0.35 }
+            'enemy1': { health: 1, speed: 75 * s, score: 100, shootInterval: 4.0 },
+            'enemy2': { health: 2, speed: 70 * s, score: 200, shootInterval: 3.2 },
+            'enemy3': { health: 4, speed: 65 * s, score: 400, shootInterval: 2.2 },
+            'enemy4': { health: 2, speed: 95 * s, score: 300, shootInterval: 3.5 },  // Phantom: fast, elusive
+            'enemy5': { health: 7, speed: 45 * s, score: 500, shootInterval: 1.8 },  // Sentinel: tanky, slow
+            'enemy6': { health: 1, speed: 120 * s, score: 80, shootInterval: 5.0 },  // Swarm: fragile, fast
+            'boss': { health: 70, speed: 50 * s, score: 5000, shootInterval: 0.5 },
+            'boss_hydra': { health: 50, speed: 45 * s, score: 7000, shootInterval: 0.4 },
+            'boss_fortress': { health: 70, speed: 35 * s, score: 9000, shootInterval: 0.3 },
+            'boss_void': { health: 70, speed: 55 * s, score: 8000, shootInterval: 0.35 }
         };
 
         // Phantom-specific: cloaking
@@ -108,12 +110,12 @@ class Enemy extends GameObject {
             this.gravityWells = []; // {x, y, life, strength}
         }
         
-        const s = stats[this.type] || stats['enemy1'];
-        this.maxHealth = s.health;
+        const s1 = stats[this.type] || stats['enemy1'];
+        this.maxHealth = s1.health;
         this.health = this.maxHealth;
-        this.speed = s.speed;
-        this.scoreValue = s.score;
-        this.shootInterval = s.shootInterval;
+        this.speed = s1.speed;
+        this.scoreValue = s1.score;
+        this.shootInterval = s1.shootInterval;
     }
 
     /**
@@ -121,7 +123,8 @@ class Enemy extends GameObject {
      */
     setMovementPattern(pattern, params = {}) {
         this.movementPattern = pattern;
-        this.amplitude = params.amplitude || 100;
+        const s = this._scale || 1;
+        this.amplitude = params.amplitude || (100 * s);
         this.frequency = params.frequency || 2;
         this.targetX = params.targetX;
         this.targetY = params.targetY;
@@ -205,13 +208,13 @@ class Enemy extends GameObject {
             case 'phantom':
                 // Erratic phasing movement
                 this.velocity.y = this.speed * 0.7;
-                this.position.x = this.startX + Math.sin(this.movementTimer * 3) * 60 + Math.cos(this.movementTimer * 5.7) * 30;
+                this.position.x = this.startX + Math.sin(this.movementTimer * 3) * 60 * (this._scale || 1) + Math.cos(this.movementTimer * 5.7) * 30 * (this._scale || 1);
                 break;
 
             case 'sentinel':
                 // Slow, steady descent — slightly weaving
                 this.velocity.y = this.speed;
-                this.position.x = this.startX + Math.sin(this.movementTimer * 0.8) * 40;
+                this.position.x = this.startX + Math.sin(this.movementTimer * 0.8) * 40 * (this._scale || 1);
                 break;
 
             case 'swarm':
@@ -418,6 +421,7 @@ class Enemy extends GameObject {
     shoot(game) {
         const centerX = this.position.x + this.width / 2;
         const bottomY = this.position.y + this.height;
+        const s = this._scale || 1;
         
         if (this.type === 'boss') {
             // Boss spara pattern multipli
@@ -427,20 +431,20 @@ class Enemy extends GameObject {
             switch (pattern) {
                 case 'spread':
                     for (let i = -2; i <= 2; i++) {
-                        game.spawnBullet(centerX - 4, bottomY, i * 60, 250, 'enemy');
+                        game.spawnBullet(centerX - 4 * s, bottomY, i * 60, 250, 'enemy');
                     }
                     break;
                 case 'aimed':
                     if (game.player && game.player.active) {
                         const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                        game.spawnBullet(centerX - 4, bottomY, dir.x * 300, dir.y * 300, 'enemy');
+                        game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 300, dir.y * 300, 'enemy');
                     }
                     break;
                 case 'burst':
                     for (let i = 0; i < 8; i++) {
                         const angle = (i / 8) * Math.PI * 2;
                         game.spawnBullet(
-                            centerX - 4, bottomY,
+                            centerX - 4 * s, bottomY,
                             Math.cos(angle) * 200,
                             Math.sin(angle) * 200,
                             'enemy'
@@ -450,27 +454,27 @@ class Enemy extends GameObject {
             }
         } else if (this.type === 'boss_hydra') {
             // Hydra: each head fires independently
-            const headOffsets = [-40, 0, 40];
+            const headOffsets = [-40 * s, 0, 40 * s];
             for (let i = 0; i < 3; i++) {
                 const hx = centerX + headOffsets[i];
                 if (this.enragePhase) {
                     // Enraged: rapid aimed shots from all heads
                     if (game.player && game.player.active) {
                         const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
-                        game.spawnBullet(hx - 4, bottomY, dir.x * 280, dir.y * 280, 'enemy');
+                        game.spawnBullet(hx - 4 * s, bottomY, dir.x * 280, dir.y * 280, 'enemy');
                     }
                 } else {
                     // Normal: alternating spread and straight
                     if (i === 1) {
                         // Center head: spread
                         for (let j = -1; j <= 1; j++) {
-                            game.spawnBullet(hx - 4, bottomY, j * 50, 220, 'enemy');
+                            game.spawnBullet(hx - 4 * s, bottomY, j * 50, 220, 'enemy');
                         }
                     } else {
                         // Side heads: aimed
                         if (game.player && game.player.active) {
                             const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
-                            game.spawnBullet(hx - 4, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 80, 'enemy');
+                            game.spawnBullet(hx - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 80, 'enemy');
                         }
                     }
                 }
@@ -479,17 +483,17 @@ class Enemy extends GameObject {
             // Fortress: 4 rotating turrets fire outward + aimed center cannon
             for (let i = 0; i < 4; i++) {
                 const tAngle = this.turretAngle + (i * Math.PI / 2);
-                const tx = centerX + Math.cos(tAngle) * 60;
-                const ty = this.position.y + this.height / 2 + Math.sin(tAngle) * 40;
-                game.spawnBullet(tx - 4, ty, Math.cos(tAngle + Math.PI / 2) * 180, Math.sin(tAngle + Math.PI / 2) * 180 + 80, 'enemy');
+                const tx = centerX + Math.cos(tAngle) * 60 * s;
+                const ty = this.position.y + this.height / 2 + Math.sin(tAngle) * 40 * s;
+                game.spawnBullet(tx - 4 * s, ty, Math.cos(tAngle + Math.PI / 2) * 180, Math.sin(tAngle + Math.PI / 2) * 180 + 80, 'enemy');
             }
             // Center cannon aimed at player
             if (game.player && game.player.active) {
                 const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                game.spawnBullet(centerX - 4, bottomY, dir.x * 250, dir.y * 250, 'enemy');
+                game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 250, dir.y * 250, 'enemy');
                 // Double shot
-                game.spawnBullet(centerX - 20, bottomY, dir.x * 230, dir.y * 230, 'enemy');
-                game.spawnBullet(centerX + 16, bottomY, dir.x * 230, dir.y * 230, 'enemy');
+                game.spawnBullet(centerX - 20 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
+                game.spawnBullet(centerX + 16 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
             }
         } else if (this.type === 'boss_void') {
             // Void: spiral pattern + homing-like shots
@@ -498,7 +502,7 @@ class Enemy extends GameObject {
             for (let i = 0; i < numBullets; i++) {
                 const angle = spiralOffset + (i / numBullets) * Math.PI * 2;
                 game.spawnBullet(
-                    centerX - 4, this.position.y + this.height / 2,
+                    centerX - 4 * s, this.position.y + this.height / 2,
                     Math.cos(angle) * 170,
                     Math.sin(angle) * 170 + 50,
                     'enemy'
@@ -508,9 +512,9 @@ class Enemy extends GameObject {
             // Nemici normali - solo 30% mira al player, 70% dritto
             if (Math.random() > 0.7 && game.player && game.player.active) {
                 const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                game.spawnBullet(centerX - 4, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 100, 'enemy');
+                game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 100, 'enemy');
             } else {
-                game.spawnBullet(centerX - 4, bottomY, 0, 200, 'enemy');
+                game.spawnBullet(centerX - 4 * s, bottomY, 0, 200, 'enemy');
             }
         }
     }
@@ -628,13 +632,14 @@ class Enemy extends GameObject {
     render(ctx, assets) {
         const centerX = this.position.x + this.width / 2;
         const centerY = this.position.y + this.height / 2;
+        const s = this._scale || 1;
         
         ctx.save();
         
         // Engine glow for all enemies
         const engineGlow = ctx.createRadialGradient(
-            centerX, this.position.y - 5, 0,
-            centerX, this.position.y - 5, 15
+            centerX, this.position.y - 5 * s, 0,
+            centerX, this.position.y - 5 * s, 15 * s
         );
         const glowColors = {
             'enemy1': { r: 255, g: 100, b: 100 },
@@ -749,11 +754,12 @@ class Enemy extends GameObject {
 
         // Hydra Boss: head glow indicators
         if (this.type === 'boss_hydra') {
-            const headOffsets = [-40, 0, 40];
+            const s2 = this._scale || 1;
+            const headOffsets = [-40 * s2, 0, 40 * s2];
             for (let i = 0; i < 3; i++) {
                 const hx = centerX + headOffsets[i];
-                const hy = this.position.y + this.height - 10;
-                const headGlow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 12);
+                const hy = this.position.y + this.height - 10 * s2;
+                const headGlow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 12 * s2);
                 const intensity = this.enragePhase ? 0.8 : 0.4;
                 headGlow.addColorStop(0, `rgba(100, 255, 80, ${intensity})`);
                 headGlow.addColorStop(1, 'rgba(100, 255, 80, 0)');
@@ -937,13 +943,14 @@ class Enemy extends GameObject {
 class EnemyFactory {
     static createWave(type, count, game, pattern = 'straight') {
         const enemies = [];
+        const s = game.gameScale || 1;
         const spacing = game.canvas.width / (count + 1);
         
         for (let i = 0; i < count; i++) {
-            const x = spacing * (i + 1) - 24;
-            const enemy = new Enemy(x, -60, type);
+            const x = spacing * (i + 1) - 24 * s;
+            const enemy = new Enemy(x, -60 * s, type, s);
             enemy.setMovementPattern(pattern, { 
-                amplitude: 80,
+                amplitude: 80 * s,
                 frequency: 2 + Math.random()
             });
             enemies.push(enemy);
@@ -954,8 +961,9 @@ class EnemyFactory {
 
     static createFormation(type, formation, game) {
         const enemies = [];
+        const s = game.gameScale || 1;
         const startX = game.canvas.width / 2;
-        const startY = -60;
+        const startY = -60 * s;
         
         // Formazioni predefinite
         const formations = {
@@ -987,16 +995,17 @@ class EnemyFactory {
         };
         
         const points = formations[formation] || formations['line'];
-        const spacing = 60;
+        const spacing = 60 * s;
         
         points.forEach(([dx, dy], i) => {
             const enemy = new Enemy(
-                startX + dx * spacing - 24,
+                startX + dx * spacing - 24 * s,
                 startY - dy * spacing,
-                type
+                type,
+                s
             );
             enemy.setMovementPattern('sine', {
-                amplitude: 60,
+                amplitude: 60 * s,
                 frequency: 1.5
             });
             enemies.push(enemy);
@@ -1016,16 +1025,18 @@ class EnemyFactory {
             bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
         }
 
+        const s = game.gameScale || 1;
         const bossWidths = {
             'boss': 80, 'boss_hydra': 90,
             'boss_fortress': 100, 'boss_void': 75
         };
-        const halfW = bossWidths[bossType] || 80;
+        const halfW = (bossWidths[bossType] || 80) * s;
 
         const boss = new Enemy(
             game.canvas.width / 2 - halfW,
-            -150,
-            bossType
+            -150 * s,
+            bossType,
+            s
         );
         boss.setMovementPattern(bossType);
         boss.applyLevelScaling(game.level || 1);

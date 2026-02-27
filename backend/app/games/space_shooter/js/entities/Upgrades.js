@@ -170,9 +170,10 @@ class UpgradeManager {
                 ? enemies[i % enemies.length] 
                 : null;
             
+            const s = this.game.gameScale || 1;
             const offsetAngle = (i / missileCount) * Math.PI * 2;
-            const spawnX = player.position.x + player.width / 2 + Math.cos(offsetAngle) * 25;
-            const spawnY = player.position.y + Math.sin(offsetAngle) * 15;
+            const spawnX = player.position.x + player.width / 2 + Math.cos(offsetAngle) * 25 * s;
+            const spawnY = player.position.y + Math.sin(offsetAngle) * 15 * s;
             
             const missile = new SmartMissile(
                 spawnX,
@@ -284,6 +285,7 @@ class EnergyBarrier {
     constructor(player, manager) {
         this.player = player;
         this.manager = manager;
+        this._scale = manager.game.gameScale || 1;
         
         // Shield stats (level 1) - ultra nerfed
         this.maxShield = 3;
@@ -293,7 +295,7 @@ class EnergyBarrier {
         this.regenTimer = 0;
         
         // Visual
-        this.radius = 35;
+        this.radius = 35 * this._scale;
         this.pulseTime = 0;
         this.hitFlashTime = 0;
         this.breakParticles = [];
@@ -304,6 +306,7 @@ class EnergyBarrier {
      */
     upgrade() {
         const level = this.manager.barrierLevel;
+        const s = this._scale;
         const shieldBase = 1;
         
         const regenBase = 0.3;
@@ -313,7 +316,7 @@ class EnergyBarrier {
         this.regenDelay = Math.max(3.5, 5 - level * 0.15);
         
         // Increase radius slightly
-        this.radius = 35 + level * 2;
+        this.radius = (35 + level * 2) * s;
         
         // Restore some shield on upgrade
         this.currentShield = Math.min(this.currentShield + this.maxShield * 0.3, this.maxShield);
@@ -519,9 +522,11 @@ class EnergyBarrier {
  */
 class SmartMissile extends GameObject {
     constructor(x, y, target, manager) {
-        super(x, y, 12, 20);
+        const s = manager.game.gameScale || 1;
+        super(x, y, Math.round(12 * s), Math.round(20 * s));
         this.tag = 'playerMissile';
         this.manager = manager;
+        this._scale = s;
         
         this.target = target;
         this.active = true;
@@ -529,7 +534,7 @@ class SmartMissile extends GameObject {
         // Stats based on level
         const level = manager.missileLevel;
         this.damage = 3 + level * 1.5;
-        this.speed = 250 + level * 20;
+        this.speed = (250 + level * 20) * s;
         this.turnSpeed = 4 + level * 0.5; // Radians per second
         this.lifetime = 5; // Seconds before self-destruct
         
@@ -656,7 +661,7 @@ class SmartMissile extends GameObject {
         );
         
         // Splash damage to nearby enemies
-        const splashRadius = 30 + this.manager.missileLevel * 5;
+        const splashRadius = (30 + this.manager.missileLevel * 5) * (this._scale || 1);
         const splashDamage = this.damage * 0.5;
         
         game.enemies.forEach(enemy => {
@@ -739,22 +744,23 @@ class ProtectorDrone {
         this.player = player;
         this.index = index;
         this.manager = manager;
+        this._scale = manager.game.gameScale || 1;
         
         // Orbital parameters
-        this.orbitRadius = 55;
+        this.orbitRadius = 55 * this._scale;
         this.orbitAngle = (Math.PI * 2 / 2) * index; // Start opposite for 2 drones
         this.orbitSpeed = 2.5;
         
         // Position
         this.x = 0;
         this.y = 0;
-        this.size = 16;
+        this.size = Math.round(16 * this._scale);
         
         // Stats (level 1)
         this.damage = 1.2;
         this.fireRate = 0.40; // Seconds between shots
         this.fireCooldown = 0;
-        this.range = 260;
+        this.range = 260 * this._scale;
         
         // Bullets
         this.bullets = [];
@@ -770,10 +776,11 @@ class ProtectorDrone {
      */
     upgrade() {
         const level = this.manager.droneLevel;
+        const s = this._scale;
         
         this.damage = 1.2 + level * 0.6;
         this.fireRate = Math.max(0.18, 0.40 - level * 0.03);
-        this.range = 260 + level * 25;
+        this.range = (260 + level * 25) * s;
     }
     
     update(deltaTime, game) {
@@ -843,7 +850,8 @@ class ProtectorDrone {
             this.y,
             angle,
             this.damage,
-            this.range
+            this.range,
+            this._scale
         );
         
         this.bullets.push(bullet);
@@ -937,14 +945,14 @@ class ProtectorDrone {
  * DroneBullet - Bullet fired by protector drone
  */
 class DroneBullet {
-    constructor(x, y, angle, damage, range) {
+    constructor(x, y, angle, damage, range, scale = 1) {
         this.x = x;
         this.y = y;
         this.angle = angle;
         this.damage = damage;
         this.range = range;
-        this.speed = 500;
-        this.size = 6;
+        this.speed = 500 * scale;
+        this.size = Math.round(6 * scale);
         this.active = true;
         this.distanceTraveled = 0;
         

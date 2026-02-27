@@ -35,21 +35,28 @@ export const CONFIG = {
             reward: 20,
             label: 'Easy',
             description: '20 Waves',
-            color: '#00ff88'
+            color: '#00ff88',
         },
         MEDIUM: {
             waves: 50,
             reward: 50,
             label: 'Medium',
             description: '50 Waves',
-            color: '#ffaa00'
+            color: '#ffaa00',
         },
         HARD: {
             waves: 70,
             reward: 70,
             label: 'Hard',
             description: '70 Waves',
-            color: '#ff4444'
+            color: '#ff4444',
+        },
+        EXTREME: {
+            waves: 100,
+            reward: 100,
+            label: 'Extreme',
+            description: '100 Waves',
+            color: '#cc00ff',
         }
     },
 

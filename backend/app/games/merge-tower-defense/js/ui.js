@@ -3167,123 +3167,217 @@ export class UIManager {
         const width = this.canvas.width / (window.devicePixelRatio || 1);
         const height = this.canvas.height / (window.devicePixelRatio || 1);
         
-        // Overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        // Full-screen dark background
+        ctx.fillStyle = 'rgba(5, 10, 8, 0.97)';
         ctx.fillRect(0, 0, width, height);
         
-        // Popup box
-        const popupWidth = Math.min(380, width * 0.85);
-        const popupHeight = Math.min(380, height * 0.65);
-        const popupX = (width - popupWidth) / 2;
-        const popupY = (height - popupHeight) / 2;
+        // Subtle grid pattern overlay
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.04)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for (let gx = 0; gx < width; gx += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, height);
+            ctx.stroke();
+        }
+        for (let gy = 0; gy < height; gy += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, gy);
+            ctx.lineTo(width, gy);
+            ctx.stroke();
+        }
         
-        // Popup background with tower defense theme
-        ctx.fillStyle = 'rgba(10, 20, 15, 0.95)';
-        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+        // Top decorative bar
+        const barGrad = ctx.createLinearGradient(0, 0, width, 0);
+        barGrad.addColorStop(0, 'rgba(0, 255, 136, 0)');
+        barGrad.addColorStop(0.5, 'rgba(0, 255, 136, 0.3)');
+        barGrad.addColorStop(1, 'rgba(0, 255, 136, 0)');
+        ctx.fillStyle = barGrad;
+        ctx.fillRect(0, 0, width, 3);
         
-        // Popup border (neon green like defense zone)
-        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        // Bottom decorative bar
+        ctx.fillStyle = barGrad;
+        ctx.fillRect(0, height - 3, width, 3);
         
-        // Inner glow effect
-        ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
-        ctx.lineWidth = 6;
-        ctx.strokeRect(popupX + 3, popupY + 3, popupWidth - 6, popupHeight - 6);
+        // Title area with glow
+        const titleY = height * 0.08;
         
-        // Title with gear icon
-        this.graphics.drawText('⚙️ SETTINGS', width / 2, popupY + 45, {
-            size: 32,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
+        // Title glow circle
+        const titleGlow = ctx.createRadialGradient(width / 2, titleY + 10, 0, width / 2, titleY + 10, 120);
+        titleGlow.addColorStop(0, 'rgba(0, 255, 136, 0.12)');
+        titleGlow.addColorStop(1, 'rgba(0, 255, 136, 0)');
+        ctx.fillStyle = titleGlow;
+        ctx.beginPath();
+        ctx.arc(width / 2, titleY + 10, 120, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Title
+        this.graphics.drawText('⚙️ SETTINGS', width / 2, titleY + 15, {
+            size: 36,
+            color: '#ffffff',
             align: 'center',
             bold: true,
             shadow: true
         });
         
-        // Settings options
-        const contentWidth = popupWidth * 0.8;
-        const contentX = popupX + (popupWidth - contentWidth) / 2;
-        let contentY = popupY + 100;
+        // Decorative line under title
+        const lineY = titleY + 45;
+        const lineGrad = ctx.createLinearGradient(width * 0.15, lineY, width * 0.85, lineY);
+        lineGrad.addColorStop(0, 'rgba(0, 255, 136, 0)');
+        lineGrad.addColorStop(0.3, 'rgba(0, 255, 136, 0.6)');
+        lineGrad.addColorStop(0.5, 'rgba(0, 255, 136, 1)');
+        lineGrad.addColorStop(0.7, 'rgba(0, 255, 136, 0.6)');
+        lineGrad.addColorStop(1, 'rgba(0, 255, 136, 0)');
+        ctx.strokeStyle = lineGrad;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.15, lineY);
+        ctx.lineTo(width * 0.85, lineY);
+        ctx.stroke();
+        
+        // Content area
+        const contentWidth = Math.min(340, width * 0.85);
+        const contentX = (width - contentWidth) / 2;
+        let contentY = lineY + 35;
         
         this.settingsPopupButtons = [];
         this.settingsCheckboxes = [];
         
-        // Music toggle checkbox
+        // --- AUDIO SECTION ---
+        // Section label
+        this.graphics.drawText('AUDIO', contentX + 5, contentY, {
+            size: 13,
+            color: 'rgba(0, 255, 136, 0.5)',
+            align: 'left',
+            bold: true
+        });
+        contentY += 22;
+        
+        // Section card background
+        const audioCardHeight = 110;
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.04)';
+        Utils.drawRoundRect(ctx, contentX, contentY, contentWidth, audioCardHeight, 12);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)';
+        ctx.lineWidth = 1;
+        Utils.drawRoundRect(ctx, contentX, contentY, contentWidth, audioCardHeight, 12);
+        ctx.stroke();
+        
+        // Music toggle
         const musicEnabled = this.audio ? this.audio.enabled : true;
-        this.renderCheckbox(contentX, contentY, '🎵 Background Music', 'music', musicEnabled);
-        contentY += 60;
+        this.renderSettingsToggle(contentX + 15, contentY + 15, contentWidth - 30, '🎵 Background Music', 'music', musicEnabled);
         
-        // Sound toggle checkbox
+        // Sound toggle
         const soundEnabled = this.audio ? this.audio.soundEnabled : true;
-        this.renderCheckbox(contentX, contentY, '🔊 Sound Effects', 'sound', soundEnabled);
-        contentY += 70;
+        this.renderSettingsToggle(contentX + 15, contentY + 65, contentWidth - 30, '🔊 Sound Effects', 'sound', soundEnabled);
         
-        // Fullscreen toggle button
-        const buttonHeight = 50;
-        // Check fullscreen state: prefer local tracking, then PlatformSDK, fallback to CSS classes
+        contentY += audioCardHeight + 20;
+        
+        // --- DISPLAY SECTION ---
+        this.graphics.drawText('DISPLAY', contentX + 5, contentY, {
+            size: 13,
+            color: 'rgba(0, 255, 136, 0.5)',
+            align: 'left',
+            bold: true
+        });
+        contentY += 22;
+        
+        const displayCardHeight = 60;
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.04)';
+        Utils.drawRoundRect(ctx, contentX, contentY, contentWidth, displayCardHeight, 12);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)';
+        ctx.lineWidth = 1;
+        Utils.drawRoundRect(ctx, contentX, contentY, contentWidth, displayCardHeight, 12);
+        ctx.stroke();
+        
+        // Fullscreen button inside the card
         const isFullscreen = window._gameFullscreenState === true ||
             ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function') 
                 ? window.PlatformSDK.isFullscreen() 
                 : (document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
         const fullscreenText = isFullscreen ? '🔲 Exit Fullscreen' : '⛶ Enter Fullscreen';
-        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, fullscreenText, 'fullscreen');
-        contentY += buttonHeight + 15;
+        this.renderSettingsButton(contentX + 15, contentY + 10, contentWidth - 30, 40, fullscreenText, 'fullscreen');
         
-        // Reset Tutorial button
-       
+        contentY += displayCardHeight + 30;
         
-        // Close button
-        contentY += 5;
-        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight * 0.8, '✕ Close', 'close');
+        // --- ACTION BUTTONS ---
+        const buttonHeight = 54;
+        
+        // Quit Game button
+        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, '🚪 Quit Game', 'quit');
+        contentY += buttonHeight + 14;
+        
+        // Close / Resume button
+        this.renderSettingsButton(contentX, contentY, contentWidth, buttonHeight, '▶ Resume Game', 'close');
     }
     
-    renderCheckbox(x, y, text, action, checked) {
+    /**
+     * Render a modern toggle switch for settings
+     */
+    renderSettingsToggle(x, y, toggleWidth, text, action, checked) {
         const ctx = this.graphics.ctx;
-        const boxSize = 32;
-        const boxX = x + 5;
-        const boxY = y;
         
-        // Store checkbox for interaction
+        // Toggle switch dimensions
+        const switchWidth = 52;
+        const switchHeight = 28;
+        const switchX = x + toggleWidth - switchWidth;
+        const switchY = y + 4;
+        
+        // Store as checkbox for interaction (reuse existing click handling)
         this.settingsCheckboxes.push({
-            x: boxX,
-            y: boxY,
-            width: boxSize,
-            height: boxSize,
+            x: switchX - 10,
+            y: switchY - 5,
+            width: switchWidth + 20,
+            height: switchHeight + 10,
             action,
             checked
         });
         
-        // Checkbox box
-        ctx.fillStyle = checked ? CONFIG.COLORS.TEXT_PRIMARY : 'rgba(40, 40, 40, 0.8)';
-        Utils.drawRoundRect(ctx, boxX, boxY, boxSize, boxSize, 6);
-        ctx.fill();
-        
-        // Checkbox border
-        ctx.strokeStyle = CONFIG.COLORS.TEXT_PRIMARY;
-        ctx.lineWidth = 2;
-        Utils.drawRoundRect(ctx, boxX, boxY, boxSize, boxSize, 6);
-        ctx.stroke();
-        
-        // Checkmark
-        if (checked) {
-            this.graphics.drawText('✓', boxX + boxSize / 2, boxY + boxSize / 2, {
-                size: 24,
-                color: '#000000',
-                align: 'center',
-                baseline: 'middle',
-                bold: true
-            });
-        }
-        
         // Label text
-        this.graphics.drawText(text, boxX + boxSize + 15, boxY + boxSize / 2, {
-            size: 20,
-            color: CONFIG.COLORS.TEXT_PRIMARY,
+        this.graphics.drawText(text, x, y + switchHeight / 2 + 2, {
+            size: 18,
+            color: '#ffffff',
             align: 'left',
             baseline: 'middle',
-            bold: true,
+            bold: false,
             shadow: true
         });
+        
+        // Switch track
+        const trackColor = checked ? 'rgba(0, 255, 136, 0.4)' : 'rgba(60, 60, 60, 0.8)';
+        ctx.fillStyle = trackColor;
+        Utils.drawRoundRect(ctx, switchX, switchY, switchWidth, switchHeight, switchHeight / 2);
+        ctx.fill();
+        
+        // Switch track border
+        ctx.strokeStyle = checked ? 'rgba(0, 255, 136, 0.7)' : 'rgba(100, 100, 100, 0.5)';
+        ctx.lineWidth = 1.5;
+        Utils.drawRoundRect(ctx, switchX, switchY, switchWidth, switchHeight, switchHeight / 2);
+        ctx.stroke();
+        
+        // Switch knob
+        const knobRadius = (switchHeight - 6) / 2;
+        const knobX = checked ? switchX + switchWidth - knobRadius - 4 : switchX + knobRadius + 4;
+        const knobY = switchY + switchHeight / 2;
+        
+        // Knob glow when active
+        if (checked) {
+            const knobGlow = ctx.createRadialGradient(knobX, knobY, 0, knobX, knobY, knobRadius + 6);
+            knobGlow.addColorStop(0, 'rgba(0, 255, 136, 0.3)');
+            knobGlow.addColorStop(1, 'rgba(0, 255, 136, 0)');
+            ctx.fillStyle = knobGlow;
+            ctx.beginPath();
+            ctx.arc(knobX, knobY, knobRadius + 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Knob circle
+        ctx.fillStyle = checked ? '#00ff88' : '#888888';
+        ctx.beginPath();
+        ctx.arc(knobX, knobY, knobRadius, 0, Math.PI * 2);
+        ctx.fill();
     }
     
     renderSettingsButton(x, y, width, height, text, action, disabled = false) {
@@ -3294,28 +3388,63 @@ export class UIManager {
             x, y, width, height, action, disabled
         });
         
-        // Button background
+        // Button background with gradient
         if (disabled) {
             ctx.fillStyle = 'rgba(50, 50, 50, 0.5)';
         } else if (action === 'close') {
-            ctx.fillStyle = 'rgba(220, 50, 50, 0.8)';
+            // Resume button - green accent
+            const grad = ctx.createLinearGradient(x, y, x, y + height);
+            grad.addColorStop(0, 'rgba(0, 200, 100, 0.35)');
+            grad.addColorStop(1, 'rgba(0, 150, 75, 0.25)');
+            ctx.fillStyle = grad;
+        } else if (action === 'quit') {
+            // Quit button - orange/red accent
+            const grad = ctx.createLinearGradient(x, y, x, y + height);
+            grad.addColorStop(0, 'rgba(220, 100, 0, 0.35)');
+            grad.addColorStop(1, 'rgba(180, 60, 0, 0.25)');
+            ctx.fillStyle = grad;
         } else {
-            ctx.fillStyle = CONFIG.COLORS.BUTTON_BG;
+            // Default button
+            const grad = ctx.createLinearGradient(x, y, x, y + height);
+            grad.addColorStop(0, 'rgba(30, 40, 50, 0.9)');
+            grad.addColorStop(1, 'rgba(20, 30, 40, 0.9)');
+            ctx.fillStyle = grad;
         }
         
-        Utils.drawRoundRect(ctx, x, y, width, height, 8);
+        Utils.drawRoundRect(ctx, x, y, width, height, 12);
         ctx.fill();
         
         // Button border
-        ctx.strokeStyle = disabled ? '#555555' : CONFIG.COLORS.BUTTON_BORDER;
+        let borderColor;
+        if (disabled) {
+            borderColor = 'rgba(80, 80, 80, 0.5)';
+        } else if (action === 'close') {
+            borderColor = 'rgba(0, 255, 136, 0.6)';
+        } else if (action === 'quit') {
+            borderColor = 'rgba(255, 150, 0, 0.6)';
+        } else {
+            borderColor = 'rgba(0, 255, 136, 0.3)';
+        }
+        ctx.strokeStyle = borderColor;
         ctx.lineWidth = 2;
-        Utils.drawRoundRect(ctx, x, y, width, height, 8);
+        Utils.drawRoundRect(ctx, x, y, width, height, 12);
         ctx.stroke();
         
         // Button text
+        let textColor;
+        if (disabled) {
+            textColor = '#666666';
+        } else if (action === 'close') {
+            textColor = '#00ff88';
+        } else if (action === 'quit') {
+            textColor = '#ffaa44';
+        } else {
+            textColor = '#ffffff';
+        }
+        
         this.graphics.drawText(text, x + width / 2, y + height / 2, {
-            size: 18,
-            color: disabled ? '#666666' : CONFIG.COLORS.TEXT_PRIMARY,
+            size: action === 'close' ? 20 : 18,
+            color: textColor,
             align: 'center',
             baseline: 'middle',
             bold: true,

@@ -477,7 +477,7 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
         
         // Resume and start game
         game.resume();
-        game.audio.play();
+        // Music is OFF by default - player can enable it from settings
         
         // Start session now that mode is selected
         if (platformReady && !sessionActive) {

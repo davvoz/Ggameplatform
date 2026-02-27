@@ -9,7 +9,7 @@ export class AudioEngine {
     constructor() {
         this.backgroundMusic = null;
         this.volume = 0.3;
-        this.enabled = true;
+        this.enabled = false;
         this.isPlaying = false;
         
         this.soundEnabled = true;

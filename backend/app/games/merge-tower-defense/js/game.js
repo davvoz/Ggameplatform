@@ -218,7 +218,7 @@ export class Game {
                 }
                 // Check if retry button was clicked
                 if (this.ui.isRetryButtonClicked(screenPos.x, screenPos.y)) {
-                    this.restart();
+                    this.restartWithModeSelection();
                     return;
                 }
                 // Check if exit fullscreen button was clicked
@@ -254,7 +254,11 @@ export class Game {
                         this.audio.toggle();
                     } else if (uiAction.action === 'checkbox') {
                         // Checkbox toggled - handled in UI
-                    } 
+                    } else if (uiAction.action === 'quit') {
+                        // Quit game - go back to wave mode selection
+                        this.ui.closeSettingsPopup();
+                        this.restartWithModeSelection();
+                    }
                     return;
                 }
                 
@@ -924,6 +928,13 @@ export class Game {
     victory() {
         if (this.state.isVictory) return;
 
+        // Recalculate highest level from actual existing cannons
+        for (const cannon of this.entities.cannons) {
+            if (cannon.level > this.state.highestLevel) {
+                this.state.highestLevel = cannon.level;
+            }
+        }
+
         this.state.isVictory = true;
         this.audio.stop();
         
@@ -1572,6 +1583,13 @@ export class Game {
 
     gameOver() {
         if (this.state.isGameOver) return;
+
+        // Recalculate highest level from actual existing cannons
+        for (const cannon of this.entities.cannons) {
+            if (cannon.level > this.state.highestLevel) {
+                this.state.highestLevel = cannon.level;
+            }
+        }
 
         this.state.isGameOver = true;
         this.audio.stop();

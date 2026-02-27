@@ -1,8 +1,17 @@
 {
-  "version": "3.33.5",
-  "timestamp": "2026-02-25T21:52:22.004Z",
-  "buildNumber": 423,
+  "version": "3.33.6",
+  "timestamp": "2026-02-27T01:32:09.725Z",
+  "buildNumber": 424,
   "changelog": [
+    {
+      "version": "3.33.6",
+      "date": "2026-02-27",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2]desktop dimensions",
+        "🔖 Bump version to 3.33.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.5",
       "date": "2026-02-25",
@@ -82,16 +91,6 @@
       "changes": [
         "fix: [Space Shooter] update coin icon from diamond to coin in shop and continue button",
         "🔖 Bump version to 3.32.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.32.4",
-      "date": "2026-02-19",
-      "type": "patch",
-      "changes": [
-        "fix: update styles and add font imports for improved UI consistency across games",
-        "Fix: [Sky Tower] Add fullscreen button and styles for iOS fullscreen support in Sky Tower game",
-        "🔖 Bump version to 3.32.3 [skip-version]"
       ]
     }
   ]

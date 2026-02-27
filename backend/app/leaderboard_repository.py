@@ -15,7 +15,8 @@ from app.models import (
     LeaderboardReward,
     WeeklyWinner,
     User,
-    Game
+    Game,
+    GameStatus
 )
 
 
@@ -458,7 +459,7 @@ class LeaderboardRepository:
         """
         week_start, week_end = self.get_current_week()
 
-        # Get all entries for this user in the current week
+        # Get all entries for this user in the current week (only ranked games)
         user_entries = self.session.query(
             WeeklyLeaderboard,
             Game.title,
@@ -466,9 +467,12 @@ class LeaderboardRepository:
             Game.steem_rewards_enabled
         ).join(
             Game, WeeklyLeaderboard.game_id == Game.game_id
+        ).join(
+            GameStatus, Game.status_id == GameStatus.status_id
         ).filter(
             WeeklyLeaderboard.user_id == user_id,
-            WeeklyLeaderboard.week_start == week_start
+            WeeklyLeaderboard.week_start == week_start,
+            GameStatus.status_code == 'ranked'
         ).all()
 
         standings = []

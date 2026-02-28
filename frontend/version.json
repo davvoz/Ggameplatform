@@ -1,8 +1,17 @@
 {
-  "version": "3.33.9",
-  "timestamp": "2026-02-28T01:34:33.526Z",
-  "buildNumber": 427,
+  "version": "3.33.10",
+  "timestamp": "2026-02-28T12:15:07.348Z",
+  "buildNumber": 428,
   "changelog": [
+    {
+      "version": "3.33.10",
+      "date": "2026-02-28",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]NERF boss ,adjust boss health and score values for game balance",
+        "🔖 Bump version to 3.33.9 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.9",
       "date": "2026-02-28",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: adjust loader and end-message positioning in CommunityStatsRenderer to prevent invalid HTML",
         "🔖 Bump version to 3.33.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.0",
-      "date": "2026-02-21",
-      "type": "minor",
-      "changes": [
-        "feat: add score power strategy for XP calculation and migrate SS2 XP rules",
-        "🔖 Bump version to 3.32.7 [skip-version]"
       ]
     }
   ]

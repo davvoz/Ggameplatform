@@ -1,8 +1,17 @@
 {
-  "version": "3.33.10",
-  "timestamp": "2026-02-28T12:15:07.348Z",
-  "buildNumber": 428,
+  "version": "3.33.11",
+  "timestamp": "2026-02-28T21:55:18.987Z",
+  "buildNumber": 429,
   "changelog": [
+    {
+      "version": "3.33.11",
+      "date": "2026-02-28",
+      "type": "patch",
+      "changes": [
+        "fix: [SS]Add daily quests for Space Shooter",
+        "🔖 Bump version to 3.33.10 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.10",
       "date": "2026-02-28",
@@ -82,15 +91,6 @@
       "changes": [
         "feat : [SS2] add new world , total refractor",
         "🔖 Bump version to 3.33.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.1",
-      "date": "2026-02-21",
-      "type": "patch",
-      "changes": [
-        "fix: adjust loader and end-message positioning in CommunityStatsRenderer to prevent invalid HTML",
-        "🔖 Bump version to 3.33.0 [skip-version]"
       ]
     }
   ]

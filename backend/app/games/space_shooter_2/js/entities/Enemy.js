@@ -895,13 +895,13 @@ const BOSS_DEFS = {
     8: {
         name: 'Magma Colossus',
         totalWidth: 220, totalHeight: 200,
-        baseHP: 200,
-        score: 6500,
+        baseHP: 160,
+        score: 6000,
         speed: 28,
         movePattern: 'figure8',
         color: '#ff5500',
         parts: [
-            { role: 'core', offsetX: 0, offsetY: 0, width: 90, height: 90, health: 200,
+            { role: 'core', offsetX: 0, offsetY: 0, width: 90, height: 90, health: 160,
               spriteKey: 'boss8_core', canShoot: true, shootRate: 1.5, shootPattern: 'radial', bulletCount: 12, bulletSpeed: 120 },
             { role: 'turret', offsetX: -75, offsetY: -30, width: 35, height: 35, health: 25,
               spriteKey: 'boss8_turret', canShoot: true, shootRate: 1.3, shootPattern: 'spread', bulletCount: 4, bulletSpeed: 150 },
@@ -925,13 +925,13 @@ const BOSS_DEFS = {
     9: {
         name: 'Frost Sovereign',
         totalWidth: 210, totalHeight: 200,
-        baseHP: 220,
+        baseHP: 210,
         score: 7500,
         speed: 42,
         movePattern: 'weave',
         color: '#44bbff',
         parts: [
-            { role: 'core', offsetX: 0, offsetY: 0, width: 80, height: 80, health: 220,
+            { role: 'core', offsetX: 0, offsetY: 0, width: 80, height: 80, health: 210,
               spriteKey: 'boss9_core', canShoot: true, shootRate: 1.8, shootPattern: 'spiral', bulletCount: 6, bulletSpeed: 125 },
             { role: 'turret', offsetX: 0, offsetY: 0, width: 26, height: 26, health: 16,
               spriteKey: 'boss9_orb', orbitRadius: 65, orbitAngle: 0, orbitSpeed: 2,

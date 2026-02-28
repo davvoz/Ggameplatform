@@ -83,8 +83,8 @@ class ScoreManager {
             const weights = [15, 10, 20, 8, 8, 20, 5];
             // W2 power-ups available from Level 31+
             if (g.levelManager.currentLevel >= 31) {
-                types.push('drone_companion', 'bullet_time', 'bouncing_bullets');
-                weights.push(6, 5, 5);
+                types.push('drone_companion', 'bullet_time');
+                weights.push(6, 5);
             }
             const type = this.weightedRandom(types, weights);
             entities.powerUps.push(new PowerUp(
@@ -160,9 +160,7 @@ class ScoreManager {
         g.levelManager.levelEnemiesKilled++;
         this.totalEnemiesKilled++;
 
-        const mbTypes = g.levelManager.currentLevel >= 31
-            ? ['health', 'bouncing_bullets']
-            : ['health', 'points'];
+        const mbTypes = ['health', 'points'];
         for (let i = 0; i < 2; i++) {
             entities.powerUps.push(new PowerUp(
                 cx + (i - 0.5) * 30 - 17,

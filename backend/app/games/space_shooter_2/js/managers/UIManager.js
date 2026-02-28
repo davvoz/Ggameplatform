@@ -68,7 +68,7 @@ class UIManager {
                 ? `<div class="perk-stack">Level ${perk.currentStacks} → ${perk.currentStacks + 1}</div>`
                 : '';
             const tradeoffHtml = perk.tradeoff
-                ? `<div class="perk-tradeoff">⚠ ${perk.tradeoff}</div>`
+                ? `<div class="perk-tradeoff">! ${perk.tradeoff}</div>`
                 : '';
             const stackDescHtml = perk.stackDesc && perk.currentStacks > 0
                 ? `<div class="perk-stack-desc">${perk.stackDesc}</div>`

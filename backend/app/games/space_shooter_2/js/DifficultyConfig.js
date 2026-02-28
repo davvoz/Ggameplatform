@@ -10,8 +10,8 @@ const DIFFICULTY_CONFIG = {
         enemySpeedMult: 1,
         enemyFireRateMult: 1,
         enemyBulletSpeedMult: 1,
-        bossHpMult: 1,
-        bossSpeedMult: 1
+        bossHpMult: 0.55,
+        bossSpeedMult: 0.9
     },
     normal: {
         id: 'normal',
@@ -20,12 +20,12 @@ const DIFFICULTY_CONFIG = {
         desc: 'Balanced challenge for most pilots.',
         color: '#42a5f5',
         scoreMultiplier: 1,
-        enemyHpMult: 1.5,
-        enemySpeedMult: 1.25,
-        enemyFireRateMult: 0.8,
-        enemyBulletSpeedMult: 1.2,
-        bossHpMult: 1.4,
-        bossSpeedMult: 1.15
+        enemyHpMult: 1.25,
+        enemySpeedMult: 1.1,
+        enemyFireRateMult: 0.85,
+        enemyBulletSpeedMult: 1.1,
+        bossHpMult: 1.25,
+        bossSpeedMult: 1.05
     },
     hard: {
         id: 'hard',

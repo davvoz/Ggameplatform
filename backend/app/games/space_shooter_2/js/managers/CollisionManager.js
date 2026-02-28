@@ -46,6 +46,8 @@ class CollisionManager {
         const critAoeRange = perks.getCritAoeRange();
         const critAoeBonusChance = perks.getCritAoeBonusChance();
         const stealthDmgBonus = perks.getStealthDamageBonus();
+        const hijackChance = perks.getNeuralHijackChance();
+        const hijackMaxAllies = perks.getNeuralHijackMaxAllies();
 
         for (const bullet of entities.bullets) {
             if (!bullet.active || bullet.owner !== 'player') continue;
@@ -64,6 +66,7 @@ class CollisionManager {
             for (let i = 0, len = nearby.length; i < len; i++) {
                 const enemy = nearby[i];
                 if (!enemy.active) continue;
+                if (enemy._isAlly) continue; // Don't shoot allies
                 if (bullet._hitIds && bullet._hitIds.has(enemy)) continue;
                 if (bullet.collidesWithCircle(enemy)) {
                     let dmg = bullet.damage * dmgMult;
@@ -75,7 +78,21 @@ class CollisionManager {
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const killed = enemy.takeDamage(Math.ceil(dmg), g);
-                    if (killed) g.waveManager.onEnemyKilled(enemy);
+                    if (killed) {
+                        // Neural Hijack: chance to convert instead of kill
+                        if (hijackChance > 0 && !enemy._isAlly && !enemy.config.spawner && Math.random() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
+                            enemy.active = true;
+                            enemy.health = Math.ceil(enemy.maxHealth * 0.5);
+                            enemy._isAlly = true;
+                            enemy._allyShootTimer = 0;
+                            enemy.alpha = 1;
+                            perks.alliedEnemies.push(enemy);
+                            g.particles.emit(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 'powerup', 10);
+                            g.postProcessing.flash({ r: 0, g: 220, b: 255 }, 0.08);
+                        } else {
+                            g.waveManager.onEnemyKilled(enemy);
+                        }
+                    }
 
                     const eCX = enemy.position.x + enemy.width / 2;
                     const eCY = enemy.position.y + enemy.height / 2;
@@ -221,6 +238,33 @@ class CollisionManager {
                     }
                 }
 
+                // ── Allies absorb enemy bullets (shield the player) ──
+                {
+                    let absorbed = false;
+                    const allies = perks.alliedEnemies;
+                    if (allies && allies.length > 0) {
+                        const bcx2 = bullet.position.x + bullet.width / 2;
+                        const bcy2 = bullet.position.y + bullet.height / 2;
+                        for (const ally of allies) {
+                            if (!ally.active) continue;
+                            const ax = ally.position.x + ally.width / 2;
+                            const ay = ally.position.y + ally.height / 2;
+                            const ar = ally.width * 0.5;
+                            const adx = bcx2 - ax;
+                            const ady = bcy2 - ay;
+                            if (adx * adx + ady * ady < ar * ar) {
+                                bullet.destroy();
+                                ally.takeDamage(1, g);
+                                ally.hitFlash = 1;
+                                g.particles.emit(bcx2, bcy2, 'shield', 4);
+                                absorbed = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (absorbed) continue;
+                }
+
                 // ── Fast distance pre-check: skip expensive circle if way too far ──
                 const bcx = bullet.position.x + bullet.width / 2;
                 const bcy = bullet.position.y + bullet.height / 2;
@@ -252,6 +296,7 @@ class CollisionManager {
 
             for (const enemy of entities.enemies) {
                 if (!enemy.active) continue;
+                if (enemy._isAlly) continue; // Skip allied enemies
                 if (enemy.collidesWithCircle(player)) {
                     if (perks.hasThorns()) {
                         // Thorns: enemy takes 3 damage, player is immune to contact damage

@@ -16,9 +16,9 @@ const PERK_RARITY = {
 
 // ─── Category definitions ───
 const PERK_CATEGORIES = {
-    offensive:  { label: 'Offensive',  icon: '⚔', color: '#ff5555' },
-    defensive:  { label: 'Defensive',  icon: '🛡', color: '#5588ff' },
-    utility:    { label: 'Utility',    icon: '⚙', color: '#55ff88' }
+    offensive:  { label: 'Offensive',  icon: '»', color: '#ff5555' },
+    defensive:  { label: 'Defensive',  icon: '«', color: '#5588ff' },
+    utility:    { label: 'Utility',    icon: '~', color: '#55ff88' }
 };
 
 // ─── Full Perk Catalog (20 perks) ───
@@ -77,7 +77,7 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'common',
         maxStacks: 3,
-        icon: '♥',
+        icon: '▲',
         world: 1
     },
     {
@@ -99,7 +99,7 @@ const PERK_CATALOG = [
         category: 'offensive',
         rarity: 'legendary',
         maxStacks: 1,
-        icon: '☠',
+        icon: '▼',
         stats: { hp: -1 },
         tradeoff: '−1 HP, −25% resist',
         world: 1
@@ -157,7 +157,7 @@ const PERK_CATALOG = [
         category: 'defensive',
         rarity: 'epic',
         maxStacks: 1,
-        icon: '✴',
+        icon: '∗',
         stats: { resist: 1 },
         world: 1
     },
@@ -207,7 +207,7 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '★',
+        icon: '■',
         world: 1
     },
     {
@@ -230,7 +230,7 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'rare',
         maxStacks: 2,
-        icon: '♣',
+        icon: '○',
         world: 1
     },
     {
@@ -263,14 +263,14 @@ const PERK_CATALOG = [
     // ── Offensive ──
 
     {
-        id: 'ricochet_master',
-        name: 'Ricochet Master',
-        description: 'All bullets bounce off screen edges up to 2 times.',
-        stackDesc: '+1 max bounce per stack',
+        id: 'neural_hijack',
+        name: 'Neural Hijack',
+        description: '25% chance killed enemies become permanent allies.',
+        stackDesc: '+10% chance, +1 max ally per stack',
         category: 'offensive',
         rarity: 'rare',
         maxStacks: 3,
-        icon: '↯',
+        icon: '▸',
         world: 2
     },
     {
@@ -301,12 +301,12 @@ const PERK_CATALOG = [
     {
         id: 'scia_infuocata',
         name: 'Fire Trail',
-        description: 'Leave a fire trail that damages enemies (2 dmg/s, 1s duration).',
-        stackDesc: '+1 dmg/s, +0.5s duration per stack',
+        description: 'Leave a persistent fire trail that damages enemies (2 dmg/s, 10s).',
+        stackDesc: '+1 dmg/s, +4s duration per stack',
         category: 'defensive',
         rarity: 'epic',
         maxStacks: 2,
-        icon: '♨',
+        icon: '≈',
         world: 2
     },
 
@@ -330,7 +330,7 @@ const PERK_CATALOG = [
         category: 'utility',
         rarity: 'legendary',
         maxStacks: 1,
-        icon: '⚛',
+        icon: '●',
         world: 2
     }
 ];
@@ -358,6 +358,7 @@ class PerkSystem {
         this.fireTrailSegments = [];
         this.fireTrailTimer = 0;
         this.sovraccaricoCooldown = 0;
+        this.alliedEnemies = []; // Neural Hijack converted allies
         // Cache for getActivePerks() — invalidated on activatePerk/reset
         this._activePerkCache = null;
     }
@@ -369,23 +370,24 @@ class PerkSystem {
     /** Return `count` random perks (weighted by rarity), no duplicates.
      *  Only perks whose `world` ≤ currentWorld are eligible. */
     getRandomSelection(count = 3, currentWorld = 1) {
+        const usedIds = new Set();
         const pool = [];
         for (const perk of PERK_CATALOG) {
             if ((perk.world || 1) > currentWorld) continue;
+            if (usedIds.has(perk.id)) continue;
             const cur = this.activePerks.get(perk.id) || 0;
             if (cur >= perk.maxStacks) continue;
             const w = PERK_RARITY[perk.rarity].weight;
             for (let i = 0; i < w; i++) pool.push(perk);
         }
         const selected = [];
-        const used = new Set();
         let attempts = 0;
         while (selected.length < count && attempts < 300) {
             attempts++;
             if (pool.length === 0) break;
             const perk = pool[Math.floor(Math.random() * pool.length)];
-            if (used.has(perk.id)) continue;
-            used.add(perk.id);
+            if (usedIds.has(perk.id)) continue;
+            usedIds.add(perk.id);
             selected.push({
                 ...perk,
                 currentStacks: this.activePerks.get(perk.id) || 0,
@@ -462,14 +464,15 @@ class PerkSystem {
     getDroneCount()        { return this.getStacks('orbital_drone'); }
 
     // ── World 2 Perk Getters ──
-    getRicochetBounces()   { return this.hasPerk('ricochet_master') ? 2 + (this.getStacks('ricochet_master') - 1) : 0; }
+    getNeuralHijackChance()  { return this.hasPerk('neural_hijack') ? 0.25 + (this.getStacks('neural_hijack') - 1) * 0.10 : 0; }
+    getNeuralHijackMaxAllies(){ return this.hasPerk('neural_hijack') ? 3 + this.getStacks('neural_hijack') : 0; }
     getStealthDamageBonus(){ return this.hasPerk('predatore') ? 0.50 + (this.getStacks('predatore') - 1) * 0.25 : 0; }
     getRevealRange()       { return this.hasPerk('esploratore') ? 220 + (this.getStacks('esploratore') - 1) * 40 : (this.hasPerk('predatore') ? 180 : 0); }
     getExplorerMagnetBonus() { return this.hasPerk('esploratore') ? 0.30 + (this.getStacks('esploratore') - 1) * 0.20 : 0; }
     getCritAoeRange()      { return this.hasPerk('colpo_critico') ? 80 + (this.getStacks('colpo_critico') - 1) * 20 : 0; }
     getCritAoeBonusChance(){ return this.hasPerk('colpo_critico') ? 0.05 * this.getStacks('colpo_critico') : 0; }
     getFireTrailDmg()      { return this.hasPerk('scia_infuocata') ? 2 + (this.getStacks('scia_infuocata') - 1) : 0; }
-    getFireTrailDuration() { return this.hasPerk('scia_infuocata') ? 1 + (this.getStacks('scia_infuocata') - 1) * 0.5 : 0; }
+    getFireTrailDuration() { return this.hasPerk('scia_infuocata') ? 10 + (this.getStacks('scia_infuocata') - 1) * 4 : 0; }
     hasSovraccarico()      { return this.hasPerk('sovraccarico'); }
 
     //  Boolean shortcuts
@@ -503,6 +506,7 @@ class PerkSystem {
         this.fireTrailSegments = [];
         this.fireTrailTimer = 0;
         this.sovraccaricoCooldown = 0;
+        this.alliedEnemies = [];
     }
 }
 

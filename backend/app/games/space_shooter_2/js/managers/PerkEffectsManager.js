@@ -1,9 +1,11 @@
 import Explosion from '../entities/Explosion.js';
+import AllyController from './AllyController.js';
 
 class PerkEffectsManager {
     constructor(game) {
         this.game = game;
         this._emergencySlowTimer = 0;
+        this.allyController = new AllyController(game);
     }
 
     applyPerkModifiersToPlayer() {
@@ -65,7 +67,7 @@ class PerkEffectsManager {
                     let nearest = null;
                     let nearDist = Infinity;
                     for (const e of g.entityManager.enemies) {
-                        if (!e.active) continue;
+                        if (!e.active || e._isAlly) continue;
                         const ex = e.position.x + e.width / 2;
                         const ey = e.position.y + e.height / 2;
                         const d = Math.sqrt((ex - dx) ** 2 + (ey - dy) ** 2);
@@ -121,41 +123,41 @@ class PerkEffectsManager {
 
         // ─── World 2 Perk Effects ───
 
-        // Ricochet Master: make all player bullets bounce
-        if (perks.getRicochetBounces() > 0) {
-            for (const b of g.entityManager.bullets) {
-                if (b.owner === 'player' && b.maxBounces === 0) {
-                    b.maxBounces = perks.getRicochetBounces();
-                }
-            }
-        }
+        // Neural Hijack: orbital allies (delegated to AllyController)
+        this.allyController.update(deltaTime);
 
-        // Scia Infuocata (Fire Trail)
+        // Scia Infuocata (Fire Trail) — only drop segments while moving
         if (perks.getFireTrailDmg() > 0) {
+            const px = player.position.x + player.width / 2;
+            const py = player.position.y + player.height;
             perks.fireTrailTimer -= deltaTime;
             if (perks.fireTrailTimer <= 0) {
                 perks.fireTrailTimer = 0.15; // drop a trail segment every 150ms
-                perks.fireTrailSegments.push({
-                    x: player.position.x + player.width / 2,
-                    y: player.position.y + player.height,
-                    timer: perks.getFireTrailDuration()
-                });
+                // Skip if player hasn't moved enough since last segment
+                const segs = perks.fireTrailSegments;
+                const last = segs.length > 0 ? segs[segs.length - 1] : null;
+                const moved = !last || (Math.abs(px - last.x) > 4 || Math.abs(py - last.y) > 4);
+                if (moved) {
+                    segs.push({ x: px, y: py, timer: perks.getFireTrailDuration() });
+                }
             }
             const dmgPerSec = perks.getFireTrailDmg();
+            const trailDrift = 50; // px/s — segments drift down like the world scrolls
             for (let i = perks.fireTrailSegments.length - 1; i >= 0; i--) {
                 const seg = perks.fireTrailSegments[i];
                 seg.timer -= deltaTime;
-                if (seg.timer <= 0) {
+                seg.y += trailDrift * deltaTime; // drift downward with world
+                if (seg.timer <= 0 || seg.y > g.canvas.height + 30) {
                     perks.fireTrailSegments.splice(i, 1);
                     continue;
                 }
                 // Damage enemies touching this trail segment
                 for (const e of g.entityManager.enemies) {
-                    if (!e.active) continue;
+                    if (!e.active || e._isAlly) continue;
                     const ex = e.position.x + e.width / 2;
                     const ey = e.position.y + e.height / 2;
                     const d = Math.sqrt((ex - seg.x) ** 2 + (ey - seg.y) ** 2);
-                    if (d < 20) {
+                    if (d < 28) {
                         const killed = e.takeDamage(dmgPerSec * deltaTime, g);
                         if (killed) g.scoreManager.onEnemyKilled(e);
                     }
@@ -206,7 +208,7 @@ class PerkEffectsManager {
             let nearest = null;
             let nearDist = 120;
             for (const e of g.entityManager.enemies) {
-                if (!e.active || hit.has(e)) continue;
+                if (!e.active || e._isAlly || hit.has(e)) continue;
                 const ex = e.position.x + e.width / 2;
                 const ey = e.position.y + e.height / 2;
                 const d = Math.sqrt((ex - cx) ** 2 + (ey - cy) ** 2);
@@ -232,7 +234,7 @@ class PerkEffectsManager {
     applyExplosiveAoE(cx, cy, radius, damage) {
         const g = this.game;
         for (const e of g.entityManager.enemies) {
-            if (!e.active) continue;
+            if (!e.active || e._isAlly) continue;
             const ex = e.position.x + e.width / 2;
             const ey = e.position.y + e.height / 2;
             const d = Math.sqrt((ex - cx) ** 2 + (ey - cy) ** 2);
@@ -311,22 +313,42 @@ class PerkEffectsManager {
         ctx.save();
         for (const seg of segments) {
             const t = seg.timer / this.game.perkSystem.getFireTrailDuration();
-            const alpha = t * 0.6;
-            ctx.globalAlpha = alpha;
-            const grad = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, 14);
-            grad.addColorStop(0, `rgba(255,200,50,${alpha})`);
-            grad.addColorStop(0.4, `rgba(255,100,20,${alpha * 0.6})`);
-            grad.addColorStop(1, `rgba(200,30,0,0)`);
+            const alpha = Math.min(1, t * 0.65);
+            const flicker = 0.9 + 0.1 * Math.sin(performance.now() * 0.01 + seg.x * 0.3);
+            ctx.globalAlpha = alpha * flicker;
+
+            // Outer glow
+            const r = 18;
+            const outerGrad = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, r * 1.4);
+            outerGrad.addColorStop(0, `rgba(255,220,80,${alpha * 0.3})`);
+            outerGrad.addColorStop(1, `rgba(255,80,10,0)`);
+            ctx.fillStyle = outerGrad;
+            ctx.beginPath();
+            ctx.arc(seg.x, seg.y, r * 1.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core fire circle
+            const grad = ctx.createRadialGradient(seg.x, seg.y, 0, seg.x, seg.y, r);
+            grad.addColorStop(0, `rgba(255,240,100,${alpha * 0.85})`);
+            grad.addColorStop(0.3, `rgba(255,160,30,${alpha * 0.65})`);
+            grad.addColorStop(0.7, `rgba(230,60,10,${alpha * 0.3})`);
+            grad.addColorStop(1, `rgba(180,20,0,0)`);
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(seg.x, seg.y, 14, 0, Math.PI * 2);
+            ctx.arc(seg.x, seg.y, r, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
     }
 
+    /** Render allied enemies (Neural Hijack) — delegated to AllyController */
+    renderAllies(ctx) {
+        this.allyController.render(ctx, this.game.assets);
+    }
+
     reset() {
         this._emergencySlowTimer = 0;
+        this.allyController.reset();
     }
 }
 

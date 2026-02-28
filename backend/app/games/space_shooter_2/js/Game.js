@@ -402,7 +402,9 @@ class Game {
 
             for (const pu of em.powerUps) pu.render(ctx);
 
-            for (const enemy of em.enemies) enemy.render(ctx, this.assets);
+            for (const enemy of em.enemies) {
+                if (!enemy._isAlly) enemy.render(ctx, this.assets);
+            }
 
             if (em.boss && em.boss.active) em.boss.render(ctx, this.assets);
 
@@ -425,6 +427,7 @@ class Game {
 
             this.perkEffectsManager.renderDrones(ctx);
             this.perkEffectsManager.renderFireTrail(ctx);
+            this.perkEffectsManager.renderAllies(ctx);
 
             for (const exp of em.explosions) exp.render(ctx);
 

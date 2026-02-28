@@ -229,7 +229,7 @@ export class DesertPlanetRenderer extends PlanetRenderer {
         for (const op of this._oasisPools) {
             const totalH = op.totalH;
             for (const tileOff of [0, totalH]) {
-                const ly = op.y + tileOff - scrollY;
+                const ly = op.y + scrollY - tileOff;
                 if (ly + op.ry * 1.5 < -10 || ly - op.ry * 1.5 > H + 10) continue;
 
                 ctx.save();

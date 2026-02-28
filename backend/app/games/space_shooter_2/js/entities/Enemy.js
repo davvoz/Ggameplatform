@@ -272,7 +272,7 @@ class Enemy extends GameObject {
         // Speed: +2% per level (1.0x at L1, ~1.58x at L30) 
         const worldRelLevel = ((level - 1) % 30) + 1; // 1-30 per world
         const levelHpMult = 1 + (worldRelLevel - 1) * 0.06;
-        const levelSpdMult = 1 + (worldRelLevel - 1) * 0.02;
+        const levelSpdMult = 1 + (worldRelLevel - 1) * (level > 30 ? 0.012 : 0.02);
         
         this.health = Math.ceil(config.health * hpMult * levelHpMult);
         this.maxHealth = this.health;
@@ -305,6 +305,9 @@ class Enemy extends GameObject {
     }
 
     update(deltaTime, game) {
+        // Allies are fully managed by AllyController — skip normal AI
+        if (this._isAlly) return false;
+
         const dt = deltaTime * (game.timeScale || 1);
         this.moveTimer += dt;
 
@@ -868,23 +871,23 @@ const BOSS_DEFS = {
     7: {
         name: 'Titanus Rex',
         totalWidth: 200, totalHeight: 190,
-        baseHP: 170,
+        baseHP: 110,
         score: 5500,
         speed: 38,
         movePattern: 'chase',
         color: '#22cc44',
         parts: [
-            { role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 170,
+            { role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 110,
               spriteKey: 'boss7_core', canShoot: true, shootRate: 2, shootPattern: 'spread', bulletCount: 5, bulletSpeed: 130 },
-            { role: 'turret', offsetX: -65, offsetY: -30, width: 32, height: 32, health: 22,
+            { role: 'turret', offsetX: -65, offsetY: -30, width: 32, height: 32, health: 16,
               spriteKey: 'boss7_turret', canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 160 },
-            { role: 'turret', offsetX: 65, offsetY: -30, width: 32, height: 32, health: 22,
+            { role: 'turret', offsetX: 65, offsetY: -30, width: 32, height: 32, health: 16,
               spriteKey: 'boss7_turret', canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 160 },
-            { role: 'arm', offsetX: -50, offsetY: 35, width: 40, height: 55, health: 25,
+            { role: 'arm', offsetX: -50, offsetY: 35, width: 40, height: 55, health: 18,
               spriteKey: 'boss7_arm', bobAmplitude: 6, bobSpeed: 1.8 },
-            { role: 'arm', offsetX: 50, offsetY: 35, width: 40, height: 55, health: 25,
+            { role: 'arm', offsetX: 50, offsetY: 35, width: 40, height: 55, health: 18,
               spriteKey: 'boss7_arm', bobAmplitude: 6, bobSpeed: 1.8 },
-            { role: 'shield', offsetX: 0, offsetY: -55, width: 90, height: 22, health: 20,
+            { role: 'shield', offsetX: 0, offsetY: -55, width: 90, height: 22, health: 14,
               spriteKey: 'boss7_shield', bobAmplitude: 3, bobSpeed: 1.5 },
         ]
     },
@@ -1245,7 +1248,7 @@ class MultiBoss {
         // HP: +5% per level, Speed: +1.5% per level
         const worldRelLevel = ((level - 1) % 30) + 1;
         const levelHpMult = 1 + (worldRelLevel - 1) * 0.05;
-        const levelSpdMult = 1 + (worldRelLevel - 1) * 0.015;
+        const levelSpdMult = 1 + (worldRelLevel - 1) * (level > 30 ? 0.01 : 0.015);
 
         // Center position
         this.centerX = x + def.totalWidth / 2;

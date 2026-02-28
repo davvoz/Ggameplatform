@@ -319,7 +319,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
             for (const tileOff of [0, totalH]) {
-                const oY = tileOff - scrollY;
+                const oY = scrollY - tileOff;
                 if (oY + totalH < -50 || oY > H + 50) continue;
 
                 const trace = (dx) => {
@@ -403,7 +403,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         for (const tp of this._toxicPools) {
             const totalH = tp.totalH;
             for (const tileOff of [0, totalH]) {
-                const ly = tp.y + tileOff - scrollY;
+                const ly = tp.y + scrollY - tileOff;
                 if (ly + tp.ry * 2 < -10 || ly - tp.ry * 2 > H + 10) continue;
 
                 ctx.save();
@@ -486,7 +486,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
             if (lifeFrac > 1) continue;
             const fade = lifeFrac < 0.15 ? lifeFrac / 0.15 : 1 - (lifeFrac - 0.15) / 0.85;
             for (const tileOff of [0, pool.totalH]) {
-                const py = pool.y + tileOff - scrollY + pb.dy;
+                const py = pool.y + scrollY - tileOff + pb.dy;
                 const px = pool.x + pb.dx;
                 if (py < -10 || py > H + 10) continue;
 

@@ -14,8 +14,7 @@ const POWERUP_TYPES = {
     ultimate: { icon: '💎', color: { r: 180, g: 100, b: 255 }, label: 'ULT+' },
     // ─── World 2 Power-ups ───
     drone_companion: { icon: '🤖', color: { r: 100, g: 220, b: 255 }, label: 'Drone' },
-    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' },
-    bouncing_bullets:{ icon: '🔮', color: { r: 255, g: 160, b: 40 }, label: 'Bounce' }
+    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' }
 };
 
 class PowerUp extends GameObject {
@@ -302,25 +301,7 @@ class PowerUp extends GameObject {
                 }
                 break;
             }
-            case 'bouncing_bullets': {
-                // Bouncing orb with arrows
-                const s = size * 0.6;
-                ctx.beginPath();
-                ctx.arc(cx, cy, s, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                // Ricochet arrows
-                ctx.strokeStyle = '#ff8800';
-                ctx.lineWidth = 1.5;
-                const dirs = [[1, -1], [-1, 1], [1, 1]];
-                for (const [dx, dy] of dirs) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx + dx * s * 0.7, cy + dy * s * 0.7);
-                    ctx.stroke();
-                }
-                break;
-            }
+
         }
         ctx.restore();
     }
@@ -365,10 +346,7 @@ class PowerUp extends GameObject {
                 game.bulletTimeActive = true;
                 game.bulletTimeTimer = 6;
                 break;
-            case 'bouncing_bullets':
-                player.bouncingBullets = true;
-                player.bouncingBulletsTime = 8;
-                break;
+
         }
     }
 }

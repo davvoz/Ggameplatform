@@ -863,8 +863,11 @@ export function getLevelData(level) {
 
     // Generate bonus waves based on level
     const bonusWaves = generateBonusWaves(level);
+    // World 2 speed damping: reduce inherited speedMult to keep normal difficulty manageable
+    const sMult = level > 30 ? base.speedMult * 0.82 : base.speedMult;
     return {
         ...base,
+        speedMult: sMult,
         waves: [...base.waves, ...bonusWaves]
     };
 }
@@ -882,9 +885,12 @@ function generateBonusWaves(level) {
     // Use world-relative level so W2 feels like W1 in length
     const relLevel = level > 30 ? level - 30 : level;
 
-    const bonusCount = isBoss ? Math.floor(relLevel / 10) : Math.floor(relLevel / 3) + 1;
-    // Clamp to reasonable range: 1-8 bonus waves
-    const count = Math.min(8, Math.max(1, bonusCount));
+    const bonusCount = isBoss ? Math.floor(relLevel / 10) : (level > 30
+        ? Math.floor(relLevel / 5) + 1   // W2: fewer bonus waves
+        : Math.floor(relLevel / 3) + 1); // W1: original formula
+    // Clamp to reasonable range: 1 for W2, 1-8 for W1
+    const maxBonusWaves = level > 30 ? 5 : 8;
+    const count = Math.min(maxBonusWaves, Math.max(1, bonusCount));
 
     const formations = ['none', 'vee', 'line', 'diamond', 'pincer', 'ring', 'stagger', 'cross', 'arrow'];
     const patterns = ['straight', 'sine', 'zigzag', 'dive', 'circle', 'spiral', 'strafe', 'swoop', 'pendulum'];

@@ -147,9 +147,6 @@ class Player extends GameObject {
         this.droneFireTimer = 0;
         this.droneAngle = 0;
 
-        this.bouncingBullets = false;
-        this.bouncingBulletsTime = 0;
-
         // Ultimate system
         this.ultimateCharge = 0;
         this.ultimateActive = false;
@@ -319,14 +316,6 @@ class Player extends GameObject {
             }
         }
 
-        // Bouncing bullets
-        if (this.bouncingBullets) {
-            this.bouncingBulletsTime -= deltaTime;
-            if (this.bouncingBulletsTime <= 0) {
-                this.bouncingBullets = false;
-            }
-        }
-
         this.thrusterFlicker += deltaTime * 10;
     }
 
@@ -442,7 +431,7 @@ class Player extends GameObject {
                 this._novaTime = 0; // track animation progress
                 // Damage all enemies on screen
                 for (const enemy of game.enemies) {
-                    if (enemy.active) {
+                    if (enemy.active && !enemy._isAlly) {
                         enemy.takeDamage(10, game);
                         game.particles.emit(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, 'explosion', 15);
                     }
@@ -704,20 +693,6 @@ class Player extends GameObject {
             ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
             ctx.lineTo(drCx, drCy);
             ctx.stroke();
-            ctx.restore();
-        }
-
-        // ── BOUNCING BULLETS VISUAL ──
-        if (this.bouncingBullets) {
-            ctx.save();
-            ctx.globalAlpha = 0.25 + 0.1 * Math.sin(Date.now() * 0.006);
-            ctx.strokeStyle = '#ffaa22';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.arc(cx, cy, 38, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
             ctx.restore();
         }
 

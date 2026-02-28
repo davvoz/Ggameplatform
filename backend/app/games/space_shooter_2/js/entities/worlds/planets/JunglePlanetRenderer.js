@@ -175,7 +175,7 @@ export class JunglePlanetRenderer extends PlanetRenderer {
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
             for (const tileOff of [0, totalH]) {
-                const oY = tileOff - scrollY;
+                const oY = scrollY - tileOff;
                 if (oY + totalH < -50 || oY > H + 50) continue;
 
                 const trace = (dx) => {

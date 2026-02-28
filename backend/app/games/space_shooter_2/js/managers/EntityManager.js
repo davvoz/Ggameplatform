@@ -22,10 +22,6 @@ class EntityManager {
         // Cap total bullets to prevent lag during intense boss fights
         if (this.bullets.length >= 200) return;
         const bullet = new Bullet(x, y, vx, vy, owner, damage);
-        // World 2 bouncing bullets power-up
-        if (owner === 'player' && this.player && this.player.bouncingBullets) {
-            bullet.maxBounces = 2;
-        }
         this.bullets.push(bullet);
     }
 
@@ -53,7 +49,7 @@ class EntityManager {
             let closest = null;
             let closestDist = Infinity;
             for (const enemy of this.enemies) {
-                if (!enemy.active) continue;
+                if (!enemy.active || enemy._isAlly) continue;
                 const dx = enemy.position.x + enemy.width / 2 - m.x;
                 const dy = enemy.position.y + enemy.height / 2 - m.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -96,7 +92,7 @@ class EntityManager {
             m.y += m.vy * dt;
 
             for (const enemy of this.enemies) {
-                if (!enemy.active) continue;
+                if (!enemy.active || enemy._isAlly) continue;
                 if (m.x > enemy.position.x && m.x < enemy.position.x + enemy.width &&
                     m.y > enemy.position.y && m.y < enemy.position.y + enemy.height) {
                     const killed = enemy.takeDamage(m.damage, g);

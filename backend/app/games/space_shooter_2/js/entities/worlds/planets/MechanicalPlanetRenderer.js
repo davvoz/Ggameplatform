@@ -260,7 +260,7 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
             ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
 
             for (const tileOff of [0, totalH]) {
-                const oY = tileOff - scrollY;
+                const oY = scrollY - tileOff;
                 if (oY + totalH < -50 || oY > H + 50) continue;
 
                 const trace = (dx) => {
@@ -370,7 +370,7 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         for (const g of this._gears) {
             const totalH = g.totalH;
             for (const tileOff of [0, totalH]) {
-                const gy = g.y + tileOff - scrollY;
+                const gy = g.y + scrollY - tileOff;
                 if (gy + g.radius * 1.5 < -10 || gy - g.radius * 1.5 > H + 10) continue;
 
                 ctx.save();

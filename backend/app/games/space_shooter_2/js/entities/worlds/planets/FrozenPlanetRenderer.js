@@ -282,7 +282,7 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
             for (const tileOff of [0, totalH]) {
-                const oY = tileOff - scrollY;
+                const oY = scrollY - tileOff;
                 if (oY + totalH < -50 || oY > H + 50) continue;
 
                 const trace = (dx) => {
@@ -329,7 +329,7 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
         for (const lk of this._frozenLakes) {
             const totalH = lk.totalH;
             for (const tileOff of [0, totalH]) {
-                const ly = lk.y + tileOff - scrollY;
+                const ly = lk.y + scrollY - tileOff;
                 if (ly + lk.ry < -10 || ly - lk.ry > H + 10) continue;
 
                 ctx.save();

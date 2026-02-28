@@ -57,7 +57,7 @@ class WaveManager {
             return;
         }
 
-        const enemiesAlive = entities.enemies.filter(e => e.active).length;
+        const enemiesAlive = entities.enemies.filter(e => e.active && !e._isAlly).length;
 
         if (this.waveCleared) {
             this.waveDelay -= deltaTime;

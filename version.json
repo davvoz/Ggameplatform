@@ -1,8 +1,17 @@
 {
-  "version": "3.33.12",
-  "timestamp": "2026-03-01T02:13:25.427Z",
-  "buildNumber": 430,
+  "version": "3.33.13",
+  "timestamp": "2026-03-01T15:31:42.515Z",
+  "buildNumber": 431,
   "changelog": [
+    {
+      "version": "3.33.13",
+      "date": "2026-03-01",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] enhance visuals and animations for level transitions and power-ups",
+        "🔖 Bump version to 3.33.12 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.12",
       "date": "2026-03-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SS2]feat in obf , fix ani",
         "🔖 Bump version to 3.33.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.3",
-      "date": "2026-02-24",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]enhance perk selection to consider current world context",
-        "🔖 Bump version to 3.33.2 [skip-version]"
       ]
     }
   ]

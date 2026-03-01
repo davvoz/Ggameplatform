@@ -1,8 +1,17 @@
 {
-  "version": "3.33.11",
-  "timestamp": "2026-02-28T21:55:18.987Z",
-  "buildNumber": 429,
+  "version": "3.33.12",
+  "timestamp": "2026-03-01T02:13:25.427Z",
+  "buildNumber": 430,
   "changelog": [
+    {
+      "version": "3.33.12",
+      "date": "2026-03-01",
+      "type": "patch",
+      "changes": [
+        "fix:clean project , [SS2] manage coins",
+        "🔖 Bump version to 3.33.11 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.11",
       "date": "2026-02-28",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [SS2]enhance perk selection to consider current world context",
         "🔖 Bump version to 3.33.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.2",
-      "date": "2026-02-24",
-      "type": "patch",
-      "changes": [
-        "feat : [SS2] add new world , total refractor",
-        "🔖 Bump version to 3.33.1 [skip-version]"
       ]
     }
   ]

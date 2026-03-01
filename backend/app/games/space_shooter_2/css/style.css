@@ -1385,7 +1385,6 @@ html, body {
 
 /* ===== SCROLLBAR FOR SCREEN CONTENT ===== */
 .screen-content {
-    scrollbar-width: none;           /* Firefox */
     -ms-overflow-style: none;        /* IE/Edge */
 }
 .screen-content::-webkit-scrollbar {
@@ -1645,6 +1644,7 @@ body.game-fullscreen #game-container {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    min-height: 80px;
 }
 #perk-coin-actions.hidden { display: none; }
 
@@ -1681,7 +1681,7 @@ body.game-fullscreen #game-container {
     border-radius: 10px;
     padding: 8px 12px 6px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
     min-width: 72px;
 }
 .coin-action-btn:hover:not(:disabled) {
@@ -1747,7 +1747,6 @@ body.game-fullscreen #game-container {
 }
 .perk-card--mini .perk-desc {
     font-size: 9px;
-    -webkit-line-clamp: 2;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -1966,4 +1965,26 @@ body.game-fullscreen #game-container {
 @keyframes xpSlideOut {
     from { transform: translateX(0); opacity: 1; }
     to   { transform: translateX(400px); opacity: 0; }
+}
+
+/* ===== Stagger entrance animation ===== */
+@keyframes staggerIn {
+    from {
+        opacity: 0;
+        transform: translateY(var(--stagger-shift, 14px));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stagger-enter {
+    opacity: 0;
+    animation: staggerIn 0.34s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    animation-delay: calc(var(--stagger-i, 0) * 70ms + 50ms);
+    will-change: opacity, transform;
+    /* Prevent existing CSS transitions (e.g. perk-card transform) from
+       conflicting with the animation on the same property. */
+    transition: none !important;
 }

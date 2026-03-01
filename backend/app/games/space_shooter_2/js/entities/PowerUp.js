@@ -2,7 +2,16 @@ import GameObject from './GameObject.js';
 
 /**
  * PowerUp - Collectible items dropped by enemies
+ *
+ * Performance modes:
+ *   HIGH   → shadowBlur glow ring + radial gradient body + highlight crescent
+ *            + icon + rotating sparkle particles
+ *   MEDIUM → no shadowBlur glow ring, radial gradient body + icon (no sparkles)
+ *   LOW    → flat filled circle + simple icon (no gradients, no glow, no sparkles)
  */
+
+// Shared performance state
+let _perfMode = 'high';
 
 const POWERUP_TYPES = {
     health: { icon: '❤️', color: { r: 255, g: 80, b: 80 }, label: '+HP' },
@@ -30,6 +39,10 @@ class PowerUp extends GameObject {
         this.config = POWERUP_TYPES[type] || POWERUP_TYPES.health;
         this.pulsePhase = 0;
         this.magnetRange = 80;
+    }
+
+    static setPerformanceMode(mode) {
+        _perfMode = mode;
     }
 
     update(deltaTime, game) {
@@ -74,18 +87,45 @@ class PowerUp extends GameObject {
         const col = this.config.color;
         const colStr = `rgb(${col.r},${col.g},${col.b})`;
 
-        // Outer glow ring
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.2 * blinkAlpha;
-        ctx.strokeStyle = colStr;
-        ctx.shadowColor = colStr;
-        ctx.shadowBlur = 18;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
+        const isHigh = _perfMode === 'high';
+        const isLow  = _perfMode === 'low';
+
+        // ─── LOW MODE: flat circle + icon, no effects ───
+        if (isLow) {
+            // Simple flat filled circle
+            ctx.fillStyle = colStr;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+            // Thin outline
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Icon only
+            ctx.shadowBlur = 0;
+            this.drawPowerUpIcon(ctx, cx, cy, r * 0.5);
+
+            ctx.restore();
+            return;
+        }
+
+        // ─── MEDIUM / HIGH MODE ───
+
+        // Outer glow ring (HIGH only — uses shadowBlur)
+        if (isHigh) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.2 * blinkAlpha;
+            ctx.strokeStyle = colStr;
+            ctx.shadowColor = colStr;
+            ctx.shadowBlur = 18;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
 
         // Background filled circle with cartoon outline
         const bodyGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.3, 0, cx, cy, r);
@@ -102,31 +142,35 @@ class PowerUp extends GameObject {
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // Highlight crescent
-        ctx.save();
-        ctx.globalAlpha = 0.35;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.ellipse(cx - r * 0.2, cy - r * 0.25, r * 0.45, r * 0.25, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // Highlight crescent (HIGH only)
+        if (isHigh) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(cx - r * 0.2, cy - r * 0.25, r * 0.45, r * 0.25, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
 
         // Draw proper icon shapes instead of emoji
         ctx.shadowBlur = 0;
         this.drawPowerUpIcon(ctx, cx, cy, r * 0.5);
 
-        // Rotating sparkle particles around the orb
-        const sparkCount = 3;
-        const sparkAngleBase = Date.now() * 0.003;
-        ctx.globalAlpha = 0.5 * blinkAlpha;
-        ctx.fillStyle = '#fff';
-        for (let i = 0; i < sparkCount; i++) {
-            const sa = sparkAngleBase + i * Math.PI * 2 / sparkCount;
-            const sx = cx + Math.cos(sa) * (r + 4);
-            const sy = cy + Math.sin(sa) * (r + 4);
-            ctx.beginPath();
-            ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
-            ctx.fill();
+        // Rotating sparkle particles around the orb (HIGH only)
+        if (isHigh) {
+            const sparkCount = 3;
+            const sparkAngleBase = Date.now() * 0.003;
+            ctx.globalAlpha = 0.5 * blinkAlpha;
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < sparkCount; i++) {
+                const sa = sparkAngleBase + i * Math.PI * 2 / sparkCount;
+                const sx = cx + Math.cos(sa) * (r + 4);
+                const sy = cy + Math.sin(sa) * (r + 4);
+                ctx.beginPath();
+                ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         ctx.restore();

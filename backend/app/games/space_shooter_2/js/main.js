@@ -329,14 +329,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ========== LEVEL COMPLETE ==========
     document.getElementById('btn-next-level')?.addEventListener('click', () => {
-        game.hideLevelCompleteScreen();
         game.sound.playMenuClick();
+        const lcScreen = document.getElementById('level-complete-screen');
         // Skip perk screen on world-end levels (30, 60) — world transition or victory follows
         const isWorldEnd = (game.currentLevel % 30 === 0);
         if (isWorldEnd) {
+            game.hideLevelCompleteScreen();
             game.startNextLevel();
         } else {
-            game.showPerkScreen();
+            // Cross-fade directly into perk screen (no flash)
+            game.showPerkScreen(lcScreen);
         }
     });
 

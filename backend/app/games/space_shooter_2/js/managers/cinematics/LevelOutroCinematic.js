@@ -54,8 +54,15 @@ export default class LevelOutroCinematic extends CinematicScene {
         const cx  = w / 2;
         const cy  = h / 3;
 
-        /* dark overlay */
-        const bgAlpha = Math.min(0.4, p * 1.5);
+        /* dark overlay — ramps to near-opaque at the end for seamless
+           transition into the level-complete screen (background ~0.94) */
+        let bgAlpha;
+        if (p < 0.8) {
+            bgAlpha = Math.min(0.4, p * 1.5);
+        } else {
+            // 0.4 → 0.94 over the last 20%
+            bgAlpha = 0.4 + ((p - 0.8) / 0.2) * 0.54;
+        }
         ctx.fillStyle = `rgba(0,0,0,${bgAlpha.toFixed(3)})`;
         ctx.fillRect(0, 0, w, h);
 

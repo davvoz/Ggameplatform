@@ -3,11 +3,10 @@ import GameObject from './GameObject.js';
 /**
  * Bullet - Energy bolt projectile
  *
- * All performance modes render the SAME bolt shape (bezier body, multi-layer
- * core, trail). The only differences:
- *   HIGH   → outer radialGradient glow + sparkle tip + 8-point trail
- *   MEDIUM → no outer glow, sparkle tip, 5-point trail
- *   LOW    → no outer glow, no sparkle, 3-point trail
+ * Performance modes:
+ *   HIGH   → bezier bolt body (3 layers) + outer glow + sparkle tip + 8-point tapered trail
+ *   MEDIUM → bezier bolt body (3 layers) + 5-point tapered trail (no glow, no sparkle)
+ *   LOW    → simple rectangle bolt (2 fills, no bezier) + single-line trail (1 stroke)
  *
  * No shadowBlur is used in any mode.
  */
@@ -124,7 +123,42 @@ class Bullet extends GameObject {
 
         ctx.save();
 
-        // === TRAIL: tapered line (always rendered, length varies) ===
+        // ─── LOW MODE: ultra-simple rectangle + single-line trail ───
+        if (isLow) {
+            // Simple trail — single stroke from last trail point to current
+            if (this.trail.length >= 4) {
+                const ti = this.trail.length - 4;
+                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = this.midColor;
+                ctx.lineWidth = bW * 0.8;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.trail[ti], this.trail[ti + 1]);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+            }
+
+            // Simple rotated rectangle bolt
+            ctx.globalAlpha = 1;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(this._dirAngle);
+            // Outer rect
+            ctx.fillStyle = this.outerColor;
+            ctx.fillRect(-bW * 0.5, -bL, bW, bL * 1.4);
+            // Inner bright core rect
+            ctx.fillStyle = this.coreColor;
+            ctx.globalAlpha = 0.85;
+            ctx.fillRect(-bW * 0.25, -bL * 0.6, bW * 0.5, bL * 0.9);
+            ctx.restore();
+
+            ctx.restore();
+            return;
+        }
+
+        // ─── MEDIUM / HIGH MODE ───
+
+        // === TRAIL: tapered line (length varies by mode) ===
         if (this.trail.length >= 4) {
             const segs = this.trail.length / 2;
             for (let i = 0; i < this.trail.length - 2; i += 2) {
@@ -158,7 +192,7 @@ class Bullet extends GameObject {
             ctx.fill();
         }
 
-        // === BOLT BODY (always rendered — same shape on all modes) ===
+        // === BOLT BODY (bezier shape on medium/high) ===
         ctx.globalAlpha = 1;
 
         ctx.save();
@@ -197,8 +231,8 @@ class Bullet extends GameObject {
 
         ctx.restore(); // undo translate+rotate
 
-        // === SPARKLE at tip (skip only on low — barely visible difference) ===
-        if (!isLow) {
+        // === SPARKLE at tip (high only) ===
+        if (isHigh) {
             const dirX = this._speed > 0 ? this.velocity.x / this._speed : 0;
             const dirY = this._speed > 0 ? this.velocity.y / this._speed : -1;
             const pulse = 0.8 + Math.sin(this.age * 20) * 0.2;

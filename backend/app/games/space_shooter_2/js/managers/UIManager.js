@@ -5,6 +5,38 @@ class UIManager {
         this._currentPerkCards = [];
     }
 
+    /**
+     * Smoothly reveal a .ui-screen: forces a reflow so the browser commits
+     * the hidden (opacity 0) state, then transitions to visible.
+     */
+    _revealScreen(screen) {
+        screen.offsetHeight; // force reflow to commit opacity:0
+        screen.classList.remove('hidden');
+        if (window.audioViz) window.audioViz.start(screen);
+    }
+
+    /**
+     * Instant swap between two ui-screens (no animation, no layout flash).
+     */
+    _crossFadeScreens(oldScreen, newScreen) {
+        if (oldScreen) {
+            oldScreen.style.transition = 'none';
+            oldScreen.classList.add('hidden');
+            oldScreen.offsetHeight;
+            oldScreen.style.transition = '';
+            if (window.audioViz && window.audioViz.canvas.parentNode === oldScreen) {
+                window.audioViz.stop();
+            }
+        }
+
+        newScreen.style.transition = 'none';
+        newScreen.classList.remove('hidden');
+        newScreen.offsetHeight;
+        newScreen.style.transition = '';
+
+        if (window.audioViz) window.audioViz.start(newScreen);
+    }
+
     // ══════════════════════════════════════════════
     //  COIN ACTIONS — definitions for the perk screen
     // ══════════════════════════════════════════════
@@ -51,8 +83,45 @@ class UIManager {
             starsEl.appendChild(star);
         }
 
-        screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+        // Pre-hide all animated elements before the screen appears
+        this._prepareLevelCompleteEntrance(screen);
+
+        this._revealScreen(screen);
+
+        // Stagger entrance animation
+        this._staggerLevelCompleteEntrance(screen);
+    }
+
+    /** Hide all summary panel children for stagger entrance. */
+    _prepareLevelCompleteEntrance(screen) {
+        const els = [
+            screen.querySelector('.lc-title'),
+            screen.querySelector('.lc-stars'),
+            screen.querySelector('.lc-level-name'),
+            ...screen.querySelectorAll('.summary-row, .summary-divider'),
+            screen.querySelector('.screen-actions')
+        ];
+        els.forEach(el => { if (el) { el.classList.remove('stagger-enter'); el.style.opacity = '0'; } });
+    }
+
+    /** Stagger reveal via CSS animation — top to bottom, uniform rhythm. */
+    _staggerLevelCompleteEntrance(screen) {
+        let i = 0;
+
+        // Title
+        this._staggerMark(screen.querySelector('.lc-title'), i++, 14);
+        // Stars
+        this._staggerMark(screen.querySelector('.lc-stars'), i++, 10);
+        // Level name
+        this._staggerMark(screen.querySelector('.lc-level-name'), i++, 8);
+
+        // Summary rows
+        screen.querySelectorAll('.summary-row, .summary-divider').forEach(row => {
+            this._staggerMark(row, i++, 12);
+        });
+
+        // Continue button
+        this._staggerMark(screen.querySelector('.screen-actions'), i++, 10);
     }
 
     hideLevelCompleteScreen() {
@@ -63,7 +132,7 @@ class UIManager {
         }
     }
 
-    showPerkScreen() {
+    async showPerkScreen(fromScreen) {
         const g = this.game;
         const screen = document.getElementById('perk-select-screen');
         if (!screen) return;
@@ -73,10 +142,93 @@ class UIManager {
         const perks = g.perkSystem.getRandomSelection(3, currentWorld);
 
         this._renderPerkCards(perks);
-        this._renderCoinActions();
+        // Await so coin elements exist in the DOM before we stagger
+        await this._renderCoinActions();
 
-        screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+        // Pre-hide everything for staggered reveal
+        this._preparePerkEntrance(screen);
+
+        if (fromScreen) {
+            this._crossFadeScreens(fromScreen, screen);
+        } else {
+            this._revealScreen(screen);
+        }
+
+        // Unified stagger animation
+        this._staggerPerkEntrance(screen);
+    }
+
+    // ── Shared animation helper ────────────────────────
+    //    Pure CSS animation — no setTimeout, no layout thrashing.
+    //    Each element gets a .stagger-enter class + --stagger-i index;
+    //    the browser's compositor pre-schedules the whole cascade.
+
+    /**
+     * Mark an element for staggered CSS entrance.
+     * @param {HTMLElement} el
+     * @param {number} index  sequential index (determines delay via CSS calc)
+     * @param {number} [shift=14]  px translateY start offset
+     */
+    _staggerMark(el, index, shift = 14) {
+        if (!el) return;
+        // Reset any previous animation state
+        el.classList.remove('stagger-enter');
+        el.style.opacity = '0';
+        el.style.setProperty('--stagger-i', index);
+        el.style.setProperty('--stagger-shift', `${shift}px`);
+        // Force reflow so animation restarts if re-entering
+        void el.offsetWidth;
+        el.classList.add('stagger-enter');
+
+        // Clean up after animation finishes so will-change layer is
+        // de-promoted gracefully and inline styles don't linger.
+        const onEnd = () => {
+            el.removeEventListener('animationend', onEnd);
+            el.classList.remove('stagger-enter');
+            el.style.opacity = '1';
+            el.style.transform = '';
+            el.style.willChange = '';
+            el.style.removeProperty('--stagger-i');
+            el.style.removeProperty('--stagger-shift');
+        };
+        el.addEventListener('animationend', onEnd, { once: true });
+    }
+
+    // ── Perk screen entrance ──────────────────────────
+
+    /** Pre-hide all perk screen elements (instant, no class yet). */
+    _preparePerkEntrance(screen) {
+        const els = [
+            screen.querySelector('.perk-title'),
+            screen.querySelector('.perk-subtitle'),
+            ...screen.querySelectorAll('#perk-cards-container .perk-card'),
+            document.getElementById('perk-coin-actions')
+        ];
+        els.forEach(el => { if (el) { el.classList.remove('stagger-enter'); el.style.opacity = '0'; } });
+    }
+
+    /**
+     * Staggered reveal via CSS animation — zero setTimeout, compositor-driven.
+     *   Title → Subtitle → Cards → Balance badge → Coin buttons
+     */
+    _staggerPerkEntrance(screen) {
+        let i = 0;
+
+        // Title
+        this._staggerMark(screen.querySelector('.perk-title'), i++, 14);
+        // Subtitle
+        this._staggerMark(screen.querySelector('.perk-subtitle'), i++, 10);
+
+        // Perk cards
+        screen.querySelectorAll('#perk-cards-container .perk-card').forEach(card => {
+            this._staggerMark(card, i++, 18);
+        });
+
+        // Coin section — animate as a single block to avoid serial layout shifts
+        const coinWrapper = document.getElementById('perk-coin-actions');
+        if (coinWrapper && !coinWrapper.classList.contains('hidden')) {
+            this._staggerMark(coinWrapper, i++, 12);
+        }
     }
 
     // ──────────────────────────────────────────
@@ -345,8 +497,7 @@ class UIManager {
         // Continue button
         this._updateContinueUI();
 
-        screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+        this._revealScreen(screen);
     }
 
     // ──────────────────────────────────────────
@@ -442,7 +593,7 @@ class UIManager {
         // Hide game-over, show swap screen
         document.getElementById('game-over-screen')?.classList.add('hidden');
         if (window.audioViz) window.audioViz.stop();
-        screen.classList.remove('hidden');
+        this._revealScreen(screen);
     }
 
     _renderSwapCurrentPerks() {
@@ -650,8 +801,7 @@ class UIManager {
             });
         }
 
-        screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+        this._revealScreen(screen);
     }
 
     populateShipPreviews() {

@@ -9,6 +9,7 @@ import Bullet from './entities/Bullet.js';
 import { PerkSystem } from './PerkSystem.js';
 import { Enemy } from './entities/Enemy.js';
 import Explosion from './entities/Explosion.js';
+import { PowerUp } from './entities/PowerUp.js';
 
 import { DIFFICULTY_CONFIG } from './DifficultyConfig.js';
 import EntityManager from './managers/EntityManager.js';
@@ -378,8 +379,10 @@ class Game {
         // Clear canvas before each frame to prevent artifacts from previous renders
         ctx.clearRect(0, 0, w, h);
 
-        // Solid black when in menu / gameover so canvas never peeks through UI overlays
-        if (this.state === 'menu' || this.state === 'gameover') {
+        // Solid black when in menu / gameover / levelComplete
+        // so canvas never peeks through while UI screen opacity transitions in
+        if (this.state === 'menu' || this.state === 'gameover' ||
+            this.state === 'levelComplete') {
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, w, h);
             ctx.restore();
@@ -586,8 +589,8 @@ class Game {
         this.uiManager.hideLevelCompleteScreen();
     }
 
-    showPerkScreen() {
-        this.uiManager.showPerkScreen();
+    showPerkScreen(fromScreen) {
+        this.uiManager.showPerkScreen(fromScreen);
     }
 
     startNextLevel() {
@@ -830,6 +833,9 @@ class Game {
 
         // Explosion detail
         Explosion.setPerformanceMode(mode);
+
+        // PowerUp effects
+        PowerUp.setPerformanceMode(mode);
 
         // PostProcessing
         this.postProcessing.setQuality(mode);

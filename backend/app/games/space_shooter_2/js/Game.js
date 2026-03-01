@@ -20,6 +20,7 @@ import CinematicManager from './managers/CinematicManager.js';
 import HUDRenderer from './managers/HUDRenderer.js';
 import UIManager from './managers/UIManager.js';
 import PerkEffectsManager from './managers/PerkEffectsManager.js';
+import PlatformCoinService from './managers/PlatformCoinService.js';
 
 
 
@@ -90,11 +91,18 @@ class Game {
         this.scoreManager = new ScoreManager(this);
         this.waveManager = new WaveManager(this);
         this.levelManager = new LevelManager(this);
+
+        // Continue system
+        this.CONTINUE_COST = 50;
+        this.CONTINUE_CHANGE_BUILD_COST = 70;
+        this.hasContinued = false;
+        this.lastSentScore = 0;
         this.collisionManager = new CollisionManager(this);
         this.cinematicManager = new CinematicManager(this);
         this.hudRenderer = new HUDRenderer(this);
         this.uiManager = new UIManager(this);
         this.perkEffectsManager = new PerkEffectsManager(this);
+        this.coinService = new PlatformCoinService();
 
         this.init();
     }
@@ -500,6 +508,9 @@ class Game {
 
         this.perkSystem.reset();
 
+        this.hasContinued = false;
+        this.lastSentScore = 0;
+
         // Set starting level based on selected world (each world = 30 levels)
        // window.DEBUG_START_LEVEL = 56; // TODO: TEMP TEST — remove after testing
         if (window.DEBUG_START_LEVEL && window.DEBUG_START_LEVEL > 1) {
@@ -598,6 +609,71 @@ class Game {
 
     closeShipDetail() {
         this.uiManager.closeShipDetail();
+    }
+
+    // ══════════════════════════════════
+    //  CONTINUE SYSTEM
+    // ══════════════════════════════════
+
+    /**
+     * Resume game after a paid continue.
+     * Restores the player at full HP on the same level, keeps score/perks.
+     */
+    resumeAfterContinue() {
+        // Hide game-over screen
+        document.getElementById('game-over-screen')?.classList.add('hidden');
+        if (window.audioViz) window.audioViz.stop();
+
+        // Preserve evolved stats
+        const oldPlayer = this.entityManager.player;
+        const savedBonusStats = oldPlayer ? { ...oldPlayer.bonusStats } : { hp: 0, speed: 0, resist: 0, fireRate: 0 };
+        const savedWeaponLevel = oldPlayer ? oldPlayer.weaponLevel : 1;
+
+        // Create fresh player with same ship/ultimate
+        const player = new Player(
+            this.logicalWidth / 2 - 32,
+            this.logicalHeight - 100,
+            this.selectedShipId,
+            this.selectedUltimateId
+        );
+        player.bonusStats = savedBonusStats;
+        player.recalculateStats();
+        player.health = player.maxHealth;
+        player.weaponLevel = savedWeaponLevel;
+        player.invincible = true;
+        player.invincibleTime = player.invincibleDuration * 2.5; // Extended invincibility
+
+        this.entityManager.player = player;
+
+        // Clear battlefield
+        this.entityManager.enemies = [];
+        this.entityManager.bullets = [];
+        this.entityManager.explosions = [];
+        this.entityManager.powerUps = [];
+        this.entityManager.homingMissiles = [];
+        this.entityManager.bossActive = false;
+        this.entityManager.boss = null;
+        this.entityManager.miniBossActive = false;
+        this.entityManager.miniBoss = null;
+
+        // Restart waves for current level
+        this.waveManager.resetForLevel();
+
+        // Re-apply perks
+        this.perkEffectsManager.applyPerkModifiersToPlayer();
+
+        // Visual feedback
+        this.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.8);
+        this.sound.playGameMusic();
+
+        this.hasContinued = true;
+        this.state = 'playing';
+        this.uiManager.showHudButtons();
+
+        // Restart game session so platform tracks the continue segment
+        if (typeof window.startGameSession === 'function') {
+            window.startGameSession();
+        }
     }
 
     _hideHudButtons() {

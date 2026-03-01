@@ -348,6 +348,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ========== GAME OVER ==========
+    document.getElementById('go-continue-btn')?.addEventListener('click', () => {
+        game.uiManager.handleContinue();
+        game.sound.playMenuClick();
+    });
+
+    document.getElementById('go-continue-build-btn')?.addEventListener('click', () => {
+        game.uiManager.handleContinueChangeBuild();
+        game.sound.playMenuClick();
+    });
+
+    document.getElementById('perk-swap-confirm')?.addEventListener('click', () => {
+        game.uiManager.confirmPerkSwap();
+        game.sound.playMenuClick();
+    });
+
+    document.getElementById('perk-swap-cancel')?.addEventListener('click', () => {
+        game.uiManager.hidePerkSwapOverlay();
+        game.sound.playMenuClick();
+    });
+
     document.getElementById('btn-restart')?.addEventListener('click', () => {
         game.state = 'menu';
         game.clearAllEntities();

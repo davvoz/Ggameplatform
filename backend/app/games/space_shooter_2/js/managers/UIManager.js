@@ -1,6 +1,22 @@
 class UIManager {
     constructor(game) {
         this.game = game;
+        /** Currently displayed perk cards (so coin actions can replace them). */
+        this._currentPerkCards = [];
+    }
+
+    // ══════════════════════════════════════════════
+    //  COIN ACTIONS — definitions for the perk screen
+    // ══════════════════════════════════════════════
+
+    /** Coin action config: id, cost, label, icon, handler key */
+    static get COIN_ACTIONS() {
+        return [
+            { id: 'reroll',     cost: 5,  label: 'Reroll',       icon: '🔄', desc: '3 new random perks' },
+            { id: 'rare',       cost: 10, label: 'Rare pack',    icon: '💎', desc: '3 rare+ perks' },
+            { id: 'epic',       cost: 20, label: 'Epic pack',    icon: '🔮', desc: '3 epic+ perks' },
+            { id: 'choose_any', cost: 40, label: 'Free pick',    icon: '⭐', desc: 'Choose any perk' }
+        ];
     }
 
     showLevelCompleteScreen() {
@@ -55,9 +71,24 @@ class UIManager {
         g.state = 'perkSelect';
         const currentWorld = g.levelManager ? g.levelManager.getCurrentWorld() : 1;
         const perks = g.perkSystem.getRandomSelection(3, currentWorld);
+
+        this._renderPerkCards(perks);
+        this._renderCoinActions();
+
+        screen.classList.remove('hidden');
+        if (window.audioViz) window.audioViz.start(screen);
+    }
+
+    // ──────────────────────────────────────────
+    //  Perk card rendering (shared by all flows)
+    // ──────────────────────────────────────────
+
+    /** Render an array of perks into #perk-cards-container */
+    _renderPerkCards(perks) {
         const container = document.getElementById('perk-cards-container');
         if (!container) return;
         container.innerHTML = '';
+        this._currentPerkCards = perks;
 
         for (const perk of perks) {
             const card = document.createElement('div');
@@ -90,12 +121,192 @@ class UIManager {
             card.addEventListener('click', () => this.handlePerkChoice(perk.id));
             container.appendChild(card);
         }
+    }
 
-        screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+    // ──────────────────────────────────────────
+    //  Coin action bar
+    // ──────────────────────────────────────────
+
+    /** Render coin action buttons + balance badge into #perk-coin-actions */
+    async _renderCoinActions() {
+        const wrapper = document.getElementById('perk-coin-actions');
+        if (!wrapper) return;
+
+        const coinService = this.game.coinService;
+        if (!coinService || !coinService.isAvailable()) {
+            wrapper.classList.add('hidden');
+            return;
+        }
+
+        wrapper.classList.remove('hidden');
+        wrapper.innerHTML = '';
+
+        // Balance badge
+        const balance = await coinService.fetchBalance();
+        const balEl = document.createElement('div');
+        balEl.className = 'coin-balance-badge';
+        balEl.id = 'perk-coin-balance';
+        balEl.innerHTML = `<span class="coin-icon">🪙</span> <span class="coin-amount">${balance}</span>`;
+        wrapper.appendChild(balEl);
+
+        // Action buttons
+        const btnRow = document.createElement('div');
+        btnRow.className = 'coin-action-row';
+
+        for (const action of UIManager.COIN_ACTIONS) {
+            const btn = document.createElement('button');
+            btn.className = 'coin-action-btn';
+            btn.disabled = balance < action.cost;
+            btn.dataset.actionId = action.id;
+            btn.innerHTML = `
+                <span class="coin-action-icon">${action.icon}</span>
+                <span class="coin-action-label">${action.label}</span>
+                <span class="coin-action-cost">🪙 ${action.cost}</span>
+            `;
+            btn.title = action.desc;
+            btn.addEventListener('click', () => this._handleCoinAction(action));
+            btnRow.appendChild(btn);
+        }
+
+        wrapper.appendChild(btnRow);
+    }
+
+    /** Update the balance display and button states in-place. */
+    _refreshCoinUI(newBalance) {
+        const amountEl = document.querySelector('#perk-coin-balance .coin-amount');
+        if (amountEl) amountEl.textContent = newBalance;
+
+        for (const action of UIManager.COIN_ACTIONS) {
+            const btn = document.querySelector(`.coin-action-btn[data-action-id="${action.id}"]`);
+            if (btn) btn.disabled = newBalance < action.cost;
+        }
+    }
+
+    // ──────────────────────────────────────────
+    //  Coin action handlers
+    // ──────────────────────────────────────────
+
+    async _handleCoinAction(action) {
+        const g = this.game;
+        const coinService = g.coinService;
+        if (!coinService) return;
+
+        const ok = await coinService.spendCoins(action.cost, `Perk ${action.id}`);
+        if (!ok) return;
+
+        g.sound.playPowerUp();
+        g.postProcessing.flash({ r: 255, g: 215, b: 0 }, 0.12);
+
+        const currentWorld = g.levelManager ? g.levelManager.getCurrentWorld() : 1;
+
+        switch (action.id) {
+            case 'reroll':
+                this._renderPerkCards(g.perkSystem.getRandomSelection(3, currentWorld));
+                break;
+            case 'rare':
+                this._renderPerkCards(g.perkSystem.getSelectionByMinRarity('rare', 3, currentWorld));
+                break;
+            case 'epic':
+                this._renderPerkCards(g.perkSystem.getSelectionByMinRarity('epic', 3, currentWorld));
+                break;
+            case 'choose_any':
+                this._showFullCatalog(currentWorld);
+                break;
+        }
+
+        this._refreshCoinUI(coinService.balance);
+    }
+
+    // ──────────────────────────────────────────
+    //  Full catalog (Choose Any)
+    // ──────────────────────────────────────────
+
+    _showFullCatalog(currentWorld) {
+        const g = this.game;
+        const allPerks = g.perkSystem.getAllAvailablePerks(currentWorld);
+        const container = document.getElementById('perk-cards-container');
+        if (!container) return;
+        container.innerHTML = '';
+        container.classList.add('perk-cards--catalog');
+
+        // Group by category
+        const groups = {};
+        for (const p of allPerks) {
+            (groups[p.category] = groups[p.category] || []).push(p);
+        }
+
+        for (const [cat, perks] of Object.entries(groups)) {
+            const catData = perks[0]?.categoryData;
+            const header = document.createElement('div');
+            header.className = 'perk-catalog-header';
+            header.innerHTML = `<span style="color:${catData?.color || '#fff'}">${catData?.icon || ''} ${catData?.label || cat}</span>`;
+            container.appendChild(header);
+
+            const row = document.createElement('div');
+            row.className = 'perk-cards perk-catalog-row';
+
+            for (const perk of perks) {
+                const card = document.createElement('div');
+                card.className = `perk-card perk-card--mini rarity-${perk.rarity}`;
+                card.dataset.perkId = perk.id;
+
+                card.innerHTML = `
+                    <div class="perk-rarity-label" style="color:${perk.rarityData.color}">${perk.rarityData.label}</div>
+                    <div class="perk-icon-wrap" style="border-color:${perk.rarityData.border}">
+                        <span class="perk-icon">${perk.icon}</span>
+                    </div>
+                    <div class="perk-name">${perk.name}</div>
+                    <div class="perk-desc">${perk.description}</div>
+                    ${perk.currentStacks > 0 ? `<div class="perk-stack">Lv ${perk.currentStacks} → ${perk.currentStacks + 1}</div>` : ''}
+                `;
+
+                card.addEventListener('click', () => {
+                    container.classList.remove('perk-cards--catalog');
+                    this._detachScrollFade();
+                    this.handlePerkChoice(perk.id);
+                });
+                row.appendChild(card);
+            }
+            container.appendChild(row);
+        }
+
+        // Activate gradient fade hint at bottom of the scrollable area
+        this._attachScrollFade();
+    }
+
+    // ──────────────────────────────────────────
+    //  Scroll fade hint (replaces scrollbar)
+    // ──────────────────────────────────────────
+
+    /** Show/hide a bottom gradient fade based on scroll position. */
+    _attachScrollFade() {
+        const panel = document.querySelector('#perk-select-screen .screen-content');
+        if (!panel) return;
+
+        // Initial check
+        this._updateScrollFade(panel);
+
+        // Store ref so we can remove later
+        this._scrollFadeHandler = () => this._updateScrollFade(panel);
+        panel.addEventListener('scroll', this._scrollFadeHandler, { passive: true });
+    }
+
+    _detachScrollFade() {
+        const panel = document.querySelector('#perk-select-screen .screen-content');
+        if (panel && this._scrollFadeHandler) {
+            panel.removeEventListener('scroll', this._scrollFadeHandler);
+            panel.style.setProperty('--fade-hint', '0');
+        }
+        this._scrollFadeHandler = null;
+    }
+
+    _updateScrollFade(panel) {
+        const distFromBottom = panel.scrollHeight - panel.scrollTop - panel.clientHeight;
+        panel.style.setProperty('--fade-hint', distFromBottom > 16 ? '1' : '0');
     }
 
     hidePerkScreen() {
+        this._detachScrollFade();
         const screen = document.getElementById('perk-select-screen');
         if (screen) {
             screen.classList.add('hidden');
@@ -131,8 +342,290 @@ class UIManager {
         document.getElementById('go-level-reached').textContent = g.levelManager.currentLevel;
         document.getElementById('go-enemies-killed').textContent = g.scoreManager.totalEnemiesKilled;
 
+        // Continue button
+        this._updateContinueUI();
+
         screen.classList.remove('hidden');
         if (window.audioViz) window.audioViz.start(screen);
+    }
+
+    // ──────────────────────────────────────────
+    //  Continue UI (game-over screen)
+    // ──────────────────────────────────────────
+
+    async _updateContinueUI() {
+        const section = document.getElementById('go-continue-section');
+        if (!section) return;
+
+        const coinService = this.game.coinService;
+        if (!coinService || !coinService.isAvailable()) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+
+        const balance = await coinService.fetchBalance();
+        const g = this.game;
+        const canAffordContinue = balance >= g.CONTINUE_COST;
+        const canAffordBuild = balance >= g.CONTINUE_CHANGE_BUILD_COST;
+        const hasPerks = g.perkSystem.getActivePerks().length > 0;
+
+        const btn = document.getElementById('go-continue-btn');
+        const buildBtn = document.getElementById('go-continue-build-btn');
+        const balEl = document.getElementById('go-continue-balance');
+
+        if (btn) {
+            btn.disabled = !canAffordContinue;
+            btn.classList.toggle('disabled', !canAffordContinue);
+        }
+        if (buildBtn) {
+            const disabled = !canAffordBuild || !hasPerks;
+            buildBtn.disabled = disabled;
+            buildBtn.classList.toggle('disabled', disabled);
+            buildBtn.style.display = hasPerks ? '' : 'none';
+        }
+        if (balEl) {
+            balEl.textContent = `Your balance: ${balance} coins`;
+            balEl.className = canAffordContinue ? 'continue-balance' : 'continue-balance insufficient';
+        }
+    }
+
+    async handleContinue() {
+        const g = this.game;
+        const coinService = g.coinService;
+        if (!coinService) return;
+
+        const ok = await coinService.spendCoins(
+            g.CONTINUE_COST,
+            `Space Shooter 2 continue: ${g.CONTINUE_COST} coins`
+        );
+        if (!ok) return;
+
+        g.resumeAfterContinue();
+    }
+
+    // ──────────────────────────────────────────
+    //  Continue & Change Build (70 coins)
+    // ──────────────────────────────────────────
+
+    async handleContinueChangeBuild() {
+        const g = this.game;
+        const coinService = g.coinService;
+        if (!coinService) return;
+
+        const ok = await coinService.spendCoins(
+            g.CONTINUE_CHANGE_BUILD_COST,
+            `Space Shooter 2 continue + change build: ${g.CONTINUE_CHANGE_BUILD_COST} coins`
+        );
+        if (!ok) return;
+
+        g.sound.playPowerUp();
+        this._showPerkSwapUI();
+    }
+
+    _showPerkSwapUI() {
+        const screen = document.getElementById('perk-swap-screen');
+        if (!screen) return;
+
+        // State
+        this._swapRemoveIds = new Set();
+        this._swapAddIds = [];
+        this._swapMaxRemove = 3;
+
+        // Render current build (compact chips)
+        this._renderSwapCurrentPerks();
+        // Render catalog using the same card style as the shop
+        this._renderSwapCatalog();
+        this._updateSwapState();
+
+        // Hide game-over, show swap screen
+        document.getElementById('game-over-screen')?.classList.add('hidden');
+        if (window.audioViz) window.audioViz.stop();
+        screen.classList.remove('hidden');
+    }
+
+    _renderSwapCurrentPerks() {
+        const container = document.getElementById('perk-swap-current');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const activePerks = this.game.perkSystem.getActivePerks();
+        if (activePerks.length === 0) {
+            container.innerHTML = '<p style="color:#667;">No active perks</p>';
+            return;
+        }
+
+        for (const perk of activePerks) {
+            const chip = document.createElement('div');
+            chip.className = 'swap-chip';
+            chip.dataset.perkId = perk.id;
+            chip.innerHTML = `
+                <span class="swap-chip-icon" style="border-color:${perk.rarityData.border}">${perk.icon}</span>
+                <span class="swap-chip-name">${perk.name}</span>
+                <span class="swap-chip-lv">Lv${perk.stacks}</span>
+                <span class="swap-chip-x">✕</span>
+            `;
+            chip.addEventListener('click', () => this._toggleSwapRemove(perk.id, chip));
+            container.appendChild(chip);
+        }
+    }
+
+    _toggleSwapRemove(perkId, chip) {
+        if (this._swapRemoveIds.has(perkId)) {
+            this._swapRemoveIds.delete(perkId);
+            chip.classList.remove('swap-chip--remove');
+        } else {
+            if (this._swapRemoveIds.size >= this._swapMaxRemove) return;
+            this._swapRemoveIds.add(perkId);
+            chip.classList.add('swap-chip--remove');
+        }
+        // If a removed perk was also in addIds, drop it
+        this._swapAddIds = this._swapAddIds.filter(id => !this._swapRemoveIds.has(id));
+        this._refreshSwapCatalogSelection();
+        this._updateSwapState();
+    }
+
+    /** Render the replacement catalog using the same perk-card--mini layout as the shop. */
+    _renderSwapCatalog() {
+        const container = document.getElementById('perk-swap-catalog');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const currentWorld = this.game.levelManager ? this.game.levelManager.getCurrentWorld() : 1;
+        const allPerks = this.game.perkSystem.getAllAvailablePerks(currentWorld);
+
+        const groups = {};
+        for (const p of allPerks) {
+            (groups[p.category] = groups[p.category] || []).push(p);
+        }
+
+        for (const [cat, perks] of Object.entries(groups)) {
+            const catData = perks[0]?.categoryData;
+            const header = document.createElement('div');
+            header.className = 'perk-catalog-header';
+            header.innerHTML = `<span style="color:${catData?.color || '#fff'}">${catData?.icon || ''} ${catData?.label || cat}</span>`;
+            container.appendChild(header);
+
+            const row = document.createElement('div');
+            row.className = 'perk-cards perk-catalog-row';
+
+            for (const perk of perks) {
+                const card = document.createElement('div');
+                card.className = `perk-card perk-card--mini rarity-${perk.rarity}`;
+                card.dataset.perkId = perk.id;
+                card.innerHTML = `
+                    <div class="perk-rarity-label" style="color:${perk.rarityData.color}">${perk.rarityData.label}</div>
+                    <div class="perk-icon-wrap" style="border-color:${perk.rarityData.border}">
+                        <span class="perk-icon">${perk.icon}</span>
+                    </div>
+                    <div class="perk-name">${perk.name}</div>
+                    <div class="perk-desc">${perk.description}</div>
+                    ${perk.currentStacks > 0 ? `<div class="perk-stack">Lv ${perk.currentStacks}</div>` : ''}
+                `;
+                card.addEventListener('click', () => this._toggleSwapAdd(perk.id, card));
+                row.appendChild(card);
+            }
+            container.appendChild(row);
+        }
+    }
+
+    _toggleSwapAdd(perkId, card) {
+        const idx = this._swapAddIds.indexOf(perkId);
+        if (idx >= 0) {
+            this._swapAddIds.splice(idx, 1);
+            card.classList.remove('swap-pick');
+        } else {
+            if (this._swapAddIds.length >= this._swapRemoveIds.size) return;
+            this._swapAddIds.push(perkId);
+            card.classList.add('swap-pick');
+        }
+        this._updateSwapState();
+    }
+
+    _refreshSwapCatalogSelection() {
+        const catalogEl = document.getElementById('perk-swap-catalog');
+        if (!catalogEl) return;
+        for (const card of catalogEl.querySelectorAll('.perk-card--mini')) {
+            const id = card.dataset.perkId;
+            card.classList.toggle('swap-pick', this._swapAddIds.includes(id));
+        }
+    }
+
+    _updateSwapState() {
+        const removeCount = this._swapRemoveIds.size;
+        const addCount = this._swapAddIds.length;
+
+        const hint = document.getElementById('perk-swap-hint');
+        if (hint) {
+            if (removeCount === 0) hint.textContent = 'Tap perks to mark for removal (max 3)';
+            else if (addCount < removeCount) hint.textContent = `Now pick ${removeCount - addCount} replacement${removeCount - addCount > 1 ? 's' : ''} from the catalog`;
+            else hint.textContent = 'Ready! Confirm to continue with new build';
+        }
+
+        const counter = document.getElementById('perk-swap-replace-count');
+        if (counter) counter.textContent = `${addCount} / ${removeCount}`;
+
+        const catalogSection = document.getElementById('swap-catalog-section');
+        const divider = document.getElementById('swap-divider');
+        if (catalogSection) catalogSection.style.display = removeCount > 0 ? '' : 'none';
+        if (divider) divider.style.display = removeCount > 0 ? '' : 'none';
+
+        const confirmBtn = document.getElementById('perk-swap-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = !(removeCount > 0 && addCount === removeCount);
+        }
+
+        const catalogEl = document.getElementById('perk-swap-catalog');
+        if (catalogEl) {
+            for (const card of catalogEl.querySelectorAll('.perk-card--mini')) {
+                const id = card.dataset.perkId;
+                const isPicked = this._swapAddIds.includes(id);
+                const atLimit = addCount >= removeCount && !isPicked;
+                card.classList.toggle('swap-off', atLimit);
+            }
+        }
+    }
+
+    confirmPerkSwap() {
+        const g = this.game;
+        const player = g.entityManager.player;
+
+        // 1. Remove selected perks
+        for (const id of this._swapRemoveIds) {
+            const inverseDelta = g.perkSystem.removePerk(id);
+            if (inverseDelta && player) {
+                player.applyBonusStats(inverseDelta);
+            }
+        }
+
+        // 2. Activate new perks
+        for (const id of this._swapAddIds) {
+            const statDelta = g.perkSystem.activatePerk(id);
+            if (statDelta && player) {
+                player.applyBonusStats(statDelta);
+            }
+        }
+
+        // 3. Recalculate all perk modifiers
+        g.perkEffectsManager.applyPerkModifiersToPlayer();
+
+        // 4. Hide overlay & resume (mark as confirming so game-over doesn't re-show)
+        this._swapConfirming = true;
+        this.hidePerkSwapOverlay();
+        g.resumeAfterContinue();
+    }
+
+    hidePerkSwapOverlay() {
+        const screen = document.getElementById('perk-swap-screen');
+        if (screen) screen.classList.add('hidden');
+        // If cancelling (not confirming), re-show game-over
+        if (!this._swapConfirming) {
+            document.getElementById('game-over-screen')?.classList.remove('hidden');
+        }
+        this._swapRemoveIds = null;
+        this._swapAddIds = null;
+        this._swapConfirming = false;
     }
 
     showVictoryScreen() {

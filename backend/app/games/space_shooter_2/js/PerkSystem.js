@@ -398,6 +398,73 @@ class PerkSystem {
         return selected;
     }
 
+    // ══════════════════════════════════
+    //  COIN-POWERED SELECTION (Premium rerolls)
+    // ══════════════════════════════════
+
+    /**
+     * Return `count` random perks filtered to a **minimum** rarity tier.
+     * Used by the coin-reroll options (rare / epic).
+     * @param {'rare'|'epic'|'legendary'} minRarity
+     * @param {number} count
+     * @param {number} currentWorld
+     */
+    getSelectionByMinRarity(minRarity, count = 3, currentWorld = 1) {
+        const tierOrder = ['common', 'rare', 'epic', 'legendary'];
+        const minIdx = tierOrder.indexOf(minRarity);
+        const eligible = PERK_CATALOG.filter(p => {
+            if ((p.world || 1) > currentWorld) return false;
+            if (tierOrder.indexOf(p.rarity) < minIdx) return false;
+            const cur = this.activePerks.get(p.id) || 0;
+            return cur < p.maxStacks;
+        });
+
+        // Weighted random pick without duplicates
+        const usedIds = new Set();
+        const pool = [];
+        for (const perk of eligible) {
+            const w = PERK_RARITY[perk.rarity].weight;
+            for (let i = 0; i < w; i++) pool.push(perk);
+        }
+
+        const selected = [];
+        let attempts = 0;
+        while (selected.length < count && attempts < 300) {
+            attempts++;
+            if (pool.length === 0) break;
+            const perk = pool[Math.floor(Math.random() * pool.length)];
+            if (usedIds.has(perk.id)) continue;
+            usedIds.add(perk.id);
+            selected.push(this._enrichPerk(perk));
+        }
+        return selected;
+    }
+
+    /**
+     * Return ALL perks the player can still pick (for "choose any" option).
+     * Grouped by category, each enriched with rarity/stack info.
+     * @param {number} currentWorld
+     */
+    getAllAvailablePerks(currentWorld = 1) {
+        return PERK_CATALOG
+            .filter(p => {
+                if ((p.world || 1) > currentWorld) return false;
+                const cur = this.activePerks.get(p.id) || 0;
+                return cur < p.maxStacks;
+            })
+            .map(p => this._enrichPerk(p));
+    }
+
+    /** @private Attach runtime display data to a perk snapshot. */
+    _enrichPerk(perk) {
+        return {
+            ...perk,
+            currentStacks: this.activePerks.get(perk.id) || 0,
+            rarityData: PERK_RARITY[perk.rarity],
+            categoryData: PERK_CATEGORIES[perk.category]
+        };
+    }
+
     /** Activate a perk, returns stat deltas (or null) */
     activatePerk(perkId) {
         const perk = PERK_MAP.get(perkId);
@@ -421,6 +488,29 @@ class PerkSystem {
 
     hasPerk(id) { return (this.activePerks.get(id) || 0) > 0; }
     getStacks(id) { return this.activePerks.get(id) || 0; }
+
+    /**
+     * Completely remove a perk (all stacks).
+     * Returns the stat deltas that were granted (negated) so the caller can undo them,
+     * or null if the perk wasn't active.
+     */
+    removePerk(perkId) {
+        const stacks = this.activePerks.get(perkId) || 0;
+        if (stacks === 0) return null;
+        const perk = PERK_MAP.get(perkId);
+        this.activePerks.delete(perkId);
+        this._activePerkCache = null;
+
+        // If the perk granted flat stats, compute the inverse so the caller can undo
+        if (perk && perk.stats) {
+            const inverse = {};
+            for (const [k, v] of Object.entries(perk.stats)) {
+                inverse[k] = -v * stacks;
+            }
+            return inverse;
+        }
+        return null;
+    }
 
     getActivePerks() {
         if (this._activePerkCache) return this._activePerkCache;

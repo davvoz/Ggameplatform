@@ -308,6 +308,7 @@
                 <h2 class="perk-title">CHOOSE YOUR UPGRADE</h2>
                 <p class="perk-subtitle">Select one perk to enhance your build</p>
                 <div id="perk-cards-container" class="perk-cards"></div>
+                <div id="perk-coin-actions" class="hidden"></div>
             </div>
         </div>
 
@@ -329,8 +330,46 @@
                         <span class="summary-value" id="go-enemies-killed">0</span>
                     </div>
                 </div>
+                <div class="go-continue-section" id="go-continue-section">
+                    <div class="continue-buttons-row">
+                        <button id="go-continue-btn" class="btn-continue">
+                            <span class="continue-icon">🪙</span>
+                            <span class="continue-text">CONTINUE</span>
+                            <span class="continue-cost">50 Coins</span>
+                        </button>
+                        <button id="go-continue-build-btn" class="btn-continue btn-continue--build">
+                            <span class="continue-icon">🔧</span>
+                            <span class="continue-text">CHANGE BUILD</span>
+                            <span class="continue-cost">70 Coins</span>
+                        </button>
+                    </div>
+                    <div class="continue-balance" id="go-continue-balance"></div>
+                </div>
                 <div class="screen-actions center">
                     <button id="btn-restart" class="btn-primary">TRY AGAIN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PERK SWAP (Change Build) ========== -->
+        <div id="perk-swap-screen" class="ui-screen hidden">
+            <div class="screen-content perk-panel">
+                <h2 class="perk-title">CHANGE BUILD</h2>
+                <p class="perk-subtitle" id="perk-swap-hint">Tap perks to mark for removal (max 3)</p>
+
+                <div class="swap-section-label">YOUR BUILD</div>
+                <div class="swap-chips" id="perk-swap-current"></div>
+
+                <div class="swap-divider" id="swap-divider"></div>
+
+                <div id="swap-catalog-section">
+                    <div class="swap-section-label">PICK REPLACEMENTS <span class="swap-counter" id="perk-swap-replace-count">0 / 0</span></div>
+                    <div id="perk-swap-catalog" class="perk-cards--catalog"></div>
+                </div>
+
+                <div class="screen-actions center" style="margin-top:16px">
+                    <button id="perk-swap-confirm" class="btn-primary" disabled>CONFIRM & CONTINUE</button>
+                    <button id="perk-swap-cancel" class="btn-secondary">BACK</button>
                 </div>
             </div>
         </div>

@@ -393,6 +393,8 @@ class CollisionManager {
 
         g.uiManager.hideHudButtons();
 
+        // Send score to platform — use delta (xp_score) so XP is only for new points
+        const deltaScore = g.scoreManager.score - g.lastSentScore;
         if (window.sendScoreToPlatform) {
             window.sendScoreToPlatform(g.scoreManager.score, {
                 level: g.levelManager.currentLevel,
@@ -400,9 +402,12 @@ class CollisionManager {
                 maxCombo: g.scoreManager.maxCombo,
                 ship: g.selectedShipId,
                 ultimate: g.selectedUltimateId,
-                difficulty: g.difficulty.id
+                difficulty: g.difficulty.id,
+                continued: g.hasContinued,
+                xp_score: deltaScore > 0 ? deltaScore : g.scoreManager.score
             });
         }
+        g.lastSentScore = g.scoreManager.score;
 
         g.cinematicManager.beginDeathCinematic(px, py);
     }

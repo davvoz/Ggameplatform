@@ -171,8 +171,13 @@ html, body {
     align-items: center;
     justify-content: center;
     background: rgba(3, 3, 14, 0.94);
-    animation: screenIn 0.25s ease-out;
     overflow: hidden;
+
+    /* Smooth show/hide via opacity + transform (no display:none snap) */
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: opacity 0.28s ease-out, transform 0.28s ease-out, visibility 0s 0s;
 }
 /* Subtle grid overlay */
 .ui-screen::before {
@@ -197,12 +202,11 @@ html, body {
     z-index: 0;
 }
 .ui-screen.hidden {
-    display: none !important;
-}
-
-@keyframes screenIn {
-    from { opacity: 0; transform: scale(0.98); }
-    to { opacity: 1; transform: scale(1); }
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.97);
+    transition: opacity 0.22s ease-in, transform 0.22s ease-in, visibility 0s 0.22s;
 }
 
 .screen-content {
@@ -835,6 +839,171 @@ html, body {
     text-shadow: 0 0 24px rgba(255,68,68,0.5), 0 0 60px rgba(255,68,68,0.15);
 }
 
+/* ── Continue section ── */
+.go-continue-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 8px;
+}
+.go-continue-section.hidden { display: none; }
+
+.btn-continue {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, rgba(255,170,0,0.25) 0%, rgba(255,120,0,0.18) 100%);
+    border: 1px solid rgba(255,170,0,0.5);
+    border-radius: 8px;
+    color: #ffd666;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, transform 0.15s;
+}
+.btn-continue:hover:not(.disabled) {
+    background: linear-gradient(135deg, rgba(255,170,0,0.4) 0%, rgba(255,120,0,0.3) 100%);
+    border-color: rgba(255,170,0,0.8);
+    transform: scale(1.04);
+}
+.btn-continue.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+}
+.continue-icon { font-size: 18px; }
+.continue-text { font-weight: 600; }
+.continue-cost {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255,214,102,0.7);
+    letter-spacing: 1px;
+}
+.continue-balance {
+    font-size: 11px;
+    font-family: 'Exo 2', sans-serif;
+    color: rgba(136,170,204,0.6);
+    letter-spacing: 0.5px;
+}
+.continue-balance.insufficient {
+    color: rgba(255,100,100,0.7);
+}
+.continue-buttons-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.btn-continue--build {
+    background: linear-gradient(135deg, rgba(0,180,255,0.22) 0%, rgba(80,120,255,0.16) 100%);
+    border-color: rgba(0,180,255,0.45);
+    color: #88ddff;
+}
+.btn-continue--build:hover:not(.disabled) {
+    background: linear-gradient(135deg, rgba(0,180,255,0.38) 0%, rgba(80,120,255,0.28) 100%);
+    border-color: rgba(0,180,255,0.8);
+}
+
+/* ── Perk Swap (Change Build screen) ── */
+.swap-section-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(136,170,204,0.5);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-align: left;
+}
+.swap-counter {
+    color: rgba(0,220,180,0.8);
+    font-weight: 700;
+}
+.swap-divider {
+    width: 90%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,180,255,0.25), transparent);
+    margin: 14px auto;
+}
+
+/* Chips (current build) */
+.swap-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+.swap-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 6px;
+    border-radius: 20px;
+    border: 1px solid rgba(68,136,255,0.25);
+    background: rgba(15,20,40,0.7);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.12s;
+}
+.swap-chip:hover {
+    border-color: rgba(255,100,100,0.5);
+    transform: scale(1.04);
+}
+.swap-chip-icon {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(68,136,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: rgba(255,255,255,0.04);
+    flex-shrink: 0;
+}
+.swap-chip-name {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 11px;
+    color: #ccddeeff;
+    white-space: nowrap;
+}
+.swap-chip-lv {
+    font-size: 9px;
+    color: rgba(136,170,204,0.5);
+}
+.swap-chip-x {
+    font-size: 12px;
+    color: rgba(255,80,80,0);
+    transition: color 0.15s;
+    margin-left: 2px;
+}
+.swap-chip--remove {
+    border-color: rgba(255,60,60,0.65);
+    background: rgba(255,40,40,0.12);
+}
+.swap-chip--remove .swap-chip-x { color: rgba(255,80,80,0.9); }
+.swap-chip--remove .swap-chip-name {
+    text-decoration: line-through;
+    color: rgba(200,180,180,0.5);
+}
+
+/* Catalog pick states (reuses .perk-card--mini) */
+.perk-card--mini.swap-pick {
+    border-color: rgba(0,220,120,0.7) !important;
+    box-shadow: 0 0 14px rgba(0,220,120,0.25);
+    background: rgba(0,220,120,0.06);
+}
+.perk-card--mini.swap-off {
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+/* Disabled primary button */
+.btn-primary:disabled, .btn-primary[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
 /* ===== VICTORY ===== */
 .victory-title {
     font-family: 'Orbitron', 'Segoe UI', sans-serif;
@@ -1215,12 +1384,12 @@ html, body {
 }
 
 /* ===== SCROLLBAR FOR SCREEN CONTENT ===== */
-.screen-content::-webkit-scrollbar {
-    width: 4px;
+.screen-content {
+    scrollbar-width: none;           /* Firefox */
+    -ms-overflow-style: none;        /* IE/Edge */
 }
-.screen-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
+.screen-content::-webkit-scrollbar {
+    display: none;                   /* Chrome/Safari */
 }
 
 /* ===== RESPONSIVE ===== */
@@ -1292,6 +1461,23 @@ body.game-fullscreen #game-container {
 .perk-panel {
     max-width: 700px;
     text-align: center;
+    position: relative;
+}
+/* Gradient fade at bottom to hint more content (no scrollbar) */
+.perk-panel::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    height: 32px;
+    margin-top: -32px;
+    background: linear-gradient(to bottom, transparent, rgba(3, 3, 14, 0.92));
+    pointer-events: none;
+    z-index: 2;
+    opacity: var(--fade-hint, 0);
+    transition: opacity 0.25s;
 }
 .perk-title {
     font-family: 'Orbitron', 'Segoe UI', sans-serif;
@@ -1450,6 +1636,128 @@ body.game-fullscreen #game-container {
     .perk-desc {
         width: 100%;
     }
+}
+
+/* ===== COIN ACTIONS (Perk Screen) ===== */
+#perk-coin-actions {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+#perk-coin-actions.hidden { display: none; }
+
+.coin-balance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 215, 0, 0.10);
+    border: 1px solid rgba(255, 215, 0, 0.28);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffd700;
+    letter-spacing: 1px;
+}
+.coin-icon { font-size: 15px; }
+
+.coin-action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.coin-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: rgba(20, 22, 40, 0.88);
+    border: 1px solid rgba(255, 215, 0, 0.22);
+    border-radius: 10px;
+    padding: 8px 12px 6px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    min-width: 72px;
+}
+.coin-action-btn:hover:not(:disabled) {
+    border-color: #ffd700;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
+    transform: translateY(-2px);
+}
+.coin-action-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+}
+.coin-action-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.coin-action-icon { font-size: 18px; }
+.coin-action-label {
+    font-family: 'Exo 2', 'Segoe UI', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #ccdde8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.coin-action-cost {
+    font-family: 'Space Mono', Consolas, monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+/* ===== Full Catalog (Choose Any) ===== */
+.perk-cards--catalog {
+    display: block !important;
+}
+.perk-catalog-header {
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 10px 0 6px;
+    text-align: left;
+}
+.perk-catalog-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-bottom: 6px;
+}
+.perk-card--mini {
+    min-width: 110px;
+    max-width: 140px;
+    padding: 10px 8px 8px;
+    font-size: 0.88em;
+}
+.perk-card--mini .perk-icon-wrap {
+    width: 36px;
+    height: 36px;
+}
+.perk-card--mini .perk-icon {
+    font-size: 17px;
+}
+.perk-card--mini .perk-desc {
+    font-size: 9px;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (max-width: 480px) {
+    .coin-action-row { gap: 6px; }
+    .coin-action-btn { min-width: 62px; padding: 6px 8px 5px; }
+    .coin-action-icon { font-size: 15px; }
+    .perk-card--mini { min-width: 90px; max-width: 120px; }
 }
 
 /* ========== DIFFICULTY SELECTION ========== */

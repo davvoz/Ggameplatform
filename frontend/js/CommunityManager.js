@@ -441,14 +441,17 @@ class CommunityManager {
         const overflow = users.length - MAX_VISIBLE;
 
         visible.forEach((user, i) => {
-            const initials = (user.username || '?').substring(0, 2);
-            const colorIdx = Math.abs(this._hashCode(user.user_id || user.username)) % AVATAR_COLORS.length;
+            const steemAvatarUrl = `https://steemitimages.com/u/${encodeURIComponent(user.username || 'anonymous')}/avatar/small`;
 
             const el = document.createElement('div');
             el.className = 'mini-avatar';
-            el.style.background = `linear-gradient(135deg, ${AVATAR_COLORS[colorIdx]}, ${AVATAR_COLORS[(colorIdx + 1) % AVATAR_COLORS.length]})`;
             el.style.zIndex = MAX_VISIBLE - i;
-            el.textContent = initials;
+
+            const img = document.createElement('img');
+            img.src = steemAvatarUrl;
+            img.alt = user.username;
+            img.className = 'mini-avatar-img';
+            el.appendChild(img);
 
             const tooltip = document.createElement('span');
             tooltip.className = 'mini-avatar-tooltip';
@@ -592,8 +595,8 @@ class CommunityManager {
         const messageEl = document.createElement('div');
         messageEl.className = `chat-message ${isOwnMessage ? 'own-message' : ''}`;
         
-        // Get avatar initial
-        const initial = (message.username || 'A').charAt(0).toUpperCase();
+        // Steem avatar URL
+        const steemAvatarUrl = `https://steemitimages.com/u/${encodeURIComponent(message.username || 'anonymous')}/avatar/small`;
         
         // Format timestamp
         const time = this._formatTime(message.timestamp || message.created_at);
@@ -611,7 +614,9 @@ class CommunityManager {
         }
         
         messageEl.innerHTML = `
-            <div class="message-avatar">${initial}</div>
+            <div class="message-avatar">
+                <img src="${steemAvatarUrl}" alt="${this._escapeHtml(message.username || 'Anonymous')}">
+            </div>
             <div class="message-bubble">
                 <div class="message-header">
                     <span class="message-username">${this._escapeHtml(message.username || 'Anonymous')}</span>

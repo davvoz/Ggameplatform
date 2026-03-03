@@ -1,8 +1,17 @@
 {
-  "version": "3.33.14",
-  "timestamp": "2026-03-03T09:13:11.113Z",
-  "buildNumber": 432,
+  "version": "3.33.15",
+  "timestamp": "2026-03-03T12:59:45.418Z",
+  "buildNumber": 433,
   "changelog": [
+    {
+      "version": "3.33.15",
+      "date": "2026-03-03",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]update quest progress to reflect actual levels and scores achieved",
+        "🔖 Bump version to 3.33.14 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.14",
       "date": "2026-03-03",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SS2]desktop dimensions",
         "🔖 Bump version to 3.33.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.5",
-      "date": "2026-02-25",
-      "type": "patch",
-      "changes": [
-        "fix: move check_world_progress script for game_progress table validation",
-        "🔖 Bump version to 3.33.4 [skip-version]"
       ]
     }
   ]

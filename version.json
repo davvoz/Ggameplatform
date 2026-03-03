@@ -1,8 +1,17 @@
 {
-  "version": "3.33.16",
-  "timestamp": "2026-03-03T15:34:42.463Z",
-  "buildNumber": 434,
+  "version": "3.34.0",
+  "timestamp": "2026-03-03T21:14:13.778Z",
+  "buildNumber": 435,
   "changelog": [
+    {
+      "version": "3.34.0",
+      "date": "2026-03-03",
+      "type": "minor",
+      "changes": [
+        "feat: add online user avatars and stats request handling in community chat",
+        "🔖 Bump version to 3.33.16 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.16",
       "date": "2026-03-03",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: include GameStatus in leaderboard user standings query for ranked games",
         "🔖 Bump version to 3.33.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.7",
-      "date": "2026-02-27",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD]enhance WaveModeSelector UI and add EXTREME difficulty mode",
-        "🔖 Bump version to 3.33.6 [skip-version]"
       ]
     }
   ]

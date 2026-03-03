@@ -1,8 +1,17 @@
 {
-  "version": "3.33.15",
-  "timestamp": "2026-03-03T12:59:45.418Z",
-  "buildNumber": 433,
+  "version": "3.33.16",
+  "timestamp": "2026-03-03T15:34:42.463Z",
+  "buildNumber": 434,
   "changelog": [
+    {
+      "version": "3.33.16",
+      "date": "2026-03-03",
+      "type": "patch",
+      "changes": [
+        "fix: update cover image URL in post content generation",
+        "🔖 Bump version to 3.33.15 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.15",
       "date": "2026-03-03",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [MTD]enhance WaveModeSelector UI and add EXTREME difficulty mode",
         "🔖 Bump version to 3.33.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.6",
-      "date": "2026-02-27",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2]desktop dimensions",
-        "🔖 Bump version to 3.33.5 [skip-version]"
       ]
     }
   ]

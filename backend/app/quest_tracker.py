@@ -1508,17 +1508,16 @@ class QuestTracker:
             self.update_quest_progress(user_id, quest, cumulative['total_kills'], user_quest)
         
         elif tracking_type == 'reach_level':
-            # Check if the player reached the target level in any session this period
-            if cumulative['max_level'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1, user_quest)
+            # Show actual level reached as progress
+            self.update_quest_progress(user_id, quest, cumulative['max_level'], user_quest)
         
         elif tracking_type == 'high_score':
-            if cumulative['high_score'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1, user_quest)
+            # Show actual score as progress
+            self.update_quest_progress(user_id, quest, cumulative['high_score'], user_quest)
         
         elif tracking_type == 'max_combo':
-            if cumulative['max_combo'] >= quest.target_value:
-                self.update_quest_progress(user_id, quest, 1, user_quest)
+            # Show actual combo as progress
+            self.update_quest_progress(user_id, quest, cumulative['max_combo'], user_quest)
         
         # Save last_completion_date if quest was just completed
         if user_quest.is_completed and not stored_data.get('last_completion_date'):

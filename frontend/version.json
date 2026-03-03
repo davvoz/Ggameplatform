@@ -1,8 +1,17 @@
 {
-  "version": "3.33.13",
-  "timestamp": "2026-03-01T15:31:42.515Z",
-  "buildNumber": 431,
+  "version": "3.33.14",
+  "timestamp": "2026-03-03T09:13:11.113Z",
+  "buildNumber": 432,
   "changelog": [
+    {
+      "version": "3.33.14",
+      "date": "2026-03-03",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2] Emergency Protocol after continue and build",
+        "🔖 Bump version to 3.33.13 [skip-version]"
+      ]
+    },
     {
       "version": "3.33.13",
       "date": "2026-03-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: move check_world_progress script for game_progress table validation",
         "🔖 Bump version to 3.33.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.4",
-      "date": "2026-02-25",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2]feat in obf , fix ani",
-        "🔖 Bump version to 3.33.3 [skip-version]"
       ]
     }
   ]

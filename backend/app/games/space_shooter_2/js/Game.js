@@ -662,7 +662,8 @@ class Game {
         // Restart waves for current level
         this.waveManager.resetForLevel();
 
-        // Re-apply perks
+        // Re-apply perks & reset per-level perk state (e.g. Emergency Protocol)
+        this.perkSystem.onLevelStart();
         this.perkEffectsManager.applyPerkModifiersToPlayer();
 
         // Visual feedback

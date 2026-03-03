@@ -409,6 +409,27 @@ class Player extends GameObject {
             this.weaponLevel--;
         }
 
+        // ── Emergency Protocol: prevent death, grant 3s invincibility + slow-mo ──
+        if (this.health <= 1 && game.perkSystem && game.perkSystem.hasEmergencyProtocol()) {
+            if (this.health <= 0) this.health = 1; // prevent lethal blow
+            game.perkSystem.emergencyUsedThisLevel = true;
+            this.invincible = true;
+            this.invincibleTime = 3;
+            this.blinkTimer = 0;
+            if (game.perkEffectsManager) {
+                game.perkEffectsManager._emergencySlowTimer = 3;
+            }
+            game.timeScale = 0.4;
+            game.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.3);
+            game.postProcessing.shake(10, 0.5);
+            game.particles.emit(
+                this.position.x + this.width / 2,
+                this.position.y + this.height / 2,
+                'explosion', 20
+            );
+            return false; // survived thanks to Emergency Protocol
+        }
+
         if (this.health <= 0) {
             this.health = 0;
             this.destroy();

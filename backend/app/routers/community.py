@@ -142,8 +142,15 @@ class CommunityChatManager:
             await self._handle_chat_message(user_id, data)
         elif message_type == "history":
             await self._handle_history_request(user_id, data)
+        elif message_type == "request_stats":
+            await self._handle_stats_request(user_id)
         elif message_type == "ping":
             await self._send_pong(user_id)
+
+    async def _handle_stats_request(self, user_id: str):
+        """Handle request for current stats"""
+        if user_id in self.connections:
+            await self._send_stats(self.connections[user_id].websocket)
     
     async def _handle_chat_message(self, user_id: str, data: dict):
         """Process and broadcast a chat message"""
@@ -296,7 +303,11 @@ class CommunityChatManager:
             "onlineUsers": len(self.connections),
             "totalMessages": len(self.messages),
             "totalMembers": len(self.connections),  #  Could be enhanced to track unique users
-            "latestMessageId": latest_id
+            "latestMessageId": latest_id,
+            "onlineUsersList": [
+                {"user_id": u.user_id, "username": u.username}
+                for u in self.connections.values()
+            ]
         }
     
     async def _send_push_to_offline_users(self, message: ChatMessage):

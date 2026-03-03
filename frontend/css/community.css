@@ -116,6 +116,96 @@
     border-left: 1px solid var(--chat-border);
 }
 
+/* ========== Online User Avatars ========== */
+.online-avatars {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 12px;
+}
+
+.online-avatars .mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    border: 2px solid var(--chat-header-bg);
+    margin-left: -8px;
+    position: relative;
+    cursor: default;
+    transition: transform 0.2s ease, z-index 0.2s ease;
+    flex-shrink: 0;
+}
+
+.online-avatars .mini-avatar:first-child {
+    margin-left: 0;
+}
+
+.online-avatars .mini-avatar:hover {
+    transform: scale(1.15);
+    z-index: 10;
+}
+
+.online-avatars .mini-avatar-overflow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--chat-header-bg);
+    margin-left: -8px;
+    flex-shrink: 0;
+}
+
+.mini-avatar-tooltip {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 20;
+}
+
+.mini-avatar:hover .mini-avatar-tooltip {
+    opacity: 1;
+}
+
+@media (max-width: 480px) {
+    .online-avatars .mini-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 0.55rem;
+        margin-left: -6px;
+    }
+    .online-avatars .mini-avatar-overflow {
+        width: 24px;
+        height: 24px;
+        font-size: 0.5rem;
+        margin-left: -6px;
+    }
+}
+
 .chat-header-actions {
     display: flex;
     gap: 8px;

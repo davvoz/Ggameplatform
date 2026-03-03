@@ -141,10 +141,12 @@ class CommunityAPI {
                     
                 case 'user_join':
                     this.onUserJoin(data.user);
+                    if (data.stats) this.onStatsUpdate(data.stats);
                     break;
                     
                 case 'user_leave':
                     this.onUserLeave(data.user);
+                    if (data.stats) this.onStatsUpdate(data.stats);
                     break;
                     
                 case 'stats':
@@ -289,6 +291,13 @@ class CommunityAPI {
             offset,
             limit
         });
+    }
+
+    /**
+     * Request current stats (online users count, etc.)
+     */
+    requestStats() {
+        this._sendRaw({ type: 'request_stats' });
     }
 
     /**

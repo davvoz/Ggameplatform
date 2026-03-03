@@ -144,6 +144,7 @@ class CommunityManager {
             statusIndicator: document.getElementById('headerStatusIndicator'),
             statusText: document.getElementById('headerStatusText'),
             onlineCount: document.getElementById('onlineCount'),
+            onlineAvatars: document.getElementById('onlineAvatars'),
             
             // Messages
             chatMessagesArea: document.getElementById('chatMessagesArea'),
@@ -357,6 +358,9 @@ class CommunityManager {
         
         // Request message history
         this.communityAPI.requestHistory(0, 50);
+
+        // Always request fresh stats (needed when reusing existing WebSocket on SPA navigation)
+        this.communityAPI.requestStats();
     }
 
     /**
@@ -386,6 +390,9 @@ class CommunityManager {
     _handleStatsUpdate(stats) {
         this.stats = { ...this.stats, ...stats };
         this._updateStats();
+        if (stats.onlineUsersList) {
+            this._renderOnlineAvatars(stats.onlineUsersList);
+        }
     }
 
     /**
@@ -412,6 +419,66 @@ class CommunityManager {
             const count = this.stats.onlineUsers || 0;
             this.elements.onlineCount.textContent = `${count} online`;
         }
+    }
+
+    /**
+     * Render mini avatars of online users in the chat header
+     * @private
+     * @param {Array} users - Array of {user_id, username}
+     */
+    _renderOnlineAvatars(users) {
+        const container = this.elements.onlineAvatars;
+        if (!container) return;
+
+        container.innerHTML = '';
+        const MAX_VISIBLE = 8;
+        const AVATAR_COLORS = [
+            '#6366f1', '#8b5cf6', '#0ea5e9', '#14b8a6',
+            '#f59e0b', '#ef4444', '#ec4899', '#22c55e'
+        ];
+
+        const visible = users.slice(0, MAX_VISIBLE);
+        const overflow = users.length - MAX_VISIBLE;
+
+        visible.forEach((user, i) => {
+            const initials = (user.username || '?').substring(0, 2);
+            const colorIdx = Math.abs(this._hashCode(user.user_id || user.username)) % AVATAR_COLORS.length;
+
+            const el = document.createElement('div');
+            el.className = 'mini-avatar';
+            el.style.background = `linear-gradient(135deg, ${AVATAR_COLORS[colorIdx]}, ${AVATAR_COLORS[(colorIdx + 1) % AVATAR_COLORS.length]})`;
+            el.style.zIndex = MAX_VISIBLE - i;
+            el.textContent = initials;
+
+            const tooltip = document.createElement('span');
+            tooltip.className = 'mini-avatar-tooltip';
+            tooltip.textContent = user.username;
+            el.appendChild(tooltip);
+
+            container.appendChild(el);
+        });
+
+        if (overflow > 0) {
+            const more = document.createElement('div');
+            more.className = 'mini-avatar-overflow';
+            more.textContent = `+${overflow}`;
+            container.appendChild(more);
+        }
+    }
+
+    /**
+     * Simple hash code for consistent avatar colors
+     * @private
+     * @param {string} str
+     * @returns {number}
+     */
+    _hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return hash;
     }
 
     /**

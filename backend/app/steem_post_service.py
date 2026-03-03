@@ -100,7 +100,7 @@ class SteemPostService:
         body_parts.append(f"")
         
         # Cover image
-        body_parts.append(f"![coverart](https://cdn.steemitimages.com/DQmYHS6e195yMGWkZUjzg45b8epPRFJcv9GCDzvaeLmRieV/image.png)\n")
+        body_parts.append(f"![coverart](https://cdn.steemitimages.com/DQmdER2vT5d8k5HE6GjnyjQrYh5q8uT33ZBeyoThnBzXBEH/image.png)\n")
         
 
         # CTA section

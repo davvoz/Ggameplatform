@@ -323,7 +323,7 @@ function createShipSprite(name, c) {
             ctx.closePath();
             outlineAndFill(ctx, c.accent, c.dark, 2);
 
-            // Armor grooves on body
+            // Armor grooves on body and wings
             ctx.strokeStyle = c.dark;
             ctx.lineWidth = 1.5;
             ctx.beginPath();

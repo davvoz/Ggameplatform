@@ -625,6 +625,14 @@ class Player extends GameObject {
                 magnet_field:       { dx: -26, dy: 16, c:'u' },   // L aft wing
                 lucky_drops:        { dx:  26, dy: 26, c:'u' },   // R tail wing
                 point_multiplier:   { dx: -26, dy: 26, c:'u' },   // L tail wing
+
+                // ═══ WORLD 2 — MID RING (±18, between inner & outer) ═══
+                neural_hijack:      { dx:  18, dy:-20, c:'o' },   // R fwd mid
+                predatore:          { dx: -18, dy:-20, c:'o' },   // L fwd mid
+                colpo_critico:      { dx:  18, dy: -8, c:'o' },   // R mid mid
+                scia_infuocata:     { dx: -18, dy: -8, c:'d' },   // L mid mid
+                esploratore:        { dx:  18, dy: 10, c:'u' },   // R aft mid
+                sovraccarico:       { dx: -18, dy: 10, c:'u' },   // L aft mid
             };
 
             // Category glow colors: offensive=red, defensive=blue, utility=green

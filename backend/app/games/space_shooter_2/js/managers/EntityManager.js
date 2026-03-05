@@ -1,6 +1,5 @@
 import Bullet from '../entities/Bullet.js';
 import Explosion from '../entities/Explosion.js';
-import PowerUp from '../entities/PowerUp.js';
 import { MultiBoss } from '../entities/Enemy.js';
 
 class EntityManager {
@@ -43,102 +42,151 @@ class EntityManager {
         const g = this.game;
         for (const m of this.homingMissiles) {
             if (!m.active) continue;
+
             m.life -= dt;
-            if (m.life <= 0) { m.active = false; continue; }
-
-            let closest = null;
-            let closestDist = Infinity;
-            for (const enemy of this.enemies) {
-                if (!enemy.active || enemy._isAlly) continue;
-                const dx = enemy.position.x + enemy.width / 2 - m.x;
-                const dy = enemy.position.y + enemy.height / 2 - m.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < closestDist) { closestDist = dist; closest = enemy; }
-            }
-            if (this.boss && this.boss.active && !this.boss.entering) {
-                const dx = this.boss.position.x + this.boss.width / 2 - m.x;
-                const dy = this.boss.position.y + this.boss.height / 2 - m.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < closestDist) { closestDist = dist; closest = this.boss; }
-            }
-            if (this.miniBoss && this.miniBoss.active && !this.miniBoss.entering) {
-                const dx = this.miniBoss.position.x + this.miniBoss.width / 2 - m.x;
-                const dy = this.miniBoss.position.y + this.miniBoss.height / 2 - m.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < closestDist) { closestDist = dist; closest = this.miniBoss; }
-            }
-
-            if (closest) {
-                const dx = closest.position.x + closest.width / 2 - m.x;
-                const dy = closest.position.y + closest.height / 2 - m.y;
-                const angle = Math.atan2(dy, dx);
-                m.vx += Math.cos(angle) * m.speed * 3 * dt;
-                m.vy += Math.sin(angle) * m.speed * 3 * dt;
-                const spd = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
-                if (spd > m.speed) {
-                    m.vx = m.vx / spd * m.speed;
-                    m.vy = m.vy / spd * m.speed;
-                }
-            }
-
-            // Flat trail: [x0,y0, x1,y1, ...] — max 8 points (16 floats)
-            m.trail.push(m.x, m.y);
-            while (m.trail.length > 16) {
-                m.trail.shift();
-                m.trail.shift();
-            }
-
-            m.x += m.vx * dt;
-            m.y += m.vy * dt;
-
-            for (const enemy of this.enemies) {
-                if (!enemy.active || enemy._isAlly) continue;
-                if (m.x > enemy.position.x && m.x < enemy.position.x + enemy.width &&
-                    m.y > enemy.position.y && m.y < enemy.position.y + enemy.height) {
-                    const killed = enemy.takeDamage(m.damage, g);
-                    if (killed) g.waveManager.onEnemyKilled(enemy);
-                    m.active = false;
-                    this.explosions.push(new Explosion(m.x, m.y, 0.5));
-                    g.particles.emit(m.x, m.y, 'explosion', 8);
-                    break;
-                }
-            }
-            if (this.boss && this.boss.active && !this.boss.entering && m.active) {
-                let missileHit = false;
-                if (this.boss instanceof MultiBoss) {
-                    const hitIdx = this.boss.getHitPart(m.x, m.y);
-                    if (hitIdx >= 0) {
-                        const res = this.boss.damagepart(hitIdx, m.damage, g);
-                        if (res.bossKilled) g.waveManager.onBossKilled();
-                        missileHit = true;
-                    }
-                } else if (m.x > this.boss.position.x && m.x < this.boss.position.x + this.boss.width &&
-                           m.y > this.boss.position.y && m.y < this.boss.position.y + this.boss.height) {
-                    const killed = this.boss.takeDamage(m.damage, g);
-                    if (killed) g.waveManager.onBossKilled();
-                    missileHit = true;
-                }
-                if (missileHit) {
-                    m.active = false;
-                    this.explosions.push(new Explosion(m.x, m.y, 0.5));
-                    g.particles.emit(m.x, m.y, 'explosion', 8);
-                }
-            }
-            if (this.miniBoss && this.miniBoss.active && !this.miniBoss.entering && m.active) {
-                const hitIdx = this.miniBoss.getHitPart(m.x, m.y);
-                if (hitIdx >= 0) {
-                    this.miniBoss.damagepart(hitIdx, m.damage, g);
-                    m.active = false;
-                    this.explosions.push(new Explosion(m.x, m.y, 0.5));
-                    g.particles.emit(m.x, m.y, 'explosion', 8);
-                }
-            }
-
-            if (m.x < -50 || m.x > g.logicalWidth + 50 || m.y < -50 || m.y > g.logicalHeight + 50) {
+            if (m.life <= 0) {
                 m.active = false;
+                continue;
+            }
+
+            this.updateMissileTarget(m);
+            this.updateMissilePosition(m, dt);
+            this.checkMissileCollisions(m, g);
+            this.checkMissileOutOfBounds(m, g);
+        }
+
+        this.homingMissiles = this.homingMissiles.filter(m => m.active);
+    }
+
+    updateMissileTarget(m) {
+        let closest = null;
+        let closestDist = Infinity;
+
+        for (const enemy of this.enemies) {
+            if (!enemy.active || enemy._isAlly) continue;
+            const dist = this.getDistance(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, m.x, m.y);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = enemy;
             }
         }
-        this.homingMissiles = this.homingMissiles.filter(m => m.active);
+
+        this.checkBossAsTarget(this.boss, m, closestDist);
+        this.checkBossAsTarget(this.miniBoss, m, closestDist);
+
+        if (closest) {
+            this.steerTowards(m, closest);
+        }
+    }
+
+    checkBossAsTarget(boss, m, currentClosestDist) {
+        if (!boss || !boss.active || boss.entering) return;
+
+        const dx = boss.position.x + boss.width / 2 - m.x;
+        const dy = boss.position.y + boss.height / 2 - m.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < currentClosestDist) {
+            this.steerTowards(m, boss);
+        }
+    }
+
+    steerTowards(m, target) {
+        const dx = target.position.x + target.width / 2 - m.x;
+        const dy = target.position.y + target.height / 2 - m.y;
+        const angle = Math.atan2(dy, dx);
+
+        m.vx += Math.cos(angle) * m.speed * 3 * (1 / 60);
+        m.vy += Math.sin(angle) * m.speed * 3 * (1 / 60);
+
+        const spd = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+        if (spd > m.speed) {
+            m.vx = (m.vx / spd) * m.speed;
+            m.vy = (m.vy / spd) * m.speed;
+        }
+    }
+
+    updateMissilePosition(m, dt) {
+        m.trail.push(m.x, m.y);
+        while (m.trail.length > 16) {
+            m.trail.shift();
+            m.trail.shift();
+        }
+
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+    }
+
+    checkMissileCollisions(m, g) {
+        this.checkEnemyCollisions(m, g);
+        this.checkBossCollisions(m, g);
+        this.checkMiniBossCollisions(m, g);
+    }
+
+    checkEnemyCollisions(m, g) {
+        for (const enemy of this.enemies) {
+            if (!enemy.active || enemy._isAlly) continue;
+            if (this.isInsideRect(m.x, m.y, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
+                enemy.takeDamage(m.damage, g);
+                m.active = false;
+                this.createMissileExplosion(m, g);
+                break;
+            }
+        }
+    }
+
+    checkBossCollisions(m, g) {
+        if (!this.boss || !this.boss.active || this.boss.entering || !m.active) return;
+
+        let missileHit = false;
+        if (this.boss instanceof MultiBoss) {
+            const hitIdx = this.boss.getHitPart(m.x, m.y);
+            if (hitIdx >= 0) {
+                this.boss.damagepart(hitIdx, m.damage, g);
+                missileHit = true;
+            }
+        } else if (this.isInsideRect(m.x, m.y, this.boss.position.x, this.boss.position.y, this.boss.width, this.boss.height)) {
+            this.boss.takeDamage(m.damage, g);
+            missileHit = true;
+        }
+
+        if (missileHit) {
+            m.active = false;
+            this.createMissileExplosion(m, g);
+        }
+    }
+
+    checkMiniBossCollisions(m, g) {
+        if (!this.miniBoss || !this.miniBoss.active || this.miniBoss.entering || !m.active) return;
+
+        const hitIdx = this.miniBoss.getHitPart(m.x, m.y);
+        if (hitIdx >= 0) {
+            this.miniBoss.damagepart(hitIdx, m.damage, g);
+            m.active = false;
+            this.createMissileExplosion(m, g);
+        }
+    }
+
+    checkMissileOutOfBounds(m, g) {
+        const margin = 50;
+        if (m.x < -margin || m.x > g.logicalWidth + margin || m.y < -margin || m.y > g.logicalHeight + margin) {
+            m.active = false;
+        }
+    }
+
+    isInsideRect(x, y, rectX, rectY, width, height) {
+        return x > rectX && x < rectX + width && y > rectY && y < rectY + height;
+    }
+
+    getDistance(x1, y1, x2, y2) {
+        const dx = x1 - x2;
+        const dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    createMissileExplosion(m, g) {
+        this.explosions.push(new Explosion(m.x, m.y, 0.5));
+        g.particles.emit(m.x, m.y, 'explosion', 8);
     }
 
     cleanup() {

@@ -1,8 +1,18 @@
 {
-  "version": "3.34.2",
-  "timestamp": "2026-03-05T18:05:28.180Z",
-  "buildNumber": 437,
+  "version": "3.34.3",
+  "timestamp": "2026-03-06T08:47:05.471Z",
+  "buildNumber": 438,
   "changelog": [
+    {
+      "version": "3.34.3",
+      "date": "2026-03-06",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix : [SS2] add world 3",
+        "🔖 Bump version to 3.34.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.34.2",
       "date": "2026-03-05",
@@ -83,15 +93,6 @@
       "changes": [
         "fix: [SS]Add daily quests for Space Shooter",
         "🔖 Bump version to 3.33.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.10",
-      "date": "2026-02-28",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]NERF boss ,adjust boss health and score values for game balance",
-        "🔖 Bump version to 3.33.9 [skip-version]"
       ]
     }
   ]

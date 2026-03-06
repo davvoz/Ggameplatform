@@ -1,8 +1,18 @@
 {
-  "version": "3.34.1",
-  "timestamp": "2026-03-03T21:38:21.971Z",
-  "buildNumber": 436,
+  "version": "3.34.2",
+  "timestamp": "2026-03-05T18:05:28.180Z",
+  "buildNumber": 437,
   "changelog": [
+    {
+      "version": "3.34.2",
+      "date": "2026-03-05",
+      "type": "patch",
+      "changes": [
+        "fix:fittizia",
+        "fix:[SS2]refractor AssetManager monolith",
+        "🔖 Bump version to 3.34.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.34.1",
       "date": "2026-03-03",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: [SS2]NERF boss ,adjust boss health and score values for game balance",
         "🔖 Bump version to 3.33.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.9",
-      "date": "2026-02-28",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]Implement Neural Hijack mechanics and AllyController",
-        "🔖 Bump version to 3.33.8 [skip-version]"
       ]
     }
   ]

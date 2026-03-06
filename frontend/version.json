@@ -1,8 +1,17 @@
 {
-  "version": "3.34.3",
-  "timestamp": "2026-03-06T08:47:05.471Z",
-  "buildNumber": 438,
+  "version": "3.35.0",
+  "timestamp": "2026-03-06T09:00:14.176Z",
+  "buildNumber": 439,
   "changelog": [
+    {
+      "version": "3.35.0",
+      "date": "2026-03-06",
+      "type": "minor",
+      "changes": [
+        "feat:[ADMIN] add refund coins script for user credits",
+        "🔖 Bump version to 3.34.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.34.3",
       "date": "2026-03-06",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:clean project , [SS2] manage coins",
         "🔖 Bump version to 3.33.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.11",
-      "date": "2026-02-28",
-      "type": "patch",
-      "changes": [
-        "fix: [SS]Add daily quests for Space Shooter",
-        "🔖 Bump version to 3.33.10 [skip-version]"
       ]
     }
   ]

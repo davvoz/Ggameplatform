@@ -193,6 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (icon) {
                     if (worldNum === 1) icon.textContent = '◆';
                     else if (worldNum === 2) icon.textContent = '◇';
+                    else if (worldNum === 3) icon.textContent = '⬡';
                 }
                 if (lockLabel) lockLabel.style.display = 'none';
             }

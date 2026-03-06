@@ -104,6 +104,10 @@ class Bullet extends GameObject {
             }
             if (bounced) {
                 this.bounces++;
+                // Reduce damage on each ricochet
+                if (this._bounceDmgMul) {
+                    this.damage = Math.max(1, Math.ceil(this.damage * this._bounceDmgMul));
+                }
                 // Recalculate direction angle
                 const spd = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
                 this._dirAngle = spd > 0 ? Math.atan2(this.velocity.y / spd, this.velocity.x / spd) - Math.PI / 2 : 0;

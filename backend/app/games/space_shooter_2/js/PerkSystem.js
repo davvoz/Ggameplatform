@@ -332,6 +332,74 @@ const PERK_CATALOG = [
         maxStacks: 1,
         icon: '●',
         world: 2
+    },
+
+    // ═══════════════════════════════════════
+    //  WORLD 3 — SIMULATION BREAK PERKS
+    // ═══════════════════════════════════════
+
+    // ── Offensive ──
+
+    {
+        id: 'packet_burst',
+        name: 'Packet Burst',
+        description: 'Every 5th shot fires a burst of 3 extra projectiles.',
+        stackDesc: '−1 shot interval per stack (min 3)',
+        category: 'offensive',
+        rarity: 'rare',
+        maxStacks: 2,
+        icon: '⧉',
+        world: 3
+    },
+    {
+        id: 'virus_inject',
+        name: 'Virus Inject',
+        description: 'Bullets have 25% chance to infect enemy (purple, 1 dmg/sec 3s). Infected enemy death spreads to 2 nearest.',
+        stackDesc: '+15% infection chance, +0.5s duration per stack',
+        category: 'offensive',
+        rarity: 'epic',
+        maxStacks: 2,
+        icon: '☣',
+        world: 3
+    },
+
+    // ── Defensive ──
+
+    {
+        id: 'glitch_dash',
+        name: 'Glitch Dash',
+        description: 'Taking damage grants 1.5s invulnerability + 40% speed boost.',
+        stackDesc: '+0.5s duration, +10% speed per stack',
+        category: 'defensive',
+        rarity: 'rare',
+        maxStacks: 3,
+        icon: '⟐',
+        world: 3
+    },
+    {
+        id: 'entropy_shield',
+        name: 'Entropy Shield',
+        description: 'Every 20 kills generates a shield that absorbs 1 hit.',
+        stackDesc: '−5 kills needed per stack',
+        category: 'defensive',
+        rarity: 'common',
+        maxStacks: 3,
+        icon: '⬡',
+        world: 3
+    },
+
+    // ── Utility ──
+
+    {
+        id: 'data_leech',
+        name: 'Data Leech',
+        description: 'Killed enemies have 20% chance to drop double score pickups.',
+        stackDesc: '+10% chance per stack',
+        category: 'utility',
+        rarity: 'common',
+        maxStacks: 3,
+        icon: '⬠',
+        world: 3
     }
 ];
 
@@ -359,6 +427,10 @@ class PerkSystem {
         this.fireTrailTimer = 0;
         this.sovraccaricoCooldown = 0;
         this.alliedEnemies = []; // Neural Hijack converted allies
+        // World 3 perk state
+        this.packetBurstCounter = 0;   // Packet Burst shot counter
+        this.glitchDashTimer = 0;      // Glitch Dash invuln remaining
+        this.entropyShieldKills = 0;   // Entropy Shield kill tracker
         // Cache for getActivePerks() — invalidated on activatePerk/reset
         this._activePerkCache = null;
     }
@@ -565,6 +637,15 @@ class PerkSystem {
     getFireTrailDuration() { return this.hasPerk('scia_infuocata') ? 10 + (this.getStacks('scia_infuocata') - 1) * 4 : 0; }
     hasSovraccarico()      { return this.hasPerk('sovraccarico'); }
 
+    // ── World 3 Perk Getters ──
+    getPacketBurstInterval()  { return this.hasPerk('packet_burst') ? 5 - (this.getStacks('packet_burst') - 1) : 0; }
+    getVirusInfectChance()    { return this.hasPerk('virus_inject') ? 0.25 + (this.getStacks('virus_inject') - 1) * 0.15 : 0; }
+    getVirusInfectDuration()  { return this.hasPerk('virus_inject') ? 3 + (this.getStacks('virus_inject') - 1) * 0.5 : 0; }
+    getGlitchDashDuration()   { return this.hasPerk('glitch_dash') ? 1.5 + (this.getStacks('glitch_dash') - 1) * 0.5 : 0; }
+    getGlitchDashSpeedBoost() { return this.hasPerk('glitch_dash') ? 0.4 + (this.getStacks('glitch_dash') - 1) * 0.1 : 0; }
+    getEntropyShieldKills()   { return this.hasPerk('entropy_shield') ? 20 - (this.getStacks('entropy_shield') - 1) * 5 : Infinity; }
+    getDataLeechChance()      { return this.hasPerk('data_leech') ? 0.2 + (this.getStacks('data_leech') - 1) * 0.1 : 0; }
+
     //  Boolean shortcuts
     hasExplosiveRounds()   { return this.hasPerk('explosive_rounds'); }
     hasThorns()            { return this.hasPerk('thorns'); }
@@ -597,6 +678,10 @@ class PerkSystem {
         this.fireTrailTimer = 0;
         this.sovraccaricoCooldown = 0;
         this.alliedEnemies = [];
+        // World 3
+        this.packetBurstCounter = 0;
+        this.glitchDashTimer = 0;
+        this.entropyShieldKills = 0;
     }
 }
 

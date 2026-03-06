@@ -86,6 +86,11 @@ class ScoreManager {
                 types.push('drone_companion', 'bullet_time');
                 weights.push(6, 5);
             }
+            // W3 power-ups available from Level 61+
+            if (g.levelManager.currentLevel >= 61) {
+                types.push('glitch_clone', 'data_drain');
+                weights.push(5, 5);
+            }
             const type = this.weightedRandom(types, weights);
             entities.powerUps.push(new PowerUp(
                 enemy.position.x + enemy.width / 2 - 17,
@@ -123,7 +128,9 @@ class ScoreManager {
         this.totalEnemiesKilled++;
 
         for (let i = 0; i < 3; i++) {
-            const types = g.levelManager.currentLevel >= 31
+            const types = g.levelManager.currentLevel >= 61
+                ? ['health', 'glitch_clone', 'ultimate']
+                : g.levelManager.currentLevel >= 31
                 ? ['health', 'drone_companion', 'ultimate']
                 : ['health', 'points', 'ultimate'];
             entities.powerUps.push(new PowerUp(
@@ -160,7 +167,9 @@ class ScoreManager {
         g.levelManager.levelEnemiesKilled++;
         this.totalEnemiesKilled++;
 
-        const mbTypes = ['health', 'points'];
+        const mbTypes = g.levelManager.currentLevel >= 61
+            ? ['health', 'data_drain']
+            : ['health', 'points'];
         for (let i = 0; i < 2; i++) {
             entities.powerUps.push(new PowerUp(
                 cx + (i - 0.5) * 30 - 17,

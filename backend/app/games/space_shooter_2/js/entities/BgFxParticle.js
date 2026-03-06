@@ -28,6 +28,7 @@ import { FrozenFx }      from './fx/FrozenFx.js';
 import { DesertFx }      from './fx/DesertFx.js';
 import { MechanicalFx }  from './fx/MechanicalFx.js';
 import { ToxicFx }       from './fx/ToxicFx.js';
+import { GlitchFx }      from './fx/GlitchFx.js';
 
 /**
  * Strategy registry — maps fxType string → Strategy class.
@@ -53,7 +54,9 @@ const FX_REGISTRY = {
     frozen     : FrozenFx,
     desert     : DesertFx,
     mechanical : MechanicalFx,
-    toxic      : ToxicFx
+    toxic      : ToxicFx,
+    // simulation effects
+    glitch     : GlitchFx
 };
 
 /**

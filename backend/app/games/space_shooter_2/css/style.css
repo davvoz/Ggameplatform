@@ -1911,6 +1911,9 @@ body.game-fullscreen #game-container {
 .world-card[data-world="2"]::before {
     background: linear-gradient(135deg, rgba(100,220,150,0.12), rgba(40,120,80,0.08));
 }
+.world-card[data-world="3"]::before {
+    background: linear-gradient(135deg, rgba(0,255,200,0.12), rgba(0,120,100,0.08));
+}
 .world-card:hover:not(.locked) { transform: translateY(-2px); border-color: rgba(100,180,255,0.6); }
 .world-card:hover:not(.locked)::before { opacity: 1; }
 .world-card.selected {

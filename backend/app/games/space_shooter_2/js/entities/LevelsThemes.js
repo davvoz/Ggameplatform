@@ -359,6 +359,175 @@ const LEVEL_THEMES = {
             toxicPools: 2, acidRain: true, acidRainCount: 55
         }
     },
+
+    // ═══════════════════════════════════════════════
+    //  WORLD 3 — SIMULATION BREAK (Levels 61-90)
+    //  The game engine is malfunctioning: corrupted grids,
+    //  glitch artifacts, data streams, broken geometry.
+    //  intensity ramps from 0.0 → 1.0 as levels advance.
+    // ═══════════════════════════════════════════════
+
+    // ─── Sector 1: First Cracks (61-65) ───
+    // L61: Boot Sequence — faint grid, first signs of corruption
+    bootSequence: {
+        bg: '#060810', stars: ['#6688aa', '#88aacc', '#aaddee'], nebula: ['rgba(20,30,60,1)', 'rgba(15,20,50,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.05, gridHue: 200, dist: [0.40, 0.55, 0.70, 0.88] }
+    },
+    // L62: Memory Leak — cyan-hued data fragments appearing
+    memoryLeak: {
+        bg: '#04080e', stars: ['#55aacc', '#77ccee', '#bbddff'], nebula: ['rgba(15,40,70,1)', 'rgba(10,25,55,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.08, gridHue: 190, dist: [0.32, 0.52, 0.72, 0.88] }
+    },
+    // L63: Stutter — slight glitch frequency increase, magenta hints
+    stutter: {
+        bg: '#080610', stars: ['#9977cc', '#bb99ee', '#ddbbff'], nebula: ['rgba(40,20,70,1)', 'rgba(30,10,55,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.12, gridHue: 270, dist: [0.35, 0.52, 0.70, 0.87] }
+    },
+    // L64: Debug Mode — green data streams become prominent
+    debugMode: {
+        bg: '#040a06', stars: ['#55cc77', '#77ee99', '#aaffcc'], nebula: ['rgba(15,50,25,1)', 'rgba(10,35,15,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.15, gridHue: 140, dist: [0.30, 0.55, 0.70, 0.85] }
+    },
+    // L65: Stack Overflow — first mini-boss, moderate corruption
+    stackOverflow: {
+        bg: '#0a060c', stars: ['#cc5588', '#ee77aa', '#ffaacc'], nebula: ['rgba(60,15,40,1)', 'rgba(45,10,30,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.20, gridHue: 330, dist: [0.35, 0.52, 0.68, 0.85] }
+    },
+
+    // ─── Sector 2: Corruption Spreads (66-70) ───
+    // L66: Null Pointer — dark, sparse, with sudden pixel pops
+    nullPointer: {
+        bg: '#040408', stars: ['#445566', '#667788', '#88aabb'], nebula: ['rgba(12,14,28,1)', 'rgba(8,10,22,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.25, gridHue: 210, dist: [0.28, 0.48, 0.68, 0.88] }
+    },
+    // L67: Fragmented — broken polygons dominate
+    fragmented: {
+        bg: '#06040a', stars: ['#8866bb', '#aa88dd', '#ccaaff'], nebula: ['rgba(30,15,50,1)', 'rgba(20,8,40,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.28, gridHue: 280, dist: [0.25, 0.42, 0.72, 0.88] }
+    },
+    // L68: Syntax Error — red/orange error hues, many blocks
+    syntaxError: {
+        bg: '#0c0406', stars: ['#ee6644', '#ff8866', '#ffbb99'], nebula: ['rgba(70,18,12,1)', 'rgba(50,10,8,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.32, gridHue: 15, dist: [0.42, 0.55, 0.70, 0.86] }
+    },
+    // L69: Infinite Loop — green cycling data streams
+    infiniteLoop: {
+        bg: '#040c04', stars: ['#44dd66', '#66ff88', '#aaffbb'], nebula: ['rgba(10,55,18,1)', 'rgba(8,40,12,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.35, gridHue: 130, dist: [0.25, 0.58, 0.72, 0.86] }
+    },
+    // L70: Core Dump — boss level, mixed corruption
+    coreDump: {
+        bg: '#08040c', stars: ['#bb44cc', '#dd66ee', '#ff99ff'], nebula: ['rgba(50,10,60,1)', 'rgba(35,5,45,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.40, gridHue: 290, dist: [0.35, 0.52, 0.68, 0.84] }
+    },
+
+    // ─── Sector 3: System Failure (71-75) ───
+    // L71: Buffer Overflow — heavy block corruption, cyan-dominant
+    bufferOverflow: {
+        bg: '#040a10', stars: ['#44bbdd', '#66ddff', '#99eeff'], nebula: ['rgba(12,45,65,1)', 'rgba(8,30,50,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.45, gridHue: 195, dist: [0.42, 0.55, 0.68, 0.84], glitchMul: 1.1 }
+    },
+    // L72: Race Condition — fast particles, flickering pixels
+    raceCondition: {
+        bg: '#060606', stars: ['#aaaaaa', '#cccccc', '#eeeeee'], nebula: ['rgba(25,25,25,1)', 'rgba(18,18,18,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.48, gridHue: 0, dist: [0.28, 0.45, 0.62, 0.88] }
+    },
+    // L73: Deadlock — purple-dark, heavy broken polys
+    deadlock: {
+        bg: '#0a0418', stars: ['#7744bb', '#9966dd', '#cc99ff'], nebula: ['rgba(35,10,65,1)', 'rgba(25,5,50,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.52, gridHue: 270, dist: [0.25, 0.42, 0.72, 0.86] }
+    },
+    // L74: Segfault — red crashes, code fragments flying
+    segfault: {
+        bg: '#100408', stars: ['#dd4444', '#ff6666', '#ff9999'], nebula: ['rgba(65,12,20,1)', 'rgba(50,8,15,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.55, gridHue: 0, dist: [0.30, 0.45, 0.62, 0.82] }
+    },
+    // L75: Heap Corruption — boss, multi-color chaos
+    heapCorruption: {
+        bg: '#080608', stars: ['#dd77aa', '#ff99cc', '#ffbbee'], nebula: ['rgba(50,18,40,1)', 'rgba(35,10,28,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.60, gridHue: 320, dist: [0.35, 0.52, 0.68, 0.84], glitchMul: 1.15 }
+    },
+
+    // ─── Sector 4: Critical Failure (76-80) ───
+    // L76: Blue Screen — deep blue, dense grid lines
+    blueScreen: {
+        bg: '#020820', stars: ['#3366dd', '#5588ff', '#88bbff'], nebula: ['rgba(5,20,80,1)', 'rgba(3,12,60,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.65, gridHue: 220, dist: [0.40, 0.55, 0.70, 0.85], glitchMul: 1.2 }
+    },
+    // L77: Kernel Panic — dark with bright flashes
+    kernelPanic: {
+        bg: '#040204', stars: ['#ee3355', '#ff5577', '#ff88aa'], nebula: ['rgba(55,6,18,1)', 'rgba(40,3,12,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.68, gridHue: 350, dist: [0.30, 0.48, 0.65, 0.84] }
+    },
+    // L78: Bit Rot — faded, desaturated, decaying blocks
+    bitRot: {
+        bg: '#080806', stars: ['#998866', '#bbaa88', '#ddccaa'], nebula: ['rgba(35,30,22,1)', 'rgba(25,20,15,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.72, gridHue: 45, dist: [0.38, 0.55, 0.68, 0.82] }
+    },
+    // L79: Overflow — magenta/cyan chromatic overload
+    overflow: {
+        bg: '#0a0412', stars: ['#cc44ff', '#dd77ff', '#eeaaff'], nebula: ['rgba(50,10,70,1)', 'rgba(35,5,55,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.75, gridHue: 290, dist: [0.32, 0.48, 0.65, 0.85], glitchMul: 1.2 }
+    },
+    // L80: Fatal Exception — boss, high intensity
+    fatalException: {
+        bg: '#0c0204', stars: ['#ff3333', '#ff6655', '#ff9988'], nebula: ['rgba(70,8,10,1)', 'rgba(55,4,6,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.80, gridHue: 5, dist: [0.35, 0.52, 0.68, 0.84], glitchMul: 1.25 }
+    },
+
+    // ─── Sector 5: Meltdown (81-85) ───
+    // L81: Data Corruption — warped green-cyan grid
+    dataCorruption: {
+        bg: '#040c0a', stars: ['#33ddaa', '#55ffcc', '#88ffee'], nebula: ['rgba(8,50,40,1)', 'rgba(5,35,28,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.82, gridHue: 165, dist: [0.38, 0.52, 0.66, 0.82], glitchMul: 1.25 }
+    },
+    // L82: Ghost Process — faint, ethereal white on dark
+    ghostProcess: {
+        bg: '#050508', stars: ['#aabbcc', '#ccddee', '#eeeeff'], nebula: ['rgba(18,20,30,1)', 'rgba(12,14,22,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.85, gridHue: 220, dist: [0.25, 0.45, 0.68, 0.88] }
+    },
+    // L83: Malware — aggressive red/yellow, many pixel noise
+    malware: {
+        bg: '#100804', stars: ['#ff8800', '#ffaa33', '#ffcc66'], nebula: ['rgba(65,30,8,1)', 'rgba(50,20,4,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.88, gridHue: 30, dist: [0.30, 0.45, 0.60, 0.85], glitchMul: 1.3 }
+    },
+    // L84: Worm Hole — dark purple void, code fragments
+    wormHole: {
+        bg: '#08021a', stars: ['#6622dd', '#8844ff', '#bb77ff'], nebula: ['rgba(30,5,75,1)', 'rgba(20,2,55,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.90, gridHue: 270, dist: [0.28, 0.42, 0.58, 0.82] }
+    },
+    // L85: System Halt — boss, near-maximum corruption
+    systemHalt: {
+        bg: '#0a0206', stars: ['#dd2244', '#ff4466', '#ff7799'], nebula: ['rgba(55,6,16,1)', 'rgba(40,3,10,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.92, gridHue: 345, dist: [0.35, 0.50, 0.65, 0.82], glitchMul: 1.35 }
+    },
+
+    // ─── Sector 6: Total Collapse (86-90) ───
+    // L86: Cascade Failure — multi-hue chaos, everything breaking
+    cascadeFailure: {
+        bg: '#080408', stars: ['#cc55cc', '#ee77ee', '#ffaaff'], nebula: ['rgba(45,12,45,1)', 'rgba(30,8,30,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.93, gridHue: 300, dist: [0.35, 0.50, 0.65, 0.80], glitchMul: 1.35 }
+    },
+    // L87: Zero Day — bright white flashes, maximum pixel noise
+    zeroDay: {
+        bg: '#060606', stars: ['#dddddd', '#eeeeee', '#ffffff'], nebula: ['rgba(22,22,22,1)', 'rgba(15,15,15,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.95, gridHue: 0, dist: [0.25, 0.40, 0.55, 0.85], glitchMul: 1.4 }
+    },
+    // L88: Entropy Max — desaturated, heavy distortion bands
+    entropyMax: {
+        bg: '#0a0808', stars: ['#bb8877', '#ddaa99', '#ffccbb'], nebula: ['rgba(40,28,25,1)', 'rgba(30,20,18,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.96, gridHue: 20, dist: [0.35, 0.52, 0.68, 0.82], glitchMul: 1.4 }
+    },
+    // L89: Last Signal — deep void, faint cyan flickers
+    lastSignal: {
+        bg: '#020408', stars: ['#225588', '#3377aa', '#55aadd'], nebula: ['rgba(5,14,30,1)', 'rgba(3,10,22,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 0.98, gridHue: 200, dist: [0.30, 0.48, 0.65, 0.84] }
+    },
+    // L90: The Kernel — final boss, total system collapse
+    theKernel: {
+        bg: '#020002', stars: ['#ff0044', '#ff3366', '#ff6699'], nebula: ['rgba(60,0,15,1)', 'rgba(40,0,8,1)', 'rgba(80,0,20,1)'], fx: 'glitch',
+        glitchConfig: { intensity: 1.0, gridHue: 350, dist: [0.35, 0.50, 0.65, 0.80], glitchMul: 1.5 }
+    },
 };
 
 // Map: level number (1-60) → theme key
@@ -382,6 +551,18 @@ const LEVEL_THEME_MAP = [
     'factoryFloor', 'assemblyLine', 'controlCore', 'reactorChamber', 'mechBoss',
     // World 2 — Toxic (56-60)
     'toxicShores', 'acidRain', 'mutationZone', 'groundZero', 'toxicBoss',
+    // World 3 — Simulation Break: First Cracks (61-65)
+    'bootSequence', 'memoryLeak', 'stutter', 'debugMode', 'stackOverflow',
+    // World 3 — Corruption Spreads (66-70)
+    'nullPointer', 'fragmented', 'syntaxError', 'infiniteLoop', 'coreDump',
+    // World 3 — System Failure (71-75)
+    'bufferOverflow', 'raceCondition', 'deadlock', 'segfault', 'heapCorruption',
+    // World 3 — Critical Failure (76-80)
+    'blueScreen', 'kernelPanic', 'bitRot', 'overflow', 'fatalException',
+    // World 3 — Meltdown (81-85)
+    'dataCorruption', 'ghostProcess', 'malware', 'wormHole', 'systemHalt',
+    // World 3 — Total Collapse (86-90)
+    'cascadeFailure', 'zeroDay', 'entropyMax', 'lastSignal', 'theKernel',
 ];
 
 function getThemeForLevel(level) {

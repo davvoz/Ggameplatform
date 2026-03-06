@@ -147,6 +147,14 @@ class Player extends GameObject {
         this.droneFireTimer = 0;
         this.droneAngle = 0;
 
+        // ─── World 3 Power-up temporaries ───
+        this.glitchCloneActive = false;
+        this.glitchCloneTime = 0;
+        this.glitchCloneFireTimer = 0;
+        this.glitchCloneAngle = 0;
+        this.dataDrainActive = false;
+        this.dataDrainTime = 0;
+
         // Ultimate system
         this.ultimateCharge = 0;
         this.ultimateActive = false;
@@ -316,6 +324,49 @@ class Player extends GameObject {
             }
         }
 
+        // ─── World 3 Power-up Timers ───
+
+        // Glitch Clone — 2 holographic clones orbit and fire
+        if (this.glitchCloneActive) {
+            this.glitchCloneTime -= deltaTime;
+            this.glitchCloneAngle += deltaTime * 2;
+            this.glitchCloneFireTimer -= deltaTime;
+            if (this.glitchCloneFireTimer <= 0) {
+                this.glitchCloneFireTimer = 0.45;
+                for (let i = 0; i < 2; i++) {
+                    const a = this.glitchCloneAngle + i * Math.PI;
+                    const cx = this.position.x + this.width / 2 + Math.cos(a) * 40;
+                    const cy = this.position.y + this.height / 2 + Math.sin(a) * 40;
+                    game.spawnBullet(cx, cy, 0, -480, 'player');
+                }
+            }
+            if (this.glitchCloneTime <= 0) {
+                this.glitchCloneActive = false;
+            }
+        }
+
+        // Data Drain — AoE damage field around player
+        if (this.dataDrainActive) {
+            this.dataDrainTime -= deltaTime;
+            const pcx = this.position.x + this.width / 2;
+            const pcy = this.position.y + this.height / 2;
+            const drainRadius = 100;
+            const em = game.entityManager;
+            for (const enemy of em.enemies) {
+                if (!enemy.active) continue;
+                const ecx = enemy.position.x + enemy.width / 2;
+                const ecy = enemy.position.y + enemy.height / 2;
+                const dx = ecx - pcx, dy = ecy - pcy;
+                if (dx * dx + dy * dy < drainRadius * drainRadius) {
+                    enemy.health -= 15 * deltaTime;
+                    if (enemy.health <= 0) enemy.health = 0;
+                }
+            }
+            if (this.dataDrainTime <= 0) {
+                this.dataDrainActive = false;
+            }
+        }
+
         this.thrusterFlicker += deltaTime * 10;
     }
 
@@ -368,6 +419,20 @@ class Player extends GameObject {
                     game.spawnBullet(centerX + 6, topY + 2, 0, bulletSpeed * 1.1, 'player');
                 }
                 break;
+        }
+
+        // ── Packet Burst: every Nth shot fires 3 extra projectiles ──
+        if (game.perkSystem) {
+            const burstInterval = game.perkSystem.getPacketBurstInterval();
+            if (burstInterval > 0) {
+                game.perkSystem.packetBurstCounter++;
+                if (game.perkSystem.packetBurstCounter >= burstInterval) {
+                    game.perkSystem.packetBurstCounter = 0;
+                    game.spawnBullet(centerX - 14, topY + 4, -60, bulletSpeed * 0.95, 'player');
+                    game.spawnBullet(centerX, topY - 2, 0, bulletSpeed * 1.1, 'player');
+                    game.spawnBullet(centerX + 14, topY + 4, 60, bulletSpeed * 0.95, 'player');
+                }
+            }
         }
     }
 
@@ -435,6 +500,17 @@ class Player extends GameObject {
             this.destroy();
             return true; // died
         }
+
+        // ── Glitch Dash: on-hit invuln + speed boost ──
+        if (game.perkSystem && game.perkSystem.getGlitchDashDuration() > 0) {
+            const dur = game.perkSystem.getGlitchDashDuration();
+            game.perkSystem.glitchDashTimer = dur;
+            this.invincible = true;
+            this.invincibleTime = dur;
+            this.blinkTimer = 0;
+            game.postProcessing.flash({ r: 0, g: 255, b: 200 }, 0.15);
+        }
+
         return false;
     }
 
@@ -633,6 +709,13 @@ class Player extends GameObject {
                 scia_infuocata:     { dx: -18, dy: -8, c:'d' },   // L mid mid
                 esploratore:        { dx:  18, dy: 10, c:'u' },   // R aft mid
                 sovraccarico:       { dx: -18, dy: 10, c:'u' },   // L aft mid
+
+                // ═══ WORLD 3 — FAR RING (±32, outermost hardpoints) ═══
+                packet_burst:       { dx:  32, dy:-12, c:'o' },   // R fwd far
+                virus_inject:       { dx: -32, dy:-12, c:'o' },   // L fwd far
+                glitch_dash:        { dx:  32, dy:  2, c:'d' },   // R mid far
+                entropy_shield:     { dx: -32, dy:  2, c:'d' },   // L mid far
+                data_leech:         { dx:  32, dy: 16, c:'u' },   // R aft far
             };
 
             // Category glow colors: offensive=red, defensive=blue, utility=green
@@ -722,6 +805,95 @@ class Player extends GameObject {
             ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
             ctx.lineTo(drCx, drCy);
             ctx.stroke();
+            ctx.restore();
+        }
+
+        // ── GLITCH CLONE VISUAL ──
+        if (this.glitchCloneActive) {
+            ctx.save();
+            const now = Date.now();
+            for (let i = 0; i < 2; i++) {
+                const cloneAngle = this.glitchCloneAngle + i * Math.PI;
+                const clX = cx + Math.cos(cloneAngle) * 40;
+                const clY = cy + Math.sin(cloneAngle) * 40;
+                const flicker = 0.35 + 0.15 * Math.sin(now * 0.008 + i * 3);
+                ctx.globalAlpha = flicker;
+                // Holographic tinted ship silhouette
+                const cloneGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, 14);
+                cloneGrad.addColorStop(0, 'rgba(0,220,200,0.6)');
+                cloneGrad.addColorStop(1, 'rgba(0,220,200,0)');
+                ctx.fillStyle = cloneGrad;
+                ctx.beginPath(); ctx.arc(clX, clY, 14, 0, Math.PI * 2); ctx.fill();
+                // Clone body (small triangle ship)
+                ctx.fillStyle = 'rgba(0,255,220,0.5)';
+                ctx.strokeStyle = 'rgba(0,255,220,0.7)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(clX, clY - 10);
+                ctx.lineTo(clX + 7, clY + 6);
+                ctx.lineTo(clX - 7, clY + 6);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                // Scanline effect
+                ctx.strokeStyle = 'rgba(0,255,220,0.2)';
+                ctx.lineWidth = 1;
+                for (let s = -8; s <= 8; s += 4) {
+                    ctx.beginPath();
+                    ctx.moveTo(clX - 6, clY + s);
+                    ctx.lineTo(clX + 6, clY + s);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        // ── DATA DRAIN VISUAL ──
+        if (this.dataDrainActive) {
+            ctx.save();
+            const now = Date.now();
+            const pulse = 0.4 + 0.2 * Math.sin(now * 0.006);
+            const drainR = 100;
+            // Outer pulsing ring
+            ctx.globalAlpha = pulse * 0.6;
+            ctx.strokeStyle = '#7832f0';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#9955ff';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(cx, cy, drainR, 0, Math.PI * 2);
+            ctx.stroke();
+            // Inner gradient field
+            const dg = ctx.createRadialGradient(cx, cy, 10, cx, cy, drainR);
+            dg.addColorStop(0, 'rgba(120,50,240,0.08)');
+            dg.addColorStop(0.6, 'rgba(120,50,240,0.04)');
+            dg.addColorStop(1, 'rgba(120,50,240,0)');
+            ctx.globalAlpha = pulse;
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = dg;
+            ctx.beginPath(); ctx.arc(cx, cy, drainR, 0, Math.PI * 2); ctx.fill();
+            // Rotating drain arcs
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < 4; i++) {
+                const a = (i * Math.PI / 2) + now * 0.003;
+                ctx.globalAlpha = pulse * 0.5;
+                ctx.strokeStyle = '#aa66ff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, drainR * 0.7, a, a + Math.PI * 0.3);
+                ctx.stroke();
+            }
+            // Spiraling particles converging inward
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2 + now * 0.004;
+                const dist = drainR * (0.3 + 0.5 * ((now * 0.001 + i * 0.3) % 1));
+                const px = cx + Math.cos(angle) * dist;
+                const py = cy + Math.sin(angle) * dist;
+                ctx.globalAlpha = pulse * 0.8;
+                ctx.fillStyle = '#cc88ff';
+                ctx.beginPath();
+                ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         }
 

@@ -35,6 +35,16 @@ const WORLDS = [
         bossIds: [7, 8, 9, 10, 11, 12],
         miniBossIds: [5, 6, 7, 8],
         planets: ['Alien Jungle', 'Volcanic', 'Frozen', 'Desert', 'Mechanical', 'Toxic']
+    },
+    {
+        id: 3,
+        name: 'Simulation Break',
+        subtitle: 'BEYOND THE CODE',
+        icon: '⬡',
+        themeColor: '#00ffcc',
+        bossIds: [13, 14, 15, 16, 17, 18],
+        miniBossIds: [9, 10, 11, 12],
+        planets: null
     }
 ];
 

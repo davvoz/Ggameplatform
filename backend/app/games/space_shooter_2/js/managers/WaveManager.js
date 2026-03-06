@@ -72,6 +72,9 @@ class WaveManager {
                     let miniBossType;
                     if (levelData.miniboss) {
                         miniBossType = levelData.miniboss;
+                    } else if (lvl > 60) {
+                        // World 3: cycle through types 9-12
+                        miniBossType = 9 + (((lvl - 61) % 4));
                     } else if (lvl > 30) {
                         // World 2: cycle through types 5-8
                         miniBossType = 5 + (((lvl - 31) % 4));
@@ -131,6 +134,19 @@ class WaveManager {
 
     onEnemyKilled(enemy) {
         this.game.scoreManager.onEnemyKilled(enemy);
+
+        const perks = this.game.perkSystem;
+        if (!perks) return;
+
+        // Entropy Shield: track kills for auto-shield
+        if (perks.getEntropyShieldKills() < Infinity) {
+            perks.entropyShieldKills++;
+        }
+
+        // Data Leech: chance for double score
+        if (perks.getDataLeechChance() > 0 && Math.random() < perks.getDataLeechChance()) {
+            this.game.scoreManager.onEnemyKilled(enemy); // extra score credit
+        }
     }
 
     onBossKilled() {

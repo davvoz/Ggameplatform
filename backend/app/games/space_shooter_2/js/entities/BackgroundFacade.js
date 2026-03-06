@@ -2,6 +2,7 @@ import { BgFxParticle } from "./BgFxParticle.js";
 import { getThemeForLevel } from "./LevelsThemes.js";
 import { SpaceWorldRenderer } from "./worlds/SpaceWorldRenderer.js";
 import { PlanetWorldRenderer } from "./worlds/PlanetWorldRenderer.js";
+import { SimulationWorldRenderer } from "./worlds/SimulationWorldRenderer.js";
 
 // ═════════════════════════════════════════════════════════════
 //  BackgroundFacade — thin orchestrator that delegates to WorldRenderers
@@ -44,7 +45,7 @@ export class BackgroundFacade {
         this.worlds = [
             new SpaceWorldRenderer(canvasWidth, canvasHeight, quality),   // World 1 (1-30)
             new PlanetWorldRenderer(canvasWidth, canvasHeight, quality),  // World 2 (31-60)
-            // new YourWorldRenderer(canvasWidth, canvasHeight, quality), // World 3 (61-90)
+            new SimulationWorldRenderer(canvasWidth, canvasHeight, quality), // World 3 (61-90)
         ];
 
         /** Currently active world renderer. */

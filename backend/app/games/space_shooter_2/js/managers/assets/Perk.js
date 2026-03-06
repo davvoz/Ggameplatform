@@ -39,6 +39,12 @@ import { outlineAndFill } from './Helper.js';
             { id:'scia_infuocata',   draw: _drawDev_sciaInfuocata },
             { id:'esploratore',      draw: _drawDev_esploratore },
             { id:'sovraccarico',     draw: _drawDev_sovraccarico },
+            // ── WORLD 3 PERKS ──
+            { id:'packet_burst',     draw: _drawDev_packetBurst },
+            { id:'virus_inject',     draw: _drawDev_virusInject },
+            { id:'glitch_dash',      draw: _drawDev_glitchDash },
+            { id:'entropy_shield',   draw: _drawDev_entropyShield },
+            { id:'data_leech',       draw: _drawDev_dataLeech },
         ];
 
         for (const def of defs) {
@@ -572,6 +578,136 @@ import { outlineAndFill } from './Helper.js';
         ctx.beginPath(); ctx.arc(cx,cy,r*0.8,0,Math.PI*2); ctx.stroke();
         ctx.strokeStyle='rgba(255,220,0,0.25)'; ctx.lineWidth=1;
         ctx.beginPath(); ctx.arc(cx,cy,r*1.1,0,Math.PI*2); ctx.stroke();
+    }
+
+    // ══════════════════════════════════
+    //  WORLD 3 — SIMULATION BREAK
+    // ══════════════════════════════════
+
+    /** Packet Burst: three stacked data blocks */
+    function _drawDev_packetBurst(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.32;
+        const bw=r*0.6, bh=r*0.35;
+        // Three offset rectangles (data packets)
+        const cols = ['#00eebb','#00ccaa','#009988'];
+        for (let i = 0; i < 3; i++) {
+            const ox = (i-1)*r*0.25;
+            const oy = (i-1)*r*0.3;
+            ctx.fillStyle = cols[i];
+            ctx.fillRect(cx+ox-bw/2, cy+oy-bh/2, bw, bh);
+            ctx.strokeStyle='#111'; ctx.lineWidth=1.2;
+            ctx.strokeRect(cx+ox-bw/2, cy+oy-bh/2, bw, bh);
+            // Data lines
+            ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=0.8;
+            ctx.beginPath(); ctx.moveTo(cx+ox-bw*0.3, cy+oy); ctx.lineTo(cx+ox+bw*0.3, cy+oy); ctx.stroke();
+        }
+        // Burst arrows
+        ctx.fillStyle='rgba(0,238,187,0.5)';
+        for (let a = 0; a < 4; a++) {
+            const ang = a * Math.PI/2;
+            const ax = cx + Math.cos(ang)*r*1.1;
+            const ay = cy + Math.sin(ang)*r*1.1;
+            ctx.beginPath(); ctx.arc(ax,ay,r*0.12,0,Math.PI*2); ctx.fill();
+        }
+    }
+
+    /** Virus Inject: biohazard symbol with purple glow */
+    function _drawDev_virusInject(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Purple glow backdrop
+        ctx.fillStyle='rgba(180,0,255,0.15)';
+        ctx.beginPath(); ctx.arc(cx, cy, r*1.1, 0, Math.PI*2); ctx.fill();
+        // Biohazard: 3 arcs
+        ctx.strokeStyle='#b400ff'; ctx.lineWidth=2;
+        for (let i = 0; i < 3; i++) {
+            const a = i * Math.PI * 2 / 3 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(a)*r*0.3, cy + Math.sin(a)*r*0.3, r*0.45, a - 0.8, a + 0.8);
+            ctx.stroke();
+        }
+        // Center circle
+        ctx.fillStyle='#d060ff';
+        ctx.beginPath(); ctx.arc(cx, cy, r*0.18, 0, Math.PI*2); ctx.fill();
+        // Center hole
+        ctx.fillStyle='#1a0028';
+        ctx.beginPath(); ctx.arc(cx, cy, r*0.08, 0, Math.PI*2); ctx.fill();
+    }
+
+    /** Glitch Dash: phasing ship silhouette with motion lines */
+    function _drawDev_glitchDash(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Ghost silhouette (shifted)
+        ctx.globalAlpha=0.3;
+        ctx.fillStyle='#00ffcc';
+        ctx.beginPath();
+        ctx.moveTo(cx-r*0.6, cy+r*0.5);
+        ctx.lineTo(cx-r*0.1, cy-r*0.7);
+        ctx.lineTo(cx+r*0.4, cy+r*0.5);
+        ctx.closePath(); ctx.fill();
+        ctx.globalAlpha=1;
+        // Main silhouette
+        ctx.fillStyle='#00ffaa';
+        ctx.beginPath();
+        ctx.moveTo(cx-r*0.4, cy+r*0.5);
+        ctx.lineTo(cx+r*0.1, cy-r*0.7);
+        ctx.lineTo(cx+r*0.6, cy+r*0.5);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='#111'; ctx.lineWidth=1.2; ctx.stroke();
+        // Speed lines
+        ctx.strokeStyle='rgba(0,255,170,0.5)'; ctx.lineWidth=1;
+        for (let i = 0; i < 3; i++) {
+            const ly = cy - r*0.3 + i*r*0.3;
+            ctx.beginPath(); ctx.moveTo(cx-r*1.1, ly); ctx.lineTo(cx-r*0.5, ly); ctx.stroke();
+        }
+    }
+
+    /** Entropy Shield: hexagonal barrier with digital noise */
+    function _drawDev_entropyShield(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.38;
+        // Hexagon
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = Math.PI/6 + i * Math.PI/3;
+            const px = cx + Math.cos(a)*r;
+            const py = cy + Math.sin(a)*r;
+            if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.closePath();
+        ctx.fillStyle='rgba(0,200,255,0.15)';
+        ctx.fill();
+        ctx.strokeStyle='#00ccff'; ctx.lineWidth=2; ctx.stroke();
+        // Inner hex
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = Math.PI/6 + i * Math.PI/3;
+            ctx.lineTo(cx + Math.cos(a)*r*0.55, cy + Math.sin(a)*r*0.55);
+        }
+        ctx.closePath();
+        ctx.strokeStyle='rgba(0,200,255,0.4)'; ctx.lineWidth=1; ctx.stroke();
+        // Center pip
+        ctx.fillStyle='#00eeff';
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.12,0,Math.PI*2); ctx.fill();
+    }
+
+    /** Data Leech: suction/drain symbol — two curved arrows into center */
+    function _drawDev_dataLeech(ctx, S, sc) {
+        const cx=S/2, cy=S/2, r=S*0.36;
+        // Outer glow ring
+        ctx.strokeStyle='rgba(170,0,255,0.3)'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.95,0,Math.PI*2); ctx.stroke();
+        // Two curved arrows
+        ctx.strokeStyle='#bb44ff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(cx, cy, r*0.6, -Math.PI*0.8, -Math.PI*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, r*0.6, Math.PI*0.2, Math.PI*0.8); ctx.stroke();
+        // Arrow tips pointing inward
+        const tipR = r*0.15;
+        ctx.fillStyle='#bb44ff';
+        ctx.beginPath(); ctx.arc(cx+r*0.15, cy-r*0.35, tipR, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx-r*0.15, cy+r*0.35, tipR, 0, Math.PI*2); ctx.fill();
+        // Center core
+        ctx.fillStyle='#dd66ff';
+        ctx.beginPath(); ctx.arc(cx,cy,r*0.18,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
     }
 
 export { generatePerkDeviceSprites };

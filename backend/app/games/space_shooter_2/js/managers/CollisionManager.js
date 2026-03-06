@@ -77,8 +77,46 @@ class CollisionManager {
                     const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
+                    // Virus Inject: chance to infect on hit
+                    if (bullet._virusChance && !enemy._virusInfected && Math.random() < bullet._virusChance) {
+                        enemy._virusInfected = true;
+                        enemy._virusDuration = bullet._virusDuration;
+                        enemy._virusTimer = 0;
+                        g.particles.emitCustom(
+                            enemy.position.x + enemy.width / 2,
+                            enemy.position.y + enemy.height / 2,
+                            { count: 5, speed: 30, life: 0.4, size: 3,
+                              color: { r: 180, g: 0, b: 255 }, gravity: 0, fadeOut: true, shrink: true }, 5
+                        );
+                    }
+
                     const killed = enemy.takeDamage(Math.ceil(dmg), g);
                     if (killed) {
+                        // Virus spread on death: infect 2 nearest enemies
+                        if (enemy._virusInfected) {
+                            const eCX2 = enemy.position.x + enemy.width / 2;
+                            const eCY2 = enemy.position.y + enemy.height / 2;
+                            const candidates = [];
+                            for (const e2 of g.entityManager.enemies) {
+                                if (!e2.active || e2 === enemy || e2._isAlly || e2._virusInfected) continue;
+                                const dx2 = (e2.position.x + e2.width / 2) - eCX2;
+                                const dy2 = (e2.position.y + e2.height / 2) - eCY2;
+                                const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                                if (dist < 150) candidates.push({ e: e2, d: dist });
+                            }
+                            candidates.sort((a, b) => a.d - b.d);
+                            for (let s = 0; s < Math.min(2, candidates.length); s++) {
+                                const t = candidates[s].e;
+                                t._virusInfected = true;
+                                t._virusDuration = enemy._virusDuration;
+                                t._virusTimer = 0;
+                                g.particles.emitCustom(
+                                    t.position.x + t.width / 2, t.position.y + t.height / 2,
+                                    { count: 4, speed: 25, life: 0.3, size: 2,
+                                      color: { r: 180, g: 0, b: 255 }, gravity: 0, fadeOut: true, shrink: true }, 4
+                                );
+                            }
+                        }
                         // Neural Hijack: chance to convert instead of kill
                         if (hijackChance > 0 && !enemy._isAlly && !enemy.config.spawner && Math.random() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
                             enemy.active = true;

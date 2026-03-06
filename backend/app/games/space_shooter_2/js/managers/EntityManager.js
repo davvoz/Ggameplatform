@@ -21,6 +21,16 @@ class EntityManager {
         // Cap total bullets to prevent lag during intense boss fights
         if (this.bullets.length >= 200) return;
         const bullet = new Bullet(x, y, vx, vy, owner, damage);
+
+        // Virus Inject: player bullets can infect enemies on hit
+        if (owner === 'player' && this.game.perkSystem) {
+            const infectChance = this.game.perkSystem.getVirusInfectChance();
+            if (infectChance > 0) {
+                bullet._virusChance = infectChance;
+                bullet._virusDuration = this.game.perkSystem.getVirusInfectDuration();
+            }
+        }
+
         this.bullets.push(bullet);
     }
 

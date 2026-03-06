@@ -77,6 +77,48 @@ const ENEMY_TYPES = {
         width: 46, height: 46, health: 2, speed: 75, score: 170,
         color: '#88dd00', shootRate: 2, dropChance: 0.14,
         splits: true
+    },
+
+    // ═══════ WORLD 3 ENEMIES — Simulation Break ═══════
+
+    // Common W3 — corrupted drone, fast, blink-teleports around
+    glitch_drone: {
+        width: 42, height: 42, health: 2, speed: 110, score: 200,
+        color: '#00eedd', shootRate: 1.6, dropChance: 0.12,
+        w3behaviour: 'blinker'   // teleports + shoots after blink
+    },
+    // Common W3 — boxy data cube, tanky, shield-links with nearby cubes
+    data_cube: {
+        width: 54, height: 54, health: 5, speed: 40, score: 280,
+        color: '#8844ff', shootRate: 2, dropChance: 0.20,
+        w3behaviour: 'shielder'  // links shield with nearby cubes, takes less dmg when linked
+    },
+    // Simulation exclusive — fragmented polygon, bursts into fast fragments on low HP
+    fragment_shard: {
+        width: 50, height: 50, health: 3, speed: 75, score: 230,
+        color: '#ff3388', shootRate: 2.2, dropChance: 0.16,
+        w3behaviour: 'fragmenter' // at 1 HP, splits into 3 fast micro-shards instead of dying
+    },
+    // Simulation exclusive — phasing warp bug, periodically invisible/invulnerable
+    warp_bug: {
+        width: 46, height: 46, health: 2, speed: 95, score: 220,
+        color: '#44ff88', shootRate: 1.5, dropChance: 0.14,
+        stealth: true,
+        w3behaviour: 'phaser'    // cycles between visible (vulnerable) and invisible (invulnerable)
+    },
+    // Simulation exclusive — spawns glitch_drone swarms + attracts nearby enemies
+    error_node: {
+        width: 62, height: 62, health: 4, speed: 25, score: 320,
+        color: '#ff8800', shootRate: 0, dropChance: 0.22,
+        spawner: true,
+        w3behaviour: 'beacon'    // boosts speed of nearby enemies while alive
+    },
+    // Simulation exclusive — mirror ghost, copies player movement inversely
+    mirror_ghost: {
+        width: 48, height: 48, health: 2, speed: 85, score: 190,
+        color: '#ccccff', shootRate: 1.8, dropChance: 0.13,
+        splits: true,
+        w3behaviour: 'mirror'    // mirrors player X position (opposite side of screen)
     }
 };
 
@@ -145,6 +187,45 @@ const MOVEMENT = {
         enemy.position.y += enemy.speed * 0.7 * dt;
         const swing = Math.sin(enemy.moveTimer * 1.8) * 120;
         enemy.position.x = enemy.startX + swing;
+    },
+
+    // ═══════ WORLD 3 EXCLUSIVE MOVEMENT PATTERNS ═══════
+
+    /** Blink teleport — moves normally then teleports randomly every ~2s */
+    glitch_blink: (enemy, dt) => {
+        enemy.position.y += enemy.speed * 0.6 * dt;
+        enemy._blinkTimer = (enemy._blinkTimer || 1.5 + Math.random()) - dt;
+        if (enemy._blinkTimer <= 0) {
+            enemy._blinkTimer = 1.5 + Math.random() * 1.5;
+            // Teleport within ±80px horizontally, ±30px vertically
+            enemy.position.x += (Math.random() - 0.5) * 160;
+            enemy.position.y += (Math.random() - 0.3) * 60;
+            enemy.position.x = Math.max(10, Math.min(enemy.canvasWidth - 10, enemy.position.x));
+            enemy._justBlinked = 6; // flash frames for visual feedback
+        }
+        if (enemy._justBlinked > 0) enemy._justBlinked--;
+    },
+    /** Orbit player — circles around the player's X position */
+    orbit_player: (enemy, dt) => {
+        enemy.moveTimer += dt;
+        const orbitR = 70 + Math.sin(enemy.moveTimer * 0.5) * 20;
+        const tx = (enemy.targetX || enemy.canvasWidth / 2);
+        enemy.position.x += (tx + Math.cos(enemy.moveTimer * 1.8) * orbitR - enemy.position.x) * 2 * dt;
+        enemy.position.y += enemy.speed * 0.35 * dt;
+        enemy.position.y += Math.sin(enemy.moveTimer * 2.5) * 15 * dt;
+    },
+    /** Phase drift — smoothly phases left/right with ghost afterimages (handled in render) */
+    phase_drift: (enemy, dt) => {
+        enemy.moveTimer += dt;
+        enemy.position.y += enemy.speed * 0.5 * dt;
+        // Smooth sine with abrupt direction shifts
+        const phase = Math.sin(enemy.moveTimer * 1.2) + 0.4 * Math.sin(enemy.moveTimer * 3.1);
+        enemy.position.x = enemy.startX + phase * 80;
+        // Store previous positions for afterimage rendering
+        if (!enemy._afterimages) enemy._afterimages = [];
+        enemy._afterimages.push({ x: enemy.position.x, y: enemy.position.y, alpha: 0.25 });
+        if (enemy._afterimages.length > 4) enemy._afterimages.shift();
+        for (const ai of enemy._afterimages) ai.alpha *= 0.92;
     }
 };
 
@@ -358,6 +439,83 @@ class Enemy extends GameObject {
             }
         }
 
+        // ── W3 special behaviours ──
+        const w3b = this.config.w3behaviour;
+        if (w3b) {
+            const cx = this.position.x + this.width / 2;
+            const cy = this.position.y + this.height / 2;
+
+            if (w3b === 'blinker') {
+                // Shoot immediately after a teleport blink
+                if (this._justBlinked > 0 && this._justBlinked === 6 && this.config.shootRate > 0) {
+                    this.shoot(game);
+                }
+            }
+
+            if (w3b === 'phaser') {
+                // Cycle visible/invisible every ~2.5s
+                if (this._phaseTimer === undefined) this._phaseTimer = Math.random() * 2.5;
+                this._phaseTimer -= dt;
+                if (this._phaseTimer <= 0) {
+                    this._phaseTimer = 2.0 + Math.random();
+                    this._phaseVisible = !this._phaseVisible;
+                }
+                if (this._phaseVisible === undefined) this._phaseVisible = true;
+                this.alpha = this._phaseVisible ? 1 : 0.08;
+                this._invulnerable = !this._phaseVisible;
+            }
+
+            if (w3b === 'beacon') {
+                // Boost speed of enemies within 120px radius
+                if (!this._beaconTimer) this._beaconTimer = 0;
+                this._beaconTimer -= dt;
+                if (this._beaconTimer <= 0) {
+                    this._beaconTimer = 0.5; // check twice per second
+                    const enemies = game.entityManager ? game.entityManager.enemies : [];
+                    for (const e of enemies) {
+                        if (e === this || !e.active) continue;
+                        const dx = (e.position.x + e.width / 2) - cx;
+                        const dy = (e.position.y + e.height / 2) - cy;
+                        if (dx * dx + dy * dy < 14400) { // 120px radius
+                            e._boosted = 1.5; // will decay
+                        }
+                    }
+                }
+            }
+
+            if (w3b === 'mirror') {
+                // Mirror player X position (opposite side of screen)
+                if (game.player && game.player.active) {
+                    const playerCx = game.player.position.x + game.player.width / 2;
+                    const mirrorX = this.canvasWidth - playerCx;
+                    this.position.x += (mirrorX - this.width / 2 - this.position.x) * 3 * dt;
+                }
+            }
+
+            if (w3b === 'shielder') {
+                // Link shield with nearby data_cubes — reduce damage taken
+                this._shieldLinked = false;
+                const enemies = game.entityManager ? game.entityManager.enemies : [];
+                for (const e of enemies) {
+                    if (e === this || !e.active || e.config.w3behaviour !== 'shielder') continue;
+                    const dx = (e.position.x + e.width / 2) - cx;
+                    const dy = (e.position.y + e.height / 2) - cy;
+                    if (dx * dx + dy * dy < 22500) { // 150px radius
+                        this._shieldLinked = true;
+                        this._shieldPartner = e;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Apply beacon boost and decay it
+        if (this._boosted && this._boosted > 1) {
+            this.position.y += this.speed * 0.5 * dt; // extra downward speed
+            this._boosted -= dt;
+            if (this._boosted <= 1) this._boosted = 0;
+        }
+
         if (this.position.y > game.logicalHeight + 50) {
             this.destroy();
         }
@@ -372,6 +530,11 @@ class Enemy extends GameObject {
     }
 
     takeDamage(amount, game) {
+        // Phaser invulnerability
+        if (this._invulnerable) return false;
+        // Shielder damage reduction when linked
+        if (this._shieldLinked) amount = Math.max(1, Math.ceil(amount * 0.4));
+
         this.health -= amount;
         this.hitFlash = 1;
 
@@ -383,6 +546,31 @@ class Enemy extends GameObject {
 
         if (this.health <= 0) {
             this.health = 0;
+
+            // Fragmenter: splits into 3 fast micro-shards on death
+            if (this.config.w3behaviour === 'fragmenter' && !this._isShard && game.entityManager) {
+                const level = game.levelManager ? game.levelManager.currentLevel : 1;
+                for (let i = 0; i < 3; i++) {
+                    const angle = (i - 1) * 0.5; // -0.5, 0, 0.5 spread
+                    const sx = this.position.x + this.width / 2 + (i - 1) * 18;
+                    const sy = this.position.y;
+                    const shard = new Enemy(sx, sy, 'fragment_shard', 'straight', this.canvasWidth, game.difficulty, level);
+                    shard.health = 1;
+                    shard.maxHealth = 1;
+                    shard.speed *= 1.8;
+                    shard.width = 12;
+                    shard.height = 12;
+                    shard._isShard = true; // prevent recursive splitting
+                    shard.config = { ...shard.config, w3behaviour: null }; // no further splits
+                    shard.startX = sx;
+                    // Give some horizontal velocity via phase
+                    shard.movePhase = angle > 0 ? 1 : -1;
+                    shard.pattern = 'sine';
+                    game.entityManager.enemies.push(shard);
+                }
+                game.particles.emit(this.position.x + this.width / 2, this.position.y + this.height / 2, 'hit', 10);
+            }
+
             // Toxic blob splits into 2 mini swarm enemies on death
             if (this._splits && game.entityManager) {
                 const level = game.levelManager ? game.levelManager.currentLevel : 1;
@@ -472,6 +660,132 @@ class Enemy extends GameObject {
             ctx.beginPath();
             ctx.roundRect(barX, barY, barW, barH, 2);
             ctx.stroke();
+        }
+
+        // ── W3 visual effects ──
+        const w3b = this.config.w3behaviour;
+        if (w3b) {
+            // Blinker: bright cyan flash after teleport
+            if (w3b === 'blinker' && this._justBlinked > 0) {
+                ctx.save();
+                ctx.globalAlpha = this._justBlinked / 8;
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = '#00ffff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, this.width * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Phaser: shimmer ring when invisible
+            if (w3b === 'phaser' && !this._phaseVisible) {
+                ctx.save();
+                ctx.globalAlpha = 0.3 + 0.15 * Math.sin(Date.now() * 0.008);
+                ctx.strokeStyle = '#ff44ff';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(cx, cy, this.width * 0.6, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Beacon: pulsing orange aura
+            if (w3b === 'beacon') {
+                ctx.save();
+                const pulse = 0.12 + 0.08 * Math.sin(Date.now() * 0.005);
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = '#ff8800';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Shielder: draw link line to partner
+            if (w3b === 'shielder' && this._shieldLinked && this._shieldPartner && this._shieldPartner.active) {
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = '#44aaff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 3]);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                const px = this._shieldPartner.position.x + this._shieldPartner.width / 2;
+                const py = this._shieldPartner.position.y + this._shieldPartner.height / 2;
+                ctx.lineTo(px, py);
+                ctx.stroke();
+                // Small shield hexagon around self
+                ctx.globalAlpha = 0.2;
+                ctx.strokeStyle = '#88ccff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = i * Math.PI / 3;
+                    const r = this.width * 0.55;
+                    const method = i === 0 ? 'moveTo' : 'lineTo';
+                    ctx[method](cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Mirror: vertical mirror line indicator
+            if (w3b === 'mirror') {
+                ctx.save();
+                ctx.globalAlpha = 0.15;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 6]);
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(cx, ctx.canvas ? ctx.canvas.height : 800);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Virus infection: purple pulsing glow
+        if (this._virusInfected) {
+            ctx.save();
+            const vCx = this.position.x + this.width / 2;
+            const vCy = this.position.y + this.height / 2;
+            const vR = Math.max(this.width, this.height) * 0.7;
+            const vPulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+            ctx.globalAlpha = 0.25 + vPulse * 0.2;
+            ctx.fillStyle = '#b400ff';
+            ctx.beginPath();
+            ctx.arc(vCx, vCy, vR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.6 + vPulse * 0.3;
+            ctx.strokeStyle = '#d060ff';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.arc(vCx, vCy, vR * 0.8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+
+        // Phase drift afterimages
+        if (this._afterimages && this._afterimages.length > 0) {
+            ctx.save();
+            const sprite = assets.getSprite(`enemy_${this.type}`);
+            const pad = 8;
+            for (let i = 0; i < this._afterimages.length; i++) {
+                const ai = this._afterimages[i];
+                ctx.globalAlpha = ai.a * 0.3;
+                if (sprite) {
+                    ctx.drawImage(sprite, ai.x - pad, ai.y - pad, this.width + pad * 2, this.height + pad * 2);
+                } else {
+                    ctx.fillStyle = this.config.color;
+                    ctx.fillRect(ai.x, ai.y, this.width, this.height);
+                }
+            }
+            ctx.restore();
         }
 
         ctx.restore();
@@ -613,6 +927,14 @@ class BossPart {
 
     takeDamage(amount) {
         if (!this.active || !this.destroyable) return false;
+        // W3 Boss: Corrupted Compiler syntax shield — core is immune
+        if (this._shielded) return false;
+        // W3 Boss: Data Devourer absorb — bullets heal instead
+        if (this._absorbing) {
+            this.health = Math.min(this.maxHealth, this.health + amount);
+            this.hitFlash = 0.5;
+            return false;
+        }
         this.health -= amount;
         this.hitFlash = 1;
         if (this.health <= 0) {
@@ -1053,6 +1375,200 @@ const BOSS_DEFS = {
             { role: 'arm', offsetX: 80, offsetY: 40, width: 48, height: 68, health: 32,
               spriteKey: 'boss12_arm', bobAmplitude: 6, bobSpeed: 1.2 },
         ]
+    },
+
+    // ═══════════════════════════════════════════════
+    //  WORLD 3 BOSSES — Simulation Break (13-18)
+    // ═══════════════════════════════════════════════
+
+    // Boss 13 (Level 65): Corrupted Compiler — first W3 boss, moderate
+    13: {
+        name: 'Corrupted Compiler',
+        totalWidth: 180, totalHeight: 160,
+        baseHP: 180,
+        score: 6000,
+        speed: 38,
+        movePattern: 'sweep',
+        color: '#00ddcc',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 75, height: 75, health: 180,
+              spriteKey: 'boss13_core', canShoot: true, shootRate: 2.2, shootPattern: 'spread', bulletCount: 5, bulletSpeed: 130 },
+            { role: 'turret', offsetX: -60, offsetY: -20, width: 32, height: 32, health: 18,
+              spriteKey: 'boss13_turret', canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 165 },
+            { role: 'turret', offsetX: 60, offsetY: -20, width: 32, height: 32, health: 18,
+              spriteKey: 'boss13_turret', canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 165 },
+            { role: 'shield', offsetX: 0, offsetY: -55, width: 100, height: 22, health: 22,
+              spriteKey: 'boss13_shield', bobAmplitude: 3, bobSpeed: 1.5 },
+            { role: 'arm', offsetX: -50, offsetY: 25, width: 38, height: 50, health: 20,
+              spriteKey: 'boss13_arm', bobAmplitude: 5, bobSpeed: 1.8 },
+            { role: 'arm', offsetX: 50, offsetY: 25, width: 38, height: 50, health: 20,
+              spriteKey: 'boss13_arm', bobAmplitude: 5, bobSpeed: 1.8 },
+        ]
+    },
+    // Boss 14 (Level 70): Fragment King — heavy, many orbiting shards
+    14: {
+        name: 'Fragment King',
+        totalWidth: 210, totalHeight: 190,
+        baseHP: 220,
+        score: 7500,
+        speed: 30,
+        movePattern: 'weave',
+        color: '#ff3388',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 80, height: 80, health: 220,
+              spriteKey: 'boss14_core', canShoot: true, shootRate: 1.8, shootPattern: 'radial', bulletCount: 12, bulletSpeed: 110 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 28, height: 28, health: 18,
+              spriteKey: 'boss14_orb', orbitRadius: 75, orbitAngle: 0, orbitSpeed: 1.8,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 160 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 28, height: 28, health: 18,
+              spriteKey: 'boss14_orb', orbitRadius: 75, orbitAngle: Math.PI * 2 / 3, orbitSpeed: 1.8,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 160 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 28, height: 28, health: 18,
+              spriteKey: 'boss14_orb', orbitRadius: 75, orbitAngle: Math.PI * 4 / 3, orbitSpeed: 1.8,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 160 },
+            { role: 'arm', offsetX: -65, offsetY: 30, width: 40, height: 55, health: 22,
+              spriteKey: 'boss14_arm', bobAmplitude: 4, bobSpeed: 1.5 },
+            { role: 'arm', offsetX: 65, offsetY: 30, width: 40, height: 55, health: 22,
+              spriteKey: 'boss14_arm', bobAmplitude: 4, bobSpeed: 1.5 },
+            { role: 'shield', offsetX: 0, offsetY: -60, width: 110, height: 24, health: 28,
+              spriteKey: 'boss14_shield', bobAmplitude: 3, bobSpeed: 1.5 },
+        ]
+    },
+    // Boss 15 (Level 75): Mirror Engine — erratic, reflective shields
+    15: {
+        name: 'Mirror Engine',
+        totalWidth: 220, totalHeight: 200,
+        baseHP: 260,
+        score: 9000,
+        speed: 42,
+        movePattern: 'erratic',
+        color: '#ccccff',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 260,
+              spriteKey: 'boss15_core', canShoot: true, shootRate: 1.5, shootPattern: 'spiral', bulletCount: 6, bulletSpeed: 120 },
+            { role: 'turret', offsetX: -75, offsetY: -30, width: 34, height: 34, health: 22,
+              spriteKey: 'boss15_turret', canShoot: true, shootRate: 1.5, shootPattern: 'rapid', bulletSpeed: 180, bulletCount: 3 },
+            { role: 'turret', offsetX: 75, offsetY: -30, width: 34, height: 34, health: 22,
+              spriteKey: 'boss15_turret', canShoot: true, shootRate: 1.5, shootPattern: 'rapid', bulletSpeed: 180, bulletCount: 3 },
+            { role: 'shield', offsetX: -45, offsetY: -55, width: 35, height: 20, health: 20,
+              spriteKey: 'boss15_shield' },
+            { role: 'shield', offsetX: 45, offsetY: -55, width: 35, height: 20, health: 20,
+              spriteKey: 'boss15_shield' },
+            { role: 'shield', offsetX: 0, offsetY: -65, width: 90, height: 22, health: 25,
+              spriteKey: 'boss15_shield2', bobAmplitude: 3, bobSpeed: 1.2 },
+            { role: 'arm', offsetX: -65, offsetY: 35, width: 42, height: 58, health: 25,
+              spriteKey: 'boss15_arm', bobAmplitude: 5, bobSpeed: 1.5 },
+            { role: 'arm', offsetX: 65, offsetY: 35, width: 42, height: 58, health: 25,
+              spriteKey: 'boss15_arm', bobAmplitude: 5, bobSpeed: 1.5 },
+        ]
+    },
+    // Boss 16 (Level 80): Chaos Generator — figure8 pattern, heavy fire
+    16: {
+        name: 'Chaos Generator',
+        totalWidth: 230, totalHeight: 210,
+        baseHP: 300,
+        score: 10500,
+        speed: 35,
+        movePattern: 'figure8',
+        color: '#ff8800',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 90, height: 90, health: 300,
+              spriteKey: 'boss16_core', canShoot: true, shootRate: 1.2, shootPattern: 'radial', bulletCount: 14, bulletSpeed: 115 },
+            { role: 'turret', offsetX: -80, offsetY: -30, width: 36, height: 36, health: 24,
+              spriteKey: 'boss16_turret', canShoot: true, shootRate: 1.2, shootPattern: 'rapid', bulletSpeed: 185, bulletCount: 4 },
+            { role: 'turret', offsetX: 80, offsetY: -30, width: 36, height: 36, health: 24,
+              spriteKey: 'boss16_turret', canShoot: true, shootRate: 1.2, shootPattern: 'rapid', bulletSpeed: 185, bulletCount: 4 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 28, height: 28, health: 18,
+              spriteKey: 'boss16_orb', orbitRadius: 85, orbitAngle: 0, orbitSpeed: 2,
+              canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 170 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 28, height: 28, health: 18,
+              spriteKey: 'boss16_orb', orbitRadius: 85, orbitAngle: Math.PI, orbitSpeed: 2,
+              canShoot: true, shootRate: 1.8, shootPattern: 'aimed', bulletSpeed: 170 },
+            { role: 'shield', offsetX: 0, offsetY: -65, width: 120, height: 25, health: 30,
+              spriteKey: 'boss16_shield', bobAmplitude: 3, bobSpeed: 1.5 },
+            { role: 'arm', offsetX: -70, offsetY: 40, width: 44, height: 62, health: 28,
+              spriteKey: 'boss16_arm', bobAmplitude: 5, bobSpeed: 1.2 },
+            { role: 'arm', offsetX: 70, offsetY: 40, width: 44, height: 62, health: 28,
+              spriteKey: 'boss16_arm', bobAmplitude: 5, bobSpeed: 1.2 },
+        ]
+    },
+    // Boss 17 (Level 85): Data Devourer — chase pattern, aggressive, weakpoints
+    17: {
+        name: 'Data Devourer',
+        totalWidth: 240, totalHeight: 220,
+        baseHP: 340,
+        score: 11500,
+        speed: 40,
+        movePattern: 'chase',
+        color: '#8844ff',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 92, height: 92, health: 340,
+              spriteKey: 'boss17_core', canShoot: true, shootRate: 1, shootPattern: 'spiral', bulletCount: 8, bulletSpeed: 125 },
+            { role: 'turret', offsetX: -85, offsetY: -35, width: 38, height: 38, health: 26,
+              spriteKey: 'boss17_turret', canShoot: true, shootRate: 1, shootPattern: 'rapid', bulletSpeed: 195, bulletCount: 4 },
+            { role: 'turret', offsetX: 85, offsetY: -35, width: 38, height: 38, health: 26,
+              spriteKey: 'boss17_turret', canShoot: true, shootRate: 1, shootPattern: 'rapid', bulletSpeed: 195, bulletCount: 4 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 30, height: 30, health: 20,
+              spriteKey: 'boss17_orb', orbitRadius: 90, orbitAngle: 0, orbitSpeed: 2.2,
+              canShoot: true, shootRate: 1.5, shootPattern: 'aimed', bulletSpeed: 175 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 30, height: 30, health: 20,
+              spriteKey: 'boss17_orb', orbitRadius: 90, orbitAngle: Math.PI, orbitSpeed: 2.2,
+              canShoot: true, shootRate: 1.5, shootPattern: 'aimed', bulletSpeed: 175 },
+            { role: 'shield', offsetX: 0, offsetY: -68, width: 125, height: 24, health: 32,
+              spriteKey: 'boss17_shield', bobAmplitude: 3, bobSpeed: 1.5 },
+            { role: 'weakpoint', offsetX: -42, offsetY: 50, width: 24, height: 24, health: 16,
+              spriteKey: 'boss17_weak', score: 450 },
+            { role: 'weakpoint', offsetX: 42, offsetY: 50, width: 24, height: 24, health: 16,
+              spriteKey: 'boss17_weak', score: 450 },
+            { role: 'arm', offsetX: -75, offsetY: 40, width: 46, height: 65, health: 30,
+              spriteKey: 'boss17_arm', bobAmplitude: 5, bobSpeed: 1.2 },
+            { role: 'arm', offsetX: 75, offsetY: 40, width: 46, height: 65, health: 30,
+              spriteKey: 'boss17_arm', bobAmplitude: 5, bobSpeed: 1.2 },
+        ]
+    },
+    // Boss 18 (Level 90): The Kernel — final W3 boss, maximum everything
+    18: {
+        name: 'The Kernel',
+        totalWidth: 260, totalHeight: 240,
+        baseHP: 400,
+        score: 14000,
+        speed: 38,
+        movePattern: 'erratic',
+        color: '#ff0044',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 100, height: 100, health: 400,
+              spriteKey: 'boss18_core', canShoot: true, shootRate: 0.9, shootPattern: 'radial', bulletCount: 20, bulletSpeed: 120 },
+            { role: 'turret', offsetX: -95, offsetY: -40, width: 40, height: 40, health: 30,
+              spriteKey: 'boss18_turret', canShoot: true, shootRate: 0.8, shootPattern: 'rapid', bulletSpeed: 200, bulletCount: 5 },
+            { role: 'turret', offsetX: 95, offsetY: -40, width: 40, height: 40, health: 30,
+              spriteKey: 'boss18_turret', canShoot: true, shootRate: 0.8, shootPattern: 'rapid', bulletSpeed: 200, bulletCount: 5 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 32, height: 32, health: 22,
+              spriteKey: 'boss18_orb', orbitRadius: 100, orbitAngle: 0, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 1.2, shootPattern: 'aimed', bulletSpeed: 185 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 32, height: 32, health: 22,
+              spriteKey: 'boss18_orb', orbitRadius: 100, orbitAngle: Math.PI / 2, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 1.2, shootPattern: 'aimed', bulletSpeed: 185 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 32, height: 32, health: 22,
+              spriteKey: 'boss18_orb', orbitRadius: 100, orbitAngle: Math.PI, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 1.2, shootPattern: 'aimed', bulletSpeed: 185 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 32, height: 32, health: 22,
+              spriteKey: 'boss18_orb', orbitRadius: 100, orbitAngle: Math.PI * 3 / 2, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 1.2, shootPattern: 'aimed', bulletSpeed: 185 },
+            { role: 'shield', offsetX: 0, offsetY: -75, width: 140, height: 28, health: 38,
+              spriteKey: 'boss18_shield', bobAmplitude: 3, bobSpeed: 1.5 },
+            { role: 'shield', offsetX: -55, offsetY: -55, width: 32, height: 18, health: 20,
+              spriteKey: 'boss18_shield2' },
+            { role: 'shield', offsetX: 55, offsetY: -55, width: 32, height: 18, health: 20,
+              spriteKey: 'boss18_shield2' },
+            { role: 'weakpoint', offsetX: -45, offsetY: 58, width: 26, height: 26, health: 18,
+              spriteKey: 'boss18_weak', score: 500 },
+            { role: 'weakpoint', offsetX: 45, offsetY: 58, width: 26, height: 26, health: 18,
+              spriteKey: 'boss18_weak', score: 500 },
+            { role: 'arm', offsetX: -85, offsetY: 45, width: 50, height: 70, health: 35,
+              spriteKey: 'boss18_arm', bobAmplitude: 6, bobSpeed: 1.2 },
+            { role: 'arm', offsetX: 85, offsetY: 45, width: 50, height: 70, health: 35,
+              spriteKey: 'boss18_arm', bobAmplitude: 6, bobSpeed: 1.2 },
+        ]
     }
 };
 
@@ -1220,6 +1736,92 @@ const MINIBOSS_DEFS = {
             { role: 'turret', offsetX: 0, offsetY: -30, width: 22, height: 22, health: 8,
               spriteKey: 'mboss8_turret', canShoot: true, shootRate: 2.5, shootPattern: 'spread', bulletCount: 3, bulletSpeed: 140 },
         ]
+    },
+
+    // ═══════ WORLD 3 MINI-BOSSES — Simulation Break ═══════
+
+    // Mini-Boss 9: Glitch Core — fast digital insectoid
+    9: {
+        name: 'Glitch Core',
+        totalWidth: 110, totalHeight: 100,
+        baseHP: 38,
+        score: 500,
+        speed: 50,
+        movePattern: 'zigzag',
+        color: '#00ddcc',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 55, height: 55, health: 38,
+              spriteKey: 'mboss9_core', canShoot: true, shootRate: 2.2, shootPattern: 'spread', bulletCount: 4, bulletSpeed: 140 },
+            { role: 'arm', offsetX: -35, offsetY: 8, width: 22, height: 35, health: 12,
+              spriteKey: 'mboss9_blade', rotationSpeed: 2 },
+            { role: 'arm', offsetX: 35, offsetY: 8, width: 22, height: 35, health: 12,
+              spriteKey: 'mboss9_blade', rotationSpeed: -2 },
+            { role: 'turret', offsetX: 0, offsetY: -32, width: 20, height: 20, health: 8,
+              spriteKey: 'mboss9_turret', canShoot: true, shootRate: 2, shootPattern: 'aimed', bulletSpeed: 160 },
+        ]
+    },
+    // Mini-Boss 10: Broken Renderer — slow, shielded, heavy fire
+    10: {
+        name: 'Broken Renderer',
+        totalWidth: 125, totalHeight: 110,
+        baseHP: 42,
+        score: 520,
+        speed: 22,
+        movePattern: 'slowSweep',
+        color: '#8844ff',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 60, height: 60, health: 42,
+              spriteKey: 'mboss10_core', canShoot: true, shootRate: 1.8, shootPattern: 'radial', bulletCount: 8, bulletSpeed: 125 },
+            { role: 'shield', offsetX: 0, offsetY: -40, width: 70, height: 18, health: 18,
+              spriteKey: 'mboss10_shield', bobAmplitude: 2, bobSpeed: 1.5 },
+            { role: 'turret', offsetX: -42, offsetY: -12, width: 24, height: 24, health: 10,
+              spriteKey: 'mboss10_turret', canShoot: true, shootRate: 2, shootPattern: 'rapid', bulletSpeed: 165, bulletCount: 2 },
+            { role: 'turret', offsetX: 42, offsetY: -12, width: 24, height: 24, health: 10,
+              spriteKey: 'mboss10_turret', canShoot: true, shootRate: 2, shootPattern: 'rapid', bulletSpeed: 165, bulletCount: 2 },
+        ]
+    },
+    // Mini-Boss 11: Fragment Swarm — orbiting shards, weave pattern
+    11: {
+        name: 'Fragment Swarm',
+        totalWidth: 115, totalHeight: 110,
+        baseHP: 36,
+        score: 480,
+        speed: 45,
+        movePattern: 'weave',
+        color: '#ff3388',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 50, height: 50, health: 36,
+              spriteKey: 'mboss11_core', canShoot: true, shootRate: 2, shootPattern: 'spiral', bulletCount: 4, bulletSpeed: 130 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 20, height: 20, health: 8,
+              spriteKey: 'mboss11_orb', orbitRadius: 44, orbitAngle: 0, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 155 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 20, height: 20, health: 8,
+              spriteKey: 'mboss11_orb', orbitRadius: 44, orbitAngle: Math.PI * 2 / 3, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 155 },
+            { role: 'turret', offsetX: 0, offsetY: 0, width: 20, height: 20, health: 8,
+              spriteKey: 'mboss11_orb', orbitRadius: 44, orbitAngle: Math.PI * 4 / 3, orbitSpeed: 2.5,
+              canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 155 },
+        ]
+    },
+    // Mini-Boss 12: Mirror Guardian — aggressive chaser, reflective
+    12: {
+        name: 'Mirror Guardian',
+        totalWidth: 115, totalHeight: 100,
+        baseHP: 40,
+        score: 540,
+        speed: 48,
+        movePattern: 'chase',
+        color: '#ccccff',
+        parts: [
+            { role: 'core', offsetX: 0, offsetY: 0, width: 55, height: 55, health: 40,
+              spriteKey: 'mboss12_core', canShoot: true, shootRate: 1.5, shootPattern: 'rapid', bulletSpeed: 175, bulletCount: 3 },
+            { role: 'arm', offsetX: -35, offsetY: 10, width: 24, height: 34, health: 11,
+              spriteKey: 'mboss12_arm', canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 150 },
+            { role: 'arm', offsetX: 35, offsetY: 10, width: 24, height: 34, health: 11,
+              spriteKey: 'mboss12_arm', canShoot: true, shootRate: 2.5, shootPattern: 'aimed', bulletSpeed: 150 },
+            { role: 'shield', offsetX: 0, offsetY: -35, width: 60, height: 16, health: 14,
+              spriteKey: 'mboss12_shield', bobAmplitude: 2, bobSpeed: 1.8 },
+        ]
     }
 };
 
@@ -1375,6 +1977,11 @@ class MultiBoss {
         // Movement pattern
         this._applyMovement(dt, game);
 
+        // ── W3 Boss Special Mechanics (bossId 13-18) ──
+        if (!this.isMiniBoss && this.bossId >= 13 && this.bossId <= 18) {
+            this._updateW3BossAbility(dt, game);
+        }
+
         // ── Clamp boss to screen ──
         const bossMargin = this.width * 0.4;
         this.centerX = Math.max(bossMargin, Math.min(this.canvasWidth - bossMargin, this.centerX));
@@ -1457,6 +2064,170 @@ class MultiBoss {
                 // Restore original offsets
                 part.offsetX = origOX;
                 part.offsetY = origOY;
+            }
+        }
+    }
+
+    // ── W3 Boss Special Abilities ──
+    _updateW3BossAbility(dt, game) {
+        if (!this._w3Timer) this._w3Timer = 0;
+        this._w3Timer += dt;
+
+        switch (this.bossId) {
+            case 13: {
+                // Corrupted Compiler — "Syntax Shield": every 8s, becomes invulnerable for 2.5s
+                // Visual: core flashes cyan, all bullets pass through
+                if (!this._shieldCooldown) this._shieldCooldown = 5;
+                this._shieldCooldown -= dt;
+                if (this._shieldCooldown <= 0 && !this._syntaxShieldActive) {
+                    this._syntaxShieldActive = true;
+                    this._syntaxShieldTimer = 2.5;
+                }
+                if (this._syntaxShieldActive) {
+                    this._syntaxShieldTimer -= dt;
+                    // Make core invulnerable during shield
+                    const core = this.parts.find(p => p.role === 'core' && p.active);
+                    if (core) core._shielded = true;
+                    if (this._syntaxShieldTimer <= 0) {
+                        this._syntaxShieldActive = false;
+                        this._shieldCooldown = 8;
+                        const core2 = this.parts.find(p => p.role === 'core' && p.active);
+                        if (core2) core2._shielded = false;
+                    }
+                }
+                break;
+            }
+            case 14: {
+                // Fragment King — "Shard Burst": every 7s spawns 3 fast fragment_shards
+                if (!this._burstCooldown) this._burstCooldown = 6;
+                this._burstCooldown -= dt;
+                if (this._burstCooldown <= 0) {
+                    this._burstCooldown = 7;
+                    if (game.entityManager) {
+                        const level = game.levelManager ? game.levelManager.currentLevel : 1;
+                        for (let i = 0; i < 3; i++) {
+                            const sx = this.centerX + (i - 1) * 50;
+                            const sy = this.centerY + 60;
+                            const shard = new Enemy(sx, sy, 'fragment_shard', 'sine', this.canvasWidth, game.difficulty, level);
+                            shard.speed *= 1.5;
+                            shard._isShard = true;
+                            shard.config = { ...shard.config, w3behaviour: null };
+                            game.entityManager.enemies.push(shard);
+                        }
+                        game.particles.emit(this.centerX, this.centerY + 40, 'hit', 12);
+                    }
+                }
+                break;
+            }
+            case 15: {
+                // Mirror Engine — "Reflect Mode": every 10s, for 3s all player bullets near the boss get deflected downward
+                if (!this._reflectCooldown) this._reflectCooldown = 7;
+                this._reflectCooldown -= dt;
+                if (this._reflectCooldown <= 0 && !this._reflectActive) {
+                    this._reflectActive = true;
+                    this._reflectTimer = 3;
+                }
+                if (this._reflectActive) {
+                    this._reflectTimer -= dt;
+                    // Deflect nearby player bullets
+                    if (game.entityManager) {
+                        for (const b of game.entityManager.bullets) {
+                            if (!b.active || b.tag !== 'player') continue;
+                            const dx = (b.position.x + b.width / 2) - this.centerX;
+                            const dy = (b.position.y + b.height / 2) - this.centerY;
+                            if (dx * dx + dy * dy < 8100) { // 90px radius
+                                b.velocity.y = Math.abs(b.velocity.y); // flip downward
+                                b.tag = 'enemy'; // now damages player
+                            }
+                        }
+                    }
+                    if (this._reflectTimer <= 0) {
+                        this._reflectActive = false;
+                        this._reflectCooldown = 10;
+                    }
+                }
+                break;
+            }
+            case 16: {
+                // Chaos Generator — "Warp Dash": every 6s teleports to random X, leaves damage trail
+                if (!this._warpCooldown) this._warpCooldown = 4;
+                this._warpCooldown -= dt;
+                if (this._warpCooldown <= 0) {
+                    this._warpCooldown = 6;
+                    // Emit particles at old position
+                    game.particles.emit(this.centerX, this.centerY, 'explosion', 10);
+                    // Teleport to random X
+                    this.centerX = 100 + Math.random() * (this.canvasWidth - 200);
+                    // Emit particles at new position
+                    game.particles.emit(this.centerX, this.centerY, 'hit', 8);
+                    // Fire radial burst on arrival
+                    const core = this.parts.find(p => p.role === 'core' && p.active);
+                    if (core) {
+                        for (let i = 0; i < 8; i++) {
+                            const angle = (i / 8) * Math.PI * 2;
+                            const bx = core.worldX + core.width / 2;
+                            const by = core.worldY + core.height / 2;
+                            game.spawnBullet(bx, by, Math.cos(angle) * 120, Math.sin(angle) * 120, 'enemy');
+                        }
+                    }
+                }
+                break;
+            }
+            case 17: {
+                // Data Devourer — "Absorb Phase": every 9s, for 2s, bullets hitting core HEAL it
+                if (!this._absorbCooldown) this._absorbCooldown = 6;
+                this._absorbCooldown -= dt;
+                if (this._absorbCooldown <= 0 && !this._absorbActive) {
+                    this._absorbActive = true;
+                    this._absorbTimer = 2;
+                }
+                if (this._absorbActive) {
+                    this._absorbTimer -= dt;
+                    const core = this.parts.find(p => p.role === 'core' && p.active);
+                    if (core) core._absorbing = true;
+                    if (this._absorbTimer <= 0) {
+                        this._absorbActive = false;
+                        this._absorbCooldown = 9;
+                        const core2 = this.parts.find(p => p.role === 'core' && p.active);
+                        if (core2) core2._absorbing = false;
+                    }
+                }
+                break;
+            }
+            case 18: {
+                // The Kernel — "Phase Shift": changes move pattern at 66% and 33% HP
+                const ratio = this.health / this.maxHealth;
+                if (!this._phase) this._phase = 1;
+                if (this._phase === 1 && ratio < 0.66) {
+                    this._phase = 2;
+                    this.def = { ...this.def, movePattern: 'chase' };
+                    this.speed *= 1.2;
+                    // Speed up all turret fire
+                    for (const p of this.parts) {
+                        if (p.canShoot && p.active) p.shootRate *= 0.75;
+                    }
+                    game.particles.emit(this.centerX, this.centerY, 'explosion', 15);
+                }
+                if (this._phase === 2 && ratio < 0.33) {
+                    this._phase = 3;
+                    this.def = { ...this.def, movePattern: 'erratic' };
+                    this.speed *= 1.3;
+                    // Even faster fire
+                    for (const p of this.parts) {
+                        if (p.canShoot && p.active) p.shootRate *= 0.7;
+                    }
+                    game.particles.emit(this.centerX, this.centerY, 'explosion', 20);
+                    // Spawn 2 glitch_drones as minions
+                    if (game.entityManager) {
+                        const level = game.levelManager ? game.levelManager.currentLevel : 1;
+                        for (let i = 0; i < 2; i++) {
+                            const sx = this.centerX + (i === 0 ? -80 : 80);
+                            const drone = new Enemy(sx, this.centerY + 80, 'glitch_drone', 'glitch_blink', this.canvasWidth, game.difficulty, level);
+                            game.entityManager.enemies.push(drone);
+                        }
+                    }
+                }
+                break;
             }
         }
     }
@@ -1672,6 +2443,60 @@ class MultiBoss {
             ctx.font = mono(9);
             ctx.fillStyle = '#ff2222';
             ctx.fillText('⚠ ENRAGED', this.centerX, barY - 14);
+        }
+
+        // ── W3 Boss ability indicators ──
+        if (!this.isMiniBoss && this.bossId >= 13) {
+            // Boss 13: Syntax Shield glow
+            if (this._syntaxShieldActive) {
+                ctx.save();
+                ctx.globalAlpha = 0.25 + 0.15 * Math.sin(Date.now() * 0.01);
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, this.width * 0.45, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.font = mono(8);
+                ctx.fillStyle = '#00ffff';
+                ctx.textAlign = 'center';
+                ctx.setLineDash([]);
+                ctx.fillText('SHIELD', this.centerX, barY - (this.enraged ? 24 : 14));
+                ctx.restore();
+            }
+            // Boss 15: Reflect Mode indicator
+            if (this._reflectActive) {
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.strokeStyle = '#ccccff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, 90, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.font = mono(8);
+                ctx.fillStyle = '#ccccff';
+                ctx.globalAlpha = 0.8;
+                ctx.textAlign = 'center';
+                ctx.setLineDash([]);
+                ctx.fillText('REFLECT', this.centerX, barY - (this.enraged ? 24 : 14));
+                ctx.restore();
+            }
+            // Boss 17: Absorb indicator
+            if (this._absorbActive) {
+                ctx.save();
+                ctx.globalAlpha = 0.2 + 0.1 * Math.sin(Date.now() * 0.008);
+                ctx.fillStyle = '#8844ff';
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, this.width * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = mono(8);
+                ctx.fillStyle = '#cc88ff';
+                ctx.globalAlpha = 0.9;
+                ctx.textAlign = 'center';
+                ctx.fillText('ABSORB', this.centerX, barY - (this.enraged ? 24 : 14));
+                ctx.restore();
+            }
         }
 
         ctx.restore();

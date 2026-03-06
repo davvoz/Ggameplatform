@@ -855,6 +855,425 @@ const LEVEL_DATA = [
             makeWave([e('phantom', 0.3, 'spiral'), e('phantom', 0.5, 'spiral'), e('phantom', 0.7, 'spiral'), e('toxic_blob', 0.5)], 1.5, 'ring'),
         ]
     },
+
+    // ═════════════════════════════════════════════
+    //  WORLD 3 — SIMULATION BREAK   (Levels 61-90)
+    // ═════════════════════════════════════════════
+
+    // ── Sector 1: Boot Sequence (61-65) ──
+
+    // ===== LEVEL 61: Boot Sequence =====
+    {
+        name: 'Boot Sequence',
+        description: 'The simulation initialises. Something is already wrong.',
+        speedMult: 1.0,
+        boss: null,
+        waves: [
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink')], 1),
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.4), e('glitch_drone', 0.6), e('glitch_drone', 0.8, 'glitch_blink')], 1.5),
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.5, 'sine'), e('glitch_drone', 0.7, 'glitch_blink')], 1.5),
+        ]
+    },
+    // ===== LEVEL 62: Memory Leak =====
+    {
+        name: 'Memory Leak',
+        description: 'Data cubes overflow from corrupted sectors.',
+        speedMult: 1.05,
+        boss: null,
+        waves: [
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink'), e('data_cube', 0.5)], 1),
+            makeWave([e('data_cube', 0.3), e('data_cube', 0.7), e('glitch_drone', 0.5, 'glitch_blink')], 1.5),
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('data_cube', 0.5), e('glitch_drone', 0.8, 'glitch_blink')], 1),
+        ]
+    },
+    // ===== LEVEL 63: Stutter =====
+    {
+        name: 'Stutter',
+        description: 'Enemies teleport in erratic bursts.',
+        speedMult: 1.1,
+        boss: null,
+        waves: [
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink')], 1, 'pincer'),
+            makeWave([e('fragment_shard', 0.5), e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink')], 1.5),
+            makeWave([e('data_cube', 0.4), e('fragment_shard', 0.6), e('glitch_drone', 0.2), e('glitch_drone', 0.8)], 1),
+            makeWave([e('fragment_shard', 0.3, 'sine'), e('fragment_shard', 0.7, 'sine'), e('glitch_drone', 0.5, 'spiral')], 1.5, 'vee'),
+        ]
+    },
+    // ===== LEVEL 64: Debug Mode =====
+    {
+        name: 'Debug Mode',
+        description: 'Warp bugs materialise through code fissures.',
+        speedMult: 1.12,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.5, 'phase_drift'), e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink')], 1),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('warp_bug', 0.7, 'phase_drift'), e('fragment_shard', 0.5, 'zigzag')], 1.5),
+            makeWave([e('data_cube', 0.2), e('warp_bug', 0.5, 'phase_drift'), e('data_cube', 0.8), e('glitch_drone', 0.5, 'glitch_blink')], 1, 'diamond'),
+            makeWave([e('fragment_shard', 0.3, 'dive'), e('warp_bug', 0.5, 'phase_drift'), e('fragment_shard', 0.7, 'dive')], 1),
+        ]
+    },
+    // ===== LEVEL 65: Boss - Corrupted Compiler =====
+    {
+        name: 'Corrupted Compiler',
+        description: 'Code turns hostile. Compile or be compiled.',
+        speedMult: 1.1,
+        boss: 13,
+        miniboss: 9,
+        waves: [
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink'), e('data_cube', 0.5)], 1),
+            makeWave([e('fragment_shard', 0.3), e('warp_bug', 0.5, 'phase_drift'), e('fragment_shard', 0.7)], 1),
+            makeWave([e('data_cube', 0.3, 'zigzag'), e('data_cube', 0.7, 'zigzag'), e('glitch_drone', 0.5, 'glitch_blink')], 1.5, 'ring'),
+        ]
+    },
+
+    // ── Sector 2: Null Pointer (66-70) ──
+
+    // ===== LEVEL 66: Null Pointer =====
+    {
+        name: 'Null Pointer',
+        description: 'References collapse. Enemies spawn from the void.',
+        speedMult: 1.15,
+        boss: null,
+        waves: [
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink'), e('error_node', 0.5)], 1),
+            makeWave([e('error_node', 0.3), e('error_node', 0.7), e('glitch_drone', 0.5, 'glitch_blink')], 1.5),
+            makeWave([e('fragment_shard', 0.3, 'sine'), e('error_node', 0.5), e('fragment_shard', 0.7, 'sine'), e('warp_bug', 0.5, 'phase_drift')], 1, 'arrow'),
+        ]
+    },
+    // ===== LEVEL 67: Fragmented =====
+    {
+        name: 'Fragmented',
+        description: 'Mirror ghosts reflect your every move.',
+        speedMult: 1.18,
+        boss: null,
+        waves: [
+            makeWave([e('mirror_ghost', 0.5, 'orbit_player'), e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink')], 1),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('mirror_ghost', 0.7, 'orbit_player'), e('fragment_shard', 0.5, 'spiral')], 1.5),
+            makeWave([e('data_cube', 0.2), e('mirror_ghost', 0.5, 'orbit_player'), e('data_cube', 0.8), e('warp_bug', 0.5, 'phase_drift')], 1, 'stagger'),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('fragment_shard', 0.5, 'dive'), e('mirror_ghost', 0.7, 'orbit_player')], 1),
+        ]
+    },
+    // ===== LEVEL 68: Syntax Error =====
+    {
+        name: 'Syntax Error',
+        description: 'In valid patterns arise. Brace for chaos.',
+        speedMult: 1.2,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.3), e('warp_bug', 0.5, 'phase_drift'), e('error_node', 0.7)], 1),
+            makeWave([e('fragment_shard', 0.2, 'zigzag'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.8, 'zigzag')], 1.5, 'pincer'),
+            makeWave([e('data_cube', 0.3), e('error_node', 0.5), e('data_cube', 0.7), e('glitch_drone', 0.5, 'glitch_blink')], 1),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player'), e('warp_bug', 0.7, 'phase_drift')], 1, 'vee'),
+        ]
+    },
+    // ===== LEVEL 69: Infinite Loop =====
+    {
+        name: 'Infinite Loop',
+        description: 'Waves that never end. Break the cycle.',
+        speedMult: 1.22,
+        boss: null,
+        waves: [
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.4, 'glitch_blink'), e('glitch_drone', 0.6, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink')], 1, 'ring'),
+            makeWave([e('data_cube', 0.3, 'spiral'), e('fragment_shard', 0.5), e('data_cube', 0.7, 'spiral'), e('error_node', 0.5)], 1.5),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift'), e('mirror_ghost', 0.7, 'orbit_player')], 1, 'cross'),
+            makeWave([e('error_node', 0.3), e('fragment_shard', 0.5, 'sine'), e('error_node', 0.7), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+        ]
+    },
+    // ===== LEVEL 70: Boss - Fragment King =====
+    {
+        name: 'Fragment King',
+        description: 'The king of broken data. Assemble your resolve.',
+        speedMult: 1.15,
+        boss: 14,
+        miniboss: 10,
+        waves: [
+            makeWave([e('fragment_shard', 0.3, 'spiral'), e('fragment_shard', 0.5), e('fragment_shard', 0.7, 'spiral')], 1),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.7, 'orbit_player')], 1.5),
+            makeWave([e('data_cube', 0.3), e('warp_bug', 0.5, 'phase_drift'), e('data_cube', 0.7), e('fragment_shard', 0.5, 'dive')], 1, 'diamond'),
+        ]
+    },
+
+    // ── Sector 3: Buffer Zone (71-75) ──
+
+    // ===== LEVEL 71: Buffer Overflow =====
+    {
+        name: 'Buffer Overflow',
+        description: 'Too much data. Systems strain under the load.',
+        speedMult: 1.25,
+        boss: null,
+        waves: [
+            makeWave([e('data_cube', 0.2), e('data_cube', 0.4), e('data_cube', 0.6), e('data_cube', 0.8)], 1, 'line'),
+            makeWave([e('error_node', 0.3), e('error_node', 0.7), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink')], 1.5),
+            makeWave([e('fragment_shard', 0.2, 'strafe'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.8, 'strafe'), e('warp_bug', 0.5, 'phase_drift')], 1, 'stagger'),
+            makeWave([e('data_cube', 0.3, 'zigzag'), e('error_node', 0.5), e('data_cube', 0.7, 'zigzag'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+        ]
+    },
+    // ===== LEVEL 72: Race Condition =====
+    {
+        name: 'Race Condition',
+        description: 'Enemies arrive out of order. Synchronise or die.',
+        speedMult: 1.28,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.2, 'phase_drift'), e('warp_bug', 0.8, 'phase_drift'), e('glitch_drone', 0.5, 'glitch_blink')], 0.5),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.7, 'orbit_player')], 1, 'arrow'),
+            makeWave([e('fragment_shard', 0.2, 'zigzag'), e('data_cube', 0.5, 'spiral'), e('fragment_shard', 0.8, 'zigzag'), e('warp_bug', 0.5, 'phase_drift')], 1.5),
+            makeWave([e('error_node', 0.3), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.7), e('data_cube', 0.5, 'pendulum')], 1, 'cross'),
+        ]
+    },
+    // ===== LEVEL 73: Deadlock =====
+    {
+        name: 'Deadlock',
+        description: 'Processes freeze. Only force breaks the stalemate.',
+        speedMult: 1.3,
+        boss: null,
+        waves: [
+            makeWave([e('data_cube', 0.3), e('data_cube', 0.5), e('data_cube', 0.7), e('error_node', 0.5)], 1, 'diamond'),
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift'), e('mirror_ghost', 0.8, 'orbit_player')], 1.5),
+            makeWave([e('fragment_shard', 0.3, 'strafe'), e('error_node', 0.5), e('fragment_shard', 0.7, 'strafe'), e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink')], 1, 'pincer'),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('data_cube', 0.5), e('warp_bug', 0.7, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+        ]
+    },
+    // ===== LEVEL 74: Segfault =====
+    {
+        name: 'Segfault',
+        description: 'Memory violations cascade through every sector.',
+        speedMult: 1.32,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.2), e('error_node', 0.5), e('error_node', 0.8)], 1, 'line'),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('fragment_shard', 0.5, 'dive'), e('mirror_ghost', 0.7, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift')], 1.5),
+            makeWave([e('data_cube', 0.2, 'spiral'), e('glitch_drone', 0.4, 'glitch_blink'), e('glitch_drone', 0.6, 'glitch_blink'), e('data_cube', 0.8, 'spiral')], 1, 'ring'),
+            makeWave([e('fragment_shard', 0.3, 'pendulum'), e('error_node', 0.5), e('fragment_shard', 0.7, 'pendulum'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+            makeWave([e('warp_bug', 0.2, 'phase_drift'), e('warp_bug', 0.5, 'phase_drift'), e('warp_bug', 0.8, 'phase_drift')], 0.5, 'stagger'),
+        ]
+    },
+    // ===== LEVEL 75: Boss - Mirror Engine =====
+    {
+        name: 'Mirror Engine',
+        description: 'It copies everything. Think before you shoot.',
+        speedMult: 1.25,
+        boss: 15,
+        miniboss: 11,
+        waves: [
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('mirror_ghost', 0.5, 'orbit_player'), e('mirror_ghost', 0.7, 'orbit_player')], 1),
+            makeWave([e('data_cube', 0.3), e('error_node', 0.5), e('data_cube', 0.7), e('warp_bug', 0.5, 'phase_drift')], 1.5),
+            makeWave([e('fragment_shard', 0.2, 'dive'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.8, 'dive')], 1, 'arrow'),
+        ]
+    },
+
+    // ── Sector 4: Kernel Panic (76-80) ──
+
+    // ===== LEVEL 76: Blue Screen =====
+    {
+        name: 'Blue Screen',
+        description: 'Critical failure. The system fights back.',
+        speedMult: 1.35,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.3), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.7), e('data_cube', 0.5)], 1, 'diamond'),
+            makeWave([e('fragment_shard', 0.2, 'spiral'), e('warp_bug', 0.4, 'phase_drift'), e('warp_bug', 0.6, 'phase_drift'), e('fragment_shard', 0.8, 'spiral')], 1.5),
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.4, 'glitch_blink'), e('mirror_ghost', 0.5, 'orbit_player'), e('glitch_drone', 0.6, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink')], 1, 'ring'),
+            makeWave([e('data_cube', 0.3, 'pendulum'), e('error_node', 0.5), e('data_cube', 0.7, 'pendulum'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+        ]
+    },
+    // ===== LEVEL 77: Kernel Panic =====
+    {
+        name: 'Kernel Panic',
+        description: 'Core processes crash. Total system meltdown.',
+        speedMult: 1.38,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.2), e('error_node', 0.5), e('error_node', 0.8), e('fragment_shard', 0.5, 'dive')], 1),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift'), e('mirror_ghost', 0.7, 'orbit_player'), e('data_cube', 0.5, 'zigzag')], 1.5, 'cross'),
+            makeWave([e('glitch_drone', 0.1, 'glitch_blink'), e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink'), e('glitch_drone', 0.9, 'glitch_blink')], 1, 'ring'),
+            makeWave([e('data_cube', 0.3), e('error_node', 0.5), e('data_cube', 0.7), e('fragment_shard', 0.3, 'sine'), e('fragment_shard', 0.7, 'sine')], 1, 'stagger'),
+        ]
+    },
+    // ===== LEVEL 78: Bit Rot =====
+    {
+        name: 'Bit Rot',
+        description: 'Data decays. Even your weapons feel unstable.',
+        speedMult: 1.4,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.2, 'phase_drift'), e('data_cube', 0.5, 'spiral'), e('warp_bug', 0.8, 'phase_drift')], 1, 'pincer'),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.7, 'orbit_player'), e('fragment_shard', 0.5, 'circle')], 1.5),
+            makeWave([e('error_node', 0.2), e('warp_bug', 0.4, 'phase_drift'), e('data_cube', 0.6, 'zigzag'), e('error_node', 0.8)], 1, 'arrow'),
+            makeWave([e('fragment_shard', 0.3, 'dive'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.7, 'dive'), e('glitch_drone', 0.5, 'glitch_blink')], 1),
+            makeWave([e('data_cube', 0.3, 'pendulum'), e('data_cube', 0.5), e('data_cube', 0.7, 'pendulum')], 0.5, 'line'),
+        ]
+    },
+    // ===== LEVEL 79: Overflow =====
+    {
+        name: 'Overflow',
+        description: 'Values break limits. Everything escalates.',
+        speedMult: 1.42,
+        boss: null,
+        miniboss: 9,
+        waves: [
+            makeWave([e('error_node', 0.3), e('error_node', 0.5), e('error_node', 0.7), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+            makeWave([e('data_cube', 0.2, 'spiral'), e('fragment_shard', 0.4, 'strafe'), e('fragment_shard', 0.6, 'strafe'), e('data_cube', 0.8, 'spiral')], 1.5, 'diamond'),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player'), e('warp_bug', 0.7, 'phase_drift'), e('error_node', 0.5)], 1),
+            makeWave([e('glitch_drone', 0.2, 'glitch_blink'), e('glitch_drone', 0.4, 'glitch_blink'), e('mirror_ghost', 0.5, 'orbit_player'), e('glitch_drone', 0.6, 'glitch_blink'), e('glitch_drone', 0.8, 'glitch_blink')], 1, 'arrow'),
+        ]
+    },
+    // ===== LEVEL 80: Boss - Chaos Generator =====
+    {
+        name: 'Chaos Generator',
+        description: 'Randomness incarnate. Nothing is predictable.',
+        speedMult: 1.35,
+        boss: 16,
+        miniboss: 12,
+        waves: [
+            makeWave([e('error_node', 0.3, 'spiral'), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.7, 'spiral')], 1),
+            makeWave([e('fragment_shard', 0.2, 'circle'), e('warp_bug', 0.5, 'phase_drift'), e('fragment_shard', 0.8, 'circle')], 1.5),
+            makeWave([e('data_cube', 0.3), e('mirror_ghost', 0.5, 'orbit_player'), e('data_cube', 0.7), e('error_node', 0.5)], 1, 'cross'),
+        ]
+    },
+
+    // ── Sector 5: Ghost Protocol (81-85) ──
+
+    // ===== LEVEL 81: Data Corruption =====
+    {
+        name: 'Data Corruption',
+        description: 'Files rewrite themselves. Trust nothing.',
+        speedMult: 1.45,
+        boss: null,
+        waves: [
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.8, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift')], 1),
+            makeWave([e('data_cube', 0.3, 'spiral'), e('fragment_shard', 0.5, 'dive'), e('data_cube', 0.7, 'spiral'), e('error_node', 0.5)], 1.5, 'diamond'),
+            makeWave([e('glitch_drone', 0.1, 'glitch_blink'), e('glitch_drone', 0.3, 'glitch_blink'), e('mirror_ghost', 0.5, 'orbit_player'), e('glitch_drone', 0.7, 'glitch_blink'), e('glitch_drone', 0.9, 'glitch_blink')], 1, 'ring'),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('error_node', 0.5), e('warp_bug', 0.7, 'phase_drift'), e('fragment_shard', 0.5, 'zigzag')], 1),
+        ]
+    },
+    // ===== LEVEL 82: Ghost Process =====
+    {
+        name: 'Ghost Process',
+        description: 'Phantom threads haunt every sector.',
+        speedMult: 1.48,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('warp_bug', 0.5, 'phase_drift'), e('warp_bug', 0.7, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player')], 1, 'vee'),
+            makeWave([e('error_node', 0.2), e('data_cube', 0.5, 'pendulum'), e('error_node', 0.8), e('fragment_shard', 0.5, 'spiral')], 1.5),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('mirror_ghost', 0.5, 'orbit_player'), e('mirror_ghost', 0.7, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift')], 1, 'stagger'),
+            makeWave([e('data_cube', 0.2, 'zigzag'), e('error_node', 0.4), e('fragment_shard', 0.6, 'dive'), e('data_cube', 0.8, 'zigzag')], 1),
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('mirror_ghost', 0.5, 'orbit_player'), e('glitch_drone', 0.7, 'glitch_blink')], 0.5, 'arrow'),
+        ]
+    },
+    // ===== LEVEL 83: Malware =====
+    {
+        name: 'Malware',
+        description: 'Hostile code spreads. Error nodes multiply.',
+        speedMult: 1.5,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.2), e('error_node', 0.4), e('error_node', 0.6), e('error_node', 0.8)], 1, 'line'),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('warp_bug', 0.5, 'phase_drift'), e('mirror_ghost', 0.7, 'orbit_player'), e('fragment_shard', 0.5, 'dive')], 1.5),
+            makeWave([e('data_cube', 0.3, 'pendulum'), e('error_node', 0.5), e('data_cube', 0.7, 'pendulum'), e('warp_bug', 0.5, 'phase_drift')], 1, 'cross'),
+            makeWave([e('fragment_shard', 0.2, 'spiral'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.8, 'spiral'), e('error_node', 0.5)], 1),
+        ]
+    },
+    // ===== LEVEL 84: Wormhole =====
+    {
+        name: 'Wormhole',
+        description: 'Space folds. Enemies arrive from everywhere.',
+        speedMult: 1.52,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.1, 'phase_drift'), e('warp_bug', 0.3, 'phase_drift'), e('warp_bug', 0.5, 'phase_drift'), e('warp_bug', 0.7, 'phase_drift'), e('warp_bug', 0.9, 'phase_drift')], 1, 'ring'),
+            makeWave([e('error_node', 0.3), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.7), e('data_cube', 0.5, 'pendulum')], 1.5),
+            makeWave([e('fragment_shard', 0.2, 'strafe'), e('data_cube', 0.4, 'zigzag'), e('mirror_ghost', 0.6, 'orbit_player'), e('fragment_shard', 0.8, 'strafe')], 1, 'stagger'),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('error_node', 0.5), e('warp_bug', 0.7, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+            makeWave([e('data_cube', 0.3), e('data_cube', 0.5), e('data_cube', 0.7), e('glitch_drone', 0.5, 'circle')], 0.5, 'diamond'),
+        ]
+    },
+    // ===== LEVEL 85: Boss - Data Devourer =====
+    {
+        name: 'Data Devourer',
+        description: 'It consumes code. Your weapons barely register.',
+        speedMult: 1.45,
+        boss: 17,
+        miniboss: 9,
+        waves: [
+            makeWave([e('error_node', 0.3, 'circle'), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.7, 'circle')], 1),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('data_cube', 0.5, 'pendulum'), e('warp_bug', 0.7, 'phase_drift'), e('fragment_shard', 0.5)], 1.5),
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'pincer'),
+        ]
+    },
+
+    // ── Sector 6: The Kernel (86-90) ──
+
+    // ===== LEVEL 86: Cascade Failure =====
+    {
+        name: 'Cascade Failure',
+        description: 'One crash triggers another. Systems fall like dominoes.',
+        speedMult: 1.55,
+        boss: null,
+        waves: [
+            makeWave([e('error_node', 0.2), e('error_node', 0.4), e('error_node', 0.6), e('error_node', 0.8), e('mirror_ghost', 0.5, 'orbit_player')], 1, 'cross'),
+            makeWave([e('fragment_shard', 0.3, 'spiral'), e('warp_bug', 0.5, 'phase_drift'), e('fragment_shard', 0.7, 'spiral'), e('data_cube', 0.5)], 1.5),
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('mirror_ghost', 0.4, 'orbit_player'), e('mirror_ghost', 0.6, 'orbit_player'), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'ring'),
+            makeWave([e('data_cube', 0.3, 'pendulum'), e('error_node', 0.5), e('data_cube', 0.7, 'pendulum'), e('warp_bug', 0.5, 'phase_drift')], 1),
+            makeWave([e('fragment_shard', 0.3, 'dive'), e('mirror_ghost', 0.5, 'orbit_player'), e('fragment_shard', 0.7, 'dive')], 0.5, 'arrow'),
+        ]
+    },
+    // ===== LEVEL 87: Zero Day =====
+    {
+        name: 'Zero Day',
+        description: 'An unknown exploit. No patch exists.',
+        speedMult: 1.58,
+        boss: null,
+        waves: [
+            makeWave([e('warp_bug', 0.2, 'phase_drift'), e('mirror_ghost', 0.4, 'orbit_player'), e('error_node', 0.6), e('warp_bug', 0.8, 'phase_drift')], 1),
+            makeWave([e('data_cube', 0.3, 'zigzag'), e('fragment_shard', 0.5, 'pendulum'), e('data_cube', 0.7, 'zigzag'), e('mirror_ghost', 0.5, 'orbit_player')], 1.5, 'diamond'),
+            makeWave([e('error_node', 0.2), e('error_node', 0.5), e('error_node', 0.8), e('warp_bug', 0.5, 'phase_drift')], 1, 'stagger'),
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('fragment_shard', 0.5, 'spiral'), e('mirror_ghost', 0.7, 'orbit_player'), e('data_cube', 0.5, 'pendulum')], 1),
+            makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink'), e('error_node', 0.5)], 0.5, 'ring'),
+        ]
+    },
+    // ===== LEVEL 88: Entropy Max =====
+    {
+        name: 'Entropy Max',
+        description: 'Maximum disorder. Only order survives.',
+        speedMult: 1.6,
+        boss: null,
+        waves: [
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('error_node', 0.4), e('warp_bug', 0.6, 'phase_drift'), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'pincer'),
+            makeWave([e('data_cube', 0.3, 'pendulum'), e('fragment_shard', 0.5, 'circle'), e('data_cube', 0.7, 'pendulum'), e('error_node', 0.5)], 1.5),
+            makeWave([e('warp_bug', 0.2, 'phase_drift'), e('mirror_ghost', 0.4, 'orbit_player'), e('error_node', 0.6), e('warp_bug', 0.8, 'phase_drift'), e('fragment_shard', 0.5, 'spiral')], 1, 'cross'),
+            makeWave([e('data_cube', 0.2, 'zigzag'), e('data_cube', 0.4, 'zigzag'), e('mirror_ghost', 0.6, 'orbit_player'), e('data_cube', 0.8, 'zigzag')], 1),
+            makeWave([e('error_node', 0.3), e('error_node', 0.5), e('error_node', 0.7), e('mirror_ghost', 0.5, 'orbit_player')], 0.5, 'arrow'),
+        ]
+    },
+    // ===== LEVEL 89: Last Signal =====
+    {
+        name: 'Last Signal',
+        description: 'One final transmission. The Kernel awakens.',
+        speedMult: 1.62,
+        boss: null,
+        miniboss: 12,
+        waves: [
+            makeWave([e('mirror_ghost', 0.2, 'orbit_player'), e('mirror_ghost', 0.4, 'orbit_player'), e('mirror_ghost', 0.6, 'orbit_player'), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'line'),
+            makeWave([e('error_node', 0.3, 'spiral'), e('warp_bug', 0.5, 'phase_drift'), e('error_node', 0.7, 'spiral'), e('data_cube', 0.5)], 1.5),
+            makeWave([e('fragment_shard', 0.2, 'dive'), e('data_cube', 0.4, 'pendulum'), e('mirror_ghost', 0.6, 'orbit_player'), e('fragment_shard', 0.8, 'dive')], 1, 'stagger'),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('error_node', 0.5), e('warp_bug', 0.7, 'phase_drift'), e('mirror_ghost', 0.5, 'orbit_player')], 1),
+            makeWave([e('error_node', 0.2), e('error_node', 0.4), e('mirror_ghost', 0.5, 'orbit_player'), e('error_node', 0.6), e('error_node', 0.8)], 0.5, 'ring'),
+        ]
+    },
+    // ===== LEVEL 90: Boss - The Kernel =====
+    {
+        name: 'The Kernel',
+        description: 'THE CORE OF THE SIMULATION. End it.',
+        speedMult: 1.55,
+        boss: 18,
+        miniboss: 10,
+        waves: [
+            makeWave([e('mirror_ghost', 0.3, 'orbit_player'), e('error_node', 0.5), e('mirror_ghost', 0.7, 'orbit_player')], 1),
+            makeWave([e('warp_bug', 0.3, 'phase_drift'), e('data_cube', 0.5, 'pendulum'), e('warp_bug', 0.7, 'phase_drift'), e('fragment_shard', 0.5)], 1.5),
+            makeWave([e('error_node', 0.2), e('mirror_ghost', 0.4, 'orbit_player'), e('error_node', 0.6), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'diamond'),
+        ]
+    },
 ];
 
 export function getLevelData(level) {
@@ -864,7 +1283,10 @@ export function getLevelData(level) {
     // Generate bonus waves based on level
     const bonusWaves = generateBonusWaves(level);
     // World 2 speed damping: reduce inherited speedMult to keep normal difficulty manageable
-    const sMult = level > 30 ? base.speedMult * 0.82 : base.speedMult;
+    // World 3 speed damping: slightly less reduction than W2
+    const sMult = level > 60 ? base.speedMult * 0.78
+               : level > 30 ? base.speedMult * 0.82
+               : base.speedMult;
     return {
         ...base,
         speedMult: sMult,
@@ -880,15 +1302,18 @@ function generateBonusWaves(level) {
     // Boss levels get fewer bonus waves (focus on the boss)
     const w1BossLevels = [5, 10, 15, 20, 25, 30];
     const w2BossLevels = [35, 40, 45, 50, 55, 60];
-    const isBoss = w1BossLevels.includes(level) || w2BossLevels.includes(level);
+    const w3BossLevels = [65, 70, 75, 80, 85, 90];
+    const isBoss = w1BossLevels.includes(level) || w2BossLevels.includes(level) || w3BossLevels.includes(level);
 
-    // Use world-relative level so W2 feels like W1 in length
-    const relLevel = level > 30 ? level - 30 : level;
+    // Use world-relative level so each world feels consistent in length
+    const relLevel = level > 60 ? level - 60 : (level > 30 ? level - 30 : level);
 
-    const bonusCount = isBoss ? Math.floor(relLevel / 10) : (level > 30
+    const bonusCount = isBoss ? Math.floor(relLevel / 10) : (level > 60
+        ? Math.floor(relLevel / 5) + 1   // W3: similar to W2
+        : level > 30
         ? Math.floor(relLevel / 5) + 1   // W2: fewer bonus waves
         : Math.floor(relLevel / 3) + 1); // W1: original formula
-    // Clamp to reasonable range: 1 for W2, 1-8 for W1
+    // Clamp to reasonable range
     const maxBonusWaves = level > 30 ? 5 : 8;
     const count = Math.min(maxBonusWaves, Math.max(1, bonusCount));
 
@@ -909,6 +1334,14 @@ function generateBonusWaves(level) {
     const w2MechPool = ['stalker', 'mech_drone', 'nest', 'sentinel', 'heavy', 'phantom'];
     const w2ToxicPool = ['stalker', 'toxic_blob', 'nest', 'sentinel', 'phantom', 'mech_drone'];
 
+    // ─── World 3 enemy pools (simulation break) ───
+    const w3BootPool = ['glitch_drone', 'data_cube', 'fragment_shard', 'warp_bug'];
+    const w3NullPool = ['glitch_drone', 'fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost'];
+    const w3BufferPool = ['data_cube', 'fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost'];
+    const w3KernelPool = ['fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost', 'data_cube'];
+    const w3GhostPool = ['warp_bug', 'error_node', 'mirror_ghost', 'fragment_shard', 'data_cube', 'glitch_drone'];
+    const w3FinalPool = ['error_node', 'mirror_ghost', 'warp_bug', 'data_cube', 'fragment_shard'];
+
     let pool;
     if (level <= 5) pool = earlyTypes;
     else if (level <= 12) pool = midTypes;
@@ -919,7 +1352,13 @@ function generateBonusWaves(level) {
     else if (level <= 45) pool = w2FrostPool;
     else if (level <= 50) pool = w2DesertPool;
     else if (level <= 55) pool = w2MechPool;
-    else pool = w2ToxicPool;
+    else if (level <= 60) pool = w2ToxicPool;
+    else if (level <= 65) pool = w3BootPool;
+    else if (level <= 70) pool = w3NullPool;
+    else if (level <= 75) pool = w3BufferPool;
+    else if (level <= 80) pool = w3KernelPool;
+    else if (level <= 85) pool = w3GhostPool;
+    else pool = w3FinalPool;
 
     const waves = [];
     for (let w = 0; w < count; w++) {

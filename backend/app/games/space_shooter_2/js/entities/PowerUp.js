@@ -23,7 +23,10 @@ const POWERUP_TYPES = {
     ultimate: { icon: '💎', color: { r: 180, g: 100, b: 255 }, label: 'ULT+' },
     // ─── World 2 Power-ups ───
     drone_companion: { icon: '🤖', color: { r: 100, g: 220, b: 255 }, label: 'Drone' },
-    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' }
+    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' },
+    // ─── World 3 Power-ups ───
+    glitch_clone:    { icon: '👥', color: { r: 0, g: 220, b: 200 }, label: 'Clones' },
+    data_drain:      { icon: '🌀', color: { r: 120, g: 50, b: 240 }, label: 'Drain' }
 };
 
 class PowerUp extends GameObject {
@@ -345,6 +348,50 @@ class PowerUp extends GameObject {
                 }
                 break;
             }
+            // ─── World 3 Power-up Icons ───
+            case 'glitch_clone': {
+                // Two overlapping silhouette shapes (clone pair)
+                const s = size * 0.65;
+                // Back clone (offset, semi-transparent)
+                ctx.globalAlpha = 0.4;
+                ctx.beginPath();
+                ctx.moveTo(cx + s * 0.3, cy - s * 0.8);
+                ctx.lineTo(cx + s * 0.7, cy - s * 0.2);
+                ctx.lineTo(cx + s * 0.5, cy + s * 0.8);
+                ctx.lineTo(cx + s * 0.1, cy + s * 0.8);
+                ctx.lineTo(cx - s * 0.1, cy - s * 0.2);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.globalAlpha = 1;
+                // Front clone
+                ctx.beginPath();
+                ctx.moveTo(cx - s * 0.3, cy - s * 0.8);
+                ctx.lineTo(cx + s * 0.3, cy - s * 0.3);
+                ctx.lineTo(cx + s * 0.15, cy + s * 0.8);
+                ctx.lineTo(cx - s * 0.35, cy + s * 0.8);
+                ctx.lineTo(cx - s * 0.6, cy - s * 0.2);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                break;
+            }
+            case 'data_drain': {
+                // Spiral vortex/drain icon
+                const s = size * 0.7;
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let a = 0; a < Math.PI * 3; a += 0.15) {
+                    const sr = s * 0.15 + a * s * 0.2;
+                    if (sr > s) break;
+                    const px = cx + sr * Math.cos(a), py = cy + sr * Math.sin(a);
+                    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                // Center dot
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2); ctx.fill();
+                break;
+            }
 
         }
         ctx.restore();
@@ -389,6 +436,17 @@ class PowerUp extends GameObject {
             case 'bullet_time':
                 game.bulletTimeActive = true;
                 game.bulletTimeTimer = 6;
+                break;
+            // ─── World 3 Power-ups ───
+            case 'glitch_clone':
+                player.glitchCloneActive = true;
+                player.glitchCloneTime = 8;
+                player.glitchCloneFireTimer = 0;
+                player.glitchCloneAngle = 0;
+                break;
+            case 'data_drain':
+                player.dataDrainActive = true;
+                player.dataDrainTime = 6;
                 break;
 
         }

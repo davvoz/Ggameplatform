@@ -198,6 +198,81 @@ class PerkEffectsManager {
                 }
             }
         }
+
+        // ─── World 3 Perk Effects ───
+
+        // Glitch Dash: invulnerability + speed after taking damage
+        if (perks.glitchDashTimer > 0) {
+            perks.glitchDashTimer -= deltaTime;
+            const boost = perks.getGlitchDashSpeedBoost();
+            player.speed = player.baseSpeed * (g.perkSystem.getSpeedMultiplier() + boost);
+            if (perks.glitchDashTimer <= 0) {
+                perks.glitchDashTimer = 0;
+                player.invincible = false;
+                this.applyPerkModifiersToPlayer(); // restore normal speed
+            }
+        }
+
+        // Entropy Shield: kill counter → auto shield
+        if (perks.getEntropyShieldKills() < Infinity) {
+            if (perks.entropyShieldKills >= perks.getEntropyShieldKills()) {
+                perks.entropyShieldKills = 0;
+                if (!player.shieldActive) {
+                    player.shieldActive = true;
+                    player.shieldTime = 4;
+                    g.particles.emit(
+                        player.position.x + player.width / 2,
+                        player.position.y + player.height / 2,
+                        'shield', 8
+                    );
+                    g.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.12);
+                }
+            }
+        }
+
+        // Virus Inject: tick damage on infected enemies
+        if (perks.hasPerk('virus_inject')) {
+            for (const e of g.entityManager.enemies) {
+                if (!e.active || !e._virusInfected) continue;
+                e._virusTimer += deltaTime;
+                if (e._virusTimer >= e._virusDuration) {
+                    e._virusInfected = false;
+                    continue;
+                }
+                // 1 damage per second
+                e._virusTickAccum = (e._virusTickAccum || 0) + deltaTime;
+                if (e._virusTickAccum >= 1) {
+                    e._virusTickAccum -= 1;
+                    const killed = e.takeDamage(1, g);
+                    if (killed) {
+                        g.scoreManager.onEnemyKilled(e);
+                        // Spread on tick-kill too
+                        const eCX = e.position.x + e.width / 2;
+                        const eCY = e.position.y + e.height / 2;
+                        const cands = [];
+                        for (const e2 of g.entityManager.enemies) {
+                            if (!e2.active || e2 === e || e2._isAlly || e2._virusInfected) continue;
+                            const dx = (e2.position.x + e2.width / 2) - eCX;
+                            const dy = (e2.position.y + e2.height / 2) - eCY;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 150) cands.push({ e: e2, d: dist });
+                        }
+                        cands.sort((a, b) => a.d - b.d);
+                        for (let s = 0; s < Math.min(2, cands.length); s++) {
+                            const t = cands[s].e;
+                            t._virusInfected = true;
+                            t._virusDuration = e._virusDuration;
+                            t._virusTimer = 0;
+                            g.particles.emitCustom(
+                                t.position.x + t.width / 2, t.position.y + t.height / 2,
+                                { count: 4, speed: 25, life: 0.3, size: 2,
+                                  color: { r: 180, g: 0, b: 255 }, gravity: 0, fadeOut: true, shrink: true }, 4
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     applyChainLightning(fromX, fromY, targets, damage) {

@@ -1,8 +1,17 @@
 {
-  "version": "3.35.0",
-  "timestamp": "2026-03-06T09:00:14.176Z",
-  "buildNumber": 439,
+  "version": "3.35.1",
+  "timestamp": "2026-03-09T22:20:11.718Z",
+  "buildNumber": 440,
   "changelog": [
+    {
+      "version": "3.35.1",
+      "date": "2026-03-09",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] add world 4",
+        "🔖 Bump version to 3.35.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.35.0",
       "date": "2026-03-06",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[SS2] enhance visuals and animations for level transitions and power-ups",
         "🔖 Bump version to 3.33.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.12",
-      "date": "2026-03-01",
-      "type": "patch",
-      "changes": [
-        "fix:clean project , [SS2] manage coins",
-        "🔖 Bump version to 3.33.11 [skip-version]"
       ]
     }
   ]

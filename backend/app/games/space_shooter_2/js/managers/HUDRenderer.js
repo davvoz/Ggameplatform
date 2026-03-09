@@ -1,4 +1,4 @@
-import { getLevelData } from '../LevelData.js';
+import { getLevelData } from '../LevelDataFacade.js';
 import { title, ui, mono } from '../FontConfig.js';
 
 class HUDRenderer {

@@ -3,6 +3,7 @@ import { getThemeForLevel } from "./LevelsThemes.js";
 import { SpaceWorldRenderer } from "./worlds/SpaceWorldRenderer.js";
 import { PlanetWorldRenderer } from "./worlds/PlanetWorldRenderer.js";
 import { SimulationWorldRenderer } from "./worlds/SimulationWorldRenderer.js";
+import { QuantumWorldRenderer } from "./worlds/QuantumWorldRenderer.js";
 
 // ═════════════════════════════════════════════════════════════
 //  BackgroundFacade — thin orchestrator that delegates to WorldRenderers
@@ -46,6 +47,7 @@ export class BackgroundFacade {
             new SpaceWorldRenderer(canvasWidth, canvasHeight, quality),   // World 1 (1-30)
             new PlanetWorldRenderer(canvasWidth, canvasHeight, quality),  // World 2 (31-60)
             new SimulationWorldRenderer(canvasWidth, canvasHeight, quality), // World 3 (61-90)
+            new QuantumWorldRenderer(canvasWidth, canvasHeight, quality),     // World 4 (91-120)
         ];
 
         /** Currently active world renderer. */
@@ -68,6 +70,25 @@ export class BackgroundFacade {
         this.quality = quality;
         for (const w of this.worlds) w.setQuality(quality);
         this._buildForTheme(this.currentTheme, this.currentLevel);
+    }
+
+    /** Pass player position so reactive worlds (e.g. Quantum) can respond. */
+    setPlayerInfo(x, y) {
+        if (this._activeWorld && typeof this._activeWorld.setPlayerInfo === 'function') {
+            this._activeWorld.setPlayerInfo(x, y);
+        }
+    }
+
+    /**
+     * Return the active quantum field zones (World 4 only).
+     * Each zone: { x, y, radius, type, intensity, timer }
+     * type: 'safe' | 'danger' | 'info'
+     */
+    getActiveZones() {
+        if (this._activeWorld && this._activeWorld.activeZones) {
+            return this._activeWorld.activeZones;
+        }
+        return [];
     }
 
     /** Per-frame update. */
@@ -134,13 +155,14 @@ export class BackgroundFacade {
         this._activeWorld = this.worlds[worldIdx] || this.worlds[0];
 
         // Build the world
-        this._activeWorld.build(theme);
+        this._activeWorld.build(theme, this.currentLevel);
 
         // FX particles (shared across all worlds)
         if (theme.fx) {
             const cfg = theme.jungleConfig || theme.volcanicConfig
                      || theme.frozenConfig || theme.desertConfig
-                     || theme.mechanicalConfig || theme.toxicConfig || null;
+                     || theme.mechanicalConfig || theme.toxicConfig
+                     || theme.quantumConfig || null;
             let fxCount;
             if (cfg && cfg.fxN) {
                 fxCount = cfg.fxN;

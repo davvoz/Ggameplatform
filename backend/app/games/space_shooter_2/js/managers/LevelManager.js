@@ -1,4 +1,4 @@
-import { getLevelData, getTotalLevels } from '../LevelData.js';
+import { getLevelData, getTotalLevels } from '../LevelDataFacade.js';
 import {
     LEVELS_PER_WORLD,
     getWorldForLevel,

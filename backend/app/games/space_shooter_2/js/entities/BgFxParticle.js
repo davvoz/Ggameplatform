@@ -29,6 +29,7 @@ import { DesertFx }      from './fx/DesertFx.js';
 import { MechanicalFx }  from './fx/MechanicalFx.js';
 import { ToxicFx }       from './fx/ToxicFx.js';
 import { GlitchFx }      from './fx/GlitchFx.js';
+import { QuantumFx }     from './fx/QuantumFx.js';
 
 /**
  * Strategy registry — maps fxType string → Strategy class.
@@ -56,7 +57,9 @@ const FX_REGISTRY = {
     mechanical : MechanicalFx,
     toxic      : ToxicFx,
     // simulation effects
-    glitch     : GlitchFx
+    glitch     : GlitchFx,
+    // quantum effects
+    quantum    : QuantumFx
 };
 
 /**

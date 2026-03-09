@@ -1,5 +1,5 @@
 import { EnemyFactory } from '../entities/Enemy.js';
-import { getLevelData } from '../LevelData.js';
+import { getLevelData } from '../LevelDataFacade.js';
 
 class WaveManager {
     constructor(game) {
@@ -72,6 +72,9 @@ class WaveManager {
                     let miniBossType;
                     if (levelData.miniboss) {
                         miniBossType = levelData.miniboss;
+                    } else if (lvl > 90) {
+                        // World 4: cycle through types 13-16
+                        miniBossType = 13 + (((lvl - 91) % 4));
                     } else if (lvl > 60) {
                         // World 3: cycle through types 9-12
                         miniBossType = 9 + (((lvl - 61) % 4));
@@ -113,7 +116,14 @@ class WaveManager {
         const x = g.logicalWidth / 2 - 95;
         entities.boss = EnemyFactory.createBoss(x, -200, bossLevel, g.logicalWidth, g.difficulty, g.levelManager.currentLevel);
         g.sound.playBossWarning();
-        g.postProcessing.shake(3, 2.0);
+        // W4 bosses (19-24): stronger entrance
+        const isW4 = bossLevel >= 19 && bossLevel <= 24;
+        g.postProcessing.shake(isW4 ? 5 : 3, isW4 ? 2.5 : 2.0);
+        if (isW4) {
+            // Mark boss for warp-in animation
+            entities.boss._warpInTimer = 0;
+            entities.boss._warpInDuration = 1.8;
+        }
     }
 
     spawnMiniBoss(miniBossType) {
@@ -128,8 +138,14 @@ class WaveManager {
             color: entities.miniBoss.def.color,
             maxTimer: 2.0
         };
-        g.postProcessing.shake(3, 0.3);
+        // W4 mini-bosses (13-16): warp-in effect
+        const isW4Mini = miniBossType >= 13 && miniBossType <= 16;
+        g.postProcessing.shake(isW4Mini ? 4 : 3, isW4Mini ? 0.6 : 0.3);
         g.sound.playExplosionBig();
+        if (isW4Mini) {
+            entities.miniBoss._warpInTimer = 0;
+            entities.miniBoss._warpInDuration = 1.2;
+        }
     }
 
     onEnemyKilled(enemy) {

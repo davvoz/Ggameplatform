@@ -4,7 +4,7 @@
  * Exposes .zoom, .zoomProgress, .pcx, .pcy for Game.js camera transform.
  */
 import CinematicScene from './CinematicScene.js';
-import { getLevelData } from '../../LevelData.js';
+import { getLevelData } from '../../LevelDataFacade.js';
 import { title } from '../../FontConfig.js';
 
 export default class LevelOutroCinematic extends CinematicScene {

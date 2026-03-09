@@ -5,7 +5,7 @@
  */
 import CinematicScene from './CinematicScene.js';
 import { easeOut } from './CinematicUtils.js';
-import { getLevelData } from '../../LevelData.js';
+import { getLevelData } from '../../LevelDataFacade.js';
 import { title } from '../../FontConfig.js';
 
 export default class LevelIntroCinematic extends CinematicScene {

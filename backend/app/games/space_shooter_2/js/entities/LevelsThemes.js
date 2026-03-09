@@ -528,6 +528,144 @@ const LEVEL_THEMES = {
         bg: '#020002', stars: ['#ff0044', '#ff3366', '#ff6699'], nebula: ['rgba(60,0,15,1)', 'rgba(40,0,8,1)', 'rgba(80,0,20,1)'], fx: 'glitch',
         glitchConfig: { intensity: 1.0, gridHue: 350, dist: [0.35, 0.50, 0.65, 0.80], glitchMul: 1.5 }
     },
+
+    // ═══════════════════════════════════════════════════════
+    //  WORLD 4 — Quantum Realm  (Levels 91-120)
+    //  quantumConfig: { energy: 0-1, fieldHue: int, dist: [4 values] }
+    //  energy drives sector selection (0 = quark lattice, 1 = unified field)
+    // ═══════════════════════════════════════════════════════
+
+    // Stage 1: Quark Lattice (91-95) — low energy, primary colors
+    quarkEntry: {
+        bg: '#080412', stars: ['#6644aa', '#8866cc', '#aa88ee'], nebula: ['rgba(30,15,60,1)', 'rgba(20,10,45,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.05, fieldHue: 270, dist: [0.40, 0.60, 0.78, 0.90] }
+    },
+    quarkLattice: {
+        bg: '#0a0516', stars: ['#7755bb', '#9977dd', '#bb99ff'], nebula: ['rgba(35,18,70,1)', 'rgba(25,12,50,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.08, fieldHue: 275, dist: [0.38, 0.58, 0.76, 0.90] }
+    },
+    colorCharge: {
+        bg: '#0c0618', stars: ['#ff4466', '#44ff88', '#4488ff'], nebula: ['rgba(40,20,75,1)', 'rgba(30,14,55,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.12, fieldHue: 280, dist: [0.36, 0.56, 0.74, 0.88] }
+    },
+    gluonBond: {
+        bg: '#0d071a', stars: ['#ff5577', '#55ff99', '#5599ff'], nebula: ['rgba(45,22,80,1)', 'rgba(32,16,60,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.15, fieldHue: 285, dist: [0.35, 0.55, 0.73, 0.88] }
+    },
+    protonCrusher: {
+        bg: '#0f081c', stars: ['#ff3366', '#33ff77', '#3377ff'], nebula: ['rgba(50,25,90,1)', 'rgba(35,18,65,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.18, fieldHue: 290, dist: [0.34, 0.54, 0.72, 0.87] }
+    },
+
+    // Stage 2: Lepton Fields (96-100) — electron orbits
+    leptonField: {
+        bg: '#060a18', stars: ['#5588dd', '#77aaff', '#99ccff'], nebula: ['rgba(15,30,70,1)', 'rgba(10,20,50,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.22, fieldHue: 210, dist: [0.38, 0.56, 0.74, 0.89] }
+    },
+    electronOrbit: {
+        bg: '#070b1a', stars: ['#4499ee', '#66bbff', '#88ddff'], nebula: ['rgba(18,35,80,1)', 'rgba(12,22,55,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.26, fieldHue: 205, dist: [0.37, 0.55, 0.73, 0.88] }
+    },
+    neutrinoWave: {
+        bg: '#050c1c', stars: ['#33aaff', '#55ccff', '#77eeff'], nebula: ['rgba(12,38,85,1)', 'rgba(8,25,60,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.30, fieldHue: 200, dist: [0.36, 0.54, 0.72, 0.87] }
+    },
+    muonDecay: {
+        bg: '#040d1e', stars: ['#22bbff', '#44ddff', '#66ffff'], nebula: ['rgba(10,40,90,1)', 'rgba(6,28,65,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.34, fieldHue: 195, dist: [0.35, 0.53, 0.71, 0.86] }
+    },
+    electroweakBoss: {
+        bg: '#030e20', stars: ['#ffaa22', '#4488ff', '#ffffff'], nebula: ['rgba(8,42,95,1)', 'rgba(4,30,70,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.38, fieldHue: 40, dist: [0.34, 0.52, 0.70, 0.85] }
+    },
+
+    // Stage 3: Boson Conduit (101-105) — force carriers
+    bosonStream: {
+        bg: '#100810', stars: ['#cc66ff', '#ee88ff', '#ffaaff'], nebula: ['rgba(50,25,50,1)', 'rgba(35,18,35,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.42, fieldHue: 300, dist: [0.36, 0.54, 0.72, 0.87] }
+    },
+    wBosonPath: {
+        bg: '#120a12', stars: ['#dd77ff', '#ff99ff', '#ffbbff'], nebula: ['rgba(55,28,55,1)', 'rgba(40,20,40,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.46, fieldHue: 305, dist: [0.35, 0.53, 0.71, 0.86] }
+    },
+    zBosonResonance: {
+        bg: '#140c14', stars: ['#ee88ff', '#ffaaff', '#ffccff'], nebula: ['rgba(60,30,60,1)', 'rgba(45,22,45,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.50, fieldHue: 310, dist: [0.34, 0.52, 0.70, 0.85] }
+    },
+    photonFlood: {
+        bg: '#160e16', stars: ['#ffee88', '#ffffaa', '#ffffcc'], nebula: ['rgba(65,32,55,1)', 'rgba(48,24,40,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.54, fieldHue: 50, dist: [0.33, 0.51, 0.69, 0.84] }
+    },
+    gluonOverlord: {
+        bg: '#180f18', stars: ['#33ff88', '#66ffaa', '#99ffcc'], nebula: ['rgba(70,35,50,1)', 'rgba(50,25,35,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.58, fieldHue: 150, dist: [0.32, 0.50, 0.68, 0.83] }
+    },
+
+    // Stage 4: Higgs Vacuum (106-110) — mass fields, golden hues
+    higgsVacuum: {
+        bg: '#121008', stars: ['#ffcc44', '#ffdd66', '#ffee88'], nebula: ['rgba(55,50,20,1)', 'rgba(40,35,14,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.62, fieldHue: 45, dist: [0.35, 0.53, 0.71, 0.86] }
+    },
+    symmetryBreak: {
+        bg: '#14120a', stars: ['#ffdd55', '#ffee77', '#ffff99'], nebula: ['rgba(60,55,25,1)', 'rgba(45,38,18,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.66, fieldHue: 48, dist: [0.34, 0.52, 0.70, 0.85] }
+    },
+    massGenesis: {
+        bg: '#16140c', stars: ['#ffee66', '#ffff88', '#ffffaa'], nebula: ['rgba(65,60,28,1)', 'rgba(48,42,20,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.70, fieldHue: 50, dist: [0.33, 0.51, 0.69, 0.84] }
+    },
+    vacuumDecay: {
+        bg: '#18160e', stars: ['#ffd700', '#ffe633', '#fff066'], nebula: ['rgba(70,65,30,1)', 'rgba(50,45,22,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.74, fieldHue: 52, dist: [0.32, 0.50, 0.68, 0.83] }
+    },
+    higgsManifestation: {
+        bg: '#1a1810', stars: ['#ffd700', '#ffffff', '#ffffcc'], nebula: ['rgba(75,70,35,1)', 'rgba(55,48,25,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.78, fieldHue: 42, dist: [0.31, 0.49, 0.67, 0.82] }
+    },
+
+    // Stage 5: Antimatter Rift (111-115) — matter/antimatter split
+    antimatterRift: {
+        bg: '#0a0412', stars: ['#ff44aa', '#44ffaa', '#cc44ff'], nebula: ['rgba(35,12,55,1)', 'rgba(25,8,40,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.82, fieldHue: 320, dist: [0.34, 0.52, 0.70, 0.85] }
+    },
+    pairCreation: {
+        bg: '#0c0614', stars: ['#ff55bb', '#55ffbb', '#dd55ff'], nebula: ['rgba(40,15,60,1)', 'rgba(28,10,45,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.84, fieldHue: 325, dist: [0.33, 0.51, 0.69, 0.84] }
+    },
+    annihilationZone: {
+        bg: '#0e0816', stars: ['#ff66cc', '#66ffcc', '#ee66ff'], nebula: ['rgba(45,18,65,1)', 'rgba(32,12,48,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.87, fieldHue: 330, dist: [0.32, 0.50, 0.68, 0.83] }
+    },
+    cpViolation: {
+        bg: '#100a18', stars: ['#ff77dd', '#77ffdd', '#ff77ff'], nebula: ['rgba(50,22,70,1)', 'rgba(35,15,52,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.90, fieldHue: 335, dist: [0.31, 0.49, 0.67, 0.82] }
+    },
+    antimatterSovereign: {
+        bg: '#120c1a', stars: ['#cc44ff', '#ff44cc', '#ffffff'], nebula: ['rgba(55,25,75,1)', 'rgba(38,18,55,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.92, fieldHue: 290, dist: [0.30, 0.48, 0.66, 0.81] }
+    },
+
+    // Stage 6: Unified Field (116-120) — maximum energy, white/gold
+    unifiedField: {
+        bg: '#0c0a14', stars: ['#aaaaff', '#ccccff', '#eeeeff'], nebula: ['rgba(35,30,60,1)', 'rgba(25,20,45,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.94, fieldHue: 240, dist: [0.33, 0.50, 0.68, 0.83] }
+    },
+    superSymmetry: {
+        bg: '#0e0c16', stars: ['#bbbbff', '#ddddff', '#ffffff'], nebula: ['rgba(40,35,65,1)', 'rgba(28,22,48,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.95, fieldHue: 250, dist: [0.32, 0.49, 0.67, 0.82] }
+    },
+    feynmanVertex: {
+        bg: '#100e18', stars: ['#ccccff', '#eeeeff', '#ffffff'], nebula: ['rgba(45,40,70,1)', 'rgba(32,26,52,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.96, fieldHue: 260, dist: [0.31, 0.48, 0.66, 0.81] }
+    },
+    stringTheory: {
+        bg: '#12101a', stars: ['#ddddff', '#ffffff', '#ffffee'], nebula: ['rgba(50,45,75,1)', 'rgba(35,30,55,1)'], fx: 'quantum',
+        quantumConfig: { energy: 0.98, fieldHue: 270, dist: [0.30, 0.47, 0.65, 0.80] }
+    },
+    grandUnification: {
+        bg: '#14121c', stars: ['#ffffff', '#ffeedd', '#ffd700'], nebula: ['rgba(55,50,80,1)', 'rgba(40,35,60,1)'], fx: 'quantum',
+        quantumConfig: { energy: 1.0, fieldHue: 45, dist: [0.28, 0.45, 0.63, 0.78] }
+    },
 };
 
 // Map: level number (1-60) → theme key
@@ -563,6 +701,18 @@ const LEVEL_THEME_MAP = [
     'dataCorruption', 'ghostProcess', 'malware', 'wormHole', 'systemHalt',
     // World 3 — Total Collapse (86-90)
     'cascadeFailure', 'zeroDay', 'entropyMax', 'lastSignal', 'theKernel',
+    // World 4 — Quark Lattice (91-95)
+    'quarkEntry', 'quarkLattice', 'colorCharge', 'gluonBond', 'protonCrusher',
+    // World 4 — Lepton Fields (96-100)
+    'leptonField', 'electronOrbit', 'neutrinoWave', 'muonDecay', 'electroweakBoss',
+    // World 4 — Boson Conduit (101-105)
+    'bosonStream', 'wBosonPath', 'zBosonResonance', 'photonFlood', 'gluonOverlord',
+    // World 4 — Higgs Vacuum (106-110)
+    'higgsVacuum', 'symmetryBreak', 'massGenesis', 'vacuumDecay', 'higgsManifestation',
+    // World 4 — Antimatter Rift (111-115)
+    'antimatterRift', 'pairCreation', 'annihilationZone', 'cpViolation', 'antimatterSovereign',
+    // World 4 — Unified Field (116-120)
+    'unifiedField', 'superSymmetry', 'feynmanVertex', 'stringTheory', 'grandUnification',
 ];
 
 function getThemeForLevel(level) {

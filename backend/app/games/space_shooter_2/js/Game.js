@@ -179,7 +179,15 @@ class Game {
     update(deltaTime) {
         this.gameTime += deltaTime;
 
-        if (this.backgroundFacade) this.backgroundFacade.update(deltaTime);
+        if (this.backgroundFacade) {
+            if (this.player && this.player.active) {
+                this.backgroundFacade.setPlayerInfo(
+                    this.player.position.x + this.player.width / 2,
+                    this.player.position.y + this.player.height / 2
+                );
+            }
+            this.backgroundFacade.update(deltaTime);
+        }
         this.postProcessing.update(deltaTime);
         this.particles.update(deltaTime);
 
@@ -300,6 +308,12 @@ class Game {
 
         this.perkEffectsManager.updatePerkEffects(deltaTime);
 
+        // ─── World 4 Quantum Field Effects ───
+        // Background activeZones affect gameplay when player/enemies are inside
+        if (this.backgroundFacade && this.currentLevel >= 91 && this.currentLevel <= 120) {
+            this._updateQuantumFieldEffects(deltaTime, em);
+        }
+
         if (this.scoreManager.combo > 0) {
             this.scoreManager.comboTimer -= deltaTime * this.perkSystem.getComboDecayMultiplier();
             if (this.scoreManager.comboTimer <= 0) {
@@ -308,6 +322,162 @@ class Game {
         }
 
         this.waveManager.updateWaves(deltaTime);
+    }
+
+    // ════════════════════════════════════════════════
+    //  WORLD 4 — QUANTUM FIELD GAMEPLAY EFFECTS
+    //  Background zones from QuantumWorldRenderer affect
+    //  the real gameplay: speed, damage, enemy weakness.
+    // ════════════════════════════════════════════════
+
+    _updateQuantumFieldEffects(deltaTime, em) {
+        const player = em.player;
+        if (!player || !player.active) return;
+
+        // Reset per-frame quantum flags BEFORE early-return,
+        // so effects don't persist when all zones expire.
+        player._quantumBoosted = false;
+
+        const zones = this.backgroundFacade.getActiveZones();
+        if (!zones || zones.length === 0) {
+            // No active zones — ensure lingering effects are cleared
+            if (!player.rapidFire) player.fireRate = player.baseFireRate;
+            if (!player.speedBoost) {
+                player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
+            }
+            this._quantumDmgTimer = 0;
+            // Clear enemy quantum flags
+            for (const enemy of em.enemies) {
+                enemy._quantumWeak = false;
+                enemy._quantumBoosted = false;
+                enemy._quantumFrozen = false;
+            }
+            return;
+        }
+
+        const px = player.position.x + player.width / 2;
+        const py = player.position.y + player.height / 2;
+
+        // Accumulator for quantum state timers
+        if (!this._quantumDmgTimer) this._quantumDmgTimer = 0;
+        this._quantumDmgTimer += deltaTime;
+
+        let inSafe = false;
+        let inDanger = false;
+        let inInfo = false;
+        let inDistortion = false;
+
+        // Check player vs zones
+        for (const z of zones) {
+            const dist = Math.hypot(px - z.x, py - z.y);
+            if (dist > z.radius) continue;
+
+            if (z.type === 'safe') {
+                inSafe = true;
+                // Attack speed ×2 while inside
+                if (!player.rapidFire) {
+                    player.fireRate = player.baseFireRate * 0.5;
+                }
+            }
+            else if (z.type === 'danger') {
+                inDanger = true;
+                // Chip damage every 2 seconds
+                if (this._quantumDmgTimer >= 2) {
+                    player.takeDamage(1, this);
+                    this._quantumDmgTimer = 0;
+                    this.particles.emit(px, py, 'hit', 4);
+                    this.postProcessing.flash({ r: 180, g: 30, b: 30 }, 0.1);
+                }
+                // Slow player
+                if (!player.speedBoost) {
+                    player.speed = player.baseSpeed * 0.6;
+                }
+            }
+            else if (z.type === 'info') {
+                inInfo = true;
+                // Damage boost — player bullets deal ×2 while inside
+                player._quantumBoosted = true;
+            }
+            else if (z.type === 'distortion') {
+                inDistortion = true;
+            }
+        }
+
+        // Reset fire rate if not in safe zone
+        if (!inSafe && !player.rapidFire) {
+            player.fireRate = player.baseFireRate;
+        }
+
+        // Reset speed if not in danger zone
+        if (!inDanger && !player.speedBoost) {
+            player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
+        }
+
+        // Reset damage timer if not actively in danger
+        if (!inDanger) {
+            this._quantumDmgTimer = 0;
+        }
+
+        // Enemy effects from zones:
+        // Enemies in 'info' zones → weakened (take 50% more damage) — visual indicator
+        // Enemies in 'danger' zones → boosted (move 30% faster)
+        for (const enemy of em.enemies) {
+            const ex = enemy.position.x + enemy.width / 2;
+            const ey = enemy.position.y + enemy.height / 2;
+            enemy._quantumWeak = false;
+            enemy._quantumBoosted = false;
+            enemy._quantumFrozen = false;
+
+            for (const z of zones) {
+                const dist = Math.hypot(ex - z.x, ey - z.y);
+                if (dist > z.radius) continue;
+
+                if (z.type === 'info') {
+                    enemy._quantumWeak = true;
+                }
+                else if (z.type === 'danger') {
+                    enemy._quantumBoosted = true;
+                }
+                else if (z.type === 'distortion') {
+                    enemy._quantumFrozen = true;
+                    enemy._quantumWeak = true; // also take ×1.5 damage
+                }
+            }
+        }
+    }
+
+    _renderDistortionZones(ctx) {
+        const zones = this.backgroundFacade.getActiveZones();
+        if (!zones) return;
+        const canvas = this.canvas;
+        const scale = this.scale;
+        const t = performance.now() / 1000;
+
+        // Accumulate warp from all active distortion zones
+        let totalWarp = 0;
+        for (const z of zones) {
+            if (z.type !== 'distortion') continue;
+            const fade = Math.min(1, z.timer / 0.5);
+            if (fade > 0) totalWarp += fade;
+        }
+        if (totalWarp <= 0) return;
+
+        const warpStr = Math.min(totalWarp, 1.5) * 0.08;
+        const sx = 1 + warpStr * Math.sin(t * 1.3);
+        const sy = 1 + warpStr * Math.cos(t * 0.9);
+
+        // Full-screen warp: redraw entire canvas with scale distortion
+        const w = canvas.width / scale;
+        const h = canvas.height / scale;
+        const cx = w / 2;
+        const cy = h / 2;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(sx, sy);
+        ctx.translate(-cx, -cy);
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, w, h);
+        ctx.restore();
     }
 
     /**
@@ -444,6 +614,11 @@ class Game {
 
             this.particles.render(ctx);
 
+            // World 4: distortion zone lens warp (after all entities, before HUD)
+            if (this.backgroundFacade && this.currentLevel >= 91 && this.currentLevel <= 120) {
+                this._renderDistortionZones(ctx);
+            }
+
             this.hudRenderer.renderHUD(ctx);
         }
 
@@ -515,7 +690,12 @@ class Game {
         this.lastSentScore = 0;
 
         // Set starting level based on selected world (each world = 30 levels)
-       // window.DEBUG_START_LEVEL = 56; // TODO: TEMP TEST — remove after testing
+       // window.DEBUG_START_LEVEL = 115; // TODO: TEMP TEST — remove after testing
+        //piazziamo il numero giusto di perks in base al window.DEBUG_START_LEVEL, così se si inizia da un mondo avanzato si hanno già i perks sbloccati nei mondi precedenti
+        //for (let i = 0; i < 25; i++) {
+          //  this.perkSystem.grantPerk();
+       // }
+
         if (window.DEBUG_START_LEVEL && window.DEBUG_START_LEVEL > 1) {
             this.levelManager.currentLevel = window.DEBUG_START_LEVEL;
         } else if (startWorld > 1) {

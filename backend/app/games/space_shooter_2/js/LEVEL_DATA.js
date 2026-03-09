@@ -1,32 +1,12 @@
-/**
- * LevelData - 30 discrete levels (no randomization)
- * 
- * Each level defines exact enemy waves that spawn in order.
- * Waves are sequential: all enemies in a wave must be cleared before next wave.
- * Last level in a boss-cycle has a boss fight.
- * 
- * Wave format:
- *   enemies: array of { type, x, pattern } - exact enemies to spawn
- *   delay:   seconds to wait before this wave starts (after previous cleared)
- * 
- * Level format:
- *   waves:          array of wave definitions
- *   boss:           boss level (null = no boss)
- *   speedMult:      enemy speed multiplier
- *   name:           display name for level
- *   description:    brief description
- */
-
-function makeWave(enemies, delay = 1, formation = 'none') {
+ function makeWave(enemies, delay = 1, formation = 'none') {
     return { enemies, delay, formation };
 }
 
-function e(type, x, pattern = 'straight') {
+ function e(type, x, pattern = 'straight') {
     return { type, x, pattern };
 }
 
 // x positions: 0.1 to 0.9 (fraction of canvas width, resolved at runtime)
-
 const LEVEL_DATA = [
     // ===== LEVEL 1: First Contact =====
     {
@@ -418,9 +398,7 @@ const LEVEL_DATA = [
     //  WORLD 2 — PLANETARY FLYOVER (Levels 31-60)
     //  6 Planets × 5 Levels — Low-altitude planetary flight
     // ═══════════════════════════════════════════════════════════
-
     // ═════ PLANET 1: ALIEN JUNGLE (Levels 31-35) ═════
-
     // ===== LEVEL 31: Jungle Descent =====
     {
         name: 'Jungle Descent',
@@ -456,9 +434,9 @@ const LEVEL_DATA = [
         boss: null,
         miniboss: 7, // L33: Cryo Colossus
         waves: [makeWave([e('nest', 0.5), e('stalker', 0.2, 'zigzag'), e('stalker', 0.8, 'zigzag'), e('fighter', 0.4), e('fighter', 0.6)], 1, 'diamond'),
-            makeWave([e('jungle_vine', 0.2), e('jungle_vine', 0.4), e('jungle_vine', 0.6), e('jungle_vine', 0.8)], 1.5, 'stagger'),
-            makeWave([e('jungle_vine', 0.3, 'dive'), e('jungle_vine', 0.7, 'dive'), e('stalker', 0.5, 'sine')], 1.5, 'vee'),
-            makeWave([e('stalker', 0.2, 'strafe'), e('jungle_vine', 0.5, 'pendulum'), e('stalker', 0.8, 'strafe'), e('fighter', 0.4)], 1, 'cross'),
+        makeWave([e('jungle_vine', 0.2), e('jungle_vine', 0.4), e('jungle_vine', 0.6), e('jungle_vine', 0.8)], 1.5, 'stagger'),
+        makeWave([e('jungle_vine', 0.3, 'dive'), e('jungle_vine', 0.7, 'dive'), e('stalker', 0.5, 'sine')], 1.5, 'vee'),
+        makeWave([e('stalker', 0.2, 'strafe'), e('jungle_vine', 0.5, 'pendulum'), e('stalker', 0.8, 'strafe'), e('fighter', 0.4)], 1, 'cross'),
         ]
     },
     // ===== LEVEL 34: Ancient Ruins =====
@@ -488,7 +466,6 @@ const LEVEL_DATA = [
     },
 
     // ═════ PLANET 2: VOLCANIC (Levels 36-40) ═════
-
     // ===== LEVEL 36: Volcanic Entry =====
     {
         name: 'Volcanic Entry',
@@ -559,7 +536,6 @@ const LEVEL_DATA = [
     },
 
     // ═════ PLANET 3: FROZEN (Levels 41-45) ═════
-
     // ===== LEVEL 41: Frozen Approach =====
     {
         name: 'Frozen Approach',
@@ -634,7 +610,6 @@ const LEVEL_DATA = [
     },
 
     // ═════ PLANET 4: DESERT (Levels 46-50) ═════
-
     // ===== LEVEL 46: Desert Landing =====
     {
         name: 'Desert Landing',
@@ -707,7 +682,6 @@ const LEVEL_DATA = [
     },
 
     // ═════ PLANET 5: MECHANICAL (Levels 51-55) ═════
-
     // ===== LEVEL 51: Factory Floor =====
     {
         name: 'Factory Floor',
@@ -782,7 +756,6 @@ const LEVEL_DATA = [
     },
 
     // ═════ PLANET 6: TOXIC (Levels 56-60) ═════
-
     // ===== LEVEL 56: Toxic Shores =====
     {
         name: 'Toxic Shores',
@@ -859,9 +832,7 @@ const LEVEL_DATA = [
     // ═════════════════════════════════════════════
     //  WORLD 3 — SIMULATION BREAK   (Levels 61-90)
     // ═════════════════════════════════════════════
-
     // ── Sector 1: Boot Sequence (61-65) ──
-
     // ===== LEVEL 61: Boot Sequence =====
     {
         name: 'Boot Sequence',
@@ -927,7 +898,6 @@ const LEVEL_DATA = [
     },
 
     // ── Sector 2: Null Pointer (66-70) ──
-
     // ===== LEVEL 66: Null Pointer =====
     {
         name: 'Null Pointer',
@@ -994,7 +964,6 @@ const LEVEL_DATA = [
     },
 
     // ── Sector 3: Buffer Zone (71-75) ──
-
     // ===== LEVEL 71: Buffer Overflow =====
     {
         name: 'Buffer Overflow',
@@ -1063,7 +1032,6 @@ const LEVEL_DATA = [
     },
 
     // ── Sector 4: Kernel Panic (76-80) ──
-
     // ===== LEVEL 76: Blue Screen =====
     {
         name: 'Blue Screen',
@@ -1133,7 +1101,6 @@ const LEVEL_DATA = [
     },
 
     // ── Sector 5: Ghost Protocol (81-85) ──
-
     // ===== LEVEL 81: Data Corruption =====
     {
         name: 'Data Corruption',
@@ -1203,7 +1170,6 @@ const LEVEL_DATA = [
     },
 
     // ── Sector 6: The Kernel (86-90) ──
-
     // ===== LEVEL 86: Cascade Failure =====
     {
         name: 'Cascade Failure',
@@ -1274,112 +1240,410 @@ const LEVEL_DATA = [
             makeWave([e('error_node', 0.2), e('mirror_ghost', 0.4, 'orbit_player'), e('error_node', 0.6), e('mirror_ghost', 0.8, 'orbit_player')], 1, 'diamond'),
         ]
     },
+
+    // ═══════════════════════════════════════════════════════
+    //  WORLD 4 — QUANTUM REALM  (Levels 91-120)
+    //  Theme: High-energy physics, Standard Model
+    //  Enemies: quark_triplet, neutrino_ghost, boson_carrier,
+    //           higgs_field, positron_mirror, gluon_chain
+    //  Movements: quantum_tunnel, wave_function, orbital, superposition
+    // ═══════════════════════════════════════════════════════
+    // ── Sector 1: Quark Lattice (91-95) ──
+    // Level 91
+    {
+        name: 'Quark Entry',
+        description: 'You breach the quantum boundary. Triplet quarks materialise.',
+        speedMult: 1.0,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('quark_triplet', 0.5, 'quantum_tunnel'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1),
+            makeWave([e('quark_triplet', 0.2), e('quark_triplet', 0.4), e('quark_triplet', 0.6), e('quark_triplet', 0.8)], 1.5),
+            makeWave([e('quark_triplet', 0.3, 'wave_function'), e('neutrino_ghost', 0.5, 'wave_function'), e('quark_triplet', 0.7, 'wave_function')], 1.5),
+        ]
+    },
+    // Level 92
+    {
+        name: 'Quark Lattice',
+        description: 'Color-charged triplets swarm the field. Kill all three together!',
+        speedMult: 1.05,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('quark_triplet', 0.5), e('quark_triplet', 0.8, 'quantum_tunnel')], 1),
+            makeWave([e('neutrino_ghost', 0.3, 'wave_function'), e('quark_triplet', 0.5), e('neutrino_ghost', 0.7, 'wave_function')], 1.5),
+            makeWave([e('quark_triplet', 0.2), e('neutrino_ghost', 0.4, 'wave_function'), e('quark_triplet', 0.6), e('neutrino_ghost', 0.8, 'wave_function')], 1.5, 'vee'),
+        ]
+    },
+    // Level 93
+    {
+        name: 'Color Charge',
+        description: 'Red, green, blue — the chromodynamic dance intensifies.',
+        speedMult: 1.1,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('boson_carrier', 0.5, 'orbital'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1),
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('boson_carrier', 0.5), e('neutrino_ghost', 0.8, 'wave_function')], 1.5, 'pincer'),
+            makeWave([e('quark_triplet', 0.3), e('quark_triplet', 0.5), e('quark_triplet', 0.7), e('boson_carrier', 0.5, 'orbital')], 1.5),
+        ]
+    },
+    // Level 94
+    {
+        name: 'Gluon Bond',
+        description: 'Gluon carriers reinforce quark defences. Break the chains!',
+        speedMult: 1.15,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('gluon_chain', 0.2), e('gluon_chain', 0.4), e('gluon_chain', 0.6), e('gluon_chain', 0.8)], 1, 'line'),
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('boson_carrier', 0.5, 'orbital'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1.5),
+            makeWave([e('gluon_chain', 0.2), e('quark_triplet', 0.4), e('gluon_chain', 0.6), e('quark_triplet', 0.8)], 1.5, 'stagger'),
+        ]
+    },
+    // ===== LEVEL 95: Boss - Proton Crusher =====
+    {
+        name: 'Proton Crusher',
+        description: 'WARNING: Proton-class entity detected. Destroy all quarks!',
+        speedMult: 1.2,
+        boss: 19,
+        miniboss: 13,
+        waves: [
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1),
+            makeWave([e('gluon_chain', 0.3), e('boson_carrier', 0.5, 'orbital'), e('gluon_chain', 0.7)], 1.5),
+        ]
+    },
+
+    // ── Sector 2: Lepton Fields (96-100) ──
+    // Level 96
+    {
+        name: 'Lepton Field',
+        description: 'Electron orbital paths detected. Beware phase-shifting neutrinos!',
+        speedMult: 1.1,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('neutrino_ghost', 0.3, 'wave_function'), e('neutrino_ghost', 0.5, 'wave_function'), e('neutrino_ghost', 0.7, 'wave_function')], 1),
+            makeWave([e('quark_triplet', 0.2), e('neutrino_ghost', 0.4, 'orbital'), e('neutrino_ghost', 0.6, 'orbital'), e('quark_triplet', 0.8)], 1.5, 'ring'),
+            makeWave([e('neutrino_ghost', 0.3, 'superposition'), e('boson_carrier', 0.5), e('neutrino_ghost', 0.7, 'superposition')], 1.5),
+        ]
+    },
+    // Level 97
+    {
+        name: 'Electron Orbit',
+        description: 'Orbital patterns confuse targeting. Watch the oscillation!',
+        speedMult: 1.15,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('neutrino_ghost', 0.2, 'orbital'), e('boson_carrier', 0.4, 'orbital'), e('neutrino_ghost', 0.6, 'orbital'), e('boson_carrier', 0.8, 'orbital')], 1, 'diamond'),
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('higgs_field', 0.5), e('quark_triplet', 0.7, 'quantum_tunnel')], 1.5),
+            makeWave([e('neutrino_ghost', 0.2, 'superposition'), e('neutrino_ghost', 0.5, 'superposition'), e('neutrino_ghost', 0.8, 'superposition')], 1.5),
+        ]
+    },
+    // Level 98
+    {
+        name: 'Neutrino Wave',
+        description: 'Neutrinos oscillate between flavors. Only one is vulnerable!',
+        speedMult: 1.2,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('neutrino_ghost', 0.4, 'wave_function'), e('neutrino_ghost', 0.6, 'wave_function'), e('neutrino_ghost', 0.8, 'wave_function')], 1),
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('higgs_field', 0.5), e('boson_carrier', 0.7, 'orbital')], 1.5, 'cross'),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('neutrino_ghost', 0.4, 'superposition'), e('neutrino_ghost', 0.6, 'superposition'), e('quark_triplet', 0.8, 'quantum_tunnel')], 1.5),
+        ]
+    },
+    // Level 99
+    {
+        name: 'Muon Decay',
+        description: 'Heavy leptons decay into lighter forms. The field destabilises.',
+        speedMult: 1.25,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('positron_mirror', 0.3, 'quantum_tunnel'), e('neutrino_ghost', 0.5, 'wave_function'), e('positron_mirror', 0.7, 'quantum_tunnel')], 1),
+            makeWave([e('higgs_field', 0.3), e('boson_carrier', 0.5, 'orbital'), e('higgs_field', 0.7)], 1.5, 'pincer'),
+            makeWave([e('positron_mirror', 0.2), e('neutrino_ghost', 0.4, 'superposition'), e('positron_mirror', 0.6), e('neutrino_ghost', 0.8, 'superposition')], 1.5),
+        ]
+    },
+    // ===== LEVEL 100: Boss - Electroweak Unifier =====
+    {
+        name: 'Electroweak Unifier',
+        description: 'WARNING: Electroweak unification event! Two phases, one enemy!',
+        speedMult: 1.3,
+        boss: 20,
+        miniboss: 14,
+        waves: [
+            makeWave([e('neutrino_ghost', 0.3, 'wave_function'), e('neutrino_ghost', 0.7, 'wave_function')], 1),
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('positron_mirror', 0.5), e('boson_carrier', 0.7, 'orbital')], 1.5),
+        ]
+    },
+
+    // ── Sector 3: Boson Conduit (101-105) ──
+    // Level 101
+    {
+        name: 'Boson Stream',
+        description: 'Force carriers flow through the conduit. They link enemies together!',
+        speedMult: 1.15,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('boson_carrier', 0.5, 'orbital'), e('boson_carrier', 0.7, 'orbital')], 1),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('boson_carrier', 0.4, 'orbital'), e('quark_triplet', 0.6, 'quantum_tunnel'), e('boson_carrier', 0.8, 'orbital')], 1.5, 'arrow'),
+            makeWave([e('gluon_chain', 0.2), e('boson_carrier', 0.4, 'orbital'), e('gluon_chain', 0.6), e('boson_carrier', 0.8, 'orbital')], 1.5, 'line'),
+        ]
+    },
+    // Level 102
+    {
+        name: 'W-Boson Path',
+        description: 'Weak force carriers grant immunity shields to nearby enemies.',
+        speedMult: 1.2,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('higgs_field', 0.5), e('boson_carrier', 0.7, 'orbital')], 1),
+            makeWave([e('neutrino_ghost', 0.2, 'superposition'), e('boson_carrier', 0.4, 'orbital'), e('neutrino_ghost', 0.6, 'superposition'), e('boson_carrier', 0.8, 'orbital')], 1.5, 'diamond'),
+            makeWave([e('gluon_chain', 0.2), e('gluon_chain', 0.4), e('higgs_field', 0.5), e('gluon_chain', 0.6), e('gluon_chain', 0.8)], 1.5, 'line'),
+        ]
+    },
+    // Level 103
+    {
+        name: 'Z-Boson Resonance',
+        description: 'Resonance patterns amplify enemy fire rates. Stay sharp!',
+        speedMult: 1.25,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('boson_carrier', 0.2, 'orbital'), e('positron_mirror', 0.4, 'quantum_tunnel'), e('boson_carrier', 0.6, 'orbital'), e('positron_mirror', 0.8, 'quantum_tunnel')], 1, 'cross'),
+            makeWave([e('higgs_field', 0.3), e('neutrino_ghost', 0.5, 'wave_function'), e('higgs_field', 0.7)], 1.5),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('boson_carrier', 0.4, 'orbital'), e('quark_triplet', 0.6, 'quantum_tunnel'), e('boson_carrier', 0.8, 'orbital')], 1.5, 'stagger'),
+        ]
+    },
+    // Level 104
+    {
+        name: 'Photon Flood',
+        description: 'Massless photons flood the field. Speed is their weapon!',
+        speedMult: 1.3,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('neutrino_ghost', 0.4, 'wave_function'), e('neutrino_ghost', 0.6, 'wave_function'), e('neutrino_ghost', 0.8, 'wave_function')], 1, 'vee'),
+            makeWave([e('positron_mirror', 0.3, 'superposition'), e('boson_carrier', 0.5, 'orbital'), e('positron_mirror', 0.7, 'superposition')], 1.5),
+            makeWave([e('gluon_chain', 0.2), e('higgs_field', 0.4), e('gluon_chain', 0.6), e('higgs_field', 0.8)], 1.5, 'pincer'),
+        ]
+    },
+    // ===== LEVEL 105: Boss - Gluon Overlord =====
+    {
+        name: 'Gluon Overlord',
+        description: 'WARNING: 8 color-charge turrets orbit the overlord. Break the pairs!',
+        speedMult: 1.35,
+        boss: 21,
+        miniboss: 15,
+        waves: [
+            makeWave([e('gluon_chain', 0.3), e('boson_carrier', 0.5, 'orbital'), e('gluon_chain', 0.7)], 1, 'line'),
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1.5),
+        ]
+    },
+
+    // ── Sector 4: Higgs Vacuum (106-110) ──
+    // Level 106
+    {
+        name: 'Higgs Vacuum',
+        description: 'Mass fields slow your bullets. Find the gaps in the golden aura!',
+        speedMult: 1.2,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('higgs_field', 0.3), e('higgs_field', 0.5), e('higgs_field', 0.7)], 1),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('higgs_field', 0.5), e('quark_triplet', 0.8, 'quantum_tunnel')], 1.5, 'ring'),
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('higgs_field', 0.5), e('boson_carrier', 0.7, 'orbital')], 1.5),
+        ]
+    },
+    // Level 107
+    {
+        name: 'Symmetry Break',
+        description: 'Electroweak symmetry shatters. New patterns emerge!',
+        speedMult: 1.25,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('higgs_field', 0.3), e('positron_mirror', 0.5, 'superposition'), e('higgs_field', 0.7)], 1, 'pincer'),
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('gluon_chain', 0.4), e('gluon_chain', 0.6), e('neutrino_ghost', 0.8, 'wave_function')], 1.5),
+            makeWave([e('higgs_field', 0.3), e('boson_carrier', 0.5, 'orbital'), e('higgs_field', 0.7)], 1.5, 'diamond'),
+        ]
+    },
+    // Level 108
+    {
+        name: 'Mass Genesis',
+        description: 'The Higgs mechanism grants mass. Enemies become heavier, slower, tougher.',
+        speedMult: 1.3,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('higgs_field', 0.2), e('higgs_field', 0.4), e('higgs_field', 0.6), e('higgs_field', 0.8)], 1, 'line'),
+            makeWave([e('quark_triplet', 0.3, 'quantum_tunnel'), e('boson_carrier', 0.5, 'orbital'), e('quark_triplet', 0.7, 'quantum_tunnel')], 1.5, 'arrow'),
+            makeWave([e('positron_mirror', 0.2, 'superposition'), e('higgs_field', 0.4), e('positron_mirror', 0.6, 'superposition'), e('higgs_field', 0.8)], 1.5),
+        ]
+    },
+    // Level 109
+    {
+        name: 'Vacuum Decay',
+        description: 'False vacuum destabilises. The fabric of space trembles!',
+        speedMult: 1.35,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('higgs_field', 0.3), e('gluon_chain', 0.5), e('higgs_field', 0.7)], 1),
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('positron_mirror', 0.4, 'quantum_tunnel'), e('neutrino_ghost', 0.6, 'wave_function'), e('positron_mirror', 0.8, 'quantum_tunnel')], 1.5, 'cross'),
+            makeWave([e('boson_carrier', 0.2, 'orbital'), e('higgs_field', 0.4), e('higgs_field', 0.6), e('boson_carrier', 0.8, 'orbital')], 1.5, 'stagger'),
+        ]
+    },
+    // ===== LEVEL 110: Boss - Higgs Manifestation =====
+    {
+        name: 'Higgs Manifestation',
+        description: 'WARNING: Mass wells pull you in! Weakpoints only exposed during field phase!',
+        speedMult: 1.4,
+        boss: 22,
+        miniboss: 16,
+        waves: [
+            makeWave([e('higgs_field', 0.3), e('higgs_field', 0.7)], 1),
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('gluon_chain', 0.5), e('boson_carrier', 0.7, 'orbital')], 1.5),
+        ]
+    },
+
+    // ── Sector 5: Antimatter Rift (111-115) ──
+    // Level 111
+    {
+        name: 'Antimatter Rift',
+        description: 'Matter and antimatter collide. Kill paired enemies together!',
+        speedMult: 1.25,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('positron_mirror', 0.3, 'quantum_tunnel'), e('positron_mirror', 0.5, 'quantum_tunnel'), e('positron_mirror', 0.7, 'quantum_tunnel')], 1),
+            makeWave([e('positron_mirror', 0.2, 'superposition'), e('quark_triplet', 0.4), e('positron_mirror', 0.6, 'superposition'), e('quark_triplet', 0.8)], 1.5, 'ring'),
+            makeWave([e('neutrino_ghost', 0.3, 'wave_function'), e('positron_mirror', 0.5, 'quantum_tunnel'), e('neutrino_ghost', 0.7, 'wave_function')], 1.5),
+        ]
+    },
+    // Level 112
+    {
+        name: 'Pair Creation',
+        description: 'Particle-antiparticle pairs spontaneously appear from the vacuum.',
+        speedMult: 1.3,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('positron_mirror', 0.2, 'quantum_tunnel'), e('positron_mirror', 0.4), e('positron_mirror', 0.6), e('positron_mirror', 0.8, 'quantum_tunnel')], 1, 'vee'),
+            makeWave([e('boson_carrier', 0.3, 'orbital'), e('higgs_field', 0.5), e('boson_carrier', 0.7, 'orbital')], 1.5),
+            makeWave([e('gluon_chain', 0.2), e('positron_mirror', 0.4, 'superposition'), e('positron_mirror', 0.6, 'superposition'), e('gluon_chain', 0.8)], 1.5, 'line'),
+        ]
+    },
+    // Level 113
+    {
+        name: 'Annihilation Zone',
+        description: 'The annihilation energy is extreme. Every kill triggers paired explosions!',
+        speedMult: 1.35,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('positron_mirror', 0.2, 'superposition'), e('neutrino_ghost', 0.4, 'wave_function'), e('positron_mirror', 0.6, 'superposition'), e('neutrino_ghost', 0.8, 'wave_function')], 1, 'diamond'),
+            makeWave([e('higgs_field', 0.3), e('positron_mirror', 0.5, 'quantum_tunnel'), e('higgs_field', 0.7)], 1.5),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('boson_carrier', 0.4, 'orbital'), e('positron_mirror', 0.6, 'superposition'), e('gluon_chain', 0.8)], 1.5, 'cross'),
+        ]
+    },
+    // Level 114
+    {
+        name: 'CP Violation',
+        description: 'Matter-antimatter asymmetry detected. Expect unpredictable spawns!',
+        speedMult: 1.4,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('positron_mirror', 0.3, 'superposition'), e('positron_mirror', 0.5, 'quantum_tunnel'), e('positron_mirror', 0.7, 'superposition')], 1),
+            makeWave([e('higgs_field', 0.2), e('gluon_chain', 0.4), e('gluon_chain', 0.6), e('higgs_field', 0.8)], 1.5, 'pincer'),
+            makeWave([e('boson_carrier', 0.2, 'orbital'), e('neutrino_ghost', 0.4, 'wave_function'), e('boson_carrier', 0.6, 'orbital'), e('neutrino_ghost', 0.8, 'wave_function')], 1.5, 'stagger'),
+        ]
+    },
+    // ===== LEVEL 115: Boss - Antimatter Sovereign =====
+    {
+        name: 'Antimatter Sovereign',
+        description: 'WARNING: Mirror halves — balance your damage or it heals!',
+        speedMult: 1.45,
+        boss: 23,
+        miniboss: 13,
+        waves: [
+            makeWave([e('positron_mirror', 0.3, 'superposition'), e('positron_mirror', 0.7, 'superposition')], 1),
+            makeWave([e('higgs_field', 0.3), e('boson_carrier', 0.5, 'orbital'), e('higgs_field', 0.7)], 1.5),
+        ]
+    },
+
+    // ── Sector 6: Unified Field (116-120) ──
+    // Level 116
+    {
+        name: 'Unified Field',
+        description: 'All forces converge. Every enemy type appears!',
+        speedMult: 1.3,
+        boss: null,
+        miniboss: 14,
+        waves: [
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('neutrino_ghost', 0.4, 'wave_function'), e('boson_carrier', 0.6, 'orbital'), e('higgs_field', 0.8)], 1, 'arrow'),
+            makeWave([e('positron_mirror', 0.3, 'superposition'), e('gluon_chain', 0.5), e('positron_mirror', 0.7, 'superposition')], 1.5),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('boson_carrier', 0.4, 'orbital'), e('higgs_field', 0.6), e('gluon_chain', 0.8)], 1.5, 'diamond'),
+        ]
+    },
+    // Level 117
+    {
+        name: 'Super Symmetry',
+        description: 'Supersymmetric partners mirror every attack. Double trouble!',
+        speedMult: 1.35,
+        boss: null,
+        miniboss: 15,
+        waves: [
+            makeWave([e('positron_mirror', 0.2, 'superposition'), e('neutrino_ghost', 0.4, 'superposition'), e('positron_mirror', 0.6, 'superposition'), e('neutrino_ghost', 0.8, 'superposition')], 1, 'ring'),
+            makeWave([e('higgs_field', 0.3), e('boson_carrier', 0.5, 'orbital'), e('higgs_field', 0.7)], 1.5, 'cross'),
+            makeWave([e('gluon_chain', 0.2), e('quark_triplet', 0.4, 'quantum_tunnel'), e('gluon_chain', 0.6), e('quark_triplet', 0.8, 'quantum_tunnel')], 1.5, 'line'),
+        ]
+    },
+    // Level 118
+    {
+        name: 'Feynman Vertex',
+        description: 'Interaction vertices multiply. Every enemy connects to every other!',
+        speedMult: 1.4,
+        boss: null,
+        miniboss: 16,
+        waves: [
+            makeWave([e('boson_carrier', 0.2, 'orbital'), e('boson_carrier', 0.4, 'orbital'), e('boson_carrier', 0.6, 'orbital'), e('boson_carrier', 0.8, 'orbital')], 1, 'diamond'),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('higgs_field', 0.4), e('positron_mirror', 0.6, 'superposition'), e('gluon_chain', 0.8)], 1.5, 'stagger'),
+            makeWave([e('neutrino_ghost', 0.2, 'wave_function'), e('boson_carrier', 0.4, 'orbital'), e('neutrino_ghost', 0.6, 'wave_function'), e('boson_carrier', 0.8, 'orbital')], 1.5, 'pincer'),
+        ]
+    },
+    // Level 119
+    {
+        name: 'String Theory',
+        description: 'Reality vibrates at its most fundamental level. One more push!',
+        speedMult: 1.5,
+        boss: null,
+        miniboss: 13,
+        waves: [
+            makeWave([e('higgs_field', 0.2), e('positron_mirror', 0.4, 'superposition'), e('higgs_field', 0.6), e('positron_mirror', 0.8, 'superposition')], 1, 'cross'),
+            makeWave([e('gluon_chain', 0.2), e('boson_carrier', 0.4, 'orbital'), e('quark_triplet', 0.6, 'quantum_tunnel'), e('neutrino_ghost', 0.8, 'wave_function')], 1.5, 'arrow'),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('positron_mirror', 0.4, 'superposition'), e('gluon_chain', 0.6), e('higgs_field', 0.8)], 1.5, 'vee'),
+        ]
+    },
+    // ===== LEVEL 120: Boss - Grand Unified Theory =====
+    {
+        name: 'Grand Unified Theory',
+        description: 'THE THEORY OF EVERYTHING. All four forces in one entity. End this!',
+        speedMult: 1.55,
+        boss: 24,
+        miniboss: 14,
+        waves: [
+            makeWave([e('higgs_field', 0.3), e('boson_carrier', 0.5, 'orbital'), e('higgs_field', 0.7)], 1),
+            makeWave([e('positron_mirror', 0.3, 'superposition'), e('gluon_chain', 0.5), e('positron_mirror', 0.7, 'superposition')], 1.5),
+            makeWave([e('quark_triplet', 0.2, 'quantum_tunnel'), e('neutrino_ghost', 0.4, 'wave_function'), e('quark_triplet', 0.6, 'quantum_tunnel'), e('neutrino_ghost', 0.8, 'wave_function')], 1, 'diamond'),
+        ]
+    },
 ];
 
-export function getLevelData(level) {
-    const idx = Math.min(level - 1, LEVEL_DATA.length - 1);
-    const base = LEVEL_DATA[idx];
-
-    // Generate bonus waves based on level
-    const bonusWaves = generateBonusWaves(level);
-    // World 2 speed damping: reduce inherited speedMult to keep normal difficulty manageable
-    // World 3 speed damping: slightly less reduction than W2
-    const sMult = level > 60 ? base.speedMult * 0.78
-               : level > 30 ? base.speedMult * 0.82
-               : base.speedMult;
-    return {
-        ...base,
-        speedMult: sMult,
-        waves: [...base.waves, ...bonusWaves]
-    };
-}
-
-/**
- * Generate extra enemy waves based on level.
- * More waves and tougher compositions at higher levels.
- */
-function generateBonusWaves(level) {
-    // Boss levels get fewer bonus waves (focus on the boss)
-    const w1BossLevels = [5, 10, 15, 20, 25, 30];
-    const w2BossLevels = [35, 40, 45, 50, 55, 60];
-    const w3BossLevels = [65, 70, 75, 80, 85, 90];
-    const isBoss = w1BossLevels.includes(level) || w2BossLevels.includes(level) || w3BossLevels.includes(level);
-
-    // Use world-relative level so each world feels consistent in length
-    const relLevel = level > 60 ? level - 60 : (level > 30 ? level - 30 : level);
-
-    const bonusCount = isBoss ? Math.floor(relLevel / 10) : (level > 60
-        ? Math.floor(relLevel / 5) + 1   // W3: similar to W2
-        : level > 30
-        ? Math.floor(relLevel / 5) + 1   // W2: fewer bonus waves
-        : Math.floor(relLevel / 3) + 1); // W1: original formula
-    // Clamp to reasonable range
-    const maxBonusWaves = level > 30 ? 5 : 8;
-    const count = Math.min(maxBonusWaves, Math.max(1, bonusCount));
-
-    const formations = ['none', 'vee', 'line', 'diamond', 'pincer', 'ring', 'stagger', 'cross', 'arrow'];
-    const patterns = ['straight', 'sine', 'zigzag', 'dive', 'circle', 'spiral', 'strafe', 'swoop', 'pendulum'];
-
-    // ─── World 1 enemy pools ───
-    const earlyTypes = ['scout', 'swarm', 'fighter'];
-    const midTypes = ['fighter', 'heavy', 'phantom', 'swarm'];
-    const lateTypes = ['fighter', 'heavy', 'phantom', 'sentinel'];
-    const endTypes = ['heavy', 'phantom', 'sentinel'];
-
-    // ─── World 2 enemy pools (includes W1 + W2 enemies) ───
-    const w2JunglePool = ['stalker', 'jungle_vine', 'nest', 'fighter', 'scout'];
-    const w2VolcanicPool = ['stalker', 'lava_golem', 'nest', 'heavy', 'fighter'];
-    const w2FrostPool = ['stalker', 'frost_elemental', 'nest', 'sentinel', 'heavy'];
-    const w2DesertPool = ['stalker', 'sand_wurm', 'nest', 'phantom', 'sentinel'];
-    const w2MechPool = ['stalker', 'mech_drone', 'nest', 'sentinel', 'heavy', 'phantom'];
-    const w2ToxicPool = ['stalker', 'toxic_blob', 'nest', 'sentinel', 'phantom', 'mech_drone'];
-
-    // ─── World 3 enemy pools (simulation break) ───
-    const w3BootPool = ['glitch_drone', 'data_cube', 'fragment_shard', 'warp_bug'];
-    const w3NullPool = ['glitch_drone', 'fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost'];
-    const w3BufferPool = ['data_cube', 'fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost'];
-    const w3KernelPool = ['fragment_shard', 'warp_bug', 'error_node', 'mirror_ghost', 'data_cube'];
-    const w3GhostPool = ['warp_bug', 'error_node', 'mirror_ghost', 'fragment_shard', 'data_cube', 'glitch_drone'];
-    const w3FinalPool = ['error_node', 'mirror_ghost', 'warp_bug', 'data_cube', 'fragment_shard'];
-
-    let pool;
-    if (level <= 5) pool = earlyTypes;
-    else if (level <= 12) pool = midTypes;
-    else if (level <= 22) pool = lateTypes;
-    else if (level <= 30) pool = endTypes;
-    else if (level <= 35) pool = w2JunglePool;
-    else if (level <= 40) pool = w2VolcanicPool;
-    else if (level <= 45) pool = w2FrostPool;
-    else if (level <= 50) pool = w2DesertPool;
-    else if (level <= 55) pool = w2MechPool;
-    else if (level <= 60) pool = w2ToxicPool;
-    else if (level <= 65) pool = w3BootPool;
-    else if (level <= 70) pool = w3NullPool;
-    else if (level <= 75) pool = w3BufferPool;
-    else if (level <= 80) pool = w3KernelPool;
-    else if (level <= 85) pool = w3GhostPool;
-    else pool = w3FinalPool;
-
-    const waves = [];
-    for (let w = 0; w < count; w++) {
-        // Enemy count scales with world-relative level: 3 at L1, up to 6 at endgame
-        const enemyCount = Math.min(6, 3 + Math.floor(relLevel / 7) + Math.floor(w / 3));
-        const enemies = [];
-        for (let i = 0; i < enemyCount; i++) {
-            const type = pool[Math.floor(Math.random() * pool.length)];
-            const x = 0.1 + (i / (enemyCount - 1 || 1)) * 0.8; // spread 0.1-0.9
-            const pat = relLevel > 8 ? patterns[Math.floor(Math.random() * patterns.length)] : patterns[Math.floor(Math.random() * 4)];
-            enemies.push(e(type, parseFloat(x.toFixed(2)), pat));
-        }
-        const formation = formations[Math.floor(Math.random() * formations.length)];
-        const delay = w === 0 ? 1.5 : (0.5 + Math.random() * 0.5);
-        waves.push(makeWave(enemies, parseFloat(delay.toFixed(1)), formation));
-    }
-    return waves;
-}
-
-export function getTotalLevels() {
-    return LEVEL_DATA.length;
-}
-
-export default LEVEL_DATA;
+export { LEVEL_DATA , makeWave, e };

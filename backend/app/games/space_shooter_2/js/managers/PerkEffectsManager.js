@@ -127,7 +127,10 @@ class PerkEffectsManager {
         this.allyController.update(deltaTime);
 
         // Scia Infuocata (Fire Trail) — only drop segments while moving
-        if (perks.getFireTrailDmg() > 0) {
+        if (perks.getFireTrailDmg() <= 0) {
+            // Perk removed — drain any leftover segments so they don't linger
+            if (perks.fireTrailSegments.length > 0) perks.fireTrailSegments.length = 0;
+        } else {
             const px = player.position.x + player.width / 2;
             const py = player.position.y + player.height;
             perks.fireTrailTimer -= deltaTime;

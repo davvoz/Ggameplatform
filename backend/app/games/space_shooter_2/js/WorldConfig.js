@@ -45,6 +45,16 @@ const WORLDS = [
         bossIds: [13, 14, 15, 16, 17, 18],
         miniBossIds: [9, 10, 11, 12],
         planets: null
+    },
+    {
+        id: 4,
+        name: 'Quantum Realm',
+        subtitle: 'INTO THE STANDARD MODEL',
+        icon: '⚛',
+        themeColor: '#ff44ff',
+        bossIds: [19, 20, 21, 22, 23, 24],
+        miniBossIds: [13, 14, 15, 16],
+        planets: null
     }
 ];
 

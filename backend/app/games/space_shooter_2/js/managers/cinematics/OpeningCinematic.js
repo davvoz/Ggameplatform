@@ -4,7 +4,7 @@
  * Accepts `worldNum` in setup options (default 1).
  *
  * Unified order for all worlds:
- *   SPACE SHOOTER 2 title → Fleet Roster → World title → Mini-Bosses → Bosses → Perks
+ *   SPACE SHOOTER 2 title → Fleet Roster → World title → [Enemies (W4)] → Mini-Bosses → Bosses → Perks
  *
  * Timeline durations are computed dynamically from content count,
  * so adding ships / bosses / mini-bosses auto-extends the sequence.
@@ -16,10 +16,11 @@ import {
     renderLetterbox, renderSkipHint, renderVignette
 } from './CinematicUtils.js';
 import ShowcasePhase from './ShowcasePhase.js';
-import { renderShipCard, renderMiniBossCard, renderBossCard } from './EntityCardRenderers.js';
+import { renderShipCard, renderMiniBossCard, renderBossCard, renderW4EnemyCard } from './EntityCardRenderers.js';
 import { getWorldConfig, ITEM_SHOWCASE_TIME } from '../../WorldConfig.js';
 import { SHIP_DATA } from '../../entities/Player.js';
 import { BOSS_DEFS, MINIBOSS_DEFS } from '../../entities/Enemy.js';
+import { ENEMY_TYPES } from '../../entities/enemy/types/ENEMY_TYPES.js';
 import { PERK_CATALOG } from '../../PerkSystem.js';
 import { title, ui, mono } from '../../FontConfig.js';
 
@@ -50,7 +51,7 @@ export default class OpeningCinematic extends CinematicScene {
         this.themeColor  = worldCfg.themeColor || '#4488ff';
 
         // ── Build data-driven showcase phases ──
-        // Unified order: SS2 title → Ships → World title → Mini-Bosses → Bosses → Perks
+        // Unified order: SS2 title → Ships → World title → [Enemies (W4)] → Mini-Bosses → Bosses → Perks
         const T = ITEM_SHOWCASE_TIME;
         const ships      = Object.values(SHIP_DATA);
         const shipsStart = TITLE_END - CROSSFADE;
@@ -59,8 +60,24 @@ export default class OpeningCinematic extends CinematicScene {
         this.worldTitleStart = shipsStart + ships.length * T - CROSSFADE;
         this.worldTitleEnd   = this.worldTitleStart + WORLD_TITLE_DUR;
 
-        // Enemies start after world title
-        const mbStart   = this.worldTitleEnd - CROSSFADE;
+        // W4 regular enemies to showcase (only for World 4)
+        const w4EnemyTypes = ['quark_triplet', 'neutrino_ghost', 'boson_carrier',
+                              'higgs_field', 'positron_mirror', 'gluon_chain'];
+        const w4Enemies = this.worldNum === 4
+            ? w4EnemyTypes.map(type => ({
+                type,
+                color: ENEMY_TYPES[type]?.color || '#ff44ff',
+                name: type.replace(/_/g, ' ').toUpperCase(),
+                behaviour: ENEMY_TYPES[type]?.w4behaviour || '',
+            }))
+            : [];
+
+        // Regular enemies (if any) start after world title
+        const enemiesStart = this.worldTitleEnd - CROSSFADE;
+        // Mini-bosses start after enemies (or after world title if no enemies)
+        const mbStart   = w4Enemies.length > 0
+            ? enemiesStart + w4Enemies.length * T
+            : this.worldTitleEnd - CROSSFADE;
         const bossStart = mbStart + miniBosses.length * T;
 
         const enemyHeaderColor = this.worldNum === 1 ? undefined : this.themeColor;
@@ -80,6 +97,20 @@ export default class OpeningCinematic extends CinematicScene {
                 itemYOffset:   -15,
                 onPhaseStart:  (g) => g.sound?.playCinematicWhoosh?.(),
             }),
+            // W4 regular enemy showcase (only present for World 4)
+            ...(w4Enemies.length > 0 ? [new ShowcasePhase({
+                header:        { text: '⚛ QUANTUM HOSTILES ⚛', color: '#ff44ff',
+                                 shadowColor: '#cc22cc', shadowBlur: 16,
+                                 animFreq: 3, animStyle: 'pulse' },
+                items:         w4Enemies,
+                cardRenderer:  renderW4EnemyCard,
+                startTime:     enemiesStart,
+                slideStyle:    'alternating',
+                enterDuration: 0.35,
+                headerY:       0.12,
+                itemYOffset:   -10,
+                onPhaseStart:  (g) => g.sound?.playCinematicWhoosh?.(),
+            })] : []),
             new ShowcasePhase({
                 header:        { text: '⚠ MINI-BOSSES ⚠', color: enemyHeaderColor,
                                  shadowColor: enemyShadowColor },

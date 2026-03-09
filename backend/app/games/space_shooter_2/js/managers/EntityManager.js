@@ -20,7 +20,13 @@ class EntityManager {
     spawnBullet(x, y, vx, vy, owner, damage = 1) {
         // Cap total bullets to prevent lag during intense boss fights
         if (this.bullets.length >= 200) return;
+
+        // Quantum Boost: double damage for player bullets while in boost zone
+        const qBoosted = owner === 'player' && this.game.entityManager.player?._quantumBoosted;
+        if (qBoosted) damage *= 2;
+
         const bullet = new Bullet(x, y, vx, vy, owner, damage);
+        if (qBoosted) bullet._quantumBoosted = true;
 
         // Virus Inject: player bullets can infect enemies on hit
         if (owner === 'player' && this.game.perkSystem) {

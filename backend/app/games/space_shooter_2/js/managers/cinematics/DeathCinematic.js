@@ -4,7 +4,7 @@
  * Not skippable. Duration: 6.5 s.
  */
 import CinematicScene from './CinematicScene.js';
-import { getLevelData } from '../../LevelData.js';
+import { getLevelData } from '../../LevelDataFacade.js';
 import { title, ui } from '../../FontConfig.js';
 
 export default class DeathCinematic extends CinematicScene {

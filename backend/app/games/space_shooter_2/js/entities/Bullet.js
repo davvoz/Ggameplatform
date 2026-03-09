@@ -35,6 +35,8 @@ class Bullet extends GameObject {
                 ? (owner === 'player' ? 5 : 4)
                 : (owner === 'player' ? 8 : 5));
 
+        this._quantumBoosted = false;
+
         if (owner === 'player') {
             this.color = { r: 80, g: 200, b: 255 };
             this.coreColor = '#ffffff';
@@ -126,6 +128,16 @@ class Bullet extends GameObject {
         const isLow  = _perfMode === 'low';
 
         ctx.save();
+
+        // Quantum-boosted bullets: golden-electric palette + bigger bolt
+        if (this._quantumBoosted && this.owner === 'player') {
+            this.coreColor = '#ffffcc';
+            this.midColor = '#ffdd44';
+            this.outerColor = '#cc8800';
+            this.color = { r: 255, g: 200, b: 60 };
+            this.boltLength = 17;
+            this.boltWidth = 6.5;
+        }
 
         // ─── LOW MODE: ultra-simple rectangle + single-line trail ───
         if (isLow) {

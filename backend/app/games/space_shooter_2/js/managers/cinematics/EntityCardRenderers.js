@@ -11,6 +11,7 @@
 import { easeOut, renderBossPartsAtPosition } from './CinematicUtils.js';
 import { BOSS_INTERVAL } from '../../WorldConfig.js';
 import { title, ui, mono } from '../../FontConfig.js';
+import { drawW4Sprite } from '../../entities/enemy/types/QuantumSprites.js';
 
 // ═══════════════════════════════════════════════════════
 //  Ship card  (fleet roster)
@@ -173,6 +174,59 @@ export function renderBossCard(ctx, boss, x, y, alpha, scale, itemT, game, w, _h
     ctx.font      = mono(lvlSize, 400);
     ctx.fillStyle = '#cc6655';
     ctx.fillText(`LEVEL ${(index + 1) * BOSS_INTERVAL}`, x, y + 98 * scale);
+
+    ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  W4 Enemy card — renders using the actual in-game drawW4Sprite
+// ═══════════════════════════════════════════════════════
+export function renderW4EnemyCard(ctx, enemy, x, y, alpha, _scale, itemT, game, w) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // ── Glow ──
+    const glowR = 65;
+    ctx.globalAlpha = alpha * 0.15;
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, glowR);
+    grd.addColorStop(0, enemy.color);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(x, y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Draw enemy using the exact in-game sprite renderer ──
+    ctx.globalAlpha = alpha;
+    const sz = 90;
+    const t = itemT;
+    drawW4Sprite(ctx, enemy.type, x, y, sz, sz, t, {
+        flavorIdx: 0,
+        fieldRadius: sz * 0.8,
+        annihilateTimer: 0,
+        reformTimer: 0,
+        isEndpoint: true,
+        forceBoosted: false,
+    });
+
+    // ── Name ──
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'top';
+    const nameSize = Math.min(22, w * 0.048);
+    ctx.font       = title(nameSize, 'bold');
+    ctx.shadowColor = enemy.color;
+    ctx.shadowBlur  = 14;
+    ctx.fillStyle   = enemy.color;
+    const displayName = enemy.name || enemy.type.replace(/_/g, ' ').toUpperCase();
+    ctx.fillText(displayName, x, y + 56);
+
+    // ── Behaviour tag ──
+    ctx.shadowBlur  = 0;
+    ctx.globalAlpha = alpha * 0.5;
+    const tagSize = Math.min(12, w * 0.026);
+    ctx.font      = mono(tagSize, 400);
+    ctx.fillStyle = '#998899';
+    ctx.fillText(enemy.behaviour || '', x, y + 80);
 
     ctx.restore();
 }

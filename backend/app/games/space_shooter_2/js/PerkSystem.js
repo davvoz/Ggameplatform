@@ -400,6 +400,74 @@ const PERK_CATALOG = [
         maxStacks: 3,
         icon: '⬠',
         world: 3
+    },
+
+    // ═══════════════════════════════════════════════════
+    //  WORLD 4 PERKS — Quantum Realm
+    // ═══════════════════════════════════════════════════
+
+    // ── Offensive ──
+
+    {
+        id: 'quantum_entangle',
+        name: 'Quantum Entangle',
+        description: 'Hitting an enemy marks it. Kill a marked enemy and the nearest enemy within 100px takes 50% damage.',
+        stackDesc: '+30px range, +15% damage per stack',
+        category: 'offensive',
+        rarity: 'rare',
+        maxStacks: 2,
+        icon: '⨂',
+        world: 4
+    },
+    {
+        id: 'wave_collapse',
+        name: 'Wave Collapse',
+        description: 'Every 12 kills fires a probability wave that deals 4 dmg to all enemies in a 150px line.',
+        stackDesc: '−3 kills needed, +1 dmg per stack',
+        category: 'offensive',
+        rarity: 'epic',
+        maxStacks: 2,
+        icon: '≋',
+        world: 4
+    },
+
+    // ── Defensive ──
+
+    {
+        id: 'tunnel_shift',
+        name: 'Tunnel Shift',
+        description: 'Taking lethal damage: 40% chance to quantum-tunnel to a safe position instead of dying. Once per level.',
+        stackDesc: '+20% trigger chance per stack',
+        category: 'defensive',
+        rarity: 'legendary',
+        maxStacks: 2,
+        icon: '◈',
+        world: 4
+    },
+    {
+        id: 'probability_field',
+        name: 'Probability Field',
+        description: 'Enemy bullets within 60px of player have 15% chance to be deflected.',
+        stackDesc: '+10% chance, +15px range per stack',
+        category: 'defensive',
+        rarity: 'rare',
+        maxStacks: 3,
+        icon: '⊛',
+        world: 4
+    },
+
+    // ── Utility ──
+
+    {
+        id: 'antimatter_harvest',
+        name: 'Antimatter Harvest',
+        description: 'Killing paired/linked enemies (triplets, chains) grants +50% bonus score and recharges ultimate by 5%.',
+        stackDesc: '+25% score, +3% ultimate per stack',
+        category: 'utility',
+        rarity: 'common',
+        maxStacks: 3,
+        icon: '⊘',
+        world: 4
     }
 ];
 
@@ -431,8 +499,36 @@ class PerkSystem {
         this.packetBurstCounter = 0;   // Packet Burst shot counter
         this.glitchDashTimer = 0;      // Glitch Dash invuln remaining
         this.entropyShieldKills = 0;   // Entropy Shield kill tracker
+        // World 4 perk state
+        this.waveCollapseKills = 0;    // Wave Collapse kill tracker
+        this.tunnelShiftUsed = false;  // Tunnel Shift per-level flag
+        this.entangledTarget = null;   // Quantum Entangle marked enemy
         // Cache for getActivePerks() — invalidated on activatePerk/reset
         this._activePerkCache = null;
+    }
+
+    grantPerk(perkId) {
+        // For testing: grant a specific perk by ID, or a random one if no ID provided
+        let perk;
+        if (perkId) {
+            perk = PERK_MAP.get(perkId);
+        } else {
+            // Grant a random perk if no ID is provided
+            const eligiblePerks = PERK_CATALOG.filter(p => {
+                const cur = this.activePerks.get(p.id) || 0;
+                return cur < p.maxStacks;
+            });
+            if (eligiblePerks.length > 0) {
+                perk = eligiblePerks[Math.floor(Math.random() * eligiblePerks.length)];
+            }
+        }
+        if (perk) {
+            const currentStacks = this.activePerks.get(perk.id) || 0;
+            if (currentStacks < perk.maxStacks) {
+                this.activePerks.set(perk.id, currentStacks + 1);
+                this._activePerkCache = null; // Invalidate cache
+            }
+        }
     }
 
     // ══════════════════════════════════
@@ -659,6 +755,8 @@ class PerkSystem {
     /** Called at the start of each level */
     onLevelStart() {
         this.emergencyUsedThisLevel = false;
+        this.fireTrailSegments = [];
+        this.fireTrailTimer = 0;
         // Deploy shield shortly after level starts (2s delay)
         this.autoShieldTimer = this.hasPerk('auto_shield') ? 2 : this.getAutoShieldCooldown();
     }

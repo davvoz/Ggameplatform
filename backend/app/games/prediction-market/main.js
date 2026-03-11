@@ -552,12 +552,12 @@ function setupEvents() {
         els.betAmount.value = state.betAmount; updateBetSummary();
     });
     $('#betIncrease').addEventListener('click', () => {
-        state.betAmount = Math.min(5000, state.betAmount<10 ? state.betAmount+1 : state.betAmount+5);
+        state.betAmount = Math.min(500, state.betAmount<10 ? state.betAmount+1 : state.betAmount+5);
         els.betAmount.value = state.betAmount; updateBetSummary();
     });
     $$('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            state.betAmount = parseInt(btn.dataset.amount);
+            state.betAmount = Math.min(500, Math.max(1, parseInt(btn.dataset.amount)));
             els.betAmount.value = state.betAmount; updateBetSummary();
         });
     });

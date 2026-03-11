@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Up or Down</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+    <script src="/sdk/platformsdk.obf.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="logo-area">
+                    <span class="btc-icon">&#x20BF;</span>
+                    <span class="logo-text">Up or Down</span>
+                </div>
+            </div>
+            <div class="top-bar-right">
+                <div class="coin-balance" id="coinBalance">
+                    <span class="coin-icon">&#x1FA99;</span>
+                    <span class="coin-amount" id="coinAmount">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div class="result-banner" id="resultBanner">
+            <span class="result-text" id="resultText"></span>
+        </div>
+
+        <!-- Price Display -->
+        <div class="price-section">
+            <div class="price-label">Bitcoin (BTC/USDT)</div>
+            <div class="price-main" id="currentPrice">--</div>
+            <div class="price-change" id="priceChange">
+                <span class="change-arrow" id="changeArrow">--</span>
+                <span class="change-percent" id="changePercent"></span>
+                <span class="vs-lock">vs entry price</span>
+            </div>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="chart-section">
+            <div class="chart-canvas-wrap">
+                <canvas id="priceChart"></canvas>
+            </div>
+            <div class="chart-lock-line" id="lockLine">
+                <span class="lock-label" id="lockLabel">Entry: --</span>
+            </div>
+        </div>
+
+        <!-- Round Info -->
+        <div class="round-section">
+            <div class="round-status-bar">
+                <div class="round-phase" id="roundPhase">WAITING</div>
+                <div class="round-timer" id="roundTimer">--:--</div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-lock-marker" id="lockMarker"></div>
+            </div>
+        </div>
+
+        <!-- Odds Cards (clickable = direction selector) -->
+        <div class="odds-section">
+            <div class="odds-card up selected" id="oddsUp">
+                <div class="odds-direction"><span class="odds-arrow">&uarr;</span> UP</div>
+                <div class="odds-multiplier" id="oddsUpValue">--x</div>
+                <div class="odds-prob" id="probUp">--%</div>
+            </div>
+            <div class="odds-divider"><div class="vs-circle">VS</div></div>
+            <div class="odds-card down" id="oddsDown">
+                <div class="odds-direction"><span class="odds-arrow">&darr;</span> DOWN</div>
+                <div class="odds-multiplier" id="oddsDownValue">--x</div>
+                <div class="odds-prob" id="probDown">--%</div>
+            </div>
+        </div>
+
+        <!-- Betting Panel (no direction buttons, just amount + place) -->
+        <div class="bet-section" id="betSection">
+            <div class="bet-amount-section">
+                <div class="bet-input-row">
+                    <button class="bet-adj-btn" id="betDecrease">&minus;</button>
+                    <div class="bet-input-wrapper">
+                        <input type="number" id="betAmount" value="10" min="1" max="5000" readonly>
+                        <span class="bet-coin-icon">&#x1FA99;</span>
+                    </div>
+                    <button class="bet-adj-btn" id="betIncrease">+</button>
+                </div>
+                <div class="bet-presets">
+                    <button class="preset-btn" data-amount="5">5</button>
+                    <button class="preset-btn" data-amount="10">10</button>
+                    <button class="preset-btn" data-amount="25">25</button>
+                    <button class="preset-btn" data-amount="50">50</button>
+                    <button class="preset-btn" data-amount="100">100</button>
+                    <button class="preset-btn" data-amount="500">500</button>
+                </div>
+            </div>
+            <div class="bet-summary-inline">
+                <span class="bsi-odds" id="betOdds">--x</span>
+                <span class="bsi-sep">&middot;</span>
+                <span class="bsi-win">Win <span id="betPotentialWin">--</span> &#x1FA99;</span>
+            </div>
+            <button class="place-bet-btn" id="placeBetBtn"><span class="btn-text">Place Bet</span></button>
+        </div>
+
+        <!-- Active Bet -->
+        <div class="active-bet-section" id="activeBetSection" style="display:none;">
+            <div class="active-bet-card" id="activeBetCard">
+                <div class="active-bet-row"><span>Direction</span><span id="activeBetDir">--</span></div>
+                <div class="active-bet-row"><span>Amount</span><span id="activeBetAmount">--</span></div>
+                <div class="active-bet-row"><span>Odds</span><span id="activeBetOdds">--</span></div>
+                <div class="active-bet-row highlight"><span>Win</span><span id="activeBetWin">--</span></div>
+            </div>
+        </div>
+
+        <!-- Last Round (single line) -->
+        <div class="last-round" id="lastRound" style="display:none;"></div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

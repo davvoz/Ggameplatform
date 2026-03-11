@@ -1,0 +1,304 @@
+/* ================================================
+   Up or Down — BTC Prediction Game — v3
+   Compact single-screen layout, clickable odds
+   ================================================ */
+
+:root {
+    --bg-primary: #0d0d0f;
+    --bg-secondary: #141418;
+    --bg-card: #1a1a20;
+    --bg-card-hover: #1f1f26;
+    --border: #2a2a35;
+    --border-light: #333340;
+    --text-primary: #f0f0f5;
+    --text-secondary: #8888a0;
+    --text-muted: #55556a;
+    --green: #00d26a;
+    --green-dim: rgba(0,210,106,0.15);
+    --green-glow: rgba(0,210,106,0.3);
+    --red: #ff4757;
+    --red-dim: rgba(255,71,87,0.15);
+    --red-glow: rgba(255,71,87,0.3);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.15);
+    --yellow: #f59e0b;
+    --yellow-dim: rgba(245,158,11,0.15);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+    overflow: hidden;
+    height: 100vh; height: 100dvh;
+    font-family: var(--font);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    touch-action: none;
+}
+
+#app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 14px;
+    padding-top: env(safe-area-inset-top);
+    height: 100vh; height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --- Top Bar --- */
+.top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.logo-area { display: flex; align-items: center; gap: 8px; }
+.btc-icon { font-size: 22px; color: #f7931a; font-weight: 800; }
+.logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.coin-balance {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--bg-card); padding: 6px 12px;
+    border-radius: 20px; border: 1px solid var(--border);
+    transition: box-shadow 0.3s;
+}
+.coin-icon { font-size: 14px; }
+.coin-amount { font-size: 13px; font-weight: 700; color: var(--yellow); min-width: 28px; }
+.coin-flash { box-shadow: 0 0 10px var(--yellow-dim); }
+
+/* --- Result Banner --- */
+.result-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 12px 20px; font-size: 15px; font-weight: 800;
+    font-family: var(--font);
+    transform: translateY(-100%); opacity: 0;
+    transition: transform 0.4s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+    pointer-events: none;
+}
+.result-banner.show { transform: translateY(0); opacity: 1; }
+.result-banner.win { background: var(--green); color: #fff; box-shadow: 0 4px 20px var(--green-glow); }
+.result-banner.lose { background: var(--red); color: #fff; box-shadow: 0 4px 20px var(--red-glow); }
+.result-banner.neutral { background: var(--bg-card); color: var(--text-primary); border-bottom: 1px solid var(--border); }
+
+/* --- Price Section --- */
+.price-section { text-align: center; padding: 10px 0 6px; flex-shrink: 0; }
+.price-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-bottom: 1px; }
+.price-main {
+    font-size: 34px; font-weight: 800; letter-spacing: -1px;
+    line-height: 1.1; font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+}
+.price-change {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; margin-top: 2px; font-size: 13px; font-weight: 600;
+}
+.price-change.up { color: var(--green); }
+.price-change.down { color: var(--red); }
+.change-arrow { font-size: 13px; }
+.vs-lock { color: var(--text-muted); font-weight: 400; font-size: 11px; margin-left: 4px; }
+
+/* --- Chart --- */
+.chart-section {
+    position: relative; background: var(--bg-card);
+    border-radius: var(--radius); border: 1px solid var(--border);
+    padding: 8px; margin-bottom: 8px;
+    flex: 1 1 100px; min-height: 80px; max-height: 160px;
+}
+.chart-canvas-wrap { width: 100%; height: 100%; overflow: hidden; position: relative; }
+#priceChart { display: block; }
+.chart-lock-line {
+    position: absolute; left: 8px; right: 8px;
+    border-top: 1px dashed var(--text-muted);
+    top: 50%; pointer-events: none;
+}
+.lock-label {
+    position: absolute; right: 0; top: -18px;
+    font-size: 9px; color: var(--text-muted);
+    background: var(--bg-card); padding: 1px 5px;
+    border-radius: 3px; font-weight: 500;
+}
+
+/* --- Round Section --- */
+.round-section { margin-bottom: 8px; flex-shrink: 0; }
+.round-status-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.round-phase {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 3px 8px; border-radius: 4px;
+    background: var(--blue-dim); color: var(--blue);
+}
+.round-phase.betting { background: var(--green-dim); color: var(--green); }
+.round-phase.locked { background: var(--yellow-dim); color: var(--yellow); }
+.round-phase.resolved { background: var(--blue-dim); color: var(--blue); }
+.round-phase.waiting { background: var(--bg-card); color: var(--text-muted); }
+.round-timer { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.round-timer.urgent { color: var(--red); animation: pulse-text 1s ease-in-out infinite; }
+@keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.progress-bar-container {
+    position: relative; height: 4px;
+    background: var(--bg-card); border-radius: 2px;
+}
+.progress-bar {
+    height: 100%; border-radius: 2px; background: var(--green);
+    transition: width 1s linear, background 0.5s; width: 0%;
+}
+.progress-bar.locked { background: var(--yellow); }
+.progress-lock-marker {
+    position: absolute; left: 80%; top: -3px;
+    width: 2px; height: 10px; background: var(--text-muted); border-radius: 1px;
+}
+
+/* --- Odds Section (clickable) --- */
+.odds-section { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+.odds-card {
+    flex: 1; background: var(--bg-card); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 10px 8px; text-align: center;
+    transition: all 0.2s; cursor: pointer; user-select: none;
+}
+.odds-card:active { transform: scale(0.97); }
+.odds-card.up { border-color: rgba(0,210,106,0.2); }
+.odds-card.down { border-color: rgba(255,71,87,0.2); }
+/* Selected state */
+.odds-card.up.selected { border-color: var(--green); background: var(--green-dim); box-shadow: 0 0 12px var(--green-dim); }
+.odds-card.down.selected { border-color: var(--red); background: var(--red-dim); box-shadow: 0 0 12px var(--red-dim); }
+.odds-direction {
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+}
+.odds-card.up .odds-direction { color: var(--green); }
+.odds-card.down .odds-direction { color: var(--red); }
+.odds-arrow { font-size: 14px; font-weight: 800; }
+.odds-multiplier { font-size: 22px; font-weight: 800; margin: 1px 0; font-variant-numeric: tabular-nums; }
+.odds-card.up .odds-multiplier { color: var(--green); }
+.odds-card.down .odds-multiplier { color: var(--red); }
+.odds-prob { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.odds-divider { display: flex; align-items: center; }
+.vs-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+}
+
+/* --- Bet Section (compact) --- */
+.bet-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; flex-shrink: 0;
+}
+.bet-amount-section { margin-bottom: 8px; }
+.bet-input-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.bet-adj-btn {
+    width: 36px; height: 36px; border-radius: var(--radius-xs);
+    border: 1px solid var(--border); background: var(--bg-secondary);
+    color: var(--text-primary); font-size: 18px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s; font-family: var(--font);
+}
+.bet-adj-btn:active { transform: scale(0.95); }
+.bet-input-wrapper { flex: 1; position: relative; }
+.bet-input-wrapper input {
+    width: 100%; height: 36px; border-radius: var(--radius-xs);
+    border: 1px solid var(--border); background: var(--bg-secondary);
+    color: var(--text-primary); font-size: 16px; font-weight: 700;
+    text-align: center; font-family: var(--font);
+    font-variant-numeric: tabular-nums; outline: none; padding-right: 26px;
+}
+.bet-coin-icon { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+.bet-presets { display: flex; gap: 4px; }
+.preset-btn {
+    flex: 1; padding: 4px 2px; border-radius: var(--radius-xs);
+    border: 1px solid var(--border); background: var(--bg-secondary);
+    color: var(--text-secondary); font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: var(--font);
+}
+.preset-btn:hover { border-color: var(--blue); color: var(--text-primary); }
+.preset-btn:active { transform: scale(0.95); }
+
+/* Inline summary */
+.bet-summary-inline {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; font-size: 13px; color: var(--text-secondary);
+    margin-bottom: 8px; font-weight: 600;
+}
+.bsi-odds { color: var(--text-primary); font-weight: 700; }
+.bsi-sep { color: var(--text-muted); }
+.bsi-win { color: var(--yellow); font-weight: 700; }
+
+.place-bet-btn {
+    width: 100%; padding: 11px; border-radius: var(--radius-sm);
+    border: none; font-family: var(--font); font-size: 15px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+    color: white; background: var(--green);
+}
+.place-bet-btn:hover { filter: brightness(1.1); }
+.place-bet-btn:active { transform: scale(0.98); }
+.place-bet-btn:disabled {
+    background: var(--bg-secondary); color: var(--text-muted);
+    cursor: not-allowed; transform: none; filter: none;
+}
+.place-bet-btn.down-selected { background: var(--red); }
+
+/* --- Active Bet (compact) --- */
+.active-bet-section { margin-bottom: 8px; flex-shrink: 0; }
+.active-bet-card {
+    background: var(--bg-card); border: 1px solid var(--green);
+    border-radius: var(--radius); padding: 10px 12px;
+    position: relative; overflow: hidden;
+}
+.active-bet-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: var(--green);
+}
+.active-bet-card.down-bet { border-color: var(--red); }
+.active-bet-card.down-bet::before { background: var(--red); }
+.active-bet-row {
+    display: flex; justify-content: space-between;
+    padding: 2px 0; font-size: 12px; color: var(--text-secondary);
+}
+.active-bet-row span:last-child { font-weight: 600; color: var(--text-primary); }
+.active-bet-row.highlight { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 6px; font-size: 13px; }
+.active-bet-row.highlight span:last-child { font-weight: 800; color: var(--yellow); }
+
+/* --- Last Round (minimal single line) --- */
+.last-round {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 6px 0; flex-shrink: 0;
+    font-size: 12px; color: var(--text-secondary);
+}
+.lr-label { font-weight: 500; }
+.lr-badge {
+    font-size: 10px; font-weight: 700; padding: 2px 6px;
+    border-radius: 3px; text-transform: uppercase;
+}
+.lr-badge.up { background: var(--green-dim); color: var(--green); }
+.lr-badge.down { background: var(--red-dim); color: var(--red); }
+.lr-change { font-weight: 700; font-variant-numeric: tabular-nums; }
+.lr-change.up { color: var(--green); }
+.lr-change.down { color: var(--red); }
+
+/* --- Toast --- */
+.toast {
+    position: fixed; bottom: 60px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 16px;
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    z-index: 2000; opacity: 0; transition: all 0.3s ease;
+    pointer-events: none; box-shadow: var(--shadow);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { border-color: var(--red); color: var(--red); }
+.toast.success { border-color: var(--green); color: var(--green); }
+
+/* --- Responsive --- */
+@media (max-width: 380px) {
+    .price-main { font-size: 28px; }
+    .odds-multiplier { font-size: 18px; }
+    .chart-section { min-height: 60px; }
+}

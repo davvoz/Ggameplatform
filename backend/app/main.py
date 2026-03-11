@@ -18,6 +18,7 @@ from app.routers import push_notifications
 from app.routers import campaigns
 from app.games.rainbow_rush_be.router import router as rainbow_rush_router
 from app.games.briscola_be.router import router as briscola_router
+from app.games.prediction_market_be.router import router as prediction_market_router
 #from app.games.city_world_be.router import router as city_world_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
@@ -93,7 +94,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh https:; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https: https://fonts.googleapis.com; "
                 "img-src 'self' data: https: http:; "
-                "connect-src 'self' ws: wss: https://esm.sh http://localhost:3000 http://localhost:8000; "
+                "connect-src 'self' ws: wss: https://esm.sh https://api.binance.com http://localhost:3000 http://localhost:8000; "
                 "frame-src 'self'; "
                 "font-src 'self' data: https://fonts.gstatic.com; "
                 "media-src 'self' data: blob:;"
@@ -183,6 +184,7 @@ app.include_router(community.rest_router, tags=["community-api"])
 app.include_router(community_stats.router, tags=["community-stats"])
 app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"])
 app.include_router(briscola_router, tags=["Briscola Multiplayer"])
+app.include_router(prediction_market_router, tags=["Up or Down"])
 #app.include_router(city_world_router, tags=["City World"])
 app.include_router(push_notifications.router, tags=["push-notifications"])
 app.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])
@@ -204,6 +206,16 @@ async def startup_schedulers():
     
     start_daily_quest_scheduler()
     print("✅ Daily quest reset scheduler started")
+    
+    # Start prediction market WebSocket + first round
+    from app.games.prediction_market_be.router import start_new_round as start_prediction_round, start_btc_websocket
+    try:
+        await start_btc_websocket()
+        print("✅ Binance WebSocket started")
+        await start_prediction_round()
+        print("✅ Prediction Market first round started")
+    except Exception as e:
+        print(f"⚠️ Prediction Market startup failed (will retry on first request): {e}")
     
     # Send startup notification
     send_telegram_info(

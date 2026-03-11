@@ -1,8 +1,17 @@
 {
-  "version": "3.35.3",
-  "timestamp": "2026-03-11T22:36:30.789Z",
-  "buildNumber": 442,
+  "version": "3.35.4",
+  "timestamp": "2026-03-11T22:40:46.156Z",
+  "buildNumber": 443,
   "changelog": [
+    {
+      "version": "3.35.4",
+      "date": "2026-03-11",
+      "type": "patch",
+      "changes": [
+        "fix: limit bet amount to a maximum of 500",
+        "🔖 Bump version to 3.35.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.35.3",
       "date": "2026-03-11",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: update cover image URL in post content generation",
         "🔖 Bump version to 3.33.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.15",
-      "date": "2026-03-03",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]update quest progress to reflect actual levels and scores achieved",
-        "🔖 Bump version to 3.33.14 [skip-version]"
       ]
     }
   ]

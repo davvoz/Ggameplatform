@@ -1,8 +1,18 @@
 {
-  "version": "3.35.2",
-  "timestamp": "2026-03-11T17:21:20.496Z",
-  "buildNumber": 441,
+  "version": "3.35.3",
+  "timestamp": "2026-03-11T22:36:30.789Z",
+  "buildNumber": 442,
   "changelog": [
+    {
+      "version": "3.35.3",
+      "date": "2026-03-11",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: remove emoji from potential win display in bet summary",
+        "🔖 Bump version to 3.35.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.35.2",
       "date": "2026-03-11",
@@ -84,15 +94,6 @@
       "changes": [
         "fix: [SS2]update quest progress to reflect actual levels and scores achieved",
         "🔖 Bump version to 3.33.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.33.14",
-      "date": "2026-03-03",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2] Emergency Protocol after continue and build",
-        "🔖 Bump version to 3.33.13 [skip-version]"
       ]
     }
   ]

@@ -333,7 +333,7 @@ function updateBetSummary() {
     const sel = state.selectedDirection === 'up' ? odds.up : odds.down;
     const pot = Math.floor(state.betAmount * sel);
     els.betOdds.textContent = sel+'x';
-    els.betPotentialWin.textContent = pot+' \uD83E\uDE99';
+    els.betPotentialWin.textContent = pot;
     els.placeBetBtn.classList.toggle('down-selected', state.selectedDirection==='down');
     syncBetBtnText();
 }

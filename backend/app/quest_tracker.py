@@ -264,6 +264,12 @@ class QuestTracker:
             self._process_space_shooter_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
             return
         
+        # Sette e Mezzo game quests
+        if game_id == 'setteemezzo' and tracking_type:
+            print(f"🃏 [QuestTracker] Processing Sette e Mezzo quest: {quest.title} (type: {tracking_type})")
+            self._process_setteemezzo_quest(user_id, quest, quest_config, tracking_type, score, extra_data)
+            return
+        
         # ============ GENERIC QUEST HANDLING ============
         
         # Play games quests (cumulative or daily reset)
@@ -987,6 +993,72 @@ class QuestTracker:
         
         elif tracking_type == 'games_played':
             self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+    
+    def _process_setteemezzo_quest(self, user_id: str, quest: Quest, quest_config: Dict,
+                                    tracking_type: str, score: int, extra_data: Dict):
+        """Process Sette e Mezzo game-specific quests."""
+        print(f"    🃏 [SetteEMezzo] Processing quest {quest.quest_id}: {quest.title}")
+        print(f"        tracking_type: {tracking_type}, extra_data: {extra_data}")
+        
+        user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+        stored_data = self._get_quest_extra_data(user_quest)
+        
+        # Check for daily reset
+        reset_period = quest_config.get('reset_period')
+        if reset_period == 'daily':
+            today = self._get_today_date()
+            last_reset_date = stored_data.get('last_reset_date')
+            if last_reset_date != today:
+                print(f"    🔄 [SetteEMezzo] Resetting daily quest for new day: {quest.title}")
+                user_quest.is_completed = 0
+                user_quest.current_progress = 0
+                user_quest.completed_at = None
+                user_quest.is_claimed = 0
+                user_quest.claimed_at = None
+                stored_data['last_reset_date'] = today
+                # Reset cumulative counters for the new day
+                stored_data['cumulative'] = None
+                self._set_quest_extra_data(user_quest, stored_data)
+                self.db.flush()
+        
+        # Initialize cumulative counters if not present
+        if not stored_data.get('cumulative'):
+            stored_data['cumulative'] = {
+                'games_played': 0,
+                'wins': 0,
+                'losses': 0,
+                'sette_e_mezzo': 0,
+            }
+        
+        cumulative = stored_data['cumulative']
+        
+        # Update cumulative stats from extra_data
+        if extra_data:
+            cumulative['games_played'] += 1
+            
+            result = extra_data.get('result', '')
+            if result == 'win':
+                cumulative['wins'] += 1
+            elif result == 'lose':
+                cumulative['losses'] += 1
+            
+            if extra_data.get('sette_e_mezzo'):
+                cumulative['sette_e_mezzo'] += 1
+        
+        # Save cumulative data
+        stored_data['cumulative'] = cumulative
+        self._set_quest_extra_data(user_quest, stored_data)
+        self.db.flush()
+        
+        # Update quest progress based on tracking type
+        if tracking_type == 'games_played':
+            self.update_quest_progress(user_id, quest, cumulative['games_played'], user_quest)
+        elif tracking_type == 'wins':
+            self.update_quest_progress(user_id, quest, cumulative['wins'], user_quest)
+        elif tracking_type == 'losses':
+            self.update_quest_progress(user_id, quest, cumulative['losses'], user_quest)
+        elif tracking_type == 'sette_e_mezzo':
+            self.update_quest_progress(user_id, quest, cumulative['sette_e_mezzo'], user_quest)
     
     def _process_briscola_quest(self, user_id: str, quest: Quest, quest_config: Dict, 
                                 tracking_type: str, score: int, extra_data: Dict):

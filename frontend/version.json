@@ -1,8 +1,17 @@
 {
-  "version": "3.35.5",
-  "timestamp": "2026-03-13T12:31:36.856Z",
-  "buildNumber": 444,
+  "version": "3.36.0",
+  "timestamp": "2026-03-13T12:50:06.711Z",
+  "buildNumber": 445,
   "changelog": [
+    {
+      "version": "3.36.0",
+      "date": "2026-03-13",
+      "type": "minor",
+      "changes": [
+        "feat: Add Sette e Mezzo game",
+        "🔖 Bump version to 3.35.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.35.5",
       "date": "2026-03-13",
@@ -85,15 +94,6 @@
       "changes": [
         "fix: update mini-avatar implementation to use Steem avatars and improve styling",
         "🔖 Bump version to 3.34.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.34.0",
-      "date": "2026-03-03",
-      "type": "minor",
-      "changes": [
-        "feat: add online user avatars and stats request handling in community chat",
-        "🔖 Bump version to 3.33.16 [skip-version]"
       ]
     }
   ]

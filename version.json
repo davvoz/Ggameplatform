@@ -1,8 +1,17 @@
 {
-  "version": "3.36.0",
-  "timestamp": "2026-03-13T12:50:06.711Z",
-  "buildNumber": 445,
+  "version": "3.36.1",
+  "timestamp": "2026-03-13T15:38:18.009Z",
+  "buildNumber": 446,
   "changelog": [
+    {
+      "version": "3.36.1",
+      "date": "2026-03-13",
+      "type": "patch",
+      "changes": [
+        "fix: Set client_max_body_size for API requests",
+        "🔖 Bump version to 3.36.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.36.0",
       "date": "2026-03-13",
@@ -85,15 +94,6 @@
         "fix:fittizia",
         "fix:[SS2]refractor AssetManager monolith",
         "🔖 Bump version to 3.34.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.34.1",
-      "date": "2026-03-03",
-      "type": "patch",
-      "changes": [
-        "fix: update mini-avatar implementation to use Steem avatars and improve styling",
-        "🔖 Bump version to 3.34.0 [skip-version]"
       ]
     }
   ]

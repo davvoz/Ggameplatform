@@ -65,26 +65,82 @@ html, body {
     display: flex; align-items: center; gap: 5px;
     background: var(--bg-card); padding: 6px 12px;
     border-radius: 20px; border: 1px solid var(--border);
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.4s, transform 0.2s, border-color 0.4s;
 }
 .coin-icon { font-size: 14px; }
-.coin-amount { font-size: 13px; font-weight: 700; color: var(--yellow); min-width: 28px; }
-.coin-flash { box-shadow: 0 0 10px var(--yellow-dim); }
-
-/* --- Result Banner --- */
-.result-banner {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    padding: 12px 20px; font-size: 15px; font-weight: 800;
-    font-family: var(--font);
-    transform: translateY(-100%); opacity: 0;
-    transition: transform 0.4s cubic-bezier(.4,0,.2,1), opacity 0.4s;
-    pointer-events: none;
+.coin-amount { font-size: 13px; font-weight: 700; color: var(--yellow); min-width: 28px; font-variant-numeric: tabular-nums; transition: transform 0.3s; }
+.coin-flash {
+    box-shadow: 0 0 16px var(--yellow-dim);
+    border-color: var(--yellow);
+    transform: scale(1.08);
 }
-.result-banner.show { transform: translateY(0); opacity: 1; }
-.result-banner.win { background: var(--green); color: #fff; box-shadow: 0 4px 20px var(--green-glow); }
-.result-banner.lose { background: var(--red); color: #fff; box-shadow: 0 4px 20px var(--red-glow); }
-.result-banner.neutral { background: var(--bg-card); color: var(--text-primary); border-bottom: 1px solid var(--border); }
+.coin-flash .coin-amount {
+    animation: coinBounce 0.4s ease-out;
+}
+@keyframes coinBounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* --- Result Banner (removed — using celebration animations) --- */
+.result-banner { display: none; }
+
+/* --- Win/Lose Celebration on chart --- */
+.chart-section.win-celebration {
+    border-color: var(--green);
+    box-shadow: inset 0 0 30px rgba(0, 210, 106, 0.08), 0 0 24px rgba(0, 210, 106, 0.15);
+    animation: chartCelebrate 2s ease-out;
+}
+.chart-section.lose-celebration {
+    border-color: var(--red);
+    box-shadow: inset 0 0 20px rgba(255, 71, 87, 0.06), 0 0 16px rgba(255, 71, 87, 0.1);
+    animation: chartCelebrate 1.5s ease-out;
+}
+@keyframes chartCelebrate {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.01); }
+    100% { transform: scale(1); }
+}
+
+/* Confetti particles */
+.confetti {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    z-index: 20;
+    pointer-events: none;
+    animation: confettiFall var(--fall-duration, 1.5s) cubic-bezier(.2, .8, .3, 1) forwards;
+    opacity: 0;
+}
+@keyframes confettiFall {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translate(var(--fall-x, 30px), var(--fall-y, 120px)) rotate(var(--fall-rot, 360deg)) scale(0.4); }
+}
+
+/* Payout popup */
+.payout-popup {
+    position: absolute;
+    top: 30%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 28px; font-weight: 900;
+    color: var(--gold, #f5a623);
+    z-index: 25; pointer-events: none;
+    animation: payoutPop 1.2s cubic-bezier(.2, .8, .3, 1) forwards;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 166, 35, 0.4);
+    white-space: nowrap;
+}
+.payout-popup.lose {
+    color: var(--red);
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 71, 87, 0.3);
+    font-size: 22px;
+}
+@keyframes payoutPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    60% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -80%) scale(0.9); opacity: 0; }
+}
 
 /* --- Price Section --- */
 .price-section { text-align: center; padding: 10px 0 6px; flex-shrink: 0; }
@@ -109,19 +165,22 @@ html, body {
     border-radius: var(--radius); border: 1px solid var(--border);
     padding: 8px; margin-bottom: 8px;
     flex: 1 1 100px; min-height: 80px; max-height: 160px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 .chart-canvas-wrap { width: 100%; height: 100%; overflow: hidden; position: relative; }
 #priceChart { display: block; }
 .chart-lock-line {
     position: absolute; left: 8px; right: 8px;
-    border-top: 1px dashed var(--text-muted);
+    border-top: 2px dashed var(--yellow);
     top: 50%; pointer-events: none;
 }
 .lock-label {
-    position: absolute; right: 0; top: -18px;
-    font-size: 9px; color: var(--text-muted);
-    background: var(--bg-card); padding: 1px 5px;
-    border-radius: 3px; font-weight: 500;
+    position: absolute; right: 0; top: -20px;
+    font-size: 10px; color: var(--yellow);
+    background: rgba(26, 26, 32, 0.9); padding: 2px 7px;
+    border-radius: 4px; font-weight: 700;
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 /* --- Round Section --- */
@@ -136,6 +195,13 @@ html, body {
 .round-phase.locked { background: var(--yellow-dim); color: var(--yellow); }
 .round-phase.resolved { background: var(--blue-dim); color: var(--blue); }
 .round-phase.waiting { background: var(--bg-card); color: var(--text-muted); }
+.round-timer-wrap {
+    display: flex; align-items: center; gap: 6px;
+}
+.round-timer-label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
 .round-timer { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .round-timer.urgent { color: var(--red); animation: pulse-text 1s ease-in-out infinite; }
 @keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -301,4 +367,147 @@ html, body {
     .price-main { font-size: 28px; }
     .odds-multiplier { font-size: 18px; }
     .chart-section { min-height: 60px; }
+}
+
+/* --- Rules Toggle --- */
+.rules-toggle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-muted);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: var(--font);
+    margin-left: 6px;
+}
+
+.rules-toggle:hover {
+    border-color: #f7931a;
+    color: #f7931a;
+}
+
+/* --- Rules Overlay --- */
+.rules-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.rules-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.rules-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: calc(100% - 40px);
+    max-width: 420px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s cubic-bezier(.2, .8, .3, 1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.rules-overlay.open .rules-panel {
+    transform: translateY(0) scale(1);
+}
+
+.rules-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.rules-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.rules-close:hover {
+    background: var(--red-dim);
+    color: var(--red);
+    border-color: var(--red);
+}
+
+.rules-body {
+    padding: 12px 16px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rule-section {
+    margin-bottom: 14px;
+}
+
+.rule-section:last-child {
+    margin-bottom: 0;
+}
+
+.rule-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text-primary);
+}
+
+.rule-section p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.rule-section ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.rule-section li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    padding-left: 12px;
+    position: relative;
+}
+
+.rule-section li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
 }

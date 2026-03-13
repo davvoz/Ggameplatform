@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Blackjack</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="/sdk/platformsdk.obf.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="logo-area">
+                <span class="game-icon">🃏</span>
+                <span class="logo-text">Blackjack</span>
+                <button class="rules-toggle" id="rulesToggle" title="How to play">?</button>
+            </div>
+            <div class="coin-balance">
+                <span class="coin-icon">💰</span>
+                <span class="coin-amount" id="coinAmount">--</span>
+            </div>
+        </div>
+
+        <!-- Table Area -->
+        <div class="table-area">
+            <!-- Dealer -->
+            <div class="hand-section dealer-section">
+                <div class="hand-label">
+                    <span>Dealer</span>
+                    <span class="hand-value" id="dealerValue"></span>
+                </div>
+                <div class="cards-row" id="dealerCards"></div>
+            </div>
+
+            <!-- Divider -->
+            <div class="table-divider">
+                <div class="divider-line"></div>
+                <div class="game-status" id="gameStatus">Place your bet</div>
+                <div class="divider-line"></div>
+            </div>
+
+            <!-- Player -->
+            <div class="hand-section player-section">
+                <div class="hand-label">
+                    <span>You</span>
+                    <span class="hand-value" id="playerValue"></span>
+                </div>
+                <div class="cards-row" id="playerCards"></div>
+                <div class="split-hands" id="splitHands" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Controls Area (fixed height so table doesn't resize) -->
+        <div class="controls-area">
+            <!-- Action Buttons -->
+            <div class="actions-section" id="actionsSection" style="display:none;">
+                <button class="action-btn hit-btn" data-action="hit">
+                    <span class="action-icon">🃏</span>
+                    <span>Hit</span>
+                </button>
+                <button class="action-btn stand-btn" data-action="stand">
+                    <span class="action-icon">✋</span>
+                    <span>Stand</span>
+                </button>
+                <button class="action-btn double-btn" data-action="double" style="display:none;">
+                    <span class="action-icon">⏫</span>
+                    <span>Double</span>
+                </button>
+                <button class="action-btn split-btn" data-action="split" style="display:none;">
+                    <span class="action-icon">✂️</span>
+                    <span>Split</span>
+                </button>
+                <button class="action-btn surrender-btn" data-action="surrender" style="display:none;">
+                    <span class="action-icon">🏳️</span>
+                    <span>Give Up</span>
+                </button>
+                <button class="action-btn insurance-btn" data-action="insurance" style="display:none;">
+                    <span class="action-icon">🛡️</span>
+                    <span>Insure</span>
+                </button>
+            </div>
+
+            <!-- Bet Section -->
+            <div class="bet-section" id="betSection">
+                <div class="bet-left">
+                    <div class="bet-amount-row">
+                        <span class="bet-label">BET</span>
+                        <button class="bet-adj-btn bet-reset" id="betReset" title="Reset to minimum">↺</button>
+                        <div class="bet-display">
+                            <input type="number" id="betAmount" min="1" max="5000" value="10" readonly>
+                            <span class="bet-coin">🪙</span>
+                        </div>
+                    </div>
+                    <div class="bet-chips-row">
+                        <button class="bet-chip" data-add="5">+5</button>
+                        <button class="bet-chip" data-add="10">+10</button>
+                        <button class="bet-chip" data-add="50">+50</button>
+                        <button class="bet-chip" data-add="100">+100</button>
+                    </div>
+                </div>
+                <button class="deal-btn" id="dealBtn">DEAL</button>
+            </div>
+
+            <!-- New Hand -->
+            <div class="new-hand-section" id="newHandSection" style="display:none;">
+                <button class="deal-btn" id="newHandBtn">NEW HAND</button>
+            </div>
+        </div>
+
+        <!-- Rules Overlay -->
+        <div class="rules-overlay" id="rulesOverlay">
+            <div class="rules-panel">
+                <div class="rules-header">
+                    <span>📖 How to Play</span>
+                    <button class="rules-close" id="rulesClose">✕</button>
+                </div>
+                <div class="rules-body">
+                    <div class="rule-section">
+                        <h3>🎯 Goal</h3>
+                        <p>Beat the dealer by getting a hand value closer to <strong>21</strong> without going over.</p>
+                    </div>
+                    <div class="rule-section">
+                        <h3>🃏 Card Values</h3>
+                        <ul>
+                            <li><strong>2–10</strong> → Face value</li>
+                            <li><strong>J, Q, K</strong> → 10 points</li>
+                            <li><strong>A (Ace)</strong> → 11 or 1 (automatically adjusted)</li>
+                        </ul>
+                    </div>
+                    <div class="rule-section">
+                        <h3>🎮 Actions</h3>
+                        <ul>
+                            <li><strong>🃏 Hit</strong> — Draw another card</li>
+                            <li><strong>✋ Stand</strong> — Keep your hand, dealer plays</li>
+                            <li><strong>⏫ Double</strong> — Double your bet, get exactly one more card</li>
+                            <li><strong>✂️ Split</strong> — Split two equal cards into separate hands (costs same bet)</li>
+                            <li><strong>🏳️ Give Up</strong> — Surrender and get half your bet back</li>
+                            <li><strong>🛡️ Insure</strong> — Side bet (half your bet) when dealer shows Ace; pays 2:1 if dealer has Blackjack</li>
+                        </ul>
+                    </div>
+                    <div class="rule-section">
+                        <h3>💰 Payouts</h3>
+                        <ul>
+                            <li><strong>Blackjack</strong> (A + 10/J/Q/K) → <span class="payout-gold">pays 3:2</span></li>
+                            <li><strong>Regular Win</strong> → <span class="payout-green">pays 1:1</span></li>
+                            <li><strong>Push</strong> (tie) → bet returned</li>
+                            <li><strong>Bust</strong> (over 21) → you lose</li>
+                        </ul>
+                    </div>
+                    <div class="rule-section">
+                        <h3>🏦 Dealer Rules</h3>
+                        <p>The dealer <strong>must hit on 16 or less</strong> and <strong>stands on 17+</strong>. The dealer hits on soft 17 (Ace counted as 11).</p>
+                    </div>
+                    <div class="rule-section">
+                        <h3>💡 Tips</h3>
+                        <ul>
+                            <li>Never hit on 17 or above</li>
+                            <li>Double down on 11 vs dealer 2–10</li>
+                            <li>Always split Aces and 8s</li>
+                            <li>Surrender 16 vs dealer 9, 10, A</li>
+                            <li>Stand on 12–16 if dealer shows 2–6</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

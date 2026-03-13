@@ -118,9 +118,29 @@ async function loadBalance() {
 }
 function updateBalanceUI(v) {
     if (!els.coinAmount) return;
-    els.coinAmount.textContent = fmtNum(v);
+    const prev = parseInt(els.coinAmount.textContent.replace(/[^0-9-]/g, '')) || 0;
+    const target = Math.round(v);
+    if (prev === target) return;
+
+    // Animate counting
+    const diff = target - prev;
+    const steps = Math.min(Math.abs(diff), 20);
+    const duration = 400;
+    const stepTime = duration / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+        step++;
+        const progress = step / steps;
+        const current = Math.round(prev + diff * progress);
+        els.coinAmount.textContent = fmtNum(current);
+        if (step >= steps) {
+            clearInterval(timer);
+            els.coinAmount.textContent = fmtNum(target);
+        }
+    }, stepTime);
+
     els.coinAmount.parentElement.classList.add('coin-flash');
-    setTimeout(() => els.coinAmount.parentElement.classList.remove('coin-flash'), 600);
+    setTimeout(() => els.coinAmount.parentElement.classList.remove('coin-flash'), 800);
 }
 
 // --- API ---
@@ -218,7 +238,7 @@ function updateRoundUI(round) {
 
     // Lock price label + change
     if (round.lock_price) {
-        els.lockLabel.textContent = 'Entry: $'+fmtPrice(round.lock_price);
+        els.lockLabel.textContent = 'Opening: $'+fmtPrice(round.lock_price);
         if (round.current_price) {
             const ch = ((round.current_price-round.lock_price)/round.lock_price)*100;
             const up = ch >= 0;
@@ -278,7 +298,7 @@ function handleResolved(round) {
     if (state.myBet) {
         const won = state.myBet.direction === result;
         const winnings = won ? state.myBet.potential_win : 0;
-        showBanner(won?'win':'lose', won ? ('+'+state.myBet.potential_win+' \uD83E\uDE99') : ('-'+state.myBet.amount+' \uD83E\uDE99'));
+        showCelebration(won, winnings, state.myBet.amount);
 
         // End session → triggers XP calculation in RuntimeShell
         sendGameOver(winnings, {
@@ -291,17 +311,51 @@ function handleResolved(round) {
             lock_price: round.lock_price,
             close_price: closePrice
         });
-    } else {
-        showBanner('neutral', 'Round ended '+result.toUpperCase()+(result==='up'?' \u2191':' \u2193'));
     }
     loadBalance();
     fetchHistory().then(renderLastRound);
 }
 
-function showBanner(type, text) {
-    els.resultBanner.className = 'result-banner show '+type;
-    els.resultText.textContent = text;
-    setTimeout(() => els.resultBanner.classList.remove('show'), 4000);
+function showCelebration(won, winnings, betAmount) {
+    const chart = document.querySelector('.chart-section');
+    const cls = won ? 'win-celebration' : 'lose-celebration';
+    chart.classList.add(cls);
+    setTimeout(() => chart.classList.remove(cls), 2500);
+
+    if (won) {
+        // Confetti
+        const colors = ['#00d26a', '#00ff88', '#00b85c', '#80ffc0', '#f5a623'];
+        for (let i = 0; i < 20; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.background = colors[Math.floor(Math.random() * colors.length)];
+            c.style.left = `${10 + Math.random() * 80}%`;
+            c.style.top = `${20 + Math.random() * 40}%`;
+            c.style.setProperty('--fall-x', `${(Math.random() - 0.5) * 120}px`);
+            c.style.setProperty('--fall-y', `${60 + Math.random() * 80}px`);
+            c.style.setProperty('--fall-rot', `${Math.random() * 720 - 360}deg`);
+            c.style.setProperty('--fall-duration', `${0.8 + Math.random() * 0.8}s`);
+            c.style.animationDelay = `${Math.random() * 0.3}s`;
+            c.style.width = `${5 + Math.random() * 6}px`;
+            c.style.height = `${5 + Math.random() * 6}px`;
+            chart.appendChild(c);
+            setTimeout(() => c.remove(), 2000);
+        }
+
+        // Payout popup
+        const popup = document.createElement('div');
+        popup.className = 'payout-popup';
+        popup.textContent = `+${winnings} \uD83E\uDE99`;
+        chart.appendChild(popup);
+        setTimeout(() => popup.remove(), 1500);
+    } else {
+        // Lose popup
+        const popup = document.createElement('div');
+        popup.className = 'payout-popup lose';
+        popup.textContent = 'Bet Lost!';
+        chart.appendChild(popup);
+        setTimeout(() => popup.remove(), 1500);
+    }
 }
 
 function resetForNewRound() {
@@ -316,7 +370,7 @@ function resetForNewRound() {
     els.placeBetBtn.disabled = false;
     syncBetBtnText();
     els.resultBanner.classList.remove('show');
-    els.lockLabel.textContent = 'Entry: --';
+    els.lockLabel.textContent = 'Opening: --';
     els.priceChange.className = 'price-change';
     els.changeArrow.textContent = '--';
     els.changePercent.textContent = '';
@@ -542,6 +596,13 @@ function selectDirection(dir) {
 }
 
 function setupEvents() {
+    // Rules overlay
+    $('#rulesToggle').addEventListener('click', () => $('#rulesOverlay').classList.add('open'));
+    $('#rulesClose').addEventListener('click', () => $('#rulesOverlay').classList.remove('open'));
+    $('#rulesOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    });
+
     // Clickable odds cards for direction
     els.oddsUp.addEventListener('click', () => selectDirection('up'));
     els.oddsDown.addEventListener('click', () => selectDirection('down'));
@@ -670,7 +731,7 @@ function showXPBanner(xpAmount, payload) {
     banner.className = 'game-xp-banner';
     banner.innerHTML = `<div class="game-xp-badge"><span class="game-xp-icon">⭐</span><span class="game-xp-amount">+${Number(xpAmount).toFixed(2)} XP</span></div>`;
     document.body.appendChild(banner);
-    setTimeout(() => { banner.classList.add('hiding'); setTimeout(() => banner.remove(), 600); }, 3500);
+    setTimeout(() => { banner.classList.add('hiding'); setTimeout(() => banner.remove(), 500); }, 2500);
 }
 
 function showLevelUpModal(data) {

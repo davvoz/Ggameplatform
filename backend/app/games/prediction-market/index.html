@@ -20,6 +20,7 @@
                 <div class="logo-area">
                     <span class="btc-icon">&#x20BF;</span>
                     <span class="logo-text">Up or Down</span>
+                    <button class="rules-toggle" id="rulesToggle" title="How to play">?</button>
                 </div>
             </div>
             <div class="top-bar-right">
@@ -42,7 +43,7 @@
             <div class="price-change" id="priceChange">
                 <span class="change-arrow" id="changeArrow">--</span>
                 <span class="change-percent" id="changePercent"></span>
-                <span class="vs-lock">vs entry price</span>
+                <span class="vs-lock">vs opening price</span>
             </div>
         </div>
 
@@ -60,7 +61,10 @@
         <div class="round-section">
             <div class="round-status-bar">
                 <div class="round-phase" id="roundPhase">WAITING</div>
-                <div class="round-timer" id="roundTimer">--:--</div>
+                <div class="round-timer-wrap">
+                    <span class="round-timer-label">Round ends in</span>
+                    <div class="round-timer" id="roundTimer">--:--</div>
+                </div>
             </div>
             <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar"></div>
@@ -123,6 +127,44 @@
 
         <!-- Last Round (single line) -->
         <div class="last-round" id="lastRound" style="display:none;"></div>
+
+        <!-- Rules Overlay -->
+        <div class="rules-overlay" id="rulesOverlay">
+            <div class="rules-panel">
+                <div class="rules-header">
+                    <span>&#x1F4D6; How to Play</span>
+                    <button class="rules-close" id="rulesClose">&#x2715;</button>
+                </div>
+                <div class="rules-body">
+                    <div class="rule-section">
+                        <h3>&#x1F3AE; The Game</h3>
+                        <ul>
+                            <li>Each round lasts <strong>5 minutes</strong></li>
+                            <li>At the start, the current <strong>BTC price</strong> is locked as the opening price</li>
+                            <li>You bet on whether the price at the <strong>end of the round</strong> will be <strong>above</strong> or <strong>below</strong> the opening price</li>
+                            <li>If your prediction is correct, you win <strong>bet &times; odds</strong></li>
+                        </ul>
+                    </div>
+                    <div class="rule-section">
+                        <h3>&#x1F4CA; Odds</h3>
+                        <ul>
+                            <li>Odds change in real time based on <strong>time remaining</strong> and <strong>current price distance</strong> from the opening price</li>
+                            <li>Betting <strong>early</strong> gives higher odds &mdash; waiting means lower payouts</li>
+                            <li>If the price is already moving in one direction, that side pays less</li>
+                            <li>Your payout is locked at the odds <strong>when you placed the bet</strong></li>
+                        </ul>
+                    </div>
+                    <div class="rule-section">
+                        <h3>&#x23F1;&#xFE0F; Timing</h3>
+                        <ul>
+                            <li><strong>First 4 min</strong> &mdash; betting is open</li>
+                            <li><strong>Last 1 min</strong> &mdash; bets are locked, wait for the result</li>
+                            <li>If the closing price equals the opening price, all bets are <strong>refunded</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="main.js"></script>
 </body>

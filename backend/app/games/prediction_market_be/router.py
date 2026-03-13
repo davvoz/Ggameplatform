@@ -34,7 +34,7 @@ MIN_BET = 1
 MAX_BET = 500
 HOUSE_EDGE = 0.05                  # 5% house edge
 MAX_PAYOUT = 10.0                  # max 10x payout cap
-TIME_DECAY_MIN = 0.70              # at end of betting, payouts are 70% of normal
+TIME_DECAY_MIN = 0.30              # at end of betting, payouts are 30% of normal
 
 # Volatility model constants
 # BTC annualized vol ~60%. We convert to per-second vol for time-based odds.
@@ -367,19 +367,24 @@ async def _resolve_round():
     current_round.status = "resolved"
     current_round.resolved_at = time.time()
     
-    result = "up" if close_price >= current_round.lock_price else "down"
+    result = "up" if close_price > current_round.lock_price else ("down" if close_price < current_round.lock_price else "flat")
     
     logger.info(
         f"[PredictionMarket] Round {current_round.round_id} resolved: "
         f"lock=${current_round.lock_price:,.2f} close=${close_price:,.2f} result={result}"
     )
     
-    # Pay winners
+    # Pay winners (or refund everyone on flat)
     winners = []
     losers = []
+    refunds = []
     for bet in current_round.bets:
         bet["result"] = result
-        if bet["direction"] == result:
+        if result == "flat":
+            bet["won"] = None
+            bet["payout"] = bet["amount"]
+            refunds.append(bet)
+        elif bet["direction"] == result:
             bet["won"] = True
             bet["payout"] = int(bet["amount"] * bet["locked_odds"])
             winners.append(bet)
@@ -388,9 +393,8 @@ async def _resolve_round():
             bet["payout"] = 0
             losers.append(bet)
     
-    # Award coins to winners asynchronously
-    # We need a DB session — we'll do it via a helper
-    await _pay_winners(winners)
+    # Award coins to winners + refund flat bets
+    await _pay_winners(winners + refunds)
     
     # Save to history
     round_history.insert(0, {

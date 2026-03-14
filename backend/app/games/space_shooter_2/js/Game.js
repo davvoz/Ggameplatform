@@ -702,6 +702,7 @@ class Game {
             this.levelManager.currentLevel = (startWorld - 1) * 30 + 1;
         }
 
+        this.sessionStartLevel = this.levelManager.currentLevel;
         this.levelManager.levelStartTime = performance.now();
 
         this.entityManager.player = new Player(

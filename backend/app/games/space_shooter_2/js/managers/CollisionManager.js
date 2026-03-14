@@ -436,6 +436,7 @@ class CollisionManager {
         if (window.sendScoreToPlatform) {
             window.sendScoreToPlatform(g.scoreManager.score, {
                 level: g.levelManager.currentLevel,
+                levelsCompleted: g.levelManager.currentLevel - (g.sessionStartLevel || 1),
                 enemiesKilled: g.scoreManager.totalEnemiesKilled,
                 maxCombo: g.scoreManager.maxCombo,
                 ship: g.selectedShipId,

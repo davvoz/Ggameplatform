@@ -1545,7 +1545,7 @@ class QuestTracker:
             
             # Get session stats
             session_kills = extra_data.get('enemiesKilled', 0)
-            session_level = extra_data.get('level', 0)
+            session_level = extra_data.get('levelsCompleted', extra_data.get('level', 0))
             session_combo = extra_data.get('maxCombo', 0)
             
             print(f"    🚀 [SpaceShooter2] Session stats: kills={session_kills}, level={session_level}, combo={session_combo}, score={score}")

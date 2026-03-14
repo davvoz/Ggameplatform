@@ -1,8 +1,18 @@
 {
-  "version": "3.36.3",
-  "timestamp": "2026-03-13T16:58:07.141Z",
-  "buildNumber": 448,
+  "version": "3.36.4",
+  "timestamp": "2026-03-14T10:50:23.619Z",
+  "buildNumber": 449,
   "changelog": [
+    {
+      "version": "3.36.4",
+      "date": "2026-03-14",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: [SS2]Update session level tracking to use levelsCompleted in QuestTracker",
+        "🔖 Bump version to 3.36.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.36.3",
       "date": "2026-03-13",
@@ -83,15 +93,6 @@
       "changes": [
         "fix:[SS2] add world 4",
         "🔖 Bump version to 3.35.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.35.0",
-      "date": "2026-03-06",
-      "type": "minor",
-      "changes": [
-        "feat:[ADMIN] add refund coins script for user credits",
-        "🔖 Bump version to 3.34.3 [skip-version]"
       ]
     }
   ]

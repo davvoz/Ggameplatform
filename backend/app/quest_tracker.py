@@ -5,8 +5,9 @@ Quest Tracker - Automatically updates user quest progress
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, distinct
 import json
+import math
 
 from app.models import Quest, UserQuest, User, GameSession, CoinTransaction
 from app.repositories import UserCoinsRepository, CoinTransactionRepository
@@ -504,6 +505,138 @@ class QuestTracker:
                 completed_count = uq_count
 
             self.update_quest_progress(user_id, quest, int(completed_count))
+        
+        # ============ PLATFORM DAILY QUESTS ============
+        
+        # Play N distinct games today
+        elif quest_type == "play_distinct_games_daily":
+            user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+            
+            # Daily reset
+            reset_period = quest_config.get('reset_period')
+            if reset_period == 'daily':
+                today = self._get_today_date()
+                stored_data = self._get_quest_extra_data(user_quest)
+                last_reset_date = stored_data.get('last_reset_date')
+                if last_reset_date != today:
+                    user_quest.is_completed = 0
+                    user_quest.current_progress = 0
+                    user_quest.completed_at = None
+                    user_quest.is_claimed = 0
+                    user_quest.claimed_at = None
+                    stored_data['last_reset_date'] = today
+                    self._set_quest_extra_data(user_quest, stored_data)
+                    self.db.flush()
+            
+            # Count distinct game_ids played today
+            today_start = datetime.strptime(self._get_today_date(), '%Y-%m-%d')
+            distinct_game_rows = self.db.query(GameSession.game_id).filter(
+                GameSession.user_id == user_id,
+                GameSession.ended_at.isnot(None),
+                GameSession.ended_at >= today_start.isoformat()
+            ).distinct().all()
+            
+            distinct_games = len(distinct_game_rows)
+            distinct_game_ids = [r[0] for r in distinct_game_rows]
+            print(f"    🌐 [QuestTracker] Play Distinct Games: {distinct_games} distinct games today: {distinct_game_ids}")
+            
+            self.update_quest_progress(user_id, quest, distinct_games, user_quest)
+        
+        # Complete at least half of game daily quests today
+        elif quest_type == "complete_half_daily_game_quests":
+            user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+            
+            # Daily reset
+            reset_period = quest_config.get('reset_period')
+            if reset_period == 'daily':
+                today = self._get_today_date()
+                stored_data = self._get_quest_extra_data(user_quest)
+                last_reset_date = stored_data.get('last_reset_date')
+                if last_reset_date != today:
+                    user_quest.is_completed = 0
+                    user_quest.current_progress = 0
+                    user_quest.completed_at = None
+                    user_quest.is_claimed = 0
+                    user_quest.claimed_at = None
+                    stored_data['last_reset_date'] = today
+                    self._set_quest_extra_data(user_quest, stored_data)
+                    self.db.flush()
+            
+            # Find all game-specific daily quests (have game_id in config AND reset_period daily)
+            daily_game_quests = self.db.query(Quest).filter(
+                Quest.is_active == 1,
+                Quest.config.like('%"reset_period": "daily"%'),
+                Quest.config.like('%"game_id":%'),
+            ).all()
+            
+            total_daily_game = len(daily_game_quests)
+            if total_daily_game > 0:
+                daily_game_quest_ids = [q.quest_id for q in daily_game_quests]
+                
+                # Flush so that game quests completed earlier in this loop are visible
+                self.db.flush()
+                
+                completed_count = self.db.query(UserQuest).filter(
+                    UserQuest.user_id == user_id,
+                    UserQuest.quest_id.in_(daily_game_quest_ids),
+                    UserQuest.is_completed == 1,
+                ).count()
+                
+                print(f"🏆 [QuestTracker] Complete Half: {completed_count}/{total_daily_game} daily game quests completed")
+                
+                half_target = math.ceil(total_daily_game / 2)
+                
+                # Update target_value dynamically so UI shows correct progress
+                quest.target_value = half_target
+                
+                self.update_quest_progress(user_id, quest, int(completed_count), user_quest)
+        
+        # Complete ALL game daily quests today
+        elif quest_type == "complete_all_daily_quests":
+            user_quest = self.get_or_create_user_quest(user_id, quest.quest_id)
+            
+            # Daily reset
+            reset_period = quest_config.get('reset_period')
+            if reset_period == 'daily':
+                today = self._get_today_date()
+                stored_data = self._get_quest_extra_data(user_quest)
+                last_reset_date = stored_data.get('last_reset_date')
+                if last_reset_date != today:
+                    user_quest.is_completed = 0
+                    user_quest.current_progress = 0
+                    user_quest.completed_at = None
+                    user_quest.is_claimed = 0
+                    user_quest.claimed_at = None
+                    stored_data['last_reset_date'] = today
+                    self._set_quest_extra_data(user_quest, stored_data)
+                    self.db.flush()
+            
+            # Find all game-specific daily quests
+            daily_game_quests = self.db.query(Quest).filter(
+                Quest.is_active == 1,
+                Quest.config.like('%"reset_period": "daily"%'),
+                Quest.config.like('%"game_id":%'),
+            ).all()
+            
+            total_daily_game = len(daily_game_quests)
+            if total_daily_game > 0:
+                daily_game_quest_ids = [q.quest_id for q in daily_game_quests]
+                
+                # Flush so that game quests completed earlier in this loop are visible
+                self.db.flush()
+                
+                completed_count = self.db.query(UserQuest).filter(
+                    UserQuest.user_id == user_id,
+                    UserQuest.quest_id.in_(daily_game_quest_ids),
+                    UserQuest.is_completed == 1,
+                ).count()
+                
+                print(f"🏆 [QuestTracker] Complete All: {completed_count}/{total_daily_game} daily game quests completed")
+                
+                # Update target_value dynamically so UI shows correct progress
+                quest.target_value = total_daily_game
+                
+                self.update_quest_progress(user_id, quest, int(completed_count), user_quest)
     
     def track_login(self, user_id: str):
         """Track quest progress when user logs in."""

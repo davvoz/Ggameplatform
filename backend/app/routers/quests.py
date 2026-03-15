@@ -7,6 +7,8 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 import os
+import json
+import math
 
 from app.database import get_db
 from app.models import Quest, UserQuest, User, LevelMilestone
@@ -51,7 +53,23 @@ async def get_all_quests(
         query = query.filter(Quest.is_active == 1)
     
     quests = query.order_by(Quest.quest_id).all()
-    return [quest.to_dict() for quest in quests]
+    
+    # Pre-compute the number of game-specific daily quests (for platform daily meta-quests)
+    daily_game_quest_count = db.query(Quest).filter(
+        Quest.is_active == 1,
+        Quest.config.like('%"reset_period": "daily"%'),
+        Quest.config.like('%"game_id":%'),
+    ).count()
+    
+    result = []
+    for quest in quests:
+        q = quest.to_dict()
+        if quest.quest_type == "complete_half_daily_game_quests" and daily_game_quest_count > 0:
+            q["target_value"] = math.ceil(daily_game_quest_count / 2)
+        elif quest.quest_type == "complete_all_daily_quests" and daily_game_quest_count > 0:
+            q["target_value"] = daily_game_quest_count
+        result.append(q)
+    return result
 
 
 @router.get("/user/{user_id}", response_model=List[QuestWithProgress])
@@ -69,9 +87,22 @@ async def get_user_quests(
     # Get all active quests
     quests = db.query(Quest).filter(Quest.is_active == 1).order_by(Quest.quest_id).all()
     
+    # Pre-compute the number of game-specific daily quests (for platform daily meta-quests)
+    daily_game_quest_count = db.query(Quest).filter(
+        Quest.is_active == 1,
+        Quest.config.like('%"reset_period": "daily"%'),
+        Quest.config.like('%"game_id":%'),
+    ).count()
+
     result = []
     for quest in quests:
         quest_dict = quest.to_dict()
+        
+        # Dynamically fix target_value for platform daily meta-quests
+        if quest.quest_type == "complete_half_daily_game_quests" and daily_game_quest_count > 0:
+            quest_dict["target_value"] = math.ceil(daily_game_quest_count / 2)
+        elif quest.quest_type == "complete_all_daily_quests" and daily_game_quest_count > 0:
+            quest_dict["target_value"] = daily_game_quest_count
         
         # Get user progress for this quest
         progress = db.query(UserQuest).filter(

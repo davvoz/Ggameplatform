@@ -1,8 +1,17 @@
 {
-  "version": "3.37.1",
-  "timestamp": "2026-03-15T14:59:40.798Z",
-  "buildNumber": 451,
+  "version": "3.38.0",
+  "timestamp": "2026-03-15T18:45:53.829Z",
+  "buildNumber": 452,
   "changelog": [
+    {
+      "version": "3.38.0",
+      "date": "2026-03-15",
+      "type": "minor",
+      "changes": [
+        "feat: Add CRUD endpoints and schema for platform configuration, push subscriptions, and game progress",
+        "🔖 Bump version to 3.37.1 [skip-version]"
+      ]
+    },
     {
       "version": "3.37.1",
       "date": "2026-03-15",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: limit bet amount to a maximum of 500",
         "🔖 Bump version to 3.35.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.35.3",
-      "date": "2026-03-11",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: remove emoji from potential win display in bet summary",
-        "🔖 Bump version to 3.35.2 [skip-version]"
       ]
     }
   ]

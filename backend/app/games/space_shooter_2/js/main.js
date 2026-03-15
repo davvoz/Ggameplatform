@@ -230,6 +230,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load progress on startup
     loadWorldProgress();
 
+    // ========== SAVE / LOAD ==========
+
+    // Load saved checkpoint and show CONTINUE button if available
+    async function loadSaveData() {
+        const save = await game.saveManager.loadRaw();
+        const btnContinue = document.getElementById('btn-continue');
+        const infoEl = document.getElementById('continue-info');
+        if (save && btnContinue) {
+            btnContinue.classList.remove('hidden');
+            // Show save info (level + date)
+            const dt = new Date(save.ts);
+            const dateStr = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const worldNum = Math.ceil(save.level / 30);
+            infoEl.textContent = `Level ${save.level} · World ${worldNum} · ${dateStr}`;
+        } else if (btnContinue) {
+            btnContinue.classList.add('hidden');
+        }
+    }
+    loadSaveData();
+
+    // CONTINUE button → load save and start playing
+    document.getElementById('btn-continue')?.addEventListener('click', () => {
+        const save = game.saveManager.getCachedSave();
+        if (!save) return;
+        game.sound.playMenuClick();
+        hideScreen('start-screen');
+        game.sound.resume();
+        game.sound.playGameMusic();
+        game.loadSavedGame(save);
+    });
+
+    // SAVE from pause menu (save and keep playing)
+    document.getElementById('btn-save')?.addEventListener('click', async () => {
+        game.sound.playMenuClick();
+        await game.saveMidLevel();
+    });
+
+    // SAVE & QUIT from pause menu
+    document.getElementById('btn-save-quit')?.addEventListener('click', async () => {
+        game.sound.playMenuClick();
+        await game.saveMidLevel();
+        game.state = 'menu';
+        showScreen('start-screen', false);
+        hideScreen('settings-popup');
+        game._hideHudButtons();
+        game.sound.playIntroMusic();
+        // Refresh continue button
+        await loadSaveData();
+    });
+
     // ========== DIFFICULTY SELECTION ==========
     const diffCards = document.querySelectorAll('.diff-card');
     let selectedDifficulty = 'boring';
@@ -308,6 +358,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Ultimate select → Start game
     document.getElementById('btn-select-ultimate')?.addEventListener('click', () => {
         hideScreen('ultimate-select-screen');
+        // New game clears any existing save
+        game.saveManager.deleteSave();
         game.startGame(selectedShip, selectedUltimate, selectedDifficulty, selectedWorld);
         game.sound.playMenuClick();
     });
@@ -376,6 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.state = 'menu';
         game.clearAllEntities();
         loadWorldProgress();
+        loadSaveData();
         showScreen('start-screen', false);
         hideScreen('game-over-screen');
         game.sound.playIntroMusic();
@@ -387,6 +440,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.state = 'menu';
         game.clearAllEntities();
         loadWorldProgress();
+        // Delete save on victory (game completed)
+        game.saveManager.deleteSave();
+        loadSaveData();
         showScreen('start-screen', false);
         hideScreen('victory-screen');
         game.sound.playIntroMusic();
@@ -415,6 +471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         game._hideHudButtons();
         game.sound.playIntroMusic();
         game.sound.playMenuClick();
+        loadSaveData();
     });
 
     // ========== PERFORMANCE BUTTONS ==========

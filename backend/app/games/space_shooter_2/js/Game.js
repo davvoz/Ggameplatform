@@ -22,6 +22,7 @@ import HUDRenderer from './managers/HUDRenderer.js';
 import UIManager from './managers/UIManager.js';
 import PerkEffectsManager from './managers/PerkEffectsManager.js';
 import PlatformCoinService from './managers/PlatformCoinService.js';
+import SaveManager from './managers/SaveManager.js';
 
 
 
@@ -104,6 +105,10 @@ class Game {
         this.uiManager = new UIManager(this);
         this.perkEffectsManager = new PerkEffectsManager(this);
         this.coinService = new PlatformCoinService();
+        this.saveManager = new SaveManager(this);
+
+        // Reference needed by loadSavedGame()
+        this._difficultyConfig = DIFFICULTY_CONFIG;
 
         this.init();
     }
@@ -1095,6 +1100,93 @@ class Game {
 
     addScore(points) {
         return this.scoreManager.addScore(points);
+    }
+
+    // ── Save / Load ─────────────────────────────────────────────────
+
+    /** Save checkpoint (called after level completion). */
+    async saveCheckpoint() {
+        return this.saveManager.save(true);
+    }
+
+    /** Save current state mid-level (e.g. Save & Quit from pause). */
+    async saveMidLevel() {
+        return this.saveManager.save(false);
+    }
+
+    /**
+     * Resume from a saved checkpoint.
+     * @param {object} saveData - raw save object from SaveManager.loadRaw()
+     */
+    loadSavedGame(saveData) {
+        if (!saveData) return false;
+        const g = this;
+
+        // Reset everything (same as startGame)
+        g.scoreManager.reset();
+        g.levelManager.reset();
+        g.waveManager.reset();
+        g.cinematicManager.reset();
+        g.perkEffectsManager.reset();
+        g.hudRenderer.reset();
+        g.entityManager.clearAll();
+        g.perkSystem.reset();
+
+        g.timeScale = 1;
+        g.bulletTimeActive = false;
+        g.bulletTimeTimer = 0;
+
+        // Restore config
+        g.difficulty = g._difficultyConfig[saveData.difficultyId] || g._difficultyConfig.boring;
+        g.selectedShipId = saveData.shipId;
+        g.selectedUltimateId = saveData.ultimateId;
+        g.hasContinued = saveData.hasContinued || false;
+        g.lastSentScore = 0;
+        g.gameTime = saveData.gameTime || 0;
+
+        // Restore score
+        g.scoreManager.score = saveData.score || 0;
+        g.scoreManager.totalPoints = saveData.totalPoints || 0;
+        g.scoreManager.totalEnemiesKilled = saveData.totalEnemiesKilled || 0;
+
+        // Restore level
+        g.levelManager.currentLevel = saveData.level;
+        g.levelManager.currentWorld = g.levelManager.getCurrentWorld();
+        g.levelManager.levelStartTime = performance.now();
+        g.sessionStartLevel = saveData.level;
+
+        // Create player with saved stats
+        const player = new Player(
+            g.logicalWidth / 2 - 32,
+            g.logicalHeight - 100,
+            saveData.shipId,
+            saveData.ultimateId
+        );
+        player.bonusStats = saveData.bonusStats || { hp: 0, speed: 0, resist: 0, fireRate: 0 };
+        player.recalculateStats();
+        player.health = player.maxHealth;
+        player.weaponLevel = saveData.weaponLevel || 1;
+        g.entityManager.player = player;
+
+        // Restore perks
+        if (saveData.perks) {
+            for (const [perkId, stacks] of Object.entries(saveData.perks)) {
+                for (let i = 0; i < stacks; i++) {
+                    g.perkSystem.activatePerk(perkId);
+                }
+            }
+        }
+        g.perkEffectsManager.applyPerkModifiersToPlayer();
+
+        // Background & audio
+        if (g.backgroundFacade) g.backgroundFacade.setLevel(saveData.level);
+        g.sound.resume();
+        if (g.sound.musicBuffers?.length > 0) g.sound.playGameMusic();
+        if (window.startGameSession) window.startGameSession();
+
+        // Start level intro cinematic
+        g.cinematicManager.beginLevelIntro();
+        return true;
     }
 }
 

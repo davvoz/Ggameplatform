@@ -86,6 +86,8 @@ class LevelManager {
             // Final world completed — save progress
             const completedWorld = Math.ceil(prevLevel / LEVELS_PER_WORLD);
             if (window.saveWorldProgress) window.saveWorldProgress(completedWorld);
+            // Clear checkpoint save (game completed!)
+            g.saveManager.deleteSave();
             g.state = 'victory';
             g.uiManager.showVictoryScreen();
             return;

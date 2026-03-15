@@ -1,8 +1,17 @@
 {
-  "version": "3.36.4",
-  "timestamp": "2026-03-14T10:50:23.619Z",
-  "buildNumber": 449,
+  "version": "3.37.0",
+  "timestamp": "2026-03-15T14:02:59.128Z",
+  "buildNumber": 450,
   "changelog": [
+    {
+      "version": "3.37.0",
+      "date": "2026-03-15",
+      "type": "minor",
+      "changes": [
+        "feat: Add platform daily quests for cross-game activities",
+        "🔖 Bump version to 3.36.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.36.4",
       "date": "2026-03-14",
@@ -84,15 +93,6 @@
       "changes": [
         "feat(prediction-market): Implement prediction market backend with betting logic, BTC price fetching, and odds calculation",
         "🔖 Bump version to 3.35.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.35.1",
-      "date": "2026-03-09",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2] add world 4",
-        "🔖 Bump version to 3.35.0 [skip-version]"
       ]
     }
   ]

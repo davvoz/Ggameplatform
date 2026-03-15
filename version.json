@@ -1,8 +1,17 @@
 {
-  "version": "3.37.0",
-  "timestamp": "2026-03-15T14:02:59.128Z",
-  "buildNumber": 450,
+  "version": "3.37.1",
+  "timestamp": "2026-03-15T14:59:40.798Z",
+  "buildNumber": 451,
   "changelog": [
+    {
+      "version": "3.37.1",
+      "date": "2026-03-15",
+      "type": "patch",
+      "changes": [
+        "fix: [SS2]Implement save/load functionality with continue and save buttons",
+        "🔖 Bump version to 3.37.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.37.0",
       "date": "2026-03-15",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: remove emoji from potential win display in bet summary",
         "🔖 Bump version to 3.35.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.35.2",
-      "date": "2026-03-11",
-      "type": "patch",
-      "changes": [
-        "feat(prediction-market): Implement prediction market backend with betting logic, BTC price fetching, and odds calculation",
-        "🔖 Bump version to 3.35.1 [skip-version]"
       ]
     }
   ]

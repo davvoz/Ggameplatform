@@ -917,6 +917,123 @@ const DB_SCHEMA = {
         },
         
         erPosition: { x: 400, y: 50 }
+    },
+
+    // ==================== SYSTEM TABLES ====================
+
+    platform_config: {
+        tableName: 'platform_config',
+        label: 'Config Piattaforma',
+        icon: '⚙️',
+        color: '#607D8B',
+        apiEndpoint: 'platform-config',
+        dataKey: 'platform_config',
+
+        primaryKey: 'key',
+        foreignKeys: {},
+
+        fields: {
+            key: { ...FIELD_TYPES.STRING_PK, label: 'Chiave' },
+            value: { ...FIELD_TYPES.TEXT, label: 'Valore', required: true },
+            description: { ...FIELD_TYPES.TEXT, label: 'Descrizione' },
+            updated_at: { ...FIELD_TYPES.UPDATED_AT, label: 'Aggiornato il' }
+        },
+
+        tableColumns: ['key', 'value', 'description', 'updated_at', 'actions'],
+
+        columnConfig: {
+            key: { searchable: true, style: 'font-weight: 600; font-family: monospace;' },
+            value: { searchable: true, type: 'custom', render: (value) => ({
+                type: 'html',
+                content: `<code style="font-size: 0.85em; max-width: 300px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${value || '-'}</code>`
+            })},
+            description: { style: 'color: #737373; font-size: 0.9em;' },
+            updated_at: { type: 'date' }
+        },
+
+        erPosition: { x: 400, y: 200 }
+    },
+
+    push_subscriptions: {
+        tableName: 'push_subscriptions',
+        label: 'Push Subscriptions',
+        icon: '🔔',
+        color: '#E91E63',
+        apiEndpoint: 'push-subscriptions',
+        dataKey: 'push_subscriptions',
+
+        primaryKey: 'subscription_id',
+        foreignKeys: {
+            user_id: { table: 'users', field: 'user_id' }
+        },
+
+        fields: {
+            subscription_id: { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            user_id: { ...FIELD_TYPES.STRING, label: 'User', required: true, fk: 'users.user_id' },
+            endpoint: { ...FIELD_TYPES.TEXT, label: 'Endpoint', required: true },
+            p256dh_key: { ...FIELD_TYPES.STRING, label: 'P256DH Key', required: true },
+            auth_key: { ...FIELD_TYPES.STRING, label: 'Auth Key', required: true },
+            user_agent: { ...FIELD_TYPES.STRING, label: 'User Agent' },
+            is_active: { ...FIELD_TYPES.IS_ACTIVE, label: 'Attiva' },
+            created_at: { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' },
+            updated_at: { ...FIELD_TYPES.UPDATED_AT, label: 'Aggiornato il' },
+            last_used: { ...FIELD_TYPES.DATETIME, label: 'Ultimo Uso' }
+        },
+
+        tableColumns: ['subscription_id', 'user_id', 'is_active', 'user_agent', 'last_used', 'updated_at', 'actions'],
+
+        columnConfig: {
+            subscription_id: { width: '60px' },
+            user_id: { type: 'custom', render: RENDERERS.truncateId(12), searchable: true },
+            is_active: { type: 'custom', render: RENDERERS.booleanStatus('🔔 Attiva', '🔕 Inattiva') },
+            user_agent: { style: 'font-size: 0.85em; color: #737373; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' },
+            last_used: { type: 'date' },
+            updated_at: { type: 'date' }
+        },
+
+        erPosition: { x: 400, y: 350 }
+    },
+
+    game_progress: {
+        tableName: 'game_progress',
+        label: 'Game Progress',
+        icon: '💾',
+        color: '#00BCD4',
+        apiEndpoint: 'game-progress',
+        dataKey: 'game_progress',
+
+        primaryKey: 'id',
+        foreignKeys: {
+            user_id: { table: 'users', field: 'user_id' },
+            game_id: { table: 'games', field: 'game_id' }
+        },
+
+        fields: {
+            id: { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            user_id: { ...FIELD_TYPES.STRING, label: 'User', required: true, fk: 'users.user_id' },
+            game_id: { ...FIELD_TYPES.STRING, label: 'Game', required: true, fk: 'games.game_id' },
+            progress_data: { ...FIELD_TYPES.JSON, label: 'Progress Data', default: '{}' },
+            updated_at: { ...FIELD_TYPES.UPDATED_AT, label: 'Aggiornato il' }
+        },
+
+        tableColumns: ['id', 'user_id', 'game_id', 'progress_data', 'updated_at', 'actions'],
+
+        columnConfig: {
+            id: { width: '60px' },
+            user_id: { type: 'custom', render: RENDERERS.truncateId(12), searchable: true },
+            game_id: { searchable: true, style: 'font-weight: 600;' },
+            progress_data: { type: 'custom', render: (value) => {
+                const json = typeof value === 'string' ? value : JSON.stringify(value || {});
+                const preview = json.length > 80 ? json.substring(0, 80) + '...' : json;
+                return {
+                    type: 'html',
+                    content: `<code style="font-size: 0.8em; color: #525252;">${preview}</code>`
+                };
+            }},
+            updated_at: { type: 'date' }
+        },
+
+        erPosition: { x: 400, y: 500 }
     }
 };
 

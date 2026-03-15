@@ -14,7 +14,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser, Campaign
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser, Campaign, PlatformConfig, PushSubscription, GameProgress
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -330,6 +330,22 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         campaigns_query = session.query(Campaign).order_by(desc(Campaign.created_at)).all()
         campaigns = [c.to_dict() for c in campaigns_query]
         
+        # Get platform config
+        platform_config_query = session.query(PlatformConfig).order_by(PlatformConfig.key).all()
+        platform_config = [pc.to_dict() for pc in platform_config_query]
+        
+        # Get push subscriptions
+        push_subscriptions_query = session.query(PushSubscription).order_by(desc(PushSubscription.created_at)).all()
+        push_subscriptions = [ps.to_dict() for ps in push_subscriptions_query]
+        
+        # Get game progress
+        game_progress_query = session.query(GameProgress).order_by(desc(GameProgress.updated_at)).all()
+        game_progress = [gp.to_dict() for gp in game_progress_query]
+        
+        # Get admin users (without password hashes)
+        admin_users_query = session.query(AdminUser).order_by(AdminUser.admin_id).all()
+        admin_users = [au.to_dict() for au in admin_users_query]
+        
         # Calculate total coins in circulation
         total_coins_circulation = sum([uc.balance for uc in user_coins_query])
     
@@ -351,6 +367,10 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "total_user_login_streak": len(user_login_streak),
         "total_daily_login_reward_config": len(daily_login_reward_config),
         "total_campaigns": len(campaigns),
+        "total_platform_config": len(platform_config),
+        "total_push_subscriptions": len(push_subscriptions),
+        "total_game_progress": len(game_progress),
+        "total_admin_users": len(admin_users),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -371,6 +391,10 @@ async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
         "user_login_streak": user_login_streak,
         "daily_login_reward_config": daily_login_reward_config,
         "campaigns": campaigns,
+        "platform_config": platform_config,
+        "push_subscriptions": push_subscriptions,
+        "game_progress": game_progress,
+        "admin_users": admin_users,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -464,6 +488,18 @@ async def export_database():
         # Export campaigns
         campaigns_query = session.query(Campaign).order_by(desc(Campaign.created_at)).all()
         campaigns = [c.to_dict() for c in campaigns_query]
+        
+        # Export platform config
+        platform_config_query = session.query(PlatformConfig).order_by(PlatformConfig.key).all()
+        platform_config = [pc.to_dict() for pc in platform_config_query]
+        
+        # Export push subscriptions
+        push_subscriptions_query = session.query(PushSubscription).order_by(desc(PushSubscription.created_at)).all()
+        push_subscriptions = [ps.to_dict() for ps in push_subscriptions_query]
+        
+        # Export game progress
+        game_progress_query = session.query(GameProgress).order_by(desc(GameProgress.updated_at)).all()
+        game_progress = [gp.to_dict() for gp in game_progress_query]
     
     return {
         "export_date": datetime.utcnow().isoformat(),
@@ -485,6 +521,9 @@ async def export_database():
         "total_user_login_streak": len(user_login_streak),
         "total_daily_login_reward_config": len(daily_login_reward_config),
         "total_campaigns": len(campaigns),
+        "total_platform_config": len(platform_config),
+        "total_push_subscriptions": len(push_subscriptions),
+        "total_game_progress": len(game_progress),
         "games": games,
         "users": users,
         "sessions": sessions,
@@ -502,7 +541,10 @@ async def export_database():
         "weekly_winners": weekly_winners,
         "daily_login_rewards": daily_login_rewards,
         "daily_login_reward_config": daily_login_reward_config,
-        "campaigns": campaigns
+        "campaigns": campaigns,
+        "platform_config": platform_config,
+        "push_subscriptions": push_subscriptions,
+        "game_progress": game_progress
     }
 
 @router.get("/sessions/open")
@@ -2010,6 +2052,261 @@ async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== PLATFORM CONFIG CRUD ENDPOINTS ==========
+
+@router.post("/platform-config", status_code=201)
+async def create_platform_config(request: Request, db: Session = Depends(get_db)):
+    """Create a new platform config entry"""
+    try:
+        data = await request.json()
+        if not data.get("key") or not data.get("value"):
+            raise HTTPException(status_code=400, detail="key and value are required")
+        
+        existing = db.query(PlatformConfig).filter(PlatformConfig.key == data["key"]).first()
+        if existing:
+            raise HTTPException(status_code=409, detail=f"Config key '{data['key']}' already exists")
+        
+        config = PlatformConfig(
+            key=data["key"],
+            value=data["value"],
+            description=data.get("description", "")
+        )
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/platform-config/{key}")
+async def get_platform_config(key: str, db: Session = Depends(get_db)):
+    """Get a platform config entry by key"""
+    try:
+        config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Config not found")
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/platform-config/{key}")
+async def update_platform_config(key: str, request: Request, db: Session = Depends(get_db)):
+    """Update a platform config entry"""
+    try:
+        data = await request.json()
+        config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Config not found")
+        
+        if "value" in data:
+            config.value = data["value"]
+        if "description" in data:
+            config.description = data["description"]
+        
+        db.commit()
+        db.refresh(config)
+        return {"success": True, "data": config.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/platform-config/{key}")
+async def delete_platform_config(key: str, db: Session = Depends(get_db)):
+    """Delete a platform config entry"""
+    try:
+        config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
+        if not config:
+            raise HTTPException(status_code=404, detail="Config not found")
+        
+        db.delete(config)
+        db.commit()
+        return {"success": True, "message": f"Config '{key}' deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== PUSH SUBSCRIPTIONS CRUD ENDPOINTS ==========
+
+@router.post("/push-subscriptions", status_code=201)
+async def create_push_subscription(request: Request, db: Session = Depends(get_db)):
+    """Create a new push subscription"""
+    try:
+        data = await request.json()
+        required = ["user_id", "endpoint", "p256dh_key", "auth_key"]
+        for field in required:
+            if not data.get(field):
+                raise HTTPException(status_code=400, detail=f"{field} is required")
+        
+        sub = PushSubscription(
+            user_id=data["user_id"],
+            endpoint=data["endpoint"],
+            p256dh_key=data["p256dh_key"],
+            auth_key=data["auth_key"],
+            user_agent=data.get("user_agent", ""),
+            is_active=data.get("is_active", True)
+        )
+        db.add(sub)
+        db.commit()
+        db.refresh(sub)
+        return {"success": True, "data": sub.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/push-subscriptions/{subscription_id}")
+async def get_push_subscription(subscription_id: int, db: Session = Depends(get_db)):
+    """Get a push subscription by ID"""
+    try:
+        sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        return {"success": True, "data": sub.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/push-subscriptions/{subscription_id}")
+async def update_push_subscription(subscription_id: int, request: Request, db: Session = Depends(get_db)):
+    """Update a push subscription"""
+    try:
+        data = await request.json()
+        sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        for field in ["user_id", "endpoint", "p256dh_key", "auth_key", "user_agent", "is_active"]:
+            if field in data:
+                setattr(sub, field, data[field])
+        
+        db.commit()
+        db.refresh(sub)
+        return {"success": True, "data": sub.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/push-subscriptions/{subscription_id}")
+async def delete_push_subscription(subscription_id: int, db: Session = Depends(get_db)):
+    """Delete a push subscription"""
+    try:
+        sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
+        if not sub:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        db.delete(sub)
+        db.commit()
+        return {"success": True, "message": "Subscription deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== GAME PROGRESS CRUD ENDPOINTS ==========
+
+@router.post("/game-progress", status_code=201)
+async def create_game_progress(request: Request, db: Session = Depends(get_db)):
+    """Create a new game progress entry"""
+    try:
+        data = await request.json()
+        if not data.get("user_id") or not data.get("game_id"):
+            raise HTTPException(status_code=400, detail="user_id and game_id are required")
+        
+        existing = db.query(GameProgress).filter(
+            GameProgress.user_id == data["user_id"],
+            GameProgress.game_id == data["game_id"]
+        ).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="Progress entry already exists for this user/game")
+        
+        progress = GameProgress(
+            user_id=data["user_id"],
+            game_id=data["game_id"],
+            progress_data=data.get("progress_data", "{}")
+        )
+        db.add(progress)
+        db.commit()
+        db.refresh(progress)
+        return {"success": True, "data": progress.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/game-progress/{progress_id}")
+async def get_game_progress(progress_id: int, db: Session = Depends(get_db)):
+    """Get a game progress entry by ID"""
+    try:
+        progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
+        if not progress:
+            raise HTTPException(status_code=404, detail="Progress not found")
+        return {"success": True, "data": progress.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/game-progress/{progress_id}")
+async def update_game_progress(progress_id: int, request: Request, db: Session = Depends(get_db)):
+    """Update a game progress entry"""
+    try:
+        data = await request.json()
+        progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
+        if not progress:
+            raise HTTPException(status_code=404, detail="Progress not found")
+        
+        for field in ["user_id", "game_id", "progress_data"]:
+            if field in data:
+                setattr(progress, field, data[field])
+        
+        db.commit()
+        db.refresh(progress)
+        return {"success": True, "data": progress.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/game-progress/{progress_id}")
+async def delete_game_progress(progress_id: int, db: Session = Depends(get_db)):
+    """Delete a game progress entry"""
+    try:
+        progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
+        if not progress:
+            raise HTTPException(status_code=404, detail="Progress not found")
+        
+        db.delete(progress)
+        db.commit()
+        return {"success": True, "message": "Progress deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

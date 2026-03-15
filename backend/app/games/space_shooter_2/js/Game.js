@@ -1141,13 +1141,15 @@ class Game {
         g.selectedShipId = saveData.shipId;
         g.selectedUltimateId = saveData.ultimateId;
         g.hasContinued = saveData.hasContinued || false;
-        g.lastSentScore = 0;
         g.gameTime = saveData.gameTime || 0;
 
         // Restore score
         g.scoreManager.score = saveData.score || 0;
         g.scoreManager.totalPoints = saveData.totalPoints || 0;
         g.scoreManager.totalEnemiesKilled = saveData.totalEnemiesKilled || 0;
+
+        // Mark restored score as already sent so XP delta is correct
+        g.lastSentScore = g.scoreManager.score;
 
         // Restore level
         g.levelManager.currentLevel = saveData.level;

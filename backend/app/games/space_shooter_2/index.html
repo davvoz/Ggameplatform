@@ -90,8 +90,9 @@
 
                 <button id="btn-start" class="btn-primary">START GAME</button>
                 <button id="btn-continue" class="btn-secondary hidden">
-                    <span class="continue-label">CONTINUE</span>
+                    <span class="continue-label">▶ CONTINUE RUN</span>
                     <span class="continue-info" id="continue-info"></span>
+                    <span class="continue-warning">Progress is lost on death</span>
                 </button>
             </div>
         </div>
@@ -361,6 +362,7 @@
                     </div>
                     <div class="continue-balance" id="go-continue-balance"></div>
                 </div>
+                <p class="go-checkpoint-note" id="go-checkpoint-note">💀 Checkpoint cleared — this run is over</p>
                 <div class="screen-actions center">
                     <button id="btn-restart" class="btn-primary">TRY AGAIN</button>
                 </div>
@@ -433,8 +435,9 @@
                         </div>
                     </div>
                     <button id="btn-resume" class="btn-primary settings-resume">RESUME</button>
-                    <button id="btn-save" class="btn-secondary btn-save-style">SAVE</button>
-                    <button id="btn-save-quit" class="btn-secondary btn-save-style">SAVE & QUIT</button>
+                    <button id="btn-save" class="btn-secondary btn-save-style">💾 SAVE CHECKPOINT</button>
+                    <button id="btn-save-quit" class="btn-secondary btn-save-style">💾 SAVE & QUIT</button>
+                    <p class="save-hint">Checkpoint is cleared if you die — each run counts for the leaderboard!</p>
                     <button id="btn-quit" class="btn-danger">QUIT TO MENU</button>
                 </div>
             </div>

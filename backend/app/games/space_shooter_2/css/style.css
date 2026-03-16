@@ -2073,3 +2073,43 @@ body.game-fullscreen #game-container {
     border-color: rgba(40, 180, 100, 0.5);
     box-shadow: 0 0 16px rgba(40, 180, 100, 0.15);
 }
+
+/* ========== SAVE HINT (pause menu) ========== */
+
+.save-hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: rgba(255, 180, 80, 0.7);
+    text-align: center;
+    margin: 6px 0 10px;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+}
+
+/* ========== CONTINUE BUTTON WARNING ========== */
+
+#btn-continue .continue-warning {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: rgba(255, 180, 80, 0.6);
+    letter-spacing: 0.3px;
+    font-weight: 400;
+}
+
+/* ========== SAVE INDICATOR DANGER ========== */
+
+#save-indicator.danger {
+    border-color: rgba(255, 80, 60, 0.5);
+    color: #ff6655;
+}
+
+/* ========== GAME OVER CHECKPOINT NOTE ========== */
+
+.go-checkpoint-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 100, 80, 0.65);
+    text-align: center;
+    margin: 14px 0 4px;
+    letter-spacing: 0.3px;
+}

@@ -427,6 +427,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-restart')?.addEventListener('click', () => {
         game.state = 'menu';
         game.clearAllEntities();
+        // Ensure save is cleared on game over (run ended)
+        game.saveManager.deleteSave();
         loadWorldProgress();
         loadSaveData();
         showScreen('start-screen', false);

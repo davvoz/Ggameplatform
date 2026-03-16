@@ -128,7 +128,7 @@ class SaveManager {
 
     // ─── Delete ────────────────────────────────────────────────────────
 
-    async deleteSave() {
+    async deleteSave(showIndicator = false) {
         this._cachedSave = null;
         try { localStorage.removeItem(LS_KEY); } catch (_) {}
 
@@ -139,24 +139,35 @@ class SaveManager {
                 await PlatformSDK.saveProgress(existing);
             } catch (_) {}
         }
+
+        if (showIndicator) this._showDeleteIndicator();
     }
 
     // ─── Visual feedback ───────────────────────────────────────────────
 
     _showSaveIndicator() {
+        this._showIndicator('💾 CHECKPOINT SAVED', false);
+    }
+
+    _showDeleteIndicator() {
+        this._showIndicator('💀 CHECKPOINT CLEARED', true);
+    }
+
+    _showIndicator(text, isDanger) {
         let el = document.getElementById('save-indicator');
         if (!el) {
             el = document.createElement('div');
             el.id = 'save-indicator';
-            el.textContent = '💾 SAVED';
             document.getElementById('game-container')?.appendChild(el);
         }
-        el.classList.remove('hidden', 'fade-out');
+        el.textContent = text;
+        el.classList.remove('hidden', 'fade-out', 'danger');
+        if (isDanger) el.classList.add('danger');
         el.classList.add('show');
         clearTimeout(this._saveIndicatorTimer);
         this._saveIndicatorTimer = setTimeout(() => {
             el.classList.add('fade-out');
-            setTimeout(() => el.classList.remove('show', 'fade-out'), 400);
+            setTimeout(() => el.classList.remove('show', 'fade-out', 'danger'), 400);
         }, 1500);
     }
 }

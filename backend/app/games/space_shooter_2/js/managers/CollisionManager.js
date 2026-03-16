@@ -431,6 +431,9 @@ class CollisionManager {
 
         g.uiManager.hideHudButtons();
 
+        // Delete checkpoint save — this run is over (leaderboard integrity)
+        g.saveManager.deleteSave(true);
+
         // Send score to platform — use delta (xp_score) so XP is only for new points
         const deltaScore = g.scoreManager.score - g.lastSentScore;
         if (window.sendScoreToPlatform) {

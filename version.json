@@ -1,8 +1,17 @@
 {
-  "version": "3.38.0",
-  "timestamp": "2026-03-15T18:45:53.829Z",
-  "buildNumber": 452,
+  "version": "3.38.1",
+  "timestamp": "2026-03-16T23:10:23.244Z",
+  "buildNumber": 453,
   "changelog": [
+    {
+      "version": "3.38.1",
+      "date": "2026-03-16",
+      "type": "patch",
+      "changes": [
+        "fix : [SS2]checkpoints",
+        "🔖 Bump version to 3.38.0 [skip-version]"
+      ]
+    },
     {
       "version": "3.38.0",
       "date": "2026-03-15",
@@ -83,15 +92,6 @@
       "changes": [
         "Add Blackjack game backend and registration script",
         "🔖 Bump version to 3.35.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.35.4",
-      "date": "2026-03-11",
-      "type": "patch",
-      "changes": [
-        "fix: limit bet amount to a maximum of 500",
-        "🔖 Bump version to 3.35.3 [skip-version]"
       ]
     }
   ]

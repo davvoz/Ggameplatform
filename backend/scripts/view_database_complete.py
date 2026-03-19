@@ -4,6 +4,7 @@ Complete database viewer - Shows all tables with all fields and sample data
 import sqlite3
 import sys
 import os
+import re
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -17,6 +18,12 @@ def format_value(value):
     if isinstance(value, str) and len(value) > 50:
         return value[:47] + "..."
     return str(value)
+
+def _validate_identifier(name):
+    """Validate that a SQL identifier contains only safe characters."""
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', name):
+        raise ValueError(f"Invalid SQL identifier: {name}")
+    return name
 
 def view_database():
     """View complete database structure and data"""
@@ -42,7 +49,8 @@ def view_database():
             print("=" * 100)
             
             # Get column info
-            cursor.execute(f"PRAGMA table_info({table_name})")
+            safe_name = _validate_identifier(table_name)
+            cursor.execute(f"PRAGMA table_info({safe_name})")
             columns = cursor.fetchall()
             
             print("\n🔹 SCHEMA:")
@@ -59,7 +67,7 @@ def view_database():
                 print(f"{col_id:<3} {col_name:<30} {col_type:<15} {nullable:<10} {default:<15} {pk:<5}")
             
             # Get row count
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            cursor.execute(f"SELECT COUNT(*) FROM [{safe_name}]")
             count = cursor.fetchone()[0]
             
             print(f"\n📊 Total rows: {count}")
@@ -69,7 +77,7 @@ def view_database():
                 print("\n🔹 SAMPLE DATA (first 3 rows):")
                 print("-" * 100)
                 
-                cursor.execute(f"SELECT * FROM {table_name} LIMIT 3")
+                cursor.execute(f"SELECT * FROM [{safe_name}] LIMIT 3")
                 rows = cursor.fetchall()
                 
                 col_names = [col[1] for col in columns]
@@ -81,7 +89,7 @@ def view_database():
                         print(f"  {col_name:<30} = {display_value}")
             
             # Get foreign keys
-            cursor.execute(f"PRAGMA foreign_key_list({table_name})")
+            cursor.execute(f"PRAGMA foreign_key_list({safe_name})")
             fks = cursor.fetchall()
             
             if fks:
@@ -92,7 +100,7 @@ def view_database():
                     print(f"  {from_col} → {ref_table}.{to_col}")
             
             # Get indexes
-            cursor.execute(f"PRAGMA index_list({table_name})")
+            cursor.execute(f"PRAGMA index_list({safe_name})")
             indexes = cursor.fetchall()
             
             if indexes:
@@ -101,7 +109,8 @@ def view_database():
                 for idx in indexes:
                     idx_name, is_unique = idx[1], idx[2]
                     unique_marker = " [UNIQUE]" if is_unique else ""
-                    cursor.execute(f"PRAGMA index_info({idx_name})")
+                    safe_idx = _validate_identifier(idx_name)
+                    cursor.execute(f"PRAGMA index_info({safe_idx})")
                     idx_cols = cursor.fetchall()
                     col_list = ", ".join([col[2] for col in idx_cols])
                     print(f"  {idx_name}{unique_marker}: ({col_list})")

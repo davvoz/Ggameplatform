@@ -21,8 +21,13 @@ def create_admin_table():
     print("✅ admin_users table created successfully")
 
 
-def create_default_admin(username="admin", password="admin123"):
+def create_default_admin(username="admin", password=None):
     """Create default admin user."""
+    if password is None:
+        password = os.getenv("ADMIN_PASSWORD", "")
+        if not password:
+            print("❌ No password provided. Set ADMIN_PASSWORD environment variable.")
+            return
     print(f"\nCreating default admin user: {username}")
     
     with get_db_session() as session:
@@ -51,7 +56,6 @@ def create_default_admin(username="admin", password="admin123"):
         
         print(f"✅ Admin user created successfully")
         print(f"   Username: {username}")
-        print(f"   Password: {password}")
         print(f"\n⚠️  IMPORTANT: Change the default password immediately!")
 
 
@@ -118,10 +122,11 @@ if __name__ == "__main__":
     
     # Get credentials from environment variables
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
-    admin_password = os.getenv("ADMIN_PASSWORD", "changeme123")
+    admin_password = os.getenv("ADMIN_PASSWORD", "")
     
-    if admin_password == "changeme123":
-        print("\n⚠️  WARNING: Using default password! Set ADMIN_PASSWORD environment variable!")
+    if not admin_password:
+        print("\n⚠️  WARNING: No password set! Set ADMIN_PASSWORD environment variable!")
+        return
     
     # Create default admin
     create_default_admin(admin_username, admin_password)

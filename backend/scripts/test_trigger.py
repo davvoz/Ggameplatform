@@ -16,7 +16,7 @@ def test_trigger():
     # Crea un utente di test
     test_username = f"test_trigger_{int(time.time())}"
     print(f"1️⃣ Creazione utente di test: {test_username}")
-    user = create_user(username=test_username, email=f"{test_username}@test.com", password="test123")
+    user = create_user(username=test_username, email=f"{test_username}@test.com", password=uuid.uuid4().hex)
     user_id = user['user_id']
     print(f"   ✅ Utente creato: {user_id}\n")
     

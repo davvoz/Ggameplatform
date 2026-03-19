@@ -4,6 +4,7 @@ Migrates data from old schema (with 'metadata' column) to new schema (with 'extr
 """
 import sqlite3
 import json
+import re
 from pathlib import Path
 from datetime import datetime
 import shutil
@@ -299,10 +300,13 @@ def verify_migration():
     cursor = conn.cursor()
     
     # Count records in each table
+    ALLOWED_TABLES = {'games', 'users', 'game_sessions', 'user_achievements', 'leaderboards'}
     tables = ['games', 'users', 'game_sessions', 'user_achievements', 'leaderboards']
     
     for table in tables:
-        cursor.execute(f"SELECT COUNT(*) FROM {table}")
+        if table not in ALLOWED_TABLES or not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', table):
+            continue
+        cursor.execute(f"SELECT COUNT(*) FROM [{table}]")
         count = cursor.fetchone()[0]
         print(f"  ✅ {table}: {count} records")
     

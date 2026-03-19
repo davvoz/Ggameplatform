@@ -13,6 +13,7 @@ Tests:
 import requests
 import time
 import hashlib
+import uuid
 import bcrypt
 
 BASE_URL = "http://localhost:8000"
@@ -23,7 +24,7 @@ def test_password_hashing():
     print("-" * 50)
     
     # Test password
-    password = "TestPassword123!"
+    password = uuid.uuid4().hex
     
     # SHA-256 hash (insecure)
     sha256_hash = hashlib.sha256(password.encode()).hexdigest()

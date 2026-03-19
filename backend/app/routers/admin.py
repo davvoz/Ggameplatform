@@ -44,7 +44,12 @@ from datetime import datetime
 router = APIRouter()
 
 # JWT Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-to-random-secret-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY environment variable must be set. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
@@ -199,7 +204,7 @@ async def get_form_options(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Admin API key from environment
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
 def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
     """Verify admin access via API key or localhost"""

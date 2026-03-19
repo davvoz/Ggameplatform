@@ -20,7 +20,7 @@ from app.level_system import LevelSystem
 router = APIRouter()
 
 # Admin API key from environment
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
 def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
     """Verify admin access via API key or localhost"""

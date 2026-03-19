@@ -42,7 +42,7 @@ def create_campaigns_table():
         
         # Count records
         with engine.connect() as conn:
-            result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+            result = conn.execute(text("SELECT COUNT(*) FROM campaigns"))
             count = result.scalar()
             print(f"   Records: {count}")
         

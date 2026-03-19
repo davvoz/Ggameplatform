@@ -4,11 +4,18 @@ Check current database schema
 import sqlite3
 import sys
 import os
+import re
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 db_path = "data/game_platform.db"
+
+def _validate_identifier(name):
+    """Validate that a SQL identifier contains only safe characters."""
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', name):
+        raise ValueError(f"Invalid SQL identifier: {name}")
+    return name
 
 try:
     conn = sqlite3.connect(db_path)
@@ -24,11 +31,12 @@ try:
     
     for table in tables:
         table_name = table[0]
+        safe_name = _validate_identifier(table_name)
         print(f"\n📋 Table: {table_name}")
         print("-" * 80)
         
         # Get column info
-        cursor.execute(f"PRAGMA table_info({table_name})")
+        cursor.execute(f"PRAGMA table_info({safe_name})")
         columns = cursor.fetchall()
         
         for col in columns:
@@ -40,7 +48,7 @@ try:
             print(f"  {col_id:2d}. {col_name:30s} {col_type:15s}{pk_marker}{null_marker}{default_marker}")
         
         # Get count
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        cursor.execute(f"SELECT COUNT(*) FROM [{safe_name}]")
         count = cursor.fetchone()[0]
         print(f"\n  📊 Total rows: {count}")
     

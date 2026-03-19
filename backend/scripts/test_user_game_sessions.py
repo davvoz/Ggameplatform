@@ -4,6 +4,7 @@ Crea un utente, avvia sessioni di gioco in diversi giochi, e traccia i progressi
 """
 import time
 import random
+import uuid
 from datetime import datetime
 from app.database import (
     get_db_session,
@@ -148,7 +149,7 @@ def main():
     
     username = f"test_player_{int(time.time())}"
     email = f"{username}@test.com"
-    password = "TestPassword123!"
+    password = uuid.uuid4().hex
     
     try:
         user = create_user(

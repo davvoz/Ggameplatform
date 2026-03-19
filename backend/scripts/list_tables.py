@@ -3,9 +3,16 @@ List all tables in the database
 """
 import sys
 import os
+import re
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import sqlite3
+
+def _validate_identifier(name):
+    """Validate that a SQL identifier contains only safe characters."""
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', name):
+        raise ValueError(f"Invalid SQL identifier: {name}")
+    return name
 
 def list_all_tables():
     """List all tables in database"""
@@ -30,13 +37,14 @@ def list_all_tables():
         print(f"\n📊 Found {len(tables)} tables:")
         for table in tables:
             table_name = table[0]
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            safe_name = _validate_identifier(table_name)
+            cursor.execute(f"SELECT COUNT(*) FROM [{safe_name}]")
             count = cursor.fetchone()[0]
             print(f"   • {table_name:30} ({count} records)")
             
             # If it's quests, show structure
             if 'quest' in table_name.lower():
-                cursor.execute(f"PRAGMA table_info({table_name})")
+                cursor.execute(f"PRAGMA table_info({safe_name})")
                 columns = cursor.fetchall()
                 print(f"     Columns:")
                 for col in columns:

@@ -44,6 +44,7 @@ export class RainbowRushSDK {
      */
     setupPlatformListener() {
         window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
             // Only accept config messages
             if (event.data && event.data.type === 'config') {
                 const payload = event.data.payload;

@@ -2,6 +2,7 @@
 Test quest tracking system
 """
 import sys
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -18,7 +19,7 @@ def test_quest_tracking():
     # Create a test user
     print("1. Creating test user...")
     try:
-        user = create_user(username="questtester", email="quest@test.com", password="test123")
+        user = create_user(username="questtester", email="quest@test.com", password=uuid.uuid4().hex)
     except ValueError:
         # User already exists, authenticate instead
         from app.database import get_user_by_username

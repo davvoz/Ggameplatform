@@ -42,7 +42,7 @@ def create_push_subscriptions_table():
         
         # Count records
         with engine.connect() as conn:
-            result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+            result = conn.execute(text("SELECT COUNT(*) FROM push_subscriptions"))
             count = result.scalar()
             print(f"   Records: {count}")
         

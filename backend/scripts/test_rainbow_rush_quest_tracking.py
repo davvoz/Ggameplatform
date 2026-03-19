@@ -3,6 +3,7 @@ Test Rainbow Rush quest tracking system
 Verifies that quest tracking works correctly with platform database
 """
 import sys
+import uuid
 from pathlib import Path
 
 # Add parent directory to path
@@ -30,7 +31,7 @@ def test_rainbow_rush_quest_tracking():
     # Create or get test user
     print("2. Creating/getting test user...")
     try:
-        user = create_user(username="rr_test_user", email="rrtest@test.com", password="test123")
+        user = create_user(username="rr_test_user", email="rrtest@test.com", password=uuid.uuid4().hex)
         print(f"   ✅ Created new user: {user['user_id']}")
     except ValueError:
         user = get_user_by_username("rr_test_user")

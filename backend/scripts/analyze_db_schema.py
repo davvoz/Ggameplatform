@@ -3,9 +3,16 @@ Script to analyze the database schema and compare with ORM models
 """
 import sqlite3
 import json
+import re
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
+
+def _validate_identifier(name):
+    """Validate that a SQL identifier contains only safe characters."""
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', name):
+        raise ValueError(f"Invalid SQL identifier: {name}")
+    return name
 
 def analyze_database():
     conn = sqlite3.connect(str(DB_PATH))
@@ -25,11 +32,12 @@ def analyze_database():
         if table.startswith('sqlite_'):
             continue
             
+        safe_table = _validate_identifier(table)
         print(f"\n📋 TABLE: {table}")
         print("-" * 40)
         
         # Get columns
-        cursor.execute(f"PRAGMA table_info({table})")
+        cursor.execute(f"PRAGMA table_info({safe_table})")
         columns = cursor.fetchall()
         
         table_info = {
@@ -57,7 +65,7 @@ def analyze_database():
                 table_info["primary_keys"].append(name)
         
         # Get foreign keys
-        cursor.execute(f"PRAGMA foreign_key_list({table})")
+        cursor.execute(f"PRAGMA foreign_key_list({safe_table})")
         fks = cursor.fetchall()
         
         if fks:
@@ -72,7 +80,7 @@ def analyze_database():
                 print(f"    🔗 {fk[3]} -> {fk[2]}.{fk[4]}")
         
         # Get indexes
-        cursor.execute(f"PRAGMA index_list({table})")
+        cursor.execute(f"PRAGMA index_list({safe_table})")
         indexes = cursor.fetchall()
         if indexes:
             print(f"\n  Indexes:")

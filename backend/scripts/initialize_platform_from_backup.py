@@ -301,8 +301,13 @@ def insert_daily_login_config(session, data: list):
     print(f"   ✅ {len(data)} configurazioni daily login inserite")
 
 
-def create_default_admin(session, username: str = "admin", password: str = "admin123"):
+def create_default_admin(session, username: str = "admin", password: str = None):
     """Create default admin user for DB Viewer access."""
+    if password is None:
+        password = os.environ.get("ADMIN_PASSWORD", "")
+        if not password:
+            print(f"\n⚠️ Skipping admin creation: set ADMIN_PASSWORD environment variable")
+            return
     print(f"\n👤 Creazione admin user di default...")
     
     # Hash password with bcrypt
@@ -321,7 +326,6 @@ def create_default_admin(session, username: str = "admin", password: str = "admi
     
     print(f"   ✅ Admin user creato!")
     print(f"   📧 Username: {username}")
-    print(f"   🔑 Password: {password}")
 
 
 def set_platform_epoch(session) -> str:
@@ -477,7 +481,7 @@ def initialize_platform(backup_file: str, force: bool = False):
         print("\n🔐 Accedi al DB Viewer con:")
         print("   URL: /admin/login")
         print("   Username: admin")
-        print("   Password: admin123")
+        print("   Password: (set via ADMIN_PASSWORD env variable)")
         
     except Exception as e:
         session.rollback()

@@ -28,6 +28,7 @@ export class Application {
     // Listen for platform messages (XP banner, level-up) and render them in-game
     window.addEventListener('message', (event) => {
       try {
+        if (event.origin !== window.location.origin) return;
         if (!event.data || !event.data.type) return;
 
         if (event.data.type === 'showXPBanner' && event.data.payload) {

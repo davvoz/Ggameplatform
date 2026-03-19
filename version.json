@@ -1,8 +1,18 @@
 {
-  "version": "3.38.4",
-  "timestamp": "2026-03-19T21:59:32.293Z",
-  "buildNumber": 456,
+  "version": "3.38.5",
+  "timestamp": "2026-03-19T22:40:40.590Z",
+  "buildNumber": 457,
   "changelog": [
+    {
+      "version": "3.38.5",
+      "date": "2026-03-19",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix : remove scripts",
+        "🔖 Bump version to 3.38.4 [skip-version]"
+      ]
+    },
     {
       "version": "3.38.4",
       "date": "2026-03-19",
@@ -85,15 +95,6 @@
       "changes": [
         "fix: Add Sette e Mezzo quest processing to QuestTracker",
         "🔖 Bump version to 3.36.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.36.2",
-      "date": "2026-03-13",
-      "type": "patch",
-      "changes": [
-        "fix: Move client_max_body_size directive to server block for consistency",
-        "🔖 Bump version to 3.36.1 [skip-version]"
       ]
     }
   ]

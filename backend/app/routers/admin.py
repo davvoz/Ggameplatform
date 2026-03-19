@@ -46,7 +46,10 @@ router = APIRouter()
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError("JWT_SECRET_KEY environment variable must be set")
+    raise RuntimeError(
+        "JWT_SECRET_KEY environment variable must be set. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 

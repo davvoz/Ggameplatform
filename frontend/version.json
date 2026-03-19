@@ -1,8 +1,18 @@
 {
-  "version": "3.38.5",
-  "timestamp": "2026-03-19T22:40:40.590Z",
-  "buildNumber": 457,
+  "version": "3.38.6",
+  "timestamp": "2026-03-19T22:56:30.164Z",
+  "buildNumber": 458,
   "changelog": [
+    {
+      "version": "3.38.6",
+      "date": "2026-03-19",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "refactor: update deployment summary to use environment variable for commit message",
+        "🔖 Bump version to 3.38.5 [skip-version]"
+      ]
+    },
     {
       "version": "3.38.5",
       "date": "2026-03-19",
@@ -86,15 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: [SS2]Update session level tracking to use levelsCompleted in QuestTracker",
         "🔖 Bump version to 3.36.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.36.3",
-      "date": "2026-03-13",
-      "type": "patch",
-      "changes": [
-        "fix: Add Sette e Mezzo quest processing to QuestTracker",
-        "🔖 Bump version to 3.36.2 [skip-version]"
       ]
     }
   ]

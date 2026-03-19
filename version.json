@@ -1,8 +1,19 @@
 {
-  "version": "3.38.3",
-  "timestamp": "2026-03-19T16:51:29.465Z",
-  "buildNumber": 455,
+  "version": "3.38.4",
+  "timestamp": "2026-03-19T21:59:32.293Z",
+  "buildNumber": 456,
   "changelog": [
+    {
+      "version": "3.38.4",
+      "date": "2026-03-19",
+      "type": "patch",
+      "changes": [
+        "Merge pull request #8 from davvoz/copilot/fix-issue-resolution",
+        "Fix SonarCloud S2819: Add origin verification to service worker message handler",
+        "Initial plan",
+        "🔖 Bump version to 3.38.3 [skip-version]"
+      ]
+    },
     {
       "version": "3.38.3",
       "date": "2026-03-19",
@@ -83,15 +94,6 @@
       "changes": [
         "fix: Move client_max_body_size directive to server block for consistency",
         "🔖 Bump version to 3.36.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.36.1",
-      "date": "2026-03-13",
-      "type": "patch",
-      "changes": [
-        "fix: Set client_max_body_size for API requests",
-        "🔖 Bump version to 3.36.0 [skip-version]"
       ]
     }
   ]

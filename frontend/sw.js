@@ -101,6 +101,12 @@ self.addEventListener('notificationclose', event => {
 
 // Message handler - per debug e utility
 self.addEventListener('message', event => {
+  // Verify the origin of the received message
+  if (event.origin && event.origin !== self.location.origin) {
+    console.warn('[SW] Message from unauthorized origin:', event.origin);
+    return;
+  }
+
   if (event.data?.type === 'GET_SW_VERSION') {
     event.ports[0]?.postMessage({ version: SW_VERSION });
   }

@@ -382,6 +382,7 @@ class RainbowRushApp {
         
         // Listen for messages from platform (e.g., XP banner requests) - fallback
         window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
             if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
 
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);

@@ -97,6 +97,7 @@ async function initPlatform() {
     // Listen for XP banner and level-up notifications from platform/RuntimeShell
     window.addEventListener('message', (event) => {
         try {
+            if (event.origin !== window.location.origin) return;
             const msg = event.data;
             if (!msg || !msg.type) return;
             if (msg.type === 'showXPBanner' && msg.payload) {

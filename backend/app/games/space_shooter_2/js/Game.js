@@ -958,6 +958,7 @@ class Game {
 
     setupWindowListeners() {
         window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
             if (!event.data || !event.data.type) return;
 
             if (event.data.type === 'showXPBanner' && event.data.payload) {

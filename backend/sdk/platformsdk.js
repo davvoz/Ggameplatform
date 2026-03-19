@@ -124,6 +124,11 @@
         handlePlatformMessage(event) {
             const message = event.data;
             
+            // Validate message origin
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            
             // Validate message format
             if (!this.isValidMessage(message)) {
                 return;
@@ -165,7 +170,7 @@
                                 payload: { _messageId: message.payload?._messageId || null },
                                 timestamp: Date.now(),
                                 protocolVersion: PROTOCOL_VERSION
-                            }, '*');
+                            }, window.location.origin);
                         }
                     } catch (err) {
                         this.log('Error sending handled ack to parent:', err);
@@ -183,7 +188,7 @@
                                 payload: { _messageId: message.payload?._messageId || null },
                                 timestamp: Date.now(),
                                 protocolVersion: PROTOCOL_VERSION
-                            }, '*');
+                            }, window.location.origin);
                         }
                     } catch (err) {
                         this.log('Error sending handled ack to parent:', err);
@@ -611,7 +616,7 @@
             
             // Send to parent window
             if (window.parent && window.parent !== window.self) {
-                window.parent.postMessage(message, '*');
+                window.parent.postMessage(message, window.location.origin);
             }
             
         }
@@ -622,7 +627,7 @@
         processMessageQueue() {
             while (this.messageQueue.length > 0) {
                 const message = this.messageQueue.shift();
-                window.parent.postMessage(message, '*');
+                window.parent.postMessage(message, window.location.origin);
             }
         }
         

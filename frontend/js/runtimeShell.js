@@ -222,6 +222,22 @@ export default class RuntimeShell {
     }
 
     /**
+     * Get the origin of the game iframe for secure postMessage targeting
+     * @returns {string} The game iframe origin
+     */
+    getGameOrigin() {
+        try {
+            if (this.iframe && this.iframe.src) {
+                const url = new URL(this.iframe.src, window.location.origin);
+                return url.origin;
+            }
+        } catch (e) {
+            this.log('Could not determine game origin, using current origin');
+        }
+        return window.location.origin;
+    }
+
+    /**
      * Validate message format
      * @param {Object} message - The message to validate
      * @returns {boolean} Whether the message is valid
@@ -537,7 +553,7 @@ export default class RuntimeShell {
         }
 
         this.log('Sending message to game:', message);
-        this.iframe.contentWindow.postMessage(message, '*');
+        this.iframe.contentWindow.postMessage(message, this.getGameOrigin());
     }
 
     /**
@@ -548,7 +564,7 @@ export default class RuntimeShell {
 
         while (this.messageQueue.length > 0) {
             const message = this.messageQueue.shift();
-            this.iframe.contentWindow.postMessage(message, '*');
+            this.iframe.contentWindow.postMessage(message, this.getGameOrigin());
         }
     }
 
@@ -928,7 +944,7 @@ export default class RuntimeShell {
             payload: { _requestId: requestId, progress_data: progressData },
             protocolVersion: PROTOCOL_VERSION,
             timestamp: Date.now()
-        }, '*');
+        }, this.getGameOrigin());
     }
 
     /**

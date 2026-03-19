@@ -105,6 +105,8 @@ function onPlatformReady() {
  * Handle messages from parent frame (platform)
  */
 function handleMessage(event) {
+    if (event.origin !== window.location.origin) return;
+    
     const data = event.data;
     
     if (!data || typeof data !== 'object') return;

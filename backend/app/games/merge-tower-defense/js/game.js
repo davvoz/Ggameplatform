@@ -49,6 +49,7 @@ export class Game {
         
         // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
         window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
             if (!event.data || !event.data.type) return;
             
             // Handle XP banner

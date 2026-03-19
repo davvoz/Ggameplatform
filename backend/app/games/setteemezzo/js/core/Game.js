@@ -74,6 +74,7 @@ export class Game {
         // Listen for platform XP / level-up messages
         window.addEventListener('message', (e) => {
             try {
+                if (e.origin !== window.location.origin) return;
                 if (!e.data?.type) return;
                 if (e.data.type === 'showXPBanner' && e.data.payload) {
                     Game.#showXPBanner(e.data.payload.xp_earned, e.data.payload);

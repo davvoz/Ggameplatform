@@ -1,8 +1,17 @@
 {
-  "version": "3.38.2",
-  "timestamp": "2026-03-19T16:26:14.629Z",
-  "buildNumber": 454,
+  "version": "3.38.3",
+  "timestamp": "2026-03-19T16:51:29.465Z",
+  "buildNumber": 455,
   "changelog": [
+    {
+      "version": "3.38.3",
+      "date": "2026-03-19",
+      "type": "patch",
+      "changes": [
+        "fix: update python-multipart version to 0.0.22 in requirements",
+        "🔖 Bump version to 3.38.2 [skip-version]"
+      ]
+    },
     {
       "version": "3.38.2",
       "date": "2026-03-19",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: Set client_max_body_size for API requests",
         "🔖 Bump version to 3.36.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.36.0",
-      "date": "2026-03-13",
-      "type": "minor",
-      "changes": [
-        "feat: Add Sette e Mezzo game",
-        "🔖 Bump version to 3.35.5 [skip-version]"
       ]
     }
   ]

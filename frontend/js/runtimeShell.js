@@ -224,6 +224,31 @@ export default class RuntimeShell {
     }
 
     /**
+     * Get validated target origin for postMessage
+     * Extracts origin from iframe src and validates against allowed origins
+     * @returns {string|null} Valid target origin or null if invalid
+     */
+    getValidatedTargetOrigin() {
+        try {
+            if (!this.iframe || !this.iframe.src) {
+                return null;
+            }
+            const targetOrigin = new URL(this.iframe.src).origin;
+            
+            // Validate the target origin is in our allowed list
+            if (this.isValidOrigin(targetOrigin)) {
+                return targetOrigin;
+            }
+            
+            this.log('Target origin not in allowed origins:', targetOrigin);
+            return null;
+        } catch (e) {
+            this.log('Failed to determine iframe origin:', e.message);
+            return null;
+        }
+    }
+
+    /**
      * Validate message format
      * @param {Object} message - The message to validate
      * @returns {boolean} Whether the message is valid
@@ -539,13 +564,12 @@ export default class RuntimeShell {
         }
 
         this.log('Sending message to game:', message);
-        try {
-            const targetOrigin = new URL(this.iframe.src).origin;
-            this.iframe.contentWindow.postMessage(message, targetOrigin);
-        } catch (e) {
-            this.log('Failed to determine iframe origin, using current origin');
-            this.iframe.contentWindow.postMessage(message, window.location.origin);
+        const targetOrigin = this.getValidatedTargetOrigin();
+        if (!targetOrigin) {
+            this.log('Cannot send message: unable to determine valid target origin');
+            return;
         }
+        this.iframe.contentWindow.postMessage(message, targetOrigin);
     }
 
     /**
@@ -554,9 +578,16 @@ export default class RuntimeShell {
     processMessageQueue() {
         this.log('Processing message queue:', this.messageQueue.length, 'messages');
 
+        const targetOrigin = this.getValidatedTargetOrigin();
+        if (!targetOrigin) {
+            this.log('Cannot process message queue: unable to determine valid target origin');
+            this.messageQueue = [];
+            return;
+        }
+
         while (this.messageQueue.length > 0) {
             const message = this.messageQueue.shift();
-            this.iframe.contentWindow.postMessage(message, '*');
+            this.iframe.contentWindow.postMessage(message, targetOrigin);
         }
     }
 
@@ -931,12 +962,17 @@ export default class RuntimeShell {
      */
     sendProgressResponse(requestId, progressData) {
         if (!this.iframe || !this.iframe.contentWindow) return;
+        const targetOrigin = this.getValidatedTargetOrigin();
+        if (!targetOrigin) {
+            this.log('Cannot send progress response: unable to determine valid target origin');
+            return;
+        }
         this.iframe.contentWindow.postMessage({
             type: 'progressLoaded',
             payload: { _requestId: requestId, progress_data: progressData },
             protocolVersion: PROTOCOL_VERSION,
             timestamp: Date.now()
-        }, '*');
+        }, targetOrigin);
     }
 
     /**

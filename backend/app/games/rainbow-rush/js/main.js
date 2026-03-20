@@ -10,6 +10,7 @@ class RainbowRushApp {
         this.gameController = null;
         this.screenManager = null;
         this.initialized = false;
+        this.parentOrigin = null;  // validated parent origin for postMessage
     }
 
     async init() {
@@ -73,11 +74,12 @@ class RainbowRushApp {
      */
     signalGameReady() {
         if (window.parent !== window) {
-            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
+            const targetOrigin = this.parentOrigin || (document.referrer ? new URL(document.referrer).origin : window.location.origin);
             window.parent.postMessage({
                 type: 'gameReady',
                 gameId: 'rainbow-rush',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                protocolVersion: '1.0.0'
             }, targetOrigin);
 
         }
@@ -383,8 +385,17 @@ class RainbowRushApp {
         
         // Listen for messages from platform (e.g., XP banner requests) - fallback
         window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'showXPBanner' && event.data.payload) {
-
+            if (!event.data || !event.data.type) return;
+            // Validate protocol version
+            if (event.data.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!this.parentOrigin) {
+                this.parentOrigin = event.origin;
+            } else if (event.origin !== this.parentOrigin) {
+                console.warn('[RainbowRush] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
+            if (event.data.type === 'showXPBanner' && event.data.payload) {
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
         });

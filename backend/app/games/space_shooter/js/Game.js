@@ -49,6 +49,7 @@ class Game {
         this.waveInterval = 5;
         this.waveNumber = 0;
         this.bossSpawned = false;
+        this.parentOrigin = null;  // validated parent origin for postMessage
 
         // Delta time
         this.lastTime = 0;
@@ -393,16 +394,23 @@ class Game {
         // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
+            // Validate protocol version
+            if (event.data.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!this.parentOrigin) {
+                this.parentOrigin = event.origin;
+            } else if (event.origin !== this.parentOrigin) {
+                console.warn('[SpaceShooter] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
 
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
-
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
 
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-
                 this.showLevelUpNotification(event.data.payload);
             }
         });

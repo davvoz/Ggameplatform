@@ -28,6 +28,9 @@ export class Game {
         // Initialize combat system (OOP-based)
         this.combatSystem = new CombatSystem(this);
 
+        // Validated parent origin for secure message handling
+        this.parentOrigin = null;
+
         this.setupInputHandlers();
         this.performanceMonitor = Utils.createPerformanceMonitor();
         this.setupWindowListeners();
@@ -50,6 +53,20 @@ export class Game {
         // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
+            
+            // Validate protocol version to ensure it's a valid platform message
+            if (event.data.protocolVersion !== '1.0.0') return;
+            
+            // Verify origin: once parent origin is established, reject messages from other origins
+            if (this.parentOrigin && event.origin !== this.parentOrigin) {
+                console.warn('[MTD] Rejected message from untrusted origin:', event.origin);
+                return;
+            }
+            
+            // Store parent origin from first valid message
+            if (!this.parentOrigin && event.origin) {
+                this.parentOrigin = event.origin;
+            }
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {

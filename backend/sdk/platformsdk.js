@@ -35,6 +35,7 @@
             this.eventCallbacks = new Map();
             this.messageQueue = [];
             this.config = null;
+            this.parentOrigin = null; // Validated parent origin for secure postMessage
             this.state = {
                 score: 0,
                 level: 1,
@@ -133,6 +134,18 @@
                 return;
             }
 
+            // Verify origin: once parent origin is established, reject messages from other origins
+            if (this.parentOrigin && event.origin !== this.parentOrigin) {
+                console.warn('[PlatformSDK] Rejected message from untrusted origin:', event.origin);
+                return;
+            }
+
+            // Store parent origin from first valid message for secure postMessage replies
+            if (!this.parentOrigin && event.origin) {
+                this.parentOrigin = event.origin;
+                this.log('Parent origin set to:', this.parentOrigin);
+            }
+
             this.log('Received platform message:', message);
 
             // Handle message based on type
@@ -163,13 +176,13 @@
                     // If any in-game handler exists, notify parent that game handled the banner
                     try {
                         const hasHandler = this.eventCallbacks.has('showXPBanner') && this.eventCallbacks.get('showXPBanner').length > 0;
-                        if (hasHandler && window.parent && window.parent !== window.self) {
+                        if (hasHandler && window.parent && window.parent !== window.self && this.parentOrigin) {
                             window.parent.postMessage({
                                 type: 'handled_showXPBanner',
                                 payload: { _messageId: message.payload?._messageId || null },
                                 timestamp: Date.now(),
                                 protocolVersion: PROTOCOL_VERSION
-                            }, '*');
+                            }, this.parentOrigin);
                         }
                     } catch (err) {
                         this.log('Error sending handled ack to parent:', err);
@@ -181,13 +194,13 @@
                     // Notify parent if handled in-game
                     try {
                         const hasHandler2 = this.eventCallbacks.has('showLevelUpModal') && this.eventCallbacks.get('showLevelUpModal').length > 0;
-                        if (hasHandler2 && window.parent && window.parent !== window.self) {
+                        if (hasHandler2 && window.parent && window.parent !== window.self && this.parentOrigin) {
                             window.parent.postMessage({
                                 type: 'handled_showLevelUpModal',
                                 payload: { _messageId: message.payload?._messageId || null },
                                 timestamp: Date.now(),
                                 protocolVersion: PROTOCOL_VERSION
-                            }, '*');
+                            }, this.parentOrigin);
                         }
                     } catch (err) {
                         this.log('Error sending handled ack to parent:', err);
@@ -613,9 +626,20 @@
                 return;
             }
 
-            // Send to parent window
+            // Send to parent window with validated origin
             if (window.parent && window.parent !== window.self) {
-                window.parent.postMessage(message, '*');
+                const targetOrigin = this.parentOrigin || window.location.ancestorOrigins?.[0];
+                if (targetOrigin) {
+                    window.parent.postMessage(message, targetOrigin);
+                } else {
+                    // Fallback: use document.referrer origin for initial ready message
+                    try {
+                        const referrerOrigin = new URL(document.referrer).origin;
+                        window.parent.postMessage(message, referrerOrigin);
+                    } catch (e) {
+                        this.log('Cannot determine parent origin, message not sent');
+                    }
+                }
             }
 
         }
@@ -624,9 +648,13 @@
          * Process queued messages
          */
         processMessageQueue() {
+            if (!this.parentOrigin) {
+                this.log('Cannot process message queue: parent origin not set');
+                return;
+            }
             while (this.messageQueue.length > 0) {
                 const message = this.messageQueue.shift();
-                window.parent.postMessage(message, '*');
+                window.parent.postMessage(message, this.parentOrigin);
             }
         }
 

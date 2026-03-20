@@ -1,6 +1,8 @@
 // ============================================
         // Platform Integration
         // ============================================
+        let parentOrigin = null;  // validated parent origin for postMessage
+        
         PlatformSDK.init({
             onPause: () => {
                 if (gameState.isPlaying) {
@@ -99,16 +101,23 @@
         // Listen for messages from platform (e.g., XP banner and level-up requests)
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
+            // Validate protocol version
+            if (event.data.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!parentOrigin) {
+                parentOrigin = event.origin;
+            } else if (event.origin !== parentOrigin) {
+                console.warn('[SkyTower] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
-
                 showXPBanner(event.data.payload.xp_earned, event.data.payload);
             }
             
             // Handle level-up notification
             if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-
                 showLevelUpNotification(event.data.payload);
             }
         });

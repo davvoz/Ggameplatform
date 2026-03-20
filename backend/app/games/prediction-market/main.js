@@ -27,6 +27,7 @@ const state = {
     chartTarget: [],        // target points for animation
     chartCurrent: [],       // currently rendered points
     chartAnimFrame: null,
+    parentOrigin: null,     // validated parent origin for postMessage
 };
 
 const $ = s => document.querySelector(s);
@@ -69,7 +70,7 @@ function cacheDom() {
 // --- Platform SDK ---
 function sendGameStarted() {
     try {
-        const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
+        const targetOrigin = state.parentOrigin || (document.referrer ? new URL(document.referrer).origin : window.location.origin);
         window.parent.postMessage({
             type: 'gameStarted',
             payload: {},
@@ -100,6 +101,15 @@ async function initPlatform() {
         try {
             const msg = event.data;
             if (!msg || !msg.type) return;
+            // Validate protocol version
+            if (msg.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!state.parentOrigin) {
+                state.parentOrigin = event.origin;
+            } else if (event.origin !== state.parentOrigin) {
+                console.warn('[UoD] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
             if (msg.type === 'showXPBanner' && msg.payload) {
                 showXPBanner(msg.payload.xp_earned, msg.payload);
             }

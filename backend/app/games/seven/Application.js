@@ -15,6 +15,7 @@ export class Application {
   constructor() {
     this._gameController = null;
     this._eventHandler = null;
+    this._parentOrigin = null;  // validated parent origin for postMessage
   }
 
   async start() {
@@ -29,6 +30,15 @@ export class Application {
     window.addEventListener('message', (event) => {
       try {
         if (!event.data || !event.data.type) return;
+        // Validate protocol version
+        if (event.data.protocolVersion !== '1.0.0') return;
+        // Validate and store origin from first valid message
+        if (!this._parentOrigin) {
+          this._parentOrigin = event.origin;
+        } else if (event.origin !== this._parentOrigin) {
+          console.warn('[Seven] Rejected message from unexpected origin:', event.origin);
+          return;
+        }
 
         if (event.data.type === 'showXPBanner' && event.data.payload) {
           this._gameController._ui.showXPBanner(event.data.payload.xp_earned, event.data.payload);

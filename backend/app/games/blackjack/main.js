@@ -16,6 +16,7 @@ let gameId = null;
 let balance = 0;
 let bet = 10;
 let busy = false;
+let parentOrigin = null; // Validated parent origin for secure postMessage
 
 // Track rendered cards so we only add new ones
 let renderedDealerCards = [];
@@ -78,6 +79,21 @@ async function initSDK() {
         try {
             const msg = event.data;
             if (!msg || !msg.type) return;
+            
+            // Validate protocol version to ensure it's a valid platform message
+            if (msg.protocolVersion !== '1.0.0') return;
+            
+            // Verify origin: once parent origin is established, reject messages from other origins
+            if (parentOrigin && event.origin !== parentOrigin) {
+                console.warn('[BJ] Rejected message from untrusted origin:', event.origin);
+                return;
+            }
+            
+            // Store parent origin from first valid message
+            if (!parentOrigin && event.origin) {
+                parentOrigin = event.origin;
+            }
+            
             if (msg.type === 'showXPBanner' && msg.payload) {
                 showXPBanner(msg.payload.xp_earned, msg.payload);
             }
@@ -574,14 +590,15 @@ async function apiDeal() {
 
         // Notify platform
         try {
-            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
-
-            window.parent.postMessage({
-                type: 'gameStarted',
-                payload: {},
-                timestamp: Date.now(),
-                protocolVersion: '1.0.0'
-            }, targetOrigin);
+            const targetOrigin = parentOrigin || (document.referrer ? new URL(document.referrer).origin : null);
+            if (targetOrigin && window.parent && window.parent !== window.self) {
+                window.parent.postMessage({
+                    type: 'gameStarted',
+                    payload: {},
+                    timestamp: Date.now(),
+                    protocolVersion: '1.0.0'
+                }, targetOrigin);
+            }
         } catch (_) { }
 
         updateUI(state, true);

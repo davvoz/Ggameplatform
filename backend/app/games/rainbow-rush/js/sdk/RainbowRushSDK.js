@@ -23,6 +23,7 @@ export class RainbowRushSDK {
         this.sessionStartTime = null;
         this.heartbeatInterval = null;
         this.initialized = false;
+        this.parentOrigin = null;  // validated parent origin for postMessage
         
         // Event listeners
         this.listeners = new Map();
@@ -45,26 +46,32 @@ export class RainbowRushSDK {
     setupPlatformListener() {
         window.addEventListener('message', (event) => {
             // Only accept config messages
-            if (event.data && event.data.type === 'config') {
-                const payload = event.data.payload;
-
-                
-                // Store platform user data - THIS IS THE ONLY SOURCE OF TRUTH
-                if (payload.userId) {
-                    this.userId = payload.userId; // Set userId from parent
-                    this.platformUserId = payload.userId;
-
-                }
-                if (payload.username) {
-                    this.username = payload.username;
-
-                }
-                
-                // Resolve the pending promise if waiting
-                if (this._configPromiseResolve) {
-                    this._configPromiseResolve();
-                    this._configPromiseResolve = null;
-                }
+            if (!event.data || event.data.type !== 'config') return;
+            // Validate protocol version
+            if (event.data.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!this.parentOrigin) {
+                this.parentOrigin = event.origin;
+            } else if (event.origin !== this.parentOrigin) {
+                console.warn('[RainbowRushSDK] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
+            
+            const payload = event.data.payload;
+            
+            // Store platform user data - THIS IS THE ONLY SOURCE OF TRUTH
+            if (payload.userId) {
+                this.userId = payload.userId; // Set userId from parent
+                this.platformUserId = payload.userId;
+            }
+            if (payload.username) {
+                this.username = payload.username;
+            }
+            
+            // Resolve the pending promise if waiting
+            if (this._configPromiseResolve) {
+                this._configPromiseResolve();
+                this._configPromiseResolve = null;
             }
         });
     }

@@ -99,6 +99,7 @@ class Game {
         this.CONTINUE_CHANGE_BUILD_COST = 70;
         this.hasContinued = false;
         this.lastSentScore = 0;
+        this.parentOrigin = null;  // validated parent origin for postMessage
         this.collisionManager = new CollisionManager(this);
         this.cinematicManager = new CinematicManager(this);
         this.hudRenderer = new HUDRenderer(this);
@@ -958,11 +959,16 @@ class Game {
 
     setupWindowListeners() {
         window.addEventListener('message', (event) => {
-            // Validate origin - only accept messages from parent platform
-            const expectedOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
-            if (event.origin !== expectedOrigin) return;
-
             if (!event.data || !event.data.type) return;
+            // Validate protocol version
+            if (event.data.protocolVersion !== '1.0.0') return;
+            // Validate and store origin from first valid message
+            if (!this.parentOrigin) {
+                this.parentOrigin = event.origin;
+            } else if (event.origin !== this.parentOrigin) {
+                console.warn('[SpaceShooter2] Rejected message from unexpected origin:', event.origin);
+                return;
+            }
 
             if (event.data.type === 'showXPBanner' && event.data.payload) {
                 this.showXPBanner(event.data.payload.xp_earned, event.data.payload);

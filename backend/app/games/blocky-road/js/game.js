@@ -41,6 +41,9 @@ class BlockyRoadGame {
         this.tutorialMoveCount = 0;
         this.tutorialMovesRequired = 3; // Hide after 3 movements
         
+        // Validated parent origin for secure postMessage
+        this.parentOrigin = null;
+        
         // Setup window listeners for platform messages
         this.setupWindowListeners();
     }
@@ -137,6 +140,20 @@ class BlockyRoadGame {
         // Listen for messages from platform (e.g., XP banner and level-up requests)
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
+            
+            // Validate protocol version to ensure it's a valid platform message
+            if (event.data.protocolVersion !== '1.0.0') return;
+            
+            // Verify origin: once parent origin is established, reject messages from other origins
+            if (this.parentOrigin && event.origin !== this.parentOrigin) {
+                console.warn('[BlockyRoad] Rejected message from untrusted origin:', event.origin);
+                return;
+            }
+            
+            // Store parent origin from first valid message
+            if (!this.parentOrigin && event.origin) {
+                this.parentOrigin = event.origin;
+            }
             
             // Handle XP banner
             if (event.data.type === 'showXPBanner' && event.data.payload) {
@@ -731,13 +748,15 @@ class BlockyRoadGame {
         // Notify platform that game has started - this will create the session
         if (typeof PlatformSDK !== 'undefined') {
             try {
-                window.parent.postMessage({
-                    type: 'gameStarted',
-                    payload: {},
-                    timestamp: Date.now(),
-                    protocolVersion: '1.0.0'
-                }, '*');
-
+                const targetOrigin = this.parentOrigin || (document.referrer ? new URL(document.referrer).origin : null);
+                if (targetOrigin && window.parent && window.parent !== window.self) {
+                    window.parent.postMessage({
+                        type: 'gameStarted',
+                        payload: {},
+                        timestamp: Date.now(),
+                        protocolVersion: '1.0.0'
+                    }, targetOrigin);
+                }
             } catch (e) {
                 console.error('⚠️ Failed to send game started event:', e);
             }
@@ -789,13 +808,15 @@ class BlockyRoadGame {
         // Notify platform that a new game has started - create new session
         if (typeof PlatformSDK !== 'undefined') {
             try {
-                window.parent.postMessage({
-                    type: 'gameStarted',
-                    payload: {},
-                    timestamp: Date.now(),
-                    protocolVersion: '1.0.0'
-                }, '*');
-
+                const targetOrigin = this.parentOrigin || (document.referrer ? new URL(document.referrer).origin : null);
+                if (targetOrigin && window.parent && window.parent !== window.self) {
+                    window.parent.postMessage({
+                        type: 'gameStarted',
+                        payload: {},
+                        timestamp: Date.now(),
+                        protocolVersion: '1.0.0'
+                    }, targetOrigin);
+                }
             } catch (e) {
                 console.error('⚠️ Failed to send game started event on restart:', e);
             }

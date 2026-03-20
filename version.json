@@ -1,8 +1,17 @@
 {
-  "version": "4.0.5",
-  "timestamp": "2026-03-20T17:40:43.125Z",
-  "buildNumber": 464,
+  "version": "4.0.6",
+  "timestamp": "2026-03-20T17:55:31.448Z",
+  "buildNumber": 465,
   "changelog": [
+    {
+      "version": "4.0.6",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix: [settemezzo] Sonar",
+        "🔖 Bump version to 4.0.5 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.5",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
         "Fix SonarCloud S2819: Add origin verification to service worker message handler",
         "Initial plan",
         "🔖 Bump version to 3.38.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.3",
-      "date": "2026-03-19",
-      "type": "patch",
-      "changes": [
-        "fix: update python-multipart version to 0.0.22 in requirements",
-        "🔖 Bump version to 3.38.2 [skip-version]"
       ]
     }
   ]

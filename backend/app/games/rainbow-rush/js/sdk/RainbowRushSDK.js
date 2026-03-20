@@ -46,7 +46,7 @@ export class RainbowRushSDK {
     setupPlatformListener() {
         window.addEventListener('message', (event) => {
             // Only accept config messages
-            if (!event.data || event.data.type !== 'config') return;
+            if (event.data?.type !== 'config') return;
             // Validate protocol version
             if (event.data.protocolVersion !== '1.0.0') return;
             // Validate and store origin from first valid message

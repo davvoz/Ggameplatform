@@ -385,7 +385,7 @@ class RainbowRushApp {
         
         // Listen for messages from platform (e.g., XP banner requests) - fallback
         window.addEventListener('message', (event) => {
-            if (!event.data || !event.data.type) return;
+            if (!event.data?.type) return;
             // Validate protocol version
             if (event.data.protocolVersion !== '1.0.0') return;
             // Validate and store origin from first valid message

@@ -230,7 +230,7 @@ export default class RuntimeShell {
      */
     getValidatedTargetOrigin() {
         try {
-            if (!this.iframe || !this.iframe.src) {
+            if (!this.iframe?.src) {
                 return null;
             }
             const targetOrigin = new URL(this.iframe.src).origin;

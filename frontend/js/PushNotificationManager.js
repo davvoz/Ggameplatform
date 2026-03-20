@@ -149,7 +149,6 @@ class PushNotificationManager {
             });
 
             if (!response.ok) {
-                const error = await response.json();
                 return null;
             }
 

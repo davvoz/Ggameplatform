@@ -1103,7 +1103,7 @@ async function initPushNotifications() {
         }
 
         // Chiede SUBITO il permesso e registra
-        const result = await pushManager.promptForSubscription(user.user_id);
+         await pushManager.promptForSubscription(user.user_id);
 
     } catch (err) {
     }

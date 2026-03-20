@@ -76,7 +76,7 @@ class CommunityManager {
         const user = this.authManager?.getUser();
 
         // ── Reuse the global CommunityAPI WebSocket if available ──
-        if (getCommunityWS() && getCommunityWS().isConnected) {
+        if (getCommunityWS()?.isConnected) {
             // Take over the existing connection
             this.communityAPI = getCommunityWS();
             this._ownsWS = false; // we must NOT disconnect on destroy

@@ -1,8 +1,17 @@
 {
-  "version": "4.0.4",
-  "timestamp": "2026-03-20T17:31:27.947Z",
-  "buildNumber": 463,
+  "version": "4.0.5",
+  "timestamp": "2026-03-20T17:40:43.125Z",
+  "buildNumber": 464,
   "changelog": [
+    {
+      "version": "4.0.5",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix: update parent origin handling in PlatformSDKManager",
+        "🔖 Bump version to 4.0.4 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.4",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: update python-multipart version to 0.0.22 in requirements",
         "🔖 Bump version to 3.38.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.2",
-      "date": "2026-03-19",
-      "type": "patch",
-      "changes": [
-        "fix: update python-multipart, python-jose, PyJWT, and Pillow versions in requirements",
-        "🔖 Bump version to 3.38.1 [skip-version]"
       ]
     }
   ]

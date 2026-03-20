@@ -1,8 +1,17 @@
 {
-  "version": "4.0.2",
-  "timestamp": "2026-03-20T16:20:34.607Z",
-  "buildNumber": 461,
+  "version": "4.0.3",
+  "timestamp": "2026-03-20T16:51:16.388Z",
+  "buildNumber": 462,
   "changelog": [
+    {
+      "version": "4.0.3",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix:Sonar",
+        "🔖 Bump version to 4.0.2 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.2",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
       "changes": [
         "fix : [SS2]checkpoints",
         "🔖 Bump version to 3.38.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.0",
-      "date": "2026-03-15",
-      "type": "minor",
-      "changes": [
-        "feat: Add CRUD endpoints and schema for platform configuration, push subscriptions, and game progress",
-        "🔖 Bump version to 3.37.1 [skip-version]"
       ]
     }
   ]

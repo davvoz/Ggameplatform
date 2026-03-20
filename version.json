@@ -1,8 +1,17 @@
 {
-  "version": "4.0.1",
-  "timestamp": "2026-03-20T15:49:01.553Z",
-  "buildNumber": 460,
+  "version": "4.0.2",
+  "timestamp": "2026-03-20T16:20:34.607Z",
+  "buildNumber": 461,
   "changelog": [
+    {
+      "version": "4.0.2",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix: remove unreachable code in PushNotificationManager",
+        "🔖 Bump version to 4.0.1 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.1",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
       "changes": [
         "feat: Add CRUD endpoints and schema for platform configuration, push subscriptions, and game progress",
         "🔖 Bump version to 3.37.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.37.1",
-      "date": "2026-03-15",
-      "type": "patch",
-      "changes": [
-        "fix: [SS2]Implement save/load functionality with continue and save buttons",
-        "🔖 Bump version to 3.37.0 [skip-version]"
       ]
     }
   ]

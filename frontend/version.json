@@ -1,8 +1,17 @@
 {
-  "version": "4.0.3",
-  "timestamp": "2026-03-20T16:51:16.388Z",
-  "buildNumber": 462,
+  "version": "4.0.4",
+  "timestamp": "2026-03-20T17:31:27.947Z",
+  "buildNumber": 463,
   "changelog": [
+    {
+      "version": "4.0.4",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix: Sonar",
+        "🔖 Bump version to 4.0.3 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.3",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: update python-multipart, python-jose, PyJWT, and Pillow versions in requirements",
         "🔖 Bump version to 3.38.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.1",
-      "date": "2026-03-16",
-      "type": "patch",
-      "changes": [
-        "fix : [SS2]checkpoints",
-        "🔖 Bump version to 3.38.0 [skip-version]"
       ]
     }
   ]

@@ -9,6 +9,18 @@ export class PlatformSDKAdapter {
     this._userId = null;
     this._config = null;
     this._sessionId = null;
+    this._parentOrigin = this._getParentOrigin();
+  }
+
+  _getParentOrigin() {
+    try {
+      if (document.referrer) {
+        return new URL(document.referrer).origin;
+      }
+    } catch (e) {
+      console.warn('[PlatformSDKAdapter] Could not determine parent origin:', e);
+    }
+    return null;
   }
 
   isAvailable() {
@@ -28,6 +40,7 @@ export class PlatformSDKAdapter {
   }
 
   sendGameStarted() {
+    if (!this._parentOrigin) return;
     try {
 
       window.parent.postMessage({
@@ -35,7 +48,7 @@ export class PlatformSDKAdapter {
         payload: {},
         timestamp: Date.now(),
         protocolVersion: '1.0.0'
-      }, '*');
+      }, this._parentOrigin);
     } catch (error) {
       console.error('[PlatformSDKAdapter] Error sending gameStarted:', error);
     }
@@ -326,7 +339,7 @@ export class PlatformSDKAdapter {
   }
 
   showXPNotification(xpAmount, sessionData) {
-    if (!this.isAvailable()) {
+    if (!this.isAvailable() || !this._parentOrigin) {
       return;
     }
 
@@ -343,7 +356,7 @@ export class PlatformSDKAdapter {
         },
         timestamp: Date.now(),
         protocolVersion: '1.0.0'
-      }, '*');
+      }, this._parentOrigin);
     } catch (error) {
       console.error('[PlatformSDKAdapter] Error showing XP notification:', error);
     }

@@ -8,6 +8,19 @@ let sessionStarted = false;
 let platformBalance = 0;
 const CONTINUE_COST = 50;
 
+// Get parent origin for secure postMessage
+function getParentOrigin() {
+    try {
+        if (document.referrer) {
+            return new URL(document.referrer).origin;
+        }
+    } catch (e) {
+        console.warn('[main] Could not determine parent origin:', e);
+    }
+    return null;
+}
+const parentOrigin = getParentOrigin();
+
 // Load user's coin balance
 async function loadUserBalance() {
     let userId = window.platformConfig?.userId;
@@ -66,14 +79,14 @@ function startGameSession() {
     if (sessionStarted) return;
     sessionStarted = true;
     
-    if (typeof PlatformSDK !== 'undefined') {
+    if (typeof PlatformSDK !== 'undefined' && parentOrigin) {
         try {
             window.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
-            }, '*');
+            }, parentOrigin);
 
         } catch (error) {
             console.error('⚠️ Failed to start game session:', error);

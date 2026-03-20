@@ -48,6 +48,19 @@ let isZoomedOut = false;
 let aiDifficulty = null;
 let gameStarted = false;
 
+// Get parent origin for secure postMessage
+function getParentOrigin() {
+    try {
+        if (document.referrer) {
+            return new URL(document.referrer).origin;
+        }
+    } catch (e) {
+        console.warn('[main] Could not determine parent origin:', e);
+    }
+    return null;
+}
+const parentOrigin = getParentOrigin();
+
 const DIFFICULTY_LABEL = {
   easy: "Easy",
   medium: "Medium",
@@ -84,14 +97,14 @@ function startGameSession() {
   if (sessionStarted) return;
   sessionStarted = true;
   
-  if (typeof PlatformSDK !== 'undefined') {
+  if (typeof PlatformSDK !== 'undefined' && parentOrigin) {
     try {
       window.parent.postMessage({
         type: 'gameStarted',
         payload: {},
         timestamp: Date.now(),
         protocolVersion: '1.0.0'
-      }, '*');
+      }, parentOrigin);
 
     } catch (error) {
       console.error('⚠️ Failed to start game session:', error);

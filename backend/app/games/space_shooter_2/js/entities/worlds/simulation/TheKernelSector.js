@@ -14,28 +14,28 @@ export class TheKernelSector extends SimulationSectorRenderer {
         const count = this.quality === 'low' ? 5 : 10;
         for (let i = 0; i < count; i++) {
             this.fractals.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                sides: 3 + Math.floor(Math.random() * 5),
-                radius: 8 + Math.random() * 25,
-                rot: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 0.8,
-                speed: 3 + Math.random() * 8,
-                hue: Math.random() * 360,
-                alpha: 0.08 + Math.random() * 0.12,
-                innerRings: 1 + Math.floor(Math.random() * 3)
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                sides: 3 + Math.floor(window.randomSecure() * 5),
+                radius: 8 + window.randomSecure() * 25,
+                rot: window.randomSecure() * Math.PI * 2,
+                rotSpeed: (window.randomSecure() - 0.5) * 0.8,
+                speed: 3 + window.randomSecure() * 8,
+                hue: window.randomSecure() * 360,
+                alpha: 0.08 + window.randomSecure() * 0.12,
+                innerRings: 1 + Math.floor(window.randomSecure() * 3)
             });
         }
 
         for (let i = 0; i < (this.quality === 'low' ? 10 : 20); i++) {
             this.floaters.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                size: 1 + Math.random() * 3,
-                speed: 2 + Math.random() * 6,
-                hue: Math.random() * 360,
-                alpha: 0.1 + Math.random() * 0.2,
-                orbit: Math.random() * Math.PI * 2
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                size: 1 + window.randomSecure() * 3,
+                speed: 2 + window.randomSecure() * 6,
+                hue: window.randomSecure() * 360,
+                alpha: 0.1 + window.randomSecure() * 0.2,
+                orbit: window.randomSecure() * Math.PI * 2
             });
         }
     }
@@ -46,14 +46,14 @@ export class TheKernelSector extends SimulationSectorRenderer {
             f.rot += f.rotSpeed * dt;
             f.hue = (f.hue + 15 * dt) % 360;
             if (f.y > this.canvasHeight + 30) {
-                f.y = -30; f.x = Math.random() * this.canvasWidth;
+                f.y = -30; f.x = window.randomSecure() * this.canvasWidth;
             }
         }
         for (const f of this.floaters) {
             f.y += f.speed * dt;
             f.orbit += dt * 0.5;
             f.x += Math.sin(f.orbit) * 10 * dt;
-            if (f.y > this.canvasHeight + 5) { f.y = -5; f.x = Math.random() * this.canvasWidth; }
+            if (f.y > this.canvasHeight + 5) { f.y = -5; f.x = window.randomSecure() * this.canvasWidth; }
         }
     }
 

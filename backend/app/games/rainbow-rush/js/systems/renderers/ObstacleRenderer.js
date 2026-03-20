@@ -104,15 +104,15 @@ export class ObstacleRenderer extends IEntityRenderer {
         }
 
         // Particelle di calore/energia che si irradiano
-        if (Math.random() < 0.3) {
+        if (window.randomSecure() < 0.3) {
             for (let i = 0; i < 3; i++) {
-                const particleAngle = Math.random() * Math.PI * 2;
-                const particleDistance = radius * (1.5 + Math.random() * 0.5);
+                const particleAngle = window.randomSecure() * Math.PI * 2;
+                const particleDistance = radius * (1.5 + window.randomSecure() * 0.5);
                 const px = centerX + Math.cos(particleAngle) * particleDistance;
                 const py = centerY + Math.sin(particleAngle) * particleDistance;
-                const pSize = 1 + Math.random() * 1.5;
+                const pSize = 1 + window.randomSecure() * 1.5;
 
-                this.renderer.drawCircle(px, py, pSize, [1.0, 0.5, 0.0, 0.6 + Math.random() * 0.4]);
+                this.renderer.drawCircle(px, py, pSize, [1.0, 0.5, 0.0, 0.6 + window.randomSecure() * 0.4]);
             }
         }
     }

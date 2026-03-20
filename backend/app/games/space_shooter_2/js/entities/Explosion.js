@@ -33,11 +33,11 @@ class Explosion {
                 ? (5 + Math.floor(size * 3))
                 : (6 + Math.floor(size * 4));
         for (let i = 0; i < blobCount; i++) {
-            const angle = (Math.PI * 2 / blobCount) * i + (Math.random() - 0.5) * 0.5;
+            const angle = (Math.PI * 2 / blobCount) * i + (window.randomSecure() - 0.5) * 0.5;
             this.blobs.push({
                 angle,
-                speed: 40 + Math.random() * 80 * size,
-                size: 8 + Math.random() * 12 * size,
+                speed: 40 + window.randomSecure() * 80 * size,
+                size: 8 + window.randomSecure() * 12 * size,
                 x: 0, y: 0
             });
         }
@@ -50,12 +50,12 @@ class Explosion {
                 ? (4 + Math.floor(size * 2))
                 : (5 + Math.floor(size * 3));
         for (let i = 0; i < sparkCount; i++) {
-            const angle = Math.random() * Math.PI * 2;
+            const angle = window.randomSecure() * Math.PI * 2;
             this.sparks.push({
                 angle,
-                speed: 80 + Math.random() * 120 * size,
+                speed: 80 + window.randomSecure() * 120 * size,
                 x: 0, y: 0,
-                life: 0.3 + Math.random() * 0.3
+                life: 0.3 + window.randomSecure() * 0.3
             });
         }
 

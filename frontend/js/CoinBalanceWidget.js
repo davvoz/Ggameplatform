@@ -220,12 +220,5 @@ if (!document.getElementById('coin-widget-style')) {
 document.head.appendChild(style);
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CoinBalanceWidget;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.CoinBalanceWidget = CoinBalanceWidget;
-}
+// ES6 export
+export default CoinBalanceWidget;

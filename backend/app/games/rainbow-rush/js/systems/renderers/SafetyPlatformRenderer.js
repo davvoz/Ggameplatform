@@ -106,8 +106,8 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
 
     renderDissolveParticles(platform, alpha) {
         for (let i = 0; i < 5; i++) {
-            const particleX = platform.x + Math.random() * platform.width;
-            const particleY = platform.y + Math.random() * platform.height;
+            const particleX = platform.x + window.randomSecure() * platform.width;
+            const particleY = platform.y + window.randomSecure() * platform.height;
             const particleColor = [...platform.color];
             particleColor[3] = alpha * 0.5;
             this.renderer.drawCircle(particleX, particleY, 2, particleColor);

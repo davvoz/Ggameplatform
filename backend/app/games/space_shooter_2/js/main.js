@@ -37,12 +37,13 @@ function startGameSession() {
     sessionStarted = true;
     if (typeof PlatformSDK !== 'undefined') {
         try {
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
             window.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
-            }, '*');
+            }, targetOrigin);
         } catch (e) {
             console.error('[SS2] Failed to start session:', e);
         }

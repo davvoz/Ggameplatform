@@ -25,19 +25,19 @@ export class JunglePlanetRenderer extends PlanetRenderer {
         for (let r = 0; r < riverCount; r++) {
             let baseX;
             if (riverCount === 1) {
-                baseX = W * 0.25 + Math.random() * W * 0.5;
+                baseX = W * 0.25 + window.randomSecure() * W * 0.5;
             } else {
                 const slot = (r + 0.5) / riverCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
+                baseX = W * (0.1 + slot * 0.8) + (window.randomSecure() - 0.5) * W * 0.12;
             }
-            const width = rw[0] + Math.random() * (rw[1] - rw[0]);
+            const width = rw[0] + window.randomSecure() * (rw[1] - rw[0]);
             const tileH = H * 3;
-            const segH = 60 + Math.random() * 30;
+            const segH = 60 + window.randomSecure() * 30;
             const segs = Math.ceil(tileH / segH);
             const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 15;
+            let cx = 0, drift = (window.randomSecure() - 0.5) * 15;
             for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 16;
+                drift += (window.randomSecure() - 0.5) * 16;
                 drift = Math.max(-30, Math.min(30, drift));
                 cx += drift;
                 const maxWander = W * 0.2;
@@ -45,10 +45,10 @@ export class JunglePlanetRenderer extends PlanetRenderer {
                 points.push({ x: cx, y: (i + 1) * segH });
             }
             const totalRiverH = points[points.length - 1].y;
-            const wc = Math.random();
-            const hue = wc < 0.5 ? 190 + Math.random() * 15 : 175 + Math.random() * 15;
-            const sat = 28 + Math.random() * 15;
-            const light = 16 + Math.random() * 8;
+            const wc = window.randomSecure();
+            const hue = wc < 0.5 ? 190 + window.randomSecure() * 15 : 175 + window.randomSecure() * 15;
+            const sat = 28 + window.randomSecure() * 15;
+            const light = 16 + window.randomSecure() * 8;
             this._rivers.push({ baseX, width, points, totalH: totalRiverH, hue, sat, light });
         }
         this._riverSpeed = 22;
@@ -64,15 +64,15 @@ export class JunglePlanetRenderer extends PlanetRenderer {
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
             const shape = [];
-            for (let s = 0; s < 6; s++) shape.push(0.7 + Math.random() * 0.35);
+            for (let s = 0; s < 6; s++) shape.push(0.7 + window.randomSecure() * 0.35);
             this._edgeTrees.push({
                 ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 30 + Math.random() * 50,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: 45 + Math.random() * 20,
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.65 + Math.random() * 0.3
+                reach: eR[0] + window.randomSecure() * (eR[1] - eR[0]),
+                height: 30 + window.randomSecure() * 50,
+                hue: eH[0] + window.randomSecure() * (eH[1] - eH[0]),
+                sat: 45 + window.randomSecure() * 20,
+                lightness: eL[0] + window.randomSecure() * (eL[1] - eL[0]),
+                alpha: 0.65 + window.randomSecure() * 0.3
             });
         }
 

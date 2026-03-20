@@ -89,7 +89,7 @@ export class AudioSynthesizer {
         const data = buffer.getChannelData(0);
         
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
+            data[i] = window.randomSecure() * 2 - 1;
         }
         
         const noise = this.ctx.createBufferSource();

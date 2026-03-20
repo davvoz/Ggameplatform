@@ -105,7 +105,7 @@ export class PhysicsEngine {
     bodyB.wakeUp();
 
     // Random initial velocities - reduced to keep dice contained
-    const randomVelocity = () => (Math.random() - 0.5) * 1;
+    const randomVelocity = () => (window.randomSecure() - 0.5) * 1;
     
     bodyA.velocity.set(
       randomVelocity(),
@@ -120,14 +120,14 @@ export class PhysicsEngine {
 
     // Random angular velocity (spin) - reduced for better control
     bodyA.angularVelocity.set(
-      (Math.random() - 0.5) * 15,
-      (Math.random() - 0.5) * 15,
-      (Math.random() - 0.5) * 15
+      (window.randomSecure() - 0.5) * 15,
+      (window.randomSecure() - 0.5) * 15,
+      (window.randomSecure() - 0.5) * 15
     );
     bodyB.angularVelocity.set(
-      (Math.random() - 0.5) * 15,
-      (Math.random() - 0.5) * 15,
-      (Math.random() - 0.5) * 15
+      (window.randomSecure() - 0.5) * 15,
+      (window.randomSecure() - 0.5) * 15,
+      (window.randomSecure() - 0.5) * 15
     );
 
     // Reset rotation

@@ -14,6 +14,8 @@
  */
 
 import { config } from './config.js';
+import AuthManager from './auth.js';
+import { getCurrentGameRuntime } from './state.js';
 
 const PROTOCOL_VERSION = '1.0.0';
 
@@ -537,7 +539,13 @@ export default class RuntimeShell {
         }
 
         this.log('Sending message to game:', message);
-        this.iframe.contentWindow.postMessage(message, '*');
+        try {
+            const targetOrigin = new URL(this.iframe.src).origin;
+            this.iframe.contentWindow.postMessage(message, targetOrigin);
+        } catch (e) {
+            this.log('Failed to determine iframe origin, using current origin');
+            this.iframe.contentWindow.postMessage(message, window.location.origin);
+        }
     }
 
     /**
@@ -559,8 +567,8 @@ export default class RuntimeShell {
         // Get current user from AuthManager
         let userId = null;
         let username = null;
-        if (window.AuthManager && window.AuthManager.isLoggedIn()) {
-            const user = window.AuthManager.getUser();
+        if (AuthManager.isLoggedIn()) {
+            const user = AuthManager.getUser();
             userId = user?.user_id || null;
             username = user?.username || user?.account_name || null;
         }
@@ -1004,13 +1012,13 @@ export default class RuntimeShell {
                 this.log('Game session ended:', data.session);
 
                 // Update user's XP in AuthManager (note: capital A)
-                if (window.AuthManager) {
-                    window.AuthManager.updateCur8(data.session.xp_earned);
+                if (AuthManager) {
+                    AuthManager.updateCur8(data.session.xp_earned);
 
                     // Refresh dati utente dal server per sincronizzare XP
                     // (ritardo di 500ms per dare tempo al backend di processare)
                     // setTimeout(async () => {
-                    //     await window.AuthManager.refreshUserData();
+                    //     await AuthManager.refreshUserData();
                     // }, 500);
                 }
 
@@ -1060,7 +1068,7 @@ export default class RuntimeShell {
         const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
         // Check if user is anonymous
-        const currentUser = window.AuthManager?.currentUser;
+        const currentUser = AuthManager?.currentUser;
         const isAnonymous = currentUser?.is_anonymous === true;
 
         // Add user_data to levelUpData for games to check
@@ -1122,15 +1130,14 @@ export default class RuntimeShell {
     }, 1000);
 
     function onOpen() {
-
         //se una sessione di gioco è in corso, termina la sessione senza assegnare XP
-        if (window.runtimeShellInstance) {
+        const runtimeInstance = getCurrentGameRuntime();
+        if (runtimeInstance) {
             //gameOver forzato con 0 punti
-            this.sendMessage(GAME_MESSAGE_TYPES.GAME_OVER, { score: 0, extra_data: {} });
+            runtimeInstance.sendMessage(GAME_MESSAGE_TYPES.GAME_OVER, { score: 0, extra_data: {} });
             //pulizia runtime shell senza assegnare XP
-            window.runtimeShellInstance.cleanup(false, true);
-            window.runtimeShellInstance.exit();
-
+            runtimeInstance.cleanup(false, true);
+            runtimeInstance.exit();
         }
     }
 })();

@@ -1,3 +1,5 @@
+import { getCoinBalanceWidget } from './state.js';
+
 /**
  * Steem Post Modal
  * Modal for creating and publishing Steem posts with user customization
@@ -40,7 +42,6 @@ class SteemPostModal {
             await this.loadInitialData();
 
         } catch (error) {
-            console.error('Error showing post modal:', error);
             alert(`Failed to open post creator: ${error.message}`);
         }
     }
@@ -199,7 +200,6 @@ class SteemPostModal {
             }
 
         } catch (error) {
-            console.error('Error loading initial data:', error);
             alert(`Failed to load balance: ${error.message}`);
         }
     }
@@ -253,7 +253,6 @@ class SteemPostModal {
             await this.confirmAndFinalize(result, hasKeychain ? 'keychain' : 'posting_key');
 
         } catch (error) {
-            console.error('Error publishing post:', error);
             this.resetPublishButton(publishBtn);
         }
     }
@@ -352,15 +351,15 @@ class SteemPostModal {
                 await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postTitle, publishMethod);
 
             } catch (error) {
-                console.error('[SteemPostModal] Failed to confirm post on backend:', error);
                 // Continue anyway - post was published successfully
             }
         }
 
         this.showSuccess(result.post_url);
 
-        if (window.coinBalanceWidget) {
-            await window.coinBalanceWidget.updateBalance();
+        const coinBalanceWidget = getCoinBalanceWidget();
+        if (coinBalanceWidget) {
+            await coinBalanceWidget.updateBalance();
         }
     }
 
@@ -458,7 +457,6 @@ class SteemPostModal {
             statusEl.style.color = '#4CAF50';
 
         } catch (error) {
-            console.error('Image upload error:', error);
             let errorMessage = error.message;
             if (errorMessage.includes('timeout')) {
                 errorMessage = 'Upload timeout. Please check your connection and try again.';
@@ -592,5 +590,5 @@ class SteemPostModal {
     }
 }
 
-// Export
-window.SteemPostModal = SteemPostModal;
+// ES6 export
+export default SteemPostModal;

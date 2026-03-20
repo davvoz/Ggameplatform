@@ -1,6 +1,14 @@
 import { getUserSessions, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { config } from './config.js';
+import AuthManager from './auth.js';
+import SteemPostAPI from './SteemPostAPI.js';
+import CoinAPI from './coinAPI.js';
+import SteemPostModal from './SteemPostModal.js';
+
+// Module-level lazy-initialized instances
+let steemPostAPI = null;
+let coinAPI = null;
 
 /**
  * Profile page renderer with refactored architecture
@@ -8,7 +16,7 @@ import { config } from './config.js';
 class ProfileRenderer {
     constructor() {
         this.appContainer = document.getElementById('app');
-        this.authManager = window.AuthManager;
+        this.authManager = AuthManager;
     }
 
     async render() {
@@ -45,7 +53,7 @@ class ProfileRenderer {
                         } catch (e) { }
                     }
                 })
-                .catch(e => console.warn('Could not fetch multiplier breakdown:', e));
+                .catch(e => { });
         }
 
         // Load all other data in background (non-blocking)
@@ -88,7 +96,6 @@ class ProfileRenderer {
             });
 
         } catch (error) {
-            console.error('❌ Error loading profile data:', error);
         }
     }
 
@@ -121,9 +128,7 @@ class ProfileRenderer {
 
                 return userData.user;
             }
-            console.error('❌ Failed to fetch user data:', response.status, response.statusText);
         } catch (error) {
-            console.error('❌ Error fetching fresh user data:', error);
         }
 
 
@@ -138,7 +143,6 @@ class ProfileRenderer {
             // Return the full response so caller can access total count if API provides it
             return sessionsData || { count: 0, sessions: [] };
         } catch (error) {
-            console.error('❌ Error loading sessions:', error);
             return { count: 0, sessions: [] };
         }
     }
@@ -710,7 +714,6 @@ class ProfileRenderer {
                 this._configureMultiplierBadge(multiplierEl, data.breakdown, user);
             })
             .catch(error => {
-                console.error('Failed to load multiplier breakdown:', error);
                 multiplierEl.textContent = `${fallbackMultiplier}x`;
             });
     }
@@ -804,7 +807,7 @@ class ProfileRenderer {
                     this._updateProfileLevelCard(levelInfo, totalXP);
                 }
             })
-            .catch(error => console.error('Failed to load level info:', error));
+            .catch(error => { });
     }
 
     _updateNavbarLevelBadge(levelInfo, totalXP) {
@@ -909,7 +912,6 @@ class ProfileRenderer {
             const totalQuestClaims = await this._fetchAllQuestClaims(user.user_id, apiUrl);
             questsDoneEl.textContent = totalQuestClaims;
         } catch (error) {
-            console.error('Failed to load quests count:', error);
             questsDoneEl.textContent = '0';
         }
     }
@@ -953,7 +955,6 @@ class ProfileRenderer {
                 gamesTriedEl.textContent = uniqueGames;
             }
         } catch (error) {
-            console.error('Failed to load games tried:', error);
             gamesTriedEl.textContent = '0';
         }
     }
@@ -1118,7 +1119,6 @@ class ProfileRenderer {
                 coinBalanceEl.textContent = '0';
             }
         } catch (error) {
-            console.error('❌ Error loading coin balance:', error);
             coinBalanceEl.textContent = '--';
         }
     }
@@ -1141,7 +1141,6 @@ class ProfileRenderer {
             section.style.display = 'block';
             section.innerHTML = this.buildWeeklyStandingsHTML(data);
         } catch (error) {
-            console.error('Error loading weekly standings:', error);
         }
     }
 
@@ -1341,7 +1340,6 @@ class ProfileRenderer {
 
             return result;
         } catch (err) {
-            console.error('Error refreshing multiplier:', err);
             throw err;
         }
     }
@@ -1375,7 +1373,6 @@ class ProfileRenderer {
 
             return result;
         } catch (err) {
-            console.error('updateMultiplierBackend error:', err);
             throw err;
         }
     }
@@ -1652,7 +1649,6 @@ class ProfileRenderer {
             await this._updateProfileVisualsAfterVote();
 
         } catch (err) {
-            console.error('Vote error:', err);
             voteBtn.textContent = '❌ Failed';
         } finally {
             voteBtn.disabled = false;
@@ -1836,7 +1832,7 @@ class ProfileRenderer {
         }
         
         // If no data available, return 0 - can't calculate without backend data
-        console.warn('Cannot calculate per-SP bonus: missing delegation data from backend');
+
         return 0;
     }
 
@@ -1975,7 +1971,6 @@ class ProfileRenderer {
             await this._refreshModalWithNewBreakdown(modal);
 
         } catch (err) {
-            console.error('Delegation error:', err);
             delegateBtn.textContent = '❌ Failed';
         } finally {
             delegateBtn.disabled = false;
@@ -2026,7 +2021,6 @@ class ProfileRenderer {
     }
 
     initializeSteemPostButton(user) {
-        console.log('Initializing Steem post button for user:', user);
         const steemPostBanner = document.getElementById('steemPostBanner');
         const shareBtn = document.getElementById('shareOnSteemBtn');
 
@@ -2045,21 +2039,20 @@ class ProfileRenderer {
     }
 
     _initializeSteemPostAPI() {
-        if (!window.steemPostAPI) {
+        if (!steemPostAPI) {
             const API_URL = window.ENV?.API_URL || window.location.origin;
-            window.steemPostAPI = new SteemPostAPI(API_URL);
+            steemPostAPI = new SteemPostAPI(API_URL);
         }
     }
 
     async _setupShareButton(shareBtn, user) {
         try {
-            const availability = await window.steemPostAPI.checkPostAvailability(user.user_id);
+            const availability = await steemPostAPI.checkPostAvailability(user.user_id);
 
             if (!availability.can_post) {
                 this._setupCooldownState(shareBtn, availability, user.user_id);
             }
         } catch (error) {
-            console.error('Error checking post availability:', error);
         }
 
         this._attachShareButtonClickHandler(shareBtn);
@@ -2115,7 +2108,7 @@ class ProfileRenderer {
 
         const updateCooldown = async () => {
             try {
-                const newAvailability = await window.steemPostAPI.checkPostAvailability(userId);
+                const newAvailability = await steemPostAPI.checkPostAvailability(userId);
 
                 if (newAvailability.can_post) {
                     this._enableShareButton(shareBtn);
@@ -2128,7 +2121,6 @@ class ProfileRenderer {
                     this._adjustUpdateInterval(updateInterval, updateCooldown, newAvailability.hours_remaining);
                 }
             } catch (error) {
-                console.error('Error updating cooldown:', error);
             }
         };
 
@@ -2170,15 +2162,14 @@ class ProfileRenderer {
                 this._initializeCoinAPI();
                 await this._showSteemPostModal();
             } catch (error) {
-                console.error('Error showing Steem post modal:', error);
             }
         });
     }
 
     _initializeCoinAPI() {
-        if (!window.coinAPI) {
+        if (!coinAPI) {
             const API_URL = window.ENV?.API_URL || window.location.origin;
-            window.coinAPI = new CoinAPI(API_URL);
+            coinAPI = new CoinAPI(API_URL);
         }
     }
 
@@ -2188,8 +2179,8 @@ class ProfileRenderer {
      */
     async _showSteemPostModal() {
         const modal = new SteemPostModal(
-            window.steemPostAPI,
-            window.coinAPI,
+            steemPostAPI,
+            coinAPI,
             this.authManager
         );
         await modal.show();
@@ -2207,15 +2198,15 @@ export async function renderProfile() {
     await renderer.render();
 }
 
-//helper to open the canonical CUR8 multiplier modal from other scripts
-try {
-    window.showCur8MultiplierModal = function (breakdown) {
-        try {
-            const renderer = new ProfileRenderer();
-            renderer.showMultiplierModal(breakdown);
-        } catch (e) {
-
-        }
-    };
-} catch (e) {
+/**
+ * Helper to open the canonical CUR8 multiplier modal from other scripts
+ * @param {Object} breakdown - The multiplier breakdown data
+ */
+export function showCur8MultiplierModal(breakdown) {
+    try {
+        const renderer = new ProfileRenderer();
+        renderer.showMultiplierModal(breakdown);
+    } catch (e) {
+        // Silently fail if modal cannot be shown
+    }
 }

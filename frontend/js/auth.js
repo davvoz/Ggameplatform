@@ -593,17 +593,5 @@ const AuthManager = {
     }
 };
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => AuthManager.init());
-} else {
-    AuthManager.init();
-}
-
-// Listen for login event and update UI
-window.addEventListener('userLogin', () => {
-    AuthManager.updateUI();
-});
-
-// Export for use in other modules
-window.AuthManager = AuthManager;
+// ES6 export
+export default AuthManager;

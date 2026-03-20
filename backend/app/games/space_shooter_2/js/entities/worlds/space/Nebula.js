@@ -1,20 +1,20 @@
 // ===== NEBULA =====
 export class Nebula {
     constructor(canvasWidth, canvasHeight, theme = null) {
-        this.x = Math.random() * canvasWidth;
-        this.y = -200 - Math.random() * 300;
-        this.radius = 80 + Math.random() * 150;
-        this.speed = 5 + Math.random() * 8;
+        this.x = window.randomSecure() * canvasWidth;
+        this.y = -200 - window.randomSecure() * 300;
+        this.radius = 80 + window.randomSecure() * 150;
+        this.speed = 5 + window.randomSecure() * 8;
         const colors = (theme && theme.nebula) ? theme.nebula : Nebula.DEFAULT_COLORS;
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-        this.alpha = 0.03 + Math.random() * 0.04;
+        this.color = colors[Math.floor(window.randomSecure() * colors.length)];
+        this.alpha = 0.03 + window.randomSecure() * 0.04;
     }
 
     update(dt, canvasWidth, canvasHeight) {
         this.y += this.speed * dt;
         if (this.y > canvasHeight + this.radius) {
             this.y = -this.radius * 2;
-            this.x = Math.random() * canvasWidth;
+            this.x = window.randomSecure() * canvasWidth;
         }
     }
 

@@ -248,16 +248,16 @@ class Game {
             em.player.update(deltaTime, this);
 
             this.particles.emitCustom(
-                em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
+                em.player.position.x + em.player.width / 2 + (window.randomSecure() - 0.5) * 8,
                 em.player.position.y + em.player.height,
                 ParticleSystem.PRESETS.thruster,
                 1
             );
 
-            if (em.player.ultimateCharge >= 100 && Math.random() < 0.15) {
+            if (em.player.ultimateCharge >= 100 && window.randomSecure() < 0.15) {
                 this.particles.emit(
-                    em.player.position.x + Math.random() * em.player.width,
-                    em.player.position.y + Math.random() * em.player.height,
+                    em.player.position.x + window.randomSecure() * em.player.width,
+                    em.player.position.y + window.randomSecure() * em.player.height,
                     'ultimateCharged', 1
                 );
             }
@@ -495,7 +495,7 @@ class Game {
         // Player thruster particles (no input, no firing)
         if (em.player && em.player.active) {
             this.particles.emitCustom(
-                em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
+                em.player.position.x + em.player.width / 2 + (window.randomSecure() - 0.5) * 8,
                 em.player.position.y + em.player.height,
                 ParticleSystem.PRESETS.thruster,
                 1
@@ -958,6 +958,10 @@ class Game {
 
     setupWindowListeners() {
         window.addEventListener('message', (event) => {
+            // Validate origin - only accept messages from parent platform
+            const expectedOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
+            if (event.origin !== expectedOrigin) return;
+
             if (!event.data || !event.data.type) return;
 
             if (event.data.type === 'showXPBanner' && event.data.payload) {

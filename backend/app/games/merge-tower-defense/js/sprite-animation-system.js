@@ -753,8 +753,8 @@ export class AnimationBuilder {
             if (parts.includes(limb)) {
                 clip.addTrack(limb, [
                     { time: 0, transform: { rotation: 0 } },
-                    { time: duration * 0.5, transform: { rotation: Math.random() * 0.5 - 0.25 } },
-                    { time: duration, transform: { rotation: Math.random() * 1.0 - 0.5 } }
+                    { time: duration * 0.5, transform: { rotation: window.randomSecure() * 0.5 - 0.25 } },
+                    { time: duration, transform: { rotation: window.randomSecure() * 1.0 - 0.5 } }
                 ]);
             }
         }

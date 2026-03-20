@@ -37,29 +37,29 @@ class Explosion extends GameObject {
         // Fire blobs - big, overlapping, slow-moving outward to create fireball mass
         const fireCount = isLarge ? 8 : isMedium ? 5 : 3;
         for (let i = 0; i < fireCount; i++) {
-            const a = (i / fireCount) * TAU + Math.random() * 0.8;
-            const sp = 30 + Math.random() * 60;
+            const a = (i / fireCount) * TAU + window.randomSecure() * 0.8;
+            const sp = 30 + window.randomSecure() * 60;
             particles.push({
-                x: this.centerX + (Math.random() - 0.5) * 8,
-                y: this.centerY + (Math.random() - 0.5) * 8,
+                x: this.centerX + (window.randomSecure() - 0.5) * 8,
+                y: this.centerY + (window.randomSecure() - 0.5) * 8,
                 vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-                size: (isLarge ? 18 : isMedium ? 12 : 8) + Math.random() * 6,
-                life: 1, decay: 1.6 + Math.random() * 0.4,
+                size: (isLarge ? 18 : isMedium ? 12 : 8) + window.randomSecure() * 6,
+                life: 1, decay: 1.6 + window.randomSecure() * 0.4,
                 type: 'fire',
-                hue: 15 + Math.random() * 35
+                hue: 15 + window.randomSecure() * 35
             });
         }
 
         // Hot sparks - fast debris with gravity
         const sparkCount = isLarge ? 12 : isMedium ? 7 : 4;
         for (let i = 0; i < sparkCount; i++) {
-            const a = (i / sparkCount) * TAU + Math.random() * 0.5;
-            const sp = 200 + Math.random() * 300;
+            const a = (i / sparkCount) * TAU + window.randomSecure() * 0.5;
+            const sp = 200 + window.randomSecure() * 300;
             particles.push({
                 x: this.centerX, y: this.centerY,
                 vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-                size: 1 + Math.random() * 1.5,
-                life: 1, decay: 2 + Math.random(),
+                size: 1 + window.randomSecure() * 1.5,
+                life: 1, decay: 2 + window.randomSecure(),
                 type: 'spark'
             });
         }
@@ -67,16 +67,16 @@ class Explosion extends GameObject {
         // Smoke - appears after fireball fades
         const smokeCount = isLarge ? 4 : isMedium ? 3 : 2;
         for (let i = 0; i < smokeCount; i++) {
-            const a = Math.random() * TAU;
-            const sp = 8 + Math.random() * 15;
+            const a = window.randomSecure() * TAU;
+            const sp = 8 + window.randomSecure() * 15;
             particles.push({
-                x: this.centerX + (Math.random() - 0.5) * 12,
-                y: this.centerY + (Math.random() - 0.5) * 12,
+                x: this.centerX + (window.randomSecure() - 0.5) * 12,
+                y: this.centerY + (window.randomSecure() - 0.5) * 12,
                 vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 15,
-                size: 14 + Math.random() * 10,
-                life: 1, decay: 0.55 + Math.random() * 0.2,
+                size: 14 + window.randomSecure() * 10,
+                life: 1, decay: 0.55 + window.randomSecure() * 0.2,
                 type: 'smoke',
-                delay: 0.15 + Math.random() * 0.1
+                delay: 0.15 + window.randomSecure() * 0.1
             });
         }
 

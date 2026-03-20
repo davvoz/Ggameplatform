@@ -2,6 +2,10 @@ import { renderCatalog, renderGameDetail, renderGamePlayer, renderAbout, renderQ
 import { renderLeaderboard } from './LeaderboardRenderer.js';
 import { renderProfile } from './ProfileRenderer.js';
 import { renderUserProfile } from './UserProfileRenderer.js';
+import {
+    getCurrentGameRuntime, setCurrentGameRuntime,
+    getCurrentCommunityManager, setCurrentCommunityManager
+} from './state.js';
 
 /**
  * Router configuration
@@ -40,16 +44,16 @@ function handleRoute() {
     const route = matchRoute(hash);
     
     // Cleanup previous game runtime when navigating away from player
-    if (!hash.startsWith('/play/') && window.currentGameRuntime) {
+    if (!hash.startsWith('/play/') && getCurrentGameRuntime()) {
         // Skip session end when navigating away - no XP awarded
-        window.currentGameRuntime.cleanup(false, true);
-        window.currentGameRuntime = null;
+        getCurrentGameRuntime().cleanup(false, true);
+        setCurrentGameRuntime(null);
     }
     
     // Cleanup community manager when navigating away from community
-    if (hash !== '/community' && window.currentCommunityManager) {
-        window.currentCommunityManager.destroy();
-        window.currentCommunityManager = null;
+    if (hash !== '/community' && getCurrentCommunityManager()) {
+        getCurrentCommunityManager().destroy();
+        setCurrentCommunityManager(null);
     }
     
     if (route) {

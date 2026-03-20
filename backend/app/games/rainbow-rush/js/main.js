@@ -73,11 +73,12 @@ class RainbowRushApp {
      */
     signalGameReady() {
         if (window.parent !== window) {
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
             window.parent.postMessage({
                 type: 'gameReady',
                 gameId: 'rainbow-rush',
                 timestamp: Date.now()
-            }, '*');
+            }, targetOrigin);
 
         }
     }

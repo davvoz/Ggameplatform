@@ -129,13 +129,13 @@ function generateBonusWaves(level) {
         const enemyCount = Math.min(6, 3 + Math.floor(relLevel / 7) + Math.floor(w / 3));
         const enemies = [];
         for (let i = 0; i < enemyCount; i++) {
-            const type = pool[Math.floor(Math.random() * pool.length)];
+            const type = pool[Math.floor(window.randomSecure() * pool.length)];
             const x = 0.1 + (i / (enemyCount - 1 || 1)) * 0.8; // spread 0.1-0.9
-            const pat = relLevel > 8 ? patterns[Math.floor(Math.random() * patterns.length)] : patterns[Math.floor(Math.random() * 4)];
+            const pat = relLevel > 8 ? patterns[Math.floor(window.randomSecure() * patterns.length)] : patterns[Math.floor(window.randomSecure() * 4)];
             enemies.push(e(type, parseFloat(x.toFixed(2)), pat));
         }
-        const formation = formations[Math.floor(Math.random() * formations.length)];
-        const delay = w === 0 ? 1.5 : (0.5 + Math.random() * 0.5);
+        const formation = formations[Math.floor(window.randomSecure() * formations.length)];
+        const delay = w === 0 ? 1.5 : (0.5 + window.randomSecure() * 0.5);
         waves.push(makeWave(enemies, parseFloat(delay.toFixed(1)), formation));
     }
     return waves;

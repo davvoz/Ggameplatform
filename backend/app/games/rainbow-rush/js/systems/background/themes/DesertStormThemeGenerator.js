@@ -55,7 +55,7 @@ export class DesertStormThemeGenerator extends BaseThemeGenerator {
                 x: i * this.canvasWidth / config.DUNE_COUNT,
                 y: this.canvasHeight * (0.6 + i * 0.06),
                 width: this.canvasWidth / config.DUNE_COUNT + 60,
-                height: 90 + Math.random() * 50,
+                height: 90 + window.randomSecure() * 50,
                 color: [0.7 - i * 0.06, 0.55 - i * 0.06, 0.25 - i * 0.04, 0.4 + i * 0.15],
                 type: 'simple_shape',
                 shape: 'dune',
@@ -70,8 +70,8 @@ export class DesertStormThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.PYRAMID_COUNT; i++) {
-            const width = 130 + Math.random() * 60;
-            const height = 110 + Math.random() * 50;
+            const width = 130 + window.randomSecure() * 60;
+            const height = 110 + window.randomSecure() * 50;
             const x = (i + 0.4) * this.canvasWidth / (config.PYRAMID_COUNT + 1);
 
             layers.push({
@@ -93,14 +93,14 @@ export class DesertStormThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SAND_PARTICLE_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 1 + Math.random() * 4,
-                speed: 60 + Math.random() * 120,
-                color: [0.8, 0.65, 0.35, 0.3 + Math.random() * 0.4],
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                radius: 1 + window.randomSecure() * 4,
+                speed: 60 + window.randomSecure() * 120,
+                color: [0.8, 0.65, 0.35, 0.3 + window.randomSecure() * 0.4],
                 type: 'simple_particle',
-                drift: 100 + Math.random() * 150,
-                angle: Math.PI / 6 + (Math.random() - 0.5) * 0.3
+                drift: 100 + window.randomSecure() * 150,
+                angle: Math.PI / 6 + (window.randomSecure() - 0.5) * 0.3
             });
         }
     }
@@ -111,14 +111,14 @@ export class DesertStormThemeGenerator extends BaseThemeGenerator {
         for (let i = 0; i < config.HEATWAVE_PARTICLE_COUNT; i++) {
             particles.push({
                 x: (i + 0.5) * this.canvasWidth / config.HEATWAVE_PARTICLE_COUNT,
-                y: this.canvasHeight * 0.65 + Math.random() * this.canvasHeight * 0.2,
-                amplitude: 12 + Math.random() * 15,
-                frequency: 0.025 + Math.random() * 0.015,
-                speed: 50 + Math.random() * 40,
+                y: this.canvasHeight * 0.65 + window.randomSecure() * this.canvasHeight * 0.2,
+                amplitude: 12 + window.randomSecure() * 15,
+                frequency: 0.025 + window.randomSecure() * 0.015,
+                speed: 50 + window.randomSecure() * 40,
                 color: [0.9, 0.8, 0.5, 0.2],
                 type: 'animated_particle',
                 animation: 'wave',
-                height: 50 + Math.random() * 30
+                height: 50 + window.randomSecure() * 30
             });
         }
     }

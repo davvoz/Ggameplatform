@@ -1,3 +1,5 @@
+import AuthManager from './auth.js';
+
 /**
  * Level Widget - Display user level, progress, and handle level-up notifications
  */
@@ -98,7 +100,7 @@ class LevelWidget {
         const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
         // Check if user is anonymous
-        const currentUser = window.AuthManager?.currentUser;
+        const currentUser = AuthManager?.currentUser;
         const isAnonymous = currentUser?.is_anonymous === true;
 
         const modal = document.createElement('div');
@@ -150,8 +152,5 @@ class LevelWidget {
         }, 5000);
     }
 }
-
-// Export as global for compatibility
-window.LevelWidget = LevelWidget;
 
 export default LevelWidget;

@@ -1,3 +1,8 @@
+//InfiniteScrollManager
+import { InfiniteScrollManager } from './InfiniteScrollManager.js';
+import { steemAvatarService } from './SteemAvatarService.js';
+import CommunityStatsAPI from './CommunityStatsAPI.js';
+
 /**
  * CommunityStatsRenderer
  * Renders charts, infographics, and tables for the community stats section.
@@ -152,10 +157,10 @@ class CommunityStatsRenderer {
      */
     _getSectionAnchors() {
         return [
-            { id: 'cs-sec-overview',  icon: '\ud83d\udcca', label: 'Overview' },
-            { id: 'cs-sec-games',     icon: '\ud83c\udfae', label: 'Games' },
-            { id: 'cs-sec-economy',   icon: '\ud83d\udcb0', label: 'Economy' },
-            { id: 'cs-sec-fame',      icon: '\ud83c\udfc5', label: 'Fame' },
+            { id: 'cs-sec-overview', icon: '\ud83d\udcca', label: 'Overview' },
+            { id: 'cs-sec-games', icon: '\ud83c\udfae', label: 'Games' },
+            { id: 'cs-sec-economy', icon: '\ud83d\udcb0', label: 'Economy' },
+            { id: 'cs-sec-fame', icon: '\ud83c\udfc5', label: 'Fame' },
             { id: 'cs-sec-leaderboard', icon: '\ud83c\udfc6', label: 'Board' },
         ];
     }
@@ -183,14 +188,14 @@ class CommunityStatsRenderer {
 
         const engagement = [
             { icon: '👥', label: 'Registered Users', value: p.total_registered_users, accent: '' },
-            { icon: '🎮', label: 'Total Games',      value: p.total_games,           accent: '' },
-            { icon: '🕹️', label: 'Total Sessions',   value: p.total_sessions,        accent: '' },
+            { icon: '🎮', label: 'Total Games', value: p.total_games, accent: '' },
+            { icon: '🕹️', label: 'Total Sessions', value: p.total_sessions, accent: '' },
         ];
 
         const economy = [
             { icon: '⭐', label: 'XP Distributed', value: this._fmtNum(p.total_xp_distributed), accent: 'xp' },
-            { icon: '🪙', label: 'Coins Earned',   value: this._fmtNum(p.total_coins_earned),   accent: 'coins' },
-            { icon: '💸', label: 'Coins Spent',    value: this._fmtNum(p.total_coins_spent),    accent: 'spent' },
+            { icon: '🪙', label: 'Coins Earned', value: this._fmtNum(p.total_coins_earned), accent: 'coins' },
+            { icon: '💸', label: 'Coins Spent', value: this._fmtNum(p.total_coins_spent), accent: 'spent' },
         ];
 
         const renderKpi = (k) => `
@@ -444,9 +449,9 @@ class CommunityStatsRenderer {
         if (!d?.success) return '';
 
         const periods = [
-            { key: 'daily',   label: 'Today',    icon: '📅' },
-            { key: 'weekly',  label: 'This Week', icon: '📆' },
-            { key: 'alltime', label: 'All Time',  icon: '♾️' },
+            { key: 'daily', label: 'Today', icon: '📅' },
+            { key: 'weekly', label: 'This Week', icon: '📆' },
+            { key: 'alltime', label: 'All Time', icon: '♾️' },
         ];
 
         const tabs = periods.map(p =>
@@ -593,7 +598,7 @@ class CommunityStatsRenderer {
 
         const rows = d.data.map((u, i) => {
             const rankBadge = u.rank <= 3
-                ? `<span class="cs-rank-medal">${['🥇','🥈','🥉'][u.rank - 1]}</span>`
+                ? `<span class="cs-rank-medal">${['🥇', '🥈', '🥉'][u.rank - 1]}</span>`
                 : `<span class="cs-rank-num">#${u.rank}</span>`;
 
             const avatarHTML = this._renderAvatar(u.steem_username);
@@ -1027,7 +1032,7 @@ class CommunityStatsRenderer {
      */
     _renderUserRowElement(u, index) {
         const rankBadge = u.rank <= 3
-            ? `<span class="cs-rank-medal">${['🥇','🥈','🥉'][u.rank - 1]}</span>`
+            ? `<span class="cs-rank-medal">${['🥇', '🥈', '🥉'][u.rank - 1]}</span>`
             : `<span class="cs-rank-num">#${u.rank}</span>`;
 
         const avatarHTML = this._renderAvatar(u.steem_username);
@@ -1110,8 +1115,8 @@ class CommunityStatsRenderer {
      * @private
      */
     _renderAvatar(steemUsername) {
-        if (window.steemAvatarService) {
-            return window.steemAvatarService.renderAvatarImg(steemUsername, {
+        if (steemAvatarService) {
+            return steemAvatarService.renderAvatarImg(steemUsername, {
                 size: 'small',
                 cssClass: 'cs-user-avatar',
                 width: 32,
@@ -1204,7 +1209,4 @@ class CommunityStatsRenderer {
     }
 }
 
-// Global export (matches existing pattern)
-if (typeof window !== 'undefined') {
-    window.CommunityStatsRenderer = CommunityStatsRenderer;
-}
+export default CommunityStatsRenderer;

@@ -1,3 +1,6 @@
+import AuthManager from './auth.js';
+import { checkUnclaimedQuests } from './nav.js';
+
 /**
  * Show level up modal
  */
@@ -5,7 +8,7 @@ function showLevelUpModal(levelUpData) {
     const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
     // Check if user is anonymous
-    const currentUser = window.AuthManager?.currentUser;
+    const currentUser = AuthManager?.currentUser;
     const isAnonymous = currentUser?.is_anonymous === true;
 
     const modal = document.createElement('div');
@@ -186,16 +189,16 @@ async function handleClaimReward(questId, userId) {
         createRewardAnimation(questCard, result.xp_reward, result.reward_coins);
 
         // Update user XP in header and AuthManager
-        if (window.AuthManager) {
-            const user = window.AuthManager.getUser();
+        if (AuthManager) {
+            const user = AuthManager.getUser();
             user.total_xp_earned = result.total_xp;
-            window.AuthManager.setUser(user);
+            AuthManager.setUser(user);
             
             // Update XP display in navigation by asking AuthManager to re-render
             const levelBadgeElement = document.getElementById('levelBadgeContainer');
-            if (window.AuthManager && typeof window.AuthManager.updateUI === 'function') {
+            if (typeof AuthManager.updateUI === 'function') {
                 // updateUI will fetch level info and re-render the badge properly
-                window.AuthManager.updateUI().catch(() => {
+                AuthManager.updateUI().catch(() => {
                     if (levelBadgeElement) levelBadgeElement.textContent = `⭐ ${Math.floor(result.total_xp)} XP`;
                 });
             } else if (levelBadgeElement) {
@@ -225,9 +228,7 @@ async function handleClaimReward(questId, userId) {
         setTimeout(async () => {
             await reloadQuests(userId);
             // Update quest badge in navigation
-            if (window.refreshQuestBadge) {
-                window.refreshQuestBadge();
-            }
+            checkUnclaimedQuests();
         }, 2000);
 
     } catch (error) {
@@ -399,12 +400,12 @@ export class QuestRenderer {
     }
 
     validateAuthentication() {
-        if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+        if (!AuthManager.isLoggedIn()) {
             this.renderLoginRequired();
             return false;
         }
 
-        this.user = window.AuthManager.getUser();
+        this.user = AuthManager.getUser();
 
         if (this.user.is_anonymous) {
             this.renderAnonymousWarning();
@@ -611,7 +612,7 @@ class QuestStatistics {
                     }, 30);
                 }
 
-                const user = window.AuthManager && window.AuthManager.getUser && window.AuthManager.getUser();
+                const user = AuthManager.getUser();
                 if (user && user.user_id && typeof user.total_xp_earned !== 'undefined') {
                     const { getUserSessions } = await import('./api.js');
 
@@ -897,7 +898,7 @@ window.addEventListener('gameSessionEnded', async (event) => {
     }
     
     // Get current user
-    const user = window.AuthManager?.getUser();
+    const user = AuthManager?.getUser();
     if (!user || !user.user_id) {
         return;
     }

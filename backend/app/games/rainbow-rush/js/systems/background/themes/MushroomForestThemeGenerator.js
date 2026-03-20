@@ -52,16 +52,16 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.GIANT_MUSHROOM_COUNT; i++) {
-            const height = 120 + Math.random() * 80;
-            const capWidth = 80 + Math.random() * 60;
+            const height = 120 + window.randomSecure() * 80;
+            const capWidth = 80 + window.randomSecure() * 60;
             const x = (i + 0.5) * this.canvasWidth / config.GIANT_MUSHROOM_COUNT;
-            const hue = Math.random();
+            const hue = window.randomSecure();
 
             // Stem
             layers.push({
                 x: x - 10,
                 y: groundY - height,
-                width: 20 + Math.random() * 10,
+                width: 20 + window.randomSecure() * 10,
                 height: height * 0.7,
                 color: [0.8, 0.75, 0.7, 0.8],
                 type: 'simple_shape',
@@ -79,14 +79,14 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
                 color: [
                     0.6 + hue * 0.4,
                     0.2 + (1 - hue) * 0.3,
-                    0.3 + Math.random() * 0.2,
+                    0.3 + window.randomSecure() * 0.2,
                     0.85
                 ],
                 type: 'simple_shape',
                 shape: 'mushroom_cap',
                 speed: 5 + i * 2,
                 offset: 0,
-                spots: Math.floor(3 + Math.random() * 5)
+                spots: Math.floor(3 + window.randomSecure() * 5)
             });
         }
     }
@@ -96,9 +96,9 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.REGULAR_MUSHROOM_COUNT; i++) {
-            const size = 15 + Math.random() * 25;
-            const x = Math.random() * this.canvasWidth;
-            const hue = Math.random();
+            const size = 15 + window.randomSecure() * 25;
+            const x = window.randomSecure() * this.canvasWidth;
+            const hue = window.randomSecure();
 
             layers.push({
                 x,
@@ -124,14 +124,14 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SPORE_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
                 radius: this.randomInRange(config.SPORE_MIN_RADIUS, config.SPORE_MAX_RADIUS),
-                speed: 8 + Math.random() * 15,
-                color: [0.9, 0.9, 0.7, 0.4 + Math.random() * 0.3],
+                speed: 8 + window.randomSecure() * 15,
+                color: [0.9, 0.9, 0.7, 0.4 + window.randomSecure() * 0.3],
                 type: 'simple_particle',
-                drift: (Math.random() - 0.5) * 20,
-                wobble: Math.random() * Math.PI * 2
+                drift: (window.randomSecure() - 0.5) * 20,
+                wobble: window.randomSecure() * Math.PI * 2
             });
         }
     }
@@ -141,15 +141,15 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.FIREFLY_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.4 + Math.random() * this.canvasHeight * 0.4,
-                radius: 2 + Math.random() * 2,
-                speed: 18 + Math.random() * 25,
-                glow: Math.random() * Math.PI * 2,
+                x: window.randomSecure() * this.canvasWidth,
+                y: this.canvasHeight * 0.4 + window.randomSecure() * this.canvasHeight * 0.4,
+                radius: 2 + window.randomSecure() * 2,
+                speed: 18 + window.randomSecure() * 25,
+                glow: window.randomSecure() * Math.PI * 2,
                 color: [0.7, 1.0, 0.5, 0.8],
                 type: 'firefly',
-                driftX: (Math.random() - 0.5) * 40,
-                driftY: (Math.random() - 0.5) * 30
+                driftX: (window.randomSecure() - 0.5) * 40,
+                driftY: (window.randomSecure() - 0.5) * 30
             });
         }
     }

@@ -52,8 +52,8 @@ export class TableRenderer {
         // Subtle felt texture
         ctx.fillStyle = 'rgba(0,0,0,0.025)';
         for (let i = 0; i < 150; i++) {
-            const fx = Math.random() * w;
-            const fy = h * 0.55 + Math.random() * h * 0.45;
+            const fx = window.randomSecure() * w;
+            const fy = h * 0.55 + window.randomSecure() * h * 0.45;
             ctx.fillRect(fx, fy, 1, 1);
         }
 

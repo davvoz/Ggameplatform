@@ -122,5 +122,5 @@ class LeaderboardAPI {
     }
 }
 
-// Global export
-window.LeaderboardAPI = LeaderboardAPI;
+// ES6 export
+export default LeaderboardAPI;

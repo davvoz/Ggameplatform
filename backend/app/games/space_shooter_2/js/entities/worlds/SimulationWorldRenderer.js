@@ -85,17 +85,17 @@ export class SimulationWorldRenderer extends WorldRenderer {
         // Scroll stars
         for (const s of this.stars) {
             s.y += s.speed * dt;
-            if (s.y > this.canvasHeight + 2) { s.y = -2; s.x = Math.random() * this.canvasWidth; }
+            if (s.y > this.canvasHeight + 2) { s.y = -2; s.x = window.randomSecure() * this.canvasWidth; }
         }
         // Animate glitch bands
         for (const band of this.glitchBands) {
             band.timer -= dt;
             if (band.timer <= 0) {
-                band.y = Math.random() * this.canvasHeight;
-                band.h = 2 + Math.random() * (4 + this.intensity * 6);
-                band.offsetX = (Math.random() - 0.5) * (3 + this.intensity * 8);
-                band.timer = 0.2 + Math.random() * 0.5;
-                band.alpha = 0.1 + Math.random() * 0.15;
+                band.y = window.randomSecure() * this.canvasHeight;
+                band.h = 2 + window.randomSecure() * (4 + this.intensity * 6);
+                band.offsetX = (window.randomSecure() - 0.5) * (3 + this.intensity * 8);
+                band.timer = 0.2 + window.randomSecure() * 0.5;
+                band.alpha = 0.1 + window.randomSecure() * 0.15;
             }
         }
         // Sector-specific update
@@ -133,12 +133,12 @@ export class SimulationWorldRenderer extends WorldRenderer {
         const count = this.quality === 'low' ? 20 : 40;
         for (let i = 0; i < count; i++) {
             this.stars.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                size: 0.5 + Math.random() * 1.5,
-                speed: 4 + Math.random() * 8,
-                hue: this.gridHue + (Math.random() - 0.5) * 40,
-                alpha: 0.15 + Math.random() * 0.25
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                size: 0.5 + window.randomSecure() * 1.5,
+                speed: 4 + window.randomSecure() * 8,
+                hue: this.gridHue + (window.randomSecure() - 0.5) * 40,
+                alpha: 0.15 + window.randomSecure() * 0.25
             });
         }
     }
@@ -153,8 +153,8 @@ export class SimulationWorldRenderer extends WorldRenderer {
         const count = Math.max(1, Math.floor(1 + this.intensity * 3));
         for (let i = 0; i < count; i++) {
             this.glitchBands.push({
-                y: Math.random() * this.canvasHeight, h: 3, offsetX: 0,
-                alpha: 0.12, timer: Math.random() * 0.6
+                y: window.randomSecure() * this.canvasHeight, h: 3, offsetX: 0,
+                alpha: 0.12, timer: window.randomSecure() * 0.6
             });
         }
     }
@@ -200,11 +200,11 @@ export class SimulationWorldRenderer extends WorldRenderer {
     }
 
     _renderHeavyDistortion(ctx) {
-        if (Math.random() < 0.04) {
+        if (window.randomSecure() < 0.04) {
             ctx.save();
-            ctx.globalAlpha = 0.04 + Math.random() * 0.04;
-            ctx.fillStyle = Math.random() < 0.5 ? '#0ff' : '#f0f';
-            ctx.fillRect(0, Math.random() * this.canvasHeight, this.canvasWidth, 2 + Math.random() * 6);
+            ctx.globalAlpha = 0.04 + window.randomSecure() * 0.04;
+            ctx.fillStyle = window.randomSecure() < 0.5 ? '#0ff' : '#f0f';
+            ctx.fillRect(0, window.randomSecure() * this.canvasHeight, this.canvasWidth, 2 + window.randomSecure() * 6);
             ctx.restore();
         }
     }

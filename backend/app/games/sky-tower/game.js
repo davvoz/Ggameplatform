@@ -459,9 +459,9 @@
                 const cloudCluster = new THREE.Group();
                 
                 // Each cloud is made of multiple overlapping spheres for a fluffy look
-                const numPuffs = 5 + Math.floor(Math.random() * 4);
+                const numPuffs = 5 + Math.floor(window.randomSecure() * 4);
                 for (let j = 0; j < numPuffs; j++) {
-                    const puffSize = 2 + Math.random() * 2.5;
+                    const puffSize = 2 + window.randomSecure() * 2.5;
                     const puffGeometry = new THREE.SphereGeometry(puffSize, 16, 16);
                     const puffMaterial = new THREE.MeshStandardMaterial({
                         color: 0xffffff,
@@ -476,30 +476,30 @@
                     const puff = new THREE.Mesh(puffGeometry, puffMaterial);
                     
                     // Position puffs in a cluster
-                    puff.position.x = (Math.random() - 0.5) * 4;
-                    puff.position.y = (Math.random() - 0.5) * 2;
-                    puff.position.z = (Math.random() - 0.5) * 4;
+                    puff.position.x = (window.randomSecure() - 0.5) * 4;
+                    puff.position.y = (window.randomSecure() - 0.5) * 2;
+                    puff.position.z = (window.randomSecure() - 0.5) * 4;
                     
                     // Slight random scale for organic look
-                    const scaleVariation = 0.8 + Math.random() * 0.4;
+                    const scaleVariation = 0.8 + window.randomSecure() * 0.4;
                     puff.scale.set(scaleVariation, scaleVariation * 0.7, scaleVariation);
                     
                     cloudCluster.add(puff);
                 }
                 
                 // Position cloud cluster in front of camera (positive x, negative z)
-                const angle = Math.random() * Math.PI * 0.5; // Only 90 degrees quadrant
-                const radius = 15 + Math.random() * 25;
+                const angle = window.randomSecure() * Math.PI * 0.5; // Only 90 degrees quadrant
+                const radius = 15 + window.randomSecure() * 25;
                 const x = Math.abs(Math.cos(angle) * radius); // Force positive X (in front of camera)
                 const z = -Math.abs(Math.sin(angle) * radius); // Force negative Z (to the side)
                 
                 cloudCluster.position.x = x;
                 cloudCluster.position.z = z;
                 // Clouds at different heights from 10 to 40 (higher to avoid buildings)
-                cloudCluster.position.y = 10 + Math.random() * 30;
+                cloudCluster.position.y = 10 + window.randomSecure() * 30;
                 
                 // Overall cloud scale variation
-                const cloudScale = 0.6 + Math.random() * 0.8;
+                const cloudScale = 0.6 + window.randomSecure() * 0.8;
                 cloudCluster.scale.set(cloudScale, cloudScale * 0.8, cloudScale);
                 
                 // Store initial Y position for fade calculations
@@ -594,11 +594,11 @@
             // Generate organic road positions with good coverage
             for (let i = -4; i <= 1; i++) {
                 const basePos = i * 12; // Reduced spacing
-                const variation = (Math.random() - 0.5) * 4; // Less randomness
+                const variation = (window.randomSecure() - 0.5) * 4; // Less randomness
                 const roadPos = basePos + variation;
                 
                 // Skip some roads randomly for less uniformity
-                if (Math.random() > 0.2) {
+                if (window.randomSecure() > 0.2) {
                     roadPositions.push(roadPos);
                 }
             }
@@ -648,62 +648,62 @@
                     if (isOnRoad(x, z)) continue;
                     
                     const zone = getZoneType(x, z);
-                    const rand = Math.random();
+                    const rand = window.randomSecure();
                     const nearRoad = isNearRoad(x, z);
                     
                     if (zone === 'urban_dense') {
                         if (nearRoad && rand < 0.65) {
-                            const offsetX = x + (Math.random() - 0.5) * 2;
-                            const offsetZ = z + (Math.random() - 0.5) * 2;
+                            const offsetX = x + (window.randomSecure() - 0.5) * 2;
+                            const offsetZ = z + (window.randomSecure() - 0.5) * 2;
                             // Double check not on road with offset
                             if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
                                 houseData.push({x: offsetX, z: offsetZ, rot: 0});
                                 occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
                             }
                         } else if (!nearRoad && rand < 0.25) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.7 + Math.random() * 0.4, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 1.5, z: z + (window.randomSecure() - 0.5) * 1.5, scale: 0.7 + window.randomSecure() * 0.4, rot: window.randomSecure() * Math.PI * 2});
                         }
                     } else if (zone === 'urban_medium') {
                         if (nearRoad && rand < 0.5) {
-                            const offsetX = x + (Math.random() - 0.5) * 2.5;
-                            const offsetZ = z + (Math.random() - 0.5) * 2.5;
+                            const offsetX = x + (window.randomSecure() - 0.5) * 2.5;
+                            const offsetZ = z + (window.randomSecure() - 0.5) * 2.5;
                             if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
                                 houseData.push({x: offsetX, z: offsetZ, rot: 0});
                                 occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
                             }
                         } else if (rand < 0.65) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.8 + Math.random() * 0.5, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 1.5, z: z + (window.randomSecure() - 0.5) * 1.5, scale: 0.8 + window.randomSecure() * 0.5, rot: window.randomSecure() * Math.PI * 2});
                         }
                     } else if (zone === 'suburban') {
                         if (rand < 0.2) {
-                            const offsetX = x + (Math.random() - 0.5) * 3;
-                            const offsetZ = z + (Math.random() - 0.5) * 3;
+                            const offsetX = x + (window.randomSecure() - 0.5) * 3;
+                            const offsetZ = z + (window.randomSecure() - 0.5) * 3;
                             if (!isOnRoad(offsetX, offsetZ) && !isPositionOccupied(offsetX, offsetZ, 2.5)) {
                                 houseData.push({x: offsetX, z: offsetZ, rot: 0});
                                 occupiedPositions.push({x: offsetX, z: offsetZ, size: 2.5});
                             }
                         } else if (rand < 0.7) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.7 + Math.random() * 0.6, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 2, z: z + (window.randomSecure() - 0.5) * 2, scale: 0.7 + window.randomSecure() * 0.6, rot: window.randomSecure() * Math.PI * 2});
                         }
                     } else if (zone === 'park') {
                         if (rand < 0.75) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.8 + Math.random() * 0.5, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 1.5, z: z + (window.randomSecure() - 0.5) * 1.5, scale: 0.8 + window.randomSecure() * 0.5, rot: window.randomSecure() * Math.PI * 2});
                         } else if (rand < 0.9) {
-                            bushData.push({x: x + (Math.random() - 0.5) * 1.5, z: z + (Math.random() - 0.5) * 1.5, scale: 0.7 + Math.random() * 0.5});
+                            bushData.push({x: x + (window.randomSecure() - 0.5) * 1.5, z: z + (window.randomSecure() - 0.5) * 1.5, scale: 0.7 + window.randomSecure() * 0.5});
                         }
                     } else if (zone === 'forest') {
                         if (rand < 0.85) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.9 + Math.random() * 0.6, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 2, z: z + (window.randomSecure() - 0.5) * 2, scale: 0.9 + window.randomSecure() * 0.6, rot: window.randomSecure() * Math.PI * 2});
                         } else if (rand < 0.95) {
-                            bushData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.8 + Math.random() * 0.5});
+                            bushData.push({x: x + (window.randomSecure() - 0.5) * 2, z: z + (window.randomSecure() - 0.5) * 2, scale: 0.8 + window.randomSecure() * 0.5});
                         }
                     } else {
                         if (rand < 0.55) {
-                            treeData.push({x: x + (Math.random() - 0.5) * 3, z: z + (Math.random() - 0.5) * 3, scale: 0.8 + Math.random() * 0.7, rot: Math.random() * Math.PI * 2});
+                            treeData.push({x: x + (window.randomSecure() - 0.5) * 3, z: z + (window.randomSecure() - 0.5) * 3, scale: 0.8 + window.randomSecure() * 0.7, rot: window.randomSecure() * Math.PI * 2});
                         } else if (rand < 0.7) {
-                            bushData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.7 + Math.random() * 0.6});
+                            bushData.push({x: x + (window.randomSecure() - 0.5) * 2, z: z + (window.randomSecure() - 0.5) * 2, scale: 0.7 + window.randomSecure() * 0.6});
                         } else if (rand < 0.8) {
-                            rockData.push({x: x + (Math.random() - 0.5) * 2, z: z + (Math.random() - 0.5) * 2, scale: 0.6 + Math.random() * 0.8});
+                            rockData.push({x: x + (window.randomSecure() - 0.5) * 2, z: z + (window.randomSecure() - 0.5) * 2, scale: 0.6 + window.randomSecure() * 0.8});
                         }
                     }
                 }
@@ -1025,9 +1025,9 @@
                 position.set(rock.x, -0.3 + 0.1, rock.z);
                 scale.set(rock.scale, rock.scale * 0.6, rock.scale); // Flatter rocks
                 rotation.setFromEuler(new THREE.Euler(
-                    Math.random() * 0.3,
-                    Math.random() * Math.PI * 2,
-                    Math.random() * 0.3
+                    window.randomSecure() * 0.3,
+                    window.randomSecure() * Math.PI * 2,
+                    window.randomSecure() * 0.3
                 ));
                 matrix.compose(position, rotation, scale);
                 rockMesh.setMatrixAt(i, matrix);
@@ -1038,28 +1038,28 @@
             // Create 3 types of buildings: houses, buildings, skyscrapers
             houseData.forEach((house, idx) => {
                 const buildingGroup = new THREE.Group();
-                const typeRand = Math.random();
+                const typeRand = window.randomSecure();
                 
                 let buildingType, height, width, depth;
                 
                 if (typeRand < 0.4) {
                     // HOUSE - low and wide
                     buildingType = 'house';
-                    height = 1.5 + Math.random() * 1;
-                    width = 1.8 + Math.random() * 0.6;
-                    depth = 1.8 + Math.random() * 0.6;
+                    height = 1.5 + window.randomSecure() * 1;
+                    width = 1.8 + window.randomSecure() * 0.6;
+                    depth = 1.8 + window.randomSecure() * 0.6;
                 } else if (typeRand < 0.75) {
                     // BUILDING - medium
                     buildingType = 'building';
-                    height = 2.5 + Math.random() * 2;
-                    width = 1.5 + Math.random() * 0.5;
-                    depth = 1.5 + Math.random() * 0.5;
+                    height = 2.5 + window.randomSecure() * 2;
+                    width = 1.5 + window.randomSecure() * 0.5;
+                    depth = 1.5 + window.randomSecure() * 0.5;
                 } else {
                     // SKYSCRAPER - tall and narrow
                     buildingType = 'skyscraper';
-                    height = 4 + Math.random() * 3;
-                    width = 1.2 + Math.random() * 0.4;
-                    depth = 1.2 + Math.random() * 0.4;
+                    height = 4 + window.randomSecure() * 3;
+                    width = 1.2 + window.randomSecure() * 0.4;
+                    depth = 1.2 + window.randomSecure() * 0.4;
                 }
                 
                 // Main building body
@@ -1184,14 +1184,14 @@
             const starVertices = [];
             
             for (let i = 0; i < 2000; i++) {
-                let x = (Math.random() - 0.5) * 300;
-                const y = Math.random() * 120 + 28; // Stars start at height 28 (after clouds)
-                let z = (Math.random() - 0.5) * 300;
+                let x = (window.randomSecure() - 0.5) * 300;
+                const y = window.randomSecure() * 120 + 28; // Stars start at height 28 (after clouds)
+                let z = (window.randomSecure() - 0.5) * 300;
                 
                 // Only place stars behind tower (negative x OR negative z)
                 if (x >= 0 && z >= 0) {
                     // Flip to behind tower
-                    if (Math.random() > 0.5) {
+                    if (window.randomSecure() > 0.5) {
                         x = -x;
                     } else {
                         z = -z;
@@ -1842,8 +1842,8 @@
                 piece.position.z += velocityZ * frameDelta;
 
                 // Apply rotation (scaled)
-                piece.rotation.x += (Math.random() - 0.5) * rotationSpeed * frameDelta;
-                piece.rotation.z += (Math.random() - 0.5) * rotationSpeed * frameDelta;
+                piece.rotation.x += (window.randomSecure() - 0.5) * rotationSpeed * frameDelta;
+                piece.rotation.z += (window.randomSecure() - 0.5) * rotationSpeed * frameDelta;
                 
                 // Check if piece has fallen below disappear level
                 if (piece.position.y < disappearLevel) {
@@ -1901,7 +1901,7 @@
             
             // Only randomize color on restart, not on first game
             if (!isFirstGame) {
-                currentHue = Math.floor(Math.random() * 360);
+                currentHue = Math.floor(window.randomSecure() * 360);
             }
             isFirstGame = false;
             
@@ -2325,7 +2325,7 @@
         // ============================================
         function initGame() {
             // Set random starting hue before creating base block
-            currentHue = Math.floor(Math.random() * 360);
+            currentHue = Math.floor(window.randomSecure() * 360);
             
             // Create initial base block so tower is visible at start
             createBaseBlock();

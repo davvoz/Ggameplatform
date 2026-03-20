@@ -118,7 +118,7 @@ export class DamageCollisionHandler extends CollisionHandler {
 
         for (let j = 0; j < 12; j++) {
             const angle = (Math.PI * 2 * j) / 12;
-            const speed = 100 + Math.random() * 80;
+            const speed = 100 + window.randomSecure() * 80;
             entityManager.addEntity('powerupParticles', {
                 x: impactX,
                 y: impactY,
@@ -126,7 +126,7 @@ export class DamageCollisionHandler extends CollisionHandler {
                 vy: Math.sin(angle) * speed,
                 life: 0.5,
                 maxLife: 0.5,
-                size: 4 + Math.random() * 2,
+                size: 4 + window.randomSecure() * 2,
                 color: [1.0, 0.9, 0.2, 1.0],
                 gravity: 100,
                 type: 'shield-particle'
@@ -141,7 +141,7 @@ export class DamageCollisionHandler extends CollisionHandler {
     _createDamageParticles(entityManager) {
         for (let j = 0; j < 12; j++) {
             const angle = (Math.PI * 2 * j) / 12;
-            const speed = 100 + Math.random() * 80;
+            const speed = 100 + window.randomSecure() * 80;
             entityManager.addEntity('powerupParticles', {
                 x: this.context.player.x + this.context.player.width / 2,
                 y: this.context.player.y + this.context.player.height / 2,
@@ -149,7 +149,7 @@ export class DamageCollisionHandler extends CollisionHandler {
                 vy: Math.sin(angle) * speed - 50,
                 life: 0.6,
                 maxLife: 0.6,
-                size: 4 + Math.random() * 3,
+                size: 4 + window.randomSecure() * 3,
                 color: [1.0, 0.2, 0.2, 1.0],
                 gravity: 200,
                 type: 'damage-particle'

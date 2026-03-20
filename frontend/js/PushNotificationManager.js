@@ -31,7 +31,6 @@ class PushNotificationManager {
      */
     async init() {
         if (!this.isSupported) {
-            console.warn('⚠️ Push notifications not supported in this browser');
             return false;
         }
 
@@ -39,13 +38,12 @@ class PushNotificationManager {
             // Get VAPID public key from backend
             const keyResponse = await fetch(`${API_BASE_URL}/push/vapid-public-key`);
             if (!keyResponse.ok) {
-                console.error('Failed to fetch VAPID public key');
                 return false;
             }
 
             const keyData = await keyResponse.json();
             if (!keyData.configured) {
-                console.warn('⚠️ Push notifications not configured on server');
+                return false;
                 return false;
             }
 
@@ -53,11 +51,9 @@ class PushNotificationManager {
 
             // Wait for service worker registration
             this.swRegistration = await navigator.serviceWorker.ready;
-            console.log('✅ Push notification manager initialized');
             return true;
 
         } catch (error) {
-            console.error('❌ Failed to initialize push notifications:', error);
             return false;
         }
     }
@@ -98,10 +94,9 @@ class PushNotificationManager {
 
         try {
             const permission = await Notification.requestPermission();
-            console.log(`📬 Notification permission: ${permission}`);
             return permission;
         } catch (error) {
-            console.error('❌ Error requesting notification permission:', error);
+
             return 'error';
         }
     }
@@ -113,14 +108,12 @@ class PushNotificationManager {
      */
     async subscribe(userId) {
         if (!this.isSupported || !this.vapidPublicKey) {
-            console.error('Push notifications not initialized');
             return null;
         }
 
         if (!this.hasPermission()) {
             const permission = await this.requestPermission();
             if (permission !== 'granted') {
-                console.warn('User denied notification permission');
                 return null;
             }
         }
@@ -136,9 +129,6 @@ class PushNotificationManager {
                     userVisibleOnly: true,
                     applicationServerKey: applicationServerKey
                 });
-                console.log('✅ Created new push subscription');
-            } else {
-                console.log('ℹ️ Using existing push subscription');
             }
 
             // Send subscription to backend
@@ -161,12 +151,10 @@ class PushNotificationManager {
 
             if (!response.ok) {
                 const error = await response.json();
-                console.error('❌ Failed to register subscription:', error);
                 return null;
             }
 
             const result = await response.json();
-            console.log('✅ Push subscription registered:', result);
             
             // Store subscription status locally
             localStorage.setItem('pushSubscribed', 'true');
@@ -175,7 +163,6 @@ class PushNotificationManager {
             return result;
 
         } catch (error) {
-            console.error('❌ Error subscribing to push notifications:', error);
             return null;
         }
     }
@@ -209,11 +196,9 @@ class PushNotificationManager {
             localStorage.removeItem('pushSubscribed');
             localStorage.removeItem('pushSubscriptionId');
 
-            console.log('✅ Unsubscribed from push notifications');
             return response.ok;
 
         } catch (error) {
-            console.error('❌ Error unsubscribing:', error);
             return false;
         }
     }
@@ -251,7 +236,6 @@ class PushNotificationManager {
 
             return await response.json();
         } catch (error) {
-            console.error('❌ Test notification error:', error);
             throw error;
         }
     }

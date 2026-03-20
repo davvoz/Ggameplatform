@@ -29,7 +29,7 @@ export class VolcanicFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const vc = this.config;
         const d = vc ? vc.dist : [0.35, 0.50, 0.70, 0.90];
-        const roll = Math.random();
+        const roll = window.randomSecure();
 
         if (roll < d[0])      this._initLavaRock(W, H, initial, vc);
         else if (roll < d[1]) this._initObsidian(W, H, initial);
@@ -42,87 +42,87 @@ export class VolcanicFx extends BaseFxStrategy {
 
     _initLavaRock(W, H, initial, vc) {
         this.subType = 'lavaRock';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -80 - Math.random() * 60;
-        this.depthLayer = Math.random();
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -80 - window.randomSecure() * 60;
+        this.depthLayer = window.randomSecure();
         const near = this.depthLayer;
         const mul = vc ? (vc.lavaRockMul || 1) : 1;
-        this.size = (18 + near * 30 + Math.random() * 20) * mul;
-        this.speed = 18 + near * 14 + Math.random() * 10;
-        this.alpha = 0.6 + near * 0.25 + Math.random() * 0.1;
+        this.size = (18 + near * 30 + window.randomSecure() * 20) * mul;
+        this.speed = 18 + near * 14 + window.randomSecure() * 10;
+        this.alpha = 0.6 + near * 0.25 + window.randomSecure() * 0.1;
         Object.assign(this, pickColor(LAVA_ROCK_PALETTE, near));
-        this.shape = generateShape(6 + Math.floor(Math.random() * 3), 0.55, 0.5);
-        this.rot = Math.random() * Math.PI * 2;
-        this.rotSpd = (Math.random() - 0.5) * 0.02;
-        this.shadowOx = 3 + Math.random() * 3;
-        this.shadowOy = 3 + Math.random() * 3;
-        this.hasGlow = Math.random() < 0.35;
-        this.glowHue = 15 + Math.random() * 25;
+        this.shape = generateShape(6 + Math.floor(window.randomSecure() * 3), 0.55, 0.5);
+        this.rot = window.randomSecure() * Math.PI * 2;
+        this.rotSpd = (window.randomSecure() - 0.5) * 0.02;
+        this.shadowOx = 3 + window.randomSecure() * 3;
+        this.shadowOy = 3 + window.randomSecure() * 3;
+        this.hasGlow = window.randomSecure() < 0.35;
+        this.glowHue = 15 + window.randomSecure() * 25;
     }
 
     _initObsidian(W, H, initial) {
         this.subType = 'obsidian';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -40 - Math.random() * 30;
-        this.depthLayer = Math.random();
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 30;
+        this.depthLayer = window.randomSecure();
         const near = this.depthLayer;
-        this.size = 6 + near * 12 + Math.random() * 10;
-        this.speed = 19 + near * 14 + Math.random() * 10;
-        this.alpha = 0.65 + near * 0.2 + Math.random() * 0.12;
+        this.size = 6 + near * 12 + window.randomSecure() * 10;
+        this.speed = 19 + near * 14 + window.randomSecure() * 10;
+        this.alpha = 0.65 + near * 0.2 + window.randomSecure() * 0.12;
         Object.assign(this, pickColor(OBSIDIAN_PALETTE, near));
-        this.shape = generateShape(4 + Math.floor(Math.random() * 3), 0.4, 0.7);
-        this.rot = Math.random() * Math.PI * 2;
+        this.shape = generateShape(4 + Math.floor(window.randomSecure() * 3), 0.4, 0.7);
+        this.rot = window.randomSecure() * Math.PI * 2;
         this.rotSpd = 0;
-        this.shineAngle = Math.random() * Math.PI * 2;
+        this.shineAngle = window.randomSecure() * Math.PI * 2;
     }
 
     _initAsh(W, H, initial) {
         this.subType = 'ash';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -45 - Math.random() * 25;
-        this.size = 12 + Math.random() * 28;
-        this.speed = 19 + Math.random() * 14;
-        this.alpha = 0.25 + Math.random() * 0.2;
-        this.elongation = 0.5 + Math.random() * 0.6;
-        this.rot = Math.random() * Math.PI;
-        this.ashLight = 12 + Math.random() * 10;
-        this.ashWarm = Math.random() < 0.4;
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -45 - window.randomSecure() * 25;
+        this.size = 12 + window.randomSecure() * 28;
+        this.speed = 19 + window.randomSecure() * 14;
+        this.alpha = 0.25 + window.randomSecure() * 0.2;
+        this.elongation = 0.5 + window.randomSecure() * 0.6;
+        this.rot = window.randomSecure() * Math.PI;
+        this.ashLight = 12 + window.randomSecure() * 10;
+        this.ashWarm = window.randomSecure() < 0.4;
     }
 
     _initCrater(W, H, initial, vc) {
         this.subType = 'crater';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -60 - Math.random() * 40;
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 40;
         const cw = vc ? vc.craterW : [14, 28];
-        this.size = cw[0] + Math.random() * (cw[1] - cw[0]);
-        this.speed = 18 + Math.random() * 14;
-        this.alpha = 0.55 + Math.random() * 0.35;
-        this.elongation = 0.7 + Math.random() * 0.3;
-        this.rot = Math.random() * Math.PI;
+        this.size = cw[0] + window.randomSecure() * (cw[1] - cw[0]);
+        this.speed = 18 + window.randomSecure() * 14;
+        this.alpha = 0.55 + window.randomSecure() * 0.35;
+        this.elongation = 0.7 + window.randomSecure() * 0.3;
+        this.rot = window.randomSecure() * Math.PI;
         const lc = pickColor(LAVA_POOL_PALETTE);
         this.lavaHue = lc.hue; this.lavaSat = lc.sat; this.lavaLight = lc.lightness;
-        this.rimHue = 20 + Math.random() * 15;
-        this.rimSat = 10 + Math.random() * 12;
-        this.rimLight = 10 + Math.random() * 8;
+        this.rimHue = 20 + window.randomSecure() * 15;
+        this.rimSat = 10 + window.randomSecure() * 12;
+        this.rimLight = 10 + window.randomSecure() * 8;
     }
 
     _initScorched(W, H, initial) {
         this.subType = 'scorched';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -40 - Math.random() * 25;
-        this.size = 10 + Math.random() * 22;
-        this.speed = 19 + Math.random() * 14;
-        this.alpha = 0.3 + Math.random() * 0.2;
-        this.elongation = 0.45 + Math.random() * 0.55;
-        this.rot = Math.random() * Math.PI;
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 25;
+        this.size = 10 + window.randomSecure() * 22;
+        this.speed = 19 + window.randomSecure() * 14;
+        this.alpha = 0.3 + window.randomSecure() * 0.2;
+        this.elongation = 0.45 + window.randomSecure() * 0.55;
+        this.rot = window.randomSecure() * Math.PI;
         this.embers = [];
-        const eN = 1 + Math.floor(Math.random() * 3);
+        const eN = 1 + Math.floor(window.randomSecure() * 3);
         for (let i = 0; i < eN; i++) {
             this.embers.push({
-                ox: (Math.random() - 0.5) * this.size * 1.2,
-                oy: (Math.random() - 0.5) * this.size * this.elongation * 1.2,
-                r: 0.8 + Math.random() * 1.5,
-                phase: Math.random() * Math.PI * 2
+                ox: (window.randomSecure() - 0.5) * this.size * 1.2,
+                oy: (window.randomSecure() - 0.5) * this.size * this.elongation * 1.2,
+                r: 0.8 + window.randomSecure() * 1.5,
+                phase: window.randomSecure() * Math.PI * 2
             });
         }
     }
@@ -322,7 +322,7 @@ export class VolcanicFx extends BaseFxStrategy {
             for (const em of this.embers) {
                 const pulse = 0.5 + 0.5 * Math.sin(em.phase + performance.now() * 0.003);
                 ctx.globalAlpha = this.alpha * 0.4 * pulse;
-                ctx.fillStyle = `hsl(${20 + Math.random() * 15},90%,${40 + pulse * 20}%)`;
+                ctx.fillStyle = `hsl(${20 + window.randomSecure() * 15},90%,${40 + pulse * 20}%)`;
                 ctx.beginPath();
                 ctx.arc(em.ox, em.oy, em.r, 0, Math.PI * 2);
                 ctx.fill();

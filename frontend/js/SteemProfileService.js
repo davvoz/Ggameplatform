@@ -31,7 +31,6 @@ export class SteemProfileService {
             const data = await response.json();
             return data.result || [];
         } catch (error) {
-            console.error('Error fetching outgoing vesting delegations:', error);
             return [];
         }
     }
@@ -57,7 +56,6 @@ export class SteemProfileService {
 
             return await this._extractProfileData(accountData);
         } catch (error) {
-            console.error('Error fetching Steem profile:', error);
             return null;
         }
     }
@@ -79,7 +77,6 @@ export class SteemProfileService {
         });
 
         if (!response.ok) {
-            console.error('Steem API error:', response.status, response.statusText);
             return null;
         }
 
@@ -114,12 +111,7 @@ export class SteemProfileService {
         // Get delegation specifically to @cur8 using get_vesting_delegations
         const delegationAmount = await this._getDelegationToCur8(account.name);
 
-        console.log('✅ Extracted Steem data:', {
-            witnessVotes,
-            votesCur8Witness,
-            proxy,
-            delegationAmount
-        });
+
 
         return {
             profileImage: profile.profile_image || '',
@@ -150,7 +142,6 @@ export class SteemProfileService {
             }
             return false;
         } catch (error) {
-            console.error(`Error checking proxy vote for ${proxyUsername}:`, error);
             return false;
         }
     }
@@ -179,7 +170,6 @@ export class SteemProfileService {
             });
 
             if (!response.ok) {
-                console.warn('Failed to fetch VESTS to SP ratio, using cached value if available');
                 return this.vestsToSpCache; // Return cached value or null
             }
 
@@ -197,10 +187,8 @@ export class SteemProfileService {
                 return ratio;
             }
             
-            console.warn('Invalid VESTS to SP calculation, using cached value if available');
             return this.vestsToSpCache; // Return cached value or null
         } catch (error) {
-            console.error('Error fetching VESTS to SP ratio:', error);
             return this.vestsToSpCache; // Return cached value or null
         }
     }
@@ -216,7 +204,6 @@ export class SteemProfileService {
             
             // If we can't get the ratio, we can't calculate delegation accurately
             if (!vestsPerSteem) {
-                console.error('Cannot calculate delegation: VESTS to SP ratio unavailable');
                 return 0;
             }
             
@@ -250,7 +237,6 @@ export class SteemProfileService {
 
             return 0;
         } catch (error) {
-            console.error('Error fetching delegation to cur8:', error);
             return 0;
         }
     }

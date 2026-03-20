@@ -244,7 +244,7 @@ class GoalReachedState extends BaseGameState {
             // Create clean particle explosion
             for (let i = 0; i < 50; i++) {
                 const angle = (Math.PI * 2 * i) / 50;
-                const speed = 150 + Math.random() * 80;
+                const speed = 150 + window.randomSecure() * 80;
                 
                 // Simple gold particles
                 const color = [1.0, 0.9, 0.2, 1.0];
@@ -366,11 +366,11 @@ class GoalReachedState extends BaseGameState {
         }
         
         // Continue spawning particles - simple and clean
-        if (fadeProgress < 0.85 && Math.random() < 0.2) {
+        if (fadeProgress < 0.85 && window.randomSecure() < 0.2) {
             const entityManager = context.entityManager;
             
             if (player && entityManager) {
-                const angle = Math.random() * Math.PI * 2;
+                const angle = window.randomSecure() * Math.PI * 2;
                 const speed = 120;
                 
                 entityManager.addEntity('powerupParticles', {

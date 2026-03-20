@@ -50,15 +50,15 @@ export class FlightButtonUI {
             this.bounceOffset = Math.abs(Math.sin(this.bouncePhase)) * 10;
             
             // Genera sparkles quando ready
-            if (Math.random() < 0.15) {
-                const angle = Math.random() * Math.PI * 2;
+            if (window.randomSecure() < 0.15) {
+                const angle = window.randomSecure() * Math.PI * 2;
                 this.sparkles.push({
                     x: this.buttonX + Math.cos(angle) * this.buttonRadius,
                     y: this.buttonY + Math.sin(angle) * this.buttonRadius,
                     vx: Math.cos(angle) * 60,
                     vy: Math.sin(angle) * 60,
                     life: 1.0,
-                    size: 3 + Math.random() * 2
+                    size: 3 + window.randomSecure() * 2
                 });
             }
         } else {

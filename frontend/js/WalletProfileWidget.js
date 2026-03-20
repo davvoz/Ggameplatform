@@ -1,3 +1,6 @@
+import CoinAPI from './coinAPI.js';
+import { getCoinAPI } from './state.js';
+
 /**
  * Wallet widget for profile page - Shows balance and recent transactions
  */
@@ -5,7 +8,7 @@ class WalletProfileWidget {
     constructor(container, userId) {
         this.container = container;
         this.userId = userId;
-        this.coinAPI = window.coinAPI || new window.CoinAPI();
+        this.coinAPI = getCoinAPI() || new CoinAPI();
     }
 
     /**
@@ -116,7 +119,5 @@ class WalletProfileWidget {
     }
 }
 
-// Export to global scope
-if (typeof window !== 'undefined') {
-    window.WalletProfileWidget = WalletProfileWidget;
-}
+// ES6 export
+export default WalletProfileWidget;

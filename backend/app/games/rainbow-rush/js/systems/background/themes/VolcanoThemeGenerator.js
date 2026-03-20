@@ -84,14 +84,14 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SMOKE_PARTICLE_COUNT; i++) {
             particles.push({
-                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60,
+                x: this.canvasWidth * 0.65 + (window.randomSecure() - 0.5) * 60,
                 y: this.canvasHeight * 0.35 - 20 - i * 25,
-                radius: 15 + Math.random() * 20,
-                speed: -15 - Math.random() * 25,
+                radius: 15 + window.randomSecure() * 20,
+                speed: -15 - window.randomSecure() * 25,
                 color: [0.2, 0.15, 0.12, 0.4 - i * 0.06],
                 type: 'smoke',
                 expansion: 1 + i * 0.15,
-                drift: (Math.random() - 0.5) * 10
+                drift: (window.randomSecure() - 0.5) * 10
             });
         }
     }
@@ -101,14 +101,14 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.EMBER_PARTICLE_COUNT; i++) {
             particles.push({
-                x: this.canvasWidth * 0.65 + (Math.random() - 0.5) * 70,
-                y: this.canvasHeight * 0.35 + Math.random() * 100,
+                x: this.canvasWidth * 0.65 + (window.randomSecure() - 0.5) * 70,
+                y: this.canvasHeight * 0.35 + window.randomSecure() * 100,
                 radius: this.randomInRange(config.EMBER_MIN_RADIUS, config.EMBER_MAX_RADIUS),
                 speed: this.randomInRange(config.EMBER_MIN_SPEED, config.EMBER_MAX_SPEED),
-                vx: (Math.random() - 0.5) * 30,
-                color: [1.0, 0.5 + Math.random() * 0.3, 0.0, 0.8],
+                vx: (window.randomSecure() - 0.5) * 30,
+                color: [1.0, 0.5 + window.randomSecure() * 0.3, 0.0, 0.8],
                 type: 'ember',
-                sparkle: Math.random() * Math.PI * 2
+                sparkle: window.randomSecure() * Math.PI * 2
             });
         }
     }

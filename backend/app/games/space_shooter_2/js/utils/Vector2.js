@@ -88,8 +88,8 @@ class Vector2 {
 
     static random(minX, maxX, minY, maxY) {
         return new Vector2(
-            minX + Math.random() * (maxX - minX),
-            minY + Math.random() * (maxY - minY)
+            minX + window.randomSecure() * (maxX - minX),
+            minY + window.randomSecure() * (maxY - minY)
         );
     }
 

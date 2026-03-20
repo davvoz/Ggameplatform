@@ -62,14 +62,14 @@ export class PlanetRenderer {
             const r = i / count;
             if (r < 0.35) {
                 side = 'left'; x = -5;
-                y = (i / (count * 0.35)) * H + (Math.random() - 0.5) * H * 0.1;
+                y = (i / (count * 0.35)) * H + (window.randomSecure() - 0.5) * H * 0.1;
             } else if (r < 0.70) {
                 side = 'right'; x = W + 5;
-                y = ((i - count * 0.35) / (count * 0.35)) * H + (Math.random() - 0.5) * H * 0.1;
+                y = ((i - count * 0.35) / (count * 0.35)) * H + (window.randomSecure() - 0.5) * H * 0.1;
             } else if (r < 0.85) {
-                side = 'top'; x = Math.random() * W; y = -5;
+                side = 'top'; x = window.randomSecure() * W; y = -5;
             } else {
-                side = 'bottom'; x = Math.random() * W; y = H + 5;
+                side = 'bottom'; x = window.randomSecure() * W; y = H + 5;
             }
             elements.push({ side, x, y });
         }
@@ -115,15 +115,15 @@ export class PlanetRenderer {
             wanderFrac = 0.2
         } = opts;
 
-        const baseX = W * baseXMin + Math.random() * W * baseXMax;
-        const width = pathWidth[0] + Math.random() * (pathWidth[1] - pathWidth[0]);
+        const baseX = W * baseXMin + window.randomSecure() * W * baseXMax;
+        const width = pathWidth[0] + window.randomSecure() * (pathWidth[1] - pathWidth[0]);
         const tileH = H * 3;
-        const segH = segHeight[0] + Math.random() * segHeight[1];
+        const segH = segHeight[0] + window.randomSecure() * segHeight[1];
         const segs = Math.ceil(tileH / segH);
         const points = [{ x: 0, y: 0 }];
-        let cx = 0, drift = (Math.random() - 0.5) * (driftStrength * 0.75);
+        let cx = 0, drift = (window.randomSecure() - 0.5) * (driftStrength * 0.75);
         for (let i = 0; i < segs; i++) {
-            drift += (Math.random() - 0.5) * driftStrength;
+            drift += (window.randomSecure() - 0.5) * driftStrength;
             drift = Math.max(-driftMax, Math.min(driftMax, drift));
             cx += drift;
             const maxWander = W * wanderFrac;

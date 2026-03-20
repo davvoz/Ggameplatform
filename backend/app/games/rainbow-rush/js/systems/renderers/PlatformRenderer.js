@@ -113,8 +113,8 @@ export class PlatformRenderer extends IEntityRenderer {
         const shake = crumbleProgress * 8;
         return {
             color,
-            x: baseX + (Math.random() - 0.5) * shake,
-            y: baseY + (Math.random() - 0.5) * shake
+            x: baseX + (window.randomSecure() - 0.5) * shake,
+            y: baseY + (window.randomSecure() - 0.5) * shake
         };
     }
 
@@ -150,9 +150,9 @@ export class PlatformRenderer extends IEntityRenderer {
         const particleCount = 6;
         
         for (let i = 0; i < particleCount; i++) {
-            const px = baseX + Math.random() * platform.width;
-            const py = baseY + platform.height + Math.random() * 15 * crumbleProgress;
-            const pSize = 1 + Math.random() * 2;
+            const px = baseX + window.randomSecure() * platform.width;
+            const py = baseY + platform.height + window.randomSecure() * 15 * crumbleProgress;
+            const pSize = 1 + window.randomSecure() * 2;
             this.renderer.drawCircle(px, py, pSize, [0.6, 0.5, 0.4, (1 - crumbleProgress) * 0.6]);
         }
     }

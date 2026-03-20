@@ -279,12 +279,4 @@ class InfiniteScrollManager {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = InfiniteScrollManager;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.InfiniteScrollManager = InfiniteScrollManager;
-}
+export { InfiniteScrollManager };

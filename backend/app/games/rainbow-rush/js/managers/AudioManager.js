@@ -711,7 +711,7 @@ export class AudioManager {
         const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
         const noiseData = noiseBuffer.getChannelData(0);
         for (let i = 0; i < noiseData.length; i++) {
-            noiseData[i] = Math.random() * 2 - 1;
+            noiseData[i] = window.randomSecure() * 2 - 1;
         }
         
         const noiseSource = ctx.createBufferSource();

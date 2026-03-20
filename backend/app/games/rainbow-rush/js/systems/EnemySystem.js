@@ -76,7 +76,7 @@ export class EnemySystem {
      * Spawn enemy from type (used by spawner enemies)
      */
     spawnFromSpawner(spawnerEnemy) {
-        const spawnX = spawnerEnemy.x + (Math.random() - 0.5) * 50;
+        const spawnX = spawnerEnemy.x + (window.randomSecure() - 0.5) * 50;
         const spawnY = spawnerEnemy.y;
         
         const newEnemy = this.spawnEnemy(
@@ -96,7 +96,7 @@ export class EnemySystem {
     createSpawnParticles(x, y) {
         for (let i = 0; i < 20; i++) {
             const angle = (Math.PI * 2 * i) / 20;
-            const speed = 80 + Math.random() * 60;
+            const speed = 80 + window.randomSecure() * 60;
             
             this.entityManager.addEntity('powerupParticles', {
                 x: x,
@@ -105,11 +105,11 @@ export class EnemySystem {
                 vy: Math.sin(angle) * speed,
                 life: 0.5,
                 maxLife: 0.5,
-                size: 3 + Math.random() * 2,
+                size: 3 + window.randomSecure() * 2,
                 color: [0.6, 0.4, 0.8, 1.0],
                 gravity: 100,
                 rotation: 0,
-                rotationSpeed: (Math.random() - 0.5) * 8,
+                rotationSpeed: (window.randomSecure() - 0.5) * 8,
                 type: 'spawn-particle'
             });
         }
@@ -209,7 +209,7 @@ export class EnemySystem {
         if (!config) return;
 
         const spawnX = this.dims.width + 100;
-        const spawnY = 200 + Math.random() * 300;
+        const spawnY = 200 + window.randomSecure() * 300;
 
         this.spawnEnemy(config.id, spawnX, spawnY);
     }
@@ -255,7 +255,7 @@ export class EnemySystem {
     createDeathParticles(enemy) {
         for (let i = 0; i < 30; i++) {
             const angle = (Math.PI * 2 * i) / 30;
-            const speed = 100 + Math.random() * 80;
+            const speed = 100 + window.randomSecure() * 80;
             
             this.entityManager.addEntity('powerupParticles', {
                 x: enemy.x + enemy.width / 2,
@@ -264,11 +264,11 @@ export class EnemySystem {
                 vy: Math.sin(angle) * speed - 50,
                 life: 0.8,
                 maxLife: 0.8,
-                size: 4 + Math.random() * 3,
+                size: 4 + window.randomSecure() * 3,
                 color: [...enemy.color],
                 gravity: 200,
                 rotation: 0,
-                rotationSpeed: (Math.random() - 0.5) * 10,
+                rotationSpeed: (window.randomSecure() - 0.5) * 10,
                 type: 'death-particle'
             });
         }

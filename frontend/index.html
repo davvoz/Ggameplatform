@@ -123,10 +123,7 @@
         <div class="loading">Loading...</div>
     </main>
 
-
-
     <!-- Templates -->
-
     <!-- Game Catalog Template -->
     <template id="catalog-template">
         <div class="catalog">
@@ -699,27 +696,13 @@
             }
         })();
     </script>
-    <script src="./js/nav.js"></script>
-    <script src="./js/auth.js"></script>
-    <script src="./js/coinAPI.js"></script>
-    <script src="./js/CoinBalanceWidget.js"></script>
-    <script src="./js/InfiniteScrollManager.js"></script>
-    <script src="./js/WalletStatsRenderer.js"></script>
-    <script src="./js/WalletRenderer.js"></script>
-    <script src="./js/WalletProfileWidget.js"></script>
-    <script src="./js/LeaderboardAPI.js"></script>
-    <script src="./js/daily-login-banner.js"></script>
-    <script src="./js/SteemPostAPI.js"></script>
-    <script src="./js/SteemPostModal.js"></script>
-    <script src="./js/CommunityAPI.js"></script>
-    <script src="./js/CommunityStatsAPI.js"></script>
-    <script src="./js/CommunityStatsRenderer.js"></script>
-    <script src="./js/CommunityManager.js"></script>
+    
+    <!-- ES6 Module Entry Point - All JS loaded here -->
+    <script type="module" src="./js/main.js"></script>
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="./css/community-stats.css">
     <link rel="stylesheet" href="./css/steem-post-modal.css">
-    <script src="./js/CampaignCountdown.js"></script>
-    <script type="module" src="./js/main.js"></script>
-    <script src="./js/nav-multiplier.js"></script>
 
     <!-- Initialize Coin Balance Widget and Daily Login Banner on login -->
     <script>

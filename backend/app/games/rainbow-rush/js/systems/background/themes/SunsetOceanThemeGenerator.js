@@ -73,11 +73,11 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.BIRD_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.35,
-                speed: 35 + Math.random() * 40,
-                wingPhase: Math.random() * Math.PI * 2,
-                size: 5 + Math.random() * 4,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight * 0.35,
+                speed: 35 + window.randomSecure() * 40,
+                wingPhase: window.randomSecure() * Math.PI * 2,
+                size: 5 + window.randomSecure() * 4,
                 color: [0.1, 0.1, 0.1, 0.7],
                 type: 'bird'
             });
@@ -87,13 +87,13 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
     generateReflections(particles) {
         for (let i = 0; i < 8; i++) {
             particles.push({
-                x: this.canvasWidth * 0.5 + (Math.random() - 0.5) * 100,
-                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.3,
-                radius: 3 + Math.random() * 5,
-                speed: 10 + Math.random() * 20,
-                color: [1.0, 0.6, 0.2, 0.3 + Math.random() * 0.3],
+                x: this.canvasWidth * 0.5 + (window.randomSecure() - 0.5) * 100,
+                y: this.canvasHeight * 0.5 + window.randomSecure() * this.canvasHeight * 0.3,
+                radius: 3 + window.randomSecure() * 5,
+                speed: 10 + window.randomSecure() * 20,
+                color: [1.0, 0.6, 0.2, 0.3 + window.randomSecure() * 0.3],
                 type: 'simple_particle',
-                wobble: Math.random() * Math.PI * 2
+                wobble: window.randomSecure() * Math.PI * 2
             });
         }
     }

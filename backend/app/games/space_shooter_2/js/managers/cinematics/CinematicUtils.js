@@ -23,11 +23,11 @@ export function createBgStars(count, w, h) {
     const stars = [];
     for (let i = 0; i < count; i++) {
         stars.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            speed: 20 + Math.random() * 60,
-            size: 0.5 + Math.random() * 1.5,
-            brightness: 0.3 + Math.random() * 0.7
+            x: window.randomSecure() * w,
+            y: window.randomSecure() * h,
+            speed: 20 + window.randomSecure() * 60,
+            size: 0.5 + window.randomSecure() * 1.5,
+            brightness: 0.3 + window.randomSecure() * 0.7
         });
     }
     return stars;
@@ -36,7 +36,7 @@ export function createBgStars(count, w, h) {
 export function updateBgStars(stars, dt, w, h) {
     for (const s of stars) {
         s.y += s.speed * dt;
-        if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
+        if (s.y > h) { s.y = 0; s.x = window.randomSecure() * w; }
     }
 }
 

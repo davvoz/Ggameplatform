@@ -237,7 +237,7 @@ class SoundManager {
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1) * volume * this.sfxVolume;
+                data[i] = (window.randomSecure() * 2 - 1) * volume * this.sfxVolume;
             }
             const source = this.ctx.createBufferSource();
             const gain = this.ctx.createGain();
@@ -295,7 +295,7 @@ class SoundManager {
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+                data[i] = (window.randomSecure() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
             }
             const noise = this.ctx.createBufferSource();
             noise.buffer = buffer;
@@ -322,7 +322,7 @@ class SoundManager {
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
+                data[i] = (window.randomSecure() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
             }
             const noise = this.ctx.createBufferSource();
             noise.buffer = buffer;
@@ -409,7 +409,7 @@ class SoundManager {
             const bufLen = this.ctx.sampleRate * 0.12;
             const buf = this.ctx.createBuffer(1, bufLen, this.ctx.sampleRate);
             const d = buf.getChannelData(0);
-            for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufLen, 3);
+            for (let i = 0; i < bufLen; i++) d[i] = (window.randomSecure() * 2 - 1) * Math.pow(1 - i / bufLen, 3);
             const nSrc = this.ctx.createBufferSource();
             nSrc.buffer = buf;
             const nFilter = this.ctx.createBiquadFilter();
@@ -718,7 +718,7 @@ class SoundManager {
             const noiseLen = 0.9;
             const noiseBuf = this.ctx.createBuffer(1, this.ctx.sampleRate * noiseLen, this.ctx.sampleRate);
             const noiseData = noiseBuf.getChannelData(0);
-            for (let i = 0; i < noiseData.length; i++) noiseData[i] = (Math.random() * 2 - 1);
+            for (let i = 0; i < noiseData.length; i++) noiseData[i] = (window.randomSecure() * 2 - 1);
             const noiseSrc = this.ctx.createBufferSource();
             noiseSrc.buffer = noiseBuf;
             const noiseFilter = this.ctx.createBiquadFilter();
@@ -810,7 +810,7 @@ class SoundManager {
             const shimLen = 0.6;
             const shimBuf = this.ctx.createBuffer(1, this.ctx.sampleRate * shimLen, this.ctx.sampleRate);
             const shimData = shimBuf.getChannelData(0);
-            for (let i = 0; i < shimData.length; i++) shimData[i] = (Math.random() * 2 - 1);
+            for (let i = 0; i < shimData.length; i++) shimData[i] = (window.randomSecure() * 2 - 1);
             const shimSrc = this.ctx.createBufferSource();
             shimSrc.buffer = shimBuf;
             const shimFilter = this.ctx.createBiquadFilter();

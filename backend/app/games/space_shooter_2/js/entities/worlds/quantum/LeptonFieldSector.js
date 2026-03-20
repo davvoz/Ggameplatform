@@ -14,29 +14,29 @@ export class LeptonFieldSector extends QuantumSectorRenderer {
 
         const atomCount = this.quality === 'low' ? 3 : 5;
         for (let i = 0; i < atomCount; i++) {
-            const cx = (0.15 + Math.random() * 0.7) * W;
-            const cy = (0.15 + Math.random() * 0.7) * H;
-            const shellCount = 2 + Math.floor(Math.random() * 2);
+            const cx = (0.15 + window.randomSecure() * 0.7) * W;
+            const cy = (0.15 + window.randomSecure() * 0.7) * H;
+            const shellCount = 2 + Math.floor(window.randomSecure() * 2);
             const shells = [];
             for (let s = 0; s < shellCount; s++) {
-                const r = 30 + s * 25 + Math.random() * 15;
-                const electronCount = 1 + Math.floor(Math.random() * 3);
+                const r = 30 + s * 25 + window.randomSecure() * 15;
+                const electronCount = 1 + Math.floor(window.randomSecure() * 3);
                 const electrons = [];
                 for (let el = 0; el < electronCount; el++) {
                     electrons.push({
-                        angle: (Math.PI * 2 / electronCount) * el + Math.random() * 0.3,
-                        speed: 1.5 + Math.random() * 2
+                        angle: (Math.PI * 2 / electronCount) * el + window.randomSecure() * 0.3,
+                        speed: 1.5 + window.randomSecure() * 2
                     });
                 }
-                shells.push({ radius: r, electrons, tilt: Math.random() * 0.4 - 0.2 });
+                shells.push({ radius: r, electrons, tilt: window.randomSecure() * 0.4 - 0.2 });
             }
             this.orbitals.push({
                 cx, cy, shells,
-                nucleusSize: 3 + Math.random() * 3,
-                colorIdx: Math.floor(Math.random() * 3),
-                pulsePhase: Math.random() * Math.PI * 2,
-                pulseSpeed: 0.5 + Math.random(),
-                scrollSpeed: 30 + Math.random() * 15,
+                nucleusSize: 3 + window.randomSecure() * 3,
+                colorIdx: Math.floor(window.randomSecure() * 3),
+                pulsePhase: window.randomSecure() * Math.PI * 2,
+                pulseSpeed: 0.5 + window.randomSecure(),
+                scrollSpeed: 30 + window.randomSecure() * 15,
                 zoneCooldown: this.cooldown(6, 10)
             });
         }
@@ -49,7 +49,7 @@ export class LeptonFieldSector extends QuantumSectorRenderer {
             const maxR = atom.shells.length ? atom.shells[atom.shells.length - 1].radius : 40;
             if (atom.cy > H + maxR + 10) {
                 atom.cy = -maxR - 10;
-                atom.cx = (0.1 + Math.random() * 0.8) * W;
+                atom.cx = (0.1 + window.randomSecure() * 0.8) * W;
             }
             atom.pulsePhase += atom.pulseSpeed * dt;
             for (const shell of atom.shells) {

@@ -95,15 +95,15 @@ export default class AudioVisualizer {
         const count = Math.min(90, Math.floor((this.w * this.h) / 4000));
         for (let i = 0; i < count; i++) {
             this.stars.push({
-                x: Math.random() * this.w,
-                y: Math.random() * this.h,
-                size: 0.4 + Math.random() * 1.6,
-                baseAlpha: 0.25 + Math.random() * 0.55,
-                twinkleSpeed: 1.5 + Math.random() * 3,
-                phase: Math.random() * Math.PI * 2,
+                x: window.randomSecure() * this.w,
+                y: window.randomSecure() * this.h,
+                size: 0.4 + window.randomSecure() * 1.6,
+                baseAlpha: 0.25 + window.randomSecure() * 0.55,
+                twinkleSpeed: 1.5 + window.randomSecure() * 3,
+                phase: window.randomSecure() * Math.PI * 2,
                 // Brighter stars are slightly blue-white
-                hue: 200 + Math.random() * 40,
-                sat: 10 + Math.random() * 40
+                hue: 200 + window.randomSecure() * 40,
+                sat: 10 + window.randomSecure() * 40
             });
         }
     }
@@ -121,9 +121,9 @@ export default class AudioVisualizer {
                 baseX: p.rx, baseY: p.ry,
                 hue: p.hue,
                 radius: p.radius,
-                driftPhaseX: Math.random() * Math.PI * 2,
-                driftPhaseY: Math.random() * Math.PI * 2,
-                breathPhase: Math.random() * Math.PI * 2
+                driftPhaseX: window.randomSecure() * Math.PI * 2,
+                driftPhaseY: window.randomSecure() * Math.PI * 2,
+                breathPhase: window.randomSecure() * Math.PI * 2
             });
         }
     }
@@ -132,12 +132,12 @@ export default class AudioVisualizer {
         this.warpLines = [];
         // Pre-create 24 radial warp lines from center
         for (let i = 0; i < 24; i++) {
-            const angle = (i / 24) * Math.PI * 2 + (Math.random() - 0.5) * 0.12;
+            const angle = (i / 24) * Math.PI * 2 + (window.randomSecure() - 0.5) * 0.12;
             this.warpLines.push({
                 angle,
-                length: 0.15 + Math.random() * 0.25,  // fraction of screen diagonal
-                width: 0.5 + Math.random() * 1.0,
-                alpha: 0.06 + Math.random() * 0.08
+                length: 0.15 + window.randomSecure() * 0.25,  // fraction of screen diagonal
+                width: 0.5 + window.randomSecure() * 1.0,
+                alpha: 0.06 + window.randomSecure() * 0.08
             });
         }
     }

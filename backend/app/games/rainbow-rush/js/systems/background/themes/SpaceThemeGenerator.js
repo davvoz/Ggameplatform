@@ -29,16 +29,16 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.PLANET_COUNT; i++) {
             const radius = this.randomInRange(config.PLANET_MIN_RADIUS, config.PLANET_MAX_RADIUS);
-            const hue = Math.random();
+            const hue = window.randomSecure();
             
             layers.push({
                 x: (i + 1) * this.canvasWidth / (config.PLANET_COUNT + 1),
-                y: this.getSkyY(0.3 + Math.random() * 0.4),
+                y: this.getSkyY(0.3 + window.randomSecure() * 0.4),
                 radius,
                 color: [
                     0.3 + hue * 0.7,
                     0.3 + (1 - hue) * 0.5,
-                    0.5 + Math.random() * 0.3,
+                    0.5 + window.randomSecure() * 0.3,
                     0.8
                 ],
                 type: 'planet',
@@ -53,13 +53,13 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.NEBULA_COUNT; i++) {
             layers.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.7,
-                width: 150 + Math.random() * 100,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight * 0.7,
+                width: 150 + window.randomSecure() * 100,
                 color: [
-                    0.5 + Math.random() * 0.5,
-                    0.2 + Math.random() * 0.4,
-                    0.6 + Math.random() * 0.4,
+                    0.5 + window.randomSecure() * 0.5,
+                    0.2 + window.randomSecure() * 0.4,
+                    0.6 + window.randomSecure() * 0.4,
                     0.2
                 ],
                 type: 'nebula',
@@ -74,10 +74,10 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.STAR_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
                 radius: this.randomInRange(config.STAR_MIN_RADIUS, config.STAR_MAX_RADIUS),
-                twinkle: Math.random() * Math.PI * 2,
+                twinkle: window.randomSecure() * Math.PI * 2,
                 color: [1.0, 1.0, 0.9, 0.7],
                 type: 'star'
             });
@@ -89,11 +89,11 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SHOOTING_STAR_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.6,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight * 0.6,
                 length: config.SHOOTING_STAR_LENGTH,
-                speed: 200 + Math.random() * 150,
-                angle: Math.PI / 4 + (Math.random() - 0.5) * 0.5,
+                speed: 200 + window.randomSecure() * 150,
+                angle: Math.PI / 4 + (window.randomSecure() - 0.5) * 0.5,
                 color: [1.0, 1.0, 0.9, 0.8],
                 type: 'shootingStar'
             });

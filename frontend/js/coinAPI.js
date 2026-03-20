@@ -145,12 +145,5 @@ class CoinAPI {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CoinAPI;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.CoinAPI = CoinAPI;
-}
+// ES6 export
+export default CoinAPI;

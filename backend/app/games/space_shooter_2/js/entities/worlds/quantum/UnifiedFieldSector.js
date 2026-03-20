@@ -16,25 +16,25 @@ export class UnifiedFieldSector extends QuantumSectorRenderer {
         const vertCount = this.quality === 'low' ? 6 : 12;
         for (let i = 0; i < vertCount; i++) {
             this.feynmanVerts.push({
-                x: (0.1 + Math.random() * 0.8) * W,
-                y: (0.1 + Math.random() * 0.8) * H,
-                type: ['vertex', 'loop', 'propagator'][Math.floor(Math.random() * 3)],
+                x: (0.1 + window.randomSecure() * 0.8) * W,
+                y: (0.1 + window.randomSecure() * 0.8) * H,
+                type: ['vertex', 'loop', 'propagator'][Math.floor(window.randomSecure() * 3)],
                 active: false,
                 timer: this.cooldown(8, 16),
-                pulsePhase: Math.random() * Math.PI * 2,
-                colorIdx: Math.floor(Math.random() * 4),
-                scrollSpeed: 32 + Math.random() * 12
+                pulsePhase: window.randomSecure() * Math.PI * 2,
+                colorIdx: Math.floor(window.randomSecure() * 4),
+                scrollSpeed: 32 + window.randomSecure() * 12
             });
         }
         for (let i = 0; i < this.feynmanVerts.length; i++) {
             for (let j = i + 1; j < this.feynmanVerts.length; j++) {
                 const a = this.feynmanVerts[i], b = this.feynmanVerts[j];
                 const dist = Math.hypot(a.x - b.x, a.y - b.y);
-                if (dist < W * 0.4 && Math.random() < 0.4) {
+                if (dist < W * 0.4 && window.randomSecure() < 0.4) {
                     this.feynmanLines.push({
                         from: i, to: j,
-                        type: ['straight', 'wavy', 'dashed'][Math.floor(Math.random() * 3)],
-                        colorIdx: Math.floor(Math.random() * 4)
+                        type: ['straight', 'wavy', 'dashed'][Math.floor(window.randomSecure() * 3)],
+                        colorIdx: Math.floor(window.randomSecure() * 4)
                     });
                 }
             }
@@ -47,14 +47,14 @@ export class UnifiedFieldSector extends QuantumSectorRenderer {
             v.y += v.scrollSpeed * dt;
             if (v.y > H + 30) {
                 v.y = -30;
-                v.x = (0.1 + Math.random() * 0.8) * W;
+                v.x = (0.1 + window.randomSecure() * 0.8) * W;
             }
             v.pulsePhase += dt * 2;
             if (!v.active) {
                 v.timer -= dt;
                 if (v.timer <= 0) {
                     v.active = true;
-                    v.timer = 1.5 + Math.random() * 2;
+                    v.timer = 1.5 + window.randomSecure() * 2;
                     this.spawnZone(v.x, v.y, 85);
                 }
             } else {

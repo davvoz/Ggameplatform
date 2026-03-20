@@ -162,18 +162,18 @@ export class PlayerAnimationController {
 
             case 'turbo':
                 // Particelle FIAMME tipo rientro atmosferico
-                if (Math.random() < 0.9) { // Frequenza altissima
+                if (window.randomSecure() < 0.9) { // Frequenza altissima
                     return {
                         type: 'flame_trail',
                         count: 5, // Molte particelle
-                        offsetX: -25 - Math.random() * 15, // Dietro il player
-                        offsetY: Math.random() * 20 - 10,
+                        offsetX: -25 - window.randomSecure() * 15, // Dietro il player
+                        offsetY: window.randomSecure() * 20 - 10,
                         spread: 60,
                         velocityRange: [80, 180],
                         lifetime: 0.5,
                         color: [
                             1.0, // Rosso
-                            0.3 + Math.random() * 0.4, // Arancione variabile
+                            0.3 + window.randomSecure() * 0.4, // Arancione variabile
                             0.1 // Poco blu
                         ],
                         fadeOut: true, // Dissoluzione

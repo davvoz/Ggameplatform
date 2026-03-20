@@ -12,15 +12,15 @@ export class CorruptedZoneSector extends SimulationSectorRenderer {
         const count = this.quality === 'low' ? 15 : 30;
         for (let i = 0; i < count; i++) {
             this.floaters.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                size: 4 + Math.random() * 16,
-                speed: 8 + Math.random() * 18,
-                rotSpeed: (Math.random() - 0.5) * 2,
-                rot: Math.random() * Math.PI * 2,
-                hue: 260 + Math.random() * 50,
-                alpha: 0.12 + Math.random() * 0.18,
-                broken: Math.random() < 0.4
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                size: 4 + window.randomSecure() * 16,
+                speed: 8 + window.randomSecure() * 18,
+                rotSpeed: (window.randomSecure() - 0.5) * 2,
+                rot: window.randomSecure() * Math.PI * 2,
+                hue: 260 + window.randomSecure() * 50,
+                alpha: 0.12 + window.randomSecure() * 0.18,
+                broken: window.randomSecure() < 0.4
             });
         }
     }
@@ -30,8 +30,8 @@ export class CorruptedZoneSector extends SimulationSectorRenderer {
             f.y += f.speed * dt;
             f.rot += f.rotSpeed * dt;
             if (f.y > this.canvasHeight + 20) {
-                f.y = -20; f.x = Math.random() * this.canvasWidth;
-                f.size = 4 + Math.random() * 16;
+                f.y = -20; f.x = window.randomSecure() * this.canvasWidth;
+                f.size = 4 + window.randomSecure() * 16;
             }
         }
     }
@@ -74,8 +74,8 @@ export class CorruptedZoneSector extends SimulationSectorRenderer {
             for (let i = 0; i < 5; i++) {
                 const nx = ((Math.sin(this.time * 1.3 + i * 7) * 0.5 + 0.5) * this.canvasWidth) | 0;
                 const ny = ((Math.cos(this.time * 0.9 + i * 4) * 0.5 + 0.5) * this.canvasHeight) | 0;
-                const nw = 30 + Math.random() * 50;
-                const nh = 20 + Math.random() * 30;
+                const nw = 30 + window.randomSecure() * 50;
+                const nh = 20 + window.randomSecure() * 30;
                 ctx.fillStyle = `hsla(280,40%,50%,0.3)`;
                 ctx.fillRect(nx, ny, nw, nh);
             }

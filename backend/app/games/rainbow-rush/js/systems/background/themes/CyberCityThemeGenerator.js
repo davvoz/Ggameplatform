@@ -68,10 +68,10 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.BUILDING_COUNT; i++) {
-            const width = 40 + Math.random() * 60;
-            const height = 120 + Math.random() * 180;
+            const width = 40 + window.randomSecure() * 60;
+            const height = 120 + window.randomSecure() * 180;
             const x = (i + 0.5) * this.canvasWidth / config.BUILDING_COUNT;
-            const hue = Math.random();
+            const hue = window.randomSecure();
 
             layers.push({
                 x: x - width / 2,
@@ -86,7 +86,7 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
                 neonColor: [
                     0.4 + hue * 0.6,
                     0.2 + (1 - hue) * 0.6,
-                    0.8 + Math.random() * 0.2,
+                    0.8 + window.randomSecure() * 0.2,
                     0.6
                 ],
                 windows: true
@@ -98,23 +98,23 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         const config = CYBER_CITY_CONFIG;
         
         for (let i = 0; i < config.NEON_PARTICLE_COUNT; i++) {
-            const hue = Math.random();
+            const hue = window.randomSecure();
             
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.3 + Math.random() * this.canvasHeight * 0.5,
-                radius: 2 + Math.random() * 4,
-                speed: 15 + Math.random() * 35,
-                glow: Math.random() * Math.PI * 2,
+                x: window.randomSecure() * this.canvasWidth,
+                y: this.canvasHeight * 0.3 + window.randomSecure() * this.canvasHeight * 0.5,
+                radius: 2 + window.randomSecure() * 4,
+                speed: 15 + window.randomSecure() * 35,
+                glow: window.randomSecure() * Math.PI * 2,
                 color: [
                     0.5 + hue * 0.5,
                     0.3 + (1 - hue) * 0.5,
-                    0.9 + Math.random() * 0.1,
-                    0.7 + Math.random() * 0.3
+                    0.9 + window.randomSecure() * 0.1,
+                    0.7 + window.randomSecure() * 0.3
                 ],
                 type: 'firefly',
-                driftX: (Math.random() - 0.5) * 50,
-                driftY: (Math.random() - 0.5) * 30
+                driftX: (window.randomSecure() - 0.5) * 50,
+                driftY: (window.randomSecure() - 0.5) * 30
             });
         }
     }
@@ -123,13 +123,13 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         const config = CYBER_CITY_CONFIG;
         
         for (let i = 0; i < config.FLYING_VEHICLE_COUNT; i++) {
-            const hue = Math.random();
+            const hue = window.randomSecure();
             
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.3 + Math.random() * this.canvasHeight * 0.4,
-                speed: 45 + Math.random() * 65,
-                size: 8 + Math.random() * 12,
+                x: window.randomSecure() * this.canvasWidth,
+                y: this.canvasHeight * 0.3 + window.randomSecure() * this.canvasHeight * 0.4,
+                speed: 45 + window.randomSecure() * 65,
+                size: 8 + window.randomSecure() * 12,
                 color: [
                     0.6 + hue * 0.4,
                     0.4 + (1 - hue) * 0.4,

@@ -988,8 +988,8 @@ class Game {
             // Programma esplosioni a catena
             for (let i = 0; i < 8; i++) {
                 this.gameOverExplosions.push({
-                    x: px + (Math.random() - 0.5) * 100,
-                    y: py + (Math.random() - 0.5) * 100,
+                    x: px + (window.randomSecure() - 0.5) * 100,
+                    y: py + (window.randomSecure() - 0.5) * 100,
                     delay: 0.2 + i * 0.15,
                     spawned: false
                 });
@@ -1160,7 +1160,7 @@ class Game {
             this.updateAbilityUI();
 
             // Thruster particles
-            if (Math.random() < 0.5) {
+            if (window.randomSecure() < 0.5) {
                 this.particles.emitThruster(
                     this.player.position.x + this.player.width / 2,
                     this.player.position.y + this.player.height,
@@ -1191,7 +1191,7 @@ class Game {
         this.bullets.forEach(bullet => {
             bullet.update(deltaTime, this);
             // Bullet trail particles
-            if (Math.random() < 0.3) {
+            if (window.randomSecure() < 0.3) {
                 this.particles.emitBulletTrail(
                     bullet.position.x + bullet.width / 2,
                     bullet.position.y + bullet.height / 2,
@@ -1493,7 +1493,7 @@ class Game {
         this.gameOverExplosions.forEach(exp => {
             if (!exp.spawned && this.gameOverTimer >= exp.delay) {
                 exp.spawned = true;
-                this.spawnExplosion(exp.x, exp.y, Math.random() > 0.5 ? 'medium' : 'small');
+                this.spawnExplosion(exp.x, exp.y, window.randomSecure() > 0.5 ? 'medium' : 'small');
                 this.postProcessing.shake(8, 0.15);
             }
         });
@@ -1517,11 +1517,11 @@ class Game {
         const ld = getLevelData(this.level);
 
         // Pattern casuale dai disponibili per questo livello
-        const pattern = ld.patterns[Math.floor(Math.random() * ld.patterns.length)];
+        const pattern = ld.patterns[Math.floor(window.randomSecure() * ld.patterns.length)];
 
         // Weighted random pick dal pool nemici del livello
         const totalWeight = ld.enemyPool.reduce((sum, e) => sum + e.weight, 0);
-        let r = Math.random() * totalWeight;
+        let r = window.randomSecure() * totalWeight;
         let enemyType = ld.enemyPool[0].type;
         for (const entry of ld.enemyPool) {
             r -= entry.weight;
@@ -1534,7 +1534,7 @@ class Game {
         // Swarm enemies - proprio pattern e conteggio dal livello
         if (enemyType === 'enemy6') {
             const swarmFormations = ['v', 'wall', 'arrow', 'spiral'];
-            const formation = swarmFormations[Math.floor(Math.random() * swarmFormations.length)];
+            const formation = swarmFormations[Math.floor(window.randomSecure() * swarmFormations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
             enemies.forEach(e => {
                 e.speed *= ld.speedMultiplier;
@@ -1559,7 +1559,7 @@ class Game {
         // Sentinel enemies - proprio movement e conteggio dal livello
         if (enemyType === 'enemy5') {
             const sentinelFormations = ['line', 'cross', 'pincer'];
-            const formation = sentinelFormations[Math.floor(Math.random() * sentinelFormations.length)];
+            const formation = sentinelFormations[Math.floor(window.randomSecure() * sentinelFormations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
             enemies.forEach(e => {
                 e.setMovementPattern('sentinel');
@@ -1570,8 +1570,8 @@ class Game {
         }
 
         // Nemici standard (enemy1/2/3) - formazione o wave
-        if (Math.random() < ld.formationChance) {
-            const formation = ld.formations[Math.floor(Math.random() * ld.formations.length)];
+        if (window.randomSecure() < ld.formationChance) {
+            const formation = ld.formations[Math.floor(window.randomSecure() * ld.formations.length)];
             const enemies = EnemyFactory.createFormation(enemyType, formation, this);
             enemies.forEach(e => {
                 e.speed *= ld.speedMultiplier;
@@ -1841,8 +1841,8 @@ class Game {
             const glitchIntensity = Math.sin(this.time * 30) * 0.5 + 0.5;
 
             for (let i = 0; i < 10; i++) {
-                const y = Math.random() * this.canvas.height;
-                const height = (2 + Math.random() * 4) * s;
+                const y = window.randomSecure() * this.canvas.height;
+                const height = (2 + window.randomSecure() * 4) * s;
                 ctx.fillStyle = `rgba(255, 0, 0, ${glitchIntensity * 0.3 * (1 - progress)})`;
                 ctx.fillRect(0, y, this.canvas.width, height);
             }

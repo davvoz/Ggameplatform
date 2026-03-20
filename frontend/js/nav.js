@@ -1,22 +1,25 @@
+import CommunityAPI from './CommunityAPI.js';
+import AuthManager from './auth.js';
+import { getCommunityWS, setCommunityWS, getCurrentCommunityManager } from './state.js';
 
 /**
  * Check for unclaimed quest rewards and update badge
  */
 async function checkUnclaimedQuests() {
-    
+
     // Only check if user is logged in and not anonymous
-    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+    if (!AuthManager.isLoggedIn()) {
         removeQuestBadge();
         return;
     }
-    
-    const user = window.AuthManager.getUser();
+
+    const user = AuthManager.getUser();
     if (!user || user.is_anonymous) {
         removeQuestBadge();
         return;
     }
-    
-    
+
+
     try {
         const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
         const timestamp = Date.now();
@@ -26,22 +29,22 @@ async function checkUnclaimedQuests() {
                 'Pragma': 'no-cache'
             }
         });
-        
+
         if (!response.ok) {
             removeQuestBadge();
             return;
         }
-        
+
         const quests = await response.json();
-        
+
         // Count quests ready to claim (completed but not claimed)
         const unclaimedCount = quests.filter(quest => {
             const progress = quest.progress || {};
-            return progress.is_completed === true && 
-                   (progress.is_claimed === false || progress.is_claimed === 0);
+            return progress.is_completed === true &&
+                (progress.is_claimed === false || progress.is_claimed === 0);
         }).length;
-        
-        
+
+
         if (unclaimedCount > 0) {
             updateQuestBadge(unclaimedCount);
         } else {
@@ -58,15 +61,15 @@ async function checkUnclaimedQuests() {
 function updateQuestBadge(count) {
     const questsLink = document.getElementById('questsLink');
     if (!questsLink) return;
-    
+
     let badge = questsLink.querySelector('.quest-notification-badge');
-    
+
     if (!badge) {
         badge = document.createElement('span');
         badge.className = 'quest-notification-badge';
         questsLink.appendChild(badge);
     }
-    
+
     badge.textContent = count > 9 ? '9+' : count;
     badge.classList.add('pulse-animation');
 
@@ -100,7 +103,7 @@ function updateQuestBadge(count) {
 function removeQuestBadge() {
     const questsLink = document.getElementById('questsLink');
     if (!questsLink) return;
-    
+
     const badge = questsLink.querySelector('.quest-notification-badge');
     if (badge) {
         badge.remove();
@@ -118,12 +121,12 @@ function removeQuestBadge() {
  * Initialize quest notification checker
  */
 function initQuestNotifications() {
-    
+
     // Check when auth state changes (login/logout)
     window.addEventListener('auth-state-changed', () => {
         checkUnclaimedQuests();
     });
-    
+
     // Check when navigating to quests page
     window.addEventListener('hashchange', () => {
         if (window.location.hash.includes('quest')) {
@@ -145,16 +148,16 @@ function initQuestNotifications() {
             checkUnclaimedQuests();
         }
     });
-    
+
     // Initial check - wait for AuthManager to be ready
     const tryInitialCheck = () => {
-        if (window.AuthManager && window.AuthManager.isLoggedIn()) {
+        if (AuthManager.isLoggedIn()) {
             checkUnclaimedQuests();
         } else {
             setTimeout(tryInitialCheck, 500);
         }
     };
-    
+
     // Start checking after DOM is ready
     if (document.readyState === 'complete') {
         setTimeout(tryInitialCheck, 100);
@@ -169,28 +172,28 @@ function initQuestNotifications() {
  */
 
 function initMobileNav() {
-    
+
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');
-    
-    
+
+
     if (!navToggle || !navMenu) {
 
         return false;
     }
-    
-    
+
+
     // Remove any existing listeners by cloning
     const newNavToggle = navToggle.cloneNode(true);
     navToggle.parentNode.replaceChild(newNavToggle, navToggle);
-    
+
     // Toggle menu on hamburger click
-    newNavToggle.addEventListener('click', function(e) {
+    newNavToggle.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         const isActive = navMenu.classList.contains('active');
-        
+
         if (isActive) {
             newNavToggle.classList.remove('active');
             navMenu.classList.remove('active');
@@ -198,22 +201,22 @@ function initMobileNav() {
             newNavToggle.classList.add('active');
             navMenu.classList.add('active');
         }
-        
+
     });
-    
+
     // Close menu when clicking on a link
     const navLinks = navMenu.querySelectorAll('.nav-link');
-    
+
     navLinks.forEach(link => {
-        link.addEventListener('click', function() {
+        link.addEventListener('click', function () {
 
             newNavToggle.classList.remove('active');
             navMenu.classList.remove('active');
         });
     });
-    
+
     // Close menu when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!newNavToggle.contains(e.target) && !navMenu.contains(e.target)) {
             if (navMenu.classList.contains('active')) {
                 newNavToggle.classList.remove('active');
@@ -221,31 +224,15 @@ function initMobileNav() {
             }
         }
     });
-    
+
     return true;
 }
 
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        initMobileNav();
-        initQuestNotifications();
-        initCommunityNotifications();
-    });
-} else {
-    initMobileNav();
-    initQuestNotifications();
-    initCommunityNotifications();
-}
-
-// Backup initialization after a delay
-setTimeout(function() {
-    if (document.getElementById('navToggle') && document.getElementById('navMenu')) {
-        initMobileNav();
-        initQuestNotifications();
-        initCommunityNotifications();
-    }
-}, 500);
+// ES6 modules are deferred by default - DOM is already ready
+initMobileNav();
+initQuestNotifications();
+let _communityNotificationsInitialized = false;
+initCommunityNotifications();
 
 // ═══════════════════════════════════════════════════════════════════════
 // Community Chat Notification Badge  (WebSocket-driven, no polling)
@@ -296,7 +283,7 @@ function removeCommunityBadge() {
  * Mark latest message as seen in localStorage & clear badge
  */
 function markCommunityAsSeen() {
-    const ws = window._communityWS;
+    const ws = getCommunityWS();
     if (ws && ws._lastKnownMsgId) {
         localStorage.setItem('community_last_seen_msg', ws._lastKnownMsgId);
     }
@@ -306,7 +293,7 @@ function markCommunityAsSeen() {
 /* ── Lightweight WebSocket callbacks used by the global notifier ──── */
 
 function _navOnMessage(message) {
-    const ws = window._communityWS;
+    const ws = getCommunityWS();
     if (message && message.id) {
         ws._lastKnownMsgId = message.id;
     }
@@ -323,7 +310,7 @@ function _navOnHistoryLoad(messages) {
     if (!messages || messages.length === 0) return;
     // The backend sends newest-first; pick the newest
     const newest = messages[0];
-    const ws = window._communityWS;
+    const ws = getCommunityWS();
     if (newest && newest.id) {
         ws._lastKnownMsgId = newest.id;
     }
@@ -343,16 +330,16 @@ function _navOnHistoryLoad(messages) {
  * Called at startup and every time CommunityManager hands control back.
  */
 function installNavCommunityHandlers() {
-    const ws = window._communityWS;
+    const ws = getCommunityWS();
     if (!ws) return;
-    ws.onMessage    = _navOnMessage;
+    ws.onMessage = _navOnMessage;
     ws.onHistoryLoad = _navOnHistoryLoad;
-    ws.onConnect    = () => { console.log('[CommunityNotifier] connected'); };
-    ws.onDisconnect = () => { console.log('[CommunityNotifier] disconnected'); };
-    ws.onError      = () => {};
-    ws.onUserJoin   = () => {};
-    ws.onUserLeave  = () => {};
-    ws.onStatsUpdate = () => {};
+    ws.onConnect = () => { };
+    ws.onDisconnect = () => { };
+    ws.onError = () => { };
+    ws.onUserJoin = () => { };
+    ws.onUserLeave = () => { };
+    ws.onStatsUpdate = () => { };
 }
 
 /**
@@ -361,17 +348,17 @@ function installNavCommunityHandlers() {
  */
 async function bootCommunityWS() {
     // Never interfere while CommunityManager owns the WS
-    if (window.currentCommunityManager) return;
+    if (getCurrentCommunityManager()) return;
 
     // Tear down previous instance if user changed
-    if (window._communityWS) {
-        window._communityWS.disconnect();
-        window._communityWS = null;
+    if (getCommunityWS()) {
+        getCommunityWS().disconnect();
+        setCommunityWS(null);
     }
     removeCommunityBadge();
 
-    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) return;
-    const user = window.AuthManager.getUser();
+    if (!AuthManager.isLoggedIn()) return;
+    const user = AuthManager.getUser();
     if (!user || user.is_anonymous) return;
 
     const api = new CommunityAPI({
@@ -380,21 +367,21 @@ async function bootCommunityWS() {
     });
     // Extra property to track latest known message id
     api._lastKnownMsgId = null;
-    window._communityWS = api;
+    setCommunityWS(api);
 
     installNavCommunityHandlers();
 
     try {
         await api.connect();
     } catch (e) {
-        console.warn('[CommunityNotifier] initial connect failed, will retry', e);
+        // Connection failed (e.g. network error) - keep the global instance but it will be disconnected
     }
+
 }
 
 /**
  * Initialize community chat notification system
  */
-let _communityNotificationsInitialized = false;
 function initCommunityNotifications() {
     if (_communityNotificationsInitialized) return;
     _communityNotificationsInitialized = true;
@@ -402,7 +389,7 @@ function initCommunityNotifications() {
     // Boot on auth changes (login / logout / user switch)
     window.addEventListener('auth-state-changed', () => {
         // If CommunityManager is active it owns the WS — skip
-        if (window.currentCommunityManager) return;
+        if (getCurrentCommunityManager()) return;
         bootCommunityWS();
     });
 
@@ -417,8 +404,8 @@ function initCommunityNotifications() {
 
     // Initial boot — wait for AuthManager
     const tryBoot = () => {
-        if (window.currentCommunityManager) return; // CM is active, skip
-        if (window.AuthManager && window.AuthManager.isLoggedIn()) {
+        if (getCurrentCommunityManager()) return; // CM is active, skip
+        if (AuthManager.isLoggedIn()) {
             bootCommunityWS();
         } else {
             setTimeout(tryBoot, 500);
@@ -431,10 +418,13 @@ function initCommunityNotifications() {
     }
 }
 
-// Export for external use
-window.refreshQuestBadge = checkUnclaimedQuests;
-window.markCommunityAsSeen = markCommunityAsSeen;
-window.installNavCommunityHandlers = installNavCommunityHandlers;
-window.removeCommunityBadge = removeCommunityBadge;
-window.bootCommunityWS = bootCommunityWS;
+
+
+export {
+    markCommunityAsSeen,//comunity manager
+    installNavCommunityHandlers,//comunity manager
+    bootCommunityWS,
+    removeCommunityBadge,
+    checkUnclaimedQuests
+};
 

@@ -14,23 +14,23 @@ export class VirusCoreSector extends SimulationSectorRenderer {
         const nodeCount = this.quality === 'low' ? 5 : 10;
         for (let i = 0; i < nodeCount; i++) {
             this.tendrils.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                radius: 3 + Math.random() * 6,
-                pulsePhase: Math.random() * Math.PI * 2,
-                speed: 6 + Math.random() * 10,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                radius: 3 + window.randomSecure() * 6,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
+                speed: 6 + window.randomSecure() * 10,
                 connections: []
             });
         }
 
         for (let i = 0; i < (this.quality === 'low' ? 8 : 16); i++) {
             this.floaters.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
-                size: 2 + Math.random() * 4,
-                speed: 10 + Math.random() * 15,
-                alpha: 0.1 + Math.random() * 0.15,
-                wobble: Math.random() * Math.PI * 2
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
+                size: 2 + window.randomSecure() * 4,
+                speed: 10 + window.randomSecure() * 15,
+                alpha: 0.1 + window.randomSecure() * 0.15,
+                wobble: window.randomSecure() * Math.PI * 2
             });
         }
     }
@@ -38,12 +38,12 @@ export class VirusCoreSector extends SimulationSectorRenderer {
     update(dt) {
         for (const n of this.tendrils) {
             n.y += n.speed * dt;
-            if (n.y > this.canvasHeight + 10) { n.y = -10; n.x = Math.random() * this.canvasWidth; }
+            if (n.y > this.canvasHeight + 10) { n.y = -10; n.x = window.randomSecure() * this.canvasWidth; }
         }
         for (const f of this.floaters) {
             f.y += f.speed * dt;
             f.x += Math.sin(this.time * 2 + f.wobble) * 15 * dt;
-            if (f.y > this.canvasHeight + 5) { f.y = -5; f.x = Math.random() * this.canvasWidth; }
+            if (f.y > this.canvasHeight + 5) { f.y = -5; f.x = window.randomSecure() * this.canvasWidth; }
         }
     }
 

@@ -1,3 +1,5 @@
+import {InfiniteScrollManager} from './InfiniteScrollManager.js';
+import WalletStatsRenderer from './WalletStatsRenderer.js';
 /**
  * Wallet Renderer
  * Displays user's coin balance, statistics dashboard, and transaction history
@@ -448,12 +450,5 @@ class WalletRenderer {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WalletRenderer;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.WalletRenderer = WalletRenderer;
-}
+// ES6 export
+export default WalletRenderer;

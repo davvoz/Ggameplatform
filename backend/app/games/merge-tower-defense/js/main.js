@@ -164,12 +164,13 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
 
         // Send gameStarted event to platform
         try {
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
             window.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
-            }, '*');
+            }, targetOrigin);
 
         } catch (error) {
             console.error('[Merge Tower] Failed to send gameStarted:', error);

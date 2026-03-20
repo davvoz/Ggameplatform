@@ -67,14 +67,12 @@ class CommunityAPI {
      */
     async connect() {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            console.log('[CommunityAPI] Already connected');
             return;
         }
 
         return new Promise((resolve, reject) => {
             try {
                 const url = this._getWebSocketUrl();
-                console.log('[CommunityAPI] Connecting to:', url);
                 
                 this.ws = new WebSocket(url);
                 
@@ -90,7 +88,6 @@ class CommunityAPI {
                     reject(error);
                 };
             } catch (error) {
-                console.error('[CommunityAPI] Connection error:', error);
                 reject(error);
             }
         });
@@ -101,7 +98,6 @@ class CommunityAPI {
      * @private
      */
     _handleOpen() {
-        console.log('[CommunityAPI] Connected');
         this.isConnected = true;
         this.reconnectAttempts = 0;
         
@@ -154,7 +150,6 @@ class CommunityAPI {
                     break;
                     
                 case 'error':
-                    console.error('[CommunityAPI] Server error:', data.error);
                     this.onError(data.error);
                     break;
                     
@@ -163,10 +158,10 @@ class CommunityAPI {
                     break;
                     
                 default:
-                    console.log('[CommunityAPI] Unknown message type:', data.type);
+                    // Unknown message type
             }
         } catch (error) {
-            console.error('[CommunityAPI] Error parsing message:', error);
+            // Error parsing message
         }
     }
 
@@ -176,7 +171,6 @@ class CommunityAPI {
      * @param {CloseEvent} event
      */
     _handleClose(event) {
-        console.log('[CommunityAPI] Disconnected:', event.code, event.reason);
         this.isConnected = false;
         this._stopPing();
         
@@ -185,11 +179,10 @@ class CommunityAPI {
         // Attempt reconnection
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
-            console.log(`[CommunityAPI] Reconnecting in ${delay}ms...`);
             
             setTimeout(() => {
                 this.reconnectAttempts++;
-                this.connect().catch(console.error);
+                this.connect().catch(() => {});
             }, delay);
         }
     }
@@ -200,7 +193,6 @@ class CommunityAPI {
      * @param {Event} error
      */
     _handleError(error) {
-        console.error('[CommunityAPI] WebSocket error:', error);
         this.onError(error);
     }
 
@@ -275,7 +267,6 @@ class CommunityAPI {
         } else {
             // Queue message for later
             this.messageQueue.push(message);
-            console.log('[CommunityAPI] Message queued (not connected)');
             return false;
         }
     }
@@ -368,7 +359,7 @@ class CommunityAPI {
                 is_gif: data.is_gif
             };
         } catch (error) {
-            console.error('[CommunityAPI] Upload error:', error);
+            // Network error during upload
             return { 
                 success: false, 
                 error: 'Network error during upload' 
@@ -377,12 +368,4 @@ class CommunityAPI {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CommunityAPI;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.CommunityAPI = CommunityAPI;
-}
+export default CommunityAPI;

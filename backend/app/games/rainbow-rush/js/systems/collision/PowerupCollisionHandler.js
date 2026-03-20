@@ -45,7 +45,7 @@ export class PowerupCollisionHandler extends CollisionHandler {
     _createParticleRing(x, y, color, count, entityManager, speed = 150, life = 0.8) {
         for (let j = 0; j < count; j++) {
             const angle = (Math.PI * 2 * j) / count;
-            const particleSpeed = speed + Math.random() * 100;
+            const particleSpeed = speed + window.randomSecure() * 100;
             entityManager.addEntity('powerupParticles', {
                 x: x,
                 y: y,
@@ -53,10 +53,10 @@ export class PowerupCollisionHandler extends CollisionHandler {
                 vy: Math.sin(angle) * particleSpeed,
                 life: life,
                 maxLife: life,
-                size: 4 + Math.random() * 3,
+                size: 4 + window.randomSecure() * 3,
                 color: color,
                 gravity: 0,
-                rotationSpeed: (Math.random() - 0.5) * 10,
+                rotationSpeed: (window.randomSecure() - 0.5) * 10,
                 rotation: 0,
                 type: 'powerup-particle'
             });

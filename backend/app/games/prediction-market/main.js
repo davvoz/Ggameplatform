@@ -69,12 +69,13 @@ function cacheDom() {
 // --- Platform SDK ---
 function sendGameStarted() {
     try {
+        const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
         window.parent.postMessage({
             type: 'gameStarted',
             payload: {},
             timestamp: Date.now(),
             protocolVersion: '1.0.0'
-        }, '*');
+        }, targetOrigin);
     } catch (e) { console.error('[UoD] gameStarted fail', e); }
 }
 
@@ -328,16 +329,16 @@ function showCelebration(won, winnings, betAmount) {
         for (let i = 0; i < 20; i++) {
             const c = document.createElement('div');
             c.className = 'confetti';
-            c.style.background = colors[Math.floor(Math.random() * colors.length)];
-            c.style.left = `${10 + Math.random() * 80}%`;
-            c.style.top = `${20 + Math.random() * 40}%`;
-            c.style.setProperty('--fall-x', `${(Math.random() - 0.5) * 120}px`);
-            c.style.setProperty('--fall-y', `${60 + Math.random() * 80}px`);
-            c.style.setProperty('--fall-rot', `${Math.random() * 720 - 360}deg`);
-            c.style.setProperty('--fall-duration', `${0.8 + Math.random() * 0.8}s`);
-            c.style.animationDelay = `${Math.random() * 0.3}s`;
-            c.style.width = `${5 + Math.random() * 6}px`;
-            c.style.height = `${5 + Math.random() * 6}px`;
+            c.style.background = colors[Math.floor(window.randomSecure() * colors.length)];
+            c.style.left = `${10 + window.randomSecure() * 80}%`;
+            c.style.top = `${20 + window.randomSecure() * 40}%`;
+            c.style.setProperty('--fall-x', `${(window.randomSecure() - 0.5) * 120}px`);
+            c.style.setProperty('--fall-y', `${60 + window.randomSecure() * 80}px`);
+            c.style.setProperty('--fall-rot', `${window.randomSecure() * 720 - 360}deg`);
+            c.style.setProperty('--fall-duration', `${0.8 + window.randomSecure() * 0.8}s`);
+            c.style.animationDelay = `${window.randomSecure() * 0.3}s`;
+            c.style.width = `${5 + window.randomSecure() * 6}px`;
+            c.style.height = `${5 + window.randomSecure() * 6}px`;
             chart.appendChild(c);
             setTimeout(() => c.remove(), 2000);
         }

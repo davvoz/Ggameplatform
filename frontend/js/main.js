@@ -5,12 +5,47 @@ import { QuestRenderer } from './quest.js';
 import { navigateTo, initRouter } from './router.js';
 import RuntimeShell from './runtimeShell.obf.js';
 import { pushManager } from './PushNotificationManager.js';
+import CommunityManager from './CommunityManager.js';
+import {
+    getCurrentGameRuntime, setCurrentGameRuntime,
+    getCurrentCommunityManager, setCurrentCommunityManager,
+    getCoinAPI, setCoinAPI,
+    getWalletRenderer, setWalletRenderer,
+     setDailyLoginBanner
+} from './state.js';
+
+// Import all converted modules
+import AuthManager from './auth.js';
+import CoinAPI from './coinAPI.js';
+import LeaderboardAPI from './LeaderboardAPI.js';
+import DailyLoginBanner from './daily-login-banner.js';
+import CampaignCountdown from './CampaignCountdown.js';
+import { initNavMultiplier } from './nav-multiplier.js';
+import WalletRenderer from './WalletRenderer.js';
+
+// Import nav.js for side effects (registers community notification handlers)
+import './nav.js';
+
+// Initialize daily login banner and store in state
+const dailyLoginBannerInstance = new DailyLoginBanner();
+setDailyLoginBanner(dailyLoginBannerInstance);
+
+// Initialize AuthManager
+AuthManager.init();
+
+// Listen for login event and update UI
+window.addEventListener('userLogin', () => {
+    AuthManager.updateUI();
+});
 
 
 // Initialize router when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Check authentication - use window.AuthManager defined in auth.js
-    if (window.AuthManager && !window.AuthManager.isLoggedIn()) {
+    // Initialize nav multiplier click handler
+    initNavMultiplier();
+    
+    // Check authentication
+    if (!AuthManager.isLoggedIn()) {
         // Redirect to auth page if not on auth page
         if (!window.location.pathname.includes('auth.html')) {
 
@@ -20,8 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Track daily access for login quests (only if authenticated)
-    if (window.AuthManager && window.AuthManager.isLoggedIn()) {
-        window.AuthManager.trackDailyAccess();
+    if (AuthManager.isLoggedIn()) {
+        AuthManager.trackDailyAccess();
         
         // Initialize push notifications (non-blocking)
         initPushNotifications();
@@ -32,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Populate navbar user info if authenticated
     try {
         const userInfoEl = document.getElementById('userInfo');
-        if (window.AuthManager && window.AuthManager.currentUser && userInfoEl) {
-            const user = window.AuthManager.currentUser;
+        if (AuthManager.currentUser && userInfoEl) {
+            const user = AuthManager.currentUser;
             const userNameEl = document.getElementById('userName');
             const navAvatar = document.getElementById('navAvatar');
             const navMultiplier = document.getElementById('navMultiplier');
@@ -71,12 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wire logout button if present
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.addEventListener('click', () => {
-                try { window.AuthManager.logout(); } catch (e) { console.warn('Logout failed', e); }
+                try { AuthManager.logout(); } catch (e) { }
                 window.location.href = '/auth.html';
             });
         }
-    } catch (e) { console.warn('Navbar init failed', e); }
-
+    } catch (e) { }
     // Listen for multiplier updates dispatched by ProfileRenderer and other components
     window.addEventListener('multiplierUpdated', (ev) => {
         try {
@@ -98,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fallback: try to fetch fresh breakdown for the currently logged user
             (async () => {
                 try {
-                    const user = window.AuthManager && window.AuthManager.getUser && window.AuthManager.getUser();
+                    const user = AuthManager.getUser();
                     if (!user || !user.user_id) return;
                     const API_URL = window.ENV?.API_URL || window.location.origin;
                     const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
@@ -118,13 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keep navbar multiplier in sync on login/logout
     window.addEventListener('userLogin', (e) => {
         try {
-            const user = window.AuthManager?.getUser?.();
+            const user = AuthManager.getUser();
             const navMultiplierEl = document.getElementById('navMultiplier');
             if (navMultiplierEl && user) {
                 const val = Number(user.cur8_multiplier || 1).toFixed(2);
                 navMultiplierEl.textContent = `${val}x`;
             }
-        } catch (err) { console.warn('Failed to update nav multiplier on login', err); }
+        } catch (err) { }
     });
 
     window.addEventListener('userLogout', () => {
@@ -138,9 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cleanup game session on page unload (browser close/refresh)
     window.addEventListener('beforeunload', () => {
-        if (window.currentGameRuntime) {
+        if (getCurrentGameRuntime()) {
             // Use sendBeacon for reliable cleanup on page unload
-            window.currentGameRuntime.cleanup(true);
+            getCurrentGameRuntime().cleanup(true);
         }
     });
 });
@@ -268,7 +302,6 @@ function setupGameModeTabs() {
             try {
                 newContent = await prepareGamesContent(newMode);
             } catch (error) {
-                console.error('Error pre-loading games:', error);
                 return;
             }
             
@@ -419,7 +452,6 @@ async function loadGamesContent(filters = {}) {
         });
     } catch (error) {
         gameGrid.innerHTML = '<div class="error-message">Failed to load games. Please try again later.</div>';
-        console.error('Error loading games:', error);
     }
 }
 
@@ -620,7 +652,6 @@ export async function renderGameDetail(params) {
 
     } catch (error) {
         appContainer.innerHTML = '<div class="error-message">Failed to load game details.</div>';
-        console.error('Error loading game detail:', error);
     }
 }
 
@@ -641,16 +672,16 @@ async function loadGameDetailLeaderboard(gameId) {
     `;
 
     try {
-        const LeaderboardAPI = window.LeaderboardAPI;
-        if (!LeaderboardAPI) {
+        const LeaderboardAPI_instance = LeaderboardAPI;
+        if (!LeaderboardAPI_instance) {
             container.style.display = 'none';
             return;
         }
 
         const [data, weekInfo, rewardsData] = await Promise.all([
-            LeaderboardAPI.getWeeklyLeaderboard(gameId, 20),
-            LeaderboardAPI.getWeekInfo(),
-            LeaderboardAPI.getRewardsConfig(gameId).catch(() => ({ rewards: [], steem_rewards_enabled: false }))
+            LeaderboardAPI_instance.getWeeklyLeaderboard(gameId, 20),
+            LeaderboardAPI_instance.getWeekInfo(),
+            LeaderboardAPI_instance.getRewardsConfig(gameId).catch(() => ({ rewards: [], steem_rewards_enabled: false }))
         ]);
 
         const rewards = rewardsData.rewards || [];
@@ -781,7 +812,6 @@ async function loadGameDetailLeaderboard(gameId) {
         });
 
     } catch (error) {
-        console.error('Error loading game detail leaderboard:', error);
         container.innerHTML = `
             <div class="gdl-section">
                 <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
@@ -798,10 +828,10 @@ export async function renderGamePlayer(params) {
     const gameId = params.id || params;
 
     // Cleanup previous game runtime if exists
-    if (window.currentGameRuntime) {
+    if (getCurrentGameRuntime()) {
         // Skip session end when loading new game - no XP awarded for previous game
-        window.currentGameRuntime.cleanup(false, true);
-        window.currentGameRuntime = null;
+        getCurrentGameRuntime().cleanup(false, true);
+        setCurrentGameRuntime(null);
     }
 
     const appContainer = document.getElementById('app');
@@ -827,7 +857,6 @@ export async function renderGamePlayer(params) {
 
     } catch (error) {
         appContainer.innerHTML = '<div class="error-message">Failed to load game.</div>';
-        console.error('Error loading game player:', error);
     }
 }
 
@@ -872,7 +901,7 @@ function setupPlayerControls(gameId, iframe) {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
     // Store runtime instance for cleanup
-    window.currentGameRuntime = runtime;
+    setCurrentGameRuntime(runtime);
 }
 
 /**
@@ -934,7 +963,7 @@ export async function renderWallet() {
     const appContainer = document.getElementById('app');
     
     // Check if user is logged in
-    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+    if (!AuthManager.isLoggedIn()) {
         appContainer.innerHTML = `
             <div class="error text-center">
                 <h2>Please Log In</h2>
@@ -948,7 +977,7 @@ export async function renderWallet() {
     appContainer.innerHTML = '<div class="loading">Loading wallet...</div>';
 
     try {
-        const user = window.AuthManager.getUser();
+        const user = AuthManager.getUser();
         if (!user || !user.user_id) {
             throw new Error('User not found');
         }
@@ -956,24 +985,23 @@ export async function renderWallet() {
         const userId = user.user_id;
         
         // Initialize CoinAPI and WalletRenderer if not already done
-        if (!window.coinAPI) {
-            window.coinAPI = new window.CoinAPI();
+        if (!getCoinAPI()) {
+            setCoinAPI(new CoinAPI());
         }
-        if (!window.walletRenderer) {
-            window.walletRenderer = new window.WalletRenderer(window.coinAPI);
+        if (!getWalletRenderer()) {
+            setWalletRenderer(new WalletRenderer(getCoinAPI()));
         }
 
-        const walletHTML = await window.walletRenderer.render(userId);
+        const walletHTML = await getWalletRenderer().render(userId);
         appContainer.innerHTML = walletHTML;
         
         // Initialize animations and infinite scroll after DOM is ready
         requestAnimationFrame(() => {
-            if (window.walletRenderer.initAfterRender) {
-                window.walletRenderer.initAfterRender();
+            if (getWalletRenderer().initAfterRender) {
+                getWalletRenderer().initAfterRender();
             }
         });
     } catch (error) {
-        console.error('Error rendering wallet:', error);
         appContainer.innerHTML = `
             <div class="error text-center">
                 <h2>Error Loading Wallet</h2>
@@ -1004,7 +1032,7 @@ export async function renderCommunity() {
     const appContainer = document.getElementById('app');
     
     // Check if user is logged in
-    if (!window.AuthManager || !window.AuthManager.isLoggedIn()) {
+    if (!AuthManager.isLoggedIn()) {
         appContainer.innerHTML = `
             <div class="error text-center">
                 <h2>Please Log In</h2>
@@ -1035,18 +1063,17 @@ export async function renderCommunity() {
     // Initialize CommunityManager
     try {
         // Cleanup previous instance if exists
-        if (window.currentCommunityManager) {
-            window.currentCommunityManager.destroy();
+        if (getCurrentCommunityManager()) {
+            getCurrentCommunityManager().destroy();
         }
         
-        window.currentCommunityManager = new window.CommunityManager({
+        setCurrentCommunityManager(new CommunityManager({
             container: appContainer.querySelector('.community'),
-            authManager: window.AuthManager
-        });
+            authManager: AuthManager
+        }));
         
-        await window.currentCommunityManager.init();
+        await getCurrentCommunityManager().init();
     } catch (error) {
-        console.error('Error initializing community:', error);
     }
 }
 
@@ -1059,14 +1086,12 @@ async function initPushNotifications() {
         // Inizializza push manager
         const initialized = await pushManager.init();
         if (!initialized) {
-            console.log('Push non supportate');
             return;
         }
 
         // Recupera utente
-        const user = window.AuthManager?.currentUser || window.AuthManager?.getUser?.();
+        const user = AuthManager.currentUser || AuthManager.getUser();
         if (!user?.user_id) {
-            console.log('Nessun utente loggato');
             return;
         }
 
@@ -1074,17 +1099,12 @@ async function initPushNotifications() {
         const isSubscribed = await pushManager.isSubscribed();
         if (isSubscribed) {
             await pushManager.subscribe(user.user_id);
-            console.log('Già iscritto, subscription aggiornata');
             return;
         }
 
         // Chiede SUBITO il permesso e registra
         const result = await pushManager.promptForSubscription(user.user_id);
-        console.log('Risultato subscription:', result);
 
     } catch (err) {
-        console.error('Errore push:', err);
     }
 }
-// Expose pushManager globally for settings/profile page usage
-window.pushManager = pushManager;

@@ -462,9 +462,9 @@ class BriscolaApp {
             setTimeout(() => {
                 const confetti = document.createElement('div');
                 confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.left = window.randomSecure() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(window.randomSecure() * colors.length)];
+                confetti.style.animationDelay = window.randomSecure() * 0.5 + 's';
                 container.appendChild(confetti);
                 
                 setTimeout(() => confetti.remove(), 3000);

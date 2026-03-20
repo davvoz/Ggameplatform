@@ -94,7 +94,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
         // Create radial explosion particles
         for (let i = 0; i < 12; i++) {
             const angle = (Math.PI * 2 * i) / 12;
-            const speed = 120 + Math.random() * 80;
+            const speed = 120 + window.randomSecure() * 80;
             entityManager.addEntity('powerupParticles', {
                 x: centerX,
                 y: centerY,
@@ -102,7 +102,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
                 vy: Math.sin(angle) * speed - 50,  // Extra upward velocity
                 life: 0.6,
                 maxLife: 0.6,
-                size: 4 + Math.random() * 3,
+                size: 4 + window.randomSecure() * 3,
                 color: [1.0, 0.6, 0.2, 1.0],  // Orange
                 gravity: 200,
                 type: 'enemy-defeat'
@@ -111,8 +111,8 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
         
         // Add some sparkles
         for (let i = 0; i < 8; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 60 + Math.random() * 40;
+            const angle = window.randomSecure() * Math.PI * 2;
+            const speed = 60 + window.randomSecure() * 40;
             entityManager.addEntity('powerupParticles', {
                 x: centerX,
                 y: centerY,
@@ -120,7 +120,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
                 vy: Math.sin(angle) * speed - 30,
                 life: 0.4,
                 maxLife: 0.4,
-                size: 2 + Math.random() * 2,
+                size: 2 + window.randomSecure() * 2,
                 color: [1.0, 1.0, 0.5, 1.0],  // Yellow sparkle
                 gravity: 150,
                 type: 'sparkle'
@@ -197,7 +197,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
     _createProjectileParticles(proj, entityManager) {
         for (let j = 0; j < 8; j++) {
             const angle = (Math.PI * 2 * j) / 8;
-            const speed = 80 + Math.random() * 60;
+            const speed = 80 + window.randomSecure() * 60;
             entityManager.addEntity('powerupParticles', {
                 x: proj.x,
                 y: proj.y,
@@ -205,7 +205,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
                 vy: Math.sin(angle) * speed,
                 life: 0.4,
                 maxLife: 0.4,
-                size: 3 + Math.random() * 2,
+                size: 3 + window.randomSecure() * 2,
                 color: [...proj.color],
                 gravity: 150,
                 type: 'projectile-hit'

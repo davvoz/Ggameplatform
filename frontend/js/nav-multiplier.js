@@ -1,8 +1,11 @@
+import AuthManager from './auth.js';
+import { showCur8MultiplierModal } from './ProfileRenderer.js';
+
 // Attach click handler to nav multiplier card to open multiplier modal (replicates ProfileRenderer modal)
-(function(){
-    function getApiUrl(){
-        return window.ENV?.API_URL || window.location.origin;
-    }
+
+function getApiUrl(){
+    return window.ENV?.API_URL || window.location.origin;
+}
 
     function createModal(breakdown){
         const modal = document.createElement('div');
@@ -106,20 +109,13 @@
 
         document.body.appendChild(modal);
 
-        // Attempt to attach vote/delegate action handlers if global functions exist
-        const voteBtn = modal.querySelector('#navVoteCur8Btn');
-        if(voteBtn && typeof window.voteCur8Witness === 'function'){
-            voteBtn.addEventListener('click', ()=> window.voteCur8Witness());
-        }
-        const delegateBtn = modal.querySelector('#navDelegateCur8Btn');
-        if(delegateBtn && typeof window.delegateToCur8 === 'function'){
-            delegateBtn.addEventListener('click', ()=> window.delegateToCur8(Number(slider.value)||0));
-        }
+        // Note: Vote/delegate buttons in this modal are display-only
+        // The actual voting/delegating happens through the ProfileRenderer modal
     }
 
     async function onClick(e){
         try{
-            const user = (window.AuthManager && window.AuthManager.isLoggedIn && window.AuthManager.isLoggedIn()) ? window.AuthManager.getUser() : null;
+            const user = AuthManager.isLoggedIn() ? AuthManager.getUser() : null;
             if(!user || !user.user_id){
                 // show auth modal if not logged in
                 const authModal = document.getElementById('authModal');
@@ -132,9 +128,9 @@
             const json = await resp.json();
             const breakdown = json.breakdown;
             // Prefer canonical modal from ProfileRenderer when available
-            if (window.showCur8MultiplierModal && typeof window.showCur8MultiplierModal === 'function') {
+            if (showCur8MultiplierModal) {
                 try {
-                    window.showCur8MultiplierModal(breakdown);
+                    showCur8MultiplierModal(breakdown);
                     return;
                 } catch (e) {
 
@@ -146,8 +142,12 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
-        const card = document.getElementById('multiplierCard');
-        if(card) card.addEventListener('click', onClick);
-    });
-})();
+/**
+ * Initialize nav multiplier click handler
+ */
+export function initNavMultiplier() {
+    const card = document.getElementById('multiplierCard');
+    if(card) card.addEventListener('click', onClick);
+}
+
+export default initNavMultiplier;

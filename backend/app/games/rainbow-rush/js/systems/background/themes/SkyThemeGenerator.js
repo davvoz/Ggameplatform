@@ -31,12 +31,12 @@ export class SkyThemeGenerator extends BaseThemeGenerator {
             const numPuffs = this.randomIntInRange(config.CLOUD_MIN_PUFFS, config.CLOUD_MAX_PUFFS);
             
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.6,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight * 0.6,
                 baseSize,
                 puffs: this.createCloudPuffs(numPuffs, baseSize),
                 speed: this.randomInRange(config.CLOUD_MIN_SPEED, config.CLOUD_MAX_SPEED),
-                color: [0.95, 0.95, 0.98, 0.45 + Math.random() * 0.12],
+                color: [0.95, 0.95, 0.98, 0.45 + window.randomSecure() * 0.12],
                 type: 'cloud'
             });
         }
@@ -47,10 +47,10 @@ export class SkyThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.BIRD_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight * 0.4,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight * 0.4,
                 speed: this.randomInRange(config.BIRD_MIN_SPEED, config.BIRD_MAX_SPEED),
-                wingPhase: Math.random() * Math.PI * 2,
+                wingPhase: window.randomSecure() * Math.PI * 2,
                 size: this.randomInRange(config.BIRD_MIN_SIZE, config.BIRD_MAX_SIZE),
                 color: [0.2, 0.2, 0.2, 0.6],
                 type: 'bird'

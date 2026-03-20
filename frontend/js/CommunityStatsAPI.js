@@ -128,7 +128,5 @@ class CommunityStatsAPI {
     }
 }
 
-// Global export
-if (typeof window !== 'undefined') {
-    window.CommunityStatsAPI = CommunityStatsAPI;
-}
+// ES6 export
+export default CommunityStatsAPI;

@@ -23,9 +23,9 @@ export class DissolvingEffectRenderer extends PlatformEffectRenderer {
 
     renderFallingParticles(platform, x, y, dissolveProgress) {
         for (let i = 0; i < DissolvingEffectRenderer.PARTICLE_COUNT; i++) {
-            const particleX = x + (platform.width / DissolvingEffectRenderer.PARTICLE_COUNT) * i + Math.random() * 10;
+            const particleX = x + (platform.width / DissolvingEffectRenderer.PARTICLE_COUNT) * i + window.randomSecure() * 10;
             const particleY = y + platform.height + dissolveProgress * 40;
-            const particleSize = 2 + Math.random() * 2;
+            const particleSize = 2 + window.randomSecure() * 2;
             const alpha = (1 - dissolveProgress) * 0.8;
             this.renderer.drawCircle(particleX, particleY, particleSize, [1.0, 0.8, 0.3, alpha]);
         }
@@ -49,8 +49,8 @@ export class DissolvingEffectRenderer extends PlatformEffectRenderer {
     renderSparkle(platform, x, y, time) {
         const sparklePhase = (time * 3) % 1;
         if (sparklePhase < 0.3) {
-            const sparkleX = x + Math.random() * platform.width;
-            const sparkleY = y + Math.random() * platform.height;
+            const sparkleX = x + window.randomSecure() * platform.width;
+            const sparkleY = y + window.randomSecure() * platform.height;
             this.renderer.drawCircle(sparkleX, sparkleY, 2, [1.0, 1.0, 0.8, sparklePhase * 3]);
         }
     }

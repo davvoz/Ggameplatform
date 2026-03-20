@@ -355,7 +355,7 @@ class ProjectileCollisionSystem {
      * @returns {boolean} - True if dodged
      */
     handleDodge(zombie, proj) {
-        if (!zombie.dodgeChance || Math.random() >= zombie.dodgeChance) {
+        if (!zombie.dodgeChance || window.randomSecure() >= zombie.dodgeChance) {
             return false;
         }
 

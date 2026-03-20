@@ -69,12 +69,12 @@ const MOVEMENT = {
     /** Blink teleport — moves normally then teleports randomly every ~2s */
     glitch_blink: (enemy, dt) => {
         enemy.position.y += enemy.speed * 0.6 * dt;
-        enemy._blinkTimer = (enemy._blinkTimer || 1.5 + Math.random()) - dt;
+        enemy._blinkTimer = (enemy._blinkTimer || 1.5 + window.randomSecure()) - dt;
         if (enemy._blinkTimer <= 0) {
-            enemy._blinkTimer = 1.5 + Math.random() * 1.5;
+            enemy._blinkTimer = 1.5 + window.randomSecure() * 1.5;
             // Teleport within ±80px horizontally, ±30px vertically
-            enemy.position.x += (Math.random() - 0.5) * 160;
-            enemy.position.y += (Math.random() - 0.3) * 60;
+            enemy.position.x += (window.randomSecure() - 0.5) * 160;
+            enemy.position.y += (window.randomSecure() - 0.3) * 60;
             enemy.position.x = Math.max(10, Math.min(enemy.canvasWidth - 10, enemy.position.x));
             enemy._justBlinked = 6; // flash frames for visual feedback
         }
@@ -107,9 +107,9 @@ const MOVEMENT = {
     /** Quantum tunnel — moves normally then teleports through screen edges */
     quantum_tunnel: (enemy, dt) => {
         enemy.position.y += enemy.speed * 0.5 * dt;
-        enemy._tunnelTimer = (enemy._tunnelTimer || 2 + Math.random() * 2) - dt;
+        enemy._tunnelTimer = (enemy._tunnelTimer || 2 + window.randomSecure() * 2) - dt;
         if (enemy._tunnelTimer <= 0) {
-            enemy._tunnelTimer = 2 + Math.random() * 2;
+            enemy._tunnelTimer = 2 + window.randomSecure() * 2;
             // Tunnel through screen edge
             if (enemy.position.x < enemy.canvasWidth / 2) {
                 enemy.position.x = enemy.canvasWidth - 30;
@@ -129,11 +129,11 @@ const MOVEMENT = {
         enemy.moveTimer += dt;
         enemy.position.y += enemy.speed * 0.4 * dt;
         // Superposition wobble — position shifts unpredictably
-        enemy._wfTimer = (enemy._wfTimer || 1.5 + Math.random()) - dt;
+        enemy._wfTimer = (enemy._wfTimer || 1.5 + window.randomSecure()) - dt;
         if (enemy._wfTimer <= 0) {
-            enemy._wfTimer = 1.2 + Math.random() * 1.5;
+            enemy._wfTimer = 1.2 + window.randomSecure() * 1.5;
             // "Collapse" to a random nearby position
-            enemy.position.x = enemy.startX + (Math.random() - 0.5) * 120;
+            enemy.position.x = enemy.startX + (window.randomSecure() - 0.5) * 120;
             enemy.position.x = Math.max(20, Math.min(enemy.canvasWidth - 20, enemy.position.x));
             enemy._wfBaseX = enemy.position.x;
             enemy._wfCollapse = 6; // visual feedback frames

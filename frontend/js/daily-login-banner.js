@@ -503,5 +503,5 @@ class DailyLoginBanner {
     }
 }
 
-// Global instance
-window.dailyLoginBanner = new DailyLoginBanner();
+// ES6 export
+export default DailyLoginBanner;

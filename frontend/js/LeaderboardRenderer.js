@@ -1,8 +1,9 @@
 import { fetchGames, getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { steemAvatarService } from './SteemAvatarService.js';
+import LeaderboardAPI from './LeaderboardAPI.js';
 
-// Use LeaderboardAPI from global scope
-const LeaderboardAPI = window.LeaderboardAPI;
+// Module-level singleton
+let leaderboardRenderer = null;
 
 /**
  * Enhanced Leaderboard Renderer
@@ -17,6 +18,8 @@ class LeaderboardRenderer {
         this.rewards = [];
         this.steemEnabled = false; // Whether current game has STEEM rewards enabled
         this.countdownInterval = null;
+        this._delegationAttached = false;
+        this._boundClickHandler = null;
     }
 
     /**
@@ -129,13 +132,13 @@ class LeaderboardRenderer {
                 </div>
                 <!-- Tabs: Weekly / All-Time / Winners -->
                 <div class="leaderboard-tabs">
-                    <button class="tab-btn active" data-tab="weekly" onclick="leaderboardRenderer.switchTab('weekly')">
+                    <button class="tab-btn active" data-tab="weekly" data-action="switch-tab" data-tab-name="weekly">
                         📅 Weekly
                     </button>
-                    <button class="tab-btn" data-tab="alltime" onclick="leaderboardRenderer.switchTab('alltime')">
+                    <button class="tab-btn" data-tab="alltime" data-action="switch-tab" data-tab-name="alltime">
                         🏅 All-Time
                     </button>
-                    <button class="tab-btn" data-tab="winners" onclick="leaderboardRenderer.switchTab('winners')">
+                    <button class="tab-btn" data-tab="winners" data-action="switch-tab" data-tab-name="winners">
                         👑 Winners History
                     </button>
                 </div>
@@ -166,7 +169,7 @@ class LeaderboardRenderer {
         return `
             <div class="game-selector-card ${isSelected ? 'active' : ''}" 
                  data-game-id="${game.game_id}"
-                 onclick="leaderboardRenderer.selectGame('${game.game_id}')">
+                 data-action="select-game">
                 <div class="game-card-thumbnail">
                     <img src="${thumbnailUrl}" alt="${game.title}" loading="lazy">
                     ${steemBadge}
@@ -180,7 +183,38 @@ class LeaderboardRenderer {
      * Attach click handlers to game cards
      */
     attachGameCardHandlers() {
-        // Handlers are attached via onclick in the HTML
+        // Use event delegation on the app container
+        this._attachEventDelegation();
+    }
+
+    /**
+     * Attach event delegation for all leaderboard interactions
+     * @private
+     */
+    _attachEventDelegation() {
+        if (this._delegationAttached) return;
+        this._delegationAttached = true;
+
+        this._boundClickHandler = (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+
+            const action = target.dataset.action;
+
+            switch (action) {
+                case 'switch-tab':
+                    this.switchTab(target.dataset.tabName);
+                    break;
+                case 'select-game':
+                    this.selectGame(target.dataset.gameId);
+                    break;
+                case 'navigate-user':
+                    this.navigateToUserProfile(target.dataset.userId);
+                    break;
+            }
+        };
+
+        this.appContainer.addEventListener('click', this._boundClickHandler);
     }
 
     /**
@@ -382,7 +416,7 @@ class LeaderboardRenderer {
             const gamesInfo = hasGames && entry.games_played ? `<div class="gdl-podium-games">${entry.games_played} games</div>` : '';
 
             return `
-                <div class="gdl-podium-player gdl-podium-${entry.podiumPos}" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
+                <div class="gdl-podium-player gdl-podium-${entry.podiumPos}" data-user-id="${userId}" data-action="navigate-user" role="button" tabindex="0">
                     <div class="gdl-podium-medal">${medal}</div>
                     <div class="gdl-podium-avatar-wrap">${avatarHTML}</div>
                     <div class="gdl-podium-name">${username}</div>
@@ -414,7 +448,7 @@ class LeaderboardRenderer {
             const gamesClass = hasGames ? 'has-games-col' : '';
 
             return `
-                <div class="gdl-list-row ${rewardsClass} ${gamesClass} clickable-row" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
+                <div class="gdl-list-row ${rewardsClass} ${gamesClass} clickable-row" data-user-id="${userId}" data-action="navigate-user" role="button" tabindex="0">
                     <span class="gdl-list-rank">#${entry.rank}</span>
                     <div class="gdl-list-player">${avatarHTML}<span class="gdl-list-name">${username}</span></div>
                     <span class="gdl-list-score">${score}</span>
@@ -527,7 +561,7 @@ class LeaderboardRenderer {
         }
 
         return `
-            <div class="table-row ${rowClass} clickable-row" data-user-id="${userId}" onclick="leaderboardRenderer.navigateToUserProfile('${userId}')" role="button" tabindex="0">
+            <div class="table-row ${rowClass} clickable-row" data-user-id="${userId}" data-action="navigate-user" role="button" tabindex="0">
                 <div class="col-rank">#${entry.rank}</div>
                 <div class="col-player">${playerCellHTML}</div>
                 <div class="col-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
@@ -635,6 +669,11 @@ class LeaderboardRenderer {
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
         }
+        if (this._boundClickHandler && this.appContainer) {
+            this.appContainer.removeEventListener('click', this._boundClickHandler);
+            this._boundClickHandler = null;
+        }
+        this._delegationAttached = false;
     }
 }
 /**
@@ -642,11 +681,11 @@ class LeaderboardRenderer {
  */
 export async function renderLeaderboard() {
     // Destroy previous instance if exists
-    if (window.leaderboardRenderer) {
-        window.leaderboardRenderer.destroy();
+    if (leaderboardRenderer) {
+        leaderboardRenderer.destroy();
     }
     
     const renderer = new LeaderboardRenderer();
-    window.leaderboardRenderer = renderer; // Make accessible globally
+    leaderboardRenderer = renderer;
     await renderer.render();
 }

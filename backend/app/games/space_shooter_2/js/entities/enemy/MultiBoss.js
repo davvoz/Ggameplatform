@@ -344,7 +344,7 @@ class MultiBoss {
                     // Emit particles at old position
                     game.particles.emit(this.centerX, this.centerY, 'explosion', 10);
                     // Teleport to random X
-                    this.centerX = 100 + Math.random() * (this.canvasWidth - 200);
+                    this.centerX = 100 + window.randomSecure() * (this.canvasWidth - 200);
                     // Emit particles at new position
                     game.particles.emit(this.centerX, this.centerY, 'hit', 8);
                     // Fire radial burst on arrival
@@ -457,7 +457,7 @@ class MultiBoss {
         for (const role of priorities) {
             const candidates = this.parts.filter(p => p.active && p.role === role);
             if (candidates.length > 0) {
-                const target = candidates[Math.floor(Math.random() * candidates.length)];
+                const target = candidates[Math.floor(window.randomSecure() * candidates.length)];
                 const idx = this.parts.indexOf(target);
                 const result = this.damagepart(idx, amount, game);
                 if (result.bossKilled) return true;

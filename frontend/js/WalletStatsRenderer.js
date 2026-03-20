@@ -50,11 +50,7 @@ class WalletStatsRenderer {
             ? Math.round((balanceValue / totalEarned) * 100) 
             : 0;
         
-        // Transaction stats
-        const totalTx = detailedStats?.total_transactions || stats.totalCount || 0;
-        const incomingCount = detailedStats?.incoming_count || 0;
-        const outgoingCount = detailedStats?.outgoing_count || 0;
-        const avgEarning = stats.avgEarning || 0;
+ 
         
         return `
             <div class="balance-hero">
@@ -98,122 +94,11 @@ class WalletStatsRenderer {
         `;
     }
 
-    /**
-     * Generate floating coin elements
-     * @private
-     */
-    _generateFloatingCoins(count) {
-        let coins = '';
-        for (let i = 0; i < count; i++) {
-            const size = 20 + Math.random() * 30;
-            const left = Math.random() * 100;
-            const delay = Math.random() * 5;
-            const duration = 3 + Math.random() * 4;
-            
-            coins += `
-                <div class="floating-coin" style="
-                    left: ${left}%;
-                    width: ${size}px;
-                    height: ${size}px;
-                    animation-delay: ${delay}s;
-                    animation-duration: ${duration}s;
-                ">🪙</div>
-            `;
-        }
-        return coins;
-    }
 
-    /**
-     * Render quick stats grid
-     * @private
-     */
-    _renderQuickStats(balance, stats, detailedStats = null) {
-        // Use detailed stats for accurate counts if available
-        const totalTx = detailedStats?.total_transactions || stats.totalCount;
-        const incomingCount = detailedStats?.incoming_count || 0;
-        const outgoingCount = detailedStats?.outgoing_count || 0;
-        
-        return `
-            <div class="quick-stats-grid">
-                <div class="quick-stat-card earned">
-                    <div class="stat-icon-container">
-                        <span class="stat-icon">📈</span>
-                        <div class="stat-icon-bg"></div>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">Total Earned</span>
-                        <span class="stat-value count-up" data-target="${balance.total_earned}">
-                            +${(balance.total_earned || 0).toLocaleString()}
-                        </span>
-                    </div>
-                    <div class="stat-trend positive">
-                        <span class="trend-icon">↑</span>
-                    </div>
-                </div>
-                
-                <div class="quick-stat-card spent">
-                    <div class="stat-icon-container">
-                        <span class="stat-icon">💸</span>
-                        <div class="stat-icon-bg"></div>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">Total Spent</span>
-                        <span class="stat-value count-up" data-target="${balance.total_spent}">
-                            -${(balance.total_spent || 0).toLocaleString()}
-                        </span>
-                    </div>
-                    <div class="stat-trend negative">
-                        <span class="trend-icon">↓</span>
-                    </div>
-                </div>
-                
-                <div class="quick-stat-card transactions">
-                    <div class="stat-icon-container">
-                        <span class="stat-icon">📋</span>
-                        <div class="stat-icon-bg"></div>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">Transactions (30d)</span>
-                        <span class="stat-value count-up" data-target="${totalTx}">
-                            ${totalTx}
-                        </span>
-                    </div>
-                    <div class="tx-breakdown">
-                        <span class="tx-in">↓ ${incomingCount}</span>
-                        <span class="tx-out">↑ ${outgoingCount}</span>
-                    </div>
-                </div>
-                
-                <div class="quick-stat-card average">
-                    <div class="stat-icon-container">
-                        <span class="stat-icon">⚡</span>
-                        <div class="stat-icon-bg"></div>
-                    </div>
-                    <div class="stat-content">
-                        <span class="stat-label">Avg Earning</span>
-                        <span class="stat-value">
-                            ${stats.avgEarning > 0 ? '+' : ''}${stats.avgEarning.toLocaleString()}
-                        </span>
-                    </div>
-                    <div class="stat-badge">per tx</div>
-                </div>
-            </div>
-        `;
-    }
 
-    /**
-     * Render mini sparkline chart
-     * @private
-     */
-    _renderMiniSparkline(dailyCounts) {
-        const maxCount = Math.max(...dailyCounts, 1);
-        const bars = dailyCounts.slice(-7).map((count, i) => {
-            const height = (count / maxCount) * 100;
-            return `<div class="sparkline-bar" style="height: ${Math.max(height, 5)}%"></div>`;
-        });
-        
-        return `<div class="sparkline-chart">${bars.join('')}</div>`;
-    }
+
+
+ 
 
     /**
      * Calculate statistics from transactions
@@ -289,45 +174,8 @@ class WalletStatsRenderer {
         return stats;
     }
 
-    /**
-     * Get icon for transaction type
-     * @private
-     */
-    _getTypeIcon(type) {
-        const icons = {
-            'quest_reward': '🎯',
-            'leaderboard_reward': '🏆',
-            'daily_login': '📅',
-            'high_score': '⭐',
-            'level_up': '📈',
-            'streak_bonus': '🔥',
-            'shop_purchase': '🛒',
-            'welcome_bonus': '🎁',
-            'steem_reward': '💫',
-            'referral': '👥'
-        };
-        return icons[type] || '💰';
-    }
 
-    /**
-     * Format transaction type label
-     * @private
-     */
-    _formatTypeLabel(type) {
-        const labels = {
-            'quest_reward': 'Quest Rewards',
-            'leaderboard_reward': 'Leaderboard',
-            'daily_login': 'Daily Login',
-            'high_score': 'High Score',
-            'level_up': 'Level Up',
-            'streak_bonus': 'Streak Bonus',
-            'shop_purchase': 'Shop Purchase',
-            'welcome_bonus': 'Welcome Bonus',
-            'steem_reward': 'Steem Rewards',
-            'referral': 'Referrals'
-        };
-        return labels[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
+ 
 
     /**
      * Initialize animations after rendering
@@ -412,23 +260,7 @@ class WalletStatsRenderer {
         });
     }
 
-    /**
-     * Format date string
-     * @private
-     */
-    _formatDate(dateStr) {
-        const date = new Date(dateStr);
-        const options = { weekday: 'short', month: 'short', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
-    }
+
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WalletStatsRenderer;
-}
-
-// Global export for non-module scripts
-if (typeof window !== 'undefined') {
-    window.WalletStatsRenderer = WalletStatsRenderer;
-}
+export default WalletStatsRenderer;

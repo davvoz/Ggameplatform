@@ -253,8 +253,8 @@ export class Graphics {
         let finalY = y + Math.sin(this.animationTime * 5) * bounce * this.cellSize * 0.1;
         
         if (shake > 0) {
-            finalX += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
-            finalY += (Math.random() - 0.5) * shake * this.cellSize * 0.1;
+            finalX += (window.randomSecure() - 0.5) * shake * this.cellSize * 0.1;
+            finalY += (window.randomSecure() - 0.5) * shake * this.cellSize * 0.1;
         }
         
         const size = this.cellSize * 0.8;

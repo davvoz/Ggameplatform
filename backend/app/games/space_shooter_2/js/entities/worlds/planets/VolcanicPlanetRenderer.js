@@ -24,19 +24,19 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
         for (let c = 0; c < canyonCount; c++) {
             let baseX;
             if (canyonCount === 1) {
-                baseX = W * 0.2 + Math.random() * W * 0.6;
+                baseX = W * 0.2 + window.randomSecure() * W * 0.6;
             } else {
                 const slot = (c + 0.5) / canyonCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.1;
+                baseX = W * (0.1 + slot * 0.8) + (window.randomSecure() - 0.5) * W * 0.1;
             }
-            const width = 18 + Math.random() * 22;
+            const width = 18 + window.randomSecure() * 22;
             const tileH = H * 3;
-            const segH = 50 + Math.random() * 30;
+            const segH = 50 + window.randomSecure() * 30;
             const segs = Math.ceil(tileH / segH);
             const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 12;
+            let cx = 0, drift = (window.randomSecure() - 0.5) * 12;
             for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 24;
+                drift += (window.randomSecure() - 0.5) * 24;
                 drift = Math.max(-35, Math.min(35, drift));
                 cx += drift;
                 const maxWander = W * 0.18;
@@ -44,10 +44,10 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
                 points.push({ x: cx, y: (i + 1) * segH });
             }
             const totalCanyonH = points[points.length - 1].y;
-            const lc = Math.random();
-            const hue = lc < 0.5 ? 15 + Math.random() * 20 : 5 + Math.random() * 12;
-            const sat = 75 + Math.random() * 20;
-            const light = 30 + Math.random() * 15;
+            const lc = window.randomSecure();
+            const hue = lc < 0.5 ? 15 + window.randomSecure() * 20 : 5 + window.randomSecure() * 12;
+            const sat = 75 + window.randomSecure() * 20;
+            const light = 30 + window.randomSecure() * 15;
             this._canyons.push({ baseX, width, points, totalH: totalCanyonH, hue, sat, light });
         }
         this._canyonSpeed = 22;
@@ -62,19 +62,19 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
-            const nPts = 5 + Math.floor(Math.random() * 3);
+            const nPts = 5 + Math.floor(window.randomSecure() * 3);
             const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.4 + Math.random() * 0.65);
+            for (let s = 0; s < nPts; s++) shape.push(0.4 + window.randomSecure() * 0.65);
             this._edgeRocks.push({
                 ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 25 + Math.random() * 45,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: 10 + Math.random() * 15,
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.7 + Math.random() * 0.25,
-                hasGlow: Math.random() < 0.3,
-                glowHue: 15 + Math.random() * 20
+                reach: eR[0] + window.randomSecure() * (eR[1] - eR[0]),
+                height: 25 + window.randomSecure() * 45,
+                hue: eH[0] + window.randomSecure() * (eH[1] - eH[0]),
+                sat: 10 + window.randomSecure() * 15,
+                lightness: eL[0] + window.randomSecure() * (eL[1] - eL[0]),
+                alpha: 0.7 + window.randomSecure() * 0.25,
+                hasGlow: window.randomSecure() < 0.3,
+                glowHue: 15 + window.randomSecure() * 20
             });
         }
 

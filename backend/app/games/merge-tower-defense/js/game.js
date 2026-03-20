@@ -450,14 +450,14 @@ export class Game {
         // Big coin burst particles
         for (let i = 0; i < 12; i++) {
             const angle = (i / 12) * Math.PI * 2;
-            const speed = 3 + Math.random() * 2;
+            const speed = 3 + window.randomSecure() * 2;
             this.particles.emit(col, row, {
                 text: '💰',
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - 3,
                 gravity: 0.15,
                 life: 1.0,
-                scale: 0.6 + Math.random() * 0.4
+                scale: 0.6 + window.randomSecure() * 0.4
             });
         }
         
@@ -467,8 +467,8 @@ export class Game {
             setTimeout(() => {
                 this.particles.emit(col, row, {
                     text: '✨',
-                    vx: (Math.random() - 0.5) * 4,
-                    vy: -2 - Math.random() * 2,
+                    vx: (window.randomSecure() - 0.5) * 4,
+                    vy: -2 - window.randomSecure() * 2,
                     gravity: 0.05,
                     life: 0.6,
                     scale: 0.5
@@ -1178,7 +1178,7 @@ export class Game {
                 newZombie.hp = splitHp;
                 newZombie.maxHp = splitHp;
                 newZombie.row = zombie.row;
-                newZombie.col += (Math.random() - 0.5) * 0.5;
+                newZombie.col += (window.randomSecure() - 0.5) * 0.5;
             }
             this.particles.emit(zombie.col, zombie.row, {
                 text: 'SPLIT!',
@@ -2202,8 +2202,8 @@ export class Game {
                     const startY = y + Math.sin(startAngle) * cellSize * 0.35;
                     const endX = x + Math.cos(endAngle) * cellSize * 0.35;
                     const endY = y + Math.sin(endAngle) * cellSize * 0.35;
-                    const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 10;
-                    const midY = (startY + endY) / 2 + (Math.random() - 0.5) * 10;
+                    const midX = (startX + endX) / 2 + (window.randomSecure() - 0.5) * 10;
+                    const midY = (startY + endY) / 2 + (window.randomSecure() - 0.5) * 10;
                     
                     ctx.beginPath();
                     ctx.moveTo(startX, startY);
@@ -2382,8 +2382,8 @@ export class Game {
             shake.duration -= dt;
             const progress = shake.duration > 0 ? 1 : 0;
             const currentIntensity = shake.intensity * progress;
-            shake.x = (Math.random() - 0.5) * currentIntensity * 2;
-            shake.y = (Math.random() - 0.5) * currentIntensity * 2;
+            shake.x = (window.randomSecure() - 0.5) * currentIntensity * 2;
+            shake.y = (window.randomSecure() - 0.5) * currentIntensity * 2;
         } else {
             shake.x = 0;
             shake.y = 0;

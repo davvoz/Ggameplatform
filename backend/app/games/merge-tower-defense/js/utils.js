@@ -45,21 +45,21 @@ export const Utils = {
      * Random integer between min (inclusive) and max (inclusive)
      */
     randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        return Math.floor(window.randomSecure() * (max - min + 1)) + min;
     },
 
     /**
      * Random float between min and max
      */
     randomFloat(min, max) {
-        return Math.random() * (max - min) + min;
+        return window.randomSecure() * (max - min) + min;
     },
 
     /**
      * Random choice from array
      */
     randomChoice(array) {
-        return array[Math.floor(Math.random() * array.length)];
+        return array[Math.floor(window.randomSecure() * array.length)];
     },
 
     /**
@@ -67,7 +67,7 @@ export const Utils = {
      */
     weightedRandom(options) {
         const totalWeight = options.reduce((sum, opt) => sum + opt.weight, 0);
-        let random = Math.random() * totalWeight;
+        let random = window.randomSecure() * totalWeight;
         
         for (const option of options) {
             random -= option.weight;
@@ -275,7 +275,7 @@ export const Utils = {
      */
     shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(window.randomSecure() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;

@@ -338,23 +338,23 @@ export class LevelManager {
         let sizeCategory = 'medium'; // default
 
         if (enemyConfig.id === 'spikeball') {
-            const heightVariation = Math.random();
+            const heightVariation = window.randomSecure();
 
             if (heightVariation < 0.33) {
                 // Piccolo (60% dell'altezza base)
-                const scale = 0.6 + Math.random() * 0.15;
+                const scale = 0.6 + window.randomSecure() * 0.15;
                 width = enemyConfig.width * scale;
                 height = enemyConfig.height * scale;
                 sizeCategory = 'small';
             } else if (heightVariation < 0.66) {
                 // Medio (100% dell'altezza base con piccola variazione)
-                const scale = 0.9 + Math.random() * 0.2;
+                const scale = 0.9 + window.randomSecure() * 0.2;
                 width = enemyConfig.width * scale;
                 height = enemyConfig.height * scale;
                 sizeCategory = 'medium';
             } else {
                 // Grande (140% dell'altezza base)
-                const scale = 1.4 + Math.random() * 0.3;
+                const scale = 1.4 + window.randomSecure() * 0.3;
                 width = enemyConfig.width * scale;
                 height = enemyConfig.height * scale;
                 sizeCategory = 'large';
@@ -412,7 +412,7 @@ export class LevelManager {
                 color: color,
                 glowColor: color,
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rotationAngle: 0,
                 index: index
             };
@@ -427,7 +427,7 @@ export class LevelManager {
                 color: [1.0, 0.1, 0.3, 1.0], // Red
                 glowColor: [1.0, 0.5, 0.7, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 index: index
             };
         } else if (data.type === 'shield') {
@@ -442,7 +442,7 @@ export class LevelManager {
                 color: [0.0, 1.0, 0.5, 1.0], // Green
                 glowColor: [0.5, 1.0, 0.8, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rotation: 0,
                 index: index
             };
@@ -458,7 +458,7 @@ export class LevelManager {
                 color: [0.5, 0.5, 1.0, 1.0], // Blue
                 glowColor: [0.7, 0.7, 1.0, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rotation: 0,
                 index: index
             };
@@ -473,7 +473,7 @@ export class LevelManager {
                 color: [1.0, 0.84, 0.0, 1.0], // Gold
                 glowColor: [1.0, 0.95, 0.5, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 coinOrbitPhase: 0,
                 sparklePhase: 0,
                 index: index
@@ -490,7 +490,7 @@ export class LevelManager {
                 color: [1.0, 0.9, 0.3, 1.0], // Yellow-gold
                 glowColor: [1.0, 0.95, 0.6, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rotation: 0,
                 index: index
             };
@@ -505,7 +505,7 @@ export class LevelManager {
                 color: [1.0, 1.0, 1.0, 1.0], // White (changes in renderer)
                 glowColor: [1.0, 0.5, 1.0, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rainbowPhase: 0,
                 index: index
             };
@@ -520,7 +520,7 @@ export class LevelManager {
                 color: [0.4, 0.8, 1.0, 1.0], // Sky blue
                 glowColor: [0.6, 0.9, 1.0, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 wingPhase: 0,
                 index: index
             };
@@ -535,7 +535,7 @@ export class LevelManager {
                 color: [0.3, 1.0, 0.4, 1.0], // Electric green
                 glowColor: [0.5, 1.0, 0.6, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 energyPhase: 0,
                 orbitPhase: 0,
                 index: index
@@ -551,7 +551,7 @@ export class LevelManager {
                 color: [1.0, 0.2, 0.5, 1.0], // Pink-red
                 glowColor: [1.0, 0.4, 0.7, 1.0],
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 heartPhase: 0,
                 glowPhase: 0,
                 index: index
@@ -570,7 +570,7 @@ export class LevelManager {
                 color: color,
                 glowColor: color,
                 velocity: -this.baseSpeed,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 rotationAngle: 0,
                 index: index
             };
@@ -584,7 +584,7 @@ export class LevelManager {
                 color: [1.0, 0.84, 0.0, 1.0], // Gold
                 velocity: -this.baseSpeed,
                 value: data.value || 10,
-                pulsePhase: Math.random() * Math.PI * 2,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
                 index: index
             };
         }
@@ -635,7 +635,7 @@ export class LevelManager {
             obstacleType: data.type || 'spike',
             color: [0.8, 0.1, 0.1, 1.0],
             velocity: -this.baseSpeed,
-            animationOffset: Math.random() * Math.PI * 2,
+            animationOffset: window.randomSecure() * Math.PI * 2,
             index: index
         };
     }

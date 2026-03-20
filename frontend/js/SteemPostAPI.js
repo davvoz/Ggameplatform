@@ -344,5 +344,5 @@ class SteemPostAPI {
     }
 }
 
-// Export for use in other modules
-window.SteemPostAPI = SteemPostAPI;
+// ES6 export
+export default SteemPostAPI;

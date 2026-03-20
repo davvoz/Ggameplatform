@@ -27,38 +27,38 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         for (let r = 0; r < riverCount; r++) {
             let baseX;
             if (riverCount === 1) {
-                baseX = W * 0.25 + Math.random() * W * 0.5;
+                baseX = W * 0.25 + window.randomSecure() * W * 0.5;
             } else {
                 const slot = (r + 0.5) / riverCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
+                baseX = W * (0.1 + slot * 0.8) + (window.randomSecure() - 0.5) * W * 0.12;
             }
-            const width = rw[0] + Math.random() * (rw[1] - rw[0]);
+            const width = rw[0] + window.randomSecure() * (rw[1] - rw[0]);
             const tileH = H * 3;
-            const segH = 50 + Math.random() * 30;
+            const segH = 50 + window.randomSecure() * 30;
             const segs = Math.ceil(tileH / segH);
             const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 12;
+            let cx = 0, drift = (window.randomSecure() - 0.5) * 12;
             for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 18;
+                drift += (window.randomSecure() - 0.5) * 18;
                 drift = Math.max(-30, Math.min(30, drift));
                 cx += drift;
                 cx = Math.max(-W * 0.2, Math.min(W * 0.2, cx));
                 points.push({ x: cx, y: (i + 1) * segH });
             }
             const totalRiverH = points[points.length - 1].y;
-            const hue = 90 + Math.random() * 30;
-            const sat = 55 + Math.random() * 25;
-            const light = 22 + Math.random() * 12;
+            const hue = 90 + window.randomSecure() * 30;
+            const sat = 55 + window.randomSecure() * 25;
+            const light = 22 + window.randomSecure() * 12;
             // Generate bubble positions along the river edges
             const bubbles = [];
             const bubbleCount = this.quality === 'high' ? 15 : 7;
             for (let b = 0; b < bubbleCount; b++) {
                 bubbles.push({
-                    t: Math.random(),  // position along river (0-1)
-                    side: Math.random() < 0.5 ? -1 : 1,
-                    offset: 0.3 + Math.random() * 0.5,
-                    size: 1.5 + Math.random() * 3,
-                    phase: Math.random() * Math.PI * 2
+                    t: window.randomSecure(),  // position along river (0-1)
+                    side: window.randomSecure() < 0.5 ? -1 : 1,
+                    offset: 0.3 + window.randomSecure() * 0.5,
+                    size: 1.5 + window.randomSecure() * 3,
+                    phase: window.randomSecure() * Math.PI * 2
                 });
             }
             this._acidRivers.push({ baseX, width, points, totalH: totalRiverH, hue, sat, light, bubbles });
@@ -74,29 +74,29 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
             const spacing = totalH / poolCount;
             for (let i = 0; i < poolCount; i++) {
                 // Create sub-blobs for organic look
-                const subCount = 2 + Math.floor(Math.random() * 3);
+                const subCount = 2 + Math.floor(window.randomSecure() * 3);
                 const subBlobs = [];
                 for (let s = 0; s < subCount; s++) {
                     subBlobs.push({
-                        dx: (Math.random() - 0.5) * 20,
-                        dy: (Math.random() - 0.5) * 12,
-                        rx: 8 + Math.random() * 14,
-                        ry: 5 + Math.random() * 10,
-                        rot: (Math.random() - 0.5) * 0.6,
-                        phase: Math.random() * Math.PI * 2
+                        dx: (window.randomSecure() - 0.5) * 20,
+                        dy: (window.randomSecure() - 0.5) * 12,
+                        rx: 8 + window.randomSecure() * 14,
+                        ry: 5 + window.randomSecure() * 10,
+                        rot: (window.randomSecure() - 0.5) * 0.6,
+                        phase: window.randomSecure() * Math.PI * 2
                     });
                 }
                 this._toxicPools.push({
-                    x: 35 + Math.random() * (W - 70),
-                    y: i * spacing + Math.random() * spacing * 0.6,
-                    rx: 22 + Math.random() * 25,
-                    ry: 12 + Math.random() * 16,
-                    rot: Math.random() * 0.5 - 0.25,
-                    alpha: 0.5 + Math.random() * 0.3,
-                    hue: 95 + Math.random() * 30,
-                    sat: 65 + Math.random() * 20,
-                    light: 30 + Math.random() * 15,
-                    pulsePhase: Math.random() * Math.PI * 2,
+                    x: 35 + window.randomSecure() * (W - 70),
+                    y: i * spacing + window.randomSecure() * spacing * 0.6,
+                    rx: 22 + window.randomSecure() * 25,
+                    ry: 12 + window.randomSecure() * 16,
+                    rot: window.randomSecure() * 0.5 - 0.25,
+                    alpha: 0.5 + window.randomSecure() * 0.3,
+                    hue: 95 + window.randomSecure() * 30,
+                    sat: 65 + window.randomSecure() * 20,
+                    light: 30 + window.randomSecure() * 15,
+                    pulsePhase: window.randomSecure() * Math.PI * 2,
                     subBlobs,
                     totalH
                 });
@@ -109,15 +109,15 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const bubbleTotal = this.quality === 'high' ? poolCount * 4 : poolCount * 2;
         for (let i = 0; i < bubbleTotal; i++) {
             this._poolBubbles.push({
-                poolIdx: Math.floor(Math.random() * Math.max(1, poolCount)),
-                dx: (Math.random() - 0.5) * 30,
+                poolIdx: Math.floor(window.randomSecure() * Math.max(1, poolCount)),
+                dx: (window.randomSecure() - 0.5) * 30,
                 dy: 0,
-                size: 1 + Math.random() * 2.5,
-                speed: -8 - Math.random() * 12,
-                life: Math.random() * 2,
-                maxLife: 1 + Math.random() * 2,
-                alpha: 0.3 + Math.random() * 0.3,
-                hue: 95 + Math.random() * 25
+                size: 1 + window.randomSecure() * 2.5,
+                speed: -8 - window.randomSecure() * 12,
+                life: window.randomSecure() * 2,
+                maxLife: 1 + window.randomSecure() * 2,
+                alpha: 0.3 + window.randomSecure() * 0.3,
+                hue: 95 + window.randomSecure() * 25
             });
         }
 
@@ -132,30 +132,30 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
-            const nPts = 6 + Math.floor(Math.random() * 3);
+            const nPts = 6 + Math.floor(window.randomSecure() * 3);
             const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.55 + Math.random() * 0.5);
+            for (let s = 0; s < nPts; s++) shape.push(0.55 + window.randomSecure() * 0.5);
             // Drip tendrils hanging from the formation
-            const dripCount = 1 + Math.floor(Math.random() * 3);
+            const dripCount = 1 + Math.floor(window.randomSecure() * 3);
             const drips = [];
             for (let d = 0; d < dripCount; d++) {
                 drips.push({
-                    angle: Math.random() * Math.PI * 2,
-                    length: 8 + Math.random() * 18,
-                    width: 1.5 + Math.random() * 2,
-                    phase: Math.random() * Math.PI * 2
+                    angle: window.randomSecure() * Math.PI * 2,
+                    length: 8 + window.randomSecure() * 18,
+                    width: 1.5 + window.randomSecure() * 2,
+                    phase: window.randomSecure() * Math.PI * 2
                 });
             }
             this._edgeToxic.push({
                 ...pos, shape, drips,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 28 + Math.random() * 48,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.6 + Math.random() * 0.3,
-                hasGlow: Math.random() < 0.45,
-                glowHue: 100 + Math.random() * 25
+                reach: eR[0] + window.randomSecure() * (eR[1] - eR[0]),
+                height: 28 + window.randomSecure() * 48,
+                hue: eH[0] + window.randomSecure() * (eH[1] - eH[0]),
+                sat: eS[0] + window.randomSecure() * (eS[1] - eS[0]),
+                lightness: eL[0] + window.randomSecure() * (eL[1] - eL[0]),
+                alpha: 0.6 + window.randomSecure() * 0.3,
+                hasGlow: window.randomSecure() < 0.45,
+                glowHue: 100 + window.randomSecure() * 25
             });
         }
 
@@ -164,16 +164,16 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const fogCount = this.quality === 'high' ? 4 : 2;
         for (let f = 0; f < fogCount; f++) {
             this._toxicFog.push({
-                x: Math.random() * W,
-                y: H * 0.2 + Math.random() * H * 0.6,
-                radiusX: W * 0.3 + Math.random() * W * 0.3,
-                radiusY: H * 0.08 + Math.random() * H * 0.12,
-                hue: 85 + Math.random() * 35,
-                sat: 40 + Math.random() * 25,
-                light: 20 + Math.random() * 15,
-                alpha: 0.06 + Math.random() * 0.08,
-                driftSpeed: (Math.random() - 0.5) * 8,
-                phase: Math.random() * Math.PI * 2
+                x: window.randomSecure() * W,
+                y: H * 0.2 + window.randomSecure() * H * 0.6,
+                radiusX: W * 0.3 + window.randomSecure() * W * 0.3,
+                radiusY: H * 0.08 + window.randomSecure() * H * 0.12,
+                hue: 85 + window.randomSecure() * 35,
+                sat: 40 + window.randomSecure() * 25,
+                light: 20 + window.randomSecure() * 15,
+                alpha: 0.06 + window.randomSecure() * 0.08,
+                driftSpeed: (window.randomSecure() - 0.5) * 8,
+                phase: window.randomSecure() * Math.PI * 2
             });
         }
 
@@ -186,28 +186,28 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
                 : Math.max(10, Math.round((tcfg.acidRainCount || 30) * 0.45));
             for (let i = 0; i < rainCount; i++) {
                 this._acidRainDrops.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    length: 4 + Math.random() * 10,
-                    speed: 35 + Math.random() * 30,
-                    drift: -3 - Math.random() * 5,
-                    alpha: 0.15 + Math.random() * 0.35,
-                    hue: 90 + Math.random() * 30,
-                    sat: 60 + Math.random() * 20,
-                    light: 40 + Math.random() * 20
+                    x: window.randomSecure() * W, y: window.randomSecure() * H,
+                    length: 4 + window.randomSecure() * 10,
+                    speed: 35 + window.randomSecure() * 30,
+                    drift: -3 - window.randomSecure() * 5,
+                    alpha: 0.15 + window.randomSecure() * 0.35,
+                    hue: 90 + window.randomSecure() * 30,
+                    sat: 60 + window.randomSecure() * 20,
+                    light: 40 + window.randomSecure() * 20
                 });
             }
             // Add spores (glowing drifting particles)
             const sporeCount = this.quality === 'high' ? 15 : 6;
             for (let i = 0; i < sporeCount; i++) {
                 this._toxicSpores.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    size: 1.5 + Math.random() * 3,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: -2 + Math.random() * 4,
-                    driftPhase: Math.random() * Math.PI * 2,
-                    alpha: 0.2 + Math.random() * 0.3,
-                    hue: 90 + Math.random() * 35,
-                    pulsePhase: Math.random() * Math.PI * 2
+                    x: window.randomSecure() * W, y: window.randomSecure() * H,
+                    size: 1.5 + window.randomSecure() * 3,
+                    vx: (window.randomSecure() - 0.5) * 6,
+                    vy: -2 + window.randomSecure() * 4,
+                    driftPhase: window.randomSecure() * Math.PI * 2,
+                    alpha: 0.2 + window.randomSecure() * 0.3,
+                    hue: 90 + window.randomSecure() * 35,
+                    pulsePhase: window.randomSecure() * Math.PI * 2
                 });
             }
         }
@@ -241,7 +241,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
                 if (pb.life > pb.maxLife) {
                     pb.dy = 0;
                     pb.life = 0;
-                    pb.dx = (Math.random() - 0.5) * 30;
+                    pb.dx = (window.randomSecure() - 0.5) * 30;
                 }
             }
         }
@@ -258,7 +258,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
             for (const rd of this._acidRainDrops) {
                 rd.y += rd.speed * dt;
                 rd.x += rd.drift * dt;
-                if (rd.y > H + 15) { rd.y = -rd.length - 5; rd.x = Math.random() * W; }
+                if (rd.y > H + 15) { rd.y = -rd.length - 5; rd.x = window.randomSecure() * W; }
                 if (rd.x < -15) rd.x = W + 5;
                 if (rd.x > W + 15) rd.x = -5;
             }

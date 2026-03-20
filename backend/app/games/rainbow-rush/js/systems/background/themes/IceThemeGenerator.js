@@ -51,17 +51,17 @@ export class IceThemeGenerator extends BaseThemeGenerator {
 
         for (let i = 0; i < config.CRYSTAL_COUNT; i++) {
             const size = this.randomInRange(config.CRYSTAL_MIN_SIZE, config.CRYSTAL_MAX_SIZE);
-            const x = Math.random() * this.canvasWidth;
+            const x = window.randomSecure() * this.canvasWidth;
 
             layers.push({
                 x,
                 y: groundY - size,
                 width: size * 0.6,
                 height: size,
-                color: [0.7 + Math.random() * 0.2, 0.85 + Math.random() * 0.1, 1.0, 0.6 + Math.random() * 0.3],
+                color: [0.7 + window.randomSecure() * 0.2, 0.85 + window.randomSecure() * 0.1, 1.0, 0.6 + window.randomSecure() * 0.3],
                 type: 'crystal',
                 speed: 3 + i * 1.5,
-                glimmer: Math.random() * Math.PI * 2,
+                glimmer: window.randomSecure() * Math.PI * 2,
                 offset: 0
             });
         }
@@ -72,14 +72,14 @@ export class IceThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SNOWFLAKE_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: Math.random() * this.canvasHeight,
+                x: window.randomSecure() * this.canvasWidth,
+                y: window.randomSecure() * this.canvasHeight,
                 radius: this.randomInRange(config.SNOWFLAKE_MIN_RADIUS, config.SNOWFLAKE_MAX_RADIUS),
                 speed: this.randomInRange(config.SNOWFLAKE_MIN_SPEED, config.SNOWFLAKE_MAX_SPEED),
-                rotation: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.7 + Math.random() * 0.3],
+                rotation: window.randomSecure() * Math.PI * 2,
+                color: [1.0, 1.0, 1.0, 0.7 + window.randomSecure() * 0.3],
                 type: 'snowflake',
-                drift: (Math.random() - 0.5) * 30
+                drift: (window.randomSecure() - 0.5) * 30
             });
         }
     }

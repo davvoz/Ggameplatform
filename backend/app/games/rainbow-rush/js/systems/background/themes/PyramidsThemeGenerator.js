@@ -55,7 +55,7 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
                 x: i * this.canvasWidth / config.DUNE_COUNT,
                 y: this.canvasHeight * (0.65 + i * 0.05),
                 width: this.canvasWidth / config.DUNE_COUNT + 50,
-                height: 80 + Math.random() * 40,
+                height: 80 + window.randomSecure() * 40,
                 color: [0.75 - i * 0.05, 0.6 - i * 0.05, 0.28 - i * 0.03, 0.5 + i * 0.1],
                 type: 'simple_shape',
                 shape: 'dune',
@@ -93,13 +93,13 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SAND_PARTICLE_COUNT; i++) {
             particles.push({
-                x: Math.random() * this.canvasWidth,
-                y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3,
+                x: window.randomSecure() * this.canvasWidth,
+                y: this.canvasHeight * 0.6 + window.randomSecure() * this.canvasHeight * 0.3,
                 radius: this.randomInRange(config.SAND_MIN_RADIUS, config.SAND_MAX_RADIUS),
                 speed: this.randomInRange(config.SAND_MIN_SPEED, config.SAND_MAX_SPEED),
                 color: [0.85, 0.7, 0.4, 0.5],
                 type: 'simple_particle',
-                drift: 50 + Math.random() * 80
+                drift: 50 + window.randomSecure() * 80
             });
         }
     }
@@ -111,13 +111,13 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
             particles.push({
                 x: (i + 0.5) * this.canvasWidth / config.HEATWAVE_COUNT,
                 y: this.canvasHeight * 0.7,
-                amplitude: 15 + Math.random() * 10,
-                frequency: 0.02 + Math.random() * 0.01,
-                speed: 40 + Math.random() * 30,
+                amplitude: 15 + window.randomSecure() * 10,
+                frequency: 0.02 + window.randomSecure() * 0.01,
+                speed: 40 + window.randomSecure() * 30,
                 color: [1.0, 0.9, 0.6, 0.15],
                 type: 'animated_particle',
                 animation: 'wave',
-                height: 60 + Math.random() * 40
+                height: 60 + window.randomSecure() * 40
             });
         }
     }

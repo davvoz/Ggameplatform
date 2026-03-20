@@ -204,7 +204,7 @@ export class BackgroundSystem {
                 particle.x -= (particle.speed + cameraSpeed) * deltaTime;
                 if (particle.x < -100) {
                     particle.x = this.canvasWidth + 100;
-                    particle.y = Math.random() * this.canvasHeight * (particle.type === 'fish' ? 0.8 : 0.6);
+                    particle.y = window.randomSecure() * this.canvasHeight * (particle.type === 'fish' ? 0.8 : 0.6);
                 }
                 // Update animation phases
                 if (particle.type === 'bird') {
@@ -222,19 +222,19 @@ export class BackgroundSystem {
                 particle.x -= cameraSpeed * deltaTime; // Camera parallax
                 if (particle.y < this.canvasHeight * 0.3) {
                     particle.y = this.canvasHeight;
-                    particle.x = Math.random() * this.canvasWidth;
+                    particle.x = window.randomSecure() * this.canvasWidth;
                 }
                 break;
                 
             case 'snowflake':
                 // Fall down with drift
                 particle.y += particle.speed * deltaTime;
-                particle.drift = particle.drift || (Math.random() - 0.5) * 20;
+                particle.drift = particle.drift || (window.randomSecure() - 0.5) * 20;
                 particle.x += particle.drift * deltaTime;
                 particle.x -= cameraSpeed * deltaTime; // Camera parallax
                 if (particle.y > this.canvasHeight + 20) {
                     particle.y = -20;
-                    particle.x = Math.random() * this.canvasWidth;
+                    particle.x = window.randomSecure() * this.canvasWidth;
                 }
                 break;
                 
@@ -250,7 +250,7 @@ export class BackgroundSystem {
                 }
                 if (particle.x < 0 || (particle.type === 'ember' && particle.y < 0)) {
                     particle.x = this.canvasWidth;
-                    particle.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
+                    particle.y = this.canvasHeight * (0.5 + window.randomSecure() * 0.5);
                 }
                 break;
                 
@@ -263,7 +263,7 @@ export class BackgroundSystem {
                 
                 if (particle.color[3] <= 0 || particle.y < 0) {
                     // Respawn
-                    particle.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
+                    particle.x = this.canvasWidth * 0.65 + (window.randomSecure() - 0.5) * 60;
                     particle.y = this.canvasHeight * 0.35 - 20;
                     particle.expansion = 1;
                     particle.color[3] = 0.4;
@@ -275,7 +275,7 @@ export class BackgroundSystem {
                 particle.twinkle = (particle.twinkle || 0) + deltaTime * 2;
                 if (particle.x < 0) {
                     particle.x = this.canvasWidth;
-                    particle.y = Math.random() * this.canvasHeight;
+                    particle.y = window.randomSecure() * this.canvasHeight;
                 }
                 break;
                 
@@ -286,7 +286,7 @@ export class BackgroundSystem {
                 particle.rotation = (particle.rotation || 0) + (particle.rotationSpeed || 1) * deltaTime;
                 if (particle.y > this.canvasHeight) {
                     particle.y = -10;
-                    particle.x = Math.random() * this.canvasWidth;
+                    particle.x = window.randomSecure() * this.canvasWidth;
                 }
                 break;
         }

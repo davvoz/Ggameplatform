@@ -109,7 +109,5 @@ class CampaignCountdown {
     }
 }
 
-// Export for global use
-if (typeof window !== 'undefined') {
-    window.CampaignCountdown = CampaignCountdown;
-}
+// ES6 export
+export default CampaignCountdown;

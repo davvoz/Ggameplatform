@@ -5,7 +5,7 @@
 // ─── Config ────────────────────────────────────────────────────────
 const API = '/api/blackjack';
 const SUIT_SYMBOL = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
-const SUIT_COLOR  = { hearts: 'red', diamonds: 'red', clubs: 'black', spades: 'black' };
+const SUIT_COLOR = { hearts: 'red', diamonds: 'red', clubs: 'black', spades: 'black' };
 const BET_CHIPS = [5, 10, 50];
 const BET_MIN = 5;
 const BET_MAX = 5000;
@@ -23,23 +23,23 @@ let renderedPlayerCards = [];
 let dealerRevealed = false;
 
 // ─── DOM Refs ──────────────────────────────────────────────────────
-const $coinAmount     = document.getElementById('coinAmount');
-const $dealerCards    = document.getElementById('dealerCards');
-const $playerCards    = document.getElementById('playerCards');
-const $dealerValue    = document.getElementById('dealerValue');
-const $playerValue    = document.getElementById('playerValue');
-const $gameStatus     = document.getElementById('gameStatus');
-const $betSection     = document.getElementById('betSection');
+const $coinAmount = document.getElementById('coinAmount');
+const $dealerCards = document.getElementById('dealerCards');
+const $playerCards = document.getElementById('playerCards');
+const $dealerValue = document.getElementById('dealerValue');
+const $playerValue = document.getElementById('playerValue');
+const $gameStatus = document.getElementById('gameStatus');
+const $betSection = document.getElementById('betSection');
 const $actionsSection = document.getElementById('actionsSection');
 const $newHandSection = document.getElementById('newHandSection');
-const $betAmount      = document.getElementById('betAmount');
-const $splitHands     = document.getElementById('splitHands');
-const $dealBtn        = document.getElementById('dealBtn');
-const $newHandBtn     = document.getElementById('newHandBtn');
-const $betReset       = document.getElementById('betReset');
-const $rulesOverlay   = document.getElementById('rulesOverlay');
-const $rulesToggle    = document.getElementById('rulesToggle');
-const $rulesClose     = document.getElementById('rulesClose');
+const $betAmount = document.getElementById('betAmount');
+const $splitHands = document.getElementById('splitHands');
+const $dealBtn = document.getElementById('dealBtn');
+const $newHandBtn = document.getElementById('newHandBtn');
+const $betReset = document.getElementById('betReset');
+const $rulesOverlay = document.getElementById('rulesOverlay');
+const $rulesToggle = document.getElementById('rulesToggle');
+const $rulesClose = document.getElementById('rulesClose');
 
 // ─── Platform SDK ──────────────────────────────────────────────────
 async function initSDK() {
@@ -55,9 +55,9 @@ async function initSDK() {
             if (cfg?.userId) userId = cfg.userId;
         });
         await window.PlatformSDK.init({
-            onPause() {},
-            onResume() {},
-            onExit() {},
+            onPause() { },
+            onResume() { },
+            onExit() { },
         });
         // Fallback: check platformConfig or localStorage
         if (!userId) {
@@ -95,7 +95,7 @@ async function fetchBalance() {
             const d = await r.json();
             animateBalance(d.balance);
         }
-    } catch (_) {}
+    } catch (_) { }
 }
 
 // ─── Balance animation ─────────────────────────────────────────────
@@ -264,16 +264,16 @@ function showWinCelebration(payout, isBlackjack) {
     for (let i = 0; i < count; i++) {
         const c = document.createElement('div');
         c.className = 'confetti';
-        c.style.background = colors[Math.floor(Math.random() * colors.length)];
-        c.style.left = `${20 + Math.random() * 60}%`;
-        c.style.top = `${30 + Math.random() * 30}%`;
-        c.style.setProperty('--fall-x', `${(Math.random() - 0.5) * 120}px`);
-        c.style.setProperty('--fall-y', `${60 + Math.random() * 80}px`);
-        c.style.setProperty('--fall-rot', `${Math.random() * 720 - 360}deg`);
-        c.style.setProperty('--fall-duration', `${0.8 + Math.random() * 0.8}s`);
-        c.style.animationDelay = `${Math.random() * 0.3}s`;
-        c.style.width = `${5 + Math.random() * 6}px`;
-        c.style.height = `${5 + Math.random() * 6}px`;
+        c.style.background = colors[Math.floor(window.randomSecure() * colors.length)];
+        c.style.left = `${20 + window.randomSecure() * 60}%`;
+        c.style.top = `${30 + window.randomSecure() * 30}%`;
+        c.style.setProperty('--fall-x', `${(window.randomSecure() - 0.5) * 120}px`);
+        c.style.setProperty('--fall-y', `${60 + window.randomSecure() * 80}px`);
+        c.style.setProperty('--fall-rot', `${window.randomSecure() * 720 - 360}deg`);
+        c.style.setProperty('--fall-duration', `${0.8 + window.randomSecure() * 0.8}s`);
+        c.style.animationDelay = `${window.randomSecure() * 0.3}s`;
+        c.style.width = `${5 + window.randomSecure() * 6}px`;
+        c.style.height = `${5 + window.randomSecure() * 6}px`;
         table.appendChild(c);
         setTimeout(() => c.remove(), 2000);
     }
@@ -495,7 +495,7 @@ function updateUI(state, isNewDeal = false) {
                     window.PlatformSDK.gameOver(total_payout, {
                         extra_data: { hands: hands.length, bet: initial_bet, won: total_payout > 0 },
                     });
-                } catch (_) {}
+                } catch (_) { }
             }
         }, showDelay);
     } else {
@@ -574,13 +574,15 @@ async function apiDeal() {
 
         // Notify platform
         try {
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
+
             window.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0'
-            }, '*');
-        } catch (_) {}
+            }, targetOrigin);
+        } catch (_) { }
 
         updateUI(state, true);
     } catch (e) {

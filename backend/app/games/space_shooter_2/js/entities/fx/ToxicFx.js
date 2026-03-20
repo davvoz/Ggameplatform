@@ -37,7 +37,7 @@ export class ToxicFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const tc = this.config;
         const d = tc ? tc.dist : [0.28, 0.50, 0.72, 0.88];
-        const roll = Math.random();
+        const roll = window.randomSecure();
 
         if (roll < d[0])      this._initSludge(W, H, initial);
         else if (roll < d[1]) this._initBubbles(W, H, initial);
@@ -50,156 +50,156 @@ export class ToxicFx extends BaseFxStrategy {
 
     _initSludge(W, H, initial) {
         this.subType = 'sludge';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -80 - Math.random() * 60;
-        this.depthLayer = Math.random();
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -80 - window.randomSecure() * 60;
+        this.depthLayer = window.randomSecure();
         const near = this.depthLayer;
-        this.size = 25 + near * 35 + Math.random() * 20;
-        this.speed = 12 + near * 12 + Math.random() * 8;
+        this.size = 25 + near * 35 + window.randomSecure() * 20;
+        this.speed = 12 + near * 12 + window.randomSecure() * 8;
         this.alpha = 0.5 + near * 0.3;
         Object.assign(this, pickColor(SLUDGE_PALETTE, near));
         this.light = this.lightness;
-        this.shape = generateShape(7 + Math.floor(Math.random() * 3), 0.6, 0.4);
-        this.shadowOx = 3 + Math.random() * 3;
-        this.shadowOy = 3 + Math.random() * 3;
-        this.elongY = 0.55 + Math.random() * 0.25;
-        this.dripCount = 1 + Math.floor(Math.random() * 3);
-        this.wobblePhase = Math.random() * Math.PI * 2;
-        this.wobbleSpeed = 0.6 + Math.random() * 0.5;
+        this.shape = generateShape(7 + Math.floor(window.randomSecure() * 3), 0.6, 0.4);
+        this.shadowOx = 3 + window.randomSecure() * 3;
+        this.shadowOy = 3 + window.randomSecure() * 3;
+        this.elongY = 0.55 + window.randomSecure() * 0.25;
+        this.dripCount = 1 + Math.floor(window.randomSecure() * 3);
+        this.wobblePhase = window.randomSecure() * Math.PI * 2;
+        this.wobbleSpeed = 0.6 + window.randomSecure() * 0.5;
         // Sub-blobs orbiting the main body
         this.subBlobs = [];
-        const sbc = 1 + Math.floor(Math.random() * 3);
+        const sbc = 1 + Math.floor(window.randomSecure() * 3);
         for (let i = 0; i < sbc; i++) {
             this.subBlobs.push({
-                angle: Math.random() * Math.PI * 2,
-                dist: 0.55 + Math.random() * 0.35,
-                r: 0.15 + Math.random() * 0.2,
-                shape: generateShape(5 + Math.floor(Math.random() * 2), 0.65, 0.35),
-                orbitSpeed: (0.15 + Math.random() * 0.2) * (Math.random() < 0.5 ? 1 : -1)
+                angle: window.randomSecure() * Math.PI * 2,
+                dist: 0.55 + window.randomSecure() * 0.35,
+                r: 0.15 + window.randomSecure() * 0.2,
+                shape: generateShape(5 + Math.floor(window.randomSecure() * 2), 0.65, 0.35),
+                orbitSpeed: (0.15 + window.randomSecure() * 0.2) * (window.randomSecure() < 0.5 ? 1 : -1)
             });
         }
     }
 
     _initBubbles(W, H, initial) {
         this.subType = 'bubbles';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -20 - Math.random() * 30;
-        this.depthLayer = 0.5 + Math.random() * 0.5;
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -20 - window.randomSecure() * 30;
+        this.depthLayer = 0.5 + window.randomSecure() * 0.5;
         const near = this.depthLayer;
-        this.size = 4 + near * 8 + Math.random() * 5;
-        this.speed = 18 + near * 12 + Math.random() * 8;
+        this.size = 4 + near * 8 + window.randomSecure() * 5;
+        this.speed = 18 + near * 12 + window.randomSecure() * 8;
         this.alpha = 0.4 + near * 0.3;
         Object.assign(this, pickColor(ACID_PALETTE, near));
         this.light = this.lightness;
-        this.wobble = Math.random() * Math.PI * 2;
-        this.wobbleSpeed = 1.2 + Math.random() * 1.5;
-        this.wobbleAmp = 5 + Math.random() * 8;
+        this.wobble = window.randomSecure() * Math.PI * 2;
+        this.wobbleSpeed = 1.2 + window.randomSecure() * 1.5;
+        this.wobbleAmp = 5 + window.randomSecure() * 8;
         this.life = 0;
-        this.maxLife = 2 + Math.random() * 3.5;
+        this.maxLife = 2 + window.randomSecure() * 3.5;
         // Bloated shape with organic distortion
         this.blobShape = generateShape(6, 0.85, 0.15);
-        this.squash = 0.85 + Math.random() * 0.3;
-        this.innerGas = Math.random() < 0.5;
+        this.squash = 0.85 + window.randomSecure() * 0.3;
+        this.innerGas = window.randomSecure() < 0.5;
     }
 
     _initFumes(W, H, initial) {
         this.subType = 'fumes';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -40 - Math.random() * 60;
-        this.depthLayer = Math.random();
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 60;
+        this.depthLayer = window.randomSecure();
         const near = this.depthLayer;
-        this.size = 22 + near * 35 + Math.random() * 20;
-        this.speed = 8 + near * 8 + Math.random() * 6;
+        this.size = 22 + near * 35 + window.randomSecure() * 20;
+        this.speed = 8 + near * 8 + window.randomSecure() * 6;
         this.alpha = 0.18 + near * 0.14;
         Object.assign(this, pickColor(FUMES_PALETTE, near));
         this.light = this.lightness;
-        this.drift = (Math.random() - 0.5) * 6;
-        this.expandRate = 0.8 + Math.random() * 0.8;
-        this.swirl = Math.random() * Math.PI * 2;
-        this.swirlSpeed = 0.25 + Math.random() * 0.35;
+        this.drift = (window.randomSecure() - 0.5) * 6;
+        this.expandRate = 0.8 + window.randomSecure() * 0.8;
+        this.swirl = window.randomSecure() * Math.PI * 2;
+        this.swirlSpeed = 0.25 + window.randomSecure() * 0.35;
         this.life = 0;
-        this.maxLife = 4 + Math.random() * 5;
-        this.elongation = 0.6 + Math.random() * 0.5;
+        this.maxLife = 4 + window.randomSecure() * 5;
+        this.elongation = 0.6 + window.randomSecure() * 0.5;
         // Multiple cloud puffs composing the fume
         this.puffs = [];
-        const pc = 2 + Math.floor(Math.random() * 3);
+        const pc = 2 + Math.floor(window.randomSecure() * 3);
         for (let i = 0; i < pc; i++) {
             this.puffs.push({
-                ox: (Math.random() - 0.5) * 0.6,
-                oy: (Math.random() - 0.5) * 0.4,
-                scale: 0.4 + Math.random() * 0.4,
-                phase: Math.random() * Math.PI * 2,
-                breathSpeed: 0.3 + Math.random() * 0.4
+                ox: (window.randomSecure() - 0.5) * 0.6,
+                oy: (window.randomSecure() - 0.5) * 0.4,
+                scale: 0.4 + window.randomSecure() * 0.4,
+                phase: window.randomSecure() * Math.PI * 2,
+                breathSpeed: 0.3 + window.randomSecure() * 0.4
             });
         }
     }
 
     _initPools(W, H, initial) {
         this.subType = 'pools';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -60 - Math.random() * 50;
-        this.depthLayer = Math.random() * 0.6;
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 50;
+        this.depthLayer = window.randomSecure() * 0.6;
         const near = this.depthLayer;
-        this.size = 30 + near * 45 + Math.random() * 25;
-        this.speed = 10 + near * 8 + Math.random() * 5;
+        this.size = 30 + near * 45 + window.randomSecure() * 25;
+        this.speed = 10 + near * 8 + window.randomSecure() * 5;
         this.alpha = 0.45 + near * 0.2;
         Object.assign(this, pickColor(ACID_PALETTE, near));
         this.light = this.lightness;
-        this.pulsePhase = Math.random() * Math.PI * 2;
-        this.pulseSpeed = 0.8 + Math.random() * 1.2;
+        this.pulsePhase = window.randomSecure() * Math.PI * 2;
+        this.pulseSpeed = 0.8 + window.randomSecure() * 1.2;
         this.blobShape = generateShape(8, 0.75, 0.25);
-        this.elongY = 0.3 + Math.random() * 0.1;
+        this.elongY = 0.3 + window.randomSecure() * 0.1;
         // Surface gas bubbles
-        this.bubbleCount = 3 + Math.floor(Math.random() * 4);
+        this.bubbleCount = 3 + Math.floor(window.randomSecure() * 4);
         this.bubbles = [];
         for (let i = 0; i < this.bubbleCount; i++) {
             this.bubbles.push({
-                ox: (Math.random() - 0.5) * this.size * 1.4,
-                phase: Math.random() * Math.PI * 2,
-                speed: 1.0 + Math.random() * 2,
-                r: 1.2 + Math.random() * 2.5
+                ox: (window.randomSecure() - 0.5) * this.size * 1.4,
+                phase: window.randomSecure() * Math.PI * 2,
+                speed: 1.0 + window.randomSecure() * 2,
+                r: 1.2 + window.randomSecure() * 2.5
             });
         }
         // Fog wisps rising from pool
-        this.hasFog = Math.random() < 0.6;
-        this.fogPhase = Math.random() * Math.PI * 2;
-        this.fogSpeed = 0.4 + Math.random() * 0.3;
+        this.hasFog = window.randomSecure() < 0.6;
+        this.fogPhase = window.randomSecure() * Math.PI * 2;
+        this.fogSpeed = 0.4 + window.randomSecure() * 0.3;
     }
 
     _initMoss(W, H, initial) {
         this.subType = 'moss';
-        this.x = Math.random() * W;
-        this.y = initial ? Math.random() * H : -70 - Math.random() * 50;
-        this.depthLayer = Math.random();
+        this.x = window.randomSecure() * W;
+        this.y = initial ? window.randomSecure() * H : -70 - window.randomSecure() * 50;
+        this.depthLayer = window.randomSecure();
         const near = this.depthLayer;
-        this.size = 18 + near * 30 + Math.random() * 18;
-        this.speed = 11 + near * 11 + Math.random() * 7;
+        this.size = 18 + near * 30 + window.randomSecure() * 18;
+        this.speed = 11 + near * 11 + window.randomSecure() * 7;
         this.alpha = 0.5 + near * 0.25;
         Object.assign(this, pickColor(MOSS_PALETTE, near));
         this.light = this.lightness;
-        this.shadowOx = 2 + Math.random() * 3;
-        this.shadowOy = 2 + Math.random() * 3;
+        this.shadowOx = 2 + window.randomSecure() * 3;
+        this.shadowOy = 2 + window.randomSecure() * 3;
         // Core blob
-        this.shape = generateShape(7 + Math.floor(Math.random() * 3), 0.6, 0.4);
-        this.elongY = 0.65 + Math.random() * 0.3;
+        this.shape = generateShape(7 + Math.floor(window.randomSecure() * 3), 0.6, 0.4);
+        this.elongY = 0.65 + window.randomSecure() * 0.3;
         // Satellite clumps (smaller blobs clinging to the main one)
         this.clumps = [];
-        const cc = 2 + Math.floor(Math.random() * 3);
+        const cc = 2 + Math.floor(window.randomSecure() * 3);
         for (let i = 0; i < cc; i++) {
             this.clumps.push({
-                angle: Math.random() * Math.PI * 2,
-                dist: 0.6 + Math.random() * 0.3,
-                r: 0.2 + Math.random() * 0.2,
+                angle: window.randomSecure() * Math.PI * 2,
+                dist: 0.6 + window.randomSecure() * 0.3,
+                r: 0.2 + window.randomSecure() * 0.2,
                 shape: generateShape(5, 0.6, 0.35),
-                elongY: 0.6 + Math.random() * 0.4
+                elongY: 0.6 + window.randomSecure() * 0.4
             });
         }
         // Hanging tendrils
-        this.tendrilCount = 1 + Math.floor(Math.random() * 3);
+        this.tendrilCount = 1 + Math.floor(window.randomSecure() * 3);
         // Spore glow
-        this.hasSpores = Math.random() < 0.4;
-        this.sporePhase = Math.random() * Math.PI * 2;
-        this.sporeSpeed = 1.0 + Math.random() * 1.5;
+        this.hasSpores = window.randomSecure() < 0.4;
+        this.sporePhase = window.randomSecure() * Math.PI * 2;
+        this.sporeSpeed = 1.0 + window.randomSecure() * 1.5;
     }
 
     // ── Update ──

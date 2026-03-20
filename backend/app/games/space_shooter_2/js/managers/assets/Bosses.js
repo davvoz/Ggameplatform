@@ -2069,8 +2069,8 @@ function _genBoss20Sprites(sprites) {
             ctx.beginPath(); ctx.moveTo(cx, cy);
             let bx = cx, by = cy;
             for (let j = 0; j < 3; j++) {
-                bx += dx * 4 + (Math.random() - 0.5) * 3;
-                by += dy * 4 + (Math.random() - 0.5) * 3;
+                bx += dx * 4 + (window.randomSecure() - 0.5) * 3;
+                by += dy * 4 + (window.randomSecure() - 0.5) * 3;
                 ctx.lineTo(bx, by);
             }
             ctx.stroke();

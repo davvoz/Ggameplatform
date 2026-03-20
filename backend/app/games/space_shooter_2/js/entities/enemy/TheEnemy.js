@@ -40,11 +40,11 @@ class Enemy extends GameObject {
         this.canvasWidth = canvasWidth;
         this.pattern = pattern || 'straight';
         this.moveTimer = 0;
-        this.movePhase = Math.random() > 0.5 ? 1 : -1;
+        this.movePhase = window.randomSecure() > 0.5 ? 1 : -1;
         this.startX = x;
         this.startY = y;
-        this.strafeY = 100 + Math.random() * 100; // for strafe pattern
-        this.shootTimer = config.shootRate > 0 ? Math.random() * (config.shootRate * frMult) : 999;
+        this.strafeY = 100 + window.randomSecure() * 100; // for strafe pattern
+        this.shootTimer = config.shootRate > 0 ? window.randomSecure() * (config.shootRate * frMult) : 999;
         this.config.shootRate = config.shootRate * frMult; // adjusted fire rate
         this.dropChance = config.dropChance;
         this.targetX = 0;
@@ -56,7 +56,7 @@ class Enemy extends GameObject {
         }
         // Spawner nest — limited spawn count
         if (config.spawner) {
-            this.spawnTimer = 3 + Math.random() * 2;
+            this.spawnTimer = 3 + window.randomSecure() * 2;
             this.spawnsLeft = 2;
         }
         // Toxic blob — flag for split-on-death
@@ -65,9 +65,9 @@ class Enemy extends GameObject {
         // ── W4 emergence animation ──
         if (config.w4behaviour) {
             this._emergeTimer = 0;
-            this._emergeDuration = 0.7 + Math.random() * 0.25; // 0.7-0.95s
+            this._emergeDuration = 0.7 + window.randomSecure() * 0.25; // 0.7-0.95s
             const types = ['quantumTunnel', 'particleCondense', 'dimensionTear', 'latticeForm'];
-            this._emergeType = types[Math.floor(Math.random() * types.length)];
+            this._emergeType = types[Math.floor(window.randomSecure() * types.length)];
             this._emergeComplete = false;
             // Start invisible — will materialise via the animation
             this._savedAlpha = this.alpha;
@@ -129,7 +129,7 @@ class Enemy extends GameObject {
             this.shootTimer -= dt;
             if (this.shootTimer <= 0) {
                 this.shoot(game);
-                this.shootTimer = this.config.shootRate + (Math.random() - 0.5) * 0.5;
+                this.shootTimer = this.config.shootRate + (window.randomSecure() - 0.5) * 0.5;
             }
         }
 
@@ -148,11 +148,11 @@ class Enemy extends GameObject {
         if (this.config.spawner && this.spawnsLeft > 0) {
             this.spawnTimer -= dt;
             if (this.spawnTimer <= 0) {
-                this.spawnTimer = 3.5 + Math.random();
+                this.spawnTimer = 3.5 + window.randomSecure();
                 this.spawnsLeft--;
                 const level = game.levelManager ? game.levelManager.currentLevel : 1;
                 for (let i = 0; i < 2; i++) {
-                    const sx = this.position.x + this.width / 2 + (Math.random() - 0.5) * 40;
+                    const sx = this.position.x + this.width / 2 + (window.randomSecure() - 0.5) * 40;
                     const sy = this.position.y + this.height;
                     const spawn = new Enemy(sx, sy, 'swarm', 'straight', this.canvasWidth, game.difficulty, level);
                     game.entityManager.enemies.push(spawn);
@@ -176,10 +176,10 @@ class Enemy extends GameObject {
 
             if (w3b === 'phaser') {
                 // Cycle visible/invisible every ~2.5s
-                if (this._phaseTimer === undefined) this._phaseTimer = Math.random() * 2.5;
+                if (this._phaseTimer === undefined) this._phaseTimer = window.randomSecure() * 2.5;
                 this._phaseTimer -= dt;
                 if (this._phaseTimer <= 0) {
-                    this._phaseTimer = 2.0 + Math.random();
+                    this._phaseTimer = 2.0 + window.randomSecure();
                     this._phaseVisible = !this._phaseVisible;
                 }
                 if (this._phaseVisible === undefined) this._phaseVisible = true;
@@ -277,7 +277,7 @@ class Enemy extends GameObject {
                 if (this._flavorTimer === undefined) this._flavorTimer = 2;
                 this._flavorTimer -= dt;
                 if (this._flavorTimer <= 0) {
-                    this._flavorTimer = 1.8 + Math.random() * 0.5;
+                    this._flavorTimer = 1.8 + window.randomSecure() * 0.5;
                     this._flavorIdx = (this._flavorIdx + 1) % 3;
                 }
                 // Only vulnerable in flavor 0 (electron neutrino)

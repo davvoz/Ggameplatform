@@ -15,17 +15,17 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
         const wellCount = this.quality === 'low' ? 3 : 6;
         for (let i = 0; i < wellCount; i++) {
             this.massWells.push({
-                x: (0.1 + Math.random() * 0.8) * W,
-                y: (0.1 + Math.random() * 0.8) * H,
-                radius: 30 + Math.random() * 50,
-                depth: 0.5 + Math.random() * 0.5,
-                pulsePhase: Math.random() * Math.PI * 2,
-                pulseSpeed: 0.8 + Math.random() * 1.2,
+                x: (0.1 + window.randomSecure() * 0.8) * W,
+                y: (0.1 + window.randomSecure() * 0.8) * H,
+                radius: 30 + window.randomSecure() * 50,
+                depth: 0.5 + window.randomSecure() * 0.5,
+                pulsePhase: window.randomSecure() * Math.PI * 2,
+                pulseSpeed: 0.8 + window.randomSecure() * 1.2,
                 activeTimer: this.cooldown(10, 20),
                 isActive: false,
                 activeDuration: 0,
-                fieldStrength: 0.3 + Math.random() * 0.7,
-                scrollSpeed: 28 + Math.random() * 12
+                fieldStrength: 0.3 + window.randomSecure() * 0.7,
+                scrollSpeed: 28 + window.randomSecure() * 12
             });
         }
     }
@@ -36,7 +36,7 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
             w.y += w.scrollSpeed * dt;
             if (w.y > H + w.radius + 20) {
                 w.y = -w.radius - 20;
-                w.x = (0.1 + Math.random() * 0.8) * W;
+                w.x = (0.1 + window.randomSecure() * 0.8) * W;
             }
             w.pulsePhase += w.pulseSpeed * dt;
             if (!w.isActive) {
@@ -46,7 +46,7 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
                 }
                 if (w.activeTimer <= 0) {
                     w.isActive = true;
-                    w.activeDuration = 3 + Math.random() * 2;
+                    w.activeDuration = 3 + window.randomSecure() * 2;
                     this.spawnZone(w.x, w.y, w.radius * 2.5);
                 }
             } else {

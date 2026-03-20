@@ -445,8 +445,8 @@ export class Enemy {
 
         if (this.teleportTimer >= this.teleportInterval) {
             // Teleport near player
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 50 + Math.random() * this.teleportRange;
+            const angle = window.randomSecure() * Math.PI * 2;
+            const dist = 50 + window.randomSecure() * this.teleportRange;
             this.x = player.x + Math.cos(angle) * dist;
             this.y = player.y + Math.sin(angle) * dist;
             

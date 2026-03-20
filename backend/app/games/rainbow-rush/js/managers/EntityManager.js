@@ -322,7 +322,7 @@ export class EntityManager {
             
             // Slight horizontal drift
             if (collectible.drift === undefined) {
-                collectible.drift = (Math.random() - 0.5) * 30;
+                collectible.drift = (window.randomSecure() - 0.5) * 30;
             }
             collectible.x += collectible.drift * deltaTime;
             collectible.pulsePhase += deltaTime * 2;
@@ -393,13 +393,13 @@ export class EntityManager {
         }
 
         // Trail particles for boost - ultra ridotto al 10% con max 6 particelle
-        if (Math.random() < 0.1 && boost.trailParticles.length < this.MAX_BOOST_TRAIL) {
+        if (window.randomSecure() < 0.1 && boost.trailParticles.length < this.MAX_BOOST_TRAIL) {
             boost.trailParticles.push({
                 x: boost.x,
                 y: boost.y,
                 life: 0.3, // Vita ancora più breve
                 maxLife: 0.3,
-                size: 3 + Math.random() * 2,
+                size: 3 + window.randomSecure() * 2,
                 color: [...boost.color]
             });
         }
@@ -490,7 +490,7 @@ export class EntityManager {
         }
 
         // Rainbow trail - ultra ridotto al 20% con max 10 particelle
-        if (Math.random() < 0.2 && bonus.particles.length < this.MAX_RAINBOW_PARTICLES) {
+        if (window.randomSecure() < 0.2 && bonus.particles.length < this.MAX_RAINBOW_PARTICLES) {
             const hue = (bonus.rainbowPhase * 100) % 360;
             const rgb = this.hslToRgb(hue / 360, 1.0, 0.5);
             bonus.particles.push({

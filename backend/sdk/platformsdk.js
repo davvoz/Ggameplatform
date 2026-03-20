@@ -13,16 +13,18 @@
  *   PlatformSDK.on('pause', () => { /* pause game logic *\/ });
  */
 
+
+
 (function (global, factory) {
     // UMD pattern - supports CommonJS, AMD, and browser globals
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.PlatformSDK = factory());
+        typeof define === 'function' && define.amd ? define(factory) :
+            (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.PlatformSDK = factory());
 })(this, (function () {
     'use strict';
 
     const PROTOCOL_VERSION = '1.0.0';
-    
+
     /**
      * Platform SDK Class
      */
@@ -38,11 +40,13 @@
                 level: 1,
                 isPaused: false
             };
-            
+
             // Bind message handler
             this.boundMessageHandler = this.handlePlatformMessage.bind(this);
         }
-        
+
+
+
         /**
          * Initialize the SDK
          * @param {Object} options - Configuration options
@@ -53,14 +57,14 @@
 
                 return;
             }
-            
+
             this.log('Initializing Platform SDK...');
-            
+
             // Check if running in iframe
             if (window.self === window.top) {
 
             }
-            
+
             // Support legacy callback style (onPause, onResume, onExit, onStart)
             if (options.onPause) {
                 this.on('pause', options.onPause);
@@ -74,21 +78,21 @@
             if (options.onStart) {
                 this.on('start', options.onStart);
             }
-            
+
             // Listen for messages from platform
             window.addEventListener('message', this.boundMessageHandler);
-            
+
             this.isInitialized = true;
-            
+
             // Send ready signal to platform
             this.sendReady();
-            
+
             this.log('Platform SDK initialized successfully');
-            
+
             // Wait for platform config (with timeout)
             return this.waitForPlatform(options.timeout || 5000);
         }
-        
+
         /**
          * Wait for platform to be ready
          * @param {number} timeout - Timeout in milliseconds
@@ -102,7 +106,7 @@
                         resolve(); // Don't reject, just continue
                     }
                 }, timeout);
-                
+
                 // Listen for config message
                 const checkReady = () => {
                     if (this.isPlatformReady) {
@@ -112,47 +116,47 @@
                         setTimeout(checkReady, 100);
                     }
                 };
-                
+
                 checkReady();
             });
         }
-        
+
         /**
          * Handle incoming messages from platform
          * @param {MessageEvent} event - The message event
          */
         handlePlatformMessage(event) {
             const message = event.data;
-            
+
             // Validate message format
             if (!this.isValidMessage(message)) {
                 return;
             }
-            
+
             this.log('Received platform message:', message);
-            
+
             // Handle message based on type
             switch (message.type) {
                 case 'config':
                     this.handleConfig(message.payload);
                     break;
-                
+
                 case 'start':
                     this.handleStart(message.payload);
                     break;
-                
+
                 case 'pause':
                     this.handlePause(message.payload);
                     break;
-                
+
                 case 'resume':
                     this.handleResume(message.payload);
                     break;
-                
+
                 case 'exit':
                     this.handleExit(message.payload);
                     break;
-                
+
                 case 'showXPBanner':
                     // Forward to custom handler if game has implemented it
                     this.triggerEvent('showXPBanner', message.payload);
@@ -189,32 +193,32 @@
                         this.log('Error sending handled ack to parent:', err);
                     }
                     break;
-                
+
                 case 'progressLoaded':
                     // Response from platform with loaded progress data
                     this.triggerEvent('progressLoaded', message.payload);
                     break;
-                
+
                 default:
                     this.log('Unknown message type:', message.type);
             }
-            
+
             // Trigger registered callbacks
             this.triggerEvent(message.type, message.payload);
         }
-        
+
         /**
          * Validate message format
          * @param {*} message - The message to validate
          * @returns {boolean}
          */
         isValidMessage(message) {
-            return message && 
-                   typeof message === 'object' && 
-                   typeof message.type === 'string' &&
-                   message.protocolVersion === PROTOCOL_VERSION;
+            return message &&
+                typeof message === 'object' &&
+                typeof message.type === 'string' &&
+                message.protocolVersion === PROTOCOL_VERSION;
         }
-        
+
         /**
          * Handle platform config
          * @param {Object} config - Platform configuration
@@ -223,14 +227,14 @@
             this.config = config;
             this.isPlatformReady = true;
             this.log('Platform ready with config:', config);
-            
+
             // Store config globally for RainbowRushSDK access
             window.platformConfig = config;
-            
+
             // Process queued messages
             this.processMessageQueue();
         }
-        
+
         /**
          * Handle start event
          * @param {Object} payload - Event payload
@@ -238,7 +242,7 @@
         handleStart(payload) {
             this.log('Game start signal received');
         }
-        
+
         /**
          * Handle pause event
          * @param {Object} payload - Event payload
@@ -247,7 +251,7 @@
             this.state.isPaused = true;
             this.log('Game pause signal received');
         }
-        
+
         /**
          * Handle resume event
          * @param {Object} payload - Event payload
@@ -256,7 +260,7 @@
             this.state.isPaused = false;
             this.log('Game resume signal received');
         }
-        
+
         /**
          * Handle exit event
          * @param {Object} payload - Event payload
@@ -265,7 +269,7 @@
             this.log('Game exit signal received');
             this.cleanup();
         }
-        
+
         /**
          * Send ready signal to platform
          */
@@ -275,7 +279,7 @@
                 timestamp: Date.now()
             });
         }
-        
+
         /**
          * Send score update to platform
          * @param {number} score - The current score
@@ -286,16 +290,16 @@
                 console.error('[PlatformSDK] Score must be a number');
                 return;
             }
-            
+
             this.state.score = score;
-            
+
             this.sendToPlatform('scoreUpdate', {
                 score,
                 ...metadata,
                 timestamp: Date.now()
             });
         }
-        
+
         /**
          * Send game over event to platform
          * @param {number} finalScore - The final score
@@ -312,19 +316,19 @@
                 console.error('[PlatformSDK] Final score must be a number');
                 return;
             }
-            
+
             this.state.score = finalScore;
-            
+
             // Extract extra_data if provided
             const extra_data = metadata.extra_data || metadata;
-            
+
             this.sendToPlatform('gameOver', {
                 score: finalScore,
                 extra_data,
                 timestamp: Date.now()
             });
         }
-        
+
         /**
          * Send level completed event to platform
          * @param {number} level - The completed level number
@@ -335,16 +339,16 @@
                 console.error('[PlatformSDK] Level must be a number');
                 return;
             }
-            
+
             this.state.level = level;
-            
+
             this.sendToPlatform('levelCompleted', {
                 level,
                 ...metadata,
                 timestamp: Date.now()
             });
         }
-        
+
         /**
          * Request fullscreen mode (via platform)
          * This sends a message to the platform to handle fullscreen
@@ -354,7 +358,7 @@
                 timestamp: Date.now()
             });
         }
-        
+
         /**
          * Toggle fullscreen mode (works on iOS too!)
          * This is a convenience method that works directly in the game
@@ -367,15 +371,15 @@
                 this.requestFullScreen();
                 return;
             }
-            
+
             // Standalone mode - handle directly
             const elem = document.documentElement;
-            
+
             // iOS/iPadOS detection
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
             const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-            
+
             if ((isIOS || isIPadOS) && !fullscreenSupported) {
                 // iOS doesn't support Fullscreen API - use CSS workaround
                 this.toggleIOSFullscreen();
@@ -405,47 +409,47 @@
                 }
             }
         }
-        
+
         /**
          * iOS fullscreen toggle using CSS (since iOS doesn't support Fullscreen API)
          */
         toggleIOSFullscreen() {
             const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
-            
+
             if (isFullscreen) {
                 // Exit fullscreen
                 document.body.classList.remove('ios-game-fullscreen');
                 document.body.style.overflow = '';
-                
+
                 // Remove exit button
                 const exitBtn = document.getElementById('ios-fs-exit');
                 if (exitBtn) exitBtn.remove();
-                
+
                 this.log('Exited iOS fullscreen');
             } else {
                 // Enter fullscreen
                 document.body.classList.add('ios-game-fullscreen');
                 document.body.style.overflow = 'hidden';
-                
+
                 // Add styles if not present
                 this.injectIOSFullscreenStyles();
-                
+
                 // Create exit button
                 this.createIOSExitButton();
-                
+
                 // Try to hide Safari address bar
                 setTimeout(() => window.scrollTo(0, 1), 100);
-                
+
                 this.log('Entered iOS fullscreen');
             }
         }
-        
+
         /**
          * Inject iOS fullscreen CSS styles
          */
         injectIOSFullscreenStyles() {
             if (document.getElementById('ios-fullscreen-styles')) return;
-            
+
             const style = document.createElement('style');
             style.id = 'ios-fullscreen-styles';
             style.textContent = `
@@ -489,13 +493,13 @@
             `;
             document.head.appendChild(style);
         }
-        
+
         /**
          * Create iOS fullscreen exit button
          */
         createIOSExitButton() {
             if (document.getElementById('ios-fs-exit')) return;
-            
+
             const btn = document.createElement('button');
             btn.id = 'ios-fs-exit';
             btn.innerHTML = '✕';
@@ -507,7 +511,7 @@
             });
             document.body.appendChild(btn);
         }
-        
+
         /**
          * Check if currently in fullscreen mode
          */
@@ -518,7 +522,7 @@
             // Check iOS CSS fullscreen
             return document.body.classList.contains('ios-game-fullscreen');
         }
-        
+
         /**
          * Send log message to platform
          * @param {string} message - Log message
@@ -537,7 +541,7 @@
                 });
             }
         }
-        
+
         /**
          * Register an event callback
          * @param {string} eventType - The event type (start, pause, resume, exit, config)
@@ -548,14 +552,14 @@
                 console.error('[PlatformSDK] Callback must be a function');
                 return;
             }
-            
+
             if (!this.eventCallbacks.has(eventType)) {
                 this.eventCallbacks.set(eventType, []);
             }
-            
+
             this.eventCallbacks.get(eventType).push(callback);
         }
-        
+
         /**
          * Unregister an event callback
          * @param {string} eventType - The event type
@@ -563,15 +567,15 @@
          */
         off(eventType, callback) {
             if (!this.eventCallbacks.has(eventType)) return;
-            
+
             const callbacks = this.eventCallbacks.get(eventType);
             const index = callbacks.indexOf(callback);
-            
+
             if (index !== -1) {
                 callbacks.splice(index, 1);
             }
         }
-        
+
         /**
          * Trigger event callbacks
          * @param {string} eventType - The event type
@@ -579,7 +583,7 @@
          */
         triggerEvent(eventType, data) {
             if (!this.eventCallbacks.has(eventType)) return;
-            
+
             const callbacks = this.eventCallbacks.get(eventType);
             callbacks.forEach(callback => {
                 try {
@@ -589,7 +593,7 @@
                 }
             });
         }
-        
+
         /**
          * Send message to platform
          * @param {string} type - Message type
@@ -602,20 +606,20 @@
                 timestamp: Date.now(),
                 protocolVersion: PROTOCOL_VERSION
             };
-            
+
             // Queue message if platform is not ready (except for 'ready' message)
             if (!this.isPlatformReady && type !== 'ready') {
                 this.messageQueue.push(message);
                 return;
             }
-            
+
             // Send to parent window
             if (window.parent && window.parent !== window.self) {
                 window.parent.postMessage(message, '*');
             }
-            
+
         }
-        
+
         /**
          * Process queued messages
          */
@@ -625,7 +629,7 @@
                 window.parent.postMessage(message, '*');
             }
         }
-        
+
         /**
          * Get current SDK state
          * @returns {Object} Current state
@@ -633,7 +637,7 @@
         getState() {
             return { ...this.state };
         }
-        
+
         /**
          * Check if game is paused
          * @returns {boolean}
@@ -641,7 +645,7 @@
         isPaused() {
             return this.state.isPaused;
         }
-        
+
         /**
          * Reset session for game restart
          * Notifies the platform that the game is restarting
@@ -649,18 +653,18 @@
          */
         async resetSession() {
             this.log('Resetting session for restart');
-            
+
             // Send reset message to platform
             this.sendToPlatform('resetSession', {
                 timestamp: Date.now()
             });
-            
+
             // Wait for the platform to process (give it time to end session and start new one)
             return new Promise(resolve => {
                 setTimeout(resolve, 1000);
             });
         }
-        
+
         /**
          * Save game progress data to the platform (persisted per-user per-game)
          * @param {Object} data - Progress data to save (arbitrary JSON)
@@ -683,8 +687,8 @@
          */
         loadProgress() {
             return new Promise((resolve) => {
-                const requestId = 'lp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                
+                const requestId = 'lp_' + Date.now() + '_' + window.randomSecure().toString(36).substr(2, 6);
+
                 // Set up one-time listener for response
                 const handler = (payload) => {
                     if (payload && payload._requestId === requestId) {
@@ -693,13 +697,13 @@
                     }
                 };
                 this.on('progressLoaded', handler);
-                
+
                 // Timeout after 5s — resolve null if no response
                 setTimeout(() => {
                     this.off('progressLoaded', handler);
                     resolve(null);
                 }, 5000);
-                
+
                 this.sendToPlatform('loadProgress', {
                     _requestId: requestId,
                     timestamp: Date.now()
@@ -720,10 +724,10 @@
             this.log('SDK cleaned up');
         }
     }
-    
+
     // Create singleton instance
     const sdk = new PlatformSDK();
-    
+
     // Export as ES module default and as properties
     return {
         init: (options) => sdk.init(options),
@@ -741,11 +745,20 @@
         getState: () => sdk.getState(),
         isPaused: () => sdk.isPaused(),
         log: (message, data) => sdk.log(message, data),
-        
+
         // Version info
         version: PROTOCOL_VERSION,
-        
+
         // Access to SDK instance (advanced usage)
         _instance: sdk
     };
 }));
+
+function randomSecure() {
+    var array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / (0xFFFFFFFF + 1);
+}
+
+// For testing purposes, expose randomSecure globally
+window.randomSecure = randomSecure;

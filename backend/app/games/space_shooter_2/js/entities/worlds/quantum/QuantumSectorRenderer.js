@@ -66,10 +66,10 @@ export class QuantumSectorRenderer {
      * Type, intensity, and timer are scaled by level progression.
      */
     spawnZone(x, y, radius) {
-        const cfg = _ZONE_POOL[Math.floor(Math.random() * _ZONE_POOL.length)];
-        const baseTimer = cfg.timerRange[0] + Math.random() * (cfg.timerRange[1] - cfg.timerRange[0]);
+        const cfg = _ZONE_POOL[Math.floor(window.randomSecure() * _ZONE_POOL.length)];
+        const baseTimer = cfg.timerRange[0] + window.randomSecure() * (cfg.timerRange[1] - cfg.timerRange[0]);
         // Add randomness that grows with progression (±30% at max)
-        const jitter = 1 + (Math.random() - 0.5) * 0.6 * this.progression;
+        const jitter = 1 + (window.randomSecure() - 0.5) * 0.6 * this.progression;
         this.activeZones.push({
             x, y, radius,
             type: cfg.type,
@@ -80,11 +80,11 @@ export class QuantumSectorRenderer {
 
     /** Generate a cooldown value scaled by progression. Base range [min, max]. */
     cooldown(min, max) {
-        return (min + Math.random() * (max - min)) * this.cooldownMult;
+        return (min + window.randomSecure() * (max - min)) * this.cooldownMult;
     }
 
     /** Returns a random zone type string (legacy shortcut). */
     randomZoneType() {
-        return _ZONE_POOL[Math.floor(Math.random() * _ZONE_POOL.length)].type;
+        return _ZONE_POOL[Math.floor(window.randomSecure() * _ZONE_POOL.length)].type;
     }
 }

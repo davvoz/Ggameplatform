@@ -27,30 +27,30 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         for (let b = 0; b < beltCount; b++) {
             let baseX;
             if (beltCount === 1) {
-                baseX = W * 0.25 + Math.random() * W * 0.5;
+                baseX = W * 0.25 + window.randomSecure() * W * 0.5;
             } else {
                 const slot = (b + 0.5) / beltCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
+                baseX = W * (0.1 + slot * 0.8) + (window.randomSecure() - 0.5) * W * 0.12;
             }
-            const width = pw[0] + Math.random() * (pw[1] - pw[0]);
+            const width = pw[0] + window.randomSecure() * (pw[1] - pw[0]);
             const tileH = H * 3;
-            const segH = 35 + Math.random() * 20;
+            const segH = 35 + window.randomSecure() * 20;
             const segs = Math.ceil(tileH / segH);
             const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 6;
+            let cx = 0, drift = (window.randomSecure() - 0.5) * 6;
             for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 10;
+                drift += (window.randomSecure() - 0.5) * 10;
                 drift = Math.max(-18, Math.min(18, drift));
-                if (Math.random() < 0.3) drift = Math.round(drift / 8) * 8;
+                if (window.randomSecure() < 0.3) drift = Math.round(drift / 8) * 8;
                 cx += drift;
                 cx = Math.max(-W * 0.18, Math.min(W * 0.18, cx));
                 points.push({ x: cx, y: (i + 1) * segH });
             }
             const totalH = points[points.length - 1].y;
-            const hue = 210 + Math.random() * 20;
-            const sat = 8 + Math.random() * 10;
-            const light = 22 + Math.random() * 10;
-            const chevronGap = 12 + Math.random() * 6;
+            const hue = 210 + window.randomSecure() * 20;
+            const sat = 8 + window.randomSecure() * 10;
+            const light = 22 + window.randomSecure() * 10;
+            const chevronGap = 12 + window.randomSecure() * 6;
             this._conveyors.push({ baseX, width, points, totalH, hue, sat, light, chevronGap });
         }
         this._conveyorSpeed = 20;
@@ -63,20 +63,20 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
             const totalH = H * 3;
             const spacing = totalH / gearCount;
             for (let g = 0; g < gearCount; g++) {
-                const teeth = 6 + Math.floor(Math.random() * 6);
+                const teeth = 6 + Math.floor(window.randomSecure() * 6);
                 this._gears.push({
-                    x: 30 + Math.random() * (W - 60),
-                    y: g * spacing + Math.random() * spacing * 0.6,
-                    radius: 12 + Math.random() * 16,
+                    x: 30 + window.randomSecure() * (W - 60),
+                    y: g * spacing + window.randomSecure() * spacing * 0.6,
+                    radius: 12 + window.randomSecure() * 16,
                     teeth,
-                    toothDepth: 4 + Math.random() * 5,
-                    rot: Math.random() * Math.PI * 2,
-                    rotSpeed: (Math.random() < 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.6),
-                    alpha: 0.55 + Math.random() * 0.3,
-                    hue: 200 + Math.random() * 30,
-                    sat: 6 + Math.random() * 12,
-                    light: 25 + Math.random() * 14,
-                    hasHub: Math.random() < 0.7,
+                    toothDepth: 4 + window.randomSecure() * 5,
+                    rot: window.randomSecure() * Math.PI * 2,
+                    rotSpeed: (window.randomSecure() < 0.5 ? 1 : -1) * (0.3 + window.randomSecure() * 0.6),
+                    alpha: 0.55 + window.randomSecure() * 0.3,
+                    hue: 200 + window.randomSecure() * 30,
+                    sat: 6 + window.randomSecure() * 12,
+                    light: 25 + window.randomSecure() * 14,
+                    hasHub: window.randomSecure() < 0.7,
                     totalH
                 });
             }
@@ -94,46 +94,46 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
-            const nPts = 5 + Math.floor(Math.random() * 3);
+            const nPts = 5 + Math.floor(window.randomSecure() * 3);
             const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.5 + Math.random() * 0.55);
+            for (let s = 0; s < nPts; s++) shape.push(0.5 + window.randomSecure() * 0.55);
             this._edgeMetal.push({
                 ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 25 + Math.random() * 45,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.65 + Math.random() * 0.3,
-                hasWarning: Math.random() < 0.3,
-                hasGlow: Math.random() < 0.4,
-                glowHue: 30 + Math.random() * 20
+                reach: eR[0] + window.randomSecure() * (eR[1] - eR[0]),
+                height: 25 + window.randomSecure() * 45,
+                hue: eH[0] + window.randomSecure() * (eH[1] - eH[0]),
+                sat: eS[0] + window.randomSecure() * (eS[1] - eS[0]),
+                lightness: eL[0] + window.randomSecure() * (eL[1] - eL[0]),
+                alpha: 0.65 + window.randomSecure() * 0.3,
+                hasWarning: window.randomSecure() < 0.3,
+                hasGlow: window.randomSecure() < 0.4,
+                glowHue: 30 + window.randomSecure() * 20
             });
         }
 
         // ─── Circuit-board traces (thin pulsing lines with nodes) ───
         this._circuits = [];
-        const circuitCount = this.quality === 'high' ? 6 + Math.floor(Math.random() * 4) : 3;
+        const circuitCount = this.quality === 'high' ? 6 + Math.floor(window.randomSecure() * 4) : 3;
         for (let c = 0; c < circuitCount; c++) {
             const branches = [];
-            const numBranches = 2 + Math.floor(Math.random() * 3);
+            const numBranches = 2 + Math.floor(window.randomSecure() * 3);
             for (let br = 0; br < numBranches; br++) {
-                const segCount = 3 + Math.floor(Math.random() * 4);
+                const segCount = 3 + Math.floor(window.randomSecure() * 4);
                 const pts = [{ x: 0, y: 0 }];
                 let bx = 0, by = 0;
                 for (let s = 0; s < segCount; s++) {
-                    if (Math.random() < 0.5) { bx += (Math.random() - 0.5) * 40; }
-                    else { by += (Math.random() - 0.5) * 40; }
+                    if (window.randomSecure() < 0.5) { bx += (window.randomSecure() - 0.5) * 40; }
+                    else { by += (window.randomSecure() - 0.5) * 40; }
                     pts.push({ x: bx, y: by });
                 }
-                branches.push({ points: pts, hasNode: Math.random() < 0.6 });
+                branches.push({ points: pts, hasNode: window.randomSecure() < 0.6 });
             }
             this._circuits.push({
-                x: Math.random() * W, y: Math.random() * H,
+                x: window.randomSecure() * W, y: window.randomSecure() * H,
                 branches,
-                hue: 185 + Math.random() * 30,
-                alpha: 0.15 + Math.random() * 0.2,
-                pulsePhase: Math.random() * Math.PI * 2
+                hue: 185 + window.randomSecure() * 30,
+                alpha: 0.15 + window.randomSecure() * 0.2,
+                pulsePhase: window.randomSecure() * Math.PI * 2
             });
         }
 
@@ -145,15 +145,15 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                 : Math.max(8, Math.round((mcfg.steamCount || 25) * 0.45));
             for (let i = 0; i < steamCount; i++) {
                 this._steamParticles.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    size: 2 + Math.random() * 5,
-                    speed: -10 - Math.random() * 14,
-                    drift: (Math.random() - 0.5) * 10,
-                    driftPhase: Math.random() * Math.PI * 2,
-                    alpha: 0.08 + Math.random() * 0.18,
-                    hue: 200 + Math.random() * 20,
-                    life: Math.random() * 3,
-                    maxLife: 2.5 + Math.random() * 3
+                    x: window.randomSecure() * W, y: window.randomSecure() * H,
+                    size: 2 + window.randomSecure() * 5,
+                    speed: -10 - window.randomSecure() * 14,
+                    drift: (window.randomSecure() - 0.5) * 10,
+                    driftPhase: window.randomSecure() * Math.PI * 2,
+                    alpha: 0.08 + window.randomSecure() * 0.18,
+                    hue: 200 + window.randomSecure() * 20,
+                    life: window.randomSecure() * 3,
+                    maxLife: 2.5 + window.randomSecure() * 3
                 });
             }
         }
@@ -163,13 +163,13 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         const sparkCount = this.quality === 'high' ? 12 : 5;
         for (let i = 0; i < sparkCount; i++) {
             this._sparks.push({
-                x: Math.random() * W, y: Math.random() * H,
-                vx: (Math.random() - 0.5) * 40,
-                vy: -15 - Math.random() * 25,
-                life: Math.random() * 1.2,
-                maxLife: 0.6 + Math.random() * 0.8,
-                size: 0.5 + Math.random() * 1.5,
-                hue: 30 + Math.random() * 25
+                x: window.randomSecure() * W, y: window.randomSecure() * H,
+                vx: (window.randomSecure() - 0.5) * 40,
+                vy: -15 - window.randomSecure() * 25,
+                life: window.randomSecure() * 1.2,
+                maxLife: 0.6 + window.randomSecure() * 0.8,
+                size: 0.5 + window.randomSecure() * 1.5,
+                hue: 30 + window.randomSecure() * 25
             });
         }
 
@@ -204,9 +204,9 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                 sp.x += Math.sin(sp.driftPhase + now * 0.5) * sp.drift * dt;
                 sp.size += dt * 0.9;
                 if (sp.y < -15 || sp.life > sp.maxLife) {
-                    sp.y = H + 5 + Math.random() * 20;
-                    sp.x = Math.random() * W;
-                    sp.size = 2 + Math.random() * 5;
+                    sp.y = H + 5 + window.randomSecure() * 20;
+                    sp.x = window.randomSecure() * W;
+                    sp.size = 2 + window.randomSecure() * 5;
                     sp.life = 0;
                 }
                 if (sp.x < -15) sp.x = W + 5;
@@ -221,10 +221,10 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                 sk.y += sk.vy * dt;
                 sk.vy += 45 * dt;
                 if (sk.life > sk.maxLife) {
-                    sk.x = Math.random() * W;
-                    sk.y = Math.random() * H;
-                    sk.vx = (Math.random() - 0.5) * 40;
-                    sk.vy = -15 - Math.random() * 25;
+                    sk.x = window.randomSecure() * W;
+                    sk.y = window.randomSecure() * H;
+                    sk.vx = (window.randomSecure() - 0.5) * 40;
+                    sk.vy = -15 - window.randomSecure() * 25;
                     sk.life = 0;
                 }
             }

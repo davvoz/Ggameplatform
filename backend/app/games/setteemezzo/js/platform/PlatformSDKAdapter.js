@@ -6,11 +6,23 @@
 export class PlatformSDKAdapter {
     #sdk;
     #userId = null;
-    #config = null;
     #sessionId = null;
+    #parentOrigin = null;
 
     constructor() {
         this.#sdk = window.PlatformSDK;
+        this.#parentOrigin = this.#getParentOrigin();
+    }
+
+    #getParentOrigin() {
+        try {
+            if (document.referrer) {
+                return new URL(document.referrer).origin;
+            }
+        } catch (e) {
+            console.warn('[PlatformSDKAdapter] Could not determine parent origin:', e);
+        }
+        return null;
     }
 
     // ── Availability ──
@@ -30,7 +42,6 @@ export class PlatformSDKAdapter {
         }
 
         this.#sdk.on('config', (config) => {
-            this.#config = config;
             if (config?.userId) {
                 this.#userId = config.userId;
             }
@@ -53,14 +64,14 @@ export class PlatformSDKAdapter {
     }
 
     sendGameStarted() {
+        if (!this.#parentOrigin) return;
         try {
-            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
             window.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0',
-            }, targetOrigin);
+            }, this.#parentOrigin);
         } catch (e) {
             console.error('[PlatformSDKAdapter] Error sending gameStarted:', e);
         }
@@ -202,7 +213,7 @@ export class PlatformSDKAdapter {
     // ── XP notification ──
 
     showXPNotification(xpAmount, sessionData) {
-        if (!this.isAvailable()) return;
+        if (!this.isAvailable() || !this.#parentOrigin) return;
         try {
             window.parent.postMessage({
                 type: 'showXPBanner',
@@ -213,7 +224,7 @@ export class PlatformSDKAdapter {
                 },
                 timestamp: Date.now(),
                 protocolVersion: '1.0.0',
-            }, '*');
+            }, this.#parentOrigin);
         } catch (e) {
             console.error('[PlatformSDKAdapter] Error showing XP notification:', e);
         }

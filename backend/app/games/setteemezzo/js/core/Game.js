@@ -74,6 +74,12 @@ export class Game {
         // Listen for platform XP / level-up messages
         window.addEventListener('message', (e) => {
             try {
+                // Verify the origin of the message for security
+                const expectedOrigin = document.referrer ? new URL(document.referrer).origin : null;
+                if (expectedOrigin && e.origin !== expectedOrigin) {
+                    return; // Reject messages from unauthorized origins
+                }
+
                 if (!e.data?.type) return;
                 if (e.data.type === 'showXPBanner' && e.data.payload) {
                     Game.#showXPBanner(e.data.payload.xp_earned, e.data.payload);

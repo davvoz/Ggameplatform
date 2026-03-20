@@ -1,8 +1,17 @@
 {
-  "version": "4.0.6",
-  "timestamp": "2026-03-20T17:55:31.448Z",
-  "buildNumber": 465,
+  "version": "4.0.7",
+  "timestamp": "2026-03-20T18:18:44.048Z",
+  "buildNumber": 466,
   "changelog": [
+    {
+      "version": "4.0.7",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix: sonar",
+        "🔖 Bump version to 4.0.6 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.6",
       "date": "2026-03-20",
@@ -84,17 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix : remove scripts",
         "🔖 Bump version to 3.38.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.4",
-      "date": "2026-03-19",
-      "type": "patch",
-      "changes": [
-        "Merge pull request #8 from davvoz/copilot/fix-issue-resolution",
-        "Fix SonarCloud S2819: Add origin verification to service worker message handler",
-        "Initial plan",
-        "🔖 Bump version to 3.38.3 [skip-version]"
       ]
     }
   ]

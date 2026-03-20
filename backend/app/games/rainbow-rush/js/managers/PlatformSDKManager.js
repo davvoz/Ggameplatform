@@ -6,6 +6,19 @@
 export class PlatformSDKManager {
     constructor() {
         this.initialized = false;
+        this.parentOrigin = this._getParentOrigin();
+    }
+
+    _getParentOrigin() {
+        try {
+            if (document.referrer) {
+                const url = new URL(document.referrer);
+                return url.origin;
+            }
+        } catch (e) {
+            console.warn('[PlatformSDKManager] Could not determine parent origin:', e);
+        }
+        return null;
     }
 
     async initialize() {
@@ -55,7 +68,7 @@ export class PlatformSDKManager {
             }
             
             // ALWAYS send postMessage as backup (critical for mobile)
-            if (window.parent && typeof window.parent.postMessage === 'function') {
+            if (window.parent && typeof window.parent.postMessage === 'function' && this.parentOrigin) {
                 window.parent.postMessage({
                     type: 'gameOver',
                     payload: {
@@ -64,7 +77,7 @@ export class PlatformSDKManager {
                     },
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
-                }, '*');
+                }, this.parentOrigin);
 
             }
         } catch (error) {
@@ -76,13 +89,13 @@ export class PlatformSDKManager {
         try {
             // Send message directly to parent window (platform)
             // Always send this message even if SDK didn't initialize properly
-            if (window.parent && typeof window.parent.postMessage === 'function') {
+            if (window.parent && typeof window.parent.postMessage === 'function' && this.parentOrigin) {
                 window.parent.postMessage({
                     type: 'gameStarted',
                     payload: {},
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
-                }, '*');
+                }, this.parentOrigin);
 
             } else {
 

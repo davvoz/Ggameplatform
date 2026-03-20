@@ -1,8 +1,17 @@
 {
-  "version": "4.0.0",
-  "timestamp": "2026-03-20T14:00:36.548Z",
-  "buildNumber": 459,
+  "version": "4.0.1",
+  "timestamp": "2026-03-20T15:49:01.553Z",
+  "buildNumber": 460,
   "changelog": [
+    {
+      "version": "4.0.1",
+      "date": "2026-03-20",
+      "type": "patch",
+      "changes": [
+        "fix:sonar",
+        "🔖 Bump version to 4.0.0 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.0",
       "date": "2026-03-20",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: [SS2]Implement save/load functionality with continue and save buttons",
         "🔖 Bump version to 3.37.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.37.0",
-      "date": "2026-03-15",
-      "type": "minor",
-      "changes": [
-        "feat: Add platform daily quests for cross-game activities",
-        "🔖 Bump version to 3.36.4 [skip-version]"
       ]
     }
   ]

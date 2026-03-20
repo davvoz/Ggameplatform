@@ -97,31 +97,42 @@ export class UIManager {
 
       const modal = document.createElement('div');
       modal.className = 'level-up-modal';
+      // Build HTML structure without user-provided strings to prevent XSS
       modal.innerHTML = `
         <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
           <div class="level-up-animation">
             <div class="level-up-rays"></div>
             <div class="level-up-badge-container">
-              <span class="level-up-badge">${badge || '🏅'}</span>
+              <span class="level-up-badge"></span>
             </div>
           </div>
           <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
           <div class="level-up-levels">
-            <span class="old-level">${old_level ?? '-'}</span>
+            <span class="old-level"></span>
             <span class="level-arrow">→</span>
-            <span class="new-level">${new_level ?? '-'}</span>
+            <span class="new-level"></span>
           </div>
-          <div class="level-up-new-title">${title}</div>
+          <div class="level-up-new-title"></div>
           ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
           ${!isAnonymous && coins_awarded > 0 ? `
             <div class="level-up-reward">
               <span class="reward-icon">🪙</span>
-              <span class="reward-amount">+${coins_awarded} Coins</span>
+              <span class="reward-amount"></span>
             </div>
           ` : ''}
           <button class="level-up-close">Continue</button>
         </div>
       `;
+      
+      // Safely set text content to prevent XSS
+      modal.querySelector('.level-up-badge').textContent = badge || '🏅';
+      modal.querySelector('.old-level').textContent = old_level ?? '-';
+      modal.querySelector('.new-level').textContent = new_level ?? '-';
+      modal.querySelector('.level-up-new-title').textContent = title;
+      const rewardAmount = modal.querySelector('.reward-amount');
+      if (rewardAmount) {
+        rewardAmount.textContent = `+${coins_awarded} Coins`;
+      }
 
 
       // Ensure shared level-up styles are loaded (same as quest.js)

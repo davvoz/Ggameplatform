@@ -348,4 +348,29 @@ export class PlatformSDKAdapter {
       console.error('[PlatformSDKAdapter] Error showing XP notification:', error);
     }
   }
+
+  /**
+   * Register a callback for platform SDK events
+   * The SDK already handles origin validation securely
+   * @param {string} eventType - Event type (e.g., 'showXPBanner', 'showLevelUpModal')
+   * @param {Function} callback - Callback function
+   */
+  on(eventType, callback) {
+    if (!this.isAvailable()) {
+      return;
+    }
+    this._sdk.on(eventType, callback);
+  }
+
+  /**
+   * Unregister a callback for platform SDK events
+   * @param {string} eventType - Event type
+   * @param {Function} callback - Callback function
+   */
+  off(eventType, callback) {
+    if (!this.isAvailable()) {
+      return;
+    }
+    this._sdk.off(eventType, callback);
+  }
 }

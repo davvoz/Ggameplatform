@@ -15,7 +15,6 @@ export class Application {
   constructor() {
     this._gameController = null;
     this._eventHandler = null;
-    this._parentOrigin = null;  // validated parent origin for postMessage
   }
 
   async start() {
@@ -25,34 +24,11 @@ export class Application {
     }
 
     this._initializeComponents();
-    
-    // Listen for platform messages (XP banner, level-up) and render them in-game
-    window.addEventListener('message', (event) => {
-      try {
-        if (!event.data || !event.data.type) return;
-        // Validate protocol version
-        if (event.data.protocolVersion !== '1.0.0') return;
-        // Validate and store origin from first valid message
-        if (!this._parentOrigin) {
-          this._parentOrigin = event.origin;
-        } else if (event.origin !== this._parentOrigin) {
-          console.warn('[Seven] Rejected message from unexpected origin:', event.origin);
-          return;
-        }
-
-        if (event.data.type === 'showXPBanner' && event.data.payload) {
-          this._gameController._ui.showXPBanner(event.data.payload.xp_earned, event.data.payload);
-        }
-
-        if (event.data.type === 'showLevelUpModal' && event.data.payload) {
-          this._gameController._ui.showLevelUpModal(event.data.payload);
-        }
-      } catch (err) {
-        console.error('[Seven] Error handling platform message:', err);
-      }
-    });
 
     await this._initializePlatformSDK();
+    
+    // Register platform message handlers via SDK (origin validation handled by SDK)
+    this._registerPlatformEventHandlers();
     
     // Load coins after platform is ready
     await this._loadUserCoins();
@@ -200,6 +176,51 @@ export class Application {
         NOTIFICATION_TONE.NEUTRAL
       );
     }
+  }
+
+  /**
+   * Register handlers for platform events using SDK's secure event system
+   * Origin validation is handled by PlatformSDK internally
+   */
+  _registerPlatformEventHandlers() {
+    const platformAdapter = this._gameController._platform;
+    if (!platformAdapter.isAvailable()) {
+      return;
+    }
+
+    // XP Banner event - SDK validates origin before triggering
+    platformAdapter.on('showXPBanner', (payload) => {
+      try {
+        if (!payload) return;
+        const xp = Number(payload.xp_earned);
+        if (!Number.isFinite(xp)) return;
+        this._gameController._ui.showXPBanner(xp, payload);
+      } catch (err) {
+        console.error('[Seven] Error handling showXPBanner:', err);
+      }
+    });
+
+    // Level Up Modal event - SDK validates origin before triggering
+    platformAdapter.on('showLevelUpModal', (payload) => {
+      try {
+        if (!payload) return;
+        // Sanitize numeric values
+        const sanitized = {
+          old_level: Number.isFinite(Number(payload.old_level)) ? Number(payload.old_level) : null,
+          new_level: Number.isFinite(Number(payload.new_level)) ? Number(payload.new_level) : null,
+          title: String(payload.title || ''),
+          badge: String(payload.badge || ''),
+          coins_awarded: Number.isFinite(Number(payload.coins_awarded)) ? Number(payload.coins_awarded) : 0,
+          is_milestone: Boolean(payload.is_milestone),
+          user_data: payload.user_data && typeof payload.user_data === 'object' ? {
+            is_anonymous: Boolean(payload.user_data.is_anonymous)
+          } : {}
+        };
+        this._gameController._ui.showLevelUpModal(sanitized);
+      } catch (err) {
+        console.error('[Seven] Error handling showLevelUpModal:', err);
+      }
+    });
   }
 
   _handleExit() {

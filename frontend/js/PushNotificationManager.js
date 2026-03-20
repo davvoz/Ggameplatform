@@ -44,7 +44,6 @@ class PushNotificationManager {
             const keyData = await keyResponse.json();
             if (!keyData.configured) {
                 return false;
-                return false;
             }
 
             this.vapidPublicKey = keyData.public_key;

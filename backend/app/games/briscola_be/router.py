@@ -4,10 +4,8 @@ Briscola Multiplayer WebSocket Router
 Handles real-time multiplayer game sessions for Briscola.
 """
 
-import json
 import uuid
 import random
-import asyncio
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -35,11 +33,11 @@ class Card:
         self.id = f"{suit}_{value}"
     
     @property
-    def points(self) -> int:
+    def point_value(self) -> int:
         return self.POINTS.get(self.value, 0)
     
     @property
-    def strength(self) -> int:
+    def strength_value(self) -> int:
         return self.STRENGTH.get(self.value, 0)
     
     def to_dict(self) -> dict:
@@ -175,7 +173,7 @@ class GameState:
         
         # Determine winner
         winner_id = self._determine_round_winner(card1, card2)
-        points = card1.points + card2.points
+        points = card1.point_value + card2.point_value
         
         # Award points
         if winner_id == self.player1_id:
@@ -202,8 +200,8 @@ class GameState:
         # Check game over
         if len(self.player1_hand) == 0 and len(self.player2_hand) == 0:
             # Ricalcola i punteggi dalle carte catturate per sicurezza
-            calculated_p1 = sum(c.points for c in self.player1_captured)
-            calculated_p2 = sum(c.points for c in self.player2_captured)
+            calculated_p1 = sum(c.point_value for c in self.player1_captured)
+            calculated_p2 = sum(c.point_value for c in self.player2_captured)
             
             print(f"[Briscola] Final score verification - P1: {self.player1_score} (calculated: {calculated_p1}), P2: {self.player2_score} (calculated: {calculated_p2})")
             
@@ -237,12 +235,12 @@ class GameState:
         elif is_card1_briscola and not is_card2_briscola:
             return self.first_player_in_round
         elif is_card1_briscola and is_card2_briscola:
-            if card2.strength > card1.strength:
+            if card2.strength_value > card1.strength_value:
                 return self.get_opponent_id(self.first_player_in_round)
             return self.first_player_in_round
         else:
             # Neither is briscola
-            if card2.suit == card1.suit and card2.strength > card1.strength:
+            if card2.suit == card1.suit and card2.strength_value > card1.strength_value:
                 return self.get_opponent_id(self.first_player_in_round)
             return self.first_player_in_round
     

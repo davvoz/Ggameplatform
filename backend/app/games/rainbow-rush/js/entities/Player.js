@@ -37,7 +37,6 @@ export class Player {
         
         // Shield and Magnet powerups
         this.hasShield = false;
-        this.shieldDuration = 0;
         this.shieldStartTime = 0;
         
         this.hasMagnet = false;
@@ -120,8 +119,6 @@ export class Player {
         this.turboTimeRemaining = 0;
         this.turboInitialDuration = 0; // Salva la durata totale iniziale
         this.turboCooldownRemaining = 0;
-        this.instantFlightActive = false;
-        this.instantFlightDuration = 0;
         this.turboCooldownDuration = 12; // 12 secondi cooldown (ridotto da 20)
         this.turboBaseDuration = 3; // 3 secondi base (ridotto da 5) + level bonus
         this.turboSpeedMultiplier = 2.0; // 2x speed (ridotto da 2.5x) - più controllabile
@@ -173,13 +170,11 @@ export class Player {
     }
     
     instantFlightMoveUp() {
-        if (!this.instantFlightActive) return;
-        this.flightTargetY = Math.max(50, this.flightTargetY - this.flightStep);
+        if (this.instantFlightActive) this._doFlightMoveUp();
     }
-    
+
     instantFlightMoveDown() {
-        if (!this.instantFlightActive) return;
-        this.flightTargetY = Math.min(this.canvasHeight - 50, this.flightTargetY + this.flightStep);
+        if (this.instantFlightActive) this._doFlightMoveDown();
     }
     
     jump() {
@@ -347,36 +342,7 @@ export class Player {
                 this.flightCooldownRemaining = this.flightCooldownDuration;
                 this.flightTargetY = this.y; // Reset target
             }
-            
-            // Animazione fluttuante durante il volo
-            this.flightFloatPhase += deltaTime * 4;
-            this.wingFlapPhase += deltaTime * this.wingFlapSpeed;
-            const floatOffset = Math.sin(this.flightFloatPhase) * this.flightFloatAmplitude;
-            
-            // Smooth movement verso target Y + oscillazione fluttuante
-            const diff = this.flightTargetY - this.y;
-            const moveSpeed = 400; // Velocità smooth
-            if (Math.abs(diff) > 1) {
-                this.velocityY = Math.sign(diff) * Math.min(Math.abs(diff) * 5, moveSpeed);
-            } else {
-                // Quando vicino al target, applica solo oscillazione
-                this.velocityY = Math.cos(this.flightFloatPhase) * this.flightFloatAmplitude * 4;
-            }
-            
-            // Genera particelle flight trail (ali/propulsori) più frequenti
-            if (Math.random() < 0.5) {
-                // Particelle dalle ali (sinistra e destra)
-                const wingOffset = Math.sin(this.wingFlapPhase) * 15;
-                this.flightTrailParticles.push({
-                    x: this.x + this.width / 2 + wingOffset,
-                    y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
-                    vx: (Math.random() - 0.5) * 80,
-                    vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
-                    life: 1.0,
-                    maxLife: 1.0,
-                    color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
-                });
-            }
+            this._updateActiveFlightPhysics(deltaTime);
         }
         // Update flight cooldown SOLO quando il volo NON è attivo
         else if (this.flightCooldownRemaining > 0) {
@@ -479,42 +445,14 @@ export class Player {
             }
         }
         
-        // Gestione instant flight bonus - IDENTICO al volo normale
+        // Gestione instant flight bonus
         if (this.instantFlightActive) {
             this.instantFlightDuration -= deltaTime;
             if (this.instantFlightDuration <= 0) {
                 this.instantFlightActive = false;
                 this.instantFlightDuration = 0;
             } else {
-                // Animazione fluttuante durante il volo (IDENTICO al volo normale)
-                this.flightFloatPhase += deltaTime * 4;
-                this.wingFlapPhase += deltaTime * this.wingFlapSpeed;
-                const floatOffset = Math.sin(this.flightFloatPhase) * this.flightFloatAmplitude;
-                
-                // Smooth movement verso target Y + oscillazione fluttuante
-                const diff = this.flightTargetY - this.y;
-                const moveSpeed = 400; // Velocità smooth
-                if (Math.abs(diff) > 1) {
-                    this.velocityY = Math.sign(diff) * Math.min(Math.abs(diff) * 5, moveSpeed);
-                } else {
-                    // Quando vicino al target, applica solo oscillazione
-                    this.velocityY = Math.cos(this.flightFloatPhase) * this.flightFloatAmplitude * 4;
-                }
-                
-                // Genera particelle flight trail (ali/propulsori) più frequenti
-                if (Math.random() < 0.5) {
-                    // Particelle dalle ali (sinistra e destra)
-                    const wingOffset = Math.sin(this.wingFlapPhase) * 15;
-                    this.flightTrailParticles.push({
-                        x: this.x + this.width / 2 + wingOffset,
-                        y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
-                        vx: (Math.random() - 0.5) * 80,
-                        vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
-                        life: 1.0,
-                        maxLife: 1.0,
-                        color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
-                    });
-                }
+                this._updateActiveFlightPhysics(deltaTime);
             }
         }
         
@@ -576,19 +514,47 @@ export class Player {
 
         // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
         if (this.y > this.canvasHeight && !this.powerups.immortality) {
-
-            this.alive = false;
-            // Azzera i cooldown e disattiva il turbo quando muori
-            this.turboCooldownRemaining = 0;
-            this.flightCooldownRemaining = 0;
-            this.isTurboActive = false;
-            this.turboTimeRemaining = 0;
+            this._die();
         }
         
         // Update trail particles for powerups
         this.updateTrailParticles(deltaTime);
     }
     
+    _updateActiveFlightPhysics(deltaTime) {
+        this.flightFloatPhase += deltaTime * 4;
+        this.wingFlapPhase += deltaTime * this.wingFlapSpeed;
+
+        const diff = this.flightTargetY - this.y;
+        const moveSpeed = 400;
+        if (Math.abs(diff) > 1) {
+            this.velocityY = Math.sign(diff) * Math.min(Math.abs(diff) * 5, moveSpeed);
+        } else {
+            this.velocityY = Math.cos(this.flightFloatPhase) * this.flightFloatAmplitude * 4;
+        }
+
+        if (Math.random() < 0.5) {
+            const wingOffset = Math.sin(this.wingFlapPhase) * 15;
+            this.flightTrailParticles.push({
+                x: this.x + this.width / 2 + wingOffset,
+                y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                vx: (Math.random() - 0.5) * 80,
+                vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
+                life: 1.0,
+                maxLife: 1.0,
+                color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
+            });
+        }
+    }
+
+    _die() {
+        this.alive = false;
+        this.turboCooldownRemaining = 0;
+        this.flightCooldownRemaining = 0;
+        this.isTurboActive = false;
+        this.turboTimeRemaining = 0;
+    }
+
     updateTrailParticles(deltaTime) {
         // Add trail particles when powerups are active (ridotte per performance)
         if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
@@ -652,10 +618,7 @@ export class Player {
         this.addCameraShake(8, 0.3); // Camera shake forte
         
         if (this.health <= 0) {
-            this.alive = false;
-            // Azzera i cooldown quando muori
-            this.turboCooldownRemaining = 0;
-            this.flightCooldownRemaining = 0;
+            this._die();
         }
         
         return true; // Danno inflitto
@@ -846,38 +809,21 @@ export class Player {
         return false;
     }
     
+    _distanceToCenterOf(obj) {
+        const dx = (this.x + this.width / 2) - obj.x;
+        const dy = (this.y + this.height / 2) - obj.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     checkPowerupCollision(powerup) {
         if (!this.alive) return false;
-
-        const playerCenterX = this.x + this.width / 2;
-        const playerCenterY = this.y + this.height / 2;
-        const powerupCenterX = powerup.x;
-        const powerupCenterY = powerup.y;
-
-        const distance = Math.sqrt(
-            Math.pow(playerCenterX - powerupCenterX, 2) +
-            Math.pow(playerCenterY - powerupCenterY, 2)
-        );
-
-        // Raggio di collisione aumentato per facilitare la raccolta
-        const collisionRadius = this.width / 2 + powerup.radius * 1.5;
-        return distance < collisionRadius;
+        // Raggio aumentato per facilitare la raccolta
+        return this._distanceToCenterOf(powerup) < (this.width / 2 + powerup.radius * 1.5);
     }
 
     checkCollectibleCollision(collectible) {
         if (!this.alive) return false;
-
-        const playerCenterX = this.x + this.width / 2;
-        const playerCenterY = this.y + this.height / 2;
-        const collectibleCenterX = collectible.x;
-        const collectibleCenterY = collectible.y;
-
-        const distance = Math.sqrt(
-            Math.pow(playerCenterX - collectibleCenterX, 2) +
-            Math.pow(playerCenterY - collectibleCenterY, 2)
-        );
-
-        return distance < (this.width / 2 + collectible.radius);
+        return this._distanceToCenterOf(collectible) < (this.width / 2 + collectible.radius);
     }
 
     reset(x, y, resetHealth = true) {
@@ -969,31 +915,11 @@ export class Player {
     }
     
     activatePowerup(type) {
-        switch (type) {
-            case 'immortality':
-                this.powerups.immortality = true;
-                break;
-            case 'flight':
-                this.powerups.flight = true;
-                break;
-            case 'superJump':
-                this.powerups.superJump = true;
-                break;
-        }
+        if (type in this.powerups) this.powerups[type] = true;
     }
-    
+
     deactivatePowerup(type) {
-        switch (type) {
-            case 'immortality':
-                this.powerups.immortality = false;
-                break;
-            case 'flight':
-                this.powerups.flight = false;
-                break;
-            case 'superJump':
-                this.powerups.superJump = false;
-                break;
-        }
+        if (type in this.powerups) this.powerups[type] = false;
     }
     
     activateTurbo(currentLevel = 1) {
@@ -1195,7 +1121,7 @@ export class Player {
     // ============================================
     // FLIGHT HORIZONTAL MODE METHODS
     // ============================================
-    
+
     activateFlight() {
         // Check if already active
         if (this.isFlightActive) {
@@ -1213,14 +1139,20 @@ export class Player {
         return true;
     }
     
-    flightMoveUp() {
-        if (!this.isFlightActive) return;
+    _doFlightMoveUp() {
         this.flightTargetY = Math.max(50, this.flightTargetY - this.flightStep);
     }
-    
-    flightMoveDown() {
-        if (!this.isFlightActive) return;
+
+    _doFlightMoveDown() {
         this.flightTargetY = Math.min(this.canvasHeight - 50, this.flightTargetY + this.flightStep);
+    }
+
+    flightMoveUp() {
+        if (this.isFlightActive) this._doFlightMoveUp();
+    }
+
+    flightMoveDown() {
+        if (this.isFlightActive) this._doFlightMoveDown();
     }
     
     isFlightCooldownReady() {

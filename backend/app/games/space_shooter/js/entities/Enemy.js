@@ -61,14 +61,14 @@ class Enemy extends GameObject {
         // Phantom-specific: cloaking
         if (this.type === 'enemy4') {
             this.cloakTimer = 0;
-            this.cloakCycle = 3.0 + window.randomSecure() * 2; // seconds per cloak cycle
+            this.cloakCycle = 3.0 + Math.random() * 2; // seconds per cloak cycle
             this.opacity = 1;
-            this.phaseSpeed = 1.5 + window.randomSecure() * 0.5;
+            this.phaseSpeed = 1.5 + Math.random() * 0.5;
         }
 
         // Sentinel-specific: shield ring
         if (this.type === 'enemy5') {
-            this.shieldAngle = window.randomSecure() * Math.PI * 2;
+            this.shieldAngle = Math.random() * Math.PI * 2;
             this.shieldActive = true;
             this.shieldHits = 3; // Shield absorbs 3 hits before breaking
             this.pulseTime = 0;
@@ -78,7 +78,7 @@ class Enemy extends GameObject {
         if (this.type === 'enemy6') {
             this.jitterX = 0;
             this.jitterTimer = 0;
-            this.jitterDir = window.randomSecure() > 0.5 ? 1 : -1;
+            this.jitterDir = Math.random() > 0.5 ? 1 : -1;
         }
 
         // Hydra Boss: regeneration + multi-head tracking
@@ -103,7 +103,7 @@ class Enemy extends GameObject {
         // Void Boss: teleportation + gravity wells
         if (this.type === 'boss_void') {
             this.teleportTimer = 0;
-            this.teleportCooldown = 5 + window.randomSecure() * 3;
+            this.teleportCooldown = 5 + Math.random() * 3;
             this.voidPulseTime = 0;
             this.teleporting = false;
             this.teleportFade = 1;
@@ -337,18 +337,18 @@ class Enemy extends GameObject {
                 this.teleportFade -= deltaTime * 3;
                 if (this.teleportFade <= 0) {
                     // Teleport to new position
-                    this.position.x = 50 + window.randomSecure() * (game.canvas.width - 150 - 50);
-                    this.position.y = 40 + window.randomSecure() * 80;
+                    this.position.x = 50 + Math.random() * (game.canvas.width - 150 - 50);
+                    this.position.y = 40 + Math.random() * 80;
                     this.startX = this.position.x;
                     this.teleporting = false;
                     this.teleportFade = 0;
-                    this.teleportCooldown = 4 + window.randomSecure() * 4;
+                    this.teleportCooldown = 4 + Math.random() * 4;
 
                     // Spawn gravity well at old location
                     if (this.gravityWells.length < 3) {
                         this.gravityWells.push({
-                            x: game.canvas.width / 2 + (window.randomSecure() - 0.5) * game.canvas.width * 0.6,
-                            y: game.canvas.height * 0.5 + window.randomSecure() * game.canvas.height * 0.3,
+                            x: game.canvas.width / 2 + (Math.random() - 0.5) * game.canvas.width * 0.6,
+                            y: game.canvas.height * 0.5 + Math.random() * game.canvas.height * 0.3,
                             life: 4,
                             strength: 80
                         });
@@ -401,7 +401,7 @@ class Enemy extends GameObject {
                 const shootChance = game.level <= 10
                     ? Math.min(0.55, 0.10 + (game.level - 1) * 0.05)
                     : Math.min(0.90, 0.55 + (game.level - 10) * 0.05);
-                if (window.randomSecure() < shootChance || this.isBoss()) {
+                if (Math.random() < shootChance || this.isBoss()) {
                     this.shoot(game);
                 }
                 // Intervallo più lungo ai primi livelli (2.5x al liv 1, 1x dal liv 10+)
@@ -426,7 +426,7 @@ class Enemy extends GameObject {
         if (this.type === 'boss') {
             // Boss spara pattern multipli
             const patterns = ['spread', 'aimed', 'burst'];
-            const pattern = patterns[Math.floor(window.randomSecure() * patterns.length)];
+            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
             
             switch (pattern) {
                 case 'spread':
@@ -510,7 +510,7 @@ class Enemy extends GameObject {
             }
         } else {
             // Nemici normali - solo 30% mira al player, 70% dritto
-            if (window.randomSecure() > 0.7 && game.player && game.player.active) {
+            if (Math.random() > 0.7 && game.player && game.player.active) {
                 const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
                 game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 100, 'enemy');
             } else {
@@ -580,7 +580,7 @@ class Enemy extends GameObject {
             }
             
             // Chance di drop power-up
-            if (window.randomSecure() < this.getDropChance()) {
+            if (Math.random() < this.getDropChance()) {
                 const powerUpType = this.getRandomPowerUpType(game.level);
                 game.spawnPowerUp(this.getCenter().x, this.getCenter().y, powerUpType);
             }
@@ -604,7 +604,7 @@ class Enemy extends GameObject {
         ];
         
         const totalWeight = types.reduce((sum, t) => sum + t.weight, 0);
-        let random = window.randomSecure() * totalWeight;
+        let random = Math.random() * totalWeight;
         
         for (const t of types) {
             random -= t.weight;
@@ -951,7 +951,7 @@ class EnemyFactory {
             const enemy = new Enemy(x, -60 * s, type, s);
             enemy.setMovementPattern(pattern, { 
                 amplitude: 80 * s,
-                frequency: 2 + window.randomSecure()
+                frequency: 2 + Math.random()
             });
             enemies.push(enemy);
         }
@@ -1022,7 +1022,7 @@ class EnemyFactory {
             if (level >= 2) bossTypes.push('boss_hydra');
             if (level >= 3) bossTypes.push('boss_fortress');
             if (level >= 4) bossTypes.push('boss_void');
-            bossType = bossTypes[Math.floor(window.randomSecure() * bossTypes.length)];
+            bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
         }
 
         const s = game.gameScale || 1;

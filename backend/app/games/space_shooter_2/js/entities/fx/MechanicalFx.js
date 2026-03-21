@@ -24,7 +24,7 @@ export class MechanicalFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const mc = this.config;
         const d = mc ? mc.dist : [0.30, 0.55, 0.75, 0.90];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initGears(W, H, initial);
         else if (roll < d[1]) this._initPipes(W, H, initial);
@@ -37,99 +37,99 @@ export class MechanicalFx extends BaseFxStrategy {
 
     _initGears(W, H, initial) {
         this.subType = 'gears';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 60;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -60 - Math.random() * 60;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
-        this.size = 20 + near * 30 + window.randomSecure() * 20;
-        this.speed = 14 + near * 14 + window.randomSecure() * 10;
+        this.size = 20 + near * 30 + Math.random() * 20;
+        this.speed = 14 + near * 14 + Math.random() * 10;
         this.alpha = 0.5 + near * 0.3;
         Object.assign(this, pickColor(METAL_PALETTE, near));
         this.light = this.lightness;
-        this.teeth = 6 + Math.floor(window.randomSecure() * 6);
-        this.toothDepth = 0.2 + window.randomSecure() * 0.15;
-        this.rotation = window.randomSecure() * Math.PI * 2;
-        this.rotSpeed = (0.2 + window.randomSecure() * 0.4) * (window.randomSecure() < 0.5 ? 1 : -1);
-        this.shadowOx = 3 + window.randomSecure() * 3;
-        this.shadowOy = 3 + window.randomSecure() * 3;
-        this.hasHub = window.randomSecure() < 0.75;
-        this.hubBolts = 3 + Math.floor(window.randomSecure() * 3);
+        this.teeth = 6 + Math.floor(Math.random() * 6);
+        this.toothDepth = 0.2 + Math.random() * 0.15;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (0.2 + Math.random() * 0.4) * (Math.random() < 0.5 ? 1 : -1);
+        this.shadowOx = 3 + Math.random() * 3;
+        this.shadowOy = 3 + Math.random() * 3;
+        this.hasHub = Math.random() < 0.75;
+        this.hubBolts = 3 + Math.floor(Math.random() * 3);
     }
 
     _initPipes(W, H, initial) {
         this.subType = 'pipes';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 50;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -40 - Math.random() * 50;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
-        this.size = 15 + near * 25 + window.randomSecure() * 15;
-        this.speed = 16 + near * 12 + window.randomSecure() * 8;
+        this.size = 15 + near * 25 + Math.random() * 15;
+        this.speed = 16 + near * 12 + Math.random() * 8;
         this.alpha = 0.45 + near * 0.3;
         Object.assign(this, pickColor(METAL_PALETTE, near));
         this.light = this.lightness;
-        this.w = this.size * (1.8 + window.randomSecure());
-        this.h = this.size * (0.3 + window.randomSecure() * 0.2);
-        this.shadowOx = 2 + window.randomSecure() * 2;
-        this.shadowOy = 2 + window.randomSecure() * 2;
-        this.joints = 1 + Math.floor(window.randomSecure() * 3);
-        this.hasFlange = window.randomSecure() < 0.5;
+        this.w = this.size * (1.8 + Math.random());
+        this.h = this.size * (0.3 + Math.random() * 0.2);
+        this.shadowOx = 2 + Math.random() * 2;
+        this.shadowOy = 2 + Math.random() * 2;
+        this.joints = 1 + Math.floor(Math.random() * 3);
+        this.hasFlange = Math.random() < 0.5;
     }
 
     _initPlates(W, H, initial) {
         this.subType = 'plates';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -50 - window.randomSecure() * 50;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -50 - Math.random() * 50;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
-        this.size = 22 + near * 35 + window.randomSecure() * 18;
-        this.speed = 15 + near * 13 + window.randomSecure() * 9;
+        this.size = 22 + near * 35 + Math.random() * 18;
+        this.speed = 15 + near * 13 + Math.random() * 9;
         this.alpha = 0.5 + near * 0.25;
         Object.assign(this, pickColor(RUST_PALETTE, near));
         this.light = this.lightness;
         this.shape = generateShape(4, 0.85, 0.1);
-        this.rot = window.randomSecure() * Math.PI * 0.25 - Math.PI * 0.125;
-        this.shadowOx = 3 + window.randomSecure() * 3;
-        this.shadowOy = 3 + window.randomSecure() * 3;
-        this.hasWarning = window.randomSecure() < 0.3;
-        this.hasCrossBrace = window.randomSecure() < 0.4;
+        this.rot = Math.random() * Math.PI * 0.25 - Math.PI * 0.125;
+        this.shadowOx = 3 + Math.random() * 3;
+        this.shadowOy = 3 + Math.random() * 3;
+        this.hasWarning = Math.random() < 0.3;
+        this.hasCrossBrace = Math.random() < 0.4;
     }
 
     _initSparks(W, H, initial) {
         this.subType = 'sparks';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -20 - window.randomSecure() * 30;
-        this.depthLayer = 0.7 + window.randomSecure() * 0.3;
-        this.size = 2 + window.randomSecure() * 3;
-        this.speed = 30 + window.randomSecure() * 20;
-        this.alpha = 0.7 + window.randomSecure() * 0.3;
-        this.hue = 35 + window.randomSecure() * 15;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -20 - Math.random() * 30;
+        this.depthLayer = 0.7 + Math.random() * 0.3;
+        this.size = 2 + Math.random() * 3;
+        this.speed = 30 + Math.random() * 20;
+        this.alpha = 0.7 + Math.random() * 0.3;
+        this.hue = 35 + Math.random() * 15;
         this.sat = 90;
-        this.light = 60 + window.randomSecure() * 20;
-        this.life = 0.4 + window.randomSecure() * 0.6;
+        this.light = 60 + Math.random() * 20;
+        this.life = 0.4 + Math.random() * 0.6;
         this.maxLife = this.life;
-        this.vx = (window.randomSecure() - 0.5) * 30;
-        this.vy = -10 - window.randomSecure() * 15;
+        this.vx = (Math.random() - 0.5) * 30;
+        this.vy = -10 - Math.random() * 15;
         this.trail = [];
-        this.trailMax = 3 + Math.floor(window.randomSecure() * 3);
+        this.trailMax = 3 + Math.floor(Math.random() * 3);
     }
 
     _initVents(W, H, initial) {
         this.subType = 'vents';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 40;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 40;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
-        this.size = 12 + near * 20 + window.randomSecure() * 12;
-        this.speed = 18 + near * 16 + window.randomSecure() * 12;
+        this.size = 12 + near * 20 + Math.random() * 12;
+        this.speed = 18 + near * 16 + Math.random() * 12;
         this.alpha = 0.25 + near * 0.18;
-        this.hue = 200 + window.randomSecure() * 20;
-        this.sat = 5 + window.randomSecure() * 10;
-        this.light = 40 + window.randomSecure() * 18;
-        this.elongation = 0.6 + window.randomSecure() * 0.5;
-        this.drift = (window.randomSecure() - 0.5) * 6;
-        this.expandRate = 0.4 + window.randomSecure() * 0.4;
+        this.hue = 200 + Math.random() * 20;
+        this.sat = 5 + Math.random() * 10;
+        this.light = 40 + Math.random() * 18;
+        this.elongation = 0.6 + Math.random() * 0.5;
+        this.drift = (Math.random() - 0.5) * 6;
+        this.expandRate = 0.4 + Math.random() * 0.4;
         this.life = 0;
-        this.maxLife = 2 + window.randomSecure() * 3;
+        this.maxLife = 2 + Math.random() * 3;
     }
 
     // ── Update ──

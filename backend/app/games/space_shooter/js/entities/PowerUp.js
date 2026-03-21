@@ -11,10 +11,10 @@ class PowerUp extends GameObject {
         this.speed = 70 * scale;
         
         // Animation
-        this.bobTimer = window.randomSecure() * Math.PI * 2;
+        this.bobTimer = Math.random() * Math.PI * 2;
         this.bobAmount = 6;
         this.rotationSpeed = 1.5;
-        this.glowPulse = window.randomSecure() * Math.PI * 2;
+        this.glowPulse = Math.random() * Math.PI * 2;
         this.sparkTimer = 0;
         
         // Sparks
@@ -64,7 +64,7 @@ class PowerUp extends GameObject {
         this.sparkTimer += deltaTime;
         if (this.sparkTimer > 0.1) {
             this.sparkTimer = 0;
-            const angle = window.randomSecure() * Math.PI * 2;
+            const angle = Math.random() * Math.PI * 2;
             const color = this.colors[this.type] || this.colors.weapon;
             this.sparks.push({
                 x: this.position.x + this.width / 2 + Math.cos(angle) * 15,
@@ -72,7 +72,7 @@ class PowerUp extends GameObject {
                 vx: Math.cos(angle) * 20,
                 vy: Math.sin(angle) * 20 - 30,
                 life: 1,
-                size: 2 + window.randomSecure() * 2,
+                size: 2 + Math.random() * 2,
                 color: color
             });
         }

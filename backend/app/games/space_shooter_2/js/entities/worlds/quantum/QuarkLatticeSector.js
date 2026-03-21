@@ -21,14 +21,14 @@ export class QuarkLatticeSector extends QuantumSectorRenderer {
                 if (this.latticeNodes.length >= nodeCount) break;
                 const jitter = 20;
                 this.latticeNodes.push({
-                    x: (c + 0.5) / cols * W + (window.randomSecure() - 0.5) * jitter,
-                    y: (r + 0.5) / rows * H + (window.randomSecure() - 0.5) * jitter,
+                    x: (c + 0.5) / cols * W + (Math.random() - 0.5) * jitter,
+                    y: (r + 0.5) / rows * H + (Math.random() - 0.5) * jitter,
                     baseX: (c + 0.5) / cols * W,
                     baseY: (r + 0.5) / rows * H,
-                    colorIdx: Math.floor(window.randomSecure() * 3),
-                    radius: 4 + window.randomSecure() * 4,
-                    phase: window.randomSecure() * Math.PI * 2,
-                    pulseSpeed: 1.5 + window.randomSecure() * 2,
+                    colorIdx: Math.floor(Math.random() * 3),
+                    radius: 4 + Math.random() * 4,
+                    phase: Math.random() * Math.PI * 2,
+                    pulseSpeed: 1.5 + Math.random() * 2,
                     scrollSpeed: 35
                 });
             }
@@ -40,7 +40,7 @@ export class QuarkLatticeSector extends QuantumSectorRenderer {
                 if (dist < W / cols * 1.5) {
                     this.gluonBonds.push({
                         from: i, to: j,
-                        strength: 0.5 + window.randomSecure() * 0.5,
+                        strength: 0.5 + Math.random() * 0.5,
                         flashTimer: this.cooldown(8, 14),
                         flashing: false,
                         flashDuration: 0
@@ -56,7 +56,7 @@ export class QuarkLatticeSector extends QuantumSectorRenderer {
             n.baseY += n.scrollSpeed * dt;
             if (n.baseY > H + 30) {
                 n.baseY = -30;
-                n.baseX = (0.1 + window.randomSecure() * 0.8) * W;
+                n.baseX = (0.1 + Math.random() * 0.8) * W;
             }
             n.phase += n.pulseSpeed * dt;
             n.x = n.baseX + Math.sin(n.phase) * 8;

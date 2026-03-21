@@ -26,11 +26,11 @@ export default class LevelIntroCinematic extends CinematicScene {
         this.warpStars = [];
         for (let i = 0; i < 80; i++) {
             this.warpStars.push({
-                x: window.randomSecure() * w,
-                y: window.randomSecure() * h,
-                z: window.randomSecure() * 1.5 + 0.5,
-                len: window.randomSecure() * 60 + 40,
-                brightness: window.randomSecure() * 0.6 + 0.4
+                x: Math.random() * w,
+                y: Math.random() * h,
+                z: Math.random() * 1.5 + 0.5,
+                len: Math.random() * 60 + 40,
+                brightness: Math.random() * 0.6 + 0.4
             });
         }
 
@@ -38,10 +38,10 @@ export default class LevelIntroCinematic extends CinematicScene {
         this.scanLines = [];
         for (let i = 0; i < 4; i++) {
             this.scanLines.push({
-                y: window.randomSecure() * h,
-                speed: (window.randomSecure() * 120 + 60) * (window.randomSecure() < 0.5 ? 1 : -1),
-                alpha: window.randomSecure() * 0.15 + 0.05,
-                width: window.randomSecure() * 2 + 1
+                y: Math.random() * h,
+                speed: (Math.random() * 120 + 60) * (Math.random() < 0.5 ? 1 : -1),
+                alpha: Math.random() * 0.15 + 0.05,
+                width: Math.random() * 2 + 1
             });
         }
     }
@@ -53,7 +53,7 @@ export default class LevelIntroCinematic extends CinematicScene {
 
         for (const s of this.warpStars) {
             s.y += s.z * 900 * dt;
-            if (s.y > h + s.len) { s.y = -s.len; s.x = window.randomSecure() * w; }
+            if (s.y > h + s.len) { s.y = -s.len; s.x = Math.random() * w; }
         }
 
         for (const sl of this.scanLines) {

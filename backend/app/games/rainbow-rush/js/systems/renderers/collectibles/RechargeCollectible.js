@@ -80,11 +80,11 @@ export class RechargeCollectible extends BaseCollectible {
     }
 
     renderLightning(x, y, size) {
-        if (window.randomSecure() < 0.3) {
+        if (Math.random() < 0.3) {
             const boltCount = 3;
             for (let i = 0; i < boltCount; i++) {
-                const boltAngle = window.randomSecure() * Math.PI * 2;
-                const boltLength = size * (1.5 + window.randomSecure() * 0.8);
+                const boltAngle = Math.random() * Math.PI * 2;
+                const boltLength = size * (1.5 + Math.random() * 0.8);
                 const boltX = x + Math.cos(boltAngle) * boltLength;
                 const boltY = y + Math.sin(boltAngle) * boltLength;
 

@@ -596,7 +596,7 @@ async function aiTurnStart() {
         } else {
           // Not great, might as well try again - keep most but not all
           const modifiedMask = keepMask.slice();
-          const randomIdx = Math.floor(window.randomSecure() * 5);
+          const randomIdx = Math.floor(Math.random() * 5);
           modifiedMask[randomIdx] = false;
           diceMgr.setHeldMask(modifiedMask);
         }

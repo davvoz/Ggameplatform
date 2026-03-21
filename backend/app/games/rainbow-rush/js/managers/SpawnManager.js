@@ -130,7 +130,7 @@ export class SpawnManager {
         this.magnetTimer += deltaTime;
         if (this.magnetTimer >= this.magnetInterval) {
             // 70% chance to spawn magnet + coin rain combo
-            if (window.randomSecure() < 0.7) {
+            if (Math.random() < 0.7) {
                 this.spawnBonusCombo();
                 // Reset both timers to avoid double spawning
                 this.magnetTimer = 0;
@@ -144,7 +144,7 @@ export class SpawnManager {
         this.coinRainTimer += deltaTime;
         if (this.coinRainTimer >= this.coinRainInterval) {
             // 70% chance to spawn magnet + coin rain combo
-            if (window.randomSecure() < 0.7) {
+            if (Math.random() < 0.7) {
                 this.spawnBonusCombo();
                 // Reset both timers to avoid double spawning
                 this.magnetTimer = 0;
@@ -262,7 +262,7 @@ export class SpawnManager {
     spawnPowerup() {
         // Choose random powerup type
         const types = ['immortality', 'flight', 'superJump'];
-        const randomType = types[Math.floor(window.randomSecure() * types.length)];
+        const randomType = types[Math.floor(Math.random() * types.length)];
 
         // Find a platform to spawn on
         const validPlatforms = this.entityManager.getEntities('platforms').filter(p =>
@@ -270,7 +270,7 @@ export class SpawnManager {
         );
 
         if (validPlatforms.length > 0) {
-            const platform = validPlatforms[Math.floor(window.randomSecure() * validPlatforms.length)];
+            const platform = validPlatforms[Math.floor(Math.random() * validPlatforms.length)];
 
             // Get powerup config from centralized PowerupTypes
             const powerupEntry = Object.values(PowerupTypes).find(p => p.id === randomType);
@@ -333,7 +333,7 @@ export class SpawnManager {
      */
     spawnMagnetBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('magnetBonuses', {
             x, y,
@@ -356,7 +356,7 @@ export class SpawnManager {
      */
     spawnBonusCombo() {
         const baseX = this.dims.width + 50;
-        const y = 150 + window.randomSecure() * (this.dims.height - 400);
+        const y = 150 + Math.random() * (this.dims.height - 400);
         
         // Spawn magnet
         this.entityManager.addEntity('magnetBonuses', {
@@ -375,7 +375,7 @@ export class SpawnManager {
         });
         
         // Spawn coin rain very close horizontally (60-100 pixels behind)
-        const offsetX = 60 + window.randomSecure() * 40;
+        const offsetX = 60 + Math.random() * 40;
         this.entityManager.addEntity('coinRainBonuses', {
             x: baseX + offsetX,
             y: y,
@@ -398,7 +398,7 @@ export class SpawnManager {
      */
     spawnCoinRainBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         const bonus = {
             x, y,
@@ -423,7 +423,7 @@ export class SpawnManager {
      */
     spawnShieldBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('shieldBonuses', {
             x, y,
@@ -445,7 +445,7 @@ export class SpawnManager {
      */
     spawnMultiplierBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('multiplierBonuses', {
             x, y,
@@ -466,7 +466,7 @@ export class SpawnManager {
      */
     spawnRechargeBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('rechargeBonuses', {
             x, y,
@@ -489,7 +489,7 @@ export class SpawnManager {
      */
     spawnFlightBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('flightBonuses', {
             x, y,
@@ -511,7 +511,7 @@ export class SpawnManager {
      */
     spawnRainbowBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('rainbowBonuses', {
             x, y,
@@ -532,7 +532,7 @@ export class SpawnManager {
      */
     spawnHeartRechargeBonus() {
         const x = this.dims.width + 50;
-        const y = 100 + window.randomSecure() * (this.dims.height - 300);
+        const y = 100 + Math.random() * (this.dims.height - 300);
 
         this.entityManager.addEntity('heartRechargeBonuses', {
             x, y,

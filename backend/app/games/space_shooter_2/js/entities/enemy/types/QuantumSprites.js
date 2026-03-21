@@ -563,7 +563,7 @@ function drawBosonCarrier(ctx, cx, cy, w, h, t, state) {
         let px = cx, py = cy;
         for (let seg = 0; seg < 5; seg++) {
             const dist = r * (0.4 + seg * 0.2);
-            const jitter = (window.randomSecure() - 0.5) * 6;
+            const jitter = (Math.random() - 0.5) * 6;
             const nx = cx + Math.cos(angle) * dist + Math.sin(angle + 1.57) * jitter;
             const ny = cy + Math.sin(angle) * dist + Math.cos(angle + 1.57) * jitter;
             ctx.lineTo(nx, ny);

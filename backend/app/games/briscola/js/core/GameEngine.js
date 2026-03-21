@@ -77,7 +77,7 @@ export class GameEngine {
         this.briscola = this.briscolaCard.suit;
         
         // First player is random
-        this.currentPlayer = window.randomSecure() < 0.5 ? 1 : 2;
+        this.currentPlayer = Math.random() < 0.5 ? 1 : 2;
         this.firstPlayerInRound = this.currentPlayer;
         
         this.isGameOver = false;

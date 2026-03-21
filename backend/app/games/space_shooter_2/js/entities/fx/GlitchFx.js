@@ -34,19 +34,19 @@ const BROKEN_POLY_PALETTE = [
 function _pickColor(palette, depth) {
     let total = 0;
     for (const p of palette) total += p.weight;
-    let r = window.randomSecure() * total;
+    let r = Math.random() * total;
     let picked = palette[0];
     for (const p of palette) {
         r -= p.weight;
         if (r <= 0) { picked = p; break; }
     }
-    const hue = picked.hue[0] + window.randomSecure() * picked.hue[1];
-    const sat = picked.sat[0] + window.randomSecure() * picked.sat[1];
+    const hue = picked.hue[0] + Math.random() * picked.hue[1];
+    const sat = picked.sat[0] + Math.random() * picked.sat[1];
     let lightness;
     if (picked.light.length === 3) {
-        lightness = picked.light[0] + (depth || 0) * picked.light[1] + window.randomSecure() * picked.light[2];
+        lightness = picked.light[0] + (depth || 0) * picked.light[1] + Math.random() * picked.light[2];
     } else {
-        lightness = picked.light[0] + window.randomSecure() * picked.light[1];
+        lightness = picked.light[0] + Math.random() * picked.light[1];
     }
     return { hue, sat, lightness };
 }
@@ -57,7 +57,7 @@ export class GlitchFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const gc = this.config;
         const d = gc ? gc.dist : [0.35, 0.55, 0.75, 0.90];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initGlitchBlock(W, H, initial, gc);
         else if (roll < d[1]) this._initDataStream(W, H, initial);
@@ -72,21 +72,21 @@ export class GlitchFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initGlitchBlock(W, H, initial, gc) {
         this.subType = 'glitchBlock';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -80 - window.randomSecure() * 60;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -80 - Math.random() * 60;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const gMul = gc ? (gc.glitchMul || 1) : 1;
-        this.bw = (15 + near * 30 + window.randomSecure() * 20) * gMul;
-        this.bh = (8 + near * 15 + window.randomSecure() * 12) * gMul;
+        this.bw = (15 + near * 30 + Math.random() * 20) * gMul;
+        this.bh = (8 + near * 15 + Math.random() * 12) * gMul;
         this.size = Math.max(this.bw, this.bh);
-        this.speed = 18 + near * 16 + window.randomSecure() * 12;
-        this.alpha = 0.45 + near * 0.3 + window.randomSecure() * 0.15;
+        this.speed = 18 + near * 16 + Math.random() * 12;
+        this.alpha = 0.45 + near * 0.3 + Math.random() * 0.15;
         Object.assign(this, _pickColor(GLITCH_BLOCK_PALETTE, near));
-        this.glitchPhase = window.randomSecure() * Math.PI * 2;
-        this.glitchFreq = 2 + window.randomSecure() * 4;
-        this.scanlineGap = 2 + Math.floor(window.randomSecure() * 3);
-        this.hasBorder = window.randomSecure() < 0.6;
+        this.glitchPhase = Math.random() * Math.PI * 2;
+        this.glitchFreq = 2 + Math.random() * 4;
+        this.scanlineGap = 2 + Math.floor(Math.random() * 3);
+        this.hasBorder = Math.random() < 0.6;
     }
 
     // ═══════════════════════════════════════════
@@ -94,15 +94,15 @@ export class GlitchFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initDataStream(W, H, initial) {
         this.subType = 'dataStream';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 30;
-        this.streamLen = 20 + window.randomSecure() * 50;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -40 - Math.random() * 30;
+        this.streamLen = 20 + Math.random() * 50;
         this.size = this.streamLen;
-        this.streamW = 1 + window.randomSecure() * 2;
-        this.speed = 25 + window.randomSecure() * 20;
-        this.alpha = 0.2 + window.randomSecure() * 0.3;
-        this.streamHue = window.randomSecure() < 0.5 ? (120 + window.randomSecure() * 30) : (180 + window.randomSecure() * 30);
-        this.segments = 3 + Math.floor(window.randomSecure() * 5);
+        this.streamW = 1 + Math.random() * 2;
+        this.speed = 25 + Math.random() * 20;
+        this.alpha = 0.2 + Math.random() * 0.3;
+        this.streamHue = Math.random() < 0.5 ? (120 + Math.random() * 30) : (180 + Math.random() * 30);
+        this.segments = 3 + Math.floor(Math.random() * 5);
     }
 
     // ═══════════════════════════════════════════
@@ -110,16 +110,16 @@ export class GlitchFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initBrokenPoly(W, H, initial) {
         this.subType = 'brokenPoly';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 20;
-        this.size = 8 + window.randomSecure() * 18;
-        this.speed = 20 + window.randomSecure() * 18;
-        this.alpha = 0.4 + window.randomSecure() * 0.35;
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 1.5;
-        this.shape = generateShape(3 + Math.floor(window.randomSecure() * 4), 0.5, 0.5);
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
+        this.size = 8 + Math.random() * 18;
+        this.speed = 20 + Math.random() * 18;
+        this.alpha = 0.4 + Math.random() * 0.35;
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 1.5;
+        this.shape = generateShape(3 + Math.floor(Math.random() * 4), 0.5, 0.5);
         Object.assign(this, _pickColor(BROKEN_POLY_PALETTE));
-        this.wireframe = window.randomSecure() < 0.4;
+        this.wireframe = Math.random() < 0.4;
     }
 
     // ═══════════════════════════════════════════
@@ -127,14 +127,14 @@ export class GlitchFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initPixelNoise(W, H, initial) {
         this.subType = 'pixelNoise';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -10 - window.randomSecure() * 10;
-        this.size = 2 + window.randomSecure() * 5;
-        this.speed = 15 + window.randomSecure() * 25;
-        this.alpha = 0.15 + window.randomSecure() * 0.35;
-        this.pixelHue = [0, 120, 180, 270, 300][Math.floor(window.randomSecure() * 5)];
-        this.pixelSat = 60 + window.randomSecure() * 30;
-        this.flickerRate = 4 + window.randomSecure() * 8;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -10 - Math.random() * 10;
+        this.size = 2 + Math.random() * 5;
+        this.speed = 15 + Math.random() * 25;
+        this.alpha = 0.15 + Math.random() * 0.35;
+        this.pixelHue = [0, 120, 180, 270, 300][Math.floor(Math.random() * 5)];
+        this.pixelSat = 60 + Math.random() * 30;
+        this.flickerRate = 4 + Math.random() * 8;
     }
 
     // ═══════════════════════════════════════════
@@ -142,17 +142,17 @@ export class GlitchFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initCodeFragment(W, H, initial) {
         this.subType = 'codeFragment';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 20;
-        this.size = 12 + window.randomSecure() * 20;
-        this.speed = 16 + window.randomSecure() * 14;
-        this.alpha = 0.25 + window.randomSecure() * 0.3;
-        this.lineCount = 2 + Math.floor(window.randomSecure() * 4);
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
+        this.size = 12 + Math.random() * 20;
+        this.speed = 16 + Math.random() * 14;
+        this.alpha = 0.25 + Math.random() * 0.3;
+        this.lineCount = 2 + Math.floor(Math.random() * 4);
         this.lineWidths = [];
         for (let i = 0; i < this.lineCount; i++) {
-            this.lineWidths.push(8 + window.randomSecure() * 25);
+            this.lineWidths.push(8 + Math.random() * 25);
         }
-        this.fragHue = window.randomSecure() < 0.5 ? 120 : 180;
+        this.fragHue = Math.random() < 0.5 ? 120 : 180;
     }
 
     // ═══════════════════════════════════════════

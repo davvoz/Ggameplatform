@@ -395,7 +395,7 @@ function _genMiniBoss8Sprites(sprites) {
         // Spot welds / rivets
         ctx.fillStyle = '#887766';
         for (let i = 0; i < 5; i++) {
-            const rx = cx + (window.randomSecure() - 0.5) * r * 1.2, ry = cy + (window.randomSecure() - 0.5) * r * 1.2;
+            const rx = cx + (Math.random() - 0.5) * r * 1.2, ry = cy + (Math.random() - 0.5) * r * 1.2;
             ctx.beginPath(); ctx.arc(rx, ry, 2, 0, Math.PI * 2); ctx.fill();
         }
         // Panel lines

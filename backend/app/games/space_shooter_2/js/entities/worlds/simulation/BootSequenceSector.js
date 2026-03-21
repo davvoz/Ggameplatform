@@ -13,15 +13,15 @@ export class BootSequenceSector extends SimulationSectorRenderer {
         const words = ['LOAD','SYS','INIT','0x0F','BOOT','MEM','OK','ERR','>>','RUN','DATA','SCAN','CPU','I/O'];
         for (let i = 0; i < lineCount; i++) {
             let txt = '> ';
-            const wc = 2 + Math.floor(window.randomSecure() * 4);
-            for (let w = 0; w < wc; w++) txt += words[Math.floor(window.randomSecure() * words.length)] + ' ';
+            const wc = 2 + Math.floor(Math.random() * 4);
+            for (let w = 0; w < wc; w++) txt += words[Math.floor(Math.random() * words.length)] + ' ';
             this.floaters.push({
-                x: 8 + window.randomSecure() * (this.canvasWidth * 0.7),
-                y: window.randomSecure() * this.canvasHeight,
+                x: 8 + Math.random() * (this.canvasWidth * 0.7),
+                y: Math.random() * this.canvasHeight,
                 text: txt,
-                speed: 12 + window.randomSecure() * 14,
-                alpha: 0.15 + window.randomSecure() * 0.2,
-                hue: 140 + window.randomSecure() * 30
+                speed: 12 + Math.random() * 14,
+                alpha: 0.15 + Math.random() * 0.2,
+                hue: 140 + Math.random() * 30
             });
         }
     }
@@ -29,7 +29,7 @@ export class BootSequenceSector extends SimulationSectorRenderer {
     update(dt) {
         for (const f of this.floaters) {
             f.y += f.speed * dt;
-            if (f.y > this.canvasHeight + 16) { f.y = -16; f.x = 8 + window.randomSecure() * (this.canvasWidth * 0.7); }
+            if (f.y > this.canvasHeight + 16) { f.y = -16; f.x = 8 + Math.random() * (this.canvasWidth * 0.7); }
         }
     }
 

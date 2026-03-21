@@ -9,7 +9,7 @@ export class MathUtils {
   }
 
   static randomInt(min, max) {
-    return Math.floor(window.randomSecure() * (max - min + 1)) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   static formatSigned(value) {

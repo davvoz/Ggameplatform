@@ -45,10 +45,10 @@ export class AbilityUnlockAnimation {
         
         for (let i = 0; i < 100; i++) {
             const angle = (Math.PI * 2 * i) / 100;
-            const speed = 100 + window.randomSecure() * 200;
+            const speed = 100 + Math.random() * 200;
             const color = this.abilityType === 'flight' 
-                ? [0.4 + window.randomSecure() * 0.3, 0.8 + window.randomSecure() * 0.2, 1.0, 1.0]
-                : [1.0, 0.7 + window.randomSecure() * 0.3, 0.2 + window.randomSecure() * 0.3, 1.0];
+                ? [0.4 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
+                : [1.0, 0.7 + Math.random() * 0.3, 0.2 + Math.random() * 0.3, 1.0];
             
             this.particles.push({
                 x: centerX,
@@ -56,10 +56,10 @@ export class AbilityUnlockAnimation {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 life: 1.0,
-                maxLife: 2.0 + window.randomSecure(),
-                size: 3 + window.randomSecure() * 5,
+                maxLife: 2.0 + Math.random(),
+                size: 3 + Math.random() * 5,
                 color: color,
-                gravity: 50 + window.randomSecure() * 50
+                gravity: 50 + Math.random() * 50
             });
         }
     }
@@ -137,7 +137,7 @@ export class AbilityUnlockAnimation {
         }
         
         // Continua a generare particelle per i primi 3 secondi
-        if (this.timer < 3.0 && window.randomSecure() < 0.3) {
+        if (this.timer < 3.0 && Math.random() < 0.3) {
             this.generateExplosionParticles();
         }
         

@@ -482,7 +482,7 @@ export class EnemyMovementController {
      */
     initializeEnemy(enemy) {
         enemy._targetCol = enemy.col;
-        enemy._laneSwitchCooldown = window.randomSecure() * 0.5; // Stagger initial switches
+        enemy._laneSwitchCooldown = Math.random() * 0.5; // Stagger initial switches
         enemy._isRetreating = false;
         enemy._retreatTimer = 0;
         enemy._lastRetreatTime = 0;

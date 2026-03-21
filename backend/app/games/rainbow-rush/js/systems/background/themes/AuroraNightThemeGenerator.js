@@ -61,12 +61,12 @@ export class AuroraNightThemeGenerator extends BaseThemeGenerator {
                 color: [
                     0.2 + hue * 0.6,
                     0.8 - hue * 0.3,
-                    0.6 + window.randomSecure() * 0.4,
+                    0.6 + Math.random() * 0.4,
                     0.25 - i * 0.05
                 ],
                 type: 'aurora_wave',
                 offset: 0,
-                height: 80 + window.randomSecure() * 60
+                height: 80 + Math.random() * 60
             });
         }
     }
@@ -76,11 +76,11 @@ export class AuroraNightThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.STAR_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight * 0.7,
-                radius: 1 + window.randomSecure() * 2,
-                twinkle: window.randomSecure() * Math.PI * 2,
-                color: [1.0, 1.0, 0.95, 0.6 + window.randomSecure() * 0.4],
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.7,
+                radius: 1 + Math.random() * 2,
+                twinkle: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 0.95, 0.6 + Math.random() * 0.4],
                 type: 'star'
             });
         }
@@ -90,23 +90,23 @@ export class AuroraNightThemeGenerator extends BaseThemeGenerator {
         const config = AURORA_NIGHT_CONFIG;
         
         for (let i = 0; i < config.AURORA_PARTICLE_COUNT; i++) {
-            const hue = window.randomSecure();
+            const hue = Math.random();
             
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight * 0.5,
-                radius: 2 + window.randomSecure() * 4,
-                speed: 5 + window.randomSecure() * 15,
-                glow: window.randomSecure() * Math.PI * 2,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.5,
+                radius: 2 + Math.random() * 4,
+                speed: 5 + Math.random() * 15,
+                glow: Math.random() * Math.PI * 2,
                 color: [
                     0.3 + hue * 0.5,
                     0.7 - hue * 0.2,
-                    0.8 + window.randomSecure() * 0.2,
-                    0.5 + window.randomSecure() * 0.3
+                    0.8 + Math.random() * 0.2,
+                    0.5 + Math.random() * 0.3
                 ],
                 type: 'firefly',
-                driftX: (window.randomSecure() - 0.5) * 60,
-                driftY: (window.randomSecure() - 0.5) * 20
+                driftX: (Math.random() - 0.5) * 60,
+                driftY: (Math.random() - 0.5) * 20
             });
         }
     }

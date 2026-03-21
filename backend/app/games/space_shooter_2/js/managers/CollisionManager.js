@@ -74,11 +74,11 @@ class CollisionManager {
                     if (stealthDmgBonus > 0 && enemy.config && enemy.config.stealth) {
                         dmg *= (1 + stealthDmgBonus);
                     }
-                    const isCrit = window.randomSecure() < (critChance + critAoeBonusChance);
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     // Virus Inject: chance to infect on hit
-                    if (bullet._virusChance && !enemy._virusInfected && window.randomSecure() < bullet._virusChance) {
+                    if (bullet._virusChance && !enemy._virusInfected && Math.random() < bullet._virusChance) {
                         enemy._virusInfected = true;
                         enemy._virusDuration = bullet._virusDuration;
                         enemy._virusTimer = 0;
@@ -118,7 +118,7 @@ class CollisionManager {
                             }
                         }
                         // Neural Hijack: chance to convert instead of kill
-                        if (hijackChance > 0 && !enemy._isAlly && !enemy.config.spawner && window.randomSecure() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
+                        if (hijackChance > 0 && !enemy._isAlly && !enemy.config.spawner && Math.random() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
                             enemy.active = true;
                             enemy.health = Math.ceil(enemy.maxHealth * 0.5);
                             enemy._isAlly = true;
@@ -169,7 +169,7 @@ class CollisionManager {
                 const hitBoss = hitIdx >= 0 || (!(entities.boss instanceof MultiBoss) && bullet.collidesWithCircle(entities.boss));
                 if (hitBoss) {
                     let dmg = bullet.damage * dmgMult;
-                    const isCrit = window.randomSecure() < (critChance + critAoeBonusChance);
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     let killed = false;
@@ -212,7 +212,7 @@ class CollisionManager {
                 const hitIdx = entities.miniBoss.getHitPart(bCX, bCY);
                 if (hitIdx >= 0) {
                     let dmg = bullet.damage * dmgMult;
-                    const isCrit = window.randomSecure() < (critChance + critAoeBonusChance);
+                    const isCrit = Math.random() < (critChance + critAoeBonusChance);
                     if (isCrit) dmg = Math.ceil(dmg * critMult);
 
                     const res = entities.miniBoss.damagepart(hitIdx, Math.ceil(dmg), g);
@@ -314,7 +314,7 @@ class CollisionManager {
                 if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) continue;
 
                 if (bullet.collidesWithCircle(player)) {
-                    if (window.randomSecure() < phaseChance) {
+                    if (Math.random() < phaseChance) {
                         bullet.destroy();
                         g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
                         continue;
@@ -344,7 +344,7 @@ class CollisionManager {
                     } else {
                         const killed = enemy.takeDamage(enemy.health, g);
                         if (killed) g.waveManager.onEnemyKilled(enemy);
-                        if (window.randomSecure() < phaseChance) {
+                        if (Math.random() < phaseChance) {
                             g.particles.emit(player.position.x + player.width / 2, player.position.y + player.height / 2, 'shield', 3);
                         } else {
                             const died = player.takeDamage(1, g);
@@ -361,7 +361,7 @@ class CollisionManager {
             }
 
             if (entities.boss && entities.boss.active && !entities.boss.entering && entities.boss.collidesWithCircle(player)) {
-                if (window.randomSecure() >= phaseChance) {
+                if (Math.random() >= phaseChance) {
                     const died = player.takeDamage(2, g);
                     if (died) this.onPlayerDeath();
                     else {
@@ -376,7 +376,7 @@ class CollisionManager {
             }
 
             if (entities.miniBoss && entities.miniBoss.active && !entities.miniBoss.entering && entities.miniBoss.collidesWithCircle(player)) {
-                if (window.randomSecure() >= phaseChance) {
+                if (Math.random() >= phaseChance) {
                     const died = player.takeDamage(1, g);
                     if (died) this.onPlayerDeath();
                     else {

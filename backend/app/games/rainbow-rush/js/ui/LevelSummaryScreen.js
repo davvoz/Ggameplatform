@@ -183,11 +183,11 @@ export class LevelSummaryScreen {
             this.confettiParticles.push({
                 x: this.canvasWidth / 2,
                 y: this.canvasHeight * 0.3,
-                vx: (window.randomSecure() - 0.5) * 400,
-                vy: -window.randomSecure() * 300 - 200,
-                rotation: window.randomSecure() * Math.PI * 2,
-                rotationSpeed: (window.randomSecure() - 0.5) * 10,
-                color: colors[Math.floor(window.randomSecure() * colors.length)],
+                vx: (Math.random() - 0.5) * 400,
+                vy: -Math.random() * 300 - 200,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 10,
+                color: colors[Math.floor(Math.random() * colors.length)],
                 life: this.isGameComplete ? 1.5 : 1.0, // Confetti durano di pi\u00f9 per game complete
                 gravity: 500
             });
@@ -216,7 +216,7 @@ export class LevelSummaryScreen {
                 this.starAnimations[i] = Math.min(1.0, progress / 0.5);
                 
                 // Genera sparkle quando stella appare
-                if (this.starAnimations[i] > 0.5 && this.starAnimations[i] < 0.7 && window.randomSecure() < 0.3) {
+                if (this.starAnimations[i] > 0.5 && this.starAnimations[i] < 0.7 && Math.random() < 0.3) {
                     this.generateStarSparkle(i);
                 }
             }

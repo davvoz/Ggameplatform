@@ -60,10 +60,10 @@ export class ForestThemeGenerator extends BaseThemeGenerator {
                 y: groundY - height,
                 width,
                 height,
-                color: [0.2 + window.randomSecure() * 0.1, 0.3 + window.randomSecure() * 0.2, 0.1, 0.7 + window.randomSecure() * 0.2],
+                color: [0.2 + Math.random() * 0.1, 0.3 + Math.random() * 0.2, 0.1, 0.7 + Math.random() * 0.2],
                 type: 'tree',
                 speed: 5 + i * 2,
-                swayPhase: window.randomSecure() * Math.PI * 2,
+                swayPhase: Math.random() * Math.PI * 2,
                 offset: 0
             });
         }
@@ -74,15 +74,15 @@ export class ForestThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.FIREFLY_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.4 + window.randomSecure() * this.canvasHeight * 0.4,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.4 + Math.random() * this.canvasHeight * 0.4,
                 radius: this.randomInRange(config.FIREFLY_MIN_RADIUS, config.FIREFLY_MAX_RADIUS),
-                speed: 20 + window.randomSecure() * 30,
-                glow: window.randomSecure() * Math.PI * 2,
+                speed: 20 + Math.random() * 30,
+                glow: Math.random() * Math.PI * 2,
                 color: [0.9, 1.0, 0.3, 0.8],
                 type: 'firefly',
-                driftX: (window.randomSecure() - 0.5) * 50,
-                driftY: (window.randomSecure() - 0.5) * 30
+                driftX: (Math.random() - 0.5) * 50,
+                driftY: (Math.random() - 0.5) * 30
             });
         }
     }
@@ -92,15 +92,15 @@ export class ForestThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.LEAF_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight * 0.6,
-                speed: 15 + window.randomSecure() * 25,
-                rotation: window.randomSecure() * Math.PI * 2,
-                size: 4 + window.randomSecure() * 6,
-                color: [0.8 - window.randomSecure() * 0.3, 0.5 + window.randomSecure() * 0.3, 0.1, 0.7],
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.6,
+                speed: 15 + Math.random() * 25,
+                rotation: Math.random() * Math.PI * 2,
+                size: 4 + Math.random() * 6,
+                color: [0.8 - Math.random() * 0.3, 0.5 + Math.random() * 0.3, 0.1, 0.7],
                 type: 'leaf',
-                swayAmplitude: 20 + window.randomSecure() * 30,
-                swayPhase: window.randomSecure() * Math.PI * 2
+                swayAmplitude: 20 + Math.random() * 30,
+                swayPhase: Math.random() * Math.PI * 2
             });
         }
     }

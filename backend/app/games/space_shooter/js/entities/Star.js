@@ -3,20 +3,20 @@
  */
 class Star {
     constructor(canvasWidth, canvasHeight, layer = 1) {
-        this.x = window.randomSecure() * canvasWidth;
-        this.y = window.randomSecure() * canvasHeight;
+        this.x = Math.random() * canvasWidth;
+        this.y = Math.random() * canvasHeight;
         this.layer = layer;
         
         this.speed = 20 + layer * 40;
         this.size = 0.5 + layer * 0.7;
         
-        this.brightness = 0.3 + window.randomSecure() * 0.7;
-        this.twinkleSpeed = 1 + window.randomSecure() * 3;
-        this.twinkleOffset = window.randomSecure() * Math.PI * 2;
+        this.brightness = 0.3 + Math.random() * 0.7;
+        this.twinkleSpeed = 1 + Math.random() * 3;
+        this.twinkleOffset = Math.random() * Math.PI * 2;
         
         // Star color variation
         const colorTypes = ['white', 'blue', 'yellow', 'red'];
-        this.colorType = colorTypes[Math.floor(window.randomSecure() * colorTypes.length)];
+        this.colorType = colorTypes[Math.floor(Math.random() * colorTypes.length)];
         
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
@@ -27,7 +27,7 @@ class Star {
         
         if (this.y > this.canvasHeight) {
             this.y = -5;
-            this.x = window.randomSecure() * this.canvasWidth;
+            this.x = Math.random() * this.canvasWidth;
         }
     }
 
@@ -63,11 +63,11 @@ class Nebula {
     }
     
     reset(initial = false) {
-        this.x = window.randomSecure() * this.canvasWidth;
-        this.y = initial ? window.randomSecure() * this.canvasHeight : -200;
-        this.size = 150 + window.randomSecure() * 200;
-        this.speed = 10 + window.randomSecure() * 15;
-        this.alpha = 0.05 + window.randomSecure() * 0.1;
+        this.x = Math.random() * this.canvasWidth;
+        this.y = initial ? Math.random() * this.canvasHeight : -200;
+        this.size = 150 + Math.random() * 200;
+        this.speed = 10 + Math.random() * 15;
+        this.alpha = 0.05 + Math.random() * 0.1;
         
         const nebulaColors = [
             { r: 100, g: 50, b: 150 },   // Purple
@@ -76,9 +76,9 @@ class Nebula {
             { r: 50, g: 150, b: 130 },   // Teal
             { r: 80, g: 60, b: 140 }     // Deep purple
         ];
-        this.color = nebulaColors[Math.floor(window.randomSecure() * nebulaColors.length)];
-        this.rotation = window.randomSecure() * Math.PI * 2;
-        this.rotationSpeed = (window.randomSecure() - 0.5) * 0.2;
+        this.color = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.2;
     }
     
     update(deltaTime) {
@@ -123,15 +123,15 @@ class ShootingStar {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.active = false;
-        this.timer = 5 + window.randomSecure() * 10;
+        this.timer = 5 + Math.random() * 10;
     }
     
     spawn() {
-        this.x = window.randomSecure() * this.canvasWidth;
+        this.x = Math.random() * this.canvasWidth;
         this.y = -10;
-        this.angle = Math.PI / 4 + (window.randomSecure() - 0.5) * 0.5;
-        this.speed = 600 + window.randomSecure() * 400;
-        this.length = 40 + window.randomSecure() * 60;
+        this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+        this.speed = 600 + Math.random() * 400;
+        this.length = 40 + Math.random() * 60;
         this.alpha = 1;
         this.active = true;
     }
@@ -141,7 +141,7 @@ class ShootingStar {
             this.timer -= deltaTime;
             if (this.timer <= 0) {
                 this.spawn();
-                this.timer = 8 + window.randomSecure() * 15;
+                this.timer = 8 + Math.random() * 15;
             }
             return;
         }
@@ -225,8 +225,8 @@ class StarField {
         this.stars.forEach(star => {
             star.canvasWidth = canvasWidth;
             star.canvasHeight = canvasHeight;
-            if (star.x > canvasWidth) star.x = window.randomSecure() * canvasWidth;
-            if (star.y > canvasHeight) star.y = window.randomSecure() * canvasHeight;
+            if (star.x > canvasWidth) star.x = Math.random() * canvasWidth;
+            if (star.y > canvasHeight) star.y = Math.random() * canvasHeight;
         });
         
         this.nebulae.forEach(nebula => {

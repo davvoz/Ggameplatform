@@ -35,7 +35,7 @@ export class JungleFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const jc = this.config;
         const d = jc ? jc.dist : [0.48, 0.66, 0.80, 1.0];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initCanopy(W, H, initial, jc);
         else if (roll < d[1]) this._initRock(W, H, initial);
@@ -48,74 +48,74 @@ export class JungleFx extends BaseFxStrategy {
 
     _initCanopy(W, H, initial, jc) {
         this.subType = 'canopy';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -100 - window.randomSecure() * 80;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -100 - Math.random() * 80;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const cMul = jc ? jc.canopyMul : 1;
-        this.size = (25 + near * 40 + window.randomSecure() * 25) * cMul;
-        this.speed = 18 + near * 16 + window.randomSecure() * 12;
-        this.alpha = 0.55 + near * 0.25 + window.randomSecure() * 0.15;
+        this.size = (25 + near * 40 + Math.random() * 25) * cMul;
+        this.speed = 18 + near * 16 + Math.random() * 12;
+        this.alpha = 0.55 + near * 0.25 + Math.random() * 0.15;
         Object.assign(this, pickColor(CANOPY_PALETTE, near));
-        this.shape = generateShape(7 + Math.floor(window.randomSecure() * 3), 0.75, 0.3);
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 0.04;
-        this.shadowOx = 3 + window.randomSecure() * 4;
-        this.shadowOy = 3 + window.randomSecure() * 4;
+        this.shape = generateShape(7 + Math.floor(Math.random() * 3), 0.75, 0.3);
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 0.04;
+        this.shadowOx = 3 + Math.random() * 4;
+        this.shadowOy = 3 + Math.random() * 4;
     }
 
     _initRock(W, H, initial) {
         this.subType = 'rock';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 20;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
         // Size tier
-        const tier = window.randomSecure();
-        if (tier < 0.25)      { this.size = 14 + window.randomSecure() * 12; this.rockVariant = 'boulder'; }
-        else if (tier < 0.60) { this.size = 7 + window.randomSecure() * 8;  this.rockVariant = 'medium';  }
-        else                  { this.size = 3 + window.randomSecure() * 5;  this.rockVariant = 'pebble';  }
-        this.speed = 20 + window.randomSecure() * 18;
-        this.alpha = 0.6 + window.randomSecure() * 0.35;
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.shape = generateShape(5 + Math.floor(window.randomSecure() * 3), 0.55, 0.55);
+        const tier = Math.random();
+        if (tier < 0.25)      { this.size = 14 + Math.random() * 12; this.rockVariant = 'boulder'; }
+        else if (tier < 0.60) { this.size = 7 + Math.random() * 8;  this.rockVariant = 'medium';  }
+        else                  { this.size = 3 + Math.random() * 5;  this.rockVariant = 'pebble';  }
+        this.speed = 20 + Math.random() * 18;
+        this.alpha = 0.6 + Math.random() * 0.35;
+        this.rot = Math.random() * Math.PI * 2;
+        this.shape = generateShape(5 + Math.floor(Math.random() * 3), 0.55, 0.55);
         Object.assign(this, pickColor(ROCK_PALETTES));
         this.rockHue = this.hue; this.rockSat = this.sat; this.rockLight = this.lightness;
         this._genPebbles();
     }
 
     _genPebbles() {
-        const count = this.rockVariant === 'boulder' ? 2 + Math.floor(window.randomSecure() * 3)
-            : this.rockVariant === 'medium' ? Math.floor(window.randomSecure() * 2) : 0;
+        const count = this.rockVariant === 'boulder' ? 2 + Math.floor(Math.random() * 3)
+            : this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
         this.pebbleOffsets = [];
         for (let p = 0; p < count; p++) {
             this.pebbleOffsets.push({
-                ox: (window.randomSecure() - 0.5) * this.size * 2.5,
-                oy: (window.randomSecure() - 0.5) * this.size * 1.8,
-                cr: 1.5 + window.randomSecure() * 3,
-                lightD: -4 + window.randomSecure() * 8
+                ox: (Math.random() - 0.5) * this.size * 2.5,
+                oy: (Math.random() - 0.5) * this.size * 1.8,
+                cr: 1.5 + Math.random() * 3,
+                lightD: -4 + Math.random() * 8
             });
         }
     }
 
     _initDirt(W, H, initial) {
         this.subType = 'dirt';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -50 - window.randomSecure() * 30;
-        this.size = 15 + window.randomSecure() * 30;
-        this.speed = 20 + window.randomSecure() * 16;
-        this.alpha = 0.3 + window.randomSecure() * 0.25;
-        this.elongation = 0.6 + window.randomSecure() * 0.6;
-        this.rot = window.randomSecure() * Math.PI;
-        this.dirtLight = window.randomSecure() < 0.5 ? -3 : 4;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -50 - Math.random() * 30;
+        this.size = 15 + Math.random() * 30;
+        this.speed = 20 + Math.random() * 16;
+        this.alpha = 0.3 + Math.random() * 0.25;
+        this.elongation = 0.6 + Math.random() * 0.6;
+        this.rot = Math.random() * Math.PI;
+        this.dirtLight = Math.random() < 0.5 ? -3 : 4;
     }
 
     _initRiver(W, H, initial, jc) {
         this.subType = 'river';
-        this.x = W * 0.15 + window.randomSecure() * W * 0.7;
-        this.y = initial ? window.randomSecure() * H : -500 - window.randomSecure() * 200;
-        this.speed = 18 + window.randomSecure() * 14;
-        this.alpha = 0.7 + window.randomSecure() * 0.25;
+        this.x = W * 0.15 + Math.random() * W * 0.7;
+        this.y = initial ? Math.random() * H : -500 - Math.random() * 200;
+        this.speed = 18 + Math.random() * 14;
+        this.alpha = 0.7 + Math.random() * 0.25;
         const rw = jc ? jc.riverW : [14, 24];
-        this.width = rw[0] + window.randomSecure() * (rw[1] - rw[0]);
+        this.width = rw[0] + Math.random() * (rw[1] - rw[0]);
         this._genRiverCurves();
         const rc = pickColor(RIVER_PALETTES);
         this.riverHue = rc.hue; this.riverSat = rc.sat; this.riverLight = rc.lightness;
@@ -124,11 +124,11 @@ export class JungleFx extends BaseFxStrategy {
     _genRiverCurves() {
         this.curves = [];
         let cx = 0;
-        const segs = 6 + Math.floor(window.randomSecure() * 5);
-        const segH = 80 + window.randomSecure() * 40;
-        let drift = (window.randomSecure() - 0.5) * 20;
+        const segs = 6 + Math.floor(Math.random() * 5);
+        const segH = 80 + Math.random() * 40;
+        let drift = (Math.random() - 0.5) * 20;
         for (let i = 0; i < segs; i++) {
-            drift += (window.randomSecure() - 0.5) * 22;
+            drift += (Math.random() - 0.5) * 22;
             drift = Math.max(-40, Math.min(40, drift));
             const cpx = cx + drift * 0.6;
             cx += drift;
@@ -140,13 +140,13 @@ export class JungleFx extends BaseFxStrategy {
 
     _initSwamp(W, H, initial) {
         this.subType = 'swamp';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 40;
-        this.size = 18 + window.randomSecure() * 35;
-        this.speed = 18 + window.randomSecure() * 14;
-        this.alpha = 0.45 + window.randomSecure() * 0.3;
-        this.elongation = 0.4 + window.randomSecure() * 0.5;
-        this.rot = window.randomSecure() * Math.PI;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -60 - Math.random() * 40;
+        this.size = 18 + Math.random() * 35;
+        this.speed = 18 + Math.random() * 14;
+        this.alpha = 0.45 + Math.random() * 0.3;
+        this.elongation = 0.4 + Math.random() * 0.5;
+        this.rot = Math.random() * Math.PI;
         const sc = pickColor(SWAMP_PALETTES);
         this.swampHue = sc.hue; this.swampSat = sc.sat; this.swampLight = sc.lightness;
     }

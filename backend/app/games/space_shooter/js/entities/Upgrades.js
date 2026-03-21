@@ -368,7 +368,7 @@ class EnergyBarrier {
                 vx: Math.cos(angle) * 150,
                 vy: Math.sin(angle) * 150,
                 life: 0.8,
-                size: 4 + window.randomSecure() * 3
+                size: 4 + Math.random() * 3
             });
         }
     }
@@ -717,7 +717,7 @@ class SmartMissile extends GameObject {
         ctx.fillRect(this.width / 4, this.height / 4, this.width / 4, this.height / 4);
         
         // Exhaust flame
-        const flicker = window.randomSecure() * 0.3 + 0.7;
+        const flicker = Math.random() * 0.3 + 0.7;
         const flameGrad = ctx.createLinearGradient(0, this.height / 3, 0, this.height / 2 + 10);
         flameGrad.addColorStop(0, `rgba(255, 200, 50, ${flicker})`);
         flameGrad.addColorStop(0.5, `rgba(255, 100, 0, ${flicker * 0.7})`);
@@ -726,7 +726,7 @@ class SmartMissile extends GameObject {
         ctx.fillStyle = flameGrad;
         ctx.beginPath();
         ctx.moveTo(-this.width / 4, this.height / 3);
-        ctx.lineTo(0, this.height / 2 + 8 + window.randomSecure() * 5);
+        ctx.lineTo(0, this.height / 2 + 8 + Math.random() * 5);
         ctx.lineTo(this.width / 4, this.height / 3);
         ctx.closePath();
         ctx.fill();
@@ -767,7 +767,7 @@ class ProtectorDrone {
         
         // Animation
         this.animTime = 0;
-        this.bobOffset = window.randomSecure() * Math.PI * 2;
+        this.bobOffset = Math.random() * Math.PI * 2;
         this.propellerAngle = 0;
     }
     

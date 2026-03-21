@@ -49,7 +49,7 @@ class EnemyFactory {
         const result = [];
         for (const def of enemies) {
             const x = def.x * canvasWidth;
-            const y = -80 - window.randomSecure() * 40;
+            const y = -80 - Math.random() * 40;
             const enemy = EnemyFactory.create(
                 def.type, x, y, def.pattern,
                 canvasWidth, speedMult, difficultyConfig, level

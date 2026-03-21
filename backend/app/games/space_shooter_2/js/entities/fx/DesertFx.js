@@ -44,7 +44,7 @@ export class DesertFx extends BaseFxStrategy {
         const dc = this.config;
         // dist = [sandMass, sandPatch, rock, oasis] — remainder = cactus
         const d = dc ? dc.dist : [0.45, 0.65, 0.85, 0.95];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initSandMass(W, H, initial, dc);
         else if (roll < d[1]) this._initSandPatch(W, H, initial);
@@ -59,23 +59,23 @@ export class DesertFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initSandMass(W, H, initial, dc) {
         this.subType = 'sandMass';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -100 - window.randomSecure() * 80;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -100 - Math.random() * 80;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const sMul = dc ? (dc.sandMul || 1) : 1;
         // Size scales with depth — like canopy (25-90px)
-        this.size = (25 + near * 40 + window.randomSecure() * 25) * sMul;
+        this.size = (25 + near * 40 + Math.random() * 25) * sMul;
         // Speed with depth parallax — exactly like canopy
-        this.speed = 18 + near * 16 + window.randomSecure() * 12;
-        this.alpha = 0.55 + near * 0.25 + window.randomSecure() * 0.15;
+        this.speed = 18 + near * 16 + Math.random() * 12;
+        this.alpha = 0.55 + near * 0.25 + Math.random() * 0.15;
         Object.assign(this, pickColor(SAND_MASS_PALETTE, near));
         // Organic blob shape — like canopy (7-9 vertices)
-        this.shape = generateShape(7 + Math.floor(window.randomSecure() * 3), 0.75, 0.3);
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 0.03;
-        this.shadowOx = 3 + window.randomSecure() * 4;
-        this.shadowOy = 3 + window.randomSecure() * 4;
+        this.shape = generateShape(7 + Math.floor(Math.random() * 3), 0.75, 0.3);
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 0.03;
+        this.shadowOx = 3 + Math.random() * 4;
+        this.shadowOy = 3 + Math.random() * 4;
     }
 
     // ═══════════════════════════════════════════
@@ -84,16 +84,16 @@ export class DesertFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initSandPatch(W, H, initial) {
         this.subType = 'sandPatch';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -50 - window.randomSecure() * 30;
-        this.size = 15 + window.randomSecure() * 30;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -50 - Math.random() * 30;
+        this.size = 15 + Math.random() * 30;
         // Fixed speed — no depth variation (like jungle dirt)
-        this.speed = 20 + window.randomSecure() * 16;
-        this.alpha = 0.25 + window.randomSecure() * 0.25;
-        this.elongation = 0.6 + window.randomSecure() * 0.6;
-        this.rot = window.randomSecure() * Math.PI;
+        this.speed = 20 + Math.random() * 16;
+        this.alpha = 0.25 + Math.random() * 0.25;
+        this.elongation = 0.6 + Math.random() * 0.6;
+        this.rot = Math.random() * Math.PI;
         // Warm/cool sand variation
-        this.sandWarm = window.randomSecure() < 0.5 ? 3 : -2;
+        this.sandWarm = Math.random() < 0.5 ? 3 : -2;
     }
 
     // ═══════════════════════════════════════════
@@ -102,33 +102,33 @@ export class DesertFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initRock(W, H, initial) {
         this.subType = 'rock';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 20;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
         // Size tier — exactly like jungle rock
-        const tier = window.randomSecure();
-        if (tier < 0.25)      { this.size = 14 + window.randomSecure() * 12; this.rockVariant = 'boulder'; }
-        else if (tier < 0.60) { this.size = 7 + window.randomSecure() * 8;  this.rockVariant = 'medium';  }
-        else                  { this.size = 3 + window.randomSecure() * 5;  this.rockVariant = 'pebble';  }
+        const tier = Math.random();
+        if (tier < 0.25)      { this.size = 14 + Math.random() * 12; this.rockVariant = 'boulder'; }
+        else if (tier < 0.60) { this.size = 7 + Math.random() * 8;  this.rockVariant = 'medium';  }
+        else                  { this.size = 3 + Math.random() * 5;  this.rockVariant = 'pebble';  }
         // Fixed speed — no depth variation (like jungle rock)
-        this.speed = 20 + window.randomSecure() * 18;
-        this.alpha = 0.6 + window.randomSecure() * 0.35;
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.shape = generateShape(5 + Math.floor(window.randomSecure() * 3), 0.55, 0.55);
+        this.speed = 20 + Math.random() * 18;
+        this.alpha = 0.6 + Math.random() * 0.35;
+        this.rot = Math.random() * Math.PI * 2;
+        this.shape = generateShape(5 + Math.floor(Math.random() * 3), 0.55, 0.55);
         Object.assign(this, pickColor(ROCK_PALETTE));
         this.rockHue = this.hue; this.rockSat = this.sat; this.rockLight = this.lightness;
         this._genPebbles();
     }
 
     _genPebbles() {
-        const count = this.rockVariant === 'boulder' ? 2 + Math.floor(window.randomSecure() * 3)
-            : this.rockVariant === 'medium' ? Math.floor(window.randomSecure() * 2) : 0;
+        const count = this.rockVariant === 'boulder' ? 2 + Math.floor(Math.random() * 3)
+            : this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
         this.pebbleOffsets = [];
         for (let p = 0; p < count; p++) {
             this.pebbleOffsets.push({
-                ox: (window.randomSecure() - 0.5) * this.size * 2.5,
-                oy: (window.randomSecure() - 0.5) * this.size * 1.8,
-                cr: 1.5 + window.randomSecure() * 3,
-                lightD: -4 + window.randomSecure() * 8
+                ox: (Math.random() - 0.5) * this.size * 2.5,
+                oy: (Math.random() - 0.5) * this.size * 1.8,
+                cr: 1.5 + Math.random() * 3,
+                lightD: -4 + Math.random() * 8
             });
         }
     }
@@ -139,34 +139,34 @@ export class DesertFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initOasis(W, H, initial) {
         this.subType = 'oasis';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 40;
-        this.size = 18 + window.randomSecure() * 30;
-        this.elongation = 0.5 + window.randomSecure() * 0.4;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -60 - Math.random() * 40;
+        this.size = 18 + Math.random() * 30;
+        this.elongation = 0.5 + Math.random() * 0.4;
         // Fixed speed (like jungle swamp)
-        this.speed = 18 + window.randomSecure() * 14;
-        this.alpha = 0.5 + window.randomSecure() * 0.3;
-        this.rot = window.randomSecure() * Math.PI;
+        this.speed = 18 + Math.random() * 14;
+        this.alpha = 0.5 + Math.random() * 0.3;
+        this.rot = Math.random() * Math.PI;
         // Water colors
-        this.waterHue = 188 + window.randomSecure() * 18;
-        this.waterSat = 35 + window.randomSecure() * 18;
-        this.waterLight = 18 + window.randomSecure() * 10;
+        this.waterHue = 188 + Math.random() * 18;
+        this.waterSat = 35 + Math.random() * 18;
+        this.waterLight = 18 + Math.random() * 10;
         // Vegetation ring
-        this.vegHue = 105 + window.randomSecure() * 25;
-        this.vegSat = 30 + window.randomSecure() * 15;
-        this.vegLight = 16 + window.randomSecure() * 8;
+        this.vegHue = 105 + Math.random() * 25;
+        this.vegSat = 30 + Math.random() * 15;
+        this.vegLight = 16 + Math.random() * 8;
         // Palm trees (1-2)
         this.palms = [];
-        const palmN = 1 + Math.floor(window.randomSecure() * 2);
+        const palmN = 1 + Math.floor(Math.random() * 2);
         for (let i = 0; i < palmN; i++) {
-            const angle = window.randomSecure() * Math.PI * 2;
-            const dist = this.size * (0.85 + window.randomSecure() * 0.35);
+            const angle = Math.random() * Math.PI * 2;
+            const dist = this.size * (0.85 + Math.random() * 0.35);
             this.palms.push({
                 ox: Math.cos(angle) * dist,
                 oy: Math.sin(angle) * dist * this.elongation,
-                height: 6 + window.randomSecure() * 8,
-                crownR: 3 + window.randomSecure() * 3,
-                lean: (window.randomSecure() - 0.5) * 0.35
+                height: 6 + Math.random() * 8,
+                crownR: 3 + Math.random() * 3,
+                lean: (Math.random() - 0.5) * 0.35
             });
         }
     }
@@ -177,26 +177,26 @@ export class DesertFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initCactus(W, H, initial) {
         this.subType = 'cactus';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 25;
-        this.trunkH = 10 + window.randomSecure() * 14;
-        this.trunkW = 3 + window.randomSecure() * 3;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -40 - Math.random() * 25;
+        this.trunkH = 10 + Math.random() * 14;
+        this.trunkW = 3 + Math.random() * 3;
         this.size = this.trunkH;
         // Fixed speed
-        this.speed = 20 + window.randomSecure() * 14;
-        this.alpha = 0.55 + window.randomSecure() * 0.3;
-        this.hue = 108 + window.randomSecure() * 22;
-        this.sat = 40 + window.randomSecure() * 18;
-        this.lightness = 22 + window.randomSecure() * 10;
+        this.speed = 20 + Math.random() * 14;
+        this.alpha = 0.55 + Math.random() * 0.3;
+        this.hue = 108 + Math.random() * 22;
+        this.sat = 40 + Math.random() * 18;
+        this.lightness = 22 + Math.random() * 10;
         this.arms = [];
-        const armN = Math.floor(window.randomSecure() * 3);
+        const armN = Math.floor(Math.random() * 3);
         for (let i = 0; i < armN; i++) {
             this.arms.push({
-                y: this.trunkH * (0.3 + window.randomSecure() * 0.4),
-                len: 4 + window.randomSecure() * 5,
-                dir: window.randomSecure() < 0.5 ? -1 : 1,
-                w: this.trunkW * (0.6 + window.randomSecure() * 0.3),
-                upLen: 3 + window.randomSecure() * 5
+                y: this.trunkH * (0.3 + Math.random() * 0.4),
+                len: 4 + Math.random() * 5,
+                dir: Math.random() < 0.5 ? -1 : 1,
+                w: this.trunkW * (0.6 + Math.random() * 0.3),
+                upLen: 3 + Math.random() * 5
             });
         }
     }

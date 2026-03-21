@@ -1820,8 +1820,8 @@ export class UIManager {
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(sparkX, sparkY);
-                const endX = sparkX + (window.randomSecure() - 0.5) * s * 0.3;
-                const endY = sparkY + (window.randomSecure() - 0.5) * s * 0.3;
+                const endX = sparkX + (Math.random() - 0.5) * s * 0.3;
+                const endY = sparkY + (Math.random() - 0.5) * s * 0.3;
                 ctx.lineTo(endX, endY);
                 ctx.stroke();
             }

@@ -15,23 +15,23 @@ export class BosonConduitSector extends QuantumSectorRenderer {
         const streamCount = this.quality === 'low' ? 5 : 10;
         for (let i = 0; i < streamCount; i++) {
             const particles = [];
-            const particleCount = 4 + Math.floor(window.randomSecure() * 6);
-            const baseX = window.randomSecure() * W;
-            const angle = -Math.PI / 2 + (window.randomSecure() - 0.5) * 0.6;
+            const particleCount = 4 + Math.floor(Math.random() * 6);
+            const baseX = Math.random() * W;
+            const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
             for (let p = 0; p < particleCount; p++) {
                 particles.push({
                     offset: p * 15,
-                    size: 1.5 + window.randomSecure() * 2,
+                    size: 1.5 + Math.random() * 2,
                     alpha: 0.3 - p * 0.03
                 });
             }
             this.forceStreams.push({
-                x: baseX, y: window.randomSecure() * H,
-                angle, speed: 40 + window.randomSecure() * 60,
-                colorIdx: Math.floor(window.randomSecure() * 4),
+                x: baseX, y: Math.random() * H,
+                angle, speed: 40 + Math.random() * 60,
+                colorIdx: Math.floor(Math.random() * 4),
                 particles,
-                waveAmp: 10 + window.randomSecure() * 20,
-                waveFreq: 2 + window.randomSecure() * 3,
+                waveAmp: 10 + Math.random() * 20,
+                waveFreq: 2 + Math.random() * 3,
                 flashTimer: this.cooldown(10, 18),
                 flashing: false
             });
@@ -44,7 +44,7 @@ export class BosonConduitSector extends QuantumSectorRenderer {
             s.y += s.speed * dt;
             if (s.y > H + 50) {
                 s.y = -50;
-                s.x = window.randomSecure() * this.canvasWidth;
+                s.x = Math.random() * this.canvasWidth;
             }
             if (!s.flashing) {
                 s.flashTimer -= dt;

@@ -38,7 +38,7 @@ class BossPart {
         this.canShoot = config.canShoot || false;
         this.shootRate = config.shootRate || 2;
         this._baseShootRate = this.shootRate;
-        this.shootTimer = this.shootRate * window.randomSecure();
+        this.shootTimer = this.shootRate * Math.random();
         this.shootPattern = config.shootPattern || 'aimed'; // aimed, spread, radial, rapid
         this.bulletSpeed = config.bulletSpeed || 150;
         this.bulletCount = config.bulletCount || 1;
@@ -46,7 +46,7 @@ class BossPart {
         // Visual oscillation
         this.bobAmplitude = config.bobAmplitude || 0;
         this.bobSpeed = config.bobSpeed || 0;
-        this.bobPhase = window.randomSecure() * Math.PI * 2;
+        this.bobPhase = Math.random() * Math.PI * 2;
 
         // Score bonus when this part is destroyed
         this.score = config.score || 50;
@@ -114,7 +114,7 @@ class BossPart {
                 const py = game.player.position.y + game.player.height / 2;
                 const angle = Math.atan2(py - cy, px - cx);
                 for (let i = 0; i < 3; i++) {
-                    const spread = (window.randomSecure() - 0.5) * 0.2;
+                    const spread = (Math.random() - 0.5) * 0.2;
                     game.spawnBullet(cx, cy,
                         Math.cos(angle + spread) * (this.bulletSpeed + i * 20),
                         Math.sin(angle + spread) * (this.bulletSpeed + i * 20), 'enemy');

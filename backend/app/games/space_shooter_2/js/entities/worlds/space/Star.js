@@ -2,14 +2,14 @@
 // ===== STAR =====
 class Star {
     constructor(canvasWidth, canvasHeight, layer = 0, theme = null) {
-        this.x = window.randomSecure() * canvasWidth;
-        this.y = window.randomSecure() * canvasHeight;
+        this.x = Math.random() * canvasWidth;
+        this.y = Math.random() * canvasHeight;
         this.layer = layer;
-        this.size = 0.5 + layer * 0.8 + window.randomSecure() * 0.5;
-        this.speed = 15 + layer * 25 + window.randomSecure() * 10;
-        this.brightness = 0.3 + layer * 0.25 + window.randomSecure() * 0.2;
-        this.twinkleSpeed = 1 + window.randomSecure() * 3;
-        this.twinklePhase = window.randomSecure() * Math.PI * 2;
+        this.size = 0.5 + layer * 0.8 + Math.random() * 0.5;
+        this.speed = 15 + layer * 25 + Math.random() * 10;
+        this.brightness = 0.3 + layer * 0.25 + Math.random() * 0.2;
+        this.twinkleSpeed = 1 + Math.random() * 3;
+        this.twinklePhase = Math.random() * Math.PI * 2;
         this.color = (theme && theme.stars) ? theme.stars[layer] : ['#8899bb', '#aabbdd', '#ddeeff'][layer];
     }
 
@@ -18,7 +18,7 @@ class Star {
         this.twinklePhase += this.twinkleSpeed * dt;
         if (this.y > canvasHeight + 5) {
             this.y = -5;
-            this.x = window.randomSecure() * canvasWidth;
+            this.x = Math.random() * canvasWidth;
         }
     }
 

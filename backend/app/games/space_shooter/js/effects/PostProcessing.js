@@ -84,8 +84,8 @@ class PostProcessing {
         if (this.shakeTimer > 0) {
             const progress = this.shakeTimer / this.shakeDuration;
             const intensity = this.shakeIntensity * progress;
-            const offsetX = (window.randomSecure() - 0.5) * intensity * 2;
-            const offsetY = (window.randomSecure() - 0.5) * intensity * 2;
+            const offsetX = (Math.random() - 0.5) * intensity * 2;
+            const offsetY = (Math.random() - 0.5) * intensity * 2;
             this.canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
         } else {
             this.canvas.style.transform = '';

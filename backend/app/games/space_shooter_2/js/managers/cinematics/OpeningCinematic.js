@@ -349,8 +349,8 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.shadowColor = 'rgba(0,150,255,0.9)';
                 ctx.shadowBlur = 35 * w2alpha;
                 const glitchActive = (t - 0.8) < 0.35;
-                const gx = glitchActive ? (window.randomSecure() - 0.5) * 6 : 0;
-                const gy = glitchActive ? (window.randomSecure() - 0.5) * 3 : 0;
+                const gx = glitchActive ? (Math.random() - 0.5) * 6 : 0;
+                const gy = glitchActive ? (Math.random() - 0.5) * 3 : 0;
 
                 if ((t - 0.8) < 0.5) {
                     const abr = (1 - (t - 0.8) / 0.5) * 5;

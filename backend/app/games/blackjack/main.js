@@ -280,16 +280,16 @@ function showWinCelebration(payout, isBlackjack) {
     for (let i = 0; i < count; i++) {
         const c = document.createElement('div');
         c.className = 'confetti';
-        c.style.background = colors[Math.floor(window.randomSecure() * colors.length)];
-        c.style.left = `${20 + window.randomSecure() * 60}%`;
-        c.style.top = `${30 + window.randomSecure() * 30}%`;
-        c.style.setProperty('--fall-x', `${(window.randomSecure() - 0.5) * 120}px`);
-        c.style.setProperty('--fall-y', `${60 + window.randomSecure() * 80}px`);
-        c.style.setProperty('--fall-rot', `${window.randomSecure() * 720 - 360}deg`);
-        c.style.setProperty('--fall-duration', `${0.8 + window.randomSecure() * 0.8}s`);
-        c.style.animationDelay = `${window.randomSecure() * 0.3}s`;
-        c.style.width = `${5 + window.randomSecure() * 6}px`;
-        c.style.height = `${5 + window.randomSecure() * 6}px`;
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = `${20 + Math.random() * 60}%`;
+        c.style.top = `${30 + Math.random() * 30}%`;
+        c.style.setProperty('--fall-x', `${(Math.random() - 0.5) * 120}px`);
+        c.style.setProperty('--fall-y', `${60 + Math.random() * 80}px`);
+        c.style.setProperty('--fall-rot', `${Math.random() * 720 - 360}deg`);
+        c.style.setProperty('--fall-duration', `${0.8 + Math.random() * 0.8}s`);
+        c.style.animationDelay = `${Math.random() * 0.3}s`;
+        c.style.width = `${5 + Math.random() * 6}px`;
+        c.style.height = `${5 + Math.random() * 6}px`;
         table.appendChild(c);
         setTimeout(() => c.remove(), 2000);
     }

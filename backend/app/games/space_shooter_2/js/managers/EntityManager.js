@@ -276,7 +276,7 @@ class EntityManager {
             ctx.fillRect(w / 4, h / 4, w / 4, h / 4);
 
             // Exhaust flame with gradient
-            const flicker = window.randomSecure() * 0.3 + 0.7;
+            const flicker = Math.random() * 0.3 + 0.7;
             const flameGrad = ctx.createLinearGradient(0, h / 3, 0, h / 2 + 10);
             flameGrad.addColorStop(0, `rgba(255, 200, 50, ${flicker})`);
             flameGrad.addColorStop(0.5, `rgba(255, 100, 0, ${flicker * 0.7})`);
@@ -285,7 +285,7 @@ class EntityManager {
             ctx.fillStyle = flameGrad;
             ctx.beginPath();
             ctx.moveTo(-w / 4, h / 3);
-            ctx.lineTo(0, h / 2 + 8 + window.randomSecure() * 5);
+            ctx.lineTo(0, h / 2 + 8 + Math.random() * 5);
             ctx.lineTo(w / 4, h / 3);
             ctx.closePath();
             ctx.fill();

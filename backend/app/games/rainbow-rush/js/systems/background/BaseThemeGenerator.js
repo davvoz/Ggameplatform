@@ -78,8 +78,8 @@ export class BaseThemeGenerator {
      */
     randomPosition(marginX = 0, marginY = 0) {
         return {
-            x: marginX + window.randomSecure() * (this.canvasWidth - 2 * marginX),
-            y: marginY + window.randomSecure() * (this.canvasHeight - 2 * marginY)
+            x: marginX + Math.random() * (this.canvasWidth - 2 * marginX),
+            y: marginY + Math.random() * (this.canvasHeight - 2 * marginY)
         };
     }
 
@@ -90,7 +90,7 @@ export class BaseThemeGenerator {
      * @returns {number} Random value
      */
     randomInRange(min, max) {
-        return min + window.randomSecure() * (max - min);
+        return min + Math.random() * (max - min);
     }
 
     /**
@@ -111,9 +111,9 @@ export class BaseThemeGenerator {
      */
     colorVariation(baseColor, variation = 0.2) {
         return [
-            Math.max(0, Math.min(1, baseColor[0] + (window.randomSecure() - 0.5) * variation)),
-            Math.max(0, Math.min(1, baseColor[1] + (window.randomSecure() - 0.5) * variation)),
-            Math.max(0, Math.min(1, baseColor[2] + (window.randomSecure() - 0.5) * variation)),
+            Math.max(0, Math.min(1, baseColor[0] + (Math.random() - 0.5) * variation)),
+            Math.max(0, Math.min(1, baseColor[1] + (Math.random() - 0.5) * variation)),
+            Math.max(0, Math.min(1, baseColor[2] + (Math.random() - 0.5) * variation)),
             baseColor[3]
         ];
     }
@@ -128,9 +128,9 @@ export class BaseThemeGenerator {
         const puffs = [];
         for (let j = 0; j < numPuffs; j++) {
             puffs.push({
-                offsetX: (j - numPuffs / 2) * (baseSize * 0.5) + (window.randomSecure() - 0.5) * 20,
-                offsetY: (window.randomSecure() - 0.5) * 15,
-                radius: baseSize * (0.4 + window.randomSecure() * 0.4)
+                offsetX: (j - numPuffs / 2) * (baseSize * 0.5) + (Math.random() - 0.5) * 20,
+                offsetY: (Math.random() - 0.5) * 15,
+                radius: baseSize * (0.4 + Math.random() * 0.4)
             });
         }
         return puffs;

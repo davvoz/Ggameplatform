@@ -617,17 +617,17 @@ export class GameController {
 
     _spawnCoinRainCollectible(dims) {
         const collectible = {
-            x: window.randomSecure() * dims.width,
+            x: Math.random() * dims.width,
             y: -30,
             radius: 15,
             type: 'collectible',
             color: [1.0, 0.84, 0.0, 1.0],
             velocity: 0,
             value: 10,
-            pulsePhase: window.randomSecure() * Math.PI * 2,
+            pulsePhase: Math.random() * Math.PI * 2,
             fromCoinRain: true,
-            velocityY: 200 + window.randomSecure() * 150,
-            drift: (window.randomSecure() - 0.5) * 30
+            velocityY: 200 + Math.random() * 150,
+            drift: (Math.random() - 0.5) * 30
         };
         this.entityManager.addEntity('collectibles', collectible);
     }

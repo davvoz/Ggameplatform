@@ -77,10 +77,10 @@ export class BackgroundRenderer {
         for (let i = 0; i < config.COUNT; i++) {
             this.ambientParticles.push({
                 type: 'star',
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
                 size: config.SIZE,
-                twinklePhase: window.randomSecure() * Math.PI * 2,
+                twinklePhase: Math.random() * Math.PI * 2,
                 twinkleSpeed: config.TWINKLE_SPEED,
                 brightness: config.BRIGHTNESS,
                 color: [...config.COLOR],
@@ -95,19 +95,19 @@ export class BackgroundRenderer {
         for (let i = 0; i < config.COUNT; i++) {
             this.ambientParticles.push({
                 type: 'energy',
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight,
-                size: config.MIN_SIZE + window.randomSecure() * (config.MAX_SIZE - config.MIN_SIZE),
-                vx: (window.randomSecure() - 0.5) * config.SPEED,
-                vy: (window.randomSecure() - 0.5) * config.SPEED,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: config.MIN_SIZE + Math.random() * (config.MAX_SIZE - config.MIN_SIZE),
+                vx: (Math.random() - 0.5) * config.SPEED,
+                vy: (Math.random() - 0.5) * config.SPEED,
                 life: 1.0,
-                maxLife: config.MIN_LIFE + window.randomSecure() * (config.MAX_LIFE - config.MIN_LIFE),
+                maxLife: config.MIN_LIFE + Math.random() * (config.MAX_LIFE - config.MIN_LIFE),
                 color: [
-                    0.4 + window.randomSecure() * 0.6,
-                    0.5 + window.randomSecure() * 0.5,
-                    0.8 + window.randomSecure() * 0.2
+                    0.4 + Math.random() * 0.6,
+                    0.5 + Math.random() * 0.5,
+                    0.8 + Math.random() * 0.2
                 ],
-                radius: config.MIN_SIZE + window.randomSecure() * (config.MAX_SIZE - config.MIN_SIZE)
+                radius: config.MIN_SIZE + Math.random() * (config.MAX_SIZE - config.MIN_SIZE)
             });
         }
     }
@@ -137,10 +137,10 @@ export class BackgroundRenderer {
     }
 
     resetEnergyParticle(particle) {
-        particle.x = window.randomSecure() * this.canvasWidth;
-        particle.y = window.randomSecure() * this.canvasHeight;
-        particle.vx = (window.randomSecure() - 0.5) * AMBIENT_PARTICLE_CONFIG.ENERGY.SPEED;
-        particle.vy = (window.randomSecure() - 0.5) * AMBIENT_PARTICLE_CONFIG.ENERGY.SPEED;
+        particle.x = Math.random() * this.canvasWidth;
+        particle.y = Math.random() * this.canvasHeight;
+        particle.vx = (Math.random() - 0.5) * AMBIENT_PARTICLE_CONFIG.ENERGY.SPEED;
+        particle.vy = (Math.random() - 0.5) * AMBIENT_PARTICLE_CONFIG.ENERGY.SPEED;
         particle.life = particle.maxLife;
     }
 

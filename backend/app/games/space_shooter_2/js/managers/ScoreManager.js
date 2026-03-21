@@ -78,7 +78,7 @@ class ScoreManager {
         g.sound.playExplosion();
 
         const dropChance = enemy.dropChance + perks.getDropRateBonus();
-        if (window.randomSecure() < dropChance) {
+        if (Math.random() < dropChance) {
             const types = ['health', 'shield', 'weapon', 'speed', 'rapid', 'points', 'ultimate'];
             const weights = [15, 10, 20, 8, 8, 20, 5];
             // W2 power-ups available from Level 31+
@@ -112,8 +112,8 @@ class ScoreManager {
         for (let i = 0; i < 5; i++) {
             setTimeout(() => {
                 entities.explosions.push(new Explosion(
-                    cx + (window.randomSecure() - 0.5) * 60,
-                    cy + (window.randomSecure() - 0.5) * 60,
+                    cx + (Math.random() - 0.5) * 60,
+                    cy + (Math.random() - 0.5) * 60,
                     2
                 ));
                 g.particles.emit(cx, cy, 'explosion', 20);
@@ -153,8 +153,8 @@ class ScoreManager {
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 entities.explosions.push(new Explosion(
-                    cx + (window.randomSecure() - 0.5) * 40,
-                    cy + (window.randomSecure() - 0.5) * 40,
+                    cx + (Math.random() - 0.5) * 40,
+                    cy + (Math.random() - 0.5) * 40,
                     1.5
                 ));
                 g.particles.emit(cx, cy, 'explosion', 14);
@@ -190,7 +190,7 @@ class ScoreManager {
 
     weightedRandom(items, weights) {
         const totalWeight = weights.reduce((a, b) => a + b, 0);
-        let random = window.randomSecure() * totalWeight;
+        let random = Math.random() * totalWeight;
         for (let i = 0; i < items.length; i++) {
             random -= weights[i];
             if (random <= 0) return items[i];

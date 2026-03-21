@@ -98,9 +98,9 @@ export function generateShape(n, min, range, alternate = false, altMin = 0.25, a
     const shape = [];
     for (let i = 0; i < n; i++) {
         if (alternate && i % 2 !== 0) {
-            shape.push(altMin + window.randomSecure() * altRange);
+            shape.push(altMin + Math.random() * altRange);
         } else {
-            shape.push(min + window.randomSecure() * range);
+            shape.push(min + Math.random() * range);
         }
     }
     return shape;
@@ -114,24 +114,24 @@ export function generateShape(n, min, range, alternate = false, altMin = 0.25, a
  * @returns {{ hue: number, sat: number, lightness: number }}
  */
 export function pickColor(palette, near = 0) {
-    const roll = window.randomSecure();
+    const roll = Math.random();
     let cumulative = 0;
     for (const entry of palette) {
         cumulative += entry.weight;
         if (roll < cumulative) {
             return {
-                hue: entry.hue[0] + window.randomSecure() * entry.hue[1],
-                sat: entry.sat[0] + window.randomSecure() * entry.sat[1],
-                lightness: entry.light[0] + near * (entry.light[2] || 0) + window.randomSecure() * entry.light[1]
+                hue: entry.hue[0] + Math.random() * entry.hue[1],
+                sat: entry.sat[0] + Math.random() * entry.sat[1],
+                lightness: entry.light[0] + near * (entry.light[2] || 0) + Math.random() * entry.light[1]
             };
         }
     }
     // Fallback to last
     const last = palette[palette.length - 1];
     return {
-        hue: last.hue[0] + window.randomSecure() * last.hue[1],
-        sat: last.sat[0] + window.randomSecure() * last.sat[1],
-        lightness: last.light[0] + near * (last.light[2] || 0) + window.randomSecure() * last.light[1]
+        hue: last.hue[0] + Math.random() * last.hue[1],
+        sat: last.sat[0] + Math.random() * last.sat[1],
+        lightness: last.light[0] + near * (last.light[2] || 0) + Math.random() * last.light[1]
     };
 }
 

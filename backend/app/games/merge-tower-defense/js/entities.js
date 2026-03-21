@@ -411,7 +411,7 @@ class Zombie {
         this.stunnedUntil = 0; // Stun effect timestamp
         
         // Animation
-        this.animPhase = window.randomSecure() * Math.PI * 2;
+        this.animPhase = Math.random() * Math.PI * 2;
         this.hitFlash = 0;
         this.multiSprite = null;
         

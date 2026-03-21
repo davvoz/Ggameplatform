@@ -24,19 +24,19 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
         for (let c = 0; c < crevasseCount; c++) {
             let baseX;
             if (crevasseCount === 1) {
-                baseX = W * 0.2 + window.randomSecure() * W * 0.6;
+                baseX = W * 0.2 + Math.random() * W * 0.6;
             } else {
                 const slot = (c + 0.5) / crevasseCount;
-                baseX = W * (0.1 + slot * 0.8) + (window.randomSecure() - 0.5) * W * 0.1;
+                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.1;
             }
-            const width = 14 + window.randomSecure() * 18;
+            const width = 14 + Math.random() * 18;
             const tileH = H * 3;
-            const segH = 45 + window.randomSecure() * 30;
+            const segH = 45 + Math.random() * 30;
             const segs = Math.ceil(tileH / segH);
             const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (window.randomSecure() - 0.5) * 8;
+            let cx = 0, drift = (Math.random() - 0.5) * 8;
             for (let i = 0; i < segs; i++) {
-                drift += (window.randomSecure() - 0.5) * 14;
+                drift += (Math.random() - 0.5) * 14;
                 drift = Math.max(-25, Math.min(25, drift));
                 cx += drift;
                 const maxWander = W * 0.18;
@@ -44,9 +44,9 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
                 points.push({ x: cx, y: (i + 1) * segH });
             }
             const totalCrevasseH = points[points.length - 1].y;
-            const hue = 198 + window.randomSecure() * 18;
-            const sat = 50 + window.randomSecure() * 25;
-            const light = 22 + window.randomSecure() * 14;
+            const hue = 198 + Math.random() * 18;
+            const sat = 50 + Math.random() * 25;
+            const light = 22 + Math.random() * 14;
             this._iceCrevasses.push({ baseX, width, points, totalH: totalCrevasseH, hue, sat, light });
         }
         this._iceCrevasseSpeed = 20;
@@ -62,19 +62,19 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
-            const nPts = 6 + Math.floor(window.randomSecure() * 2);
+            const nPts = 6 + Math.floor(Math.random() * 2);
             const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.72 + window.randomSecure() * 0.32);
+            for (let s = 0; s < nPts; s++) shape.push(0.72 + Math.random() * 0.32);
             this._edgeGlaciers.push({
                 ...pos, shape,
-                reach: eR[0] + window.randomSecure() * (eR[1] - eR[0]),
-                height: 30 + window.randomSecure() * 50,
-                hue: eH[0] + window.randomSecure() * (eH[1] - eH[0]),
-                sat: eS[0] + window.randomSecure() * (eS[1] - eS[0]),
-                lightness: eL[0] + window.randomSecure() * (eL[1] - eL[0]),
-                alpha: 0.65 + window.randomSecure() * 0.3,
-                hasShine: window.randomSecure() < 0.45,
-                shineHue: 195 + window.randomSecure() * 18
+                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
+                height: 30 + Math.random() * 50,
+                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
+                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
+                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
+                alpha: 0.65 + Math.random() * 0.3,
+                hasShine: Math.random() < 0.45,
+                shineHue: 195 + Math.random() * 18
             });
         }
 
@@ -84,15 +84,15 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
         const lakeCount = fcfg ? (fcfg.frozenLakes || 0) : 0;
         for (let l = 0; l < lakeCount; l++) {
             this._frozenLakes.push({
-                x: W * 0.15 + window.randomSecure() * W * 0.7,
-                y: window.randomSecure() * H * 3,
-                rx: 30 + window.randomSecure() * 45,
-                ry: 15 + window.randomSecure() * 25,
-                rot: (window.randomSecure() - 0.5) * 0.4,
-                hue: 198 + window.randomSecure() * 15,
-                sat: 35 + window.randomSecure() * 20,
-                light: 28 + window.randomSecure() * 12,
-                alpha: 0.45 + window.randomSecure() * 0.25,
+                x: W * 0.15 + Math.random() * W * 0.7,
+                y: Math.random() * H * 3,
+                rx: 30 + Math.random() * 45,
+                ry: 15 + Math.random() * 25,
+                rot: (Math.random() - 0.5) * 0.4,
+                hue: 198 + Math.random() * 15,
+                sat: 35 + Math.random() * 20,
+                light: 28 + Math.random() * 12,
+                alpha: 0.45 + Math.random() * 0.25,
                 totalH: H * 3
             });
         }
@@ -107,15 +107,15 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
                 : Math.max(10, Math.round((fcfg.snowCount || 30) * 0.45));
             for (let i = 0; i < snowCount; i++) {
                 this._snowflakes.push({
-                    x: window.randomSecure() * W,
-                    y: window.randomSecure() * H,
-                    size: 0.5 + window.randomSecure() * 2.5,
-                    speed: 12 + window.randomSecure() * 18,
-                    drift: (window.randomSecure() - 0.5) * 8,
-                    driftPhase: window.randomSecure() * Math.PI * 2,
-                    alpha: 0.2 + window.randomSecure() * 0.5,
-                    hue: 200 + window.randomSecure() * 15,
-                    twinklePhase: window.randomSecure() * Math.PI * 2
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    size: 0.5 + Math.random() * 2.5,
+                    speed: 12 + Math.random() * 18,
+                    drift: (Math.random() - 0.5) * 8,
+                    driftPhase: Math.random() * Math.PI * 2,
+                    alpha: 0.2 + Math.random() * 0.5,
+                    hue: 200 + Math.random() * 15,
+                    twinklePhase: Math.random() * Math.PI * 2
                 });
             }
         }
@@ -147,7 +147,7 @@ export class FrozenPlanetRenderer extends PlanetRenderer {
             for (const sf of this._snowflakes) {
                 sf.y += sf.speed * dt;
                 sf.x += Math.sin(sf.driftPhase + now * 0.8) * sf.drift * dt;
-                if (sf.y > H + 5) { sf.y = -5; sf.x = window.randomSecure() * W; }
+                if (sf.y > H + 5) { sf.y = -5; sf.x = Math.random() * W; }
                 if (sf.x < -10) sf.x = W + 5;
                 if (sf.x > W + 10) sf.x = -5;
             }

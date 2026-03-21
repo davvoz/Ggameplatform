@@ -41,7 +41,7 @@ export class AIPlayer {
      * Easy AI: Random play
      */
     playEasy(hand) {
-        const index = Math.floor(window.randomSecure() * hand.length);
+        const index = Math.floor(Math.random() * hand.length);
         return hand[index];
     }
     

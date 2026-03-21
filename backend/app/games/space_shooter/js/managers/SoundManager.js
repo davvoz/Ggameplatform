@@ -413,7 +413,7 @@ class SoundManager {
         const data = buffer.getChannelData(0);
         
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = (window.randomSecure() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
         }
         
         const noise = this.audioContext.createBufferSource();

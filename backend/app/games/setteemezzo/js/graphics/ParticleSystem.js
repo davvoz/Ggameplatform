@@ -52,13 +52,13 @@ export class ParticleSystem {
         lifeMax = 1200,
     } = {}) {
         for (let i = 0; i < count; i++) {
-            const angle = window.randomSecure() * Math.PI * 2;
-            const speed = speedMin + window.randomSecure() * (speedMax - speedMin);
+            const angle = Math.random() * Math.PI * 2;
+            const speed = speedMin + Math.random() * (speedMax - speedMin);
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed - 40;
-            const life = lifeMin + window.randomSecure() * (lifeMax - lifeMin);
-            const color = colors[Math.floor(window.randomSecure() * colors.length)];
-            const size = sizeMin + window.randomSecure() * (sizeMax - sizeMin);
+            const life = lifeMin + Math.random() * (lifeMax - lifeMin);
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const size = sizeMin + Math.random() * (sizeMax - sizeMin);
             this.#particles.push(new Particle(x, y, vx, vy, life, color, size));
         }
     }
@@ -66,16 +66,16 @@ export class ParticleSystem {
     /** Emit floating sparkles (no gravity). */
     sparkle(x, y, count, color = '#d4af37') {
         for (let i = 0; i < count; i++) {
-            const angle = window.randomSecure() * Math.PI * 2;
-            const speed = 10 + window.randomSecure() * 30;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 10 + Math.random() * 30;
             const p = new Particle(
-                x + (window.randomSecure() - 0.5) * 40,
-                y + (window.randomSecure() - 0.5) * 20,
+                x + (Math.random() - 0.5) * 40,
+                y + (Math.random() - 0.5) * 20,
                 Math.cos(angle) * speed,
                 -Math.abs(Math.sin(angle) * speed) - 10,
-                600 + window.randomSecure() * 600,
+                600 + Math.random() * 600,
                 color,
-                1 + window.randomSecure() * 2
+                1 + Math.random() * 2
             );
             this.#particles.push(p);
         }

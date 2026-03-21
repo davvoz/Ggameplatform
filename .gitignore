@@ -304,3 +304,5 @@ backend/scripts/setup_city_world.py
 backend/scripts/seed_test_users.py
 TECHNICAL_DOCUMENTATION.md
 backend/app/games/merge-tower-defense/offusca_game.bat
+backend/app/games/space_shooter/js/offusca_level_data.bat
+backend/app/games/space_shooter/js/offusca_main.bat

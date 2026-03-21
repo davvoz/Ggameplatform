@@ -34,7 +34,7 @@ class PowerUp extends GameObject {
         super(x, y, 34, 34);
         this.type = type;
         this.tag = 'powerup';
-        this.floatPhase = window.randomSecure() * Math.PI * 2;
+        this.floatPhase = Math.random() * Math.PI * 2;
         this.floatSpeed = 3;
         this.fallSpeed = 60;
         this.lifeTime = 8;

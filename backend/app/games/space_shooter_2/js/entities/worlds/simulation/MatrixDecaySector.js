@@ -15,14 +15,14 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
         for (let c = 0; c < cols; c++) {
             const col = {
                 x: c * 14 + 7,
-                y: window.randomSecure() * this.canvasHeight,
-                speed: 40 + window.randomSecure() * 60,
-                length: 5 + Math.floor(window.randomSecure() * 12),
+                y: Math.random() * this.canvasHeight,
+                speed: 40 + Math.random() * 60,
+                length: 5 + Math.floor(Math.random() * 12),
                 chars: [],
                 changeTimer: 0
             };
             for (let i = 0; i < col.length; i++) {
-                col.chars.push(String.fromCharCode(0x30A0 + Math.floor(window.randomSecure() * 96)));
+                col.chars.push(String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96)));
             }
             this.codeColumns.push(col);
         }
@@ -30,15 +30,15 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
         const cubeCount = this.quality === 'low' ? 6 : 12;
         for (let i = 0; i < cubeCount; i++) {
             this.floaters.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight,
-                size: 6 + window.randomSecure() * 14,
-                speed: 5 + window.randomSecure() * 12,
-                dissolve: window.randomSecure(),
-                dissolveSpeed: 0.1 + window.randomSecure() * 0.15,
-                rot: window.randomSecure() * Math.PI * 2,
-                rotSpeed: (window.randomSecure() - 0.5) * 1.5,
-                hue: 100 + window.randomSecure() * 40
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                size: 6 + Math.random() * 14,
+                speed: 5 + Math.random() * 12,
+                dissolve: Math.random(),
+                dissolveSpeed: 0.1 + Math.random() * 0.15,
+                rot: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 1.5,
+                hue: 100 + Math.random() * 40
             });
         }
     }
@@ -48,13 +48,13 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
             col.y += col.speed * dt;
             if (col.y > this.canvasHeight + col.length * 14) {
                 col.y = -col.length * 14;
-                col.speed = 40 + window.randomSecure() * 60;
+                col.speed = 40 + Math.random() * 60;
             }
             col.changeTimer += dt;
             if (col.changeTimer > 0.15) {
                 col.changeTimer = 0;
-                const idx = Math.floor(window.randomSecure() * col.chars.length);
-                col.chars[idx] = String.fromCharCode(0x30A0 + Math.floor(window.randomSecure() * 96));
+                const idx = Math.floor(Math.random() * col.chars.length);
+                col.chars[idx] = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
             }
         }
         for (const f of this.floaters) {
@@ -62,8 +62,8 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
             f.rot += f.rotSpeed * dt;
             f.dissolve += f.dissolveSpeed * dt;
             if (f.dissolve > 1.2 || f.y > this.canvasHeight + 20) {
-                f.y = -20; f.x = window.randomSecure() * this.canvasWidth;
-                f.dissolve = 0; f.size = 6 + window.randomSecure() * 14;
+                f.y = -20; f.x = Math.random() * this.canvasWidth;
+                f.dissolve = 0; f.size = 6 + Math.random() * 14;
             }
         }
     }

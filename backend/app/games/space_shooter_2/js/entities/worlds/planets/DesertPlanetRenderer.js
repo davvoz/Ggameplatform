@@ -26,18 +26,18 @@ export class DesertPlanetRenderer extends PlanetRenderer {
             const spacing = totalH / oasisCount;
             for (let i = 0; i < oasisCount; i++) {
                 this._oasisPools.push({
-                    x: 40 + window.randomSecure() * (W - 80),
-                    y: i * spacing + window.randomSecure() * spacing * 0.6,
-                    rx: 18 + window.randomSecure() * 22,
-                    ry: 10 + window.randomSecure() * 14,
-                    rot: window.randomSecure() * 0.5 - 0.25,
-                    alpha: 0.5 + window.randomSecure() * 0.3,
-                    waterHue: 185 + window.randomSecure() * 20,
-                    waterSat: 50 + window.randomSecure() * 20,
-                    waterLight: 32 + window.randomSecure() * 12,
-                    vegHue: 110 + window.randomSecure() * 30,
-                    vegSat: 45 + window.randomSecure() * 20,
-                    vegLight: 28 + window.randomSecure() * 10,
+                    x: 40 + Math.random() * (W - 80),
+                    y: i * spacing + Math.random() * spacing * 0.6,
+                    rx: 18 + Math.random() * 22,
+                    ry: 10 + Math.random() * 14,
+                    rot: Math.random() * 0.5 - 0.25,
+                    alpha: 0.5 + Math.random() * 0.3,
+                    waterHue: 185 + Math.random() * 20,
+                    waterSat: 50 + Math.random() * 20,
+                    waterLight: 32 + Math.random() * 12,
+                    vegHue: 110 + Math.random() * 30,
+                    vegSat: 45 + Math.random() * 20,
+                    vegLight: 28 + Math.random() * 10,
                     totalH: totalH
                 });
             }
@@ -52,31 +52,31 @@ export class DesertPlanetRenderer extends PlanetRenderer {
         const edgeLit = dcfg ? dcfg.edgeLit : [28, 42];
         const edgeSat = dcfg ? dcfg.edgeSat : [45, 65];
         for (let i = 0; i < edgeN; i++) {
-            const side = window.randomSecure() < 0.6
-                ? (window.randomSecure() < 0.5 ? 'left' : 'right')
-                : (window.randomSecure() < 0.5 ? 'top' : 'bottom');
+            const side = Math.random() < 0.6
+                ? (Math.random() < 0.5 ? 'left' : 'right')
+                : (Math.random() < 0.5 ? 'top' : 'bottom');
             let x, y;
             switch (side) {
-                case 'left': x = 0; y = window.randomSecure() * H; break;
-                case 'right': x = W; y = window.randomSecure() * H; break;
-                case 'top': x = window.randomSecure() * W; y = 0; break;
-                case 'bottom': x = window.randomSecure() * W; y = H; break;
+                case 'left': x = 0; y = Math.random() * H; break;
+                case 'right': x = W; y = Math.random() * H; break;
+                case 'top': x = Math.random() * W; y = 0; break;
+                case 'bottom': x = Math.random() * W; y = H; break;
             }
-            const waveN = 5 + Math.floor(window.randomSecure() * 4);
+            const waveN = 5 + Math.floor(Math.random() * 4);
             const waves = [];
             for (let w = 0; w < waveN; w++) {
-                waves.push({ amp: 0.3 + window.randomSecure() * 0.7, phase: window.randomSecure() * Math.PI * 2 });
+                waves.push({ amp: 0.3 + Math.random() * 0.7, phase: Math.random() * Math.PI * 2 });
             }
             this._edgeDunes.push({
                 side, x, y,
-                reach: edgeReach[0] + window.randomSecure() * (edgeReach[1] - edgeReach[0]),
-                height: 30 + window.randomSecure() * 50,
-                hue: edgeHue[0] + window.randomSecure() * (edgeHue[1] - edgeHue[0]),
-                sat: edgeSat[0] + window.randomSecure() * (edgeSat[1] - edgeSat[0]),
-                lightness: edgeLit[0] + window.randomSecure() * (edgeLit[1] - edgeLit[0]),
-                alpha: 0.6 + window.randomSecure() * 0.3,
+                reach: edgeReach[0] + Math.random() * (edgeReach[1] - edgeReach[0]),
+                height: 30 + Math.random() * 50,
+                hue: edgeHue[0] + Math.random() * (edgeHue[1] - edgeHue[0]),
+                sat: edgeSat[0] + Math.random() * (edgeSat[1] - edgeSat[0]),
+                lightness: edgeLit[0] + Math.random() * (edgeLit[1] - edgeLit[0]),
+                alpha: 0.6 + Math.random() * 0.3,
                 waves,
-                hasHighlight: window.randomSecure() < 0.5
+                hasHighlight: Math.random() < 0.5
             });
         }
 
@@ -86,14 +86,14 @@ export class DesertPlanetRenderer extends PlanetRenderer {
             const count = dcfg.sandstormCount || 30;
             for (let i = 0; i < count; i++) {
                 this._sandstormParticles.push({
-                    x: window.randomSecure() * W,
-                    y: window.randomSecure() * H,
-                    size: 0.4 + window.randomSecure() * 2.0,
-                    speed: 15 + window.randomSecure() * 25,
-                    drift: 8 + window.randomSecure() * 15,
-                    driftPhase: window.randomSecure() * Math.PI * 2,
-                    alpha: 0.15 + window.randomSecure() * 0.35,
-                    hue: 35 + window.randomSecure() * 15
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    size: 0.4 + Math.random() * 2.0,
+                    speed: 15 + Math.random() * 25,
+                    drift: 8 + Math.random() * 15,
+                    driftPhase: Math.random() * Math.PI * 2,
+                    alpha: 0.15 + Math.random() * 0.35,
+                    hue: 35 + Math.random() * 15
                 });
             }
         }
@@ -118,7 +118,7 @@ export class DesertPlanetRenderer extends PlanetRenderer {
             for (const sp of this._sandstormParticles) {
                 sp.y += sp.speed * dt;
                 sp.x += Math.sin(sp.driftPhase + now * 0.6) * sp.drift * dt;
-                if (sp.y > H + 5) { sp.y = -5; sp.x = window.randomSecure() * W; }
+                if (sp.y > H + 5) { sp.y = -5; sp.x = Math.random() * W; }
                 if (sp.x < -10) sp.x = W + 5;
                 if (sp.x > W + 10) sp.x = -5;
             }

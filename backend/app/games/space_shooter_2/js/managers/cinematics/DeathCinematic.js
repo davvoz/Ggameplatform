@@ -35,18 +35,18 @@ export default class DeathCinematic extends CinematicScene {
         /* debris */
         this.debris = [];
         for (let i = 0; i < 40; i++) {
-            const angle = window.randomSecure() * Math.PI * 2;
-            const speed = window.randomSecure() * 300 + 80;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 300 + 80;
             this.debris.push({
                 x: this.deathX, y: this.deathY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - 40,
-                rot: window.randomSecure() * Math.PI * 2,
-                rotSpeed: (window.randomSecure() - 0.5) * 12,
-                size: window.randomSecure() * 6 + 2,
+                rot: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 12,
+                size: Math.random() * 6 + 2,
                 life: 1,
-                maxLife: window.randomSecure() * 2.0 + 1.0,
-                hue: Math.floor(window.randomSecure() * 40)
+                maxLife: Math.random() * 2.0 + 1.0,
+                hue: Math.floor(Math.random() * 40)
             });
         }
 
@@ -54,19 +54,19 @@ export default class DeathCinematic extends CinematicScene {
         this.cracks = [];
         const crackCount = 12;
         for (let i = 0; i < crackCount; i++) {
-            const baseAngle = (i / crackCount) * Math.PI * 2 + (window.randomSecure() - 0.5) * 0.3;
+            const baseAngle = (i / crackCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
             const segments = [];
             let ccx = this.deathX, ccy = this.deathY;
-            const segCount = Math.floor(window.randomSecure() * 4) + 3;
+            const segCount = Math.floor(Math.random() * 4) + 3;
             for (let s = 0; s < segCount; s++) {
-                const segLen   = window.randomSecure() * 50 + 30;
-                const deviation = (window.randomSecure() - 0.5) * 0.6;
+                const segLen   = Math.random() * 50 + 30;
+                const deviation = (Math.random() - 0.5) * 0.6;
                 const nx = ccx + Math.cos(baseAngle + deviation) * segLen;
                 const ny = ccy + Math.sin(baseAngle + deviation) * segLen;
                 segments.push({ x: nx, y: ny });
                 ccx = nx; ccy = ny;
             }
-            this.cracks.push({ segments, revealSpeed: window.randomSecure() * 2 + 2.5 });
+            this.cracks.push({ segments, revealSpeed: Math.random() * 2 + 2.5 });
         }
 
         this.glitchChars = '█▓▒░╠╣╚╗┃━▀▄《》';
@@ -75,14 +75,14 @@ export default class DeathCinematic extends CinematicScene {
         this.embers = [];
         for (let i = 0; i < 30; i++) {
             this.embers.push({
-                x: window.randomSecure() * w,
-                y: h + window.randomSecure() * 40,
-                vx: (window.randomSecure() - 0.5) * 30,
-                vy: -(window.randomSecure() * 80 + 40),
-                size: window.randomSecure() * 3 + 1,
-                life: window.randomSecure() * 2 + 1,
-                hue: Math.floor(window.randomSecure() * 30 + 10),
-                flicker: window.randomSecure() * Math.PI * 2
+                x: Math.random() * w,
+                y: h + Math.random() * 40,
+                vx: (Math.random() - 0.5) * 30,
+                vy: -(Math.random() * 80 + 40),
+                size: Math.random() * 3 + 1,
+                life: Math.random() * 2 + 1,
+                hue: Math.floor(Math.random() * 30 + 10),
+                flicker: Math.random() * Math.PI * 2
             });
         }
 
@@ -122,16 +122,16 @@ export default class DeathCinematic extends CinematicScene {
         }
         this.embers = this.embers.filter(e => e.life > 0);
 
-        if (t > 0.8 && t < 5.0 && window.randomSecure() < 0.35) {
+        if (t > 0.8 && t < 5.0 && Math.random() < 0.35) {
             this.embers.push({
-                x: window.randomSecure() * w,
+                x: Math.random() * w,
                 y: h + 10,
-                vx: (window.randomSecure() - 0.5) * 40,
-                vy: -(window.randomSecure() * 60 + 30),
-                size: window.randomSecure() * 2.5 + 0.5,
-                life: window.randomSecure() * 1.5 + 0.5,
-                hue: Math.floor(window.randomSecure() * 30 + 10),
-                flicker: window.randomSecure() * Math.PI * 2
+                vx: (Math.random() - 0.5) * 40,
+                vy: -(Math.random() * 60 + 30),
+                size: Math.random() * 2.5 + 0.5,
+                life: Math.random() * 1.5 + 0.5,
+                hue: Math.floor(Math.random() * 30 + 10),
+                flicker: Math.random() * Math.PI * 2
             });
         }
 
@@ -248,15 +248,15 @@ export default class DeathCinematic extends CinematicScene {
             ctx.save();
             ctx.globalAlpha = staticAlpha;
             for (let y = 0; y < h; y += 3) {
-                if (window.randomSecure() < 0.35) {
-                    const br = Math.floor(window.randomSecure() * 80 + 20);
+                if (Math.random() < 0.35) {
+                    const br = Math.floor(Math.random() * 80 + 20);
                     ctx.fillStyle = `rgb(${br},${Math.floor(br * 0.3)},${Math.floor(br * 0.3)})`;
                     ctx.fillRect(0, y, w, 1);
                 }
             }
-            if (window.randomSecure() < 0.15) {
-                const bandY = window.randomSecure() * h;
-                const bandH = window.randomSecure() * 8 + 2;
+            if (Math.random() < 0.15) {
+                const bandY = Math.random() * h;
+                const bandH = Math.random() * 8 + 2;
                 ctx.globalAlpha = staticAlpha * 2;
                 ctx.fillStyle = 'rgba(255,30,30,0.15)';
                 ctx.fillRect(0, bandY, w, bandH);
@@ -281,17 +281,17 @@ export default class DeathCinematic extends CinematicScene {
 
             let displayText = '';
             for (let i = 0; i < textBaseStr.length; i++) {
-                if (glitchInt > 0 && window.randomSecure() < glitchInt * 0.7) {
+                if (glitchInt > 0 && Math.random() < glitchInt * 0.7) {
                     displayText += this.glitchChars[
-                        Math.floor(window.randomSecure() * this.glitchChars.length)
+                        Math.floor(Math.random() * this.glitchChars.length)
                     ];
                 } else {
                     displayText += textBaseStr[i];
                 }
             }
 
-            const glitchOX = glitchInt > 0.1 ? (window.randomSecure() - 0.5) * 12 * glitchInt : 0;
-            const glitchOY = glitchInt > 0.2 ? (window.randomSecure() - 0.5) * 6  * glitchInt : 0;
+            const glitchOX = glitchInt > 0.1 ? (Math.random() - 0.5) * 12 * glitchInt : 0;
+            const glitchOY = glitchInt > 0.2 ? (Math.random() - 0.5) * 6  * glitchInt : 0;
             const slamScale = t < 2.1 ? 1.3 + (1 - eased) * 0.8 : 1.0;
 
             ctx.translate(w / 2 + glitchOX, titleY + glitchOY);

@@ -23,13 +23,13 @@ export class DataOceanSector extends SimulationSectorRenderer {
         const islandCount = this.quality === 'low' ? 4 : 8;
         for (let i = 0; i < islandCount; i++) {
             this.floaters.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight,
-                w: 20 + window.randomSecure() * 40,
-                h: 12 + window.randomSecure() * 25,
-                speed: 5 + window.randomSecure() * 10,
-                hue: 180 + window.randomSecure() * 30,
-                alpha: 0.1 + window.randomSecure() * 0.12
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                w: 20 + Math.random() * 40,
+                h: 12 + Math.random() * 25,
+                speed: 5 + Math.random() * 10,
+                hue: 180 + Math.random() * 30,
+                alpha: 0.1 + Math.random() * 0.12
             });
         }
     }
@@ -37,7 +37,7 @@ export class DataOceanSector extends SimulationSectorRenderer {
     update(dt) {
         for (const f of this.floaters) {
             f.y += f.speed * dt;
-            if (f.y > this.canvasHeight + 30) { f.y = -30; f.x = window.randomSecure() * this.canvasWidth; }
+            if (f.y > this.canvasHeight + 30) { f.y = -30; f.x = Math.random() * this.canvasWidth; }
         }
     }
 

@@ -190,7 +190,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this._createParticleRing(
                     heartRecharge.x,
                     heartRecharge.y,
-                    [1.0, 0.2 + window.randomSecure() * 0.3, 0.5, 1.0],
+                    [1.0, 0.2 + Math.random() * 0.3, 0.5, 1.0],
                     50,
                     entityManager,
                     150,

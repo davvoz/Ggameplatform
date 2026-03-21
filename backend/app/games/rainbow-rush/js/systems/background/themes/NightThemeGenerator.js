@@ -68,11 +68,11 @@ export class NightThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.STAR_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight * 0.7,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.7,
                 radius: this.randomInRange(config.STAR_MIN_RADIUS, config.STAR_MAX_RADIUS),
-                twinkle: window.randomSecure() * Math.PI * 2,
-                color: [1.0, 1.0, 0.9, 0.7 + window.randomSecure() * 0.3],
+                twinkle: Math.random() * Math.PI * 2,
+                color: [1.0, 1.0, 0.9, 0.7 + Math.random() * 0.3],
                 type: 'star'
             });
         }
@@ -83,15 +83,15 @@ export class NightThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.FIREFLY_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.5 + window.randomSecure() * this.canvasHeight * 0.3,
-                radius: 2 + window.randomSecure() * 2,
-                speed: 15 + window.randomSecure() * 25,
-                glow: window.randomSecure() * Math.PI * 2,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.3,
+                radius: 2 + Math.random() * 2,
+                speed: 15 + Math.random() * 25,
+                glow: Math.random() * Math.PI * 2,
                 color: [0.9, 1.0, 0.4, 0.8],
                 type: 'firefly',
-                driftX: (window.randomSecure() - 0.5) * 40,
-                driftY: (window.randomSecure() - 0.5) * 25
+                driftX: (Math.random() - 0.5) * 40,
+                driftY: (Math.random() - 0.5) * 25
             });
         }
     }
@@ -100,15 +100,15 @@ export class NightThemeGenerator extends BaseThemeGenerator {
         const config = NIGHT_THEME_CONFIG;
         
         for (let i = 0; i < config.CLOUD_COUNT; i++) {
-            const baseSize = 50 + window.randomSecure() * 40;
-            const numPuffs = 3 + Math.floor(window.randomSecure() * 4);
+            const baseSize = 50 + Math.random() * 40;
+            const numPuffs = 3 + Math.floor(Math.random() * 4);
             
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight * 0.5,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight * 0.5,
                 baseSize,
                 puffs: this.createCloudPuffs(numPuffs, baseSize),
-                speed: 15 + window.randomSecure() * 20,
+                speed: 15 + Math.random() * 20,
                 color: [0.2, 0.2, 0.3, 0.4],
                 type: 'cloud'
             });

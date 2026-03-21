@@ -33,7 +33,7 @@ export class FrozenFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const fc = this.config;
         const d = fc ? fc.dist : [0.30, 0.55, 0.72, 0.88];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initIceSheet(W, H, initial, fc);
         else if (roll < d[1]) this._initSnowDrift(W, H, initial);
@@ -46,94 +46,94 @@ export class FrozenFx extends BaseFxStrategy {
 
     _initIceSheet(W, H, initial, fc) {
         this.subType = 'iceSheet';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -100 - window.randomSecure() * 80;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -100 - Math.random() * 80;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const mul = fc ? (fc.iceSheetMul || 1) : 1;
-        this.size = (25 + near * 40 + window.randomSecure() * 25) * mul;
-        this.speed = 18 + near * 16 + window.randomSecure() * 12;
-        this.alpha = 0.6 + near * 0.25 + window.randomSecure() * 0.12;
+        this.size = (25 + near * 40 + Math.random() * 25) * mul;
+        this.speed = 18 + near * 16 + Math.random() * 12;
+        this.alpha = 0.6 + near * 0.25 + Math.random() * 0.12;
         Object.assign(this, pickColor(ICE_SHEET_PALETTE, near));
-        this.shape = generateShape(7 + Math.floor(window.randomSecure() * 3), 0.75, 0.3);
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 0.04;
-        this.shadowOx = 3 + window.randomSecure() * 4;
-        this.shadowOy = 3 + window.randomSecure() * 4;
+        this.shape = generateShape(7 + Math.floor(Math.random() * 3), 0.75, 0.3);
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 0.04;
+        this.shadowOx = 3 + Math.random() * 4;
+        this.shadowOy = 3 + Math.random() * 4;
     }
 
     _initSnowDrift(W, H, initial) {
         this.subType = 'snowDrift';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 40;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -60 - Math.random() * 40;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
-        this.size = 18 + near * 20 + window.randomSecure() * 25;
-        this.speed = 19 + near * 14 + window.randomSecure() * 12;
-        this.alpha = 0.5 + near * 0.25 + window.randomSecure() * 0.2;
-        this.shape = generateShape(6 + Math.floor(window.randomSecure() * 3), 0.65, 0.25);
-        this.elongation = 0.45 + window.randomSecure() * 0.3;
-        this.rot = window.randomSecure() * Math.PI;
-        this.shadowOx = 2 + window.randomSecure() * 3;
-        this.shadowOy = 2 + window.randomSecure() * 3;
+        this.size = 18 + near * 20 + Math.random() * 25;
+        this.speed = 19 + near * 14 + Math.random() * 12;
+        this.alpha = 0.5 + near * 0.25 + Math.random() * 0.2;
+        this.shape = generateShape(6 + Math.floor(Math.random() * 3), 0.65, 0.25);
+        this.elongation = 0.45 + Math.random() * 0.3;
+        this.rot = Math.random() * Math.PI;
+        this.shadowOx = 2 + Math.random() * 3;
+        this.shadowOy = 2 + Math.random() * 3;
         Object.assign(this, pickColor(SNOW_PALETTE, near));
     }
 
     _initCrystal(W, H, initial, fc) {
         this.subType = 'crystal';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -35 - window.randomSecure() * 25;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -35 - Math.random() * 25;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const mul = fc ? (fc.crystalMul || 1) : 1;
-        this.size = (6 + near * 12 + window.randomSecure() * 10) * mul;
-        this.speed = 18 + near * 13 + window.randomSecure() * 10;
-        this.alpha = 0.6 + near * 0.25 + window.randomSecure() * 0.1;
+        this.size = (6 + near * 12 + Math.random() * 10) * mul;
+        this.speed = 18 + near * 13 + Math.random() * 10;
+        this.alpha = 0.6 + near * 0.25 + Math.random() * 0.1;
         Object.assign(this, pickColor(CRYSTAL_PALETTE, near));
         // Alternating spike shape
-        this.shape = generateShape(5 + Math.floor(window.randomSecure() * 3), 0.7, 0.5, true, 0.25, 0.3);
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.shineAngle = window.randomSecure() * Math.PI * 2;
+        this.shape = generateShape(5 + Math.floor(Math.random() * 3), 0.7, 0.5, true, 0.25, 0.3);
+        this.rot = Math.random() * Math.PI * 2;
+        this.shineAngle = Math.random() * Math.PI * 2;
     }
 
     _initCrevasse(W, H, initial, fc) {
         this.subType = 'crevasse';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -55 - window.randomSecure() * 35;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -55 - Math.random() * 35;
         const cw = fc ? fc.crevasseW : [12, 26];
-        this.size = cw[0] + window.randomSecure() * (cw[1] - cw[0]);
-        this.speed = 17 + window.randomSecure() * 14;
-        this.alpha = 0.6 + window.randomSecure() * 0.3;
-        this.elongation = 0.45 + window.randomSecure() * 0.5;
-        this.rot = window.randomSecure() * Math.PI;
-        this.depthHue = 210 + window.randomSecure() * 15;
-        this.depthSat = 70 + window.randomSecure() * 20;
-        this.depthLight = 15 + window.randomSecure() * 10;
-        this.rimHue = 200 + window.randomSecure() * 12;
-        this.rimSat = 40 + window.randomSecure() * 20;
-        this.rimLight = 50 + window.randomSecure() * 15;
+        this.size = cw[0] + Math.random() * (cw[1] - cw[0]);
+        this.speed = 17 + Math.random() * 14;
+        this.alpha = 0.6 + Math.random() * 0.3;
+        this.elongation = 0.45 + Math.random() * 0.5;
+        this.rot = Math.random() * Math.PI;
+        this.depthHue = 210 + Math.random() * 15;
+        this.depthSat = 70 + Math.random() * 20;
+        this.depthLight = 15 + Math.random() * 10;
+        this.rimHue = 200 + Math.random() * 12;
+        this.rimSat = 40 + Math.random() * 20;
+        this.rimLight = 50 + Math.random() * 15;
     }
 
     _initFrost(W, H, initial) {
         this.subType = 'frost';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 25;
-        this.size = 12 + window.randomSecure() * 24;
-        this.speed = 18 + window.randomSecure() * 14;
-        this.alpha = 0.35 + window.randomSecure() * 0.25;
-        this.elongation = 0.5 + window.randomSecure() * 0.5;
-        this.rot = window.randomSecure() * Math.PI;
-        this.frostHue = 200 + window.randomSecure() * 15;
-        this.frostSat = 40 + window.randomSecure() * 20;
-        this.frostLight = 50 + window.randomSecure() * 15;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -40 - Math.random() * 25;
+        this.size = 12 + Math.random() * 24;
+        this.speed = 18 + Math.random() * 14;
+        this.alpha = 0.35 + Math.random() * 0.25;
+        this.elongation = 0.5 + Math.random() * 0.5;
+        this.rot = Math.random() * Math.PI;
+        this.frostHue = 200 + Math.random() * 15;
+        this.frostSat = 40 + Math.random() * 20;
+        this.frostLight = 50 + Math.random() * 15;
         this.sparkles = [];
-        const sN = 2 + Math.floor(window.randomSecure() * 4);
+        const sN = 2 + Math.floor(Math.random() * 4);
         for (let i = 0; i < sN; i++) {
             this.sparkles.push({
-                ox: (window.randomSecure() - 0.5) * this.size * 1.2,
-                oy: (window.randomSecure() - 0.5) * this.size * this.elongation * 1.2,
-                r: 0.5 + window.randomSecure() * 1.0,
-                phase: window.randomSecure() * Math.PI * 2
+                ox: (Math.random() - 0.5) * this.size * 1.2,
+                oy: (Math.random() - 0.5) * this.size * this.elongation * 1.2,
+                r: 0.5 + Math.random() * 1.0,
+                phase: Math.random() * Math.PI * 2
             });
         }
     }

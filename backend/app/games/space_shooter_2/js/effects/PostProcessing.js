@@ -50,8 +50,8 @@ class PostProcessing {
             } else {
                 const t = this.shakeTimer / this.shakeDuration;
                 const intensity = this.shakeIntensity * t;
-                const x = (window.randomSecure() - 0.5) * 2 * intensity;
-                const y = (window.randomSecure() - 0.5) * 2 * intensity;
+                const x = (Math.random() - 0.5) * 2 * intensity;
+                const y = (Math.random() - 0.5) * 2 * intensity;
                 this.canvas.style.transform = `translate(${x}px, ${y}px)`;
             }
         }

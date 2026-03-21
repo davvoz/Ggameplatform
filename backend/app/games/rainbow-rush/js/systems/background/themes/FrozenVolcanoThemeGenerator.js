@@ -88,18 +88,18 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.ICE_CRYSTAL_COUNT; i++) {
-            const size = 20 + window.randomSecure() * 35;
-            const x = window.randomSecure() * this.canvasWidth;
+            const size = 20 + Math.random() * 35;
+            const x = Math.random() * this.canvasWidth;
 
             layers.push({
                 x,
                 y: groundY - size,
                 width: size * 0.5,
                 height: size,
-                color: [0.7 + window.randomSecure() * 0.2, 0.8 + window.randomSecure() * 0.15, 0.95, 0.7],
+                color: [0.7 + Math.random() * 0.2, 0.8 + Math.random() * 0.15, 0.95, 0.7],
                 type: 'crystal',
                 speed: 3 + i * 1.2,
-                glimmer: window.randomSecure() * Math.PI * 2,
+                glimmer: Math.random() * Math.PI * 2,
                 offset: 0
             });
         }
@@ -110,14 +110,14 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.SNOWFLAKE_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: window.randomSecure() * this.canvasHeight,
-                radius: 2 + window.randomSecure() * 4,
-                speed: 20 + window.randomSecure() * 35,
-                rotation: window.randomSecure() * Math.PI * 2,
+                x: Math.random() * this.canvasWidth,
+                y: Math.random() * this.canvasHeight,
+                radius: 2 + Math.random() * 4,
+                speed: 20 + Math.random() * 35,
+                rotation: Math.random() * Math.PI * 2,
                 color: [1.0, 1.0, 1.0, 0.7],
                 type: 'snowflake',
-                drift: (window.randomSecure() - 0.5) * 25
+                drift: (Math.random() - 0.5) * 25
             });
         }
     }
@@ -127,14 +127,14 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.STEAM_COUNT; i++) {
             particles.push({
-                x: this.canvasWidth * 0.6 + (window.randomSecure() - 0.5) * 50,
+                x: this.canvasWidth * 0.6 + (Math.random() - 0.5) * 50,
                 y: this.canvasHeight * 0.4 - i * 25,
-                radius: 12 + window.randomSecure() * 18,
-                speed: -15 - window.randomSecure() * 25,
+                radius: 12 + Math.random() * 18,
+                speed: -15 - Math.random() * 25,
                 color: [0.9, 0.95, 1.0, 0.3 - i * 0.04],
                 type: 'smoke',
                 expansion: 1 + i * 0.15,
-                drift: (window.randomSecure() - 0.5) * 12
+                drift: (Math.random() - 0.5) * 12
             });
         }
     }

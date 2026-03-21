@@ -175,7 +175,7 @@ class PlatformGenerator {
                         x += effectiveSpacing * 2.5; // GAP LARGO extra
                     }
                     if (i % 4 === 3) {
-                        y = startY + (window.randomSecure() - 0.5) * 60;
+                        y = startY + (Math.random() - 0.5) * 60;
                     }
                     break;
 
@@ -289,12 +289,12 @@ class PlatformGenerator {
 
                 case PlatformPatterns.SCATTERED:
                     // Piattaforme sparse con GAP EXTRA casuali
-                    x = startX + i * effectiveSpacing + (window.randomSecure() - 0.5) * 60;
+                    x = startX + i * effectiveSpacing + (Math.random() - 0.5) * 60;
                     // Ogni 4-5 piattaforme, GAP EXTRA LARGO casuale
-                    if (i > 0 && window.randomSecure() < 0.3) {
-                        x += effectiveSpacing * (2.0 + window.randomSecure() * 1.5); // GAP MOLTO LARGO casuale
+                    if (i > 0 && Math.random() < 0.3) {
+                        x += effectiveSpacing * (2.0 + Math.random() * 1.5); // GAP MOLTO LARGO casuale
                     }
-                    y = startY + (window.randomSecure() - 0.5) * 90;
+                    y = startY + (Math.random() - 0.5) * 90;
                     break;
 
                 case PlatformPatterns.PYRAMID:
@@ -328,7 +328,7 @@ class PlatformGenerator {
             // Determina tipo specifico di piattaforma casualmente
             let specificType = platformType;
             if (platformType === 'normal' && i > 2) { // Non sui primi 3
-                const rand = window.randomSecure();
+                const rand = Math.random();
                 
                 // Rotating dal livello 5 - AUMENTATO AL 12%
                 if (level >= 5 && rand < 0.12) {
@@ -361,12 +361,12 @@ class PlatformGenerator {
             // Inizializza proprietà speciali per tipi dinamici
             if (specificType === 'rotating') {
                 platform.isRotating = false; // Inizia ferma, si attiva quando il player ci atterra
-                platform.rotationSpeed = 0.3 + window.randomSecure() * 0.5; // Velocità ridotta 0.3-0.8 per rotazione lenta
-                platform.rotationAngle = window.randomSecure() * Math.PI * 2; // Angolo iniziale casuale
+                platform.rotationSpeed = 0.3 + Math.random() * 0.5; // Velocità ridotta 0.3-0.8 per rotazione lenta
+                platform.rotationAngle = Math.random() * Math.PI * 2; // Angolo iniziale casuale
             } else if (specificType === 'bouncing') {
                 platform.isBouncing = true;
-                platform.bounceSpeed = 1.5 + window.randomSecure() * 1.0; // Velocità casuale
-                platform.bounceAmplitude = 20 + window.randomSecure() * 20; // Ampiezza casuale 20-40
+                platform.bounceSpeed = 1.5 + Math.random() * 1.0; // Velocità casuale
+                platform.bounceAmplitude = 20 + Math.random() * 20; // Ampiezza casuale 20-40
             } else if (specificType === 'dissolving') {
                 platform.isDissolving = false; // Inizialmente non sta dissolvendo
                 platform.dissolveDuration = 0.8;
@@ -417,7 +417,7 @@ class CollectibleSpawner {
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            const randomPowerup = availablePowerups[Math.floor(window.randomSecure() * availablePowerups.length)];
+            const randomPowerup = availablePowerups[Math.floor(Math.random() * availablePowerups.length)];
             const powerupConfig = this.getPowerupConfig(randomPowerup.id);
 
             collectibles.push(new Collectible('powerup', platform.getCenterX(), platform.y - 80, {
@@ -479,7 +479,7 @@ class CollectibleSpawner {
         // Calcola quanti cuori spawnare
         const healthCount = Math.floor(
             config.healthPerLevel.min +
-            window.randomSecure() * (config.healthPerLevel.max - config.healthPerLevel.min + 1)
+            Math.random() * (config.healthPerLevel.max - config.healthPerLevel.min + 1)
         );
 
         if (platforms.length === 0 || healthCount <= 0) {
@@ -719,7 +719,7 @@ class EnemySpawner {
 
         const enemyCount = Math.floor(
             config.enemyCount.min +
-            window.randomSecure() * (config.enemyCount.max - config.enemyCount.min)
+            Math.random() * (config.enemyCount.max - config.enemyCount.min)
         );
 
         const validPlatforms = platforms.filter((p, idx) => idx >= safetyZone);
@@ -732,13 +732,13 @@ class EnemySpawner {
         for (let i = 0; i < enemyCount; i++) {
             // Distribuisci uniformemente ma con variazione casuale
             const baseIdx = Math.floor(i * platformsPerEnemy);
-            const variation = Math.floor(window.randomSecure() * Math.min(platformsPerEnemy, 3));
+            const variation = Math.floor(Math.random() * Math.min(platformsPerEnemy, 3));
             const platformIdx = Math.min(baseIdx + variation, validPlatforms.length - 1);
             const platform = validPlatforms[platformIdx];
 
             // Selezione INTELLIGENTE del tipo nemico basata su posizione e contesto
             let enemyPool = availableEnemies;
-            const rand = window.randomSecure();
+            const rand = Math.random();
             const isHighPlatform = platform.y < 300;
             const isLowPlatform = platform.y > 500;
 
@@ -763,17 +763,17 @@ class EnemySpawner {
                 enemyPool = jumperEnemies;
             }
 
-            const randomEnemy = enemyPool[Math.floor(window.randomSecure() * enemyPool.length)];
+            const randomEnemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
 
             // Variazione verticale per flying enemies
             let yOffset = -30;
             if (randomEnemy.category === 'flying') {
-                yOffset = -50 - window.randomSecure() * 80; // Volano più in alto
+                yOffset = -50 - Math.random() * 80; // Volano più in alto
             }
 
             enemies.push(new Enemy(
                 randomEnemy.id,
-                platform.getCenterX() + (window.randomSecure() - 0.5) * 40, // Variazione orizzontale
+                platform.getCenterX() + (Math.random() - 0.5) * 40, // Variazione orizzontale
                 platform.y + yOffset,
                 platform.index
             ));
@@ -819,7 +819,7 @@ export class LevelGenerator {
         // Genera piattaforme CON SEZIONI MULTIPLE per varietà
         const platformCount = Math.floor(
             config.platformCount.min +
-            window.randomSecure() * (config.platformCount.max - config.platformCount.min)
+            Math.random() * (config.platformCount.max - config.platformCount.min)
         );
 
         const platforms = this.generateMultiSectionPlatforms(levelId, tier, platformCount, config);
@@ -833,7 +833,7 @@ export class LevelGenerator {
         const obstacleCount = Math.floor(platforms.length * 0.15); // 15% delle piattaforme
         const safetyZone = 3; // Non spawna ostacoli nelle prime 3 piattaforme
         for (let i = 0; i < obstacleCount; i++) {
-            const platformIndex = safetyZone + Math.floor(window.randomSecure() * (platforms.length - safetyZone));
+            const platformIndex = safetyZone + Math.floor(Math.random() * (platforms.length - safetyZone));
             const platform = platforms[platformIndex];
             if (platform && platform.type !== 'BOUNCY') { // Non su piattaforme bouncy
                 level.obstacles.push({
@@ -874,7 +874,7 @@ export class LevelGenerator {
         // Spawna health - SEMPRE garantito almeno 1 cuore per livello
         const guaranteedHealthThreshold = 30;
         const shouldSpawnHealth = platformCount >= guaranteedHealthThreshold ||
-            window.randomSecure() < config.healthFrequency ||
+            Math.random() < config.healthFrequency ||
             platformCount >= 10;
 
 
@@ -953,15 +953,15 @@ export class LevelGenerator {
                 : platformsPerSection;
 
             // Scegli pattern casuale per questa sezione
-            const pattern = availablePatterns[Math.floor(window.randomSecure() * availablePatterns.length)];
+            const pattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
 
             const spacing = Math.floor(
                 config.platformSpacing.min +
-                window.randomSecure() * (config.platformSpacing.max - config.platformSpacing.min)
+                Math.random() * (config.platformSpacing.max - config.platformSpacing.min)
             );
             const width = Math.floor(
                 config.platformWidth.min +
-                window.randomSecure() * (config.platformWidth.max - config.platformWidth.min)
+                Math.random() * (config.platformWidth.max - config.platformWidth.min)
             );
 
             const sectionPlatforms = PlatformGenerator.generate(
@@ -982,7 +982,7 @@ export class LevelGenerator {
             if (sectionPlatforms.length > 0) {
                 const lastPlatform = sectionPlatforms[sectionPlatforms.length - 1];
                 currentX = lastPlatform.x + spacing;
-                currentY = lastPlatform.y + (window.randomSecure() - 0.5) * 100; // Varia leggermente l'altezza
+                currentY = lastPlatform.y + (Math.random() - 0.5) * 100; // Varia leggermente l'altezza
             }
         }
 
@@ -1142,7 +1142,7 @@ export class LevelGenerator {
      * Decide se generare un ostacolo
      */
     static shouldGenerateObstacle() {
-        return window.randomSecure() < 0.15; // 15% chance di spawn ostacolo
+        return Math.random() < 0.15; // 15% chance di spawn ostacolo
     }
 
     /**
@@ -1158,7 +1158,7 @@ export class LevelGenerator {
             obstacleType: 'spike',
             color: [0.8, 0.1, 0.1, 1.0],
             velocity: velocity,
-            animationOffset: window.randomSecure() * Math.PI * 2
+            animationOffset: Math.random() * Math.PI * 2
         };
     }
 }

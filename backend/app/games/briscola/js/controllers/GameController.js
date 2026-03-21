@@ -200,7 +200,7 @@ export class GameController {
                     
                     // AI plays after a delay
                     this.isProcessing = false;
-                    setTimeout(() => this.playAITurn(), 800 + window.randomSecure() * 500);
+                    setTimeout(() => this.playAITurn(), 800 + Math.random() * 500);
                     return;
                 } else if (this.app.currentMode === 'local') {
                     // Switch to other player view

@@ -221,26 +221,26 @@ class ParticleSystem {
 
 ParticleSystem.PRESETS = {
     explosion: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 50 + window.randomSecure() * 200;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 50 + Math.random() * 200;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.3 + window.randomSecure() * 0.5,
-            size: 2 + window.randomSecure() * 4,
+            life: 0.3 + Math.random() * 0.5,
+            size: 2 + Math.random() * 4,
             endSize: 0,
-            color: { r: 255, g: 150 + Math.floor(window.randomSecure() * 105), b: 0 },
+            color: { r: 255, g: 150 + Math.floor(Math.random() * 105), b: 0 },
             endColor: { r: 255, g: 50, b: 0 },
             friction: 0.95,
             glow: true,
-            shape: window.randomSecure() > 0.5 ? 'circle' : 'spark'
+            shape: Math.random() > 0.5 ? 'circle' : 'spark'
         };
     },
     thruster: () => ({
-        vx: (window.randomSecure() - 0.5) * 30,
-        vy: 80 + window.randomSecure() * 60,
-        life: 0.15 + window.randomSecure() * 0.2,
-        size: 2 + window.randomSecure() * 3,
+        vx: (Math.random() - 0.5) * 30,
+        vy: 80 + Math.random() * 60,
+        life: 0.15 + Math.random() * 0.2,
+        size: 2 + Math.random() * 3,
         endSize: 0,
         color: { r: 100, g: 180, b: 255 },
         endColor: { r: 50, g: 80, b: 200 },
@@ -248,13 +248,13 @@ ParticleSystem.PRESETS = {
         glow: true
     }),
     spark: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 100 + window.randomSecure() * 150;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 100 + Math.random() * 150;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.1 + window.randomSecure() * 0.3,
-            size: 1 + window.randomSecure() * 2,
+            life: 0.1 + Math.random() * 0.3,
+            size: 1 + Math.random() * 2,
             endSize: 0,
             color: { r: 255, g: 255, b: 200 },
             friction: 0.96,
@@ -263,26 +263,26 @@ ParticleSystem.PRESETS = {
         };
     },
     powerup: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 20 + window.randomSecure() * 40;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 20 + Math.random() * 40;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.3 + window.randomSecure() * 0.5,
-            size: 2 + window.randomSecure() * 3,
+            life: 0.3 + Math.random() * 0.5,
+            size: 2 + Math.random() * 3,
             endSize: 0,
             color: { r: 100, g: 255, b: 100 },
             glow: true
         };
     },
     hit: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 30 + window.randomSecure() * 80;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 80;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.1 + window.randomSecure() * 0.2,
-            size: 1 + window.randomSecure() * 2,
+            life: 0.1 + Math.random() * 0.2,
+            size: 1 + Math.random() * 2,
             endSize: 0,
             color: { r: 255, g: 100, b: 100 },
             glow: true,
@@ -290,13 +290,13 @@ ParticleSystem.PRESETS = {
         };
     },
     shield: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 10 + window.randomSecure() * 30;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 10 + Math.random() * 30;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.3 + window.randomSecure() * 0.4,
-            size: 2 + window.randomSecure() * 3,
+            life: 0.3 + Math.random() * 0.4,
+            size: 2 + Math.random() * 3,
             endSize: 0,
             color: { r: 100, g: 200, b: 255 },
             glow: true,
@@ -304,13 +304,13 @@ ParticleSystem.PRESETS = {
         };
     },
     ultimateCharged: () => {
-        const angle = window.randomSecure() * Math.PI * 2;
-        const speed = 15 + window.randomSecure() * 25;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 15 + Math.random() * 25;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.5 + window.randomSecure() * 0.5,
-            size: 2 + window.randomSecure() * 4,
+            life: 0.5 + Math.random() * 0.5,
+            size: 2 + Math.random() * 4,
             endSize: 0,
             color: { r: 255, g: 215, b: 0 },
             endColor: { r: 255, g: 100, b: 0 },
@@ -318,13 +318,13 @@ ParticleSystem.PRESETS = {
         };
     },
     levelUp: () => {
-        const angle = -Math.PI / 2 + (window.randomSecure() - 0.5) * Math.PI;
-        const speed = 50 + window.randomSecure() * 100;
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+        const speed = 50 + Math.random() * 100;
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.5 + window.randomSecure() * 1,
-            size: 3 + window.randomSecure() * 5,
+            life: 0.5 + Math.random() * 1,
+            size: 3 + Math.random() * 5,
             endSize: 0,
             color: { r: 255, g: 255, b: 100 },
             endColor: { r: 100, g: 255, b: 100 },

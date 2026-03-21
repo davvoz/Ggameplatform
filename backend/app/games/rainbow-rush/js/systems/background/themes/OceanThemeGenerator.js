@@ -47,12 +47,12 @@ export class OceanThemeGenerator extends BaseThemeGenerator {
             layers.push({
                 x: (i + 0.5) * this.canvasWidth / config.SEAWEED_COUNT,
                 y: this.canvasHeight * 0.8,
-                height: 60 + window.randomSecure() * 40,
-                width: 8 + window.randomSecure() * 6,
-                swayPhase: window.randomSecure() * Math.PI * 2,
+                height: 60 + Math.random() * 40,
+                width: 8 + Math.random() * 6,
+                swayPhase: Math.random() * Math.PI * 2,
                 color: [0.1, 0.6 - i * 0.08, 0.4, 0.6],
                 type: 'seaweed',
-                speed: 0.5 + window.randomSecure() * 0.5,
+                speed: 0.5 + Math.random() * 0.5,
                 offset: 0
             });
         }
@@ -63,11 +63,11 @@ export class OceanThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.BUBBLE_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.5 + window.randomSecure() * this.canvasHeight * 0.5,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.5,
                 radius: this.randomInRange(config.BUBBLE_MIN_RADIUS, config.BUBBLE_MAX_RADIUS),
                 speed: this.randomInRange(config.BUBBLE_MIN_SPEED, config.BUBBLE_MAX_SPEED),
-                wobble: window.randomSecure() * Math.PI * 2,
+                wobble: Math.random() * Math.PI * 2,
                 color: [1.0, 1.0, 1.0, 0.4],
                 type: 'bubble'
             });
@@ -79,11 +79,11 @@ export class OceanThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.FISH_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.6 + window.randomSecure() * this.canvasHeight * 0.3,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.3,
                 speed: this.randomInRange(config.FISH_MIN_SPEED, config.FISH_MAX_SPEED),
                 size: this.randomInRange(config.FISH_MIN_SIZE, config.FISH_MAX_SIZE),
-                swimPhase: window.randomSecure() * Math.PI * 2,
+                swimPhase: Math.random() * Math.PI * 2,
                 color: [0.9, 0.5, 0.2, 0.7],
                 type: 'fish'
             });

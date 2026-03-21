@@ -335,11 +335,11 @@ export class SafetyPlatformSystem {
         const height = this.config.PLATFORM_HEIGHT;
         
         // Random starting point
-        const startX = window.randomSecure() * width;
-        const startY = window.randomSecure() * height;
+        const startX = Math.random() * width;
+        const startY = Math.random() * height;
         
         // Random crack pattern
-        const segments = 2 + Math.floor(window.randomSecure() * 4);
+        const segments = 2 + Math.floor(Math.random() * 4);
         const points = [{ x: startX, y: startY }];
         
         let currentX = startX;
@@ -347,8 +347,8 @@ export class SafetyPlatformSystem {
         
         for (let i = 0; i < segments; i++) {
             // Random direction with preference for diagonal
-            const angle = window.randomSecure() * Math.PI * 2;
-            const length = 15 + window.randomSecure() * 25;
+            const angle = Math.random() * Math.PI * 2;
+            const length = 15 + Math.random() * 25;
             
             currentX = Math.max(0, Math.min(width, currentX + Math.cos(angle) * length));
             currentY = Math.max(0, Math.min(height, currentY + Math.sin(angle) * length));
@@ -358,8 +358,8 @@ export class SafetyPlatformSystem {
         
         this.cracks.push({
             points: points,
-            thickness: 1 + window.randomSecure() * 2,
-            opacity: 0.6 + window.randomSecure() * 0.4,
+            thickness: 1 + Math.random() * 2,
+            opacity: 0.6 + Math.random() * 0.4,
             creationTime: Date.now()
         });
     }
@@ -391,7 +391,7 @@ export class SafetyPlatformSystem {
             { name: 'wavy-stairs', yFunc: (i, count) => -i * 30 + Math.cos(i * 0.8) * 40 },
             { name: 'zigzag-extreme', yFunc: (i, count) => (i % 2 === 0 ? -50 : 20) - i * 15 },
             { name: 'sine-wave', yFunc: (i, count) => Math.sin(i * 0.6) * 70 - i * 10 },
-            { name: 'scattered-up', yFunc: (i, count) => (window.randomSecure() - 0.7) * 90 - i * 20 }
+            { name: 'scattered-up', yFunc: (i, count) => (Math.random() - 0.7) * 90 - i * 20 }
         ];
         
         // Palette colori PIÙ VIVACI E FANTASIOSE
@@ -456,17 +456,17 @@ export class SafetyPlatformSystem {
                 velocity: -120,
                 type: 'platform',
                 platformType: 'RESCUE',
-                laserPhase: window.randomSecure() * Math.PI * 2,
+                laserPhase: Math.random() * Math.PI * 2,
                 laserIntensity: 1.0,
                 spawnTime: Date.now(),
                 // Proprietà fantasiose
                 shape: shape,
-                pulsePhase: window.randomSecure() * Math.PI * 2,
-                glowIntensity: 0.5 + window.randomSecure() * 0.5,
-                rotationSpeed: (window.randomSecure() - 0.5) * 0.5,
+                pulsePhase: Math.random() * Math.PI * 2,
+                glowIntensity: 0.5 + Math.random() * 0.5,
+                rotationSpeed: (Math.random() - 0.5) * 0.5,
                 currentRotation: 0,
                 particleTrail: [],
-                sparkles: window.randomSecure() > 0.5
+                sparkles: Math.random() > 0.5
             };
             platforms.push(platform);
             entityManager.addEntity('platforms', platform);

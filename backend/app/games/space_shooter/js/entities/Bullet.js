@@ -17,7 +17,7 @@ class Bullet extends GameObject {
         this.maxTrailLength = 8;
         
         // Animation
-        this.glowPulse = window.randomSecure() * Math.PI * 2;
+        this.glowPulse = Math.random() * Math.PI * 2;
         this.age = 0;
     }
 

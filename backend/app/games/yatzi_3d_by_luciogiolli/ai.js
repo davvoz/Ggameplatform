@@ -58,7 +58,7 @@ const UPPER_EXPECTED = {
 /* ================== UTILS ================== */
 
 function rollDie() {
-  return 1 + Math.floor(window.randomSecure() * 6);
+  return 1 + Math.floor(Math.random() * 6);
 }
 
 function rollDice(mask, dice) {
@@ -282,8 +282,8 @@ function adjustScoreForStrategy(category, rawScore, dice, scoreState, config) {
   }
 
   // Margine di errore deliberato per livelli facili
-  if (mistakeChance && window.randomSecure() < mistakeChance) {
-    score -= 3 + window.randomSecure() * 4;
+  if (mistakeChance && Math.random() < mistakeChance) {
+    score -= 3 + Math.random() * 4;
   }
   
   return score;
@@ -329,8 +329,8 @@ export function aiDecideKeep(dice, scoreState, rollIndex, difficulty = "medium")
   }
   
   // Margine di errore: l'AI easy può prendere decisioni meno ottimali
-  if (config.mistakeChance && window.randomSecure() < config.mistakeChance * 0.6) {
-    return masks[Math.floor(window.randomSecure() * masks.length)] || bestMask;
+  if (config.mistakeChance && Math.random() < config.mistakeChance * 0.6) {
+    return masks[Math.floor(Math.random() * masks.length)] || bestMask;
   }
   
   return bestMask;
@@ -358,7 +358,7 @@ export function aiChooseCategory(dice, scoreState, difficulty = "medium") {
     }
 
     // Margine di errore per la difficoltà easy
-    if (config.mistakeChance && window.randomSecure() < config.mistakeChance * 0.35) {
+    if (config.mistakeChance && Math.random() < config.mistakeChance * 0.35) {
       adjustedScore -= 5;
     }
     

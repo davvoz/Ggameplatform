@@ -163,7 +163,7 @@ export class SoundManager {
         const data = buffer.getChannelData(0);
         
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = window.randomSecure() * 2 - 1;
+            data[i] = Math.random() * 2 - 1;
         }
         
         const source = this.context.createBufferSource();

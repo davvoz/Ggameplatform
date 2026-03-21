@@ -87,7 +87,7 @@ export class Player {
         // Sistema espressioni e animazioni
         this.expression = 'happy'; // happy, worried, excited, surprised, determined, running, lookingUp
         this.eyeBlinkTimer = 0;
-        this.eyeBlinkInterval = 3 + window.randomSecure() * 2; // Battito ciglia casuale
+        this.eyeBlinkInterval = 3 + Math.random() * 2; // Battito ciglia casuale
         this.isBlinking = false;
         this.blinkDuration = 0.15;
         
@@ -313,11 +313,11 @@ export class Player {
             this.turboTrailParticles.push({
                 x: this.x + this.width / 2,
                 y: this.y + this.height / 2,
-                vx: (window.randomSecure() - 0.5) * 200,
-                vy: window.randomSecure() * 100,
+                vx: (Math.random() - 0.5) * 200,
+                vy: Math.random() * 100,
                 life: 1.0,
                 maxLife: 0.6,
-                color: [0.2 + window.randomSecure() * 0.3, 0.8 + window.randomSecure() * 0.2, 1.0, 1.0]
+                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
             });
         }
         // Update turbo cooldown SOLO quando il turbo NON è attivo
@@ -364,17 +364,17 @@ export class Player {
             }
             
             // Genera particelle flight trail (ali/propulsori) più frequenti
-            if (window.randomSecure() < 0.5) {
+            if (Math.random() < 0.5) {
                 // Particelle dalle ali (sinistra e destra)
                 const wingOffset = Math.sin(this.wingFlapPhase) * 15;
                 this.flightTrailParticles.push({
                     x: this.x + this.width / 2 + wingOffset,
-                    y: this.y + this.height / 2 + (window.randomSecure() - 0.5) * 10,
-                    vx: (window.randomSecure() - 0.5) * 80,
-                    vy: window.randomSecure() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
+                    y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                    vx: (Math.random() - 0.5) * 80,
+                    vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
                     life: 1.0,
                     maxLife: 1.0,
-                    color: [0.6 + window.randomSecure() * 0.4, 0.85 + window.randomSecure() * 0.15, 1.0, 0.9]
+                    color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
                 });
             }
         }
@@ -409,11 +409,11 @@ export class Player {
             this.boostParticles.push({
                 x: this.x + this.width / 2,
                 y: this.y + this.height / 2,
-                vx: -150 - window.randomSecure() * 50,
-                vy: (window.randomSecure() - 0.5) * 100,
+                vx: -150 - Math.random() * 50,
+                vy: (Math.random() - 0.5) * 100,
                 life: 0.4,
                 maxLife: 0.4,
-                size: 5 + window.randomSecure() * 3,
+                size: 5 + Math.random() * 3,
                 color: [0.0, 1.0, 0.9, 1.0]
             });
         }
@@ -434,15 +434,15 @@ export class Player {
             this.velocityX = this.boostPeakVelocity * (1 - easedProgress);
             
             // Particelle decelerazione (meno intense)
-            if (window.randomSecure() < 0.3) {
+            if (Math.random() < 0.3) {
                 this.boostParticles.push({
                     x: this.x + this.width / 2,
                     y: this.y + this.height / 2,
-                    vx: -100 - window.randomSecure() * 30,
-                    vy: (window.randomSecure() - 0.5) * 60,
+                    vx: -100 - Math.random() * 30,
+                    vy: (Math.random() - 0.5) * 60,
                     life: 0.3,
                     maxLife: 0.3,
-                    size: 3 + window.randomSecure() * 2,
+                    size: 3 + Math.random() * 2,
                     color: [0.0, 0.8, 0.7, 0.7]
                 });
             }
@@ -502,17 +502,17 @@ export class Player {
                 }
                 
                 // Genera particelle flight trail (ali/propulsori) più frequenti
-                if (window.randomSecure() < 0.5) {
+                if (Math.random() < 0.5) {
                     // Particelle dalle ali (sinistra e destra)
                     const wingOffset = Math.sin(this.wingFlapPhase) * 15;
                     this.flightTrailParticles.push({
                         x: this.x + this.width / 2 + wingOffset,
-                        y: this.y + this.height / 2 + (window.randomSecure() - 0.5) * 10,
-                        vx: (window.randomSecure() - 0.5) * 80,
-                        vy: window.randomSecure() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
+                        y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
+                        vx: (Math.random() - 0.5) * 80,
+                        vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
                         life: 1.0,
                         maxLife: 1.0,
-                        color: [0.6 + window.randomSecure() * 0.4, 0.85 + window.randomSecure() * 0.15, 1.0, 0.9]
+                        color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
                     });
                 }
             }
@@ -594,12 +594,12 @@ export class Player {
         if (this.powerups.immortality || this.powerups.flight || this.powerups.superJump) {
             // Solo 1 particella invece di 2 per frame
             this.trailParticles.push({
-                x: this.x + this.width / 2 + (window.randomSecure() - 0.5) * 10,
-                y: this.y + this.height / 2 + (window.randomSecure() - 0.5) * 10,
+                x: this.x + this.width / 2 + (Math.random() - 0.5) * 10,
+                y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
                 life: 0.6, // Ridotto da 0.8
                 maxLife: 0.6,
                 color: this.getPowerupTrailColor(),
-                size: 6 + window.randomSecure() * 3 // Ridotto da 8+4
+                size: 6 + Math.random() * 3 // Ridotto da 8+4
             });
         }
         
@@ -1081,7 +1081,7 @@ export class Player {
             if (this.eyeBlinkTimer >= this.blinkDuration) {
                 this.isBlinking = false;
                 this.eyeBlinkTimer = 0;
-                this.eyeBlinkInterval = 2 + window.randomSecure() * 3;
+                this.eyeBlinkInterval = 2 + Math.random() * 3;
             }
         } else {
             this.eyeBlinkTimer += deltaTime;
@@ -1148,8 +1148,8 @@ export class Player {
             this.cameraShake.duration -= deltaTime;
             
             const shake = this.cameraShake.intensity;
-            this.cameraShake.x = (window.randomSecure() - 0.5) * shake * 2;
-            this.cameraShake.y = (window.randomSecure() - 0.5) * shake * 2;
+            this.cameraShake.x = (Math.random() - 0.5) * shake * 2;
+            this.cameraShake.y = (Math.random() - 0.5) * shake * 2;
             
             // Decay intensity
             this.cameraShake.intensity *= 0.9;

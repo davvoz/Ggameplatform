@@ -176,25 +176,25 @@ export class DiceManager {
     for (const i of unheldIndices) {
       const body = this.diceBodies[i];
 
-      const x = (i - 2) * 1.1 + (window.randomSecure() - 0.5) * 1.0;
-      const z = (window.randomSecure() - 0.5) * 2.0;
-      const y = 4 + window.randomSecure() * 1.0;
+      const x = (i - 2) * 1.1 + (Math.random() - 0.5) * 1.0;
+      const z = (Math.random() - 0.5) * 2.0;
+      const y = 4 + Math.random() * 1.0;
 
       body.position.set(x, y, z);
       body.velocity.set(
-        (window.randomSecure() - 0.5) * 4,
-        -2 - window.randomSecure() * 2,
-        (window.randomSecure() - 0.5) * 4
+        (Math.random() - 0.5) * 4,
+        -2 - Math.random() * 2,
+        (Math.random() - 0.5) * 4
       );
       body.angularVelocity.set(
-        (window.randomSecure() - 0.5) * 20,
-        (window.randomSecure() - 0.5) * 20,
-        (window.randomSecure() - 0.5) * 20
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20
       );
       body.quaternion.setFromEuler(
-        window.randomSecure() * Math.PI * 2,
-        window.randomSecure() * Math.PI * 2,
-        window.randomSecure() * Math.PI * 2
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
       );
       body.wakeUp();
     }

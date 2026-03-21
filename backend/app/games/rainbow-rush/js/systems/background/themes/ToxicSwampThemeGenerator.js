@@ -52,8 +52,8 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
         const groundY = this.getGroundY(0.85);
 
         for (let i = 0; i < config.MUSHROOM_COUNT; i++) {
-            const size = 25 + window.randomSecure() * 40;
-            const x = (i + 0.3 + window.randomSecure() * 0.4) * this.canvasWidth / config.MUSHROOM_COUNT;
+            const size = 25 + Math.random() * 40;
+            const x = (i + 0.3 + Math.random() * 0.4) * this.canvasWidth / config.MUSHROOM_COUNT;
 
             layers.push({
                 x,
@@ -61,8 +61,8 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
                 width: size,
                 height: size,
                 color: [
-                    0.4 + window.randomSecure() * 0.2,
-                    0.6 + window.randomSecure() * 0.3,
+                    0.4 + Math.random() * 0.2,
+                    0.6 + Math.random() * 0.3,
                     0.1,
                     0.75
                 ],
@@ -70,7 +70,7 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
                 shape: 'mushroom_cap',
                 speed: 4 + i * 1.8,
                 offset: 0,
-                spots: Math.floor(2 + window.randomSecure() * 4),
+                spots: Math.floor(2 + Math.random() * 4),
                 glowing: true
             });
         }
@@ -81,11 +81,11 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.BUBBLE_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.7 + window.randomSecure() * this.canvasHeight * 0.25,
-                radius: 4 + window.randomSecure() * 10,
-                speed: 12 + window.randomSecure() * 28,
-                wobble: window.randomSecure() * Math.PI * 2,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.7 + Math.random() * this.canvasHeight * 0.25,
+                radius: 4 + Math.random() * 10,
+                speed: 12 + Math.random() * 28,
+                wobble: Math.random() * Math.PI * 2,
                 color: [0.5, 0.7, 0.2, 0.5],
                 type: 'bubble',
                 toxic: true
@@ -98,14 +98,14 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
         
         for (let i = 0; i < config.MIST_COUNT; i++) {
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.65 + window.randomSecure() * this.canvasHeight * 0.15,
-                radius: 20 + window.randomSecure() * 30,
-                speed: 8 + window.randomSecure() * 15,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.65 + Math.random() * this.canvasHeight * 0.15,
+                radius: 20 + Math.random() * 30,
+                speed: 8 + Math.random() * 15,
                 color: [0.4, 0.5, 0.3, 0.25],
                 type: 'smoke',
                 expansion: 1.05,
-                drift: (window.randomSecure() - 0.5) * 20
+                drift: (Math.random() - 0.5) * 20
             });
         }
     }
@@ -114,23 +114,23 @@ export class ToxicSwampThemeGenerator extends BaseThemeGenerator {
         const config = TOXIC_SWAMP_CONFIG;
         
         for (let i = 0; i < config.TOXIC_PARTICLE_COUNT; i++) {
-            const hue = window.randomSecure();
+            const hue = Math.random();
             
             particles.push({
-                x: window.randomSecure() * this.canvasWidth,
-                y: this.canvasHeight * 0.5 + window.randomSecure() * this.canvasHeight * 0.4,
-                radius: 2 + window.randomSecure() * 4,
-                speed: 10 + window.randomSecure() * 20,
-                glow: window.randomSecure() * Math.PI * 2,
+                x: Math.random() * this.canvasWidth,
+                y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.4,
+                radius: 2 + Math.random() * 4,
+                speed: 10 + Math.random() * 20,
+                glow: Math.random() * Math.PI * 2,
                 color: [
                     0.3 + hue * 0.3,
                     0.6 + (1 - hue) * 0.3,
                     0.1,
-                    0.6 + window.randomSecure() * 0.3
+                    0.6 + Math.random() * 0.3
                 ],
                 type: 'firefly',
-                driftX: (window.randomSecure() - 0.5) * 35,
-                driftY: (window.randomSecure() - 0.5) * 25
+                driftX: (Math.random() - 0.5) * 35,
+                driftY: (Math.random() - 0.5) * 25
             });
         }
     }

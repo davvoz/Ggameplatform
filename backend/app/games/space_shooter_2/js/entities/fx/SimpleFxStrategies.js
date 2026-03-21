@@ -10,14 +10,14 @@ import { BaseFxStrategy } from './BaseFxStrategy.js';
 export class AsteroidsFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30;
-        this.size = 4 + window.randomSecure() * 12;
-        this.speed = 20 + window.randomSecure() * 30;
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 2;
-        this.alpha = 0.15 + window.randomSecure() * 0.15;
-        this.vx = (window.randomSecure() - 0.5) * 10;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30;
+        this.size = 4 + Math.random() * 12;
+        this.speed = 20 + Math.random() * 30;
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 2;
+        this.alpha = 0.15 + Math.random() * 0.15;
+        this.vx = (Math.random() - 0.5) * 10;
     }
 
     _update(dt) {
@@ -46,12 +46,12 @@ export class AsteroidsFx extends BaseFxStrategy {
 export class SporesFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -10;
-        this.size = 2 + window.randomSecure() * 4;
-        this.speed = 10 + window.randomSecure() * 20;
-        this.phase = window.randomSecure() * Math.PI * 2;
-        this.alpha = 0.1 + window.randomSecure() * 0.15;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -10;
+        this.size = 2 + Math.random() * 4;
+        this.speed = 10 + Math.random() * 20;
+        this.phase = Math.random() * Math.PI * 2;
+        this.alpha = 0.1 + Math.random() * 0.15;
     }
 
     _update(dt) {
@@ -77,13 +77,13 @@ export class SporesFx extends BaseFxStrategy {
 export class EmbersFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : H + 10;
-        this.size = 1 + window.randomSecure() * 3;
-        this.speed = 30 + window.randomSecure() * 40;
-        this.alpha = 0.2 + window.randomSecure() * 0.3;
-        this.drift = (window.randomSecure() - 0.5) * 30;
-        this.life = 2 + window.randomSecure() * 3;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : H + 10;
+        this.size = 1 + Math.random() * 3;
+        this.speed = 30 + Math.random() * 40;
+        this.alpha = 0.2 + Math.random() * 0.3;
+        this.drift = (Math.random() - 0.5) * 30;
+        this.life = 2 + Math.random() * 3;
         this.maxLife = this.life;
     }
 
@@ -109,13 +109,13 @@ export class EmbersFx extends BaseFxStrategy {
 export class IceFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -10;
-        this.size = 2 + window.randomSecure() * 5;
-        this.speed = 15 + window.randomSecure() * 20;
-        this.rot = window.randomSecure() * Math.PI * 2;
-        this.rotSpd = (window.randomSecure() - 0.5) * 3;
-        this.alpha = 0.08 + window.randomSecure() * 0.12;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -10;
+        this.size = 2 + Math.random() * 5;
+        this.speed = 15 + Math.random() * 20;
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotSpd = (Math.random() - 0.5) * 3;
+        this.alpha = 0.08 + Math.random() * 0.12;
     }
 
     _update(dt) {
@@ -144,12 +144,12 @@ export class IceFx extends BaseFxStrategy {
 export class ShimmerFx extends BaseFxStrategy {
     _init(_initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = window.randomSecure() * H;
-        this.size = 1 + window.randomSecure() * 2;
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.size = 1 + Math.random() * 2;
         this.speed = 0;
-        this.phase = window.randomSecure() * Math.PI * 2;
-        this.phaseSpd = 1 + window.randomSecure() * 3;
+        this.phase = Math.random() * Math.PI * 2;
+        this.phaseSpd = 1 + Math.random() * 3;
         this.alpha = 0;
     }
 
@@ -170,12 +170,12 @@ export class ShimmerFx extends BaseFxStrategy {
 export class SparksFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -5;
-        this.size = 1 + window.randomSecure() * 2;
-        this.speed = 40 + window.randomSecure() * 60;
-        this.alpha = 0.2 + window.randomSecure() * 0.3;
-        this.vx = (window.randomSecure() - 0.5) * 40;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -5;
+        this.size = 1 + Math.random() * 2;
+        this.speed = 40 + Math.random() * 60;
+        this.alpha = 0.2 + Math.random() * 0.3;
+        this.vx = (Math.random() - 0.5) * 40;
     }
 
     _update(dt) {
@@ -197,12 +197,12 @@ export class SparksFx extends BaseFxStrategy {
 export class MinesFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -20;
-        this.size = 5 + window.randomSecure() * 8;
-        this.speed = 12 + window.randomSecure() * 18;
-        this.phase = window.randomSecure() * Math.PI * 2;
-        this.alpha = 0.12 + window.randomSecure() * 0.1;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -20;
+        this.size = 5 + Math.random() * 8;
+        this.speed = 12 + Math.random() * 18;
+        this.phase = Math.random() * Math.PI * 2;
+        this.alpha = 0.12 + Math.random() * 0.1;
     }
 
     _update(dt) {
@@ -231,10 +231,10 @@ export class ScanlinesFx extends BaseFxStrategy {
     _init(initial) {
         const H = this.canvasHeight;
         this.x = 0;
-        this.y = initial ? window.randomSecure() * H : -2;
-        this.size = 1 + window.randomSecure();
-        this.speed = 50 + window.randomSecure() * 30;
-        this.alpha = 0.03 + window.randomSecure() * 0.04;
+        this.y = initial ? Math.random() * H : -2;
+        this.size = 1 + Math.random();
+        this.speed = 50 + Math.random() * 30;
+        this.alpha = 0.03 + Math.random() * 0.04;
     }
 
     _update(dt) {
@@ -251,19 +251,19 @@ export class ScanlinesFx extends BaseFxStrategy {
 // ── Vortex ─────────────────────────────────────
 export class VortexFx extends BaseFxStrategy {
     _init(_initial) {
-        this.angle = window.randomSecure() * Math.PI * 2;
-        this.radius = 50 + window.randomSecure() * 200;
-        this.speed = 0.3 + window.randomSecure() * 0.5;
-        this.size = 1 + window.randomSecure() * 2;
-        this.alpha = 0.06 + window.randomSecure() * 0.08;
+        this.angle = Math.random() * Math.PI * 2;
+        this.radius = 50 + Math.random() * 200;
+        this.speed = 0.3 + Math.random() * 0.5;
+        this.size = 1 + Math.random() * 2;
+        this.alpha = 0.06 + Math.random() * 0.08;
     }
 
     _update(dt, W, H) {
         this.angle += this.speed * dt;
         this.radius -= dt * 3;
         if (this.radius < 5) {
-            this.radius = 50 + window.randomSecure() * 200;
-            this.angle = window.randomSecure() * Math.PI * 2;
+            this.radius = 50 + Math.random() * 200;
+            this.angle = Math.random() * Math.PI * 2;
         }
         this.x = W / 2 + Math.cos(this.angle) * this.radius;
         this.y = H / 2 + Math.sin(this.angle) * this.radius;
@@ -280,11 +280,11 @@ export class VortexFx extends BaseFxStrategy {
 // ── Lightning ──────────────────────────────────
 export class LightningFx extends BaseFxStrategy {
     _init(_initial) {
-        this.x = window.randomSecure() * this.canvasWidth;
-        this.y = window.randomSecure() * this.canvasHeight;
+        this.x = Math.random() * this.canvasWidth;
+        this.y = Math.random() * this.canvasHeight;
         this.life = 0;
-        this.maxLife = 0.1 + window.randomSecure() * 0.15;
-        this.cooldown = 3 + window.randomSecure() * 5;
+        this.maxLife = 0.1 + Math.random() * 0.15;
+        this.cooldown = 3 + Math.random() * 5;
         this.alpha = 0;
         this.branches = [];
     }
@@ -293,8 +293,8 @@ export class LightningFx extends BaseFxStrategy {
         this.cooldown -= dt;
         if (this.cooldown <= 0 && this.life <= 0) {
             this.life = this.maxLife;
-            this.x = window.randomSecure() * W;
-            this.y = window.randomSecure() * H * 0.4;
+            this.x = Math.random() * W;
+            this.y = Math.random() * H * 0.4;
             this.alpha = 0.3;
             this.branches = this._genBranches();
         }
@@ -302,7 +302,7 @@ export class LightningFx extends BaseFxStrategy {
             this.life -= dt;
             this.alpha = 0.3 * (this.life / this.maxLife);
             if (this.life <= 0) {
-                this.cooldown = 3 + window.randomSecure() * 5;
+                this.cooldown = 3 + Math.random() * 5;
                 this.alpha = 0;
             }
         }
@@ -329,20 +329,20 @@ export class LightningFx extends BaseFxStrategy {
         const branches = [];
         const main = [{ x: this.x, y: this.y }];
         let cx = this.x, cy = this.y;
-        const segs = 5 + Math.floor(window.randomSecure() * 6);
+        const segs = 5 + Math.floor(Math.random() * 6);
         for (let i = 0; i < segs; i++) {
-            cx += (window.randomSecure() - 0.5) * 30;
-            cy += 10 + window.randomSecure() * 20;
+            cx += (Math.random() - 0.5) * 30;
+            cy += 10 + Math.random() * 20;
             main.push({ x: cx, y: cy });
         }
         branches.push(main);
         if (main.length > 3) {
-            const si = 1 + Math.floor(window.randomSecure() * (main.length - 2));
+            const si = 1 + Math.floor(Math.random() * (main.length - 2));
             const sub = [{ x: main[si].x, y: main[si].y }];
             let sx = main[si].x, sy = main[si].y;
             for (let i = 0; i < 3; i++) {
-                sx += (window.randomSecure() - 0.5) * 25;
-                sy += 8 + window.randomSecure() * 15;
+                sx += (Math.random() - 0.5) * 25;
+                sy += 8 + Math.random() * 15;
                 sub.push({ x: sx, y: sy });
             }
             branches.push(sub);
@@ -355,12 +355,12 @@ export class LightningFx extends BaseFxStrategy {
 export class FireFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : H + 10;
-        this.size = 3 + window.randomSecure() * 6;
-        this.speed = 40 + window.randomSecure() * 50;
-        this.alpha = 0.12 + window.randomSecure() * 0.15;
-        this.drift = (window.randomSecure() - 0.5) * 20;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : H + 10;
+        this.size = 3 + Math.random() * 6;
+        this.speed = 40 + Math.random() * 50;
+        this.alpha = 0.12 + Math.random() * 0.15;
+        this.drift = (Math.random() - 0.5) * 20;
     }
 
     _update(dt) {
@@ -384,20 +384,20 @@ export class FireFx extends BaseFxStrategy {
 // ── Blackhole ──────────────────────────────────
 export class BlackholeFx extends BaseFxStrategy {
     _init(_initial) {
-        this.angle = window.randomSecure() * Math.PI * 2;
-        this.radius = 30 + window.randomSecure() * 250;
-        this.speed = 0.4 + window.randomSecure() * 0.8;
-        this.size = 0.5 + window.randomSecure() * 1.5;
-        this.alpha = 0.04 + window.randomSecure() * 0.06;
-        this.spiralRate = 0.2 + window.randomSecure() * 0.3;
+        this.angle = Math.random() * Math.PI * 2;
+        this.radius = 30 + Math.random() * 250;
+        this.speed = 0.4 + Math.random() * 0.8;
+        this.size = 0.5 + Math.random() * 1.5;
+        this.alpha = 0.04 + Math.random() * 0.06;
+        this.spiralRate = 0.2 + Math.random() * 0.3;
     }
 
     _update(dt, W, H) {
         this.angle += this.speed * dt;
         this.radius -= this.spiralRate * dt * 10;
         if (this.radius < 5) {
-            this.radius = 30 + window.randomSecure() * 250;
-            this.angle = window.randomSecure() * Math.PI * 2;
+            this.radius = 30 + Math.random() * 250;
+            this.angle = Math.random() * Math.PI * 2;
         }
         this.x = W / 2 + Math.cos(this.angle) * this.radius;
         this.y = H / 2 + Math.sin(this.angle) * this.radius;
@@ -414,8 +414,8 @@ export class BlackholeFx extends BaseFxStrategy {
 // ── Default (fallback) ─────────────────────────
 export class DefaultFx extends BaseFxStrategy {
     _init(_initial) {
-        this.x = window.randomSecure() * this.canvasWidth;
-        this.y = window.randomSecure() * this.canvasHeight;
+        this.x = Math.random() * this.canvasWidth;
+        this.y = Math.random() * this.canvasHeight;
         this.size = 1;
         this.speed = 10;
         this.alpha = 0.05;

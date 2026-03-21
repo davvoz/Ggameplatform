@@ -570,15 +570,15 @@ export class ParticleSystem {
 
         // Rising energy particles
         for (let i = 0; i < 10; i++) {
-            const offsetX = (window.randomSecure() - 0.5) * 2;
+            const offsetX = (Math.random() - 0.5) * 2;
             this.emit(x + offsetX, y + 0.5, {
                 text: '✦',
                 color: i % 2 === 0 ? '#00ff88' : '#00ffff',
                 vx: offsetX * 0.3,
-                vy: -2 - window.randomSecure(),
+                vy: -2 - Math.random(),
                 gravity: -0.5,
-                life: 1.0 + window.randomSecure() * 0.5,
-                scale: 0.5 + window.randomSecure() * 0.5,
+                life: 1.0 + Math.random() * 0.5,
+                scale: 0.5 + Math.random() * 0.5,
                 glow: true
             });
         }
@@ -701,15 +701,15 @@ export class ParticleSystem {
 
         // Shining particles floating up
         for (let i = 0; i < 10; i++) {
-            const offsetX = (window.randomSecure() - 0.5) * 1.5;
+            const offsetX = (Math.random() - 0.5) * 1.5;
             this.emit(x + offsetX, y + 0.5, {
                 text: '✦',
                 color: i % 3 === 0 ? '#ffff00' : i % 3 === 1 ? '#ffdd00' : '#ffaa00',
                 vx: offsetX * 0.2,
-                vy: -2 - window.randomSecure() * 1.5,
+                vy: -2 - Math.random() * 1.5,
                 gravity: -0.3,
-                life: 1.5 + window.randomSecure() * 0.5,
-                scale: 0.6 + window.randomSecure() * 0.4,
+                life: 1.5 + Math.random() * 0.5,
+                scale: 0.6 + Math.random() * 0.4,
                 glow: true
             });
         }
@@ -744,7 +744,7 @@ export class ParticleSystem {
         // Phase 2: Expanding shockwave ring (12 particles in a circle)
         for (let i = 0; i < 12; i++) {
             const angle = (Math.PI * 2 * i) / 12;
-            const speed = 4 + window.randomSecure() * 1;
+            const speed = 4 + Math.random() * 1;
             this.emit(x, y, {
                 text: '○',
                 color: '#ffaa00',
@@ -760,33 +760,33 @@ export class ParticleSystem {
         
         // Phase 3: Debris/sparks flying outward (8 pieces)
         for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8 + window.randomSecure() * 0.3;
-            const speed = 2 + window.randomSecure() * 2;
+            const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.3;
+            const speed = 2 + Math.random() * 2;
             const debrisChars = ['▪', '■', '▫'];
             this.emit(x, y, {
-                text: debrisChars[Math.floor(window.randomSecure() * debrisChars.length)],
+                text: debrisChars[Math.floor(Math.random() * debrisChars.length)],
                 color: i % 2 === 0 ? '#ff6600' : '#ffcc00',
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - 1,
                 gravity: 3,
                 life: 0.8,
-                scale: 0.6 + window.randomSecure() * 0.4,
+                scale: 0.6 + Math.random() * 0.4,
                 fadeOut: true
             });
         }
         
         // Phase 4: Smoke puffs (4 rising)
         for (let i = 0; i < 4; i++) {
-            const offsetX = (window.randomSecure() - 0.5) * 1.5;
-            const offsetY = (window.randomSecure() - 0.5) * 1.5;
+            const offsetX = (Math.random() - 0.5) * 1.5;
+            const offsetY = (Math.random() - 0.5) * 1.5;
             this.emit(x + offsetX, y + offsetY, {
                 text: '●',
                 color: '#555555',
-                vx: (window.randomSecure() - 0.5) * 0.5,
-                vy: -0.8 - window.randomSecure() * 0.5,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: -0.8 - Math.random() * 0.5,
                 gravity: -0.3,
                 life: 1.0,
-                scale: 1.0 + window.randomSecure() * 0.5,
+                scale: 1.0 + Math.random() * 0.5,
                 fadeOut: true
             });
         }
@@ -885,7 +885,7 @@ export class ParticleSystem {
         // Phase 2: Expanding electric ring (16 particles in a circle)
         for (let i = 0; i < 16; i++) {
             const angle = (Math.PI * 2 * i) / 16;
-            const speed = 3 + window.randomSecure() * 1;
+            const speed = 3 + Math.random() * 1;
             this.emit(x, y, {
                 text: '✦',
                 color: i % 2 === 0 ? '#ffee00' : '#ffffff',
@@ -901,8 +901,8 @@ export class ParticleSystem {
 
         // Phase 3: Electric arcs/bolts (8 bolts radiating outward)
         for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8 + window.randomSecure() * 0.2;
-            const speed = 2 + window.randomSecure() * 1.5;
+            const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.2;
+            const speed = 2 + Math.random() * 1.5;
             this.emit(x, y, {
                 text: '⚡',
                 color: '#ffff88',
@@ -910,7 +910,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * speed,
                 gravity: 0.5,
                 life: 0.6,
-                scale: 0.8 + window.randomSecure() * 0.3,
+                scale: 0.8 + Math.random() * 0.3,
                 glow: true,
                 fadeOut: true
             });
@@ -918,8 +918,8 @@ export class ParticleSystem {
 
         // Phase 4: Sparks flying outward (6 sparks)
         for (let i = 0; i < 6; i++) {
-            const angle = window.randomSecure() * Math.PI * 2;
-            const speed = 1.5 + window.randomSecure() * 2;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.5 + Math.random() * 2;
             this.emit(x, y, {
                 text: '•',
                 color: '#ffee00',
@@ -927,7 +927,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * speed - 0.5,
                 gravity: 2,
                 life: 0.7,
-                scale: 0.5 + window.randomSecure() * 0.3,
+                scale: 0.5 + Math.random() * 0.3,
                 fadeOut: true
             });
         }

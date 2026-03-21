@@ -160,7 +160,7 @@ class WaveManager {
         }
 
         // Data Leech: chance for double score
-        if (perks.getDataLeechChance() > 0 && window.randomSecure() < perks.getDataLeechChance()) {
+        if (perks.getDataLeechChance() > 0 && Math.random() < perks.getDataLeechChance()) {
             this.game.scoreManager.onEnemyKilled(enemy); // extra score credit
         }
     }

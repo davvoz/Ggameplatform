@@ -519,7 +519,7 @@ class PerkSystem {
                 return cur < p.maxStacks;
             });
             if (eligiblePerks.length > 0) {
-                perk = eligiblePerks[Math.floor(window.randomSecure() * eligiblePerks.length)];
+                perk = eligiblePerks[Math.floor(Math.random() * eligiblePerks.length)];
             }
         }
         if (perk) {
@@ -553,7 +553,7 @@ class PerkSystem {
         while (selected.length < count && attempts < 300) {
             attempts++;
             if (pool.length === 0) break;
-            const perk = pool[Math.floor(window.randomSecure() * pool.length)];
+            const perk = pool[Math.floor(Math.random() * pool.length)];
             if (usedIds.has(perk.id)) continue;
             usedIds.add(perk.id);
             selected.push({
@@ -600,7 +600,7 @@ class PerkSystem {
         while (selected.length < count && attempts < 300) {
             attempts++;
             if (pool.length === 0) break;
-            const perk = pool[Math.floor(window.randomSecure() * pool.length)];
+            const perk = pool[Math.floor(Math.random() * pool.length)];
             if (usedIds.has(perk.id)) continue;
             usedIds.add(perk.id);
             selected.push(this._enrichPerk(perk));

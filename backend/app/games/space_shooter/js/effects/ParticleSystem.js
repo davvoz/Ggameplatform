@@ -5,8 +5,8 @@ class Particle {
     constructor(x, y, config = {}) {
         this.x = x;
         this.y = y;
-        this.vx = config.vx || (window.randomSecure() - 0.5) * 100;
-        this.vy = config.vy || (window.randomSecure() - 0.5) * 100;
+        this.vx = config.vx || (Math.random() - 0.5) * 100;
+        this.vy = config.vy || (Math.random() - 0.5) * 100;
         this.size = config.size || 3;
         this.originalSize = this.size;
         this.life = config.life || 1;
@@ -143,8 +143,8 @@ class ParticleSystem {
         for (let i = 0; i < actualCount; i++) {
             const particle = new Particle(x, y, {
                 ...config,
-                vx: config.vx !== undefined ? config.vx : (window.randomSecure() - 0.5) * (config.spread || 100),
-                vy: config.vy !== undefined ? config.vy : (window.randomSecure() - 0.5) * (config.spread || 100),
+                vx: config.vx !== undefined ? config.vx : (Math.random() - 0.5) * (config.spread || 100),
+                vy: config.vy !== undefined ? config.vy : (Math.random() - 0.5) * (config.spread || 100),
                 // Applica impostazioni performance
                 glow: config.glow && this.glowEnabled,
                 trail: config.trail && this.trailEnabled,
@@ -156,10 +156,10 @@ class ParticleSystem {
     // Preset: Thruster flame
     emitThruster(x, y, intensity = 1) {
         this.emit(x, y, {
-            vx: (window.randomSecure() - 0.5) * 30,
-            vy: 100 + window.randomSecure() * 100,
-            size: 3 + window.randomSecure() * 4,
-            life: 0.2 + window.randomSecure() * 0.2,
+            vx: (Math.random() - 0.5) * 30,
+            vy: 100 + Math.random() * 100,
+            size: 3 + Math.random() * 4,
+            life: 0.2 + Math.random() * 0.2,
             decay: 2,
             color: { r: 100, g: 200, b: 255 },
             endColor: { r: 255, g: 100, b: 50 },
@@ -175,13 +175,13 @@ class ParticleSystem {
 
         // A few fast debris sparks - no circles, just trails
         for (let i = 0; i < count; i++) {
-            const angle = (i / count) * Math.PI * 2 + window.randomSecure() * 0.4;
-            const speed = 150 + window.randomSecure() * 250;
+            const angle = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+            const speed = 150 + Math.random() * 250;
             this.emit(x, y, {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 1 + window.randomSecure(),
-                life: 0.2 + window.randomSecure() * 0.25,
+                size: 1 + Math.random(),
+                life: 0.2 + Math.random() * 0.25,
                 decay: 2.5,
                 color: { r: 255, g: 220, b: 140 },
                 endColor: { r: 255, g: 80, b: 0 },
@@ -197,12 +197,12 @@ class ParticleSystem {
     emitHitSpark(x, y, color = { r: 255, g: 255, b: 255 }) {
         for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2;
-            const speed = 100 + window.randomSecure() * 100;
+            const speed = 100 + Math.random() * 100;
             this.emit(x, y, {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 2 + window.randomSecure() * 2,
-                life: 0.2 + window.randomSecure() * 0.1,
+                size: 2 + Math.random() * 2,
+                life: 0.2 + Math.random() * 0.1,
                 decay: 3,
                 color: color,
                 endColor: { r: 255, g: 200, b: 100 },
@@ -216,18 +216,18 @@ class ParticleSystem {
     emitPowerUpCollect(x, y, color) {
         for (let i = 0; i < 20; i++) {
             const angle = (i / 20) * Math.PI * 2;
-            const speed = 80 + window.randomSecure() * 40;
+            const speed = 80 + Math.random() * 40;
             this.emit(x, y, {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                size: 3 + window.randomSecure() * 3,
-                life: 0.5 + window.randomSecure() * 0.3,
+                size: 3 + Math.random() * 3,
+                life: 0.5 + Math.random() * 0.3,
                 decay: 1.5,
                 color: color,
                 endColor: { r: 255, g: 255, b: 255 },
                 glow: true,
                 shape: 'star',
-                rotationSpeed: 5 + window.randomSecure() * 5
+                rotationSpeed: 5 + Math.random() * 5
             });
         }
     }
@@ -236,9 +236,9 @@ class ParticleSystem {
     emitBulletTrail(x, y, isPlayer = true) {
         const color = isPlayer ? { r: 0, g: 200, b: 255 } : { r: 255, g: 100, b: 100 };
         this.emit(x, y, {
-            vx: (window.randomSecure() - 0.5) * 10,
+            vx: (Math.random() - 0.5) * 10,
             vy: isPlayer ? 20 : -20,
-            size: 2 + window.randomSecure() * 2,
+            size: 2 + Math.random() * 2,
             life: 0.15,
             decay: 5,
             color: color,

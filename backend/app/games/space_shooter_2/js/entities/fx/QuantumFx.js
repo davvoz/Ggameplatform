@@ -30,15 +30,15 @@ const FEYNMAN_STYLES = ['straight', 'wavy', 'dashed'];
 function _pickFieldColor(depth) {
     let total = 0;
     for (const p of QUANTUM_FIELD_PALETTE) total += p.weight;
-    let r = window.randomSecure() * total;
+    let r = Math.random() * total;
     let picked = QUANTUM_FIELD_PALETTE[0];
     for (const p of QUANTUM_FIELD_PALETTE) {
         r -= p.weight;
         if (r <= 0) { picked = p; break; }
     }
-    const hue = picked.hue[0] + window.randomSecure() * picked.hue[1];
-    const sat = picked.sat[0] + window.randomSecure() * picked.sat[1];
-    const lightness = picked.light[0] + (depth || 0) * picked.light[1] + window.randomSecure() * picked.light[2];
+    const hue = picked.hue[0] + Math.random() * picked.hue[1];
+    const sat = picked.sat[0] + Math.random() * picked.sat[1];
+    const lightness = picked.light[0] + (depth || 0) * picked.light[1] + Math.random() * picked.light[2];
     return { hue, sat, lightness };
 }
 
@@ -48,7 +48,7 @@ export class QuantumFx extends BaseFxStrategy {
         const W = this.canvasWidth, H = this.canvasHeight;
         const qc = this.config;
         const d = qc ? qc.dist : [0.35, 0.55, 0.75, 0.90];
-        const roll = window.randomSecure();
+        const roll = Math.random();
 
         if (roll < d[0])      this._initQuantumField(W, H, initial, qc);
         else if (roll < d[1]) this._initFeynmanLine(W, H, initial);
@@ -63,88 +63,88 @@ export class QuantumFx extends BaseFxStrategy {
     // ═══════════════════════════════════════════
     _initQuantumField(W, H, initial, qc) {
         this.subType = 'quantumField';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -60 - window.randomSecure() * 50;
-        this.depthLayer = window.randomSecure();
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -60 - Math.random() * 50;
+        this.depthLayer = Math.random();
         const near = this.depthLayer;
         const eMul = qc ? (qc.energyMul || 1) : 1;
-        this.blobRadius = (12 + near * 20 + window.randomSecure() * 15) * eMul;
+        this.blobRadius = (12 + near * 20 + Math.random() * 15) * eMul;
         this.size = this.blobRadius * 2;
-        this.speed = 14 + near * 14 + window.randomSecure() * 10;
-        this.alpha = 0.3 + near * 0.25 + window.randomSecure() * 0.15;
+        this.speed = 14 + near * 14 + Math.random() * 10;
+        this.alpha = 0.3 + near * 0.25 + Math.random() * 0.15;
         Object.assign(this, _pickFieldColor(near));
-        this.wavePhase = window.randomSecure() * Math.PI * 2;
-        this.waveFreq = 2 + window.randomSecure() * 3;
-        this.waveAmp = 3 + window.randomSecure() * 5;
-        this.drift = (window.randomSecure() - 0.5) * 8;
+        this.wavePhase = Math.random() * Math.PI * 2;
+        this.waveFreq = 2 + Math.random() * 3;
+        this.waveAmp = 3 + Math.random() * 5;
+        this.drift = (Math.random() - 0.5) * 8;
     }
 
     _initFeynmanLine(W, H, initial) {
         this.subType = 'feynmanLine';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -30 - window.randomSecure() * 20;
-        this.lineLen = 30 + window.randomSecure() * 60;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
+        this.lineLen = 30 + Math.random() * 60;
         this.size = this.lineLen;
-        this.angle = -Math.PI / 2 + (window.randomSecure() - 0.5) * 0.8;
-        this.speed = 18 + window.randomSecure() * 15;
-        this.alpha = 0.15 + window.randomSecure() * 0.25;
-        this.lineStyle = FEYNMAN_STYLES[Math.floor(window.randomSecure() * 3)];
-        this.lineHue = 200 + window.randomSecure() * 120;
-        this.lineWidth = 0.8 + window.randomSecure() * 1.2;
-        this.segments = 8 + Math.floor(window.randomSecure() * 8);
+        this.angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+        this.speed = 18 + Math.random() * 15;
+        this.alpha = 0.15 + Math.random() * 0.25;
+        this.lineStyle = FEYNMAN_STYLES[Math.floor(Math.random() * 3)];
+        this.lineHue = 200 + Math.random() * 120;
+        this.lineWidth = 0.8 + Math.random() * 1.2;
+        this.segments = 8 + Math.floor(Math.random() * 8);
     }
 
     _initParticleTrail(W, H, initial) {
         this.subType = 'particleTrail';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -20 - window.randomSecure() * 15;
-        this.size = 2 + window.randomSecure() * 3;
-        this.trailLen = 5 + Math.floor(window.randomSecure() * 8);
-        this.speed = 40 + window.randomSecure() * 50;
-        this.alpha = 0.4 + window.randomSecure() * 0.3;
-        this.trailColor = PARTICLE_TRAIL_COLORS[Math.floor(window.randomSecure() * PARTICLE_TRAIL_COLORS.length)];
-        this.vx = (window.randomSecure() - 0.5) * 15;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -20 - Math.random() * 15;
+        this.size = 2 + Math.random() * 3;
+        this.trailLen = 5 + Math.floor(Math.random() * 8);
+        this.speed = 40 + Math.random() * 50;
+        this.alpha = 0.4 + Math.random() * 0.3;
+        this.trailColor = PARTICLE_TRAIL_COLORS[Math.floor(Math.random() * PARTICLE_TRAIL_COLORS.length)];
+        this.vx = (Math.random() - 0.5) * 15;
         this.trailPoints = [];
-        this.curvature = (window.randomSecure() - 0.5) * 2; // magnetic field curvature
+        this.curvature = (Math.random() - 0.5) * 2; // magnetic field curvature
     }
 
     _initDecayProduct(W, H, initial) {
         this.subType = 'decayProduct';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -40 - window.randomSecure() * 30;
-        this.size = 15 + window.randomSecure() * 20;
-        this.speed = 12 + window.randomSecure() * 10;
-        this.alpha = 0.35 + window.randomSecure() * 0.3;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -40 - Math.random() * 30;
+        this.size = 15 + Math.random() * 20;
+        this.speed = 12 + Math.random() * 10;
+        this.alpha = 0.35 + Math.random() * 0.3;
         this.ringPhase = 0;
-        this.ringSpeed = 1 + window.randomSecure() * 2;
+        this.ringSpeed = 1 + Math.random() * 2;
         this.maxRingRadius = this.size;
         this.fragments = [];
-        const fragCount = 3 + Math.floor(window.randomSecure() * 4);
+        const fragCount = 3 + Math.floor(Math.random() * 4);
         for (let i = 0; i < fragCount; i++) {
             this.fragments.push({
-                angle: (Math.PI * 2 / fragCount) * i + window.randomSecure() * 0.3,
-                speed: 8 + window.randomSecure() * 12,
-                size: 1 + window.randomSecure() * 2,
+                angle: (Math.PI * 2 / fragCount) * i + Math.random() * 0.3,
+                speed: 8 + Math.random() * 12,
+                size: 1 + Math.random() * 2,
                 dist: 0
             });
         }
-        this.decayHue = 180 + window.randomSecure() * 140;
+        this.decayHue = 180 + Math.random() * 140;
     }
 
     _initVacuumBubble(W, H, initial) {
         this.subType = 'vacuumBubble';
-        this.x = window.randomSecure() * W;
-        this.y = initial ? window.randomSecure() * H : -50 - window.randomSecure() * 40;
-        this.bubbleRadius = 10 + window.randomSecure() * 20;
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -50 - Math.random() * 40;
+        this.bubbleRadius = 10 + Math.random() * 20;
         this.size = this.bubbleRadius * 2;
-        this.speed = 6 + window.randomSecure() * 8;
-        this.alpha = 0.15 + window.randomSecure() * 0.2;
-        this.breathPhase = window.randomSecure() * Math.PI * 2;
-        this.breathSpeed = 0.8 + window.randomSecure() * 1.5;
-        this.breathAmp = 0.15 + window.randomSecure() * 0.15;
-        this.bubbleHue = 240 + window.randomSecure() * 80;
-        this.drift = (window.randomSecure() - 0.5) * 6;
-        this.shimmerPhase = window.randomSecure() * Math.PI * 2;
+        this.speed = 6 + Math.random() * 8;
+        this.alpha = 0.15 + Math.random() * 0.2;
+        this.breathPhase = Math.random() * Math.PI * 2;
+        this.breathSpeed = 0.8 + Math.random() * 1.5;
+        this.breathAmp = 0.15 + Math.random() * 0.15;
+        this.bubbleHue = 240 + Math.random() * 80;
+        this.drift = (Math.random() - 0.5) * 6;
+        this.shimmerPhase = Math.random() * Math.PI * 2;
     }
 
     // ═══════════════════════════════════════════

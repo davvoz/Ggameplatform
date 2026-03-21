@@ -1,8 +1,17 @@
 {
-  "version": "4.0.10",
-  "timestamp": "2026-03-21T14:14:12.913Z",
-  "buildNumber": 469,
+  "version": "4.0.11",
+  "timestamp": "2026-03-21T21:44:48.244Z",
+  "buildNumber": 470,
   "changelog": [
+    {
+      "version": "4.0.11",
+      "date": "2026-03-21",
+      "type": "patch",
+      "changes": [
+        "fix: [MTD] Sonar",
+        "🔖 Bump version to 4.0.10 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.10",
       "date": "2026-03-21",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: remove unreachable code in PushNotificationManager",
         "🔖 Bump version to 4.0.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.1",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix:sonar",
-        "🔖 Bump version to 4.0.0 [skip-version]"
       ]
     }
   ]

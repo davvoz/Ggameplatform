@@ -1,8 +1,17 @@
 {
-  "version": "4.0.8",
-  "timestamp": "2026-03-21T10:11:33.215Z",
-  "buildNumber": 467,
+  "version": "4.0.9",
+  "timestamp": "2026-03-21T12:16:48.592Z",
+  "buildNumber": 468,
   "changelog": [
+    {
+      "version": "4.0.9",
+      "date": "2026-03-21",
+      "type": "patch",
+      "changes": [
+        "Refactor random number generation to use Math.random() instead of window.randomSecure() across multiple files for consistency and improved performance.",
+        "🔖 Bump version to 4.0.8 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.8",
       "date": "2026-03-21",
@@ -82,16 +91,6 @@
       "changes": [
         "breaking : Sonar",
         "🔖 Bump version to 3.38.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "3.38.6",
-      "date": "2026-03-19",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "refactor: update deployment summary to use environment variable for commit message",
-        "🔖 Bump version to 3.38.5 [skip-version]"
       ]
     }
   ]

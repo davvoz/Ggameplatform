@@ -1,8 +1,17 @@
 {
-  "version": "4.0.9",
-  "timestamp": "2026-03-21T12:16:48.592Z",
-  "buildNumber": 468,
+  "version": "4.0.10",
+  "timestamp": "2026-03-21T14:14:12.913Z",
+  "buildNumber": 469,
   "changelog": [
+    {
+      "version": "4.0.10",
+      "date": "2026-03-21",
+      "type": "patch",
+      "changes": [
+        "refactor: [RR]use Annotated for dependency injection in FastAPI router",
+        "🔖 Bump version to 4.0.9 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.9",
       "date": "2026-03-21",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:sonar",
         "🔖 Bump version to 4.0.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.0",
-      "date": "2026-03-20",
-      "type": "major",
-      "changes": [
-        "breaking : Sonar",
-        "🔖 Bump version to 3.38.6 [skip-version]"
       ]
     }
   ]

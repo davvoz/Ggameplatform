@@ -4,7 +4,7 @@ REST API endpoints for Rainbow Rush game
 Following REST principles and secure API design
 """
 
-from typing import Dict, Any, Optional
+from typing import Annotated, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -80,7 +80,7 @@ router = APIRouter(
 )
 
 
-def get_rainbow_rush_service(db: Session = Depends(get_rainbow_rush_db)) -> RainbowRushService:
+def get_rainbow_rush_service(db: Annotated[Session, Depends(get_rainbow_rush_db)]) -> RainbowRushService:
     """
     Dependency injection for RainbowRushService
     
@@ -94,7 +94,7 @@ def get_rainbow_rush_service(db: Session = Depends(get_rainbow_rush_db)) -> Rain
     return RainbowRushService(repository)
 
 
-async def validate_user_exists(user_id: str, main_db: Session = Depends(get_db)) -> str:
+async def validate_user_exists(user_id: str, main_db: Annotated[Session, Depends(get_db)]) -> str:
     """
     Validate that user_id exists in main platform database
     
@@ -124,8 +124,8 @@ async def validate_user_exists(user_id: str, main_db: Session = Depends(get_db))
 
 @router.get("/progress/{user_id}", response_model=ProgressResponse)
 async def get_progress(
-    user_id: str = Depends(validate_user_exists),
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    user_id: Annotated[str, Depends(validate_user_exists)],
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Get player progress
@@ -149,9 +149,9 @@ async def get_progress(
 
 @router.post("/progress/{user_id}/save-level")
 async def save_level_progress(
-    user_id: str = Depends(validate_user_exists),
-    request: SaveProgressRequest = ...,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    user_id: Annotated[str, Depends(validate_user_exists)],
+    request: SaveProgressRequest,
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Save progress for specific level
@@ -184,9 +184,9 @@ async def save_level_progress(
 
 @router.post("/completion/{user_id}")
 async def submit_level_completion(
-    user_id: str = Depends(validate_user_exists),
-    request: LevelCompletionRequest = ...,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    user_id: Annotated[str, Depends(validate_user_exists)],
+    request: LevelCompletionRequest,
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Submit level completion with anti-cheat validation
@@ -222,9 +222,9 @@ async def submit_level_completion(
 
 @router.get("/completion/{user_id}/history")
 async def get_completion_history(
-    user_id: str = Depends(validate_user_exists),
-    level_id: Optional[int] = None,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    user_id: Annotated[str, Depends(validate_user_exists)],
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)],
+    level_id: Optional[int] = None
 ):
     """
     Get level completion history
@@ -256,9 +256,9 @@ async def get_completion_history(
 
 @router.post("/session/{user_id}/start")
 async def start_session(
-    user_id: str = Depends(validate_user_exists),
-    request: SessionStartRequest = ...,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    user_id: Annotated[str, Depends(validate_user_exists)],
+    request: SessionStartRequest,
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Start new game session
@@ -289,7 +289,7 @@ async def start_session(
 async def update_session(
     session_id: str,
     request: SessionUpdateRequest,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Update game session (heartbeat, stats)
@@ -334,8 +334,8 @@ class SessionEndRequest(BaseModel):
 @router.post("/session/{session_id}/end")
 async def end_session(
     session_id: str,
-    request: Optional[SessionEndRequest] = None,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)],
+    request: Optional[SessionEndRequest] = None
 ):
     """
     End active game session
@@ -392,7 +392,7 @@ async def end_session(
 @router.get("/session/{user_id}/active")
 async def get_active_session(
     user_id: str,
-    service: RainbowRushService = Depends(get_rainbow_rush_service)
+    service: Annotated[RainbowRushService, Depends(get_rainbow_rush_service)]
 ):
     """
     Get active session for user

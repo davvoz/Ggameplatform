@@ -9,10 +9,11 @@ export class HeartCollisionHandler extends PowerupCollisionHandler {
         if (options.goalReached) return null;
 
         const hearts = entityManager.getEntities('hearts');
+        let healed = false;
 
         for (let i = hearts.length - 1; i >= 0; i--) {
             if (this.checkCollision(hearts[i])) {
-                const healed = this.context.player.heal(1);
+                healed = this.context.player.heal(1);
                 hearts.splice(i, 1);
 
                 if (healed) {
@@ -22,7 +23,7 @@ export class HeartCollisionHandler extends PowerupCollisionHandler {
             }
         }
 
-        return null;
+        return healed ? { collected: true } : null;
     }
 }
 
@@ -35,10 +36,12 @@ export class ShieldCollisionHandler extends PowerupCollisionHandler {
         if (options.goalReached) return null;
 
         const shields = entityManager.getEntities('shieldBonuses');
+        let collected = false;
 
         for (let i = shields.length - 1; i >= 0; i--) {
             if (this.checkCollision(shields[i])) {
                 const shield = shields[i];
+                collected = true;
                 
                 this._handlePowerupCollection(shield, shields, i, entityManager, {
                     text: 'SHIELD!',
@@ -57,7 +60,7 @@ export class ShieldCollisionHandler extends PowerupCollisionHandler {
             }
         }
 
-        return null;
+        return collected ? { collected: true } : null;
     }
 }
 
@@ -70,10 +73,12 @@ export class MagnetCollisionHandler extends PowerupCollisionHandler {
         if (options.goalReached) return null;
 
         const magnets = entityManager.getEntities('magnetBonuses');
+        let collected = false;
 
         for (let i = magnets.length - 1; i >= 0; i--) {
             if (this.checkCollision(magnets[i])) {
                 const magnet = magnets[i];
+                collected = true;
 
                 this._handlePowerupCollection(magnet, magnets, i, entityManager, {
                     text: 'COIN MAGNET!',
@@ -91,7 +96,7 @@ export class MagnetCollisionHandler extends PowerupCollisionHandler {
             }
         }
 
-        return null;
+        return collected ? { collected: true } : null;
     }
 }
 
@@ -104,11 +109,13 @@ export class BoostCollisionHandler extends PowerupCollisionHandler {
         if (options.goalReached) return null;
 
         const boosts = entityManager.getEntities('boosts');
+        let collected = false;
 
         for (let i = boosts.length - 1; i >= 0; i--) {
             if (this.checkCollision(boosts[i])) {
                 const boost = boosts[i];
                 boosts.splice(i, 1);
+                collected = true;
 
                 this.context.player.applyBoost();
                 this.playSound('boost');
@@ -131,7 +138,7 @@ export class BoostCollisionHandler extends PowerupCollisionHandler {
             }
         }
 
-        return null;
+        return collected ? { collected: true } : null;
     }
 
     _showBoostComboText(boost, points, entityManager) {

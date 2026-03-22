@@ -1,8 +1,17 @@
 {
-  "version": "4.0.14",
-  "timestamp": "2026-03-22T15:14:05.758Z",
-  "buildNumber": 473,
+  "version": "4.0.15",
+  "timestamp": "2026-03-22T15:27:57.295Z",
+  "buildNumber": 474,
   "changelog": [
+    {
+      "version": "4.0.15",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "fix: ensure timezone awareness for end date in current week info",
+        "🔖 Bump version to 4.0.14 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.14",
       "date": "2026-03-22",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [settemezzo] Sonar",
         "🔖 Bump version to 4.0.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.5",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix: update parent origin handling in PlatformSDKManager",
-        "🔖 Bump version to 4.0.4 [skip-version]"
       ]
     }
   ]

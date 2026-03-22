@@ -22,8 +22,8 @@ function hexRgb(h) {
     const v = parseInt(h.slice(1), 16);
     return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
 }
-function rgb(r, g, b) { return `rgb(${r|0},${g|0},${b|0})`; }
-function rgba(r, g, b, a) { return `rgba(${r|0},${g|0},${b|0},${a})`; }
+function rgb(r, g, b) { return `rgb(${Math.trunc(r)},${Math.trunc(g)},${Math.trunc(b)})`; }
+function rgba(r, g, b, a) { return `rgba(${Math.trunc(r)},${Math.trunc(g)},${Math.trunc(b)},${a})`; }
 function colStr([r, g, b]) { return rgb(r, g, b); }
 function darken(hex, k) { const c = hexRgb(hex); return rgb(c[0]*(1-k), c[1]*(1-k), c[2]*(1-k)); }
 function lighten(hex, k) { const c = hexRgb(hex); return rgb(c[0]+(255-c[0])*k, c[1]+(255-c[1])*k, c[2]+(255-c[2])*k); }
@@ -690,7 +690,7 @@ function drawProtonCrusher(ctx, boss, t) {
         // Quark flavour letter (faint watermark)
         ctx.globalAlpha = 0.18;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.55)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.55)}px serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(quarkNames[ci % 3], pcx, pcy);
@@ -828,7 +828,7 @@ function drawElectroweakUnifier(ctx, boss, t) {
         // Phase label watermark
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.32)|0}px monospace`;
+        ctx.font = `bold ${Math.trunc(pr * 0.32)}px monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(isEM ? 'EM' : 'WEAK', pcx, pcy + pr * 0.02);
 
@@ -1115,7 +1115,7 @@ function drawHiggsManifestation(ctx, boss, t) {
         // H⁰ inscription
         ctx.globalAlpha = 0.12;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.35)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('H⁰', pcx, pcy);
 
@@ -1247,7 +1247,7 @@ function drawAntimatterSovereign(ctx, boss, t) {
         // Label watermark
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.35)|0}px monospace`;
+        ctx.font = `bold ${Math.trunc(pr * 0.35)}px monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(label, pcx, pcy);
 
@@ -1447,7 +1447,7 @@ function drawGrandUnifiedTheory(ctx, boss, t) {
         // Force symbol watermark
         ctx.globalAlpha = 0.12;
         ctx.fillStyle = fCols[af];
-        ctx.font = `bold ${(pr * 0.4)|0}px monospace`;
+        ctx.font = `bold ${Math.trunc(pr * 0.4)}px monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(['g', 'γ', 'W', 'G'][af], pcx, pcy + pr * 0.05);
 
@@ -1529,7 +1529,7 @@ function drawCharmQuark(ctx, boss, t) {
 
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.4)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.4)}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('c', pcx, pcy);
 
@@ -1630,7 +1630,7 @@ function drawStrangeOscillator(ctx, boss, t) {
 
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.35)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('s', pcx, pcy);
 
@@ -1731,7 +1731,7 @@ function drawTopResonance(ctx, boss, t) {
 
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.35)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('t', pcx, pcy);
 
@@ -1827,7 +1827,7 @@ function drawBottomDecayer(ctx, boss, t) {
 
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${(pr * 0.35)|0}px serif`;
+        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('b', pcx, pcy);
 

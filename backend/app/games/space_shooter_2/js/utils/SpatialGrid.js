@@ -53,10 +53,10 @@ class SpatialGrid {
         const h = entity.height;
         const cs = this.cellSize;
 
-        const minCol = Math.max(0, (x / cs) | 0);
-        const maxCol = Math.min(this.cols - 1, ((x + w) / cs) | 0);
-        const minRow = Math.max(0, (y / cs) | 0);
-        const maxRow = Math.min(this.rows - 1, ((y + h) / cs) | 0);
+        const minCol = Math.max(0, Math.trunc(x / cs));
+        const maxCol = Math.min(this.cols - 1, Math.trunc((x + w) / cs));
+        const minRow = Math.max(0, Math.trunc(y / cs));
+        const maxRow = Math.min(this.rows - 1, Math.trunc((y + h) / cs));
 
         for (let r = minRow; r <= maxRow; r++) {
             const rowOff = r * this.cols;
@@ -82,10 +82,10 @@ class SpatialGrid {
         seen.clear();
 
         const cs = this.cellSize;
-        const minCol = Math.max(0, (x / cs) | 0);
-        const maxCol = Math.min(this.cols - 1, ((x + w) / cs) | 0);
-        const minRow = Math.max(0, (y / cs) | 0);
-        const maxRow = Math.min(this.rows - 1, ((y + h) / cs) | 0);
+        const minCol = Math.max(0, Math.trunc(x / cs));
+        const maxCol = Math.min(this.cols - 1, Math.trunc((x + w) / cs));
+        const minRow = Math.max(0, Math.trunc(y / cs));
+        const maxRow = Math.min(this.rows - 1, Math.trunc((y + h) / cs));
 
         for (let r = minRow; r <= maxRow; r++) {
             const rowOff = r * this.cols;

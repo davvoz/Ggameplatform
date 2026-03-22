@@ -156,9 +156,9 @@ class ParticleSystem {
 
             let r = p.color.r, g = p.color.g, b = p.color.b;
             if (p.endColor) {
-                r = (p.color.r + (p.endColor.r - p.color.r) * t) | 0;
-                g = (p.color.g + (p.endColor.g - p.color.g) * t) | 0;
-                b = (p.color.b + (p.endColor.b - p.color.b) * t) | 0;
+                r = Math.trunc(p.color.r + (p.endColor.r - p.color.r) * t);
+                g = Math.trunc(p.color.g + (p.endColor.g - p.color.g) * t);
+                b = Math.trunc(p.color.b + (p.endColor.b - p.color.b) * t);
             }
 
             ctx.globalAlpha = alpha;

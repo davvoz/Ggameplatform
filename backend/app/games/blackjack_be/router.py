@@ -271,7 +271,7 @@ class GameStateResponse(BaseModel):
     status: str
     dealer: Dict[str, Any]
     hands: List[Dict[str, Any]]
-    active_hand_index: Optional[int]
+    active_hand_index: Optional[int] = None
     available_actions: List[str]
     total_payout: int
     initial_bet: int

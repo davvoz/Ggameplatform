@@ -77,7 +77,7 @@ export class PlayerAnimationController {
                     rotation: Math.sin(t * Math.PI) * 0.05
                 };
 
-            case 'jumping':
+            case 'jumping': {
                 // Stretch upward
                 const jumpProgress = Math.min(1, t / 0.3);
                 return {
@@ -86,6 +86,7 @@ export class PlayerAnimationController {
                     offsetY: 0,
                     rotation: 0 // Aggiunto per coerenza
                 };
+            }
             case 'falling':
                 // Slight wobble
                 return {
@@ -94,7 +95,7 @@ export class PlayerAnimationController {
                     offsetY: Math.sin(t * 4) * 1.5,
                     rotation: 0 // Aggiunto per coerenza
                 };
-            case 'turbo':
+            case 'turbo': {
                 // Animazione turbo BOLIDE - come un meteorite che entra in atmosfera
                 const turboVibration = Math.sin(t * 30) * 0.01; // Vibrazione veloce
                 const turboPulse = Math.sin(t * 6) * 0.06; // Pulsazione energetica
@@ -118,7 +119,8 @@ export class PlayerAnimationController {
                     flameTrail: true, // Scia di fiamme dietro
                     heatDistortion: 0.3 + Math.sin(t * 20) * 0.1 // Distorsione da calore
                 };
-            case 'landing':
+            }
+            case 'landing': {
                 // Heavy squash then recover - PIÙ IMPATTO
                 const landProgress = Math.min(1, t / 0.5); // Durata aumentata
                 const squashAmount = Math.max(0, 1 - landProgress);
@@ -129,10 +131,10 @@ export class PlayerAnimationController {
                     offsetY: elasticBounce * 2,
                     rotation: 0 // Aggiunto per coerenza
                 };
+            }
 
             default:
                 return { scaleX: 1, scaleY: 1, offsetY: 0, rotation: 0 };
-                return { scaleX: 1, scaleY: 1, offsetY: 0 };
         }
     }
 
@@ -172,7 +174,7 @@ export class PlayerAnimationController {
                         velocityRange: [80, 180],
                         lifetime: 0.5,
                         color: [
-                            1.0, // Rosso
+                            1, // Rosso
                             0.3 + Math.random() * 0.4, // Arancione variabile
                             0.1 // Poco blu
                         ],

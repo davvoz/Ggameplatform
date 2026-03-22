@@ -150,8 +150,9 @@ export class IGameState {
     /**
      * Enter this state
      * @param {Object} context - Game context
+     * @returns {Promise<void>}
      */
-    enter(context) {
+    async enter(context) {
         // Optional - default no-op
     }
 

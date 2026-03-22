@@ -134,7 +134,7 @@ export class TowerManager {
         this.audio.towerPlace();
 
         this.state.cannonPriceMultiplier[cannonType] =
-            parseFloat((this.state.cannonPriceMultiplier[cannonType] * 1.25).toFixed(3));
+            Number.parseFloat((this.state.cannonPriceMultiplier[cannonType] * 1.25).toFixed(3));
 
         this.state.towersPlaced++;
         this.game.tutorial?.isActive &&

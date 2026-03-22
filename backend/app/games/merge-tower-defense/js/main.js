@@ -74,10 +74,10 @@ import { TutorialManager, TutorialPrompt } from './tutorial.js';
 
         document.getElementById('devApply').onclick = () => {
             const state = game.getState();
-            state.coins = parseInt(document.getElementById('devCoins').value) || 100;
-            state.energy = parseInt(document.getElementById('devEnergy').value) || 100;
-            state.wave = parseInt(document.getElementById('devWave').value) || 1;
-            state.targetWaves = parseInt(document.getElementById('devTarget').value) || 20;
+            state.coins = Number.parseInt(document.getElementById('devCoins').value) || 100;
+            state.energy = Number.parseInt(document.getElementById('devEnergy').value) || 100;
+            state.wave = Number.parseInt(document.getElementById('devWave').value) || 1;
+            state.targetWaves = Number.parseInt(document.getElementById('devTarget').value) || 20;
             state.waveModeSelected = true;
             state.selectedWaveMode = state.selectedWaveMode || 'EASY';
 

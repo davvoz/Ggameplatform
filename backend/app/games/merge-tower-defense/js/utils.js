@@ -175,9 +175,9 @@ export const Utils = {
     colorWithAlpha(color, alpha) {
         // Convert hex to rgba
         if (color.startsWith('#')) {
-            const r = parseInt(color.slice(1, 3), 16);
-            const g = parseInt(color.slice(3, 5), 16);
-            const b = parseInt(color.slice(5, 7), 16);
+            const r = Number.parseInt(color.slice(1, 3), 16);
+            const g = Number.parseInt(color.slice(3, 5), 16);
+            const b = Number.parseInt(color.slice(5, 7), 16);
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
         return color;
@@ -294,9 +294,9 @@ export const Utils = {
     lightenColor(color, percent) {
         if (!color.startsWith('#')) return color;
         
-        let r = parseInt(color.slice(1, 3), 16);
-        let g = parseInt(color.slice(3, 5), 16);
-        let b = parseInt(color.slice(5, 7), 16);
+        let r = Number.parseInt(color.slice(1, 3), 16);
+        let g = Number.parseInt(color.slice(3, 5), 16);
+        let b = Number.parseInt(color.slice(5, 7), 16);
         
         r = Math.min(255, Math.floor(r + (255 - r) * (percent / 100)));
         g = Math.min(255, Math.floor(g + (255 - g) * (percent / 100)));
@@ -311,9 +311,9 @@ export const Utils = {
     darkenColor(color, percent) {
         if (!color.startsWith('#')) return color;
         
-        let r = parseInt(color.slice(1, 3), 16);
-        let g = parseInt(color.slice(3, 5), 16);
-        let b = parseInt(color.slice(5, 7), 16);
+        let r = Number.parseInt(color.slice(1, 3), 16);
+        let g = Number.parseInt(color.slice(3, 5), 16);
+        let b = Number.parseInt(color.slice(5, 7), 16);
         
         r = Math.max(0, Math.floor(r * (1 - percent / 100)));
         g = Math.max(0, Math.floor(g * (1 - percent / 100)));

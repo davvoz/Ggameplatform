@@ -264,16 +264,16 @@ class PlaceBetResponse(BaseModel):
     round_id: str
 
 class RoundInfoResponse(BaseModel):
-    round_id: Optional[str]
+    round_id: Optional[str] = None
     status: str
-    lock_price: Optional[float]
-    current_price: Optional[float]
+    lock_price: Optional[float] = None
+    current_price: Optional[float] = None
     close_price: Optional[float] = None
-    seconds_remaining: Optional[float]
-    betting_seconds_remaining: Optional[float]
-    odds: Optional[Dict[str, float]]
+    seconds_remaining: Optional[float] = None
+    betting_seconds_remaining: Optional[float] = None
+    odds: Optional[Dict[str, float]] = None
     total_bets: int
-    start_time: Optional[float]
+    start_time: Optional[float] = None
 
 class RoundHistoryEntry(BaseModel):
     round_id: str

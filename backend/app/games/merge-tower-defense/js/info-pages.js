@@ -1006,9 +1006,9 @@ export class InfoPagesManager {
     hexToRgb(hex) {
         if (!hex) return '100, 100, 100';
         hex = hex.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16) || 100;
-        const g = parseInt(hex.substring(2, 4), 16) || 100;
-        const b = parseInt(hex.substring(4, 6), 16) || 100;
+        const r = Number.parseInt(hex.substring(0, 2), 16) || 100;
+        const g = Number.parseInt(hex.substring(2, 4), 16) || 100;
+        const b = Number.parseInt(hex.substring(4, 6), 16) || 100;
         return `${r}, ${g}, ${b}`;
     }
 }

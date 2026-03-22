@@ -20,7 +20,7 @@ class BaseGameState extends IGameState {
         return this.name;
     }
 
-    enter(context) {
+    async enter(context) {
 
     }
 
@@ -504,7 +504,7 @@ class LevelSummaryState extends BaseGameState {
     }
 
     async enter(context) {
-        super.enter(context);
+        await super.enter(context);
         context.engine.stop();
 
         // Reset all active effects
@@ -587,11 +587,8 @@ class LevelSummaryState extends BaseGameState {
         window.dispatchEvent(event);
 
         // Play sound based on stars
-        if (summary.stars === 3) {
-            context.audioManager?.playSound('score');
-        } else {
-            context.audioManager?.playSound('score');
-        }
+        context.audioManager?.playSound('score');
+
     }
 
     handleInput(action, data, context) {
@@ -622,7 +619,7 @@ class GameOverState extends BaseGameState {
     }
 
     async enter(context) {
-        super.enter(context);
+        await super.enter(context);
 
         // Stop audio
         context.audioManager.stopBackgroundMusic();
@@ -775,8 +772,9 @@ export class GameStateMachine {
      * Transition to new state
      * @param {string} stateName - Target state name
      * @param {Object} context - Game context
+     * @returns {Promise<void>}
      */
-    transitionTo(stateName, context) {
+    async transitionTo(stateName, context) {
         const newState = this.states.get(stateName);
 
         if (!newState) {
@@ -792,7 +790,7 @@ export class GameStateMachine {
         // Enter new state
         this.currentState = newState;
         this.currentStateName = stateName;
-        this.currentState.enter(context);
+        await this.currentState.enter(context);
     }
 
     /**

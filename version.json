@@ -1,8 +1,17 @@
 {
-  "version": "4.0.17",
-  "timestamp": "2026-03-22T23:22:56.702Z",
-  "buildNumber": 476,
+  "version": "4.0.18",
+  "timestamp": "2026-03-22T23:39:29.071Z",
+  "buildNumber": 477,
   "changelog": [
+    {
+      "version": "4.0.18",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "fix : [SS2] sonar",
+        "🔖 Bump version to 4.0.17 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.17",
       "date": "2026-03-22",
@@ -84,15 +93,6 @@
       "changes": [
         "Refactor random number generation to use Math.random() instead of window.randomSecure() across multiple files for consistency and improved performance.",
         "🔖 Bump version to 4.0.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.8",
-      "date": "2026-03-21",
-      "type": "patch",
-      "changes": [
-        "fix: [BRISCOLA] Sonar , rename card properties for clarity",
-        "🔖 Bump version to 4.0.7 [skip-version]"
       ]
     }
   ]

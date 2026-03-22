@@ -28,19 +28,27 @@
             // Create banner element
             const banner = document.createElement('div');
             banner.className = 'game-xp-banner';
-            banner.innerHTML = `
-                <div class="game-xp-badge">
-                    <span class="game-xp-icon">⭐</span>
-                    <span class="game-xp-amount">+${xpAmount.toFixed(2)} XP</span>
-                </div>
-            `;
             
+            const badgeDiv = document.createElement('div');
+            badgeDiv.className = 'game-xp-badge';
+            
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'game-xp-icon';
+            iconSpan.textContent = '⭐';
+            badgeDiv.appendChild(iconSpan);
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'game-xp-amount';
+            amountSpan.textContent = `+${xpAmount.toFixed(2)} XP`;
+            badgeDiv.appendChild(amountSpan);
+            
+            banner.appendChild(badgeDiv);
             document.body.appendChild(banner);
             
             // Remove after 3.5 seconds
             setTimeout(() => {
-                banner.classList.add('hiding');
-                setTimeout(() => banner.remove(), 500);
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), 500);
             }, 3500);
         }
 
@@ -52,49 +60,108 @@
 
             const modal = document.createElement('div');
             modal.className = 'level-up-modal';
-            modal.innerHTML = `
-                <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
-                    <div class="level-up-animation">
-                        <div class="level-up-badge-container">
-                            <span class="level-up-badge">${badge}</span>
-                        </div>
-                    </div>
-                    <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
-                    <div class="level-up-levels">
-                        <span class="old-level">${old_level}</span>
-                        <span class="level-arrow">→</span>
-                        <span class="new-level">${new_level}</span>
-                    </div>
-                    <div class="level-up-new-title">${title}</div>
-                    ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-                    ${!isAnonymous && coins_awarded > 0 ? `
-                        <div class="level-up-reward">
-                            <span class="reward-icon">🪙</span>
-                            <span class="reward-amount">+${coins_awarded} Coins</span>
-                        </div>
-                    ` : ''}
-                    <button class="level-up-close">Continue</button>
-                </div>
-            `;
 
+            // Create content container
+            const content = document.createElement('div');
+            content.className = `level-up-content ${is_milestone ? 'milestone' : ''}`;
+
+            // Animation container
+            const animation = document.createElement('div');
+            animation.className = 'level-up-animation';
+
+            const badgeContainer = document.createElement('div');
+            badgeContainer.className = 'level-up-badge-container';
+            const badgeSpan = document.createElement('span');
+            badgeSpan.className = 'level-up-badge';
+            badgeSpan.textContent = badge;
+            badgeContainer.appendChild(badgeSpan);
+            animation.appendChild(badgeContainer);
+            content.appendChild(animation);
+
+            // Title
+            const titleH2 = document.createElement('h2');
+            titleH2.className = 'level-up-title';
+            titleH2.textContent = '🎉 LEVEL UP! 🎉';
+            content.appendChild(titleH2);
+
+            // Levels display
+            const levelsDiv = document.createElement('div');
+            levelsDiv.className = 'level-up-levels';
+
+            const oldLevelSpan = document.createElement('span');
+            oldLevelSpan.className = 'old-level';
+            oldLevelSpan.textContent = old_level;
+            levelsDiv.appendChild(oldLevelSpan);
+
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'level-arrow';
+            arrowSpan.textContent = '→';
+            levelsDiv.appendChild(arrowSpan);
+
+            const newLevelSpan = document.createElement('span');
+            newLevelSpan.className = 'new-level';
+            newLevelSpan.textContent = new_level;
+            levelsDiv.appendChild(newLevelSpan);
+
+            content.appendChild(levelsDiv);
+
+            // New title
+            const newTitleDiv = document.createElement('div');
+            newTitleDiv.className = 'level-up-new-title';
+            newTitleDiv.textContent = title;
+            content.appendChild(newTitleDiv);
+
+            // Milestone badge
+            if (is_milestone) {
+            const milestoneDiv = document.createElement('div');
+            milestoneDiv.className = 'level-up-milestone-badge';
+            milestoneDiv.textContent = '✨ MILESTONE ✨';
+            content.appendChild(milestoneDiv);
+            }
+
+            // Coins reward
+            if (!isAnonymous && coins_awarded > 0) {
+            const rewardDiv = document.createElement('div');
+            rewardDiv.className = 'level-up-reward';
+
+            const rewardIcon = document.createElement('span');
+            rewardIcon.className = 'reward-icon';
+            rewardIcon.textContent = '🪙';
+            rewardDiv.appendChild(rewardIcon);
+
+            const rewardAmount = document.createElement('span');
+            rewardAmount.className = 'reward-amount';
+            rewardAmount.textContent = `+${coins_awarded} Coins`;
+            rewardDiv.appendChild(rewardAmount);
+
+            content.appendChild(rewardDiv);
+            }
+
+            // Close button
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'level-up-close';
+            closeBtn.textContent = 'Continue';
+            content.appendChild(closeBtn);
+
+            modal.appendChild(content);
             document.body.appendChild(modal);
 
             // Trigger animation
             setTimeout(() => modal.classList.add('show'), 10);
 
             // Close handler
-            const closeBtn = modal.querySelector('.level-up-close');
-            closeBtn.addEventListener('click', () => {
-                modal.classList.remove('show');
-                setTimeout(() => modal.remove(), 300);
-            });
+            const handleClose = () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+            };
+
+            closeBtn.addEventListener('click', handleClose);
 
             // Auto-close after 6 seconds
             setTimeout(() => {
-                if (modal.parentElement) {
-                    modal.classList.remove('show');
-                    setTimeout(() => modal.remove(), 300);
-                }
+            if (modal.parentElement) {
+                handleClose();
+            }
             }, 6000);
         }
 
@@ -1929,12 +1996,13 @@
             // Notify platform that game has started - this will create the session
             if (typeof PlatformSDK !== 'undefined') {
                 try {
+                    const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
                     window.parent.postMessage({
                         type: 'gameStarted',
                         payload: {},
                         timestamp: Date.now(),
                         protocolVersion: '1.0.0'
-                    }, '*');
+                    }, targetOrigin);
 
                 } catch (e) {
                     console.error('⚠️ Failed to send game started event:', e);
@@ -2043,11 +2111,12 @@
             // score = tower height (for leaderboard)
             // extra_data = stats for XP calculation (perfect stacks, combo, etc.)
             if (gameState.score > 0) {
+                const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
                 PlatformSDK.gameOver(gameState.score, {
                     perfect_stacks: gameState.perfectStacks,
                     max_combo: gameState.maxCombo,
                     total_blocks: gameState.totalBlocks
-                });
+                }, targetOrigin);
             }
         }
 
@@ -2149,12 +2218,16 @@
             if (document.getElementById('ios-fs-exit')) return;
             const btn = document.createElement('button');
             btn.id = 'ios-fs-exit';
-            btn.innerHTML = '✕';
             btn.setAttribute('aria-label', 'Exit fullscreen');
+            
+            const closeIcon = document.createElement('span');
+            closeIcon.textContent = '✕';
+            btn.appendChild(closeIcon);
+            
             btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleIOSFullscreen();
+            e.preventDefault();
+            e.stopPropagation();
+            toggleIOSFullscreen();
             });
             document.body.appendChild(btn);
         }
@@ -2163,13 +2236,30 @@
             const btn = document.getElementById('fullscreen-btn');
             if (!btn) return;
             const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.body.classList.contains('ios-game-fullscreen');
-            btn.innerHTML = isFs
-              ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
-                 </svg>`
-              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                 </svg>`;
+            
+            // Clear existing children
+            while (btn.firstChild) {
+            btn.removeChild(btn.firstChild);
+            }
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('stroke-width', '2');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            if (isFs) {
+            path.setAttribute('d', 'M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3');
+            } else {
+            path.setAttribute('d', 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3');
+            }
+            
+            svg.appendChild(path);
+            btn.appendChild(svg);
         }
 
         function handleFullscreenChange() {

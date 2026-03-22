@@ -128,7 +128,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Add security middlewares
+# Add security middlewares first (CORSMiddleware must be added last)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(NoCacheMiddleware)
 
@@ -144,8 +144,7 @@ allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
 
 if allow_all_origins:
     # More permissive CORS for LAN access
-    app.add_middleware(
-        CORSMiddleware,
+    cors_kwargs = dict(
         allow_origin_regex=r"http://.*",  # Allow any HTTP origin on LAN
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -154,14 +153,16 @@ if allow_all_origins:
     print("⚠️  CORS: Allowing all HTTP origins (LAN mode)")
 else:
     # Strict CORS for production
-    app.add_middleware(
-        CORSMiddleware,
+    cors_kwargs = dict(
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
     )
     print(f"🔒 CORS: Allowing specific origins: {allowed_origins}")
+
+# Add CORSMiddleware last in the middleware chain
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 # Initialize database
 init_db()

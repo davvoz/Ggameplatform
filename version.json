@@ -1,8 +1,17 @@
 {
-  "version": "4.0.15",
-  "timestamp": "2026-03-22T15:27:57.295Z",
-  "buildNumber": 474,
+  "version": "4.0.16",
+  "timestamp": "2026-03-22T15:47:55.868Z",
+  "buildNumber": 475,
   "changelog": [
+    {
+      "version": "4.0.16",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "refactor: update daily login banner integration to use event listeners and remove global references",
+        "🔖 Bump version to 4.0.15 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.15",
       "date": "2026-03-22",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: sonar",
         "🔖 Bump version to 4.0.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.6",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix: [settemezzo] Sonar",
-        "🔖 Bump version to 4.0.5 [skip-version]"
       ]
     }
   ]

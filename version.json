@@ -1,8 +1,17 @@
 {
-  "version": "4.0.13",
-  "timestamp": "2026-03-22T14:45:19.649Z",
-  "buildNumber": 472,
+  "version": "4.0.14",
+  "timestamp": "2026-03-22T15:14:05.758Z",
+  "buildNumber": 473,
   "changelog": [
+    {
+      "version": "4.0.14",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "Refactor datetime usage to ensure timezone awareness across the application",
+        "🔖 Bump version to 4.0.13 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.13",
       "date": "2026-03-22",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: update parent origin handling in PlatformSDKManager",
         "🔖 Bump version to 4.0.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.4",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix: Sonar",
-        "🔖 Bump version to 4.0.3 [skip-version]"
       ]
     }
   ]

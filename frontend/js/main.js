@@ -64,6 +64,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initRouter();
 
+    // Wire daily login trigger button and overlay (ES6 — no globals needed)
+    document.getElementById('daily-login-trigger')
+        ?.addEventListener('click', () => dailyLoginBannerInstance.show());
+    document.getElementById('daily-login-overlay')
+        ?.addEventListener('click', () => dailyLoginBannerInstance.hide());
+
+    // Init daily login banner for users already authenticated on page load
+    if (AuthManager.isLoggedIn()) {
+        const _dlUser = AuthManager.getUser();
+        if (_dlUser?.user_id && !_dlUser.is_anonymous) {
+            dailyLoginBannerInstance.init(_dlUser).catch(() => {});
+        }
+    }
+
     // Populate navbar user info if authenticated
     try {
         const userInfoEl = document.getElementById('userInfo');
@@ -161,6 +175,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { }
     });
 
+    // Re-init (or hide) daily login banner on every login/logout
+    window.addEventListener('userLogin', () => {
+        const _dlUser = AuthManager.getUser();
+        if (!_dlUser || _dlUser.is_anonymous) {
+            document.getElementById('daily-login-trigger')?.style && (document.getElementById('daily-login-trigger').style.display = 'none');
+            dailyLoginBannerInstance.currentUser = null;
+            return;
+        }
+        if (_dlUser.user_id) {
+            dailyLoginBannerInstance.init(_dlUser).catch(() => {});
+        }
+    });
+
     window.addEventListener('userLogout', () => {
         const navMultiplierEl = document.getElementById('navMultiplier');
         if (navMultiplierEl) navMultiplierEl.textContent = `1.00x`;
@@ -168,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide daily login trigger button on logout
         const trigger = document.getElementById('daily-login-trigger');
         if (trigger) trigger.style.display = 'none';
+        dailyLoginBannerInstance.currentUser = null;
     });
 
     // Cleanup game session on page unload (browser close/refresh)

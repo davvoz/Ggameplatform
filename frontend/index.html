@@ -56,10 +56,10 @@
 
 <body>
     <!-- Daily Login Banner (will be shown after login) -->
-    <div id="daily-login-overlay" class="daily-login-overlay" onclick="dailyLoginBanner.hide()"></div>
+    <div id="daily-login-overlay" class="daily-login-overlay"></div>
     
     <!-- Floating button to open daily reward banner (shown only when can claim) -->
-    <button id="daily-login-trigger" class="daily-login-trigger" onclick="dailyLoginBanner.show()" title="Open Daily Rewards">
+    <button id="daily-login-trigger" class="daily-login-trigger" title="Open Daily Rewards">
         🎁
     </button>
     
@@ -704,68 +704,7 @@
     <link rel="stylesheet" href="./css/community-stats.css">
     <link rel="stylesheet" href="./css/steem-post-modal.css">
 
-    <!-- Initialize Coin Balance Widget and Daily Login Banner on login -->
-    <script>
-        // Function to initialize daily login banner
-        function initDailyLoginBanner(user) {
-            const trigger = document.getElementById('daily-login-trigger');
-            if (!user || user.is_anonymous) {
-                // Ensure trigger is hidden for anonymous/no user
-                if (trigger) trigger.style.display = 'none';
-                if (window.dailyLoginBanner) {
-                    window.dailyLoginBanner.currentUser = null;
-                }
-                return;
-            }
-            if (window.dailyLoginBanner && user.user_id) {
-                window.dailyLoginBanner.init(user).then(() => {
-                    // Don't auto-show banner, only show trigger button if can claim
-                }).catch(err => {});
-            }
-        }
-        
-        // Initialize coin widget and daily login banner when user logs in
-        if (window.AuthManager) {
-            const originalLogin = window.AuthManager.login;
-            window.AuthManager.login = function (...args) {
-                const result = originalLogin.apply(this, args);
-                if (result && window.AuthManager.isLoggedIn()) {
-                    // Initialize coin widget
-                    const user = window.AuthManager.getUser();
-                    if (user && user.user_id) {
-                        if (!window.coinBalanceWidget) {
-                            window.coinAPI = new window.CoinAPI();
-                            window.coinBalanceWidget = new window.CoinBalanceWidget(window.coinAPI);
-                        }
-                        
-                        // Initialize daily login banner
-                        initDailyLoginBanner(user);
-                    }
-                }
-                return result;
-            };
-        }
-        
-        // Also initialize when page loads if user is already logged in
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                if (window.AuthManager && window.AuthManager.isLoggedIn()) {
-                    const user = window.AuthManager.getUser();
-                    if (user && user.user_id) {
-                        initDailyLoginBanner(user);
-                    }
-                }
-            }, 1000); // Wait for AuthManager to be ready
-        });
 
-        // Re-check on every login event (covers anonymous → steem and steem → anonymous)
-        window.addEventListener('userLogin', () => {
-            if (window.AuthManager) {
-                const user = window.AuthManager.getUser();
-                initDailyLoginBanner(user);
-            }
-        });
-    </script>
 
     <!-- PWA Service Worker - Solo per fullscreen iOS -->
     <script>

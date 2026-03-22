@@ -106,7 +106,7 @@ class DailyLoginBanner {
             <div class="daily-login-content">
                 <div class="daily-login-header">
                     <h3>🎁 Daily Login Rewards</h3>
-                    <button class="close-banner" onclick="dailyLoginBanner.hide()">✕</button>
+                    <button class="close-banner" id="daily-close-btn">✕</button>
                 </div>
                 
                 ${totalCycles > 0 ? `
@@ -138,7 +138,7 @@ class DailyLoginBanner {
                 
                 <div class="daily-login-footer">
                     ${canClaim ? `
-                        <button class="claim-button" onclick="dailyLoginBanner.claimReward()">
+                        <button class="claim-button" id="daily-claim-btn">
                             🎁 Claim Day ${currentDay} Reward
                         </button>
                         <p class="claim-hint">Come back tomorrow for more rewards!</p>
@@ -156,6 +156,12 @@ class DailyLoginBanner {
         `;
         
         this.bannerElement.innerHTML = html;
+
+        // Wire buttons without global references
+        this.bannerElement.querySelector('#daily-close-btn')
+            ?.addEventListener('click', () => this.hide());
+        this.bannerElement.querySelector('#daily-claim-btn')
+            ?.addEventListener('click', () => this.claimReward());
     }
     
     /**

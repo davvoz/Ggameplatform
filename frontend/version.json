@@ -1,8 +1,18 @@
 {
-  "version": "4.0.16",
-  "timestamp": "2026-03-22T15:47:55.868Z",
-  "buildNumber": 475,
+  "version": "4.0.17",
+  "timestamp": "2026-03-22T23:22:56.702Z",
+  "buildNumber": 476,
   "changelog": [
+    {
+      "version": "4.0.17",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:sonar",
+        "🔖 Bump version to 4.0.16 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.16",
       "date": "2026-03-22",
@@ -83,15 +93,6 @@
       "changes": [
         "fix: [BRISCOLA] Sonar , rename card properties for clarity",
         "🔖 Bump version to 4.0.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.7",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix: sonar",
-        "🔖 Bump version to 4.0.6 [skip-version]"
       ]
     }
   ]

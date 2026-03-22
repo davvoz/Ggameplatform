@@ -306,3 +306,8 @@ TECHNICAL_DOCUMENTATION.md
 backend/app/games/merge-tower-defense/offusca_game.bat
 backend/app/games/space_shooter/js/offusca_level_data.bat
 backend/app/games/space_shooter/js/offusca_main.bat
+backend/scripts/initialize_platform_from_backup.py
+backend/scripts/register_blackjack.py
+backend/scripts/initialize_platform_from_backup.py
+backend/scripts/initialize_platform_from_backup.py
+backend/scripts/initialize_platform_from_backup_ignore.py

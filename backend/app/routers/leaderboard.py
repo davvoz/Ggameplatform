@@ -75,7 +75,7 @@ async def get_current_week_info(db: Session = Depends(get_db)):
     
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
-    end_date = datetime.fromisoformat(week_end)
+    end_date = datetime.fromisoformat(week_end).replace(tzinfo=timezone.utc)
     days_remaining = (end_date - now).days
     
     return {

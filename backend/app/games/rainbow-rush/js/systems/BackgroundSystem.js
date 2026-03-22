@@ -40,8 +40,6 @@ export class BackgroundSystem {
         // Theme sequence for level progression
         this.themeSequence = [...DEFAULT_THEME_SEQUENCE];
         
-        // Initialize first theme (async but non-blocking)
-        this.initializeTheme().catch(err => console.error('Theme init error:', err));
     }
 
     createTransitionState() {

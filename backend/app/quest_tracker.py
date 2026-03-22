@@ -2,7 +2,7 @@
 Quest Tracker - Automatically updates user quest progress
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
@@ -29,7 +29,7 @@ class QuestTracker:
         ).first()
         
         if not user_quest:
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             user_quest = UserQuest(
                 user_id=user_id,
                 quest_id=quest_id,
@@ -58,11 +58,11 @@ class QuestTracker:
     
     def _get_today_date(self) -> str:
         """Get today's date as YYYY-MM-DD string."""
-        return datetime.utcnow().strftime('%Y-%m-%d')
+        return datetime.now(timezone.utc).strftime('%Y-%m-%d')
     
     def _get_week_start_date(self) -> str:
         """Get the start of current week (Monday) as YYYY-MM-DD string."""
-        today = datetime.utcnow()
+        today = datetime.now(timezone.utc)
         week_start = today - timedelta(days=today.weekday())
         return week_start.strftime('%Y-%m-%d')
     
@@ -126,7 +126,7 @@ class QuestTracker:
             # Only mark as completed and award rewards if it wasn't already completed
             if not user_quest.is_completed:
                 user_quest.is_completed = 1
-                user_quest.completed_at = datetime.utcnow().isoformat()
+                user_quest.completed_at = datetime.now(timezone.utc).isoformat()
                 
                 # Save completion date for daily reset logic
                 extra_data = self._get_quest_extra_data(user_quest)
@@ -645,7 +645,7 @@ class QuestTracker:
             return
         
         today = self._get_today_date()
-        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+        yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime('%Y-%m-%d')
         
         # Update login streak
         if user.last_login_date:
@@ -677,7 +677,7 @@ class QuestTracker:
                 if user.last_login:
                     try:
                         last_login = datetime.fromisoformat(user.last_login)
-                        time_since_login = datetime.utcnow() - last_login
+                        time_since_login = datetime.now(timezone.utc) - last_login
                         
                         # If more than 24 hours have passed, count it
                         if time_since_login >= timedelta(hours=24):

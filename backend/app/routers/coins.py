@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 from app.database import get_db
@@ -258,7 +258,7 @@ async def get_user_detailed_stats(
     
     try:
         # Get transactions using ORM
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         start_date_str = start_date.isoformat()
         
         transactions = db.query(CoinTransaction).filter(
@@ -288,7 +288,7 @@ async def get_user_detailed_stats(
                 else:
                     created_at = created_at_str
             except:
-                created_at = datetime.utcnow()
+                created_at = datetime.now(timezone.utc)
             
             date_key = created_at.strftime("%Y-%m-%d")
             hour = created_at.hour
@@ -336,8 +336,8 @@ async def get_user_detailed_stats(
         current_streak = 0
         temp_streak = 0
         
-        today = datetime.utcnow().strftime("%Y-%m-%d")
-        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
         
         for i, date_str in enumerate(sorted_dates):
             if i == 0:
@@ -382,11 +382,11 @@ async def get_user_detailed_stats(
         # Daily flow (last 14 days)
         daily_flow = []
         for i in range(14, -1, -1):
-            date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+            date = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
             day_data = daily_earnings.get(date, {"earned": 0, "spent": 0, "count": 0})
             daily_flow.append({
                 "date": date,
-                "day_label": (datetime.utcnow() - timedelta(days=i)).strftime("%a"),
+                "day_label": (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%a"),
                 "earned": day_data["earned"],
                 "spent": day_data["spent"],
                 "net": day_data["earned"] - day_data["spent"],

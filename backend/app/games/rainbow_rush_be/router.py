@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .database import get_rainbow_rush_db
 from .repository import RainbowRushRepository
@@ -426,5 +426,5 @@ async def health_check():
     return JSONResponse(content={
         "status": "healthy",
         "service": "rainbow-rush",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })

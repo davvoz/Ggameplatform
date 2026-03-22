@@ -7,7 +7,7 @@ import os
 import json
 import logging
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pywebpush import webpush, WebPushException
 from dotenv import load_dotenv
 
@@ -83,7 +83,7 @@ class PushNotificationService:
             "body": body,
             "icon": icon or "/icons/icon-192x192.png",
             "badge": badge or "/icons/icon-72x72.png",
-            "timestamp": int(datetime.utcnow().timestamp() * 1000),
+            "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
             "requireInteraction": False,
             "silent": False
         }
@@ -227,7 +227,7 @@ def send_push_to_all_users(title: str, body: str, **kwargs) -> Dict[str, Any]:
             for endpoint in result["expired"]:
                 db.query(PushSubscription).filter(
                     PushSubscription.endpoint == endpoint
-                ).update({"is_active": 0, "updated_at": datetime.utcnow().isoformat()})
+                ).update({"is_active": 0, "updated_at": datetime.now(timezone.utc).isoformat()})
             db.commit()
         
         return result

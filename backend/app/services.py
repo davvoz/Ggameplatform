@@ -5,7 +5,7 @@ Following SOLID principles and Domain-Driven Design
 """
 
 from typing import List, Optional, Dict, Any, Type
-from datetime import datetime
+from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 import json
 import uuid
@@ -116,7 +116,7 @@ class GameService(BaseService):
             raise ValidationError(f"Game with ID {data['game_id']} already exists")
         
         # Set timestamps
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         data['created_at'] = now
         data['updated_at'] = now
         
@@ -139,7 +139,7 @@ class GameService(BaseService):
     def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update game with validation"""
         # Update timestamp
-        data['updated_at'] = datetime.utcnow().isoformat()
+        data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         # Convert camelCase to snake_case for status (support both formats)
         if 'statusId' in data:
@@ -188,7 +188,7 @@ class UserService(BaseService):
                 raise ValidationError(f"Email {data['email']} already exists")
         
         # Set timestamp
-        data['created_at'] = datetime.utcnow().isoformat()
+        data['created_at'] = datetime.now(timezone.utc).isoformat()
         
         # Convert dicts to JSON strings
         if 'game_scores' in data and isinstance(data['game_scores'], dict):
@@ -251,7 +251,7 @@ class GameSessionService(BaseService):
         
         # Set timestamp
         if 'started_at' not in data:
-            data['started_at'] = datetime.utcnow().isoformat()
+            data['started_at'] = datetime.now(timezone.utc).isoformat()
         
         # Convert metadata to JSON string
         if 'metadata' in data and isinstance(data['metadata'], dict):
@@ -302,7 +302,7 @@ class LeaderboardService(BaseService):
         
         # Set timestamp
         if 'created_at' not in data:
-            data['created_at'] = datetime.utcnow().isoformat()
+            data['created_at'] = datetime.now(timezone.utc).isoformat()
         
         entry = Leaderboard(**data)
         created = self.repository.create(entry)
@@ -334,7 +334,7 @@ class XPRuleService(BaseService):
                 raise ValidationError(f"Missing required field: {field}")
         
         # Set timestamps
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         data['created_at'] = now
         data['updated_at'] = now
         
@@ -349,7 +349,7 @@ class XPRuleService(BaseService):
     def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update XP rule"""
         # Update timestamp
-        data['updated_at'] = datetime.utcnow().isoformat()
+        data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         # Convert parameters to JSON string
         if 'parameters' in data and isinstance(data['parameters'], dict):
@@ -376,7 +376,7 @@ class QuestService(BaseService):
         
         # Set timestamp
         if 'created_at' not in data:
-            data['created_at'] = datetime.utcnow().isoformat()
+            data['created_at'] = datetime.now(timezone.utc).isoformat()
         
         quest = Quest(**data)
         created = self.repository.create(quest)
@@ -405,7 +405,7 @@ class UserQuestService(BaseService):
         
         # Set timestamp
         if 'started_at' not in data:
-            data['started_at'] = datetime.utcnow().isoformat()
+            data['started_at'] = datetime.now(timezone.utc).isoformat()
         
         user_quest = UserQuest(**data)
         created = self.repository.create(user_quest)
@@ -433,7 +433,7 @@ class GameStatusService(BaseService):
             raise ValidationError("status_code is required")
         
         # Set timestamps
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         data['created_at'] = now
         data['updated_at'] = now
         
@@ -452,7 +452,7 @@ class GameStatusService(BaseService):
     def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update a game status"""
         # Update timestamp
-        data['updated_at'] = datetime.utcnow().isoformat()
+        data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         # Convert boolean to int for is_active if present
         if 'is_active' in data:
@@ -512,7 +512,7 @@ class CoinService:
         
         # Create transaction record
         transaction_id = f"tx_{uuid.uuid4().hex[:16]}"
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         transaction = CoinTransaction(
             transaction_id=transaction_id,
@@ -554,7 +554,7 @@ class CoinService:
         
         # Create transaction record (negative amount)
         transaction_id = f"tx_{uuid.uuid4().hex[:16]}"
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         transaction = CoinTransaction(
             transaction_id=transaction_id,
@@ -669,7 +669,7 @@ class CampaignService(BaseService):
         if data.get('xp_multiplier', 1.0) < 1.0:
             raise ValidationError("XP multiplier must be >= 1.0")
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         campaign = Campaign(
             name=data['name'],
             description=data.get('description', ''),
@@ -691,7 +691,7 @@ class CampaignService(BaseService):
         if 'xp_multiplier' in data and data['xp_multiplier'] < 1.0:
             raise ValidationError("XP multiplier must be >= 1.0")
         
-        data['updated_at'] = datetime.utcnow().isoformat()
+        data['updated_at'] = datetime.now(timezone.utc).isoformat()
         if 'is_active' in data:
             data['is_active'] = 1 if data['is_active'] else 0
         

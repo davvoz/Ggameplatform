@@ -7,7 +7,7 @@ import logging
 import os
 from typing import Optional
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class TelegramNotifier:
         Returns:
             True if sent successfully
         """
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         message = f"🚨 <b>ERROR: {title}</b>\n\n"
         message += f"⏰ <b>Time:</b> {timestamp}\n"
@@ -101,7 +101,7 @@ class TelegramNotifier:
         Returns:
             True if sent successfully
         """
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         msg = f"⚠️ <b>WARNING: {title}</b>\n\n"
         msg += f"⏰ <b>Time:</b> {timestamp}\n"
@@ -126,7 +126,7 @@ class TelegramNotifier:
         Returns:
             True if sent successfully
         """
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         msg = f"✅ <b>SUCCESS: {title}</b>\n\n"
         msg += f"⏰ <b>Time:</b> {timestamp}\n"
@@ -150,7 +150,7 @@ class TelegramNotifier:
         Returns:
             True if sent successfully
         """
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         msg = f"ℹ️ <b>INFO: {title}</b>\n\n"
         msg += f"⏰ <b>Time:</b> {timestamp}\n"

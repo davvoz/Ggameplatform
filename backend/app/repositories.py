@@ -320,8 +320,8 @@ class UserCoinsRepository(BaseRepository[UserCoins]):
         """Get user coins or create if doesn't exist"""
         user_coins = self.get_by_id(user_id)
         if not user_coins:
-            from datetime import datetime
-            now = datetime.utcnow().isoformat()
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc).isoformat()
             user_coins = UserCoins(
                 user_id=user_id,
                 balance=0,
@@ -335,24 +335,24 @@ class UserCoinsRepository(BaseRepository[UserCoins]):
     
     def add_coins(self, user_id: str, amount: int) -> UserCoins:
         """Add coins to user balance"""
-        from datetime import datetime
+        from datetime import datetime, timezone
         user_coins = self.get_or_create(user_id)
         user_coins.balance += amount
         user_coins.total_earned += amount
-        user_coins.last_updated = datetime.utcnow().isoformat()
+        user_coins.last_updated = datetime.now(timezone.utc).isoformat()
         self.db_session.commit()
         self.db_session.refresh(user_coins)
         return user_coins
     
     def remove_coins(self, user_id: str, amount: int) -> Optional[UserCoins]:
         """Remove coins from user balance (returns None if insufficient balance)"""
-        from datetime import datetime
+        from datetime import datetime, timezone
         user_coins = self.get_or_create(user_id)
         if user_coins.balance < amount:
             return None
         user_coins.balance -= amount
         user_coins.total_spent += amount
-        user_coins.last_updated = datetime.utcnow().isoformat()
+        user_coins.last_updated = datetime.now(timezone.utc).isoformat()
         self.db_session.commit()
         self.db_session.refresh(user_coins)
         return user_coins
@@ -410,8 +410,8 @@ class CampaignRepository(BaseRepository[Campaign]):
     
     def get_active_for_game(self, game_id: str) -> List[Campaign]:
         """Get currently active campaigns for a specific game"""
-        from datetime import datetime
-        now = datetime.utcnow().isoformat()
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
         try:
             return self.db_session.query(Campaign).filter(
                 Campaign.game_id == game_id,
@@ -424,8 +424,8 @@ class CampaignRepository(BaseRepository[Campaign]):
     
     def get_all_active(self) -> List[Campaign]:
         """Get all currently active campaigns"""
-        from datetime import datetime
-        now = datetime.utcnow().isoformat()
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
         try:
             return self.db_session.query(Campaign).filter(
                 Campaign.is_active == 1,

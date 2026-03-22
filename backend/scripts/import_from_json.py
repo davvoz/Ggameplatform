@@ -6,7 +6,7 @@ Usage: python import_from_json.py <json_file>
 import sys
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -60,8 +60,8 @@ def import_data(json_file):
                         entry_point=game_data.get('entry_point', 'index.html'),
                         category=game_data.get('category', 'action'),
                         tags=json.dumps(game_data.get('tags', [])),
-                        created_at=game_data.get('created_at', datetime.utcnow().isoformat()),
-                        updated_at=game_data.get('updated_at', datetime.utcnow().isoformat()),
+                        created_at=game_data.get('created_at', datetime.now(timezone.utc).isoformat()),
+                        updated_at=game_data.get('updated_at', datetime.now(timezone.utc).isoformat()),
                         extra_data=json.dumps(game_data.get('extra_data', game_data.get('metadata', {})))
                     )
                     db.add(game)
@@ -82,7 +82,7 @@ def import_data(json_file):
                         xp_reward=quest_data.get('xp_reward', 0),
                         reward_coins=quest_data.get('reward_coins', quest_data.get('sats_reward', 0)),
                         is_active=quest_data.get('is_active', 1),
-                        created_at=quest_data.get('created_at', datetime.utcnow().isoformat())
+                        created_at=quest_data.get('created_at', datetime.now(timezone.utc).isoformat())
                     )
                     db.add(quest)
                     print(f"   - {quest.title}: {quest.xp_reward} XP")
@@ -123,8 +123,8 @@ def import_data(json_file):
                         parameters=json.dumps(parameters),
                         priority=rule_data.get('priority', 0),
                         is_active=rule_data.get('is_active', 1),
-                        created_at=rule_data.get('created_at', datetime.utcnow().isoformat()),
-                        updated_at=rule_data.get('updated_at', datetime.utcnow().isoformat())
+                        created_at=rule_data.get('created_at', datetime.now(timezone.utc).isoformat()),
+                        updated_at=rule_data.get('updated_at', datetime.now(timezone.utc).isoformat())
                     )
                     db.add(xp_rule)
                     print(f"   - {xp_rule.game_id}: {xp_rule.rule_name}")

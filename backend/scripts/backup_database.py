@@ -5,7 +5,7 @@ Esporta tutti i dati dal database esistente prima della migrazione a SQLAlchemy 
 import sqlite3
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
 BACKUP_DIR = Path(__file__).parent.parent / "backups"
@@ -28,7 +28,7 @@ def backup_database():
     cursor = conn.cursor()
     
     backup_data = {
-        "backup_date": datetime.utcnow().isoformat(),
+        "backup_date": datetime.now(timezone.utc).isoformat(),
         "database_version": "1.0",
         "tables": {}
     }

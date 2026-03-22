@@ -6,7 +6,7 @@ API endpoints for Web Push notification subscriptions and sending.
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -94,7 +94,7 @@ async def subscribe_to_push(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     
     # Check if subscription already exists (by endpoint)
     existing = db.query(PushSubscription).filter(
@@ -159,7 +159,7 @@ async def unsubscribe_from_push(
     If endpoint is provided, only that subscription is deactivated.
     Otherwise, all subscriptions for the user are deactivated.
     """
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     
     if endpoint:
         # Deactivate specific subscription

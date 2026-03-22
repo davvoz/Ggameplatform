@@ -5,7 +5,7 @@ Esporta le tabelle games, quests e xp_rules in formato JSON
 import sqlite3
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Path del database
 DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
@@ -34,7 +34,7 @@ def backup_games_quests_xp():
     cursor = conn.cursor()
     
     backup_data = {
-        "backup_date": datetime.utcnow().isoformat(),
+        "backup_date": datetime.now(timezone.utc).isoformat(),
         "backup_timestamp": timestamp,
         "description": "Backup di Games, Quests e XP Rules",
         "tables": {}

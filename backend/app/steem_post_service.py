@@ -4,7 +4,7 @@ Handles creation and publication of Steem posts with user gaming statistics
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 
@@ -227,5 +227,5 @@ class SteemPostService:
             "user_id": user_id,
             "level": level,
             "total_xp": total_xp,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

@@ -7,7 +7,7 @@ Following Repository Pattern and SOLID principles
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from .models import RainbowRushProgress, RainbowRushLevelCompletion, RainbowRushGameSession
@@ -58,9 +58,9 @@ class RainbowRushRepository:
                     level_completions='{}',
                     unlocked_items='{"skins": ["default"], "abilities": ["jump"]}',
                     statistics='{}',
-                    created_at=datetime.utcnow().isoformat(),
-                    last_played=datetime.utcnow().isoformat(),
-                    updated_at=datetime.utcnow().isoformat(),
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    last_played=datetime.now(timezone.utc).isoformat(),
+                    updated_at=datetime.now(timezone.utc).isoformat(),
                     metadata='{}'
                 )
                 self.db.add(progress)
@@ -107,8 +107,8 @@ class RainbowRushRepository:
             
             # Commit solo se ci sono modifiche
             if has_changes:
-                progress.updated_at = datetime.utcnow().isoformat()
-                progress.last_played = datetime.utcnow().isoformat()
+                progress.updated_at = datetime.now(timezone.utc).isoformat()
+                progress.last_played = datetime.now(timezone.utc).isoformat()
                 self.db.flush()  # Flush invece di commit per batch operations
                 self.db.commit()
                 self.db.refresh(progress)
@@ -154,8 +154,8 @@ class RainbowRushRepository:
                 level_stats=completion_data.get('level_stats', '{}'),
                 is_validated=completion_data.get('is_validated', 0),
                 validation_score=completion_data.get('validation_score', 0.0),
-                completed_at=datetime.utcnow().isoformat(),
-                created_at=datetime.utcnow().isoformat(),
+                completed_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(timezone.utc).isoformat(),
                 session_duration=completion_data.get('session_duration', 0.0),
                 client_timestamp=completion_data.get('client_timestamp')
             )
@@ -227,8 +227,8 @@ class RainbowRushRepository:
                 is_active=1,
                 session_events='[]',
                 current_stats='{}',
-                started_at=datetime.utcnow().isoformat(),
-                last_update=datetime.utcnow().isoformat(),
+                started_at=datetime.now(timezone.utc).isoformat(),
+                last_update=datetime.now(timezone.utc).isoformat(),
                 ended_at=None,
                 heartbeat_count=0,
                 anomaly_flags=0
@@ -270,7 +270,7 @@ class RainbowRushRepository:
                 if key in allowed_fields and hasattr(session, key):
                     setattr(session, key, value)
             
-            session.last_update = datetime.utcnow().isoformat()
+            session.last_update = datetime.now(timezone.utc).isoformat()
             
             self.db.commit()
             self.db.refresh(session)
@@ -304,8 +304,8 @@ class RainbowRushRepository:
             session = self.get_session(session_id)
             if session:
                 session.is_active = 0
-                session.ended_at = datetime.utcnow().isoformat()
-                session.last_update = datetime.utcnow().isoformat()
+                session.ended_at = datetime.now(timezone.utc).isoformat()
+                session.last_update = datetime.now(timezone.utc).isoformat()
                 self.db.commit()
                 self.db.refresh(session)
             return session

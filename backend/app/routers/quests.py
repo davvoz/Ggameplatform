@@ -4,7 +4,7 @@ Quests router for managing platform quests.
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Header, Query
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 import os
 import json
@@ -144,7 +144,7 @@ async def create_quest(
     """Create a new quest (admin only)."""
     verify_admin(x_api_key, request)
     
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     
     quest = Quest(
         title=quest_data.title,
@@ -277,7 +277,7 @@ async def claim_quest_reward(
         raise HTTPException(status_code=400, detail="Quest reward already claimed")
     
     # Claim reward
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     progress.is_claimed = 1
     progress.claimed_at = now
     

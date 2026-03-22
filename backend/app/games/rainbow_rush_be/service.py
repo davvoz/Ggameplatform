@@ -5,7 +5,7 @@ Following SOLID principles and Domain-Driven Design
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import math
 import traceback
@@ -355,7 +355,7 @@ class RainbowRushService:
             
             # Validate heartbeat
             started = datetime.fromisoformat(session.started_at)
-            elapsed = (datetime.utcnow() - started).total_seconds()
+            elapsed = (datetime.now(timezone.utc) - started).total_seconds()
             
             if not self.validator.validate_session_heartbeat(session, elapsed):
                 # Mark anomaly

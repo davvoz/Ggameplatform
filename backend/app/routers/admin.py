@@ -7,7 +7,7 @@ from pydantic import BaseModel
 import secrets
 import bcrypt
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import (
     get_db_session,
     get_open_sessions, 
@@ -39,7 +39,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -66,9 +66,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create JWT token"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+        expire = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -502,7 +502,7 @@ async def export_database():
         game_progress = [gp.to_dict() for gp in game_progress_query]
     
     return {
-        "export_date": datetime.utcnow().isoformat(),
+        "export_date": datetime.now(timezone.utc).isoformat(),
         "total_games": len(games),
         "total_users": len(users),
         "total_sessions": len(sessions),
@@ -1211,7 +1211,7 @@ async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: Sessi
         for key, value in update_data.items():
             setattr(coins, key, value)
         
-        coins.last_updated = datetime.utcnow().isoformat()
+        coins.last_updated = datetime.now(timezone.utc).isoformat()
         db.commit()
         db.refresh(coins)
         
@@ -1325,7 +1325,7 @@ async def create_level_milestone(milestone_data: dict, db: Session = Depends(get
         if existing:
             raise HTTPException(status_code=400, detail="Milestone for this level already exists")
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         milestone = LevelMilestone(
             level=milestone_data['level'],
             title=milestone_data['title'],
@@ -1385,7 +1385,7 @@ async def update_level_milestone(level: int, milestone_data: dict, db: Session =
         if 'is_active' in milestone_data:
             milestone.is_active = milestone_data['is_active']
         
-        milestone.updated_at = datetime.utcnow().isoformat()
+        milestone.updated_at = datetime.now(timezone.utc).isoformat()
         db.commit()
         db.refresh(milestone)
         
@@ -1436,7 +1436,7 @@ async def create_level_reward(reward_data: dict, db: Session = Depends(get_db)):
         from app.models import LevelReward
         import uuid
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         reward_id = reward_data.get('reward_id') or f"reward_{uuid.uuid4().hex[:16]}"
         
         reward = LevelReward(
@@ -1498,7 +1498,7 @@ async def update_level_reward(reward_id: str, reward_data: dict, db: Session = D
         if 'is_active' in reward_data:
             reward.is_active = reward_data['is_active']
         
-        reward.updated_at = datetime.utcnow().isoformat()
+        reward.updated_at = datetime.now(timezone.utc).isoformat()
         db.commit()
         db.refresh(reward)
         
@@ -1620,9 +1620,9 @@ async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get
     try:
         from app.models import LeaderboardReward
         import uuid
-        from datetime import datetime
+        from datetime import datetime, timezone
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         reward = LeaderboardReward(
             reward_id=str(uuid.uuid4()),
@@ -1685,8 +1685,8 @@ async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: Sessi
         if 'description' in reward_data:
             reward.description = reward_data['description']
         
-        from datetime import datetime
-        reward.updated_at = datetime.utcnow().isoformat()
+        from datetime import datetime, timezone
+        reward.updated_at = datetime.now(timezone.utc).isoformat()
         
         db.commit()
         db.refresh(reward)
@@ -1834,7 +1834,7 @@ async def update_user_login_streak(user_id: str, streak_data: dict, db: Session 
         if 'total_cycles_completed' in reward_data:
             reward.total_cycles_completed = reward_data['total_cycles_completed']
         
-        reward.updated_at = datetime.utcnow().isoformat()
+        reward.updated_at = datetime.now(timezone.utc).isoformat()
         db.commit()
         db.refresh(reward)
         
@@ -1909,7 +1909,7 @@ async def update_daily_login_reward_config(day: int, config_data: dict, db: Sess
         if 'is_active' in config_data:
             config.is_active = config_data['is_active']
         
-        config.updated_at = datetime.utcnow().isoformat()
+        config.updated_at = datetime.now(timezone.utc).isoformat()
         db.commit()
         db.refresh(config)
         
@@ -1932,7 +1932,7 @@ async def create_daily_login_reward_config(config_data: dict, db: Session = Depe
         if existing:
             raise HTTPException(status_code=400, detail="Configuration for this day already exists")
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         config = DailyLoginRewardConfig(
             day=config_data['day'],
             coins_reward=config_data['coins_reward'],

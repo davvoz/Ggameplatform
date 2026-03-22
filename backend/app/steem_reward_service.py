@@ -6,7 +6,7 @@ Handles STEEM transactions for leaderboard rewards
 import os
 import logging
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from beem import Steem
@@ -139,7 +139,7 @@ class SteemRewardService:
                 'amount': amount,
                 'to': to_username,
                 'memo': full_memo,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:

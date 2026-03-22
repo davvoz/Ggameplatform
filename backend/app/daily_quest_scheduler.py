@@ -8,7 +8,7 @@ import schedule
 import time
 import threading
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from app.database import get_db_session
@@ -27,7 +27,7 @@ class DailyQuestScheduler:
 
     def _get_today_date(self) -> str:
         """Get today's date in YYYY-MM-DD format."""
-        return datetime.utcnow().strftime('%Y-%m-%d')
+        return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     def reset_daily_quests(self):
         """Reset all daily quests that were completed on a previous day."""

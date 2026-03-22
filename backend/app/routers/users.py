@@ -402,7 +402,7 @@ async def track_daily_access(access_data: DailyAccess):
     from app.database import get_db_session
     from app.models import User
     from app.quest_tracker import track_quest_progress_for_login
-    from datetime import datetime
+    from datetime import datetime, timezone
     
     try:
         with get_db_session() as db:
@@ -412,7 +412,7 @@ async def track_daily_access(access_data: DailyAccess):
                 raise HTTPException(status_code=404, detail="User not found")
             
             # Update last_login timestamp
-            user.last_login = datetime.utcnow().isoformat()
+            user.last_login = datetime.now(timezone.utc).isoformat()
             db.flush()
             
             # Track login quests (login_after_24h, login_streak)

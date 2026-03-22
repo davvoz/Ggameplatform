@@ -3,7 +3,7 @@ Daily Login Service
 Handles the 7-day login reward cycle system
 """
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
@@ -69,7 +69,7 @@ class DailyLoginService:
         
         if not daily_login:
             # First time - create record
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             daily_login = UserLoginStreak(
                 user_id=user_id,
                 current_day=1,
@@ -92,7 +92,7 @@ class DailyLoginService:
             # If more than 1 day has passed, reset to day 1
             if days_since_claim > 1:
                 daily_login.current_day = 1
-                daily_login.updated_at = datetime.utcnow().isoformat()
+                daily_login.updated_at = datetime.now(timezone.utc).isoformat()
                 self.db.commit()
         
         # Check if already claimed today
@@ -199,7 +199,7 @@ class DailyLoginService:
             daily_login.current_day += 1
         
         daily_login.last_claim_date = today
-        daily_login.updated_at = datetime.utcnow().isoformat()
+        daily_login.updated_at = datetime.now(timezone.utc).isoformat()
         
         self.db.commit()
         
@@ -236,7 +236,7 @@ class DailyLoginService:
         if daily_login:
             daily_login.current_day = 1
             daily_login.last_claim_date = None
-            daily_login.updated_at = datetime.utcnow().isoformat()
+            daily_login.updated_at = datetime.now(timezone.utc).isoformat()
             self.db.commit()
             
             return {

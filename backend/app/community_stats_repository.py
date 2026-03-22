@@ -65,8 +65,8 @@ class CommunityStatsRepository:
 
             # Filter by date range using string comparison (ISO format)
             if days > 0:
-                from datetime import datetime, timedelta
-                cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+                from datetime import datetime, timedelta, timezone
+                cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
                 query = query.filter(date_expr >= cutoff)
 
             results = query.group_by(
@@ -227,8 +227,8 @@ class CommunityStatsRepository:
             game_id: Optional filter for a specific game (XP only, coins are platform-wide)
         """
         try:
-            from datetime import datetime, timedelta
-            cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d") if days > 0 else None
+            from datetime import datetime, timedelta, timezone
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d") if days > 0 else None
 
             # --- XP per day (from sessions) ---
             xp_date_expr = func.substr(GameSession.started_at, 1, 10)
@@ -313,8 +313,8 @@ class CommunityStatsRepository:
             game_id: Optional filter for a specific game (XP only)
         """
         try:
-            from datetime import datetime, timedelta
-            cutoff = (datetime.utcnow() - timedelta(weeks=weeks)).strftime("%Y-%m-%d") if weeks > 0 else None
+            from datetime import datetime, timedelta, timezone
+            cutoff = (datetime.now(timezone.utc) - timedelta(weeks=weeks)).strftime("%Y-%m-%d") if weeks > 0 else None
 
             # --- XP per week ---
             xp_date_expr = func.substr(GameSession.started_at, 1, 10)
@@ -522,11 +522,11 @@ class CommunityStatsRepository:
             Each value is a dict with user info + games breakdown, or None.
         """
         try:
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, timezone
             from app.level_system import LevelSystem
 
-            today = datetime.utcnow().strftime("%Y-%m-%d")
-            week_start = (datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())).strftime("%Y-%m-%d")
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            week_start = (datetime.now(timezone.utc) - timedelta(days=datetime.now(timezone.utc).weekday())).strftime("%Y-%m-%d")
 
             result = {}
 
@@ -759,8 +759,8 @@ class CommunityStatsRepository:
             days: Number of past days to include
         """
         try:
-            from datetime import datetime, timedelta
-            cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d") if days > 0 else None
+            from datetime import datetime, timedelta, timezone
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d") if days > 0 else None
 
             date_expr = func.substr(GameSession.started_at, 1, 10)
 
@@ -809,8 +809,8 @@ class CommunityStatsRepository:
             weeks: Number of past weeks to include
         """
         try:
-            from datetime import datetime, timedelta
-            cutoff = (datetime.utcnow() - timedelta(weeks=weeks)).strftime("%Y-%m-%d") if weeks > 0 else None
+            from datetime import datetime, timedelta, timezone
+            cutoff = (datetime.now(timezone.utc) - timedelta(weeks=weeks)).strftime("%Y-%m-%d") if weeks > 0 else None
 
             date_expr = func.substr(GameSession.started_at, 1, 10)
             week_expr = func.strftime('%Y-%W', GameSession.started_at)

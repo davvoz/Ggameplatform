@@ -1,7 +1,7 @@
 import sqlite3
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Connetti al database
 db_path = os.path.join('/app', 'data', 'games', 'rainbow_rush.db')
@@ -39,7 +39,7 @@ cursor.execute("""
     SET user_id = ?, 
         updated_at = ?
     WHERE user_id = ?
-""", (new_user_id, datetime.utcnow().isoformat(), old_user_id))
+""", (new_user_id, datetime.now(timezone.utc).isoformat(), old_user_id))
 
 progress_updated = cursor.rowcount
 print(f'\n✅ Progress aggiornati: {progress_updated} record')

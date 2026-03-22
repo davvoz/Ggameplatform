@@ -73,8 +73,8 @@ async def get_current_week_info(db: Session = Depends(get_db)):
     lb_repo = LeaderboardRepository(db)
     week_start, week_end = lb_repo.get_current_week()
     
-    from datetime import datetime
-    now = datetime.utcnow()
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
     end_date = datetime.fromisoformat(week_end)
     days_remaining = (end_date - now).days
     

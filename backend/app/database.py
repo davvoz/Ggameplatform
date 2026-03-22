@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 import uuid
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker, Session, joinedload
 from contextlib import contextmanager
@@ -66,7 +66,7 @@ def init_db():
 def create_game(game_data: dict) -> dict:
     """Insert a new game into the database."""
     with get_db_session() as session:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         game = Game(
             game_id=game_data['gameId'],
@@ -108,7 +108,7 @@ def get_all_games() -> List[dict]:
         
         # Get all currently active campaigns
         from app.models import Campaign
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         active_campaigns = session.query(Campaign).filter(
             Campaign.is_active == 1,
             Campaign.start_date <= now,
@@ -153,7 +153,7 @@ def update_game(game_id: str, game_data: dict) -> Optional[dict]:
         if not game:
             return None
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         game.title = game_data.get('title', game.title)
         game.description = game_data.get('description', game.description)
@@ -220,7 +220,7 @@ def create_user(username: Optional[str] = None, email: Optional[str] = None,
                 password: Optional[str] = None, cur8_multiplier: float = 1.0) -> dict:
     """Create a new user (registered or anonymous)."""
     with get_db_session() as session:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         is_anonymous = 1 if (username is None and email is None) else 0
         
@@ -295,7 +295,7 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
             # Update last login
             with get_db_session() as session:
                 db_user = session.query(User).filter(User.user_id == user['user_id']).first()
-                db_user.last_login = datetime.utcnow().isoformat()
+                db_user.last_login = datetime.now(timezone.utc).isoformat()
                 session.flush()
                 
                 # Track quest progress for login
@@ -354,7 +354,7 @@ def create_xp_rule(
         if not game:
             raise ValueError(f"Game {game_id} not found")
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         rule_id = f"xpr_{uuid.uuid4().hex[:16]}"
         
         xp_rule = XPRule(
@@ -420,7 +420,7 @@ def update_xp_rule(rule_id: str, updates: dict) -> Optional[dict]:
         if not rule:
             return None
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Update allowed fields
         if 'rule_name' in updates:
@@ -509,7 +509,7 @@ def calculate_session_xp(
 def create_game_session(user_id: str, game_id: str) -> dict:
     """Create a new game session."""
     with get_db_session() as session:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         session_id = f"session_{uuid.uuid4().hex[:16]}"
         
         game_session = GameSession(
@@ -597,8 +597,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         active_campaigns = session.query(Campaign).filter(
             Campaign.game_id == game_id,
             Campaign.is_active == 1,
-            Campaign.start_date <= datetime.utcnow().isoformat(),
-            Campaign.end_date >= datetime.utcnow().isoformat()
+            Campaign.start_date <= datetime.now(timezone.utc).isoformat(),
+            Campaign.end_date >= datetime.now(timezone.utc).isoformat()
         ).all()
         if active_campaigns:
             campaign_multiplier = max(c.xp_multiplier for c in active_campaigns)
@@ -613,7 +613,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         print(f"[DB] Metrics: levels={session_extra_data.get('levels_completed', 0)}, distance={session_extra_data.get('distance', 0)}")
         
         # Update session
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         game_session.score = score
         game_session.xp_earned = xp_earned
         game_session.duration_seconds = duration_seconds
@@ -759,14 +759,14 @@ def close_open_sessions(max_duration_seconds: int = None) -> int:
         print(f"🔄 Found {len(open_sessions)} open sessions to close")
         
         closed_count = 0
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         for game_session in open_sessions:
             print(f"  ⏱️  Force closing session {game_session.session_id} (user: {game_session.user_id}, game: {game_session.game_id})")
             
             # Calculate duration
             started = datetime.fromisoformat(game_session.started_at)
-            ended = datetime.utcnow()
+            ended = datetime.now(timezone.utc)
             duration = int((ended - started).total_seconds())
             
             if max_duration_seconds and duration > max_duration_seconds:
@@ -802,14 +802,14 @@ def force_close_session(session_id: str) -> bool:
         
         # Calculate duration
         started = datetime.fromisoformat(game_session.started_at)
-        ended = datetime.utcnow()
+        ended = datetime.now(timezone.utc)
         duration = int((ended - started).total_seconds())
         
         # Force close: NO XP awarded (session was abandoned/orphaned)
         print(f"⚠️  Force closing session {session_id} - NO XP awarded (duration: {duration}s)")
         
         # Update session without XP
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         game_session.duration_seconds = duration
         game_session.xp_earned = 0
         game_session.ended_at = now
@@ -832,7 +832,7 @@ def migrate_add_game_scores():
 def create_game_status(status_data: dict) -> dict:
     """Create a new game status."""
     with get_db_session() as session:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Check if status_code already exists
         existing = session.query(GameStatus).filter(
@@ -886,7 +886,7 @@ def update_game_status(status_id: int, status_data: dict) -> Optional[dict]:
         if not status:
             return None
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         if 'status_name' in status_data:
             status.status_name = status_data['status_name']

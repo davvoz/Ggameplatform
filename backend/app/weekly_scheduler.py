@@ -7,7 +7,7 @@ import logging
 import schedule
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 import uuid
 
@@ -55,12 +55,12 @@ class WeeklyLeaderboardScheduler:
             Dict with processing results
         """
         # Generate unique run ID for tracking
-        run_id = f"weekly_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        run_id = f"weekly_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
         logger.info(f"🔄 Starting weekly leaderboard reset process (run_id: {run_id})...")
         
         results = {
             'success': False,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'run_id': run_id,
             'week_start': week_start,
             'week_end': week_end,
@@ -193,7 +193,7 @@ class WeeklyLeaderboardScheduler:
                                 if winner:
                                     winner.steem_tx_id = tx['tx_id']
                                     winner.reward_sent = 1
-                                    winner.reward_sent_at = datetime.utcnow().isoformat()
+                                    winner.reward_sent_at = datetime.now(timezone.utc).isoformat()
                         
                         session.commit()
                         logger.info(f"✅ STEEM rewards: {results['steem_sent']} sent, {results['steem_failed']} failed")

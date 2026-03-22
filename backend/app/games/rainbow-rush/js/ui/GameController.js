@@ -130,6 +130,11 @@ export class GameController {
         if (this.levelManager) {
             await this.levelManager.loadProgress();
         }
+
+        // Initialize background theme
+        if (this.backgroundSystem) {
+            await this.backgroundSystem.initializeTheme();
+        }
         
                 // Setup rendering system update hook
         this.renderingSystem.update = (deltaTime, entities) => {

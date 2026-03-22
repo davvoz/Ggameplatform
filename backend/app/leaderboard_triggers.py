@@ -4,7 +4,7 @@ Automatically updates leaderboard when game sessions are completed
 AGGIORNATO: Ora gestisce sia weekly che all-time leaderboard
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import event, desc
 from sqlalchemy.orm import Session
 from app.models import GameSession, Leaderboard, User, WeeklyLeaderboard
@@ -27,7 +27,7 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
     game_id = game_session.game_id
     user_id = game_session.user_id
     score = game_session.score
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     
     # Check if user is anonymous - skip leaderboard update for anonymous users
     user = session.query(User).filter(User.user_id == user_id).first()

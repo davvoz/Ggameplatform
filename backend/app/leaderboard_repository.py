@@ -3,7 +3,7 @@ Leaderboard Repository
 Handles weekly and all-time leaderboard operations
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_
@@ -32,7 +32,7 @@ class LeaderboardRepository:
         Get current week start (Monday) and end (Sunday).
         Returns ISO format dates: (week_start, week_end)
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         # Get Monday of current week
         week_start = now - timedelta(days=now.weekday())
         week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -44,7 +44,7 @@ class LeaderboardRepository:
     @staticmethod
     def get_previous_week() -> Tuple[str, str]:
         """Get previous week Monday-Sunday dates."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         current_monday = now - timedelta(days=now.weekday())
         previous_monday = current_monday - timedelta(days=7)
         previous_sunday = previous_monday + timedelta(days=6)
@@ -65,7 +65,7 @@ class LeaderboardRepository:
             return None
         
         week_start, week_end = self.get_current_week()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Check if entry exists for this week
         entry = self.session.query(WeeklyLeaderboard).filter(
@@ -112,7 +112,7 @@ class LeaderboardRepository:
             print(f"👤 User {user_id} is anonymous or not found, skipping all-time leaderboard update")
             return None
         
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Check if entry exists
         entry = self.session.query(Leaderboard).filter(
@@ -337,7 +337,7 @@ class LeaderboardRepository:
         Save weekly winners to history.
         Returns list of created winner records.
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         winners = []
         
         # Get all games with their steem_rewards_enabled flag

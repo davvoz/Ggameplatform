@@ -71,7 +71,7 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     from app.models import GameSession, CoinTransaction, WeeklyLeaderboard
     from app.level_system import LevelSystem
     from sqlalchemy import func, distinct
-    from datetime import datetime
+    from datetime import datetime, timezone
     
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -103,7 +103,7 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     if user.created_at:
         try:
             created_date = datetime.fromisoformat(user.created_at)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             days_member = (now - created_date).days
         except Exception as e:
             print(f"Could not calculate days_member: {e}")
@@ -254,12 +254,12 @@ async def create_post(
         
         # Check cooldown period (48 hours)
         if user.last_steem_post:
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, timezone
             last_post_time = datetime.fromisoformat(user.last_steem_post)
             # Ensure last_post_time is offset-naive for comparison
             if last_post_time.tzinfo is not None:
                 last_post_time = last_post_time.replace(tzinfo=None)
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             time_diff = current_time - last_post_time
             cooldown_hours = 48
             
@@ -433,7 +433,7 @@ async def get_post_availability(
             # Ensure last_post_time is offset-naive for comparison
             if last_post_time.tzinfo is not None:
                 last_post_time = last_post_time.replace(tzinfo=None)
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             time_diff = current_time - last_post_time
             cooldown_hours = 48
             
@@ -524,8 +524,8 @@ async def confirm_post(
             )
         
         # Update last post timestamp
-        from datetime import datetime
-        user.last_steem_post = datetime.utcnow().isoformat()
+        from datetime import datetime, timezone
+        user.last_steem_post = datetime.now(timezone.utc).isoformat()
         db.commit()
         
         # Send Telegram notification only for Keychain (posting_key already sent notification)

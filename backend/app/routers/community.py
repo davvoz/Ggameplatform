@@ -11,7 +11,7 @@ import asyncio
 import uuid
 import os
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
 import logging
@@ -108,7 +108,7 @@ class CommunityChatManager:
             user_id=user_id,
             username=username,
             websocket=websocket,
-            connected_at=datetime.utcnow()
+            connected_at=datetime.now(timezone.utc)
         )
         
         logger.info(f"[CommunityChat] User {username} ({user_id}) connected. Total: {len(self.connections)}")
@@ -185,11 +185,11 @@ class CommunityChatManager:
         # Create message
         self.message_counter += 1
         message = ChatMessage(
-            id=f"msg_{self.message_counter}_{int(datetime.utcnow().timestamp())}",
+            id=f"msg_{self.message_counter}_{int(datetime.now(timezone.utc).timestamp())}",
             user_id=user_id,
             username=user.username,
             text=text,
-            timestamp=int(datetime.utcnow().timestamp() * 1000),
+            timestamp=int(datetime.now(timezone.utc).timestamp() * 1000),
             image_url=data.get("image_url"),
             gif_url=data.get("gif_url"),
             level=data.get("level")
@@ -357,7 +357,7 @@ class CommunityChatManager:
                         # Mark expired subscriptions
                         if result.get("expired"):
                             sub.is_active = 0
-                            sub.updated_at = datetime.utcnow().isoformat()
+                            sub.updated_at = datetime.now(timezone.utc).isoformat()
                             
                     except Exception as e:
                         logger.warning(f"[CommunityChat] Push failed for {sub.user_id}: {e}")
@@ -457,7 +457,7 @@ async def upload_media(file: UploadFile = File(...)):
     
     # Generate unique filename
     unique_id = uuid.uuid4().hex[:12]
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{unique_id}{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
     

@@ -3,7 +3,7 @@ Coin Rewards System
 Handles automatic coin distribution for various achievements
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, List
 from sqlalchemy.orm import Session
 
@@ -120,7 +120,7 @@ class CoinRewardManager:
         # Check if already claimed today
         if recent_logins:
             last_login = datetime.fromisoformat(recent_logins[0].created_at)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # If last login was today, don't award again
             if last_login.date() == now.date():

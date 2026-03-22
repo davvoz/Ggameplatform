@@ -1,8 +1,18 @@
 {
-  "version": "4.0.11",
-  "timestamp": "2026-03-21T21:44:48.244Z",
-  "buildNumber": 470,
+  "version": "4.0.12",
+  "timestamp": "2026-03-22T14:10:45.630Z",
+  "buildNumber": 471,
   "changelog": [
+    {
+      "version": "4.0.12",
+      "date": "2026-03-22",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix : sonar",
+        "🔖 Bump version to 4.0.11 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.11",
       "date": "2026-03-21",
@@ -82,15 +92,6 @@
       "changes": [
         "fix:Sonar",
         "🔖 Bump version to 4.0.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.2",
-      "date": "2026-03-20",
-      "type": "patch",
-      "changes": [
-        "fix: remove unreachable code in PushNotificationManager",
-        "🔖 Bump version to 4.0.1 [skip-version]"
       ]
     }
   ]

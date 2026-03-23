@@ -198,7 +198,7 @@ const CONFIG = Object.freeze({
             range: 400,             // Long range
             width: 8,               // Beam width
             color: '#00ffff',
-            pierce: 999,            // Pierces all enemies
+            pierce: 1,
             beamDuration: 300       // Beam visible for 0.3 seconds
         },
         rocket: {
@@ -211,7 +211,7 @@ const CONFIG = Object.freeze({
             projectileColor: '#f44336',
             range: 500,
             pierce: 1,
-            explosionRadius: 60,
+            explosionRadius: 120,
             spread: 0,
             projectiles: 1
         },
@@ -224,7 +224,7 @@ const CONFIG = Object.freeze({
             projectileSize: 20,
             projectileColor: '#795548',
             range: 300,
-            pierce: 5,
+            pierce: 1,
             returns: true
         },
         forcefield: {
@@ -277,14 +277,7 @@ const CONFIG = Object.freeze({
             rarity: 'rare',
             weight: 15
         },
-        pierce: {
-            name: 'Pierce',
-            icon: '🎯',
-            description: '+1 pierce',
-            effect: { stat: 'pierce', add: 1 },
-            rarity: 'rare',
-            weight: 15
-        },
+
         
         // Player upgrades
         maxHealth: {
@@ -313,7 +306,7 @@ const CONFIG = Object.freeze({
         },
         armor: {
             name: 'Armor',
-            icon: '🛡️',
+            icon: '🪖',
             description: '-10% damage taken',
             effect: { stat: 'armor', add: 0.1 },
             rarity: 'rare',
@@ -323,7 +316,7 @@ const CONFIG = Object.freeze({
         // New weapons
         newShotgun: {
             name: 'Shotgun',
-            icon: '🔫',
+            icon: '�',
             description: 'Adds a powerful shotgun',
             effect: { weapon: 'shotgun' },
             rarity: 'epic',
@@ -332,7 +325,7 @@ const CONFIG = Object.freeze({
         },
         newMachineGun: {
             name: 'Machine Gun',
-            icon: '🔫',
+            icon: '�',
             description: 'Rapid fire weapon',
             effect: { weapon: 'machineGun' },
             rarity: 'epic',
@@ -487,5 +480,499 @@ const DIFFICULTY_SCALING = Object.freeze({
     3600: { enemyHealth: 15.0, enemyDamage: 10.0, enemySpeed: 1.85, spawnRate: 11.0 }
 });
 
+// ============================================================
+// WORLD / DIMENSION SYSTEM
+// ============================================================
+const WORLDS = Object.freeze({
+    voidAbyss: {
+        id: 'voidAbyss',
+        name: 'Void Abyss',
+        icon: '🌌',
+        description: 'The endless void where it all began',
+        background: {
+            color: '#0d0518',
+            gridColor: 'rgba(100, 50, 180, 0.2)',
+            dotColor: 'rgba(180, 120, 255, 0.5)',
+            bigDotColor: 'rgba(100, 40, 160, 0.15)',
+            accentColor: '#7b2ff7',
+            theme: 'void',
+            particles: { color1: '#9944ff', color2: '#5500cc', count: 30 },
+            nebula: true
+        },
+        enemyTypes: ['basic', 'fast', 'tank', 'ranged', 'exploder'],
+        weapons: ['pistol', 'shotgun', 'machineGun', 'rocket', 'laser', 'boomerang', 'forcefield', 'drone'],
+        boss: {
+            name: 'Void Overlord',
+            icon: '👑',
+            color: '#9c27b0',
+            auraColor: '#ce93d8',
+            size: 100,
+            healthMult: 1.0,
+            speedMult: 1.0,
+            abilities: ['charge', 'summon', 'aoe', 'shoot'],
+            shape: 'crown'
+        }
+    },
+    infernoCore: {
+        id: 'infernoCore',
+        name: 'Inferno Core',
+        icon: '🔥',
+        description: 'A realm of fire and molten fury',
+        background: {
+            color: '#2a1208',
+            gridColor: 'rgba(200, 60, 10, 0.2)',
+            dotColor: 'rgba(255, 140, 40, 0.5)',
+            bigDotColor: 'rgba(180, 40, 5, 0.15)',
+            accentColor: '#ff4400',
+            theme: 'inferno',
+            particles: { color1: '#ff6600', color2: '#ff2200', count: 40 },
+            lavaStreaks: true
+        },
+        enemyTypes: ['flameImp', 'emberSprinter', 'magmaGolem', 'lavaCaster', 'pyroBlob'],
+        weapons: ['flamethrower', 'meteorStaff', 'rocket', 'boomerang'],
+        boss: {
+            name: 'Pyroclasm',
+            icon: '🌋',
+            color: '#ff3300',
+            auraColor: '#ff8800',
+            size: 110,
+            healthMult: 1.3,
+            speedMult: 0.8,
+            abilities: ['charge', 'fireRing', 'eruption', 'summon'],
+            shape: 'lava'
+        }
+    },
+    frozenWastes: {
+        id: 'frozenWastes',
+        name: 'Frozen Wastes',
+        icon: '❄️',
+        description: 'An icy wasteland of frost and silence',
+        background: {
+            color: '#1a2838',
+            gridColor: 'rgba(80, 160, 220, 0.15)',
+            dotColor: 'rgba(180, 230, 255, 0.5)',
+            bigDotColor: 'rgba(60, 120, 180, 0.12)',
+            accentColor: '#00bfff',
+            theme: 'frozen',
+            particles: { color1: '#aaddff', color2: '#4488cc', count: 35 },
+            snowflakes: true
+        },
+        enemyTypes: ['iceWraith', 'blizzardWolf', 'frostGiant', 'frostArcher', 'iceDetonator'],
+        weapons: ['iceShard', 'iceGrenade', 'laser', 'forcefield'],
+        boss: {
+            name: 'Cryomancer',
+            icon: '🧊',
+            color: '#00ccff',
+            auraColor: '#80e0ff',
+            size: 95,
+            healthMult: 1.1,
+            speedMult: 0.7,
+            abilities: ['charge', 'freezeZone', 'iceStorm', 'summon'],
+            shape: 'crystal'
+        }
+    },
+    neonNexus: {
+        id: 'neonNexus',
+        name: 'Neon Nexus',
+        icon: '⚡',
+        description: 'A digital battleground of circuits and energy',
+        background: {
+            color: '#081210',
+            gridColor: 'rgba(0, 255, 80, 0.15)',
+            dotColor: 'rgba(0, 255, 180, 0.5)',
+            bigDotColor: 'rgba(0, 120, 60, 0.12)',
+            accentColor: '#00ff88',
+            theme: 'neon',
+            particles: { color1: '#00ff88', color2: '#00ccff', count: 25 },
+            scanlines: true
+        },
+        enemyTypes: ['droneSwarm', 'sparkRunner', 'mechSentinel', 'laserTurret', 'emPulser'],
+        weapons: ['teslaCoil', 'plasmaCannon', 'drone', 'laser'],
+        boss: {
+            name: 'Overload Prime',
+            icon: '🤖',
+            color: '#00ff88',
+            auraColor: '#80ffcc',
+            size: 90,
+            healthMult: 1.0,
+            speedMult: 1.3,
+            abilities: ['charge', 'droneBarrage', 'laserSweep', 'summon'],
+            shape: 'mech'
+        }
+    },
+    shadowRealm: {
+        id: 'shadowRealm',
+        name: 'Shadow Realm',
+        icon: '👁️',
+        description: 'The darkest dimension, where nightmares dwell',
+        background: {
+            color: '#0e0814',
+            gridColor: 'rgba(60, 0, 80, 0.2)',
+            dotColor: 'rgba(150, 0, 200, 0.4)',
+            bigDotColor: 'rgba(50, 0, 60, 0.15)',
+            accentColor: '#aa00ff',
+            theme: 'shadow',
+            particles: { color1: '#9900ff', color2: '#440066', count: 30 },
+            darkness: true
+        },
+        enemyTypes: ['shadowClone', 'phantasm', 'voidDevourer', 'darkCaster', 'voidMine'],
+        weapons: ['soulDrain', 'phantomBlade', 'boomerang', 'forcefield'],
+        boss: {
+            name: 'The Devourer',
+            icon: '👁️',
+            color: '#660099',
+            auraColor: '#aa44ff',
+            size: 120,
+            healthMult: 1.5,
+            speedMult: 0.6,
+            abilities: ['charge', 'voidPull', 'shadowClones', 'summon'],
+            shape: 'eye'
+        }
+    }
+});
 
-export { CONFIG, DIFFICULTY_SCALING };
+// World-specific enemy configs (merged with base ENEMIES at runtime)
+// Each world has 5 unique enemy types mirroring the base archetypes
+const WORLD_ENEMIES = Object.freeze({
+    // --- Inferno Core (5 types) ---
+    flameImp: {
+        size: 22, speed: 100, health: 18, damage: 6,
+        color: '#ff6600', spawnWeight: 35,
+        icon: '🔥',
+        trailDamage: 3, trailDuration: 2000
+    },
+    magmaGolem: {
+        size: 42, speed: 28, health: 95, damage: 14,
+        color: '#cc3300', spawnWeight: 10,
+        icon: '🌋',
+        splitsOnDeath: true, splitCount: 2
+    },
+    emberSprinter: {
+        size: 18, speed: 145, health: 12, damage: 5,
+        color: '#ff9944', spawnWeight: 25,
+        icon: '💨'
+    },
+    lavaCaster: {
+        size: 24, speed: 45, health: 16, damage: 9,
+        color: '#ff4400', spawnWeight: 12,
+        icon: '🎯',
+        attackRange: 260, projectileSpeed: 230, fireRate: 2200
+    },
+    pyroBlob: {
+        size: 26, speed: 95, health: 28, damage: 18,
+        color: '#ff5500', spawnWeight: 8,
+        icon: '💥',
+        explosionRadius: 90
+    },
+
+    // --- Frozen Wastes (5 types) ---
+    iceWraith: {
+        size: 24, speed: 85, health: 15, damage: 5,
+        color: '#80d8ff', spawnWeight: 35,
+        icon: '👻',
+        slowOnHit: 0.4, slowDuration: 1500
+    },
+    frostGiant: {
+        size: 48, speed: 22, health: 110, damage: 16,
+        color: '#0088cc', spawnWeight: 8,
+        icon: '🧊',
+        freezeRadius: 120, freezeDuration: 2000
+    },
+    blizzardWolf: {
+        size: 20, speed: 140, health: 11, damage: 4,
+        color: '#aaddff', spawnWeight: 25,
+        icon: '🐺'
+    },
+    frostArcher: {
+        size: 22, speed: 48, health: 14, damage: 8,
+        color: '#44aadd', spawnWeight: 12,
+        icon: '🏹',
+        attackRange: 280, projectileSpeed: 260, fireRate: 2400
+    },
+    iceDetonator: {
+        size: 28, speed: 80, health: 32, damage: 14,
+        color: '#00ccff', spawnWeight: 10,
+        icon: '💎',
+        explosionRadius: 100, freezeOnExplode: true
+    },
+
+    // --- Neon Nexus (5 types) ---
+    droneSwarm: {
+        size: 14, speed: 140, health: 8, damage: 3,
+        color: '#00ff88', spawnWeight: 30,
+        icon: '🤖',
+        swarmSize: 3
+    },
+    mechSentinel: {
+        size: 38, speed: 35, health: 80, damage: 12,
+        color: '#00cc66', spawnWeight: 10,
+        icon: '🛡️',
+        shieldHP: 30, shieldRegenDelay: 3000
+    },
+    sparkRunner: {
+        size: 18, speed: 150, health: 10, damage: 4,
+        color: '#44ffaa', spawnWeight: 25,
+        icon: '⚡'
+    },
+    laserTurret: {
+        size: 26, speed: 30, health: 22, damage: 10,
+        color: '#00ffcc', spawnWeight: 12,
+        icon: '🔫',
+        attackRange: 300, projectileSpeed: 400, fireRate: 1800
+    },
+    emPulser: {
+        size: 30, speed: 75, health: 35, damage: 16,
+        color: '#22dd88', spawnWeight: 8,
+        icon: '💫',
+        explosionRadius: 110, disableWeapons: true
+    },
+
+    // --- Shadow Realm (5 types) ---
+    shadowClone: {
+        size: 22, speed: 110, health: 12, damage: 7,
+        color: '#6600aa', spawnWeight: 30,
+        icon: '👤',
+        teleportCooldown: 3000, teleportRange: 200
+    },
+    voidDevourer: {
+        size: 40, speed: 30, health: 70, damage: 11,
+        color: '#330066', spawnWeight: 10,
+        icon: '👁️',
+        pullRadius: 180, pullForce: 80
+    },
+    phantasm: {
+        size: 19, speed: 135, health: 10, damage: 5,
+        color: '#9944cc', spawnWeight: 25,
+        icon: '💀'
+    },
+    darkCaster: {
+        size: 23, speed: 42, health: 15, damage: 9,
+        color: '#7700bb', spawnWeight: 12,
+        icon: '🔮',
+        attackRange: 270, projectileSpeed: 240, fireRate: 2300
+    },
+    voidMine: {
+        size: 24, speed: 60, health: 20, damage: 20,
+        color: '#440077', spawnWeight: 8,
+        icon: '🕳️',
+        explosionRadius: 85, pullOnExplode: true
+    }
+});
+
+// World-specific weapon configs (merged with base WEAPONS at runtime)
+const WORLD_WEAPONS = Object.freeze({
+    // --- Inferno Core ---
+    flamethrower: {
+        name: 'Flamethrower',
+        icon: '🔥',
+        damage: 4,
+        fireRate: 100,
+        projectileSpeed: 300,
+        projectileSize: 12,
+        projectileColor: '#ff6600',
+        range: 180,
+        pierce: 1,
+        spread: 25,
+        projectiles: 3,
+        description: 'Short range cone of fire'
+    },
+    meteorStaff: {
+        name: 'Meteor Staff',
+        icon: '☄️',
+        damage: 60,
+        fireRate: 3500,
+        projectileSpeed: 200,
+        projectileSize: 20,
+        projectileColor: '#ff4400',
+        range: 500,
+        pierce: 1,
+        explosionRadius: 160,
+        spread: 0,
+        projectiles: 1,
+        description: 'Slow massive AOE meteor'
+    },
+    // --- Frozen Wastes ---
+    iceShard: {
+        name: 'Ice Shards',
+        icon: '🧊',
+        damage: 7,
+        fireRate: 1200,
+        projectileSpeed: 380,
+        projectileSize: 10,
+        projectileColor: '#80d8ff',
+        range: 350,
+        pierce: 1,
+        spread: 40,
+        projectiles: 4,
+        description: 'Spread of freezing shards'
+    },
+    iceGrenade: {
+        name: 'Ice Grenade',
+        icon: '💣',
+        damage: 30,
+        fireRate: 3000,
+        projectileSpeed: 220,
+        projectileSize: 14,
+        projectileColor: '#88ddff',
+        range: 350,
+        pierce: 1,
+        explosionRadius: 130,
+        bounces: 3,
+        freezeDuration: 2500,
+        arcHeight: 40,
+        spread: 0,
+        projectiles: 1,
+        description: 'Bouncing grenade that freezes enemies on explosion'
+    },
+    // --- Neon Nexus ---
+    teslaCoil: {
+        name: 'Tesla Coil',
+        icon: '🌩️',
+        damage: 12,
+        fireRate: 800,
+        range: 250,
+        chainTargets: 3,
+        chainRange: 120,
+        color: '#00ff88',
+        description: 'Lightning chains between enemies'
+    },
+    plasmaCannon: {
+        name: 'Plasma Cannon',
+        icon: '💠',
+        damage: 50,
+        fireRate: 2800,
+        projectileSpeed: 350,
+        projectileSize: 18,
+        projectileColor: '#00ffcc',
+        range: 450,
+        pierce: 1,
+        explosionRadius: 110,
+        spread: 0,
+        projectiles: 1,
+        description: 'Charged plasma with AOE'
+    },
+    // --- Shadow Realm ---
+    soulDrain: {
+        name: 'Soul Drain',
+        icon: '💜',
+        damage: 8,
+        fireRate: 0,
+        range: 200,
+        width: 6,
+        color: '#aa00ff',
+        lifeSteal: 0.15,
+        description: 'Beam that heals on damage'
+    },
+    phantomBlade: {
+        name: 'Phantom Blade',
+        icon: '🗡️',
+        damage: 22,
+        fireRate: 1800,
+        projectileSpeed: 220,
+        projectileSize: 16,
+        projectileColor: '#8800cc',
+        range: 1500,
+        pierce: 1,
+        homing: true,
+        homingStrength: 4,
+        spread: 0,
+        projectiles: 1,
+        description: 'Spinning spectral blade that seeks enemies'
+    }
+});
+
+// Portal configuration
+const PORTAL_CONFIG = Object.freeze({
+    DURATION: 15000,          // 15 seconds visible
+    SIZE: 50,                 // Portal radius
+    PULSE_SPEED: 2,           // Visual pulse speed
+    ACTIVATION_RANGE: 60,     // Player must be this close
+    APPEAR_ANIMATION: 1000    // 1s fade-in
+});
+
+// Boss drop temporary weapons (20 seconds each, one per world boss)
+const BOSS_DROP_WEAPONS = Object.freeze({
+    voidAbyss: {
+        name: 'Void Lightning',
+        icon: '🌀',
+        color: '#aa44ff',
+        glowColor: 'rgba(170, 68, 255, 0.3)',
+        duration: 30000,
+        // Direct lightning bolts from player to individual enemies
+        type: 'voidLightning',
+        damage: 150,            // Damage per bolt
+        radius: 380,            // Max targeting radius
+        maxArcs: 14,            // Simultaneous bolts
+        arcInterval: 300,       // New volley every 300ms
+        arcLifetime: 400        // Visual bolt display time
+    },
+    infernoCore: {
+        name: 'Inferno Storm',
+        icon: '🌋',
+        color: '#ff4400',
+        glowColor: 'rgba(255, 68, 0, 0.3)',
+        duration: 30000,
+        // Fire nova waves expanding outward + persistent flame ring
+        type: 'fireNova',
+        damage: 160,            // Nova wave damage
+        radius: 350,            // Max nova expansion
+        novaInterval: 1200,     // Nova every 1.2s
+        novaSpeed: 450,         // Expansion speed
+        ringRadius: 120,        // Persistent flame ring radius
+        ringDamage: 50,         // Flame ring DPS
+        ringTickRate: 150       // Ring damage tick interval
+    },
+    frozenWastes: {
+        name: 'Absolute Zero',
+        icon: '❄️',
+        color: '#00ccff',
+        glowColor: 'rgba(0, 204, 255, 0.3)',
+        duration: 30000,
+        // Ice stalactites raining from sky + blizzard field
+        type: 'iceStorm',
+        damage: 140,            // Stalactite impact damage
+        stalactiteRate: 80,     // Stalactite every 80ms (massive barrage)
+        stalactiteRadius: 350,  // Spawn radius around player
+        impactRadius: 80,       // Explosion radius on impact
+        blizzardRadius: 320,    // Blizzard slow field
+        freezeChance: 0.5,      // 50% chance to freeze on hit
+        freezeDuration: 2500
+    },
+    neonNexus: {
+        name: 'Laser Grid',
+        icon: '🔋',
+        color: '#00ff88',
+        glowColor: 'rgba(0, 255, 136, 0.3)',
+        duration: 30000,
+        // Rotating laser beams that slice through everything
+        type: 'laserGrid',
+        damage: 80,             // Damage per tick per beam
+        beamCount: 6,           // Number of laser beams
+        beamLength: 400,        // How far beams reach
+        beamWidth: 16,          // Visual width
+        rotationSpeed: 2.2,     // Rotation speed (rad/s)
+        tickRate: 100,          // Damage tick interval
+        hitCooldown: 150        // Per-enemy hit cooldown
+    },
+    shadowRealm: {
+        name: "Death's Harvest",
+        icon: '💀',
+        color: '#cc00ff',
+        glowColor: 'rgba(204, 0, 255, 0.3)',
+        duration: 30000,
+        // Spectral souls that burst outward, pass through enemies, then return
+        type: 'soulBurst',
+        damage: 130,            // Damage per soul hit
+        soulCount: 20,          // Souls per burst
+        burstRadius: 400,       // How far souls travel
+        burstInterval: 1500,    // Burst every 1.5s
+        soulSpeed: 500,         // Soul travel speed
+        returnDamage: 100,      // Damage on return trip
+        lingering: true         // Souls leave damaging trail
+    }
+});
+
+// World order for portal destinations
+const WORLD_ORDER = ['voidAbyss', 'infernoCore', 'frozenWastes', 'neonNexus', 'shadowRealm'];
+
+export { CONFIG, DIFFICULTY_SCALING, WORLDS, WORLD_ENEMIES, WORLD_WEAPONS, PORTAL_CONFIG, WORLD_ORDER, BOSS_DROP_WEAPONS };

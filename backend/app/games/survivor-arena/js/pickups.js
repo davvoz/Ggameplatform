@@ -1,5 +1,5 @@
 import { Entity } from './entity.js';
-import { CONFIG } from './config.js';
+import { CONFIG, PORTAL_CONFIG } from './config.js';
 import { Player } from './player.js';
 import { MathUtils } from './utils.js';
 /**
@@ -751,4 +751,333 @@ class BombPickup extends Pickup {
     }
 }
 
-export { Pickup, XPOrb, HealthPack, MagnetPickup, BombPickup ,PICKUP_SPRITE_MAP };
+/**
+ * Dimensional Portal - appears after boss death, teleports to new world
+ */
+class DimensionalPortal extends Entity {
+    constructor(x, y, destinationWorldId) {
+        super(x, y, PORTAL_CONFIG.SIZE);
+        this.type = 'portal';
+        this.destinationWorldId = destinationWorldId; // Fixed destination for this portal
+        this.lifetime = PORTAL_CONFIG.DURATION;
+        this.timer = 0;
+        this.appearTimer = 0;
+        this.appearDuration = PORTAL_CONFIG.APPEAR_ANIMATION;
+        this.pulsePhase = 0;
+        this.rotationAngle = 0;
+        this.isClosing = false;
+        this.closingTimer = 0;
+        this.closingDuration = 1000; // 1s fade out
+    }
+
+    update(deltaTime) {
+        this.timer += deltaTime * 1000;
+        this.appearTimer += deltaTime * 1000;
+        this.pulsePhase += deltaTime * PORTAL_CONFIG.PULSE_SPEED;
+        this.rotationAngle += deltaTime * 1.5;
+
+        // Start closing animation 1s before end
+        if (this.timer >= this.lifetime - this.closingDuration && !this.isClosing) {
+            this.isClosing = true;
+            this.closingTimer = this.closingDuration;
+        }
+
+        if (this.isClosing) {
+            this.closingTimer -= deltaTime * 1000;
+        }
+
+        // Expire
+        if (this.timer >= this.lifetime) {
+            this.active = false;
+        }
+    }
+
+    /**
+     * Check if player is in activation range
+     */
+    isPlayerInRange(playerX, playerY, wrappedDistFn) {
+        const wrapped = wrappedDistFn(playerX, playerY, this.x, this.y);
+        return wrapped.distance < PORTAL_CONFIG.ACTIVATION_RANGE;
+    }
+
+    render(ctx, camera = { x: 0, y: 0 }) {
+        if (!this.active) return;
+
+        ctx.save();
+
+        // Appear/close alpha
+        let alpha = 1;
+        if (this.appearTimer < this.appearDuration) {
+            alpha = this.appearTimer / this.appearDuration;
+        }
+        if (this.isClosing) {
+            alpha = Math.max(0, this.closingTimer / this.closingDuration);
+        }
+        ctx.globalAlpha = alpha;
+
+        const pulse = 1 + Math.sin(this.pulsePhase * Math.PI) * 0.15;
+        const portalSize = this.size * pulse;
+
+        // Outer glow
+        const outerGrad = ctx.createRadialGradient(this.x, this.y, portalSize * 0.5, this.x, this.y, portalSize * 2);
+        outerGrad.addColorStop(0, 'rgba(100, 50, 255, 0.3)');
+        outerGrad.addColorStop(0.5, 'rgba(150, 50, 255, 0.1)');
+        outerGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = outerGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, portalSize * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Swirling rings
+        for (let i = 0; i < 3; i++) {
+            const ringAngle = this.rotationAngle + (i * Math.PI * 2 / 3);
+            const ringAlpha = 0.3 + Math.sin(this.pulsePhase * Math.PI + i) * 0.15;
+            ctx.strokeStyle = `rgba(180, 100, 255, ${ringAlpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, portalSize * (0.6 + i * 0.25), ringAngle, ringAngle + Math.PI * 1.5);
+            ctx.stroke();
+        }
+
+        // Inner portal (dark vortex)
+        const innerGrad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, portalSize * 0.8);
+        innerGrad.addColorStop(0, '#1a0033');
+        innerGrad.addColorStop(0.5, '#330066');
+        innerGrad.addColorStop(1, 'rgba(100, 0, 200, 0.8)');
+        ctx.fillStyle = innerGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, portalSize * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sparkle particles
+        for (let i = 0; i < 8; i++) {
+            const sparkAngle = this.rotationAngle * 2 + i * Math.PI / 4;
+            const sparkDist = portalSize * (0.4 + Math.sin(this.pulsePhase * 3 + i) * 0.3);
+            const sx = this.x + Math.cos(sparkAngle) * sparkDist;
+            const sy = this.y + Math.sin(sparkAngle) * sparkDist;
+            ctx.fillStyle = `rgba(220, 180, 255, ${0.5 + Math.sin(this.pulsePhase * 4 + i * 2) * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // "PORTAL" text
+        ctx.fillStyle = '#ddc0ff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PORTAL', this.x, this.y - portalSize - 15);
+
+        // Timer bar
+        const remaining = 1 - (this.timer / this.lifetime);
+        const barWidth = portalSize * 2;
+        const barHeight = 4;
+        const barY = this.y + portalSize + 10;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(this.x - barWidth / 2, barY, barWidth, barHeight);
+        ctx.fillStyle = remaining > 0.3 ? '#aa66ff' : '#ff4444';
+        ctx.fillRect(this.x - barWidth / 2, barY, barWidth * remaining, barHeight);
+
+        ctx.restore();
+    }
+}
+
+/**
+ * Boss Chest - animated treasure chest dropped by bosses, contains a temporary weapon
+ */
+class BossChest extends Entity {
+    constructor(x, y, worldId, weaponConfig) {
+        super(x, y, 30);
+        this.type = 'bossChest';
+        this.worldId = worldId;
+        this.weaponConfig = weaponConfig;
+        this.lifetime = 30000; // 30s like other pickups
+        this.timer = 0;
+        this.spawnTimer = 0;
+        this.spawnDuration = 600;
+        this.spawnScale = 0;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.rotationAngle = 0;
+        this.sparkles = [];
+        this.floatOffset = 0;
+
+        // Initialize sparkle positions
+        for (let i = 0; i < 12; i++) {
+            this.sparkles.push({
+                angle: Math.random() * Math.PI * 2,
+                dist: 0.6 + Math.random() * 0.8,
+                speed: 0.5 + Math.random() * 1.5,
+                size: 1 + Math.random() * 2,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    update(deltaTime) {
+        if (!this.active) return;
+
+        const dt = deltaTime * 1000;
+
+        // Spawn animation
+        if (this.spawnTimer < this.spawnDuration) {
+            this.spawnTimer += dt;
+            // Elastic ease out
+            const t = Math.min(1, this.spawnTimer / this.spawnDuration);
+            this.spawnScale = t < 1 ? 1 - Math.pow(2, -10 * t) * Math.cos(t * Math.PI * 3) : 1;
+        }
+
+        this.timer += dt;
+        this.pulsePhase += deltaTime * 3;
+        this.rotationAngle += deltaTime * 0.5;
+        this.floatOffset += deltaTime * 2.5;
+
+        // Expire
+        if (this.timer >= this.lifetime) {
+            this.active = false;
+        }
+    }
+
+    /**
+     * Check if player collects this chest
+     */
+    isPlayerInRange(playerX, playerY, wrappedDistFn) {
+        const wrapped = wrappedDistFn(playerX, playerY, this.x, this.y);
+        return wrapped.distance < (this.size + 20);
+    }
+
+    render(ctx, camera = { x: 0, y: 0 }) {
+        if (!this.active) return;
+
+        const scale = this.spawnScale;
+        if (scale <= 0) return;
+
+        const floatY = Math.sin(this.floatOffset) * 5;
+        const sx = this.x;
+        const sy = this.y + floatY;
+        const color = this.weaponConfig.color || '#ffd700';
+        const pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
+        const s = this.size * scale * pulse;
+
+        ctx.save();
+
+        // Fade out in last 5 seconds
+        if (this.timer > this.lifetime - 5000) {
+            const fade = (this.timer - (this.lifetime - 5000)) / 5000;
+            ctx.globalAlpha = 1 - fade;
+            if (Math.floor(Date.now() / 150) % 2 === 0) ctx.globalAlpha *= 0.5;
+        }
+
+        // Ground shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + s * 0.8, s * 0.8, s * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outer glow (world-colored)
+        const outerGlow = ctx.createRadialGradient(sx, sy, s * 0.3, sx, sy, s * 2.5);
+        outerGlow.addColorStop(0, color + 'aa');
+        outerGlow.addColorStop(0.4, color + '44');
+        outerGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = outerGlow;
+        ctx.beginPath();
+        ctx.arc(sx, sy, s * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pulsing ring
+        ctx.strokeStyle = color + '66';
+        ctx.lineWidth = 2;
+        const ringPulse = 1 + Math.sin(this.pulsePhase * 2) * 0.3;
+        ctx.beginPath();
+        ctx.arc(sx, sy, s * 1.8 * ringPulse, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Chest body (bottom)
+        const chestW = s * 1.4;
+        const chestH = s * 0.7;
+        const chestTop = sy - chestH * 0.3;
+
+        // Body gradient (dark wood)
+        const bodyGrad = ctx.createLinearGradient(sx, chestTop, sx, chestTop + chestH);
+        bodyGrad.addColorStop(0, '#8B5E3C');
+        bodyGrad.addColorStop(0.5, '#6B3E1C');
+        bodyGrad.addColorStop(1, '#4A2A0C');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.roundRect(sx - chestW / 2, chestTop, chestW, chestH, 4);
+        ctx.fill();
+
+        // Body outline
+        ctx.strokeStyle = '#3A1A00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Lid (slightly open, tilted)
+        const lidH = chestH * 0.5;
+        const openAngle = Math.sin(this.pulsePhase * 1.5) * 0.08 + 0.15;
+        ctx.save();
+        ctx.translate(sx - chestW / 2, chestTop);
+        ctx.rotate(-openAngle);
+        const lidGrad = ctx.createLinearGradient(0, -lidH, 0, 0);
+        lidGrad.addColorStop(0, '#A0703C');
+        lidGrad.addColorStop(1, '#7A4E1C');
+        ctx.fillStyle = lidGrad;
+        ctx.beginPath();
+        ctx.roundRect(0, -lidH, chestW, lidH, [4, 4, 0, 0]);
+        ctx.fill();
+        ctx.strokeStyle = '#3A1A00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Lid stripe
+        ctx.fillStyle = color;
+        ctx.fillRect(chestW * 0.35, -lidH * 0.6, chestW * 0.3, lidH * 0.3);
+
+        ctx.restore();
+
+        // Metal bands on body
+        ctx.fillStyle = color;
+        ctx.fillRect(sx - chestW / 2 + 2, chestTop + 2, chestW - 4, 3);
+        ctx.fillRect(sx - chestW / 2 + 2, chestTop + chestH - 5, chestW - 4, 3);
+
+        // Lock/clasp (center)
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(sx, chestTop, 5 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Light beam emanating from chest opening
+        ctx.save();
+        const beamGrad = ctx.createLinearGradient(sx, chestTop - 40 * scale, sx, chestTop);
+        beamGrad.addColorStop(0, 'transparent');
+        beamGrad.addColorStop(1, color + '88');
+        ctx.fillStyle = beamGrad;
+        ctx.beginPath();
+        ctx.moveTo(sx - chestW * 0.3, chestTop);
+        ctx.lineTo(sx - chestW * 0.15, chestTop - 40 * scale);
+        ctx.lineTo(sx + chestW * 0.15, chestTop - 40 * scale);
+        ctx.lineTo(sx + chestW * 0.3, chestTop);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Sparkle particles orbiting
+        for (const sp of this.sparkles) {
+            const ang = sp.angle + this.rotationAngle * sp.speed;
+            const dist = s * sp.dist;
+            const spx = sx + Math.cos(ang) * dist;
+            const spy = sy + Math.sin(ang) * dist + floatY * 0.5;
+            const alpha = 0.4 + Math.sin(this.pulsePhase * 2 + sp.phase) * 0.4;
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(spx, spy, sp.size * scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+}
+
+export { Pickup, XPOrb, HealthPack, MagnetPickup, BombPickup, DimensionalPortal, BossChest, PICKUP_SPRITE_MAP };

@@ -1,8 +1,17 @@
 {
-  "version": "4.0.18",
-  "timestamp": "2026-03-22T23:39:29.071Z",
-  "buildNumber": 477,
+  "version": "4.0.19",
+  "timestamp": "2026-03-23T12:07:25.076Z",
+  "buildNumber": 478,
   "changelog": [
+    {
+      "version": "4.0.19",
+      "date": "2026-03-23",
+      "type": "patch",
+      "changes": [
+        "Survivor Arena: Game Version 2.0 portal update",
+        "🔖 Bump version to 4.0.18 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.18",
       "date": "2026-03-22",
@@ -84,15 +93,6 @@
       "changes": [
         "refactor: [RR]use Annotated for dependency injection in FastAPI router",
         "🔖 Bump version to 4.0.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.9",
-      "date": "2026-03-21",
-      "type": "patch",
-      "changes": [
-        "Refactor random number generation to use Math.random() instead of window.randomSecure() across multiple files for consistency and improved performance.",
-        "🔖 Bump version to 4.0.8 [skip-version]"
       ]
     }
   ]

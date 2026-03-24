@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { passive: false });
 
     // Create game
-    const game = new Game(canvas);
+    const game = await Game.create(canvas);
     window.game = game;
 
     // Audio-reactive visualizer for popup screens

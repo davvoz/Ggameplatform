@@ -129,8 +129,12 @@ class Game {
         this.upgradeModal = null;
         this.upgradeOptions = null;
         this.upgradeLevelBadge = null;
+    }
 
-        this.init();
+    static async create(canvas) {
+        const game = new Game(canvas);
+        await game.init();
+        return game;
     }
 
     async init() {

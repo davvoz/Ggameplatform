@@ -72,8 +72,8 @@ export class CorruptedZoneSector extends SimulationSectorRenderer {
             ctx.save();
             ctx.globalAlpha = 0.04 + this.intensity * 0.03;
             for (let i = 0; i < 5; i++) {
-                const nx = ((Math.sin(this.time * 1.3 + i * 7) * 0.5 + 0.5) * this.canvasWidth) | 0;
-                const ny = ((Math.cos(this.time * 0.9 + i * 4) * 0.5 + 0.5) * this.canvasHeight) | 0;
+                const nx = Math.trunc((Math.sin(this.time * 1.3 + i * 7) * 0.5 + 0.5) * this.canvasWidth);
+                const ny = Math.trunc((Math.cos(this.time * 0.9 + i * 4) * 0.5 + 0.5) * this.canvasHeight);
                 const nw = 30 + Math.random() * 50;
                 const nh = 20 + Math.random() * 30;
                 ctx.fillStyle = `hsla(280,40%,50%,0.3)`;

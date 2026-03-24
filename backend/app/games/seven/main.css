@@ -171,12 +171,12 @@ body {
   font-size: 10px;
   text-transform: uppercase;
   color: var(--text-gray);
+  margin: 2px;
   margin-bottom: 6px;
   letter-spacing: 0.5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 2px;
 }
 
 .bet-amount-controls {

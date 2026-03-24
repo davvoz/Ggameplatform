@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { passive: false });
     
     // Initialize game
-    const game = new Game(canvas);
+    const game = await Game.create(canvas);
     
     // Expose game instance for debugging
     window.game = game;

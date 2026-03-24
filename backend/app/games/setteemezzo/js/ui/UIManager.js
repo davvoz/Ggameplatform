@@ -343,7 +343,7 @@ export class UIManager {
 
     /** Shift a hex color's lightness. */
     #shiftColor(hex, amount) {
-        const n = parseInt(hex.replace('#', ''), 16);
+        const n = Number.parseInt(hex.replace('#', ''), 16);
         const r = Math.max(0, Math.min(255, ((n >> 16) & 0xff) + amount));
         const g = Math.max(0, Math.min(255, ((n >> 8) & 0xff) + amount));
         const b = Math.max(0, Math.min(255, (n & 0xff) + amount));

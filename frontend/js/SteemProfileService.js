@@ -176,8 +176,8 @@ export class SteemProfileService {
             const data = await response.json();
             const props = data.result;
             
-            const totalVestingFundSteem = parseFloat(props.total_vesting_fund_steem.split(' ')[0] || '0');
-            const totalVestingShares = parseFloat(props.total_vesting_shares.split(' ')[0] || '0');
+            const totalVestingFundSteem = Number.parseFloat(props.total_vesting_fund_steem.split(' ')[0] || '0');
+            const totalVestingShares = Number.parseFloat(props.total_vesting_shares.split(' ')[0] || '0');
             
             if (totalVestingShares > 0 && totalVestingFundSteem > 0) {
                 const ratio = totalVestingShares / totalVestingFundSteem;
@@ -228,7 +228,7 @@ export class SteemProfileService {
             // Find delegation to @cur8
             for (const delegation of delegations) {
                 if (delegation.delegatee === 'cur8') {
-                    const vests = parseFloat(delegation.vesting_shares.split(' ')[0] || '0');
+                    const vests = Number.parseFloat(delegation.vesting_shares.split(' ')[0] || '0');
                     // Convert VESTS to STEEM Power using dynamic ratio
                     const steem = vests / vestsPerSteem;
                     return Math.round(steem * 1000) / 1000; // Round to 3 decimals

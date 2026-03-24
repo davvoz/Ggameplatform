@@ -43,14 +43,6 @@ class DailyLoginService:
             }
             for config in configs
         }
-        self.db = db
-        if coin_service:
-            self.coin_service = coin_service
-        else:
-            # Create CoinService with proper repositories
-            coins_repo = RepositoryFactory.create_usercoins_repository(db)
-            transaction_repo = RepositoryFactory.create_cointransaction_repository(db)
-            self.coin_service = CoinService(coins_repo, transaction_repo)
     
     def get_user_status(self, user_id: str) -> Dict[str, Any]:
         """
@@ -229,8 +221,8 @@ class DailyLoginService:
         Returns:
             Updated status
         """
-        daily_login = self.db.query(DailyLoginReward).filter(
-            DailyLoginReward.user_id == user_id
+        daily_login = self.db.query(UserLoginStreak).filter(
+            UserLoginStreak.user_id == user_id
         ).first()
         
         if daily_login:

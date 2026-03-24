@@ -199,7 +199,7 @@ class WalletStatsRenderer {
         const elements = document.querySelectorAll('.count-up');
         
         elements.forEach(el => {
-            const target = parseInt(el.dataset.target) || 0;
+            const target = Number.parseInt(el.dataset.target) || 0;
             const duration = this.animationDuration;
             const start = performance.now();
             const startValue = 0;

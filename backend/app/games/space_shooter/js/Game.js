@@ -331,7 +331,7 @@ class Game {
             e.preventDefault();
             e.stopPropagation();
             const trackIndex = Number.parseInt(e.target.dataset.track, 10);
-            if (isNaN(trackIndex)) return;
+            if (Number.isNaN(trackIndex)) return;
 
             // Aggiorna UI
             this.trackButtons.forEach(btn => btn.classList.remove('active'));

@@ -151,7 +151,7 @@ const AuthManager = {
 
     async loginWithKeychain() {
         const username = document.getElementById('steemUsername').value.trim();
-        const multiplier = parseFloat(document.getElementById('steemMultiplier').value);
+        const multiplier = Number.parseFloat(document.getElementById('steemMultiplier').value);
         const statusEl = document.getElementById('keychainStatus');
 
         if (!username) {

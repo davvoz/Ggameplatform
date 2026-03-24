@@ -160,7 +160,7 @@
             </div>
             <div class="game-info">
                 <div class="game-badges" aria-hidden="true"></div>
-                <h3 class="game-title"></h3>
+                <h3 class="game-title" aria-label="Game title"></h3>
                 <p class="game-description"></p>
                 <div class="game-meta">
                     <span class="game-author"></span>
@@ -179,7 +179,7 @@
                 <div class="detail-header">
                     <img class="detail-thumbnail" src="" alt="">
                     <div class="detail-info">
-                        <h2 class="detail-title"></h2>
+                        <h2 class="detail-title" aria-label="Game title"></h2>
                         <p class="detail-author"></p>
                         <p class="detail-version"></p>
                         <div class="detail-meta">
@@ -393,7 +393,7 @@
                     </div>
                 </div>
                 <div class="profile-info">
-                    <h2 class="profile-username"></h2>
+                    <h2 class="profile-username" aria-label="Username"></h2>
                     <p class="profile-type"></p>
                     <!-- Cur8 Social Profile Link -->
                     <a id="steemProfileLink" class="steem-profile-link" href="#" target="_blank" rel="noopener noreferrer">
@@ -641,12 +641,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Steem Username</label>
+                    <label for="steemUsername">Steem Username</label>
                     <input type="text" id="steemUsername" placeholder="Enter your @username">
                 </div>
 
                 <div class="form-group">
-                    <label>CUR8 Multiplier (1.0 - 5.0)</label>
+                    <label for="steemMultiplier">CUR8 Multiplier (1.0 - 5.0)</label>
                     <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1" title="CUR8 Multiplier value between 1.0 and 5.0">
                     <small>Higher multipliers = more XP per game!</small>
                 </div>

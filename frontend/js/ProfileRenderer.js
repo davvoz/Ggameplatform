@@ -651,7 +651,9 @@ class ProfileRenderer {
         const displayName = this.getDisplayName(user);
         const userType = this.getUserType(user);
 
-        content.querySelector('.profile-username').textContent = displayName;
+        const usernameEl = content.querySelector('.profile-username');
+        usernameEl.textContent = displayName;
+        usernameEl.removeAttribute('aria-label');
         content.querySelector('.profile-type').textContent = userType;
 
         // Populate Steem social profile link
@@ -1909,8 +1911,8 @@ class ProfileRenderer {
 
     async _calculateAvailableSp(spProfile) {
         const vestsPerSteem = await steemProfileService._getVestsToSpRatio();
-        const vestingShares = parseFloat((spProfile.account.vesting_shares || '0 VESTS').split(' ')[0] || '0');
-        const delegatedVestingShares = parseFloat((spProfile.account.delegated_vesting_shares || '0 VESTS').split(' ')[0] || '0');
+        const vestingShares = Number.parseFloat((spProfile.account.vesting_shares || '0 VESTS').split(' ')[0] || '0');
+        const delegatedVestingShares = Number.parseFloat((spProfile.account.delegated_vesting_shares || '0 VESTS').split(' ')[0] || '0');
 
         const delegatedToCur8Vests = await this._getDelegatedToCur8Vests(spProfile.account.name);
         const delegatedToOthers = Math.max(0, delegatedVestingShares - delegatedToCur8Vests);
@@ -1929,7 +1931,7 @@ class ProfileRenderer {
 
             return outgoing.reduce((total, delegation) => {
                 if (delegation.delegatee === 'cur8') {
-                    return total + parseFloat((delegation.vesting_shares || '0 VESTS').split(' ')[0] || '0');
+                    return total + Number.parseFloat((delegation.vesting_shares || '0 VESTS').split(' ')[0] || '0');
                 }
                 return total;
             }, 0);

@@ -144,7 +144,7 @@ export class PlatformSDKAdapter {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    amount: parseInt(amount),
+                    amount: Number.parseInt(amount),
                     transaction_type: 'game_win',
                     source_id: 'setteemezzo',
                     description: String(description),

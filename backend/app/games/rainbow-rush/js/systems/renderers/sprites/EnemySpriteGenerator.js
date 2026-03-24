@@ -523,11 +523,7 @@ export class EnemySpriteGenerator {
         for (let i = 0; i <= numWaves; i++) {
             const x = cx - width * 0.35 + (i / numWaves) * width * 0.7;
             const y = cy + height * 0.2 + Math.sin(wave + i) * 3;
-            if (i === 0) {
-                ctx.lineTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
+            ctx.lineTo(x, y);
         }
         
         ctx.closePath();

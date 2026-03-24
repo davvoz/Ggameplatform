@@ -619,9 +619,9 @@ class QuestStatistics {
                     // Request ALL sessions by omitting limit
                     const all = await getUserSessions(user.user_id).catch(() => ({ sessions: [] }));
                     const sessions = all && all.sessions ? all.sessions : [];
-                    const totalSessionXP = sessions.reduce((sum, s) => sum + (parseFloat(s.xp_earned) || 0), 0);
+                    const totalSessionXP = sessions.reduce((sum, s) => sum + (Number.parseFloat(s.xp_earned) || 0), 0);
 
-                    const questXP = Math.max(0, (parseFloat(user.total_xp_earned) || 0) - totalSessionXP);
+                    const questXP = Math.max(0, (Number.parseFloat(user.total_xp_earned) || 0) - totalSessionXP);
 
                     if (animInterval) {
                         clearInterval(animInterval);
@@ -747,7 +747,7 @@ class QuestList {
         document.querySelectorAll('.claim-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const questId = parseInt(btn.dataset.questId);
+                const questId = Number.parseInt(btn.dataset.questId);
                 await handleClaimReward(questId, this.userId);
             });
         });

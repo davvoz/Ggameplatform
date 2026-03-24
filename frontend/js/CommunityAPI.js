@@ -85,7 +85,7 @@ class CommunityAPI {
                 this.ws.onclose = this._boundHandlers.onClose;
                 this.ws.onerror = (error) => {
                     this._boundHandlers.onError(error);
-                    reject(error);
+                    reject(error instanceof Error ? error : new Error('WebSocket connection error'));
                 };
             } catch (error) {
                 reject(error);

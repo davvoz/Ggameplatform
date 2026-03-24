@@ -392,7 +392,7 @@ export class EntityLabelRenderer {
      * @returns {Object} Label style configuration
      */
     static getStyle(category) {
-        return { ...LABEL_STYLES[category] } || { ...LABEL_STYLES[EntityCategory.UNKNOWN] };
+        return { ...(LABEL_STYLES[category] || LABEL_STYLES[EntityCategory.UNKNOWN]) };
     }
 
     /**

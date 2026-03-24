@@ -82,11 +82,11 @@ export class PowerupSystem {
         const now = Date.now();
         
         // Validate duration and cooldown - se undefined, usa valori default
-        if (duration === undefined || duration === null || isNaN(duration)) {
+        if (duration === undefined || duration === null || Number.isNaN(duration)) {
 
             duration = 5000;
         }
-        if (cooldown === undefined || cooldown === null || isNaN(cooldown)) {
+        if (cooldown === undefined || cooldown === null || Number.isNaN(cooldown)) {
 
             cooldown = 15000;
         }
@@ -147,7 +147,6 @@ export class PowerupSystem {
                     this.notifyDeactivation(type);
                 }
             } else if (timer.cooldown > 0) {
-                const wasCooldown = true;
                 timer.cooldown -= deltaMs;
                 if (timer.cooldown <= 0) {
                     timer.cooldown = 0;

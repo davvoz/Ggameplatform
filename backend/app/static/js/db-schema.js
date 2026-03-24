@@ -66,7 +66,7 @@ const RENDERERS = {
     
     xp: (value) => ({
         type: 'html',
-        content: `<span style="color: #28a745; font-weight: bold;">⭐ ${parseFloat(value || 0).toFixed(0)}</span>`
+        content: `<span style="color: #28a745; font-weight: bold;">⭐ ${Number.parseFloat(value || 0).toFixed(0)}</span>`
     }),
     
     score: (value) => ({

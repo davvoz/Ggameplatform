@@ -60,30 +60,6 @@ export class CollisionDetector {
     }
 
     /**
-     * Check goal collision - player touches/crosses goal flag
-     * @param {Object} goalEntity - The goal flag entity
-     * @returns {boolean} - True if player has reached the goal
-     */
-    checkGoalCollision(goalEntity) {
-        if (!goalEntity || goalEntity.reached) return false;
-
-        // Don't allow goal completion if player is dead
-        if (!this.player.alive) return false;
-
-        // Check if player's right edge has crossed the goal's left edge
-        const playerRightEdge = this.player.x + this.player.width;
-        const goalLeftEdge = goalEntity.x;
-
-        if (playerRightEdge >= goalLeftEdge) {
-
-            goalEntity.reached = true;
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Check all collisions (Main orchestration method)
      * @param {EntityManager} entityManager
      * @param {SafetyPlatformSystem} safetyPlatformSystem

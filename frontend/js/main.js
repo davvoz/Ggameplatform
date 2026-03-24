@@ -213,7 +213,7 @@ let currentGameMode = 'ranked';
 // Helper: unified play count accessor (prefer metadata.playCount, then session_count)
 function getPlayCount(game) {
     const metaCount = game?.metadata?.playCount;
-    if (typeof metaCount === 'number' && !isNaN(metaCount)) return metaCount;
+    if (typeof metaCount === 'number' && !Number.isNaN(metaCount)) return metaCount;
     if (typeof game?.session_count === 'number') return game.session_count;
     if (typeof game?.play_count === 'number') return game.play_count;
     return 0;
@@ -580,7 +580,9 @@ function createGameCard(game) {
     }
 
     // Set game info
-    card.querySelector('.game-title').textContent = game.title;
+    const gameTitleEl = card.querySelector('.game-title');
+    gameTitleEl.textContent = game.title;
+    gameTitleEl.removeAttribute('aria-label');
     card.querySelector('.game-description').textContent = game.description || 'No description available.';
     card.querySelector('.game-author').textContent = `By ${game.author || 'Unknown'}`;
     card.querySelector('.game-category').textContent = game.category || 'Uncategorized';
@@ -639,7 +641,9 @@ export async function renderGameDetail(params) {
             ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(gameId, game.thumbnail))
             : 'https://via.placeholder.com/400x300?text=No+Image';
         document.querySelector('.detail-thumbnail').src = thumbnailUrl;
-        document.querySelector('.detail-title').textContent = game.title;
+        const detailTitleEl = document.querySelector('.detail-title');
+        detailTitleEl.textContent = game.title;
+        detailTitleEl.removeAttribute('aria-label');
         document.querySelector('.detail-author').textContent = `By ${game.author || 'Unknown'}`;
         document.querySelector('.detail-version').textContent = `Version ${game.version || '1.0.0'}`;
         document.querySelector('.detail-category').textContent = game.category || 'Uncategorized';

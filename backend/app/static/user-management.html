@@ -191,19 +191,19 @@
                 <h2>📝 Registrazione Utente</h2>
                 <form id="registerForm">
                     <div class="form-group">
-                        <label>Username</label>
+                        <label for="reg_username">Username</label>
                         <input type="text" id="reg_username" required>
                     </div>
                     <div class="form-group">
-                        <label>Email</label>
+                        <label for="reg_email">Email</label>
                         <input type="email" id="reg_email" required>
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
+                        <label for="reg_password">Password</label>
                         <input type="password" id="reg_password" required>
                     </div>
                     <div class="form-group">
-                        <label>CUR8 Multiplier</label>
+                        <label for="reg_multiplier">CUR8 Multiplier</label>
                         <input type="number" id="reg_multiplier" value="1.0" step="0.1" min="1.0">
                     </div>
                     <button type="submit">Registra Utente</button>
@@ -216,11 +216,11 @@
                 <h2>🔐 Login Utente</h2>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label>Username</label>
+                        <label for="login_username">Username</label>
                         <input type="text" id="login_username" required>
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
+                        <label for="login_password">Password</label>
                         <input type="password" id="login_password" required>
                     </div>
                     <button type="submit">Login</button>
@@ -235,7 +235,7 @@
                     Gioca come ospite senza registrazione
                 </p>
                 <div class="form-group">
-                    <label>CUR8 Multiplier</label>
+                    <label for="anon_multiplier">CUR8 Multiplier</label>
                     <input type="number" id="anon_multiplier" value="1.0" step="0.1" min="1.0">
                 </div>
                 <button onclick="createAnonymous()" class="secondary">Crea Utente Anonimo</button>
@@ -267,7 +267,7 @@
                         username: document.getElementById('reg_username').value,
                         email: document.getElementById('reg_email').value,
                         password: document.getElementById('reg_password').value,
-                        cur8_multiplier: parseFloat(document.getElementById('reg_multiplier').value)
+                        cur8_multiplier: Number.parseFloat(document.getElementById('reg_multiplier').value)
                     })
                 });
                 
@@ -342,7 +342,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        cur8_multiplier: parseFloat(document.getElementById('anon_multiplier').value)
+                        cur8_multiplier: Number.parseFloat(document.getElementById('anon_multiplier').value)
                     })
                 });
                 

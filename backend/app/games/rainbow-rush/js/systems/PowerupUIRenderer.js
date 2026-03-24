@@ -437,7 +437,7 @@ export class PowerupUIRenderer {
             this.renderer.drawRect(dx, y, digitWidth, digitHeight, digitColor);
             
             // Add a dot for each unit
-            const digit = parseInt(digitStr[i]);
+            const digit = Number.parseInt(digitStr[i]);
             for (let d = 0; d < Math.min(digit, 3); d++) {
                 this.renderer.drawCircle(dx + 1, y + d * 2, 0.5, digitColor);
             }

@@ -410,7 +410,7 @@ export class ScoreSystem {
     loadHighScoreLocal() {
         try {
             const saved = localStorage.getItem('rainbowRush_highScore');
-            return saved ? parseInt(saved, 10) : 0;
+            return saved ?  Number.parseInt(saved, 10) : 0;
         } catch (error) {
             return 0;
         }

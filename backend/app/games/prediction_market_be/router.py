@@ -74,6 +74,7 @@ class RoundState:
 
 current_round = RoundState()
 round_history: List[Dict[str, Any]] = []   # last N resolved rounds
+background_tasks: set = set()              # keep strong references to asyncio tasks
 
 # ─── BTC Price Cache & WebSocket ─────────────────────────────────────
 _price_cache = {"price": None, "timestamp": 0}
@@ -315,8 +316,10 @@ async def start_new_round():
     
     logger.info(f"[PredictionMarket] New round {current_round.round_id} started. Lock price: ${price:,.2f}")
 
-    # Schedule round phases
-    asyncio.create_task(_round_lifecycle())
+    # Schedule round phases (keep reference to prevent premature garbage collection)
+    task = asyncio.create_task(_round_lifecycle())
+    background_tasks.add(task)
+    task.add_done_callback(background_tasks.discard)
 
 
 async def _round_lifecycle():

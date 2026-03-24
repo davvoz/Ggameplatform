@@ -7,9 +7,9 @@ Supports image and GIF uploads.
 """
 
 import json
-import asyncio
 import uuid
 import os
+import aiofiles
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
@@ -466,8 +466,8 @@ async def upload_media(file: UploadFile = File(...)):
     
     # Save file
     try:
-        with open(filepath, "wb") as f:
-            f.write(content)
+        async with aiofiles.open(filepath, "wb") as f:
+            await f.write(content)
         
         # Return URL path
         media_url = f"/static/uploads/community/{filename}"

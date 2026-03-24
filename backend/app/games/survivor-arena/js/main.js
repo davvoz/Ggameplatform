@@ -58,6 +58,7 @@ async function initGame() {
         game = new Game();
         window.game = game; // debug access
         console.log('[Main] Game instance created successfully');
+        await game.init();
     } catch (error) {
         console.error('[Main] Failed to initialize game:', error);
         showErrorScreen(error.message);

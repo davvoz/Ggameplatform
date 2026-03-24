@@ -482,8 +482,11 @@ class ThemeManager {
     constructor() {
         this.currentTheme = MapThemes.classic;
         this.unlockedThemes = ['classic']; // Always includes classic
-        // Load purchases from backend (source of truth) — async, will re-validate
-        this.syncPurchasesFromBackend();
+    }
+
+    // Call after construction to load purchases from backend (source of truth)
+    async init() {
+        await this.syncPurchasesFromBackend();
     }
 
     // Load theme preference from cache WITHOUT ownership check (for instant load before backend sync)
@@ -913,3 +916,4 @@ class ThemeManager {
 
 // Global theme manager instance
 const themeManager = new ThemeManager();
+themeManager.init();

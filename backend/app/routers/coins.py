@@ -44,8 +44,8 @@ class CoinTransactionResponse(BaseModel):
     user_id: str
     amount: int
     transaction_type: str
-    source_id: Optional[str]
-    description: Optional[str]
+    source_id: Optional[str] = None
+    description: Optional[str] = None
     balance_after: int
     created_at: str
     metadata: dict

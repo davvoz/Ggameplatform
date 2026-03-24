@@ -48,6 +48,7 @@ class Game {
 
         // Character system
         this.characterManager = new CharacterManager();
+        this.characterManager.init();
 
         // Game objects
         this.player = null;
@@ -94,9 +95,6 @@ class Game {
         // Bind methods
         this.gameLoop = this.gameLoop.bind(this);
         this.handleResize = this.handleResize.bind(this);
-
-        // Initialize
-        this.init();
     }
 
     /**

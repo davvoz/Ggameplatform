@@ -157,7 +157,10 @@ export class CharacterManager {
         this.coinBalance = 0;
         this._syncRetries = 0;
         this._maxRetries = 30;
-        this.syncPurchasesFromBackend();
+    }
+
+    init() {
+        return this.syncPurchasesFromBackend();
     }
 
     async syncPurchasesFromBackend() {

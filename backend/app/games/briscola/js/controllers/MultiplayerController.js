@@ -13,6 +13,7 @@ export class MultiplayerController {
         this.opponentName = null;
         this.playerId = null;
         this.pendingStateUpdate = null;
+        this.pendingGameEnd = null;
         this.isProcessingRound = false;
         this.waitingForRematch = false;
         this.opponentWantsRematch = false;
@@ -140,6 +141,7 @@ export class MultiplayerController {
         this.opponentName = null;
         this.playerId = null;
         this.pendingStateUpdate = null;
+        this.pendingGameEnd = null;
         this.isProcessingRound = false;
         this.waitingForRematch = false;
         this.opponentWantsRematch = false;
@@ -516,6 +518,15 @@ export class MultiplayerController {
         
         this.isProcessingRound = false;
         
+        // Game over takes priority: skip the stateUpdate (irrelevant once match ends)
+        if (this.pendingGameEnd) {
+            const gameEndMsg = this.pendingGameEnd;
+            this.pendingGameEnd = null;
+            this.pendingStateUpdate = null;
+            this._applyGameEnd(gameEndMsg);
+            return;
+        }
+        
         // Process pending state update if any
         if (this.pendingStateUpdate) {
 
@@ -578,19 +589,30 @@ export class MultiplayerController {
     }
     
     /**
-     * Handle game end from server
+     * Handle game end from server.
+     * Defers to _applyGameEnd when a round animation is in progress,
+     * so players can always see the last hand before the overlay appears.
      */
     handleGameEnd(message) {
+        if (this.isProcessingRound) {
+            this.pendingGameEnd = message;
+            return;
+        }
+        this._applyGameEnd(message);
+    }
+
+    /**
+     * Apply game-end logic: update scores, play sound, show game-over screen.
+     * Called either immediately or after the round animation completes.
+     * @param {object} message - The gameEnd message received from the server
+     */
+    _applyGameEnd(message) {
         // Reset rematch flags when game ends
         this.waitingForRematch = false;
         this.opponentWantsRematch = false;
         
         // Aggiorna i punteggi del gameEngine con quelli finali dal server
         if (message.player1Score !== undefined && message.player2Score !== undefined) {
-            // Determina quale score è il nostro
-            const isHost = this.playerId === message.winner || 
-                           (this.isHost && message.winner === null);
-            
             // Il server invia player1Score e player2Score dove player1 è l'host
             if (this.isHost) {
                 this.app.gameEngine.player1Score = message.player1Score;

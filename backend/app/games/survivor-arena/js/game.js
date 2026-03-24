@@ -48,7 +48,6 @@ class Game {
 
         // Character system
         this.characterManager = new CharacterManager();
-        this.characterManager.init();
 
         // Game objects
         this.player = null;
@@ -102,6 +101,9 @@ class Game {
      */
     async init() {
         console.log('[Game] Initializing Survivor Arena...');
+
+        // Initialize character manager (async)
+        await this.characterManager.init();
 
         // Setup canvas
         this.handleResize();

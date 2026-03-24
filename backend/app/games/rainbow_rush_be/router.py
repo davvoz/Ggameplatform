@@ -94,7 +94,7 @@ def get_rainbow_rush_service(db: Annotated[Session, Depends(get_rainbow_rush_db)
     return RainbowRushService(repository)
 
 
-async def validate_user_exists(user_id: str, main_db: Annotated[Session, Depends(get_db)]) -> str:
+def validate_user_exists(user_id: str, main_db: Annotated[Session, Depends(get_db)]) -> str:
     """
     Validate that user_id exists in main platform database
     

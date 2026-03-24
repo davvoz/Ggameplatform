@@ -217,7 +217,7 @@ export function renderW4EnemyCard(ctx, enemy, x, y, alpha, _scale, itemT, game, 
     ctx.shadowColor = enemy.color;
     ctx.shadowBlur  = 14;
     ctx.fillStyle   = enemy.color;
-    const displayName = enemy.name || enemy.type.replaceAll(/_/g, ' ').toUpperCase();
+    const displayName = enemy.name || enemy.type.replaceAll('_', ' ').toUpperCase();
     ctx.fillText(displayName, x, y + 56);
 
     // ── Behaviour tag ──

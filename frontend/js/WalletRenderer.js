@@ -436,7 +436,7 @@ class WalletRenderer {
             'game_bonus': 'Game Bonus',
             'achievement': 'Achievement'
         };
-        return labels[type] || type.replaceAll(/_/g, ' ').replaceAll(/\b\w/g, l => l.toUpperCase());
+        return labels[type] || type.replaceAll('_', ' ').replaceAll(/\b\w/g, l => l.toUpperCase());
     }
 
     /**

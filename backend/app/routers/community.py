@@ -310,7 +310,7 @@ class CommunityChatManager:
             ]
         }
     
-    async def _send_push_to_offline_users(self, message: ChatMessage):
+    def _send_push_to_offline_users(self, message: ChatMessage):
         """Send push notification to users who have subscriptions but are not connected"""
         try:
             from app.database import get_db_session

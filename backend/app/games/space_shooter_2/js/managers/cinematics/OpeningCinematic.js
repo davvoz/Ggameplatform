@@ -67,7 +67,7 @@ export default class OpeningCinematic extends CinematicScene {
             ? w4EnemyTypes.map(type => ({
                 type,
                 color: ENEMY_TYPES[type]?.color || '#ff44ff',
-                name: type.replaceAll(/_/g, ' ').toUpperCase(),
+                name: type.replaceAll('_', ' ').toUpperCase(),
                 behaviour: ENEMY_TYPES[type]?.w4behaviour || '',
             }))
             : [];

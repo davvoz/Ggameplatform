@@ -69,15 +69,15 @@ export class GameController {
         this.abilityUnlockAnimation = dependencies.abilityUnlockAnimation;
         
         // Minimal state (game-specific effects)
-        this.screenFlash = { alpha: 0, color: [1, 1, 1.0] };
+        this.screenFlash = { alpha: 0, color: [1, 1, 1] };
         this.coinRainActive = false;
         this.coinRainTimer = 0;
         this.coinRainDuration = 0;
         this.coinRainSpawnTimer = 0;
         this.coinRainSpawnInterval = 0.3;
-        this.timeScale = 1.0;
+        this.timeScale = 1;
         this.cleanupTimer = 0;
-        this.cleanupInterval = 1.0;
+        this.cleanupInterval = 1;
         
         // Goal reached state
         this.goalReached = false;
@@ -290,7 +290,7 @@ export class GameController {
                 this.coinRainDuration = bonusEffect.duration;
             } else if (bonusEffect.type === 'rainbow' && bonusEffect.activated) {
                 this.timeScale = 0.6;
-                setTimeout(() => { this.timeScale = 1.0; }, 8000);
+                setTimeout(() => { this.timeScale = 1; }, 8000);
             }
         }
 
@@ -610,7 +610,7 @@ export class GameController {
         );
         this.animationController.createFloatingText(
             '💀 GAME OVER 💀', 400, 300,
-            [1, 0.2, 0.2, 1.0],
+            [1, 0.2, 0.2, 1],
             this.entityManager, 3.0
         );
         this.audioManager.stopBackgroundMusic();
@@ -626,7 +626,7 @@ export class GameController {
             y: -30,
             radius: 15,
             type: 'collectible',
-            color: [1, 0.84, 0.0, 1.0],
+            color: [1, 0.84, 0, 1],
             velocity: 0,
             value: 10,
             pulsePhase: Math.random() * Math.PI * 2,

@@ -34,8 +34,8 @@ export class DissolvingEffectRenderer extends PlatformEffectRenderer {
     renderPulsingBorder(platform, x, y, time, dissolveProgress) {
         const pulse = Math.sin(time * 15 + dissolveProgress * 10) * 0.5 + 0.5;
         const alpha = pulse * (1 - dissolveProgress);
-        this.renderer.drawRect(x, y, platform.width, 2, [1, 0.5, 0.0, alpha]);
-        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1, 0.5, 0.0, alpha]);
+        this.renderer.drawRect(x, y, platform.width, 2, [1, 0.5, 0, alpha]);
+        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1, 0.5, 0, alpha]);
     }
 
     renderIdleState(platform, x, y, time) {

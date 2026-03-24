@@ -30,7 +30,7 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.6,
-            color: [0.85, 0.7, 0.35, 1.0],
+            color: [0.85, 0.7, 0.35, 1],
             type: 'sky_gradient',
             speed: 0
         });
@@ -41,7 +41,7 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: groundY,
             height: this.canvasHeight - groundY,
-            color: [0.8, 0.65, 0.3, 1.0],
+            color: [0.8, 0.65, 0.3, 1],
             type: 'ground',
             speed: 0
         });

@@ -30,7 +30,7 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.6,
-            color: [0.1, 0.1, 0.2, 1.0],
+            color: [0.1, 0.1, 0.2, 1],
             type: 'sky_gradient',
             speed: 0
         });
@@ -41,7 +41,7 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: groundY,
             height: this.canvasHeight - groundY,
-            color: [0.05, 0.05, 0.1, 1.0],
+            color: [0.05, 0.05, 0.1, 1],
             type: 'ground',
             speed: 0
         });
@@ -53,7 +53,7 @@ export class CyberCityThemeGenerator extends BaseThemeGenerator {
         for (let i = 0; i < config.GRID_LINE_COUNT; i++) {
             layers.push({
                 y: this.canvasHeight * (0.4 + i * 0.05),
-                color: [0.3, 0.0, 0.5, 0.15 - i * 0.01],
+                color: [0.3, 0, 0.5, 0.15 - i * 0.01],
                 type: 'simple_shape',
                 shape: 'line',
                 speed: 15 + i * 5,

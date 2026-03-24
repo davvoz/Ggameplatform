@@ -6,7 +6,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 export class RechargeCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.35 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.35 + 1;
         const size = entity.radius * pulse;
         const energyPhase = entity.energyPhase;
 
@@ -40,10 +40,10 @@ export class RechargeCollectible extends BaseCollectible {
         const batteryY = y - batteryHeight / 2;
 
         // Battery body
-        this.renderer.drawRect(batteryX, batteryY, batteryWidth, batteryHeight, [0.15, 0.8, 0.3, 1.0]);
+        this.renderer.drawRect(batteryX, batteryY, batteryWidth, batteryHeight, [0.15, 0.8, 0.3, 1]);
 
         // Positive terminal
-        this.renderer.drawRect(x - size * 0.2, batteryY - size * 0.2, size * 0.4, size * 0.2, [0.2, 1, 0.4, 1.0]);
+        this.renderer.drawRect(x - size * 0.2, batteryY - size * 0.2, size * 0.4, size * 0.2, [0.2, 1, 0.4, 1]);
 
         // Energy bars
         const barCount = 4;
@@ -69,7 +69,7 @@ export class RechargeCollectible extends BaseCollectible {
             const py = y + Math.sin(orbitAngle) * orbitRadius;
             const particleSize = 2.5 + Math.sin(energyPhase * 3 + i) * 1;
 
-            this.renderer.drawCircle(px, py, particleSize, [0.5, 1, 0.6, 1.0]);
+            this.renderer.drawCircle(px, py, particleSize, [0.5, 1, 0.6, 1]);
 
             // Trail
             const trailAngle = orbitAngle + Math.PI;
@@ -100,7 +100,7 @@ export class RechargeCollectible extends BaseCollectible {
     }
 
     renderCore(x, y, size, time) {
-        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 1]);
 
         const sparkleSize = size * 0.25;
         this.renderer.drawCircle(

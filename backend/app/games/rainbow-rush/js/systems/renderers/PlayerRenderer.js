@@ -73,7 +73,7 @@ export class PlayerRenderer extends IEntityRenderer {
 
         const centerX = isVictoryMode ? player.animatedX : player.x + player.width / 2;
         const centerY = isVictoryMode ? player.animatedY : player.y + player.height / 2 + idleOffset;
-        const animScale = player.animatedScale ?? 1.0;
+        const animScale = player.animatedScale ?? 1;
 
         const baseRadius = (player.width / 2) * animScale;
         const radiusX = baseRadius * (1 + squashStretch.squash * 0.1 - squashStretch.stretch * 0.05);

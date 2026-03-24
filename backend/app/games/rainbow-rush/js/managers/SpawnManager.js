@@ -279,19 +279,19 @@ export class SpawnManager {
             let color, glowColor, duration, cooldown;
             switch (randomType) {
                 case 'immortality':
-                    color = [1, 0.84, 0.0, 1.0]; // Gold
+                    color = [1, 0.84, 0, 1]; // Gold
                     glowColor = [1, 0.95, 0.6, 0.8];
                     break;
                 case 'flight':
-                    color = [0.4, 0.7, 1, 1.0]; // Light blue
+                    color = [0.4, 0.7, 1, 1]; // Light blue
                     glowColor = [0.6, 0.85, 1, 0.8];
                     break;
                 case 'superJump':
-                    color = [1, 0.3, 0.5, 1.0]; // Pink
+                    color = [1, 0.3, 0.5, 1]; // Pink
                     glowColor = [1, 0.5, 0.7, 0.8];
                     break;
                 default:
-                    color = [1, 1, 1, 1.0];
+                    color = [1, 1, 1, 1];
                     glowColor = [1, 1, 1, 0.8];
             }
 
@@ -342,7 +342,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'magnet',
             rotation: 0,
-            color: [1, 0.0, 1, 1.0],
+            color: [1, 0, 1, 1],
             glowColor: [1, 0.5, 1, 0.6],
             pulsePhase: 0,
             radius: 17.5,
@@ -367,7 +367,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'magnet',
             rotation: 0,
-            color: [1, 0.0, 1, 1.0],
+            color: [1, 0, 1, 1],
             glowColor: [1, 0.5, 1, 0.6],
             pulsePhase: 0,
             radius: 17.5,
@@ -384,7 +384,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'coinrain',
             rotation: 0,
-            color: [1, 0.84, 0.0, 1.0],
+            color: [1, 0.84, 0, 1],
             glowColor: [1, 0.95, 0.5, 0.8],
             pulsePhase: 0,
             radius: 20,
@@ -407,7 +407,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'coinrain',
             rotation: 0,
-            color: [1, 0.84, 0.0, 1.0], // Oro
+            color: [1, 0.84, 0, 1], // Oro
             glowColor: [1, 0.95, 0.5, 0.8],
             pulsePhase: 0,
             radius: 20,
@@ -432,7 +432,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'shield',
             rotation: 0,
-            color: [0.0, 1, 0.5, 1.0],
+            color: [0, 1, 0.5, 1],
             glowColor: [0.3, 1, 0.7, 0.6],
             pulsePhase: 0,
             radius: 17.5,
@@ -454,7 +454,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'multiplier',
             rotation: 0,
-            color: [1, 0.8, 0.0, 1.0],
+            color: [1, 0.8, 0, 1],
             glowColor: [1, 0.9, 0.3, 0.6],
             pulsePhase: 0,
             radius: 20
@@ -475,7 +475,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'recharge',
             rotation: 0,
-            color: [0.2, 1, 0.4, 1.0], // Verde elettrico
+            color: [0.2, 1, 0.4, 1], // Verde elettrico
             glowColor: [0.4, 1, 0.6, 0.8],
             pulsePhase: 0,
             radius: 21,
@@ -498,7 +498,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'instantflight',
             rotation: 0,
-            color: [0.6, 0.9, 1, 1.0], // Azzurro chiaro
+            color: [0.6, 0.9, 1, 1], // Azzurro chiaro
             glowColor: [0.8, 1, 1, 0.7],
             pulsePhase: 0,
             radius: 19,
@@ -541,7 +541,7 @@ export class SpawnManager {
             velocity: -200,
             type: 'heartrecharge',
             rotation: 0,
-            color: [1, 0.2, 0.5, 1.0], // Rosa/Rosso intenso
+            color: [1, 0.2, 0.5, 1], // Rosa/Rosso intenso
             glowColor: [1, 0.5, 0.7, 0.9],
             pulsePhase: 0,
             radius: 20,

@@ -4,11 +4,11 @@
  */
 
 export class FloatingText {
-    constructor(text, x, y, color, duration = 2.0) {
+    constructor(text, x, y, color, duration = 2) {
         this.reset(text, x, y, color, duration);
     }
     
-    reset(text, x, y, color, duration = 2.0) {
+    reset(text, x, y, color, duration = 2) {
         this.text = text;
         this.x = x;
         this.y = y;
@@ -44,7 +44,7 @@ export class FloatingText {
         } else if (this.life < 0.5) {
             return this.life / 0.5;
         }
-        return 1.0;
+        return 1;
     }
     
     getCurrentY() {
@@ -148,22 +148,22 @@ export class FloatingTextSystem {
             case 'immortality':
                 return {
                     name: '⭐ IMMORTALE ⭐',
-                    color: [1, 0.9, 0.2, 1.0]
+                    color: [1, 0.9, 0.2, 1]
                 };
             case 'flight':
                 return {
                     name: '🪶 VOLO 🪶',
-                    color: [0.5, 0.9, 1, 1.0]
+                    color: [0.5, 0.9, 1, 1]
                 };
             case 'superJump':
                 return {
                     name: '⚡ SUPER SALTO ⚡',
-                    color: [1, 0.4, 0.7, 1.0]
+                    color: [1, 0.4, 0.7, 1]
                 };
             default:
                 return {
                     name: 'BONUS',
-                    color: [1, 1, 1, 1.0]
+                    color: [1, 1, 1, 1]
                 };
         }
     }
@@ -195,7 +195,7 @@ export class FloatingTextSystem {
             
             // Colore rosso quando sta per scadere
             if (secondsLeft <= 2) {
-                cooldownColor[0] = 1.0;
+                cooldownColor[0] = 1;
                 cooldownColor[1] = 0.2;
                 cooldownColor[2] = 0.2;
             }
@@ -239,13 +239,13 @@ export class FloatingTextSystem {
         }
     }
     
-    renderText(text, x, y, color, fontSize, scale = 1.0) {
+    renderText(text, x, y, color, fontSize, scale = 1) {
         // DISABLED - testi flottanti completamente disabilitati per performance
         // Vengono gestiti solo i badge power-up essenziali tramite Canvas 2D
         return;
     }
     
-    addFloatingText(text, x, y, color, duration = 2.0) {
+    addFloatingText(text, x, y, color, duration = 2) {
         // Limita numero di testi attivi per performance
         if (this.floatingTexts.length >= this.maxActiveTexts) {
             return; // Scarta se troppi testi attivi

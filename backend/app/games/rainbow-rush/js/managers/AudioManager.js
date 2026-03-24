@@ -754,7 +754,7 @@ export class AudioManager {
         
         // Discesa drammatica da nota alta a bassa (2.5 secondi)
         mainOsc.frequency.setValueAtTime(440, ctx.currentTime); // A4
-        mainOsc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 1.0); // A3
+        mainOsc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 1); // A3
         mainOsc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 2.5); // A2
         
         // Filtro passa-basso che si chiude per dare effetto "morte"

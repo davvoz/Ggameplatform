@@ -75,7 +75,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
             `💥 +${points} 🎯`,
             enemy.x + enemy.width / 2,
             enemy.y,
-            [1, 0.6, 0.2, 1.0],  // Orange color
+            [1, 0.6, 0.2, 1],  // Orange color
             entityManager
         );
         
@@ -103,7 +103,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
                 life: 0.6,
                 maxLife: 0.6,
                 size: 4 + Math.random() * 3,
-                color: [1, 0.6, 0.2, 1.0],  // Orange
+                color: [1, 0.6, 0.2, 1],  // Orange
                 gravity: 200,
                 type: 'enemy-defeat'
             });
@@ -121,7 +121,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
                 life: 0.4,
                 maxLife: 0.4,
                 size: 2 + Math.random() * 2,
-                color: [1, 1, 0.5, 1.0],  // Yellow sparkle
+                color: [1, 1, 0.5, 1],  // Yellow sparkle
                 gravity: 150,
                 type: 'sparkle'
             });
@@ -173,7 +173,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
             `💥 -${proj.damage || 1} ❤️`,
             proj.x,
             proj.y,
-            [1, 0.2, 0.2, 1.0],
+            [1, 0.2, 0.2, 1],
             entityManager
         );
 

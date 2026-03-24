@@ -223,7 +223,7 @@ export class EntityManager {
             
             if (platform.isRotating) {
                 // Ruota l'angolo continuamente
-                const rotSpeed = platform.rotationSpeed || 1.0;
+                const rotSpeed = platform.rotationSpeed || 1;
                 platform.rotationAngle = (platform.rotationAngle || 0) + rotSpeed * deltaTime;
                 
                 // Muovi il centro con la velocity della piattaforma MENO la camera
@@ -498,7 +498,7 @@ export class EntityManager {
                 y: bonus.y,
                 life: 0.35, // Vita ancora più breve
                 size: 5,
-                color: [...rgb, 1.0]
+                color: [...rgb, 1]
             });
         }
 

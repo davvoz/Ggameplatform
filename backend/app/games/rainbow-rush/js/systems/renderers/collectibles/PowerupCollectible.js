@@ -7,7 +7,7 @@ export class PowerupCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
         const radius = entity.radius || 20;
-        const rotationPulse = Math.sin((entity.rotationAngle || 0) * 2) * 0.3 + 1.0;
+        const rotationPulse = Math.sin((entity.rotationAngle || 0) * 2) * 0.3 + 1;
         const bigPulse = Math.abs(Math.sin((entity.rotationAngle || 0) * 3)) * 0.5 + 0.5;
         const currentRadius = radius * rotationPulse;
 
@@ -45,7 +45,7 @@ export class PowerupCollectible extends BaseCollectible {
         this.renderer.drawCircle(x, y, radius * 0.7, [1, 1, 1, 0.5]);
 
         const centerColor = [...color];
-        centerColor[3] = 1.0;
+        centerColor[3] = 1;
         this.renderer.drawCircle(x, y, radius * 0.5, centerColor);
     }
 

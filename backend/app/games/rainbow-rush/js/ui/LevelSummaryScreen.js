@@ -14,7 +14,7 @@ export class LevelSummaryScreen {
         
         // Animazioni
         this.animationProgress = 0;
-        this.animationDuration = 1.0;
+        this.animationDuration = 1;
         this.starAnimationDelay = 0.3;
         this.starAnimations = [0, 0, 0]; // Progress per ogni stella
         
@@ -90,15 +90,15 @@ export class LevelSummaryScreen {
             nextLevel: null,
             retry: {
                 label: 'Retry',
-                color: [0.9, 0.6, 0.2, 1.0],
-                hoverColor: [1, 0.7, 0.3, 1.0],
+                color: [0.9, 0.6, 0.2, 1],
+                hoverColor: [1, 0.7, 0.3, 1],
                 action: 'retry',
                 x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             },
             menu: {
                 label: this.isGameComplete ? 'Back to Menu' : 'Menu',
-                color: [0.6, 0.6, 0.7, 1.0],
-                hoverColor: [0.7, 0.7, 0.8, 1.0],
+                color: [0.6, 0.6, 0.7, 1],
+                hoverColor: [0.7, 0.7, 0.8, 1],
                 action: 'menu',
                 x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             }
@@ -108,8 +108,8 @@ export class LevelSummaryScreen {
         if (this.summary.nextLevelId && !this.isGameComplete) {
             this.buttons.nextLevel = {
                 label: 'Next Level',
-                color: [0.2, 0.8, 0.3, 1.0],
-                hoverColor: [0.3, 0.9, 0.4, 1.0],
+                color: [0.2, 0.8, 0.3, 1],
+                hoverColor: [0.3, 0.9, 0.4, 1],
                 action: 'next',
                 x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             };
@@ -169,11 +169,11 @@ export class LevelSummaryScreen {
      */
     generateConfetti() {
         const colors = [
-            [1, 0.2, 0.2, 1.0],
-            [0.2, 1, 0.2, 1.0],
-            [0.2, 0.2, 1, 1.0],
-            [1, 1, 0.2, 1.0],
-            [1, 0.2, 1, 1.0]
+            [1, 0.2, 0.2, 1],
+            [0.2, 1, 0.2, 1],
+            [0.2, 0.2, 1, 1],
+            [1, 1, 0.2, 1],
+            [1, 0.2, 1, 1]
         ];
         
         // Extra confetti per completamento del gioco
@@ -201,10 +201,10 @@ export class LevelSummaryScreen {
         if (!this.visible) return;
         
         // Update animazione entrata
-        if (this.animationProgress < 1.0) {
+        if (this.animationProgress < 1) {
             this.animationProgress += deltaTime / this.animationDuration;
-            if (this.animationProgress > 1.0) {
-                this.animationProgress = 1.0;
+            if (this.animationProgress > 1) {
+                this.animationProgress = 1;
             }
         }
         
@@ -256,7 +256,7 @@ export class LevelSummaryScreen {
                 y: starY,
                 vx: Math.cos(angle) * 150,
                 vy: Math.sin(angle) * 150,
-                color: [1, 0.9, 0.2, 1.0],
+                color: [1, 0.9, 0.2, 1],
                 life: 1,
                 scale: 1.0
             });

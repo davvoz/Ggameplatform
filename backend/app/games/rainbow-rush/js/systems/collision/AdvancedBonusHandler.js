@@ -137,14 +137,14 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this._createParticleRing(
                     recharge.x,
                     recharge.y,
-                    [0.2, 1, 0.4, 1.0],
+                    [0.2, 1, 0.4, 1],
                     40,
                     entityManager
                 );
 
                 this._handlePowerupCollection(recharge, rechargeBonuses, i, entityManager, {
                     text: '⚡ RICARICA ISTANTANEA!',
-                    color: [0.2, 1, 0.4, 1.0],
+                    color: [0.2, 1, 0.4, 1],
                     sound: 'powerup'
                 });
 
@@ -190,7 +190,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this._createParticleRing(
                     heartRecharge.x,
                     heartRecharge.y,
-                    [1, 0.2 + Math.random() * 0.3, 0.5, 1.0],
+                    [1, 0.2 + Math.random() * 0.3, 0.5, 1],
                     50,
                     entityManager,
                     150,
@@ -199,7 +199,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
 
                 this._handlePowerupCollection(heartRecharge, heartRechargeBonuses, i, entityManager, {
                     text: '💕 CUORI RICARICATI!',
-                    color: [1, 0.2, 0.5, 1.0],
+                    color: [1, 0.2, 0.5, 1],
                     sound: 'powerup'
                 });
 
@@ -245,10 +245,10 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
 
                 rainbowBonuses.splice(i, 1);
 
-                this.createFloatingText('🌈 RAINBOW POWER!', rainbow.x, rainbow.y, [1, 1, 1, 1.0], entityManager);
+                this.createFloatingText('🌈 RAINBOW POWER!', rainbow.x, rainbow.y, [1, 1, 1, 1], entityManager);
                 this.addNotification('🌈 RAINBOW POWER!', 'TUTTI I POTERI ATTIVI!', 'achievement');
                 this.playSound('powerup');
-                this.triggerScreenFlash(0.5, [1, 1, 1.0]);
+                this.triggerScreenFlash(0.5, [1, 1, 1]);
 
                 return { type: 'rainbow', activated: true };
             }

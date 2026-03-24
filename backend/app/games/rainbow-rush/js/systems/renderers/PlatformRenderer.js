@@ -92,16 +92,16 @@ export class PlatformRenderer extends IEntityRenderer {
     }
 
     calculateRenderColor(platform, currentCombo) {
-        const comboBoost = Math.min(currentCombo / 50, 1.0);
+        const comboBoost = Math.min(currentCombo / 50, 1);
         if (comboBoost === 0) {
             return platform.color;
         }
         
         const boostedColor = [...platform.color];
         const multiplier = 1.0 + comboBoost * 0.5;
-        boostedColor[0] = Math.min(boostedColor[0] * multiplier, 1.0);
-        boostedColor[1] = Math.min(boostedColor[1] * multiplier, 1.0);
-        boostedColor[2] = Math.min(boostedColor[2] * multiplier, 1.0);
+        boostedColor[0] = Math.min(boostedColor[0] * multiplier, 1);
+        boostedColor[1] = Math.min(boostedColor[1] * multiplier, 1);
+        boostedColor[2] = Math.min(boostedColor[2] * multiplier, 1);
         return boostedColor;
     }
 

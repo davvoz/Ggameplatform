@@ -6,7 +6,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 export class FlightCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1;
         const size = entity.radius * pulse;
         const wingPhase = Math.sin(entity.wingPhase);
 
@@ -61,7 +61,7 @@ export class FlightCollectible extends BaseCollectible {
     }
 
     renderCore(x, y, size, time) {
-        this.renderer.drawCircle(x, y, size * 0.5, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.5, [1, 1, 1, 1]);
 
         const sparkleSize = size * 0.3;
         this.renderer.drawCircle(

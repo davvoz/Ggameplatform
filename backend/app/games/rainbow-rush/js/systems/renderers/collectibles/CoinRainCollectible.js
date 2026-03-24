@@ -5,7 +5,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 
 export class CoinRainCollectible extends BaseCollectible {
     renderVisual(entity, context) {
-        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1;
         const size = entity.radius * pulse;
 
         this.renderMainCircle(entity.x, entity.y, size, entity.color);
@@ -15,7 +15,7 @@ export class CoinRainCollectible extends BaseCollectible {
 
     renderMainCircle(x, y, size, color) {
         this.renderer.drawCircle(x, y, size, color);
-        this.renderer.drawCircle(x, y, size * 0.85, [1, 0.95, 0.6, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.85, [1, 0.95, 0.6, 1]);
         this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 0.9]);
     }
 
@@ -28,8 +28,8 @@ export class CoinRainCollectible extends BaseCollectible {
             const coinY = entity.y + Math.sin(angle) * orbitRadius;
             const coinSize = 6;
 
-            this.renderer.drawCircle(coinX, coinY, coinSize, [1, 0.84, 0.0, 1.0]);
-            this.renderer.drawCircle(coinX, coinY, coinSize * 0.7, [1, 0.95, 0.4, 1.0]);
+            this.renderer.drawCircle(coinX, coinY, coinSize, [1, 0.84, 0, 1]);
+            this.renderer.drawCircle(coinX, coinY, coinSize * 0.7, [1, 0.95, 0.4, 1]);
         }
     }
 

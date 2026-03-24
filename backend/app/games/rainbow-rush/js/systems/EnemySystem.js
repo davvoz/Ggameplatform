@@ -106,7 +106,7 @@ export class EnemySystem {
                 life: 0.5,
                 maxLife: 0.5,
                 size: 3 + Math.random() * 2,
-                color: [0.6, 0.4, 0.8, 1.0],
+                color: [0.6, 0.4, 0.8, 1],
                 gravity: 100,
                 rotation: 0,
                 rotationSpeed: (Math.random() - 0.5) * 8,

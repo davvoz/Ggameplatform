@@ -6,7 +6,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 export class MultiplierCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.35 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.35 + 1;
         const size = entity.radius * pulse;
 
         this.renderLightRays(entity.x, entity.y, size, entity.rotation || 0, time);
@@ -35,12 +35,12 @@ export class MultiplierCollectible extends BaseCollectible {
             const angle = (Math.PI * 2 * i) / starPoints + rotation + time * 2;
             const px = x + Math.cos(angle) * size * 1.4;
             const py = y + Math.sin(angle) * size * 1.4;
-            this.renderer.drawCircle(px, py, 6, [1, 0.8, 0.2, 1.0]);
+            this.renderer.drawCircle(px, py, 6, [1, 0.8, 0.2, 1]);
         }
     }
 
     renderCore(x, y, size) {
-        this.renderer.drawCircle(x, y, size * 0.9, [1, 0.9, 0.3, 1.0]);
-        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.9, [1, 0.9, 0.3, 1]);
+        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 1]);
     }
 }

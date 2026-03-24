@@ -120,7 +120,7 @@ export class Enemy {
             this.jumpInterval = config.jumpInterval || 1.5;
             this.jumpTimer = 0;
             this.bounceForce = config.bounceForce || -500;
-            this.bounceMultiplier = config.bounceMultiplier || 1.0;
+            this.bounceMultiplier = config.bounceMultiplier || 1;
         }
 
         // Pattern di shoot/turret
@@ -282,7 +282,7 @@ export class Enemy {
 
         if (this.isCharging) {
             // Continue charging until timer expires
-            if (this.chargeTimer >= 1.0) {
+            if (this.chargeTimer >= 1) {
                 this.isCharging = false;
                 this.chargeTimer = 0;
                 this.velocityX = 0;
@@ -416,7 +416,7 @@ export class Enemy {
             this.velocityY = this.diveSpeed;
             
             // Stop diving after 1 second
-            if (this.diveTimer >= 1.0) {
+            if (this.diveTimer >= 1) {
                 this.isDiving = false;
                 this.diveTimer = 0;
                 this.velocityY = 0;

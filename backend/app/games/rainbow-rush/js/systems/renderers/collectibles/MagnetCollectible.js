@@ -5,7 +5,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 
 export class MagnetCollectible extends BaseCollectible {
     renderVisual(entity, context) {
-        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.3 + 1;
         const size = entity.radius * pulse;
 
         this.renderMagneticField(entity.x, entity.y, size);
@@ -19,7 +19,7 @@ export class MagnetCollectible extends BaseCollectible {
 
     renderMagnet(x, y, size) {
         const magnetWidth = size * 0.6;
-        const magnetHeight = size * 1.0;
+        const magnetHeight = size * 1;
 
         // Left pole (red)
         this.renderer.drawRect(
@@ -27,7 +27,7 @@ export class MagnetCollectible extends BaseCollectible {
             y - magnetHeight / 2,
             magnetWidth,
             magnetHeight,
-            [1, 0.2, 0.2, 1.0]
+            [1, 0.2, 0.2, 1]
         );
 
         // Right pole (blue)
@@ -36,7 +36,7 @@ export class MagnetCollectible extends BaseCollectible {
             y - magnetHeight / 2,
             magnetWidth,
             magnetHeight,
-            [0.2, 0.3, 1, 1.0]
+            [0.2, 0.3, 1, 1]
         );
 
         // Connector
@@ -45,7 +45,7 @@ export class MagnetCollectible extends BaseCollectible {
             y - magnetHeight / 2 - 4,
             6,
             4,
-            [0.7, 0.7, 0.7, 1.0]
+            [0.7, 0.7, 0.7, 1]
         );
 
         // Center glow

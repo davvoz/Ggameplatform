@@ -29,7 +29,7 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.7,
-            color: [0.4, 0.15, 0.1, 1.0],
+            color: [0.4, 0.15, 0.1, 1],
             type: 'sky_gradient',
             speed: 0
         });
@@ -40,7 +40,7 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: groundY,
             height: this.canvasHeight - groundY,
-            color: [0.2, 0.08, 0.04, 1.0],
+            color: [0.2, 0.08, 0.04, 1],
             type: 'ground',
             speed: 0
         });
@@ -56,7 +56,7 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
             y: groundY - config.MAIN_VOLCANO_HEIGHT,
             width: config.MAIN_VOLCANO_WIDTH,
             height: config.MAIN_VOLCANO_HEIGHT,
-            color: [0.15, 0.08, 0.05, 1.0],
+            color: [0.15, 0.08, 0.05, 1],
             type: 'volcano',
             speed: 12,
             craterWidth: config.MAIN_VOLCANO_CRATER_WIDTH,
@@ -106,7 +106,7 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
                 radius: this.randomInRange(config.EMBER_MIN_RADIUS, config.EMBER_MAX_RADIUS),
                 speed: this.randomInRange(config.EMBER_MIN_SPEED, config.EMBER_MAX_SPEED),
                 vx: (Math.random() - 0.5) * 30,
-                color: [1, 0.5 + Math.random() * 0.3, 0.0, 0.8],
+                color: [1, 0.5 + Math.random() * 0.3, 0, 0.8],
                 type: 'ember',
                 sparkle: Math.random() * Math.PI * 2
             });

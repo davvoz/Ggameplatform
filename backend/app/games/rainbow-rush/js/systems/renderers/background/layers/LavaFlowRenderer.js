@@ -83,14 +83,14 @@ export class LavaFlowRenderer extends BaseLayerRenderer {
         const edgeColor = [
             1.0 * brightness,
             0.35 * brightness,
-            0.0,
+            0,
             layer.color[3]
         ];
         
         const coreColor = [
             0.7 * brightness,
             0.2 * brightness,
-            0.0,
+            0,
             layer.color[3] * LAVA_FLOW_CONFIG.CORE_ALPHA_MULTIPLIER
         ];
 

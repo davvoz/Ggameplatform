@@ -33,15 +33,15 @@ export class HUDRenderer {
         
         // Detect score change
         if (score !== this.lastScore) {
-            this.scoreGlow = 1.0;
-            this.scorePulse = 1.0;
+            this.scoreGlow = 1;
+            this.scorePulse = 1;
             this.lastScore = score;
         }
         
         // Detect level change
         if (level !== this.lastLevel) {
-            this.levelGlow = 1.0;
-            this.levelPulse = 1.0;
+            this.levelGlow = 1;
+            this.levelPulse = 1;
             this.lastLevel = level;
         }
         

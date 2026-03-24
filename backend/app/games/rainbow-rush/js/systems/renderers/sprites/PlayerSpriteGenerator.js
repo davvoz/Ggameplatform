@@ -125,7 +125,7 @@ export class PlayerSpriteGenerator {
      * Get player colors
      */
     getColors(config) {
-        const baseColor = config.color || [0.2, 0.6, 1, 1.0];
+        const baseColor = config.color || [0.2, 0.6, 1, 1];
         return {
             base: `rgb(${baseColor[0] * 255}, ${baseColor[1] * 255}, ${baseColor[2] * 255})`,
             light: `rgb(${Math.min(255, baseColor[0] * 400)}, ${Math.min(255, baseColor[1] * 400)}, ${Math.min(255, baseColor[2] * 400)})`,
@@ -214,7 +214,7 @@ export class PlayerSpriteGenerator {
         // Motion blur effect
         ctx.globalAlpha = 0.3;
         this.drawBody(ctx, cx, cy + 3, radius * 0.95, colors);
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
 
         // Body (stretched)
         ctx.save();
@@ -341,7 +341,7 @@ export class PlayerSpriteGenerator {
             const trailX = cx - i * 8;
             this.drawBody(ctx, trailX + vibrate, cy, radius * 0.9, colors);
         }
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
 
         // Energy aura
         const energyGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 2);
@@ -384,7 +384,7 @@ export class PlayerSpriteGenerator {
         // Body (flickering)
         ctx.globalAlpha = 0.5 + flash * 0.5;
         this.drawBody(ctx, cx - recoil, cy, radius, colors);
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
         
         // Face - hurt expression
         this.drawEyes(ctx, cx - recoil, cy, radius, 'hurt', progress);
@@ -473,7 +473,7 @@ export class PlayerSpriteGenerator {
         const eyeSize = radius * 0.15;
 
         // Blink animation for certain states
-        const blink = (expression === 'idle' && Math.abs(Math.sin(progress * Math.PI * 2)) < 0.1) ? 0.2 : 1.0;
+        const blink = (expression === 'idle' && Math.abs(Math.sin(progress * Math.PI * 2)) < 0.1) ? 0.2 : 1;
 
         switch (expression) {
             case 'idle':

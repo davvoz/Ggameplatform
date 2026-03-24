@@ -76,14 +76,14 @@ export class RenderingUtils {
             y + height,
             width,
             2,
-            [0.0, 0.0, 0.0, baseAlpha]
+            [0, 0, 0, baseAlpha]
         );
     }
 
     /**
      * Calculate pulse value based on time
      */
-    static getPulse(time, speed = 5, min = 0.6, max = 1.0) {
+    static getPulse(time, speed = 5, min = 0.6, max = 1) {
         return Math.abs(Math.sin(time * speed)) * (max - min) + min;
     }
 

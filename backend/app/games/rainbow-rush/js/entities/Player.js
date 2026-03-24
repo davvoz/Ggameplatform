@@ -18,7 +18,7 @@ export class Player {
         this.isGrounded = false;
         this.isJumping = false;
         this.canvasHeight = canvasHeight;
-        this.color = [0.2, 0.6, 1, 1.0]; // Blue player
+        this.color = [0.2, 0.6, 1, 1]; // Blue player
         this.maxFallSpeed = 500; // Ridotta da 600 per migliori collisioni
         this.alive = true;
         
@@ -206,7 +206,7 @@ export class Player {
             const shortTapThreshold = 300; // 300ms per tap brevi
             const longTapThreshold = 600; // 600ms per tap medi
             
-            let modifier = 1.0;
+            let modifier = 1;
             let jumpType = "FULL";
             let emoji = "🚀";
             
@@ -312,7 +312,7 @@ export class Player {
                 vy: Math.random() * 100,
                 life: 1,
                 maxLife: 0.6,
-                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1.0]
+                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1]
             });
         }
         // Update turbo cooldown SOLO quando il turbo NON è attivo
@@ -380,7 +380,7 @@ export class Player {
                 life: 0.4,
                 maxLife: 0.4,
                 size: 5 + Math.random() * 3,
-                color: [0.0, 1, 0.9, 1.0]
+                color: [0, 1, 0.9, 1]
             });
         }
         
@@ -409,11 +409,11 @@ export class Player {
                     life: 0.3,
                     maxLife: 0.3,
                     size: 3 + Math.random() * 2,
-                    color: [0.0, 0.8, 0.7, 0.7]
+                    color: [0, 0.8, 0.7, 0.7]
                 });
             }
             
-            if (progress >= 1.0) {
+            if (progress >= 1) {
                 this.boostDecelerating = false;
                 this.velocityX = 0;
             }
@@ -584,7 +584,7 @@ export class Player {
     }
     
     getPowerupTrailColor() {
-        if (this.powerups.immortality) return [1, 0.84, 0.0, 0.6]; // Gold - ridotto alpha da 0.8
+        if (this.powerups.immortality) return [1, 0.84, 0, 0.6]; // Gold - ridotto alpha da 0.8
         if (this.powerups.flight) return [0.4, 0.7, 1, 0.6]; // Light blue - ridotto
         if (this.powerups.superJump) return [1, 0.3, 0.5, 0.6]; // Pink - ridotto
         return [1, 1, 1, 0.4]; // Ridotto da 0.5
@@ -596,7 +596,7 @@ export class Player {
             this.hasShield = false;
             // Visual feedback
             this.invulnerable = true;
-            this.invulnerabilityTimer = 1.0; // Brief invincibility after shield breaks
+            this.invulnerabilityTimer = 1; // Brief invincibility after shield breaks
             return false;
         }
         
@@ -700,10 +700,10 @@ export class Player {
             this.y = platformTop - this.height + yOffset;
             
             // Apply bounce multiplier for bouncy platforms
-            if (platform.bounceMultiplier && platform.bounceMultiplier > 1.0) {
+            if (platform.bounceMultiplier && platform.bounceMultiplier > 1) {
                 // SPRING platforms = CATAPULTA ORIZZONTALE! 🚀
                 if (platform.platformType === 'spring') {
-                    platform.springCompression = 1.0; // Compressione massima
+                    platform.springCompression = 1; // Compressione massima
                     this.velocityX = 1200; // BOOST ORIZZONTALE MEGA!
                     this.velocityY = -200; // Piccolo sollevamento
                 } else {
@@ -728,7 +728,7 @@ export class Player {
                     platform.isDissolving = true;
                     platform.dissolveTimer = 0;
                     platform.dissolveDuration = 0.8; // Tempo di dissoluzione (secondi)
-                    platform.dissolveAlpha = 1.0;
+                    platform.dissolveAlpha = 1;
                 }
             }
             
@@ -953,7 +953,7 @@ export class Player {
     }
     
     getTurboCooldownProgress() {
-        if (this.turboCooldownRemaining === 0) return 1.0;
+        if (this.turboCooldownRemaining === 0) return 1;
         return 1.0 - (this.turboCooldownRemaining / this.turboCooldownDuration);
     }
     

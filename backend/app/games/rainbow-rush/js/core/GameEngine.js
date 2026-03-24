@@ -22,7 +22,7 @@ export class GameEngine {
             throw new Error('WebGL not supported');
         }
         
-        gl.clearColor(0.53, 0.81, 0.92, 1.0); // Sky blue
+        gl.clearColor(0.53, 0.81, 0.92, 1); // Sky blue
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         

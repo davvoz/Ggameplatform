@@ -32,7 +32,7 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
             const circleX = centerX + Math.cos(angle) * radius;
             const circleY = centerY + Math.sin(angle) * (platform.height / 2);
             const alpha = 0.6 + Math.sin(time * 10 + i) * 0.3;
-            this.renderer.drawCircle(circleX, circleY, 3, [1, 0.5, 0.0, alpha]);
+            this.renderer.drawCircle(circleX, circleY, 3, [1, 0.5, 0, alpha]);
         }
     }
 
@@ -50,8 +50,8 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
         const centerY = y + platform.height / 2;
         const pulse = Math.sin(time * 3) * 0.3 + 0.5;
         
-        this.renderer.drawRect(x, y, platform.width, 2, [1, 0.5, 0.0, pulse]);
-        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1, 0.5, 0.0, pulse]);
+        this.renderer.drawRect(x, y, platform.width, 2, [1, 0.5, 0, pulse]);
+        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1, 0.5, 0, pulse]);
         
         this.renderArrows(x, platform.width, centerY, pulse);
     }

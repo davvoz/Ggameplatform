@@ -52,7 +52,7 @@ export class DamageCollisionHandler extends CollisionHandler {
             '⭐ PROTETTO!',
             this.context.player.x + this.context.player.width / 2,
             this.context.player.y - 20,
-            [1, 0.9, 0.2, 1.0],
+            [1, 0.9, 0.2, 1],
             entityManager
         );
 
@@ -73,7 +73,7 @@ export class DamageCollisionHandler extends CollisionHandler {
             `💥 -${damage} ❤️`,
             this.context.player.x + this.context.player.width / 2,
             this.context.player.y - 20,
-            [1, 0.2, 0.2, 1.0],
+            [1, 0.2, 0.2, 1],
             entityManager
         );
 
@@ -127,7 +127,7 @@ export class DamageCollisionHandler extends CollisionHandler {
                 life: 0.5,
                 maxLife: 0.5,
                 size: 4 + Math.random() * 2,
-                color: [1, 0.9, 0.2, 1.0],
+                color: [1, 0.9, 0.2, 1],
                 gravity: 100,
                 type: 'shield-particle'
             });
@@ -150,7 +150,7 @@ export class DamageCollisionHandler extends CollisionHandler {
                 life: 0.6,
                 maxLife: 0.6,
                 size: 4 + Math.random() * 3,
-                color: [1, 0.2, 0.2, 1.0],
+                color: [1, 0.2, 0.2, 1],
                 gravity: 200,
                 type: 'damage-particle'
             });

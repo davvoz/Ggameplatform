@@ -7,7 +7,7 @@ import { RenderingUtils } from '../RenderingUtils.js';
 export class RainbowCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.4 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.4 + 1;
         const size = entity.radius * pulse;
 
         this.renderRainbowLayers(entity.x, entity.y, size, entity.rainbowPhase, pulse);
@@ -28,7 +28,7 @@ export class RainbowCollectible extends BaseCollectible {
         for (let i = 0; i < 7; i++) {
             const hue = ((rainbowPhase * 100 + i * 51.4) % 360) / 360;
             const rgb = RenderingUtils.hslToRgb(hue, 1, 0.5);
-            this.renderer.drawCircle(x, y, size * (1.2 - i * 0.15), [...rgb, 1.0]);
+            this.renderer.drawCircle(x, y, size * (1.2 - i * 0.15), [...rgb, 1]);
         }
     }
 
@@ -45,6 +45,6 @@ export class RainbowCollectible extends BaseCollectible {
     }
 
     renderCore(x, y, size, pulse) {
-        this.renderer.drawCircle(x, y, size * 0.5 * pulse, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.5 * pulse, [1, 1, 1, 1]);
     }
 }

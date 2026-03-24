@@ -16,11 +16,11 @@ export class UIRenderer {
             return;
         }
         
-        const alpha = text.alpha || 1.0;
-        const scale = text.scale || 1.0;
+        const alpha = text.alpha || 1;
+        const scale = text.scale || 1;
         const fontSize = (text.fontSize || 48) * scale;
         const rotation = text.rotation || 0;
-        const glowIntensity = text.glowIntensity || 1.0;
+        const glowIntensity = text.glowIntensity || 1;
         
         // Dividi il testo per newline
         const lines = text.text.split('\n');
@@ -87,7 +87,7 @@ export class UIRenderer {
             switch(notif.type) {
                 case 'achievement':
                     textColor = 'rgb(255, 215, 0)';
-                    glowColor = [1, 0.84, 0.0, alpha];
+                    glowColor = [1, 0.84, 0, alpha];
                     break;
                 case 'warning':
                     textColor = 'rgb(255, 77, 77)';
@@ -95,7 +95,7 @@ export class UIRenderer {
                     break;
                 case 'streak':
                     textColor = 'rgb(255, 128, 0)';
-                    glowColor = [1, 0.5, 0.0, alpha];
+                    glowColor = [1, 0.5, 0, alpha];
                     break;
                 default:
                     textColor = 'rgb(51, 153, 255)';

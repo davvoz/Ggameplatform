@@ -12,7 +12,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
 
     render(platform, context) {
         const { time, canvasWidth, canvasHeight } = context;
-        let alpha = 1.0;
+        let alpha = 1;
         
         // Recharging effect
         if (platform.isRecharging) {
@@ -66,7 +66,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const fadeOutStart = platform.maxTimeOnPlatform - 0.4; // Inizia fade-out 400ms prima della fine
             const fadeOutDuration = 0.4; // 400ms fade-out
             
-            let timerAlpha = 1.0;
+            let timerAlpha = 1;
             
             // Fade-in all'inizio
             if (platform.timeOnPlatform < fadeInDuration) {
@@ -116,7 +116,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
 
     renderWarningStripes(platform, alpha) {
         for (let i = 0; i < platform.width; i += 20) {
-            const stripeColor = [1, 0.5, 0.0, alpha * 0.6];
+            const stripeColor = [1, 0.5, 0, alpha * 0.6];
             this.renderer.drawRect(platform.x + i, platform.y, 10, platform.height, stripeColor);
         }
     }
@@ -176,7 +176,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         const glowPulse = Math.sin(time * 3 + index * 0.8) * 0.3 + 0.7;
         
         // Animazione ricarica - POP molto veloce!
-        let scale = 1.0;
+        let scale = 1;
         let extraGlow = 0;
         let flashAlpha = 0;
         
@@ -212,22 +212,22 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         this.renderer.drawCircle(x, yBounce, (size + 6 + extraGlow * 0.5) * scale, [0.5, 1, 0.7, 0.25 * glowPulse]);
         
         // Bordo nero stile fumetto
-        this.renderer.drawCircle(x, yBounce, (size + 3) * scale, [0.1, 0.1, 0.15, 1.0]);
+        this.renderer.drawCircle(x, yBounce, (size + 3) * scale, [0.1, 0.1, 0.15, 1]);
         
         // Bordo bianco interno
-        this.renderer.drawCircle(x, yBounce, (size + 1.5) * scale, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, yBounce, (size + 1.5) * scale, [1, 1, 1, 1]);
         
         // Pallino verde lime brillante
-        this.renderer.drawCircle(x, yBounce, size * scale, [0.2, 1, 0.3, 1.0]);
+        this.renderer.drawCircle(x, yBounce, size * scale, [0.2, 1, 0.3, 1]);
         
         // Gradiente verso il centro - giallo lime
-        this.renderer.drawCircle(x, yBounce, size * 0.7 * scale, [0.6, 1, 0.5, 1.0]);
+        this.renderer.drawCircle(x, yBounce, size * 0.7 * scale, [0.6, 1, 0.5, 1]);
         
         // Centro giallo brillante
-        this.renderer.drawCircle(x, yBounce, size * 0.4 * scale, [1, 1, 0.4, 1.0]);
+        this.renderer.drawCircle(x, yBounce, size * 0.4 * scale, [1, 1, 0.4, 1]);
         
         // Highlight cartoon GRANDE (stile lucido giocoso)
-        this.renderer.drawCircle(x - size * 0.3 * scale, yBounce - size * 0.3 * scale, size * 0.45 * scale, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x - size * 0.3 * scale, yBounce - size * 0.3 * scale, size * 0.45 * scale, [1, 1, 1, 1]);
         this.renderer.drawCircle(x - size * 0.3 * scale, yBounce - size * 0.3 * scale, size * 0.35 * scale, [1, 1, 1, 0.8]);
         
         // Piccolo riflesso laterale
@@ -269,15 +269,15 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
                 const boomAlpha = 1.0 - boomProgress;
                 
                 // Flash arancione/giallo esplosivo
-                this.renderer.drawCircle(x, y, boomSize + 12, [1, 0.8, 0.0, boomAlpha * 0.7]);
-                this.renderer.drawCircle(x, y, boomSize + 8, [1, 0.5, 0.0, boomAlpha * 0.9]);
+                this.renderer.drawCircle(x, y, boomSize + 12, [1, 0.8, 0, boomAlpha * 0.7]);
+                this.renderer.drawCircle(x, y, boomSize + 8, [1, 0.5, 0, boomAlpha * 0.9]);
                 
                 // Bordo nero
-                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
-                this.renderer.drawCircle(x, y, size + 1.5, [1, 1, 1, 1.0]);
+                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1]);
+                this.renderer.drawCircle(x, y, size + 1.5, [1, 1, 1, 1]);
                 
                 // Pallino rosso che pulsa
-                this.renderer.drawCircle(x, y, size * (1 + boomProgress * 0.2), [1, 0.2, 0.2, 1.0]);
+                this.renderer.drawCircle(x, y, size * (1 + boomProgress * 0.2), [1, 0.2, 0.2, 1]);
                 
                 // Particelle esplosive a stella (8 direzioni)
                 for (let i = 0; i < 8; i++) {
@@ -304,24 +304,24 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
                 const g = 0.2 * (1 - fadeProgress) + 0.4 * fadeProgress;
                 const b = 0.2 * (1 - fadeProgress) + 0.45 * fadeProgress;
                 
-                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
+                this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1]);
                 this.renderer.drawCircle(x, y, size + 1.5, [1, 1, 1, 1.0 - fadeProgress * 0.3]);
-                this.renderer.drawCircle(x, y, size, [r, g, b, 1.0]);
-                this.renderer.drawCircle(x, y, size * 0.6, [r * 0.9, g * 0.9, b * 0.95, 1.0]);
+                this.renderer.drawCircle(x, y, size, [r, g, b, 1]);
+                this.renderer.drawCircle(x, y, size * 0.6, [r * 0.9, g * 0.9, b * 0.95, 1]);
             }
         } else {
             // Pallino spento - FACCINA TRISTE
             // Bordo nero
-            this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1.0]);
+            this.renderer.drawCircle(x, y, size + 3, [0.1, 0.1, 0.15, 1]);
             
             // Bordo bianco
             this.renderer.drawCircle(x, y, size + 1.5, [1, 1, 1, 0.5]);
             
             // Pallino grigio
-            this.renderer.drawCircle(x, y, size, [0.4, 0.4, 0.45, 1.0]);
+            this.renderer.drawCircle(x, y, size, [0.4, 0.4, 0.45, 1]);
             
             // Centro più scuro
-            this.renderer.drawCircle(x, y, size * 0.6, [0.5, 0.5, 0.55, 1.0]);
+            this.renderer.drawCircle(x, y, size * 0.6, [0.5, 0.5, 0.55, 1]);
             
             // FACCINA TRISTE :(
             const eyeSize = 2;
@@ -329,8 +329,8 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const eyeSpacing = size * 0.35;
             
             // Occhi (cerchietti neri)
-            this.renderer.drawCircle(x - eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1.0]);
-            this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1.0]);
+            this.renderer.drawCircle(x - eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1]);
+            this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize, [0.2, 0.2, 0.25, 1]);
             
             // Bocca triste (curva verso il basso)
             const mouthY = y + size * 0.2;
@@ -342,7 +342,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
                 const mx = x - mouthWidth / 2 + t * mouthWidth;
                 const curve = Math.sin(t * Math.PI) * (-mouthHeight);
                 const my = mouthY + curve;
-                this.renderer.drawCircle(mx, my, 1.5, [0.2, 0.2, 0.25, 1.0]);
+                this.renderer.drawCircle(mx, my, 1.5, [0.2, 0.2, 0.25, 1]);
             }
         }
     }
@@ -355,7 +355,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         const useWindow = platform.useWindow || 20;
         const oldestUseTime = useTimes[0];
         const timeSinceOldest = currentTime - oldestUseTime;
-        const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0);
+        const windowProgress = Math.min(timeSinceOldest / useWindow, 1);
         
         const barWidth = totalWidth;
         const barHeight = 8; // Barra più spessa
@@ -365,13 +365,13 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         this.renderer.drawRect(barX + 2, barY + 2, barWidth + 2, barHeight + 1, [0.1, 0.1, 0.15, 0.5]);
         
         // Bordo nero stile fumetto
-        this.renderer.drawRect(barX - 3, barY - 3, barWidth + 6, barHeight + 6, [0.1, 0.1, 0.15, 1.0]);
+        this.renderer.drawRect(barX - 3, barY - 3, barWidth + 6, barHeight + 6, [0.1, 0.1, 0.15, 1]);
         
         // Bordo bianco
-        this.renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, [1, 1, 1, 1.0]);
+        this.renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, [1, 1, 1, 1]);
         
         // Background grigio con texture
-        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.35, 0.35, 0.4, 1.0]);
+        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.35, 0.35, 0.4, 1]);
         this.renderer.drawRect(barX, barY, barWidth, barHeight / 2, [0.4, 0.4, 0.45, 0.5]);
         
         // Progress ARCOBALENO gradiente
@@ -379,33 +379,33 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         
         if (progressWidth > 0) {
             // Colore cambia nel tempo - effetto arcobaleno
-            const hue = (time * 0.5 + windowProgress * 2) % 1.0;
+            const hue = (time * 0.5 + windowProgress * 2) % 1;
             let r, g, b;
             
             if (hue < 0.33) {
                 // Rosso -> Giallo
-                r = 1.0;
+                r = 1;
                 g = 0.3 + (hue / 0.33) * 0.7;
                 b = 0.2;
             } else if (hue < 0.66) {
                 // Giallo -> Verde
                 r = 1.0 - ((hue - 0.33) / 0.33) * 0.7;
-                g = 1.0;
+                g = 1;
                 b = 0.2;
             } else {
                 // Verde -> Ciano
                 r = 0.3;
-                g = 1.0;
+                g = 1;
                 b = 0.2 + ((hue - 0.66) / 0.34) * 0.6;
             }
             
-            this.renderer.drawRect(barX, barY, progressWidth, barHeight, [r, g, b, 1.0]);
+            this.renderer.drawRect(barX, barY, progressWidth, barHeight, [r, g, b, 1]);
             
             // Highlight glossy superiore
             this.renderer.drawRect(barX, barY, progressWidth, barHeight / 3, [1, 1, 1, 0.6]);
             
             // Ombra interna in basso
-            this.renderer.drawRect(barX, barY + barHeight * 0.7, progressWidth, barHeight * 0.3, [0.0, 0.0, 0.0, 0.3]);
+            this.renderer.drawRect(barX, barY + barHeight * 0.7, progressWidth, barHeight * 0.3, [0, 0, 0, 0.3]);
         }
         
         // Pallino indicatore SUPER CARINO sulla punta
@@ -416,14 +416,14 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const dotSize = 6 + dotPulse * 2;
             
             // Colore sincronizzato con la barra
-            const hue = (time * 0.5 + windowProgress * 2) % 1.0;
+            const hue = (time * 0.5 + windowProgress * 2) % 1;
             let r, g, b;
             if (hue < 0.33) {
-                r = 1.0; g = 0.3 + (hue / 0.33) * 0.7; b = 0.2;
+                r = 1; g = 0.3 + (hue / 0.33) * 0.7; b = 0.2;
             } else if (hue < 0.66) {
-                r = 1.0 - ((hue - 0.33) / 0.33) * 0.7; g = 1.0; b = 0.2;
+                r = 1.0 - ((hue - 0.33) / 0.33) * 0.7; g = 1; b = 0.2;
             } else {
-                r = 0.3; g = 1.0; b = 0.2 + ((hue - 0.66) / 0.34) * 0.6;
+                r = 0.3; g = 1; b = 0.2 + ((hue - 0.66) / 0.34) * 0.6;
             }
             
             // Glow pulsante colorato
@@ -431,16 +431,16 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             this.renderer.drawCircle(dotX, dotY, dotSize + 3, [r, g, b, 0.5 * dotPulse]);
             
             // Bordo nero
-            this.renderer.drawCircle(dotX, dotY, dotSize + 1, [0.1, 0.1, 0.15, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, dotSize + 1, [0.1, 0.1, 0.15, 1]);
             
             // Pallino colorato
-            this.renderer.drawCircle(dotX, dotY, dotSize, [r, g, b, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, dotSize, [r, g, b, 1]);
             
             // Centro più chiaro
-            this.renderer.drawCircle(dotX, dotY, dotSize * 0.6, [r + 0.3, g + 0.2, b + 0.2, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, dotSize * 0.6, [r + 0.3, g + 0.2, b + 0.2, 1]);
             
             // Highlight glossy
-            this.renderer.drawCircle(dotX - dotSize * 0.3, dotY - dotSize * 0.3, dotSize * 0.4, [1, 1, 1, 1.0]);
+            this.renderer.drawCircle(dotX - dotSize * 0.3, dotY - dotSize * 0.3, dotSize * 0.4, [1, 1, 1, 1]);
             this.renderer.drawCircle(dotX - dotSize * 0.3, dotY - dotSize * 0.3, dotSize * 0.25, [1, 1, 1, 0.7]);
         }
     }
@@ -453,7 +453,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         const useWindow = platform.useWindow || 20;
         const oldestUseTime = useTimes[0];
         const timeSinceOldest = currentTime - oldestUseTime;
-        const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0);
+        const windowProgress = Math.min(timeSinceOldest / useWindow, 1);
         
         const barWidth = 8; // Barra sottile ed elegante
         const barHeight = 50; // Più compatta
@@ -464,13 +464,13 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         this.renderer.drawRect(barX - 2, barY - 1, barWidth + 4, barHeight + 2, [1, 1, 1, 0.9]);
         
         // Background grigio scuro
-        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.25, 0.25, 0.3, 1.0]);
+        this.renderer.drawRect(barX, barY, barWidth, barHeight, [0.25, 0.25, 0.3, 1]);
         
         // Progress colorato (dal basso verso l'alto)
         const progressHeight = barHeight * windowProgress;
         const r = 1.0 - windowProgress * 0.6;
         const g = 0.4 + windowProgress * 0.6;
-        this.renderer.drawRect(barX, barY + barHeight - progressHeight, barWidth, progressHeight, [r, g, 0.3, 1.0]);
+        this.renderer.drawRect(barX, barY + barHeight - progressHeight, barWidth, progressHeight, [r, g, 0.3, 1]);
         
         // Highlight sottile sulla progress bar
         if (progressHeight > 2) {
@@ -482,7 +482,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const dotX = barX + barWidth / 2;
             const dotY = barY + barHeight - progressHeight;
             const dotPulse = Math.sin(time * 6) * 0.2 + 0.8;
-            this.renderer.drawCircle(dotX, dotY, 4, [1, 1, 1, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, 4, [1, 1, 1, 1]);
             this.renderer.drawCircle(dotX, dotY, 3, [r, g, 0.3, dotPulse]);
         }
     }
@@ -495,7 +495,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         const useWindow = platform.useWindow || 20;
         const oldestUseTime = useTimes[0];
         const timeSinceOldest = currentTime - oldestUseTime;
-        const windowProgress = Math.min(timeSinceOldest / useWindow, 1.0);
+        const windowProgress = Math.min(timeSinceOldest / useWindow, 1);
         
         const barWidth = totalWidth;
         const barHeight = 6;
@@ -525,12 +525,12 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         this.renderer.drawRect(barX + barWidth, barY, 1, barHeight, borderColor);
         
         // Progress indicator
-        if (windowProgress < 1.0) {
+        if (windowProgress < 1) {
             const dotX = barX + progressWidth;
             const dotY = barY + barHeight / 2;
             const dotPulse = Math.sin(time * 8) * 0.3 + 0.7;
             this.renderer.drawCircle(dotX, dotY, 4, [1, 0.8, 0.3, dotPulse]);
-            this.renderer.drawCircle(dotX, dotY, 2, [1, 1, 1, 1.0]);
+            this.renderer.drawCircle(dotX, dotY, 2, [1, 1, 1, 1]);
         }
     }
 
@@ -546,9 +546,9 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         // Ring color
         let ringColor;
         if (timerProgress < 0.5) {
-            ringColor = [timerProgress * 2, 1, 0.0, 0.9];
+            ringColor = [timerProgress * 2, 1, 0, 0.9];
         } else {
-            ringColor = [1, 1.0 - (timerProgress - 0.5) * 2, 0.0, 0.9];
+            ringColor = [1, 1.0 - (timerProgress - 0.5) * 2, 0, 0.9];
         }
         
         // Ring segments
@@ -573,7 +573,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         // Warning glow
         const glowIntensity = timerProgress > 0.7 ? (timerProgress - 0.7) / 0.3 : 0;
         if (glowIntensity > 0) {
-            this.renderer.drawCircle(centerX, centerY, radius - 3, [1, 0.3, 0.0, glowIntensity * 0.5]);
+            this.renderer.drawCircle(centerX, centerY, radius - 3, [1, 0.3, 0, glowIntensity * 0.5]);
         }
         
         // Countdown number
@@ -587,7 +587,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
 
     renderCountdownNumber(platform, centerX, centerY, timerProgress) {
         const timeLeft = Math.ceil(platform.maxTimeOnPlatform - platform.timeOnPlatform);
-        const numberColor = timerProgress > 0.7 ? [1, 0.3, 0.0, 1.0] : [1, 1, 1, 1.0];
+        const numberColor = timerProgress > 0.7 ? [1, 0.3, 0, 1] : [1, 1, 1, 1];
         const fontSize = 12;
         const numberStr = timeLeft.toString();
         const charWidth = 7;
@@ -611,7 +611,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         }
     }
 
-    renderBigTimerIndicator(platform, time, centerX, centerY, alpha = 1.0) {
+    renderBigTimerIndicator(platform, time, centerX, centerY, alpha = 1) {
         const timerProgress = platform.timeOnPlatform / platform.maxTimeOnPlatform;
         const radius = 120;
         
@@ -683,7 +683,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         }
     }
     
-    renderNaifCountdownNumber(platform, centerX, centerY, timerProgress, time, mainColor, accentColor, alpha = 1.0) {
+    renderNaifCountdownNumber(platform, centerX, centerY, timerProgress, time, mainColor, accentColor, alpha = 1) {
         const timeLeft = Math.ceil(platform.maxTimeOnPlatform - platform.timeOnPlatform);
         
         // Colore numero - sempre bianco per contrasto (con alpha)
@@ -698,7 +698,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         let charX = centerX - totalWidth / 2;
         
         // Effetto bounce quando cambia numero
-        const bounce = timerProgress > 0.9 ? Math.sin(time * 15) * 0.1 + 0.9 : 1.0;
+        const bounce = timerProgress > 0.9 ? Math.sin(time * 15) * 0.1 + 0.9 : 1;
         
         for (const char of numberStr) {
             const segments = RenderingUtils.getDigitSegments(char);
@@ -729,7 +729,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         }
     }
     
-    renderTimerEmoji(centerX, centerY, timerProgress, time, radius, alpha = 1.0) {
+    renderTimerEmoji(centerX, centerY, timerProgress, time, radius, alpha = 1) {
         // Posizione degli occhi
         const eyeY = centerY - radius * 0.6;
         const eyeSpacing = 25;
@@ -766,7 +766,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
         }
     }
     
-    renderDecorativeStars(time, centerX, centerY, radius, mainColor, alpha = 1.0) {
+    renderDecorativeStars(time, centerX, centerY, radius, mainColor, alpha = 1) {
         // Stelline che ruotano attorno al timer (con alpha)
         const numStars = 4;
         for (let i = 0; i < numStars; i++) {
@@ -804,9 +804,9 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const particleSize = 10 + bounce * 0.3;
             
             // Pallino rosso/arancione con bordo bianco
-            this.renderer.drawCircle(px, py, particleSize + 3, [1, 1, 1, 1.0]);
-            this.renderer.drawCircle(px, py, particleSize, [1, 0.4, 0.2, 1.0]);
-            this.renderer.drawCircle(px, py, particleSize - 4, [1, 0.7, 0.4, 1.0]);
+            this.renderer.drawCircle(px, py, particleSize + 3, [1, 1, 1, 1]);
+            this.renderer.drawCircle(px, py, particleSize, [1, 0.4, 0.2, 1]);
+            this.renderer.drawCircle(px, py, particleSize - 4, [1, 0.7, 0.4, 1]);
         }
     }
     
@@ -821,7 +821,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
             const distance = radius + 8 + Math.sin(time * 10 + i) * 3;
             const px = centerX + Math.cos(angle) * distance;
             const py = centerY + Math.sin(angle) * distance;
-            this.renderer.drawCircle(px, py, 2, [1, 0.4, 0.0, 0.8]);
+            this.renderer.drawCircle(px, py, 2, [1, 0.4, 0, 0.8]);
         }
     }
     
@@ -860,7 +860,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
                     const perpY = dx / length * thickness;
                     
                     // Linea scura principale - sottile e delicata
-                    this.renderer.drawLine(x1, y1, x2, y2, thickness, [0.0, 0.0, 0.05, crackAlpha * 0.7]);
+                    this.renderer.drawLine(x1, y1, x2, y2, thickness, [0, 0, 0.05, crackAlpha * 0.7]);
                     
                     // Highlight bianco sottile (effetto vetro delicato)
                     this.renderer.drawLine(
@@ -886,7 +886,7 @@ export class SafetyPlatformRenderer extends IEntityRenderer {
                 // Punti di giunzione molto piccoli
                 if (i > 0 && i < points.length - 1) {
                     // Punto scuro piccolo
-                    this.renderer.drawCircle(x1, y1, thickness * 1.2, [0.0, 0.0, 0.05, crackAlpha * 0.6]);
+                    this.renderer.drawCircle(x1, y1, thickness * 1.2, [0, 0, 0.05, crackAlpha * 0.6]);
                     // Piccolo highlight
                     this.renderer.drawCircle(x1 - thickness * 0.3, y1 - thickness * 0.3, thickness * 0.5, [1, 1, 1, crackAlpha * 0.3]);
                 }

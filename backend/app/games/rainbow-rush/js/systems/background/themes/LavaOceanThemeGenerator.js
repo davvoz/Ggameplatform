@@ -30,7 +30,7 @@ export class LavaOceanThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.6,
-            color: [0.8, 0.2, 0.0, 1.0],
+            color: [0.8, 0.2, 0, 1],
             type: 'sky_gradient',
             speed: 0
         });
@@ -70,7 +70,7 @@ export class LavaOceanThemeGenerator extends BaseThemeGenerator {
                 radius: 5 + Math.random() * 12,
                 speed: 15 + Math.random() * 35,
                 wobble: Math.random() * Math.PI * 2,
-                color: [0.95, 0.3 + Math.random() * 0.2, 0.0, 0.6],
+                color: [0.95, 0.3 + Math.random() * 0.2, 0, 0.6],
                 type: 'bubble',
                 glow: true
             });
@@ -86,7 +86,7 @@ export class LavaOceanThemeGenerator extends BaseThemeGenerator {
                 y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.4,
                 radius: 2 + Math.random() * 4,
                 speed: -20 - Math.random() * 50,
-                color: [1, 0.4 + Math.random() * 0.3, 0.0, 0.7],
+                color: [1, 0.4 + Math.random() * 0.3, 0, 0.7],
                 type: 'simple_particle',
                 drift: (Math.random() - 0.5) * 30,
                 fade: 0.98

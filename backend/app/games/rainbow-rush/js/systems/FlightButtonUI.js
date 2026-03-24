@@ -39,7 +39,7 @@ export class FlightButtonUI {
         
         // Glow pulsante quando ready
         if (isReady) {
-            this.glowIntensity = Math.min(this.glowIntensity + deltaTime * 3, 1.0);
+            this.glowIntensity = Math.min(this.glowIntensity + deltaTime * 3, 1);
         } else {
             this.glowIntensity = Math.max(this.glowIntensity - deltaTime * 2, 0);
         }

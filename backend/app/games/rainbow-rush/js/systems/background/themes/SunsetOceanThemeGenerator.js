@@ -30,7 +30,7 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.5,
-            color: [1, 0.4, 0.2, 1.0],
+            color: [1, 0.4, 0.2, 1],
             type: 'sky_gradient',
             speed: 0
         });

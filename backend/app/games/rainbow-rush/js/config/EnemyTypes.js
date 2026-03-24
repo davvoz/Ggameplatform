@@ -27,7 +27,7 @@ export const EnemyTypes = {
         speed: 80,
         width: 30,
         height: 20,
-        color: [0.5, 0.8, 0.3, 1.0],
+        color: [0.5, 0.8, 0.3, 1],
         points: 10,
         pattern: 'patrol', // Cammina avanti/indietro
         patrolDistance: 120,
@@ -45,7 +45,7 @@ export const EnemyTypes = {
         speed: 150,
         width: 25,
         height: 25,
-        color: [0.2, 0.7, 0.2, 1.0],
+        color: [0.2, 0.7, 0.2, 1],
         points: 15,
         pattern: 'roll', // Rotola velocemente
         description: 'Cespuglio spinato che rotola pericolosamente',
@@ -62,7 +62,7 @@ export const EnemyTypes = {
         speed: 120,
         width: 20,
         height: 20,
-        color: [0.3, 0.3, 0.3, 1.0],
+        color: [0.3, 0.3, 0.3, 1],
         points: 20,
         pattern: 'sine_wave', // Vola con movimento sinusoidale
         amplitude: 40,
@@ -85,12 +85,12 @@ export const EnemyTypes = {
         speed: 100,
         width: 35,
         height: 30,
-        color: [0.8, 0.3, 0.8, 1.0],
+        color: [0.8, 0.3, 0.8, 1],
         points: 25,
         pattern: 'charge', // Si ferma, poi carica verso il player
         chargeSpeed: 300,
         chargeDetectRange: 200,
-        chargeCooldown: 2.0,
+        chargeCooldown: 2,
         description: 'Nemico che carica verso il giocatore',
         unlockLevel: 21
     },
@@ -105,7 +105,7 @@ export const EnemyTypes = {
         speed: 180,
         width: 22,
         height: 22,
-        color: [1, 0.8, 0.0, 1.0],
+        color: [1, 0.8, 0, 1],
         points: 30,
         pattern: 'chase', // Insegue il player
         chaseRange: 250,
@@ -123,7 +123,7 @@ export const EnemyTypes = {
         speed: 90,
         width: 28,
         height: 32,
-        color: [0.4, 0.7, 0.4, 1.0],
+        color: [0.4, 0.7, 0.4, 1],
         points: 35,
         pattern: 'jump', // Salta periodicamente
         jumpForce: -400,
@@ -143,7 +143,7 @@ export const EnemyTypes = {
         speed: 0, // Statico
         width: 35,
         height: 35,
-        color: [0.5, 0.5, 0.5, 1.0],
+        color: [0.5, 0.5, 0.5, 1],
         points: 40,
         pattern: 'shoot', // Spara proiettili
         shootInterval: 2.5,
@@ -185,7 +185,7 @@ export const EnemyTypes = {
         speed: 200,
         width: 30,
         height: 30,
-        color: [0.2, 0.6, 1, 1.0],
+        color: [0.2, 0.6, 1, 1],
         points: 55,
         pattern: 'bounce', // Rimbalza continuamente
         bounceForce: -500,
@@ -204,7 +204,7 @@ export const EnemyTypes = {
         speed: 220,
         width: 26,
         height: 26,
-        color: [1, 0.4, 0.2, 1.0],
+        color: [1, 0.4, 0.2, 1],
         points: 65,
         pattern: 'smart_chase', // Inseguimento intelligente con predizione
         predictionTime: 0.5,
@@ -223,7 +223,7 @@ export const EnemyTypes = {
         speed: 0,
         width: 40,
         height: 40,
-        color: [1, 0.1, 0.1, 1.0],
+        color: [1, 0.1, 0.1, 1],
         points: 70,
         pattern: 'laser', // Spara laser continuo
         laserChargeTime: 1.5,
@@ -248,10 +248,10 @@ export const EnemyTypes = {
         speed: 60,
         width: 50,
         height: 40,
-        color: [0.3, 0.5, 0.3, 1.0],
+        color: [0.3, 0.5, 0.3, 1],
         points: 80,
         pattern: 'heavy_patrol', // Lento ma resistente, spara
-        shootInterval: 2.0,
+        shootInterval: 2,
         projectileSpeed: 250,
         armor: 2, // Riduce danno ricevuto
         description: 'Nemico corazzato lento ma potente',
@@ -268,7 +268,7 @@ export const EnemyTypes = {
         speed: 160,
         width: 35,
         height: 35,
-        color: [1, 0.5, 0.0, 1.0],
+        color: [1, 0.5, 0, 1],
         points: 90,
         pattern: 'dive_bomb', // Vola, poi si tuffa sul player
         diveSpeed: 400,
@@ -288,7 +288,7 @@ export const EnemyTypes = {
         speed: 100,
         width: 28,
         height: 28,
-        color: [0.8, 0.2, 0.8, 1.0],
+        color: [0.8, 0.2, 0.8, 1],
         points: 100,
         pattern: 'teleport', // Si teletrasporta vicino al player
         teleportInterval: 3.0,
@@ -307,7 +307,7 @@ export const EnemyTypes = {
         speed: 0,
         width: 45,
         height: 45,
-        color: [0.6, 0.4, 0.8, 1.0],
+        color: [0.6, 0.4, 0.8, 1],
         points: 110,
         pattern: 'spawn', // Genera nemici minori
         spawnInterval: 5.0,
@@ -331,7 +331,7 @@ export const EnemyTypes = {
         speed: 40,
         width: 70,
         height: 70,
-        color: [0.5, 0.4, 0.3, 1.0],
+        color: [0.5, 0.4, 0.3, 1],
         points: 200,
         pattern: 'boss_multi', // Combina più pattern
         phases: [
@@ -353,7 +353,7 @@ export const EnemyTypes = {
         speed: 120,
         width: 80,
         height: 60,
-        color: [0.8, 0.2, 0.2, 1.0],
+        color: [0.8, 0.2, 0.2, 1],
         points: 300,
         pattern: 'boss_multi',
         phases: [
@@ -375,7 +375,7 @@ export const EnemyTypes = {
         speed: 180,
         width: 60,
         height: 70,
-        color: [0.2, 0.1, 0.3, 1.0],
+        color: [0.2, 0.1, 0.3, 1],
         points: 400,
         pattern: 'boss_multi',
         phases: [
@@ -397,7 +397,7 @@ export const EnemyTypes = {
         speed: 150,
         width: 90,
         height: 90,
-        color: [1, 0.5, 0.8, 1.0],
+        color: [1, 0.5, 0.8, 1],
         points: 500,
         pattern: 'boss_multi',
         phases: [

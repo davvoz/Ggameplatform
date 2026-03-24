@@ -80,7 +80,7 @@ export class ActivateTurboCommand extends GameCommand {
         if (activated) {
             audioManager.playSound('turbo');
             screenFlash.alpha = 0.3;
-            screenFlash.color = [1, 0.8, 0.0];
+            screenFlash.color = [1, 0.8, 0];
         }
         
         return activated;
@@ -109,7 +109,7 @@ export class ActivateFlightCommand extends GameCommand {
         if (activated) {
             audioManager.playSound('flight');
             screenFlash.alpha = 0.2;
-            screenFlash.color = [0.4, 0.8, 1.0];
+            screenFlash.color = [0.4, 0.8, 1];
         }
         
         return activated;

@@ -5,8 +5,8 @@ const VOLCANO_CONFIG = {
     LIGHT_COLOR_SCALE: 1.3,
     DARK_COLOR_SCALE: 0.7,
     CRATER_WALL_OFFSET: 5,
-    CRATER_WALL_LEFT_COLOR: [0.08, 0.04, 0.02, 1.0],
-    CRATER_WALL_RIGHT_COLOR: [0.1, 0.05, 0.03, 1.0],
+    CRATER_WALL_LEFT_COLOR: [0.08, 0.04, 0.02, 1],
+    CRATER_WALL_RIGHT_COLOR: [0.1, 0.05, 0.03, 1],
     LAVA_GLOW_SPEED: 2,
     LAVA_GLOW_AMPLITUDE: 0.15,
     LAVA_GLOW_BASE: 0.85,
@@ -115,7 +115,7 @@ export class VolcanoRenderer extends BaseLayerRenderer {
             lavaY,
             craterWidth - (VOLCANO_CONFIG.LAVA_X_PADDING * 2),
             VOLCANO_CONFIG.LAVA_HEIGHT,
-            [1.0 * lavaGlow, 0.4 * lavaGlow, 0.0, 0.95]
+            [1.0 * lavaGlow, 0.4 * lavaGlow, 0, 0.95]
         );
 
         // Bright lava center
@@ -124,7 +124,7 @@ export class VolcanoRenderer extends BaseLayerRenderer {
             lavaY + VOLCANO_CONFIG.LAVA_CENTER_Y_OFFSET,
             craterWidth / 2,
             VOLCANO_CONFIG.LAVA_CENTER_HEIGHT,
-            [1, 0.7 * lavaGlow, 0.2 * lavaGlow, 1.0]
+            [1, 0.7 * lavaGlow, 0.2 * lavaGlow, 1]
         );
     }
 

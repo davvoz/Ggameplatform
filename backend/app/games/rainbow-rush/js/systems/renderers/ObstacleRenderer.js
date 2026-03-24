@@ -48,20 +48,20 @@ export class ObstacleRenderer extends IEntityRenderer {
             centerX,
             centerY,
             glowRadius * (1 + glow * 0.3),
-            [1, 0.3, 0.0, 0.3 * glow]
+            [1, 0.3, 0, 0.3 * glow]
         );
 
         // Corpo centrale - sfera rossa metallica
         const radius = Math.min(spike.width, spike.height) / 2;
 
         // Cerchio esterno scuro (bordo)
-        this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1.0]);
+        this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1]);
 
         // Cerchio principale rosso
-        this.renderer.drawCircle(centerX, centerY, radius * 0.9 * pulse, [1, 0.2, 0.1, 1.0]);
+        this.renderer.drawCircle(centerX, centerY, radius * 0.9 * pulse, [1, 0.2, 0.1, 1]);
 
         // Cerchio interno rosso brillante
-        this.renderer.drawCircle(centerX, centerY, radius * 0.7 * pulse, [1, 0.4, 0.2, 1.0]);
+        this.renderer.drawCircle(centerX, centerY, radius * 0.7 * pulse, [1, 0.4, 0.2, 1]);
 
         // Riflesso metallico (highlight)
         const highlightX = centerX - radius * 0.3;
@@ -96,7 +96,7 @@ export class ObstacleRenderer extends IEntityRenderer {
                 const g = 0.3 * (1 - t);
                 const b = 0.1;
 
-                this.renderer.drawCircle(sx, sy, sw, [r, g, b, 1.0]);
+                this.renderer.drawCircle(sx, sy, sw, [r, g, b, 1]);
             }
 
             // Punta brillante
@@ -112,7 +112,7 @@ export class ObstacleRenderer extends IEntityRenderer {
                 const py = centerY + Math.sin(particleAngle) * particleDistance;
                 const pSize = 1 + Math.random() * 1.5;
 
-                this.renderer.drawCircle(px, py, pSize, [1, 0.5, 0.0, 0.6 + Math.random() * 0.4]);
+                this.renderer.drawCircle(px, py, pSize, [1, 0.5, 0, 0.6 + Math.random() * 0.4]);
             }
         }
     }
@@ -131,17 +131,17 @@ export class ObstacleRenderer extends IEntityRenderer {
             enemy.y + enemy.height + Math.abs(bounce) * 0.5,
             shadowWidth,
             4,
-            [0.0, 0.0, 0.0, 0.35]
+            [0, 0, 0, 0.35]
         );
 
         // Glow disabled for performance
         // const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
         // RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
-        //     enemy.width / 2, [0.6, 0.3, 1, 1.0], 3, glowPulse * 0.2, 0.07);
+        //     enemy.width / 2, [0.6, 0.3, 1, 1], 3, glowPulse * 0.2, 0.07);
 
         // Body
-        const bodyTopColor = [0.5, 0.2, 0.8, 1.0];
-        const bodyBottomColor = [0.3, 0.1, 0.6, 1.0];
+        const bodyTopColor = [0.5, 0.2, 0.8, 1];
+        const bodyBottomColor = [0.3, 0.1, 0.6, 1];
         this.renderer.drawRect(enemy.x, enemy.y + bounce, enemy.width, enemy.height * squish * 0.5, bodyTopColor);
         this.renderer.drawRect(enemy.x, enemy.y + bounce + enemy.height * squish * 0.5, enemy.width, enemy.height * squish * 0.5, bodyBottomColor);
 
@@ -170,14 +170,14 @@ export class ObstacleRenderer extends IEntityRenderer {
         const eyeY = enemy.y + bounce + enemy.height * squish * 0.35;
 
         // Eyes
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1, 1, 1, 1.0]);
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1, 1, 1, 1]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1, 1, 1, 1]);
 
         // Pupils
         const pupilOffsetX = Math.sin(time * 2 + offset) * 1.5;
         const pupilOffsetY = Math.cos(time * 3 + offset) * 1;
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0.0, 0.0, 1.0]);
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0.0, 0.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0, 0, 1]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0, 0, 1]);
 
         // Highlights
         this.renderer.drawCircle(enemy.x + enemy.width * 0.3 - 1, eyeY - 1, 1.5, [1, 1, 1, 0.9]);
@@ -188,7 +188,7 @@ export class ObstacleRenderer extends IEntityRenderer {
         const mouthY = enemy.y + bounce + enemy.height * squish * 0.65;
         const mouthWidth = enemy.width * 0.5;
         const mouthX = enemy.x + (enemy.width - mouthWidth) / 2;
-        this.renderer.drawRect(mouthX, mouthY, mouthWidth, 2, [0.2, 0.0, 0.0, 1.0]);
+        this.renderer.drawRect(mouthX, mouthY, mouthWidth, 2, [0.2, 0, 0, 1]);
 
         // Teeth
         for (let i = 0; i < 4; i++) {

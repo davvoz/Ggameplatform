@@ -97,7 +97,7 @@ export class EnemySpriteGenerator {
      * Get color from config
      */
     getColor(config) {
-        const color = config.color || [0.8, 0.3, 0.5, 1.0];
+        const color = config.color || [0.8, 0.3, 0.5, 1];
         return {
             r: Math.floor(color[0] * 255),
             g: Math.floor(color[1] * 255),
@@ -533,7 +533,7 @@ export class EnemySpriteGenerator {
         ctx.closePath();
         ctx.fill();
         
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
 
         // Eyes
         const eyeGlow = 0.5 + Math.sin(wave * 2) * 0.5;
@@ -660,7 +660,7 @@ export class EnemySpriteGenerator {
             ctx.stroke();
         }
         
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
     }
 
     /**

@@ -7,7 +7,7 @@ export class FaceRenderer {
         this.renderer = renderer;
     }
 
-    renderEyes(player, x, y, radiusY, scale = 1.0) {
+    renderEyes(player, x, y, radiusY, scale = 1) {
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
         const winkProgress = player.winkProgress || 0;
@@ -43,10 +43,10 @@ export class FaceRenderer {
         return configs[expression] || configs['happy'];
     }
 
-    renderOpenEyes(x, eyeY, config, intensity = 0, winkProgress = 0, scale = 1.0) {
-        const eyeWhite = [1, 1, 1, 1.0];
-        const eyeOutline = [0.0, 0.0, 0.0, 0.4];
-        const pupilColor = [0.0, 0.0, 0.0, 1.0];
+    renderOpenEyes(x, eyeY, config, intensity = 0, winkProgress = 0, scale = 1) {
+        const eyeWhite = [1, 1, 1, 1];
+        const eyeOutline = [0, 0, 0, 0.4];
+        const pupilColor = [0, 0, 0, 1];
 
         const glintSize = (1.5 + intensity * 1.5) * scale;
         const glintColor = [1, 1, 1, 0.8 + intensity * 0.2];
@@ -80,9 +80,9 @@ export class FaceRenderer {
         const winkEyeSize = config.eyeSize * (1 - winkProgress) * scale;
 
         if (winkProgress < 0.95) {
-            const eyeOutline = [0.0, 0.0, 0.0, 0.4];
-            const eyeWhite = [1, 1, 1, 1.0];
-            const pupilColor = [0.0, 0.0, 0.0, 1.0];
+            const eyeOutline = [0, 0, 0, 0.4];
+            const eyeWhite = [1, 1, 1, 1];
+            const pupilColor = [0, 0, 0, 1];
 
             this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize + 1 * scale, eyeOutline);
             this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize, eyeWhite);
@@ -91,27 +91,27 @@ export class FaceRenderer {
                 this.renderer.drawCircle(x + 7 * scale + config.pupilOffsetX * scale, eyeY + config.pupilOffsetY * scale, config.pupilSize * (1 - winkProgress * 2) * scale, pupilColor);
             }
         } else {
-            const blinkColor = [0.0, 0.0, 0.0, 0.8];
+            const blinkColor = [0, 0, 0, 0.8];
             this.renderer.drawRect(x + 4 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
             this.renderer.drawCircle(x + 7 * scale, eyeY, 3 * scale, blinkColor);
         }
     }
 
-    renderClosedEyes(x, eyeY, scale = 1.0) {
-        const blinkColor = [0.0, 0.0, 0.0, 0.8];
+    renderClosedEyes(x, eyeY, scale = 1) {
+        const blinkColor = [0, 0, 0, 0.8];
         this.renderer.drawRect(x - 10 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
         this.renderer.drawCircle(x - 7 * scale, eyeY, 3 * scale, blinkColor);
         this.renderer.drawRect(x + 4 * scale, eyeY, 6 * scale, 2 * scale, blinkColor);
         this.renderer.drawCircle(x + 7 * scale, eyeY, 3 * scale, blinkColor);
     }
 
-    renderMouth(player, x, y, radiusY, scale = 1.0) {
+    renderMouth(player, x, y, radiusY, scale = 1) {
         const emotion = player.emotion || 'happy';
         const emotionIntensity = player.emotionIntensity || 0;
 
         const expression = player.getExpression ? player.getExpression() : emotion;
         const mouthY = y + radiusY * 0.4;
-        const mouthColor = [0.0, 0.0, 0.0, 0.7];
+        const mouthColor = [0, 0, 0, 0.7];
 
         switch (expression) {
             case 'worried':
@@ -137,7 +137,7 @@ export class FaceRenderer {
         }
     }
 
-    renderHappyMouth(x, y, color, intensity = 0, scale = 1.0) {
+    renderHappyMouth(x, y, color, intensity = 0, scale = 1) {
         const points = 7 + Math.floor(intensity * 3);
         const smileRadius = (8 + intensity * 4) * scale;
         const curvature = 0.6 + intensity * 0.3;
@@ -152,7 +152,7 @@ export class FaceRenderer {
         }
     }
 
-    renderWorriedMouth(x, y, color, scale = 1.0) {
+    renderWorriedMouth(x, y, color, scale = 1) {
         for (let i = 0; i < 7; i++) {
             const t = i / 6;
             const angle = Math.PI * 0.7 + (t * Math.PI * 0.6);
@@ -163,7 +163,7 @@ export class FaceRenderer {
         }
     }
 
-    renderExcitedMouth(x, y, color, scale = 1.0) {
+    renderExcitedMouth(x, y, color, scale = 1) {
         for (let i = 0; i < 9; i++) {
             const t = i / 8;
             const angle = Math.PI * 0.15 + (t * Math.PI * 0.7);
@@ -174,23 +174,23 @@ export class FaceRenderer {
         }
     }
 
-    renderSurprisedMouth(x, y, color, scale = 1.0) {
+    renderSurprisedMouth(x, y, color, scale = 1) {
         this.renderer.drawCircle(x, y + 2 * scale, 5 * scale, color);
-        this.renderer.drawCircle(x, y + 2 * scale, 4 * scale, [0.4, 0.2, 0.2, 1.0]);
+        this.renderer.drawCircle(x, y + 2 * scale, 4 * scale, [0.4, 0.2, 0.2, 1]);
     }
 
-    renderDeterminedMouth(x, y, color, scale = 1.0) {
+    renderDeterminedMouth(x, y, color, scale = 1) {
         this.renderer.drawRect(x - 6 * scale, y, 12 * scale, 2 * scale, color);
     }
 
-    renderRunningMouth(x, y, color, scale = 1.0) {
+    renderRunningMouth(x, y, color, scale = 1) {
         this.renderer.drawCircle(x, y + 2 * scale, 4 * scale, color);
         this.renderer.drawCircle(x, y + 4 * scale, 3.5 * scale, color);
-        this.renderer.drawCircle(x, y + 2 * scale, 3 * scale, [0.3, 0.1, 0.1, 1.0]);
+        this.renderer.drawCircle(x, y + 2 * scale, 3 * scale, [0.3, 0.1, 0.1, 1]);
     }
 
-    renderLookingUpMouth(x, y, color, scale = 1.0) {
+    renderLookingUpMouth(x, y, color, scale = 1) {
         this.renderer.drawCircle(x, y + 2 * scale, 5 * scale, color);
-        this.renderer.drawCircle(x, y + 2 * scale, 4 * scale, [0.3, 0.1, 0.1, 1.0]);
+        this.renderer.drawCircle(x, y + 2 * scale, 4 * scale, [0.3, 0.1, 0.1, 1]);
     }
 }

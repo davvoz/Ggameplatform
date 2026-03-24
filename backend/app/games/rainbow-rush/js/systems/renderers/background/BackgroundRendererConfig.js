@@ -23,8 +23,8 @@ export const AMBIENT_PARTICLE_CONFIG = {
 
 export const GRADIENT_CONFIG = {
     BANDS: 20,
-    SKY_TOP_COLOR: [0.5, 0.2, 0.15, 1.0],
-    DEFAULT_BG_COLOR: [0.4, 0.7, 1, 1.0]
+    SKY_TOP_COLOR: [0.5, 0.2, 0.15, 1],
+    DEFAULT_BG_COLOR: [0.4, 0.7, 1, 1]
 };
 
 export const GROUND_CONFIG = {

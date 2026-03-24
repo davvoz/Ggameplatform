@@ -6,7 +6,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 export class HeartRechargeCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.4 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.4 + 1;
         const size = entity.radius * pulse;
         const heartPhase = entity.heartPhase;
         const glowPhase = entity.glowPhase;
@@ -22,7 +22,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
 
     renderConcentricRings(x, y, size, glowPhase, pulse) {
         for (let i = 0; i < 4; i++) {
-            const ringPulse = Math.sin(glowPhase + i * 0.8) * 0.3 + 1.0;
+            const ringPulse = Math.sin(glowPhase + i * 0.8) * 0.3 + 1;
             const ringSize = size * (1.3 + i * 0.4) * ringPulse;
             const ringAlpha = (0.6 - i * 0.12) * pulse;
             this.renderer.drawCircle(x, y, ringSize, [1, 0.3 + i * 0.1, 0.5, ringAlpha]);
@@ -37,7 +37,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
             const hx = x + Math.cos(orbitAngle) * orbitRadius;
             const hy = y + Math.sin(orbitAngle) * orbitRadius;
             const heartSize = 6 + Math.sin(heartPhase * 3 + i) * 2;
-            const heartPulse = Math.sin(heartPhase * 4 + i * 0.5) * 0.3 + 1.0;
+            const heartPulse = Math.sin(heartPhase * 4 + i * 0.5) * 0.3 + 1;
 
             // Small hearts
             this.renderer.drawCircle(hx - heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1, 0.2, 0.4, 0.9]);
@@ -56,26 +56,26 @@ export class HeartRechargeCollectible extends BaseCollectible {
     }
 
     renderCenterHeart(x, y, size, heartPhase) {
-        const heartBeat = Math.sin(heartPhase * 5) * 0.2 + 1.0;
+        const heartBeat = Math.sin(heartPhase * 5) * 0.2 + 1;
         const centerHeartSize = size * 0.7 * heartBeat;
 
         this.renderer.drawCircle(
             x - centerHeartSize * 0.3,
             y - centerHeartSize * 0.2,
             centerHeartSize * 0.6,
-            [1, 1, 1, 1.0]
+            [1, 1, 1, 1]
         );
         this.renderer.drawCircle(
             x + centerHeartSize * 0.3,
             y - centerHeartSize * 0.2,
             centerHeartSize * 0.6,
-            [1, 1, 1, 1.0]
+            [1, 1, 1, 1]
         );
         this.renderer.drawCircle(
             x,
             y + centerHeartSize * 0.3,
             centerHeartSize * 0.8,
-            [1, 1, 1, 1.0]
+            [1, 1, 1, 1]
         );
     }
 
@@ -103,7 +103,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
     }
 
     renderCore(x, y, size, time) {
-        this.renderer.drawCircle(x, y, size * 0.25, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.25, [1, 1, 1, 1]);
 
         const sparkleSize = size * 0.3;
         const sparkleOffset = Math.sin(time * 8) * sparkleSize * 0.15;

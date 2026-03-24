@@ -54,7 +54,7 @@ export class CoinCollectible extends BaseCollectible {
             const size = entity.radius * 2;
 
             ctx.save();
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 1;
             ctx.translate(entity.x, y);
             ctx.scale(Math.max(0.2, scaleX), 1);
             ctx.drawImage(img, -size / 2, -size / 2, size, size);
@@ -70,12 +70,12 @@ export class CoinCollectible extends BaseCollectible {
         const radiusY = entity.radius;
 
         // Outer gold ring
-        this.renderEllipse(entity.x, y, radiusX, radiusY, [0.8, 0.6, 0.0, 1.0]);
+        this.renderEllipse(entity.x, y, radiusX, radiusY, [0.8, 0.6, 0, 1]);
 
         // Inner golden circle
         const innerRadiusX = radiusX * 0.85;
         const innerRadiusY = radiusY * 0.85;
-        this.renderEllipse(entity.x, y, innerRadiusX, innerRadiusY, [1, 0.84, 0.0, 1.0]);
+        this.renderEllipse(entity.x, y, innerRadiusX, innerRadiusY, [1, 0.84, 0, 1]);
 
         // Highlight
         const highlightRadiusX = radiusX * 0.4;
@@ -91,7 +91,7 @@ export class CoinCollectible extends BaseCollectible {
         // Symbol
         const symbolRadiusX = radiusX * 0.5;
         const symbolRadiusY = radiusY * 0.5;
-        this.renderEllipse(entity.x, y, symbolRadiusX, symbolRadiusY, [1, 0.95, 0.4, 1.0]);
+        this.renderEllipse(entity.x, y, symbolRadiusX, symbolRadiusY, [1, 0.95, 0.4, 1]);
         this.renderEllipse(entity.x, y, symbolRadiusX * 0.3, symbolRadiusY * 0.3, [1, 1, 1, 0.9]);
     }
 }

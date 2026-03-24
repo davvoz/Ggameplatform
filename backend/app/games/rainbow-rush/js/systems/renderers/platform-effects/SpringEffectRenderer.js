@@ -24,8 +24,8 @@ export class SpringEffectRenderer extends PlatformEffectRenderer {
             const coilY = y + platform.height - coilHeight;
             const coilWidth = 1.8;
             
-            this.renderer.drawRect(coilX - coilWidth/2, coilY, coilWidth, coilHeight * 0.5, [1, 0.6, 1, 1.0]);
-            this.renderer.drawRect(coilX - coilWidth/2, coilY + coilHeight * 0.5, coilWidth, coilHeight * 0.5, [0.8, 0.3, 0.8, 1.0]);
+            this.renderer.drawRect(coilX - coilWidth/2, coilY, coilWidth, coilHeight * 0.5, [1, 0.6, 1, 1]);
+            this.renderer.drawRect(coilX - coilWidth/2, coilY + coilHeight * 0.5, coilWidth, coilHeight * 0.5, [0.8, 0.3, 0.8, 1]);
             this.renderer.drawRect(coilX - 0.6, coilY + 1, 1.2, coilHeight * 0.3, [1, 1, 1, 0.5]);
         }
     }

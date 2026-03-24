@@ -30,7 +30,7 @@ class Platform {
         this.isDissolving = false;
         this.dissolveTimer = 0;
         this.dissolveDuration = 0.8;
-        this.dissolveAlpha = 1.0;
+        this.dissolveAlpha = 1;
         this.isRotating = false;
         this.rotationAngle = 0;
         this.rotationSpeed = 0;
@@ -365,12 +365,12 @@ class PlatformGenerator {
                 platform.rotationAngle = Math.random() * Math.PI * 2; // Angolo iniziale casuale
             } else if (specificType === 'bouncing') {
                 platform.isBouncing = true;
-                platform.bounceSpeed = 1.5 + Math.random() * 1.0; // Velocità casuale
+                platform.bounceSpeed = 1.5 + Math.random() * 1; // Velocità casuale
                 platform.bounceAmplitude = 20 + Math.random() * 20; // Ampiezza casuale 20-40
             } else if (specificType === 'dissolving') {
                 platform.isDissolving = false; // Inizialmente non sta dissolvendo
                 platform.dissolveDuration = 0.8;
-                platform.dissolveAlpha = 1.0;
+                platform.dissolveAlpha = 1;
             }
             
             platforms.push(platform);
@@ -894,7 +894,7 @@ export class LevelGenerator {
         // Ogni livello cresce di ~1 secondo (baseSpeed = 180px/s → +180px per livello)
         // Formula: baseLength + (levelId * incrementPerLevel)
         const baseSpeed = 180; // px/s dalla velocità base del gioco
-        const secondsPerLevelGrowth = 1.0; // Crescita di 1 secondo per livello
+        const secondsPerLevelGrowth = 1; // Crescita di 1 secondo per livello
         const incrementPerLevel = baseSpeed * secondsPerLevelGrowth; // 180 px per livello
         
         // Lunghezza base del primo livello (circa 15 secondi)
@@ -1156,7 +1156,7 @@ export class LevelGenerator {
             height: 20,
             type: 'obstacle',
             obstacleType: 'spike',
-            color: [0.8, 0.1, 0.1, 1.0],
+            color: [0.8, 0.1, 0.1, 1],
             velocity: velocity,
             animationOffset: Math.random() * Math.PI * 2
         };

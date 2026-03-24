@@ -16,7 +16,7 @@ export class BodyRenderer {
         this.textCtx = this.textCanvas ? this.textCanvas.getContext('2d') : null;
     }
 
-    renderBody(player, x, y, radius, scale = 1.0) {
+    renderBody(player, x, y, radius, scale = 1) {
         // Update animations
         this.animationController.update(player);
         
@@ -39,9 +39,9 @@ export class BodyRenderer {
 
         if (player.invulnerable) {
             const flicker = Math.floor(Date.now() / 100) % 2;
-            bodyColor[3] = flicker === 0 ? 0.4 : 1.0;
+            bodyColor[3] = flicker === 0 ? 0.4 : 1;
         } else {
-            bodyColor[3] = 1.0;
+            bodyColor[3] = 1;
         }
 
         const sizeX = player.width * finalScaleX;
@@ -62,7 +62,7 @@ export class BodyRenderer {
         }
 
         // Bordo
-        const borderColor = [0.0, 0.0, 0.0, 0.6];
+        const borderColor = [0, 0, 0, 0.6];
         this.renderer.drawRect(rectX - 2 * finalScaleX, rectY - 2 * finalScaleY, sizeX + 4 * finalScaleX, sizeY + 4 * finalScaleY, borderColor);
 
         // Corpo - con gradiente dissoluzione se turbo
@@ -192,7 +192,7 @@ export class BodyRenderer {
         const thickness = 4;
         const segments = 60;
 
-        const baseColor = [0.4, 0.85, 1.0];
+        const baseColor = [0.4, 0.85, 1];
 
         // Glow
         const glowRadius = progressRadius + 3;
@@ -232,7 +232,7 @@ export class BodyRenderer {
 
             const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
             this.renderer.drawCircle(headX, headY, thickness * 1.8 * pulse, [1, 1, 1, 0.9 * pulse]);
-            this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1, 1.0]);
+            this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1, 1]);
         }
 
         // Sparkles

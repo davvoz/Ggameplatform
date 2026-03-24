@@ -30,7 +30,7 @@ export class AnimationRenderer {
         if (progress < 0.2) {
             scale = progress / 0.2;
         } else if (progress < 0.8) {
-            scale = 1.0;
+            scale = 1;
         } else {
             scale = 1.0 - (progress - 0.8) / 0.2;
         }
@@ -39,7 +39,7 @@ export class AnimationRenderer {
         const height = baseHeight * scale;
         const x = 400 - width / 2;
         const y = 200 - height / 2;
-        const alpha = progress < 0.2 ? progress / 0.2 : (progress > 0.8 ? (1.0 - progress) / 0.2 : 1.0);
+        const alpha = progress < 0.2 ? progress / 0.2 : (progress > 0.8 ? (1.0 - progress) / 0.2 : 1);
 
         // RIMOSSO: Rays animati (troppo pesanti)
         
@@ -147,7 +147,7 @@ export class AnimationRenderer {
             const fadeInTime = 0.2;
             const textAlpha = death.timer < fadeInTime 
                 ? Math.min(1, death.timer / fadeInTime)
-                : 1.0;
+                : 1;
             
             const fontSize = Math.max(50, Math.min(this.canvasHeight * 0.12, 140));
             

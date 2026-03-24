@@ -162,7 +162,7 @@ export class BaseThemeGenerator {
     assignParallaxSpeeds(layers) {
         // Default parallax speeds by layer type (lower = slower = further back)
         const parallaxConfig = {
-            'sky_gradient': 0.0,    // Background, no movement
+            'sky_gradient': 0,    // Background, no movement
             'ground': 1,          // Foreground, full speed
             'wave': 0.3,            // Far background
             'dune': 0.4,            // Mid background
@@ -206,7 +206,7 @@ export class BaseThemeGenerator {
                 
                 // Special case: if speed was explicitly 0, override to static
                 if (layer.speed === 0) {
-                    layer.parallaxSpeed = 0.0;
+                    layer.parallaxSpeed = 0;
                 }
             }
             

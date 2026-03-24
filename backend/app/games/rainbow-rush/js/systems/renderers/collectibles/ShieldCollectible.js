@@ -6,7 +6,7 @@ import { BaseCollectible } from './BaseCollectible.js';
 export class ShieldCollectible extends BaseCollectible {
     renderVisual(entity, context) {
         const { time } = context;
-        const pulse = Math.sin(entity.pulsePhase) * 0.25 + 1.0;
+        const pulse = Math.sin(entity.pulsePhase) * 0.25 + 1;
         const size = entity.radius * pulse;
         const hexRotation = (entity.rotation || 0) + time * 1.5;
 
@@ -30,18 +30,18 @@ export class ShieldCollectible extends BaseCollectible {
                 const t = j / 8;
                 const px = x1 + (x2 - x1) * t;
                 const py = y1 + (y2 - y1) * t;
-                this.renderer.drawCircle(px, py, 4, [0.3, 1, 0.5, 1.0]);
+                this.renderer.drawCircle(px, py, 4, [0.3, 1, 0.5, 1]);
             }
 
             // Vertex glow
-            this.renderer.drawCircle(x1, y1, 6, [0.6, 1, 0.7, 1.0]);
+            this.renderer.drawCircle(x1, y1, 6, [0.6, 1, 0.7, 1]);
             this.renderer.drawCircle(x1, y1, 4, [1, 1, 1, 0.9]);
         }
     }
 
     renderCenter(x, y, size) {
-        this.renderer.drawCircle(x, y, size * 0.7, [0.2, 0.8, 0.4, 1.0]);
-        this.renderer.drawCircle(x, y, size * 0.5, [0.4, 1, 0.6, 1.0]);
-        this.renderer.drawCircle(x, y, size * 0.15, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.7, [0.2, 0.8, 0.4, 1]);
+        this.renderer.drawCircle(x, y, size * 0.5, [0.4, 1, 0.6, 1]);
+        this.renderer.drawCircle(x, y, size * 0.15, [1, 1, 1, 1]);
     }
 }

@@ -21,7 +21,7 @@ export class AnimationController {
         // Screen flash for combos
         this.screenFlash = {
             alpha: 0,
-            color: [1, 1, 1.0]
+            color: [1, 1, 1]
         };
     }
 
@@ -49,11 +49,11 @@ export class AnimationController {
             // Animazione SEMPLIFICATA: solo scala fissa
             const lifeProgress = 1 - (text.life / text.maxLife);
             if (lifeProgress < 0.1) {
-                // Esplosione rapida (0.5 -> 1.0)
+                // Esplosione rapida (0.5 -> 1)
                 text.scale = 0.5 + (lifeProgress / 0.1) * 0.5;
             } else {
                 // Scala fissa - NO pulse
-                text.scale = 1.0;
+                text.scale = 1;
             }
             
             // Movimento verso l'alto COSTANTE
@@ -66,7 +66,7 @@ export class AnimationController {
                 text.alpha = text.life / 0.5;
                 text.glowIntensity = text.alpha;
             } else {
-                text.alpha = 1.0;
+                text.alpha = 1;
                 text.glowIntensity = 0.7; // Fisso, NO pulsazione
             }
             
@@ -88,11 +88,11 @@ export class AnimationController {
         // Scala semplice senza fronzoli
         const progress = 1 - (this.levelUpAnimation.life / this.levelUpAnimation.maxLife);
         if (progress < 0.15) {
-            // Grow rapido (0 to 1.0)
+            // Grow rapido (0 to 1)
             this.levelUpAnimation.scale = progress / 0.15;
         } else if (progress < 0.85) {
             // Stabile a 1.0 - NO oscillazioni
-            this.levelUpAnimation.scale = 1.0;
+            this.levelUpAnimation.scale = 1;
         } else {
             // Shrink rapido (1.0 to 0)
             this.levelUpAnimation.scale = 1.0 - ((progress - 0.85) / 0.15);
@@ -169,7 +169,7 @@ export class AnimationController {
             maxLife: 2.5,
             fontSize: 80,
             pulsePhase: 0,
-            color: [1, 0.9, 0.2, 1.0], // Golden color
+            color: [1, 0.9, 0.2, 1], // Golden color
             scale: 0
         };
         
@@ -208,46 +208,46 @@ export class AnimationController {
         if (combo <= 1) return;
         
         let message = '';
-        let color = [1, 1, 1, 1.0];
-        let intensity = 1.0;
+        let color = [1, 1, 1, 1];
+        let intensity = 1;
         let flashIntensity = 0;
         
         const multiplierText = multiplier.toFixed(1);
         
         if (combo >= 50) {
             message = `🌟 DIVINO! x${multiplierText} 🌟`;
-            color = [1, 0.0, 1, 1.0];
+            color = [1, 0, 1, 1];
             intensity = 3.0;
             flashIntensity = 0.4;
         } else if (combo >= 30) {
             message = `🔥 EPICO! x${multiplierText} 🔥`;
-            color = [1, 0.3, 0.0, 1.0];
+            color = [1, 0.3, 0, 1];
             intensity = 2.5;
             flashIntensity = 0.3;
         } else if (combo >= 20) {
             message = `💥 BRUTALE! x${multiplierText} 💥`;
-            color = [1, 0.2, 0.2, 1.0];
+            color = [1, 0.2, 0.2, 1];
             intensity = 2.0;
             flashIntensity = 0.25;
         } else if (combo >= 15) {
             message = `⚡ PAZZESCO! x${multiplierText} ⚡`;
-            color = [1, 1, 0.0, 1.0];
+            color = [1, 1, 0, 1];
             intensity = 1.8;
             flashIntensity = 0.2;
         } else if (combo >= 10) {
             message = `🌈 SUPER! x${multiplierText} 🌈`;
-            color = [0.0, 1, 1, 1.0];
+            color = [0, 1, 1, 1];
             intensity = 1.5;
             flashIntensity = 0.15;
         } else if (combo >= 5) {
             message = `🚀 COMBO x${multiplierText}!`;
-            color = [0.5, 1, 0.5, 1.0];
+            color = [0.5, 1, 0.5, 1];
             intensity = 1.2;
             flashIntensity = 0.1;
         } else {
             message = `COMBO x${multiplierText}`;
-            color = [1, 1, 1, 1.0];
-            intensity = 1.0;
+            color = [1, 1, 1, 1];
+            intensity = 1;
         }
         
         // Trigger screen flash for big combos
@@ -261,8 +261,8 @@ export class AnimationController {
             x: x,
             y: y,
             floatY: y,
-            life: 2.0,
-            maxLife: 2.0,
+            life: 2,
+            maxLife: 2,
             fontSize: 32 + Math.min(combo * 0.8, 30),
             pulsePhase: 0,
             color: color,
@@ -381,7 +381,7 @@ export class AnimationController {
         this.isShowingDeathAnimation = false;
         this.screenFlash = {
             alpha: 0,
-            color: [1, 1, 1.0]
+            color: [1, 1, 1]
         };
     }
 }

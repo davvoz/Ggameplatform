@@ -53,7 +53,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
             zoneY,
             borderWidth,
             zoneHeight,
-            [1, 0.8, 0.0, 1.0]
+            [1, 0.8, 0, 1]
         );
         
         // Simple glow (only 1 layer instead of 3)
@@ -93,7 +93,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
         const letterSpacing = 25 * scale;
         const startX = centerX - letterSpacing * 1.5;
         const blockSize = 6 * scale;
-        const color = [1, 1, 1, 1.0];
+        const color = [1, 1, 1, 1];
         
         // Draw simple block letters for "GOAL"
         // G

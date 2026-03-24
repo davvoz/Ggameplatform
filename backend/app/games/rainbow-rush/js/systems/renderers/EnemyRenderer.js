@@ -82,7 +82,7 @@ export class EnemyRenderer extends IEntityRenderer {
         
         // Vertical oscillation (breathing/floating effect)
         let yOffset = 0;
-        let scale = 1.0;
+        let scale = 1;
         let rotation = 0;
         
         // Animation configurations per enemy type
@@ -126,7 +126,7 @@ export class EnemyRenderer extends IEntityRenderer {
         // Apply animation
         const anim = animations[animType]();
         yOffset = anim.yOffset || 0;
-        scale = anim.scale || 1.0;
+        scale = anim.scale || 1;
         rotation = anim.rotation || 0;
 
         const enemyCenterX = enemy.x + enemy.width / 2;
@@ -355,14 +355,14 @@ export class EnemyRenderer extends IEntityRenderer {
      */
     renderProjectile(projectile, cameraOffset) {
         const ctx = this.textCtx;
-        const color = projectile.color || [1, 0.0, 0.0]; // Default red if no color
+        const color = projectile.color || [1, 0, 0]; // Default red if no color
         
         ctx.save();
 
         // Glow effect disabled for performance
         
         // Core
-        ctx.fillStyle = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 1.0)`;
+        ctx.fillStyle = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 1)`;
         ctx.beginPath();
         ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -693,7 +693,7 @@ export class EnemyRenderer extends IEntityRenderer {
         ctx.fill();
         
         // Nose (small triangle)
-        const noseX = (x + bodyWidth * 1.0) * flipX;
+        const noseX = (x + bodyWidth * 1) * flipX;
         const noseY = y + bodyHeight * 0.35;
         const noseSize = radius * 0.12;
         

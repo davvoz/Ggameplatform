@@ -27,8 +27,8 @@ export const THEME_NAMES = {
 
 export const SKY_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.4, 0.7, 1, 1.0],
-        [0.6, 0.85, 1, 1.0]
+        [0.4, 0.7, 1, 1],
+        [0.6, 0.85, 1, 1]
     ],
     CLOUD_COUNT: 3,
     CLOUD_MIN_SIZE: 40,
@@ -49,8 +49,8 @@ export const SKY_THEME_CONFIG = {
 
 export const OCEAN_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.0, 0.5, 1, 1.0],
-        [0.1, 0.7, 1, 1.0]
+        [0, 0.5, 1, 1],
+        [0.1, 0.7, 1, 1]
     ],
     WAVE_COUNT: 5,
     WAVE_BASE_AMPLITUDE: 20,
@@ -74,8 +74,8 @@ export const OCEAN_THEME_CONFIG = {
 
 export const PYRAMID_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.85, 0.7, 0.35, 1.0],
-        [0.75, 0.6, 0.25, 1.0]
+        [0.85, 0.7, 0.35, 1],
+        [0.75, 0.6, 0.25, 1]
     ],
     PYRAMID_COUNT: 3,
     PYRAMID_MIN_WIDTH: 100,
@@ -93,8 +93,8 @@ export const PYRAMID_THEME_CONFIG = {
 
 export const VOLCANO_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.6, 0.1, 0.0, 1.0],
-        [0.9, 0.35, 0.1, 1.0]
+        [0.6, 0.1, 0, 1],
+        [0.9, 0.35, 0.1, 1]
     ],
     MAIN_VOLCANO_HEIGHT: 350,
     MAIN_VOLCANO_WIDTH: 350,
@@ -114,8 +114,8 @@ export const VOLCANO_THEME_CONFIG = {
 
 export const SPACE_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.05, 0.05, 0.15, 1.0],
-        [0.1, 0.1, 0.2, 1.0]
+        [0.05, 0.05, 0.15, 1],
+        [0.1, 0.1, 0.2, 1]
     ],
     STAR_COUNT: 50,
     STAR_MIN_RADIUS: 1,
@@ -130,8 +130,8 @@ export const SPACE_THEME_CONFIG = {
 
 export const FOREST_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.4, 0.6, 0.8, 1.0],
-        [0.3, 0.5, 0.3, 1.0]
+        [0.4, 0.6, 0.8, 1],
+        [0.3, 0.5, 0.3, 1]
     ],
     TREE_COUNT: 8,
     TREE_MIN_WIDTH: 40,
@@ -146,8 +146,8 @@ export const FOREST_THEME_CONFIG = {
 
 export const ICE_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.7, 0.85, 1, 1.0],
-        [0.85, 0.95, 1, 1.0]
+        [0.7, 0.85, 1, 1],
+        [0.85, 0.95, 1, 1]
     ],
     CRYSTAL_COUNT: 10,
     CRYSTAL_MIN_SIZE: 15,
@@ -161,8 +161,8 @@ export const ICE_THEME_CONFIG = {
 
 export const NIGHT_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.1, 0.1, 0.2, 1.0],
-        [0.15, 0.15, 0.25, 1.0]
+        [0.1, 0.1, 0.2, 1],
+        [0.15, 0.15, 0.25, 1]
     ],
     MOON_RADIUS: 50,
     STAR_COUNT: 30,
@@ -174,8 +174,8 @@ export const NIGHT_THEME_CONFIG = {
 
 export const SUNSET_OCEAN_CONFIG = {
     BASE_COLORS: [
-        [1, 0.4, 0.2, 1.0],
-        [0.3, 0.5, 0.8, 1.0]
+        [1, 0.4, 0.2, 1],
+        [0.3, 0.5, 0.8, 1]
     ],
     SUN_RADIUS: 60,
     WAVE_COUNT: 4,
@@ -184,8 +184,8 @@ export const SUNSET_OCEAN_CONFIG = {
 
 export const CRYSTAL_CAVE_CONFIG = {
     BASE_COLORS: [
-        [0.1, 0.1, 0.15, 1.0],
-        [0.2, 0.25, 0.35, 1.0]
+        [0.1, 0.1, 0.15, 1],
+        [0.2, 0.25, 0.35, 1]
     ],
     HANGING_CRYSTAL_COUNT: 6,
     FLOOR_CRYSTAL_COUNT: 8,
@@ -196,8 +196,8 @@ export const CRYSTAL_CAVE_CONFIG = {
 
 export const MUSHROOM_FOREST_CONFIG = {
     BASE_COLORS: [
-        [0.2, 0.3, 0.4, 1.0],
-        [0.3, 0.4, 0.3, 1.0]
+        [0.2, 0.3, 0.4, 1],
+        [0.3, 0.4, 0.3, 1]
     ],
     GIANT_MUSHROOM_COUNT: 5,
     REGULAR_MUSHROOM_COUNT: 8,
@@ -209,8 +209,8 @@ export const MUSHROOM_FOREST_CONFIG = {
 
 export const AURORA_NIGHT_CONFIG = {
     BASE_COLORS: [
-        [0.05, 0.1, 0.2, 1.0],
-        [0.1, 0.15, 0.25, 1.0]
+        [0.05, 0.1, 0.2, 1],
+        [0.1, 0.15, 0.25, 1]
     ],
     AURORA_WAVE_COUNT: 3,
     AURORA_MIN_AMPLITUDE: 30,
@@ -221,8 +221,8 @@ export const AURORA_NIGHT_CONFIG = {
 
 export const DESERT_STORM_CONFIG = {
     BASE_COLORS: [
-        [0.8, 0.6, 0.3, 1.0],
-        [0.7, 0.5, 0.2, 1.0]
+        [0.8, 0.6, 0.3, 1],
+        [0.7, 0.5, 0.2, 1]
     ],
     DUNE_COUNT: 4,
     SAND_PARTICLE_COUNT: 30,
@@ -232,8 +232,8 @@ export const DESERT_STORM_CONFIG = {
 
 export const LAVA_OCEAN_CONFIG = {
     BASE_COLORS: [
-        [0.8, 0.2, 0.0, 1.0],
-        [0.3, 0.1, 0.5, 1.0]
+        [0.8, 0.2, 0, 1],
+        [0.3, 0.1, 0.5, 1]
     ],
     WAVE_COUNT: 4,
     LAVA_BUBBLE_COUNT: 15,
@@ -243,8 +243,8 @@ export const LAVA_OCEAN_CONFIG = {
 
 export const FROZEN_VOLCANO_CONFIG = {
     BASE_COLORS: [
-        [0.6, 0.7, 0.9, 1.0],
-        [0.4, 0.5, 0.7, 1.0]
+        [0.6, 0.7, 0.9, 1],
+        [0.4, 0.5, 0.7, 1]
     ],
     VOLCANO_COUNT: 2,
     ICE_CRYSTAL_COUNT: 12,
@@ -254,8 +254,8 @@ export const FROZEN_VOLCANO_CONFIG = {
 
 export const SPACE_FOREST_CONFIG = {
     BASE_COLORS: [
-        [0.1, 0.15, 0.25, 1.0],
-        [0.2, 0.3, 0.2, 1.0]
+        [0.1, 0.15, 0.25, 1],
+        [0.2, 0.3, 0.2, 1]
     ],
     TREE_COUNT: 6,
     STAR_COUNT: 40,
@@ -266,8 +266,8 @@ export const SPACE_FOREST_CONFIG = {
 
 export const TOXIC_SWAMP_CONFIG = {
     BASE_COLORS: [
-        [0.3, 0.4, 0.2, 1.0],
-        [0.4, 0.5, 0.1, 1.0]
+        [0.3, 0.4, 0.2, 1],
+        [0.4, 0.5, 0.1, 1]
     ],
     BUBBLE_COUNT: 10,
     MIST_COUNT: 8,
@@ -277,8 +277,8 @@ export const TOXIC_SWAMP_CONFIG = {
 
 export const CYBER_CITY_CONFIG = {
     BASE_COLORS: [
-        [0.1, 0.1, 0.2, 1.0],
-        [0.2, 0.0, 0.3, 1.0]
+        [0.1, 0.1, 0.2, 1],
+        [0.2, 0, 0.3, 1]
     ],
     BUILDING_COUNT: 8,
     NEON_PARTICLE_COUNT: 25,

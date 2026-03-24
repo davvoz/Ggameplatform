@@ -8,7 +8,7 @@ export class HeartCollectible extends BaseCollectible {
         const { time } = context;
         const offset = entity.pulsePhase || 0;
         const floatY = entity.y + Math.sin(offset + time * 2) * (entity.floatAmplitude || 8);
-        const pulse = Math.sin(offset + time * 4) * 0.25 + 1.0;
+        const pulse = Math.sin(offset + time * 4) * 0.25 + 1;
         const size = entity.radius * pulse;
 
         this.renderHeartShape(entity.x, floatY, size, entity.color, pulse);

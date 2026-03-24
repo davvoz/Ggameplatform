@@ -28,7 +28,7 @@ export class CrystalCaveThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight,
-            color: [0.1, 0.1, 0.15, 1.0],
+            color: [0.1, 0.1, 0.15, 1],
             type: 'sky_gradient',
             speed: 0
         });

@@ -102,16 +102,16 @@ export class CollectibleCollisionHandler extends CollisionHandler {
     _showScoreText(points, collectible, entityManager) {
         const speedMult = this.context.scoreSystem.getSpeedMultiplier();
         let text = `+${points}`;
-        let color = [1, 0.9, 0.2, 1.0];
+        let color = [1, 0.9, 0.2, 1];
 
         if (speedMult >= 1.5) {
             text = `+${points} ×${speedMult.toFixed(1)}`;
             if (speedMult >= 3.0) {
-                color = [1, 0.0, 0.4, 1.0]; // Rosa intenso
-            } else if (speedMult >= 2.0) {
-                color = [1, 0.4, 0.0, 1.0]; // Arancione
+                color = [1, 0, 0.4, 1]; // Rosa intenso
+            } else if (speedMult >= 2) {
+                color = [1, 0.4, 0, 1]; // Arancione
             } else {
-                color = [1, 0.8, 0.0, 1.0]; // Giallo
+                color = [1, 0.8, 0, 1]; // Giallo
             }
         }
 
@@ -140,32 +140,32 @@ export class CollectibleCollisionHandler extends CollisionHandler {
         if (combo >= 50) {
             return {
                 text: `🌟 x${combo} DIVINO! 🌟`,
-                color: [1, 0.0, 1, 1.0] // Magenta
+                color: [1, 0, 1, 1] // Magenta
             };
         } else if (combo >= 30) {
             return {
                 text: `🔥 x${combo} EPICO! 🔥`,
-                color: [1, 0.3, 0.0, 1.0] // Arancione fuoco
+                color: [1, 0.3, 0, 1] // Arancione fuoco
             };
         } else if (combo >= 20) {
             return {
                 text: `💥 x${combo} BRUTALE! 💥`,
-                color: [1, 0.2, 0.2, 1.0] // Rosso
+                color: [1, 0.2, 0.2, 1] // Rosso
             };
         } else if (combo >= 15) {
             return {
                 text: `⚡ x${combo} PAZZESCO! ⚡`,
-                color: [1, 1, 0.0, 1.0] // Giallo
+                color: [1, 1, 0, 1] // Giallo
             };
         } else if (combo >= 10) {
             return {
                 text: `🌈 x${combo} SUPER! 🌈`,
-                color: [0.0, 1, 1, 1.0] // Ciano
+                color: [0, 1, 1, 1] // Ciano
             };
         } else if (combo >= 5) {
             return {
                 text: `🚀 COMBO x${combo}! 🚀`,
-                color: [0.5, 1, 0.5, 1.0] // Verde
+                color: [0.5, 1, 0.5, 1] // Verde
             };
         }
         return null;

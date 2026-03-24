@@ -347,7 +347,7 @@ export class RenderingSystem {
         
         // Render other particles in single pass
         otherParticles.forEach(p => {
-            const color = p.color || [1, 0.8, 0.0, 1.0];
+            const color = p.color || [1, 0.8, 0, 1];
             const alpha = p.alpha || ((p.life / p.maxLife) || 0.5);
             const finalColor = [...color];
             finalColor[3] = alpha;
@@ -392,7 +392,7 @@ export class RenderingSystem {
         if (this.goalFadeProgress > 0) {
             this.animationRenderer.renderScreenFlash({
                 alpha: this.goalFadeProgress * 0.8, // Max 80% opacity
-                color: [1, 1, 1.0] // White fade
+                color: [1, 1, 1] // White fade
             });
         }
     }

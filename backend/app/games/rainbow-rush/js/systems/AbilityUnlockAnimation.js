@@ -47,8 +47,8 @@ export class AbilityUnlockAnimation {
             const angle = (Math.PI * 2 * i) / 100;
             const speed = 100 + Math.random() * 200;
             const color = this.abilityType === 'flight' 
-                ? [0.4 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1.0]
-                : [1, 0.7 + Math.random() * 0.3, 0.2 + Math.random() * 0.3, 1.0];
+                ? [0.4 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1]
+                : [1, 0.7 + Math.random() * 0.3, 0.2 + Math.random() * 0.3, 1];
             
             this.particles.push({
                 x: centerX,
@@ -99,19 +99,19 @@ export class AbilityUnlockAnimation {
         // Animazione background fade in/out
         if (this.timer < 0.5) {
             this.backgroundAlpha = this.timer / 0.5;
-        } else if (this.timer > this.duration - 1.0) {
-            this.backgroundAlpha = (this.duration - this.timer) / 1.0;
+        } else if (this.timer > this.duration - 1) {
+            this.backgroundAlpha = (this.duration - this.timer) / 1;
         } else {
             this.backgroundAlpha = 0.7;
         }
         
         // Animazione testo fade in
-        if (this.timer < 1.0) {
-            this.textAlpha = this.timer / 1.0;
+        if (this.timer < 1) {
+            this.textAlpha = this.timer / 1;
         } else if (this.timer > this.duration - 1.5) {
             this.textAlpha = (this.duration - this.timer) / 1.5;
         } else {
-            this.textAlpha = 1.0;
+            this.textAlpha = 1;
         }
         
         // Animazione icona bounce
@@ -146,7 +146,7 @@ export class AbilityUnlockAnimation {
             ring.radius += ring.speed * deltaTime;
             if (ring.radius > ring.maxRadius) {
                 ring.radius = 0;
-                ring.alpha = 1.0;
+                ring.alpha = 1;
             }
             ring.alpha = 1.0 - (ring.radius / ring.maxRadius);
         }
@@ -192,7 +192,7 @@ export class AbilityUnlockAnimation {
         
         // Raggi di luce
         const rayColor = this.abilityType === 'flight' 
-            ? [0.5, 0.9, 1.0]
+            ? [0.5, 0.9, 1]
             : [1, 0.8, 0.3];
         
         for (const ray of this.rays) {
@@ -214,7 +214,7 @@ export class AbilityUnlockAnimation {
         
         // Anelli espansivi
         const ringColor = this.abilityType === 'flight'
-            ? [0.4, 0.85, 1.0]
+            ? [0.4, 0.85, 1]
             : [1, 0.7, 0.2];
         
         for (const ring of this.rings) {
@@ -273,7 +273,7 @@ export class AbilityUnlockAnimation {
             for (let i = 0; i < 3; i++) {
                 const flameY = centerY + rocketSize * 0.5 + i * 8;
                 const flameSize = 20 - i * 5;
-                renderer.drawCircle(centerX, flameY, flameSize, [1, 0.4 + i * 0.2, 0.0, this.textAlpha * (1 - i * 0.3)]);
+                renderer.drawCircle(centerX, flameY, flameSize, [1, 0.4 + i * 0.2, 0, this.textAlpha * (1 - i * 0.3)]);
             }
         }
     }

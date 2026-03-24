@@ -24,16 +24,16 @@ export class ScoreSystem {
         this.combo = 0;
         this.comboTimer = 0;
         this.comboTimeout = 3.0; // 3 secondi per mantenere la combo
-        this.comboMultiplier = 1.0;
+        this.comboMultiplier = 1;
         this.maxCombo = 0;
         this.comboListeners = [];
         
         // Bonus multiplier (da bonus speciali)
-        this.bonusMultiplier = 1.0;
+        this.bonusMultiplier = 1;
         this.bonusMultiplierDuration = 0;
         
         // Speed multiplier (basato sulla velocità del gioco)
-        this.speedMultiplier = 1.0;
+        this.speedMultiplier = 1;
         this.currentSpeed = 0;
         
         // Level time tracking for speed bonus
@@ -64,11 +64,11 @@ export class ScoreSystem {
         this.multiplier = 1;
         this.combo = 0;
         this.comboTimer = 0;
-        this.comboMultiplier = 1.0;
+        this.comboMultiplier = 1;
         this.maxCombo = 0;
-        this.bonusMultiplier = 1.0;
+        this.bonusMultiplier = 1;
         this.bonusMultiplierDuration = 0;
-        this.speedMultiplier = 1.0;
+        this.speedMultiplier = 1;
         this.currentSpeed = 0;
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
@@ -86,11 +86,11 @@ export class ScoreSystem {
         this.multiplier = 1;
         this.combo = 0;
         this.comboTimer = 0;
-        this.comboMultiplier = 1.0;
+        this.comboMultiplier = 1;
         this.maxCombo = 0;
-        this.bonusMultiplier = 1.0;
+        this.bonusMultiplier = 1;
         this.bonusMultiplierDuration = 0;
-        this.speedMultiplier = 1.0;
+        this.speedMultiplier = 1;
         this.currentSpeed = 0;
         this.levelStartTime = Date.now();
         this.levelTimeBonus = [];
@@ -111,7 +111,7 @@ export class ScoreSystem {
         if (this.bonusMultiplierDuration > 0) {
             this.bonusMultiplierDuration -= deltaTime;
             if (this.bonusMultiplierDuration <= 0) {
-                this.bonusMultiplier = 1.0;
+                this.bonusMultiplier = 1;
                 this.bonusMultiplierDuration = 0;
             }
         }
@@ -147,7 +147,7 @@ export class ScoreSystem {
     resetCombo() {
         if (this.combo > 0) {
             this.combo = 0;
-            this.comboMultiplier = 1.0;
+            this.comboMultiplier = 1;
             this.notifyComboChange();
         }
     }
@@ -233,7 +233,7 @@ export class ScoreSystem {
             text = `+${finalPoints} ×${this.speedMultiplier.toFixed(1)}`;
             if (this.speedMultiplier >= 3.0) {
                 color = '#ff0066'; // Rosa intenso per moltiplicatori alti
-            } else if (this.speedMultiplier >= 2.0) {
+            } else if (this.speedMultiplier >= 2) {
                 color = '#ff6600'; // Arancione
             } else {
                 color = '#ffcc00'; // Giallo
@@ -300,50 +300,50 @@ export class ScoreSystem {
         
         // MOLTIPLICATORE invece di bonus fisso - PIÙ AGGRESSIVO!
         let multiplier = 0;
-        let bonusMultiplier = 1.0;
+        let bonusMultiplier = 1;
         let rank = 'none';
         let rankIcon = '';
-        let color = [0.7, 0.7, 0.7, 1.0];
+        let color = [0.7, 0.7, 0.7, 1];
         
         if (timeInSeconds <= perfectTime) {
             // PERFECT! Moltiplicatore 1.20x - +20% punti
-            multiplier = 1.0;
+            multiplier = 1;
             bonusMultiplier = 1.20;
             rank = 'perfect';
             rankIcon = '💎';
-            color = [0.4, 0.9, 1, 1.0]; // Cyan brillante
+            color = [0.4, 0.9, 1, 1]; // Cyan brillante
         } else if (timeInSeconds <= goldTime) {
             // GOLD! Moltiplicatore 1.15x - +15% punti
             multiplier = 0.8;
             bonusMultiplier = 1.15;
             rank = 'gold';
             rankIcon = '🥇';
-            color = [1, 0.84, 0.0, 1.0]; // Gold
+            color = [1, 0.84, 0, 1]; // Gold
         } else if (timeInSeconds <= silverTime) {
             // SILVER! Moltiplicatore 1.10x - +10% punti
             multiplier = 0.6;
             bonusMultiplier = 1.10;
             rank = 'silver';
             rankIcon = '🥈';
-            color = [0.75, 0.75, 0.75, 1.0]; // Silver
+            color = [0.75, 0.75, 0.75, 1]; // Silver
         } else if (timeInSeconds <= bronzeTime) {
             // BRONZE! Moltiplicatore 1.05x - +5% punti
             multiplier = 0.4;
             bonusMultiplier = 1.05;
             rank = 'bronze';
             rankIcon = '🥉';
-            color = [0.8, 0.5, 0.2, 1.0]; // Bronze
+            color = [0.8, 0.5, 0.2, 1]; // Bronze
         } else {
             // TOO SLOW - NESSUN BONUS
-            multiplier = 0.0;
-            bonusMultiplier = 1.0; // Nessun bonus/penalità
+            multiplier = 0;
+            bonusMultiplier = 1; // Nessun bonus/penalità
             rank = 'slow';
             rankIcon = '⏱️';
-            color = [0.5, 0.5, 0.5, 1.0]; // Gray
+            color = [0.5, 0.5, 0.5, 1]; // Gray
         }
         
         // Calcola i punti bonus come percentuale dello score attuale, diviso per 10
-        const bonusPoints = Math.floor(this.score * (bonusMultiplier - 1.0) / 10);
+        const bonusPoints = Math.floor(this.score * (bonusMultiplier - 1) / 10);
         
         return {
             points: bonusPoints,

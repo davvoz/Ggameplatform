@@ -16,12 +16,12 @@ const SAFETY_CONFIG = {
     DISSOLVE_SPEED_AUTO: 0.02, // slow dissolve when player leaves
     
     // Rescue platforms
-    RESCUE_SPAWN_INTERVAL: 2.0, // seconds between rescue platform spawns
+    RESCUE_SPAWN_INTERVAL: 2, // seconds between rescue platform spawns
     
     // Platform properties
     PLATFORM_WIDTH: 800,
     PLATFORM_HEIGHT: 15,
-    COLOR_READY: [0.2, 0.8, 0.4, 1.0], // Green when ready
+    COLOR_READY: [0.2, 0.8, 0.4, 1], // Green when ready
     COLOR_DEPLETED: [0.5, 0.5, 0.5, 0.3], // Gray when no charges
 };
 
@@ -92,7 +92,7 @@ export class SafetyPlatformSystem {
         this.playerOnPlatform = playerOnPlatform;
         
         // Update animazione pallino spento
-        if (this.chargeConsumedTime < 1.0) {
+        if (this.chargeConsumedTime < 1) {
             this.chargeConsumedTime += deltaTime;
         }
         
@@ -397,17 +397,17 @@ export class SafetyPlatformSystem {
         // Palette colori PIÙ VIVACI E FANTASIOSE
         const colorPalettes = [
             // Tropical
-            [[0.2, 1, 0.5, 1.0], [1, 0.8, 0.2, 1.0], [1, 0.4, 0.6, 1.0]],
+            [[0.2, 1, 0.5, 1], [1, 0.8, 0.2, 1], [1, 0.4, 0.6, 1]],
             // Candy
-            [[1, 0.3, 0.7, 1.0], [0.5, 0.3, 1, 1.0], [0.3, 0.9, 1, 1.0]],
+            [[1, 0.3, 0.7, 1], [0.5, 0.3, 1, 1], [0.3, 0.9, 1, 1]],
             // Sunset
-            [[1, 0.5, 0.2, 1.0], [1, 0.7, 0.3, 1.0], [0.9, 0.3, 0.5, 1.0]],
+            [[1, 0.5, 0.2, 1], [1, 0.7, 0.3, 1], [0.9, 0.3, 0.5, 1]],
             // Neon
-            [[0.3, 1, 0.3, 1.0], [1, 0.2, 1, 1.0], [0.2, 0.8, 1, 1.0]],
+            [[0.3, 1, 0.3, 1], [1, 0.2, 1, 1], [0.2, 0.8, 1, 1]],
             // Pastel Rainbow
-            [[0.7, 0.5, 1, 1.0], [1, 0.7, 0.8, 1.0], [0.5, 1, 0.9, 1.0]],
+            [[0.7, 0.5, 1, 1], [1, 0.7, 0.8, 1], [0.5, 1, 0.9, 1]],
             // Fire
-            [[1, 0.3, 0.2, 1.0], [1, 0.6, 0.1, 1.0], [1, 0.9, 0.3, 1.0]]
+            [[1, 0.3, 0.2, 1], [1, 0.6, 0.1, 1], [1, 0.9, 0.3, 1]]
         ];
         
         // Level-based selection

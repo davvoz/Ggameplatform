@@ -247,7 +247,7 @@ class GoalReachedState extends BaseGameState {
                 const speed = 150 + Math.random() * 80;
                 
                 // Simple gold particles
-                const color = [1, 0.9, 0.2, 1.0];
+                const color = [1, 0.9, 0.2, 1];
                 
                 entityManager.addEntity('powerupParticles', {
                     x: player.x + player.width / 2,
@@ -304,20 +304,20 @@ class GoalReachedState extends BaseGameState {
         const fadeProgress = Math.min(1, this.elapsed / this.animationDuration);
         
         // Calculate zoom scale - simple and clean
-        let zoomScale = 1.0;
+        let zoomScale = 1;
         if (this.elapsed < 0.6) {
             // Zoom in from 1.0 to 2.0x over 0.6s
             const t = this.elapsed / 0.6;
             const ease = t * t * (3 - 2 * t);
-            zoomScale = 1.0 + ease * 1.0;
-        } else if (this.elapsed < 2.0) {
+            zoomScale = 1.0 + ease * 1;
+        } else if (this.elapsed < 2) {
             // Hold at 2.0x
             zoomScale = 2.0;
         } else {
             // Zoom out from 2.0x to 1.0 in last 0.5s
-            const t = (this.elapsed - 2.0) / 0.5;
+            const t = (this.elapsed - 2) / 0.5;
             const ease = 1 - (1 - t) * (1 - t);
-            zoomScale = 2.0 - ease * 1.0;
+            zoomScale = 2.0 - ease * 1;
         }
         
         const rotation = 0;
@@ -348,7 +348,7 @@ class GoalReachedState extends BaseGameState {
             const targetY = canvasCenterY - player.height / 2;
             
             // Interpolate position based on zoom with smooth easing
-            const lerpFactor = Math.min(1, (zoomScale - 1) / 1.0);
+            const lerpFactor = Math.min(1, (zoomScale - 1) / 1);
             const smoothLerp = lerpFactor * lerpFactor * (3 - 2 * lerpFactor);
             player.animatedX = this.frozenPlayerX + (targetX - this.frozenPlayerX) * smoothLerp;
             player.animatedY = this.frozenPlayerY + (targetY - this.frozenPlayerY) * smoothLerp;
@@ -381,7 +381,7 @@ class GoalReachedState extends BaseGameState {
                     life: 1,
                     maxLife: 1,
                     size: 4,
-                    color: [1, 0.9, 0.2, 1.0],
+                    color: [1, 0.9, 0.2, 1],
                     gravity: 50,
                     type: 'victory-sparkle'
                 });
@@ -408,7 +408,7 @@ class GoalReachedState extends BaseGameState {
         
         // Calculate text position - centered below player
         // Offset scales with zoom to maintain relative position
-        const zoomScale = player.animatedScale || 1.0;
+        const zoomScale = player.animatedScale || 1;
         const offsetY = 80 * zoomScale; // Distance below player scales with zoom
         
         const textX = playerCenterX;
@@ -416,7 +416,7 @@ class GoalReachedState extends BaseGameState {
         
         // Calculate text scale and alpha based on animation progress
         let textScale = 0.5;
-        let alpha = 1.0;
+        let alpha = 1;
         
         if (this.elapsed < 0.3) {
             // Pop in animation
@@ -449,7 +449,7 @@ class GoalReachedState extends BaseGameState {
         ctx.strokeText(this.victoryText.text, textX, textY);
         
         // Fill (main color)
-        ctx.fillStyle = 'rgba(255, 215, 0, 1.0)';
+        ctx.fillStyle = 'rgba(255, 215, 0, 1)';
         ctx.fillText(this.victoryText.text, textX, textY);
         
         ctx.restore();

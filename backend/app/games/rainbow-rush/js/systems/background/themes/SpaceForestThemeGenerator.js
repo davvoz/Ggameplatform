@@ -32,7 +32,7 @@ export class SpaceForestThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.7,
-            color: [0.1, 0.15, 0.25, 1.0],
+            color: [0.1, 0.15, 0.25, 1],
             type: 'sky_gradient',
             speed: 0
         });
@@ -43,7 +43,7 @@ export class SpaceForestThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: groundY,
             height: this.canvasHeight - groundY,
-            color: [0.15, 0.25, 0.15, 1.0],
+            color: [0.15, 0.25, 0.15, 1],
             type: 'ground',
             speed: 0
         });

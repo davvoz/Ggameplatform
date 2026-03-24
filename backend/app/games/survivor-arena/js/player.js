@@ -322,6 +322,17 @@ class Player extends LivingEntity {
     }
 
     /**
+     * Remove a weapon by index (for portal sacrifice mechanic)
+     * @param {number} index - Weapon slot index to remove
+     * @returns {Weapon|null} The removed weapon, or null if invalid index
+     */
+    removeWeapon(index) {
+        if (index < 0 || index >= this.weapons.length) return null;
+        const removed = this.weapons.splice(index, 1);
+        return removed[0] || null;
+    }
+
+    /**
      * Apply stat upgrade
      * @param {string} statName 
      * @param {number} value 
@@ -504,7 +515,7 @@ class Player extends LivingEntity {
             this.sprite.render(ctx, this.x, this.y, this.spriteScale, {
                 opacity: opacity,
                 flipX: flipX,
-                tint: this.damageFlash > 0 ? '#ff6666' : null
+                tint: this.damageFlash > 0 ? '#ff2222' : null
             });
             
             ctx.restore();
@@ -516,8 +527,8 @@ class Player extends LivingEntity {
                 this.x - this.size * 0.3, this.y - this.size * 0.3, 0,
                 this.x, this.y, this.size
             );
-            gradient.addColorStop(0, '#66d9ff');
-            gradient.addColorStop(1, this.color);
+            gradient.addColorStop(0, this.damageFlash > 0 ? '#ff4444' : '#66d9ff');
+            gradient.addColorStop(1, this.damageFlash > 0 ? '#cc0000' : this.color);
 
             ctx.fillStyle = gradient;
             ctx.beginPath();
@@ -530,6 +541,65 @@ class Player extends LivingEntity {
         }
 
         ctx.restore();
+
+        // Red flash ring when taking damage
+        if (this.damageFlash > 0) {
+            const flashAlpha = Math.min(this.damageFlash / 150, 1) * 0.6;
+            ctx.strokeStyle = `rgba(255, 0, 0, ${flashAlpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size + 4, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Slow effect visual — icy blue overlay + particles
+        if (this._slowActive) {
+            const t = Date.now();
+            // Blue frost overlay on player
+            ctx.fillStyle = `rgba(100, 200, 255, ${0.15 + Math.sin(t / 120) * 0.08})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size + 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Frost ring
+            ctx.strokeStyle = `rgba(150, 230, 255, ${0.4 + Math.sin(t / 150) * 0.2})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size + 4 + Math.sin(t / 200) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+            // Floating ice particles
+            for (let i = 0; i < 4; i++) {
+                const a = (t / 600) + (i * Math.PI / 2);
+                const d = this.size + 8 + Math.sin(t / 180 + i * 2) * 4;
+                ctx.fillStyle = `rgba(180, 240, 255, ${0.4 + Math.sin(t / 100 + i) * 0.2})`;
+                ctx.beginPath();
+                ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // "SLOWED" text
+            ctx.fillStyle = `rgba(100, 200, 255, ${0.6 + Math.sin(t / 200) * 0.2})`;
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SLOWED', this.x, this.y - this.size - 12);
+        }
+
+        // Weapons disabled visual
+        if (this._weaponsDisabled) {
+            const t = Date.now();
+            ctx.strokeStyle = `rgba(255, 50, 50, ${0.4 + Math.sin(t / 100) * 0.2})`;
+            ctx.lineWidth = 2;
+            // X mark over player
+            const s = this.size * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(this.x - s, this.y - s);
+            ctx.lineTo(this.x + s, this.y + s);
+            ctx.moveTo(this.x + s, this.y - s);
+            ctx.lineTo(this.x - s, this.y + s);
+            ctx.stroke();
+            ctx.fillStyle = `rgba(255, 80, 80, ${0.6 + Math.sin(t / 150) * 0.2})`;
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('JAMMED', this.x, this.y - this.size - 12);
+        }
 
         // Dodge cooldown indicator
         if (this.dodgeCooldown > 0) {

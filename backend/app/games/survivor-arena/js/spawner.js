@@ -1,6 +1,6 @@
-import { CONFIG, DIFFICULTY_SCALING } from './config.js';
+import { CONFIG, DIFFICULTY_SCALING, WORLDS, WORLD_ENEMIES, WORLD_ORDER } from './config.js';
 import { MathUtils } from './utils.js';
-import { Enemy, MiniBoss, Boss } from './enemies.js';
+import { Enemy, MiniBoss, Boss, WorldBoss } from './enemies.js';
 /**
  * Survivor Arena - Enemy Spawner
  * @fileoverview Handles enemy spawning logic and waves
@@ -42,6 +42,10 @@ class Spawner {
         this.bossWarningShown = false;
         this.bossCount = 0; // Track number of bosses spawned
 
+        // World system
+        this.currentWorld = null; // null = home world
+        this.worldBossDefeated = false;
+
         // Enemy type weights (adjusted over time)
         this.enemyWeights = this.getInitialWeights();
     }
@@ -54,6 +58,10 @@ class Spawner {
         const weights = {};
         for (const [type, config] of Object.entries(CONFIG.ENEMIES)) {
             weights[type] = config.spawnWeight || 0;
+        }
+        // World enemies start with 0 weight (activated when in that world)
+        for (const [type, config] of Object.entries(WORLD_ENEMIES)) {
+            weights[type] = 0;
         }
         return weights;
     }
@@ -94,12 +102,38 @@ class Spawner {
     adjustEnemyWeights() {
         const minutesPassed = this.gameTime / 60;
 
-        // Reduce basic enemies, increase special types over time
-        this.enemyWeights.basic = Math.max(10, 40 - minutesPassed * 3);
-        this.enemyWeights.fast = Math.min(35, 25 + minutesPassed * 1);
-        this.enemyWeights.tank = Math.min(25, 15 + minutesPassed * 1);
-        this.enemyWeights.ranged = Math.min(20, 12 + minutesPassed * 1);
-        this.enemyWeights.exploder = Math.min(15, 8 + minutesPassed * 1);
+        // Reset all world enemy weights
+        for (const type of Object.keys(WORLD_ENEMIES)) {
+            this.enemyWeights[type] = 0;
+        }
+
+        // If in a world, spawn ONLY that world's enemies (each world has its own set)
+        if (this.currentWorld && this.currentWorld !== 'voidAbyss') {
+            const world = WORLDS[this.currentWorld];
+            if (world && world.enemyTypes) {
+                // Zero out base enemies - worlds have their own
+                this.enemyWeights.basic = 0;
+                this.enemyWeights.fast = 0;
+                this.enemyWeights.tank = 0;
+                this.enemyWeights.ranged = 0;
+                this.enemyWeights.exploder = 0;
+
+                // Activate only this world's enemies
+                for (const enemyType of world.enemyTypes) {
+                    const config = WORLD_ENEMIES[enemyType];
+                    if (config) {
+                        this.enemyWeights[enemyType] = config.spawnWeight || 20;
+                    }
+                }
+            }
+        } else {
+            // Home world (voidAbyss) or no world — use base enemies
+            this.enemyWeights.basic = Math.max(10, 40 - minutesPassed * 3);
+            this.enemyWeights.fast = Math.min(35, 25 + minutesPassed * 1);
+            this.enemyWeights.tank = Math.min(25, 15 + minutesPassed * 1);
+            this.enemyWeights.ranged = Math.min(20, 12 + minutesPassed * 1);
+            this.enemyWeights.exploder = Math.min(15, 8 + minutesPassed * 1);
+        }
     }
 
     /**
@@ -165,9 +199,10 @@ class Spawner {
         const timeSinceBoss = (this.gameTime * 1000) - this.lastBossTime;
         
         // Boss warning 3 seconds before spawn
+        const bossMinTime = CONFIG.BOSS.spawnInterval / 1000 * 0.8; // 80% of interval as min time
         if (timeSinceBoss >= CONFIG.BOSS.spawnInterval - CONFIG.BOSS.warningDuration && 
             timeSinceBoss < CONFIG.BOSS.spawnInterval &&
-            this.gameTime > 150 &&
+            this.gameTime > bossMinTime &&
             !this.bossWarningShown) {
             this.game.ui.showBossWarning();
             this.game.events.emit('bossSpawn');
@@ -175,7 +210,7 @@ class Spawner {
         }
         
         if (timeSinceBoss >= CONFIG.BOSS.spawnInterval && 
-            this.gameTime > 150) {
+            this.gameTime > bossMinTime) {
             this.spawnBoss();
             this.lastBossTime = this.gameTime * 1000;
             this.bossWarningShown = false;
@@ -184,11 +219,38 @@ class Spawner {
     }
 
     /**
+     * Get a world-equivalent enemy type for base types
+     * @param {string} baseType - Base enemy type
+     * @returns {string} World-appropriate enemy type
+     */
+    getWorldEnemyType(baseType) {
+        if (!this.currentWorld || this.currentWorld === 'voidAbyss') return baseType;
+        const world = WORLDS[this.currentWorld];
+        if (!world || !world.enemyTypes) return baseType;
+
+        // Map base archetypes to world equivalents by role
+        const roleMap = {
+            'basic': 0,   // first/generic
+            'fast': 1,    // fast/runner
+            'tank': 2,    // heavy/tank
+            'ranged': 3,  // ranged/shooter
+            'exploder': 4 // exploder
+        };
+        const idx = roleMap[baseType];
+        if (idx !== undefined && world.enemyTypes[idx]) {
+            return world.enemyTypes[idx];
+        }
+        // Fallback: random world enemy
+        return world.enemyTypes[Math.floor(Math.random() * world.enemyTypes.length)];
+    }
+
+    /**
      * Spawn a special wave with stronger enemies
      */
     spawnSpecialWave() {
-        const waveTypes = ['fast', 'tank', 'ranged', 'exploder'];
-        const waveType = waveTypes[Math.floor(Math.random() * waveTypes.length)];
+        const baseTypes = ['fast', 'tank', 'ranged', 'exploder'];
+        const baseType = baseTypes[Math.floor(Math.random() * baseTypes.length)];
+        const waveType = this.getWorldEnemyType(baseType);
         const waveSize = 5 + Math.floor(this.gameTime / 30);
 
         // Announce wave
@@ -249,9 +311,10 @@ class Spawner {
                         break;
                 }
 
-                // Mix of enemy types with higher rarity chance during hordes
-                const types = ['basic', 'basic', 'fast', 'fast', 'tank'];
-                const type = types[Math.floor(Math.random() * types.length)];
+                // Mix of enemy types - use world equivalents
+                const baseTypes = ['basic', 'basic', 'fast', 'fast', 'tank'];
+                const baseType = baseTypes[Math.floor(Math.random() * baseTypes.length)];
+                const type = this.getWorldEnemyType(baseType);
                 const rarity = this.selectRarity(true); // Higher rarity during horde
 
                 this.spawnEnemyAt(x, y, type, rarity);
@@ -439,12 +502,24 @@ class Spawner {
 
         // Progressive scaling based on boss count
         const bossScaling = 1 + (this.bossCount * 0.3); // Each boss +30% stronger
-        
-        const boss = new Boss(x, y, this.difficultyMultipliers);
-        boss.health *= bossScaling;
-        boss.maxHealth = boss.health;
-        boss.damage *= bossScaling;
-        boss.speed *= (1 + this.bossCount * 0.05); // Each boss +5% faster
+
+        let boss;
+        if (this.currentWorld && WORLDS[this.currentWorld]) {
+            // Spawn a WorldBoss for the current world
+            const worldBossConfig = WORLDS[this.currentWorld].boss;
+            boss = new WorldBoss(x, y, worldBossConfig, this.difficultyMultipliers);
+            boss.health *= bossScaling;
+            boss.maxHealth = boss.health;
+            boss.damage *= bossScaling;
+            boss.speed *= (1 + this.bossCount * 0.05);
+        } else {
+            boss = new Boss(x, y, this.difficultyMultipliers);
+            boss.health *= bossScaling;
+            boss.maxHealth = boss.health;
+            boss.damage *= bossScaling;
+            boss.speed *= (1 + this.bossCount * 0.05);
+        }
+
         boss.setTarget(this.game.player);
         
         // Add to bosses array instead of single boss
@@ -457,22 +532,50 @@ class Spawner {
     }
 
     /**
+     * Set current world for enemy/boss spawning
+     * @param {string|null} worldId - World ID or null for home world
+     */
+    setWorld(worldId) {
+        this.currentWorld = worldId;
+        this.worldBossDefeated = false;
+        this.adjustEnemyWeights();
+    }
+
+    /**
+     * Get available destination worlds (excluding current)
+     * @returns {string[]}
+     */
+    getAvailableWorlds() {
+        return WORLD_ORDER.filter(id => id !== this.currentWorld);
+    }
+
+    /**
      * Spawn enemies around a specific position (for mini-boss summon)
      * @param {number} x 
      * @param {number} y 
      * @param {number} count 
      */
     spawnSummonedEnemies(x, y, count) {
+        // Pick enemy types from current world
+        let summonType = 'basic';
+        if (this.currentWorld && this.currentWorld !== 'voidAbyss' && WORLDS[this.currentWorld]) {
+            const types = WORLDS[this.currentWorld].enemyTypes;
+            summonType = types[Math.floor(Math.random() * types.length)];
+        }
+        
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 / count) * i;
-            const dist = 50 + Math.random() * 30;
+            const dist = 150 + Math.random() * 80;
             
             const enemy = new Enemy(
                 x + Math.cos(angle) * dist,
                 y + Math.sin(angle) * dist,
-                'basic'
+                summonType
             );
             enemy.setTarget(this.game.player);
+            
+            // Spawn animation: enemy fades in and scales up
+            enemy.spawnAnim = { start: Date.now(), duration: 600 };
 
             this.game.enemies.push(enemy);
         }
@@ -510,6 +613,8 @@ class Spawner {
         this.hordeCount = 0;
         this.isHordeActive = false;
         this.bossWarningShown = false;
+        this.currentWorld = null;
+        this.worldBossDefeated = false;
     }
 }
 export { Spawner };

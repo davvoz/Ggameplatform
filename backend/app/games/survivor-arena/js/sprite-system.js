@@ -439,65 +439,84 @@ const SpriteRenderer = {
 
 const SpriteFactory = {
     // ========== PLAYER SPRITES ==========
-    createPlayer() {
+    createPlayer(colors = null) {
+        const c = colors || {
+            bodyColor: '#1a237e',
+            armorColor: '#3949ab',
+            accentColor: '#00e5ff',
+            headColor: '#283593'
+        };
         const sprite = new MultiPartSprite('player');
 
         // Body (main torso) - cyberpunk style
         sprite.addPart('body', [
             // Core body
-            { type: 'ellipse', width: 0.5, height: 0.6, color: '#1a237e', x: 0, y: 0 },
+            { type: 'ellipse', width: 0.5, height: 0.6, color: c.bodyColor, x: 0, y: 0 },
             // Armor plates
             { type: 'polygon', points: [
                 {x: -0.2, y: -0.15}, {x: 0.2, y: -0.15},
                 {x: 0.15, y: 0.15}, {x: -0.15, y: 0.15}
-            ], color: '#3949ab' },
+            ], color: c.armorColor },
             // Energy core
-            { type: 'circle', radius: 0.08, color: '#00e5ff', x: 0, y: 0 },
+            { type: 'circle', radius: 0.08, color: c.accentColor, x: 0, y: 0 },
             { type: 'circle', radius: 0.05, color: '#ffffff', x: 0, y: 0 }
         ], 0.5, 0.5, 1);
 
         // Head with visor
         const head = sprite.addPart('head', [
             // Head base
-            { type: 'circle', radius: 0.15, color: '#283593', x: 0, y: 0 },
+            { type: 'circle', radius: 0.15, color: c.headColor, x: 0, y: 0 },
             // Visor
-            { type: 'arc', radius: 0.12, startAngle: -0.7, endAngle: 0.7, color: '#00e5ff', strokeWidth: 0.06 },
+            { type: 'arc', radius: 0.12, startAngle: -0.7, endAngle: 0.7, color: c.accentColor, strokeWidth: 0.06 },
             // Antenna
-            { type: 'line', x1: 0.08, y1: -0.1, x2: 0.12, y2: -0.2, color: '#00e5ff', strokeWidth: 0.02 },
-            { type: 'circle', radius: 0.02, color: '#00e5ff', x: 0.12, y: -0.2 }
+            { type: 'line', x1: 0.08, y1: -0.1, x2: 0.12, y2: -0.2, color: c.accentColor, strokeWidth: 0.02 },
+            { type: 'circle', radius: 0.02, color: c.accentColor, x: 0.12, y: -0.2 }
         ], 0.5, 0.5, 2);
         head.setBaseTransform(0, -0.32);
 
         // Left arm
         const leftArm = sprite.addPart('leftArm', [
-            { type: 'ellipse', width: 0.12, height: 0.25, color: '#3949ab' },
-            { type: 'circle', radius: 0.04, color: '#00e5ff', x: 0, y: 0.08 }
+            { type: 'ellipse', width: 0.12, height: 0.25, color: c.armorColor },
+            { type: 'circle', radius: 0.04, color: c.accentColor, x: 0, y: 0.08 }
         ], 0.5, 0, 0);
         leftArm.setBaseTransform(-0.22, -0.05);
 
         // Right arm
         const rightArm = sprite.addPart('rightArm', [
-            { type: 'ellipse', width: 0.12, height: 0.25, color: '#3949ab' },
-            { type: 'circle', radius: 0.04, color: '#00e5ff', x: 0, y: 0.08 }
+            { type: 'ellipse', width: 0.12, height: 0.25, color: c.armorColor },
+            { type: 'circle', radius: 0.04, color: c.accentColor, x: 0, y: 0.08 }
         ], 0.5, 0, 0);
         rightArm.setBaseTransform(0.22, -0.05);
 
         // Legs
         const leftLeg = sprite.addPart('leftLeg', [
-            { type: 'ellipse', width: 0.1, height: 0.22, color: '#1a237e' },
-            { type: 'rect', width: 0.08, height: 0.06, color: '#00e5ff', x: 0, y: 0.1 }
+            { type: 'ellipse', width: 0.1, height: 0.22, color: c.bodyColor },
+            { type: 'rect', width: 0.08, height: 0.06, color: c.accentColor, x: 0, y: 0.1 }
         ], 0.5, 0, 0);
         leftLeg.setBaseTransform(-0.1, 0.28);
 
         const rightLeg = sprite.addPart('rightLeg', [
-            { type: 'ellipse', width: 0.1, height: 0.22, color: '#1a237e' },
-            { type: 'rect', width: 0.08, height: 0.06, color: '#00e5ff', x: 0, y: 0.1 }
+            { type: 'ellipse', width: 0.1, height: 0.22, color: c.bodyColor },
+            { type: 'rect', width: 0.08, height: 0.06, color: c.accentColor, x: 0, y: 0.1 }
         ], 0.5, 0, 0);
         rightLeg.setBaseTransform(0.1, 0.28);
 
+        // Jet thrusters (behind body)
+        const jetL = sprite.addPart('jetL', [
+            { type: 'ellipse', width: 0.06, height: 0.14, color: c.accentColor }
+        ], 0.5, 0, -1);
+        jetL.setBaseTransform(-0.15, 0.18);
+        jetL.opacity = 0.5;
+
+        const jetR = sprite.addPart('jetR', [
+            { type: 'ellipse', width: 0.06, height: 0.14, color: c.accentColor }
+        ], 0.5, 0, -1);
+        jetR.setBaseTransform(0.15, 0.18);
+        jetR.opacity = 0.5;
+
         // Shield effect (hidden by default)
         const shield = sprite.addPart('shield', [
-            { type: 'circle', radius: 0.55, color: '#00e5ff', fill: false, stroke: true, strokeWidth: 0.03 }
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
         ], 0.5, 0.5, 3);
         shield.visible = false;
 
@@ -508,31 +527,57 @@ const SpriteFactory = {
     },
 
     addPlayerAnimations(sprite) {
-        // Idle animation - breathing effect
+        // Idle - cyber breathing with energy core pulse
         const idle = new AnimationClip('idle', 1.5, true);
         idle.addTrack('body', [
-            { time: 0, transform: { scaleY: 1 } },
-            { time: 0.75, transform: { scaleY: 1.03 } },
-            { time: 1.5, transform: { scaleY: 1 } }
+            { time: 0, transform: { scaleY: 1, scaleX: 1 } },
+            { time: 0.75, transform: { scaleY: 1.03, scaleX: 0.98 } },
+            { time: 1.5, transform: { scaleY: 1, scaleX: 1 } }
         ]);
         idle.addTrack('head', [
-            { time: 0, transform: { y: 0 } },
-            { time: 0.75, transform: { y: -0.01 } },
-            { time: 1.5, transform: { y: 0 } }
+            { time: 0, transform: { y: 0, rotation: 0 } },
+            { time: 0.5, transform: { y: -0.008, rotation: 0.02 } },
+            { time: 1.0, transform: { y: -0.012, rotation: 0 } },
+            { time: 1.5, transform: { y: 0, rotation: 0 } }
+        ]);
+        idle.addTrack('leftArm', [
+            { time: 0, transform: { rotation: -0.05 } },
+            { time: 0.75, transform: { rotation: 0.05 } },
+            { time: 1.5, transform: { rotation: -0.05 } }
+        ]);
+        idle.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0.05 } },
+            { time: 0.75, transform: { rotation: -0.05 } },
+            { time: 1.5, transform: { rotation: 0.05 } }
+        ]);
+        // Jet thruster idle pulse
+        idle.addTrack('jetL', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.375, transform: { scaleY: 1.4 } },
+            { time: 0.75, transform: { scaleY: 0.8 } },
+            { time: 1.125, transform: { scaleY: 1.3 } },
+            { time: 1.5, transform: { scaleY: 1 } }
+        ]);
+        idle.addTrack('jetR', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.375, transform: { scaleY: 0.8 } },
+            { time: 0.75, transform: { scaleY: 1.4 } },
+            { time: 1.125, transform: { scaleY: 0.7 } },
+            { time: 1.5, transform: { scaleY: 1 } }
         ]);
         sprite.addAnimation(idle);
 
-        // Walk animation
+        // Walk - military march with active jets
         const walk = new AnimationClip('walk', 0.5, true);
         walk.addTrack('leftArm', [
-            { time: 0, transform: { rotation: 0.3 } },
-            { time: 0.25, transform: { rotation: -0.3 } },
-            { time: 0.5, transform: { rotation: 0.3 } }
+            { time: 0, transform: { rotation: 0.35 } },
+            { time: 0.25, transform: { rotation: -0.35 } },
+            { time: 0.5, transform: { rotation: 0.35 } }
         ]);
         walk.addTrack('rightArm', [
-            { time: 0, transform: { rotation: -0.3 } },
-            { time: 0.25, transform: { rotation: 0.3 } },
-            { time: 0.5, transform: { rotation: -0.3 } }
+            { time: 0, transform: { rotation: -0.35 } },
+            { time: 0.25, transform: { rotation: 0.35 } },
+            { time: 0.5, transform: { rotation: -0.35 } }
         ]);
         walk.addTrack('leftLeg', [
             { time: 0, transform: { rotation: -0.4 } },
@@ -551,6 +596,28 @@ const SpriteFactory = {
             { time: 0.375, transform: { y: -0.02 } },
             { time: 0.5, transform: { y: 0 } }
         ]);
+        walk.addTrack('head', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.125, transform: { y: -0.015 } },
+            { time: 0.25, transform: { y: 0 } },
+            { time: 0.375, transform: { y: -0.015 } },
+            { time: 0.5, transform: { y: 0 } }
+        ]);
+        // Jets flare while walking
+        walk.addTrack('jetL', [
+            { time: 0, transform: { scaleY: 1.5 } },
+            { time: 0.125, transform: { scaleY: 1.0 } },
+            { time: 0.25, transform: { scaleY: 1.5 } },
+            { time: 0.375, transform: { scaleY: 1.0 } },
+            { time: 0.5, transform: { scaleY: 1.5 } }
+        ]);
+        walk.addTrack('jetR', [
+            { time: 0, transform: { scaleY: 1.0 } },
+            { time: 0.125, transform: { scaleY: 1.5 } },
+            { time: 0.25, transform: { scaleY: 1.0 } },
+            { time: 0.375, transform: { scaleY: 1.5 } },
+            { time: 0.5, transform: { scaleY: 1.0 } }
+        ]);
         sprite.addAnimation(walk);
 
         // Damage animation
@@ -562,12 +629,1075 @@ const SpriteFactory = {
         ]);
         sprite.addAnimation(damage);
 
-        // Attack animation
+        // Attack - arm swing with body lean
         const attack = new AnimationClip('attack', 0.2, false);
         attack.addTrack('rightArm', [
             { time: 0, transform: { rotation: 0, x: 0 } },
             { time: 0.1, transform: { rotation: -1, x: 0.1 } },
             { time: 0.2, transform: { rotation: 0, x: 0 } }
+        ]);
+        attack.addTrack('body', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.1, transform: { rotation: -0.08 } },
+            { time: 0.2, transform: { rotation: 0 } }
+        ]);
+        sprite.addAnimation(attack);
+    },
+
+    // ========== FIRE WARRIOR - Bulky, spiked shoulders, flame horns ==========
+    createPlayerFire(colors = null) {
+        const c = colors || {
+            bodyColor: '#7f1d1d', armorColor: '#b91c1c',
+            accentColor: '#f97316', headColor: '#991b1b'
+        };
+        const sprite = new MultiPartSprite('player');
+
+        // Body - broad torso
+        sprite.addPart('body', [
+            { type: 'ellipse', width: 0.6, height: 0.65, color: c.bodyColor },
+            // Heavy chest plate
+            { type: 'polygon', points: [
+                {x: -0.25, y: -0.2}, {x: 0.25, y: -0.2},
+                {x: 0.18, y: 0.2}, {x: -0.18, y: 0.2}
+            ], color: c.armorColor },
+            // Flame emblem
+            { type: 'polygon', points: [
+                {x: 0, y: -0.12}, {x: -0.07, y: 0.08},
+                {x: 0.07, y: 0.08}
+            ], color: c.accentColor },
+            { type: 'circle', radius: 0.04, color: '#ffcc00', x: 0, y: 0 }
+        ], 0.5, 0.5, 1);
+
+        // Head - angular helmet with horns
+        const head = sprite.addPart('head', [
+            { type: 'rect', width: 0.3, height: 0.28, color: c.headColor, x: 0, y: 0 },
+            // Horn left
+            { type: 'polygon', points: [
+                {x: -0.12, y: -0.14}, {x: -0.18, y: -0.28}, {x: -0.06, y: -0.12}
+            ], color: c.accentColor },
+            // Horn right
+            { type: 'polygon', points: [
+                {x: 0.12, y: -0.14}, {x: 0.18, y: -0.28}, {x: 0.06, y: -0.12}
+            ], color: c.accentColor },
+            // Angry eye slits
+            { type: 'rect', width: 0.07, height: 0.025, color: '#ffcc00', x: -0.06, y: -0.02 },
+            { type: 'rect', width: 0.07, height: 0.025, color: '#ffcc00', x: 0.06, y: -0.02 }
+        ], 0.5, 0.5, 2);
+        head.setBaseTransform(0, -0.35);
+
+        // Left arm with spike shoulder
+        const leftArm = sprite.addPart('leftArm', [
+            { type: 'ellipse', width: 0.16, height: 0.28, color: c.armorColor },
+            // Shoulder spike
+            { type: 'polygon', points: [
+                {x: -0.04, y: -0.14}, {x: -0.12, y: -0.22}, {x: 0.02, y: -0.1}
+            ], color: c.accentColor },
+            // Fist glow
+            { type: 'circle', radius: 0.05, color: '#ffaa00', x: 0, y: 0.12 }
+        ], 0.5, 0, 0);
+        leftArm.setBaseTransform(-0.28, -0.05);
+
+        // Right arm with spike shoulder
+        const rightArm = sprite.addPart('rightArm', [
+            { type: 'ellipse', width: 0.16, height: 0.28, color: c.armorColor },
+            { type: 'polygon', points: [
+                {x: 0.04, y: -0.14}, {x: 0.12, y: -0.22}, {x: -0.02, y: -0.1}
+            ], color: c.accentColor },
+            { type: 'circle', radius: 0.05, color: '#ffaa00', x: 0, y: 0.12 }
+        ], 0.5, 0, 0);
+        rightArm.setBaseTransform(0.28, -0.05);
+
+        // Thick legs with flame boots
+        const leftLeg = sprite.addPart('leftLeg', [
+            { type: 'ellipse', width: 0.14, height: 0.24, color: c.bodyColor },
+            { type: 'ellipse', width: 0.12, height: 0.06, color: '#ff6600', x: 0, y: 0.12 }
+        ], 0.5, 0, 0);
+        leftLeg.setBaseTransform(-0.14, 0.28);
+
+        const rightLeg = sprite.addPart('rightLeg', [
+            { type: 'ellipse', width: 0.14, height: 0.24, color: c.bodyColor },
+            { type: 'ellipse', width: 0.12, height: 0.06, color: '#ff6600', x: 0, y: 0.12 }
+        ], 0.5, 0, 0);
+        rightLeg.setBaseTransform(0.14, 0.28);
+
+        // Flame aura (behind body)
+        const flameAura = sprite.addPart('flameAura', [
+            { type: 'polygon', points: [
+                {x: -0.08, y: 0.05}, {x: 0, y: -0.18},
+                {x: 0.08, y: 0.05}
+            ], color: '#ff4400' },
+            { type: 'polygon', points: [
+                {x: -0.14, y: 0.08}, {x: -0.06, y: -0.1},
+                {x: 0.02, y: 0.08}
+            ], color: '#ff6600' },
+            { type: 'polygon', points: [
+                {x: -0.02, y: 0.08}, {x: 0.06, y: -0.12},
+                {x: 0.14, y: 0.08}
+            ], color: '#ff6600' }
+        ], 0.5, 0.5, -1);
+        flameAura.setBaseTransform(0, -0.35);
+        flameAura.opacity = 0.5;
+
+        // Shield
+        const shield = sprite.addPart('shield', [
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
+        ], 0.5, 0.5, 3);
+        shield.visible = false;
+
+        this.addFireWarriorAnimations(sprite);
+        return sprite;
+    },
+
+    addFireWarriorAnimations(sprite) {
+        // Idle - aggressive power flex with flame pulse
+        const idle = new AnimationClip('idle', 1.2, true);
+        idle.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.3, transform: { scaleX: 1.04, scaleY: 0.97 } },
+            { time: 0.6, transform: { scaleX: 1, scaleY: 1.02 } },
+            { time: 0.9, transform: { scaleX: 1.03, scaleY: 0.98 } },
+            { time: 1.2, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        idle.addTrack('head', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.3, transform: { rotation: -0.03 } },
+            { time: 0.6, transform: { rotation: 0.02 } },
+            { time: 0.9, transform: { rotation: -0.02 } },
+            { time: 1.2, transform: { rotation: 0 } }
+        ]);
+        idle.addTrack('leftArm', [
+            { time: 0, transform: { rotation: -0.1, scaleX: 1 } },
+            { time: 0.4, transform: { rotation: 0.12, scaleX: 1.05 } },
+            { time: 0.8, transform: { rotation: -0.08, scaleX: 1 } },
+            { time: 1.2, transform: { rotation: -0.1, scaleX: 1 } }
+        ]);
+        idle.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0.1, scaleX: 1 } },
+            { time: 0.4, transform: { rotation: -0.12, scaleX: 1.05 } },
+            { time: 0.8, transform: { rotation: 0.08, scaleX: 1 } },
+            { time: 1.2, transform: { rotation: 0.1, scaleX: 1 } }
+        ]);
+        // Flame aura flickers
+        idle.addTrack('flameAura', [
+            { time: 0, transform: { scaleY: 1, scaleX: 1 } },
+            { time: 0.2, transform: { scaleY: 1.3, scaleX: 0.9 } },
+            { time: 0.4, transform: { scaleY: 0.8, scaleX: 1.1 } },
+            { time: 0.6, transform: { scaleY: 1.4, scaleX: 0.85 } },
+            { time: 0.8, transform: { scaleY: 0.9, scaleX: 1.05 } },
+            { time: 1.0, transform: { scaleY: 1.2, scaleX: 0.95 } },
+            { time: 1.2, transform: { scaleY: 1, scaleX: 1 } }
+        ]);
+        sprite.addAnimation(idle);
+
+        // Walk - heavy stomp with ground impact feel
+        const walk = new AnimationClip('walk', 0.6, true);
+        walk.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0.4 } },
+            { time: 0.3, transform: { rotation: -0.4 } },
+            { time: 0.6, transform: { rotation: 0.4 } }
+        ]);
+        walk.addTrack('rightArm', [
+            { time: 0, transform: { rotation: -0.4 } },
+            { time: 0.3, transform: { rotation: 0.4 } },
+            { time: 0.6, transform: { rotation: -0.4 } }
+        ]);
+        walk.addTrack('leftLeg', [
+            { time: 0, transform: { rotation: -0.35 } },
+            { time: 0.3, transform: { rotation: 0.35 } },
+            { time: 0.6, transform: { rotation: -0.35 } }
+        ]);
+        walk.addTrack('rightLeg', [
+            { time: 0, transform: { rotation: 0.35 } },
+            { time: 0.3, transform: { rotation: -0.35 } },
+            { time: 0.6, transform: { rotation: 0.35 } }
+        ]);
+        walk.addTrack('body', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.15, transform: { y: -0.035 } },
+            { time: 0.3, transform: { y: 0 } },
+            { time: 0.45, transform: { y: -0.035 } },
+            { time: 0.6, transform: { y: 0 } }
+        ]);
+        walk.addTrack('head', [
+            { time: 0, transform: { y: 0, rotation: 0.02 } },
+            { time: 0.15, transform: { y: -0.02, rotation: 0 } },
+            { time: 0.3, transform: { y: 0, rotation: -0.02 } },
+            { time: 0.45, transform: { y: -0.02, rotation: 0 } },
+            { time: 0.6, transform: { y: 0, rotation: 0.02 } }
+        ]);
+        // Flames blaze while walking
+        walk.addTrack('flameAura', [
+            { time: 0, transform: { scaleY: 1.5, scaleX: 0.9 } },
+            { time: 0.15, transform: { scaleY: 0.9, scaleX: 1.2 } },
+            { time: 0.3, transform: { scaleY: 1.6, scaleX: 0.85 } },
+            { time: 0.45, transform: { scaleY: 1.0, scaleX: 1.15 } },
+            { time: 0.6, transform: { scaleY: 1.5, scaleX: 0.9 } }
+        ]);
+        sprite.addAnimation(walk);
+
+        const damage = new AnimationClip('damage', 0.3, false);
+        damage.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.1, transform: { scaleX: 1.15, scaleY: 0.85 } },
+            { time: 0.3, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(damage);
+
+        // Attack - double fist slam with body thrust
+        const attack = new AnimationClip('attack', 0.25, false);
+        attack.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0, y: 0 } },
+            { time: 0.12, transform: { rotation: -0.8, y: -0.05 } },
+            { time: 0.25, transform: { rotation: 0, y: 0 } }
+        ]);
+        attack.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0, y: 0 } },
+            { time: 0.12, transform: { rotation: 0.8, y: -0.05 } },
+            { time: 0.25, transform: { rotation: 0, y: 0 } }
+        ]);
+        attack.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, y: 0 } },
+            { time: 0.12, transform: { scaleX: 1.1, y: -0.03 } },
+            { time: 0.25, transform: { scaleX: 1, y: 0 } }
+        ]);
+        attack.addTrack('flameAura', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.12, transform: { scaleY: 2.0 } },
+            { time: 0.25, transform: { scaleY: 1 } }
+        ]);
+        sprite.addAnimation(attack);
+    },
+
+    // ========== ICE SENTINEL - Wide tanky, crystal shield, heavy ==========
+    createPlayerIce(colors = null) {
+        const c = colors || {
+            bodyColor: '#1e3a5f', armorColor: '#3b82f6',
+            accentColor: '#a5f3fc', headColor: '#1e40af'
+        };
+        const sprite = new MultiPartSprite('player');
+
+        // Body - very wide and sturdy
+        sprite.addPart('body', [
+            { type: 'ellipse', width: 0.65, height: 0.7, color: c.bodyColor },
+            // Thick chest armor
+            { type: 'polygon', points: [
+                {x: -0.28, y: -0.22}, {x: 0.28, y: -0.22},
+                {x: 0.22, y: 0.22}, {x: -0.22, y: 0.22}
+            ], color: c.armorColor },
+            // Crystal emblem (diamond)
+            { type: 'polygon', points: [
+                {x: 0, y: -0.12}, {x: 0.08, y: 0},
+                {x: 0, y: 0.1}, {x: -0.08, y: 0}
+            ], color: c.accentColor },
+            // Crystal highlight
+            { type: 'polygon', points: [
+                {x: -0.02, y: -0.09}, {x: 0.04, y: -0.02},
+                {x: -0.02, y: 0}
+            ], color: '#ffffffaa' }
+        ], 0.5, 0.5, 1);
+
+        // Head - round with flat visor + crystal spike
+        const head = sprite.addPart('head', [
+            { type: 'circle', radius: 0.18, color: c.headColor, x: 0, y: 0 },
+            // Flat visor bar
+            { type: 'rect', width: 0.3, height: 0.06, color: c.accentColor, x: 0, y: -0.02 },
+            // Crystal crown spike
+            { type: 'polygon', points: [
+                {x: 0, y: -0.22}, {x: -0.04, y: -0.14}, {x: 0.04, y: -0.14}
+            ], color: c.accentColor }
+        ], 0.5, 0.5, 2);
+        head.setBaseTransform(0, -0.38);
+
+        // Left arm - shield arm (bulky)
+        const leftArm = sprite.addPart('leftArm', [
+            { type: 'ellipse', width: 0.16, height: 0.28, color: c.armorColor },
+            // Hex shield
+            { type: 'polygon', points: [
+                {x: -0.1, y: -0.08}, {x: -0.05, y: -0.14},
+                {x: 0.05, y: -0.14}, {x: 0.1, y: -0.08},
+                {x: 0.05, y: -0.02}, {x: -0.05, y: -0.02}
+            ], color: c.accentColor }
+        ], 0.5, 0, 0);
+        leftArm.setBaseTransform(-0.3, -0.05);
+
+        // Right arm
+        const rightArm = sprite.addPart('rightArm', [
+            { type: 'ellipse', width: 0.14, height: 0.26, color: c.armorColor },
+            { type: 'circle', radius: 0.04, color: c.accentColor, x: 0, y: 0.1 }
+        ], 0.5, 0, 0);
+        rightArm.setBaseTransform(0.28, -0.05);
+
+        // Thick legs
+        const leftLeg = sprite.addPart('leftLeg', [
+            { type: 'ellipse', width: 0.14, height: 0.22, color: c.bodyColor },
+            { type: 'ellipse', width: 0.14, height: 0.06, color: c.accentColor, x: 0, y: 0.1 }
+        ], 0.5, 0, 0);
+        leftLeg.setBaseTransform(-0.15, 0.3);
+
+        const rightLeg = sprite.addPart('rightLeg', [
+            { type: 'ellipse', width: 0.14, height: 0.22, color: c.bodyColor },
+            { type: 'ellipse', width: 0.14, height: 0.06, color: c.accentColor, x: 0, y: 0.1 }
+        ], 0.5, 0, 0);
+        rightLeg.setBaseTransform(0.15, 0.3);
+
+        // Crystal shoulder shards
+        const crystalL = sprite.addPart('crystalL', [
+            { type: 'polygon', points: [
+                {x: 0, y: -0.12}, {x: -0.05, y: 0.02}, {x: 0.05, y: 0.02}
+            ], color: c.accentColor },
+            { type: 'polygon', points: [
+                {x: 0.02, y: -0.08}, {x: -0.01, y: 0}, {x: 0.04, y: 0}
+            ], color: '#ffffffaa' }
+        ], 0.5, 0.5, 2);
+        crystalL.setBaseTransform(-0.28, -0.22);
+
+        const crystalR = sprite.addPart('crystalR', [
+            { type: 'polygon', points: [
+                {x: 0, y: -0.12}, {x: -0.05, y: 0.02}, {x: 0.05, y: 0.02}
+            ], color: c.accentColor },
+            { type: 'polygon', points: [
+                {x: -0.02, y: -0.08}, {x: 0.01, y: 0}, {x: -0.04, y: 0}
+            ], color: '#ffffffaa' }
+        ], 0.5, 0.5, 2);
+        crystalR.setBaseTransform(0.28, -0.22);
+
+        // Frost ring at feet
+        const frostRing = sprite.addPart('frostRing', [
+            { type: 'ellipse', width: 0.5, height: 0.12, color: c.accentColor }
+        ], 0.5, 0.5, -1);
+        frostRing.setBaseTransform(0, 0.38);
+        frostRing.opacity = 0.25;
+
+        const shield = sprite.addPart('shield', [
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
+        ], 0.5, 0.5, 3);
+        shield.visible = false;
+
+        this.addIceSentinelAnimations(sprite);
+        return sprite;
+    },
+
+    addIceSentinelAnimations(sprite) {
+        // Idle - stoic fortress with crystal shimmer
+        const idle = new AnimationClip('idle', 2.0, true);
+        idle.addTrack('body', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 1.0, transform: { scaleY: 1.02 } },
+            { time: 2.0, transform: { scaleY: 1 } }
+        ]);
+        idle.addTrack('head', [
+            { time: 0, transform: { y: 0 } },
+            { time: 1.0, transform: { y: -0.005 } },
+            { time: 2.0, transform: { y: 0 } }
+        ]);
+        // Shield arm micro-raise (guard stance)
+        idle.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.8, transform: { rotation: -0.08 } },
+            { time: 1.6, transform: { rotation: 0.04 } },
+            { time: 2.0, transform: { rotation: 0 } }
+        ]);
+        // Crystal shoulders oscillate
+        idle.addTrack('crystalL', [
+            { time: 0, transform: { scaleY: 1, y: 0 } },
+            { time: 0.7, transform: { scaleY: 1.15, y: -0.02 } },
+            { time: 1.4, transform: { scaleY: 0.9, y: 0.01 } },
+            { time: 2.0, transform: { scaleY: 1, y: 0 } }
+        ]);
+        idle.addTrack('crystalR', [
+            { time: 0, transform: { scaleY: 1, y: 0 } },
+            { time: 0.7, transform: { scaleY: 0.9, y: 0.01 } },
+            { time: 1.4, transform: { scaleY: 1.15, y: -0.02 } },
+            { time: 2.0, transform: { scaleY: 1, y: 0 } }
+        ]);
+        // Frost ring pulses
+        idle.addTrack('frostRing', [
+            { time: 0, transform: { scaleX: 1 } },
+            { time: 1.0, transform: { scaleX: 1.2 } },
+            { time: 2.0, transform: { scaleX: 1 } }
+        ]);
+        sprite.addAnimation(idle);
+
+        // Walk - heavy fortress march
+        const walk = new AnimationClip('walk', 0.7, true);
+        walk.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0.15 } },
+            { time: 0.35, transform: { rotation: -0.15 } },
+            { time: 0.7, transform: { rotation: 0.15 } }
+        ]);
+        walk.addTrack('rightArm', [
+            { time: 0, transform: { rotation: -0.15 } },
+            { time: 0.35, transform: { rotation: 0.15 } },
+            { time: 0.7, transform: { rotation: -0.15 } }
+        ]);
+        walk.addTrack('leftLeg', [
+            { time: 0, transform: { rotation: -0.25 } },
+            { time: 0.35, transform: { rotation: 0.25 } },
+            { time: 0.7, transform: { rotation: -0.25 } }
+        ]);
+        walk.addTrack('rightLeg', [
+            { time: 0, transform: { rotation: 0.25 } },
+            { time: 0.35, transform: { rotation: -0.25 } },
+            { time: 0.7, transform: { rotation: 0.25 } }
+        ]);
+        walk.addTrack('body', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.175, transform: { y: -0.015 } },
+            { time: 0.35, transform: { y: 0 } },
+            { time: 0.525, transform: { y: -0.015 } },
+            { time: 0.7, transform: { y: 0 } }
+        ]);
+        // Crystal bounce
+        walk.addTrack('crystalL', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.175, transform: { y: -0.025 } },
+            { time: 0.35, transform: { y: 0 } },
+            { time: 0.525, transform: { y: -0.025 } },
+            { time: 0.7, transform: { y: 0 } }
+        ]);
+        walk.addTrack('crystalR', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.175, transform: { y: -0.025 } },
+            { time: 0.35, transform: { y: 0 } },
+            { time: 0.525, transform: { y: -0.025 } },
+            { time: 0.7, transform: { y: 0 } }
+        ]);
+        // Frost ring follows
+        walk.addTrack('frostRing', [
+            { time: 0, transform: { scaleX: 1.1 } },
+            { time: 0.35, transform: { scaleX: 0.95 } },
+            { time: 0.7, transform: { scaleX: 1.1 } }
+        ]);
+        sprite.addAnimation(walk);
+
+        const damage = new AnimationClip('damage', 0.3, false);
+        damage.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.1, transform: { scaleX: 1.05, scaleY: 0.95 } },
+            { time: 0.3, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(damage);
+
+        // Attack - shield bash with body lunge
+        const attack = new AnimationClip('attack', 0.3, false);
+        attack.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0, x: 0 } },
+            { time: 0.15, transform: { rotation: -0.6, x: -0.05 } },
+            { time: 0.3, transform: { rotation: 0, x: 0 } }
+        ]);
+        attack.addTrack('body', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.15, transform: { rotation: 0.06 } },
+            { time: 0.3, transform: { rotation: 0 } }
+        ]);
+        attack.addTrack('crystalL', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.15, transform: { scaleY: 1.4 } },
+            { time: 0.3, transform: { scaleY: 1 } }
+        ]);
+        sprite.addAnimation(attack);
+    },
+
+    // ========== SHADOW ASSASSIN - Slim, hooded, dual daggers, cape ==========
+    createPlayerShadow(colors = null) {
+        const c = colors || {
+            bodyColor: '#1a1a2e', armorColor: '#4a1a6b',
+            accentColor: '#c084fc', headColor: '#2d1b4e'
+        };
+        const sprite = new MultiPartSprite('player');
+
+        // Cape (behind body, low z)
+        sprite.addPart('cape', [
+            { type: 'polygon', points: [
+                {x: -0.15, y: -0.1}, {x: 0.15, y: -0.1},
+                {x: 0.2, y: 0.35}, {x: -0.2, y: 0.35}
+            ], color: c.bodyColor }
+        ], 0.5, 0.5, -1);
+
+        // Shadow wisp trail (furthest behind)
+        const shadowTrail = sprite.addPart('shadowTrail', [
+            { type: 'ellipse', width: 0.3, height: 0.08, color: c.accentColor }
+        ], 0.5, 0.5, -2);
+        shadowTrail.setBaseTransform(0, 0.3);
+        shadowTrail.opacity = 0.25;
+
+        // Body - slim torso
+        sprite.addPart('body', [
+            { type: 'ellipse', width: 0.38, height: 0.5, color: c.bodyColor },
+            // Belt
+            { type: 'rect', width: 0.34, height: 0.04, color: c.armorColor, x: 0, y: 0.1 },
+            // Belt buckle
+            { type: 'circle', radius: 0.025, color: c.accentColor, x: 0, y: 0.1 }
+        ], 0.5, 0.5, 1);
+
+        // Head - hood shape
+        const head = sprite.addPart('head', [
+            // Hood (triangle)
+            { type: 'polygon', points: [
+                {x: -0.16, y: 0.05}, {x: 0, y: -0.22},
+                {x: 0.16, y: 0.05}
+            ], color: c.armorColor },
+            // Face shadow
+            { type: 'circle', radius: 0.09, color: '#0a0a15', x: 0, y: 0 },
+            // Glowing eyes
+            { type: 'circle', radius: 0.025, color: c.accentColor, x: -0.04, y: -0.01 },
+            { type: 'circle', radius: 0.025, color: c.accentColor, x: 0.04, y: -0.01 }
+        ], 0.5, 0.5, 2);
+        head.setBaseTransform(0, -0.28);
+
+        // Slim legs
+        const leftLeg = sprite.addPart('leftLeg', [
+            { type: 'ellipse', width: 0.08, height: 0.22, color: c.bodyColor },
+            { type: 'circle', radius: 0.03, color: c.armorColor, x: 0, y: 0.1 }
+        ], 0.5, 0, 0);
+        leftLeg.setBaseTransform(-0.08, 0.22);
+
+        const rightLeg = sprite.addPart('rightLeg', [
+            { type: 'ellipse', width: 0.08, height: 0.22, color: c.bodyColor },
+            { type: 'circle', radius: 0.03, color: c.armorColor, x: 0, y: 0.1 }
+        ], 0.5, 0, 0);
+        rightLeg.setBaseTransform(0.08, 0.22);
+
+        const shield = sprite.addPart('shield', [
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
+        ], 0.5, 0.5, 3);
+        shield.visible = false;
+
+        this.addShadowAssassinAnimations(sprite);
+        return sprite;
+    },
+
+    addShadowAssassinAnimations(sprite) {
+        // Idle - ninja breathing with cape flutter and shadow pulse
+        const idle = new AnimationClip('idle', 1.0, true);
+        idle.addTrack('body', [
+            { time: 0, transform: { rotation: 0, y: 0 } },
+            { time: 0.25, transform: { rotation: 0.02, y: -0.01 } },
+            { time: 0.5, transform: { rotation: 0.03, y: -0.015 } },
+            { time: 0.75, transform: { rotation: 0.01, y: -0.005 } },
+            { time: 1.0, transform: { rotation: 0, y: 0 } }
+        ]);
+        idle.addTrack('cape', [
+            { time: 0, transform: { rotation: 0, scaleY: 1, scaleX: 1 } },
+            { time: 0.25, transform: { rotation: 0.06, scaleY: 1.04, scaleX: 0.97 } },
+            { time: 0.5, transform: { rotation: 0.03, scaleY: 1.08, scaleX: 0.95 } },
+            { time: 0.75, transform: { rotation: -0.02, scaleY: 1.02, scaleX: 0.98 } },
+            { time: 1.0, transform: { rotation: 0, scaleY: 1, scaleX: 1 } }
+        ]);
+        idle.addTrack('head', [
+            { time: 0, transform: { rotation: 0, y: 0 } },
+            { time: 0.3, transform: { rotation: -0.05, y: -0.005 } },
+            { time: 0.7, transform: { rotation: 0.03, y: -0.008 } },
+            { time: 1.0, transform: { rotation: 0, y: 0 } }
+        ]);
+        // Shadow trail pulse
+        idle.addTrack('shadowTrail', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.3, transform: { scaleX: 1.3, scaleY: 0.7 } },
+            { time: 0.6, transform: { scaleX: 0.8, scaleY: 1.2 } },
+            { time: 1.0, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(idle);
+
+        // Walk - fast ninja stride with lean
+        const walk = new AnimationClip('walk', 0.35, true);
+        walk.addTrack('leftLeg', [
+            { time: 0, transform: { rotation: -0.6 } },
+            { time: 0.175, transform: { rotation: 0.6 } },
+            { time: 0.35, transform: { rotation: -0.6 } }
+        ]);
+        walk.addTrack('rightLeg', [
+            { time: 0, transform: { rotation: 0.6 } },
+            { time: 0.175, transform: { rotation: -0.6 } },
+            { time: 0.35, transform: { rotation: 0.6 } }
+        ]);
+        walk.addTrack('cape', [
+            { time: 0, transform: { rotation: -0.12, scaleY: 1.1 } },
+            { time: 0.175, transform: { rotation: 0.12, scaleY: 0.95 } },
+            { time: 0.35, transform: { rotation: -0.12, scaleY: 1.1 } }
+        ]);
+        walk.addTrack('body', [
+            { time: 0, transform: { y: 0, rotation: 0.05 } },
+            { time: 0.0875, transform: { y: -0.025, rotation: 0.05 } },
+            { time: 0.175, transform: { y: 0, rotation: 0.05 } },
+            { time: 0.2625, transform: { y: -0.025, rotation: 0.05 } },
+            { time: 0.35, transform: { y: 0, rotation: 0.05 } }
+        ]);
+        // Shadow trail spreads while running
+        walk.addTrack('shadowTrail', [
+            { time: 0, transform: { scaleX: 1.5, x: 0.05 } },
+            { time: 0.175, transform: { scaleX: 1.2, x: -0.05 } },
+            { time: 0.35, transform: { scaleX: 1.5, x: 0.05 } }
+        ]);
+        sprite.addAnimation(walk);
+
+        const damage = new AnimationClip('damage', 0.2, false);
+        damage.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.07, transform: { scaleX: 0.9, scaleY: 1.1 } },
+            { time: 0.2, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(damage);
+
+        // Attack - dual dagger slash with body twist
+        const attack = new AnimationClip('attack', 0.15, false);
+        attack.addTrack('body', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.075, transform: { rotation: -0.1 } },
+            { time: 0.15, transform: { rotation: 0 } }
+        ]);
+        attack.addTrack('cape', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.075, transform: { rotation: 0.15 } },
+            { time: 0.15, transform: { rotation: 0 } }
+        ]);
+        sprite.addAnimation(attack);
+    },
+
+    // ========== NEON HACKER - Robotic, screen face, circuit patterns ==========
+    createPlayerNeon(colors = null) {
+        const c = colors || {
+            bodyColor: '#064e3b', armorColor: '#047857',
+            accentColor: '#34d399', headColor: '#065f46'
+        };
+        const sprite = new MultiPartSprite('player');
+
+        // Body - angular robotic torso
+        sprite.addPart('body', [
+            { type: 'rect', width: 0.44, height: 0.55, color: c.bodyColor, x: 0, y: 0 },
+            // Circuit board panel
+            { type: 'rect', width: 0.3, height: 0.3, color: c.armorColor, x: 0, y: 0 },
+            // Circuit traces
+            { type: 'line', x1: -0.1, y1: -0.1, x2: 0, y2: -0.1, color: c.accentColor, strokeWidth: 0.015 },
+            { type: 'line', x1: 0, y1: -0.1, x2: 0, y2: 0.05, color: c.accentColor, strokeWidth: 0.015 },
+            { type: 'line', x1: 0, y1: 0.05, x2: 0.1, y2: 0.05, color: c.accentColor, strokeWidth: 0.015 },
+            // Circuit nodes
+            { type: 'circle', radius: 0.02, color: c.accentColor, x: -0.1, y: -0.1 },
+            { type: 'circle', radius: 0.02, color: c.accentColor, x: 0.1, y: 0.05 },
+            { type: 'circle', radius: 0.02, color: c.accentColor, x: 0, y: -0.1 }
+        ], 0.5, 0.5, 1);
+
+        // Head - monitor/screen with antenna
+        const head = sprite.addPart('head', [
+            // Monitor casing
+            { type: 'rect', width: 0.28, height: 0.22, color: c.headColor, x: 0, y: 0 },
+            // Screen
+            { type: 'rect', width: 0.22, height: 0.16, color: '#001a0d', x: 0, y: 0 },
+            // Digital eyes
+            { type: 'rect', width: 0.04, height: 0.04, color: c.accentColor, x: -0.06, y: -0.02 },
+            { type: 'rect', width: 0.04, height: 0.04, color: c.accentColor, x: 0.06, y: -0.02 },
+            // Digital mouth
+            { type: 'line', x1: -0.05, y1: 0.04, x2: 0.05, y2: 0.04, color: c.accentColor, strokeWidth: 0.02 },
+            // Antenna
+            { type: 'line', x1: 0.1, y1: -0.11, x2: 0.14, y2: -0.2, color: c.accentColor, strokeWidth: 0.015 },
+            { type: 'circle', radius: 0.018, color: c.accentColor, x: 0.14, y: -0.2 }
+        ], 0.5, 0.5, 2);
+        head.setBaseTransform(0, -0.32);
+
+        // Left arm - mechanical
+        const leftArm = sprite.addPart('leftArm', [
+            { type: 'ellipse', width: 0.1, height: 0.22, color: c.armorColor },
+            // Holographic wrist display
+            { type: 'rect', width: 0.1, height: 0.04, color: c.accentColor, x: 0, y: 0.06 },
+            // Circuit line
+            { type: 'line', x1: 0, y1: -0.08, x2: 0, y2: 0.02, color: c.accentColor, strokeWidth: 0.012 }
+        ], 0.5, 0, 0);
+        leftArm.setBaseTransform(-0.2, -0.05);
+
+        // Right arm
+        const rightArm = sprite.addPart('rightArm', [
+            { type: 'ellipse', width: 0.1, height: 0.22, color: c.armorColor },
+            { type: 'rect', width: 0.1, height: 0.04, color: c.accentColor, x: 0, y: 0.06 },
+            { type: 'line', x1: 0, y1: -0.08, x2: 0, y2: 0.02, color: c.accentColor, strokeWidth: 0.012 }
+        ], 0.5, 0, 0);
+        rightArm.setBaseTransform(0.2, -0.05);
+
+        // Robotic legs with circuit stripes
+        const leftLeg = sprite.addPart('leftLeg', [
+            { type: 'ellipse', width: 0.09, height: 0.22, color: c.bodyColor },
+            { type: 'line', x1: 0, y1: -0.08, x2: 0, y2: 0.1, color: c.accentColor, strokeWidth: 0.012 }
+        ], 0.5, 0, 0);
+        leftLeg.setBaseTransform(-0.1, 0.26);
+
+        const rightLeg = sprite.addPart('rightLeg', [
+            { type: 'ellipse', width: 0.09, height: 0.22, color: c.bodyColor },
+            { type: 'line', x1: 0, y1: -0.08, x2: 0, y2: 0.1, color: c.accentColor, strokeWidth: 0.012 }
+        ], 0.5, 0, 0);
+        rightLeg.setBaseTransform(0.1, 0.26);
+
+        // Orbiting data particle
+        const dataOrb = sprite.addPart('dataOrb', [
+            { type: 'circle', radius: 0.03, color: c.accentColor, x: 0, y: 0 },
+            { type: 'circle', radius: 0.015, color: '#ffffff', x: 0, y: 0 }
+        ], 0.5, 0.5, 3);
+
+        const shield = sprite.addPart('shield', [
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
+        ], 0.5, 0.5, 3);
+        shield.visible = false;
+
+        this.addNeonHackerAnimations(sprite);
+        return sprite;
+    },
+
+    addNeonHackerAnimations(sprite) {
+        // Idle - digital glitch with data orbit
+        const idle = new AnimationClip('idle', 1.8, true);
+        idle.addTrack('head', [
+            { time: 0, transform: { x: 0, y: 0 } },
+            { time: 0.6, transform: { x: 0.003, y: 0 } },
+            { time: 0.65, transform: { x: -0.01, y: 0.003 } },
+            { time: 0.7, transform: { x: 0.005, y: -0.002 } },
+            { time: 0.75, transform: { x: 0, y: 0 } },
+            { time: 1.3, transform: { x: -0.004, y: 0 } },
+            { time: 1.35, transform: { x: 0.008, y: 0 } },
+            { time: 1.4, transform: { x: 0, y: 0 } },
+            { time: 1.8, transform: { x: 0, y: 0 } }
+        ]);
+        idle.addTrack('body', [
+            { time: 0, transform: { scaleY: 1, x: 0 } },
+            { time: 0.65, transform: { scaleY: 1.01, x: 0.003 } },
+            { time: 0.7, transform: { scaleY: 1, x: -0.003 } },
+            { time: 0.9, transform: { scaleY: 1.02, x: 0 } },
+            { time: 1.8, transform: { scaleY: 1, x: 0 } }
+        ]);
+        // Arms circuit pulse
+        idle.addTrack('leftArm', [
+            { time: 0, transform: { scaleX: 1 } },
+            { time: 0.6, transform: { scaleX: 1.05 } },
+            { time: 0.8, transform: { scaleX: 0.97 } },
+            { time: 1.8, transform: { scaleX: 1 } }
+        ]);
+        idle.addTrack('rightArm', [
+            { time: 0, transform: { scaleX: 1 } },
+            { time: 1.0, transform: { scaleX: 1.05 } },
+            { time: 1.2, transform: { scaleX: 0.97 } },
+            { time: 1.8, transform: { scaleX: 1 } }
+        ]);
+        // Data orb orbiting
+        idle.addTrack('dataOrb', [
+            { time: 0, transform: { x: 0.28, y: 0 } },
+            { time: 0.45, transform: { x: 0, y: -0.2 } },
+            { time: 0.9, transform: { x: -0.28, y: 0 } },
+            { time: 1.35, transform: { x: 0, y: 0.2 } },
+            { time: 1.8, transform: { x: 0.28, y: 0 } }
+        ]);
+        sprite.addAnimation(idle);
+
+        // Walk - precise mechanical stride with data stream
+        const walk = new AnimationClip('walk', 0.45, true);
+        walk.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0.25 } },
+            { time: 0.225, transform: { rotation: -0.25 } },
+            { time: 0.45, transform: { rotation: 0.25 } }
+        ]);
+        walk.addTrack('rightArm', [
+            { time: 0, transform: { rotation: -0.25 } },
+            { time: 0.225, transform: { rotation: 0.25 } },
+            { time: 0.45, transform: { rotation: -0.25 } }
+        ]);
+        walk.addTrack('leftLeg', [
+            { time: 0, transform: { rotation: -0.35 } },
+            { time: 0.225, transform: { rotation: 0.35 } },
+            { time: 0.45, transform: { rotation: -0.35 } }
+        ]);
+        walk.addTrack('rightLeg', [
+            { time: 0, transform: { rotation: 0.35 } },
+            { time: 0.225, transform: { rotation: -0.35 } },
+            { time: 0.45, transform: { rotation: 0.35 } }
+        ]);
+        walk.addTrack('body', [
+            { time: 0, transform: { y: 0 } },
+            { time: 0.1125, transform: { y: -0.015 } },
+            { time: 0.225, transform: { y: 0 } },
+            { time: 0.3375, transform: { y: -0.015 } },
+            { time: 0.45, transform: { y: 0 } }
+        ]);
+        // Head stabilized (robotic)
+        walk.addTrack('head', [
+            { time: 0, transform: { y: 0.005 } },
+            { time: 0.1125, transform: { y: -0.005 } },
+            { time: 0.225, transform: { y: 0.005 } },
+            { time: 0.3375, transform: { y: -0.005 } },
+            { time: 0.45, transform: { y: 0.005 } }
+        ]);
+        // Data orb faster orbit while walking
+        walk.addTrack('dataOrb', [
+            { time: 0, transform: { x: 0.28, y: 0 } },
+            { time: 0.1125, transform: { x: 0, y: -0.2 } },
+            { time: 0.225, transform: { x: -0.28, y: 0 } },
+            { time: 0.3375, transform: { x: 0, y: 0.2 } },
+            { time: 0.45, transform: { x: 0.28, y: 0 } }
+        ]);
+        sprite.addAnimation(walk);
+
+        const damage = new AnimationClip('damage', 0.3, false);
+        damage.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.1, transform: { scaleX: 1.08, scaleY: 0.92 } },
+            { time: 0.3, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        // Glitch on damage
+        damage.addTrack('head', [
+            { time: 0, transform: { x: 0 } },
+            { time: 0.05, transform: { x: 0.015 } },
+            { time: 0.1, transform: { x: -0.015 } },
+            { time: 0.15, transform: { x: 0.008 } },
+            { time: 0.3, transform: { x: 0 } }
+        ]);
+        sprite.addAnimation(damage);
+
+        // Attack - arm thrust with hologram burst
+        const attack = new AnimationClip('attack', 0.2, false);
+        attack.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0, x: 0, scaleX: 1 } },
+            { time: 0.1, transform: { rotation: -0.8, x: 0.08, scaleX: 1.15 } },
+            { time: 0.2, transform: { rotation: 0, x: 0, scaleX: 1 } }
+        ]);
+        attack.addTrack('body', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.1, transform: { rotation: -0.06 } },
+            { time: 0.2, transform: { rotation: 0 } }
+        ]);
+        sprite.addAnimation(attack);
+    },
+
+    // ========== VOID WALKER - Floating robe, no legs, energy orbs, halo ==========
+    createPlayerVoid(colors = null) {
+        const c = colors || {
+            bodyColor: '#1e1b4b', armorColor: '#4338ca',
+            accentColor: '#e879f9', headColor: '#312e81'
+        };
+        const sprite = new MultiPartSprite('player');
+
+        // Robe body (wider at bottom, floaty)
+        sprite.addPart('body', [
+            { type: 'polygon', points: [
+                {x: -0.18, y: -0.22}, {x: 0.18, y: -0.22},
+                {x: 0.25, y: 0.25}, {x: -0.25, y: 0.25}
+            ], color: c.bodyColor },
+            // Robe trim
+            { type: 'line', x1: -0.25, y1: 0.25, x2: 0.25, y2: 0.25, color: c.accentColor, strokeWidth: 0.02 },
+            // Central rune
+            { type: 'polygon', points: [
+                {x: 0, y: -0.1}, {x: 0.06, y: 0.03},
+                {x: 0, y: 0.12}, {x: -0.06, y: 0.03}
+            ], color: c.accentColor }
+        ], 0.5, 0.5, 1);
+
+        // Head - round with halo
+        const head = sprite.addPart('head', [
+            { type: 'circle', radius: 0.16, color: c.headColor, x: 0, y: 0 },
+            // Halo
+            { type: 'arc', radius: 0.14, startAngle: -3.14, endAngle: 3.14, color: c.accentColor, strokeWidth: 0.025 },
+            // Energy eyes
+            { type: 'circle', radius: 0.035, color: c.accentColor, x: -0.06, y: -0.02 },
+            { type: 'circle', radius: 0.035, color: c.accentColor, x: 0.06, y: -0.02 },
+            { type: 'circle', radius: 0.018, color: '#ffffff', x: -0.06, y: -0.02 },
+            { type: 'circle', radius: 0.018, color: '#ffffff', x: 0.06, y: -0.02 }
+        ], 0.5, 0.5, 2);
+        head.setBaseTransform(0, -0.3);
+
+        // Arms - wide robe sleeves
+        const leftArm = sprite.addPart('leftArm', [
+            { type: 'polygon', points: [
+                {x: 0, y: -0.1}, {x: -0.12, y: 0.08},
+                {x: -0.08, y: 0.14}, {x: 0.02, y: 0}
+            ], color: c.armorColor },
+            // Hand orb
+            { type: 'circle', radius: 0.04, color: c.accentColor, x: -0.1, y: 0.1 }
+        ], 0.5, 0, 0);
+        leftArm.setBaseTransform(-0.16, -0.05);
+
+        const rightArm = sprite.addPart('rightArm', [
+            { type: 'polygon', points: [
+                {x: 0, y: -0.1}, {x: 0.12, y: 0.08},
+                {x: 0.08, y: 0.14}, {x: -0.02, y: 0}
+            ], color: c.armorColor },
+            { type: 'circle', radius: 0.04, color: c.accentColor, x: 0.1, y: 0.1 }
+        ], 0.5, 0, 0);
+        rightArm.setBaseTransform(0.16, -0.05);
+
+        // Floating energy trail instead of legs
+        const leftLeg = sprite.addPart('leftLeg', [
+            { type: 'ellipse', width: 0.06, height: 0.18, color: c.accentColor }
+        ], 0.5, 0, 0);
+        leftLeg.setBaseTransform(-0.08, 0.25);
+        leftLeg.opacity = 0.4;
+
+        const rightLeg = sprite.addPart('rightLeg', [
+            { type: 'ellipse', width: 0.06, height: 0.18, color: c.accentColor }
+        ], 0.5, 0, 0);
+        rightLeg.setBaseTransform(0.08, 0.25);
+        rightLeg.opacity = 0.4;
+
+        // Orbiting energy particles (decorative)
+        sprite.addPart('orb1', [
+            { type: 'circle', radius: 0.035, color: c.accentColor, x: 0, y: 0 }
+        ], 0.5, 0.5, 3);
+
+        // Second orb (opposite orbit)
+        sprite.addPart('orb2', [
+            { type: 'circle', radius: 0.025, color: c.accentColor, x: 0, y: 0 },
+            { type: 'circle', radius: 0.012, color: '#ffffff', x: 0, y: 0 }
+        ], 0.5, 0.5, 3);
+
+        // Void mist at base of robe
+        const voidMist = sprite.addPart('voidMist', [
+            { type: 'ellipse', width: 0.4, height: 0.1, color: c.accentColor }
+        ], 0.5, 0.5, -1);
+        voidMist.setBaseTransform(0, 0.32);
+        voidMist.opacity = 0.2;
+
+        const shield = sprite.addPart('shield', [
+            { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
+        ], 0.5, 0.5, 3);
+        shield.visible = false;
+
+        this.addVoidWalkerAnimations(sprite);
+        return sprite;
+    },
+
+    addVoidWalkerAnimations(sprite) {
+        // Idle - ethereal levitation with dual orb orbits
+        const idle = new AnimationClip('idle', 2.0, true);
+        idle.addTrack('body', [
+            { time: 0, transform: { y: 0, scaleX: 1 } },
+            { time: 0.5, transform: { y: -0.02, scaleX: 1.02 } },
+            { time: 1.0, transform: { y: -0.045, scaleX: 0.98 } },
+            { time: 1.5, transform: { y: -0.02, scaleX: 1.01 } },
+            { time: 2.0, transform: { y: 0, scaleX: 1 } }
+        ]);
+        idle.addTrack('head', [
+            { time: 0, transform: { y: 0, rotation: 0 } },
+            { time: 0.7, transform: { y: -0.02, rotation: -0.03 } },
+            { time: 1.4, transform: { y: -0.025, rotation: 0.02 } },
+            { time: 2.0, transform: { y: 0, rotation: 0 } }
+        ]);
+        idle.addTrack('leftArm', [
+            { time: 0, transform: { rotation: -0.1, y: 0 } },
+            { time: 0.5, transform: { rotation: 0.05, y: -0.015 } },
+            { time: 1.0, transform: { rotation: 0.1, y: -0.02 } },
+            { time: 1.5, transform: { rotation: -0.05, y: -0.01 } },
+            { time: 2.0, transform: { rotation: -0.1, y: 0 } }
+        ]);
+        idle.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0.1, y: 0 } },
+            { time: 0.5, transform: { rotation: -0.05, y: -0.015 } },
+            { time: 1.0, transform: { rotation: -0.1, y: -0.02 } },
+            { time: 1.5, transform: { rotation: 0.05, y: -0.01 } },
+            { time: 2.0, transform: { rotation: 0.1, y: 0 } }
+        ]);
+        // Orb 1 orbiting
+        idle.addTrack('orb1', [
+            { time: 0, transform: { x: 0.3, y: 0 } },
+            { time: 0.5, transform: { x: 0, y: -0.22 } },
+            { time: 1.0, transform: { x: -0.3, y: 0 } },
+            { time: 1.5, transform: { x: 0, y: 0.22 } },
+            { time: 2.0, transform: { x: 0.3, y: 0 } }
+        ]);
+        // Orb 2 opposite orbit
+        idle.addTrack('orb2', [
+            { time: 0, transform: { x: -0.25, y: 0 } },
+            { time: 0.5, transform: { x: 0, y: 0.18 } },
+            { time: 1.0, transform: { x: 0.25, y: 0 } },
+            { time: 1.5, transform: { x: 0, y: -0.18 } },
+            { time: 2.0, transform: { x: -0.25, y: 0 } }
+        ]);
+        // Energy trail pulses
+        idle.addTrack('leftLeg', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.7, transform: { scaleY: 1.4 } },
+            { time: 1.4, transform: { scaleY: 0.8 } },
+            { time: 2.0, transform: { scaleY: 1 } }
+        ]);
+        idle.addTrack('rightLeg', [
+            { time: 0, transform: { scaleY: 1 } },
+            { time: 0.7, transform: { scaleY: 0.8 } },
+            { time: 1.4, transform: { scaleY: 1.4 } },
+            { time: 2.0, transform: { scaleY: 1 } }
+        ]);
+        // Void mist breathing
+        idle.addTrack('voidMist', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.5, transform: { scaleX: 1.3, scaleY: 0.8 } },
+            { time: 1.0, transform: { scaleX: 0.8, scaleY: 1.3 } },
+            { time: 1.5, transform: { scaleX: 1.2, scaleY: 0.9 } },
+            { time: 2.0, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(idle);
+
+        // Walk - ethereal glide with dramatic sway
+        const walk = new AnimationClip('walk', 0.5, true);
+        walk.addTrack('body', [
+            { time: 0, transform: { rotation: 0, y: 0, scaleX: 1 } },
+            { time: 0.125, transform: { rotation: 0.04, y: -0.02, scaleX: 1.02 } },
+            { time: 0.25, transform: { rotation: 0.05, y: -0.035, scaleX: 0.98 } },
+            { time: 0.375, transform: { rotation: 0.02, y: -0.015, scaleX: 1.01 } },
+            { time: 0.5, transform: { rotation: 0, y: 0, scaleX: 1 } }
+        ]);
+        walk.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0.2 } },
+            { time: 0.25, transform: { rotation: -0.25 } },
+            { time: 0.5, transform: { rotation: 0.2 } }
+        ]);
+        walk.addTrack('rightArm', [
+            { time: 0, transform: { rotation: -0.2 } },
+            { time: 0.25, transform: { rotation: 0.25 } },
+            { time: 0.5, transform: { rotation: -0.2 } }
+        ]);
+        walk.addTrack('head', [
+            { time: 0, transform: { rotation: 0 } },
+            { time: 0.25, transform: { rotation: -0.04 } },
+            { time: 0.5, transform: { rotation: 0 } }
+        ]);
+        // Faster orb orbits while moving
+        walk.addTrack('orb1', [
+            { time: 0, transform: { x: 0.3, y: 0 } },
+            { time: 0.125, transform: { x: 0, y: -0.22 } },
+            { time: 0.25, transform: { x: -0.3, y: 0 } },
+            { time: 0.375, transform: { x: 0, y: 0.22 } },
+            { time: 0.5, transform: { x: 0.3, y: 0 } }
+        ]);
+        walk.addTrack('orb2', [
+            { time: 0, transform: { x: -0.25, y: 0 } },
+            { time: 0.125, transform: { x: 0, y: 0.18 } },
+            { time: 0.25, transform: { x: 0.25, y: 0 } },
+            { time: 0.375, transform: { x: 0, y: -0.18 } },
+            { time: 0.5, transform: { x: -0.25, y: 0 } }
+        ]);
+        // Void mist trail expands while gliding
+        walk.addTrack('voidMist', [
+            { time: 0, transform: { scaleX: 1.4 } },
+            { time: 0.25, transform: { scaleX: 1.0 } },
+            { time: 0.5, transform: { scaleX: 1.4 } }
+        ]);
+        sprite.addAnimation(walk);
+
+        const damage = new AnimationClip('damage', 0.3, false);
+        damage.addTrack('body', [
+            { time: 0, transform: { scaleX: 1, scaleY: 1 } },
+            { time: 0.1, transform: { scaleX: 1.1, scaleY: 0.9 } },
+            { time: 0.3, transform: { scaleX: 1, scaleY: 1 } }
+        ]);
+        sprite.addAnimation(damage);
+
+        // Attack - energy burst from hands with orb flare
+        const attack = new AnimationClip('attack', 0.25, false);
+        attack.addTrack('leftArm', [
+            { time: 0, transform: { rotation: 0, scaleX: 1 } },
+            { time: 0.12, transform: { rotation: -0.7, scaleX: 1.3 } },
+            { time: 0.25, transform: { rotation: 0, scaleX: 1 } }
+        ]);
+        attack.addTrack('rightArm', [
+            { time: 0, transform: { rotation: 0, scaleX: 1 } },
+            { time: 0.12, transform: { rotation: 0.7, scaleX: 1.3 } },
+            { time: 0.25, transform: { rotation: 0, scaleX: 1 } }
+        ]);
+        attack.addTrack('body', [
+            { time: 0, transform: { y: 0, scaleY: 1 } },
+            { time: 0.12, transform: { y: -0.03, scaleY: 1.05 } },
+            { time: 0.25, transform: { y: 0, scaleY: 1 } }
         ]);
         sprite.addAnimation(attack);
     },
@@ -1374,9 +2504,17 @@ class SpriteManager {
     constructor() {
         this.spriteCache = new Map();
         this.templates = new Map();
+        this.playerColors = null; // Set by CharacterManager
+        this.playerSpriteType = 'player'; // Set by CharacterManager for unique sprites
         
         // Pre-register all templates
-        this.registerTemplate('player', () => SpriteFactory.createPlayer());
+        this.registerTemplate('player', (colors) => SpriteFactory.createPlayer(colors));
+        this.registerTemplate('player_cyber', (colors) => SpriteFactory.createPlayer(colors));
+        this.registerTemplate('player_fire', (colors) => SpriteFactory.createPlayerFire(colors));
+        this.registerTemplate('player_ice', (colors) => SpriteFactory.createPlayerIce(colors));
+        this.registerTemplate('player_shadow', (colors) => SpriteFactory.createPlayerShadow(colors));
+        this.registerTemplate('player_neon', (colors) => SpriteFactory.createPlayerNeon(colors));
+        this.registerTemplate('player_void', (colors) => SpriteFactory.createPlayerVoid(colors));
         this.registerTemplate('zombie', () => SpriteFactory.createZombie());
         this.registerTemplate('runner', () => SpriteFactory.createRunner());
         this.registerTemplate('tank', () => SpriteFactory.createTank());
@@ -1392,10 +2530,16 @@ class SpriteManager {
     }
 
     createSprite(type) {
-        const factory = this.templates.get(type);
+        // Route 'player' to the selected character sprite type
+        const resolvedType = (type === 'player' && this.playerSpriteType) ? this.playerSpriteType : type;
+        const factory = this.templates.get(resolvedType);
         if (!factory) {
-            console.warn(`Unknown sprite type: ${type}`);
+            console.warn(`Unknown sprite type: ${resolvedType}`);
             return null;
+        }
+        // Pass player colors if creating a player sprite
+        if (resolvedType.startsWith('player') && this.playerColors) {
+            return factory(this.playerColors);
         }
         return factory();
     }

@@ -1,5 +1,5 @@
 import { Entity } from './entity.js';
-import { CONFIG } from './config.js';
+import { CONFIG, WORLD_WEAPONS } from './config.js';
 import { MathUtils } from './utils.js';
 /**
  * Survivor Arena - Weapons System
@@ -34,6 +34,16 @@ class Projectile extends Entity {
         this.returns = config.returns || false;
         this.returnPhase = false;
         this.owner = null;
+        this.homing = config.homing || false;
+        this.homingStrength = config.homingStrength || 0;
+        this.homingTarget = null;
+        
+        // Bounce properties (ice grenade)
+        this.bounces = config.bounces || 0;
+        this.bounceCount = 0;
+        this.freezeDuration = config.freezeDuration || 0;
+        this.arcHeight = config.arcHeight || 0;
+        this._currentArcHeight = 0;
         
         // Distance traveled (incremental)
         this.distanceTraveled = 0;
@@ -93,7 +103,59 @@ class Projectile extends Entity {
         
         // Destroy if out of range (non-returning projectiles)
         if (!this.returns && this.distanceTraveled >= this.range) {
-            this.destroy();
+            if (this.bounces > 0 && this.bounceCount < this.bounces) {
+                // Bounce: reflect in a random direction, slow down slightly
+                this.bounceCount++;
+                this.distanceTraveled = 0;
+                this._currentArcHeight = 0;
+                const newAngle = this.angle + Math.PI + (Math.random() - 0.5) * Math.PI * 0.8;
+                this.velocity.set(
+                    Math.cos(newAngle) * this.speed * 0.85,
+                    Math.sin(newAngle) * this.speed * 0.85
+                );
+                this.angle = newAngle;
+            } else {
+                this.destroy();
+            }
+        }
+        
+        // Grenade arc height
+        if (this.arcHeight > 0) {
+            const progress = Math.min(this.distanceTraveled / this.range, 1);
+            this._currentArcHeight = this.arcHeight * 4 * progress * (1 - progress);
+        }
+
+        // Rocket wobble (sinusoidal path)
+        if (this.weaponType === 'rocketLauncher') {
+            const wobble = Math.sin(this.animTime * 6) * 2.5 * deltaTime;
+            this.angle += wobble;
+            this.velocity.set(
+                Math.cos(this.angle) * this.speed,
+                Math.sin(this.angle) * this.speed
+            );
+        }
+
+        // Homing behavior: gently curve toward nearest enemy (with toroidal wrapping)
+        if (this.homing && this.homingTarget && this.homingTarget.active) {
+            let dx2 = this.homingTarget.x - this.x;
+            let dy2 = this.homingTarget.y - this.y;
+            // Wrap to shortest path in toroidal world
+            const W = CONFIG.ARENA.WIDTH;
+            const H = CONFIG.ARENA.HEIGHT;
+            if (dx2 > W / 2) dx2 -= W;
+            if (dx2 < -W / 2) dx2 += W;
+            if (dy2 > H / 2) dy2 -= H;
+            if (dy2 < -H / 2) dy2 += H;
+            const targetAngle = Math.atan2(dy2, dx2);
+            let angleDiff = targetAngle - this.angle;
+            // Normalize angle difference
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            this.angle += angleDiff * this.homingStrength * deltaTime;
+            this.velocity.set(
+                Math.cos(this.angle) * this.speed,
+                Math.sin(this.angle) * this.speed
+            );
         }
     }
 
@@ -167,6 +229,39 @@ class Projectile extends Entity {
                 break;
             case 'drone':
                 this.renderDroneShot(ctx);
+                break;
+            case 'meteorStaff':
+                this.renderMeteor(ctx);
+                break;
+            case 'iceShard':
+                this.renderIce(ctx);
+                break;
+            case 'plasmaCannon':
+                this.renderPlasma(ctx);
+                break;
+            case 'phantomBlade':
+                this.renderPhantom(ctx);
+                break;
+            case 'iceGrenade':
+                this.renderIceGrenade(ctx);
+                break;
+            case 'arrow':
+                this.renderArrow(ctx);
+                break;
+            case 'fireball':
+                this.renderFireball(ctx);
+                break;
+            case 'energyBall':
+                this.renderEnergyBall(ctx);
+                break;
+            case 'laserBolt':
+                this.renderLaserBolt(ctx);
+                break;
+            case 'darkOrb':
+                this.renderDarkOrb(ctx);
+                break;
+            case 'enemyDefault':
+                this.renderEnemyDefault(ctx);
                 break;
             default:
                 this.renderDefault(ctx);
@@ -243,113 +338,172 @@ class Projectile extends Entity {
     }
     
     renderRocket(ctx) {
-        // Rocket with exhaust
-        ctx.rotate(-this.angle); // Reset rotation for proper drawing
-        ctx.rotate(this.angle);
-        
-        // Exhaust flame
+        const s = this.size;
+        // Smoke trail (multiple fading puffs behind)
+        for (let i = 1; i <= 4; i++) {
+            const trailX = -s * 1.8 - i * s * 1.2;
+            const puffSize = s * (0.4 + i * 0.25);
+            const wobble = Math.sin(this.animTime * 10 + i * 2) * s * 0.15;
+            ctx.fillStyle = `rgba(150, 150, 150, ${0.25 - i * 0.05})`;
+            ctx.beginPath();
+            ctx.arc(trailX, wobble, puffSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Exhaust flame (flickering, multi-layered)
         const flicker = Math.sin(this.animTime * 30) * 0.3 + 0.7;
-        ctx.fillStyle = `rgba(255, 152, 0, ${flicker})`;
+        const flameLen = s * 2.5 + Math.sin(this.animTime * 25) * s * 0.5;
+        // Outer flame (orange)
+        ctx.fillStyle = `rgba(255, 100, 0, ${flicker * 0.6})`;
         ctx.beginPath();
-        ctx.moveTo(-this.size * 2.5, 0);
-        ctx.lineTo(-this.size * 1, -this.size * 0.5);
-        ctx.lineTo(-this.size * 1, this.size * 0.5);
+        ctx.moveTo(-flameLen, 0);
+        ctx.lineTo(-s * 1.0, -s * 0.55);
+        ctx.lineTo(-s * 1.0, s * 0.55);
         ctx.closePath();
         ctx.fill();
-        
-        // Rocket body
-        ctx.fillStyle = '#616161';
+        // Inner flame (yellow)
+        ctx.fillStyle = `rgba(255, 220, 50, ${flicker * 0.8})`;
         ctx.beginPath();
-        ctx.ellipse(0, 0, this.size * 1.5, this.size * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Nose cone
-        ctx.fillStyle = '#f44336';
-        ctx.beginPath();
-        ctx.moveTo(this.size * 1.5, 0);
-        ctx.lineTo(this.size * 0.8, -this.size * 0.5);
-        ctx.lineTo(this.size * 0.8, this.size * 0.5);
+        ctx.moveTo(-flameLen * 0.7, 0);
+        ctx.lineTo(-s * 1.0, -s * 0.3);
+        ctx.lineTo(-s * 1.0, s * 0.3);
         ctx.closePath();
         ctx.fill();
-        
-        // Fins
+
+        // Rocket body (metallic gradient)
+        const bodyGrad = ctx.createLinearGradient(0, -s * 0.7, 0, s * 0.7);
+        bodyGrad.addColorStop(0, '#888');
+        bodyGrad.addColorStop(0.4, '#aaa');
+        bodyGrad.addColorStop(0.6, '#999');
+        bodyGrad.addColorStop(1, '#666');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 1.5, s * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose cone (red, pointed)
+        ctx.fillStyle = '#e53935';
+        ctx.beginPath();
+        ctx.moveTo(s * 2.2, 0);
+        ctx.quadraticCurveTo(s * 1.6, -s * 0.5, s * 0.8, -s * 0.5);
+        ctx.lineTo(s * 0.8, s * 0.5);
+        ctx.quadraticCurveTo(s * 1.6, s * 0.5, s * 2.2, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Band around nose
+        ctx.strokeStyle = '#bbb';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(s * 0.8, -s * 0.55);
+        ctx.lineTo(s * 0.8, s * 0.55);
+        ctx.stroke();
+
+        // Fins (angled, sharper)
         ctx.fillStyle = '#757575';
         ctx.beginPath();
-        ctx.moveTo(-this.size, 0);
-        ctx.lineTo(-this.size * 1.5, -this.size * 0.8);
-        ctx.lineTo(-this.size * 0.5, 0);
+        ctx.moveTo(-s * 0.8, -s * 0.3);
+        ctx.lineTo(-s * 1.8, -s * 1.0);
+        ctx.lineTo(-s * 0.3, -s * 0.25);
         ctx.closePath();
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(-this.size, 0);
-        ctx.lineTo(-this.size * 1.5, this.size * 0.8);
-        ctx.lineTo(-this.size * 0.5, 0);
+        ctx.moveTo(-s * 0.8, s * 0.3);
+        ctx.lineTo(-s * 1.8, s * 1.0);
+        ctx.lineTo(-s * 0.3, s * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        // Center fin
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.9, 0);
+        ctx.lineTo(-s * 1.5, -s * 0.08);
+        ctx.lineTo(-s * 0.4, 0);
         ctx.closePath();
         ctx.fill();
     }
     
     renderFlame(ctx) {
-        // Fire particle
+        const s = this.size;
         const flicker = Math.sin(this.animTime * 20) * 0.3;
-        const size = this.size * (1 + flicker);
-        
-        // Outer flame
-        ctx.fillStyle = '#ff5722';
+        const size = s * (1 + flicker);
+        // Trailing sparks
+        for (let i = 0; i < 3; i++) {
+            const tx = -s * (1.5 + i * 0.8) + Math.sin(this.animTime * 15 + i * 3) * s * 0.2;
+            const ty = Math.sin(this.animTime * 10 + i * 5) * s * 0.3;
+            ctx.fillStyle = `rgba(255, ${100 + i * 40}, 0, ${0.3 - i * 0.08})`;
+            ctx.beginPath();
+            ctx.arc(tx, ty, s * (0.35 - i * 0.06), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Outer flame (teardrop shape)
+        ctx.fillStyle = '#dd3300';
         ctx.beginPath();
-        ctx.arc(0, 0, size * 1.2, 0, Math.PI * 2);
+        ctx.moveTo(size * 0.8, 0);
+        ctx.quadraticCurveTo(0, -size * 1.2, -size * 1.0, 0);
+        ctx.quadraticCurveTo(0, size * 1.2, size * 0.8, 0);
         ctx.fill();
-        
-        // Middle
-        ctx.fillStyle = '#ff9800';
+        // Middle flame
+        ctx.fillStyle = '#ff8800';
         ctx.beginPath();
-        ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2);
+        ctx.moveTo(size * 0.5, 0);
+        ctx.quadraticCurveTo(0, -size * 0.8, -size * 0.6, 0);
+        ctx.quadraticCurveTo(0, size * 0.8, size * 0.5, 0);
         ctx.fill();
-        
         // Core
-        ctx.fillStyle = '#ffeb3b';
+        ctx.fillStyle = '#ffee44';
         ctx.beginPath();
-        ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+        ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
         ctx.fill();
     }
     
     renderLightning(ctx) {
-        // Electric orb
+        const s = this.size;
         const pulse = Math.sin(this.animTime * 15) * 0.2 + 0.8;
-        
         ctx.shadowColor = '#2196f3';
         ctx.shadowBlur = 15;
-        
         // Outer glow
         ctx.fillStyle = `rgba(33, 150, 243, ${pulse * 0.3})`;
         ctx.beginPath();
-        ctx.arc(0, 0, this.size * 2, 0, Math.PI * 2);
+        ctx.arc(0, 0, s * 2, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Core
+        // Core (pulsing)
         ctx.fillStyle = '#64b5f6';
         ctx.beginPath();
-        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.arc(0, 0, s * pulse, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Bright center
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
+        ctx.arc(0, 0, s * 0.4, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Lightning sparks
-        ctx.strokeStyle = '#ffffff';
+        // Forked lightning bolts (jagged)
+        ctx.strokeStyle = 'rgba(200, 230, 255, 0.8)';
         ctx.lineWidth = 2;
         for (let i = 0; i < 4; i++) {
-            const sparkAngle = (this.animTime * 5 + i * Math.PI / 2) % (Math.PI * 2);
+            const sa = (this.animTime * 5 + i * Math.PI / 2) % (Math.PI * 2);
+            let px = 0, py = 0;
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(
-                Math.cos(sparkAngle) * this.size * 1.5,
-                Math.sin(sparkAngle) * this.size * 1.5
-            );
+            const segments = 3;
+            for (let j = 1; j <= segments; j++) {
+                const frac = j / segments;
+                const jx = Math.cos(sa) * s * 1.8 * frac;
+                const jy = Math.sin(sa) * s * 1.8 * frac;
+                const jitter = (j < segments) ? s * 0.3 : 0;
+                px = jx + (Math.random() - 0.5) * jitter;
+                py = jy + (Math.random() - 0.5) * jitter;
+                ctx.lineTo(px, py);
+            }
             ctx.stroke();
+            // Branch fork
+            if (Math.sin(this.animTime * 8 + i * 2) > 0) {
+                const bAngle = sa + (Math.random() - 0.5) * 1.2;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(sa) * s * 0.9, Math.sin(sa) * s * 0.9);
+                ctx.lineTo(Math.cos(bAngle) * s * 1.5, Math.sin(bAngle) * s * 1.5);
+                ctx.stroke();
+            }
         }
+        ctx.shadowBlur = 0;
     }
     
     renderIce(ctx) {
@@ -425,6 +579,380 @@ class Projectile extends Entity {
         ctx.fill();
     }
     
+    renderMeteor(ctx) {
+        const s = this.size;
+        // Fire trail particles (scattered behind)
+        for (let i = 1; i <= 5; i++) {
+            const tx = -s * 1.5 * i + Math.sin(this.animTime * 12 + i * 3) * s * 0.3;
+            const ty = Math.sin(this.animTime * 8 + i * 2) * s * 0.4;
+            const tSize = s * (0.6 - i * 0.08);
+            ctx.fillStyle = `rgba(255, ${Math.floor(80 + i * 30)}, 0, ${0.5 - i * 0.08})`;
+            ctx.beginPath();
+            ctx.arc(tx, ty, tSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Ember sparks
+        for (let i = 0; i < 4; i++) {
+            const sx = -s * (2 + i * 0.8) + Math.sin(this.animTime * 15 + i * 5) * s * 0.5;
+            const sy = Math.cos(this.animTime * 10 + i * 4) * s * 0.6;
+            ctx.fillStyle = `rgba(255, 200, 50, ${0.3 + Math.sin(this.animTime * 20 + i) * 0.2})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, s * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Main meteor body (rocky with glow)
+        const gradient = ctx.createRadialGradient(-s * 0.3, -s * 0.3, 0, 0, 0, s * 1.5);
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.2, '#ffcc00');
+        gradient.addColorStop(0.5, '#ff6600');
+        gradient.addColorStop(0.8, '#cc3300');
+        gradient.addColorStop(1, 'rgba(100, 20, 0, 0.4)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        // Slightly irregular shape
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            const r = s * 1.4 + Math.sin(i * 3.7 + this.animTime * 3) * s * 0.15;
+            const px = Math.cos(a) * r;
+            const py = Math.sin(a) * r;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        // Crater-like surface detail
+        ctx.fillStyle = 'rgba(80, 20, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(s * 0.2, -s * 0.1, s * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(-s * 0.3, s * 0.3, s * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    renderPlasma(ctx) {
+        // Glowing cyan-green plasma ball
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.3);
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.3, '#00ffcc');
+        gradient.addColorStop(0.7, '#00aa88');
+        gradient.addColorStop(1, 'rgba(0, 255, 200, 0.2)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    renderPhantom(ctx) {
+        const s = this.size;
+
+        // Ghostly trail (subtle)
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = '#9966cc';
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // === BLADE (silver/steel) ===
+        const bladeGrad = ctx.createLinearGradient(-s * 1.8, 0, s * 2.2, 0);
+        bladeGrad.addColorStop(0, '#888888');
+        bladeGrad.addColorStop(0.3, '#cccccc');
+        bladeGrad.addColorStop(0.5, '#ffffff');
+        bladeGrad.addColorStop(0.7, '#dddddd');
+        bladeGrad.addColorStop(1, '#aaaaaa');
+        ctx.fillStyle = bladeGrad;
+
+        // Blade shape - pointed tip, widens to guard
+        ctx.beginPath();
+        ctx.moveTo(s * 2.4, 0);              // Tip
+        ctx.lineTo(s * 0.8, -s * 0.22);      // Upper edge near guard
+        ctx.lineTo(-s * 0.2, -s * 0.28);     // Upper shoulder
+        ctx.lineTo(-s * 0.2, s * 0.28);      // Lower shoulder
+        ctx.lineTo(s * 0.8, s * 0.22);       // Lower edge near guard
+        ctx.closePath();
+        ctx.fill();
+
+        // Blade edge highlight (sharp edge line)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(s * 2.4, 0);
+        ctx.lineTo(s * 0.8, -s * 0.22);
+        ctx.lineTo(-s * 0.2, -s * 0.28);
+        ctx.stroke();
+
+        // Fuller line (groove down the blade center)
+        ctx.strokeStyle = 'rgba(100, 100, 120, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s * 2.0, 0);
+        ctx.lineTo(s * 0.0, 0);
+        ctx.stroke();
+
+        // === GUARD (cross piece) - gold/dark ===
+        ctx.fillStyle = '#aa8833';
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.15, -s * 0.55);
+        ctx.lineTo(s * 0.05, -s * 0.55);
+        ctx.lineTo(s * 0.05, s * 0.55);
+        ctx.lineTo(-s * 0.15, s * 0.55);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#776622';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // === HANDLE (dark leather) ===
+        ctx.fillStyle = '#443322';
+        ctx.fillRect(-s * 1.1, -s * 0.14, s * 0.95, s * 0.28);
+
+        // Handle wrap lines
+        ctx.strokeStyle = '#332211';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+            const hx = -s * 1.0 + i * s * 0.22;
+            ctx.beginPath();
+            ctx.moveTo(hx, -s * 0.14);
+            ctx.lineTo(hx, s * 0.14);
+            ctx.stroke();
+        }
+
+        // === POMMEL (round end) ===
+        ctx.fillStyle = '#aa8833';
+        ctx.beginPath();
+        ctx.arc(-s * 1.15, 0, s * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spectral glow (very subtle purple aura)
+        ctx.shadowColor = '#8844cc';
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = 'rgba(136, 68, 204, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s * 2.4, 0);
+        ctx.lineTo(s * 0.8, -s * 0.22);
+        ctx.lineTo(-s * 0.2, -s * 0.28);
+        ctx.lineTo(-s * 0.2, s * 0.28);
+        ctx.lineTo(s * 0.8, s * 0.22);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    renderIceGrenade(ctx) {
+        const s = this.size;
+        const h = this._currentArcHeight || 0;
+        const spin = this.animTime * 5;
+
+        // Undo the automatic angle rotation (grenade tumbles freely)
+        ctx.rotate(-this.angle);
+
+        // Shadow on the ground (stays at y=0)
+        const shadowScale = 1 - h * 0.008;
+        ctx.globalAlpha = 0.25 * shadowScale;
+        ctx.fillStyle = '#004466';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 1.1, s * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Lift grenade up by arc height
+        ctx.translate(0, -h);
+
+        // Scale slightly when high
+        const heightScale = 1 + h * 0.006;
+        ctx.scale(heightScale, heightScale);
+
+        // Tumble rotation
+        ctx.rotate(spin);
+
+        // Icy glow aura
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#66ccff';
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Main body - round grenade
+        const bodyGrad = ctx.createRadialGradient(-s * 0.3, -s * 0.3, 0, 0, 0, s * 1.1);
+        bodyGrad.addColorStop(0, '#ddf4ff');
+        bodyGrad.addColorStop(0.4, '#77ccee');
+        bodyGrad.addColorStop(1, '#2288aa');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Metal band around middle
+        ctx.strokeStyle = '#556677';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-s, 0);
+        ctx.lineTo(s, 0);
+        ctx.stroke();
+
+        // Frost lines on surface
+        ctx.strokeStyle = 'rgba(200, 240, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI + spin * 0.3;
+            const len = s * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+            ctx.stroke();
+            // Small branches
+            const bx = Math.cos(a) * len * 0.6;
+            const by = Math.sin(a) * len * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(bx, by);
+            ctx.lineTo(bx + Math.cos(a + 0.8) * len * 0.3, by + Math.sin(a + 0.8) * len * 0.3);
+            ctx.stroke();
+        }
+
+        // Top pin / fuse nub
+        ctx.fillStyle = '#aaeeff';
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.8, s * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#55aacc';
+        ctx.fillRect(-s * 0.08, -s * 1.15, s * 0.16, s * 0.35);
+
+        // Outer glow ring
+        ctx.shadowColor = '#00ccff';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = 'rgba(100, 220, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 1.05, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    renderArrow(ctx) {
+        // Arrow shaft
+        ctx.fillStyle = '#8B6914';
+        ctx.fillRect(-this.size * 2, -this.size * 0.2, this.size * 3.5, this.size * 0.4);
+        // Arrowhead (sharp triangle)
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.moveTo(this.size * 2, 0);
+        ctx.lineTo(this.size * 0.8, -this.size * 0.7);
+        ctx.lineTo(this.size * 0.8, this.size * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        // Fletching (tail feathers)
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.beginPath();
+        ctx.moveTo(-this.size * 2, 0);
+        ctx.lineTo(-this.size * 1.3, -this.size * 0.6);
+        ctx.lineTo(-this.size * 1.0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-this.size * 2, 0);
+        ctx.lineTo(-this.size * 1.3, this.size * 0.6);
+        ctx.lineTo(-this.size * 1.0, 0);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    renderFireball(ctx) {
+        // Fiery core
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.5);
+        grad.addColorStop(0, '#ffff44');
+        grad.addColorStop(0.3, '#ff8800');
+        grad.addColorStop(0.7, '#ff3300');
+        grad.addColorStop(1, 'rgba(200, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Flickering flames trailing behind
+        for (let i = 0; i < 4; i++) {
+            const fAngle = Math.PI + (Math.random() - 0.5) * 1.2;
+            const fDist = this.size + Math.random() * this.size;
+            const fx = Math.cos(fAngle) * fDist;
+            const fy = Math.sin(fAngle) * fDist;
+            ctx.fillStyle = `rgba(255, ${100 + Math.floor(Math.random() * 100)}, 0, ${0.4 + Math.random() * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(fx, fy, this.size * (0.3 + Math.random() * 0.4), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderEnergyBall(ctx) {
+        // Purple energy orb with ring
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.3);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, this.color);
+        grad.addColorStop(1, 'rgba(100, 0, 180, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        // Orbiting ring
+        ctx.strokeStyle = `rgba(200, 150, 255, 0.6)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 1.5, this.size * 0.5, this.animTime * 3, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    renderLaserBolt(ctx) {
+        // Neon laser bolt (elongated, bright)
+        const grad = ctx.createLinearGradient(-this.size * 2, 0, this.size * 2, 0);
+        grad.addColorStop(0, 'rgba(0, 255, 180, 0)');
+        grad.addColorStop(0.3, this.color);
+        grad.addColorStop(0.7, '#ffffff');
+        grad.addColorStop(1, this.color);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 2.5, this.size * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Glow
+        ctx.fillStyle = `rgba(0, 255, 200, 0.15)`;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 3, this.size * 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    renderDarkOrb(ctx) {
+        // Dark void orb with swirling shadow
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.5);
+        grad.addColorStop(0, '#000000');
+        grad.addColorStop(0.4, '#330055');
+        grad.addColorStop(0.8, this.color);
+        grad.addColorStop(1, 'rgba(100, 0, 180, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Swirling tendrils
+        ctx.strokeStyle = `rgba(150, 50, 255, 0.5)`;
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 3; i++) {
+            const a = this.animTime * 4 + (i * Math.PI * 2 / 3);
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size * (0.8 + i * 0.3), a, a + Math.PI * 0.6);
+            ctx.stroke();
+        }
+    }
+
+    renderEnemyDefault(ctx) {
+        // Simple colored bullet for generic ranged enemies
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        // Inner highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(-this.size * 0.2, -this.size * 0.2, this.size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
     renderDefault(ctx) {
         // Default glowing projectile
         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 2);
@@ -452,7 +980,7 @@ class Weapon {
      */
     constructor(type) {
         this.type = type;
-        const config = CONFIG.WEAPONS[type];
+        const config = CONFIG.WEAPONS[type] || WORLD_WEAPONS[type];
         
         if (!config) {
             console.error(`Unknown weapon type: ${type}`);
@@ -482,6 +1010,17 @@ class Weapon {
         this.rotationSpeed = config.rotationSpeed || 0;
         this.orbitRadius = config.orbitRadius || 0;
         this.count = config.count || 1;
+        
+        // World-specific weapon properties
+        this.chainTargets = config.chainTargets || 0;
+        this.chainRange = config.chainRange || 0;
+        this.lifeSteal = config.lifeSteal || 0;
+        this.homing = config.homing || false;
+        this.homingStrength = config.homingStrength || 0;
+        this.bounces = config.bounces || 0;
+        this.freezeDuration = config.freezeDuration || 0;
+        this.arcHeight = config.arcHeight || 0;
+        this.description = config.description || '';
         
         // Cooldown
         this.cooldown = 0;
@@ -534,12 +1073,14 @@ class Weapon {
         if (this.cooldown > 0) return null;
         
         // Don't fire if no target (except special weapons handled separately)
-        if (!target && this.type !== 'laser' && this.type !== 'forcefield' && this.type !== 'drone') {
+        if (!target && this.type !== 'laser' && this.type !== 'forcefield' && this.type !== 'drone' 
+            && this.type !== 'teslaCoil' && this.type !== 'soulDrain' && this.type !== 'blizzardOrb') {
             return null;
         }
         
         // Special weapons don't fire projectiles normally - they have their own logic
-        if (this.type === 'laser' || this.type === 'forcefield' || this.type === 'drone') {
+        if (this.type === 'laser' || this.type === 'forcefield' || this.type === 'drone'
+            || this.type === 'teslaCoil' || this.type === 'soulDrain' || this.type === 'blizzardOrb') {
             return null;
         }
         
@@ -593,11 +1134,20 @@ class Weapon {
                     range: this.range,
                     pierce: this.pierce,
                     explosionRadius: this.explosionRadius,
-                    returns: this.returns
+                    returns: this.returns,
+                    homing: this.homing,
+                    homingStrength: this.homingStrength,
+                    bounces: this.bounces || 0,
+                    freezeDuration: this.freezeDuration || 0,
+                    arcHeight: this.arcHeight || 0
                 }
             );
             
             proj.owner = player;
+            // Set homing target
+            if (this.homing && target) {
+                proj.homingTarget = target;
+            }
             this.projectilePool.push(proj);
             newProjectiles.push(proj);
         }
@@ -615,12 +1165,10 @@ class Weapon {
         this.damage *= 1.15;
         this.fireRate *= 0.90; // 10% faster per level
         
-        // Every 3 levels, add a projectile or pierce
+        // Every 3 levels, add a projectile
         if (this.level % 3 === 0) {
             if (this.type === 'shotgun' || this.type === 'machineGun') {
                 this.projectiles++;
-            } else {
-                this.pierce++;
             }
         }
         

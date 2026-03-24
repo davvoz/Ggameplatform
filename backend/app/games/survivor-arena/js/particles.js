@@ -29,7 +29,9 @@ class Particle {
         this.friction = options.friction || 0;
         this.fadeOut = options.fadeOut !== false;
         this.shrink = options.shrink || false;
+        this.glow = options.glow || false;
         this.active = true;
+        this.alpha = 1;
         
         // Initial values for interpolation
         this.initialSize = this.size;
@@ -47,6 +49,11 @@ class Particle {
         if (this.age >= this.lifetime) {
             this.active = false;
             return;
+        }
+
+        // Compute alpha for external renderers
+        if (this.fadeOut) {
+            this.alpha = 1 - (this.age / this.lifetime);
         }
 
         // Apply physics
@@ -120,7 +127,7 @@ class Particle {
 class ParticleSystem {
     constructor() {
         this.particles = [];
-        this.maxParticles = 500;
+        this.maxParticles = 700;
     }
 
     /**
@@ -236,6 +243,300 @@ class ParticleSystem {
                     shrink: true
                 }
             ));
+        }
+    }
+
+    /**
+     * Create weapon-specific AoE impact effect with smoke, debris, and sparks
+     */
+    createAoEImpact(x, y, weaponType, radius) {
+        if (weaponType === 'rocket') {
+            this._createRocketImpact(x, y, radius);
+        } else if (weaponType === 'meteorStaff') {
+            this._createMeteorImpact(x, y, radius);
+        } else if (weaponType === 'plasmaCannon') {
+            this._createPlasmaImpact(x, y, radius);
+        } else if (weaponType === 'iceGrenade') {
+            this._createIceGrenadeImpact(x, y, radius);
+        } else {
+            this.createExplosion(x, y, { count: 25, color: '#ff8800', speed: 200, size: 6 });
+        }
+    }
+
+    _createRocketImpact(x, y, radius) {
+        // Core fire burst
+        this.createExplosion(x, y, { count: 20, color: '#ff4400', speed: 280, size: 6 });
+
+        // Hot white-orange inner flash particles
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(60, 120);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: MathUtils.randomRange(5, 9),
+                color: '#ffdd44',
+                lifetime: MathUtils.randomRange(150, 300),
+                friction: 4,
+                shrink: true,
+                glow: true
+            }));
+        }
+
+        // Thick dark smoke puffs rising
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const dist = MathUtils.randomRange(0, radius * 0.3);
+            this.add(new Particle(
+                x + Math.cos(angle) * dist,
+                y + Math.sin(angle) * dist,
+                {
+                    vx: MathUtils.randomRange(-25, 25),
+                    vy: MathUtils.randomRange(-40, -90),
+                    size: MathUtils.randomRange(14, 22),
+                    color: this.randomizeColor('#444444', 30),
+                    lifetime: MathUtils.randomRange(600, 1000),
+                    friction: 0.8,
+                    shrink: true
+                }
+            ));
+        }
+
+        // Fast ember sparks flying outward
+        for (let i = 0; i < 14; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(180, 350);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - MathUtils.randomRange(0, 60),
+                size: MathUtils.randomRange(1.5, 3.5),
+                color: this.randomizeColor('#ffaa22', 30),
+                lifetime: MathUtils.randomRange(300, 550),
+                gravity: 180,
+                friction: 1.5,
+                shrink: true,
+                glow: true
+            }));
+        }
+    }
+
+    _createMeteorImpact(x, y, radius) {
+        // Core fiery burst
+        this.createExplosion(x, y, { count: 22, color: '#ff6600', speed: 250, size: 7 });
+
+        // Bright molten center
+        for (let i = 0; i < 6; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(40, 80);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: MathUtils.randomRange(6, 11),
+                color: '#ffcc00',
+                lifetime: MathUtils.randomRange(200, 350),
+                friction: 3,
+                shrink: true,
+                glow: true
+            }));
+        }
+
+        // Huge dark smoke billowing upward
+        for (let i = 0; i < 10; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const dist = MathUtils.randomRange(0, radius * 0.35);
+            this.add(new Particle(
+                x + Math.cos(angle) * dist,
+                y + Math.sin(angle) * dist,
+                {
+                    vx: MathUtils.randomRange(-30, 30),
+                    vy: MathUtils.randomRange(-50, -110),
+                    size: MathUtils.randomRange(18, 28),
+                    color: this.randomizeColor('#333333', 25),
+                    lifetime: MathUtils.randomRange(800, 1200),
+                    friction: 0.6,
+                    shrink: true
+                }
+            ));
+        }
+
+        // Heavy debris chunks with gravity
+        for (let i = 0; i < 12; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(120, 280);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - MathUtils.randomRange(40, 100),
+                size: MathUtils.randomRange(3, 7),
+                color: this.randomizeColor('#cc4400', 35),
+                lifetime: MathUtils.randomRange(500, 800),
+                gravity: 350,
+                friction: 0.5,
+                shrink: false
+            }));
+        }
+
+        // Ground-level fire embers lingering
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const dist = MathUtils.randomRange(5, radius * 0.5);
+            this.add(new Particle(
+                x + Math.cos(angle) * dist,
+                y + Math.sin(angle) * dist,
+                {
+                    vx: MathUtils.randomRange(-15, 15),
+                    vy: MathUtils.randomRange(-20, -50),
+                    size: MathUtils.randomRange(3, 5),
+                    color: this.randomizeColor('#ff6600', 30),
+                    lifetime: MathUtils.randomRange(600, 900),
+                    friction: 2,
+                    shrink: true,
+                    glow: true
+                }
+            ));
+        }
+    }
+
+    _createPlasmaImpact(x, y, radius) {
+        // Core cyan energy burst
+        this.createExplosion(x, y, { count: 18, color: '#00ffcc', speed: 220, size: 5 });
+
+        // Bright white-cyan flash core
+        for (let i = 0; i < 10; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(50, 110);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: MathUtils.randomRange(4, 8),
+                color: '#ffffff',
+                lifetime: MathUtils.randomRange(100, 250),
+                friction: 5,
+                shrink: true,
+                glow: true
+            }));
+        }
+
+        // Ultra-fast electric sparks
+        for (let i = 0; i < 16; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(300, 500);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: MathUtils.randomRange(1, 2.5),
+                color: i % 3 === 0 ? '#ffffff' : '#66ffee',
+                lifetime: MathUtils.randomRange(100, 280),
+                friction: 6,
+                shrink: true,
+                glow: true
+            }));
+        }
+
+        // Plasma wisps drifting outward
+        for (let i = 0; i < 7; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const dist = MathUtils.randomRange(0, radius * 0.25);
+            this.add(new Particle(
+                x + Math.cos(angle) * dist,
+                y + Math.sin(angle) * dist,
+                {
+                    vx: Math.cos(angle) * MathUtils.randomRange(20, 50),
+                    vy: Math.sin(angle) * MathUtils.randomRange(20, 50) - MathUtils.randomRange(10, 30),
+                    size: MathUtils.randomRange(8, 14),
+                    color: this.randomizeColor('#00ddcc', 25),
+                    lifetime: MathUtils.randomRange(400, 700),
+                    friction: 1.5,
+                    shrink: true
+                }
+            ));
+        }
+
+        // Cyan energy motes
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(80, 160);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - MathUtils.randomRange(20, 40),
+                size: MathUtils.randomRange(2.5, 4.5),
+                color: this.randomizeColor('#00ff88', 25),
+                lifetime: MathUtils.randomRange(350, 550),
+                friction: 2.5,
+                shrink: true,
+                glow: true
+            }));
+        }
+    }
+
+    _createIceGrenadeImpact(x, y, radius) {
+        // Core icy blast
+        this.createExplosion(x, y, { count: 18, color: '#88ddff', speed: 200, size: 5 });
+
+        // White-blue flash
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(40, 90);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: MathUtils.randomRange(5, 9),
+                color: '#ffffff',
+                lifetime: MathUtils.randomRange(150, 300),
+                friction: 4,
+                shrink: true,
+                glow: true
+            }));
+        }
+
+        // Ice crystal shards flying out
+        for (let i = 0; i < 12; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(150, 300);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - MathUtils.randomRange(0, 40),
+                size: MathUtils.randomRange(2, 4),
+                color: this.randomizeColor('#66ccff', 25),
+                lifetime: MathUtils.randomRange(400, 700),
+                gravity: 120,
+                friction: 1,
+                shrink: false
+            }));
+        }
+
+        // Frost mist (large, slow, fading)
+        for (let i = 0; i < 8; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const dist = MathUtils.randomRange(0, radius * 0.3);
+            this.add(new Particle(
+                x + Math.cos(angle) * dist,
+                y + Math.sin(angle) * dist,
+                {
+                    vx: MathUtils.randomRange(-20, 20),
+                    vy: MathUtils.randomRange(-30, -60),
+                    size: MathUtils.randomRange(12, 20),
+                    color: this.randomizeColor('#aaddff', 20),
+                    lifetime: MathUtils.randomRange(600, 1000),
+                    friction: 0.8,
+                    shrink: true
+                }
+            ));
+        }
+
+        // Snowflake-like sparkles
+        for (let i = 0; i < 10; i++) {
+            const angle = MathUtils.randomRange(0, Math.PI * 2);
+            const speed = MathUtils.randomRange(60, 140);
+            this.add(new Particle(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - MathUtils.randomRange(20, 40),
+                size: MathUtils.randomRange(1.5, 3),
+                color: '#ffffff',
+                lifetime: MathUtils.randomRange(500, 800),
+                friction: 2,
+                shrink: true,
+                glow: true
+            }));
         }
     }
 

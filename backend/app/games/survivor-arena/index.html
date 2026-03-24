@@ -28,7 +28,7 @@
         <!-- Loading Screen -->
         <div id="loadingScreen" class="screen">
             <div class="loading-content">
-                <h1 class="game-title">⚔️ SURVIVOR ARENA ⚔️</h1>
+                <h1 class="game-title">SURVIVOR ARENA</h1>
                 <div class="loading-bar">
                     <div id="loadingProgress" class="loading-progress"></div>
                 </div>
@@ -38,14 +38,23 @@
 
         <!-- Start Screen -->
         <div id="startScreen" class="screen hidden">
-            <div class="start-content">
-                <h1 class="game-title">⚔️ SURVIVOR ARENA ⚔️</h1>
-                <p class="game-subtitle">Survive the endless horde!</p>
-                <button id="startButton" class="btn-primary">
+            <canvas id="introCanvas"></canvas>
+            <div class="start-content intro-animated">
+                <div class="intro-title-wrapper">
+                    <h1 class="game-title intro-title">SURVIVOR<br><span class="title-arena">ARENA</span></h1>
+                </div>
+                <p class="game-subtitle intro-subtitle">Survive the endless horde!</p>
+                <div class="char-current intro-fade-in" style="animation-delay: 1.1s;">
+                    <canvas id="currentCharPreview" width="50" height="50"></canvas>
+                    <span id="currentCharName">Cyber Soldier</span>
+                    <span id="currentCharXP" class="char-xp-tag">1.0x XP</span>
+                </div>
+                <button id="charSelectBtn" class="btn-secondary intro-fade-in" style="animation-delay: 1.2s;">SELECT CHARACTER</button>
+                <button id="startButton" class="btn-primary intro-fade-in" style="animation-delay: 1.3s;">
                     <span class="btn-icon">▶</span>
                     <span class="btn-text">PLAY</span>
                 </button>
-                <div class="controls-hint">
+                <div class="controls-hint intro-fade-in" style="animation-delay: 1.4s;">
                     <p><strong>Mobile:</strong> Virtual joystick to move</p>
                     <p><strong>Desktop:</strong> WASD / Arrow keys</p>
                     <p>Weapons fire automatically!</p>
@@ -189,6 +198,7 @@
                         <span id="finalLevel" class="final-stat-value">1</span>
                     </div>
                 </div>
+                <button id="charSelectBtnGameOver" class="btn-secondary" style="margin-bottom: 10px;">CHANGE CHARACTER</button>
                 <button id="restartButton" class="btn-primary">
                     <span class="btn-icon">🔄</span>
                     <span class="btn-text">PLAY AGAIN</span>
@@ -196,9 +206,22 @@
             </div>
         </div>
 
+        <!-- Character Selector Overlay -->
+        <div id="characterSelector" class="screen hidden" style="z-index: 1100;">
+            <div class="char-selector-content">
+                <div class="char-selector-header">
+                    <h2>SELECT CHARACTER</h2>
+                    <div id="charCoinBalance" class="char-coin-balance">---</div>
+                    <button id="charCloseBtn" class="char-close-btn">&times;</button>
+                </div>
+                <div id="charGrid" class="char-grid"></div>
+            </div>
+        </div>
+
     </div> <!-- #game-container -->
 
     <!-- Scripts -->
+    <script src="js/characters.js" type="module"></script>
     <script src="js/config.js" type="module"></script>
     <script src="js/utils.js" type="module"></script>
     <script src="js/sprite-system.js" type="module"></script>

@@ -330,7 +330,7 @@ class Game {
         const handleTrackChange = async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const trackIndex = parseInt(e.target.dataset.track, 10);
+            const trackIndex = Number.parseInt(e.target.dataset.track, 10);
             if (isNaN(trackIndex)) return;
 
             // Aggiorna UI
@@ -671,7 +671,7 @@ class Game {
         if (this.trackButtons) {
             const currentTrack = this.sound.getCurrentTrackIndex();
             this.trackButtons.forEach(btn => {
-                const trackIdx = parseInt(btn.dataset.track, 10);
+                const trackIdx = Number.parseInt(btn.dataset.track, 10);
                 if (trackIdx === currentTrack) {
                     btn.classList.add('active');
                 } else {
@@ -2516,7 +2516,7 @@ class Game {
 
     loadHighScore() {
         const saved = localStorage.getItem('spaceShooterHighScore');
-        return saved ? parseInt(saved) : 0;
+        return saved ? Number.parseInt(saved) : 0;
     }
 
     saveHighScore() {

@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateWorldCards() {
         const panel = document.getElementById('world-select-panel');
         document.querySelectorAll('.world-card').forEach(card => {
-            const worldNum = parseInt(card.dataset.world);
+            const worldNum = Number.parseInt(card.dataset.world);
             const isLocked = worldNum > unlockedWorlds;
             card.classList.toggle('locked', isLocked);
             const icon = card.querySelector('.diff-icon');
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const anySelected = document.querySelector('.world-card.selected:not(.locked)');
         if (!anySelected) {
             const first = document.querySelector('.world-card:not(.locked)');
-            if (first) { first.classList.add('selected'); selectedWorld = parseInt(first.dataset.world); }
+            if (first) { first.classList.add('selected'); selectedWorld = Number.parseInt(first.dataset.world); }
         }
         // Show world panel only if 2+ worlds are unlocked
         if (panel) {
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (card.classList.contains('locked')) return;
             document.querySelectorAll('.world-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
-            selectedWorld = parseInt(card.dataset.world);
+            selectedWorld = Number.parseInt(card.dataset.world);
             game.sound.playMenuClick();
         });
     });

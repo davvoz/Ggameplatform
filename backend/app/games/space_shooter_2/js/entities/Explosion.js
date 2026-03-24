@@ -88,7 +88,7 @@ class Explosion {
     }
 
     render(ctx) {
-        if (!isFinite(this.x) || !isFinite(this.y)) { this.active = false; return; }
+        if (!Number.isFinite(this.x) || !Number.isFinite(this.y)) { this.active = false; return; }
 
         const t = this.life / this.maxLife;
         const alpha = 1 - t * t;

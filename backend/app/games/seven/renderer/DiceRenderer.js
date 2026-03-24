@@ -3,8 +3,7 @@
  * Single Responsibility: 3D rendering with Three.js
  */
 
-import { GAME_CONSTANTS, FACE_ROTATIONS } from '../constants.js';
-import { MathUtils } from '../utils/MathUtils.js';
+import { GAME_CONSTANTS } from '../constants.js';
 import { DiceFactory } from './DiceFactory.js';
 import { OrbitControls } from './OrbitControls.js';
 import { PhysicsEngine } from '../physics/PhysicsEngine.js';
@@ -33,7 +32,6 @@ export class DiceRenderer {
     this._initLights();
     this._initPlatform();
     this._initDice();
-    this._initControls();
     this._initResizeHandler();
     this._startAnimation();
   }
@@ -522,10 +520,6 @@ export class DiceRenderer {
       this._diceBodyA = this._physicsEngine.createDiceBody(GAME_CONSTANTS.DICE_POSITION_A);
       this._diceBodyB = this._physicsEngine.createDiceBody(GAME_CONSTANTS.DICE_POSITION_B);
     }
-  }
-
-  _initControls() {
-    new OrbitControls(this._canvas, this._camera);
   }
 
   _initResizeHandler() {

@@ -35,8 +35,8 @@ class PostProcessing {
         this.shakeTimer = duration;
     }
 
-    flash(color = { r: 255, g: 255, b: 255 }, alpha = 0.3) {
-        this.flashColor = color;
+    flash(color, alpha = 0.3) {
+        this.flashColor = color ?? { r: 255, g: 255, b: 255 };
         this.flashAlpha = alpha;
     }
 

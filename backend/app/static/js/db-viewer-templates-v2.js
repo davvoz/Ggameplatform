@@ -106,8 +106,8 @@ class TemplateEngine {
                 break;
 
             case 'number':
-                const numValue = parseFloat(value);
-                cell.textContent = isNaN(numValue) ? '-' : 
+                const numValue = Number.parseFloat(value);
+                cell.textContent = Number.isNaN(numValue) ? '-' : 
                     (column.decimals !== undefined ? numValue.toFixed(column.decimals) : numValue);
                 break;
 
@@ -420,7 +420,7 @@ class TemplateEngine {
                     
             case 'INTEGER':
             case 'FLOAT':
-                const numVal = parseFloat(value);
+                const numVal = Number.parseFloat(value);
                 if (def.label?.toLowerCase().includes('xp')) {
                     return `<span class="value-highlight success">⭐ ${numVal.toFixed(def.type === 'FLOAT' ? 2 : 0)}</span>`;
                 }
@@ -634,7 +634,8 @@ class Utils {
     static formatDate(dateString) {
         if (!dateString) return '-';
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) return dateString;
+                const numVal = parseFloat(value);
+        if (Number.isNaN(date.getTime())) return dateString;
         return date.toLocaleString(CONFIG?.DATE_FORMAT?.locale || 'it-IT', 
             CONFIG?.DATE_FORMAT?.options || {
                 year: 'numeric',

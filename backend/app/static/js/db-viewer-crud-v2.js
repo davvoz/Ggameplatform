@@ -491,7 +491,7 @@ class CRUDManager {
                     value = input.value;
                 }
             } else if (input.type === 'number') {
-                value = input.value ? parseFloat(input.value) : null;
+                value = input.value ? Number.parseFloat(input.value) : null;
             } else {
                 value = input.value;
             }

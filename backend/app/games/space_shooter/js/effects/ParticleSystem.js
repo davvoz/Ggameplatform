@@ -194,7 +194,8 @@ class ParticleSystem {
     }
 
     // Preset: Hit spark
-    emitHitSpark(x, y, color = { r: 255, g: 255, b: 255 }) {
+    emitHitSpark(x, y, color) {
+        if (color === undefined) color = { r: 255, g: 255, b: 255 };
         for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2;
             const speed = 100 + Math.random() * 100;

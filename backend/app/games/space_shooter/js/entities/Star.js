@@ -211,7 +211,7 @@ class StarField {
         
         for (const [layer, count] of Object.entries(starCounts)) {
             for (let i = 0; i < count; i++) {
-                this.stars.push(new Star(this.canvasWidth, this.canvasHeight, parseInt(layer)));
+                this.stars.push(new Star(this.canvasWidth, this.canvasHeight, Number.parseInt(layer)));
             }
         }
         
@@ -277,7 +277,7 @@ class StarField {
         
         for (const [layer, count] of Object.entries(starCounts)) {
             for (let i = 0; i < count; i++) {
-                this.stars.push(new Star(this.canvasWidth, this.canvasHeight, parseInt(layer)));
+                this.stars.push(new Star(this.canvasWidth, this.canvasHeight, Number.parseInt(layer)));
             }
         }
         

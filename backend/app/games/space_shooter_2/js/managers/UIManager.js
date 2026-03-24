@@ -10,7 +10,7 @@ class UIManager {
      * the hidden (opacity 0) state, then transitions to visible.
      */
     _revealScreen(screen) {
-        screen.offsetHeight; // force reflow to commit opacity:0
+        void screen.offsetHeight; // force reflow to commit opacity:0
         screen.classList.remove('hidden');
         if (window.audioViz) window.audioViz.start(screen);
     }
@@ -22,7 +22,7 @@ class UIManager {
         if (oldScreen) {
             oldScreen.style.transition = 'none';
             oldScreen.classList.add('hidden');
-            oldScreen.offsetHeight;
+            void oldScreen.offsetHeight;
             oldScreen.style.transition = '';
             if (window.audioViz && window.audioViz.canvas.parentNode === oldScreen) {
                 window.audioViz.stop();
@@ -31,7 +31,7 @@ class UIManager {
 
         newScreen.style.transition = 'none';
         newScreen.classList.remove('hidden');
-        newScreen.offsetHeight;
+        void newScreen.offsetHeight;
         newScreen.style.transition = '';
 
         if (window.audioViz) window.audioViz.start(newScreen);

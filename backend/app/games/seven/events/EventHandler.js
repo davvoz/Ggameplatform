@@ -94,8 +94,8 @@ export class EventHandler {
     // Increase button
     this._ui.elements.increaseBet.addEventListener('click', () => {
       const currentValue = this._ui.getBetAmount();
-      const maxValue = parseInt(this._ui.elements.betAmountInput.max, 10);
-      const step = parseInt(this._ui.elements.betAmountInput.step || 1, 10);
+      const maxValue = Number.parseInt(this._ui.elements.betAmountInput.max, 10);
+      const step = Number.parseInt(this._ui.elements.betAmountInput.step || 1, 10);
       const newValue = Math.min(currentValue + step, maxValue);
       
       this._ui.updateBetAmount(newValue);
@@ -104,8 +104,8 @@ export class EventHandler {
     // Decrease button
     this._ui.elements.decreaseBet.addEventListener('click', () => {
       const currentValue = this._ui.getBetAmount();
-      const minValue = parseInt(this._ui.elements.betAmountInput.min, 10);
-      const step = parseInt(this._ui.elements.betAmountInput.step || 1, 10);
+      const minValue = Number.parseInt(this._ui.elements.betAmountInput.min, 10);
+      const step = Number.parseInt(this._ui.elements.betAmountInput.step || 1, 10);
       const newValue = Math.max(currentValue - step, minValue);
       
       this._ui.updateBetAmount(newValue);
@@ -114,7 +114,7 @@ export class EventHandler {
     // Double button
     this._ui.elements.doubleBtn.addEventListener('click', () => {
       const currentValue = this._ui.getBetAmount();
-      const maxValue = parseInt(this._ui.elements.betAmountInput.max, 10);
+      const maxValue = Number.parseInt(this._ui.elements.betAmountInput.max, 10);
       const newValue = Math.min(currentValue * 2, maxValue);
       
       this._ui.updateBetAmount(newValue);
@@ -123,7 +123,7 @@ export class EventHandler {
     // Half button
     this._ui.elements.halfBtn.addEventListener('click', () => {
       const currentValue = this._ui.getBetAmount();
-      const minValue = parseInt(this._ui.elements.betAmountInput.min, 10);
+      const minValue = Number.parseInt(this._ui.elements.betAmountInput.min, 10);
       const newValue = Math.max(Math.floor(currentValue / 2), minValue);
       
       this._ui.updateBetAmount(newValue);

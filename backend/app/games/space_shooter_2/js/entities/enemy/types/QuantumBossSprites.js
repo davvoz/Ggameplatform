@@ -19,17 +19,17 @@ const hypot = Math.hypot, floor = Math.floor, min = Math.min, max = Math.max;
 // ───────── colour helpers ─────────
 function hexRgb(h) {
     if (h[0] !== '#') { const m = h.match(/(\d+)/g); return [+m[0], +m[1], +m[2]]; }
-    const v = parseInt(h.slice(1), 16);
+    const v = Number.parseInt(h.slice(1), 16);
     return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
 }
 function rgb(r, g, b) { return `rgb(${Math.trunc(r)},${Math.trunc(g)},${Math.trunc(b)})`; }
 function rgba(r, g, b, a) { return `rgba(${Math.trunc(r)},${Math.trunc(g)},${Math.trunc(b)},${a})`; }
 function colStr([r, g, b]) { return rgb(r, g, b); }
-function darken(hex, k) { const c = hexRgb(hex); return rgb(c[0]*(1-k), c[1]*(1-k), c[2]*(1-k)); }
-function lighten(hex, k) { const c = hexRgb(hex); return rgb(c[0]+(255-c[0])*k, c[1]+(255-c[1])*k, c[2]+(255-c[2])*k); }
+function darken(hex, k) { const c = hexRgb(hex); return rgb(c[0] * (1 - k), c[1] * (1 - k), c[2] * (1 - k)); }
+function lighten(hex, k) { const c = hexRgb(hex); return rgb(c[0] + (255 - c[0]) * k, c[1] + (255 - c[1]) * k, c[2] + (255 - c[2]) * k); }
 function lerpCol(a, b, f) {
     const ca = hexRgb(a), cb = hexRgb(b);
-    return rgb(ca[0]+(cb[0]-ca[0])*f, ca[1]+(cb[1]-ca[1])*f, ca[2]+(cb[2]-ca[2])*f);
+    return rgb(ca[0] + (cb[0] - ca[0]) * f, ca[1] + (cb[1] - ca[1]) * f, ca[2] + (cb[2] - ca[2]) * f);
 }
 
 // ───────── drawing primitives ─────────
@@ -796,8 +796,8 @@ function drawElectroweakUnifier(ctx, boss, t) {
         ctx.beginPath();
         ctx.moveTo(pcx, pcy - pr);
         ctx.bezierCurveTo(pcx + pr * 0.5, pcy - pr * 0.3,
-                          pcx - pr * 0.5, pcy + pr * 0.3,
-                          pcx, pcy + pr);
+            pcx - pr * 0.5, pcy + pr * 0.3,
+            pcx, pcy + pr);
         ctx.stroke();
         ctx.restore();
 
@@ -1863,9 +1863,9 @@ function _drawStyledPart(ctx, part, t, baseColor, st) {
 
     const roleColor = part.isCore ? baseColor :
         part.role === 'turret' ? lighten(baseColor, 0.25) :
-        part.role === 'shield' ? '#4488ff' :
-        part.role === 'weakpoint' ? '#ff4444' :
-        darken(baseColor, 0.2);
+            part.role === 'shield' ? '#4488ff' :
+                part.role === 'weakpoint' ? '#ff4444' :
+                    darken(baseColor, 0.2);
 
     // Soft glow
     ctx.globalAlpha = 0.1;

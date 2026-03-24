@@ -539,7 +539,7 @@ async def export_database():
         "weekly_leaderboards": weekly_leaderboards,
         "leaderboard_rewards": leaderboard_rewards,
         "weekly_winners": weekly_winners,
-        "daily_login_rewards": daily_login_rewards,
+        "daily_login_rewards": user_login_streak,
         "daily_login_reward_config": daily_login_reward_config,
         "campaigns": campaigns,
         "platform_config": platform_config,
@@ -1811,7 +1811,7 @@ async def get_user_login_streak(user_id: str, db: Session = Depends(get_db)):
         streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
         if not streak:
             raise HTTPException(status_code=404, detail="User login streak not found")
-        return {"success": True, "data": reward.to_dict()}
+        return {"success": True, "data": streak.to_dict()}
     except HTTPException:
         raise
     except Exception as e:
@@ -1827,18 +1827,18 @@ async def update_user_login_streak(user_id: str, streak_data: dict, db: Session 
         if not streak:
             raise HTTPException(status_code=404, detail="User login streak not found")
         
-        if 'current_day' in reward_data:
-            reward.current_day = reward_data['current_day']
-        if 'last_claim_date' in reward_data:
-            reward.last_claim_date = reward_data['last_claim_date']
-        if 'total_cycles_completed' in reward_data:
-            reward.total_cycles_completed = reward_data['total_cycles_completed']
+        if 'current_day' in streak_data:
+            streak.current_day = streak_data['current_day']
+        if 'last_claim_date' in streak_data:
+            streak.last_claim_date = streak_data['last_claim_date']
+        if 'total_cycles_completed' in streak_data:
+            streak.total_cycles_completed = streak_data['total_cycles_completed']
         
-        reward.updated_at = datetime.now(timezone.utc).isoformat()
+        streak.updated_at = datetime.now(timezone.utc).isoformat()
         db.commit()
-        db.refresh(reward)
+        db.refresh(streak)
         
-        return {"success": True, "data": reward.to_dict()}
+        return {"success": True, "data": streak.to_dict()}
     except HTTPException:
         raise
     except Exception as e:
@@ -1966,15 +1966,6 @@ async def delete_daily_login_reward_config(day: int, db: Session = Depends(get_d
         db.delete(config)
         db.commit()
         return {"success": True, "message": "Configuration deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-        db.delete(reward)
-        db.commit()
-        return {"success": True, "message": "Daily login reward deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

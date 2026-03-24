@@ -205,14 +205,14 @@ export class UIManager {
   }
 
   getBetAmount() {
-    return parseInt(this.elements.betAmountInput.value, 10);
+    return Number.parseInt(this.elements.betAmountInput.value, 10);
   }
 
   _updateBetButtons() {
     const currentBet = this.getBetAmount();
-    const min = parseInt(this.elements.betAmountInput.min, 10);
-    const max = parseInt(this.elements.betAmountInput.max, 10);
-    const step = parseInt(this.elements.betAmountInput.step || 1, 10);
+    const min = Number.parseInt(this.elements.betAmountInput.min, 10);
+    const max = Number.parseInt(this.elements.betAmountInput.max, 10);
+    const step = Number.parseInt(this.elements.betAmountInput.step || 1, 10);
 
     // Disable decrease if at minimum
     this.elements.decreaseBet.disabled = currentBet <= min;
@@ -291,6 +291,6 @@ export class UIManager {
   }
 
   getStakeValue() {
-    return parseInt(this.elements.stakeRange.value, 10);
+    return Number.parseInt(this.elements.stakeRange.value, 10);
   }
 }

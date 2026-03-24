@@ -77,7 +77,7 @@ class SoundManager {
             // Carica la traccia salvata o quella predefinita
             const savedTrack = localStorage.getItem('spaceShooter_musicTrack');
             if (savedTrack !== null) {
-                this.currentTrackIndex = parseInt(savedTrack, 10);
+                this.currentTrackIndex = Number.parseInt(savedTrack, 10);
             }
             this.loadBackgroundMusic(this.musicTracks[this.currentTrackIndex].file);
             

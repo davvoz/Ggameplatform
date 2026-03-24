@@ -433,9 +433,9 @@ export default class OpeningCinematic extends CinematicScene {
 
         // Parse theme color for glow effects
         const hexToRgb = (hex) => {
-            const r = parseInt(hex.slice(1,3), 16);
-            const g = parseInt(hex.slice(3,5), 16);
-            const b = parseInt(hex.slice(5,7), 16);
+            const r = Number.parseInt(hex.slice(1,3), 16);
+            const g = Number.parseInt(hex.slice(3,5), 16);
+            const b = Number.parseInt(hex.slice(5,7), 16);
             return { r, g, b };
         };
         const rgb = hexToRgb(themeColor);

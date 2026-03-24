@@ -194,13 +194,13 @@ const QueryEngine = {
             case 'ends':
                 return strValue.endsWith(searchValue);
             case 'gt':
-                return parseFloat(itemValue) > parseFloat(value);
+                return Number.parseFloat(itemValue) > Number.parseFloat(value);
             case 'gte':
-                return parseFloat(itemValue) >= parseFloat(value);
+                return Number.parseFloat(itemValue) >= Number.parseFloat(value);
             case 'lt':
-                return parseFloat(itemValue) < parseFloat(value);
+                return Number.parseFloat(itemValue) < Number.parseFloat(value);
             case 'lte':
-                return parseFloat(itemValue) <= parseFloat(value);
+                return Number.parseFloat(itemValue) <= Number.parseFloat(value);
             default:
                 return strValue.includes(searchValue);
         }
@@ -394,7 +394,7 @@ function switchTab(tabKey) {
         el.classList.remove('active');
     });
 
-    const container = document.getElementById(`${tabKey}Container`) || document.getElementById(`${tabKey}Container`);
+    const container = document.getElementById(`${tabKey}Container`) || document.getElementById(tabKey);
     if (container) container.classList.add('active');
 
     if (tabKey === 'er-diagram') {
@@ -506,7 +506,7 @@ function nextPage() {
 }
 
 function changeItemsPerPage(value) {
-    AppState.itemsPerPage = parseInt(value);
+    AppState.itemsPerPage = Number.parseInt(value, 10) || 20;
     AppState.currentPage = 1; // Reset to first page
     renderCurrentTable();
 }
@@ -572,10 +572,10 @@ function sortItems(items) {
         }
 
         // Date comparison
-        if (valA instanceof Date || (typeof valA === 'string' && !isNaN(Date.parse(valA)))) {
+        if (valA instanceof Date || (typeof valA === 'string' && !Number.isNaN(Date.parse(valA)))) {
             const dateA = new Date(valA);
             const dateB = new Date(valB);
-            if (!isNaN(dateA) && !isNaN(dateB)) {
+            if (!Number.isNaN(dateA.getTime()) && !Number.isNaN(dateB.getTime())) {
                 return direction === 'asc' ? dateA - dateB : dateB - dateA;
             }
         }

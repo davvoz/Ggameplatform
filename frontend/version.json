@@ -1,8 +1,17 @@
 {
-  "version": "4.0.28",
-  "timestamp": "2026-03-24T15:38:41.998Z",
-  "buildNumber": 487,
+  "version": "4.0.29",
+  "timestamp": "2026-03-24T16:38:58.411Z",
+  "buildNumber": 488,
   "changelog": [
+    {
+      "version": "4.0.29",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix: Sonar",
+        "🔖 Bump version to 4.0.28 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.28",
       "date": "2026-03-24",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix : [RR,SETEEMEZZO] Sonar",
         "🔖 Bump version to 4.0.19 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.19",
-      "date": "2026-03-23",
-      "type": "patch",
-      "changes": [
-        "Survivor Arena: Game Version 2.0 portal update",
-        "🔖 Bump version to 4.0.18 [skip-version]"
       ]
     }
   ]

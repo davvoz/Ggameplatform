@@ -1,8 +1,17 @@
 {
-  "version": "4.0.24",
-  "timestamp": "2026-03-24T11:27:33.745Z",
-  "buildNumber": 483,
+  "version": "4.0.25",
+  "timestamp": "2026-03-24T11:49:47.736Z",
+  "buildNumber": 484,
   "changelog": [
+    {
+      "version": "4.0.25",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix : Sonar",
+        "🔖 Bump version to 4.0.24 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.24",
       "date": "2026-03-24",
@@ -86,15 +95,6 @@
       "changes": [
         "refactor: update daily login banner integration to use event listeners and remove global references",
         "🔖 Bump version to 4.0.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.15",
-      "date": "2026-03-22",
-      "type": "patch",
-      "changes": [
-        "fix: ensure timezone awareness for end date in current week info",
-        "🔖 Bump version to 4.0.14 [skip-version]"
       ]
     }
   ]

@@ -829,7 +829,7 @@ class ProfileRenderer {
     }
 
     _updateProfileLevelCard(levelInfo, totalXP) {
-        const levelCardContainer = document.querySelector('.profile .level-card-container#levelCardContainer');
+        const levelCardContainer = document.querySelector('.profile .level-card-container#levelCardContainerProfile');
         if (!levelCardContainer) {
             return;
         }

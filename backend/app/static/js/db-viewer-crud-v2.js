@@ -13,7 +13,12 @@ class CRUDManager {
     constructor(apiBase) {
         this.apiBase = apiBase;
         this.formOptions = {};
-        this.loadFormOptions();
+    }
+
+    static async create(apiBase) {
+        const instance = new CRUDManager(apiBase);
+        await instance.loadFormOptions();
+        return instance;
     }
 
     // ============ INITIALIZATION ============
@@ -637,8 +642,8 @@ class CRUDManager {
 let crudManager;
 
 // Initialize when DOM is ready
-window.addEventListener('DOMContentLoaded', () => {
-    crudManager = new CRUDManager(CONFIG?.API_BASE || '/admin');
+window.addEventListener('DOMContentLoaded', async () => {
+    crudManager = await CRUDManager.create(CONFIG?.API_BASE || '/admin');
 });
 
 // Global functions for onclick handlers

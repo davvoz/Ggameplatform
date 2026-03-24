@@ -1078,8 +1078,8 @@ class CommunityStatsRenderer {
         });
 
         return {
-            dateLabels: [...dateSet].sort(),
-            gameNames: [...gameSet].sort(),
+            dateLabels: [...dateSet].sort((a, b) => a.localeCompare(b)),
+            gameNames: [...gameSet].sort((a, b) => a.localeCompare(b)),
             seriesMap
         };
     }

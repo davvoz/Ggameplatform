@@ -1,8 +1,17 @@
 {
-  "version": "4.0.23",
-  "timestamp": "2026-03-24T10:12:35.991Z",
-  "buildNumber": 482,
+  "version": "4.0.24",
+  "timestamp": "2026-03-24T11:27:33.745Z",
+  "buildNumber": 483,
   "changelog": [
+    {
+      "version": "4.0.24",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix : Sonar",
+        "🔖 Bump version to 4.0.23 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.23",
       "date": "2026-03-24",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: ensure timezone awareness for end date in current week info",
         "🔖 Bump version to 4.0.14 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.14",
-      "date": "2026-03-22",
-      "type": "patch",
-      "changes": [
-        "Refactor datetime usage to ensure timezone awareness across the application",
-        "🔖 Bump version to 4.0.13 [skip-version]"
       ]
     }
   ]

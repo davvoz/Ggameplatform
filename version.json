@@ -1,8 +1,17 @@
 {
-  "version": "4.0.25",
-  "timestamp": "2026-03-24T11:49:47.736Z",
-  "buildNumber": 484,
+  "version": "4.0.26",
+  "timestamp": "2026-03-24T12:50:52.793Z",
+  "buildNumber": 485,
   "changelog": [
+    {
+      "version": "4.0.26",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix: sonar",
+        "🔖 Bump version to 4.0.25 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.25",
       "date": "2026-03-24",
@@ -86,15 +95,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:sonar",
         "🔖 Bump version to 4.0.16 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.16",
-      "date": "2026-03-22",
-      "type": "patch",
-      "changes": [
-        "refactor: update daily login banner integration to use event listeners and remove global references",
-        "🔖 Bump version to 4.0.15 [skip-version]"
       ]
     }
   ]

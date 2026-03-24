@@ -1,8 +1,18 @@
 {
-  "version": "4.0.22",
-  "timestamp": "2026-03-24T09:50:53.358Z",
-  "buildNumber": 481,
+  "version": "4.0.23",
+  "timestamp": "2026-03-24T10:12:35.991Z",
+  "buildNumber": 482,
   "changelog": [
+    {
+      "version": "4.0.23",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: backend Sonar",
+        "🔖 Bump version to 4.0.22 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.22",
       "date": "2026-03-24",
@@ -85,15 +95,6 @@
       "changes": [
         "Refactor datetime usage to ensure timezone awareness across the application",
         "🔖 Bump version to 4.0.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.13",
-      "date": "2026-03-22",
-      "type": "patch",
-      "changes": [
-        "fix : sonar",
-        "🔖 Bump version to 4.0.12 [skip-version]"
       ]
     }
   ]

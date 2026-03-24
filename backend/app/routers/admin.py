@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response, Request, Header, Depends, Cookie
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from typing import Dict, List, Any, Optional
+from typing import Annotated, Dict, List, Any, Optional
 from pathlib import Path
 from pydantic import BaseModel
 import secrets
@@ -62,6 +62,8 @@ def get_db():
     with get_db_session() as session:
         yield session
 
+DbSession = Annotated[Session, Depends(get_db)]
+
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create JWT token"""
     to_encode = data.copy()
@@ -74,8 +76,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 def verify_token_from_cookie(
-    admin_token: Optional[str] = Cookie(None),
-    db: Session = Depends(get_db)
+    admin_token: Annotated[Optional[str], Cookie()] = None,
+    db: DbSession = None
 ) -> str:
     """Verify JWT token from cookie"""
     if not admin_token:
@@ -97,6 +99,8 @@ def verify_token_from_cookie(
     
     return username
 
+CurrentUser = Annotated[str, Depends(verify_token_from_cookie)]
+
 @router.get("/login", response_class=HTMLResponse)
 async def admin_login_page():
     """Serve admin login page"""
@@ -104,7 +108,7 @@ async def admin_login_page():
     return FileResponse(html_file)
 
 @router.post("/login")
-async def admin_login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+async def admin_login(login_data: LoginRequest, response: Response, db: DbSession):
     """Admin login endpoint"""
     admin = db.query(AdminUser).filter_by(username=login_data.username, is_active=1).first()
     
@@ -138,7 +142,7 @@ async def admin_login(login_data: LoginRequest, response: Response, db: Session 
 
 
 @router.get("/form-options")
-async def get_form_options(db: Session = Depends(get_db)):
+async def get_form_options(db: DbSession):
     """
     Get all available options for foreign key fields in forms.
     Returns lists of valid IDs for user_id, game_id, quest_id, etc.
@@ -201,7 +205,7 @@ async def get_form_options(db: Session = Depends(get_db)):
 # Admin API key from environment
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
 
-def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
+def verify_admin(x_api_key: Annotated[Optional[str], Header()] = None, request: Request = None):
     """Verify admin access via API key or localhost"""
     # Allow localhost and local network in development
     if request:
@@ -223,19 +227,19 @@ def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = Non
     return True
 
 @router.get("/db-viewer", response_class=HTMLResponse)
-async def db_viewer(username: str = Depends(verify_token_from_cookie)):
+async def db_viewer(username: CurrentUser):
     """Database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer-v2.html"
     return FileResponse(html_file)
 
 @router.get("/db-viewer-legacy", response_class=HTMLResponse)
-async def db_viewer_legacy(username: str = Depends(verify_token_from_cookie)):
+async def db_viewer_legacy(username: CurrentUser):
     """Legacy database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 
 @router.get("/db-stats")
-async def get_db_stats(username: str = Depends(verify_token_from_cookie)):
+async def get_db_stats(username: CurrentUser):
     """Get database statistics - Protected with JWT cookie"""
     with get_db_session() as session:
         # Get all games using ORM with eager loading of status
@@ -596,7 +600,7 @@ async def force_close_single_session(session_id: str):
 # ========== GAMES CRUD ENDPOINTS ==========
 
 @router.post("/games", status_code=201)
-async def create_game(game_data: GameRegister, db: Session = Depends(get_db)):
+async def create_game(game_data: GameRegister, db: DbSession):
     """Create a new game"""
     try:
         repo = RepositoryFactory.create_game_repository(db)
@@ -611,7 +615,7 @@ async def create_game(game_data: GameRegister, db: Session = Depends(get_db)):
 
 
 @router.get("/games/{game_id}")
-async def get_game(game_id: str, db: Session = Depends(get_db)):
+async def get_game(game_id: str, db: DbSession):
     """Get a game by ID"""
     try:
         repo = RepositoryFactory.create_game_repository(db)
@@ -628,7 +632,7 @@ async def get_game(game_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/games/{game_id}")
-async def update_game(game_id: str, game_data: GameUpdate, db: Session = Depends(get_db)):
+async def update_game(game_id: str, game_data: GameUpdate, db: DbSession):
     """Update a game"""
     try:
         repo = RepositoryFactory.create_game_repository(db)
@@ -650,7 +654,7 @@ async def update_game(game_id: str, game_data: GameUpdate, db: Session = Depends
 
 
 @router.delete("/games/{game_id}")
-async def delete_game(game_id: str, db: Session = Depends(get_db)):
+async def delete_game(game_id: str, db: DbSession):
     """Delete a game"""
     try:
         repo = RepositoryFactory.create_game_repository(db)
@@ -669,7 +673,7 @@ async def delete_game(game_id: str, db: Session = Depends(get_db)):
 # ========== USERS CRUD ENDPOINTS ==========
 
 @router.post("/users", status_code=201)
-async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
+async def create_user(user_data: UserCreate, db: DbSession):
     """Create a new user"""
     try:
         repo = RepositoryFactory.create_user_repository(db)
@@ -684,7 +688,7 @@ async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/users/{user_id}")
-async def get_user(user_id: str, db: Session = Depends(get_db)):
+async def get_user(user_id: str, db: DbSession):
     """Get a user by ID"""
     try:
         repo = RepositoryFactory.create_user_repository(db)
@@ -701,7 +705,7 @@ async def get_user(user_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/users/{user_id}")
-async def update_user(user_id: str, user_data: UserUpdate, db: Session = Depends(get_db)):
+async def update_user(user_id: str, user_data: UserUpdate, db: DbSession):
     """Update a user"""
     try:
         repo = RepositoryFactory.create_user_repository(db)
@@ -722,7 +726,7 @@ async def update_user(user_id: str, user_data: UserUpdate, db: Session = Depends
 
 
 @router.delete("/users/{user_id}")
-async def delete_user(user_id: str, db: Session = Depends(get_db)):
+async def delete_user(user_id: str, db: DbSession):
     """Delete a user"""
     try:
         repo = RepositoryFactory.create_user_repository(db)
@@ -741,7 +745,7 @@ async def delete_user(user_id: str, db: Session = Depends(get_db)):
 # ========== GAME SESSIONS CRUD ENDPOINTS ==========
 
 @router.post("/game-sessions", status_code=201)
-async def create_session(session_data: GameSessionCreate, db: Session = Depends(get_db)):
+async def create_session(session_data: GameSessionCreate, db: DbSession):
     """Create a new game session"""
     try:
         repo = RepositoryFactory.create_session_repository(db)
@@ -756,7 +760,7 @@ async def create_session(session_data: GameSessionCreate, db: Session = Depends(
 
 
 @router.get("/game-sessions/{session_id}")
-async def get_session(session_id: str, db: Session = Depends(get_db)):
+async def get_session(session_id: str, db: DbSession):
     """Get a game session by ID"""
     try:
         repo = RepositoryFactory.create_session_repository(db)
@@ -773,7 +777,7 @@ async def get_session(session_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/game-sessions/{session_id}")
-async def update_session(session_id: str, session_data: GameSessionUpdate, db: Session = Depends(get_db)):
+async def update_session(session_id: str, session_data: GameSessionUpdate, db: DbSession):
     """Update a game session"""
     try:
         repo = RepositoryFactory.create_session_repository(db)
@@ -794,7 +798,7 @@ async def update_session(session_id: str, session_data: GameSessionUpdate, db: S
 
 
 @router.delete("/game-sessions/{session_id}")
-async def delete_session(session_id: str, db: Session = Depends(get_db)):
+async def delete_session(session_id: str, db: DbSession):
     """Delete a game session"""
     try:
         repo = RepositoryFactory.create_session_repository(db)
@@ -813,7 +817,7 @@ async def delete_session(session_id: str, db: Session = Depends(get_db)):
 # ========== LEADERBOARD CRUD ENDPOINTS ==========
 
 @router.post("/leaderboard-entries", status_code=201)
-async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: Session = Depends(get_db)):
+async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: DbSession):
     """Create a new leaderboard entry"""
     try:
         repo = RepositoryFactory.create_leaderboard_repository(db)
@@ -828,7 +832,7 @@ async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: Session = 
 
 
 @router.get("/leaderboard-entries/{entry_id}")
-async def get_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+async def get_leaderboard_entry(entry_id: str, db: DbSession):
     """Get a leaderboard entry by ID"""
     try:
         repo = RepositoryFactory.create_leaderboard_repository(db)
@@ -845,7 +849,7 @@ async def get_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/leaderboard-entries/{entry_id}")
-async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate, db: Session = Depends(get_db)):
+async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate, db: DbSession):
     """Update a leaderboard entry"""
     try:
         repo = RepositoryFactory.create_leaderboard_repository(db)
@@ -866,7 +870,7 @@ async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate,
 
 
 @router.delete("/leaderboard-entries/{entry_id}")
-async def delete_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+async def delete_leaderboard_entry(entry_id: str, db: DbSession):
     """Delete a leaderboard entry"""
     try:
         repo = RepositoryFactory.create_leaderboard_repository(db)
@@ -885,7 +889,7 @@ async def delete_leaderboard_entry(entry_id: str, db: Session = Depends(get_db))
 # ========== XP RULES CRUD ENDPOINTS ==========
 
 @router.post("/xp-rules", status_code=201)
-async def create_xp_rule(rule_data: XPRuleCreate, db: Session = Depends(get_db)):
+async def create_xp_rule(rule_data: XPRuleCreate, db: DbSession):
     """Create a new XP rule"""
     try:
         repo = RepositoryFactory.create_xprule_repository(db)
@@ -900,7 +904,7 @@ async def create_xp_rule(rule_data: XPRuleCreate, db: Session = Depends(get_db))
 
 
 @router.get("/xp-rules/{rule_id}")
-async def get_xp_rule(rule_id: str, db: Session = Depends(get_db)):
+async def get_xp_rule(rule_id: str, db: DbSession):
     """Get an XP rule by ID"""
     try:
         repo = RepositoryFactory.create_xprule_repository(db)
@@ -917,7 +921,7 @@ async def get_xp_rule(rule_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/xp-rules/{rule_id}")
-async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: Session = Depends(get_db)):
+async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: DbSession):
     """Update an XP rule"""
     try:
         repo = RepositoryFactory.create_xprule_repository(db)
@@ -938,7 +942,7 @@ async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: Session = De
 
 
 @router.delete("/xp-rules/{rule_id}")
-async def delete_xp_rule(rule_id: str, db: Session = Depends(get_db)):
+async def delete_xp_rule(rule_id: str, db: DbSession):
     """Delete an XP rule"""
     try:
         repo = RepositoryFactory.create_xprule_repository(db)
@@ -957,7 +961,7 @@ async def delete_xp_rule(rule_id: str, db: Session = Depends(get_db)):
 # ========== QUESTS CRUD ENDPOINTS ==========
 
 @router.post("/quests-crud", status_code=201)
-async def create_quest(quest_data: QuestCreate, db: Session = Depends(get_db)):
+async def create_quest(quest_data: QuestCreate, db: DbSession):
     """Create a new quest"""
     try:
         repo = RepositoryFactory.create_quest_repository(db)
@@ -972,7 +976,7 @@ async def create_quest(quest_data: QuestCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/quests-crud/{quest_id}")
-async def get_quest(quest_id: int, db: Session = Depends(get_db)):
+async def get_quest(quest_id: int, db: DbSession):
     """Get a quest by ID"""
     try:
         repo = RepositoryFactory.create_quest_repository(db)
@@ -989,7 +993,7 @@ async def get_quest(quest_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/quests-crud/{quest_id}")
-async def update_quest(quest_id: int, quest_data: QuestUpdate, db: Session = Depends(get_db)):
+async def update_quest(quest_id: int, quest_data: QuestUpdate, db: DbSession):
     """Update a quest"""
     try:
         repo = RepositoryFactory.create_quest_repository(db)
@@ -1010,7 +1014,7 @@ async def update_quest(quest_id: int, quest_data: QuestUpdate, db: Session = Dep
 
 
 @router.delete("/quests-crud/{quest_id}")
-async def delete_quest(quest_id: int, db: Session = Depends(get_db)):
+async def delete_quest(quest_id: int, db: DbSession):
     """Delete a quest"""
     try:
         repo = RepositoryFactory.create_quest_repository(db)
@@ -1029,7 +1033,7 @@ async def delete_quest(quest_id: int, db: Session = Depends(get_db)):
 # ========== USER QUESTS CRUD ENDPOINTS ==========
 
 @router.post("/user-quests-crud", status_code=201)
-async def create_user_quest(user_quest_data: UserQuestCreate, db: Session = Depends(get_db)):
+async def create_user_quest(user_quest_data: UserQuestCreate, db: DbSession):
     """Create a new user quest progress"""
     try:
         repo = RepositoryFactory.create_userquest_repository(db)
@@ -1044,7 +1048,7 @@ async def create_user_quest(user_quest_data: UserQuestCreate, db: Session = Depe
 
 
 @router.get("/user-quests-crud/{user_quest_id}")
-async def get_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
+async def get_user_quest(user_quest_id: int, db: DbSession):
     """Get a user quest by ID"""
     try:
         repo = RepositoryFactory.create_userquest_repository(db)
@@ -1061,7 +1065,7 @@ async def get_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/user-quests-crud/{user_quest_id}")
-async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate, db: Session = Depends(get_db)):
+async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate, db: DbSession):
     """Update a user quest progress"""
     try:
         repo = RepositoryFactory.create_userquest_repository(db)
@@ -1082,7 +1086,7 @@ async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate
 
 
 @router.delete("/user-quests-crud/{user_quest_id}")
-async def delete_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
+async def delete_user_quest(user_quest_id: int, db: DbSession):
     """Delete a user quest progress"""
     try:
         repo = RepositoryFactory.create_userquest_repository(db)
@@ -1101,7 +1105,7 @@ async def delete_user_quest(user_quest_id: int, db: Session = Depends(get_db)):
 # ========== GAME STATUSES CRUD ENDPOINTS ==========
 
 @router.post("/game-statuses", status_code=201)
-async def create_game_status(status_data: GameStatusCreate, db: Session = Depends(get_db)):
+async def create_game_status(status_data: GameStatusCreate, db: DbSession):
     """Create a new game status"""
     try:
         repo = RepositoryFactory.create_gamestatus_repository(db)
@@ -1116,7 +1120,7 @@ async def create_game_status(status_data: GameStatusCreate, db: Session = Depend
 
 
 @router.get("/game-statuses/{status_id}")
-async def get_game_status(status_id: int, db: Session = Depends(get_db)):
+async def get_game_status(status_id: int, db: DbSession):
     """Get a game status by ID"""
     try:
         repo = RepositoryFactory.create_gamestatus_repository(db)
@@ -1133,7 +1137,7 @@ async def get_game_status(status_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/game-statuses/{status_id}")
-async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: Session = Depends(get_db)):
+async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: DbSession):
     """Update a game status"""
     try:
         repo = RepositoryFactory.create_gamestatus_repository(db)
@@ -1154,7 +1158,7 @@ async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: 
 
 
 @router.delete("/game-statuses/{status_id}")
-async def delete_game_status(status_id: int, db: Session = Depends(get_db)):
+async def delete_game_status(status_id: int, db: DbSession):
     """Delete a game status"""
     try:
         repo = RepositoryFactory.create_gamestatus_repository(db)
@@ -1173,7 +1177,7 @@ async def delete_game_status(status_id: int, db: Session = Depends(get_db)):
 # ========== USER COINS CRUD ENDPOINTS ==========
 
 @router.post("/user-coins", status_code=201)
-async def create_user_coins(coins_data: UserCoinsCreate, db: Session = Depends(get_db)):
+async def create_user_coins(coins_data: UserCoinsCreate, db: DbSession):
     """Create a new user coins record"""
     try:
         repo = RepositoryFactory.create_usercoins_repository(db)
@@ -1184,7 +1188,7 @@ async def create_user_coins(coins_data: UserCoinsCreate, db: Session = Depends(g
 
 
 @router.get("/user-coins/{user_id}")
-async def get_user_coins(user_id: str, db: Session = Depends(get_db)):
+async def get_user_coins(user_id: str, db: DbSession):
     """Get user coins by user ID"""
     try:
         repo = RepositoryFactory.create_usercoins_repository(db)
@@ -1199,7 +1203,7 @@ async def get_user_coins(user_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/user-coins/{user_id}")
-async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: Session = Depends(get_db)):
+async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: DbSession):
     """Update user coins"""
     try:
         repo = RepositoryFactory.create_usercoins_repository(db)
@@ -1224,7 +1228,7 @@ async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: Sessi
 
 
 @router.delete("/user-coins/{user_id}")
-async def delete_user_coins(user_id: str, db: Session = Depends(get_db)):
+async def delete_user_coins(user_id: str, db: DbSession):
     """Delete user coins record"""
     try:
         repo = RepositoryFactory.create_usercoins_repository(db)
@@ -1245,7 +1249,7 @@ async def delete_user_coins(user_id: str, db: Session = Depends(get_db)):
 # ========== COIN TRANSACTIONS CRUD ENDPOINTS ==========
 
 @router.get("/coin-transactions/{transaction_id}")
-async def get_coin_transaction(transaction_id: str, db: Session = Depends(get_db)):
+async def get_coin_transaction(transaction_id: str, db: DbSession):
     """Get coin transaction by ID"""
     try:
         repo = RepositoryFactory.create_cointransaction_repository(db)
@@ -1260,7 +1264,7 @@ async def get_coin_transaction(transaction_id: str, db: Session = Depends(get_db
 
 
 @router.put("/coin-transactions/{transaction_id}")
-async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionUpdate, db: Session = Depends(get_db)):
+async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionUpdate, db: DbSession):
     """Update coin transaction (description only)"""
     try:
         repo = RepositoryFactory.create_cointransaction_repository(db)
@@ -1282,7 +1286,7 @@ async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionU
 
 
 @router.delete("/coin-transactions/{transaction_id}")
-async def delete_coin_transaction(transaction_id: str, db: Session = Depends(get_db)):
+async def delete_coin_transaction(transaction_id: str, db: DbSession):
     """Delete coin transaction (use with caution - will affect balance calculations)"""
     try:
         repo = RepositoryFactory.create_cointransaction_repository(db)
@@ -1304,7 +1308,7 @@ async def delete_coin_transaction(transaction_id: str, db: Session = Depends(get
 # ============ LEVEL MILESTONES ENDPOINTS ============
 
 @router.get("/level-milestones")
-async def get_level_milestones(db: Session = Depends(get_db)):
+async def get_level_milestones(db: DbSession):
     """Get all level milestones"""
     try:
         from app.models import LevelMilestone
@@ -1315,7 +1319,7 @@ async def get_level_milestones(db: Session = Depends(get_db)):
 
 
 @router.post("/level-milestones")
-async def create_level_milestone(milestone_data: dict, db: Session = Depends(get_db)):
+async def create_level_milestone(milestone_data: dict, db: DbSession):
     """Create new level milestone"""
     try:
         from app.models import LevelMilestone
@@ -1350,7 +1354,7 @@ async def create_level_milestone(milestone_data: dict, db: Session = Depends(get
 
 
 @router.get("/level-milestones/{level}")
-async def get_level_milestone(level: int, db: Session = Depends(get_db)):
+async def get_level_milestone(level: int, db: DbSession):
     """Get level milestone by level"""
     try:
         from app.models import LevelMilestone
@@ -1365,7 +1369,7 @@ async def get_level_milestone(level: int, db: Session = Depends(get_db)):
 
 
 @router.put("/level-milestones/{level}")
-async def update_level_milestone(level: int, milestone_data: dict, db: Session = Depends(get_db)):
+async def update_level_milestone(level: int, milestone_data: dict, db: DbSession):
     """Update level milestone"""
     try:
         from app.models import LevelMilestone
@@ -1398,7 +1402,7 @@ async def update_level_milestone(level: int, milestone_data: dict, db: Session =
 
 
 @router.delete("/level-milestones/{level}")
-async def delete_level_milestone(level: int, db: Session = Depends(get_db)):
+async def delete_level_milestone(level: int, db: DbSession):
     """Delete level milestone"""
     try:
         from app.models import LevelMilestone
@@ -1419,7 +1423,7 @@ async def delete_level_milestone(level: int, db: Session = Depends(get_db)):
 # ============ LEVEL REWARDS ENDPOINTS ============
 
 @router.get("/level-rewards")
-async def get_level_rewards(db: Session = Depends(get_db)):
+async def get_level_rewards(db: DbSession):
     """Get all level rewards"""
     try:
         from app.models import LevelReward
@@ -1430,7 +1434,7 @@ async def get_level_rewards(db: Session = Depends(get_db)):
 
 
 @router.post("/level-rewards")
-async def create_level_reward(reward_data: dict, db: Session = Depends(get_db)):
+async def create_level_reward(reward_data: dict, db: DbSession):
     """Create new level reward"""
     try:
         from app.models import LevelReward
@@ -1463,7 +1467,7 @@ async def create_level_reward(reward_data: dict, db: Session = Depends(get_db)):
 
 
 @router.get("/level-rewards/{reward_id}")
-async def get_level_reward(reward_id: str, db: Session = Depends(get_db)):
+async def get_level_reward(reward_id: str, db: DbSession):
     """Get level reward by ID"""
     try:
         from app.models import LevelReward
@@ -1478,7 +1482,7 @@ async def get_level_reward(reward_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/level-rewards/{reward_id}")
-async def update_level_reward(reward_id: str, reward_data: dict, db: Session = Depends(get_db)):
+async def update_level_reward(reward_id: str, reward_data: dict, db: DbSession):
     """Update level reward"""
     try:
         from app.models import LevelReward
@@ -1511,7 +1515,7 @@ async def update_level_reward(reward_id: str, reward_data: dict, db: Session = D
 
 
 @router.delete("/level-rewards/{reward_id}")
-async def delete_level_reward(reward_id: str, db: Session = Depends(get_db)):
+async def delete_level_reward(reward_id: str, db: DbSession):
     """Delete level reward"""
     try:
         from app.models import LevelReward
@@ -1532,7 +1536,7 @@ async def delete_level_reward(reward_id: str, db: Session = Depends(get_db)):
 # ============ WEEKLY LEADERBOARDS ENDPOINTS ============
 
 @router.get("/weekly-leaderboards")
-async def get_weekly_leaderboards(db: Session = Depends(get_db)):
+async def get_weekly_leaderboards(db: DbSession):
     """Get all weekly leaderboard entries"""
     try:
         from app.models import WeeklyLeaderboard
@@ -1546,7 +1550,7 @@ async def get_weekly_leaderboards(db: Session = Depends(get_db)):
 
 
 @router.get("/weekly-leaderboards/{entry_id}")
-async def get_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+async def get_weekly_leaderboard_entry(entry_id: str, db: DbSession):
     """Get weekly leaderboard entry by ID"""
     try:
         from app.models import WeeklyLeaderboard
@@ -1561,7 +1565,7 @@ async def get_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(get_
 
 
 @router.put("/weekly-leaderboards/{entry_id}")
-async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: Session = Depends(get_db)):
+async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: DbSession):
     """Update weekly leaderboard entry"""
     try:
         from app.models import WeeklyLeaderboard
@@ -1583,7 +1587,7 @@ async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: S
 
 
 @router.delete("/weekly-leaderboards/{entry_id}")
-async def delete_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(get_db)):
+async def delete_weekly_leaderboard_entry(entry_id: str, db: DbSession):
     """Delete weekly leaderboard entry"""
     try:
         from app.models import WeeklyLeaderboard
@@ -1604,7 +1608,7 @@ async def delete_weekly_leaderboard_entry(entry_id: str, db: Session = Depends(g
 # ============ LEADERBOARD REWARDS ENDPOINTS ============
 
 @router.get("/leaderboard-rewards")
-async def get_leaderboard_rewards(db: Session = Depends(get_db)):
+async def get_leaderboard_rewards(db: DbSession):
     """Get all leaderboard rewards"""
     try:
         from app.models import LeaderboardReward
@@ -1615,7 +1619,7 @@ async def get_leaderboard_rewards(db: Session = Depends(get_db)):
 
 
 @router.post("/leaderboard-rewards")
-async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get_db)):
+async def create_leaderboard_reward(reward_data: dict, db: DbSession):
     """Create new leaderboard reward"""
     try:
         from app.models import LeaderboardReward
@@ -1649,7 +1653,7 @@ async def create_leaderboard_reward(reward_data: dict, db: Session = Depends(get
 
 
 @router.get("/leaderboard-rewards/{reward_id}")
-async def get_leaderboard_reward(reward_id: int, db: Session = Depends(get_db)):
+async def get_leaderboard_reward(reward_id: int, db: DbSession):
     """Get leaderboard reward by ID"""
     try:
         from app.models import LeaderboardReward
@@ -1664,7 +1668,7 @@ async def get_leaderboard_reward(reward_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/leaderboard-rewards/{reward_id}")
-async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: Session = Depends(get_db)):
+async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: DbSession):
     """Update leaderboard reward"""
     try:
         from app.models import LeaderboardReward
@@ -1700,7 +1704,7 @@ async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: Sessi
 
 
 @router.delete("/leaderboard-rewards/{reward_id}")
-async def delete_leaderboard_reward(reward_id: str, db: Session = Depends(get_db)):
+async def delete_leaderboard_reward(reward_id: str, db: DbSession):
     """Delete leaderboard reward"""
     try:
         from app.models import LeaderboardReward
@@ -1721,7 +1725,7 @@ async def delete_leaderboard_reward(reward_id: str, db: Session = Depends(get_db
 # ============ WEEKLY WINNERS ENDPOINTS ============
 
 @router.get("/weekly-winners")
-async def get_weekly_winners(db: Session = Depends(get_db)):
+async def get_weekly_winners(db: DbSession):
     """Get all weekly winners"""
     try:
         from app.models import WeeklyWinner
@@ -1732,7 +1736,7 @@ async def get_weekly_winners(db: Session = Depends(get_db)):
 
 
 @router.get("/weekly-winners/{winner_id}")
-async def get_weekly_winner(winner_id: int, db: Session = Depends(get_db)):
+async def get_weekly_winner(winner_id: int, db: DbSession):
     """Get weekly winner by ID"""
     try:
         from app.models import WeeklyWinner
@@ -1747,7 +1751,7 @@ async def get_weekly_winner(winner_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/weekly-winners/{winner_id}")
-async def update_weekly_winner(winner_id: str, winner_data: dict, db: Session = Depends(get_db)):
+async def update_weekly_winner(winner_id: str, winner_data: dict, db: DbSession):
     """Update weekly winner (mainly for marking reward_sent)"""
     try:
         from app.models import WeeklyWinner
@@ -1772,7 +1776,7 @@ async def update_weekly_winner(winner_id: str, winner_data: dict, db: Session = 
 
 
 @router.delete("/weekly-winners/{winner_id}")
-async def delete_weekly_winner(winner_id: str, db: Session = Depends(get_db)):
+async def delete_weekly_winner(winner_id: str, db: DbSession):
     """Delete weekly winner"""
     try:
         from app.models import WeeklyWinner
@@ -1793,7 +1797,7 @@ async def delete_weekly_winner(winner_id: str, db: Session = Depends(get_db)):
 # ============ DAILY LOGIN REWARDS ENDPOINTS ============
 
 @router.get("/user_login_streak")
-async def get_user_login_streaks(db: Session = Depends(get_db)):
+async def get_user_login_streaks(db: DbSession):
     """Get all user login streaks"""
     try:
         from app.models import UserLoginStreak
@@ -1804,7 +1808,7 @@ async def get_user_login_streaks(db: Session = Depends(get_db)):
 
 
 @router.get("/user_login_streak/{user_id}")
-async def get_user_login_streak(user_id: str, db: Session = Depends(get_db)):
+async def get_user_login_streak(user_id: str, db: DbSession):
     """Get user login streak by user ID"""
     try:
         from app.models import UserLoginStreak
@@ -1819,7 +1823,7 @@ async def get_user_login_streak(user_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/user_login_streak/{user_id}")
-async def update_user_login_streak(user_id: str, streak_data: dict, db: Session = Depends(get_db)):
+async def update_user_login_streak(user_id: str, streak_data: dict, db: DbSession):
     """Update user login streak"""
     try:
         from app.models import UserLoginStreak
@@ -1847,7 +1851,7 @@ async def update_user_login_streak(user_id: str, streak_data: dict, db: Session 
 
 
 @router.delete("/user_login_streak/{user_id}")
-async def delete_user_login_streak(user_id: str, db: Session = Depends(get_db)):
+async def delete_user_login_streak(user_id: str, db: DbSession):
     """Delete user login streak"""
     try:
         from app.models import UserLoginStreak
@@ -1868,7 +1872,7 @@ async def delete_user_login_streak(user_id: str, db: Session = Depends(get_db)):
 # ============ DAILY LOGIN REWARD CONFIG ENDPOINTS ============
 
 @router.get("/daily_login_reward_config")
-async def get_daily_login_reward_configs(db: Session = Depends(get_db)):
+async def get_daily_login_reward_configs(db: DbSession):
     """Get all daily login reward configurations"""
     try:
         from app.models import DailyLoginRewardConfig
@@ -1879,7 +1883,7 @@ async def get_daily_login_reward_configs(db: Session = Depends(get_db)):
 
 
 @router.get("/daily_login_reward_config/{day}")
-async def get_daily_login_reward_config(day: int, db: Session = Depends(get_db)):
+async def get_daily_login_reward_config(day: int, db: DbSession):
     """Get daily login reward configuration by day"""
     try:
         from app.models import DailyLoginRewardConfig
@@ -1894,7 +1898,7 @@ async def get_daily_login_reward_config(day: int, db: Session = Depends(get_db))
 
 
 @router.put("/daily_login_reward_config/{day}")
-async def update_daily_login_reward_config(day: int, config_data: dict, db: Session = Depends(get_db)):
+async def update_daily_login_reward_config(day: int, config_data: dict, db: DbSession):
     """Update daily login reward configuration"""
     try:
         from app.models import DailyLoginRewardConfig
@@ -1922,7 +1926,7 @@ async def update_daily_login_reward_config(day: int, config_data: dict, db: Sess
 
 
 @router.post("/daily_login_reward_config")
-async def create_daily_login_reward_config(config_data: dict, db: Session = Depends(get_db)):
+async def create_daily_login_reward_config(config_data: dict, db: DbSession):
     """Create new daily login reward configuration"""
     try:
         from app.models import DailyLoginRewardConfig
@@ -1955,7 +1959,7 @@ async def create_daily_login_reward_config(config_data: dict, db: Session = Depe
 
 
 @router.delete("/daily_login_reward_config/{day}")
-async def delete_daily_login_reward_config(day: int, db: Session = Depends(get_db)):
+async def delete_daily_login_reward_config(day: int, db: DbSession):
     """Delete daily login reward configuration"""
     try:
         from app.models import DailyLoginRewardConfig
@@ -1976,7 +1980,7 @@ async def delete_daily_login_reward_config(day: int, db: Session = Depends(get_d
 # ========== CAMPAIGNS CRUD ENDPOINTS ==========
 
 @router.post("/campaigns", status_code=201)
-async def create_campaign(campaign_data: CampaignCreate, db: Session = Depends(get_db)):
+async def create_campaign(campaign_data: CampaignCreate, db: DbSession):
     """Create a new campaign"""
     try:
         repo = RepositoryFactory.create_campaign_repository(db)
@@ -1991,7 +1995,7 @@ async def create_campaign(campaign_data: CampaignCreate, db: Session = Depends(g
 
 
 @router.get("/campaigns/{campaign_id}")
-async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
+async def get_campaign(campaign_id: int, db: DbSession):
     """Get a campaign by ID"""
     try:
         repo = RepositoryFactory.create_campaign_repository(db)
@@ -2008,7 +2012,7 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/campaigns/{campaign_id}")
-async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: Session = Depends(get_db)):
+async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: DbSession):
     """Update a campaign"""
     try:
         repo = RepositoryFactory.create_campaign_repository(db)
@@ -2029,7 +2033,7 @@ async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: S
 
 
 @router.delete("/campaigns/{campaign_id}")
-async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
+async def delete_campaign(campaign_id: int, db: DbSession):
     """Delete a campaign"""
     try:
         repo = RepositoryFactory.create_campaign_repository(db)
@@ -2048,7 +2052,7 @@ async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
 # ========== PLATFORM CONFIG CRUD ENDPOINTS ==========
 
 @router.post("/platform-config", status_code=201)
-async def create_platform_config(request: Request, db: Session = Depends(get_db)):
+async def create_platform_config(request: Request, db: DbSession):
     """Create a new platform config entry"""
     try:
         data = await request.json()
@@ -2076,7 +2080,7 @@ async def create_platform_config(request: Request, db: Session = Depends(get_db)
 
 
 @router.get("/platform-config/{key}")
-async def get_platform_config(key: str, db: Session = Depends(get_db)):
+async def get_platform_config(key: str, db: DbSession):
     """Get a platform config entry by key"""
     try:
         config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
@@ -2090,7 +2094,7 @@ async def get_platform_config(key: str, db: Session = Depends(get_db)):
 
 
 @router.put("/platform-config/{key}")
-async def update_platform_config(key: str, request: Request, db: Session = Depends(get_db)):
+async def update_platform_config(key: str, request: Request, db: DbSession):
     """Update a platform config entry"""
     try:
         data = await request.json()
@@ -2114,7 +2118,7 @@ async def update_platform_config(key: str, request: Request, db: Session = Depen
 
 
 @router.delete("/platform-config/{key}")
-async def delete_platform_config(key: str, db: Session = Depends(get_db)):
+async def delete_platform_config(key: str, db: DbSession):
     """Delete a platform config entry"""
     try:
         config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
@@ -2134,7 +2138,7 @@ async def delete_platform_config(key: str, db: Session = Depends(get_db)):
 # ========== PUSH SUBSCRIPTIONS CRUD ENDPOINTS ==========
 
 @router.post("/push-subscriptions", status_code=201)
-async def create_push_subscription(request: Request, db: Session = Depends(get_db)):
+async def create_push_subscription(request: Request, db: DbSession):
     """Create a new push subscription"""
     try:
         data = await request.json()
@@ -2163,7 +2167,7 @@ async def create_push_subscription(request: Request, db: Session = Depends(get_d
 
 
 @router.get("/push-subscriptions/{subscription_id}")
-async def get_push_subscription(subscription_id: int, db: Session = Depends(get_db)):
+async def get_push_subscription(subscription_id: int, db: DbSession):
     """Get a push subscription by ID"""
     try:
         sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
@@ -2177,7 +2181,7 @@ async def get_push_subscription(subscription_id: int, db: Session = Depends(get_
 
 
 @router.put("/push-subscriptions/{subscription_id}")
-async def update_push_subscription(subscription_id: int, request: Request, db: Session = Depends(get_db)):
+async def update_push_subscription(subscription_id: int, request: Request, db: DbSession):
     """Update a push subscription"""
     try:
         data = await request.json()
@@ -2200,7 +2204,7 @@ async def update_push_subscription(subscription_id: int, request: Request, db: S
 
 
 @router.delete("/push-subscriptions/{subscription_id}")
-async def delete_push_subscription(subscription_id: int, db: Session = Depends(get_db)):
+async def delete_push_subscription(subscription_id: int, db: DbSession):
     """Delete a push subscription"""
     try:
         sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
@@ -2220,7 +2224,7 @@ async def delete_push_subscription(subscription_id: int, db: Session = Depends(g
 # ========== GAME PROGRESS CRUD ENDPOINTS ==========
 
 @router.post("/game-progress", status_code=201)
-async def create_game_progress(request: Request, db: Session = Depends(get_db)):
+async def create_game_progress(request: Request, db: DbSession):
     """Create a new game progress entry"""
     try:
         data = await request.json()
@@ -2251,7 +2255,7 @@ async def create_game_progress(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/game-progress/{progress_id}")
-async def get_game_progress(progress_id: int, db: Session = Depends(get_db)):
+async def get_game_progress(progress_id: int, db: DbSession):
     """Get a game progress entry by ID"""
     try:
         progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
@@ -2265,7 +2269,7 @@ async def get_game_progress(progress_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/game-progress/{progress_id}")
-async def update_game_progress(progress_id: int, request: Request, db: Session = Depends(get_db)):
+async def update_game_progress(progress_id: int, request: Request, db: DbSession):
     """Update a game progress entry"""
     try:
         data = await request.json()
@@ -2288,7 +2292,7 @@ async def update_game_progress(progress_id: int, request: Request, db: Session =
 
 
 @router.delete("/game-progress/{progress_id}")
-async def delete_game_progress(progress_id: int, db: Session = Depends(get_db)):
+async def delete_game_progress(progress_id: int, db: DbSession):
     """Delete a game progress entry"""
     try:
         progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()

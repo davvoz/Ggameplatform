@@ -15,6 +15,8 @@ from app.models import (
     UserCoins, CoinTransaction
 )
 
+WEEK_FORMAT = '%Y-%W'
+
 
 class CommunityStatsRepository:
     """
@@ -90,7 +92,7 @@ class CommunityStatsRepository:
                 for row in results
             ]
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching daily game activity: {str(e)}")
+            raise RuntimeError(f"Error fetching daily game activity: {str(e)}") from e
 
     # =========================================================================
     # Users Ranked List
@@ -207,7 +209,7 @@ class CommunityStatsRepository:
             return ranked_users, total
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching ranked users: {str(e)}")
+            raise RuntimeError(f"Error fetching ranked users: {str(e)}") from e
 
     # =========================================================================
     # Economy Stats - XP & Coins
@@ -298,7 +300,7 @@ class CommunityStatsRepository:
             return merged
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching daily economy stats: {str(e)}")
+            raise RuntimeError(f"Error fetching daily economy stats: {str(e)}") from e
 
     def get_weekly_economy_stats(
         self,
@@ -318,8 +320,8 @@ class CommunityStatsRepository:
 
             # --- XP per week ---
             xp_date_expr = func.substr(GameSession.started_at, 1, 10)
-            # SQLite: strftime('%Y-%W', date) gives year-week
-            xp_week_expr = func.strftime('%Y-%W', GameSession.started_at)
+            # SQLite: strftime(WEEK_FORMAT, date) gives year-week
+            xp_week_expr = func.strftime(WEEK_FORMAT, GameSession.started_at)
 
             xp_query = self.db_session.query(
                 xp_week_expr.label("year_week"),
@@ -349,7 +351,7 @@ class CommunityStatsRepository:
 
             # --- Coins per week ---
             coin_date_expr = func.substr(CoinTransaction.created_at, 1, 10)
-            coin_week_expr = func.strftime('%Y-%W', CoinTransaction.created_at)
+            coin_week_expr = func.strftime(WEEK_FORMAT, CoinTransaction.created_at)
 
             coins_query = self.db_session.query(
                 coin_week_expr.label("year_week"),
@@ -405,7 +407,7 @@ class CommunityStatsRepository:
             return merged
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching weekly economy stats: {str(e)}")
+            raise RuntimeError(f"Error fetching weekly economy stats: {str(e)}") from e
 
     def get_historical_economy_stats(
         self,
@@ -505,7 +507,7 @@ class CommunityStatsRepository:
             }
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching historical economy stats: {str(e)}")
+            raise RuntimeError(f"Error fetching historical economy stats: {str(e)}") from e
 
     # =========================================================================
     # Economy Stats - Per Game (XP & Coins daily/weekly)
@@ -541,9 +543,9 @@ class CommunityStatsRepository:
             return result
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching top achievers: {str(e)}")
+            raise RuntimeError(f"Error fetching top achievers: {str(e)}") from e
 
-    def _get_top_xp_user(self, cutoff: Optional[str], LevelSystem) -> Optional[Dict[str, Any]]:
+    def _get_top_xp_user(self, cutoff: Optional[str], level_system) -> Optional[Dict[str, Any]]:
         """
         Find the user who earned the most XP in sessions since cutoff date.
         Includes per-game breakdown of their XP.
@@ -603,7 +605,7 @@ class CommunityStatsRepository:
         ).all()
 
         return self._build_achiever_dict(
-            user, LevelSystem,
+            user, level_system,
             metric_value=round(float(top_row.total_xp), 2),
             sessions=top_row.sessions,
             unique_games=top_row.unique_games,
@@ -617,7 +619,7 @@ class CommunityStatsRepository:
             } for r in breakdown]
         )
 
-    def _get_top_coins_user(self, cutoff: Optional[str], LevelSystem) -> Optional[Dict[str, Any]]:
+    def _get_top_coins_user(self, cutoff: Optional[str], level_system) -> Optional[Dict[str, Any]]:
         """
         Find the user who earned the most coins since cutoff date.
         Includes per-transaction-type breakdown.
@@ -686,7 +688,7 @@ class CommunityStatsRepository:
         sess_row = sess_stats.first()
 
         return self._build_achiever_dict(
-            user, LevelSystem,
+            user, level_system,
             metric_value=int(top_row.total_coins),
             sessions=sess_row.sessions if sess_row else 0,
             unique_games=sess_row.unique_games if sess_row else 0,
@@ -699,11 +701,11 @@ class CommunityStatsRepository:
         )
 
     def _build_achiever_dict(
-        self, user, LevelSystem, *,
+        self, user, level_system, *,
         metric_value, sessions, unique_games, total_duration, breakdown
     ) -> Dict[str, Any]:
         """Build a standardized achiever dict with user info + breakdown."""
-        level = LevelSystem.calculate_level_from_xp(user.total_xp_earned)
+        level = level_system.calculate_level_from_xp(user.total_xp_earned)
 
         # Get milestone info from database
         from app.models import LevelMilestone
@@ -794,7 +796,7 @@ class CommunityStatsRepository:
             ]
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching daily economy for game {game_id}: {str(e)}")
+            raise RuntimeError(f"Error fetching daily economy for game {game_id}: {str(e)}") from e
 
     def get_weekly_economy_per_game(
         self,
@@ -813,7 +815,7 @@ class CommunityStatsRepository:
             cutoff = (datetime.now(timezone.utc) - timedelta(weeks=weeks)).strftime("%Y-%m-%d") if weeks > 0 else None
 
             date_expr = func.substr(GameSession.started_at, 1, 10)
-            week_expr = func.strftime('%Y-%W', GameSession.started_at)
+            week_expr = func.strftime(WEEK_FORMAT, GameSession.started_at)
 
             query = self.db_session.query(
                 week_expr.label("year_week"),
@@ -849,4 +851,4 @@ class CommunityStatsRepository:
             ]
 
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching weekly economy for game {game_id}: {str(e)}")
+            raise RuntimeError(f"Error fetching weekly economy for game {game_id}: {str(e)}") from e

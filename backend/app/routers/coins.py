@@ -4,7 +4,7 @@ Coins Router - API endpoints for coin management
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from pydantic import BaseModel
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
@@ -13,6 +13,8 @@ from app.database import get_db
 from app.repositories import RepositoryFactory
 from app.services import CoinService, ValidationError
 from app.models import CoinTransaction
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 router = APIRouter(prefix="/api/coins", tags=["Coins"])
@@ -82,17 +84,19 @@ class DetailedStatsResponse(BaseModel):
     outgoing_count: int = 0
 
 
-def get_coin_service(db: Session = Depends(get_db)) -> CoinService:
+def get_coin_service(db: DbSession) -> CoinService:
     """Dependency to get CoinService instance"""
     coins_repo = RepositoryFactory.create_usercoins_repository(db)
     transaction_repo = RepositoryFactory.create_cointransaction_repository(db)
     return CoinService(coins_repo, transaction_repo)
 
+CoinServiceDep = Annotated[CoinService, Depends(get_coin_service)]
+
 
 @router.get("/{user_id}/balance", response_model=CoinBalanceResponse)
 async def get_user_balance(
     user_id: str,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """
     Get user's current coin balance
@@ -116,9 +120,9 @@ async def get_user_balance(
 @router.get("/{user_id}/transactions", response_model=List[CoinTransactionResponse])
 async def get_user_transactions(
     user_id: str,
+    coin_service: CoinServiceDep,
     limit: int = 100,
     offset: int = 0,
-    coin_service: CoinService = Depends(get_coin_service)
 ):
     """
     Get user's transaction history with pagination
@@ -145,7 +149,7 @@ async def get_user_transactions(
 async def award_coins(
     user_id: str,
     request: AwardCoinsRequest,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """
     Award coins to a user
@@ -182,7 +186,7 @@ async def award_coins(
 @router.get("/me/balance", response_model=CoinBalanceResponse)
 async def get_my_balance(
     request: Request,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """Get current user's coin balance"""
     user_id = get_current_user_id(request)
@@ -203,7 +207,7 @@ async def get_my_balance(
 async def spend_my_coins(
     request: Request,
     spend_request: SpendCoinsRequest,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """Spend coins from current user's balance"""
     user_id = get_current_user_id(request)
@@ -241,8 +245,8 @@ async def spend_my_coins(
 @router.get("/{user_id}/stats", response_model=DetailedStatsResponse)
 async def get_user_detailed_stats(
     user_id: str,
+    db: DbSession,
     days: int = 30,
-    db: Session = Depends(get_db)
 ):
     """
     Get detailed wallet statistics for a user
@@ -433,7 +437,7 @@ async def get_user_detailed_stats(
 async def award_my_coins(
     request: Request,
     award_request: AwardCoinsRequest,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """Award coins to current user"""
     user_id = get_current_user_id(request)
@@ -463,7 +467,7 @@ async def award_my_coins(
 async def get_user_purchases(
     user_id: str,
     game: str,
-    db: Session = Depends(get_db)
+    db: DbSession
 ):
     """
     Get purchased items for a user in a specific game by checking coin transactions.
@@ -499,7 +503,7 @@ async def get_user_purchases(
 async def spend_coins(
     user_id: str,
     request: SpendCoinsRequest,
-    coin_service: CoinService = Depends(get_coin_service)
+    coin_service: CoinServiceDep
 ):
     """
     Spend coins from user's balance

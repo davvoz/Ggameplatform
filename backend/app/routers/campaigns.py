@@ -6,6 +6,7 @@ Admin CRUD is handled in admin.py following existing pattern.
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from typing import Annotated
 from app.database import get_db_session
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory
@@ -18,9 +19,11 @@ def get_db():
     with get_db_session() as session:
         yield session
 
+DbSession = Annotated[Session, Depends(get_db)]
+
 
 @router.get("/active")
-async def get_active_campaigns(db: Session = Depends(get_db)):
+async def get_active_campaigns(db: DbSession):
     """Get all currently active campaigns"""
     repo = RepositoryFactory.create_campaign_repository(db)
     service = ServiceFactory.create_campaign_service(repo)
@@ -29,7 +32,7 @@ async def get_active_campaigns(db: Session = Depends(get_db)):
 
 
 @router.get("/game/{game_id}")
-async def get_game_campaigns(game_id: str, db: Session = Depends(get_db)):
+async def get_game_campaigns(game_id: str, db: DbSession):
     """Get active campaigns for a specific game"""
     repo = RepositoryFactory.create_campaign_repository(db)
     service = ServiceFactory.create_campaign_service(repo)

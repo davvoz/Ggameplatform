@@ -228,7 +228,7 @@ export class PlatformSDKAdapter {
       }
       
       const payload = {
-        amount: parseInt(amount),
+        amount: Number.parseInt(amount),
         transaction_type: 'game_win',
         source_id: 'seven',
         description: String(description)

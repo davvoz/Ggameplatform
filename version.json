@@ -1,8 +1,17 @@
 {
-  "version": "4.0.27",
-  "timestamp": "2026-03-24T14:14:56.746Z",
-  "buildNumber": 486,
+  "version": "4.0.28",
+  "timestamp": "2026-03-24T15:38:41.998Z",
+  "buildNumber": 487,
   "changelog": [
+    {
+      "version": "4.0.28",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix : Sonar",
+        "🔖 Bump version to 4.0.27 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.27",
       "date": "2026-03-24",
@@ -85,15 +94,6 @@
       "changes": [
         "Survivor Arena: Game Version 2.0 portal update",
         "🔖 Bump version to 4.0.18 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.18",
-      "date": "2026-03-22",
-      "type": "patch",
-      "changes": [
-        "fix : [SS2] sonar",
-        "🔖 Bump version to 4.0.17 [skip-version]"
       ]
     }
   ]

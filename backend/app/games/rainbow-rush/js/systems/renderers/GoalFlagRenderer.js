@@ -34,7 +34,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const isBlack = (row + col) % 2 === 0;
-                const color = isBlack ? [0.1, 0.1, 0.1, 0.8] : [1.0, 1.0, 1.0, 0.8];
+                const color = isBlack ? [0.1, 0.1, 0.1, 0.8] : [1, 1, 1, 0.8];
                 
                 this.renderer.drawRect(
                     zoneX + col * checkerSize,
@@ -53,7 +53,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
             zoneY,
             borderWidth,
             zoneHeight,
-            [1.0, 0.8, 0.0, 1.0]
+            [1, 0.8, 0.0, 1.0]
         );
         
         // Simple glow (only 1 layer instead of 3)
@@ -64,7 +64,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
                 zoneY,
                 20,
                 zoneHeight,
-                [1.0, 0.9, 0.2, glowAlpha]
+                [1, 0.9, 0.2, glowAlpha]
             );
         }
         
@@ -80,7 +80,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
                     particleX,
                     particleY,
                     5,
-                    [1.0, 0.8, 0.2, 1 - (particlePhase / 3)]
+                    [1, 0.8, 0.2, 1 - (particlePhase / 3)]
                 );
             }
         }
@@ -93,7 +93,7 @@ export class GoalFlagRenderer extends IEntityRenderer {
         const letterSpacing = 25 * scale;
         const startX = centerX - letterSpacing * 1.5;
         const blockSize = 6 * scale;
-        const color = [1.0, 1.0, 1.0, 1.0];
+        const color = [1, 1, 1, 1.0];
         
         // Draw simple block letters for "GOAL"
         // G

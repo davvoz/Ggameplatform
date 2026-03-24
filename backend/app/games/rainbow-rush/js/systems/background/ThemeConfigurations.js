@@ -27,8 +27,8 @@ export const THEME_NAMES = {
 
 export const SKY_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.4, 0.7, 1.0, 1.0],
-        [0.6, 0.85, 1.0, 1.0]
+        [0.4, 0.7, 1, 1.0],
+        [0.6, 0.85, 1, 1.0]
     ],
     CLOUD_COUNT: 3,
     CLOUD_MIN_SIZE: 40,
@@ -49,8 +49,8 @@ export const SKY_THEME_CONFIG = {
 
 export const OCEAN_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.0, 0.5, 1.0, 1.0],
-        [0.1, 0.7, 1.0, 1.0]
+        [0.0, 0.5, 1, 1.0],
+        [0.1, 0.7, 1, 1.0]
     ],
     WAVE_COUNT: 5,
     WAVE_BASE_AMPLITUDE: 20,
@@ -146,8 +146,8 @@ export const FOREST_THEME_CONFIG = {
 
 export const ICE_THEME_CONFIG = {
     BASE_COLORS: [
-        [0.7, 0.85, 1.0, 1.0],
-        [0.85, 0.95, 1.0, 1.0]
+        [0.7, 0.85, 1, 1.0],
+        [0.85, 0.95, 1, 1.0]
     ],
     CRYSTAL_COUNT: 10,
     CRYSTAL_MIN_SIZE: 15,
@@ -174,7 +174,7 @@ export const NIGHT_THEME_CONFIG = {
 
 export const SUNSET_OCEAN_CONFIG = {
     BASE_COLORS: [
-        [1.0, 0.4, 0.2, 1.0],
+        [1, 0.4, 0.2, 1.0],
         [0.3, 0.5, 0.8, 1.0]
     ],
     SUN_RADIUS: 60,

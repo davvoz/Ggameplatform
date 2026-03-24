@@ -105,7 +105,7 @@ export const EnemyTypes = {
         speed: 180,
         width: 22,
         height: 22,
-        color: [1.0, 0.8, 0.0, 1.0],
+        color: [1, 0.8, 0.0, 1.0],
         points: 30,
         pattern: 'chase', // Insegue il player
         chaseRange: 250,
@@ -167,7 +167,7 @@ export const EnemyTypes = {
         speed: 140,
         width: 32,
         height: 32,
-        color: [0.7, 0.7, 1.0, 0.6],
+        color: [0.7, 0.7, 1, 0.6],
         points: 50,
         pattern: 'phase', // Può attraversare piattaforme
         phaseInterval: 3.0,
@@ -185,7 +185,7 @@ export const EnemyTypes = {
         speed: 200,
         width: 30,
         height: 30,
-        color: [0.2, 0.6, 1.0, 1.0],
+        color: [0.2, 0.6, 1, 1.0],
         points: 55,
         pattern: 'bounce', // Rimbalza continuamente
         bounceForce: -500,
@@ -204,7 +204,7 @@ export const EnemyTypes = {
         speed: 220,
         width: 26,
         height: 26,
-        color: [1.0, 0.4, 0.2, 1.0],
+        color: [1, 0.4, 0.2, 1.0],
         points: 65,
         pattern: 'smart_chase', // Inseguimento intelligente con predizione
         predictionTime: 0.5,
@@ -223,11 +223,11 @@ export const EnemyTypes = {
         speed: 0,
         width: 40,
         height: 40,
-        color: [1.0, 0.1, 0.1, 1.0],
+        color: [1, 0.1, 0.1, 1.0],
         points: 70,
         pattern: 'laser', // Spara laser continuo
         laserChargeTime: 1.5,
-        laserDuration: 1.0,
+        laserDuration: 1,
         laserCooldown: 3.0,
         laserRange: 400,
         description: 'Torretta che spara laser devastanti',
@@ -268,7 +268,7 @@ export const EnemyTypes = {
         speed: 160,
         width: 35,
         height: 35,
-        color: [1.0, 0.5, 0.0, 1.0],
+        color: [1, 0.5, 0.0, 1.0],
         points: 90,
         pattern: 'dive_bomb', // Vola, poi si tuffa sul player
         diveSpeed: 400,
@@ -397,7 +397,7 @@ export const EnemyTypes = {
         speed: 150,
         width: 90,
         height: 90,
-        color: [1.0, 0.5, 0.8, 1.0],
+        color: [1, 0.5, 0.8, 1.0],
         points: 500,
         pattern: 'boss_multi',
         phases: [

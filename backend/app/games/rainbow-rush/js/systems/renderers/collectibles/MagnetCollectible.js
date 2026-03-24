@@ -13,8 +13,8 @@ export class MagnetCollectible extends BaseCollectible {
     }
 
     renderMagneticField(x, y, size) {
-        this.renderer.drawCircle(x, y, size * 1.5, [1.0, 0.3, 0.9, 0.2]);
-        this.renderer.drawCircle(x, y, size * 1.2, [1.0, 0.4, 0.9, 0.3]);
+        this.renderer.drawCircle(x, y, size * 1.5, [1, 0.3, 0.9, 0.2]);
+        this.renderer.drawCircle(x, y, size * 1.2, [1, 0.4, 0.9, 0.3]);
     }
 
     renderMagnet(x, y, size) {
@@ -27,7 +27,7 @@ export class MagnetCollectible extends BaseCollectible {
             y - magnetHeight / 2,
             magnetWidth,
             magnetHeight,
-            [1.0, 0.2, 0.2, 1.0]
+            [1, 0.2, 0.2, 1.0]
         );
 
         // Right pole (blue)
@@ -36,7 +36,7 @@ export class MagnetCollectible extends BaseCollectible {
             y - magnetHeight / 2,
             magnetWidth,
             magnetHeight,
-            [0.2, 0.3, 1.0, 1.0]
+            [0.2, 0.3, 1, 1.0]
         );
 
         // Connector
@@ -49,6 +49,6 @@ export class MagnetCollectible extends BaseCollectible {
         );
 
         // Center glow
-        this.renderer.drawCircle(x, y, size * 0.3, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(x, y, size * 0.3, [1, 1, 1, 0.9]);
     }
 }

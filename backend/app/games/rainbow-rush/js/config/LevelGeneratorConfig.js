@@ -171,11 +171,11 @@ export const DifficultyConfig = {
  * Ogni powerup ha: id, weight (probabilità spawn), unlockLevel, duration (ms), cooldown (ms)
  */
 export const PowerupTypes = {
-    SUPER_JUMP: { id: 'superJump', weight: 1.0, unlockLevel: 1, duration: 6000, cooldown: 12000 },
+    SUPER_JUMP: { id: 'superJump', weight: 1, unlockLevel: 1, duration: 6000, cooldown: 12000 },
     FLIGHT: { id: 'flight', weight: 0.8, unlockLevel: 8, duration: 4000, cooldown: 20000 },
     IMMORTALITY: { id: 'immortality', weight: 0.6, unlockLevel: 15, duration: 5000, cooldown: 15000 },
     SPEED_BOOST: { id: 'speedBoost', weight: 0.9, unlockLevel: 20, duration: 5000, cooldown: 15000 },
-    TURBO: { id: 'turbo', weight: 1.0, unlockLevel: 10, duration: 5000, cooldown: 15000 }
+    TURBO: { id: 'turbo', weight: 1, unlockLevel: 10, duration: 5000, cooldown: 15000 }
 };
 
 /**

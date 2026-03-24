@@ -32,7 +32,7 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
             const circleX = centerX + Math.cos(angle) * radius;
             const circleY = centerY + Math.sin(angle) * (platform.height / 2);
             const alpha = 0.6 + Math.sin(time * 10 + i) * 0.3;
-            this.renderer.drawCircle(circleX, circleY, 3, [1.0, 0.5, 0.0, alpha]);
+            this.renderer.drawCircle(circleX, circleY, 3, [1, 0.5, 0.0, alpha]);
         }
     }
 
@@ -41,7 +41,7 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
             const linePhase = (time * 4 + i * 0.3) % 1;
             const lineX = x + linePhase * platform.width;
             const lineAlpha = Math.sin(linePhase * Math.PI) * 0.7;
-            this.renderer.drawRect(lineX, y, 2, platform.height, [1.0, 0.6, 0.2, lineAlpha]);
+            this.renderer.drawRect(lineX, y, 2, platform.height, [1, 0.6, 0.2, lineAlpha]);
         }
     }
 
@@ -50,15 +50,15 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
         const centerY = y + platform.height / 2;
         const pulse = Math.sin(time * 3) * 0.3 + 0.5;
         
-        this.renderer.drawRect(x, y, platform.width, 2, [1.0, 0.5, 0.0, pulse]);
-        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1.0, 0.5, 0.0, pulse]);
+        this.renderer.drawRect(x, y, platform.width, 2, [1, 0.5, 0.0, pulse]);
+        this.renderer.drawRect(x, y + platform.height - 2, platform.width, 2, [1, 0.5, 0.0, pulse]);
         
         this.renderArrows(x, platform.width, centerY, pulse);
     }
 
     renderArrows(x, width, centerY, pulse) {
         const arrowSize = 4;
-        this.renderer.drawCircle(x + arrowSize, centerY, arrowSize, [1.0, 0.6, 0.2, pulse]);
-        this.renderer.drawCircle(x + width - arrowSize, centerY, arrowSize, [1.0, 0.6, 0.2, pulse]);
+        this.renderer.drawCircle(x + arrowSize, centerY, arrowSize, [1, 0.6, 0.2, pulse]);
+        this.renderer.drawCircle(x + width - arrowSize, centerY, arrowSize, [1, 0.6, 0.2, pulse]);
     }
 }

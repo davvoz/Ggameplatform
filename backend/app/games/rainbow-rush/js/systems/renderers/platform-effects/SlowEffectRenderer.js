@@ -22,9 +22,9 @@ export class SlowEffectRenderer extends PlatformEffectRenderer {
                 const angle = (j / 6) * Math.PI * 2 + time;
                 const px = crystalX + Math.cos(angle) * crystalSize;
                 const py = crystalY + Math.sin(angle) * crystalSize;
-                this.renderer.drawCircle(px, py, 1.5, [0.7, 0.9, 1.0, 0.8]);
+                this.renderer.drawCircle(px, py, 1.5, [0.7, 0.9, 1, 0.8]);
             }
-            this.renderer.drawCircle(crystalX, crystalY, crystalSize * 0.5, [1.0, 1.0, 1.0, 0.9]);
+            this.renderer.drawCircle(crystalX, crystalY, crystalSize * 0.5, [1, 1, 1, 0.9]);
         }
     }
 
@@ -33,7 +33,7 @@ export class SlowEffectRenderer extends PlatformEffectRenderer {
             const snowX = x + platform.width * 0.15 + (platform.width * 0.7 / 5) * i + Math.sin(time * 2 + i) * 8;
             const snowY = y - ((time * 30 + i * 10) % 30);
             const snowSize = 1 + Math.sin(time * 5 + i) * 0.5;
-            this.renderer.drawCircle(snowX, snowY, snowSize, [0.9, 0.95, 1.0, 0.7]);
+            this.renderer.drawCircle(snowX, snowY, snowSize, [0.9, 0.95, 1, 0.7]);
         }
     }
 }

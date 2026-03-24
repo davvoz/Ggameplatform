@@ -492,7 +492,7 @@ export class EntityManager {
         // Rainbow trail - ultra ridotto al 20% con max 10 particelle
         if (Math.random() < 0.2 && bonus.particles.length < this.MAX_RAINBOW_PARTICLES) {
             const hue = (bonus.rainbowPhase * 100) % 360;
-            const rgb = this.hslToRgb(hue / 360, 1.0, 0.5);
+            const rgb = this.hslToRgb(hue / 360, 1, 0.5);
             bonus.particles.push({
                 x: bonus.x,
                 y: bonus.y,

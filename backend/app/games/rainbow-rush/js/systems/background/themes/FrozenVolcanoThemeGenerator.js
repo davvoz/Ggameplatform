@@ -115,7 +115,7 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
                 radius: 2 + Math.random() * 4,
                 speed: 20 + Math.random() * 35,
                 rotation: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.7],
+                color: [1, 1, 1, 0.7],
                 type: 'snowflake',
                 drift: (Math.random() - 0.5) * 25
             });
@@ -131,7 +131,7 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
                 y: this.canvasHeight * 0.4 - i * 25,
                 radius: 12 + Math.random() * 18,
                 speed: -15 - Math.random() * 25,
-                color: [0.9, 0.95, 1.0, 0.3 - i * 0.04],
+                color: [0.9, 0.95, 1, 0.3 - i * 0.04],
                 type: 'smoke',
                 expansion: 1 + i * 0.15,
                 drift: (Math.random() - 0.5) * 12

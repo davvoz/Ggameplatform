@@ -75,7 +75,7 @@ export class CoinCollectible extends BaseCollectible {
         // Inner golden circle
         const innerRadiusX = radiusX * 0.85;
         const innerRadiusY = radiusY * 0.85;
-        this.renderEllipse(entity.x, y, innerRadiusX, innerRadiusY, [1.0, 0.84, 0.0, 1.0]);
+        this.renderEllipse(entity.x, y, innerRadiusX, innerRadiusY, [1, 0.84, 0.0, 1.0]);
 
         // Highlight
         const highlightRadiusX = radiusX * 0.4;
@@ -85,13 +85,13 @@ export class CoinCollectible extends BaseCollectible {
             y - radiusY * 0.25,
             highlightRadiusX,
             highlightRadiusY,
-            [1.0, 1.0, 0.9, 0.5]
+            [1, 1, 0.9, 0.5]
         );
 
         // Symbol
         const symbolRadiusX = radiusX * 0.5;
         const symbolRadiusY = radiusY * 0.5;
-        this.renderEllipse(entity.x, y, symbolRadiusX, symbolRadiusY, [1.0, 0.95, 0.4, 1.0]);
-        this.renderEllipse(entity.x, y, symbolRadiusX * 0.3, symbolRadiusY * 0.3, [1.0, 1.0, 1.0, 0.9]);
+        this.renderEllipse(entity.x, y, symbolRadiusX, symbolRadiusY, [1, 0.95, 0.4, 1.0]);
+        this.renderEllipse(entity.x, y, symbolRadiusX * 0.3, symbolRadiusY * 0.3, [1, 1, 1, 0.9]);
     }
 }

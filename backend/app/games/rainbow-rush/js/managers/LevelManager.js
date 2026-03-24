@@ -49,13 +49,13 @@ export class LevelManager {
 
     generateRainbowColors() {
         return [
-            [1.0, 0.2, 0.2, 1.0],  // Red
-            [1.0, 0.5, 0.0, 1.0],  // Orange
-            [1.0, 0.9, 0.0, 1.0],  // Yellow
+            [1, 0.2, 0.2, 1.0],  // Red
+            [1, 0.5, 0.0, 1.0],  // Orange
+            [1, 0.9, 0.0, 1.0],  // Yellow
             [0.2, 0.8, 0.2, 1.0],  // Green
-            [0.2, 0.5, 1.0, 1.0],  // Blue
+            [0.2, 0.5, 1, 1.0],  // Blue
             [0.5, 0.2, 0.8, 1.0],  // Purple
-            [1.0, 0.2, 0.8, 1.0]   // Pink
+            [1, 0.2, 0.8, 1.0]   // Pink
         ];
     }
 
@@ -267,16 +267,16 @@ export class LevelManager {
                 break;
             case 'spring':
                 bounceMultiplier = 2.5;
-                color = [1.0, 0.4, 0.9, 1.0];
+                color = [1, 0.4, 0.9, 1.0];
                 break;
             case 'crumbling':
                 color = [baseColor[0] * 0.7, baseColor[1] * 0.7, baseColor[2] * 0.7, 1.0];
                 break;
             case 'icy':
-                color = [0.7, 0.9, 1.0, 0.9];
+                color = [0.7, 0.9, 1, 0.9];
                 break;
             case 'rotating':
-                color = [1.0, 0.6, 0.2, 1.0]; // Orange for rotating platforms
+                color = [1, 0.6, 0.2, 1.0]; // Orange for rotating platforms
                 break;
             case 'dissolving':
                 color = [baseColor[0] * 0.9, baseColor[1] * 0.8, baseColor[2] * 1.1, 0.85]; // Slightly transparent purple tint
@@ -298,7 +298,7 @@ export class LevelManager {
             originalVelocity: velocity,
             bounceMultiplier: bounceMultiplier,
             crumbleTimer: 0,
-            crumbleDuration: 1.0,
+            crumbleDuration: 1,
             isCrumbling: false,
             springCompression: 0,
             springAnimationTime: 0,
@@ -307,7 +307,7 @@ export class LevelManager {
             isDissolving: data.isDissolving || false,
             dissolveTimer: 0,
             dissolveDuration: data.dissolveDuration || 0.8,
-            dissolveAlpha: data.dissolveAlpha || 1.0,
+            dissolveAlpha: data.dissolveAlpha || 1,
             isRotating: data.isRotating || false, // ✅ PRESERVA dal LevelGenerator
             rotationAngle: data.rotationAngle || 0,
             rotationSpeed: data.rotationSpeed || 0,
@@ -424,8 +424,8 @@ export class LevelManager {
                 radius: 18,
                 type: 'health',
                 value: data.value || 1,
-                color: [1.0, 0.1, 0.3, 1.0], // Red
-                glowColor: [1.0, 0.5, 0.7, 1.0],
+                color: [1, 0.1, 0.3, 1.0], // Red
+                glowColor: [1, 0.5, 0.7, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 index: index
@@ -439,8 +439,8 @@ export class LevelManager {
                 type: 'shield',
                 value: data.value || 1,
                 duration: data.duration,
-                color: [0.0, 1.0, 0.5, 1.0], // Green
-                glowColor: [0.5, 1.0, 0.8, 1.0],
+                color: [0.0, 1, 0.5, 1.0], // Green
+                glowColor: [0.5, 1, 0.8, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 rotation: 0,
@@ -455,8 +455,8 @@ export class LevelManager {
                 type: 'magnet',
                 value: data.value || 1,
                 duration: data.duration,
-                color: [0.5, 0.5, 1.0, 1.0], // Blue
-                glowColor: [0.7, 0.7, 1.0, 1.0],
+                color: [0.5, 0.5, 1, 1.0], // Blue
+                glowColor: [0.7, 0.7, 1, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 rotation: 0,
@@ -470,8 +470,8 @@ export class LevelManager {
                 radius: 20,
                 type: 'coinRain',
                 value: data.value || 1,
-                color: [1.0, 0.84, 0.0, 1.0], // Gold
-                glowColor: [1.0, 0.95, 0.5, 1.0],
+                color: [1, 0.84, 0.0, 1.0], // Gold
+                glowColor: [1, 0.95, 0.5, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 coinOrbitPhase: 0,
@@ -487,8 +487,8 @@ export class LevelManager {
                 type: 'multiplier',
                 multiplier: data.multiplier || 2,
                 duration: data.duration || 15000,
-                color: [1.0, 0.9, 0.3, 1.0], // Yellow-gold
-                glowColor: [1.0, 0.95, 0.6, 1.0],
+                color: [1, 0.9, 0.3, 1.0], // Yellow-gold
+                glowColor: [1, 0.95, 0.6, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 rotation: 0,
@@ -502,8 +502,8 @@ export class LevelManager {
                 radius: 22,
                 type: 'rainbow',
                 value: data.value || 1,
-                color: [1.0, 1.0, 1.0, 1.0], // White (changes in renderer)
-                glowColor: [1.0, 0.5, 1.0, 1.0],
+                color: [1, 1, 1, 1.0], // White (changes in renderer)
+                glowColor: [1, 0.5, 1, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 rainbowPhase: 0,
@@ -517,8 +517,8 @@ export class LevelManager {
                 radius: 20,
                 type: 'flightBonus',
                 duration: data.duration || 8000,
-                color: [0.4, 0.8, 1.0, 1.0], // Sky blue
-                glowColor: [0.6, 0.9, 1.0, 1.0],
+                color: [0.4, 0.8, 1, 1.0], // Sky blue
+                glowColor: [0.6, 0.9, 1, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 wingPhase: 0,
@@ -532,8 +532,8 @@ export class LevelManager {
                 radius: 20,
                 type: 'rechargeBonus',
                 rechargeAmount: data.rechargeAmount || 50,
-                color: [0.3, 1.0, 0.4, 1.0], // Electric green
-                glowColor: [0.5, 1.0, 0.6, 1.0],
+                color: [0.3, 1, 0.4, 1.0], // Electric green
+                glowColor: [0.5, 1, 0.6, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 energyPhase: 0,
@@ -548,8 +548,8 @@ export class LevelManager {
                 radius: 22,
                 type: 'heartRechargeBonus',
                 hearts: data.hearts || 1,
-                color: [1.0, 0.2, 0.5, 1.0], // Pink-red
-                glowColor: [1.0, 0.4, 0.7, 1.0],
+                color: [1, 0.2, 0.5, 1.0], // Pink-red
+                glowColor: [1, 0.4, 0.7, 1.0],
                 velocity: -this.baseSpeed,
                 pulsePhase: Math.random() * Math.PI * 2,
                 heartPhase: 0,
@@ -581,7 +581,7 @@ export class LevelManager {
                 y: data.y,
                 radius: 15,
                 type: 'collectible',
-                color: [1.0, 0.84, 0.0, 1.0], // Gold
+                color: [1, 0.84, 0.0, 1.0], // Gold
                 velocity: -this.baseSpeed,
                 value: data.value || 10,
                 pulsePhase: Math.random() * Math.PI * 2,
@@ -596,11 +596,11 @@ export class LevelManager {
     getPowerupColor(powerupType) {
         switch (powerupType) {
             case 'immortality':
-                return [1.0, 0.84, 0.0, 1.0]; // Gold
+                return [1, 0.84, 0.0, 1.0]; // Gold
             case 'flight':
-                return [0.4, 0.85, 1.0, 1.0]; // Light blue
+                return [0.4, 0.85, 1, 1.0]; // Light blue
             case 'superJump':
-                return [1.0, 0.2, 0.6, 1.0]; // Pink
+                return [1, 0.2, 0.6, 1.0]; // Pink
             default:
                 return [0.8, 0.8, 0.8, 1.0]; // Gray
         }
@@ -612,13 +612,13 @@ export class LevelManager {
     getBonusColor(bonusType) {
         switch (bonusType) {
             case 'health':
-                return [1.0, 0.1, 0.3, 1.0]; // Red (heart)
+                return [1, 0.1, 0.3, 1.0]; // Red (heart)
             case 'shield':
-                return [0.0, 1.0, 0.5, 1.0]; // Green
+                return [0.0, 1, 0.5, 1.0]; // Green
             case 'magnet':
-                return [0.6, 0.4, 1.0, 1.0]; // Purple
+                return [0.6, 0.4, 1, 1.0]; // Purple
             default:
-                return [1.0, 1.0, 1.0, 1.0]; // White
+                return [1, 1, 1, 1.0]; // White
         }
     }
 

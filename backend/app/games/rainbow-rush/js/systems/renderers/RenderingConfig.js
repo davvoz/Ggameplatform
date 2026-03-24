@@ -5,15 +5,15 @@
 export const RenderingConfig = {
     // Colors
     COLORS: {
-        PLAYER_DEFAULT: [0.0, 0.85, 1.0, 1.0],         // Cyan brillante SBAM
-        PLAYER_TURBO: [1.0, 0.85, 0.0, 1.0],           // Giallo oro intenso
-        PLAYER_IMMORTALITY: [1.0, 0.75, 0.0, 1.0],     // Arancione dorato
-        PLAYER_FLIGHT: [0.3, 0.95, 1.0, 1.0],          // Azzurro brillante
-        PLAYER_SUPER_JUMP: [1.0, 0.2, 0.8, 1.0],       // Magenta acceso
+        PLAYER_DEFAULT: [0.0, 0.85, 1, 1.0],         // Cyan brillante SBAM
+        PLAYER_TURBO: [1, 0.85, 0.0, 1.0],           // Giallo oro intenso
+        PLAYER_IMMORTALITY: [1, 0.75, 0.0, 1.0],     // Arancione dorato
+        PLAYER_FLIGHT: [0.3, 0.95, 1, 1.0],          // Azzurro brillante
+        PLAYER_SUPER_JUMP: [1, 0.2, 0.8, 1.0],       // Magenta acceso
         SHADOW: [0.0, 0.0, 0.0, 0.3],
-        WHITE: [1.0, 1.0, 1.0, 1.0],
-        DANGER_RED: [1.0, 0.3, 0.2, 1.0],
-        SUCCESS_GREEN: [0.4, 1.0, 0.6, 1.0],
+        WHITE: [1, 1, 1, 1.0],
+        DANGER_RED: [1, 0.3, 0.2, 1.0],
+        SUCCESS_GREEN: [0.4, 1, 0.6, 1.0],
     },
 
     // Sizes

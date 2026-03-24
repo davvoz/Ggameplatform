@@ -34,8 +34,8 @@ export class HeartCollectible extends BaseCollectible {
         }
 
         // Highlights
-        this.renderer.drawCircle(x - lobeOffset * 0.6, y - size * 0.3, size * 0.2, [1.0, 1.0, 1.0, 0.5 * pulse]);
-        this.renderer.drawCircle(x + lobeOffset * 0.6, y - size * 0.3, size * 0.2, [1.0, 1.0, 1.0, 0.5 * pulse]);
+        this.renderer.drawCircle(x - lobeOffset * 0.6, y - size * 0.3, size * 0.2, [1, 1, 1, 0.5 * pulse]);
+        this.renderer.drawCircle(x + lobeOffset * 0.6, y - size * 0.3, size * 0.2, [1, 1, 1, 0.5 * pulse]);
     }
 
     renderSparkles(x, y, size, time, pulse) {
@@ -45,7 +45,7 @@ export class HeartCollectible extends BaseCollectible {
             const px = x + Math.cos(angle) * orbitRadius;
             const py = y + Math.sin(angle) * orbitRadius;
             const sparkleSize = 2.5 + Math.sin(time * 5 + i) * 1;
-            this.renderer.drawCircle(px, py, sparkleSize, [1.0, 1.0, 1.0, 0.9 * pulse]);
+            this.renderer.drawCircle(px, py, sparkleSize, [1, 1, 1, 0.9 * pulse]);
         }
     }
 }

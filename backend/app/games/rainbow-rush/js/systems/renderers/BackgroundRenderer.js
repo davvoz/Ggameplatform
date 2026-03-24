@@ -100,7 +100,7 @@ export class BackgroundRenderer {
                 size: config.MIN_SIZE + Math.random() * (config.MAX_SIZE - config.MIN_SIZE),
                 vx: (Math.random() - 0.5) * config.SPEED,
                 vy: (Math.random() - 0.5) * config.SPEED,
-                life: 1.0,
+                life: 1,
                 maxLife: config.MIN_LIFE + Math.random() * (config.MAX_LIFE - config.MIN_LIFE),
                 color: [
                     0.4 + Math.random() * 0.6,

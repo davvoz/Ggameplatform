@@ -23,6 +23,7 @@ export class Croupier {
      * @param {number}  config.height - canvas height (fullscreen)
      */
     #onReactionFinished = null;
+    #sheets = null;
 
     constructor(config) {
         this.#width = config.width;
@@ -71,10 +72,14 @@ export class Croupier {
             this.#animator.register('happy', new Animation(happySheet, { frameDuration: 120, loop: true }));
         }
 
-        Promise.all(sheets.map(s => s.load())).then(() => {
-            this.#loaded = true;
-            this.#animator.play('idle');
-        });
+        this.#sheets = sheets;
+    }
+
+    async load() {
+        await Promise.all(this.#sheets.map(s => s.load()));
+        this.#loaded = true;
+        this.#animator.play('idle');
+        this.#sheets = null;
     }
 
     get loaded() { return this.#loaded; }

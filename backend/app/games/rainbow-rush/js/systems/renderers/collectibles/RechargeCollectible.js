@@ -23,13 +23,13 @@ export class RechargeCollectible extends BaseCollectible {
             const ringPhase = (energyPhase + i * 2) % 6;
             const ringSize = size * (0.8 + ringPhase * 0.4);
             const ringAlpha = (1 - ringPhase / 6) * 0.8;
-            this.renderer.drawCircle(x, y, ringSize, [0.2, 1.0, 0.4, ringAlpha]);
+            this.renderer.drawCircle(x, y, ringSize, [0.2, 1, 0.4, ringAlpha]);
         }
     }
 
     renderConcentricCircles(x, y, size, color) {
         this.renderer.drawCircle(x, y, size * 1.8, [0.1, 0.8, 0.3, 0.4]);
-        this.renderer.drawCircle(x, y, size * 1.4, [0.2, 1.0, 0.4, 0.6]);
+        this.renderer.drawCircle(x, y, size * 1.4, [0.2, 1, 0.4, 0.6]);
         this.renderer.drawCircle(x, y, size, color);
     }
 
@@ -43,7 +43,7 @@ export class RechargeCollectible extends BaseCollectible {
         this.renderer.drawRect(batteryX, batteryY, batteryWidth, batteryHeight, [0.15, 0.8, 0.3, 1.0]);
 
         // Positive terminal
-        this.renderer.drawRect(x - size * 0.2, batteryY - size * 0.2, size * 0.4, size * 0.2, [0.2, 1.0, 0.4, 1.0]);
+        this.renderer.drawRect(x - size * 0.2, batteryY - size * 0.2, size * 0.4, size * 0.2, [0.2, 1, 0.4, 1.0]);
 
         // Energy bars
         const barCount = 4;
@@ -55,7 +55,7 @@ export class RechargeCollectible extends BaseCollectible {
                 batteryY + 4 + i * barHeight,
                 batteryWidth - 8,
                 barHeight - 2,
-                [0.4, 1.0, 0.5, barPulse]
+                [0.4, 1, 0.5, barPulse]
             );
         }
     }
@@ -69,7 +69,7 @@ export class RechargeCollectible extends BaseCollectible {
             const py = y + Math.sin(orbitAngle) * orbitRadius;
             const particleSize = 2.5 + Math.sin(energyPhase * 3 + i) * 1;
 
-            this.renderer.drawCircle(px, py, particleSize, [0.5, 1.0, 0.6, 1.0]);
+            this.renderer.drawCircle(px, py, particleSize, [0.5, 1, 0.6, 1.0]);
 
             // Trail
             const trailAngle = orbitAngle + Math.PI;
@@ -93,21 +93,21 @@ export class RechargeCollectible extends BaseCollectible {
                     const t = s / steps;
                     const sx = x + (boltX - x) * t;
                     const sy = y + (boltY - y) * t;
-                    this.renderer.drawCircle(sx, sy, 2, [1.0, 1.0, 1.0, 1 - t]);
+                    this.renderer.drawCircle(sx, sy, 2, [1, 1, 1, 1 - t]);
                 }
             }
         }
     }
 
     renderCore(x, y, size, time) {
-        this.renderer.drawCircle(x, y, size * 0.4, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 1.0]);
 
         const sparkleSize = size * 0.25;
         this.renderer.drawCircle(
             x - sparkleSize * 0.2,
             y - sparkleSize * 0.2,
             sparkleSize,
-            [1.0, 1.0, 1.0, 0.95 + Math.sin(time * 12) * 0.05]
+            [1, 1, 1, 0.95 + Math.sin(time * 12) * 0.05]
         );
     }
 }

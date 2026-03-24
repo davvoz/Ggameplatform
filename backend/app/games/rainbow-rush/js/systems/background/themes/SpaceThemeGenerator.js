@@ -78,7 +78,7 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
                 y: Math.random() * this.canvasHeight,
                 radius: this.randomInRange(config.STAR_MIN_RADIUS, config.STAR_MAX_RADIUS),
                 twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.9, 0.7],
+                color: [1, 1, 0.9, 0.7],
                 type: 'star'
             });
         }
@@ -94,7 +94,7 @@ export class SpaceThemeGenerator extends BaseThemeGenerator {
                 length: config.SHOOTING_STAR_LENGTH,
                 speed: 200 + Math.random() * 150,
                 angle: Math.PI / 4 + (Math.random() - 0.5) * 0.5,
-                color: [1.0, 1.0, 0.9, 0.8],
+                color: [1, 1, 0.9, 0.8],
                 type: 'shootingStar'
             });
         }

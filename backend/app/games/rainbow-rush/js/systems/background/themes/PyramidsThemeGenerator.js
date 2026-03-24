@@ -114,7 +114,7 @@ export class PyramidsThemeGenerator extends BaseThemeGenerator {
                 amplitude: 15 + Math.random() * 10,
                 frequency: 0.02 + Math.random() * 0.01,
                 speed: 40 + Math.random() * 30,
-                color: [1.0, 0.9, 0.6, 0.15],
+                color: [1, 0.9, 0.6, 0.15],
                 type: 'animated_particle',
                 animation: 'wave',
                 height: 60 + Math.random() * 40

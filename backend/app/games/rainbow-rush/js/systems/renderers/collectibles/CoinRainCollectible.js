@@ -15,8 +15,8 @@ export class CoinRainCollectible extends BaseCollectible {
 
     renderMainCircle(x, y, size, color) {
         this.renderer.drawCircle(x, y, size, color);
-        this.renderer.drawCircle(x, y, size * 0.85, [1.0, 0.95, 0.6, 1.0]);
-        this.renderer.drawCircle(x, y, size * 0.4, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(x, y, size * 0.85, [1, 0.95, 0.6, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.4, [1, 1, 1, 0.9]);
     }
 
     renderOrbitingCoins(entity, size) {
@@ -28,8 +28,8 @@ export class CoinRainCollectible extends BaseCollectible {
             const coinY = entity.y + Math.sin(angle) * orbitRadius;
             const coinSize = 6;
 
-            this.renderer.drawCircle(coinX, coinY, coinSize, [1.0, 0.84, 0.0, 1.0]);
-            this.renderer.drawCircle(coinX, coinY, coinSize * 0.7, [1.0, 0.95, 0.4, 1.0]);
+            this.renderer.drawCircle(coinX, coinY, coinSize, [1, 0.84, 0.0, 1.0]);
+            this.renderer.drawCircle(coinX, coinY, coinSize * 0.7, [1, 0.95, 0.4, 1.0]);
         }
     }
 
@@ -41,7 +41,7 @@ export class CoinRainCollectible extends BaseCollectible {
             const sparkleY = entity.y + Math.sin(sparkleAngle) * sparkleRadius;
             const sparkleAlpha = (Math.sin(entity.sparklePhase * 4 + i) + 1) * 0.5;
 
-            this.renderer.drawCircle(sparkleX, sparkleY, 3, [1.0, 1.0, 0.8, sparkleAlpha]);
+            this.renderer.drawCircle(sparkleX, sparkleY, 3, [1, 1, 0.8, sparkleAlpha]);
         }
     }
 }

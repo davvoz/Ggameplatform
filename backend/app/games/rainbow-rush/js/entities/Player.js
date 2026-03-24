@@ -18,7 +18,7 @@ export class Player {
         this.isGrounded = false;
         this.isJumping = false;
         this.canvasHeight = canvasHeight;
-        this.color = [0.2, 0.6, 1.0, 1.0]; // Blue player
+        this.color = [0.2, 0.6, 1, 1.0]; // Blue player
         this.maxFallSpeed = 500; // Ridotta da 600 per migliori collisioni
         this.alive = true;
         
@@ -310,9 +310,9 @@ export class Player {
                 y: this.y + this.height / 2,
                 vx: (Math.random() - 0.5) * 200,
                 vy: Math.random() * 100,
-                life: 1.0,
+                life: 1,
                 maxLife: 0.6,
-                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
+                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1.0]
             });
         }
         // Update turbo cooldown SOLO quando il turbo NON è attivo
@@ -380,14 +380,14 @@ export class Player {
                 life: 0.4,
                 maxLife: 0.4,
                 size: 5 + Math.random() * 3,
-                color: [0.0, 1.0, 0.9, 1.0]
+                color: [0.0, 1, 0.9, 1.0]
             });
         }
         
         // Gestione decelerazione fluida del boost
         if (this.boostDecelerating) {
             this.boostDecelerationTime += deltaTime;
-            const progress = Math.min(1.0, this.boostDecelerationTime / this.boostDecelerationDuration);
+            const progress = Math.min(1, this.boostDecelerationTime / this.boostDecelerationDuration);
             
             // Easing esponenziale in uscita - decelerazione molto dolce e naturale
             const smoothEase = (t) => {
@@ -540,9 +540,9 @@ export class Player {
                 y: this.y + this.height / 2 + (Math.random() - 0.5) * 10,
                 vx: (Math.random() - 0.5) * 80,
                 vy: Math.random() * 60 - 30 + Math.sin(this.wingFlapPhase) * 20,
-                life: 1.0,
-                maxLife: 1.0,
-                color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1.0, 0.9]
+                life: 1,
+                maxLife: 1,
+                color: [0.6 + Math.random() * 0.4, 0.85 + Math.random() * 0.15, 1, 0.9]
             });
         }
     }
@@ -584,10 +584,10 @@ export class Player {
     }
     
     getPowerupTrailColor() {
-        if (this.powerups.immortality) return [1.0, 0.84, 0.0, 0.6]; // Gold - ridotto alpha da 0.8
-        if (this.powerups.flight) return [0.4, 0.7, 1.0, 0.6]; // Light blue - ridotto
-        if (this.powerups.superJump) return [1.0, 0.3, 0.5, 0.6]; // Pink - ridotto
-        return [1.0, 1.0, 1.0, 0.4]; // Ridotto da 0.5
+        if (this.powerups.immortality) return [1, 0.84, 0.0, 0.6]; // Gold - ridotto alpha da 0.8
+        if (this.powerups.flight) return [0.4, 0.7, 1, 0.6]; // Light blue - ridotto
+        if (this.powerups.superJump) return [1, 0.3, 0.5, 0.6]; // Pink - ridotto
+        return [1, 1, 1, 0.4]; // Ridotto da 0.5
     }
     
     takeDamage(amount = 1) {

@@ -49,10 +49,10 @@ export class ParticleSystem {
         const particleCount = 3;
 
         // Colore semplificato
-        const particleColor = powerupType === 'immortality' ? [1.0, 0.84, 0.0, 1.0] :
-                             powerupType === 'flight' ? [0.4, 0.7, 1.0, 1.0] :
-                             powerupType === 'superJump' ? [1.0, 0.3, 0.5, 1.0] :
-                             [1.0, 1.0, 1.0, 1.0];
+        const particleColor = powerupType === 'immortality' ? [1, 0.84, 0.0, 1.0] :
+                             powerupType === 'flight' ? [0.4, 0.7, 1, 1.0] :
+                             powerupType === 'superJump' ? [1, 0.3, 0.5, 1.0] :
+                             [1, 1, 1, 1.0];
 
         // Esplosione minima
         for (let i = 0; i < particleCount; i++) {
@@ -128,9 +128,9 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * 100 - 30,
                 life: 0.4,
                 maxLife: 0.4,
-                alpha: 1.0,
+                alpha: 1,
                 size: 3,
-                color: [1.0, 0.3, 0.3, 1.0]
+                color: [1, 0.3, 0.3, 1.0]
             });
         }
 

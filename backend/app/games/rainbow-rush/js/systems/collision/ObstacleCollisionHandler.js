@@ -73,7 +73,7 @@ export class ObstacleCollisionHandler extends DamageCollisionHandler {
                     '😎 +5',
                     obstacle.x,
                     obstacle.y - 20,
-                    [0.0, 1.0, 1.0, 1.0],
+                    [0.0, 1, 1, 1.0],
                     entityManager
                 );
                 this.context.scoreSystem.addPoints(5);
@@ -83,7 +83,7 @@ export class ObstacleCollisionHandler extends DamageCollisionHandler {
                 this.context.particleSystem.createSparkles(
                     playerRight,
                     this.context.player.y + this.context.player.height / 2,
-                    [0.0, 1.0, 1.0],
+                    [0.0, 1, 1.0],
                     10,
                     entityManager
                 );

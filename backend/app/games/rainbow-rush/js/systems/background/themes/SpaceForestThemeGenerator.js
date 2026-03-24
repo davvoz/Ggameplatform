@@ -141,7 +141,7 @@ export class SpaceForestThemeGenerator extends BaseThemeGenerator {
                 y: Math.random() * this.canvasHeight * 0.7,
                 radius: 1 + Math.random() * 2,
                 twinkle: Math.random() * Math.PI * 2,
-                color: [0.9 + Math.random() * 0.1, 0.9 + Math.random() * 0.1, 1.0, 0.6 + Math.random() * 0.4],
+                color: [0.9 + Math.random() * 0.1, 0.9 + Math.random() * 0.1, 1, 0.6 + Math.random() * 0.4],
                 type: 'star'
             });
         }
@@ -162,7 +162,7 @@ export class SpaceForestThemeGenerator extends BaseThemeGenerator {
                 color: [
                     0.5 + hue * 0.5,
                     0.8 - hue * 0.3,
-                    1.0,
+                    1,
                     0.8
                 ],
                 type: 'firefly',

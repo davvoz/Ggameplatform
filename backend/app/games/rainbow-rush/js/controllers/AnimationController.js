@@ -21,7 +21,7 @@ export class AnimationController {
         // Screen flash for combos
         this.screenFlash = {
             alpha: 0,
-            color: [1.0, 1.0, 1.0]
+            color: [1, 1, 1.0]
         };
     }
 
@@ -125,7 +125,7 @@ export class AnimationController {
         if (!this.deathAnimation) return;
         
         this.deathAnimation.timer += deltaTime;
-        this.deathAnimation.fadeAlpha = Math.min(1.0, this.deathAnimation.timer / 0.8);
+        this.deathAnimation.fadeAlpha = Math.min(1, this.deathAnimation.timer / 0.8);
         this.deathAnimation.playerAlpha = Math.max(0, 1.0 - (this.deathAnimation.timer / 1.5));
         this.deathAnimation.rotation += deltaTime * 3;
         this.deathAnimation.scale = 1.0 + (this.deathAnimation.timer * 0.5);
@@ -169,7 +169,7 @@ export class AnimationController {
             maxLife: 2.5,
             fontSize: 80,
             pulsePhase: 0,
-            color: [1.0, 0.9, 0.2, 1.0], // Golden color
+            color: [1, 0.9, 0.2, 1.0], // Golden color
             scale: 0
         };
         
@@ -208,7 +208,7 @@ export class AnimationController {
         if (combo <= 1) return;
         
         let message = '';
-        let color = [1.0, 1.0, 1.0, 1.0];
+        let color = [1, 1, 1, 1.0];
         let intensity = 1.0;
         let flashIntensity = 0;
         
@@ -216,37 +216,37 @@ export class AnimationController {
         
         if (combo >= 50) {
             message = `🌟 DIVINO! x${multiplierText} 🌟`;
-            color = [1.0, 0.0, 1.0, 1.0];
+            color = [1, 0.0, 1, 1.0];
             intensity = 3.0;
             flashIntensity = 0.4;
         } else if (combo >= 30) {
             message = `🔥 EPICO! x${multiplierText} 🔥`;
-            color = [1.0, 0.3, 0.0, 1.0];
+            color = [1, 0.3, 0.0, 1.0];
             intensity = 2.5;
             flashIntensity = 0.3;
         } else if (combo >= 20) {
             message = `💥 BRUTALE! x${multiplierText} 💥`;
-            color = [1.0, 0.2, 0.2, 1.0];
+            color = [1, 0.2, 0.2, 1.0];
             intensity = 2.0;
             flashIntensity = 0.25;
         } else if (combo >= 15) {
             message = `⚡ PAZZESCO! x${multiplierText} ⚡`;
-            color = [1.0, 1.0, 0.0, 1.0];
+            color = [1, 1, 0.0, 1.0];
             intensity = 1.8;
             flashIntensity = 0.2;
         } else if (combo >= 10) {
             message = `🌈 SUPER! x${multiplierText} 🌈`;
-            color = [0.0, 1.0, 1.0, 1.0];
+            color = [0.0, 1, 1, 1.0];
             intensity = 1.5;
             flashIntensity = 0.15;
         } else if (combo >= 5) {
             message = `🚀 COMBO x${multiplierText}!`;
-            color = [0.5, 1.0, 0.5, 1.0];
+            color = [0.5, 1, 0.5, 1.0];
             intensity = 1.2;
             flashIntensity = 0.1;
         } else {
             message = `COMBO x${multiplierText}`;
-            color = [1.0, 1.0, 1.0, 1.0];
+            color = [1, 1, 1, 1.0];
             intensity = 1.0;
         }
         
@@ -266,7 +266,7 @@ export class AnimationController {
             fontSize: 32 + Math.min(combo * 0.8, 30),
             pulsePhase: 0,
             color: color,
-            scale: 1.0,
+            scale: 1,
             combo: combo,
             intensity: intensity
         };
@@ -291,9 +291,9 @@ export class AnimationController {
             timer: 0,
             duration: 4.0,
             fadeAlpha: 0,
-            playerAlpha: 1.0,
+            playerAlpha: 1,
             rotation: 0,
-            scale: 1.0,
+            scale: 1,
             particles: particles
         };
     }
@@ -310,7 +310,7 @@ export class AnimationController {
             startY: y,
             life: duration,
             maxLife: duration,
-            alpha: 1.0,
+            alpha: 1,
             color: color,
             fontSize: 48,     // GRANDE E VISIBILE
             velocityY: -50,   // Sale verso l'alto più lentamente
@@ -335,7 +335,7 @@ export class AnimationController {
             startY: y,
             life: duration,
             maxLife: duration,
-            alpha: 1.0,
+            alpha: 1,
             color: color,
             fontSize: 72,     // ENORME!
             velocityY: -60,   // Sale verso l'alto più lentamente per essere leggibile
@@ -381,7 +381,7 @@ export class AnimationController {
         this.isShowingDeathAnimation = false;
         this.screenFlash = {
             alpha: 0,
-            color: [1.0, 1.0, 1.0]
+            color: [1, 1, 1.0]
         };
     }
 }

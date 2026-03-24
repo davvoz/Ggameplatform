@@ -83,7 +83,7 @@ export class BodyRenderer {
                     // Parte posteriore: fiamme arancioni/rosse
                     const flameProgress = i / (segments * 0.3);
                     segmentColor = [
-                        1.0,
+                        1,
                         0.3 + flameProgress * (bodyColor[1] - 0.3),
                         0.1 + flameProgress * (bodyColor[2] - 0.1),
                         alpha * 0.6
@@ -102,7 +102,7 @@ export class BodyRenderer {
         }
 
         // Highlight (adattato)
-        const highlightColor = [1.0, 1.0, 1.0, 0.7];
+        const highlightColor = [1, 1, 1, 0.7];
         this.renderer.drawCircle(x - sizeX * 0.2, finalY - sizeY * 0.2, Math.min(sizeX, sizeY) * 0.25, highlightColor);
 
         if (rotation !== 0 && this.textCtx) {
@@ -155,8 +155,8 @@ export class BodyRenderer {
         this.renderWing(x, y, wingFlap, 1, time);
 
         const flightAura = Math.sin(player.flightFloatPhase || 0) * 0.2 + 0.5;
-        this.renderer.drawCircle(x, y, player.width, [0.4, 0.85, 1.0, 0.15 * flightAura]);
-        this.renderer.drawCircle(x, y, player.width * 0.75, [0.5, 0.9, 1.0, 0.2 * flightAura]);
+        this.renderer.drawCircle(x, y, player.width, [0.4, 0.85, 1, 0.15 * flightAura]);
+        this.renderer.drawCircle(x, y, player.width * 0.75, [0.5, 0.9, 1, 0.2 * flightAura]);
     }
 
     renderWing(x, y, wingFlap, side, time) {
@@ -181,7 +181,7 @@ export class BodyRenderer {
                 const py = fy + (featherEndY - fy) * t;
                 const featherRadius = (5 - i) * (1 - t * 0.5);
                 const featherAlpha = (0.8 - i * 0.1) * (1 - t * 0.3);
-                this.renderer.drawCircle(px, py, featherRadius, [0.9, 0.95 + i * 0.01, 1.0, featherAlpha]);
+                this.renderer.drawCircle(px, py, featherRadius, [0.9, 0.95 + i * 0.01, 1, featherAlpha]);
             }
         }
     }
@@ -196,7 +196,7 @@ export class BodyRenderer {
 
         // Glow
         const glowRadius = progressRadius + 3;
-        this.renderer.drawCircle(x, y, glowRadius, [0.3, 0.7, 1.0, 0.15]);
+        this.renderer.drawCircle(x, y, glowRadius, [0.3, 0.7, 1, 0.15]);
 
         // Background
         for (let i = 0; i < segments; i++) {
@@ -231,8 +231,8 @@ export class BodyRenderer {
             const headY = y + Math.sin(headAngle) * progressRadius;
 
             const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
-            this.renderer.drawCircle(headX, headY, thickness * 1.8 * pulse, [1.0, 1.0, 1.0, 0.9 * pulse]);
-            this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1.0, 1.0]);
+            this.renderer.drawCircle(headX, headY, thickness * 1.8 * pulse, [1, 1, 1, 0.9 * pulse]);
+            this.renderer.drawCircle(headX, headY, thickness * 1.2, [0.8, 0.95, 1, 1.0]);
         }
 
         // Sparkles
@@ -244,7 +244,7 @@ export class BodyRenderer {
                 const sx = x + Math.cos(sparkleAngle) * sparkleRadius;
                 const sy = y + Math.sin(sparkleAngle) * sparkleRadius;
                 const sparkleAlpha = (Math.sin(Date.now() / 300 + i) * 0.3 + 0.5) * progress;
-                this.renderer.drawCircle(sx, sy, 2, [1.0, 1.0, 1.0, sparkleAlpha]);
+                this.renderer.drawCircle(sx, sy, 2, [1, 1, 1, sparkleAlpha]);
             }
         }
     }

@@ -47,15 +47,15 @@ export class AbilityUnlockAnimation {
             const angle = (Math.PI * 2 * i) / 100;
             const speed = 100 + Math.random() * 200;
             const color = this.abilityType === 'flight' 
-                ? [0.4 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0, 1.0]
-                : [1.0, 0.7 + Math.random() * 0.3, 0.2 + Math.random() * 0.3, 1.0];
+                ? [0.4 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1.0]
+                : [1, 0.7 + Math.random() * 0.3, 0.2 + Math.random() * 0.3, 1.0];
             
             this.particles.push({
                 x: centerX,
                 y: centerY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 1.0,
+                life: 1,
                 maxLife: 2.0 + Math.random(),
                 size: 3 + Math.random() * 5,
                 color: color,
@@ -70,7 +70,7 @@ export class AbilityUnlockAnimation {
                 radius: 0,
                 maxRadius: 300 + i * 50,
                 speed: 200 + i * 50,
-                alpha: 1.0,
+                alpha: 1,
                 thickness: 4
             });
         }
@@ -85,7 +85,7 @@ export class AbilityUnlockAnimation {
                 length: 0,
                 maxLength: 400,
                 speed: 500,
-                alpha: 1.0,
+                alpha: 1,
                 width: 8
             });
         }
@@ -193,7 +193,7 @@ export class AbilityUnlockAnimation {
         // Raggi di luce
         const rayColor = this.abilityType === 'flight' 
             ? [0.5, 0.9, 1.0]
-            : [1.0, 0.8, 0.3];
+            : [1, 0.8, 0.3];
         
         for (const ray of this.rays) {
             const endX = centerX + Math.cos(ray.angle) * ray.length;
@@ -215,7 +215,7 @@ export class AbilityUnlockAnimation {
         // Anelli espansivi
         const ringColor = this.abilityType === 'flight'
             ? [0.4, 0.85, 1.0]
-            : [1.0, 0.7, 0.2];
+            : [1, 0.7, 0.2];
         
         for (const ring of this.rings) {
             if (ring.radius > 0) {
@@ -238,8 +238,8 @@ export class AbilityUnlockAnimation {
         // Glow centrale
         const glowSize = 120 + Math.sin(this.timer * 4) * 20;
         const glowColor = this.abilityType === 'flight'
-            ? [0.4, 0.85, 1.0, this.backgroundAlpha * 0.3]
-            : [1.0, 0.7, 0.2, this.backgroundAlpha * 0.3];
+            ? [0.4, 0.85, 1, this.backgroundAlpha * 0.3]
+            : [1, 0.7, 0.2, this.backgroundAlpha * 0.3];
         
         renderer.drawCircle(centerX, centerY, glowSize, glowColor);
         renderer.drawCircle(centerX, centerY, glowSize * 0.7, [...glowColor.slice(0, 3), glowColor[3] * 1.5]);
@@ -248,12 +248,12 @@ export class AbilityUnlockAnimation {
         // Icona abilità
         const iconSize = 60 * this.iconScale;
         const iconColor = this.abilityType === 'flight'
-            ? [0.5, 0.9, 1.0, this.textAlpha]
-            : [1.0, 0.8, 0.3, this.textAlpha];
+            ? [0.5, 0.9, 1, this.textAlpha]
+            : [1, 0.8, 0.3, this.textAlpha];
         
         // Disegna icona semplice (cerchio con simbolo)
         renderer.drawCircle(centerX, centerY, iconSize, iconColor);
-        renderer.drawCircle(centerX, centerY, iconSize * 0.9, [1.0, 1.0, 1.0, this.textAlpha * 0.8]);
+        renderer.drawCircle(centerX, centerY, iconSize * 0.9, [1, 1, 1, this.textAlpha * 0.8]);
         
         // Simbolo interno
         if (this.abilityType === 'flight') {
@@ -262,18 +262,18 @@ export class AbilityUnlockAnimation {
             for (let i = 0; i < 3; i++) {
                 const y = centerY - arrowSize + i * 12;
                 const width = arrowSize - Math.abs(i - 1) * 10;
-                renderer.drawRect(centerX - width / 2, y, width, 8, [0.4, 0.85, 1.0, this.textAlpha]);
+                renderer.drawRect(centerX - width / 2, y, width, 8, [0.4, 0.85, 1, this.textAlpha]);
             }
         } else {
             // Simbolo razzo/turbo
             const rocketSize = iconSize * 0.5;
             // Corpo razzo
-            renderer.drawRect(centerX - 8, centerY - rocketSize, 16, rocketSize * 1.5, [1.0, 0.7, 0.2, this.textAlpha]);
+            renderer.drawRect(centerX - 8, centerY - rocketSize, 16, rocketSize * 1.5, [1, 0.7, 0.2, this.textAlpha]);
             // Fiamme
             for (let i = 0; i < 3; i++) {
                 const flameY = centerY + rocketSize * 0.5 + i * 8;
                 const flameSize = 20 - i * 5;
-                renderer.drawCircle(centerX, flameY, flameSize, [1.0, 0.4 + i * 0.2, 0.0, this.textAlpha * (1 - i * 0.3)]);
+                renderer.drawCircle(centerX, flameY, flameSize, [1, 0.4 + i * 0.2, 0.0, this.textAlpha * (1 - i * 0.3)]);
             }
         }
     }

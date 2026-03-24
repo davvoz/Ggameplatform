@@ -24,16 +24,16 @@ export class SpringEffectRenderer extends PlatformEffectRenderer {
             const coilY = y + platform.height - coilHeight;
             const coilWidth = 1.8;
             
-            this.renderer.drawRect(coilX - coilWidth/2, coilY, coilWidth, coilHeight * 0.5, [1.0, 0.6, 1.0, 1.0]);
+            this.renderer.drawRect(coilX - coilWidth/2, coilY, coilWidth, coilHeight * 0.5, [1, 0.6, 1, 1.0]);
             this.renderer.drawRect(coilX - coilWidth/2, coilY + coilHeight * 0.5, coilWidth, coilHeight * 0.5, [0.8, 0.3, 0.8, 1.0]);
-            this.renderer.drawRect(coilX - 0.6, coilY + 1, 1.2, coilHeight * 0.3, [1.0, 1.0, 1.0, 0.5]);
+            this.renderer.drawRect(coilX - 0.6, coilY + 1, 1.2, coilHeight * 0.3, [1, 1, 1, 0.5]);
         }
     }
 
     renderEnergyEffect(platform, x, y, springTime, compression) {
         if (compression > 0.3) {
             const energyPulse = Math.sin(springTime * 15) * 0.5 + 0.5;
-            const energyColor = [1.0, 1.0, 0.3, compression * 0.8 * energyPulse];
+            const energyColor = [1, 1, 0.3, compression * 0.8 * energyPulse];
             this.renderer.drawRect(x, y - 3, platform.width, 3, energyColor);
         }
     }

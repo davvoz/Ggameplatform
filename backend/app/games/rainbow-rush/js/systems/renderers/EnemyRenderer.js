@@ -355,7 +355,7 @@ export class EnemyRenderer extends IEntityRenderer {
      */
     renderProjectile(projectile, cameraOffset) {
         const ctx = this.textCtx;
-        const color = projectile.color || [1.0, 0.0, 0.0]; // Default red if no color
+        const color = projectile.color || [1, 0.0, 0.0]; // Default red if no color
         
         ctx.save();
 

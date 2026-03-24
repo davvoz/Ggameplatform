@@ -107,7 +107,7 @@ export class SafetyPlatformSystem {
         
         // Update dissolve animation for rendering (independent from logic)
         if (this.timeOnPlatform > 0) {
-            this.dissolveProgress = Math.min(1.0, this.timeOnPlatform / this.config.TIME_BEFORE_DISSOLVE);
+            this.dissolveProgress = Math.min(1, this.timeOnPlatform / this.config.TIME_BEFORE_DISSOLVE);
         } else {
             this.dissolveProgress = 0;
         }
@@ -274,7 +274,7 @@ export class SafetyPlatformSystem {
         this.rechargeAnimProgress += deltaTime;
         
         // Calcola quanti pallini dovrebbero essere ricaricati in base al progresso
-        const progress = Math.min(1.0, this.rechargeAnimProgress / this.rechargeAnimDuration);
+        const progress = Math.min(1, this.rechargeAnimProgress / this.rechargeAnimDuration);
         const targetCharges = this.chargesBeforeRecharge + Math.ceil((this.config.MAX_CHARGES - this.chargesBeforeRecharge) * progress);
         this.charges = Math.min(targetCharges, this.config.MAX_CHARGES);
         
@@ -397,17 +397,17 @@ export class SafetyPlatformSystem {
         // Palette colori PIÙ VIVACI E FANTASIOSE
         const colorPalettes = [
             // Tropical
-            [[0.2, 1.0, 0.5, 1.0], [1.0, 0.8, 0.2, 1.0], [1.0, 0.4, 0.6, 1.0]],
+            [[0.2, 1, 0.5, 1.0], [1, 0.8, 0.2, 1.0], [1, 0.4, 0.6, 1.0]],
             // Candy
-            [[1.0, 0.3, 0.7, 1.0], [0.5, 0.3, 1.0, 1.0], [0.3, 0.9, 1.0, 1.0]],
+            [[1, 0.3, 0.7, 1.0], [0.5, 0.3, 1, 1.0], [0.3, 0.9, 1, 1.0]],
             // Sunset
-            [[1.0, 0.5, 0.2, 1.0], [1.0, 0.7, 0.3, 1.0], [0.9, 0.3, 0.5, 1.0]],
+            [[1, 0.5, 0.2, 1.0], [1, 0.7, 0.3, 1.0], [0.9, 0.3, 0.5, 1.0]],
             // Neon
-            [[0.3, 1.0, 0.3, 1.0], [1.0, 0.2, 1.0, 1.0], [0.2, 0.8, 1.0, 1.0]],
+            [[0.3, 1, 0.3, 1.0], [1, 0.2, 1, 1.0], [0.2, 0.8, 1, 1.0]],
             // Pastel Rainbow
-            [[0.7, 0.5, 1.0, 1.0], [1.0, 0.7, 0.8, 1.0], [0.5, 1.0, 0.9, 1.0]],
+            [[0.7, 0.5, 1, 1.0], [1, 0.7, 0.8, 1.0], [0.5, 1, 0.9, 1.0]],
             // Fire
-            [[1.0, 0.3, 0.2, 1.0], [1.0, 0.6, 0.1, 1.0], [1.0, 0.9, 0.3, 1.0]]
+            [[1, 0.3, 0.2, 1.0], [1, 0.6, 0.1, 1.0], [1, 0.9, 0.3, 1.0]]
         ];
         
         // Level-based selection
@@ -457,7 +457,7 @@ export class SafetyPlatformSystem {
                 type: 'platform',
                 platformType: 'RESCUE',
                 laserPhase: Math.random() * Math.PI * 2,
-                laserIntensity: 1.0,
+                laserIntensity: 1,
                 spawnTime: Date.now(),
                 // Proprietà fantasiose
                 shape: shape,

@@ -87,19 +87,19 @@ export class UIRenderer {
             switch(notif.type) {
                 case 'achievement':
                     textColor = 'rgb(255, 215, 0)';
-                    glowColor = [1.0, 0.84, 0.0, alpha];
+                    glowColor = [1, 0.84, 0.0, alpha];
                     break;
                 case 'warning':
                     textColor = 'rgb(255, 77, 77)';
-                    glowColor = [1.0, 0.3, 0.3, alpha];
+                    glowColor = [1, 0.3, 0.3, alpha];
                     break;
                 case 'streak':
                     textColor = 'rgb(255, 128, 0)';
-                    glowColor = [1.0, 0.5, 0.0, alpha];
+                    glowColor = [1, 0.5, 0.0, alpha];
                     break;
                 default:
                     textColor = 'rgb(51, 153, 255)';
-                    glowColor = [0.2, 0.6, 1.0, alpha];
+                    glowColor = [0.2, 0.6, 1, alpha];
             }
             
             const boxX = this.canvasWidth - 400;

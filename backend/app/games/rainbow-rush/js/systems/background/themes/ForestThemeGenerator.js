@@ -79,7 +79,7 @@ export class ForestThemeGenerator extends BaseThemeGenerator {
                 radius: this.randomInRange(config.FIREFLY_MIN_RADIUS, config.FIREFLY_MAX_RADIUS),
                 speed: 20 + Math.random() * 30,
                 glow: Math.random() * Math.PI * 2,
-                color: [0.9, 1.0, 0.3, 0.8],
+                color: [0.9, 1, 0.3, 0.8],
                 type: 'firefly',
                 driftX: (Math.random() - 0.5) * 50,
                 driftY: (Math.random() - 0.5) * 30

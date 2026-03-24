@@ -46,7 +46,7 @@ export class TurboButtonUI {
         
         // Glow when ready
         if (player.isTurboCooldownReady() && !player.isTurboActive) {
-            this.glowIntensity = Math.min(1.0, this.glowIntensity + deltaTime * 2);
+            this.glowIntensity = Math.min(1, this.glowIntensity + deltaTime * 2);
         } else {
             this.glowIntensity = Math.max(0.0, this.glowIntensity - deltaTime * 3);
         }

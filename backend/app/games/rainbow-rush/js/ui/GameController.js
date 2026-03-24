@@ -69,7 +69,7 @@ export class GameController {
         this.abilityUnlockAnimation = dependencies.abilityUnlockAnimation;
         
         // Minimal state (game-specific effects)
-        this.screenFlash = { alpha: 0, color: [1.0, 1.0, 1.0] };
+        this.screenFlash = { alpha: 0, color: [1, 1, 1.0] };
         this.coinRainActive = false;
         this.coinRainTimer = 0;
         this.coinRainDuration = 0;
@@ -610,7 +610,7 @@ export class GameController {
         );
         this.animationController.createFloatingText(
             '💀 GAME OVER 💀', 400, 300,
-            [1.0, 0.2, 0.2, 1.0],
+            [1, 0.2, 0.2, 1.0],
             this.entityManager, 3.0
         );
         this.audioManager.stopBackgroundMusic();
@@ -626,7 +626,7 @@ export class GameController {
             y: -30,
             radius: 15,
             type: 'collectible',
-            color: [1.0, 0.84, 0.0, 1.0],
+            color: [1, 0.84, 0.0, 1.0],
             velocity: 0,
             value: 10,
             pulsePhase: Math.random() * Math.PI * 2,

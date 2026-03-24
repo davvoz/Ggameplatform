@@ -311,14 +311,14 @@ export class ScoreSystem {
             bonusMultiplier = 1.20;
             rank = 'perfect';
             rankIcon = '💎';
-            color = [0.4, 0.9, 1.0, 1.0]; // Cyan brillante
+            color = [0.4, 0.9, 1, 1.0]; // Cyan brillante
         } else if (timeInSeconds <= goldTime) {
             // GOLD! Moltiplicatore 1.15x - +15% punti
             multiplier = 0.8;
             bonusMultiplier = 1.15;
             rank = 'gold';
             rankIcon = '🥇';
-            color = [1.0, 0.84, 0.0, 1.0]; // Gold
+            color = [1, 0.84, 0.0, 1.0]; // Gold
         } else if (timeInSeconds <= silverTime) {
             // SILVER! Moltiplicatore 1.10x - +10% punti
             multiplier = 0.6;

@@ -114,6 +114,7 @@ export class Game {
 
     async start() {
         await CardView.ready();
+        await this.#croupier.load();
         await this.#initPlatform();
         this.#loop.start();
         this.#fsm.transition('betting');

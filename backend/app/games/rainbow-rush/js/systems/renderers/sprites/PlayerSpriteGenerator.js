@@ -125,7 +125,7 @@ export class PlayerSpriteGenerator {
      * Get player colors
      */
     getColors(config) {
-        const baseColor = config.color || [0.2, 0.6, 1.0, 1.0];
+        const baseColor = config.color || [0.2, 0.6, 1, 1.0];
         return {
             base: `rgb(${baseColor[0] * 255}, ${baseColor[1] * 255}, ${baseColor[2] * 255})`,
             light: `rgb(${Math.min(255, baseColor[0] * 400)}, ${Math.min(255, baseColor[1] * 400)}, ${Math.min(255, baseColor[2] * 400)})`,
@@ -312,7 +312,7 @@ export class PlayerSpriteGenerator {
         this.drawWings(ctx, cx, cy + floatY, radius, wingFlap, colors);
 
         // Shadow (faint when flying)
-        this.drawShadow(ctx, cx, cy + radius * 2, radius * 1.0, 0.15);
+        this.drawShadow(ctx, cx, cy + radius * 2, radius * 1, 0.15);
 
         // Body
         this.drawBody(ctx, cx, cy + floatY, radius, colors);

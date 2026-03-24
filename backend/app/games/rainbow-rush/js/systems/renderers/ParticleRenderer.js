@@ -20,7 +20,7 @@ export class ParticleRenderer {
             }
             
             this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
-            this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1.0, 1.0, 1.0, alpha * 0.9]);
+            this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1, 1, 1, alpha * 0.9]);
         } else {
             if (particle.glow) {
                 this.renderer.drawCircle(particle.x, particle.y, particle.size * 1.8, [...color, alpha * 0.3]);
@@ -43,7 +43,7 @@ export class ParticleRenderer {
         }
         
         this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
-        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.4, [1.0, 1.0, 1.0, alpha * 0.8]);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.4, [1, 1, 1, alpha * 0.8]);
     }
 
     renderProjectileHit(particle) {
@@ -53,7 +53,7 @@ export class ParticleRenderer {
         
         // Simple projectile hit particle - small explosion effect
         this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
-        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1.0, 1.0, 1.0, alpha * 0.6]);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.5, [1, 1, 1, alpha * 0.6]);
     }
 
     renderEnemyDefeat(particle) {
@@ -68,7 +68,7 @@ export class ParticleRenderer {
         }
         
         this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
-        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.6, [1.0, 1.0, 1.0, alpha * 0.7]);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.6, [1, 1, 1, alpha * 0.7]);
     }
 
     renderSparkle(particle) {
@@ -82,7 +82,7 @@ export class ParticleRenderer {
         }
         
         this.renderer.drawCircle(particle.x, particle.y, particle.size, color);
-        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.3, [1.0, 1.0, 1.0, alpha * 0.9]);
+        this.renderer.drawCircle(particle.x, particle.y, particle.size * 0.3, [1, 1, 1, alpha * 0.9]);
     }
 
     /**

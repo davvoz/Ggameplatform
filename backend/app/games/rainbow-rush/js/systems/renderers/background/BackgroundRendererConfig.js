@@ -9,7 +9,7 @@ export const AMBIENT_PARTICLE_CONFIG = {
         SIZE: 1.5,
         TWINKLE_SPEED: 3,
         BRIGHTNESS: 0.4,
-        COLOR: [1.0, 1.0, 0.9]
+        COLOR: [1, 1, 0.9]
     },
     ENERGY: {
         COUNT: 3,
@@ -24,7 +24,7 @@ export const AMBIENT_PARTICLE_CONFIG = {
 export const GRADIENT_CONFIG = {
     BANDS: 20,
     SKY_TOP_COLOR: [0.5, 0.2, 0.15, 1.0],
-    DEFAULT_BG_COLOR: [0.4, 0.7, 1.0, 1.0]
+    DEFAULT_BG_COLOR: [0.4, 0.7, 1, 1.0]
 };
 
 export const GROUND_CONFIG = {

@@ -72,7 +72,7 @@ export class NightThemeGenerator extends BaseThemeGenerator {
                 y: Math.random() * this.canvasHeight * 0.7,
                 radius: this.randomInRange(config.STAR_MIN_RADIUS, config.STAR_MAX_RADIUS),
                 twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.9, 0.7 + Math.random() * 0.3],
+                color: [1, 1, 0.9, 0.7 + Math.random() * 0.3],
                 type: 'star'
             });
         }
@@ -88,7 +88,7 @@ export class NightThemeGenerator extends BaseThemeGenerator {
                 radius: 2 + Math.random() * 2,
                 speed: 15 + Math.random() * 25,
                 glow: Math.random() * Math.PI * 2,
-                color: [0.9, 1.0, 0.4, 0.8],
+                color: [0.9, 1, 0.4, 0.8],
                 type: 'firefly',
                 driftX: (Math.random() - 0.5) * 40,
                 driftY: (Math.random() - 0.5) * 25

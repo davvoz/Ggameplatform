@@ -57,7 +57,7 @@ export class FlightButtonUI {
                     y: this.buttonY + Math.sin(angle) * this.buttonRadius,
                     vx: Math.cos(angle) * 60,
                     vy: Math.sin(angle) * 60,
-                    life: 1.0,
+                    life: 1,
                     size: 3 + Math.random() * 2
                 });
             }

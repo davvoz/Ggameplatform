@@ -29,23 +29,23 @@ export class Powerup {
     configure() {
         switch (this.type) {
             case PowerupTypes.IMMORTALITY:
-                this.color = [1.0, 0.84, 0.0, 1.0]; // Gold
+                this.color = [1, 0.84, 0.0, 1.0]; // Gold
                 this.icon = '🛡️';
-                this.glowColor = [1.0, 0.95, 0.6, 0.8];
+                this.glowColor = [1, 0.95, 0.6, 0.8];
                 this.duration = 5000; // 5 seconds
                 this.cooldown = 15000; // 15 seconds
                 break;
             case PowerupTypes.FLIGHT:
-                this.color = [0.4, 0.7, 1.0, 1.0]; // Light blue
+                this.color = [0.4, 0.7, 1, 1.0]; // Light blue
                 this.icon = '🪶';
-                this.glowColor = [0.6, 0.85, 1.0, 0.8];
+                this.glowColor = [0.6, 0.85, 1, 0.8];
                 this.duration = 4000; // 4 seconds
                 this.cooldown = 20000; // 20 seconds
                 break;
             case PowerupTypes.SUPER_JUMP:
-                this.color = [1.0, 0.3, 0.5, 1.0]; // Pink
+                this.color = [1, 0.3, 0.5, 1.0]; // Pink
                 this.icon = '⚡';
-                this.glowColor = [1.0, 0.5, 0.7, 0.8];
+                this.glowColor = [1, 0.5, 0.7, 0.8];
                 this.duration = 6000; // 6 seconds
                 this.cooldown = 12000; // 12 seconds
                 break;

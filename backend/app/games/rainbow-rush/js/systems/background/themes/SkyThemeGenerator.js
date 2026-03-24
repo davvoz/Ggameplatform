@@ -68,7 +68,7 @@ export class SkyThemeGenerator extends BaseThemeGenerator {
                 angle: (i * Math.PI / 6) - Math.PI / 12,
                 length: config.SUNRAY_BASE_LENGTH + i * config.SUNRAY_LENGTH_INCREMENT,
                 width: 40,
-                color: [1.0, 0.95, 0.7, 0.15],
+                color: [1, 0.95, 0.7, 0.15],
                 type: 'sunray',
                 speed: 1 + i * 0.3,
                 offset: 0

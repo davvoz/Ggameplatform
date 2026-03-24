@@ -80,7 +80,7 @@ export class ActivateTurboCommand extends GameCommand {
         if (activated) {
             audioManager.playSound('turbo');
             screenFlash.alpha = 0.3;
-            screenFlash.color = [1.0, 0.8, 0.0];
+            screenFlash.color = [1, 0.8, 0.0];
         }
         
         return activated;

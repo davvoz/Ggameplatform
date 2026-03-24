@@ -106,7 +106,7 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
                 radius: this.randomInRange(config.EMBER_MIN_RADIUS, config.EMBER_MAX_RADIUS),
                 speed: this.randomInRange(config.EMBER_MIN_SPEED, config.EMBER_MAX_SPEED),
                 vx: (Math.random() - 0.5) * 30,
-                color: [1.0, 0.5 + Math.random() * 0.3, 0.0, 0.8],
+                color: [1, 0.5 + Math.random() * 0.3, 0.0, 0.8],
                 type: 'ember',
                 sparkle: Math.random() * Math.PI * 2
             });

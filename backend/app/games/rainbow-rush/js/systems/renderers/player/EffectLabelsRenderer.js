@@ -38,10 +38,10 @@ export class EffectLabelsRenderer {
         // Update animation states
         for (const [key, state] of this.activeEffectsState.entries()) {
             if (state.scale < 1.0) {
-                state.scale = Math.min(1.0, state.scale + deltaTime * 4);
+                state.scale = Math.min(1, state.scale + deltaTime * 4);
             }
             if (state.alpha < 1.0) {
-                state.alpha = Math.min(1.0, state.alpha + deltaTime * 5);
+                state.alpha = Math.min(1, state.alpha + deltaTime * 5);
             }
             if (state.wobble > 0) {
                 state.wobble = Math.max(0, state.wobble - deltaTime * 2);

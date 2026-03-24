@@ -86,7 +86,7 @@ export class LavaOceanThemeGenerator extends BaseThemeGenerator {
                 y: this.canvasHeight * 0.6 + Math.random() * this.canvasHeight * 0.4,
                 radius: 2 + Math.random() * 4,
                 speed: -20 - Math.random() * 50,
-                color: [1.0, 0.4 + Math.random() * 0.3, 0.0, 0.7],
+                color: [1, 0.4 + Math.random() * 0.3, 0.0, 0.7],
                 type: 'simple_particle',
                 drift: (Math.random() - 0.5) * 30,
                 fade: 0.98

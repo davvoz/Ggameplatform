@@ -42,7 +42,7 @@ export class PowerupCollectible extends BaseCollectible {
 
     renderMainBody(x, y, radius, color) {
         this.renderer.drawCircle(x, y, radius, color);
-        this.renderer.drawCircle(x, y, radius * 0.7, [1.0, 1.0, 1.0, 0.5]);
+        this.renderer.drawCircle(x, y, radius * 0.7, [1, 1, 1, 0.5]);
 
         const centerColor = [...color];
         centerColor[3] = 1.0;
@@ -75,7 +75,7 @@ export class PowerupCollectible extends BaseCollectible {
             const sx = x + Math.cos(angle) * rayLength;
             const sy = y + Math.sin(angle) * rayLength;
 
-            const starColor = [1.0, 1.0, 1.0, 0.5 * pulse];
+            const starColor = [1, 1, 1, 0.5 * pulse];
             this.renderer.drawCircle(sx, sy, 2, starColor);
         }
     }

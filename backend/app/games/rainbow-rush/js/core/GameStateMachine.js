@@ -236,7 +236,7 @@ class GoalReachedState extends BaseGameState {
         // Store victory text that will be rendered following player during zoom
         this.victoryText = {
             text: '🏁 LEVEL COMPLETE! 🏁',
-            alpha: 1.0,
+            alpha: 1,
             scale: 0.5
         };
         
@@ -247,7 +247,7 @@ class GoalReachedState extends BaseGameState {
                 const speed = 150 + Math.random() * 80;
                 
                 // Simple gold particles
-                const color = [1.0, 0.9, 0.2, 1.0];
+                const color = [1, 0.9, 0.2, 1.0];
                 
                 entityManager.addEntity('powerupParticles', {
                     x: player.x + player.width / 2,
@@ -378,10 +378,10 @@ class GoalReachedState extends BaseGameState {
                     y: player.y + player.height / 2,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
-                    life: 1.0,
-                    maxLife: 1.0,
+                    life: 1,
+                    maxLife: 1,
                     size: 4,
-                    color: [1.0, 0.9, 0.2, 1.0],
+                    color: [1, 0.9, 0.2, 1.0],
                     gravity: 50,
                     type: 'victory-sparkle'
                 });

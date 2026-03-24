@@ -25,22 +25,22 @@ export class PowerupUIRenderer {
         // Colors for each powerup type
         this.powerupConfig = {
             immortality: {
-                color: [1.0, 0.84, 0.0, 1.0], // Gold
-                glowColor: [1.0, 0.95, 0.6, 0.8],
+                color: [1, 0.84, 0.0, 1.0], // Gold
+                glowColor: [1, 0.95, 0.6, 0.8],
                 bgColor: [0.3, 0.25, 0.1, 0.6],
                 name: 'IMMORTALE',
                 icon: '🛡️'
             },
             flight: {
-                color: [0.4, 0.7, 1.0, 1.0], // Light blue
-                glowColor: [0.6, 0.85, 1.0, 0.8],
+                color: [0.4, 0.7, 1, 1.0], // Light blue
+                glowColor: [0.6, 0.85, 1, 0.8],
                 bgColor: [0.1, 0.2, 0.3, 0.6],
                 name: 'VOLO',
                 icon: '🪶'
             },
             superJump: {
-                color: [1.0, 0.3, 0.5, 1.0], // Pink
-                glowColor: [1.0, 0.5, 0.7, 0.8],
+                color: [1, 0.3, 0.5, 1.0], // Pink
+                glowColor: [1, 0.5, 0.7, 0.8],
                 bgColor: [0.3, 0.1, 0.2, 0.6],
                 name: 'SUPER SALTO',
                 icon: '⚡'
@@ -158,7 +158,7 @@ export class PowerupUIRenderer {
             
             if (filled) {
                 // Cuore pieno - rosso brillante
-                const color = [1.0, 0.1, 0.3, 1.0];
+                const color = [1, 0.1, 0.3, 1.0];
                 
                 // Glow più evidente
                 const glowColor = [...color];
@@ -235,7 +235,7 @@ export class PowerupUIRenderer {
         
         // Border cerchio icona
         const iconBorderColor = isActive ? [...config.color] :
-                               (isOnCooldown ? [0.8, 0.4, 0.0, 0.9] : [0.0, 1.0, 0.0, 0.9]);
+                               (isOnCooldown ? [0.8, 0.4, 0.0, 0.9] : [0.0, 1, 0.0, 0.9]);
         this.drawCircleOutline(iconCircleX, iconCircleY, circleRadius, iconBorderColor, 2);
         
         // Icona dentro cerchio
@@ -253,7 +253,7 @@ export class PowerupUIRenderer {
         
         // Ready indicator sul cerchio quando pronto
         if (!isActive && !isOnCooldown) {
-            const readyGlow = [0.0, 1.0, 0.0, 0.3 + pulse * 0.3];
+            const readyGlow = [0.0, 1, 0.0, 0.3 + pulse * 0.3];
             this.renderer.drawCircle(iconCircleX, iconCircleY, circleRadius + 4, readyGlow);
         }
         
@@ -287,7 +287,7 @@ export class PowerupUIRenderer {
             // Shimmer effect on top
             const shimmerWidth = 30;
             const shimmerX = barX + (shimmer * (fillWidth - shimmerWidth));
-            const shimmerColor = [1.0, 1.0, 1.0, 0.4 * pulse];
+            const shimmerColor = [1, 1, 1, 0.4 * pulse];
             
             if (shimmerX + shimmerWidth <= barX + fillWidth && fillWidth > shimmerWidth) {
                 this.renderer.drawRect(
@@ -307,7 +307,7 @@ export class PowerupUIRenderer {
             // Timer digitale sulla barra
             const secondsLeft = Math.ceil(timer.duration / 1000);
             const timeText = `${secondsLeft}s`;
-            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, timeText, [1.0, 1.0, 1.0, 1.0]);
+            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, timeText, [1, 1, 1, 1.0]);
             
         } else if (isOnCooldown) {
             // Barra di COOLDOWN - si riempie da vuota a piena
@@ -336,15 +336,15 @@ export class PowerupUIRenderer {
         } else {
             // PRONTO - barra piena con colore verde
             fillWidth = this.barWidth;
-            const readyColor = [0.0, 1.0, 0.0, 0.5 + pulse * 0.3];
+            const readyColor = [0.0, 1, 0.0, 0.5 + pulse * 0.3];
             this.renderer.drawRect(barX + 2, barYAdjusted + 2, fillWidth - 4, enhancedBarHeight - 4, readyColor);
             
             // Pulsing sparkle
-            const sparkleColor = [1.0, 1.0, 1.0, 0.8 * pulse];
+            const sparkleColor = [1, 1, 1, 0.8 * pulse];
             this.renderer.drawCircle(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, 4, sparkleColor);
             
             // Testo "PRONTO"
-            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, "PRONTO", [1.0, 1.0, 1.0, 1.0]);
+            this.drawTimeText(barX + this.barWidth / 2, barYAdjusted + enhancedBarHeight / 2, "PRONTO", [1, 1, 1, 1.0]);
         }
         
         // Nome del powerup - grande e visibile accanto alla barra

@@ -25,7 +25,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
             const ringPulse = Math.sin(glowPhase + i * 0.8) * 0.3 + 1.0;
             const ringSize = size * (1.3 + i * 0.4) * ringPulse;
             const ringAlpha = (0.6 - i * 0.12) * pulse;
-            this.renderer.drawCircle(x, y, ringSize, [1.0, 0.3 + i * 0.1, 0.5, ringAlpha]);
+            this.renderer.drawCircle(x, y, ringSize, [1, 0.3 + i * 0.1, 0.5, ringAlpha]);
         }
     }
 
@@ -40,18 +40,18 @@ export class HeartRechargeCollectible extends BaseCollectible {
             const heartPulse = Math.sin(heartPhase * 4 + i * 0.5) * 0.3 + 1.0;
 
             // Small hearts
-            this.renderer.drawCircle(hx - heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
-            this.renderer.drawCircle(hx + heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
-            this.renderer.drawCircle(hx, hy + heartSize * 0.2, heartSize * 0.6 * heartPulse, [1.0, 0.2, 0.4, 0.9]);
+            this.renderer.drawCircle(hx - heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1, 0.2, 0.4, 0.9]);
+            this.renderer.drawCircle(hx + heartSize * 0.25, hy - heartSize * 0.15, heartSize * 0.5 * heartPulse, [1, 0.2, 0.4, 0.9]);
+            this.renderer.drawCircle(hx, hy + heartSize * 0.2, heartSize * 0.6 * heartPulse, [1, 0.2, 0.4, 0.9]);
 
             // Glow
-            this.renderer.drawCircle(hx, hy, heartSize * 1.2, [1.0, 0.5, 0.7, 0.3]);
+            this.renderer.drawCircle(hx, hy, heartSize * 1.2, [1, 0.5, 0.7, 0.3]);
         }
     }
 
     renderMainCircle(x, y, size, color) {
-        this.renderer.drawCircle(x, y, size * 1.6, [1.0, 0.15, 0.4, 0.5]);
-        this.renderer.drawCircle(x, y, size * 1.2, [1.0, 0.2, 0.45, 0.7]);
+        this.renderer.drawCircle(x, y, size * 1.6, [1, 0.15, 0.4, 0.5]);
+        this.renderer.drawCircle(x, y, size * 1.2, [1, 0.2, 0.45, 0.7]);
         this.renderer.drawCircle(x, y, size, color);
     }
 
@@ -63,19 +63,19 @@ export class HeartRechargeCollectible extends BaseCollectible {
             x - centerHeartSize * 0.3,
             y - centerHeartSize * 0.2,
             centerHeartSize * 0.6,
-            [1.0, 1.0, 1.0, 1.0]
+            [1, 1, 1, 1.0]
         );
         this.renderer.drawCircle(
             x + centerHeartSize * 0.3,
             y - centerHeartSize * 0.2,
             centerHeartSize * 0.6,
-            [1.0, 1.0, 1.0, 1.0]
+            [1, 1, 1, 1.0]
         );
         this.renderer.drawCircle(
             x,
             y + centerHeartSize * 0.3,
             centerHeartSize * 0.8,
-            [1.0, 1.0, 1.0, 1.0]
+            [1, 1, 1, 1.0]
         );
     }
 
@@ -89,7 +89,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
             y - crossThickness / 2,
             crossSize * 2,
             crossThickness,
-            [1.0, 0.9, 0.95, 0.9]
+            [1, 0.9, 0.95, 0.9]
         );
 
         // Vertical bar
@@ -98,12 +98,12 @@ export class HeartRechargeCollectible extends BaseCollectible {
             y - crossSize,
             crossThickness,
             crossSize * 2,
-            [1.0, 0.9, 0.95, 0.9]
+            [1, 0.9, 0.95, 0.9]
         );
     }
 
     renderCore(x, y, size, time) {
-        this.renderer.drawCircle(x, y, size * 0.25, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.25, [1, 1, 1, 1.0]);
 
         const sparkleSize = size * 0.3;
         const sparkleOffset = Math.sin(time * 8) * sparkleSize * 0.15;
@@ -111,7 +111,7 @@ export class HeartRechargeCollectible extends BaseCollectible {
             x + sparkleOffset,
             y - sparkleOffset,
             sparkleSize * 0.8,
-            [1.0, 1.0, 1.0, 0.85 + Math.sin(time * 10) * 0.15]
+            [1, 1, 1, 0.85 + Math.sin(time * 10) * 0.15]
         );
     }
 

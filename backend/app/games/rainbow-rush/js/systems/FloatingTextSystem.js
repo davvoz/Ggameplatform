@@ -148,22 +148,22 @@ export class FloatingTextSystem {
             case 'immortality':
                 return {
                     name: '⭐ IMMORTALE ⭐',
-                    color: [1.0, 0.9, 0.2, 1.0]
+                    color: [1, 0.9, 0.2, 1.0]
                 };
             case 'flight':
                 return {
                     name: '🪶 VOLO 🪶',
-                    color: [0.5, 0.9, 1.0, 1.0]
+                    color: [0.5, 0.9, 1, 1.0]
                 };
             case 'superJump':
                 return {
                     name: '⚡ SUPER SALTO ⚡',
-                    color: [1.0, 0.4, 0.7, 1.0]
+                    color: [1, 0.4, 0.7, 1.0]
                 };
             default:
                 return {
                     name: 'BONUS',
-                    color: [1.0, 1.0, 1.0, 1.0]
+                    color: [1, 1, 1, 1.0]
                 };
         }
     }

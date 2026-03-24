@@ -44,12 +44,12 @@ export class FaceRenderer {
     }
 
     renderOpenEyes(x, eyeY, config, intensity = 0, winkProgress = 0, scale = 1.0) {
-        const eyeWhite = [1.0, 1.0, 1.0, 1.0];
+        const eyeWhite = [1, 1, 1, 1.0];
         const eyeOutline = [0.0, 0.0, 0.0, 0.4];
         const pupilColor = [0.0, 0.0, 0.0, 1.0];
 
         const glintSize = (1.5 + intensity * 1.5) * scale;
-        const glintColor = [1.0, 1.0, 1.0, 0.8 + intensity * 0.2];
+        const glintColor = [1, 1, 1, 0.8 + intensity * 0.2];
 
         // Left eye
         this.renderer.drawCircle(x - 7 * scale, eyeY, (config.eyeSize + 1) * scale, eyeOutline);
@@ -81,7 +81,7 @@ export class FaceRenderer {
 
         if (winkProgress < 0.95) {
             const eyeOutline = [0.0, 0.0, 0.0, 0.4];
-            const eyeWhite = [1.0, 1.0, 1.0, 1.0];
+            const eyeWhite = [1, 1, 1, 1.0];
             const pupilColor = [0.0, 0.0, 0.0, 1.0];
 
             this.renderer.drawCircle(x + 7 * scale, eyeY, winkEyeSize + 1 * scale, eyeOutline);

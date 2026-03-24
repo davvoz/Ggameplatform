@@ -137,20 +137,20 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this._createParticleRing(
                     recharge.x,
                     recharge.y,
-                    [0.2, 1.0, 0.4, 1.0],
+                    [0.2, 1, 0.4, 1.0],
                     40,
                     entityManager
                 );
 
                 this._handlePowerupCollection(recharge, rechargeBonuses, i, entityManager, {
                     text: '⚡ RICARICA ISTANTANEA!',
-                    color: [0.2, 1.0, 0.4, 1.0],
+                    color: [0.2, 1, 0.4, 1.0],
                     sound: 'powerup'
                 });
 
                 this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('⚡ Safety Ricaricato!', 'Tutti i pallini ripristinati!', 'achievement');
-                this.triggerScreenFlash(0.3, [0.2, 1.0, 0.4]);
+                this.triggerScreenFlash(0.3, [0.2, 1, 0.4]);
             }
         }
     }
@@ -190,7 +190,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this._createParticleRing(
                     heartRecharge.x,
                     heartRecharge.y,
-                    [1.0, 0.2 + Math.random() * 0.3, 0.5, 1.0],
+                    [1, 0.2 + Math.random() * 0.3, 0.5, 1.0],
                     50,
                     entityManager,
                     150,
@@ -199,7 +199,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
 
                 this._handlePowerupCollection(heartRecharge, heartRechargeBonuses, i, entityManager, {
                     text: '💕 CUORI RICARICATI!',
-                    color: [1.0, 0.2, 0.5, 1.0],
+                    color: [1, 0.2, 0.5, 1.0],
                     sound: 'powerup'
                 });
 
@@ -210,7 +210,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     this.addNotification('💕 Già al Massimo!', 'Cuori già pieni!', 'info');
                 }
 
-                this.triggerScreenFlash(0.4, [1.0, 0.2, 0.5]);
+                this.triggerScreenFlash(0.4, [1, 0.2, 0.5]);
             }
         }
     }
@@ -238,17 +238,17 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 for (let j = 0; j < 5; j++) {
                     setTimeout(() => {
                         const hue = (j * 72) % 360;
-                        const rgb = this._hslToRgb(hue / 360, 1.0, 0.5);
+                        const rgb = this._hslToRgb(hue / 360, 1, 0.5);
                         this.createExplosion(rainbow.x, rainbow.y, rgb, 120, entityManager);
                     }, j * 150);
                 }
 
                 rainbowBonuses.splice(i, 1);
 
-                this.createFloatingText('🌈 RAINBOW POWER!', rainbow.x, rainbow.y, [1.0, 1.0, 1.0, 1.0], entityManager);
+                this.createFloatingText('🌈 RAINBOW POWER!', rainbow.x, rainbow.y, [1, 1, 1, 1.0], entityManager);
                 this.addNotification('🌈 RAINBOW POWER!', 'TUTTI I POTERI ATTIVI!', 'achievement');
                 this.playSound('powerup');
-                this.triggerScreenFlash(0.5, [1.0, 1.0, 1.0]);
+                this.triggerScreenFlash(0.5, [1, 1, 1.0]);
 
                 return { type: 'rainbow', activated: true };
             }

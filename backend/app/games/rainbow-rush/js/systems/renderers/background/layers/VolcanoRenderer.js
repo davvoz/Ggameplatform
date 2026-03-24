@@ -124,7 +124,7 @@ export class VolcanoRenderer extends BaseLayerRenderer {
             lavaY + VOLCANO_CONFIG.LAVA_CENTER_Y_OFFSET,
             craterWidth / 2,
             VOLCANO_CONFIG.LAVA_CENTER_HEIGHT,
-            [1.0, 0.7 * lavaGlow, 0.2 * lavaGlow, 1.0]
+            [1, 0.7 * lavaGlow, 0.2 * lavaGlow, 1.0]
         );
     }
 

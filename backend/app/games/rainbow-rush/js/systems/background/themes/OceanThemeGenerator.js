@@ -68,7 +68,7 @@ export class OceanThemeGenerator extends BaseThemeGenerator {
                 radius: this.randomInRange(config.BUBBLE_MIN_RADIUS, config.BUBBLE_MAX_RADIUS),
                 speed: this.randomInRange(config.BUBBLE_MIN_SPEED, config.BUBBLE_MAX_SPEED),
                 wobble: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.4],
+                color: [1, 1, 1, 0.4],
                 type: 'bubble'
             });
         }

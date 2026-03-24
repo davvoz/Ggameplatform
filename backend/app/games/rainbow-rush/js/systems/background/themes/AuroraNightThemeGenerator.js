@@ -80,7 +80,7 @@ export class AuroraNightThemeGenerator extends BaseThemeGenerator {
                 y: Math.random() * this.canvasHeight * 0.7,
                 radius: 1 + Math.random() * 2,
                 twinkle: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 0.95, 0.6 + Math.random() * 0.4],
+                color: [1, 1, 0.95, 0.6 + Math.random() * 0.4],
                 type: 'star'
             });
         }

@@ -146,7 +146,7 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
                 radius: 2 + Math.random() * 2,
                 speed: 18 + Math.random() * 25,
                 glow: Math.random() * Math.PI * 2,
-                color: [0.7, 1.0, 0.5, 0.8],
+                color: [0.7, 1, 0.5, 0.8],
                 type: 'firefly',
                 driftX: (Math.random() - 0.5) * 40,
                 driftY: (Math.random() - 0.5) * 30

@@ -19,7 +19,7 @@ export class RainbowCollectible extends BaseCollectible {
     renderRainbowLayers(x, y, size, rainbowPhase, pulse) {
         for (let i = 0; i < 6; i++) {
             const hue = ((rainbowPhase * 100 + i * 60) % 360) / 360;
-            const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.5);
+            const rgb = RenderingUtils.hslToRgb(hue, 1, 0.5);
             this.renderer.drawCircle(x, y, size * (2.5 + i * 0.2), [...rgb, (0.4 - i * 0.05) * pulse]);
         }
     }
@@ -27,7 +27,7 @@ export class RainbowCollectible extends BaseCollectible {
     renderConcentricRings(x, y, size, rainbowPhase) {
         for (let i = 0; i < 7; i++) {
             const hue = ((rainbowPhase * 100 + i * 51.4) % 360) / 360;
-            const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.5);
+            const rgb = RenderingUtils.hslToRgb(hue, 1, 0.5);
             this.renderer.drawCircle(x, y, size * (1.2 - i * 0.15), [...rgb, 1.0]);
         }
     }
@@ -39,12 +39,12 @@ export class RainbowCollectible extends BaseCollectible {
             const px = x + Math.cos(orbitAngle) * orbitRadius;
             const py = y + Math.sin(orbitAngle) * orbitRadius;
             const hue = ((rainbowPhase * 100 + i * 24) % 360) / 360;
-            const rgb = RenderingUtils.hslToRgb(hue, 1.0, 0.7);
+            const rgb = RenderingUtils.hslToRgb(hue, 1, 0.7);
             this.renderer.drawCircle(px, py, 2 + Math.sin(time * 10 + i) * 0.8, [...rgb, 0.8]);
         }
     }
 
     renderCore(x, y, size, pulse) {
-        this.renderer.drawCircle(x, y, size * 0.5 * pulse, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(x, y, size * 0.5 * pulse, [1, 1, 1, 1.0]);
     }
 }

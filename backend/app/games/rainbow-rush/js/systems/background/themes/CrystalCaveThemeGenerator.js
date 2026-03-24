@@ -106,7 +106,7 @@ export class CrystalCaveThemeGenerator extends BaseThemeGenerator {
                 color: [
                     0.5 + hue * 0.5,
                     0.7 + (1 - hue) * 0.3,
-                    1.0,
+                    1,
                     0.6 + Math.random() * 0.3
                 ],
                 type: 'firefly',

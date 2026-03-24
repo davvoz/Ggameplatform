@@ -10,7 +10,7 @@ export class LevelProgressBarRenderer {
     
     render(progressBar) {
         // Sfondo della barra verticale
-        const bgColor = [1.0, 1.0, 1.0, 0.2];
+        const bgColor = [1, 1, 1, 0.2];
         this.renderer.drawRect(
             progressBar.x, 
             progressBar.y, 
@@ -22,7 +22,7 @@ export class LevelProgressBarRenderer {
         // Fill della barra - dal basso verso l'alto
         const fillHeight = progressBar.height * progressBar.animProgress;
         const fillY = progressBar.y + progressBar.height - fillHeight;
-        const fillColor = [1.0, 0.8, 0.3, 0.4];
+        const fillColor = [1, 0.8, 0.3, 0.4];
         
         if (fillHeight > 0) {
             this.renderer.drawRect(
@@ -54,7 +54,7 @@ export class LevelProgressBarRenderer {
         this.renderer.drawCircle(x + 2, y + 2, radius + 1, shadowColor);
         
         // Bordo esterno bianco
-        const borderColor = [1.0, 1.0, 1.0, 1.0];
+        const borderColor = [1, 1, 1, 1.0];
         this.renderer.drawCircle(x, y, radius + 1.5, borderColor);
         
         // Corpo principale verde (più saturato)
@@ -62,11 +62,11 @@ export class LevelProgressBarRenderer {
         this.renderer.drawCircle(x, y, radius, bodyColor);
         
         // Highlight principale sul corpo (più grande)
-        const highlightColor = [1.0, 1.0, 1.0, 0.7];
+        const highlightColor = [1, 1, 1, 0.7];
         this.renderer.drawCircle(x - radius * 0.25, y - radius * 0.25, radius * 0.4, highlightColor);
         
         // Occhi più grandi
-        const eyeWhite = [1.0, 1.0, 1.0, 1.0];
+        const eyeWhite = [1, 1, 1, 1.0];
         const eyeBlack = [0.0, 0.0, 0.0, 1.0];
         const eyeSize = radius * 0.4;
         const eyeY = y - radius * 0.2;
@@ -77,14 +77,14 @@ export class LevelProgressBarRenderer {
         this.renderer.drawCircle(x - eyeSpacing, eyeY, eyeSize, eyeWhite);
         this.renderer.drawCircle(x - eyeSpacing, eyeY, eyeSize * 0.5, eyeBlack);
         // Riflesso negli occhi
-        this.renderer.drawCircle(x - eyeSpacing - eyeSize * 0.2, eyeY - eyeSize * 0.2, eyeSize * 0.2, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(x - eyeSpacing - eyeSize * 0.2, eyeY - eyeSize * 0.2, eyeSize * 0.2, [1, 1, 1, 0.9]);
         
         // Occhio destro con contorno
         this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize + 0.5, [0.0, 0.0, 0.0, 0.3]);
         this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize, eyeWhite);
         this.renderer.drawCircle(x + eyeSpacing, eyeY, eyeSize * 0.5, eyeBlack);
         // Riflesso negli occhi
-        this.renderer.drawCircle(x + eyeSpacing - eyeSize * 0.2, eyeY - eyeSize * 0.2, eyeSize * 0.2, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(x + eyeSpacing - eyeSize * 0.2, eyeY - eyeSize * 0.2, eyeSize * 0.2, [1, 1, 1, 0.9]);
         
         // Bocca sorridente con più punti
         const mouthY = y + radius * 0.35;

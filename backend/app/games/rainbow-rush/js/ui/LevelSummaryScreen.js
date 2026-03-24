@@ -91,7 +91,7 @@ export class LevelSummaryScreen {
             retry: {
                 label: 'Retry',
                 color: [0.9, 0.6, 0.2, 1.0],
-                hoverColor: [1.0, 0.7, 0.3, 1.0],
+                hoverColor: [1, 0.7, 0.3, 1.0],
                 action: 'retry',
                 x: 0, y: 0, width: 0, height: 0  // Initialize with default values
             },
@@ -169,11 +169,11 @@ export class LevelSummaryScreen {
      */
     generateConfetti() {
         const colors = [
-            [1.0, 0.2, 0.2, 1.0],
-            [0.2, 1.0, 0.2, 1.0],
-            [0.2, 0.2, 1.0, 1.0],
-            [1.0, 1.0, 0.2, 1.0],
-            [1.0, 0.2, 1.0, 1.0]
+            [1, 0.2, 0.2, 1.0],
+            [0.2, 1, 0.2, 1.0],
+            [0.2, 0.2, 1, 1.0],
+            [1, 1, 0.2, 1.0],
+            [1, 0.2, 1, 1.0]
         ];
         
         // Extra confetti per completamento del gioco
@@ -188,7 +188,7 @@ export class LevelSummaryScreen {
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 10,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                life: this.isGameComplete ? 1.5 : 1.0, // Confetti durano di pi\u00f9 per game complete
+                life: this.isGameComplete ? 1.5 : 1, // Confetti durano di pi\u00f9 per game complete
                 gravity: 500
             });
         }
@@ -213,7 +213,7 @@ export class LevelSummaryScreen {
             if (i < this.summary.stars) {
                 const delay = i * this.starAnimationDelay;
                 const progress = Math.max(0, this.animationProgress - delay);
-                this.starAnimations[i] = Math.min(1.0, progress / 0.5);
+                this.starAnimations[i] = Math.min(1, progress / 0.5);
                 
                 // Genera sparkle quando stella appare
                 if (this.starAnimations[i] > 0.5 && this.starAnimations[i] < 0.7 && Math.random() < 0.3) {
@@ -256,8 +256,8 @@ export class LevelSummaryScreen {
                 y: starY,
                 vx: Math.cos(angle) * 150,
                 vy: Math.sin(angle) * 150,
-                color: [1.0, 0.9, 0.2, 1.0],
-                life: 1.0,
+                color: [1, 0.9, 0.2, 1.0],
+                life: 1,
                 scale: 1.0
             });
         }

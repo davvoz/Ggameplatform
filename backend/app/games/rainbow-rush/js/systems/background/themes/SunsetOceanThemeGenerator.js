@@ -30,7 +30,7 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.5,
-            color: [1.0, 0.4, 0.2, 1.0],
+            color: [1, 0.4, 0.2, 1.0],
             type: 'sky_gradient',
             speed: 0
         });
@@ -43,11 +43,11 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
             x: this.canvasWidth * 0.5,
             y: this.canvasHeight * 0.4,
             radius: config.SUN_RADIUS,
-            color: [1.0, 0.5, 0.1, 0.9],
+            color: [1, 0.5, 0.1, 0.9],
             type: 'celestial',
             speed: 1,
             offset: 0,
-            glowColor: [1.0, 0.6, 0.2, 0.4],
+            glowColor: [1, 0.6, 0.2, 0.4],
             glowRadius: config.SUN_RADIUS * 2
         });
     }
@@ -91,7 +91,7 @@ export class SunsetOceanThemeGenerator extends BaseThemeGenerator {
                 y: this.canvasHeight * 0.5 + Math.random() * this.canvasHeight * 0.3,
                 radius: 3 + Math.random() * 5,
                 speed: 10 + Math.random() * 20,
-                color: [1.0, 0.6, 0.2, 0.3 + Math.random() * 0.3],
+                color: [1, 0.6, 0.2, 0.3 + Math.random() * 0.3],
                 type: 'simple_particle',
                 wobble: Math.random() * Math.PI * 2
             });

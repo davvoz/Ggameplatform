@@ -47,16 +47,16 @@ export class AnimationRenderer {
         this.renderer.drawRect(x - 8, y - 8, width + 16, height + 16, [0.05, 0.05, 0.1, alpha * 0.85]);
 
         // Border semplice
-        const borderColor = [1.0, 0.85, 0.3, alpha];
+        const borderColor = [1, 0.85, 0.3, alpha];
         this.renderer.drawRect(x - 8, y - 8, width + 16, 3, borderColor);
         this.renderer.drawRect(x - 8, y + height + 5, width + 16, 3, borderColor);
         this.renderer.drawRect(x - 8, y - 8, 3, height + 16, borderColor);
         this.renderer.drawRect(x + width + 5, y - 8, 3, height + 16, borderColor);
 
         // Body
-        this.renderer.drawRect(x, y, width, height * 0.5, [1.0, 0.9, 0.3, alpha * 0.9]);
-        this.renderer.drawRect(x, y + height * 0.5, width, height * 0.5, [1.0, 0.7, 0.2, alpha * 0.9]);
-        this.renderer.drawRect(x, y, width, height * 0.25, [1.0, 1.0, 1.0, alpha * 0.25]);
+        this.renderer.drawRect(x, y, width, height * 0.5, [1, 0.9, 0.3, alpha * 0.9]);
+        this.renderer.drawRect(x, y + height * 0.5, width, height * 0.5, [1, 0.7, 0.2, alpha * 0.9]);
+        this.renderer.drawRect(x, y, width, height * 0.25, [1, 1, 1, alpha * 0.25]);
 
         // RIMOSSO: Sparkles rotanti (troppo pesanti)
     }
@@ -146,7 +146,7 @@ export class AnimationRenderer {
         if (this.textCtx) {
             const fadeInTime = 0.2;
             const textAlpha = death.timer < fadeInTime 
-                ? Math.min(1.0, death.timer / fadeInTime)
+                ? Math.min(1, death.timer / fadeInTime)
                 : 1.0;
             
             const fontSize = Math.max(50, Math.min(this.canvasHeight * 0.12, 140));

@@ -102,7 +102,7 @@ export class EnemySpriteGenerator {
             r: Math.floor(color[0] * 255),
             g: Math.floor(color[1] * 255),
             b: Math.floor(color[2] * 255),
-            a: color[3] || 1.0,
+            a: color[3] || 1,
             base: `rgb(${Math.floor(color[0] * 255)}, ${Math.floor(color[1] * 255)}, ${Math.floor(color[2] * 255)})`,
             dark: `rgb(${Math.floor(color[0] * 150)}, ${Math.floor(color[1] * 150)}, ${Math.floor(color[2] * 150)})`,
             light: `rgb(${Math.min(255, Math.floor(color[0] * 350))}, ${Math.min(255, Math.floor(color[1] * 350))}, ${Math.min(255, Math.floor(color[2] * 350))})`,

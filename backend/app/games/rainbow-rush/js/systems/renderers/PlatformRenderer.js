@@ -172,7 +172,7 @@ export class PlatformRenderer extends IEntityRenderer {
     renderHighlights(x, y, width, height, color, time) {
         const comboBoost = color[0] > 1.0 ? 0.3 : 0;
         const highlightPulse = Math.sin(time * 3) * 0.1 + 0.5 + comboBoost;
-        this.renderer.drawRect(x + 3, y + 1, width - 6, 2, [1.0, 1.0, 1.0, highlightPulse]);
+        this.renderer.drawRect(x + 3, y + 1, width - 6, 2, [1, 1, 1, highlightPulse]);
         
         this.renderBorderGlow(x, y, width, height, color, time);
     }

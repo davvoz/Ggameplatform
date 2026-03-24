@@ -112,7 +112,7 @@ export class LavaFlowRenderer extends BaseLayerRenderer {
             y,
             layer.width * LAVA_FLOW_CONFIG.CENTER_WIDTH_RATIO,
             segmentHeight,
-            [1.0, 0.6 * segment.brightness, 0.1 * segment.brightness, 0.7]
+            [1, 0.6 * segment.brightness, 0.1 * segment.brightness, 0.7]
         );
     }
 }

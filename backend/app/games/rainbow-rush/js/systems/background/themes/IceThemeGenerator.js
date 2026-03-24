@@ -28,7 +28,7 @@ export class IceThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: 0,
             height: this.canvasHeight * 0.7,
-            color: [0.7, 0.85, 1.0, 1.0],
+            color: [0.7, 0.85, 1, 1.0],
             type: 'sky_gradient',
             speed: 0
         });
@@ -39,7 +39,7 @@ export class IceThemeGenerator extends BaseThemeGenerator {
         layers.push({
             y: groundY,
             height: this.canvasHeight - groundY,
-            color: [0.9, 0.95, 1.0, 1.0],
+            color: [0.9, 0.95, 1, 1.0],
             type: 'ground',
             speed: 0
         });
@@ -58,7 +58,7 @@ export class IceThemeGenerator extends BaseThemeGenerator {
                 y: groundY - size,
                 width: size * 0.6,
                 height: size,
-                color: [0.7 + Math.random() * 0.2, 0.85 + Math.random() * 0.1, 1.0, 0.6 + Math.random() * 0.3],
+                color: [0.7 + Math.random() * 0.2, 0.85 + Math.random() * 0.1, 1, 0.6 + Math.random() * 0.3],
                 type: 'crystal',
                 speed: 3 + i * 1.5,
                 glimmer: Math.random() * Math.PI * 2,
@@ -77,7 +77,7 @@ export class IceThemeGenerator extends BaseThemeGenerator {
                 radius: this.randomInRange(config.SNOWFLAKE_MIN_RADIUS, config.SNOWFLAKE_MAX_RADIUS),
                 speed: this.randomInRange(config.SNOWFLAKE_MIN_SPEED, config.SNOWFLAKE_MAX_SPEED),
                 rotation: Math.random() * Math.PI * 2,
-                color: [1.0, 1.0, 1.0, 0.7 + Math.random() * 0.3],
+                color: [1, 1, 1, 0.7 + Math.random() * 0.3],
                 type: 'snowflake',
                 drift: (Math.random() - 0.5) * 30
             });

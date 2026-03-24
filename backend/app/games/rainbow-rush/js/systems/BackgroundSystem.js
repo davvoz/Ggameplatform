@@ -125,7 +125,7 @@ export class BackgroundSystem {
             console.error(`Failed to initialize theme: ${this.currentTheme}`);
             this.layers = [];
             this.particles = [];
-            this.baseColors = [[0.4, 0.7, 1.0, 1.0], [0.6, 0.85, 1.0, 1.0]];
+            this.baseColors = [[0.4, 0.7, 1, 1.0], [0.6, 0.85, 1, 1.0]];
         }
     }
 
@@ -333,7 +333,7 @@ export class BackgroundSystem {
      */
     getBackgroundColor() {
         const colors = this.getBaseColors();
-        return colors && colors.length > 0 ? colors[0] : [0.4, 0.7, 1.0, 1.0];
+        return colors && colors.length > 0 ? colors[0] : [0.4, 0.7, 1, 1.0];
     }
 
     interpolateLayers() {

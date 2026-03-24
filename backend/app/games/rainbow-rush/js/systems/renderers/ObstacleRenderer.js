@@ -48,7 +48,7 @@ export class ObstacleRenderer extends IEntityRenderer {
             centerX,
             centerY,
             glowRadius * (1 + glow * 0.3),
-            [1.0, 0.3, 0.0, 0.3 * glow]
+            [1, 0.3, 0.0, 0.3 * glow]
         );
 
         // Corpo centrale - sfera rossa metallica
@@ -58,16 +58,16 @@ export class ObstacleRenderer extends IEntityRenderer {
         this.renderer.drawCircle(centerX, centerY, radius * pulse, [0.5, 0.1, 0.1, 1.0]);
 
         // Cerchio principale rosso
-        this.renderer.drawCircle(centerX, centerY, radius * 0.9 * pulse, [1.0, 0.2, 0.1, 1.0]);
+        this.renderer.drawCircle(centerX, centerY, radius * 0.9 * pulse, [1, 0.2, 0.1, 1.0]);
 
         // Cerchio interno rosso brillante
-        this.renderer.drawCircle(centerX, centerY, radius * 0.7 * pulse, [1.0, 0.4, 0.2, 1.0]);
+        this.renderer.drawCircle(centerX, centerY, radius * 0.7 * pulse, [1, 0.4, 0.2, 1.0]);
 
         // Riflesso metallico (highlight)
         const highlightX = centerX - radius * 0.3;
         const highlightY = centerY - radius * 0.3;
-        this.renderer.drawCircle(highlightX, highlightY, radius * 0.4, [1.0, 0.9, 0.7, 0.6]);
-        this.renderer.drawCircle(highlightX, highlightY, radius * 0.25, [1.0, 1.0, 1.0, 0.8]);
+        this.renderer.drawCircle(highlightX, highlightY, radius * 0.4, [1, 0.9, 0.7, 0.6]);
+        this.renderer.drawCircle(highlightX, highlightY, radius * 0.25, [1, 1, 1, 0.8]);
 
         // Spuntoni metallici intorno (8 spine)
         const numSpikes = 8;
@@ -100,7 +100,7 @@ export class ObstacleRenderer extends IEntityRenderer {
             }
 
             // Punta brillante
-            this.renderer.drawCircle(tipX, tipY, 1.5, [1.0, 0.9, 0.7, 0.9]);
+            this.renderer.drawCircle(tipX, tipY, 1.5, [1, 0.9, 0.7, 0.9]);
         }
 
         // Particelle di calore/energia che si irradiano
@@ -112,7 +112,7 @@ export class ObstacleRenderer extends IEntityRenderer {
                 const py = centerY + Math.sin(particleAngle) * particleDistance;
                 const pSize = 1 + Math.random() * 1.5;
 
-                this.renderer.drawCircle(px, py, pSize, [1.0, 0.5, 0.0, 0.6 + Math.random() * 0.4]);
+                this.renderer.drawCircle(px, py, pSize, [1, 0.5, 0.0, 0.6 + Math.random() * 0.4]);
             }
         }
     }
@@ -137,7 +137,7 @@ export class ObstacleRenderer extends IEntityRenderer {
         // Glow disabled for performance
         // const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
         // RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
-        //     enemy.width / 2, [0.6, 0.3, 1.0, 1.0], 3, glowPulse * 0.2, 0.07);
+        //     enemy.width / 2, [0.6, 0.3, 1, 1.0], 3, glowPulse * 0.2, 0.07);
 
         // Body
         const bodyTopColor = [0.5, 0.2, 0.8, 1.0];
@@ -147,8 +147,8 @@ export class ObstacleRenderer extends IEntityRenderer {
 
         // Border
         const borderGlow = Math.sin(time * 8 + offset) * 0.3 + 0.6;
-        this.renderer.drawRect(enemy.x, enemy.y + bounce, enemy.width, 1, [0.8, 0.5, 1.0, borderGlow]);
-        this.renderer.drawRect(enemy.x, enemy.y + bounce + enemy.height * squish - 1, enemy.width, 1, [0.8, 0.5, 1.0, borderGlow]);
+        this.renderer.drawRect(enemy.x, enemy.y + bounce, enemy.width, 1, [0.8, 0.5, 1, borderGlow]);
+        this.renderer.drawRect(enemy.x, enemy.y + bounce + enemy.height * squish - 1, enemy.width, 1, [0.8, 0.5, 1, borderGlow]);
 
         // Face
         this.renderEnemyEyes(enemy, time, offset, bounce, squish);
@@ -161,7 +161,7 @@ export class ObstacleRenderer extends IEntityRenderer {
             const px = enemy.x + enemy.width / 2 + Math.cos(angle) * radius;
             const py = enemy.y + bounce + enemy.height * squish / 2 + Math.sin(angle) * radius;
             const pSize = 1 + Math.sin(time * 15 + i) * 0.5;
-            this.renderer.drawCircle(px, py, pSize, [0.7, 0.4, 1.0, 0.6]);
+            this.renderer.drawCircle(px, py, pSize, [0.7, 0.4, 1, 0.6]);
         }
     }
 
@@ -170,18 +170,18 @@ export class ObstacleRenderer extends IEntityRenderer {
         const eyeY = enemy.y + bounce + enemy.height * squish * 0.35;
 
         // Eyes
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1.0, 1.0, 1.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3, eyeY, 4 * eyeScale, [1, 1, 1, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7, eyeY, 4 * eyeScale, [1, 1, 1, 1.0]);
 
         // Pupils
         const pupilOffsetX = Math.sin(time * 2 + offset) * 1.5;
         const pupilOffsetY = Math.cos(time * 3 + offset) * 1;
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1.0, 0.0, 0.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0.0, 0.0, 1.0]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 + pupilOffsetX, eyeY + pupilOffsetY, 2, [1, 0.0, 0.0, 1.0]);
 
         // Highlights
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
-        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 - 1, eyeY - 1, 1.5, [1.0, 1.0, 1.0, 0.9]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.3 - 1, eyeY - 1, 1.5, [1, 1, 1, 0.9]);
+        this.renderer.drawCircle(enemy.x + enemy.width * 0.7 - 1, eyeY - 1, 1.5, [1, 1, 1, 0.9]);
     }
 
     renderEnemyMouth(enemy, bounce, squish) {
@@ -193,7 +193,7 @@ export class ObstacleRenderer extends IEntityRenderer {
         // Teeth
         for (let i = 0; i < 4; i++) {
             const toothX = mouthX + (mouthWidth / 4) * i + mouthWidth / 8;
-            this.renderer.drawRect(toothX - 1, mouthY - 3, 2, 3, [1.0, 1.0, 1.0, 0.9]);
+            this.renderer.drawRect(toothX - 1, mouthY - 3, 2, 3, [1, 1, 1, 0.9]);
         }
     }
 }

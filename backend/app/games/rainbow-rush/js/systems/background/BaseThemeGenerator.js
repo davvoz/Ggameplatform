@@ -163,7 +163,7 @@ export class BaseThemeGenerator {
         // Default parallax speeds by layer type (lower = slower = further back)
         const parallaxConfig = {
             'sky_gradient': 0.0,    // Background, no movement
-            'ground': 1.0,          // Foreground, full speed
+            'ground': 1,          // Foreground, full speed
             'wave': 0.3,            // Far background
             'dune': 0.4,            // Mid background
             'simple_shape': 0.5,    // Variable depth
@@ -196,7 +196,7 @@ export class BaseThemeGenerator {
                 if (layer.speed !== undefined && layer.speed > 0) {
                     // Convert old speed to parallaxSpeed (normalize between 0-1)
                     // Higher speed = closer layer = higher parallaxSpeed
-                    layer.parallaxSpeed = Math.min(1.0, layer.speed / 10.0);
+                    layer.parallaxSpeed = Math.min(1, layer.speed / 10.0);
                 } else if (parallaxConfig.hasOwnProperty(layer.type)) {
                     layer.parallaxSpeed = parallaxConfig[layer.type];
                 } else {

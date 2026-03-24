@@ -1,8 +1,17 @@
 {
-  "version": "4.0.20",
-  "timestamp": "2026-03-24T08:42:56.024Z",
-  "buildNumber": 479,
+  "version": "4.0.21",
+  "timestamp": "2026-03-24T09:12:56.156Z",
+  "buildNumber": 480,
   "changelog": [
+    {
+      "version": "4.0.21",
+      "date": "2026-03-24",
+      "type": "patch",
+      "changes": [
+        "fix : [RR] Sonar",
+        "🔖 Bump version to 4.0.20 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.20",
       "date": "2026-03-24",
@@ -85,15 +94,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix : sonar",
         "🔖 Bump version to 4.0.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.11",
-      "date": "2026-03-21",
-      "type": "patch",
-      "changes": [
-        "fix: [MTD] Sonar",
-        "🔖 Bump version to 4.0.10 [skip-version]"
       ]
     }
   ]

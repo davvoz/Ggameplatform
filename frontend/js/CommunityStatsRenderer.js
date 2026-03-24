@@ -787,20 +787,20 @@ class CommunityStatsRenderer {
         return `
         <div class="cs-skeleton">
             <div class="cs-skel-section">
-                <div class="cs-skel-title"></div>
-                <div class="cs-skel-kpis">
-                    ${Array(6).fill('<div class="cs-skel-kpi"></div>').join('')}
-                </div>
+            <div class="cs-skel-title"></div>
+            <div class="cs-skel-kpis">
+                ${new Array(6).fill('<div class="cs-skel-kpi"></div>').join('')}
+            </div>
             </div>
             <div class="cs-skel-section">
-                <div class="cs-skel-title"></div>
-                <div class="cs-skel-chart"></div>
+            <div class="cs-skel-title"></div>
+            <div class="cs-skel-chart"></div>
             </div>
             <div class="cs-skel-section">
-                <div class="cs-skel-title"></div>
-                <div class="cs-skel-rows">
-                    ${Array(5).fill('<div class="cs-skel-row"></div>').join('')}
-                </div>
+            <div class="cs-skel-title"></div>
+            <div class="cs-skel-rows">
+                ${new Array(5).fill('<div class="cs-skel-row"></div>').join('')}
+            </div>
             </div>
         </div>`;
     }

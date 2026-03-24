@@ -83,7 +83,7 @@ export const Utils = {
      * Format number with commas
      */
     formatNumber(num) {
-        return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return Math.floor(num).toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
 
     /**

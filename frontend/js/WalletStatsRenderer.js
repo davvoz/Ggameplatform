@@ -113,7 +113,7 @@ class WalletStatsRenderer {
             byType: {},
             dailyCounts: [0, 0, 0, 0, 0, 0, 0],
             recentTrend: 0,
-            activityMatrix: Array(7).fill(null).map(() => Array(4).fill(0))
+            activityMatrix: new Array(7).fill(null).map(() => new Array(4).fill(0))
         };
         
         const now = new Date();

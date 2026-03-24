@@ -22,7 +22,7 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
                 changeTimer: 0
             };
             for (let i = 0; i < col.length; i++) {
-                col.chars.push(String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96)));
+                col.chars.push(String.fromCodePoint(0x30A0 + Math.floor(Math.random() * 96)));
             }
             this.codeColumns.push(col);
         }
@@ -54,7 +54,7 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
             if (col.changeTimer > 0.15) {
                 col.changeTimer = 0;
                 const idx = Math.floor(Math.random() * col.chars.length);
-                col.chars[idx] = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+                col.chars[idx] = String.fromCodePoint(0x30A0 + Math.floor(Math.random() * 96));
             }
         }
         for (const f of this.floaters) {

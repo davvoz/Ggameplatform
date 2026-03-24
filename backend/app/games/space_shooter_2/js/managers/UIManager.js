@@ -10,7 +10,6 @@ class UIManager {
      * the hidden (opacity 0) state, then transitions to visible.
      */
     _revealScreen(screen) {
-        void screen.offsetHeight; // force reflow to commit opacity:0
         screen.classList.remove('hidden');
         if (window.audioViz) window.audioViz.start(screen);
     }
@@ -22,7 +21,6 @@ class UIManager {
         if (oldScreen) {
             oldScreen.style.transition = 'none';
             oldScreen.classList.add('hidden');
-            void oldScreen.offsetHeight;
             oldScreen.style.transition = '';
             if (window.audioViz && window.audioViz.canvas.parentNode === oldScreen) {
                 window.audioViz.stop();
@@ -31,7 +29,6 @@ class UIManager {
 
         newScreen.style.transition = 'none';
         newScreen.classList.remove('hidden');
-        void newScreen.offsetHeight;
         newScreen.style.transition = '';
 
         if (window.audioViz) window.audioViz.start(newScreen);
@@ -176,8 +173,6 @@ class UIManager {
         el.style.opacity = '0';
         el.style.setProperty('--stagger-i', index);
         el.style.setProperty('--stagger-shift', `${shift}px`);
-        // Force reflow so animation restarts if re-entering
-        void el.offsetWidth;
         el.classList.add('stagger-enter');
 
         // Clean up after animation finishes so will-change layer is

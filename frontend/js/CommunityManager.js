@@ -473,7 +473,7 @@ class CommunityManager {
     _hashCode(str) {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + str.codePointAt(i);
             hash = Math.trunc(hash);
         }
         return hash;
@@ -732,7 +732,7 @@ class CommunityManager {
 
         // Convert URLs to links
         const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-        processed = processed.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+        processed = processed.replaceAll(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 
         return processed;
     }

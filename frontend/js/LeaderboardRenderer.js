@@ -630,7 +630,7 @@ class LeaderboardRenderer {
     renderWeekGroup(group) {
         const start = new Date(group.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const end = new Date(group.week_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const weekId = `week_${group.week_start.replace(/[^\w]/g, '')}_${group.week_end.replace(/[^\w]/g, '')}`;
+        const weekId = `week_${group.week_start.replaceAll(/[^\w]/g, '')}_${group.week_end.replaceAll(/[^\w]/g, '')}`;
         return `
             <div class="week-group" id="${weekId}">
                 <h3 class="week-title collapsible" data-toggle="${weekId}" style="cursor:pointer; user-select:none; display:flex; align-items:center; gap:10px;">

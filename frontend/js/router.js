@@ -75,7 +75,7 @@ function matchRoute(path) {
     
     // Try pattern matching
     for (const [pattern, handler] of Object.entries(routes)) {
-        const regex = new RegExp('^' + pattern.replace(/:[^\s/]+/g, '([\\w-]+)') + '$');
+        const regex = new RegExp('^' + pattern.replaceAll(/:[^\s/]+/g, '([\\w-]+)') + '$');
         const match = path.match(regex);
         
         if (match) {

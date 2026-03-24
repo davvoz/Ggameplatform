@@ -325,9 +325,9 @@ class SteemPostAPI {
         
         // Convert title to URL-safe format
         let permlink = title.toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
-            .replace(/\s+/g, '-')          // Replace spaces with hyphens
-            .replace(/-+/g, '-')           // Replace multiple hyphens
+            .replaceAll(/[^a-z0-9\s-]/g, '') // Remove special chars
+            .replaceAll(/\s+/g, '-')          // Replace spaces with hyphens
+            .replaceAll(/-+/g, '-')           // Replace multiple hyphens
             .substring(0, 100);            // Limit length
         
         // Add timestamp to ensure uniqueness

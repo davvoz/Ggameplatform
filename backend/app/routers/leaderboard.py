@@ -51,14 +51,14 @@ class WinnerHistoryEntry(BaseModel):
     game_title: str
     user_id: str
     username: str
-    steem_username: Optional[str]
+    steem_username: Optional[str] = None
     rank: int
     score: int
     steem_reward: float
     coin_reward: int
     reward_sent: bool
-    reward_sent_at: Optional[str]
-    steem_tx_id: Optional[str]
+    reward_sent_at: Optional[str] = None
+    steem_tx_id: Optional[str] = None
 
 
 class CurrentWeekInfo(BaseModel):

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/levels", tags=["Levels"])
 # Response models
 class LevelProgressResponse(BaseModel):
     user_id: str
-    username: Optional[str]
+    username: Optional[str] = None
     current_level: int
     next_level: int
     current_xp: float

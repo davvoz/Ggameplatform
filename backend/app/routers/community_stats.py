@@ -56,7 +56,7 @@ class GameDailyActivityResponse(BaseModel):
     """Response for daily game activity endpoint."""
     success: bool
     days: int
-    game_id: Optional[str]
+    game_id: Optional[str] = None
     total_records: int
     data: List[GameDailyActivityItem]
 
@@ -65,9 +65,9 @@ class RankedUserItem(BaseModel):
     """Single user in the ranked list."""
     rank: int
     user_id: str
-    username: Optional[str]
-    avatar: Optional[str]
-    steem_username: Optional[str]
+    username: Optional[str] = None
+    avatar: Optional[str] = None
+    steem_username: Optional[str] = None
     level: int
     level_title: str
     level_badge: str
@@ -78,8 +78,8 @@ class RankedUserItem(BaseModel):
     login_streak: int
     games_played: int
     unique_games: int
-    created_at: Optional[str]
-    last_login: Optional[str]
+    created_at: Optional[str] = None
+    last_login: Optional[str] = None
 
 
 class RankedUsersResponse(BaseModel):
@@ -106,7 +106,7 @@ class EconomyDailyResponse(BaseModel):
     success: bool
     period: str
     days: int
-    game_id: Optional[str]
+    game_id: Optional[str] = None
     total_records: int
     data: List[dict]  # Can be EconomyDailyItem or per-game variant
 
@@ -128,7 +128,7 @@ class EconomyWeeklyResponse(BaseModel):
     success: bool
     period: str
     weeks: int
-    game_id: Optional[str]
+    game_id: Optional[str] = None
     total_records: int
     data: List[dict]  # Can be EconomyWeeklyItem or per-game variant
 
@@ -161,7 +161,7 @@ class EconomyHistoricalResponse(BaseModel):
     """Response for historical economy stats endpoint."""
     success: bool
     period: str
-    game_id: Optional[str]
+    game_id: Optional[str] = None
     platform: PlatformTotals
     games: List[GameBreakdownItem]
 
@@ -180,8 +180,8 @@ class AchieverBreakdownItem(BaseModel):
 class AchieverItem(BaseModel):
     """A top achiever user with details and breakdown."""
     user_id: str
-    username: Optional[str]
-    steem_username: Optional[str]
+    username: Optional[str] = None
+    steem_username: Optional[str] = None
     level: int
     level_title: str
     level_badge: str

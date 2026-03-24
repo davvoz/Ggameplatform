@@ -23,7 +23,7 @@ class GameStatusResponse(BaseModel):
     status_id: int
     status_name: str
     status_code: str
-    description: Optional[str]
+    description: Optional[str] = None
     display_order: int
     is_active: bool
     created_at: str
@@ -139,8 +139,8 @@ class GameResponse(BaseModel):
     entry_point: str
     category: str
     tags: List[str]
-    status_id: Optional[int]
-    status: Optional[GameStatusResponse]
+    status_id: Optional[int] = None
+    status: Optional[GameStatusResponse] = None
     steem_rewards_enabled: bool = False
     active_campaign: Optional[Dict[str, Any]] = None
     created_at: str
@@ -210,7 +210,7 @@ class QuestResponse(BaseModel):
     """Schema for quest response."""
     quest_id: int
     title: str
-    description: Optional[str]
+    description: Optional[str] = None
     quest_type: str
     target_value: int
     xp_reward: int
@@ -231,8 +231,8 @@ class UserQuestProgress(BaseModel):
     current_progress: int
     is_completed: bool
     is_claimed: bool
-    completed_at: Optional[str]
-    claimed_at: Optional[str]
+    completed_at: Optional[str] = None
+    claimed_at: Optional[str] = None
     started_at: str
     
     class Config:
@@ -446,11 +446,11 @@ class CoinTransactionResponse(BaseModel):
     user_id: str
     amount: int
     transaction_type: str
-    source_id: Optional[str]
-    description: Optional[str]
+    source_id: Optional[str] = None
+    description: Optional[str] = None
     balance_after: int
     created_at: str
-    extra_data: Optional[str]
+    extra_data: Optional[str] = None
     
     class Config:
         orm_mode = True
@@ -487,7 +487,7 @@ class LevelMilestoneResponse(BaseModel):
     title: str
     badge: str
     color: str
-    description: Optional[str]
+    description: Optional[str] = None
     is_active: bool
     created_at: str
     updated_at: str
@@ -527,7 +527,7 @@ class LevelRewardResponse(BaseModel):
     level: int
     reward_type: str
     reward_amount: int
-    description: Optional[str]
+    description: Optional[str] = None
     is_active: bool
     created_at: str
     updated_at: str
@@ -567,7 +567,7 @@ class WeeklyLeaderboardResponse(BaseModel):
     user_id: str
     game_id: str
     score: int
-    rank: Optional[int]
+    rank: Optional[int] = None
     created_at: str
     updated_at: str
     
@@ -607,12 +607,12 @@ class LeaderboardRewardUpdate(BaseModel):
 class LeaderboardRewardResponse(BaseModel):
     """Schema for leaderboard reward response."""
     reward_id: str
-    game_id: Optional[str]
+    game_id: Optional[str] = None
     rank_start: int
     rank_end: int
-    steem_reward: Optional[float]
-    coin_reward: Optional[int]
-    description: Optional[str]
+    steem_reward: Optional[float] = None
+    coin_reward: Optional[int] = None
+    description: Optional[str] = None
     is_active: bool
     created_at: str
     updated_at: str
@@ -661,11 +661,11 @@ class WeeklyWinnerResponse(BaseModel):
     user_id: str
     rank: int
     score: int
-    steem_reward: Optional[float]
-    coin_reward: Optional[int]
-    steem_tx_id: Optional[str]
+    steem_reward: Optional[float] = None
+    coin_reward: Optional[int] = None
+    steem_tx_id: Optional[str] = None
     reward_sent: bool
-    reward_sent_at: Optional[str]
+    reward_sent_at: Optional[str] = None
     created_at: str
     
     class Config:

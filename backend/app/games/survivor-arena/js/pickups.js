@@ -9,6 +9,8 @@ import { MathUtils } from './utils.js';
 
 
 
+const DEFAULT_CAMERA = Object.freeze({ x: 0, y: 0 });
+
 // Map pickup types to sprite types
 const PICKUP_SPRITE_MAP = {
     'xpOrb': 'pickup-xp',
@@ -130,70 +132,12 @@ class Pickup extends Entity {
     }
 
     /**
-     * Draw pickup
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {Object} camera 
-     */
-    draw(ctx, camera) {
-        if (!this.active) return;
-
-        const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y + Math.sin(Date.now() / 200 + this.floatOffset) * this.floatAmplitude;
-        const scale = this.spawnScale;
-
-        ctx.save();
-
-        // Fade out near end of lifetime
-        if (this.age > this.lifetime - 3000) {
-            const fadeProgress = (this.age - (this.lifetime - 3000)) / 3000;
-            ctx.globalAlpha = 1 - fadeProgress;
-            
-            // Blink effect
-            if (Math.floor(Date.now() / 100) % 2 === 0) {
-                ctx.globalAlpha *= 0.5;
-            }
-        }
-
-        // Glow
-        const glowGradient = ctx.createRadialGradient(
-            screenX, screenY, 0,
-            screenX, screenY, this.size * 2 * scale
-        );
-        glowGradient.addColorStop(0, this.color);
-        glowGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = glowGradient;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, this.size * 2 * scale, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Core
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, this.size * scale, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Shine
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.beginPath();
-        ctx.arc(
-            screenX - this.size * 0.3 * scale,
-            screenY - this.size * 0.3 * scale,
-            this.size * 0.3 * scale,
-            0, Math.PI * 2
-        );
-        ctx.fill();
-
-        ctx.restore();
-    }
-
-    /**
      * Render pickup (camera transform already applied)
      * Called by renderSeamless - delegates to draw with camera at 0,0
      * @param {CanvasRenderingContext2D} ctx 
      * @param {Object} camera
      */
-    render(ctx, camera = { x: 0, y: 0 }) {
+    render(ctx, camera = DEFAULT_CAMERA) {
         // Delegate to draw method which each subclass implements
         this.draw(ctx, camera);
     }
@@ -392,7 +336,7 @@ class XPOrb extends Pickup {
      * @returns {string}
      */
     darkenColor(color, percent) {
-        const num = parseInt(color.replace('#', ''), 16);
+        const num = Number.parseInt(color.replace('#', ''), 16);
         const amt = Math.round(2.55 * percent);
         const R = Math.max(0, (num >> 16) - amt);
         const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
@@ -800,7 +744,7 @@ class DimensionalPortal extends Entity {
         return wrapped.distance < PORTAL_CONFIG.ACTIVATION_RANGE;
     }
 
-    render(ctx, camera = { x: 0, y: 0 }) {
+    render(ctx, camera = DEFAULT_CAMERA) {
         if (!this.active) return;
 
         ctx.save();
@@ -945,7 +889,7 @@ class BossChest extends Entity {
         return wrapped.distance < (this.size + 20);
     }
 
-    render(ctx, camera = { x: 0, y: 0 }) {
+    render(ctx, camera = DEFAULT_CAMERA) {
         if (!this.active) return;
 
         const scale = this.spawnScale;

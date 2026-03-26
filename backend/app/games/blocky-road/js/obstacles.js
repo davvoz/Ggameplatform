@@ -254,7 +254,7 @@ class ObstacleManager {
         // Clean up train timers for rows far behind player (more than 10 rows back)
         const cleanupThreshold = Math.floor(playerZ) - 10;
         for (const z in this.trainTimers) {
-            if (parseInt(z) < cleanupThreshold) {
+            if (Number.parseInt(z) < cleanupThreshold) {
                 delete this.trainTimers[z];
             }
         }

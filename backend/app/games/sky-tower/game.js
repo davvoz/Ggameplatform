@@ -1182,7 +1182,7 @@
                     // Front windows (skip on first row where door is for ALL buildings)
                     const skipFrontWindows = (row === 0);
                     if (!skipFrontWindows) {
-                        const numWindowsFront = buildingType === 'house' ? 2 : (buildingType === 'skyscraper' ? 2 : 2);
+                        const numWindowsFront = 2;
                         const windowOffsetX = width * 0.25;
                         for (let i = 0; i < numWindowsFront; i++) {
                             const window1 = new THREE.Mesh(windowGeometry, windowMaterial.clone());

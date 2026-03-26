@@ -824,7 +824,7 @@ class UIManager {
         const sacrificeBtns = modal.querySelectorAll('.sacrifice-btn');
         sacrificeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.index);
+                const idx = Number.parseInt(btn.dataset.index);
                 if (selectedSacrifice === idx) {
                     selectedSacrifice = null;
                     btn.classList.remove('selected');

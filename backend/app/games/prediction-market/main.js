@@ -129,7 +129,7 @@ async function loadBalance() {
 }
 function updateBalanceUI(v) {
     if (!els.coinAmount) return;
-    const prev = parseInt(els.coinAmount.textContent.replace(/[^0-9-]/g, '')) || 0;
+    const prev = Number.parseInt(els.coinAmount.textContent.replace(/[^0-9-]/g, '')) || 0;
     const target = Math.round(v);
     if (prev === target) return;
 
@@ -629,7 +629,7 @@ function setupEvents() {
     });
     $$('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            state.betAmount = Math.min(500, Math.max(1, parseInt(btn.dataset.amount)));
+            state.betAmount = Math.min(500, Math.max(1, Number.parseInt(btn.dataset.amount)));
             els.betAmount.value = state.betAmount; updateBetSummary();
         });
     });

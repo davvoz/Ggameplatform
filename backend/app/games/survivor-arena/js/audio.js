@@ -83,7 +83,7 @@ class AudioManager {
             // Carica la traccia salvata o quella predefinita
             const savedTrack = localStorage.getItem('survivorArena_musicTrack');
             if (savedTrack !== null) {
-                this.currentTrackIndex = parseInt(savedTrack, 10);
+                this.currentTrackIndex = Number.parseInt(savedTrack, 10);
             }
             
             // Carica la musica di background

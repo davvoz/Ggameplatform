@@ -2609,7 +2609,7 @@ class Enemy extends LivingEntity {
      * @returns {string}
      */
     lightenColor(color, percent) {
-        const num = parseInt(color.replace('#', ''), 16);
+        const num = Number.parseInt(color.replace('#', ''), 16);
         const amt = Math.round(2.55 * percent);
         const R = Math.min(255, (num >> 16) + amt);
         const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
@@ -2624,7 +2624,7 @@ class Enemy extends LivingEntity {
      * @returns {string}
      */
     darkenColor(color, percent) {
-        const num = parseInt(color.replace('#', ''), 16);
+        const num = Number.parseInt(color.replace('#', ''), 16);
         const amt = Math.round(2.55 * percent);
         const R = Math.max(0, (num >> 16) - amt);
         const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);

@@ -739,7 +739,7 @@ class ParticleSystem {
      * @returns {string}
      */
     randomizeColor(color, variance) {
-        const num = parseInt(color.replace('#', ''), 16);
+        const num = Number.parseInt(color.replace('#', ''), 16);
         const R = MathUtils.clamp((num >> 16) + MathUtils.randomInt(-variance, variance), 0, 255);
         const G = MathUtils.clamp(((num >> 8) & 0x00FF) + MathUtils.randomInt(-variance, variance), 0, 255);
         const B = MathUtils.clamp((num & 0x0000FF) + MathUtils.randomInt(-variance, variance), 0, 255);

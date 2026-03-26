@@ -11,7 +11,6 @@ class TouchControls {
         this.isTouching = false;
         
         this.setupTouchControls();
-        this.createVirtualButtons();
     }
     
     setupTouchControls() {
@@ -142,96 +141,7 @@ class TouchControls {
         // Use game's processMove method for consistent score tracking
         this.game.processMove(dx, dz);
     }
-    
-    createVirtualButtons() {
-        // Virtual buttons disabled - using swipe only
-        return;
-        
-        // Check if mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (!isMobile) return;
-        
-        // Create button container
-        const container = document.createElement('div');
-        container.id = 'virtualButtons';
-        container.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: grid;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 5px;
-            z-index: 100;
-            opacity: 0.7;
-        `;
-        
-        // Button style
-        const buttonStyle = `
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            user-select: none;
-            touch-action: manipulation;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-        
-        // Create buttons in grid layout
-        const buttons = [
-            { pos: '1,2', label: '⬆️', action: 'up' },
-            { pos: '2,1', label: '⬅️', action: 'left' },
-            { pos: '2,3', label: '➡️', action: 'right' },
-            { pos: '3,2', label: '⬇️', action: 'down' }
-        ];
-        
-        buttons.forEach(btn => {
-            const button = document.createElement('div');
-            button.style.cssText = buttonStyle;
-            button.style.gridColumn = btn.pos.split(',')[1];
-            button.style.gridRow = btn.pos.split(',')[0];
-            button.textContent = btn.label;
-            
-            // Touch events for button
-            button.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                button.style.transform = 'scale(0.95)';
-                button.style.background = 'rgba(255, 255, 255, 1)';
-                this.handleSwipe(btn.action);
-            });
-            
-            button.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                button.style.transform = 'scale(1)';
-                button.style.background = 'rgba(255, 255, 255, 0.9)';
-            });
-            
-            // Also support mouse for testing
-            button.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                button.style.transform = 'scale(0.95)';
-                this.handleSwipe(btn.action);
-            });
-            
-            button.addEventListener('mouseup', (e) => {
-                e.preventDefault();
-                button.style.transform = 'scale(1)';
-            });
-            
-            container.appendChild(button);
-        });
-        
-        document.body.appendChild(container);
-        
 
-    }
     
     destroy() {
         // Remove virtual buttons if they exist

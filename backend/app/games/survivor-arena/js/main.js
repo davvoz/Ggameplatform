@@ -72,23 +72,33 @@ async function initGame() {
 function showErrorScreen(message) {
     const loadingScreen = document.getElementById('loadingScreen');
     if (loadingScreen) {
-        loadingScreen.innerHTML = `
-            <div style="text-align: center; color: #ff4444;">
-                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                <h2>Failed to Load Game</h2>
-                <p style="color: #aaa; margin-top: 10px;">${message}</p>
-                <button onclick="location.reload()" style="
-                    margin-top: 20px;
-                    padding: 10px 30px;
-                    background: #ff00ff;
-                    border: none;
-                    border-radius: 5px;
-                    color: white;
-                    cursor: pointer;
-                    font-size: 16px;
-                ">Retry</button>
-            </div>
-        `;
+        loadingScreen.textContent = '';
+
+        const wrapper = document.createElement('div');
+        Object.assign(wrapper.style, { textAlign: 'center', color: '#ff4444' });
+
+        const icon = document.createElement('div');
+        Object.assign(icon.style, { fontSize: '48px', marginBottom: '20px' });
+        icon.textContent = '⚠️';
+
+        const heading = document.createElement('h2');
+        heading.textContent = 'Failed to Load Game';
+
+        const msg = document.createElement('p');
+        Object.assign(msg.style, { color: '#aaa', marginTop: '10px' });
+        msg.textContent = message;
+
+        const btn = document.createElement('button');
+        Object.assign(btn.style, {
+            marginTop: '20px', padding: '10px 30px', background: '#ff00ff',
+            border: 'none', borderRadius: '5px', color: 'white',
+            cursor: 'pointer', fontSize: '16px'
+        });
+        btn.textContent = 'Retry';
+        btn.addEventListener('click', () => location.reload());
+
+        wrapper.append(icon, heading, msg, btn);
+        loadingScreen.appendChild(wrapper);
     }
 }
 
@@ -103,6 +113,9 @@ function onPlatformReady() {
     }
 }
 
+// Origin pinning: derive initial parent origin from document.referrer
+let parentOrigin = document.referrer ? new URL(document.referrer).origin : null;
+
 /**
  * Handle messages from parent frame (platform)
  */
@@ -110,6 +123,17 @@ function handleMessage(event) {
     const data = event.data;
     
     if (!data || typeof data !== 'object') return;
+
+    // Verify origin: reject messages from untrusted origins
+    if (parentOrigin && event.origin !== parentOrigin) {
+        console.warn('[SurvivorArena] Rejected message from untrusted origin:', event.origin);
+        return;
+    }
+
+    // Pin parent origin from first valid message if referrer wasn't available
+    if (!parentOrigin && event.origin) {
+        parentOrigin = event.origin;
+    }
     
     switch (data.type) {
         case 'platformReady':
@@ -163,12 +187,20 @@ function showXPBanner(xpAmount, extraData = null) {
     // Create banner element
     const banner = document.createElement('div');
     banner.className = 'game-xp-banner';
-    banner.innerHTML = `
-        <div class="game-xp-badge">
-            <span class="game-xp-icon">⭐</span>
-            <span class="game-xp-amount">+${Number(xpAmount).toFixed(2)} XP</span>
-        </div>
-    `;
+
+    const badgeDiv = document.createElement('div');
+    badgeDiv.className = 'game-xp-badge';
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'game-xp-icon';
+    iconSpan.textContent = '⭐';
+
+    const amountSpan = document.createElement('span');
+    amountSpan.className = 'game-xp-amount';
+    amountSpan.textContent = '+' + Number(xpAmount).toFixed(2) + ' XP';
+
+    badgeDiv.append(iconSpan, amountSpan);
+    banner.appendChild(badgeDiv);
     
     // Append to game-container for fullscreen compatibility
     const container = document.getElementById('game-container') || document.body;
@@ -192,31 +224,79 @@ function showLevelUpNotification(levelUpData) {
 
     const modal = document.createElement('div');
     modal.className = 'level-up-modal';
-    modal.innerHTML = `
-        <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
-            <div class="level-up-animation">
-                <div class="level-up-rays"></div>
-                <div class="level-up-badge-container">
-                    <span class="level-up-badge">${badge}</span>
-                </div>
-            </div>
-            <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
-            <div class="level-up-levels">
-                <span class="old-level">${old_level}</span>
-                <span class="level-arrow">→</span>
-                <span class="new-level">${new_level}</span>
-            </div>
-            <div class="level-up-new-title">${title}</div>
-            ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-            ${!isAnonymous && coins_awarded > 0 ? `
-                <div class="level-up-reward">
-                    <span class="reward-icon">🪙</span>
-                    <span class="reward-amount">+${coins_awarded} Coins</span>
-                </div>
-            ` : ''}
-            <button class="level-up-close">Continue</button>
-        </div>
-    `;
+
+    const content = document.createElement('div');
+    content.className = 'level-up-content';
+    if (is_milestone) content.classList.add('milestone');
+
+    // Animation
+    const animation = document.createElement('div');
+    animation.className = 'level-up-animation';
+    const rays = document.createElement('div');
+    rays.className = 'level-up-rays';
+    const badgeContainer = document.createElement('div');
+    badgeContainer.className = 'level-up-badge-container';
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'level-up-badge';
+    badgeSpan.textContent = badge;
+    badgeContainer.appendChild(badgeSpan);
+    animation.append(rays, badgeContainer);
+
+    // Title
+    const titleEl = document.createElement('h2');
+    titleEl.className = 'level-up-title';
+    titleEl.textContent = '🎉 LEVEL UP! 🎉';
+
+    // Levels
+    const levels = document.createElement('div');
+    levels.className = 'level-up-levels';
+    const oldLvl = document.createElement('span');
+    oldLvl.className = 'old-level';
+    oldLvl.textContent = old_level;
+    const arrow = document.createElement('span');
+    arrow.className = 'level-arrow';
+    arrow.textContent = '→';
+    const newLvl = document.createElement('span');
+    newLvl.className = 'new-level';
+    newLvl.textContent = new_level;
+    levels.append(oldLvl, arrow, newLvl);
+
+    // New title
+    const newTitle = document.createElement('div');
+    newTitle.className = 'level-up-new-title';
+    newTitle.textContent = title;
+
+    content.append(animation, titleEl, levels, newTitle);
+
+    // Milestone badge
+    if (is_milestone) {
+        const milestoneBadge = document.createElement('div');
+        milestoneBadge.className = 'level-up-milestone-badge';
+        milestoneBadge.textContent = '✨ MILESTONE ✨';
+        content.appendChild(milestoneBadge);
+    }
+
+    // Coin reward
+    if (!isAnonymous && coins_awarded > 0) {
+        const reward = document.createElement('div');
+        reward.className = 'level-up-reward';
+        const rewardIcon = document.createElement('span');
+        rewardIcon.className = 'reward-icon';
+        rewardIcon.textContent = '🪙';
+        const rewardAmount = document.createElement('span');
+        rewardAmount.className = 'reward-amount';
+        rewardAmount.textContent = '+' + coins_awarded + ' Coins';
+        reward.append(rewardIcon, rewardAmount);
+        content.appendChild(reward);
+    }
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'level-up-close';
+    closeBtn.textContent = 'Continue';
+    content.appendChild(closeBtn);
+
+    modal.appendChild(content);
 
     // Append to game-container for fullscreen compatibility
     const container = document.getElementById('game-container') || document.body;
@@ -226,7 +306,6 @@ function showLevelUpNotification(levelUpData) {
     setTimeout(() => modal.classList.add('show'), 10);
 
     // Close handler
-    const closeBtn = modal.querySelector('.level-up-close');
     closeBtn.addEventListener('click', () => {
         modal.classList.remove('show');
         setTimeout(() => modal.remove(), 300);
@@ -558,10 +637,11 @@ function updateFullscreenIcon() {
 // Notify parent that game frame is ready
 window.addEventListener('load', () => {
     if (window.parent !== window) {
+        const targetOrigin = document.referrer ? new URL(document.referrer).origin : null;
         window.parent.postMessage({
             type: 'gameReady',
             game: 'survivor-arena'
-        }, '*');
+        }, null);
     }
 });
 

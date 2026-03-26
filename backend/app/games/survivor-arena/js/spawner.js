@@ -75,7 +75,7 @@ class Spawner {
         // Find appropriate difficulty tier
         let lastTier = DIFFICULTY_SCALING[0];
         for (const [time, multipliers] of Object.entries(DIFFICULTY_SCALING)) {
-            if (timeSeconds >= parseInt(time)) {
+            if (timeSeconds >= Number.parseInt(time)) {
                 lastTier = multipliers;
             }
         }

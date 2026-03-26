@@ -1273,9 +1273,9 @@ class Game {
                 const size = 1.5 + (i % 4) * 0.5;
                 const alpha = 0.2 + Math.sin(t / 600 + i * 0.8) * 0.15;
                 const c = i % 2 === 0 ? bg.particles.color1 : bg.particles.color2;
-                const r = parseInt(c.slice(1, 3), 16);
-                const g = parseInt(c.slice(3, 5), 16);
-                const b = parseInt(c.slice(5, 7), 16);
+                const r = Number.parseInt(c.slice(1, 3), 16);
+                const g = Number.parseInt(c.slice(3, 5), 16);
+                const b = Number.parseInt(c.slice(5, 7), 16);
                 ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
                 ctx.beginPath();
                 ctx.arc(px, py, size, 0, Math.PI * 2);
@@ -6515,7 +6515,7 @@ class Game {
             if (trackButtons.length > 0 && this.audio) {
                 const currentTrack = this.audio.getCurrentTrackIndex();
                 trackButtons.forEach(btn => {
-                    const trackIdx = parseInt(btn.dataset.track, 10);
+                    const trackIdx = Number.parseInt(btn.dataset.track, 10);
                     if (trackIdx === currentTrack) {
                         btn.classList.add('active');
                     } else {
@@ -7067,8 +7067,8 @@ class Game {
         const handleTrackChange = async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const trackIndex = parseInt(e.target.dataset.track, 10);
-            if (isNaN(trackIndex)) return;
+            const trackIndex = Number.parseInt(e.target.dataset.track, 10);
+            if (Number.isNaN(trackIndex)) return;
 
             // Aggiorna UI
             trackButtons.forEach(btn => btn.classList.remove('active'));
@@ -7098,13 +7098,14 @@ class Game {
         this.gameStartSent = true;
 
         try {
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : null;
             if (typeof PlatformSDK !== 'undefined') {
                 window.parent.postMessage({
                     type: 'gameStarted',
                     payload: {},
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
-                }, '*');
+                },  targetOrigin);
                 console.log('[Game] Game started notification sent');
             }
         } catch (error) {

@@ -4,7 +4,7 @@ Steem Post Router - API endpoints for Steem post publishing
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional, List, Dict, Any
+from typing import Annotated, Optional, List, Dict, Any
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -64,6 +64,11 @@ def get_coin_service(db: Session = Depends(get_db)) -> CoinService:
 def get_steem_post_service() -> SteemPostService:
     """Dependency to get SteemPostService instance"""
     return SteemPostService()
+
+
+DbSession = Annotated[Session, Depends(get_db)]
+CoinServiceDep = Annotated[CoinService, Depends(get_coin_service)]
+SteemPostServiceDep = Annotated[SteemPostService, Depends(get_steem_post_service)]
 
 
 def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
@@ -158,9 +163,9 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
 @router.post("/preview-post", response_model=PostPreviewResponse)
 async def preview_post(
     request: PostPreviewRequest,
-    db: Session = Depends(get_db),
-    post_service: SteemPostService = Depends(get_steem_post_service),
-    coin_service: CoinService = Depends(get_coin_service)
+    db: DbSession,
+    post_service: SteemPostServiceDep,
+    coin_service: CoinServiceDep,
 ):
     """
     Generate a preview of the Steem post without publishing
@@ -224,9 +229,9 @@ async def preview_post(
 @router.post("/create-post", response_model=CreatePostResponse, response_model_exclude_none=False)
 async def create_post(
     request: CreatePostRequest,
-    db: Session = Depends(get_db),
-    post_service: SteemPostService = Depends(get_steem_post_service),
-    coin_service: CoinService = Depends(get_coin_service)
+    db: DbSession,
+    post_service: SteemPostServiceDep,
+    coin_service: CoinServiceDep,
 ):
     """
     Create and prepare Steem post data (actual publishing happens via Keychain on frontend)
@@ -401,7 +406,7 @@ async def get_post_cost():
 @router.get("/post-availability/{user_id}")
 async def get_post_availability(
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Check if user can publish a post (cooldown check)
@@ -468,9 +473,9 @@ async def get_post_availability(
 @router.post("/confirm-post")
 async def confirm_post(
     request: dict,
-    db: Session = Depends(get_db),
-    coin_service: CoinService = Depends(get_coin_service),
-    post_service: SteemPostService = Depends(get_steem_post_service)
+    db: DbSession,
+    coin_service: CoinServiceDep,
+    post_service: SteemPostServiceDep,
 ):
     """
     Confirm successful post publication, deduct coins, and update cooldown timer
@@ -571,9 +576,9 @@ async def confirm_post(
 @router.post("/publish-with-key")
 async def publish_with_key(
     request: dict,
-    db: Session = Depends(get_db),
-    coin_service: CoinService = Depends(get_coin_service),
-    post_service: SteemPostService = Depends(get_steem_post_service)
+    db: DbSession,
+    coin_service: CoinServiceDep,
+    post_service: SteemPostServiceDep,
 ):
     """
     Publish post to Steem blockchain using posting key (server-side with beem)
@@ -976,9 +981,9 @@ def _send_publish_notification(username: str, post_url: str, permlink: str) -> N
 @router.post("/refund-post")
 async def refund_post(
     request: dict,
-    db: Session = Depends(get_db),
-    post_service: SteemPostService = Depends(get_steem_post_service),
-    coin_service: CoinService = Depends(get_coin_service)
+    db: DbSession,
+    post_service: SteemPostServiceDep,
+    coin_service: CoinServiceDep,
 ):
     """
     Refund coins if post publication failed

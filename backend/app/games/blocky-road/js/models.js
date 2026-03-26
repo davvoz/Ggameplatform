@@ -491,10 +491,10 @@ const Models = {
     },
     
     // Create car - Cute Crossy Road style (themed colors)
-    createCar: (color = 0xFF4444) => {
+    createCar: () => {
         const theme = themeManager.getTheme();
         const palette = theme.models.vehicleColors;
-        color = palette[Math.floor(Math.random() * palette.length)];
+        const color = palette[Math.floor(Math.random() * palette.length)];
         const group = new THREE.Group();
         
         // Main body using pooled geometry - POOLED (no fade-out anymore)
@@ -563,10 +563,10 @@ const Models = {
     },
     
     // Create truck - Detailed blocky style (themed colors)
-    createTruck: (color = 0x3366FF) => {
+    createTruck: () => {
         const theme = themeManager.getTheme();
         const palette = theme.models.vehicleColors;
-        color = palette[Math.floor(Math.random() * palette.length)];
+        const color = palette[Math.floor(Math.random() * palette.length)];
         const group = new THREE.Group();
         
         // Truck cab (front part) - POOLED (no fade-out anymore)
@@ -660,10 +660,10 @@ const Models = {
     },
     
     // Create motorcycle - Simple small blocky bike (themed colors)
-    createMotorcycle: (color = 0x1E88E5) => {
+    createMotorcycle: () => {
         const theme = themeManager.getTheme();
         const palette = theme.models.vehicleColors;
-        color = palette[Math.floor(Math.random() * palette.length)];
+        const color = palette[Math.floor(Math.random() * palette.length)];
         const group = new THREE.Group();
 
         // Corpo principale - POOLED (no fade-out anymore)

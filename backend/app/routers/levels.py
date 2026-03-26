@@ -4,7 +4,7 @@ Levels Router - API endpoints for level system
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -13,6 +13,8 @@ from app.level_system import LevelSystem
 
 
 router = APIRouter(prefix="/api/levels", tags=["Levels"])
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 # Response models
@@ -44,7 +46,7 @@ class LevelMilestoneResponse(BaseModel):
 @router.get("/{user_id}", response_model=LevelProgressResponse)
 async def get_user_level_progress(
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Get user's current level progress and information.
@@ -142,8 +144,8 @@ async def calculate_xp_for_level(level: int):
 
 @router.get("/leaderboard/top-levels")
 async def get_level_leaderboard(
+    db: DbSession,
     limit: int = 100,
-    db: Session = Depends(get_db)
 ):
     """
     Get leaderboard of highest level players.

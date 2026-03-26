@@ -3,7 +3,7 @@ Quests router for managing platform quests.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Header, Query
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 import os
@@ -18,6 +18,8 @@ from app.services import ServiceFactory
 from app.level_system import LevelSystem
 
 router = APIRouter()
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 # Admin API key from environment
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
@@ -43,8 +45,8 @@ def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = Non
 
 @router.get("/", response_model=List[QuestResponse])
 async def get_all_quests(
+    db: DbSession,
     active_only: bool = True,
-    db: Session = Depends(get_db)
 ):
     """Get all quests, optionally filtered by active status."""
     query = db.query(Quest)
@@ -75,7 +77,7 @@ async def get_all_quests(
 @router.get("/user/{user_id}", response_model=List[QuestWithProgress])
 async def get_user_quests(
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """Get all quests with user progress."""
     
@@ -123,7 +125,7 @@ async def get_user_quests(
 @router.get("/{quest_id}", response_model=QuestResponse)
 async def get_quest(
     quest_id: int,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """Get a specific quest by ID."""
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
@@ -138,8 +140,8 @@ async def get_quest(
 async def create_quest(
     quest_data: QuestCreate,
     request: Request,
+    db: DbSession,
     x_api_key: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
 ):
     """Create a new quest (admin only)."""
     verify_admin(x_api_key, request)
@@ -170,8 +172,8 @@ async def update_quest(
     quest_id: int,
     quest_data: QuestCreate,
     request: Request,
+    db: DbSession,
     x_api_key: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
 ):
     """Update an existing quest (admin only)."""
     verify_admin(x_api_key, request)
@@ -201,8 +203,8 @@ async def update_quest(
 async def delete_quest(
     quest_id: int,
     request: Request,
+    db: DbSession,
     x_api_key: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
 ):
     """Delete a quest (admin only)."""
     verify_admin(x_api_key, request)
@@ -220,7 +222,7 @@ async def delete_quest(
 
 @router.get("/stats/summary")
 async def get_quests_stats(
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """Get quest statistics."""
     
@@ -244,8 +246,8 @@ async def get_quests_stats(
 @router.post("/claim/{quest_id}")
 async def claim_quest_reward(
     quest_id: int,
+    db: DbSession,
     user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
 ):
     """Claim reward for a completed quest."""
     

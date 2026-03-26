@@ -5,7 +5,7 @@ Platform Router - Platform-wide configuration and info endpoints
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import Optional
+from typing import Annotated, Optional
 from app.database import get_db_session
 from app.models import PlatformConfig
 
@@ -16,6 +16,9 @@ def get_db():
     """Get database session as dependency"""
     with get_db_session() as session:
         yield session
+
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 def get_platform_epoch(db: Session) -> str:
@@ -49,7 +52,7 @@ def set_platform_epoch(db: Session, epoch: str = None) -> str:
 
 
 @router.get("/info")
-async def get_platform_info(db: Session = Depends(get_db)):
+async def get_platform_info(db: DbSession):
     """
     Get platform information including the current epoch.
     Frontend should check this on load and logout if epoch changed.
@@ -65,7 +68,7 @@ async def get_platform_info(db: Session = Depends(get_db)):
 
 
 @router.get("/health")
-async def health_check(db: Session = Depends(get_db)):
+async def health_check(db: DbSession):
     """Simple health check endpoint."""
     try:
         # Try to query something simple

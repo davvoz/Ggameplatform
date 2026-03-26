@@ -55,7 +55,7 @@ class Utils {
     }
 
     static formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
     static playSound(scene, key, volume = 1) {

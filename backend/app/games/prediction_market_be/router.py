@@ -88,7 +88,7 @@ _ws_task = None
 _ws_connected = False
 
 
-async def start_btc_websocket():
+def start_btc_websocket():
     """Start the persistent Binance WebSocket connection."""
     global _ws_task
     if _ws_task is None or _ws_task.done():
@@ -397,7 +397,7 @@ async def _resolve_round():
             losers.append(bet)
     
     # Award coins to winners + refund flat bets
-    await _pay_winners(winners + refunds)
+    _pay_winners(winners + refunds)
     
     # Save to history
     round_history.insert(0, {
@@ -417,7 +417,7 @@ async def _resolve_round():
         round_history[:] = round_history[:50]
 
 
-async def _pay_winners(winners: List[Dict]):
+def _pay_winners(winners: List[Dict]):
     """Award coins to winning bets."""
     from app.database import SessionLocal
     

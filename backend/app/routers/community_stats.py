@@ -12,7 +12,7 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Annotated, Optional, List
 from pydantic import BaseModel, Field
 import logging
 
@@ -33,6 +33,9 @@ def get_community_stats_service(db: Session = Depends(get_db)) -> CommunityStats
     """Dependency to get CommunityStatsService instance following existing DI pattern."""
     repository = CommunityStatsRepository(db)
     return CommunityStatsService(repository)
+
+
+CommunityStatsServiceDep = Annotated[CommunityStatsService, Depends(get_community_stats_service)]
 
 
 # =============================================================================
@@ -213,9 +216,9 @@ class TopAchieversResponse(BaseModel):
 
 @router.get("/games/daily", response_model=GameDailyActivityResponse)
 async def get_games_daily_activity(
+    service: CommunityStatsServiceDep,
     days: int = Query(30, ge=1, le=365, description="Number of past days to include"),
     game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
-    service: CommunityStatsService = Depends(get_community_stats_service)
 ):
     """
     Get game activity trends day by day.
@@ -239,9 +242,9 @@ async def get_games_daily_activity(
 
 @router.get("/users/ranked", response_model=RankedUsersResponse)
 async def get_users_ranked(
+    service: CommunityStatsServiceDep,
     limit: int = Query(50, ge=1, le=200, description="Maximum number of users to return"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
-    service: CommunityStatsService = Depends(get_community_stats_service)
 ):
     """
     Get registered users ranked by total XP earned.
@@ -265,9 +268,9 @@ async def get_users_ranked(
 
 @router.get("/economy/daily", response_model=EconomyDailyResponse)
 async def get_economy_daily(
+    service: CommunityStatsServiceDep,
     days: int = Query(30, ge=1, le=365, description="Number of past days to include"),
     game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
-    service: CommunityStatsService = Depends(get_community_stats_service)
 ):
     """
     Get XP and coins distributed per day.
@@ -291,9 +294,9 @@ async def get_economy_daily(
 
 @router.get("/economy/weekly", response_model=EconomyWeeklyResponse)
 async def get_economy_weekly(
+    service: CommunityStatsServiceDep,
     weeks: int = Query(12, ge=1, le=52, description="Number of past weeks to include"),
     game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
-    service: CommunityStatsService = Depends(get_community_stats_service)
 ):
     """
     Get XP and coins distributed per week.
@@ -316,8 +319,8 @@ async def get_economy_weekly(
 
 @router.get("/economy/historical", response_model=EconomyHistoricalResponse)
 async def get_economy_historical(
+    service: CommunityStatsServiceDep,
     game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
-    service: CommunityStatsService = Depends(get_community_stats_service)
 ):
     """
     Get all-time economy totals with per-game breakdown.
@@ -340,7 +343,7 @@ async def get_economy_historical(
 
 @router.get("/top-achievers", response_model=TopAchieversResponse)
 async def get_top_achievers(
-    service: CommunityStatsService = Depends(get_community_stats_service)
+    service: CommunityStatsServiceDep,
 ):
     """
     Get the top XP and coins earners for today, this week, and all-time.

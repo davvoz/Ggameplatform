@@ -4,7 +4,7 @@ Leaderboard Router - API endpoints for weekly and all-time leaderboards
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Annotated, Optional, List
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -13,6 +13,8 @@ from app.weekly_scheduler import get_scheduler
 
 
 router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 # Pydantic schemas
@@ -68,7 +70,7 @@ class CurrentWeekInfo(BaseModel):
 
 
 @router.get("/week-info")
-async def get_current_week_info(db: Session = Depends(get_db)):
+async def get_current_week_info(db: DbSession):
     """Get current week information."""
     lb_repo = LeaderboardRepository(db)
     week_start, week_end = lb_repo.get_current_week()
@@ -88,9 +90,9 @@ async def get_current_week_info(db: Session = Depends(get_db)):
 
 @router.get("/weekly", response_model=dict)
 async def get_weekly_leaderboard(
+    db: DbSession,
     game_id: Optional[str] = Query(None, description="Filter by game ID. If not provided, returns global leaderboard"),
     limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db)
 ):
     """
     Get current week's leaderboard.
@@ -116,9 +118,9 @@ async def get_weekly_leaderboard(
 
 @router.get("/all-time", response_model=dict)
 async def get_all_time_leaderboard(
+    db: DbSession,
     game_id: Optional[str] = Query(None, description="Filter by game ID. If not provided, returns global leaderboard"),
     limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db)
 ):
     """
     Get all-time best scores leaderboard.
@@ -141,7 +143,7 @@ async def get_all_time_leaderboard(
 @router.post("/score", status_code=status.HTTP_201_CREATED)
 async def update_leaderboard_score(
     score_data: ScoreUpdate,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Update user's score in both weekly and all-time leaderboards.
@@ -181,9 +183,9 @@ async def update_leaderboard_score(
 
 @router.get("/winners", response_model=dict)
 async def get_winners_history(
+    db: DbSession,
     limit: int = Query(50, ge=1, le=200),
     game_id: Optional[str] = Query(None, description="Filter by game ID"),
-    db: Session = Depends(get_db)
 ):
     """
     Get historical weekly winners.
@@ -225,8 +227,8 @@ async def trigger_manual_reset(
 
 @router.get("/rewards-config")
 async def get_rewards_configuration(
+    db: DbSession,
     game_id: Optional[str] = Query(None, description="Get rewards for specific game"),
-    db: Session = Depends(get_db)
 ):
     """Get configured rewards for leaderboard rankings."""
     from app.models import LeaderboardReward, Game
@@ -265,7 +267,7 @@ async def get_rewards_configuration(
 @router.get("/user-weekly-standings/{user_id}")
 async def get_user_weekly_standings(
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Get a user's current weekly leaderboard standings across all games.

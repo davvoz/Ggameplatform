@@ -213,7 +213,7 @@ async def startup_schedulers():
     # Start prediction market WebSocket + first round
     from app.games.prediction_market_be.router import start_new_round as start_prediction_round, start_btc_websocket
     try:
-        await start_btc_websocket()
+        start_btc_websocket()
         print("✅ Binance WebSocket started")
         await start_prediction_round()
         print("✅ Prediction Market first round started")

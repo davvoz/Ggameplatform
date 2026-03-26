@@ -5,7 +5,7 @@ API endpoints for Web Push notification subscriptions and sending.
 
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Annotated, Optional, List, Dict, Any
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from slowapi import Limiter
@@ -20,6 +20,8 @@ from app.push_notification_service import push_service, send_push_to_user, send_
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 # ============ SCHEMAS ============
 
@@ -83,7 +85,7 @@ async def get_vapid_public_key():
 async def subscribe_to_push(
     request: Request,
     subscription: PushSubscriptionCreate,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Register a new push subscription for a user.
@@ -151,8 +153,8 @@ async def subscribe_to_push(
 async def unsubscribe_from_push(
     request: Request,
     user_id: str,
+    db: DbSession,
     endpoint: Optional[str] = None,
-    db: Session = Depends(get_db)
 ):
     """
     Unsubscribe from push notifications.
@@ -182,7 +184,7 @@ async def unsubscribe_from_push(
 @router.get("/push/subscriptions/{user_id}", tags=["push-notifications"])
 async def get_user_subscriptions(
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """Get all push subscriptions for a user."""
     subscriptions = db.query(PushSubscription).filter(
@@ -201,7 +203,7 @@ async def get_user_subscriptions(
 async def send_push_notification(
     request: Request,
     notification: PushNotificationSend,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Send a push notification.
@@ -251,7 +253,7 @@ async def send_push_notification(
 async def send_test_notification(
     request: Request,
     user_id: str,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """Send a test push notification to a user."""
     if not push_service.is_configured():

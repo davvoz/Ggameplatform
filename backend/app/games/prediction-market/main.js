@@ -129,7 +129,7 @@ async function loadBalance() {
 }
 function updateBalanceUI(v) {
     if (!els.coinAmount) return;
-    const prev = Number.parseInt(els.coinAmount.textContent.replace(/[^0-9-]/g, '')) || 0;
+    const prev = Number.parseInt(els.coinAmount.textContent.replaceAll(/[^0-9-]/g, '')) || 0;
     const target = Math.round(v);
     if (prev === target) return;
 

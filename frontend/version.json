@@ -1,8 +1,17 @@
 {
-  "version": "4.0.32",
-  "timestamp": "2026-03-24T21:56:02.625Z",
-  "buildNumber": 491,
+  "version": "4.0.33",
+  "timestamp": "2026-03-26T21:59:16.018Z",
+  "buildNumber": 492,
   "changelog": [
+    {
+      "version": "4.0.33",
+      "date": "2026-03-26",
+      "type": "patch",
+      "changes": [
+        "fix:Sonar",
+        "🔖 Bump version to 4.0.32 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.32",
       "date": "2026-03-24",
@@ -82,16 +91,6 @@
       "changes": [
         "fix : Sonar",
         "🔖 Bump version to 4.0.23 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.23",
-      "date": "2026-03-24",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: backend Sonar",
-        "🔖 Bump version to 4.0.22 [skip-version]"
       ]
     }
   ]

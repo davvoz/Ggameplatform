@@ -74,7 +74,6 @@ async function initSDK() {
         fetchBalance();
     }
 
-    const targetOrigin = parentOrigin || (document.referrer ? new URL(document.referrer).origin : null);
     // Listen for XP banner and level-up notifications from platform/RuntimeShell
     window.addEventListener('message', (event) => {
         try {
@@ -261,7 +260,6 @@ function showSection(el, displayVal = '') {
     if (el.style.display !== 'none' && el.style.display !== '') return;
     el.style.display = displayVal;
     el.style.animation = 'none';
-    el.offsetHeight; // force reflow
     el.style.animation = '';
 }
 function hideSection(el) {
@@ -1088,7 +1086,7 @@ $newHandBtn.addEventListener('click', () => {
 $betReset.addEventListener('click', resetBet);
 
 document.querySelectorAll('.bet-chip').forEach(btn => {
-    btn.addEventListener('click', () => addToBet(parseInt(btn.dataset.add)));
+    btn.addEventListener('click', () => addToBet(Number.parseInt(btn.dataset.add)));
 });
 
 $actionsSection.querySelectorAll('.action-btn').forEach(btn => {

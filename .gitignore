@@ -311,3 +311,6 @@ backend/scripts/register_blackjack.py
 backend/scripts/initialize_platform_from_backup.py
 backend/scripts/initialize_platform_from_backup.py
 backend/scripts/initialize_platform_from_backup_ignore.py
+
+#.agents directory for AI agents
+.agents/

@@ -217,10 +217,7 @@ body {
     color: var(--green);
 }
 
-/* Smooth game-status transitions */
-.game-status {
-    transition: color 0.3s, text-shadow 0.3s;
-}
+
 
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -498,6 +495,8 @@ body {
     color: rgba(255, 255, 255, 0.6);
     white-space: nowrap;
     transition: all 0.4s;
+    transition: color 0.3s, text-shadow 0.3s;
+
 }
 
 /* Result text in game-status area */

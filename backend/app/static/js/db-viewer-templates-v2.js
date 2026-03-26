@@ -634,7 +634,6 @@ class Utils {
     static formatDate(dateString) {
         if (!dateString) return '-';
         const date = new Date(dateString);
-                const numVal = Number.parseFloat(value);
         if (Number.isNaN(date.getTime())) return dateString;
         return date.toLocaleString(CONFIG?.DATE_FORMAT?.locale || 'it-IT', 
             CONFIG?.DATE_FORMAT?.options || {

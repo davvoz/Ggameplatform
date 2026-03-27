@@ -1,8 +1,17 @@
 {
-  "version": "4.0.36",
-  "timestamp": "2026-03-27T08:57:12.195Z",
-  "buildNumber": 495,
+  "version": "4.1.0",
+  "timestamp": "2026-03-27T14:25:30.218Z",
+  "buildNumber": 496,
   "changelog": [
+    {
+      "version": "4.1.0",
+      "date": "2026-03-27",
+      "type": "minor",
+      "changes": [
+        "feat: Private messages , link users",
+        "🔖 Bump version to 4.0.36 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.36",
       "date": "2026-03-27",
@@ -82,15 +91,6 @@
       "changes": [
         "fix : Sonar",
         "🔖 Bump version to 4.0.27 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.27",
-      "date": "2026-03-24",
-      "type": "patch",
-      "changes": [
-        "fix:Sonar",
-        "🔖 Bump version to 4.0.26 [skip-version]"
       ]
     }
   ]

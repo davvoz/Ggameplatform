@@ -24,24 +24,6 @@ DbSession = Annotated[Session, Depends(get_db)]
 # Admin API key from environment
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "dev-admin-key-change-in-production")
 
-def verify_admin(x_api_key: Optional[str] = Header(None), request: Request = None):
-    """Verify admin access via API key or localhost"""
-    # Allow localhost and local network in development
-    if request:
-        client_ip = request.client.host
-        # Allow localhost
-        if client_ip in ["127.0.0.1", "localhost", "::1"]:
-            return True
-        # Allow local network (192.168.x.x)
-        if client_ip.startswith("192.168."):
-            return True
-    
-    # Check API key
-    if x_api_key != ADMIN_API_KEY:
-        raise HTTPException(status_code=403, detail="Admin access denied")
-    
-    return True
-
 
 @router.get("/", response_model=List[QuestResponse])
 async def get_all_quests(
@@ -141,10 +123,9 @@ async def create_quest(
     quest_data: QuestCreate,
     request: Request,
     db: DbSession,
-    x_api_key: Optional[str] = Header(None),
+    x_api_key: Annotated[Optional[str], Header()] = None,
 ):
     """Create a new quest (admin only)."""
-    verify_admin(x_api_key, request)
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -173,10 +154,9 @@ async def update_quest(
     quest_data: QuestCreate,
     request: Request,
     db: DbSession,
-    x_api_key: Optional[str] = Header(None),
+    x_api_key: Annotated[Optional[str], Header()] = None,
 ):
     """Update an existing quest (admin only)."""
-    verify_admin(x_api_key, request)
     
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
     
@@ -204,11 +184,9 @@ async def delete_quest(
     quest_id: int,
     request: Request,
     db: DbSession,
-    x_api_key: Optional[str] = Header(None),
+    x_api_key: Annotated[Optional[str], Header()] = None,
 ):
-    """Delete a quest (admin only)."""
-    verify_admin(x_api_key, request)
-    
+    """Delete a quest (admin only)."""    
     quest = db.query(Quest).filter(Quest.quest_id == quest_id).first()
     
     if not quest:
@@ -247,7 +225,7 @@ async def get_quests_stats(
 async def claim_quest_reward(
     quest_id: int,
     db: DbSession,
-    user_id: str = Query(..., description="User ID"),
+    user_id: Annotated[str, Query(description="User ID")],
 ):
     """Claim reward for a completed quest."""
     

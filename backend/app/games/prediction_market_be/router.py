@@ -7,7 +7,7 @@ Uses Binance public API for BTC price (free, no API key needed).
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Annotated, Optional, List, Dict, Any
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 import asyncio
@@ -21,6 +21,8 @@ import json
 from app.database import get_db
 from app.repositories import RepositoryFactory
 from app.services import CoinService, ValidationError
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 logger = logging.getLogger(__name__)
 
@@ -501,7 +503,7 @@ async def get_price():
 @router.post("/bet", response_model=PlaceBetResponse)
 async def place_bet(
     bet_request: PlaceBetRequest,
-    db: Session = Depends(get_db),
+    db: DbSession,
 ):
     """Place a bet on the current round."""
     user_id = bet_request.user_id

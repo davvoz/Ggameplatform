@@ -217,8 +217,8 @@ class TopAchieversResponse(BaseModel):
 @router.get("/games/daily", response_model=GameDailyActivityResponse)
 async def get_games_daily_activity(
     service: CommunityStatsServiceDep,
-    days: int = Query(30, ge=1, le=365, description="Number of past days to include"),
-    game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
+    days: Annotated[int, Query(ge=1, le=365, description="Number of past days to include")] = 30,
+    game_id: Annotated[Optional[str], Query(description="Filter by specific game ID")] = None,
 ):
     """
     Get game activity trends day by day.
@@ -243,8 +243,8 @@ async def get_games_daily_activity(
 @router.get("/users/ranked", response_model=RankedUsersResponse)
 async def get_users_ranked(
     service: CommunityStatsServiceDep,
-    limit: int = Query(50, ge=1, le=200, description="Maximum number of users to return"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
+    limit: Annotated[int, Query(ge=1, le=200, description="Maximum number of users to return")] = 50,
+    offset: Annotated[int, Query(ge=0, description="Pagination offset")] = 0,
 ):
     """
     Get registered users ranked by total XP earned.
@@ -269,8 +269,8 @@ async def get_users_ranked(
 @router.get("/economy/daily", response_model=EconomyDailyResponse)
 async def get_economy_daily(
     service: CommunityStatsServiceDep,
-    days: int = Query(30, ge=1, le=365, description="Number of past days to include"),
-    game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
+    days: Annotated[int, Query(ge=1, le=365, description="Number of past days to include")] = 30,
+    game_id: Annotated[Optional[str], Query(description="Filter by specific game ID")] = None,
 ):
     """
     Get XP and coins distributed per day.
@@ -295,8 +295,8 @@ async def get_economy_daily(
 @router.get("/economy/weekly", response_model=EconomyWeeklyResponse)
 async def get_economy_weekly(
     service: CommunityStatsServiceDep,
-    weeks: int = Query(12, ge=1, le=52, description="Number of past weeks to include"),
-    game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
+    weeks: Annotated[int, Query(ge=1, le=52, description="Number of past weeks to include")] = 12,
+    game_id: Annotated[Optional[str], Query(description="Filter by specific game ID")] = None,
 ):
     """
     Get XP and coins distributed per week.
@@ -320,7 +320,7 @@ async def get_economy_weekly(
 @router.get("/economy/historical", response_model=EconomyHistoricalResponse)
 async def get_economy_historical(
     service: CommunityStatsServiceDep,
-    game_id: Optional[str] = Query(None, description="Filter by specific game ID"),
+    game_id: Annotated[Optional[str], Query(description="Filter by specific game ID")] = None,
 ):
     """
     Get all-time economy totals with per-game breakdown.

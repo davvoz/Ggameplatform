@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Annotated, Optional, Dict, Any
 from app.database import (
     create_user, get_user_by_id, get_user_by_username, 
     authenticate_user,  get_all_users,
@@ -338,7 +338,7 @@ async def get_user(user_id: str):
     }
 
 @router.get("/{user_id}/sessions")
-async def get_user_game_sessions(user_id: str, limit: int = Query(None)):
+async def get_user_game_sessions(user_id: str, limit: Annotated[Optional[int], Query()] = None):
     """Get user's game sessions and total count.
 
     Returns a paginated list of recent sessions (limited by `limit`) and the

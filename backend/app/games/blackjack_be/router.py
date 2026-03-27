@@ -6,7 +6,7 @@ All game logic runs server-side to prevent cheating.
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Annotated, Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 import random
 import time
@@ -16,6 +16,8 @@ import uuid
 from app.database import get_db
 from app.repositories import RepositoryFactory
 from app.services import CoinService, ValidationError
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 logger = logging.getLogger(__name__)
 
@@ -368,7 +370,7 @@ def resolve_hands(game: GameSession):
 @router.post("/deal", response_model=GameStateResponse)
 async def deal(
     req: DealRequest,
-    db: Session = Depends(get_db),
+    db: DbSession,
 ):
     """Start a new Blackjack hand. Deducts the bet from user's balance."""
     cleanup_old_games()
@@ -432,7 +434,7 @@ async def deal(
 @router.post("/action", response_model=GameStateResponse)
 async def action(
     req: ActionRequest,
-    db: Session = Depends(get_db),
+    db: DbSession,
 ):
     """Perform a game action (hit, stand, double, split, surrender, insurance)."""
     game = active_games.get(req.game_id)

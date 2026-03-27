@@ -10,7 +10,7 @@ import json
 import uuid
 import os
 import aiofiles
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
@@ -431,7 +431,7 @@ chat_manager = CommunityChatManager()
 # =============================================================================
 
 @rest_router.post("/upload")
-async def upload_media(file: UploadFile = File(...)):
+async def upload_media(file: Annotated[UploadFile, File()]):
     """
     Upload an image or GIF for chat.
     Max size: 5MB

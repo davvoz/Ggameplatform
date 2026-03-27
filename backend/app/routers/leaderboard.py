@@ -91,8 +91,8 @@ async def get_current_week_info(db: DbSession):
 @router.get("/weekly", response_model=dict)
 async def get_weekly_leaderboard(
     db: DbSession,
-    game_id: Optional[str] = Query(None, description="Filter by game ID. If not provided, returns global leaderboard"),
-    limit: int = Query(50, ge=1, le=100),
+    game_id: Annotated[Optional[str], Query(description="Filter by game ID. If not provided, returns global leaderboard")] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ):
     """
     Get current week's leaderboard.
@@ -119,8 +119,8 @@ async def get_weekly_leaderboard(
 @router.get("/all-time", response_model=dict)
 async def get_all_time_leaderboard(
     db: DbSession,
-    game_id: Optional[str] = Query(None, description="Filter by game ID. If not provided, returns global leaderboard"),
-    limit: int = Query(50, ge=1, le=100),
+    game_id: Annotated[Optional[str], Query(description="Filter by game ID. If not provided, returns global leaderboard")] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ):
     """
     Get all-time best scores leaderboard.
@@ -184,8 +184,8 @@ async def update_leaderboard_score(
 @router.get("/winners", response_model=dict)
 async def get_winners_history(
     db: DbSession,
-    limit: int = Query(50, ge=1, le=200),
-    game_id: Optional[str] = Query(None, description="Filter by game ID"),
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    game_id: Annotated[Optional[str], Query(description="Filter by game ID")] = None,
 ):
     """
     Get historical weekly winners.
@@ -205,7 +205,7 @@ async def get_winners_history(
 
 @router.post("/manual-reset", status_code=status.HTTP_200_OK)
 async def trigger_manual_reset(
-    use_current_week: bool = Query(False, description="Process current week instead of previous (for testing)")
+    use_current_week: Annotated[bool, Query(description="Process current week instead of previous (for testing)")] = False,
 ):
     """
     Manually trigger weekly reset (admin only - should add auth).
@@ -228,7 +228,7 @@ async def trigger_manual_reset(
 @router.get("/rewards-config")
 async def get_rewards_configuration(
     db: DbSession,
-    game_id: Optional[str] = Query(None, description="Get rewards for specific game"),
+    game_id: Annotated[Optional[str], Query(description="Get rewards for specific game")] = None,
 ):
     """Get configured rewards for leaderboard rankings."""
     from app.models import LeaderboardReward, Game

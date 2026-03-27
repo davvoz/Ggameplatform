@@ -1,8 +1,17 @@
 {
-  "version": "4.1.0",
-  "timestamp": "2026-03-27T14:25:30.218Z",
-  "buildNumber": 496,
+  "version": "4.1.1",
+  "timestamp": "2026-03-27T22:37:26.063Z",
+  "buildNumber": 497,
   "changelog": [
+    {
+      "version": "4.1.1",
+      "date": "2026-03-27",
+      "type": "patch",
+      "changes": [
+        "fix: ensure datetime objects are timezone-aware for user post timestamps",
+        "🔖 Bump version to 4.1.0 [skip-version]"
+      ]
+    },
     {
       "version": "4.1.0",
       "date": "2026-03-27",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Sonar",
         "🔖 Bump version to 4.0.28 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.28",
-      "date": "2026-03-24",
-      "type": "patch",
-      "changes": [
-        "fix : Sonar",
-        "🔖 Bump version to 4.0.27 [skip-version]"
       ]
     }
   ]

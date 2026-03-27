@@ -1,8 +1,17 @@
 {
-  "version": "4.0.35",
-  "timestamp": "2026-03-26T22:48:16.783Z",
-  "buildNumber": 494,
+  "version": "4.0.36",
+  "timestamp": "2026-03-27T08:57:12.195Z",
+  "buildNumber": 495,
   "changelog": [
+    {
+      "version": "4.0.36",
+      "date": "2026-03-27",
+      "type": "patch",
+      "changes": [
+        "refactor: Sonar fix v3",
+        "🔖 Bump version to 4.0.35 [skip-version]"
+      ]
+    },
     {
       "version": "4.0.35",
       "date": "2026-03-26",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:Sonar",
         "🔖 Bump version to 4.0.26 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.26",
-      "date": "2026-03-24",
-      "type": "patch",
-      "changes": [
-        "fix: sonar",
-        "🔖 Bump version to 4.0.25 [skip-version]"
       ]
     }
   ]

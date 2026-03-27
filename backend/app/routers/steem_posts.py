@@ -108,6 +108,8 @@ def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:
     if user.created_at:
         try:
             created_date = datetime.fromisoformat(user.created_at)
+            if created_date.tzinfo is None:
+                created_date = created_date.replace(tzinfo=timezone.utc)
             now = datetime.now(timezone.utc)
             days_member = (now - created_date).days
         except Exception as e:
@@ -261,9 +263,9 @@ async def create_post(
         if user.last_steem_post:
             from datetime import datetime, timedelta, timezone
             last_post_time = datetime.fromisoformat(user.last_steem_post)
-            # Ensure last_post_time is offset-naive for comparison
-            if last_post_time.tzinfo is not None:
-                last_post_time = last_post_time.replace(tzinfo=None)
+            # Ensure last_post_time is timezone-aware (UTC) for comparison
+            if last_post_time.tzinfo is None:
+                last_post_time = last_post_time.replace(tzinfo=timezone.utc)
             current_time = datetime.now(timezone.utc)
             time_diff = current_time - last_post_time
             cooldown_hours = 48
@@ -435,9 +437,9 @@ async def get_post_availability(
         if user.last_steem_post:
             from datetime import datetime, timedelta, timezone
             last_post_time = datetime.fromisoformat(user.last_steem_post)
-            # Ensure last_post_time is offset-naive for comparison
-            if last_post_time.tzinfo is not None:
-                last_post_time = last_post_time.replace(tzinfo=None)
+            # Ensure last_post_time is timezone-aware (UTC) for comparison
+            if last_post_time.tzinfo is None:
+                last_post_time = last_post_time.replace(tzinfo=timezone.utc)
             current_time = datetime.now(timezone.utc)
             time_diff = current_time - last_post_time
             cooldown_hours = 48

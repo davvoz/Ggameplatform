@@ -994,6 +994,53 @@ const DB_SCHEMA = {
         erPosition: { x: 400, y: 350 }
     },
 
+    community_messages: {
+        tableName: 'community_messages',
+        label: 'Chat Messaggi',
+        icon: '💬',
+        color: '#0ea5e9',
+        apiEndpoint: 'community-messages',
+        dataKey: 'community_messages',
+
+        primaryKey: 'id',
+        foreignKeys: {},
+
+        fields: {
+            id:          { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            message_id:  { ...FIELD_TYPES.STRING,     label: 'Message ID', required: true },
+            user_id:     { ...FIELD_TYPES.STRING,     label: 'User ID',    required: true },
+            username:    { ...FIELD_TYPES.STRING,     label: 'Username',   required: true },
+            text:        { ...FIELD_TYPES.TEXT,       label: 'Testo' },
+            image_url:   { ...FIELD_TYPES.STRING,     label: 'Immagine URL' },
+            gif_url:     { ...FIELD_TYPES.STRING,     label: 'GIF URL' },
+            level:       { ...FIELD_TYPES.INTEGER,    label: 'Livello' },
+            timestamp_ms:{ ...FIELD_TYPES.INTEGER,    label: 'Timestamp (ms)' },
+            is_edited:   { ...FIELD_TYPES.IS_ACTIVE,  label: 'Modificato' },
+            edited_at_ms:{ ...FIELD_TYPES.INTEGER,    label: 'Modificato il (ms)' },
+            created_at:  { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' }
+        },
+
+        tableColumns: ['id', 'username', 'text', 'is_edited', 'timestamp_ms', 'created_at', 'actions'],
+
+        columnConfig: {
+            id:           { width: '60px' },
+            username:     { searchable: true, style: 'font-weight: 600; color: #0ea5e9;' },
+            text:         { type: 'custom', render: (value) => {
+                const safe = (value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const preview = safe.length > 100 ? safe.substring(0, 100) + '…' : safe;
+                return { type: 'html', content: `<span title="${safe}">${preview || '<em style="color:#737373">—</em>'}</span>` };
+            }, searchable: true },
+            is_edited:    { type: 'custom', render: RENDERERS.booleanStatus('✏️ Sì', '—') },
+            timestamp_ms: { type: 'custom', render: (value) => {
+                if (!value) return '—';
+                return { type: 'html', content: `<span title="${value}">${new Date(value).toLocaleString('it-IT')}</span>` };
+            }},
+            created_at:   { type: 'date' }
+        },
+
+        erPosition: { x: 600, y: 500 }
+    },
+
     game_progress: {
         tableName: 'game_progress',
         label: 'Game Progress',
@@ -1034,6 +1081,100 @@ const DB_SCHEMA = {
         },
 
         erPosition: { x: 400, y: 500 }
+    },
+
+    user_connections: {
+        tableName: 'user_connections',
+        label: 'Connessioni Utenti',
+        icon: '🤝',
+        color: '#8B5CF6',
+        apiEndpoint: 'user-connections',
+        dataKey: 'user_connections',
+
+        primaryKey: 'id',
+        foreignKeys: {
+            requester_id: { table: 'users', field: 'user_id' },
+            receiver_id: { table: 'users', field: 'user_id' }
+        },
+
+        fields: {
+            id:            { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            requester_id:  { ...FIELD_TYPES.STRING, label: 'Richiedente', required: true, fk: 'users.user_id' },
+            receiver_id:   { ...FIELD_TYPES.STRING, label: 'Destinatario', required: true, fk: 'users.user_id' },
+            status:        { ...FIELD_TYPES.STRING, label: 'Stato', required: true, default: 'pending' },
+            created_at:    { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' },
+            updated_at:    { ...FIELD_TYPES.UPDATED_AT, label: 'Aggiornato il' }
+        },
+
+        tableColumns: ['id', 'requester_id', 'receiver_id', 'status', 'created_at', 'updated_at', 'actions'],
+
+        columnConfig: {
+            id:            { width: '60px' },
+            requester_id:  { searchable: true, style: 'font-weight: 600; color: #8B5CF6;' },
+            receiver_id:   { searchable: true, style: 'font-weight: 600; color: #8B5CF6;' },
+            status:        { type: 'custom', render: (value) => {
+                const colors = { pending: '#f59e0b', accepted: '#22c55e', rejected: '#ef4444' };
+                const labels = { pending: '⏳ In attesa', accepted: '✅ Accettata', rejected: '❌ Rifiutata' };
+                return {
+                    type: 'html',
+                    content: `<span style="color: ${colors[value] || '#6c757d'}; font-weight: 600;">${labels[value] || value}</span>`
+                };
+            }, searchable: true },
+            created_at:    { type: 'date' },
+            updated_at:    { type: 'date' }
+        },
+
+        erPosition: { x: 200, y: 600 }
+    },
+
+    private_messages: {
+        tableName: 'private_messages',
+        label: 'Messaggi Privati',
+        icon: '✉️',
+        color: '#ec4899',
+        apiEndpoint: 'private-messages',
+        dataKey: 'private_messages',
+
+        primaryKey: 'id',
+        foreignKeys: {
+            sender_id: { table: 'users', field: 'user_id' },
+            receiver_id: { table: 'users', field: 'user_id' }
+        },
+
+        fields: {
+            id:           { ...FIELD_TYPES.INTEGER_PK, label: 'ID' },
+            message_id:   { ...FIELD_TYPES.STRING, label: 'Message ID', required: true },
+            sender_id:    { ...FIELD_TYPES.STRING, label: 'Mittente', required: true, fk: 'users.user_id' },
+            receiver_id:  { ...FIELD_TYPES.STRING, label: 'Destinatario', required: true, fk: 'users.user_id' },
+            text:         { ...FIELD_TYPES.TEXT, label: 'Testo' },
+            timestamp_ms: { ...FIELD_TYPES.INTEGER, label: 'Timestamp (ms)' },
+            is_read:      { ...FIELD_TYPES.INTEGER, label: 'Letto', default: 0 },
+            created_at:   { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' }
+        },
+
+        tableColumns: ['id', 'sender_id', 'receiver_id', 'text', 'is_read', 'timestamp_ms', 'created_at', 'actions'],
+
+        columnConfig: {
+            id:           { width: '60px' },
+            sender_id:    { searchable: true, style: 'font-weight: 600; color: #ec4899;' },
+            receiver_id:  { searchable: true, style: 'font-weight: 600; color: #ec4899;' },
+            text:         { type: 'custom', render: (value) => {
+                const safe = (value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const preview = safe.length > 100 ? safe.substring(0, 100) + '…' : safe;
+                return { type: 'html', content: `<span title="${safe}">${preview || '<em style="color:#737373">—</em>'}</span>` };
+            }, searchable: true },
+            is_read:      { type: 'custom', render: (value) => ({
+                type: 'html',
+                content: value ? '<span style="color: #22c55e; font-weight: 600;">✅ Sì</span>' : '<span style="color: #ef4444; font-weight: 600;">❌ No</span>'
+            })},
+            timestamp_ms: { type: 'custom', render: (value) => {
+                if (!value) return '—';
+                return { type: 'html', content: `<span title="${value}">${new Date(value).toLocaleString('it-IT')}</span>` };
+            }},
+            created_at:   { type: 'date' }
+        },
+
+        erPosition: { x: 400, y: 600 }
     }
 };
 

@@ -2,6 +2,8 @@ import { getGameResourceUrl, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import { config } from './config.js';
+import AuthManager from './auth.js';
+import ConfirmModal from './ConfirmModal.js';
 
 /**
  * UserProfileRenderer - Renders the public profile page for any user.
@@ -56,6 +58,9 @@ class UserProfileRenderer {
 
             // Load Steem profile in background (slowest call)
             this.loadSteemProfileAsync(user);
+
+            // Load connection status in background
+            this.loadConnectionStatusAsync();
         } catch (error) {
             console.error('Error rendering user profile:', error);
             this.showErrorState();
@@ -375,6 +380,7 @@ class UserProfileRenderer {
                 <div class="profile-content">
                     <div class="user-profile-back-btn-container">
                         <button class="user-profile-back-btn" onclick="window.history.back()">← Back</button>
+                        <button class="user-profile-connect-btn" id="connectBtn" style="display:none;">🔗 Connect</button>
                     </div>
 
                     <h3>📊 Game Statistics</h3>
@@ -667,6 +673,131 @@ class UserProfileRenderer {
         const createdDate = new Date(user.created_at);
         const now = new Date();
         return Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+    }
+
+    // ───────── Connection Request ─────────
+
+    /**
+     * Check and display connection button for the profile user.
+     */
+    async loadConnectionStatusAsync() {
+        const currentUser = AuthManager.getUser();
+        if (!currentUser || currentUser.is_anonymous || currentUser.user_id === this.userId) {
+            return;
+        }
+
+        const btn = document.getElementById('connectBtn');
+        if (!btn) {
+            return;
+        }
+
+        try {
+            const API_URL = this.getApiUrl();
+            const res = await fetch(
+                `${API_URL}/api/private-messages/connections/status?user_id=${encodeURIComponent(currentUser.user_id)}&other_id=${encodeURIComponent(this.userId)}`
+            );
+            if (!res.ok) {
+                return;
+            }
+            const data = await res.json();
+
+            if (data.status === 'accepted') {
+                btn.textContent = '❌ Disconnect';
+                btn.disabled = false;
+                btn.classList.add('user-profile-connect-btn--connected');
+                btn.style.display = '';
+                btn.addEventListener('click', () => this._handleDisconnectClick(btn, currentUser.user_id, data.id));
+            } else if (data.status === 'pending') {
+                btn.textContent = '⏳ Pending';
+                btn.disabled = true;
+                btn.classList.add('user-profile-connect-btn--pending');
+                btn.style.display = '';
+            } else {
+                btn.textContent = '🔗 Connect';
+                btn.disabled = false;
+                btn.style.display = '';
+                btn.addEventListener('click', () => this._handleConnectClick(btn, currentUser.user_id));
+            }
+        } catch {
+            // Connection status check failed; hide button
+        }
+    }
+
+    /**
+     * Handle connect button click — send connection request.
+     * @param {HTMLElement} btn
+     * @param {string} requesterId
+     */
+    async _handleConnectClick(btn, requesterId) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Sending...';
+
+        try {
+            const API_URL = this.getApiUrl();
+            const res = await fetch(
+                `${API_URL}/api/private-messages/connections/request?requester_id=${encodeURIComponent(requesterId)}&receiver_id=${encodeURIComponent(this.userId)}`,
+                { method: 'POST' }
+            );
+
+            if (res.ok) {
+                btn.textContent = '⏳ Pending';
+                btn.classList.add('user-profile-connect-btn--pending');
+            } else {
+                const body = await res.json().catch(() => ({}));
+                btn.textContent = body.detail || 'Error';
+                setTimeout(() => {
+                    btn.textContent = '🔗 Connect';
+                    btn.disabled = false;
+                }, 2000);
+            }
+        } catch {
+            btn.textContent = '🔗 Connect';
+            btn.disabled = false;
+        }
+    }
+
+    async _handleDisconnectClick(btn, userId, connectionId) {
+        const confirmed = await ConfirmModal.show({
+            title: 'Remove Connection',
+            message: 'Remove this connection? The conversation will be deleted.',
+            confirmText: 'Remove',
+            cancelText: 'Cancel',
+            variant: 'danger',
+        });
+        if (!confirmed) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Disconnecting...';
+
+        try {
+            const API_URL = this.getApiUrl();
+            const res = await fetch(
+                `${API_URL}/api/private-messages/connections/${connectionId}?user_id=${encodeURIComponent(userId)}`,
+                { method: 'DELETE' }
+            );
+
+            if (res.ok) {
+                btn.textContent = '🔗 Connect';
+                btn.disabled = false;
+                btn.classList.remove('user-profile-connect-btn--connected');
+                // Replace the button to remove old listeners
+                const newBtn = btn.cloneNode(true);
+                btn.replaceWith(newBtn);
+                newBtn.addEventListener('click', () => this._handleConnectClick(newBtn, userId));
+            } else {
+                const body = await res.json().catch(() => ({}));
+                btn.textContent = body.detail || 'Error';
+                setTimeout(() => {
+                    btn.textContent = '❌ Disconnect';
+                    btn.disabled = false;
+                }, 2000);
+            }
+        } catch {
+            btn.textContent = '❌ Disconnect';
+            btn.disabled = false;
+        }
     }
 
     getApiUrl() {

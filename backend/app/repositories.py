@@ -8,7 +8,11 @@ from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from abc import ABC, abstractmethod
-from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, Campaign
+from app.models import (
+    Base, Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest,
+    GameStatus, UserCoins, CoinTransaction, Campaign, CommunityMessage,
+    UserConnection, PrivateMessage,
+)
 
 # Generic type for models
 ModelType = TypeVar("ModelType", bound=Base)
@@ -436,6 +440,337 @@ class CampaignRepository(BaseRepository[Campaign]):
             raise Exception(f"Error fetching active campaigns: {str(e)}")
 
 
+class CommunityMessageRepository(BaseRepository[CommunityMessage]):
+    """
+    Repository for CommunityMessage entities.
+
+    Manages the persistent chat history window: persists incoming messages and
+    prunes the table so it never exceeds MAX_MESSAGES rows, giving the same
+    'last-100' semantics that previously lived only in memory.
+    """
+
+    MAX_MESSAGES: int = 100
+
+    def __init__(self, db_session: Session):
+        super().__init__(CommunityMessage, db_session, id_field="id")
+
+    def get_latest(self, limit: int = MAX_MESSAGES) -> List[CommunityMessage]:
+        """Return up to *limit* most-recent messages, ordered oldest-first."""
+        try:
+            rows = (
+                self.db_session.query(CommunityMessage)
+                .order_by(CommunityMessage.timestamp_ms.desc())
+                .limit(limit)
+                .all()
+            )
+            rows.reverse()
+            return rows
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error fetching community messages: {str(exc)}")
+
+    def save_message(self, message_dict: dict) -> CommunityMessage:
+        """
+        Persist a chat message dict and prune old rows in a single transaction.
+
+        *message_dict* must contain the keys produced by ChatMessage.to_dict().
+        """
+        from datetime import datetime, timezone
+
+        record = CommunityMessage(
+            message_id=message_dict["id"],
+            user_id=message_dict["user_id"],
+            username=message_dict["username"],
+            text=message_dict.get("text", ""),
+            image_url=message_dict.get("image_url"),
+            gif_url=message_dict.get("gif_url"),
+            level=message_dict.get("level"),
+            timestamp_ms=message_dict["timestamp"],
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+        try:
+            self.db_session.add(record)
+            self.db_session.flush()
+            self._trim_old_messages()
+            self.db_session.commit()
+            self.db_session.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error saving community message: {str(exc)}")
+
+    def update_message_text(self, message_id: str, new_text: str, edited_at_ms: int) -> Optional[CommunityMessage]:
+        """Update the text of a persisted message and mark it as edited."""
+        try:
+            record = (
+                self.db_session.query(CommunityMessage)
+                .filter(CommunityMessage.message_id == message_id)
+                .first()
+            )
+            if not record:
+                return None
+            record.text = new_text
+            record.is_edited = 1
+            record.edited_at_ms = edited_at_ms
+            self.db_session.commit()
+            self.db_session.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error updating community message: {str(exc)}")
+
+    def _trim_old_messages(self) -> None:
+        """Delete the oldest rows so the table never exceeds MAX_MESSAGES."""
+        try:
+            total = self.db_session.query(CommunityMessage).count()
+            excess = total - self.MAX_MESSAGES
+            if excess <= 0:
+                return
+            cutoff_ids = (
+                self.db_session.query(CommunityMessage.id)
+                .order_by(CommunityMessage.timestamp_ms.asc())
+                .limit(excess)
+                .subquery()
+            )
+            self.db_session.query(CommunityMessage).filter(
+                CommunityMessage.id.in_(cutoff_ids)
+            ).delete(synchronize_session=False)
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error trimming community messages: {str(exc)}")
+
+
+class UserConnectionRepository(BaseRepository["UserConnection"]):
+    """Repository for user connection requests."""
+
+    def __init__(self, db_session: Session):
+        super().__init__(UserConnection, db_session, id_field="id")
+
+    def find_connection(self, user_a: str, user_b: str) -> Optional[UserConnection]:
+        """Find an existing connection between two users (in either direction)."""
+        try:
+            return (
+                self.db_session.query(UserConnection)
+                .filter(
+                    ((UserConnection.requester_id == user_a) & (UserConnection.receiver_id == user_b))
+                    | ((UserConnection.requester_id == user_b) & (UserConnection.receiver_id == user_a))
+                )
+                .first()
+            )
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error finding connection: {str(exc)}")
+
+    def get_pending_for_user(self, user_id: str) -> List[UserConnection]:
+        """Return pending connection requests received by *user_id*."""
+        try:
+            return (
+                self.db_session.query(UserConnection)
+                .filter(
+                    UserConnection.receiver_id == user_id,
+                    UserConnection.status == "pending",
+                )
+                .order_by(UserConnection.created_at.desc())
+                .all()
+            )
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error fetching pending connections: {str(exc)}")
+
+    def get_accepted_for_user(self, user_id: str) -> List[UserConnection]:
+        """Return all accepted connections involving *user_id*."""
+        try:
+            return (
+                self.db_session.query(UserConnection)
+                .filter(
+                    UserConnection.status == "accepted",
+                    (UserConnection.requester_id == user_id)
+                    | (UserConnection.receiver_id == user_id),
+                )
+                .order_by(UserConnection.updated_at.desc())
+                .all()
+            )
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error fetching accepted connections: {str(exc)}")
+
+    def update_status(self, connection_id: int, new_status: str, now_iso: str) -> Optional[UserConnection]:
+        """Update the status of a connection request."""
+        try:
+            conn = self.get_by_id(connection_id)
+            if not conn:
+                return None
+            conn.status = new_status
+            conn.updated_at = now_iso
+            self.db_session.commit()
+            self.db_session.refresh(conn)
+            return conn
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error updating connection status: {str(exc)}")
+
+    def count_pending_for_user(self, user_id: str) -> int:
+        """Count pending connection requests received by *user_id*."""
+        try:
+            return (
+                self.db_session.query(UserConnection)
+                .filter(
+                    UserConnection.receiver_id == user_id,
+                    UserConnection.status == "pending",
+                )
+                .count()
+            )
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error counting pending connections: {str(exc)}")
+
+
+class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
+    """Repository for private messages between connected users."""
+
+    MAX_MESSAGES_PER_CONVERSATION: int = 100
+
+    def __init__(self, db_session: Session):
+        super().__init__(PrivateMessage, db_session, id_field="id")
+
+    def get_conversation(self, user_a: str, user_b: str, limit: int = 100) -> List[PrivateMessage]:
+        """Return messages between two users, ordered oldest-first."""
+        try:
+            rows = (
+                self.db_session.query(PrivateMessage)
+                .filter(
+                    ((PrivateMessage.sender_id == user_a) & (PrivateMessage.receiver_id == user_b))
+                    | ((PrivateMessage.sender_id == user_b) & (PrivateMessage.receiver_id == user_a))
+                )
+                .order_by(PrivateMessage.timestamp_ms.desc())
+                .limit(limit)
+                .all()
+            )
+            rows.reverse()
+            return rows
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error fetching conversation: {str(exc)}")
+
+    def save_message(self, message_dict: dict) -> PrivateMessage:
+        """Persist a private message and trim the conversation to MAX_MESSAGES_PER_CONVERSATION."""
+        from datetime import datetime, timezone
+
+        record = PrivateMessage(
+            message_id=message_dict["message_id"],
+            sender_id=message_dict["sender_id"],
+            receiver_id=message_dict["receiver_id"],
+            text=message_dict.get("text", ""),
+            timestamp_ms=message_dict["timestamp"],
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+        try:
+            self.db_session.add(record)
+            self.db_session.flush()
+            self._trim_conversation(record.sender_id, record.receiver_id)
+            self.db_session.commit()
+            self.db_session.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error saving private message: {str(exc)}")
+
+    def mark_as_read(self, receiver_id: str, sender_id: str) -> int:
+        """Mark all unread messages in a conversation as read. Returns count updated."""
+        try:
+            count = (
+                self.db_session.query(PrivateMessage)
+                .filter(
+                    PrivateMessage.sender_id == sender_id,
+                    PrivateMessage.receiver_id == receiver_id,
+                    PrivateMessage.is_read == 0,
+                )
+                .update({"is_read": 1}, synchronize_session=False)
+            )
+            self.db_session.commit()
+            return count
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error marking messages as read: {str(exc)}")
+
+    def count_unread_for_user(self, user_id: str) -> int:
+        """Count total unread messages for a user across all conversations."""
+        try:
+            return (
+                self.db_session.query(PrivateMessage)
+                .filter(
+                    PrivateMessage.receiver_id == user_id,
+                    PrivateMessage.is_read == 0,
+                )
+                .count()
+            )
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error counting unread messages: {str(exc)}")
+
+    def count_unread_per_peer(self, user_id: str) -> Dict[str, int]:
+        """Return a dict mapping sender_id -> unread count for the given user."""
+        from sqlalchemy import func
+        try:
+            rows = (
+                self.db_session.query(
+                    PrivateMessage.sender_id,
+                    func.count(PrivateMessage.id),
+                )
+                .filter(
+                    PrivateMessage.receiver_id == user_id,
+                    PrivateMessage.is_read == 0,
+                )
+                .group_by(PrivateMessage.sender_id)
+                .all()
+            )
+            return {sender_id: count for sender_id, count in rows}
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error counting unread per peer: {str(exc)}")
+
+    def _trim_conversation(self, user_a: str, user_b: str) -> None:
+        """Keep only the latest MAX_MESSAGES_PER_CONVERSATION messages in a conversation."""
+        try:
+            total = (
+                self.db_session.query(PrivateMessage)
+                .filter(
+                    ((PrivateMessage.sender_id == user_a) & (PrivateMessage.receiver_id == user_b))
+                    | ((PrivateMessage.sender_id == user_b) & (PrivateMessage.receiver_id == user_a))
+                )
+                .count()
+            )
+            excess = total - self.MAX_MESSAGES_PER_CONVERSATION
+            if excess <= 0:
+                return
+            cutoff_ids = (
+                self.db_session.query(PrivateMessage.id)
+                .filter(
+                    ((PrivateMessage.sender_id == user_a) & (PrivateMessage.receiver_id == user_b))
+                    | ((PrivateMessage.sender_id == user_b) & (PrivateMessage.receiver_id == user_a))
+                )
+                .order_by(PrivateMessage.timestamp_ms.asc())
+                .limit(excess)
+                .subquery()
+            )
+            self.db_session.query(PrivateMessage).filter(
+                PrivateMessage.id.in_(cutoff_ids)
+            ).delete(synchronize_session=False)
+        except SQLAlchemyError as exc:
+            raise Exception(f"Error trimming private messages: {str(exc)}")
+
+    def update_message_text(self, message_id: str, new_text: str, edited_at_ms: int) -> Optional[PrivateMessage]:
+        """Update the text of a private message and mark it as edited."""
+        try:
+            record = (
+                self.db_session.query(PrivateMessage)
+                .filter(PrivateMessage.message_id == message_id)
+                .first()
+            )
+            if not record:
+                return None
+            record.text = new_text
+            record.is_edited = 1
+            record.edited_at_ms = edited_at_ms
+            self.db_session.commit()
+            self.db_session.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            self.db_session.rollback()
+            raise Exception(f"Error updating private message: {str(exc)}")
+
+
 class RepositoryFactory:
     """
     Factory Pattern for creating repositories
@@ -485,3 +820,15 @@ class RepositoryFactory:
     @staticmethod
     def create_campaign_repository(db_session: Session) -> CampaignRepository:
         return CampaignRepository(db_session)
+
+    @staticmethod
+    def create_community_message_repository(db_session: Session) -> "CommunityMessageRepository":
+        return CommunityMessageRepository(db_session)
+
+    @staticmethod
+    def create_user_connection_repository(db_session: Session) -> "UserConnectionRepository":
+        return UserConnectionRepository(db_session)
+
+    @staticmethod
+    def create_private_message_repository(db_session: Session) -> "PrivateMessageRepository":
+        return PrivateMessageRepository(db_session)

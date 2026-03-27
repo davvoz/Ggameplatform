@@ -1,6 +1,7 @@
 import CommunityAPI from './CommunityAPI.js';
+import { PrivateMessageAPI } from './PrivateMessageManager.js';
 import AuthManager from './auth.js';
-import { getCommunityWS, setCommunityWS, getCurrentCommunityManager } from './state.js';
+import { getCommunityWS, setCommunityWS, getCurrentCommunityManager, getPMWS, setPMWS } from './state.js';
 
 /**
  * Check for unclaimed quest rewards and update badge
@@ -380,7 +381,7 @@ async function bootCommunityWS() {
 }
 
 /**
- * Initialize community chat notification system
+ * Initialize community chat + PM notification system
  */
 function initCommunityNotifications() {
     if (_communityNotificationsInitialized) return;
@@ -391,6 +392,7 @@ function initCommunityNotifications() {
         // If CommunityManager is active it owns the WS — skip
         if (getCurrentCommunityManager()) return;
         bootCommunityWS();
+        bootPMWS();
     });
 
     // When navigating TO community, mark as seen (CommunityManager will
@@ -402,11 +404,21 @@ function initCommunityNotifications() {
         }
     });
 
+    // Listen for PM notifications from PrivateMessageManager (fires when
+    // a new message or connection request arrives in real-time).
+    // If the user is NOT on the community page, show the community nav badge.
+    window.addEventListener('pm:notification', () => {
+        if (window.location.hash !== '#/community') {
+            updateCommunityBadge();
+        }
+    });
+
     // Initial boot — wait for AuthManager
     const tryBoot = () => {
         if (getCurrentCommunityManager()) return; // CM is active, skip
         if (AuthManager.isLoggedIn()) {
             bootCommunityWS();
+            bootPMWS();
         } else {
             setTimeout(tryBoot, 500);
         }
@@ -418,6 +430,87 @@ function initCommunityNotifications() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// Private Messages Global WebSocket  (always-on, like community WS)
+//
+// A single PrivateMessageAPI instance stays connected at all times.
+// Lightweight handlers show the community nav badge on incoming
+// messages/connection requests.  When PrivateMessageManager takes
+// over (user opens Messages tab) it swaps in its own callbacks;
+// on destroy it hands control back here.
+// ═══════════════════════════════════════════════════════════════════════
+
+/* ── Lightweight PM WebSocket callbacks ── */
+
+function _navPMOnMessage(_msg) {
+    if (window.location.hash !== '#/community') {
+        updateCommunityBadge();
+    }
+    window.dispatchEvent(new CustomEvent('pm:notification', {
+        detail: { reason: 'message' },
+    }));
+}
+
+function _navPMOnConnectionRequest(_conn) {
+    if (window.location.hash !== '#/community') {
+        updateCommunityBadge();
+    }
+    window.dispatchEvent(new CustomEvent('pm:notification', {
+        detail: { reason: 'connection_request' },
+    }));
+}
+
+function _navPMOnUnreadSummary(data) {
+    const total = (data.unread_messages || 0) + (data.pending_connections || 0);
+    if (total > 0 && window.location.hash !== '#/community') {
+        updateCommunityBadge();
+    }
+    if (total > 0) {
+        window.dispatchEvent(new CustomEvent('pm:notification', {
+            detail: { reason: 'unread_summary', total },
+        }));
+    }
+}
+
+/**
+ * Install the lightweight (badge-only) callbacks on the global PM WS.
+ * Called at startup and every time PrivateMessageManager hands control back.
+ */
+function installNavPMHandlers() {
+    const ws = getPMWS();
+    if (!ws) return;
+    ws.onMessage = _navPMOnMessage;
+    ws.onConnectionRequest = _navPMOnConnectionRequest;
+    ws.onUnreadSummary = _navPMOnUnreadSummary;
+    ws.onError = () => {};
+}
+
+/**
+ * Boot (or reboot) the global PM WebSocket.
+ * Connects if user is logged in and not anonymous.
+ */
+async function bootPMWS() {
+    // Tear down previous instance if user changed
+    if (getPMWS()) {
+        getPMWS().disconnect();
+        setPMWS(null);
+    }
+
+    if (!AuthManager.isLoggedIn()) return;
+    const user = AuthManager.getUser();
+    if (!user || user.is_anonymous) return;
+
+    const api = new PrivateMessageAPI({ userId: user.user_id });
+    setPMWS(api);
+    installNavPMHandlers();
+
+    try {
+        await api.connect();
+    } catch {
+        // Connection failed — keep the instance but it will be disconnected
+    }
+}
+
 
 
 export {
@@ -425,6 +518,8 @@ export {
     installNavCommunityHandlers,//comunity manager
     bootCommunityWS,
     removeCommunityBadge,
-    checkUnclaimedQuests
+    checkUnclaimedQuests,
+    installNavPMHandlers,
+    bootPMWS,
 };
 

@@ -200,6 +200,16 @@
     opacity: 1;
 }
 
+/* ========== Clickable Mini Avatar (header) ========== */
+.mini-avatar--clickable {
+    cursor: pointer;
+}
+
+.mini-avatar--clickable:focus-visible {
+    outline: 2px solid var(--bubble-own);
+    outline-offset: 2px;
+}
+
 @media (max-width: 480px) {
     .online-avatars .mini-avatar {
         width: 24px;
@@ -336,6 +346,59 @@
     background: linear-gradient(135deg, #0ea5e9, #06b6d4);
 }
 
+/* ========== Clickable Avatar ========== */
+.message-avatar--clickable {
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 50%;
+}
+
+.message-avatar--clickable:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px var(--bubble-own);
+}
+
+.message-avatar--clickable:focus-visible {
+    outline: 2px solid var(--bubble-own);
+    outline-offset: 2px;
+}
+
+/* ========== Avatar Tooltip (desktop only) ========== */
+.message-avatar-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.88);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 20;
+}
+
+.message-avatar-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.88);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .message-avatar--clickable:hover .message-avatar-tooltip {
+        opacity: 1;
+    }
+}
+
 .message-bubble {
     background: var(--bubble-other);
     border-radius: 18px;
@@ -412,6 +475,100 @@
 
 .chat-message.own-message .message-time {
     color: rgba(255, 255, 255, 0.7);
+}
+
+/* ========== Message Edit Feature ========== */
+
+/* Pencil button – hidden until the bubble is hovered */
+.message-edit-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0 2px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.message-bubble:hover .message-edit-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.message-edit-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.15);
+}
+
+/* "edited" label */
+.message-edited-label {
+    font-size: 0.65rem;
+    opacity: 0.55;
+    font-style: italic;
+    flex-shrink: 0;
+}
+
+.chat-message.own-message .message-edited-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Editing state: expand bubble slightly */
+.message-bubble--editing {
+    outline: 2px solid rgba(14, 165, 233, 0.45);
+    border-radius: 12px;
+}
+
+/* Inline textarea */
+.message-edit-input {
+    width: 100%;
+    min-width: 180px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(14, 165, 233, 0.55);
+    border-radius: 8px;
+    color: inherit;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    padding: 6px 10px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+/* Save / Cancel action row */
+.message-edit-actions {
+    display: flex;
+    gap: 6px;
+    margin-right: auto;
+}
+
+.message-edit-save,
+.message-edit-cancel {
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.message-edit-save {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0a0e17;
+}
+
+.message-edit-cancel {
+    background: rgba(255, 255, 255, 0.15);
+    color: inherit;
+}
+
+.message-edit-save:hover,
+.message-edit-cancel:hover {
+    opacity: 0.8;
 }
 
 /* Message Media */

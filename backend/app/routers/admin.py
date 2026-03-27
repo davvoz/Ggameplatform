@@ -14,7 +14,7 @@ from app.database import (
     close_open_sessions, 
     force_close_session
 )
-from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser, Campaign, PlatformConfig, PushSubscription, GameProgress
+from app.models import Game, User, GameSession, Leaderboard, XPRule, Quest, UserQuest, GameStatus, UserCoins, CoinTransaction, LevelMilestone, LevelReward, WeeklyLeaderboard, LeaderboardReward, WeeklyWinner, AdminUser, Campaign, PlatformConfig, PushSubscription, GameProgress, CommunityMessage, UserConnection, PrivateMessage
 from app.repositories import RepositoryFactory
 from app.services import ServiceFactory, ValidationError
 from app.schemas import (
@@ -350,6 +350,18 @@ async def get_db_stats(username: CurrentUser):
         admin_users_query = session.query(AdminUser).order_by(AdminUser.admin_id).all()
         admin_users = [au.to_dict() for au in admin_users_query]
         
+        # Get community messages
+        community_messages_query = session.query(CommunityMessage).order_by(desc(CommunityMessage.timestamp_ms)).all()
+        community_messages = [cm.to_dict() for cm in community_messages_query]
+        
+        # Get user connections
+        user_connections_query = session.query(UserConnection).order_by(desc(UserConnection.created_at)).all()
+        user_connections = [uc_conn.to_dict() for uc_conn in user_connections_query]
+        
+        # Get private messages
+        private_messages_query = session.query(PrivateMessage).order_by(desc(PrivateMessage.timestamp_ms)).all()
+        private_messages = [pm.to_dict() for pm in private_messages_query]
+        
         # Calculate total coins in circulation
         total_coins_circulation = sum([uc.balance for uc in user_coins_query])
     
@@ -375,6 +387,9 @@ async def get_db_stats(username: CurrentUser):
         "total_push_subscriptions": len(push_subscriptions),
         "total_game_progress": len(game_progress),
         "total_admin_users": len(admin_users),
+        "total_community_messages": len(community_messages),
+        "total_user_connections": len(user_connections),
+        "total_private_messages": len(private_messages),
         "total_categories": len(categories),
         "total_authors": len(authors),
         "games": games,
@@ -399,6 +414,9 @@ async def get_db_stats(username: CurrentUser):
         "push_subscriptions": push_subscriptions,
         "game_progress": game_progress,
         "admin_users": admin_users,
+        "community_messages": community_messages,
+        "user_connections": user_connections,
+        "private_messages": private_messages,
         "categories": list(categories),
         "authors": list(authors)
     }
@@ -504,6 +522,18 @@ async def export_database():
         # Export game progress
         game_progress_query = session.query(GameProgress).order_by(desc(GameProgress.updated_at)).all()
         game_progress = [gp.to_dict() for gp in game_progress_query]
+        
+        # Export community messages
+        community_messages_query = session.query(CommunityMessage).order_by(desc(CommunityMessage.timestamp_ms)).all()
+        community_messages = [cm.to_dict() for cm in community_messages_query]
+        
+        # Export user connections
+        user_connections_query = session.query(UserConnection).order_by(desc(UserConnection.created_at)).all()
+        user_connections = [uc_conn.to_dict() for uc_conn in user_connections_query]
+        
+        # Export private messages
+        private_messages_query = session.query(PrivateMessage).order_by(desc(PrivateMessage.timestamp_ms)).all()
+        private_messages = [pm.to_dict() for pm in private_messages_query]
     
     return {
         "export_date": datetime.now(timezone.utc).isoformat(),
@@ -528,6 +558,9 @@ async def export_database():
         "total_platform_config": len(platform_config),
         "total_push_subscriptions": len(push_subscriptions),
         "total_game_progress": len(game_progress),
+        "total_community_messages": len(community_messages),
+        "total_user_connections": len(user_connections),
+        "total_private_messages": len(private_messages),
         "games": games,
         "users": users,
         "sessions": sessions,
@@ -548,7 +581,10 @@ async def export_database():
         "campaigns": campaigns,
         "platform_config": platform_config,
         "push_subscriptions": push_subscriptions,
-        "game_progress": game_progress
+        "game_progress": game_progress,
+        "community_messages": community_messages,
+        "user_connections": user_connections,
+        "private_messages": private_messages
     }
 
 @router.get("/sessions/open")
@@ -2221,6 +2257,32 @@ async def delete_push_subscription(subscription_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ========== COMMUNITY MESSAGES CRUD ENDPOINTS ==========
+
+@router.delete("/community-messages/{message_id}")
+async def delete_community_message(message_id: int, db: DbSession):
+    """Delete a community chat message"""
+    try:
+        msg = db.query(CommunityMessage).filter(CommunityMessage.id == message_id).first()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+
+        chat_message_id = msg.message_id
+        db.delete(msg)
+        db.commit()
+
+        # Remove from live chat and broadcast to connected clients
+        from app.routers.community import chat_manager
+        await chat_manager.remove_message(chat_message_id)
+
+        return {"success": True, "message": "Message deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ========== GAME PROGRESS CRUD ENDPOINTS ==========
 
 @router.post("/game-progress", status_code=201)
@@ -2302,6 +2364,185 @@ async def delete_game_progress(progress_id: int, db: DbSession):
         db.delete(progress)
         db.commit()
         return {"success": True, "message": "Progress deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== USER CONNECTIONS CRUD ENDPOINTS ==========
+
+@router.post("/user-connections", status_code=201)
+async def create_user_connection(request: Request, db: DbSession):
+    """Create a new user connection"""
+    try:
+        data = await request.json()
+        required = ["requester_id", "receiver_id"]
+        for field in required:
+            if not data.get(field):
+                raise HTTPException(status_code=400, detail=f"{field} is required")
+        
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        conn = UserConnection(
+            requester_id=data["requester_id"],
+            receiver_id=data["receiver_id"],
+            status=data.get("status", "pending"),
+            created_at=now,
+            updated_at=now
+        )
+        db.add(conn)
+        db.commit()
+        db.refresh(conn)
+        return {"success": True, "data": conn.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/user-connections/{connection_id}")
+async def get_user_connection(connection_id: int, db: DbSession):
+    """Get a user connection by ID"""
+    try:
+        conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
+        if not conn:
+            raise HTTPException(status_code=404, detail="Connection not found")
+        return {"success": True, "data": conn.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/user-connections/{connection_id}")
+async def update_user_connection(connection_id: int, request: Request, db: DbSession):
+    """Update a user connection"""
+    try:
+        data = await request.json()
+        conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
+        if not conn:
+            raise HTTPException(status_code=404, detail="Connection not found")
+        
+        from datetime import datetime, timezone
+        for field in ["requester_id", "receiver_id", "status"]:
+            if field in data:
+                setattr(conn, field, data[field])
+        conn.updated_at = datetime.now(timezone.utc).isoformat()
+        
+        db.commit()
+        db.refresh(conn)
+        return {"success": True, "data": conn.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/user-connections/{connection_id}")
+async def delete_user_connection(connection_id: int, db: DbSession):
+    """Delete a user connection"""
+    try:
+        conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
+        if not conn:
+            raise HTTPException(status_code=404, detail="Connection not found")
+        
+        db.delete(conn)
+        db.commit()
+        return {"success": True, "message": "Connection deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== PRIVATE MESSAGES CRUD ENDPOINTS ==========
+
+@router.post("/private-messages", status_code=201)
+async def create_private_message_admin(request: Request, db: DbSession):
+    """Create a new private message (admin)"""
+    try:
+        data = await request.json()
+        required = ["sender_id", "receiver_id"]
+        for field in required:
+            if not data.get(field):
+                raise HTTPException(status_code=400, detail=f"{field} is required")
+        
+        import uuid
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        msg = PrivateMessage(
+            message_id=data.get("message_id", f"admin_{uuid.uuid4().hex[:12]}"),
+            sender_id=data["sender_id"],
+            receiver_id=data["receiver_id"],
+            text=data.get("text", ""),
+            timestamp_ms=data.get("timestamp_ms", int(now.timestamp() * 1000)),
+            is_read=data.get("is_read", 0),
+            created_at=now.isoformat()
+        )
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        return {"success": True, "data": msg.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/private-messages/{message_id}")
+async def get_private_message_admin(message_id: int, db: DbSession):
+    """Get a private message by ID"""
+    try:
+        msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        return {"success": True, "data": msg.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/private-messages/{message_id}")
+async def update_private_message_admin(message_id: int, request: Request, db: DbSession):
+    """Update a private message"""
+    try:
+        data = await request.json()
+        msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        for field in ["sender_id", "receiver_id", "text", "is_read"]:
+            if field in data:
+                setattr(msg, field, data[field])
+        
+        db.commit()
+        db.refresh(msg)
+        return {"success": True, "data": msg.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/private-messages/{message_id}")
+async def delete_private_message_admin(message_id: int, db: DbSession):
+    """Delete a private message"""
+    try:
+        msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        db.delete(msg)
+        db.commit()
+        return {"success": True, "message": "Message deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

@@ -10,6 +10,9 @@ let currentGameRuntime = null;
 let currentCommunityManager = null;
 let communityWS = null;
 
+// Private Messages state
+let pmWS = null;
+
 // Wallet state
 let coinAPI = null;
 let walletRenderer = null;
@@ -43,6 +46,15 @@ export function getCommunityWS() {
 
 export function setCommunityWS(ws) {
     communityWS = ws;
+}
+
+// Private Messages WebSocket
+export function getPMWS() {
+    return pmWS;
+}
+
+export function setPMWS(ws) {
+    pmWS = ws;
 }
 
 // Coin API

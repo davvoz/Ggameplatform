@@ -420,7 +420,7 @@ class TemplateEngine {
                     
             case 'INTEGER':
             case 'FLOAT':
-                const numVal = Number.Number.parseFloat(value);
+                const numVal = Number.parseFloat(value);
                 if (def.label?.toLowerCase().includes('xp')) {
                     return `<span class="value-highlight success">⭐ ${numVal.toFixed(def.type === 'FLOAT' ? 2 : 0)}</span>`;
                 }

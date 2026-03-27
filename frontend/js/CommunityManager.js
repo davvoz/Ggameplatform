@@ -3,6 +3,8 @@ import CommunityStatsRenderer from './CommunityStatsRenderer.js';
 import { installNavCommunityHandlers, bootCommunityWS, removeCommunityBadge, markCommunityAsSeen } from './nav.js';
 import AuthManager from './auth.js';
 import { getCommunityWS, setCommunityWS, getCurrentCommunityManager } from './state.js';
+import PrivateMessageManager from './PrivateMessageManager.js';
+import { config } from './config.js';
 
 /**
  * CommunityManager
@@ -24,12 +26,14 @@ class CommunityManager {
         this.communityAPI = null;
         this.scrollManager = null;
         this.statsRenderer = null;
+        this.privateMessageManager = null;
 
         // State
         this.messages = [];
         this.currentSection = 'chat';
         this.isInitialized = false;
         this.statsLoaded = false;
+        this.messagesLoaded = false;
         this.stats = {
             onlineUsers: 0,
             totalMessages: 0,
@@ -54,8 +58,15 @@ class CommunityManager {
             onDisconnect: this._handleDisconnect.bind(this),
             onError: this._handleError.bind(this),
             onHistoryLoad: this._handleHistoryLoad.bind(this),
-            onStatsUpdate: this._handleStatsUpdate.bind(this)
+            onStatsUpdate: this._handleStatsUpdate.bind(this),
+            onMessageEdited: this._handleMessageEdited.bind(this),
+            onMessageDeleted: this._handleMessageDeleted.bind(this)
         };
+
+        // Edit-in-place state
+        this._editingMessageId = null;
+        this._editingOriginalText = null;
+        this._editingElement = null;
     }
 
     /**
@@ -88,6 +99,8 @@ class CommunityManager {
             this.communityAPI.onError = this._boundHandlers.onError;
             this.communityAPI.onHistoryLoad = this._boundHandlers.onHistoryLoad;
             this.communityAPI.onStatsUpdate = this._boundHandlers.onStatsUpdate;
+            this.communityAPI.onMessageEdited = this._boundHandlers.onMessageEdited;
+            this.communityAPI.onMessageDeleted = this._boundHandlers.onMessageDeleted;
 
 
             // Trigger the connect handler manually (WS is already open)
@@ -102,7 +115,9 @@ class CommunityManager {
                 onDisconnect: this._boundHandlers.onDisconnect,
                 onError: this._boundHandlers.onError,
                 onHistoryLoad: this._boundHandlers.onHistoryLoad,
-                onStatsUpdate: this._boundHandlers.onStatsUpdate
+                onStatsUpdate: this._boundHandlers.onStatsUpdate,
+                onMessageEdited: this._boundHandlers.onMessageEdited,
+                onMessageDeleted: this._boundHandlers.onMessageDeleted
             });
             this._ownsWS = true;
 
@@ -121,6 +136,22 @@ class CommunityManager {
         // Mark community messages as seen (clears the nav badge)
         markCommunityAsSeen();
 
+        // Check for existing unread PMs → show Messages tab badge
+        if (user?.user_id && this.currentSection !== 'messages') {
+            const pmBase = config.getApiEndpoint('/api/private-messages');
+            fetch(`${pmBase}/unread-summary?user_id=${encodeURIComponent(user.user_id)}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data) {
+                        const total = (data.unread_messages || 0) + (data.pending_connections || 0);
+                        if (total > 0) {
+                            this._showMessagesTabBadge(total);
+                        }
+                    }
+                })
+                .catch(() => { /* ignore */ });
+        }
+
         // Restore previously active tab (if any)
         const savedSection = sessionStorage.getItem('community_active_tab');
         if (savedSection && savedSection !== this.currentSection) {
@@ -138,6 +169,7 @@ class CommunityManager {
             navTabs: this.container?.querySelectorAll('.community-nav-tab'),
             chatSection: this.container?.querySelector('.community-chat-section'),
             statsSection: this.container?.querySelector('.community-stats-section'),
+            messagesSection: this.container?.querySelector('.community-messages-section'),
 
             // Header
             headerStatus: document.querySelector('.chat-header-status'),
@@ -243,6 +275,17 @@ class CommunityManager {
                 this._handleScroll();
             });
         }
+
+        // Private Messages notifications → show/update/hide badge on Messages tab
+        this._boundHandlers.onPMNotification = (e) => {
+            const count = e.detail?.total ?? 0;
+            if (this.currentSection === 'messages' || count <= 0) {
+                this._hideMessagesTabBadge();
+            } else {
+                this._showMessagesTabBadge(count);
+            }
+        };
+        window.addEventListener('pm:notification', this._boundHandlers.onPMNotification);
     }
 
     /**
@@ -425,7 +468,7 @@ class CommunityManager {
         const container = this.elements.onlineAvatars;
         if (!container) return;
 
-        container.innerHTML = '';
+        container.replaceChildren();
         const MAX_VISIBLE = 8;
         const AVATAR_COLORS = [
             '#6366f1', '#8b5cf6', '#0ea5e9', '#14b8a6',
@@ -439,8 +482,12 @@ class CommunityManager {
             const steemAvatarUrl = `https://steemitimages.com/u/${encodeURIComponent(user.username || 'anonymous')}/avatar/small`;
 
             const el = document.createElement('div');
-            el.className = 'mini-avatar';
+            el.className = 'mini-avatar mini-avatar--clickable';
             el.style.zIndex = MAX_VISIBLE - i;
+            el.dataset.userId = user.user_id || '';
+            el.setAttribute('role', 'link');
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('aria-label', `View profile of ${user.username}`);
 
             const img = document.createElement('img');
             img.src = steemAvatarUrl;
@@ -453,6 +500,7 @@ class CommunityManager {
             tooltip.textContent = user.username;
             el.appendChild(tooltip);
 
+            this._bindAvatarNavigation(el);
             container.appendChild(el);
         });
 
@@ -589,6 +637,7 @@ class CommunityManager {
 
         const messageEl = document.createElement('div');
         messageEl.className = `chat-message ${isOwnMessage ? 'own-message' : ''}`;
+        messageEl.dataset.msgId = message.id;
 
         // Steem avatar URL
         const steemAvatarUrl = `https://steemitimages.com/u/${encodeURIComponent(message.username || 'anonymous')}/avatar/small`;
@@ -596,33 +645,111 @@ class CommunityManager {
         // Format timestamp
         const time = this._formatTime(message.timestamp || message.created_at);
 
-        // Process message text (links, etc.)
-        const processedText = this._processMessageText(message.text || '');
+        // Build avatar
+        const username = message.username || 'Anonymous';
+        const userId = message.user_id || '';
 
-        // Build media HTML
-        let mediaHtml = '';
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'message-avatar message-avatar--clickable';
+        avatarDiv.dataset.userId = userId;
+        avatarDiv.setAttribute('role', 'link');
+        avatarDiv.setAttribute('tabindex', '0');
+        avatarDiv.setAttribute('aria-label', `View profile of ${username}`);
+
+        const avatarImg = document.createElement('img');
+        avatarImg.src = steemAvatarUrl;
+        avatarImg.alt = username;
+        avatarDiv.appendChild(avatarImg);
+
+        const avatarTooltip = document.createElement('span');
+        avatarTooltip.className = 'message-avatar-tooltip';
+        avatarTooltip.textContent = username;
+        avatarDiv.appendChild(avatarTooltip);
+
+        messageEl.appendChild(avatarDiv);
+
+        // Build bubble
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+
+        const header = document.createElement('div');
+        header.className = 'message-header';
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'message-username';
+        usernameSpan.textContent = username;
+        header.appendChild(usernameSpan);
+        bubble.appendChild(header);
+
+        // Process message text (links, etc.)
+        if (message.text) {
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.appendChild(this._processMessageText(message.text));
+            bubble.appendChild(textDiv);
+        }
+
+        // Build media elements
         if (message.image_url) {
-            mediaHtml += `<img class="message-image" src="${this._escapeHtml(message.image_url)}" alt="Shared image" loading="lazy" data-lightbox="true">`;
+            const img = document.createElement('img');
+            img.className = 'message-image';
+            img.src = message.image_url;
+            img.alt = 'Shared image';
+            img.loading = 'lazy';
+            img.dataset.lightbox = 'true';
+            bubble.appendChild(img);
         }
         if (message.gif_url) {
-            mediaHtml += `<img class="message-gif" src="${this._escapeHtml(message.gif_url)}" alt="GIF" loading="lazy" data-lightbox="true">`;
+            const gif = document.createElement('img');
+            gif.className = 'message-gif';
+            gif.src = message.gif_url;
+            gif.alt = 'GIF';
+            gif.loading = 'lazy';
+            gif.dataset.lightbox = 'true';
+            bubble.appendChild(gif);
         }
 
-        messageEl.innerHTML = `
-            <div class="message-avatar">
-                <img src="${steemAvatarUrl}" alt="${this._escapeHtml(message.username || 'Anonymous')}">
-            </div>
-            <div class="message-bubble">
-                <div class="message-header">
-                    <span class="message-username">${this._escapeHtml(message.username || 'Anonymous')}</span>
-                </div>
-                ${processedText ? `<div class="message-text">${processedText}</div>` : ''}
-                ${mediaHtml}
-                <div class="message-footer">
-                    <span class="message-time">${time}</span>
-                </div>
-            </div>
-        `;
+        // Build footer
+        const footer = document.createElement('div');
+        footer.className = 'message-footer';
+
+        if (isOwnMessage && message.text) {
+            const editBtnEl = document.createElement('button');
+            editBtnEl.className = 'message-edit-btn';
+            editBtnEl.title = 'Edit message';
+            editBtnEl.setAttribute('aria-label', 'Edit message');
+            editBtnEl.textContent = '✏️';
+            footer.appendChild(editBtnEl);
+        }
+
+        if (message.is_edited) {
+            const editedSpan = document.createElement('span');
+            editedSpan.className = 'message-edited-label';
+            editedSpan.textContent = 'edited';
+            footer.appendChild(editedSpan);
+        }
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'message-time';
+        timeSpan.textContent = time;
+        footer.appendChild(timeSpan);
+
+        bubble.appendChild(footer);
+        messageEl.appendChild(bubble);
+
+        // Bind avatar click → navigate to user profile
+        const avatarEl = messageEl.querySelector('.message-avatar--clickable');
+        if (avatarEl) {
+            this._bindAvatarNavigation(avatarEl);
+        }
+
+        // Bind edit button
+        if (isOwnMessage && message.text) {
+            const btn = messageEl.querySelector('.message-edit-btn');
+            btn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._startEditMessage(messageEl, message.id, message.text);
+            });
+        }
 
         // Add click handlers for images
         const images = messageEl.querySelectorAll('[data-lightbox="true"]');
@@ -631,6 +758,219 @@ class CommunityManager {
         });
 
         return messageEl;
+    }
+
+    // ========================================================================
+    // Message Editing
+    // ========================================================================
+
+    /**
+     * Handle a message_edited broadcast from the server.
+     * Updates the in-memory array and the live DOM element for all clients.
+     * @private
+     * @param {{ message_id: string, text: string, is_edited: boolean, edited_at: number }} data
+     */
+    _handleMessageDeleted(data) {
+        const { message_id } = data;
+
+        // Remove from in-memory list
+        this.messages = this.messages.filter(m => m.id !== message_id);
+
+        // If the user was editing this message, cancel edit mode
+        if (this._editingMessageId === message_id) {
+            this._finishEditUI();
+        }
+
+        // Remove from DOM with a brief fade-out
+        const msgEl = this.elements.chatMessages?.querySelector(`[data-msg-id="${CSS.escape(message_id)}"]`);
+        if (msgEl) {
+            msgEl.style.transition = 'opacity 0.3s ease';
+            msgEl.style.opacity = '0';
+            setTimeout(() => msgEl.remove(), 300);
+        }
+    }
+
+    _handleMessageEdited(data) {
+        const { message_id, text, is_edited, edited_at } = data;
+
+        // Update in-memory
+        const msg = this.messages.find(m => m.id === message_id);
+        if (msg) {
+            msg.text = text;
+            msg.is_edited = is_edited;
+            msg.edited_at = edited_at;
+        }
+
+        // If the current user was editing this message, restore the DOM first
+        // (the textarea has replaced .message-text, so we must teardown before querying)
+        if (this._editingMessageId === message_id) {
+            this._finishEditUI(text);
+        }
+
+        // Update DOM text for all clients (safe: .message-text is now present)
+        const msgEl = this.elements.chatMessages?.querySelector(`[data-msg-id="${CSS.escape(message_id)}"]`);
+        if (!msgEl) return;
+
+        const textEl = msgEl.querySelector('.message-text');
+        if (textEl) {
+            textEl.replaceChildren(this._processMessageText(text));
+        }
+
+        // Show "edited" label if not already present
+        if (is_edited) {
+            const footer = msgEl.querySelector('.message-footer');
+            if (footer && !footer.querySelector('.message-edited-label')) {
+                const label = document.createElement('span');
+                label.className = 'message-edited-label';
+                label.textContent = 'edited';
+                const timeEl = footer.querySelector('.message-time');
+                if (timeEl) {
+                    footer.insertBefore(label, timeEl);
+                } else {
+                    footer.appendChild(label);
+                }
+            }
+        }
+    }
+
+    /**
+     * Enter edit mode for a message bubble.
+     * @private
+     * @param {HTMLElement} messageEl
+     * @param {string} messageId
+     * @param {string} currentText
+     */
+    _startEditMessage(messageEl, messageId, currentText) {
+        if (this._editingMessageId) {
+            this._cancelEdit();
+        }
+
+        this._editingMessageId = messageId;
+        this._editingOriginalText = currentText;
+        this._editingElement = messageEl;
+
+        const bubble = messageEl.querySelector('.message-bubble');
+        const textEl = bubble?.querySelector('.message-text');
+        if (!textEl || !bubble) return;
+
+        // Replace text div with a textarea
+        const textarea = document.createElement('textarea');
+        textarea.className = 'message-edit-input';
+        textarea.value = currentText;
+        textarea.rows = Math.min(5, Math.max(1, Math.ceil(currentText.length / 40)));
+        textEl.replaceWith(textarea);
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+        // Replace edit button with save/cancel actions inside the footer
+        const editBtn = bubble.querySelector('.message-edit-btn');
+        if (editBtn) editBtn.style.display = 'none';
+
+        const footer = bubble.querySelector('.message-footer');
+        if (footer) {
+            const actions = document.createElement('div');
+            actions.className = 'message-edit-actions';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'message-edit-save';
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', () => {
+                this._submitEditMessage(messageId, textarea.value);
+            });
+            actions.appendChild(saveBtn);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'message-edit-cancel';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', () => {
+                this._cancelEdit();
+            });
+            actions.appendChild(cancelBtn);
+
+            footer.prepend(actions);
+        }
+
+        bubble.classList.add('message-bubble--editing');
+
+        // Keyboard shortcuts: Enter to save, Escape to cancel
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this._cancelEdit();
+            } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this._submitEditMessage(messageId, textarea.value);
+            }
+        });
+    }
+
+    /**
+     * Submit an edited message to the server.
+     * The UI update is deferred to _handleMessageEdited (server echo).
+     * @private
+     * @param {string} messageId
+     * @param {string} newText
+     */
+    _submitEditMessage(messageId, newText) {
+        const trimmed = newText.trim();
+
+        if (!trimmed) {
+            this._showNotification('Message cannot be empty', 'error');
+            return;
+        }
+        if (trimmed.length > 500) {
+            this._showNotification('Message too long (max 500 characters)', 'error');
+            return;
+        }
+        if (trimmed === this._editingOriginalText) {
+            this._cancelEdit();
+            return;
+        }
+
+        this.communityAPI.sendEditMessage(messageId, trimmed);
+        // UI will update via _handleMessageEdited broadcast from server
+    }
+
+    /**
+     * Cancel the current in-progress edit and restore the original UI.
+     * @private
+     */
+    _cancelEdit() {
+        if (!this._editingMessageId) return;
+        this._finishEditUI();
+    }
+
+    /**
+     * Tear down the edit-mode UI regardless of outcome.
+     * @private
+     * @param {string|null} confirmedText - When provided, renders this text instead of the original.
+     */
+    _finishEditUI(confirmedText = null) {
+        const messageEl = this._editingElement;
+        const textToRender = confirmedText !== null ? confirmedText : this._editingOriginalText;
+
+        this._editingMessageId = null;
+        this._editingOriginalText = null;
+        this._editingElement = null;
+
+        if (!messageEl) return;
+
+        const bubble = messageEl.querySelector('.message-bubble');
+        const textarea = bubble?.querySelector('.message-edit-input');
+
+        if (textarea) {
+            const textEl = document.createElement('div');
+            textEl.className = 'message-text';
+            textEl.appendChild(this._processMessageText(textToRender || ''));
+            textarea.replaceWith(textEl);
+        }
+
+        bubble?.querySelector('.message-edit-actions')?.remove();
+
+        const editBtn = bubble?.querySelector('.message-edit-btn');
+        if (editBtn) editBtn.style.display = '';
+
+        bubble?.classList.remove('message-bubble--editing');
     }
 
     /**
@@ -648,10 +988,17 @@ class CommunityManager {
         // Create lightbox
         lightbox = document.createElement('div');
         lightbox.className = 'image-lightbox';
-        lightbox.innerHTML = `
-            <button class="image-lightbox-close" title="Close">✕</button>
-            <img src="${this._escapeHtml(imageUrl)}" alt="Full size image">
-        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'image-lightbox-close';
+        closeBtn.title = 'Close';
+        closeBtn.textContent = '✕';
+        lightbox.appendChild(closeBtn);
+
+        const lbImg = document.createElement('img');
+        lbImg.src = imageUrl;
+        lbImg.alt = 'Full size image';
+        lightbox.appendChild(lbImg);
 
         // Close on click
         lightbox.addEventListener('click', (e) => {
@@ -686,7 +1033,7 @@ class CommunityManager {
     _renderAllMessages() {
         if (!this.elements.chatMessages) return;
 
-        this.elements.chatMessages.innerHTML = '';
+        this.elements.chatMessages.replaceChildren();
 
         const fragment = document.createDocumentFragment();
 
@@ -711,30 +1058,80 @@ class CommunityManager {
     _showEmptyState() {
         if (!this.elements.chatMessages) return;
 
-        this.elements.chatMessages.innerHTML = `
-            <div class="chat-empty-state">
-                <div class="empty-icon">💬</div>
-                <h3>No messages yet</h3>
-                <p>Be the first to say hello to the community!</p>
-            </div>
-        `;
+        const emptyState = document.createElement('div');
+        emptyState.className = 'chat-empty-state';
+
+        const emptyIcon = document.createElement('div');
+        emptyIcon.className = 'empty-icon';
+        emptyIcon.textContent = '💬';
+        emptyState.appendChild(emptyIcon);
+
+        const emptyTitle = document.createElement('h3');
+        emptyTitle.textContent = 'No messages yet';
+        emptyState.appendChild(emptyTitle);
+
+        const emptyDesc = document.createElement('p');
+        emptyDesc.textContent = 'Be the first to say hello to the community!';
+        emptyState.appendChild(emptyDesc);
+
+        this.elements.chatMessages.replaceChildren(emptyState);
     }
 
     /**
      * Process message text for links and formatting
      * @private
      * @param {string} text
-     * @returns {string}
+     * @returns {DocumentFragment}
      */
     _processMessageText(text) {
-        // Escape HTML first
-        let processed = this._escapeHtml(text);
-
-        // Convert URLs to links
+        const fragment = document.createDocumentFragment();
         const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-        processed = processed.replaceAll(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+        let lastIndex = 0;
+        let match;
 
-        return processed;
+        while ((match = urlRegex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+            const a = document.createElement('a');
+            a.href = match[1];
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = match[1];
+            fragment.appendChild(a);
+            lastIndex = urlRegex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+
+        return fragment;
+    }
+
+    /**
+     * Bind click and keyboard navigation to an avatar element.
+     * Navigates to the user's public profile.
+     * @private
+     * @param {HTMLElement} avatarEl - The avatar container with data-user-id
+     */
+    _bindAvatarNavigation(avatarEl) {
+        const userId = avatarEl.dataset.userId;
+        if (!userId) {
+            return;
+        }
+
+        const navigate = () => {
+            window.location.hash = `#/user/${encodeURIComponent(userId)}`;
+        };
+
+        avatarEl.addEventListener('click', navigate);
+        avatarEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate();
+            }
+        });
     }
 
     /**
@@ -744,9 +1141,12 @@ class CommunityManager {
      * @returns {string}
      */
     _escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return String(text)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
     }
 
     /**
@@ -974,10 +1374,11 @@ class CommunityManager {
     _showNotification(message, type = 'info') {
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = `chat-toast chat-toast-${type}`;
-        toast.innerHTML = `
-            <span class="toast-message">${message}</span>
-        `;
+        toast.className = `chat-toast chat-toast-${this._escapeHtml(type)}`;
+        const toastMsg = document.createElement('span');
+        toastMsg.className = 'toast-message';
+        toastMsg.textContent = message;
+        toast.appendChild(toastMsg);
 
         // Add styles if not present
         if (!document.querySelector('#toast-styles')) {
@@ -1048,8 +1449,34 @@ class CommunityManager {
     }
 
     /**
-     * Switch between chat and stats sections
-     * @param {string} section - 'chat' or 'stats'
+     * Show a notification dot on the Messages tab when user is on another tab
+     * @private
+     */
+    _showMessagesTabBadge(count) {
+        const msgTab = this.container?.querySelector('.community-nav-tab[data-section="messages"]');
+        if (!msgTab) return;
+        let badge = msgTab.querySelector('.messages-tab-badge');
+        if (badge) {
+            if (count != null) badge.textContent = count > 99 ? '99+' : String(count);
+            return;
+        }
+        badge = document.createElement('span');
+        badge.className = 'messages-tab-badge';
+        badge.textContent = (count != null && count > 0) ? (count > 99 ? '99+' : String(count)) : '';
+        msgTab.appendChild(badge);
+    }
+
+    /**
+     * Remove the Messages tab notification dot
+     * @private
+     */
+    _hideMessagesTabBadge() {
+        this.container?.querySelectorAll('.messages-tab-badge').forEach(b => b.remove());
+    }
+
+    /**
+     * Switch between chat, stats, and messages sections
+     * @param {string} section - 'chat', 'stats', or 'messages'
      * @private
      */
     _switchSection(section) {
@@ -1070,10 +1497,23 @@ class CommunityManager {
         if (this.elements.statsSection) {
             this.elements.statsSection.classList.toggle('active', section === 'stats');
         }
+        if (this.elements.messagesSection) {
+            this.elements.messagesSection.classList.toggle('active', section === 'messages');
+        }
 
         // Lazy-load stats on first switch
         if (section === 'stats' && !this.statsLoaded) {
             this._initStats();
+        }
+
+        // Lazy-load private messages on first switch
+        if (section === 'messages' && !this.messagesLoaded) {
+            this._initPrivateMessages();
+        }
+
+        // Switching to messages → clear messages tab badge
+        if (section === 'messages') {
+            this._hideMessagesTabBadge();
         }
 
         // Switching to chat → clear the tab badge and mark messages as seen
@@ -1092,6 +1532,26 @@ class CommunityManager {
     }
 
     /**
+     * Initialize private messages (lazy, first time only)
+     * @private
+     */
+    async _initPrivateMessages() {
+        if (this.messagesLoaded) return;
+        this.messagesLoaded = true;
+
+        try {
+            this.privateMessageManager = new PrivateMessageManager(this.elements.messagesSection);
+            await this.privateMessageManager.init();
+        } catch (err) {
+            if (this.elements.messagesSection) {
+                this.elements.messagesSection.replaceChildren(
+                    this._buildErrorBlock('Failed to load private messages.')
+                );
+            }
+        }
+    }
+
+    /**
      * Initialize the stats renderer (lazy, first time only)
      * @private
      */
@@ -1104,13 +1564,33 @@ class CommunityManager {
             await this.statsRenderer.mount(this.elements.statsSection);
         } catch (err) {
             if (this.elements.statsSection) {
-                this.elements.statsSection.innerHTML = `
-                    <div class="cs-error">
-                        <span class="cs-error-icon">⚠️</span>
-                        <p>Failed to load community stats.</p>
-                    </div>`;
+                this.elements.statsSection.replaceChildren(
+                    this._buildErrorBlock('Failed to load community stats.')
+                );
             }
         }
+    }
+
+    /**
+     * Build a DOM error block element
+     * @private
+     * @param {string} text
+     * @returns {HTMLElement}
+     */
+    _buildErrorBlock(text) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cs-error';
+
+        const icon = document.createElement('span');
+        icon.className = 'cs-error-icon';
+        icon.textContent = '⚠️';
+        wrapper.appendChild(icon);
+
+        const p = document.createElement('p');
+        p.textContent = text;
+        wrapper.appendChild(p);
+
+        return wrapper;
     }
 
     /**
@@ -1153,10 +1633,22 @@ class CommunityManager {
             this.statsRenderer = null;
         }
 
+        // Destroy private message manager
+        if (this.privateMessageManager) {
+            this.privateMessageManager.destroy();
+            this.privateMessageManager = null;
+        }
+
+        // Remove PM notification listener
+        if (this._boundHandlers.onPMNotification) {
+            window.removeEventListener('pm:notification', this._boundHandlers.onPMNotification);
+        }
+
         // Clear state
         this.messages = [];
         this.isInitialized = false;
         this.statsLoaded = false;
+        this.messagesLoaded = false;
         this.elements = {};
     }
 }

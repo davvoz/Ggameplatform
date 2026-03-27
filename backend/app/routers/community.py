@@ -48,7 +48,9 @@ class ChatMessage:
     image_url: Optional[str] = None
     gif_url: Optional[str] = None
     level: Optional[int] = None
-    
+    is_edited: bool = False
+    edited_at: Optional[int] = None
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -85,14 +87,15 @@ class CommunityChatManager:
     def __init__(self):
         if self._initialized:
             return
-            
+
         self.connections: Dict[str, ConnectedUser] = {}
         self.messages: List[ChatMessage] = []
         self.max_messages = 100
         self.message_counter = 0
         self._initialized = True
-        
-        logger.info("[CommunityChat] Manager initialized")
+
+        self._load_messages_from_db()
+        logger.info("[CommunityChat] Manager initialized (loaded %d messages from DB)", len(self.messages))
     
     async def connect(self, websocket: WebSocket, user_id: str, username: str):
         """Add a new connection (websocket already accepted)"""
@@ -140,6 +143,8 @@ class CommunityChatManager:
         
         if message_type == "message":
             await self._handle_chat_message(user_id, data)
+        elif message_type == "edit_message":
+            await self._handle_edit_message(user_id, data)
         elif message_type == "history":
             await self._handle_history_request(user_id, data)
         elif message_type == "request_stats":
@@ -151,6 +156,53 @@ class CommunityChatManager:
         """Handle request for current stats"""
         if user_id in self.connections:
             await self._send_stats(self.connections[user_id].websocket)
+
+    async def _handle_edit_message(self, user_id: str, data: dict):
+        """Handle message edit request — only the original author may edit."""
+        message_id = data.get("message_id", "").strip()
+        new_text = data.get("text", "").strip()
+
+        if not message_id:
+            await self._send_error(user_id, "Missing message_id")
+            return
+
+        if not new_text:
+            await self._send_error(user_id, "Edited message cannot be empty")
+            return
+
+        if len(new_text) > 500:
+            await self._send_error(user_id, "Message too long (max 500 characters)")
+            return
+
+        # Locate message and verify ownership
+        target = next((m for m in self.messages if m.id == message_id), None)
+        if not target:
+            await self._send_error(user_id, "Message not found")
+            return
+
+        if target.user_id != user_id:
+            await self._send_error(user_id, "Cannot edit another user's message")
+            return
+
+        # Update in-memory record
+        edited_at_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        target.text = new_text
+        target.is_edited = True
+        target.edited_at = edited_at_ms
+
+        # Persist asynchronously (fire-and-forget; errors are logged internally)
+        self._persist_message_edit(message_id, new_text, edited_at_ms)
+
+        # Broadcast the update to every connected client
+        await self._broadcast({
+            "type": "message_edited",
+            "message_id": message_id,
+            "text": new_text,
+            "is_edited": True,
+            "edited_at": edited_at_ms,
+        })
+
+        logger.debug("[CommunityChat] Message %s edited by %s", message_id, user_id)
     
     async def _handle_chat_message(self, user_id: str, data: dict):
         """Process and broadcast a chat message"""
@@ -202,11 +254,14 @@ class CommunityChatManager:
         
         logger.debug(f"[CommunityChat] Message from {user.username}: {text[:50]}...")
         
+        # Persist to database (trim to MAX_MESSAGES is handled inside)
+        self._persist_message(message)
+
         # Broadcast to all connected users
         await self._broadcast_message(message)
-        
+
         # Send push notifications to users who are NOT currently connected
-        await self._send_push_to_offline_users(message)
+        self._send_push_to_offline_users(message)
     
     async def _handle_history_request(self, user_id: str, data: dict):
         """Handle request for message history"""
@@ -309,8 +364,83 @@ class CommunityChatManager:
                 for u in self.connections.values()
             ]
         }
-    
+
+    # -------------------------------------------------------------------------
+    # Persistence helpers
+    # -------------------------------------------------------------------------
+
+    def _load_messages_from_db(self) -> None:
+        """Populate the in-memory cache from the database on startup."""
+        try:
+            from app.database import get_db_session
+            from app.repositories import CommunityMessageRepository
+
+            with get_db_session() as db:
+                repo = CommunityMessageRepository(db)
+                rows = repo.get_latest(self.max_messages)
+                self.messages = [
+                    ChatMessage(
+                        id=row.message_id,
+                        user_id=row.user_id,
+                        username=row.username,
+                        text=row.text or "",
+                        timestamp=row.timestamp_ms,
+                        image_url=row.image_url,
+                        gif_url=row.gif_url,
+                        level=row.level,
+                        is_edited=bool(row.is_edited),
+                        edited_at=row.edited_at_ms,
+                    )
+                    for row in rows
+                ]
+                if self.messages:
+                    # Restore counter so new IDs never collide
+                    self.message_counter = max(
+                        int(m.id.split("_")[1]) for m in self.messages
+                        if m.id.startswith("msg_")
+                    )
+        except Exception as exc:
+            logger.error("[CommunityChat] Failed to load messages from DB: %s", exc)
+
+    def _persist_message(self, message: ChatMessage) -> None:
+        """Persist a chat message to the database and keep the table trimmed."""
+        try:
+            from app.database import get_db_session
+            from app.repositories import CommunityMessageRepository
+
+            with get_db_session() as db:
+                repo = CommunityMessageRepository(db)
+                repo.save_message(message.to_dict())
+        except Exception as exc:
+            logger.error("[CommunityChat] Failed to persist message %s: %s", message.id, exc)
+
+    async def remove_message(self, message_id: str) -> bool:
+        """Remove a message from memory and broadcast deletion to all clients."""
+        idx = next((i for i, m in enumerate(self.messages) if m.id == message_id), None)
+        if idx is None:
+            return False
+        del self.messages[idx]
+        await self._broadcast({
+            "type": "message_deleted",
+            "message_id": message_id,
+        })
+        logger.info("[CommunityChat] Message %s removed and broadcast", message_id)
+        return True
+
+    def _persist_message_edit(self, message_id: str, new_text: str, edited_at_ms: int) -> None:
+        """Persist a message edit to the database."""
+        try:
+            from app.database import get_db_session
+            from app.repositories import CommunityMessageRepository
+
+            with get_db_session() as db:
+                repo = CommunityMessageRepository(db)
+                repo.update_message_text(message_id, new_text, edited_at_ms)
+        except Exception as exc:
+            logger.error("[CommunityChat] Failed to persist edit for %s: %s", message_id, exc)
+
     def _send_push_to_offline_users(self, message: ChatMessage):
+
         """Send push notification to users who have subscriptions but are not connected"""
         try:
             from app.database import get_db_session
@@ -431,7 +561,7 @@ chat_manager = CommunityChatManager()
 # =============================================================================
 
 @rest_router.post("/upload")
-async def upload_media(file: Annotated[UploadFile, File()]):
+async def upload_media(file:Annotated[UploadFile , File()]):
     """
     Upload an image or GIF for chat.
     Max size: 5MB

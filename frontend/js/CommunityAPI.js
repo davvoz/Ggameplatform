@@ -28,6 +28,8 @@ class CommunityAPI {
         this.onUserLeave = options.onUserLeave || (() => {});
         this.onHistoryLoad = options.onHistoryLoad || (() => {});
         this.onStatsUpdate = options.onStatsUpdate || (() => {});
+        this.onMessageEdited = options.onMessageEdited || (() => {});
+        this.onMessageDeleted = options.onMessageDeleted || (() => {});
 
         this.ws = null;
         this.isConnected = false;
@@ -147,6 +149,19 @@ class CommunityAPI {
                     
                 case 'stats':
                     this.onStatsUpdate(data.stats);
+                    break;
+
+                case 'message_edited':
+                    this.onMessageEdited({
+                        message_id: data.message_id,
+                        text: data.text,
+                        is_edited: data.is_edited,
+                        edited_at: data.edited_at
+                    });
+                    break;
+
+                case 'message_deleted':
+                    this.onMessageDeleted({ message_id: data.message_id });
                     break;
                     
                 case 'error':
@@ -269,6 +284,19 @@ class CommunityAPI {
             this.messageQueue.push(message);
             return false;
         }
+    }
+
+    /**
+     * Send an edit for an existing own message
+     * @param {string} messageId - ID of the message to edit
+     * @param {string} newText - New text content
+     */
+    sendEditMessage(messageId, newText) {
+        this._sendRaw({
+            type: 'edit_message',
+            message_id: messageId,
+            text: newText.trim()
+        });
     }
 
     /**

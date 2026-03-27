@@ -91,9 +91,44 @@
     }
 }
 
+/* Messages tab notification badge (pill with count, matches .pm-unread-badge) */
+.messages-tab-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff;
+    border-radius: 9px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--background-light);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    z-index: 5;
+    pointer-events: none;
+    animation: messages-tab-badge-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes messages-tab-badge-in {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 /* ========== Section Containers ========== */
 .community-chat-section,
-.community-stats-section {
+.community-stats-section,
+.community-messages-section {
     flex: 1;
     display: none;
     min-height: 0;

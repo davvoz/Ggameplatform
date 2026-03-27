@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 import uuid
 import json
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import create_engine, desc, func
+from sqlalchemy import create_engine, desc, func, text
 from sqlalchemy.orm import sessionmaker, Session, joinedload
 from contextlib import contextmanager
 import bcrypt
@@ -47,9 +47,24 @@ def get_db():
     finally:
         db.close()
 
+def _migrate_private_messages_edit_columns():
+    """Add is_edited and edited_at_ms columns to private_messages if missing."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(private_messages)"))
+            cols = {row[1] for row in result}
+            if "is_edited" not in cols:
+                conn.execute(text("ALTER TABLE private_messages ADD COLUMN is_edited INTEGER DEFAULT 0"))
+            if "edited_at_ms" not in cols:
+                conn.execute(text("ALTER TABLE private_messages ADD COLUMN edited_at_ms INTEGER"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  PM edit columns migration: {e}")
+
 def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
+    _migrate_private_messages_edit_columns()
     setup_leaderboard_triggers()
     
     # Setup quest triggers for automatic quest progress updates

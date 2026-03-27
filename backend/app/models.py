@@ -813,6 +813,50 @@ class PushSubscription(Base):
         return f"<PushSubscription {self.subscription_id} for user {self.user_id}>"
 
 
+class CommunityMessage(Base):
+    """Persistent community chat message - keeps last 100 messages across restarts."""
+    __tablename__ = 'community_messages'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message_id = Column(String(100), unique=True, nullable=False, index=True)
+    user_id = Column(String, nullable=False)
+    username = Column(String(255), nullable=False)
+    text = Column(Text, default='')
+    image_url = Column(String(1000), nullable=True)
+    gif_url = Column(String(1000), nullable=True)
+    level = Column(Integer, nullable=True)
+    timestamp_ms = Column(Integer, nullable=False)
+    is_edited = Column(Integer, default=0)
+    edited_at_ms = Column(Integer, nullable=True)
+    created_at = Column(String, nullable=False)
+
+    __table_args__ = (
+        Index('idx_community_msg_timestamp', 'timestamp_ms'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to dict — uses integer `id` as PK, `message_id` as the chat string key."""
+        return {
+            "id": self.id,
+            "message_id": self.message_id,
+            "user_id": self.user_id,
+            "username": self.username,
+            "text": self.text or "",
+            "timestamp": self.timestamp_ms,
+            "timestamp_ms": self.timestamp_ms,
+            "image_url": self.image_url,
+            "gif_url": self.gif_url,
+            "level": self.level,
+            "is_edited": bool(self.is_edited),
+            "edited_at": self.edited_at_ms,
+            "edited_at_ms": self.edited_at_ms,
+            "created_at": self.created_at,
+        }
+
+    def __repr__(self) -> str:
+        return f"<CommunityMessage {self.message_id} by {self.username}>"
+
+
 class Campaign(Base):
     """Campaign model - associates games with XP bonus periods."""
     __tablename__ = 'campaigns'
@@ -879,3 +923,74 @@ class GameProgress(Base):
     
     def __repr__(self) -> str:
         return f"<GameProgress user={self.user_id} game={self.game_id}>"
+
+
+class UserConnection(Base):
+    """Represents a connection request between two users."""
+    __tablename__ = 'user_connections'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    requester_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
+    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default='pending')  # pending, accepted, rejected
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('requester_id', 'receiver_id', name='uq_connection_pair'),
+        Index('idx_conn_receiver_status', 'receiver_id', 'status'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize connection to dictionary."""
+        return {
+            "id": self.id,
+            "requester_id": self.requester_id,
+            "receiver_id": self.receiver_id,
+            "status": self.status,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    def __repr__(self) -> str:
+        return f"<UserConnection {self.requester_id} -> {self.receiver_id} ({self.status})>"
+
+
+class PrivateMessage(Base):
+    """A private message between two connected users."""
+    __tablename__ = 'private_messages'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message_id = Column(String(100), unique=True, nullable=False, index=True)
+    sender_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    text = Column(Text, default='')
+    timestamp_ms = Column(Integer, nullable=False)
+    is_read = Column(Integer, default=0)
+    is_edited = Column(Integer, default=0)
+    edited_at_ms = Column(Integer, nullable=True)
+    created_at = Column(String, nullable=False)
+
+    __table_args__ = (
+        Index('idx_pm_conversation', 'sender_id', 'receiver_id'),
+        Index('idx_pm_timestamp', 'timestamp_ms'),
+        Index('idx_pm_unread', 'receiver_id', 'is_read'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize message to dictionary."""
+        return {
+            "id": self.id,
+            "message_id": self.message_id,
+            "sender_id": self.sender_id,
+            "receiver_id": self.receiver_id,
+            "text": self.text or "",
+            "timestamp": self.timestamp_ms,
+            "is_read": bool(self.is_read),
+            "is_edited": bool(self.is_edited),
+            "edited_at": self.edited_at_ms,
+            "created_at": self.created_at,
+        }
+
+    def __repr__(self) -> str:
+        return f"<PrivateMessage {self.message_id} {self.sender_id}->{self.receiver_id}>"

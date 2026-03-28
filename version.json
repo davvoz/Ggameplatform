@@ -1,8 +1,17 @@
 {
-  "version": "4.1.1",
-  "timestamp": "2026-03-27T22:37:26.063Z",
-  "buildNumber": 497,
+  "version": "4.1.2",
+  "timestamp": "2026-03-28T21:12:12.526Z",
+  "buildNumber": 498,
   "changelog": [
+    {
+      "version": "4.1.2",
+      "date": "2026-03-28",
+      "type": "patch",
+      "changes": [
+        "fix: Sonar new code",
+        "🔖 Bump version to 4.1.1 [skip-version]"
+      ]
+    },
     {
       "version": "4.1.1",
       "date": "2026-03-27",
@@ -82,15 +91,6 @@
       "changes": [
         "fix : Sonar Reliability low",
         "🔖 Bump version to 4.0.29 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.29",
-      "date": "2026-03-24",
-      "type": "patch",
-      "changes": [
-        "fix: Sonar",
-        "🔖 Bump version to 4.0.28 [skip-version]"
       ]
     }
   ]

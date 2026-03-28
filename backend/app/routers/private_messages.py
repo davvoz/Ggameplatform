@@ -7,7 +7,7 @@ WebSocket endpoint for real-time private chat.
 
 import uuid
 import logging
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 
@@ -62,7 +62,7 @@ class PrivateMessageManager:
         # user_id -> WebSocket
         self.connections: Dict[str, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket, user_id: str) -> None:
+    def connect(self, websocket: WebSocket, user_id: str) -> None:
         """Register a user's WebSocket for private messaging."""
         self.connections[user_id] = websocket
         logger.info("PM: User %s connected", user_id)
@@ -135,9 +135,9 @@ class ConnectionValidator:
 
 @rest_router.post("/connections/request")
 async def request_connection(
-    requester_id: str = Query(..., min_length=1),
-    receiver_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    requester_id: Annotated[str, Query(..., min_length=1)],
+    receiver_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Send a connection request to another user."""
     if requester_id == receiver_id:
@@ -203,8 +203,8 @@ async def _notify_connection_request(connection, requester_id: str) -> None:
 @rest_router.post("/connections/{connection_id}/accept")
 def accept_connection(
     connection_id: int,
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Accept a pending connection request."""
     repo = UserConnectionRepository(db)
@@ -225,8 +225,8 @@ def accept_connection(
 @rest_router.post("/connections/{connection_id}/reject")
 def reject_connection(
     connection_id: int,
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Reject a pending connection request."""
     repo = UserConnectionRepository(db)
@@ -247,8 +247,8 @@ def reject_connection(
 @rest_router.delete("/connections/{connection_id}")
 def disconnect_connection(
     connection_id: int,
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Remove an accepted connection between two users."""
     repo = UserConnectionRepository(db)
@@ -266,8 +266,8 @@ def disconnect_connection(
 
 @rest_router.get("/connections")
 def get_connections(
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return accepted connections for a user, enriched with usernames and unread counts."""
     conn_repo = UserConnectionRepository(db)
@@ -292,8 +292,8 @@ def get_connections(
 
 @rest_router.get("/connections/pending")
 def get_pending_connections(
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return pending connection requests received by the user, enriched with requester info."""
     conn_repo = UserConnectionRepository(db)
@@ -313,9 +313,9 @@ def get_pending_connections(
 
 @rest_router.get("/connections/status")
 def get_connection_status(
-    user_id: str = Query(..., min_length=1),
-    other_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    other_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Check the connection status between two users."""
     repo = UserConnectionRepository(db)
@@ -333,9 +333,9 @@ def get_connection_status(
 
 @rest_router.get("/conversation")
 def get_conversation(
-    user_id: str = Query(..., min_length=1),
-    peer_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    peer_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return message history between two connected users."""
     if not ConnectionValidator.are_connected(db, user_id, peer_id):
@@ -352,8 +352,8 @@ def get_conversation(
 
 @rest_router.get("/unread-count")
 def get_unread_count(
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return total unread message count for a user."""
     repo = PrivateMessageRepository(db)
@@ -362,8 +362,8 @@ def get_unread_count(
 
 @rest_router.get("/unread-summary")
 def get_unread_summary(
-    user_id: str = Query(..., min_length=1),
-    db: Session = Depends(get_db),
+    user_id: Annotated[str, Query(..., min_length=1)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     """Return total unread messages + pending connection requests count."""
     msg_repo = PrivateMessageRepository(db)
@@ -412,7 +412,7 @@ async def private_messages_ws(websocket: WebSocket):
             await websocket.close(code=4002, reason="Missing user_id")
             return
 
-        await pm_manager.connect(websocket, user_id)
+        pm_manager.connect(websocket, user_id)
 
         # Send pending connection requests + unread summary on join
         await _send_pending_requests(websocket, user_id)

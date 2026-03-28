@@ -541,7 +541,7 @@ class PrivateMessageManager {
                 return;
             }
             const action = btn.dataset.action;
-            const connectionId = parseInt(btn.dataset.id, 10);
+            const connectionId = Number.parseInt(btn.dataset.id, 10);
             if (action === 'accept') {
                 this._acceptRequest(connectionId);
             } else if (action === 'reject') {
@@ -558,7 +558,7 @@ class PrivateMessageManager {
             }
             const peerId = item.dataset.peerId;
             const peerUsername = item.dataset.peerUsername;
-            const connectionId = parseInt(item.dataset.connectionId, 10);
+            const connectionId = Number.parseInt(item.dataset.connectionId, 10);
             this._openChat(peerId, peerUsername, connectionId);
         });
     }

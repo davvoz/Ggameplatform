@@ -1026,7 +1026,7 @@ const DB_SCHEMA = {
             id:           { width: '60px' },
             username:     { searchable: true, style: 'font-weight: 600; color: #0ea5e9;' },
             text:         { type: 'custom', render: (value) => {
-                const safe = (value || '').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
+                const safe = (value || '').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                 const preview = safe.length > 100 ? safe.substring(0, 100) + '…' : safe;
                 return { type: 'html', content: `<span title="${safe}">${preview || '<em style="color:#737373">—</em>'}</span>` };
             }, searchable: true },
@@ -1159,7 +1159,7 @@ const DB_SCHEMA = {
             sender_id:    { searchable: true, style: 'font-weight: 600; color: #ec4899;' },
             receiver_id:  { searchable: true, style: 'font-weight: 600; color: #ec4899;' },
             text:         { type: 'custom', render: (value) => {
-                const safe = (value || '').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
+                const safe = (value || '').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                 const preview = safe.length > 100 ? safe.substring(0, 100) + '…' : safe;
                 return { type: 'html', content: `<span title="${safe}">${preview || '<em style="color:#737373">—</em>'}</span>` };
             }, searchable: true },

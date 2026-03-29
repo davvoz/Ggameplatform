@@ -1043,3 +1043,26 @@
     font-style: italic;
     text-align: center;
 }
+
+/* ========== iOS PWA Safe Area Fix ========== */
+/* On iPhone (PWA / standalone), the fixed navbar includes safe-area-inset-top
+   for the notch / Dynamic Island, making it taller than the default 60-70px.
+   Push the community section down so the tab bar (Chat/Messages/Stats) is visible. */
+@media (max-width: 768px) {
+    body.ios-pwa .community,
+    html.ios-standalone .community,
+    body.display-standalone .community {
+        padding-top: calc(84px + env(safe-area-inset-top, 0px));
+        height: calc(100vh - 60px - env(safe-area-inset-top, 0px));
+    }
+}
+
+/* Safari (including non-PWA) on iOS: account for safe-area when present */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        .community {
+            padding-top: calc(84px + env(safe-area-inset-top, 0px));
+            height: calc(100vh - 60px - env(safe-area-inset-top, 0px));
+        }
+    }
+}

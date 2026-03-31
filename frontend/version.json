@@ -1,8 +1,17 @@
 {
-  "version": "4.2.1",
-  "timestamp": "2026-03-31T08:54:10.836Z",
-  "buildNumber": 502,
+  "version": "4.2.2",
+  "timestamp": "2026-03-31T13:58:36.445Z",
+  "buildNumber": 503,
   "changelog": [
+    {
+      "version": "4.2.2",
+      "date": "2026-03-31",
+      "type": "patch",
+      "changes": [
+        "fix:[MP]multiplayer coins bug",
+        "🔖 Bump version to 4.2.1 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.1",
       "date": "2026-03-31",
@@ -82,15 +91,6 @@
       "changes": [
         "refactor: Sonar fix v2",
         "🔖 Bump version to 4.0.34 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.34",
-      "date": "2026-03-26",
-      "type": "patch",
-      "changes": [
-        "refactor: Sonar fixes",
-        "🔖 Bump version to 4.0.33 [skip-version]"
       ]
     }
   ]

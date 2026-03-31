@@ -367,20 +367,21 @@ export class LobbyState extends State {
     }
 
     #setupJoinButtons() {
-        const keys = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         const buttons = [];
         const cols = 8;
-        const sz = 36;
+        const sz = 42;
         const sx = (DESIGN_WIDTH - cols * sz) / 2;
-        const sy = 240;
+        const sy = 215;
 
         for (let i = 0; i < keys.length; i++) {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            buttons.push({ x: sx + col * sz, y: sy + row * (sz + 4), w: sz - 4, h: sz - 4, label: keys[i], action: `key_${keys[i]}`, color: CLR.ACCENT, fontSize: 10 });
+            buttons.push({ x: sx + col * sz, y: sy + row * (sz + 4), w: sz - 4, h: sz - 4, label: keys[i], action: `key_${keys[i]}`, color: CLR.ACCENT, fontSize: 14 });
         }
-        buttons.push({ x: 60,  y: sy + 5 * (sz + 4), w: 100, h: 32, label: 'DEL',  action: 'keyDel', color: CLR.RED,   fontSize: 9 });
-        buttons.push({ x: 200, y: sy + 5 * (sz + 4), w: 140, h: 32, label: 'JOIN',  action: 'doJoin', color: CLR.GREEN, fontSize: 10 });
+        const actionY = sy + Math.ceil(keys.length / cols) * (sz + 4) + 4;
+        buttons.push({ x: sx,       y: actionY, w: 130, h: 36, label: 'DEL',  action: 'keyDel', color: CLR.RED,   fontSize: 13 });
+        buttons.push({ x: sx + 140, y: actionY, w: cols * sz - 140, h: 36, label: 'JOIN',  action: 'doJoin', color: CLR.GREEN, fontSize: 13 });
         buttons.push({ x: 60,  y: DESIGN_HEIGHT - 56, w: DESIGN_WIDTH - 120, h: 36, label: 'BACK', action: 'lobbyBack', color: CLR.TEXT_MID, fontSize: 10 });
 
         this._game.ui.setButtons(buttons);
@@ -408,6 +409,15 @@ export class LobbyState extends State {
 
     async #doCreateRoom() {
         try {
+            // Check balance before creating a bet room
+            if (this.#betAmount > 0) {
+                const balance = await this._game.platform.getUserBalance();
+                if (balance === null || balance < this.#betAmount) {
+                    this.showError('NOT ENOUGH COINS');
+                    return;
+                }
+            }
+
             if (!this._game.network.connected) {
                 await this._game.network.connect();
             }
@@ -452,7 +462,19 @@ export class LobbyState extends State {
                 await this._game.network.connect();
             }
 
-            this._game.network.on('joinedRoom', (data) => {
+            this._game.network.on('joinedRoom', async (data) => {
+                const betAmount = data.betAmount ?? 0;
+
+                // Check balance before joining a bet room
+                if (betAmount > 0) {
+                    const balance = await this._game.platform.getUserBalance();
+                    if (balance === null || balance < betAmount) {
+                        this.showError('NOT ENOUGH COINS');
+                        this._game.network.disconnect();
+                        return;
+                    }
+                }
+
                 const stageId = data.stageId ?? 'default';
                 const stage = VS_STAGES.find(s => s.id === stageId) ?? VS_STAGES[0];
 
@@ -460,7 +482,7 @@ export class LobbyState extends State {
                 this._game.isVsCPU = false;
                 this._game.fsm.transition('multiCharSelect', {
                     roundsToWin: data.roundsToWin,
-                    betAmount: data.betAmount,
+                    betAmount: betAmount,
                     stage,
                     opponentName: data.opponentName,
                 });

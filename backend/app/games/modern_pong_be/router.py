@@ -250,6 +250,20 @@ async def websocket_endpoint(websocket: WebSocket):
                     await current_room.broadcast(data, exclude=player_id)
 
             # ----------------------------------------------------------
+            # Super shot fired (from host)
+            # ----------------------------------------------------------
+            elif msg_type == "superShot":
+                if current_room and player_id == current_room.host_id:
+                    await current_room.broadcast(data, exclude=player_id)
+
+            # ----------------------------------------------------------
+            # Shield hit (from host)
+            # ----------------------------------------------------------
+            elif msg_type == "shieldHit":
+                if current_room and player_id == current_room.host_id:
+                    await current_room.broadcast(data, exclude=player_id)
+
+            # ----------------------------------------------------------
             # Rematch request
             # ----------------------------------------------------------
             elif msg_type == "rematch":

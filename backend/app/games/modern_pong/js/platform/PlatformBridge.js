@@ -35,17 +35,8 @@ export class PlatformBridge {
             }
         });
 
-        // XP banner & level-up via SDK event
-        this.#sdk.on('showXPBanner', (payload) => {
-            if (payload && payload.xp_earned !== undefined) {
-                PlatformBridge.showXPBanner(payload.xp_earned);
-            }
-        });
-        this.#sdk.on('showLevelUpModal', (payload) => {
-            if (payload) PlatformBridge.showLevelUpNotification(payload);
-        });
-
-        // Fallback: also listen via raw postMessage
+        // XP banner & level-up via raw postMessage only (not SDK events)
+        // to avoid duplicate triggers from the SDK's generic triggerEvent.
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
             if (event.data.protocolVersion !== '1.0.0') return;
@@ -121,7 +112,7 @@ export class PlatformBridge {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ amount, description }),
+                body: JSON.stringify({ amount, description, transaction_type: 'game_bet' }),
             });
             return res.ok;
         } catch (e) {
@@ -137,7 +128,7 @@ export class PlatformBridge {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ amount, description }),
+                body: JSON.stringify({ amount, description, transaction_type: 'game_win' }),
             });
             return res.ok;
         } catch (e) {

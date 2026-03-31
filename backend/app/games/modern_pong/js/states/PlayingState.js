@@ -36,9 +36,26 @@ export class PlayingState extends State {
         this._game.ui.clearButtons();
         this._game.sound.stopMusic();
         this._game.sound.playGameMusic();
+
+        // Handle opponent disconnect during match
+        if (!this._game.isVsCPU) {
+            this._game.network.on('opponentLeft', () => {
+                // Opponent left mid-match — treat as win, award full pot
+                const betAmount = this._game.betAmount ?? 0;
+                if (betAmount > 0) {
+                    this._game.platform.awardCoins(betAmount * 2, 'Pong bet won - opponent left');
+                }
+                this._game.network.disconnect();
+                this._game.fsm.transition('menu');
+            });
+        }
     }
 
-    exit() { /* no-op */ }
+    exit() {
+        if (!this._game.isVsCPU) {
+            this._game.network?.off('opponentLeft');
+        }
+    }
 
     update(dt) {
         const game = this._game;
@@ -231,6 +248,10 @@ export class PlayingState extends State {
                 game.particles.emit(ball.x, ball.y, 15, {
                     colors: [COLORS.NEON_CYAN, '#ffffff'],
                 });
+                // Sync shield hit to guest
+                if (!game.isVsCPU && game.isHost) {
+                    game.network.send({ type: 'shieldHit' });
+                }
             }
         }
 
@@ -367,6 +388,11 @@ export class PlayingState extends State {
     #executeSuperShot(character, ball, game) {
         game.sound.playSuperShot();
         game.shake.trigger(10, 400);
+
+        // Notify guest about the super shot (so they can replicate visuals)
+        if (!game.isVsCPU && game.isHost) {
+            game.network.sendSuperShot(character.data.id, character.isTopPlayer);
+        }
 
         // Big particle burst with character colors
         game.particles.emit(character.x, character.y, 35, {

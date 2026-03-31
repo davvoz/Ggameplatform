@@ -28,6 +28,18 @@ export class RoundEndState extends State {
         this.#deuceParticlesDone = false;
         this._game.ui.clearButtons();
 
+        // Handle opponent disconnect between rounds
+        if (!this._game.isVsCPU) {
+            this._game.network.on('opponentLeft', () => {
+                const betAmount = this._game.betAmount ?? 0;
+                if (betAmount > 0) {
+                    this._game.platform.awardCoins(betAmount * 2, 'Pong bet won - opponent left');
+                }
+                this._game.network.disconnect();
+                this._game.fsm.transition('menu');
+            });
+        }
+
         // Celebrate
         const scorer = this.#scorerId === 'bottom'
             ? this._game.bottomPlayer
@@ -35,7 +47,11 @@ export class RoundEndState extends State {
         scorer.playCelebrate();
     }
 
-    exit() { /* no-op */ }
+    exit() {
+        if (!this._game.isVsCPU) {
+            this._game.network?.off('opponentLeft');
+        }
+    }
 
     update(dt) {
         this.#timer += dt;

@@ -123,6 +123,14 @@ export class NetworkManager {
         });
     }
 
+    sendSuperShot(charId, isTopPlayer) {
+        this.send({
+            type: 'superShot',
+            charId,
+            isTopPlayer,
+        });
+    }
+
     sendRematch() {
         this.send({ type: 'rematch' });
     }

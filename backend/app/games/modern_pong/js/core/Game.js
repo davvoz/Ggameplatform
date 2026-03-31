@@ -11,6 +11,7 @@ import { PlatformBridge } from '../platform/PlatformBridge.js';
 import { AIController } from '../ai/AIController.js';
 import { Character } from '../entities/Character.js';
 import { Ball } from '../entities/Ball.js';
+import { SuperShield } from '../entities/FieldObjects.js';
 import { CHARACTERS } from '../characters/CharacterData.js';
 import { SoundManager } from '../audio/SoundManager.js';
 import {
@@ -220,6 +221,56 @@ export class Game {
                 lifeMin: 500, lifeMax: 1500,
             });
             this.scoreGoal(data.scorerId);
+        });
+
+        // Super shot relayed from host to guest
+        this.network.on('superShot', (data) => {
+            if (this.isHost) return;
+            const charId = data.charId;
+            const isTop = data.isTopPlayer;
+            const character = isTop ? this.topPlayer : this.bottomPlayer;
+            if (!character) return;
+
+            // Visual/audio effects
+            this.sound.playSuperShot();
+            this.shake.trigger(10, 400);
+            this.particles.emit(character.x, character.y, 35, {
+                colors: [character.data.palette.primary, character.data.palette.accent, '#ffffff'],
+                speedMin: 50, speedMax: 160,
+                sizeMin: 2, sizeMax: 5,
+            });
+
+            // Character-specific visuals
+            if (charId === 'tank') {
+                this.addFieldObject(
+                    new SuperShield(isTop, character.data.palette.accent)
+                );
+                this.particles.emit(
+                    (ARENA_LEFT + ARENA_RIGHT) / 2,
+                    isTop ? ARENA_TOP + 4 : ARENA_BOTTOM - 4,
+                    30,
+                    { colors: ['#88ee88', '#44bb44', '#ffffff'], speedMin: 30, speedMax: 100 }
+                );
+            }
+        });
+
+        // Shield hit relayed from host to guest
+        this.network.on('shieldHit', () => {
+            if (this.isHost) return;
+            // Find first alive field object with destroy and trigger it
+            for (const obj of this.fieldObjects) {
+                if (obj.alive && obj.destroy) {
+                    obj.destroy();
+                    this.shake.trigger(5, 150);
+                    this.sound.playShieldHit();
+                    if (obj.x !== undefined && obj.y !== undefined) {
+                        this.particles.emit(obj.x, obj.y, 15, {
+                            colors: [COLORS.NEON_CYAN, '#ffffff'],
+                        });
+                    }
+                    break;
+                }
+            }
         });
     }
 

@@ -423,8 +423,21 @@ export class MultiCharSelectState extends State {
 
     /* ======================= READY ======================= */
 
-    #onReady() {
+    async #onReady() {
         if (this.#ready) return;
+
+        // Spend coins when committing to the match
+        const betAmount = this.#roomData?.betAmount ?? 0;
+        if (betAmount > 0) {
+            const spent = await this._game.platform.spendCoins(betAmount, 'Pong multiplayer bet');
+            if (!spent) {
+                // Not enough coins — disconnect and go back
+                this._game.network.disconnect();
+                this._game.fsm.transition('menu');
+                return;
+            }
+        }
+
         this.#ready = true;
 
         // Send character choice to server FIRST, then play sound
@@ -469,6 +482,11 @@ export class MultiCharSelectState extends State {
 
         // Opponent disconnected
         this._game.network.on('opponentLeft', () => {
+            // Refund bet only if we already clicked READY (coins were spent)
+            const betAmount = this.#roomData?.betAmount ?? 0;
+            if (betAmount > 0 && this.#ready) {
+                this._game.platform.awardCoins(betAmount, 'Pong bet refund - opponent left');
+            }
             this._game.network.disconnect();
             this._game.fsm.transition('menu');
         });

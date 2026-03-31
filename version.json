@@ -1,8 +1,17 @@
 {
-  "version": "4.2.0",
-  "timestamp": "2026-03-31T08:32:49.431Z",
-  "buildNumber": 501,
+  "version": "4.2.1",
+  "timestamp": "2026-03-31T08:54:10.836Z",
+  "buildNumber": 502,
   "changelog": [
+    {
+      "version": "4.2.1",
+      "date": "2026-03-31",
+      "type": "patch",
+      "changes": [
+        "fix: update quest titles and descriptions to English",
+        "🔖 Bump version to 4.2.0 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.0",
       "date": "2026-03-31",
@@ -82,15 +91,6 @@
       "changes": [
         "refactor: Sonar fixes",
         "🔖 Bump version to 4.0.33 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.33",
-      "date": "2026-03-26",
-      "type": "patch",
-      "changes": [
-        "fix:Sonar",
-        "🔖 Bump version to 4.0.32 [skip-version]"
       ]
     }
   ]

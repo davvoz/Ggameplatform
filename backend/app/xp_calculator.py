@@ -185,6 +185,25 @@ class ThresholdStrategy(XPCalculationStrategy):
         return True
 
 
+class FlatBonusStrategy(XPCalculationStrategy):
+    """Award a flat XP amount regardless of score (participation bonus)."""
+
+    def calculate(self, context: SessionContext, parameters: Dict[str, Any]) -> float:
+        """
+        XP = base_xp (fixed amount per session).
+
+        Expected parameters:
+            - base_xp: float (default 1.0)
+        """
+        return parameters.get('base_xp', 1.0)
+
+    def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
+        if 'base_xp' in parameters:
+            if not isinstance(parameters['base_xp'], (int, float)) or parameters['base_xp'] < 0:
+                return False
+        return True
+
+
 class HighScoreBonusStrategy(XPCalculationStrategy):
     """Award bonus XP for achieving a new high score."""
     
@@ -667,6 +686,7 @@ class StrategyFactory:
     """Factory for creating XP calculation strategies (Factory Pattern)."""
     
     _strategies: Dict[str, XPCalculationStrategy] = {
+        'flat': FlatBonusStrategy(),
         'score_multiplier': ScoreMultiplierStrategy(),
         'score_power': ScorePowerStrategy(),
         'time_bonus': TimeBonusStrategy(),

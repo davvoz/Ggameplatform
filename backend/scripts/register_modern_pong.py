@@ -134,8 +134,8 @@ XP_RULES = [
 
 QUESTS = [
     {
-        "title": "Pong: Prima Partita",
-        "description": "Gioca la tua prima partita a Pixel Arena Pong",
+        "title": "Pong: First Match",
+        "description": "Play your first Pixel Arena Pong match",
         "quest_type": "play_games",
         "target_value": 1,
         "xp_reward": 20,
@@ -150,8 +150,8 @@ QUESTS = [
         }),
     },
     {
-        "title": "Pong: Campione del Giorno",
-        "description": "Vinci 3 partite a Pixel Arena Pong",
+        "title": "Pong: Champion of the Day",
+        "description": "Win 3 Pixel Arena Pong matches",
         "quest_type": "score",
         "target_value": 3,
         "xp_reward": 50,
@@ -166,8 +166,8 @@ QUESTS = [
         }),
     },
     {
-        "title": "Pong: Cacciatore di Power-Up",
-        "description": "Raccogli 10 power-up in una giornata",
+        "title": "Pong: Power-Up Hunter",
+        "description": "Collect 10 power-ups in a day",
         "quest_type": "score",
         "target_value": 10,
         "xp_reward": 35,

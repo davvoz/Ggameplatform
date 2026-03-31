@@ -94,7 +94,7 @@ export class RoundEndState extends State {
             : ROUND_END_DELAY;
 
         if (this.#timer >= delay) {
-            this._game.startNextRound();
+            this._game.startNextRound(this.#scorerId);
         }
     }
 

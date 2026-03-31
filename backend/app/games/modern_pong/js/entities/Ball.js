@@ -170,6 +170,47 @@ export class Ball {
         this.#impactY = this.#y;
     }
 
+    /**
+     * Visual-only update for network guests.
+     * Updates trail, timers, and visual state — no physics/position changes.
+     * Call AFTER interpolation has set the correct x/y from the server.
+     */
+    updateVisuals(dt) {
+        if (this.#frozen) return;
+
+        // Trail (using current interpolated position)
+        this.#trail.push({ x: this.#x, y: this.#y });
+        if (this.#trail.length > this.#maxTrail) {
+            this.#trail.shift();
+        }
+
+        // Fireball timer
+        if (this.#fireball) {
+            this.#fireballTimer -= dt;
+            if (this.#fireballTimer <= 0) {
+                this.#fireball = false;
+                this.#color = COLORS.WHITE;
+                this.#glowColor = COLORS.NEON_CYAN;
+            }
+        }
+
+        // Visual timers
+        const sec = dt / 1000;
+        this.#rotation += (Math.abs(this.#vx) + Math.abs(this.#vy)) * sec * 0.04;
+        this.#pulsePhase += dt * 0.006;
+        this.#speedGlow = Math.min(1, this.#speed / BALL_MAX_SPEED);
+        if (this.#impactFlash > 0) this.#impactFlash -= dt;
+
+        // Shadow blaze timer
+        if (this.#shadowBlazeTimer > 0) {
+            this.#shadowBlazeTimer -= dt;
+            if (this.#shadowBlazeTimer <= 0) {
+                this.#color = COLORS.WHITE;
+                this.#glowColor = COLORS.NEON_CYAN;
+            }
+        }
+    }
+
     setColor(color, glow) {
         this.#color = color;
         this.#glowColor = glow;

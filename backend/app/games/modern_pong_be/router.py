@@ -218,6 +218,15 @@ async def websocket_endpoint(websocket: WebSocket):
                         })
 
             # ----------------------------------------------------------
+            # Ping / pong — RTT measurement
+            # ----------------------------------------------------------
+            elif msg_type == "ping":
+                await websocket.send_json({
+                    "type": "pong",
+                    "t": data.get("t", 0),
+                })
+
+            # ----------------------------------------------------------
             # Relay: game state from host → guest  (host-authoritative)
             # ----------------------------------------------------------
             elif msg_type == "gameState":
@@ -234,6 +243,13 @@ async def websocket_endpoint(websocket: WebSocket):
                         "dx": data.get("dx", 0),
                         "dy": data.get("dy", 0),
                     })
+
+            # ----------------------------------------------------------
+            # Relay: power-up spawned (host → guest)
+            # ----------------------------------------------------------
+            elif msg_type == "powerUpSpawned":
+                if current_room and player_id == current_room.host_id:
+                    await current_room.broadcast(data, exclude=player_id)
 
             # ----------------------------------------------------------
             # Goal scored (from host)

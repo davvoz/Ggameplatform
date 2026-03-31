@@ -24,7 +24,11 @@ export class StoryCompleteState extends State {
         this._game.sound.playMatchWin();
 
         // Report story completion to platform
-        this._game.platform.gameOver(6, { winner: true, mode: 'story' });
+        this._game.platform.gameOver(6, {
+            won: true,
+            mode: 'story',
+            powerups_collected: this._game.powerupsCollected ?? 0,
+        });
     }
 
     exit() {

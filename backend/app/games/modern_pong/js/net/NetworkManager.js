@@ -9,11 +9,14 @@ export class NetworkManager {
     #playerId = null;
     #roomCode = null;
     #isHost = false;
+    #rtt = 0;
+    #pingInterval = null;
 
     get connected() { return this.#connected; }
     get playerId() { return this.#playerId; }
     get roomCode() { return this.#roomCode; }
     get isHost() { return this.#isHost; }
+    get rtt() { return this.#rtt; }
 
     on(type, callback) {
         if (!this.#listeners.has(type)) {
@@ -34,6 +37,7 @@ export class NetworkManager {
 
             this.#ws.onopen = () => {
                 this.#connected = true;
+                this.#startPing();
                 resolve();
             };
 
@@ -66,7 +70,12 @@ export class NetworkManager {
             this.#playerId = null;
             this.#roomCode = null;
             this.#isHost = false;
+            this.#rtt = 0;
             this.#listeners.clear();
+            if (this.#pingInterval) {
+                clearInterval(this.#pingInterval);
+                this.#pingInterval = null;
+            }
         }
     }
 
@@ -149,11 +158,23 @@ export class NetworkManager {
                 this.#roomCode = data.roomCode;
                 this.#isHost = false;
                 break;
+            case 'pong':
+                this.#rtt = performance.now() - (data.t ?? 0);
+                return; // don't emit pong to listeners
             default:
                 break;
         }
 
         this.#emit(type, data);
+    }
+
+    #startPing() {
+        if (this.#pingInterval) clearInterval(this.#pingInterval);
+        this.#pingInterval = setInterval(() => {
+            if (this.#connected) {
+                this.send({ type: 'ping', t: performance.now() });
+            }
+        }, 2000);
     }
 
     #emit(type, data = null) {

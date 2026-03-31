@@ -75,10 +75,17 @@ export class MatchEndState extends State {
             : (this.#winner === 'top');
         const platform = this._game.platform;
 
-        // Session end
+        // Session end — send structured extra_data for quest tracking
         platform.gameOver(
             didWin ? this.#bottomScore : this.#topScore,
-            { winner: didWin, mode: this._game.isVsCPU ? 'cpu' : 'multiplayer' }
+            {
+                won: didWin,
+                mode: this._game.isVsCPU ? 'cpu' : 'multiplayer',
+                is_multiplayer: !this._game.isVsCPU,
+                player_score: this._game.playerIsBottom ? this.#bottomScore : this.#topScore,
+                opponent_score: this._game.playerIsBottom ? this.#topScore : this.#bottomScore,
+                powerups_collected: this._game.powerupsCollected ?? 0,
+            }
         );
 
         // Multiplayer bet payout

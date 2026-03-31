@@ -2,7 +2,7 @@ import { State } from './State.js';
 import {
      ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM, ARENA_MID_Y,
     POWERUP_SPAWN_INTERVAL, MAX_ACTIVE_POWERUPS, COLORS,
-    BALL_MAX_SPEED,
+    BALL_MAX_SPEED, DESIGN_WIDTH, DESIGN_HEIGHT, UI_FONT,
 } from '../config/Constants.js';
 import { HUD } from '../ui/UIManager.js';
 import { CollisionSystem } from '../physics/CollisionSystem.js';
@@ -23,6 +23,8 @@ export class PlayingState extends State {
     #hitCooldown = new Map();
     /** Track whether we've played the super-ready chime for each player */
     #superReadyPlayed = { top: false, bottom: false };
+    /** Counter for unique power-up network IDs */
+    #puIdCounter = 0;
 
     enter(data) {
         this.#matchData = data ?? this._game.matchData;
@@ -64,7 +66,7 @@ export class PlayingState extends State {
         // Update input
         game.input.update();
 
-        // Player movement — guest skips local move, positions come from host
+        // Player movement
         if (isAuthority) {
             game.bottomPlayer.move(game.input.dx, game.input.dy, dt);
         }
@@ -83,7 +85,10 @@ export class PlayingState extends State {
                 dt,
             );
         } else {
-            // Guest: send local input to host, positions come from gameState
+            // Guest: predict own character locally for responsive feel,
+            // then send input to host. Server correction is applied by
+            // Game.#interpolateNetState() after this update cycle.
+            game.topPlayer.move(game.input.dx, game.input.dy, dt);
             game.network.sendInput({ dx: game.input.dx, dy: game.input.dy });
         }
 
@@ -98,10 +103,14 @@ export class PlayingState extends State {
         // Update entities
         game.topPlayer.update(dt);
         game.bottomPlayer.update(dt);
-        game.ball.update(dt);
+        // Ball physics only on authority; guest visuals run in Game.#update()
+        // after interpolation sets the correct server position.
+        if (isAuthority) {
+            game.ball.update(dt);
+        }
 
-        // Wall hit sound
-        if (game.ball.consumeWallHit()) {
+        // Wall hit sound (authority only — guest doesn't run ball physics)
+        if (isAuthority && game.ball.consumeWallHit()) {
             game.sound.playWallHit();
         }
 
@@ -146,7 +155,19 @@ export class PlayingState extends State {
                 game.powerUps.filter(p => p.alive).length < MAX_ACTIVE_POWERUPS) {
                 this.#powerUpTimer = 0;
                 const pu = spawnRandomPowerUp(POWERUP_TYPES);
+                pu._netId = ++this.#puIdCounter;
                 game.addPowerUp(pu);
+
+                // Sync powerup spawn to guest
+                if (!game.isVsCPU && game.isHost) {
+                    game.network.send({
+                        type: 'powerUpSpawned',
+                        id: pu._netId,
+                        typeId: pu.type.id,
+                        x: pu.x,
+                        y: pu.y,
+                    });
+                }
             }
 
             // Collisions
@@ -206,6 +227,22 @@ export class PlayingState extends State {
         // HUD
         HUD.drawSuperBars(ctx, this._game.topPlayer, this._game.bottomPlayer);
         HUD.drawJoystickHint(ctx, this._game.input);
+
+        // Ping indicator (multiplayer only)
+        if (!this._game.isVsCPU) {
+            const rtt = Math.round(this._game.network.rtt);
+            const color = rtt < 80 ? COLORS.NEON_GREEN
+                        : rtt < 150 ? COLORS.NEON_YELLOW
+                        : COLORS.NEON_RED;
+            ctx.save();
+            ctx.font = `7px ${UI_FONT}`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.6;
+            ctx.fillText(`${rtt}ms`, DESIGN_WIDTH - 14, DESIGN_HEIGHT - 18);
+            ctx.restore();
+        }
     }
 
     #handleCollisions() {
@@ -370,6 +407,23 @@ export class PlayingState extends State {
             colors: [powerUp.type.color, '#ffffff'],
             speedMin: 30, speedMax: 100,
         });
+
+        // Track powerups collected for quest progress
+        const isLocalPlayer = game.playerIsBottom
+            ? !collector.isTopPlayer
+            : collector.isTopPlayer;
+        if (isLocalPlayer) {
+            game.powerupsCollected++;
+        }
+
+        // Sync powerup collection to guest
+        if (!game.isVsCPU && game.isHost && powerUp._netId) {
+            game.network.send({
+                type: 'powerUpCollected',
+                powerUpId: powerUp._netId,
+                collectorId: collector.isTopPlayer ? 'top' : 'bottom',
+            });
+        }
 
         // Charge super on power-up collect
         const wasReady = collector.superReady;

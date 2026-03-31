@@ -11,8 +11,10 @@ import { PlatformBridge } from '../platform/PlatformBridge.js';
 import { AIController } from '../ai/AIController.js';
 import { Character } from '../entities/Character.js';
 import { Ball } from '../entities/Ball.js';
-import { SuperShield } from '../entities/FieldObjects.js';
+import { PowerUp } from '../entities/PowerUp.js';
+import { Shield, SuperShield } from '../entities/FieldObjects.js';
 import { CHARACTERS } from '../characters/CharacterData.js';
+import { POWERUP_TYPES } from '../powerups/PowerUpTypes.js';
 import { SoundManager } from '../audio/SoundManager.js';
 import {
     DESIGN_WIDTH, DESIGN_HEIGHT,
@@ -73,6 +75,7 @@ export class Game {
     isHost = true;
     betAmount = 0;
     matchData = null;
+    powerupsCollected = 0;
 
     /** True when the local player controls the bottom character. */
     get playerIsBottom() { return this.isVsCPU || this.isHost; }
@@ -82,6 +85,13 @@ export class Game {
     storyPlayerCharId = null;
     arenaTheme = null;
     obstacles = [];
+
+    /* --- network interpolation (guest-side) --- */
+    #netBuffer = [];
+    #interpDelay = 100;     // ms behind authoritative state for smooth interpolation
+    #lastSyncTime = 0;
+    #syncRate = 50;         // ms between syncs → 20 Hz (was every frame ~60 Hz)
+    #stateSeq = 0;
 
     constructor(canvas) {
         this.renderer = new Renderer(canvas, DESIGN_WIDTH, DESIGN_HEIGHT);
@@ -180,29 +190,24 @@ export class Game {
             this.guestInputState.dy = data.dy ?? 0;
         });
 
-        // Host sends gameState → guest receives it and applies positions
+        // Host sends gameState → guest buffers snapshots for interpolation
         this.network.on('gameState', (data) => {
             if (this.isHost) return;  // only guest applies
             const s = data.state ?? data;
-            if (s.ball && this.ball) {
-                this.ball.x = s.ball.x;
-                this.ball.y = s.ball.y;
-                this.ball.vx = s.ball.vx;
-                this.ball.vy = s.ball.vy;
-                if (s.ball.fx) this.ball.applyEffectState(s.ball.fx);
-            }
-            if (s.top && this.topPlayer) {
-                this.topPlayer.x = s.top.x;
-                this.topPlayer.y = s.top.y;
-                if (s.top.fx) this.topPlayer.applyEffectState(s.top.fx);
-            }
-            if (s.bottom && this.bottomPlayer) {
-                this.bottomPlayer.x = s.bottom.x;
-                this.bottomPlayer.y = s.bottom.y;
-                if (s.bottom.fx) this.bottomPlayer.applyEffectState(s.bottom.fx);
-            }
+
+            // Buffer snapshot for interpolation
+            this.#netBuffer.push({ time: performance.now(), state: s });
+            // Keep last 30 snapshots (~1.5 s at 20 Hz)
+            while (this.#netBuffer.length > 30) this.#netBuffer.shift();
+
+            // Scores are discrete — apply immediately
             if (s.topScore !== undefined) this.topScore = s.topScore;
             if (s.bottomScore !== undefined) this.bottomScore = s.bottomScore;
+
+            // Effect states applied immediately (they're booleans, not positions)
+            if (s.ball?.fx) this.ball?.applyEffectState(s.ball.fx);
+            if (s.top?.fx) this.topPlayer?.applyEffectState(s.top.fx);
+            if (s.bottom?.fx) this.bottomPlayer?.applyEffectState(s.bottom.fx);
         });
 
         // Goal relayed from host to guest
@@ -272,6 +277,39 @@ export class Game {
                 }
             }
         });
+
+        // Power-up spawned on host → create visual copy on guest
+        this.network.on('powerUpSpawned', (data) => {
+            if (this.isHost) return;
+            const type = POWERUP_TYPES.find(t => t.id === data.typeId);
+            if (type) {
+                const pu = new PowerUp(type, data.x, data.y);
+                pu._netId = data.id;
+                this.addPowerUp(pu);
+            }
+        });
+
+        // Power-up collected on host → remove visual on guest + effects
+        this.network.on('powerUpCollected', (data) => {
+            if (this.isHost) return;
+            const pu = this.powerUps.find(p => p._netId === data.powerUpId && p.alive);
+            if (pu) {
+                this.sound.playPowerUp();
+                this.particles.emit(pu.x, pu.y, 20, {
+                    colors: [pu.type.color, '#ffffff'],
+                    speedMin: 30, speedMax: 100,
+                });
+
+                // Create visual field objects for certain power-up types
+                if (pu.type.id === 'shield') {
+                    const isTopCollector = data.collectorId === 'top';
+                    this.addFieldObject(new Shield(isTopCollector));
+                }
+
+                pu.collect();
+                this.cleanupPowerUps();
+            }
+        });
     }
 
     /* ---------------------------------------------------------- */
@@ -288,6 +326,8 @@ export class Game {
         this.powerUps = [];
         this.fieldObjects = [];
         this.obstacles = [];
+        this.powerupsCollected = 0;
+        this.clearNetBuffer();
 
         // Store story theme if present
         this.arenaTheme = data.theme ?? null;
@@ -436,11 +476,12 @@ export class Game {
         }
     }
 
-    startNextRound() {
+    startNextRound(lastScorerId) {
         this.currentRound++;
         this.powerUps = [];
         this.fieldObjects = [];
         this.extraBalls.length = 0;
+        this.clearNetBuffer();
 
         // Rebuild obstacles from matchData (they persist across rounds)
         this.obstacles = [];
@@ -459,7 +500,9 @@ export class Game {
         this.bottomPlayer.clearEffects();
         this.topPlayer.clearEffects();
 
-        this.#spawnBall();
+        // Serve toward the player who lost the point
+        const serveDir = lastScorerId === 'bottom' ? -1 : lastScorerId === 'top' ? 1 : undefined;
+        this.#spawnBall(serveDir);
         this.ball.unfreeze();
 
         this.fsm.transition('playing', this.matchData);
@@ -515,7 +558,15 @@ export class Game {
 
     syncToNetwork() {
         if (!this.network.connected) return;
+
+        // Rate-limit: send at ~20 Hz instead of every frame
+        const now = performance.now();
+        if (now - this.#lastSyncTime < this.#syncRate) return;
+        this.#lastSyncTime = now;
+        this.#stateSeq++;
+
         this.network.sendGameState({
+            seq: this.#stateSeq,
             ball: {
                 x: this.ball.x, y: this.ball.y,
                 vx: this.ball.vx, vy: this.ball.vy,
@@ -567,13 +618,13 @@ export class Game {
     /*  Private helpers                                           */
     /* ---------------------------------------------------------- */
 
-    #spawnBall() {
+    #spawnBall(direction) {
         this.ball = new Ball();
         this.ball.x = (ARENA_LEFT + ARENA_RIGHT) / 2;
         this.ball.y = ARENA_MID_Y;
 
         const angle = (Math.random() - 0.5) * Math.PI * 0.4;
-        const dir = Math.random() < 0.5 ? -1 : 1;
+        const dir = direction ?? (Math.random() < 0.5 ? -1 : 1);
         this.ball.vx = Math.sin(angle) * BALL_BASE_SPEED;
         this.ball.vy = Math.cos(angle) * BALL_BASE_SPEED * dir;
         this.ball.freeze();
@@ -590,5 +641,111 @@ export class Game {
 
     #update(dt) {
         this.fsm.update(dt);
+
+        // Guest: apply interpolation AFTER the state machine update,
+        // then run visual-only ball update with corrected positions.
+        if (!this.isVsCPU && !this.isHost) {
+            this.#interpolateNetState();
+            this.ball?.updateVisuals(dt);
+        }
+    }
+
+    /* ---------------------------------------------------------- */
+    /*  Network snapshot interpolation (guest-side)               */
+    /* ---------------------------------------------------------- */
+
+    /**
+     * Interpolate entity positions from the snapshot buffer.
+     * Renders ~100 ms behind the host for smooth movement even with jitter.
+     * Own character (topPlayer for guest) uses gentle correction
+     * to blend client-side prediction with authoritative state.
+     */
+    #interpolateNetState() {
+        if (this.#netBuffer.length === 0) return;
+
+        const renderTime = performance.now() - this.#interpDelay;
+
+        // Find two snapshots bracketing renderTime
+        let before = null, after = null;
+        for (let i = this.#netBuffer.length - 1; i > 0; i--) {
+            if (this.#netBuffer[i - 1].time <= renderTime) {
+                before = this.#netBuffer[i - 1];
+                after = this.#netBuffer[i];
+                break;
+            }
+        }
+
+        if (!before) {
+            // All snapshots are in the future or only one — use latest
+            this.#applySnapshot(this.#netBuffer[this.#netBuffer.length - 1].state);
+            return;
+        }
+
+        const range = after.time - before.time;
+        const t = range > 0 ? Math.min(1, (renderTime - before.time) / range) : 1;
+
+        const bs = before.state;
+        const as_ = after.state;
+
+        // Interpolate ball
+        if (bs.ball && as_.ball && this.ball) {
+            this.ball.x = this.#lerp(bs.ball.x, as_.ball.x, t);
+            this.ball.y = this.#lerp(bs.ball.y, as_.ball.y, t);
+            this.ball.vx = as_.ball.vx;
+            this.ball.vy = as_.ball.vy;
+        }
+
+        // Interpolate opponent (bottomPlayer for guest = host's character)
+        if (bs.bottom && as_.bottom && this.bottomPlayer) {
+            this.bottomPlayer.x = this.#lerp(bs.bottom.x, as_.bottom.x, t);
+            this.bottomPlayer.y = this.#lerp(bs.bottom.y, as_.bottom.y, t);
+        }
+
+        // Smooth correction for own character (topPlayer = guest's predicted character)
+        if (as_.top && this.topPlayer) {
+            const serverX = this.#lerp(
+                bs.top?.x ?? as_.top.x,
+                as_.top.x, t,
+            );
+            const serverY = this.#lerp(
+                bs.top?.y ?? as_.top.y,
+                as_.top.y, t,
+            );
+            // Gentle blend toward server — keeps prediction responsive but corrects drift
+            const correction = 0.15;
+            this.topPlayer.x += (serverX - this.topPlayer.x) * correction;
+            this.topPlayer.y += (serverY - this.topPlayer.y) * correction;
+        }
+    }
+
+    /**
+     * Fallback: apply a single snapshot directly (no interpolation pair available).
+     */
+    #applySnapshot(s) {
+        if (s.ball && this.ball) {
+            this.ball.x = s.ball.x;
+            this.ball.y = s.ball.y;
+            this.ball.vx = s.ball.vx;
+            this.ball.vy = s.ball.vy;
+        }
+        if (s.bottom && this.bottomPlayer) {
+            this.bottomPlayer.x = s.bottom.x;
+            this.bottomPlayer.y = s.bottom.y;
+        }
+        if (s.top && this.topPlayer) {
+            const correction = 0.3;
+            this.topPlayer.x += (s.top.x - this.topPlayer.x) * correction;
+            this.topPlayer.y += (s.top.y - this.topPlayer.y) * correction;
+        }
+    }
+
+    #lerp(a, b, t) {
+        return a + (b - a) * t;
+    }
+
+    /** Clear interpolation buffer (call on round/match reset). */
+    clearNetBuffer() {
+        this.#netBuffer.length = 0;
+        this.#stateSeq = 0;
     }
 }

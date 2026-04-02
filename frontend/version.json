@@ -1,8 +1,17 @@
 {
-  "version": "4.2.3",
-  "timestamp": "2026-03-31T23:46:24.438Z",
-  "buildNumber": 504,
+  "version": "4.2.4",
+  "timestamp": "2026-04-02T15:51:03.080Z",
+  "buildNumber": 505,
   "changelog": [
+    {
+      "version": "4.2.4",
+      "date": "2026-04-02",
+      "type": "patch",
+      "changes": [
+        "fix:[MP]characters animation",
+        "🔖 Bump version to 4.2.3 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.3",
       "date": "2026-03-31",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: Private messages , link users",
         "🔖 Bump version to 4.0.36 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.0.36",
-      "date": "2026-03-27",
-      "type": "patch",
-      "changes": [
-        "refactor: Sonar fix v3",
-        "🔖 Bump version to 4.0.35 [skip-version]"
       ]
     }
   ]

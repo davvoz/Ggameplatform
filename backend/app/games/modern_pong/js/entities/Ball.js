@@ -32,6 +32,8 @@ export class Ball {
     #pulsePhase = 0;        // travelling pulse
     #speedGlow = 0;         // ramps up with speed
     #shadowBlazeTimer = 0;  // shadow super — purple fire disc
+    #speedBurstFlash = 0;   // flash on accelerate
+    #prevSpeedTier = 0;     // track speed tier changes
 
     constructor() {
         this.reset(1);
@@ -85,6 +87,8 @@ export class Ball {
         this.#pulsePhase = 0;
         this.#speedGlow = 0;
         this.#shadowBlazeTimer = 0;
+        this.#speedBurstFlash = 0;
+        this.#prevSpeedTier = 0;
     }
 
     freeze() { this.#frozen = true; }
@@ -103,7 +107,7 @@ export class Ball {
         this.#fireball = false;
         this.#fireballTimer = 0;
         this.#color = COLORS.WHITE;
-        this.#glowColor = COLORS.NEON_CYAN;
+        this.#glowColor = this.speedColor;
         return true;
     }
 
@@ -121,7 +125,7 @@ export class Ball {
     clearShadowBlaze() {
         this.#shadowBlazeTimer = 0;
         this.#color = COLORS.WHITE;
-        this.#glowColor = COLORS.NEON_CYAN;
+        this.#glowColor = this.speedColor;
     }
 
     get isShadowBlaze() { return this.#shadowBlazeTimer > 0; }
@@ -148,7 +152,7 @@ export class Ball {
         } else if (!s.fireball && this.#fireball) {
             this.#fireball = false;
             this.#color = COLORS.WHITE;
-            this.#glowColor = COLORS.NEON_CYAN;
+            this.#glowColor = this.speedColor;
         }
         this.#fireballTimer = s.fireballTimer ?? 0;
         // Shadow blaze
@@ -157,7 +161,7 @@ export class Ball {
         } else if (!s.shadowBlaze && this.#shadowBlazeTimer > 0) {
             this.#shadowBlazeTimer = 0;
             this.#color = COLORS.WHITE;
-            this.#glowColor = COLORS.NEON_CYAN;
+            this.#glowColor = this.speedColor;
         }
         // Frozen
         this.#frozen = !!s.frozen;
@@ -178,9 +182,10 @@ export class Ball {
     updateVisuals(dt) {
         if (this.#frozen) return;
 
-        // Trail (using current interpolated position)
+        // Trail (using current interpolated position) — grows with speed
+        const dynamicMaxTrailVis = this.#maxTrail + Math.round(this.speedRatio * 14);
         this.#trail.push({ x: this.#x, y: this.#y });
-        if (this.#trail.length > this.#maxTrail) {
+        while (this.#trail.length > dynamicMaxTrailVis) {
             this.#trail.shift();
         }
 
@@ -190,7 +195,7 @@ export class Ball {
             if (this.#fireballTimer <= 0) {
                 this.#fireball = false;
                 this.#color = COLORS.WHITE;
-                this.#glowColor = COLORS.NEON_CYAN;
+                this.#glowColor = this.speedColor;
             }
         }
 
@@ -200,13 +205,19 @@ export class Ball {
         this.#pulsePhase += dt * 0.006;
         this.#speedGlow = Math.min(1, this.#speed / BALL_MAX_SPEED);
         if (this.#impactFlash > 0) this.#impactFlash -= dt;
+        if (this.#speedBurstFlash > 0) this.#speedBurstFlash -= dt;
+
+        // Keep glow synced with speed (when no special FX)
+        if (!this.#fireball && this.#shadowBlazeTimer <= 0) {
+            this.#glowColor = this.speedColor;
+        }
 
         // Shadow blaze timer
         if (this.#shadowBlazeTimer > 0) {
             this.#shadowBlazeTimer -= dt;
             if (this.#shadowBlazeTimer <= 0) {
                 this.#color = COLORS.WHITE;
-                this.#glowColor = COLORS.NEON_CYAN;
+                this.#glowColor = this.speedColor;
             }
         }
     }
@@ -216,12 +227,54 @@ export class Ball {
         this.#glowColor = glow;
     }
 
+    /** Speed ratio 0-1 from base to max. */
+    get speedRatio() {
+        return Math.max(0, Math.min(1, (this.#speed - BALL_BASE_SPEED) / (BALL_MAX_SPEED - BALL_BASE_SPEED)));
+    }
+
+    /**
+     * Speed tier: 0 = calm, 1 = warm, 2 = hot, 3 = blaze.
+     * Thresholds at ~25%, 50%, 75% of speed range.
+     */
+    get speedTier() {
+        const r = this.speedRatio;
+        if (r < 0.25) return 0;
+        if (r < 0.50) return 1;
+        if (r < 0.75) return 2;
+        return 3;
+    }
+
+    /**
+     * Returns dynamic glow/accent color based on current speed (when no special effect active).
+     */
+    get speedColor() {
+        const r = this.speedRatio;
+        if (r < 0.20) return COLORS.NEON_CYAN;
+        if (r < 0.40) return COLORS.NEON_GREEN;
+        if (r < 0.60) return COLORS.NEON_YELLOW;
+        if (r < 0.80) return COLORS.NEON_ORANGE;
+        return COLORS.NEON_RED;
+    }
+
     accelerate() {
+        const oldTier = this.speedTier;
         this.#speed = Math.min(this.#speed * BALL_ACCELERATION, BALL_MAX_SPEED);
         const magnitude = Math.sqrt(this.#vx * this.#vx + this.#vy * this.#vy);
         if (magnitude > 0) {
             this.#vx = (this.#vx / magnitude) * this.#speed;
             this.#vy = (this.#vy / magnitude) * this.#speed;
+        }
+
+        // Update dynamic colors if no special FX is active
+        if (!this.#fireball && this.#shadowBlazeTimer <= 0) {
+            this.#glowColor = this.speedColor;
+        }
+
+        // Flash on tier change
+        const newTier = this.speedTier;
+        if (newTier > oldTier) {
+            this.#speedBurstFlash = 250;
+            this.#prevSpeedTier = newTier;
         }
     }
 
@@ -245,9 +298,10 @@ export class Ball {
             this.triggerImpact();
         }
 
-        // Trail
+        // Trail — length scales with speed
+        const dynamicMaxTrail = this.#maxTrail + Math.round(this.speedRatio * 14);
         this.#trail.push({ x: this.#x, y: this.#y });
-        if (this.#trail.length > this.#maxTrail) {
+        while (this.#trail.length > dynamicMaxTrail) {
             this.#trail.shift();
         }
 
@@ -257,7 +311,7 @@ export class Ball {
             if (this.#fireballTimer <= 0) {
                 this.#fireball = false;
                 this.#color = COLORS.WHITE;
-                this.#glowColor = COLORS.NEON_CYAN;
+                this.#glowColor = this.speedColor;
             }
         }
 
@@ -283,13 +337,19 @@ export class Ball {
         this.#pulsePhase += dt * 0.006;
         this.#speedGlow = Math.min(1, this.#speed / BALL_MAX_SPEED);
         if (this.#impactFlash > 0) this.#impactFlash -= dt;
+        if (this.#speedBurstFlash > 0) this.#speedBurstFlash -= dt;
+
+        // Keep glow synced with speed (when no special FX)
+        if (!this.#fireball && this.#shadowBlazeTimer <= 0) {
+            this.#glowColor = this.speedColor;
+        }
 
         // Shadow blaze timer — reset color when it expires
         if (this.#shadowBlazeTimer > 0) {
             this.#shadowBlazeTimer -= dt;
             if (this.#shadowBlazeTimer <= 0) {
                 this.#color = COLORS.WHITE;
-                this.#glowColor = COLORS.NEON_CYAN;
+                this.#glowColor = this.speedColor;
             }
         }
     }
@@ -447,6 +507,78 @@ export class Ball {
 
         ctx.restore();
 
+        /* ---- 7b. SPEED MOMENTUM VISUALS ---- */
+        const sRatio = this.speedRatio;
+        const sTier  = this.speedTier;
+
+        // Heat rings — appear from tier 1+, extra ring each tier
+        if (sTier >= 1) {
+            const sColor = this.speedColor;
+            const now7 = Date.now();
+            ctx.save();
+            for (let ring = 0; ring < sTier; ring++) {
+                const phase = now7 / (200 - ring * 30) + ring * 1.2;
+                const expand = Math.sin(phase) * 2;
+                const ringR = r + 4 + ring * 4 + expand;
+                ctx.globalAlpha = (0.35 - ring * 0.07) * (0.7 + Math.sin(phase * 1.3) * 0.3);
+                ctx.strokeStyle = sColor;
+                ctx.lineWidth = 1.5 - ring * 0.25;
+                ctx.beginPath();
+                ctx.arc(x, y, ringR, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Motion streaks — at tier 2+ draw velocity lines behind the ball
+        if (sTier >= 2) {
+            const spd = Math.sqrt(this.#vx * this.#vx + this.#vy * this.#vy);
+            if (spd > 0) {
+                const dx = -this.#vx / spd;
+                const dy = -this.#vy / spd;
+                const perpX = -dy;
+                const perpY = dx;
+                const streakCount = sTier + 1;
+                const streakLen = 6 + sRatio * 18;
+                ctx.save();
+                ctx.strokeStyle = this.speedColor;
+                ctx.lineWidth = 1;
+                for (let s = 0; s < streakCount; s++) {
+                    const offset = (s - (streakCount - 1) / 2) * 4;
+                    const sx = x + perpX * offset + dx * (r + 2);
+                    const sy = y + perpY * offset + dy * (r + 2);
+                    ctx.globalAlpha = 0.25 + sRatio * 0.2;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(sx + dx * streakLen, sy + dy * streakLen);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // Speed burst flash — brief expanding ring when tier changes
+        if (this.#speedBurstFlash > 0) {
+            const burstFrac = this.#speedBurstFlash / 250;
+            const burstR = r + (1 - burstFrac) * 28;
+            ctx.save();
+            ctx.globalAlpha = burstFrac * 0.6;
+            ctx.strokeStyle = this.speedColor;
+            ctx.lineWidth = 3 * burstFrac;
+            ctx.shadowColor = this.speedColor;
+            ctx.shadowBlur = 12 * burstFrac;
+            ctx.beginPath();
+            ctx.arc(x, y, burstR, 0, Math.PI * 2);
+            ctx.stroke();
+            // Inner bright disc
+            ctx.globalAlpha = burstFrac * 0.25;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x, y, burstR * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
         /* ---- 8. FIREBALL PARTICLES ---- */
         if (this.#fireball) {
             for (let i = 0; i < 4; i++) {
@@ -592,6 +724,8 @@ export class Ball {
         this.#y = state.y;
         this.#vx = state.vx;
         this.#vy = state.vy;
+        // Derive speed so guest sees correct speed visuals
+        this.#speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
         if (state.fireball && !this.#fireball) {
             this.setFireball(3000);
         }

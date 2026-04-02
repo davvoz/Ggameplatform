@@ -17,7 +17,7 @@ export class Character {
     #currentAnim = 'idle';
     #frameIndex = 0;
     #frameTimer = 0;
-    #frameDuration = 150;
+    #frameDuration = 110;
     #velocityX = 0;
     #velocityY = 0;
     #activeEffects = new Map();
@@ -236,6 +236,11 @@ export class Character {
         const sy = row * fs;
         const drawSize = CHARACTER_SIZE * this.#sizeMultiplier * this.#baseSize;
 
+        // Render scale accounts for padding in the spritesheet frame
+        const renderScale = this.#spriteSheet.renderScale ?? 1;
+        const artCenterY = this.#spriteSheet.artCenterY ?? 0.5;
+        const renderSize = drawSize * renderScale;
+
         ctx.save();
 
         // Flip sprite for top player (faces down)
@@ -245,14 +250,16 @@ export class Character {
             ctx.drawImage(
                 this.#spriteSheet.canvas,
                 sx, sy, fs, fs,
-                -drawSize / 2, -drawSize / 2, drawSize, drawSize
+                -renderSize / 2, -(1 - artCenterY) * renderSize,
+                renderSize, renderSize
             );
         } else {
             ctx.drawImage(
                 this.#spriteSheet.canvas,
                 sx, sy, fs, fs,
-                this.#x - drawSize / 2, this.#y - drawSize / 2,
-                drawSize, drawSize
+                this.#x - renderSize / 2,
+                this.#y - artCenterY * renderSize,
+                renderSize, renderSize
             );
         }
 

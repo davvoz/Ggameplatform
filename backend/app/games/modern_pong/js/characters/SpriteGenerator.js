@@ -6,16 +6,18 @@
 export class SpriteGenerator {
     static #cache = new Map();
 
-    static FRAME_SIZE = 64;
+    static FRAME_SIZE = 96;
+    static CHAR_SCALE = 2;
+    static ART_CENTER_Y = 0.63;
     static ANIM_FRAMES = {
-        idle: 4,
-        moveUp: 4,
-        moveDown: 4,
-        moveLeft: 4,
-        moveRight: 4,
-        hit: 3,
-        stun: 2,
-        celebrate: 4,
+        idle: 6,
+        moveUp: 6,
+        moveDown: 6,
+        moveLeft: 6,
+        moveRight: 6,
+        hit: 5,
+        stun: 4,
+        celebrate: 6,
     };
 
     /**
@@ -49,7 +51,12 @@ export class SpriteGenerator {
             rowIdx++;
         }
 
-        const sheet = { canvas, anims, frameSize: fs, maxCols };
+        const artScaledSize = SpriteGenerator.CHAR_SCALE * 32;
+        const sheet = {
+            canvas, anims, frameSize: fs, maxCols,
+            renderScale: fs / artScaledSize,
+            artCenterY: SpriteGenerator.ART_CENTER_Y,
+        };
         SpriteGenerator.#cache.set(cacheKey, sheet);
         return sheet;
     }
@@ -57,7 +64,7 @@ export class SpriteGenerator {
     static #drawCharacterFrame(ctx, ox, oy, size, charData, anim, frame) {
         const s = size;
         const half = s / 2;
-        const sc = s / 32;
+        const sc = SpriteGenerator.CHAR_SCALE;
         const p = charData.palette;
         const id = charData.id;
 
@@ -65,38 +72,83 @@ export class SpriteGenerator {
         ctx.translate(ox, oy);
 
         /* ---- animation transforms ---- */
-        const t = frame * Math.PI / 2;
-        let offX = 0, offY = 0, squash = 1, stretch = 1;
+        const totalFrames = SpriteGenerator.ANIM_FRAMES[anim] || 6;
+        const t = frame * Math.PI * 2 / totalFrames;
+        let offX = 0, offY = 0, squash = 1, stretch = 1, rotation = 0;
         let legPhase = 0, armMode = 0; // 0=idle, 1=punch, 2=up
         const moving = anim.startsWith('move');
 
         switch (anim) {
             case 'idle':
-                offY = Math.sin(t) * 1.2 * sc;
+                offY = Math.sin(t) * 2 * sc;
+                rotation = Math.sin(t * 0.5) * 0.02;
+                squash = 1 + Math.sin(t) * 0.018;
+                stretch = 1 - Math.sin(t) * 0.018;
                 break;
             case 'moveUp':
-                offY = (-1 + Math.abs(Math.sin(t))) * sc;
-                legPhase = t; break;
+                offY = (-2 + Math.abs(Math.sin(t)) * 2) * sc;
+                legPhase = t;
+                rotation = Math.sin(t) * 0.04;
+                squash = 1 - Math.abs(Math.sin(t)) * 0.04;
+                stretch = 1 + Math.abs(Math.sin(t)) * 0.04;
+                break;
             case 'moveDown':
-                offY = (1 - Math.abs(Math.sin(t))) * sc;
-                legPhase = t; break;
+                offY = (2 - Math.abs(Math.sin(t)) * 2) * sc;
+                legPhase = t;
+                rotation = Math.sin(t) * 0.04;
+                squash = 1 - Math.abs(Math.sin(t)) * 0.04;
+                stretch = 1 + Math.abs(Math.sin(t)) * 0.04;
+                break;
             case 'moveLeft':
-                offX = (-1 + Math.sin(t)) * sc;
-                legPhase = t; break;
+                offX = (-2 + Math.sin(t) * 2) * sc;
+                legPhase = t;
+                rotation = -0.05;
+                squash = 1.03; stretch = 0.97;
+                break;
             case 'moveRight':
-                offX = (1 - Math.sin(t)) * sc;
-                legPhase = t; break;
-            case 'hit':
-                squash = 1.15; stretch = 0.85;
-                offY = -2 * sc; armMode = 1; break;
-            case 'stun':
-                offX = ((frame % 2) * 4 - 2) * sc; break;
-            case 'celebrate':
-                offY = (-3 - Math.abs(Math.sin(t) * 4)) * sc;
-                armMode = 2; break;
+                offX = (2 - Math.sin(t) * 2) * sc;
+                legPhase = t;
+                rotation = 0.05;
+                squash = 1.03; stretch = 0.97;
+                break;
+            case 'hit': {
+                const hitPhases = [
+                    { oy: 1, sq: 0.92, st: 1.08, arm: 0 },
+                    { oy: -2, sq: 1.18, st: 0.82, arm: 1 },
+                    { oy: -3, sq: 1.22, st: 0.78, arm: 1 },
+                    { oy: -1.5, sq: 1.08, st: 0.92, arm: 1 },
+                    { oy: 0, sq: 1, st: 1, arm: 0 },
+                ];
+                const hp = hitPhases[Math.min(frame, hitPhases.length - 1)];
+                offY = hp.oy * sc; squash = hp.sq; stretch = hp.st; armMode = hp.arm;
+                break;
+            }
+            case 'stun': {
+                const wobbleAngles = [-0.1, 0.1, -0.07, 0.04];
+                const wobbleX = [-2.5, 2.5, -1.5, 1];
+                rotation = wobbleAngles[frame % 4];
+                offX = wobbleX[frame % 4] * sc;
+                offY = (frame === 3 ? 1.5 : 0) * sc;
+                break;
+            }
+            case 'celebrate': {
+                const celebPhases = [
+                    { oy: 1.5, sq: 1.12, st: 0.88 },
+                    { oy: -4, sq: 0.86, st: 1.14 },
+                    { oy: -8, sq: 0.9, st: 1.1 },
+                    { oy: -5, sq: 0.93, st: 1.07 },
+                    { oy: -1, sq: 1.1, st: 0.9 },
+                    { oy: 0, sq: 1, st: 1 },
+                ];
+                const cp = celebPhases[Math.min(frame, celebPhases.length - 1)];
+                offY = cp.oy * sc; squash = cp.sq; stretch = cp.st;
+                armMode = 2;
+                break;
+            }
         }
 
-        ctx.translate(half + offX, half + offY);
+        ctx.translate(half + offX, s * SpriteGenerator.ART_CENTER_Y + offY);
+        if (rotation !== 0) ctx.rotate(rotation);
         ctx.scale(squash, stretch);
 
         const wide = id === 'tank';
@@ -261,32 +313,60 @@ export class SpriteGenerator {
         SpriteGenerator.#drawHeadgear(ctx, sc, p, id, anim, frame);
 
         /* ==== 7. EYES (per character) ==== */
-        SpriteGenerator.#drawEyes(ctx, sc, p, id, anim);
+        SpriteGenerator.#drawEyes(ctx, sc, p, id, anim, frame);
 
         /* ==== 8. MOUTH ==== */
-        SpriteGenerator.#drawMouth(ctx, sc, p, anim);
+        SpriteGenerator.#drawMouth(ctx, sc, p, id, anim, frame);
 
         /* ==== Stun sparkles ==== */
         if (anim === 'stun') {
-            ctx.fillStyle = p.accent;
-            const sOff = frame * 1.2;
-            for (let i = 0; i < 3; i++) {
-                const a = sOff + i * 2.09;
-                const sx = Math.cos(a) * 9 * sc;
+            const sOff = frame * 1.5;
+            // Orbiting stars
+            for (let i = 0; i < 4; i++) {
+                const a = sOff + i * Math.PI / 2;
+                const orbitR = (8 + Math.sin(frame * 0.8 + i) * 2) * sc;
+                const sx = Math.cos(a) * orbitR;
                 const sy = -15 * sc + Math.sin(a) * 3 * sc;
-                PR(ctx, sx - sc * 0.5, sy - sc * 0.5, sc, sc);
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.rotate(a);
+                ctx.fillStyle = i % 2 === 0 ? p.accent : '#ffffff';
+                PR(ctx, -sc * 0.5, -sc * 0.3, sc, sc * 0.6);
+                PR(ctx, -sc * 0.3, -sc * 0.5, sc * 0.6, sc);
+                ctx.restore();
             }
+            // Dizzy swirl
+            ctx.strokeStyle = p.accent;
+            ctx.lineWidth = 0.5 * sc;
+            ctx.globalAlpha = 0.45;
+            ctx.beginPath();
+            for (let a = 0; a < Math.PI * 3; a += 0.3) {
+                const sr = (2 + a * 1.2) * sc;
+                const sx = Math.cos(a + sOff) * sr;
+                const sy = -15 * sc + Math.sin(a + sOff) * sr * 0.3;
+                a === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
         }
 
         /* ==== Aura glow ==== */
         if (anim === 'hit' || anim === 'celebrate') {
-            ctx.globalAlpha = 0.12 + Math.sin(frame * Math.PI) * 0.08;
-            ctx.fillStyle = p.accent;
+            const glowIntensity = 0.15 + Math.sin(frame * Math.PI / 2) * 0.1;
+            ctx.globalAlpha = glowIntensity;
+            const grad = ctx.createRadialGradient(0, -2 * sc, 2 * sc, 0, -2 * sc, 15 * sc);
+            grad.addColorStop(0, p.accent);
+            grad.addColorStop(0.6, p.secondary);
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.ellipse(0, -2 * sc, 15 * sc, 15 * sc, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalAlpha = 1;
         }
+
+        /* ==== Per-character ambient particles ==== */
+        SpriteGenerator.#drawCharacterParticles(ctx, sc, p, id, anim, frame, totalFrames);
 
         ctx.restore();
     }
@@ -295,45 +375,66 @@ export class SpriteGenerator {
     static #drawHeadgear(ctx, sc, p, id, anim, frame) {
         const PR = SpriteGenerator.#pixelRect;
         const RR = SpriteGenerator.#roundedRect;
+        const totalFrames = SpriteGenerator.ANIM_FRAMES[anim] || 6;
+        const t = frame * Math.PI * 2 / totalFrames;
 
         switch (id) {
             case 'blaze': {
-                // Flame crown — 3 rising flames
+                // Flame crown with per-frame flicker
                 ctx.fillStyle = p.primary;
                 PR(ctx, -6 * sc, -15 * sc, 12 * sc, 3 * sc);
+                // Side flames with flicker offset
+                const flicker1 = Math.sin(t * 2) * 0.5 * sc;
+                const flicker2 = Math.cos(t * 2 + 1) * 0.5 * sc;
                 ctx.fillStyle = p.secondary;
-                PR(ctx, -5 * sc, -16 * sc, 3 * sc, 2 * sc);
-                PR(ctx, 2 * sc, -16 * sc, 3 * sc, 2 * sc);
+                PR(ctx, -5 * sc, -16 * sc + flicker1, 3 * sc, 2 * sc);
+                PR(ctx, 2 * sc, -16 * sc + flicker2, 3 * sc, 2 * sc);
+                // Center flame with height variation
+                const centerH = 3 + Math.sin(t * 3) * 0.8;
                 ctx.fillStyle = p.accent;
-                PR(ctx, -2 * sc, -17 * sc, 4 * sc, 3 * sc);
-                PR(ctx, -1 * sc, -18 * sc, 2 * sc, 1 * sc);
-                // Flame tip flicker
-                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.5;
-                PR(ctx, 0, -18 * sc, sc, sc);
+                PR(ctx, -2 * sc, (-17 - Math.sin(t) * 0.5) * sc, 4 * sc, centerH * sc);
+                PR(ctx, -1 * sc, (-18 - Math.sin(t * 2) * 0.5) * sc, 2 * sc, sc);
+                // Flame tip with color cycling
+                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.5 + Math.sin(t * 4) * 0.3;
+                PR(ctx, Math.sin(t) * 0.5 * sc, (-18 - Math.sin(t * 2) * 0.5) * sc, sc, sc);
+                // Floating ember sparks
+                ctx.fillStyle = p.accent; ctx.globalAlpha = 0.5;
+                PR(ctx, (Math.sin(t + 1) * 3) * sc, (-19 - Math.abs(Math.sin(t))) * sc, sc * 0.7, sc * 0.7);
+                PR(ctx, (Math.cos(t + 2) * 2) * sc, (-18.5 - Math.abs(Math.cos(t))) * sc, sc * 0.5, sc * 0.5);
                 ctx.globalAlpha = 1;
                 break;
             }
             case 'frost': {
-                // Ice crystal tiara
+                // Ice crystal tiara with shimmer effect
                 ctx.fillStyle = p.accent;
                 PR(ctx, -6 * sc, -15 * sc, 12 * sc, 2 * sc);
-                // 3 crystals
+                // 3 crystals with varying alpha for shimmer
                 ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 0.7 + Math.sin(t * 2) * 0.3;
                 PR(ctx, -1 * sc, -17 * sc, 2 * sc, 2 * sc);
-                PR(ctx, -4 * sc, -16 * sc, 2 * sc, 1 * sc);
-                PR(ctx, 2 * sc, -16 * sc, 2 * sc, 1 * sc);
-                // Crystal sparkle
-                ctx.fillStyle = p.secondary; ctx.globalAlpha = 0.6;
-                PR(ctx, 0, -17 * sc, sc, sc);
+                ctx.globalAlpha = 0.7 + Math.sin(t * 2 + 2) * 0.3;
+                PR(ctx, -4 * sc, -16 * sc, 2 * sc, sc);
+                ctx.globalAlpha = 0.7 + Math.sin(t * 2 + 4) * 0.3;
+                PR(ctx, 2 * sc, -16 * sc, 2 * sc, sc);
                 ctx.globalAlpha = 1;
-                // Flowing hair wisps
+                // Crystal sparkle with moving highlight
+                ctx.fillStyle = p.secondary; ctx.globalAlpha = 0.7;
+                const sparkX = Math.sin(t) * sc;
+                PR(ctx, sparkX, -17 * sc, sc, sc);
+                ctx.globalAlpha = 1;
+                // Flowing hair wisps with sway
+                const hairSway = Math.sin(t * 0.7) * 0.5 * sc;
                 ctx.fillStyle = p.secondary;
-                PR(ctx, -7 * sc, -10 * sc, 2 * sc, 4 * sc);
-                PR(ctx, 5 * sc, -10 * sc, 2 * sc, 4 * sc);
+                PR(ctx, -7 * sc + hairSway, -10 * sc, 2 * sc, 4 * sc);
+                PR(ctx, 5 * sc - hairSway, -10 * sc, 2 * sc, 4 * sc);
+                // Tiny ice sparkle floating near tiara
+                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.4 + Math.sin(t * 3) * 0.3;
+                PR(ctx, (Math.sin(t * 1.5) * 5) * sc, -16 * sc, sc * 0.5, sc * 0.5);
+                ctx.globalAlpha = 1;
                 break;
             }
             case 'shadow': {
-                // Dark hood / cowl
+                // Dark hood / cowl with inner glow
                 ctx.fillStyle = p.primary;
                 RR(ctx, -8 * sc, -16 * sc, 16 * sc, 7 * sc, 5 * sc);
                 // Hood inner shadow
@@ -341,44 +442,71 @@ export class SpriteGenerator {
                 RR(ctx, -6 * sc, -11 * sc, 12 * sc, 2 * sc, sc);
                 // Hood tip
                 ctx.fillStyle = p.primary;
-                PR(ctx, -1 * sc, -17 * sc, 2 * sc, 1 * sc);
-                // Scarf tails (flow during movement)
+                PR(ctx, -1 * sc, -17 * sc, 2 * sc, sc);
+                // Inner hood glow (mysterious)
+                ctx.fillStyle = p.eyes; ctx.globalAlpha = 0.08 + Math.sin(t) * 0.05;
+                RR(ctx, -5 * sc, -12 * sc, 10 * sc, 3 * sc, sc);
+                ctx.globalAlpha = 1;
+                // Scarf tails (flow while moving + breathe while idle)
                 ctx.fillStyle = p.accent;
-                const scarfOff = anim.startsWith('move') ? Math.sin(frame * Math.PI / 2) * sc : 0;
+                const scarfOff = anim.startsWith('move') ? Math.sin(t) * 1.5 * sc : Math.sin(t * 0.5) * 0.5 * sc;
                 PR(ctx, -8 * sc, -6 * sc, 2 * sc, 5 * sc + scarfOff);
                 PR(ctx, 6 * sc, -6 * sc, 2 * sc, 5 * sc - scarfOff);
+                // Scarf tip accent
+                ctx.fillStyle = p.secondary; ctx.globalAlpha = 0.5;
+                PR(ctx, -8 * sc, -1 * sc + scarfOff, 2 * sc, sc);
+                PR(ctx, 6 * sc, -1 * sc - scarfOff, 2 * sc, sc);
+                ctx.globalAlpha = 1;
                 break;
             }
             case 'tank': {
                 // Heavy metal helmet
                 ctx.fillStyle = p.primary;
                 RR(ctx, -9 * sc, -16 * sc, 18 * sc, 7 * sc, 3 * sc);
-                // Central ridge
+                // Central ridge with highlight
                 ctx.fillStyle = p.accent;
                 PR(ctx, -1 * sc, -17 * sc, 2 * sc, 6 * sc);
+                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.15;
+                PR(ctx, 0, -17 * sc, sc, 6 * sc);
+                ctx.globalAlpha = 1;
                 // Visor slit
                 ctx.fillStyle = p.outline;
-                PR(ctx, -6 * sc, -10 * sc, 12 * sc, 1 * sc);
-                // Side rivets
+                PR(ctx, -6 * sc, -10 * sc, 12 * sc, sc);
+                // Visor reflection sweep
+                const visorX = -6 + (frame % totalFrames) * (12 / totalFrames);
+                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.25;
+                PR(ctx, visorX * sc, -10 * sc, 3 * sc, sc);
+                ctx.globalAlpha = 1;
+                // Side rivets with metallic shine
                 ctx.fillStyle = p.secondary;
                 PR(ctx, -7 * sc, -12 * sc, sc, sc);
                 PR(ctx, 6 * sc, -12 * sc, sc, sc);
+                ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.3;
+                PR(ctx, -7 * sc, -12 * sc, sc * 0.5, sc * 0.5);
+                PR(ctx, 6 * sc, -12 * sc, sc * 0.5, sc * 0.5);
+                ctx.globalAlpha = 1;
                 break;
             }
             case 'spark': {
                 // Electric spiky hair
                 ctx.fillStyle = p.primary;
                 PR(ctx, -5 * sc, -15 * sc, 10 * sc, 2 * sc);
-                // Spikes
+                // Spikes with per-frame crackle jitter
+                const jitter = Math.sin(t * 3) * 0.3 * sc;
                 ctx.fillStyle = p.accent;
-                PR(ctx, -4 * sc, -17 * sc, 2 * sc, 2 * sc);
-                PR(ctx, -1 * sc, -19 * sc, 2 * sc, 4 * sc);
-                PR(ctx, 2 * sc, -17 * sc, 2 * sc, 2 * sc);
-                // Electric tips
+                PR(ctx, -4 * sc, (-17 + Math.sin(t * 2) * 0.3) * sc, 2 * sc, 2 * sc);
+                PR(ctx, -1 * sc, (-19 + jitter) * sc, 2 * sc, 4 * sc);
+                PR(ctx, 2 * sc, (-17 + Math.cos(t * 2) * 0.3) * sc, 2 * sc, 2 * sc);
+                // Extra side spikes
+                PR(ctx, -6 * sc, (-15 + Math.sin(t * 2 + 1) * 0.3) * sc, sc, sc);
+                PR(ctx, 5 * sc, (-15 + Math.cos(t * 2 + 1) * 0.3) * sc, sc, sc);
+                // Electric tips with flashing
                 ctx.fillStyle = '#ffffff';
-                PR(ctx, 0, -19 * sc, sc, sc);
-                PR(ctx, -3 * sc, -17 * sc, sc, sc);
-                PR(ctx, 3 * sc, -17 * sc, sc, sc);
+                ctx.globalAlpha = 0.6 + Math.sin(t * 4) * 0.4;
+                PR(ctx, jitter * 0.5, (-19 + jitter) * sc, sc, sc);
+                PR(ctx, -3 * sc, (-17 + Math.sin(t * 2) * 0.3) * sc, sc, sc);
+                PR(ctx, 3 * sc, (-17 + Math.cos(t * 2) * 0.3) * sc, sc, sc);
+                ctx.globalAlpha = 1;
                 // Goggle strap
                 ctx.fillStyle = p.outline;
                 PR(ctx, -7 * sc, -10 * sc, 2 * sc, sc);
@@ -391,31 +519,82 @@ export class SpriteGenerator {
                 RR(ctx, -8 * sc, -16 * sc, 16 * sc, 6 * sc, 4 * sc);
                 // Hood peak
                 ctx.fillStyle = p.secondary;
-                PR(ctx, -2 * sc, -17 * sc, 4 * sc, 1 * sc);
-                // Toxic drip marks on sides
+                PR(ctx, -2 * sc, -17 * sc, 4 * sc, sc);
+                // Toxic drip marks (animated dripping)
                 ctx.fillStyle = p.accent;
-                PR(ctx, -6 * sc, -10 * sc, sc, 3 * sc);
-                PR(ctx, 5 * sc, -11 * sc, sc, 2 * sc);
-                PR(ctx, -5 * sc, -8 * sc, sc, 2 * sc);
+                const drip = (frame * 0.4) % 2;
+                PR(ctx, -6 * sc, (-10 + drip * 0.5) * sc, sc, (3 + drip * 0.3) * sc);
+                PR(ctx, 5 * sc, (-11 + drip * 0.3) * sc, sc, (2 + drip * 0.2) * sc);
+                PR(ctx, -5 * sc, (-8 + drip * 0.4) * sc, sc, (2 + drip * 0.2) * sc);
+                // Drip droplet falling
+                ctx.globalAlpha = 0.6;
+                const dropY = (-7 + drip * 2) * sc;
+                ctx.beginPath();
+                ctx.arc(-6 * sc + sc * 0.5, dropY, sc * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
                 break;
             }
         }
     }
 
     /* ---- Per-character eyes ---- */
-    static #drawEyes(ctx, sc, p, id, anim) {
+    static #drawEyes(ctx, sc, p, id, anim, frame) {
         const PR = SpriteGenerator.#pixelRect;
 
         if (anim === 'stun') {
-            // Dizzy X-eyes for all
+            // Enhanced dizzy X-eyes with spiral effect
             ctx.fillStyle = p.outline;
+            // Left X
             PR(ctx, -5 * sc, -9 * sc, sc, sc);
             PR(ctx, -3 * sc, -9 * sc, sc, sc);
+            PR(ctx, -4 * sc, -10 * sc, sc, sc);
             PR(ctx, -4 * sc, -8 * sc, sc, sc);
+            // Right X
             PR(ctx, 2 * sc, -9 * sc, sc, sc);
             PR(ctx, 4 * sc, -9 * sc, sc, sc);
+            PR(ctx, 3 * sc, -10 * sc, sc, sc);
             PR(ctx, 3 * sc, -8 * sc, sc, sc);
             return;
+        }
+
+        if (anim === 'celebrate') {
+            // Happy crescent eyes (^_^)
+            ctx.strokeStyle = p.outline;
+            ctx.lineWidth = sc * 0.8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(-3.5 * sc, -8 * sc, 2 * sc, Math.PI + 0.3, -0.3);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(3.5 * sc, -8 * sc, 2 * sc, Math.PI + 0.3, -0.3);
+            ctx.stroke();
+            // Sparkle dots near eyes
+            ctx.fillStyle = p.accent;
+            ctx.globalAlpha = 0.7;
+            PR(ctx, -6 * sc, -10 * sc, sc * 0.7, sc * 0.7);
+            PR(ctx, 5.5 * sc, -10 * sc, sc * 0.7, sc * 0.7);
+            ctx.globalAlpha = 1;
+            return;
+        }
+
+        // Idle blink on last 2 frames
+        if (anim === 'idle' && frame >= 4) {
+            ctx.fillStyle = p.outline;
+            PR(ctx, -5 * sc, -8 * sc, 3 * sc, sc);
+            PR(ctx, 2 * sc, -8 * sc, 3 * sc, sc);
+            // Tiny highlight even when blinking
+            ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.3;
+            PR(ctx, -5 * sc, -8 * sc, sc, sc * 0.5);
+            PR(ctx, 2 * sc, -8 * sc, sc, sc * 0.5);
+            ctx.globalAlpha = 1;
+            return;
+        }
+
+        // Add glow for hit frames
+        if (anim === 'hit') {
+            ctx.shadowColor = p.eyes;
+            ctx.shadowBlur = 4 * sc;
         }
 
         switch (id) {
@@ -532,35 +711,77 @@ export class SpriteGenerator {
                 PR(ctx, 2 * sc, -9 * sc, sc, sc);
             }
         }
+
+        if (anim === 'hit') {
+            ctx.shadowBlur = 0;
+        }
     }
 
-    /* ---- Mouth (shared, per-animation) ---- */
-    static #drawMouth(ctx, sc, p, anim) {
+    /* ---- Mouth (per-character, per-animation) ---- */
+    static #drawMouth(ctx, sc, p, id, anim, frame) {
         const PR = SpriteGenerator.#pixelRect;
         if (anim === 'celebrate') {
-            // Wide grin — white teeth
+            // Big happy grin with teeth and tongue
             ctx.fillStyle = p.outline;
-            PR(ctx, -3 * sc, -5 * sc, 6 * sc, 2 * sc);
+            PR(ctx, -3 * sc, -5 * sc, 6 * sc, 3 * sc);
             ctx.fillStyle = '#ffffff';
             PR(ctx, -2 * sc, -5 * sc, 4 * sc, sc);
+            // Tongue peek
+            ctx.fillStyle = '#ff7777';
+            PR(ctx, -sc, -3 * sc, 2 * sc, sc);
         } else if (anim === 'stun') {
-            // Open O mouth
+            // Wavy open mouth with wobble
+            const wobble = Math.sin(frame * Math.PI * 0.5) * sc * 0.5;
             ctx.fillStyle = p.outline;
-            PR(ctx, -1 * sc, -5 * sc, 2 * sc, 2 * sc);
-            ctx.fillStyle = '#000000'; ctx.globalAlpha = 0.4;
-            PR(ctx, 0, -4 * sc, sc, sc);
+            PR(ctx, -1.5 * sc + wobble, -5 * sc, 3 * sc, 2 * sc);
+            ctx.fillStyle = '#330000'; ctx.globalAlpha = 0.5;
+            PR(ctx, -sc + wobble, -4 * sc, 2 * sc, sc);
             ctx.globalAlpha = 1;
         } else if (anim === 'hit') {
-            // Gritted teeth
+            // Battle cry — wide open mouth
             ctx.fillStyle = p.outline;
-            PR(ctx, -2 * sc, -5 * sc, 4 * sc, 2 * sc);
+            PR(ctx, -2 * sc, -5 * sc, 4 * sc, 3 * sc);
+            ctx.fillStyle = '#660000'; ctx.globalAlpha = 0.6;
+            PR(ctx, -1 * sc, -4 * sc, 2 * sc, 2 * sc);
+            ctx.globalAlpha = 1;
+            // Teeth top row
             ctx.fillStyle = '#ffffff';
             PR(ctx, -1 * sc, -5 * sc, sc, sc);
             PR(ctx, 0, -5 * sc, sc, sc);
         } else {
-            // Neutral small line
-            ctx.fillStyle = p.outline;
-            PR(ctx, -1 * sc, -4 * sc, 2 * sc, sc);
+            // Per-character idle/move mouth
+            switch (id) {
+                case 'blaze':
+                case 'tank':
+                    // Determined frown
+                    ctx.fillStyle = p.outline;
+                    PR(ctx, -2 * sc, -4 * sc, 4 * sc, sc);
+                    break;
+                case 'frost':
+                case 'spark':
+                    // Small smile curve
+                    ctx.fillStyle = p.outline;
+                    PR(ctx, -2 * sc, -4 * sc, 4 * sc, sc);
+                    ctx.fillStyle = p.skin;
+                    PR(ctx, -2 * sc, -4 * sc, sc, sc);
+                    PR(ctx, sc, -4 * sc, sc, sc);
+                    break;
+                case 'shadow':
+                    // Thin neutral line
+                    ctx.fillStyle = p.outline;
+                    PR(ctx, -sc, -4 * sc, 2 * sc, sc);
+                    break;
+                case 'venom':
+                    // Mischievous smirk
+                    ctx.fillStyle = p.outline;
+                    PR(ctx, -2 * sc, -4 * sc, 4 * sc, sc);
+                    PR(ctx, sc, -5 * sc, sc, sc);
+                    break;
+                default:
+                    ctx.fillStyle = p.outline;
+                    PR(ctx, -1 * sc, -4 * sc, 2 * sc, sc);
+                    break;
+            }
         }
     }
 
@@ -618,6 +839,135 @@ export class SpriteGenerator {
                 PR(ctx, (bw - 3) * sc, 3 * sc, sc, 3 * sc);
                 PR(ctx, 0, 5 * sc, sc, sc);
                 break;
+        }
+    }
+
+    /* ---- Per-character ambient particles ---- */
+    static #drawCharacterParticles(ctx, sc, p, id, anim, frame, totalFrames) {
+        const PR = SpriteGenerator.#pixelRect;
+        const t = frame * Math.PI * 2 / totalFrames;
+
+        switch (id) {
+            case 'blaze': {
+                // Rising flame particles
+                const numFlames = anim === 'hit' ? 5 : 3;
+                for (let i = 0; i < numFlames; i++) {
+                    const seed = i * 2.39996;
+                    const life = (frame * 0.3 + seed) % 1;
+                    const fx = (Math.sin(seed * 3) * 6 + Math.sin(t + seed) * 2) * sc;
+                    const fy = (-14 - life * 8) * sc;
+                    const fSize = (1 - life * 0.5) * sc;
+                    ctx.globalAlpha = 0.7 * (1 - life);
+                    ctx.fillStyle = life < 0.3 ? p.accent : (life < 0.6 ? p.secondary : p.primary);
+                    PR(ctx, fx - fSize / 2, fy - fSize / 2, fSize, fSize);
+                }
+                ctx.globalAlpha = 1;
+                break;
+            }
+            case 'frost': {
+                // Floating ice sparkles
+                for (let i = 0; i < 4; i++) {
+                    const seed = i * 1.618;
+                    const angle = t + seed * Math.PI;
+                    const radius = (10 + Math.sin(angle * 0.7) * 3) * sc;
+                    const fx = Math.cos(angle) * radius;
+                    const fy = -8 * sc + Math.sin(angle * 1.3) * 5 * sc;
+                    const sparkleSize = (0.6 + Math.sin(t + i * 2) * 0.3) * sc;
+                    ctx.globalAlpha = 0.5 + Math.sin(t + i) * 0.3;
+                    ctx.fillStyle = i % 2 === 0 ? '#ffffff' : p.accent;
+                    ctx.save();
+                    ctx.translate(fx, fy);
+                    ctx.rotate(angle);
+                    PR(ctx, -sparkleSize / 2, 0, sparkleSize, sparkleSize * 0.5);
+                    PR(ctx, 0, -sparkleSize / 2, sparkleSize * 0.5, sparkleSize);
+                    ctx.restore();
+                }
+                ctx.globalAlpha = 1;
+                break;
+            }
+            case 'shadow': {
+                // Dark mist wisps
+                ctx.globalAlpha = 0.2;
+                for (let i = 0; i < 3; i++) {
+                    const seed = i * 2.1;
+                    const wx = (Math.sin(t + seed) * 8) * sc;
+                    const wy = (5 + Math.cos(t * 0.5 + seed) * 3) * sc;
+                    const wLen = (4 + Math.sin(t + i) * 2) * sc;
+                    ctx.fillStyle = p.primary;
+                    ctx.beginPath();
+                    ctx.ellipse(wx, wy, wLen, sc * 0.8, t + seed, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                break;
+            }
+            case 'tank': {
+                // Ground dust puffs when moving
+                if (anim.startsWith('move') || anim === 'celebrate') {
+                    ctx.globalAlpha = 0.25;
+                    ctx.fillStyle = '#ccbb99';
+                    for (let i = 0; i < 3; i++) {
+                        const dx = (Math.sin(t + i * 2) * 5) * sc;
+                        const dy = (11 + Math.sin(frame * 0.7 + i * 1.3) * 1.5) * sc;
+                        const dSize = (1 + Math.sin(t + i) * 0.5) * sc;
+                        ctx.beginPath();
+                        ctx.ellipse(dx, dy, dSize, dSize * 0.6, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                break;
+            }
+            case 'spark': {
+                // Electric arcs between hair spikes
+                ctx.strokeStyle = p.accent;
+                ctx.lineWidth = 0.5 * sc;
+                ctx.globalAlpha = 0.6 + Math.sin(t * 2) * 0.3;
+                for (let i = 0; i < 2; i++) {
+                    const startX = (i === 0 ? -3 : 1) * sc;
+                    const startY = -17 * sc;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    for (let j = 1; j <= 3; j++) {
+                        const bx = startX + (Math.sin(t + i + j) * 3) * sc;
+                        const by = startY + j * 2 * sc * (i === 0 ? -0.3 : 0.3);
+                        ctx.lineTo(bx, by);
+                    }
+                    ctx.stroke();
+                }
+                // Floating spark points
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < 3; i++) {
+                    const sa = t * 2 + i * Math.PI * 2 / 3;
+                    const sr = (11 + Math.sin(sa) * 2) * sc;
+                    const sx = Math.cos(sa) * sr;
+                    const sy = -8 * sc + Math.sin(sa * 1.5) * 4 * sc;
+                    PR(ctx, sx, sy, sc * 0.7, sc * 0.7);
+                }
+                ctx.globalAlpha = 1;
+                break;
+            }
+            case 'venom': {
+                // Toxic rising bubbles
+                for (let i = 0; i < 4; i++) {
+                    const seed = i * 1.8;
+                    const life = (frame * 0.25 + seed * 0.3) % 1;
+                    const bx = (Math.sin(seed * 5) * 6 + Math.sin(t + seed) * 1.5) * sc;
+                    const by = (6 - life * 14) * sc;
+                    const bSize = (0.5 + (1 - life) * 0.8) * sc;
+                    ctx.globalAlpha = 0.5 * (1 - life * 0.8);
+                    ctx.fillStyle = i % 2 === 0 ? p.accent : p.secondary;
+                    ctx.beginPath();
+                    ctx.arc(bx, by, bSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Bubble highlight
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 0.3 * (1 - life);
+                    PR(ctx, bx - bSize * 0.3, by - bSize * 0.3, bSize * 0.4, bSize * 0.4);
+                }
+                ctx.globalAlpha = 1;
+                break;
+            }
         }
     }
 

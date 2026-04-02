@@ -6257,6 +6257,14 @@ class Game {
             this.drones = [];
             this.miniBoss = null;
 
+            // Recreate drones based on player's drone weapon level
+            const droneWeapon = this.player.weapons.find(w => w && w.type === 'drone');
+            if (droneWeapon) {
+                for (let i = 0; i < droneWeapon.level; i++) {
+                    this.addDrone();
+                }
+            }
+
             // Update spawner
             this.spawner.setWorld(worldId);
 

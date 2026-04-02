@@ -1,8 +1,17 @@
 {
-  "version": "4.2.5",
-  "timestamp": "2026-04-02T20:51:43.714Z",
-  "buildNumber": 506,
+  "version": "4.2.6",
+  "timestamp": "2026-04-02T23:42:55.838Z",
+  "buildNumber": 507,
   "changelog": [
+    {
+      "version": "4.2.6",
+      "date": "2026-04-02",
+      "type": "patch",
+      "changes": [
+        "fix:[MP] fix multiplayer lags",
+        "🔖 Bump version to 4.2.5 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.5",
       "date": "2026-04-02",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Sonar new code",
         "🔖 Bump version to 4.1.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.1.1",
-      "date": "2026-03-27",
-      "type": "patch",
-      "changes": [
-        "fix: ensure datetime objects are timezone-aware for user post timestamps",
-        "🔖 Bump version to 4.1.0 [skip-version]"
       ]
     }
   ]

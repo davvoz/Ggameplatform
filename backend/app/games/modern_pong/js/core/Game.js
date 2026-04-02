@@ -86,12 +86,11 @@ export class Game {
     arenaTheme = null;
     obstacles = [];
 
-    /* --- network interpolation (guest-side) --- */
+    /* --- network interpolation (server-authoritative) --- */
     #netBuffer = [];
-    #interpDelay = 100;     // ms behind authoritative state for smooth interpolation
-    #lastSyncTime = 0;
-    #syncRate = 50;         // ms between syncs → 20 Hz (was every frame ~60 Hz)
-    #stateSeq = 0;
+    #interpDelay = 66;      // ms behind authoritative state (~2 server ticks at 30 Hz)
+    #serverBallTarget = null;   // { x, y, vx, vy } — latest interpolated server truth
+    #serverOppTarget = null;    // { x, y } — latest interpolated server opponent pos
 
     constructor(canvas) {
         this.renderer = new Renderer(canvas, DESIGN_WIDTH, DESIGN_HEIGHT);
@@ -180,43 +179,74 @@ export class Game {
     /*  Network events (multiplayer sync)                         */
     /* ---------------------------------------------------------- */
 
-    /** Stores the latest guest input received from the network. */
-    guestInputState = { dx: 0, dy: 0 };
-
     #wireNetworkEvents() {
-        // Guest sends input → host receives guestInput
-        this.network.on('guestInput', (data) => {
-            this.guestInputState.dx = data.dx ?? 0;
-            this.guestInputState.dy = data.dy ?? 0;
-        });
-
-        // Host sends gameState → guest buffers snapshots for interpolation
-        this.network.on('gameState', (data) => {
-            if (this.isHost) return;  // only guest applies
+        // Server sends a batched 'tick' message at 30 Hz containing
+        // the authoritative snapshot + any events that occurred this tick.
+        this.network.on('tick', (data) => {
             const s = data.state ?? data;
 
-            // Buffer snapshot for interpolation
             this.#netBuffer.push({ time: performance.now(), state: s });
-            // Keep last 30 snapshots (~1.5 s at 20 Hz)
             while (this.#netBuffer.length > 30) this.#netBuffer.shift();
 
-            // Scores are discrete — apply immediately
+            // Scores — apply immediately (discrete)
             if (s.topScore !== undefined) this.topScore = s.topScore;
             if (s.bottomScore !== undefined) this.bottomScore = s.bottomScore;
 
-            // Effect states applied immediately (they're booleans, not positions)
+            // Effect states — apply immediately (booleans, not positions)
+            if (s.ball?.fx) this.ball?.applyEffectState(s.ball.fx);
+            if (s.top?.fx) this.topPlayer?.applyEffectState(s.top.fx);
+            if (s.bottom?.fx) this.bottomPlayer?.applyEffectState(s.bottom.fx);
+
+            // On ball-affecting events, immediately snap ball to server state
+            // so dead-reckoning continues with correct post-collision velocity.
+            if (data.events?.length && s.ball && this.ball) {
+                const BALL_EVENTS = ['paddleHit', 'shieldHit', 'superShot',
+                    'fireballPassThrough', 'obstacleHit', 'wallHit'];
+                if (data.events.some(ev => BALL_EVENTS.includes(ev.t))) {
+                    this.ball.x = s.ball.x;
+                    this.ball.y = s.ball.y;
+                    this.ball.vx = s.ball.vx;
+                    this.ball.vy = s.ball.vy;
+                    this.#serverBallTarget = {
+                        x: s.ball.x, y: s.ball.y,
+                        vx: s.ball.vx, vy: s.ball.vy,
+                    };
+                }
+            }
+
+            // Replay bundled events
+            if (data.events) {
+                for (const ev of data.events) {
+                    this.network.emit(ev.t, ev.d);
+                }
+            }
+        });
+
+        // Legacy / standalone events that are sent outside the tick loop
+        this.network.on('gameState', (data) => {
+            const s = data.state ?? data;
+            this.#netBuffer.push({ time: performance.now(), state: s });
+            while (this.#netBuffer.length > 30) this.#netBuffer.shift();
+            if (s.topScore !== undefined) this.topScore = s.topScore;
+            if (s.bottomScore !== undefined) this.bottomScore = s.bottomScore;
             if (s.ball?.fx) this.ball?.applyEffectState(s.ball.fx);
             if (s.top?.fx) this.topPlayer?.applyEffectState(s.top.fx);
             if (s.bottom?.fx) this.bottomPlayer?.applyEffectState(s.bottom.fx);
         });
 
-        // Goal relayed from host to guest
+        // Server countdown acknowledgement — the client runs its own local
+        // countdown timer in CountdownState, so we just log receipt.
+        this.network.on('countdown', () => { /* handled by CountdownState timer */ });
+
+        // Server goal event — authoritative scoring + state transition
         this.network.on('goal', (data) => {
-            if (this.isHost) return;
-            // Play goal effects on guest side
+            this.topScore = data.topScore ?? this.topScore;
+            this.bottomScore = data.bottomScore ?? this.bottomScore;
+
             this.ball?.freeze();
             this.shake.trigger(8, 300);
             this.sound.playGoal();
+
             const goalX = (ARENA_LEFT + ARENA_RIGHT) / 2;
             const goalY = data.scorerId === 'bottom' ? ARENA_TOP : ARENA_BOTTOM;
             this.particles.emit(goalX, goalY, 40, {
@@ -225,18 +255,37 @@ export class Game {
                 sizeMin: 2, sizeMax: 6,
                 lifeMin: 500, lifeMax: 1500,
             });
-            this.scoreGoal(data.scorerId);
+
+            if (data.matchEnd) {
+                this.fsm.transition('matchEnd', {
+                    winner: data.winner,
+                    topScore: data.topScore,
+                    bottomScore: data.bottomScore,
+                });
+            } else {
+                this.fsm.transition('roundEnd', {
+                    scorerId: data.scorerId,
+                    topScore: data.topScore,
+                    bottomScore: data.bottomScore,
+                });
+            }
         });
 
-        // Super shot relayed from host to guest
+        // Server round start — transition out of RoundEnd into PlayingState
+        this.network.on('roundStart', (data) => {
+            // If we're still in roundEnd, trigger the next round.
+            if (this.fsm.currentName === 'roundEnd') {
+                this.startNextRound(data.lastScorerId, data.round);
+            }
+        });
+
+        // Super shot VFX — both clients
         this.network.on('superShot', (data) => {
-            if (this.isHost) return;
             const charId = data.charId;
             const isTop = data.isTopPlayer;
             const character = isTop ? this.topPlayer : this.bottomPlayer;
             if (!character) return;
 
-            // Visual/audio effects
             this.sound.playSuperShot();
             this.shake.trigger(10, 400);
             this.particles.emit(character.x, character.y, 35, {
@@ -245,7 +294,6 @@ export class Game {
                 sizeMin: 2, sizeMax: 5,
             });
 
-            // Character-specific visuals
             if (charId === 'tank') {
                 this.addFieldObject(
                     new SuperShield(isTop, character.data.palette.accent)
@@ -259,10 +307,8 @@ export class Game {
             }
         });
 
-        // Shield hit relayed from host to guest
+        // Shield hit VFX — both clients
         this.network.on('shieldHit', () => {
-            if (this.isHost) return;
-            // Find first alive field object with destroy and trigger it
             for (const obj of this.fieldObjects) {
                 if (obj.alive && obj.destroy) {
                     obj.destroy();
@@ -278,9 +324,8 @@ export class Game {
             }
         });
 
-        // Power-up spawned on host → create visual copy on guest
+        // Power-up spawned — create visual entity on both clients
         this.network.on('powerUpSpawned', (data) => {
-            if (this.isHost) return;
             const type = POWERUP_TYPES.find(t => t.id === data.typeId);
             if (type) {
                 const pu = new PowerUp(type, data.x, data.y);
@@ -289,9 +334,8 @@ export class Game {
             }
         });
 
-        // Power-up collected on host → remove visual on guest + effects
+        // Power-up collected — remove visual + effects on both clients
         this.network.on('powerUpCollected', (data) => {
-            if (this.isHost) return;
             const pu = this.powerUps.find(p => p._netId === data.powerUpId && p.alive);
             if (pu) {
                 this.sound.playPowerUp();
@@ -300,15 +344,68 @@ export class Game {
                     speedMin: 30, speedMax: 100,
                 });
 
-                // Create visual field objects for certain power-up types
-                if (pu.type.id === 'shield') {
+                // Create visual field objects for shield power-ups
+                if (data.typeId === 'shield') {
                     const isTopCollector = data.collectorId === 'top';
                     this.addFieldObject(new Shield(isTopCollector));
+                }
+
+                // Track powerups collected for quest progress
+                const isLocalCollector = this.playerIsBottom
+                    ? data.collectorId === 'bottom'
+                    : data.collectorId === 'top';
+                if (isLocalCollector) {
+                    this.powerupsCollected++;
                 }
 
                 pu.collect();
                 this.cleanupPowerUps();
             }
+        });
+
+        // Paddle hit sound + particles — both clients
+        // Ball already snapped to collision pos by tick handler; play effects instantly.
+        this.network.on('paddleHit', (data) => {
+            this.sound.playPaddleHit();
+            this.shake.trigger(3, 100);
+            const character = data.isTopPlayer ? this.topPlayer : this.bottomPlayer;
+            if (character) {
+                character.playHit();
+                this.particles.emit(data.ballX, data.ballY, 8, {
+                    colors: [character.data.palette.accent, '#ffffff'],
+                    speedMin: 20, speedMax: 80,
+                });
+            }
+        });
+
+        // Wall hit sound — both clients
+        this.network.on('wallHit', () => {
+            this.sound.playWallHit();
+        });
+
+        // Fireball pass-through VFX — both clients
+        this.network.on('fireballPassThrough', (data) => {
+            this.shake.trigger(6, 200);
+            this.particles.emit(data.ballX, data.ballY, 25, {
+                colors: [COLORS.NEON_ORANGE, COLORS.NEON_RED, '#ffff00'],
+                speedMin: 40, speedMax: 120,
+                sizeMin: 2, sizeMax: 5,
+            });
+        });
+
+        // Extra ball scored — VFX (score already updated by server snapshot)
+        this.network.on('extraBallGoal', (data) => {
+            this.shake.trigger(4, 150);
+            this.sound.playGoal();
+            this.particles.emit(data.goalX, data.goalY, 20, {
+                colors: [COLORS.NEON_YELLOW, '#ffffff'],
+                speedMin: 30, speedMax: 120,
+            });
+        });
+
+        // Obstacle hit — sound
+        this.network.on('obstacleHit', () => {
+            this.sound.playWallHit();
         });
     }
 
@@ -386,11 +483,6 @@ export class Game {
     /* ---------------------------------------------------------- */
 
     scoreGoal(scorerId) {
-        // Host sends goal event to guest so both transition together
-        if (!this.isVsCPU && this.isHost) {
-            this.network.sendGoal(scorerId);
-        }
-
         if (scorerId === 'bottom') {
             this.bottomScore++;
         } else {
@@ -476,8 +568,13 @@ export class Game {
         }
     }
 
-    startNextRound(lastScorerId) {
-        this.currentRound++;
+    startNextRound(lastScorerId, serverRound) {
+        // Use server-provided round number if available, otherwise increment
+        if (serverRound !== undefined) {
+            this.currentRound = serverRound;
+        } else {
+            this.currentRound++;
+        }
         this.powerUps = [];
         this.fieldObjects = [];
         this.extraBalls.length = 0;
@@ -503,7 +600,12 @@ export class Game {
         // Serve toward the player who lost the point
         const serveDir = lastScorerId === 'bottom' ? -1 : lastScorerId === 'top' ? 1 : undefined;
         this.#spawnBall(serveDir);
-        this.ball.unfreeze();
+
+        // In multiplayer, keep ball frozen — server snapshots will position it.
+        // In CPU mode, unfreeze for local physics.
+        if (this.isVsCPU) {
+            this.ball.unfreeze();
+        }
 
         this.fsm.transition('playing', this.matchData);
     }
@@ -553,39 +655,6 @@ export class Game {
     extraBalls = [];
 
     /* ---------------------------------------------------------- */
-    /*  Network sync                                              */
-    /* ---------------------------------------------------------- */
-
-    syncToNetwork() {
-        if (!this.network.connected) return;
-
-        // Rate-limit: send at ~20 Hz instead of every frame
-        const now = performance.now();
-        if (now - this.#lastSyncTime < this.#syncRate) return;
-        this.#lastSyncTime = now;
-        this.#stateSeq++;
-
-        this.network.sendGameState({
-            seq: this.#stateSeq,
-            ball: {
-                x: this.ball.x, y: this.ball.y,
-                vx: this.ball.vx, vy: this.ball.vy,
-                fx: this.ball.getEffectState(),
-            },
-            top: {
-                x: this.topPlayer.x, y: this.topPlayer.y,
-                fx: this.topPlayer.getEffectState(),
-            },
-            bottom: {
-                x: this.bottomPlayer.x, y: this.bottomPlayer.y,
-                fx: this.bottomPlayer.getEffectState(),
-            },
-            topScore: this.topScore,
-            bottomScore: this.bottomScore,
-        });
-    }
-
-    /* ---------------------------------------------------------- */
     /*  Drawing helpers                                           */
     /* ---------------------------------------------------------- */
 
@@ -623,10 +692,18 @@ export class Game {
         this.ball.x = (ARENA_LEFT + ARENA_RIGHT) / 2;
         this.ball.y = ARENA_MID_Y;
 
-        const angle = (Math.random() - 0.5) * Math.PI * 0.4;
-        const dir = direction ?? (Math.random() < 0.5 ? -1 : 1);
-        this.ball.vx = Math.sin(angle) * BALL_BASE_SPEED;
-        this.ball.vy = Math.cos(angle) * BALL_BASE_SPEED * dir;
+        if (this.isVsCPU) {
+            // Local physics — give ball a random starting velocity
+            const angle = (Math.random() - 0.5) * Math.PI * 0.4;
+            const dir = direction ?? (Math.random() < 0.5 ? -1 : 1);
+            this.ball.vx = Math.sin(angle) * BALL_BASE_SPEED;
+            this.ball.vy = Math.cos(angle) * BALL_BASE_SPEED * dir;
+        } else {
+            // Multiplayer — server controls the ball; start with zero velocity.
+            // Server snapshots will provide authoritative position/velocity.
+            this.ball.vx = 0;
+            this.ball.vy = 0;
+        }
         this.ball.freeze();
     }
 
@@ -642,11 +719,52 @@ export class Game {
     #update(dt) {
         this.fsm.update(dt);
 
-        // Guest: apply interpolation AFTER the state machine update,
-        // then run visual-only ball update with corrected positions.
-        if (!this.isVsCPU && !this.isHost) {
-            this.#interpolateNetState();
+        // Multiplayer: dead-reckon entities each frame for 60 fps smoothness,
+        // blended toward the server snapshot target every tick.
+        if (!this.isVsCPU) {
+            // 1.  Compute the latest server target from the snapshot buffer.
+            this.#computeServerTargets();
+
+            const sec = dt / 1000;
+            const oppPlayer = this.playerIsBottom ? this.topPlayer : this.bottomPlayer;
+
+            // 2.  Dead-reckon ball: advance by velocity, bounce off walls.
+            if (this.ball && !this.ball.frozen) {
+                this.ball.x += this.ball.vx * sec;
+                this.ball.y += this.ball.vy * sec;
+                // Simple wall bounce (keeps ball visually correct between snapshots)
+                const r = this.ball.radius;
+                if (this.ball.x - r <= ARENA_LEFT) {
+                    this.ball.x = ARENA_LEFT + r;
+                    this.ball.vx = Math.abs(this.ball.vx);
+                } else if (this.ball.x + r >= ARENA_RIGHT) {
+                    this.ball.x = ARENA_RIGHT - r;
+                    this.ball.vx = -Math.abs(this.ball.vx);
+                }
+            }
+
+            // 3.  Blend toward server truth (frame-rate independent).
+            //     Formula: 1 - (1-base)^(dt*60) keeps convergence rate
+            //     consistent regardless of actual frame rate.
+            if (this.#serverBallTarget && this.ball && !this.ball.frozen) {
+                const bc = 1 - Math.pow(0.7, sec * 60);   // ~0.3 @60fps
+                this.ball.x += (this.#serverBallTarget.x - this.ball.x) * bc;
+                this.ball.y += (this.#serverBallTarget.y - this.ball.y) * bc;
+                this.ball.vx += (this.#serverBallTarget.vx - this.ball.vx) * bc;
+                this.ball.vy += (this.#serverBallTarget.vy - this.ball.vy) * bc;
+            }
+
+            if (this.#serverOppTarget && oppPlayer) {
+                const oc = 1 - Math.pow(0.65, sec * 60);  // ~0.35 @60fps
+                oppPlayer.x += (this.#serverOppTarget.x - oppPlayer.x) * oc;
+                oppPlayer.y += (this.#serverOppTarget.y - oppPlayer.y) * oc;
+            }
+
+            // 4.  Visual updates (trail, effects — no position changes).
             this.ball?.updateVisuals(dt);
+            for (const eb of this.extraBalls) {
+                eb.updateVisuals(dt);
+            }
         }
     }
 
@@ -655,12 +773,13 @@ export class Game {
     /* ---------------------------------------------------------- */
 
     /**
-     * Interpolate entity positions from the snapshot buffer.
-     * Renders ~100 ms behind the host for smooth movement even with jitter.
-     * Own character (topPlayer for guest) uses gentle correction
-     * to blend client-side prediction with authoritative state.
+     * Compute the server target positions from the snapshot buffer.
+     * Uses interpolation when a pair of snapshots brackets the render time,
+     * otherwise extrapolates from the latest snapshot.
+     * Results are stored in #serverBallTarget / #serverOppTarget and used
+     * by the dead-reckoning blend in #update().
      */
-    #interpolateNetState() {
+    #computeServerTargets() {
         if (this.#netBuffer.length === 0) return;
 
         const renderTime = performance.now() - this.#interpDelay;
@@ -676,66 +795,126 @@ export class Game {
         }
 
         if (!before) {
-            // All snapshots are in the future or only one — use latest
-            this.#applySnapshot(this.#netBuffer[this.#netBuffer.length - 1].state);
+            // Use latest snapshot directly
+            const s = this.#netBuffer[this.#netBuffer.length - 1].state;
+            this.#applySnapshotTargets(s);
             return;
         }
 
         const range = after.time - before.time;
-        const t = range > 0 ? Math.min(1, (renderTime - before.time) / range) : 1;
+        const rawT = range > 0 ? (renderTime - before.time) / range : 1;
+        const t = Math.min(rawT, 1);
 
         const bs = before.state;
         const as_ = after.state;
 
-        // Interpolate ball
-        if (bs.ball && as_.ball && this.ball) {
-            this.ball.x = this.#lerp(bs.ball.x, as_.ball.x, t);
-            this.ball.y = this.#lerp(bs.ball.y, as_.ball.y, t);
-            this.ball.vx = as_.ball.vx;
-            this.ball.vy = as_.ball.vy;
+        const ownKey = this.playerIsBottom ? 'bottom' : 'top';
+        const oppKey = this.playerIsBottom ? 'top' : 'bottom';
+        const ownPlayer = this.playerIsBottom ? this.bottomPlayer : this.topPlayer;
+
+        // Ball target (interpolate or extrapolate)
+        if (bs.ball && as_.ball) {
+            let bx, by;
+            if (rawT <= 1) {
+                bx = this.#lerp(bs.ball.x, as_.ball.x, t);
+                by = this.#lerp(bs.ball.y, as_.ball.y, t);
+            } else {
+                const overshoot = Math.min((renderTime - after.time) / 1000, 0.05);
+                bx = as_.ball.x + as_.ball.vx * overshoot;
+                by = as_.ball.y + as_.ball.vy * overshoot;
+            }
+            this.#serverBallTarget = {
+                x: bx, y: by,
+                vx: as_.ball.vx, vy: as_.ball.vy,
+            };
         }
 
-        // Interpolate opponent (bottomPlayer for guest = host's character)
-        if (bs.bottom && as_.bottom && this.bottomPlayer) {
-            this.bottomPlayer.x = this.#lerp(bs.bottom.x, as_.bottom.x, t);
-            this.bottomPlayer.y = this.#lerp(bs.bottom.y, as_.bottom.y, t);
+        // Opponent target
+        if (bs[oppKey] && as_[oppKey]) {
+            const ot = Math.min(rawT, 2);   // extrapolate linearly for opponent
+            this.#serverOppTarget = {
+                x: this.#lerp(bs[oppKey].x, as_[oppKey].x, ot),
+                y: this.#lerp(bs[oppKey].y, as_[oppKey].y, ot),
+            };
         }
 
-        // Smooth correction for own character (topPlayer = guest's predicted character)
-        if (as_.top && this.topPlayer) {
-            const serverX = this.#lerp(
-                bs.top?.x ?? as_.top.x,
-                as_.top.x, t,
-            );
-            const serverY = this.#lerp(
-                bs.top?.y ?? as_.top.y,
-                as_.top.y, t,
-            );
-            // Gentle blend toward server — keeps prediction responsive but corrects drift
-            const correction = 0.15;
-            this.topPlayer.x += (serverX - this.topPlayer.x) * correction;
-            this.topPlayer.y += (serverY - this.topPlayer.y) * correction;
+        // Own character — trust client prediction fully.
+        // Only correct on large discrepancy (stun, teleport, power-up push).
+        // Uses LATEST snapshot (not interpolated) to avoid correcting toward stale data.
+        if (as_[ownKey] && ownPlayer) {
+            const dx = as_[ownKey].x - ownPlayer.x;
+            const dy = as_[ownKey].y - ownPlayer.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 40) {
+                // Teleport-level — hard snap
+                ownPlayer.x = as_[ownKey].x;
+                ownPlayer.y = as_[ownKey].y;
+            } else if (dist > 15) {
+                // Moderate mismatch — gentle nudge
+                ownPlayer.x += dx * 0.1;
+                ownPlayer.y += dy * 0.1;
+            }
+            // Below 15px: trust client prediction entirely
+        }
+
+        // Extra balls — sync count and set positions
+        const snapExtra = as_.extraBalls ?? [];
+        while (this.extraBalls.length > snapExtra.length) this.extraBalls.pop();
+        while (this.extraBalls.length < snapExtra.length) this.extraBalls.push(new Ball());
+        for (let i = 0; i < snapExtra.length; i++) {
+            const seb = snapExtra[i];
+            const bseb = bs.extraBalls?.[i];
+            if (bseb && rawT <= 1) {
+                this.extraBalls[i].x = this.#lerp(bseb.x, seb.x, t);
+                this.extraBalls[i].y = this.#lerp(bseb.y, seb.y, t);
+            } else {
+                this.extraBalls[i].x = seb.x;
+                this.extraBalls[i].y = seb.y;
+            }
+            this.extraBalls[i].vx = seb.vx;
+            this.extraBalls[i].vy = seb.vy;
         }
     }
 
     /**
-     * Fallback: apply a single snapshot directly (no interpolation pair available).
+     * Fallback: extract targets from a single snapshot (no interpolation pair).
      */
-    #applySnapshot(s) {
-        if (s.ball && this.ball) {
-            this.ball.x = s.ball.x;
-            this.ball.y = s.ball.y;
-            this.ball.vx = s.ball.vx;
-            this.ball.vy = s.ball.vy;
+    #applySnapshotTargets(s) {
+        const ownKey = this.playerIsBottom ? 'bottom' : 'top';
+        const oppKey = this.playerIsBottom ? 'top' : 'bottom';
+        const ownPlayer = this.playerIsBottom ? this.bottomPlayer : this.topPlayer;
+
+        if (s.ball) {
+            this.#serverBallTarget = {
+                x: s.ball.x, y: s.ball.y,
+                vx: s.ball.vx, vy: s.ball.vy,
+            };
         }
-        if (s.bottom && this.bottomPlayer) {
-            this.bottomPlayer.x = s.bottom.x;
-            this.bottomPlayer.y = s.bottom.y;
+        if (s[oppKey]) {
+            this.#serverOppTarget = { x: s[oppKey].x, y: s[oppKey].y };
         }
-        if (s.top && this.topPlayer) {
-            const correction = 0.3;
-            this.topPlayer.x += (s.top.x - this.topPlayer.x) * correction;
-            this.topPlayer.y += (s.top.y - this.topPlayer.y) * correction;
+        if (s[ownKey] && ownPlayer) {
+            const dx = s[ownKey].x - ownPlayer.x;
+            const dy = s[ownKey].y - ownPlayer.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 40) {
+                ownPlayer.x = s[ownKey].x;
+                ownPlayer.y = s[ownKey].y;
+            } else if (dist > 15) {
+                ownPlayer.x += dx * 0.1;
+                ownPlayer.y += dy * 0.1;
+            }
+        }
+
+        // Extra balls
+        const snapExtra = s.extraBalls ?? [];
+        while (this.extraBalls.length > snapExtra.length) this.extraBalls.pop();
+        while (this.extraBalls.length < snapExtra.length) this.extraBalls.push(new Ball());
+        for (let i = 0; i < snapExtra.length; i++) {
+            this.extraBalls[i].x = snapExtra[i].x;
+            this.extraBalls[i].y = snapExtra[i].y;
+            this.extraBalls[i].vx = snapExtra[i].vx;
+            this.extraBalls[i].vy = snapExtra[i].vy;
         }
     }
 
@@ -746,6 +925,7 @@ export class Game {
     /** Clear interpolation buffer (call on round/match reset). */
     clearNetBuffer() {
         this.#netBuffer.length = 0;
-        this.#stateSeq = 0;
+        this.#serverBallTarget = null;
+        this.#serverOppTarget = null;
     }
 }

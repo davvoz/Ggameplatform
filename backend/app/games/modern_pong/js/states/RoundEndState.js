@@ -88,14 +88,19 @@ export class RoundEndState extends State {
         this._game.particles.update(dt);
         this._game.tweens.update(dt);
 
-        // Extend delay when deuce/advantage banner is shown
-        const delay = (this._game.isDeuce || this._game.advantage)
-            ? ROUND_END_DELAY + 1000
-            : ROUND_END_DELAY;
+        // In multiplayer, the server drives round transitions via 'roundStart'.
+        // In CPU/story mode, use the local timer.
+        if (this._game.isVsCPU) {
+            const delay = (this._game.isDeuce || this._game.advantage)
+                ? ROUND_END_DELAY + 1000
+                : ROUND_END_DELAY;
 
-        if (this.#timer >= delay) {
-            this._game.startNextRound(this.#scorerId);
+            if (this.#timer >= delay) {
+                this._game.startNextRound(this.#scorerId);
+            }
         }
+        // For multiplayer: Game.js handles the 'roundStart' network event,
+        // which calls startNextRound() when the server is ready.
     }
 
     draw(ctx) {

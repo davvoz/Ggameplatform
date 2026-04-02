@@ -1,0 +1,59 @@
+"""
+Server-side game constants for Modern Pong.
+
+Mirrors the frontend Constants.js to guarantee identical physics
+between server simulation and client visuals.
+"""
+
+# Arena dimensions (px in design space)
+DESIGN_WIDTH = 400
+DESIGN_HEIGHT = 700
+
+ARENA_PADDING = 10
+ARENA_LEFT = ARENA_PADDING
+ARENA_RIGHT = DESIGN_WIDTH - ARENA_PADDING
+ARENA_TOP = 60
+ARENA_BOTTOM = DESIGN_HEIGHT - 60
+ARENA_MID_Y = (ARENA_TOP + ARENA_BOTTOM) / 2
+
+# Character
+CHARACTER_SIZE = 64
+CHARACTER_HALF = CHARACTER_SIZE / 2
+
+# Ball
+BALL_RADIUS = 9
+BALL_BASE_SPEED = 200.0
+BALL_MAX_SPEED = 500.0
+BALL_ACCELERATION = 1.03
+
+# Power-ups
+POWERUP_SIZE = 24
+POWERUP_RADIUS = POWERUP_SIZE / 2
+POWERUP_SPAWN_INTERVAL = 3.5       # seconds
+POWERUP_DURATION = 5.0             # seconds
+MAX_ACTIVE_POWERUPS = 4
+
+# Timing (seconds)
+COUNTDOWN_DURATION = 3.5
+ROUND_END_DELAY = 2.0
+ROUND_END_DELAY_DEUCE = 3.0
+
+# Tick rate
+TICK_RATE = 30
+TICK_INTERVAL = 1.0 / TICK_RATE
+
+# Super charge
+SUPER_CHARGE_MAX = 100
+SUPER_CHARGE_HIT = 20
+SUPER_CHARGE_POWERUP = 15
+
+# Collision cooldowns (seconds)
+HIT_COOLDOWN = 0.15
+FIREBALL_PASS_COOLDOWN = 0.4
+
+# Stun durations (seconds)
+FREEZE_STUN = 1.5
+FROST_SUPER_STUN = 2.5
+SHADOW_BLAZE_DURATION = 2.5
+BLAZE_SUPER_FIREBALL = 4.0
+VENOM_MIRROR_DURATION = 3.0

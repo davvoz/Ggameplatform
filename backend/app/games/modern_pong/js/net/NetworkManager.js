@@ -1,6 +1,9 @@
 /**
  * WebSocket network manager for multiplayer.
  * Handles connection, room management, and message relay.
+ *
+ * Server-authoritative model: both clients are symmetric —
+ * each sends input, receives authoritative state from the server.
  */
 export class NetworkManager {
     #ws = null;
@@ -11,6 +14,8 @@ export class NetworkManager {
     #isHost = false;
     #rtt = 0;
     #pingInterval = null;
+    #lastInputTime = 0;
+    #inputInterval = 16;   // ~60 Hz — match render rate for minimal input latency
 
     get connected() { return this.#connected; }
     get playerId() { return this.#playerId; }
@@ -47,7 +52,7 @@ export class NetworkManager {
 
             this.#ws.onclose = () => {
                 this.#connected = false;
-                this.#emit('disconnected');
+                this.emit('disconnected');
             };
 
             this.#ws.onmessage = (event) => {
@@ -85,13 +90,14 @@ export class NetworkManager {
         }
     }
 
-    createRoom(username, betAmount, roundsToWin, stageId) {
+    createRoom(username, betAmount, roundsToWin, stageId, stageObstacles) {
         this.send({
             type: 'createRoom',
             username,
             betAmount,
             roundsToWin,
             stageId,
+            stageObstacles,
         });
     }
 
@@ -103,40 +109,14 @@ export class NetworkManager {
         });
     }
 
+    /** Send local input to the server, throttled to ~30 Hz. */
     sendInput(input) {
+        const now = performance.now();
+        if (now - this.#lastInputTime < this.#inputInterval) return;
+        this.#lastInputTime = now;
         this.send({
             type: 'input',
             ...input,
-        });
-    }
-
-    sendGameState(state) {
-        this.send({
-            type: 'gameState',
-            state,
-        });
-    }
-
-    sendGoal(scorerId) {
-        this.send({
-            type: 'goal',
-            scorerId,
-        });
-    }
-
-    sendPowerUpCollected(powerUpId, collectorId) {
-        this.send({
-            type: 'powerUpCollected',
-            powerUpId,
-            collectorId,
-        });
-    }
-
-    sendSuperShot(charId, isTopPlayer) {
-        this.send({
-            type: 'superShot',
-            charId,
-            isTopPlayer,
         });
     }
 
@@ -165,7 +145,7 @@ export class NetworkManager {
                 break;
         }
 
-        this.#emit(type, data);
+        this.emit(type, data);
     }
 
     #startPing() {
@@ -177,7 +157,8 @@ export class NetworkManager {
         }, 2000);
     }
 
-    #emit(type, data = null) {
+    /** Emit an event to registered listeners (public for replaying bundled events). */
+    emit(type, data = null) {
         const cbs = this.#listeners.get(type);
         if (cbs) {
             for (const cb of cbs) {

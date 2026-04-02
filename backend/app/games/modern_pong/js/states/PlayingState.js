@@ -34,7 +34,10 @@ export class PlayingState extends State {
         this.#hitCooldown.clear();
         this.#superReadyPlayed = { top: false, bottom: false };
         this._game.extraBalls.length = 0;
-        this._game.ball.unfreeze();
+        // Only unfreeze ball locally in CPU mode — in multiplayer the server controls the ball.
+        if (this._game.isVsCPU) {
+            this._game.ball.unfreeze();
+        }
         this._game.ui.clearButtons();
         this._game.sound.stopMusic();
         this._game.sound.playGameMusic();
@@ -61,81 +64,78 @@ export class PlayingState extends State {
 
     update(dt) {
         const game = this._game;
-        const isAuthority = game.isVsCPU || game.isHost;
 
         // Update input
         game.input.update();
 
-        // Player movement
-        if (isAuthority) {
-            game.bottomPlayer.move(game.input.dx, game.input.dy, dt);
-        }
-
-        // AI or networked opponent
         if (game.isVsCPU) {
+            // CPU/Story mode — full local authority (unchanged)
+            game.bottomPlayer.move(game.input.dx, game.input.dy, dt);
             const aiInput = game.ai.computeInput(
                 game.topPlayer, game.ball, game.powerUps, dt
             );
             game.topPlayer.move(aiInput.dx, aiInput.dy, dt);
-        } else if (game.isHost) {
-            // Host: move top player with guest's network input
-            game.topPlayer.move(
-                game.guestInputState.dx,
-                game.guestInputState.dy,
-                dt,
-            );
-        } else {
-            // Guest: predict own character locally for responsive feel,
-            // then send input to host. Server correction is applied by
-            // Game.#interpolateNetState() after this update cycle.
-            game.topPlayer.move(game.input.dx, game.input.dy, dt);
-            game.network.sendInput({ dx: game.input.dx, dy: game.input.dy });
-        }
 
-        // Push characters out of obstacles after movement (host only)
-        if (isAuthority) {
             for (const obs of game.obstacles) {
                 obs.pushCharacterOut(game.bottomPlayer);
                 obs.pushCharacterOut(game.topPlayer);
             }
-        }
 
-        // Update entities
-        game.topPlayer.update(dt);
-        game.bottomPlayer.update(dt);
-        // Ball physics only on authority; guest visuals run in Game.#update()
-        // after interpolation sets the correct server position.
-        if (isAuthority) {
+            game.topPlayer.update(dt);
+            game.bottomPlayer.update(dt);
             game.ball.update(dt);
-        }
 
-        // Wall hit sound (authority only — guest doesn't run ball physics)
-        if (isAuthority && game.ball.consumeWallHit()) {
-            game.sound.playWallHit();
-        }
+            if (game.ball.consumeWallHit()) {
+                game.sound.playWallHit();
+            }
 
-        if (isAuthority) {
             // Decrement fireball no-collide timers
             for (const [char, timer] of this.#noCollide) {
                 const t = timer - dt;
                 if (t <= 0) this.#noCollide.delete(char);
                 else this.#noCollide.set(char, t);
             }
-
             // Decrement hit cooldown timers
             for (const [char, timer] of this.#hitCooldown) {
                 const t = timer - dt;
                 if (t <= 0) this.#hitCooldown.delete(char);
                 else this.#hitCooldown.set(char, t);
             }
-
             // Update extra balls
             for (const eb of game.extraBalls) {
                 eb.update(dt);
             }
+
+            // Power-up spawning
+            this.#powerUpTimer += dt;
+            if (this.#powerUpTimer >= POWERUP_SPAWN_INTERVAL &&
+                game.powerUps.filter(p => p.alive).length < MAX_ACTIVE_POWERUPS) {
+                this.#powerUpTimer = 0;
+                const pu = spawnRandomPowerUp(POWERUP_TYPES);
+                game.addPowerUp(pu);
+            }
+
+            // Collisions & goals
+            this.#handleCollisions();
+            this.#checkGoals();
+        } else {
+            // Multiplayer — server-authoritative
+            // Predict own character locally for responsive feel
+            const ownPlayer = game.playerIsBottom ? game.bottomPlayer : game.topPlayer;
+            ownPlayer.move(game.input.dx, game.input.dy, dt);
+
+            // Send input to server
+            game.network.sendInput({ dx: game.input.dx, dy: game.input.dy });
+
+            // Update character animations/effects (visual only)
+            game.topPlayer.update(dt);
+            game.bottomPlayer.update(dt);
+
+            // No physics, collisions, goals, or power-up spawning —
+            // the server handles all of that and sends events.
         }
 
-        // Update power-ups (visual update on both, spawning host-only)
+        // Update power-ups (visual update — both modes)
         for (const pu of game.powerUps) {
             pu.update(dt);
         }
@@ -148,44 +148,10 @@ export class PlayingState extends State {
             obs.update(dt);
         }
 
-        if (isAuthority) {
-            // Power-up spawning
-            this.#powerUpTimer += dt;
-            if (this.#powerUpTimer >= POWERUP_SPAWN_INTERVAL &&
-                game.powerUps.filter(p => p.alive).length < MAX_ACTIVE_POWERUPS) {
-                this.#powerUpTimer = 0;
-                const pu = spawnRandomPowerUp(POWERUP_TYPES);
-                pu._netId = ++this.#puIdCounter;
-                game.addPowerUp(pu);
-
-                // Sync powerup spawn to guest
-                if (!game.isVsCPU && game.isHost) {
-                    game.network.send({
-                        type: 'powerUpSpawned',
-                        id: pu._netId,
-                        typeId: pu.type.id,
-                        x: pu.x,
-                        y: pu.y,
-                    });
-                }
-            }
-
-            // Collisions
-            this.#handleCollisions();
-
-            // Check goals
-            this.#checkGoals();
-        }
-
         // Update graphics
         game.shake.update(dt);
         game.particles.update(dt);
         game.tweens.update(dt);
-
-        // Network sync (if multiplayer host)
-        if (!game.isVsCPU && game.isHost) {
-            game.syncToNetwork();
-        }
     }
 
     draw(ctx) {
@@ -285,10 +251,6 @@ export class PlayingState extends State {
                 game.particles.emit(ball.x, ball.y, 15, {
                     colors: [COLORS.NEON_CYAN, '#ffffff'],
                 });
-                // Sync shield hit to guest
-                if (!game.isVsCPU && game.isHost) {
-                    game.network.send({ type: 'shieldHit' });
-                }
             }
         }
 
@@ -416,15 +378,6 @@ export class PlayingState extends State {
             game.powerupsCollected++;
         }
 
-        // Sync powerup collection to guest
-        if (!game.isVsCPU && game.isHost && powerUp._netId) {
-            game.network.send({
-                type: 'powerUpCollected',
-                powerUpId: powerUp._netId,
-                collectorId: collector.isTopPlayer ? 'top' : 'bottom',
-            });
-        }
-
         // Charge super on power-up collect
         const wasReady = collector.superReady;
         collector.chargeSuper(15);
@@ -442,11 +395,6 @@ export class PlayingState extends State {
     #executeSuperShot(character, ball, game) {
         game.sound.playSuperShot();
         game.shake.trigger(10, 400);
-
-        // Notify guest about the super shot (so they can replicate visuals)
-        if (!game.isVsCPU && game.isHost) {
-            game.network.sendSuperShot(character.data.id, character.isTopPlayer);
-        }
 
         // Big particle burst with character colors
         game.particles.emit(character.x, character.y, 35, {

@@ -440,13 +440,13 @@ export class LobbyState extends State {
                 });
             });
 
-            this._game.network.send({
-                type: 'createRoom',
-                username: 'Player',
-                betAmount: this.#betAmount,
-                roundsToWin: this.#roundsToWin,
-                stageId: stage.id,
-            });
+            this._game.network.createRoom(
+                'Player',
+                this.#betAmount,
+                this.#roundsToWin,
+                stage.id,
+                (stage.obstacles ?? []).map(o => ({ x: o.x, y: o.y, w: o.w, h: o.h })),
+            );
         } catch (e) {
             this.showError('COULD NOT CONNECT TO SERVER');
         }

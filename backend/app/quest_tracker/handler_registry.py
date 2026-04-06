@@ -19,6 +19,7 @@ from app.quest_tracker.game_handlers.space_shooter import SpaceShooterHandler
 from app.quest_tracker.game_handlers.space_shooter_2 import SpaceShooter2Handler
 from app.quest_tracker.game_handlers.setteemezzo import SettemezzoHandler
 from app.quest_tracker.game_handlers.modern_pong import ModernPongHandler
+from app.quest_tracker.game_handlers.altitude import AltitudeHandler
 
 GAME_HANDLERS: Dict[str, Type[BaseGameQuestHandler]] = {
     "seven": SevenHandler,
@@ -32,6 +33,7 @@ GAME_HANDLERS: Dict[str, Type[BaseGameQuestHandler]] = {
     "space_shooter_2": SpaceShooter2Handler,
     "setteemezzo": SettemezzoHandler,
     "modern_pong": ModernPongHandler,
+    "altitude": AltitudeHandler,
 }
 
 

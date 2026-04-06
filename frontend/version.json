@@ -1,8 +1,17 @@
 {
-  "version": "4.2.6",
-  "timestamp": "2026-04-02T23:42:55.838Z",
-  "buildNumber": 507,
+  "version": "4.2.7",
+  "timestamp": "2026-04-06T16:57:46.368Z",
+  "buildNumber": 508,
   "changelog": [
+    {
+      "version": "4.2.7",
+      "date": "2026-04-06",
+      "type": "patch",
+      "changes": [
+        "add altitude",
+        "🔖 Bump version to 4.2.6 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.6",
       "date": "2026-04-02",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: update text sanitization",
         "🔖 Bump version to 4.1.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.1.2",
-      "date": "2026-03-28",
-      "type": "patch",
-      "changes": [
-        "fix: Sonar new code",
-        "🔖 Bump version to 4.1.1 [skip-version]"
       ]
     }
   ]

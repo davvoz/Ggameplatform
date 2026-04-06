@@ -6,6 +6,7 @@
 import { GameObject } from './GameObject.js';
 import { ENEMY_TYPES, COLORS, DESIGN_WIDTH } from '../config/Constants.js';
 import { SpriteGenerator } from '../graphics/SpriteGenerator.js';
+import { updateAndCompact } from '../core/ArrayUtils.js';
 
 export class Enemy extends GameObject {
     #type;
@@ -78,10 +79,11 @@ export class Enemy extends GameObject {
         }
 
         // Update bullets
-        this.#bullets = this.#bullets.filter(b => {
+        updateAndCompact(this.#bullets, b => {
             b.x += b.vx * dt;
             b.y += b.vy * dt;
-            return b.active;
+            b.life -= dt;
+            return b.active && b.life > 0;
         });
 
         // Screen wrapping
@@ -150,6 +152,7 @@ export class Enemy extends GameObject {
             vx: (dx / dist) * speed,
             vy: (dy / dist) * speed,
             active: true,
+            life: 4,   // seconds before auto-despawn
             width: 8,
             height: 8,
         });

@@ -14,7 +14,7 @@ import { InputManager } from '../managers/InputManager.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { SaveManager } from '../managers/SaveManager.js';
 import { PlatformBridge } from '../PlatformBridge.js';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, ZONES } from '../config/Constants.js';
+import { ZONES } from '../config/Constants.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
 
 // States

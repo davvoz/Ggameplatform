@@ -3,6 +3,8 @@
  * Single Responsibility: Manage property tweening over time.
  */
 
+import { updateAndCompact, compactInPlace } from '../core/ArrayUtils.js';
+
 // Easing functions
 export const Easing = {
     linear: t => t,
@@ -120,11 +122,11 @@ export class TweenManager {
      * Remove all tweens for a target
      */
     killTweensOf(target) {
-        this.#tweens = this.#tweens.filter(t => t.target !== target);
+        compactInPlace(this.#tweens, t => t.target !== target);
     }
 
     update(dt) {
-        this.#tweens = this.#tweens.filter(t => t.update(dt));
+        updateAndCompact(this.#tweens, t => t.update(dt));
     }
 
     clear() {

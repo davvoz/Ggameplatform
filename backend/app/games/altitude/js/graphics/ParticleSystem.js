@@ -3,6 +3,8 @@
  * Single Responsibility: Manage and render particle effects.
  */
 
+import { updateAndCompact } from '../core/ArrayUtils.js';
+
 export class Particle {
     constructor(x, y, config = {}) {
         this.x = x;
@@ -286,16 +288,16 @@ export class ParticleSystem {
     }
 
     update(dt) {
-        this.#particles = this.#particles.filter(p => p.update(dt));
+        updateAndCompact(this.#particles, p => p.update(dt));
     }
 
     draw(ctx, cameraY = 0) {
+        ctx.save();
+        ctx.translate(0, -cameraY);
         for (const particle of this.#particles) {
-            ctx.save();
-            ctx.translate(0, -cameraY);
             particle.draw(ctx);
-            ctx.restore();
         }
+        ctx.restore();
     }
 
     clear() {

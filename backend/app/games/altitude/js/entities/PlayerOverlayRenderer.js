@@ -22,252 +22,235 @@ class PlayerOverlay {
 }
 
 // ── Shield ────────────────────────────────────────────────────────────────────
-// Rotating hex-arc bubble + pulsing inner glow + orbiting sparkle dots
+// Flickering energy barrier — bubble + 3 rotating arc panels + inner ring
 class ShieldOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
         const t = this._t;
         const r = 36;
+
         ctx.save();
-        ctx.translate(x, y);
+        ctx.shadowColor = '#00eeff';
+        ctx.shadowBlur = 10;
 
-        // Pulsing radial fill
-        const pulse = 0.6 + Math.sin(t * 4) * 0.2;
-        const radGrad = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r);
-        radGrad.addColorStop(0, `rgba(0,220,255,${(0.08 * pulse).toFixed(3)})`);
-        radGrad.addColorStop(1, 'rgba(0,100,255,0)');
-        ctx.fillStyle = radGrad;
-        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        // Shield bubble
+        ctx.globalAlpha = 0.05 + Math.sin(t * 3) * 0.025;
+        ctx.fillStyle = '#00ccff';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
 
-        // 6 rotating arc segments
-        ctx.strokeStyle = `rgba(0,240,255,${(0.62 + Math.sin(t * 3) * 0.22).toFixed(3)})`;
+        // 3 flickering arc panels (120° apart, rotating)
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#00eeff'; ctx.shadowBlur = 10;
-        for (let i = 0; i < 6; i++) {
-            const a = (i / 6) * Math.PI * 2 + t * 1.4;
+        ctx.strokeStyle = '#00f0ff';
+        for (let i = 0; i < 3; i++) {
+            const a = (i / 3) * Math.PI * 2 + t * 1.2;
+            ctx.globalAlpha = 0.4 + Math.sin(t * 6 + i * 2.1) * 0.3;
             ctx.beginPath();
-            ctx.arc(0, 0, r, a, a + Math.PI / 4.5);
+            ctx.arc(x, y, r, a, a + Math.PI * 0.55);
             ctx.stroke();
         }
 
-        // Counter-rotating outer sparkle dots
-        ctx.shadowBlur = 5;
-        for (let i = 0; i < 8; i++) {
-            const a = (i / 8) * Math.PI * 2 - t * 0.9;
-            const sr = r + 4 + Math.sin(t * 5 + i) * 3;
-            const alpha = (0.4 + Math.sin(t * 6 + i * 0.7) * 0.3).toFixed(3);
-            ctx.fillStyle = `rgba(180,255,255,${alpha})`;
-            ctx.beginPath();
-            ctx.arc(Math.cos(a) * sr, Math.sin(a) * sr, 1.8, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        // Inner energy ring
+        ctx.globalAlpha = 0.2;
+        ctx.strokeStyle = '#66ddff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
 // ── Magnet ────────────────────────────────────────────────────────────────────
-// Elliptical field-arc lines + 3 gold coins orbiting in a coin halo
+// Converging field pulses + orbiting coins at varied depths
 class MagnetOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
         const t = this._t;
-        const R = 34;
+        const R = 32;
+
         ctx.save();
-        ctx.translate(x, y);
+        ctx.shadowColor = '#ffcc00';
+        ctx.shadowBlur = 6;
 
-        // Magnetic field arcs (3 concentric pairs)
-        ctx.lineWidth = 1.2;
-        for (let i = 1; i <= 3; i++) {
-            const fr = R * 0.33 * i;
-            const alpha = (0.12 + i * 0.06).toFixed(3);
-            ctx.strokeStyle = `rgba(255,200,0,${alpha})`;
-            ctx.beginPath(); ctx.arc(0, 0, fr, -Math.PI * 0.7, Math.PI * 0.7); ctx.stroke();
-            ctx.beginPath(); ctx.arc(0, 0, fr,  Math.PI * 0.3, Math.PI * 1.7); ctx.stroke();
+        // 2 inward-converging field pulses
+        ctx.strokeStyle = '#ffcc44';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 2; i++) {
+            const phase = (t * 1.8 + i * 0.5) % 1;
+            const pr = R + (1 - phase) * 16;
+            ctx.globalAlpha = phase * 0.25;
+            ctx.beginPath();
+            ctx.arc(x, y, pr, 0, Math.PI * 2);
+            ctx.stroke();
         }
 
-        // 3 orbiting gold coins
-        ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 8;
+        // 3 orbiting coins at staggered depths
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowBlur = 4;
         for (let i = 0; i < 3; i++) {
-            const a  = (i / 3) * Math.PI * 2 + t * 2.2;
-            const cx = Math.cos(a) * R;
-            const cy = Math.sin(a) * R * 0.5;
-            // coin disc — shrinks to line when edge-on (simulate 3-D spin)
-            const rx = 6;
-            const ry = Math.max(1.5, 6 * Math.abs(Math.cos(a + t * 0.4)));
-            ctx.fillStyle = '#ffcc00';
-            ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-            // shine
-            ctx.fillStyle = 'rgba(255,255,200,0.55)';
-            ctx.beginPath(); ctx.ellipse(cx - 1.5, cy - 1.5, rx * 0.35, ry * 0.40, -0.4, 0, Math.PI * 2); ctx.fill();
+            const a = (i / 3) * Math.PI * 2 + t * 2.0;
+            const depth = 0.5 + Math.sin(a) * 0.35;
+            const cr = R * (0.7 + i * 0.13);
+            ctx.globalAlpha = 0.4 + depth * 0.5;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(a) * cr, y + Math.sin(a) * cr * 0.4, 3 + depth * 2.5, 0, Math.PI * 2);
+            ctx.fill();
         }
+
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
 // ── SpringBoots ───────────────────────────────────────────────────────────────
-// Animated coil springs under each foot + expanding bounce ring on the ground
+// Zigzag coil springs + ground bounce ripple
 class SpringBootsOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
-        const t   = this._t;
+        const t     = this._t;
         const footY = y + h / 2;
+
         ctx.save();
-        ctx.shadowColor = '#44ff88'; ctx.shadowBlur = 10;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#44ff88';
+        ctx.shadowBlur = 6;
 
+        // 2 zigzag springs (5 segments each)
+        ctx.strokeStyle = '#22ff66';
+        ctx.lineWidth = 2;
         [-9, 9].forEach(bx => {
-            const coils  = 4;
-            const coilR  = 5;
-            const coilH  = 14 + Math.sin(t * 8 + bx) * 2.5;
-            const steps  = coils * 12;
-
-            ctx.strokeStyle = '#22ff66'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+            const stretch = 13 + Math.sin(t * 8 + bx) * 3;
             ctx.beginPath();
-            for (let s = 0; s <= steps; s++) {
-                const frac = s / steps;
-                const sx = x + bx + Math.sin(frac * Math.PI * 2 * coils) * coilR;
-                const sy = footY + frac * coilH;
-                s === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+            ctx.moveTo(x + bx, footY);
+            for (let i = 1; i <= 5; i++) {
+                const sx = x + bx + ((i % 2) * 2 - 1) * 5;
+                ctx.lineTo(sx, footY + (i / 5) * stretch);
             }
             ctx.stroke();
-
-            // Bottom plate
-            ctx.fillStyle = '#22ff66';
-            ctx.beginPath(); ctx.ellipse(x + bx, footY + coilH, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
         });
 
-        // Expanding bounce ring below feet
-        const ringPhase = (t * 4) % 1;
-        const ringR  = 10 + ringPhase * 24;
-        const ringAlpha = (1 - ringPhase) * 0.7;
-        ctx.strokeStyle = `rgba(80,255,140,${ringAlpha.toFixed(3)})`;
-        ctx.lineWidth = 1.5; ctx.shadowBlur = 6;
+        // Ground bounce ripple
+        const phase = (t * 4) % 1;
+        ctx.globalAlpha = (1 - phase) * 0.55;
+        ctx.strokeStyle = '#44ff88';
+        ctx.lineWidth = 1.2;
+        const ripR = 8 + phase * 22;
         ctx.beginPath();
-        ctx.ellipse(x, footY + 7, ringR, ringR * 0.28, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, footY + 6, ripR, ripR * 0.25, 0, 0, Math.PI * 2);
         ctx.stroke();
 
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
 // ── Slow Time ─────────────────────────────────────────────────────────────────
-// Blue frost aura + animated clock with rotating hands + drifting snowflakes
+// Frost clock — blue tint + clock ring with 4 ticks + hour/minute hands
 class SlowTimeOverlay extends PlayerOverlay {
-    #flakes = Array.from({ length: 10 }, () => ({
-        ox:    (Math.random() - 0.5) * 52,
-        oy:    (Math.random() - 0.5) * 62,
-        phase: Math.random() * Math.PI * 2,
-        size:  1.5 + Math.random() * 2.0,
-    }));
-
     draw(ctx, x, y, h) {
-        const t = this._t;
-        ctx.save();
-        ctx.translate(x, y);
+        const t  = this._t;
+        const cr = 32;
 
-        // Blue aura
-        const aura = ctx.createRadialGradient(0, 0, 10, 0, 0, 50);
-        aura.addColorStop(0, 'rgba(80,160,255,0.14)');
-        aura.addColorStop(1, 'rgba(40,80,255,0)');
-        ctx.fillStyle = aura;
-        ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#aadaff';
+        ctx.shadowBlur = 6;
+
+        // Frost tint
+        ctx.globalAlpha = 0.06;
+        ctx.fillStyle = '#88bbff';
+        ctx.beginPath();
+        ctx.arc(x, y, cr + 6, 0, Math.PI * 2);
+        ctx.fill();
 
         // Clock ring
-        const cr = 38;
-        ctx.strokeStyle = 'rgba(140,200,255,0.55)'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(0, 0, cr, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.45;
+        ctx.strokeStyle = '#8cbfff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, cr, 0, Math.PI * 2);
+        ctx.stroke();
 
-        // Tick marks
-        for (let i = 0; i < 12; i++) {
-            const ta = (i / 12) * Math.PI * 2;
-            const r1 = cr - 3, r2 = cr;
-            ctx.strokeStyle = 'rgba(140,200,255,0.4)'; ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(ta) * r1, Math.sin(ta) * r1);
-            ctx.lineTo(Math.cos(ta) * r2, Math.sin(ta) * r2);
-            ctx.stroke();
+        // 4 tick marks (12/3/6/9) — single batched path
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = '#aadcff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI * 2 - Math.PI / 2;
+            ctx.moveTo(x + Math.cos(a) * (cr - 4), y + Math.sin(a) * (cr - 4));
+            ctx.lineTo(x + Math.cos(a) * (cr - 1), y + Math.sin(a) * (cr - 1));
         }
-
-        ctx.lineCap = 'round';
-        ctx.shadowColor = '#aadaff'; ctx.shadowBlur = 5;
+        ctx.stroke();
 
         // Hour hand (slow)
-        const ha = t * 0.52 - Math.PI / 2;
-        ctx.strokeStyle = 'rgba(180,220,255,0.85)'; ctx.lineWidth = 2.2;
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ha) * cr * 0.52, Math.sin(ha) * cr * 0.52); ctx.stroke();
+        const ha = t * 0.5 - Math.PI / 2;
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = '#b0d8ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(ha) * cr * 0.45, y + Math.sin(ha) * cr * 0.45);
+        ctx.stroke();
 
-        // Minute hand (fast)
-        const ma = t * 2.8 - Math.PI / 2;
-        ctx.strokeStyle = 'rgba(200,235,255,0.75)'; ctx.lineWidth = 1.3;
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ma) * cr * 0.80, Math.sin(ma) * cr * 0.80); ctx.stroke();
+        // Minute hand (faster)
+        const ma = t * 2.5 - Math.PI / 2;
+        ctx.globalAlpha = 0.65;
+        ctx.strokeStyle = '#c8eaff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(ma) * cr * 0.75, y + Math.sin(ma) * cr * 0.75);
+        ctx.stroke();
 
-        // Centre dot
-        ctx.fillStyle = '#aadaff';
-        ctx.shadowBlur = 4;
-        ctx.beginPath(); ctx.arc(0, 0, 2.8, 0, Math.PI * 2); ctx.fill();
-
-        // Drifting snowflakes
-        ctx.shadowBlur = 4; ctx.shadowColor = '#aaddff';
-        this.#flakes.forEach(sf => {
-            const sx = sf.ox + Math.sin(t * 0.7 + sf.phase) * 8;
-            const sy = sf.oy + Math.sin(t * 0.42 + sf.phase * 1.3) * 6;
-            const alpha = (0.5 + Math.sin(t * 3 + sf.phase) * 0.3).toFixed(3);
-            ctx.strokeStyle = `rgba(200,230,255,${alpha})`; ctx.lineWidth = sf.size * 0.55;
-            for (let arm = 0; arm < 3; arm++) {
-                const aa = (arm / 3) * Math.PI + sf.phase * 0.3;
-                ctx.beginPath();
-                ctx.moveTo(sx + Math.cos(aa) * sf.size * 2.5, sy + Math.sin(aa) * sf.size * 2.5);
-                ctx.lineTo(sx - Math.cos(aa) * sf.size * 2.5, sy - Math.sin(aa) * sf.size * 2.5);
-                ctx.stroke();
-            }
-        });
-
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
-// ── Double Coins ─────────────────────────────────────────────────────────────
-// Golden glow + crown of 8 spinning coins orbiting the player's head
+// ── Double Coins ──────────────────────────────────────────────────────────────
+// Golden crown halo ring + orbiting coins + ×2 multiplier
 class DoubleCoinsOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
-        const t = this._t;
+        const t     = this._t;
+        const headY = y - h * 0.38;
+        const R     = 22;
+
         ctx.save();
-        ctx.translate(x, y - h * 0.10);
+        ctx.shadowColor = '#ffcc00';
+        ctx.shadowBlur = 6;
 
-        // Golden player glow
-        const glow = ctx.createRadialGradient(0, 0, 5, 0, 0, 42);
-        glow.addColorStop(0, 'rgba(255,210,0,0.18)');
-        glow.addColorStop(1, 'rgba(255,140,0,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI * 2); ctx.fill();
+        // Halo ring
+        ctx.globalAlpha = 0.2 + Math.sin(t * 2) * 0.1;
+        ctx.strokeStyle = '#ffc800';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(x, headY, R + 4, 9, 0, 0, Math.PI * 2);
+        ctx.stroke();
 
-        // 8 coins in tilted halo orbiting the head
-        const orbitCy = -h * 0.28;
-        ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 8;
-        for (let i = 0; i < 8; i++) {
-            const a  = (i / 8) * Math.PI * 2 + t * 1.4;
-            const cx = Math.cos(a) * 28;
-            const cy = orbitCy + Math.sin(a) * 10;
-            const depth = 0.55 + Math.sin(a) * 0.45; // z-depth illusion
-            ctx.globalAlpha = 0.55 + Math.abs(Math.cos(a)) * 0.40;
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath(); ctx.arc(cx, cy, 4.5 * depth, 0, Math.PI * 2); ctx.fill();
-            // shine
-            ctx.fillStyle = 'rgba(255,255,210,0.65)';
-            ctx.beginPath(); ctx.arc(cx - 1, cy - 1, 1.5 * depth, 0, Math.PI * 2); ctx.fill();
+        // 5 orbiting coins
+        ctx.fillStyle = '#ffd700';
+        for (let i = 0; i < 5; i++) {
+            const a = (i / 5) * Math.PI * 2 + t * 1.3;
+            ctx.globalAlpha = 0.5 + Math.abs(Math.cos(a)) * 0.4;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(a) * R, headY + Math.sin(a) * 7, 3.5, 0, Math.PI * 2);
+            ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // Floating "×2" text
-        const textAlpha = 0.55 + Math.sin(t * 2.5) * 0.30;
-        ctx.globalAlpha = textAlpha;
-        ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 6;
+        // ×2 multiplier text
+        ctx.globalAlpha = 0.6 + Math.sin(t * 2.5) * 0.25;
         ctx.fillStyle = '#ffe040';
         ctx.font = 'bold 11px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('×2', 0, -h * 0.58);
-        ctx.globalAlpha = 1;
+        ctx.fillText('×2', x, y - h * 0.6);
 
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
@@ -334,153 +317,150 @@ class JetpackOverlay extends PlayerOverlay {
     }
 }
 
-// ── Rocket Pods (Double Jump) ─────────────────────────────────────────────────
-// Blue thruster pods on the back — flames grow bigger during jump
+// ── Rocket Pods ───────────────────────────────────────────────────────────────
+// Mechanical jet pods with nozzle caps + reactive thrust flames
 class RocketPodsOverlay extends PlayerOverlay {
     drawBehind(ctx, x, y, h, { anim }) {
         const t  = this._t;
         const pY = y - h * 0.06;
+
         ctx.save();
+        ctx.shadowColor = '#3399ff';
+        ctx.shadowBlur = 6;
+
         [-1, 1].forEach(side => {
             const px = x + side * 17;
-            ctx.shadowColor = '#3399ff'; ctx.shadowBlur = 8;
-            // Pod shell
-            const g = ctx.createLinearGradient(px, pY - 7, px, pY + 7);
-            g.addColorStop(0, '#1a44bb'); g.addColorStop(0.5, '#2255dd'); g.addColorStop(1, '#080e44');
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.roundRect(px - 4, pY - 7, 8, 14, 3); ctx.fill();
-            // Nozzle cap
-            ctx.fillStyle = '#111133';
-            ctx.beginPath(); ctx.ellipse(px, pY + 7, 4.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            // Intake ring
-            ctx.strokeStyle = '#88aaff'; ctx.lineWidth = 1.0; ctx.globalAlpha = 0.65; ctx.shadowBlur = 4;
-            ctx.beginPath(); ctx.ellipse(px, pY - 2.5, 3.5, 2, 0, 0, Math.PI * 2); ctx.stroke();
+
+            // Pod body
+            ctx.fillStyle = '#2255dd';
+            ctx.beginPath();
+            ctx.roundRect(px - 4, pY - 7, 8, 14, 3);
+            ctx.fill();
+
+            // Nozzle cap (dome on top)
+            ctx.fillStyle = '#3366cc';
+            ctx.beginPath();
+            ctx.arc(px, pY - 7, 4, Math.PI, 0);
+            ctx.fill();
+
+            // Thrust flame
+            const isJump = anim === 'jump';
+            const fh = isJump ? 10 + Math.sin(t * 22 + side) * 4 : 3 + Math.sin(t * 10 + side) * 1.5;
+            ctx.globalAlpha = isJump ? 0.85 : 0.4;
+            ctx.fillStyle = isJump ? '#78b4ff' : '#5090ff';
+            ctx.shadowBlur = isJump ? 10 : 4;
+            ctx.beginPath();
+            ctx.ellipse(px, pY + 10 + fh * 0.5, 2.5, fh, 0, 0, Math.PI * 2);
+            ctx.fill();
             ctx.globalAlpha = 1;
-            // Flame plume
-            const fh = anim === 'jump' ? 9 + Math.sin(t * 22 + side) * 4 : 3 + Math.sin(t * 10 + side) * 1.5;
-            ctx.fillStyle = anim === 'jump' ? 'rgba(120,180,255,0.88)' : 'rgba(80,140,255,0.45)';
-            ctx.shadowColor = '#99ccff'; ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.ellipse(px, pY + 10 + fh * 0.5, 2.5, fh, 0, 0, Math.PI * 2); ctx.fill();
-            // Glow intake dot
-            ctx.fillStyle = '#4488ff'; ctx.shadowColor = '#4488ff'; ctx.shadowBlur = 6;
-            ctx.beginPath(); ctx.arc(px, pY - 4.5, 1.8, 0, Math.PI * 2); ctx.fill();
         });
+
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
-// ── Glide Wings ────────────────────────────────────────────────────────────────
-// ── Glide Wings (improved organic shape) ───────────────────────────────────────
+// ── Glide Wings ───────────────────────────────────────────────────────────────
+// Organic dragonfly wings — 3-curve shape with central vein
 class GlideWingsOverlay extends PlayerOverlay {
     drawBehind(ctx, x, y, h, { anim }) {
         const t       = this._t;
         const anchorY = y - h * 0.18;
 
-        // Spread più elegante e fluido
         const spread = anim === 'fall' ? 1.0
                      : anim === 'jump' ? 0.18
                      : 0.40 + Math.sin(t * 2.0) * 0.07;
 
         ctx.save();
         ctx.shadowColor = '#22dd77';
-        ctx.shadowBlur  = 10;
+        ctx.shadowBlur  = 8;
 
         [-1, 1].forEach(side => {
+            const baseX = x + side * 7;
+            const midX  = x + side * (10 + spread * 18);
+            const tipX  = x + side * (22 + spread * 32);
+            const tipY  = anchorY + spread * 20;
 
-            // Geometria migliorata
-            const baseX   = x + side * 7;
-            const baseY   = anchorY - 2;
-            const midX    = x + side * (10 + spread * 18);
-            const midY    = anchorY + spread * 4;
-            const tipX    = x + side * (22 + spread * 32);
-            const tipY    = anchorY + spread * 20;
-
-            const alpha = (0.50 + spread * 0.32).toFixed(2);
-
-            ctx.fillStyle   = `rgba(24,185,90,${alpha})`;
+            // Wing membrane
+            ctx.globalAlpha = 0.50 + spread * 0.32;
+            ctx.fillStyle   = '#18b95a';
             ctx.strokeStyle = '#44ffaa';
-            ctx.lineWidth   = 1.4;
+            ctx.lineWidth   = 1.2;
 
-            // Forma dell’ala: più organica, 3 curve
             ctx.beginPath();
-            ctx.moveTo(baseX, baseY);
-
-            // Curva superiore
-            ctx.quadraticCurveTo(
-                midX, anchorY - 6 + spread * 2,
-                tipX, anchorY + spread * 6
-            );
-
-            // Curva esterna (bordo)
-            ctx.quadraticCurveTo(
-                tipX - side * 6,
-                tipY,
-                midX,
-                anchorY + 18
-            );
-
-            // Curva inferiore verso la base
-            ctx.quadraticCurveTo(
-                x + side * 5,
-                anchorY + 14,
-                baseX,
-                anchorY + 4
-            );
+            ctx.moveTo(baseX, anchorY - 2);
+            ctx.quadraticCurveTo(midX, anchorY - 6 + spread * 2, tipX, anchorY + spread * 6);
+            ctx.quadraticCurveTo(tipX - side * 6, tipY, midX, anchorY + 18);
+            ctx.quadraticCurveTo(x + side * 5, anchorY + 14, baseX, anchorY + 4);
 
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
 
-            // Vene — più naturali e distribuite
-            ctx.strokeStyle = 'rgba(100,255,160,0.35)';
-            ctx.lineWidth   = 0.9;
+            // Central vein
+            ctx.strokeStyle = 'rgba(100,255,160,0.3)';
+            ctx.lineWidth = 0.8;
 
             ctx.beginPath();
             ctx.moveTo(baseX, anchorY + 3);
             ctx.quadraticCurveTo(
                 midX * 0.85 + x * 0.15,
                 anchorY + spread * 10,
-                tipX * 0.75 + x * 0.25,
-                anchorY + spread * 18
+                tipX * 0.7 + x * 0.3,
+                anchorY + spread * 16
             );
             ctx.stroke();
         });
 
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
 
-// ── Armor Plating (Knockback Resist) ─────────────────────────────────────────
-// Metallic hex shoulder plates visible on the sides of the body
+// ── Armor Plating ─────────────────────────────────────────────────────────────
+// Hex shoulder plates with metallic edge highlight + center rivet
 class ArmorPlatingOverlay extends PlayerOverlay {
     drawBehind(ctx, x, y, h) {
-        const t  = this._t;
         const bY = y - h * 0.05;
+
         ctx.save();
-        ctx.shadowColor = '#aabbcc'; ctx.shadowBlur = 6;
+        ctx.shadowColor = '#aabbcc';
+        ctx.shadowBlur = 5;
+
         [-1, 1].forEach(side => {
             const px = x + side * 14;
-            const g  = ctx.createLinearGradient(px, bY - 9, px, bY + 5);
-            g.addColorStop(0, '#7799aa'); g.addColorStop(0.5, '#99bbcc'); g.addColorStop(1, '#334455');
-            ctx.fillStyle = g;
+
+            // Hex plate fill
+            ctx.fillStyle = '#7799aa';
             ctx.beginPath();
             ctx.moveTo(px - 6, bY - 8); ctx.lineTo(px + 6, bY - 8);
             ctx.lineTo(px + 8, bY - 2); ctx.lineTo(px + 5, bY + 5);
             ctx.lineTo(px - 5, bY + 5); ctx.lineTo(px - 8, bY - 2);
-            ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#ccdde8'; ctx.lineWidth = 0.9; ctx.globalAlpha = 0.6; ctx.stroke();
+            ctx.closePath();
+            ctx.fill();
+
+            // Top edge highlight (metallic sheen)
+            ctx.strokeStyle = '#ccdde8';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(px - 6, bY - 8);
+            ctx.lineTo(px + 6, bY - 8);
+            ctx.lineTo(px + 8, bY - 2);
+            ctx.stroke();
+
+            // Center rivet
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#bbccdd';
+            ctx.beginPath();
+            ctx.arc(px, bY - 1, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#667788'; ctx.shadowBlur = 2;
-            [[-3, -4], [3, -4], [0, 2]].forEach(([rx, ry]) => {
-                ctx.beginPath(); ctx.arc(px + rx, bY + ry, 1.3, 0, Math.PI * 2); ctx.fill();
-            });
         });
-        const pa = (0.12 + Math.sin(t * 1.8) * 0.06).toFixed(3);
-        ctx.fillStyle = `rgba(180,200,220,${pa})`; ctx.shadowBlur = 8; ctx.shadowColor = '#aabbcc';
-        ctx.beginPath(); ctx.arc(x, bY, 20, 0, Math.PI * 2); ctx.fill();
+
         ctx.shadowBlur = 0;
         ctx.restore();
     }
@@ -511,64 +491,82 @@ class DashChevronOverlay extends PlayerOverlay {
     }
 }
 
-// ── Stomp Boots ────────────────────────────────────────────────────────────────
-// Red energy halo around each boot + orange crackle sparks
+// ── Stomp Boots ───────────────────────────────────────────────────────────────
+// Red energy rings + downward impact chevron
 class StompBootsOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
         const t     = this._t;
         const bootY = y + h * 0.44;
+
         ctx.save();
-        ctx.shadowColor = '#ff5500'; ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ff5500';
+        ctx.shadowBlur = 6;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Boot energy rings
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ff5000';
         [-8, 8].forEach(bx => {
-            const px    = x + bx;
-            const alpha = (0.45 + Math.sin(t * 7 + bx) * 0.22).toFixed(2);
-            ctx.strokeStyle = `rgba(255,80,0,${alpha})`; ctx.lineWidth = 2.0;
-            ctx.beginPath(); ctx.ellipse(px, bootY, 8.5, 5, 0, 0, Math.PI * 2); ctx.stroke();
-            ctx.fillStyle = 'rgba(255,60,0,0.12)';
-            ctx.beginPath(); ctx.ellipse(px, bootY, 8.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-        });
-        for (let i = 0; i < 6; i++) {
-            const bx    = i < 3 ? -8 : 8;
-            const sa    = t * 4.5 + i * 2.094;
-            const sr    = 10 + Math.sin(t * 5 + i) * 3;
-            const alpha = (0.38 + Math.sin(t * 8 + i * 0.8) * 0.28).toFixed(2);
-            ctx.fillStyle = `rgba(255,140,0,${alpha})`; ctx.shadowBlur = 4;
+            ctx.globalAlpha = 0.5 + Math.sin(t * 7 + bx) * 0.2;
             ctx.beginPath();
-            ctx.arc(x + bx + Math.cos(sa) * sr * 0.75, bootY + Math.sin(sa) * sr * 0.45, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
+            ctx.ellipse(x + bx, bootY, 8, 4.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        // Downward impact chevron (▼)
+        ctx.globalAlpha = 0.4 + Math.sin(t * 5) * 0.2;
+        ctx.strokeStyle = '#ff6622';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(x - 5, bootY + 7);
+        ctx.lineTo(x, bootY + 13);
+        ctx.lineTo(x + 5, bootY + 7);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
 
 // ── Shockwave ─────────────────────────────────────────────────────────────────
-// Yellow-white elliptical pulse rings + crackle spokes radiating from body
+// Expanding pulse rings + 4 radial burst lines
 class ShockwaveOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
-        const t = this._t;
+        const t  = this._t;
+        const cy = y + h * 0.10;
+
         ctx.save();
-        ctx.translate(x, y + h * 0.10);
-        for (let p = 0; p < 2; p++) {
-            const phase  = (t * 2.2 + p * 0.5) % 1;
-            const r      = 14 + phase * 26;
-            const alpha  = ((1 - phase) * 0.62).toFixed(2);
-            ctx.strokeStyle = `rgba(255,220,0,${alpha})`;
-            ctx.lineWidth   = 1.5 - phase * 0.8;
-            ctx.shadowColor = '#ffdd00'; ctx.shadowBlur = 6;
-            ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.35, 0, 0, Math.PI * 2); ctx.stroke();
-        }
-        ctx.shadowBlur = 3;
-        for (let i = 0; i < 6; i++) {
-            const a   = (i / 6) * Math.PI * 2 + t * 1.5;
-            const r1  = 14, r2 = 18 + Math.sin(t * 10 + i) * 4;
-            const alpha = (0.35 + Math.sin(t * 8 + i) * 0.20).toFixed(2);
-            ctx.strokeStyle = `rgba(255,240,0,${alpha})`; ctx.lineWidth = 0.9;
+        ctx.shadowColor = '#ffdd00';
+        ctx.shadowBlur = 5;
+        ctx.lineCap = 'round';
+
+        // 2 expanding pulse rings
+        ctx.strokeStyle = '#ffdd44';
+        for (let i = 0; i < 2; i++) {
+            const phase = (t * 2.2 + i * 0.5) % 1;
+            const r = 12 + phase * 28;
+            ctx.globalAlpha = (1 - phase) * 0.55;
+            ctx.lineWidth = 1.8 - phase;
             ctx.beginPath();
-            ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1 * 0.6);
-            ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2 * 0.6);
+            ctx.ellipse(x, cy, r, r * 0.32, 0, 0, Math.PI * 2);
             ctx.stroke();
         }
+
+        // 4 radial burst lines (NSEW) — single batched path
+        const burst = 16 + Math.sin(t * 3) * 4;
+        ctx.globalAlpha = 0.35 + Math.sin(t * 4) * 0.15;
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, cy);       ctx.lineTo(x + burst, cy);
+        ctx.moveTo(x - 8, cy);       ctx.lineTo(x - burst, cy);
+        ctx.moveTo(x, cy - 5);       ctx.lineTo(x, cy - burst * 0.6);
+        ctx.moveTo(x, cy + 5);       ctx.lineTo(x, cy + burst * 0.6);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
         ctx.restore();
     }
@@ -577,12 +575,6 @@ class ShockwaveOverlay extends PlayerOverlay {
 // ── Spike Head ────────────────────────────────────────────────────────────────
 class SpikeHeadOverlay extends PlayerOverlay {
     #flashTimers = new Array(5).fill(0);
-
-    update(dt) {
-        super.update(dt);
-        // Decadimento flash
-       // this.#flashTimers = this.#flashTimers.map(f => Math.max(0, f - dt * 5));
-    }
 
     draw(ctx, x, y, h, { spikeCount, spikeTimers, spikeCooldown, spike_haste }) {
         if (!spikeCount || spikeCount <= 0) return;
@@ -669,160 +661,67 @@ class SpikeHeadOverlay extends PlayerOverlay {
 
 
 
-// ── Ghost Repel ──────────────────────────────────────────────────────────────
-// Circular cooldown ring drawn around the player. Ready = pulsing magenta orb.
+// ── Ghost Repel ───────────────────────────────────────────────────────────────
+// Ward aura — rotating arc + ward crosses (ready) / progress arc + % (charging)
 class GhostRepelOverlay extends PlayerOverlay {
     draw(ctx, x, y, h, { ghostRepelCooldown, ghostRepelMaxCd }) {
         if (!ghostRepelMaxCd) return;
+
         const t     = this._t;
         const cd    = ghostRepelCooldown ?? 0;
-        const max   = ghostRepelMaxCd;
-        const pct   = cd <= 0 ? 1 : 1 - (cd / max);
+        const pct   = cd <= 0 ? 1 : 1 - cd / ghostRepelMaxCd;
         const ready = cd <= 0;
-        const pulse = 0.5 + Math.sin(t * 5) * 0.5;
-        const r     = 28;
+        const r     = 24;
 
         ctx.save();
-        ctx.translate(x, y);
-
-        // ── Inner spectral aura (always present) ──
-        const rg = ctx.createRadialGradient(0, 0, 4, 0, 0, r);
-        if (ready) {
-            rg.addColorStop(0, `rgba(160,255,230,${(0.10 + pulse * 0.07).toFixed(3)})`);
-            rg.addColorStop(0.5, `rgba(60,160,200,${(0.04 + pulse * 0.04).toFixed(3)})`);
-            rg.addColorStop(1, 'rgba(20,0,60,0)');
-        } else {
-            rg.addColorStop(0, `rgba(90,0,140,${(0.05 + pct * 0.07).toFixed(3)})`);
-            rg.addColorStop(1, 'rgba(20,0,60,0)');
-        }
-        ctx.fillStyle = rg;
-        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.lineCap = 'round';
 
         if (ready) {
-            // ── 6 rotating spectral arc segments (teal) ──
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = '#50ffd0';
-            ctx.shadowBlur  = 12 + pulse * 10;
-            for (let i = 0; i < 6; i++) {
-                const a = (i / 6) * Math.PI * 2 + t * 1.8;
-                const alpha = (0.5 + Math.sin(t * 4 + i) * 0.25).toFixed(3);
-                ctx.strokeStyle = `rgba(80,255,210,${alpha})`;
-                ctx.beginPath();
-                ctx.arc(0, 0, r, a, a + Math.PI / 5);
-                ctx.stroke();
-            }
-
-            // ── 4 counter-rotating outer segments (purple) ──
-            ctx.lineWidth = 1.5;
+            ctx.shadowColor = '#66ffee';
             ctx.shadowBlur = 6;
-            for (let i = 0; i < 4; i++) {
-                const a = (i / 4) * Math.PI * 2 - t * 2.2;
-                const alpha = (0.4 + Math.sin(t * 5 + i) * 0.25).toFixed(3);
-                ctx.strokeStyle = `rgba(190,80,255,${alpha})`;
-                ctx.beginPath();
-                ctx.arc(0, 0, r + 5, a, a + Math.PI / 5);
-                ctx.stroke();
-            }
 
-            // ── 4 rune diamonds slowly orbiting ──
-            ctx.shadowColor = '#a050ff';
-            ctx.shadowBlur = 9;
-            for (let i = 0; i < 4; i++) {
-                const a  = (i / 4) * Math.PI * 2 + t * 0.7;
-                const dx = Math.cos(a) * (r + 9);
-                const dy = Math.sin(a) * (r + 9);
-                const s  = 3.5 + Math.sin(t * 3 + i) * 0.8;
-                const alpha = (0.65 + Math.sin(t * 2.5 + i) * 0.25).toFixed(3);
-                ctx.fillStyle = `rgba(200,110,255,${alpha})`;
-                ctx.beginPath();
-                ctx.moveTo(dx, dy - s);
-                ctx.lineTo(dx + s, dy);
-                ctx.lineTo(dx, dy + s);
-                ctx.lineTo(dx - s, dy);
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            // ── 8 outer sparkle wisp-dots ──
-            ctx.shadowColor = '#88ffee';
-            ctx.shadowBlur = 5;
-            for (let i = 0; i < 8; i++) {
-                const a  = (i / 8) * Math.PI * 2 - t * 1.9;
-                const sr = r + 3 + Math.sin(t * 6 + i) * 2;
-                const alpha = (0.3 + Math.sin(t * 5 + i * 0.8) * 0.28).toFixed(3);
-                ctx.fillStyle = `rgba(200,255,240,${alpha})`;
-                ctx.beginPath();
-                ctx.arc(Math.cos(a) * sr, Math.sin(a) * sr, 1.8, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // ── 👻 icon bobbing above head ──
-            const bob = Math.sin(t * 3.5) * 3;
-            ctx.shadowColor = '#80ffee';
-            ctx.shadowBlur = 16 + pulse * 8;
-            ctx.font = '14px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = `rgba(255,255,255,${(0.75 + pulse * 0.25).toFixed(3)})`;
-            ctx.fillText('\uD83D\uDC7B', 0, -r - 13 + bob);
-
-        } else {
-            // ── CHARGING: 16-dot ring track ──
-            ctx.shadowColor = '#9944ff';
-            for (let i = 0; i < 16; i++) {
-                const a      = (i / 16) * Math.PI * 2 - Math.PI / 2;
-                const active = i < Math.round(pct * 16);
-                ctx.shadowBlur  = active ? 4 : 0;
-                ctx.fillStyle   = active ? 'rgba(160,70,255,0.80)' : 'rgba(70,0,100,0.35)';
-                ctx.beginPath();
-                ctx.arc(Math.cos(a) * r, Math.sin(a) * r, active ? 2.2 : 1.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // ── Progress fill arc with glow ──
-            ctx.strokeStyle = 'rgba(150,55,255,0.92)';
-            ctx.lineWidth   = 3;
-            ctx.lineCap     = 'round';
-            ctx.shadowColor = '#9933ff';
-            ctx.shadowBlur  = 12;
+            // Rotating ward arc
+            ctx.strokeStyle = 'rgba(80,255,210,0.5)';
+            ctx.lineWidth = 2;
+            const a = t * 1.4;
             ctx.beginPath();
-            ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+            ctx.arc(x, y, r, a, a + Math.PI * 1.3);
             ctx.stroke();
 
-            // ── Bright spark at arc tip ──
-            if (pct > 0.02) {
-                const tipA = -Math.PI / 2 + Math.PI * 2 * pct;
-                ctx.shadowColor = '#dd99ff';
-                ctx.shadowBlur  = 16;
-                ctx.fillStyle   = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(Math.cos(tipA) * r, Math.sin(tipA) * r, 3, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // ── 3 floating ghost wisps drifting inside ring ──
-            ctx.shadowColor = '#8844cc';
+            // 3 ward crosses — single batched path
+            ctx.strokeStyle = 'rgba(100,255,220,0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
             for (let i = 0; i < 3; i++) {
-                const wa = (i / 3) * Math.PI * 2 + t * 0.65 + Math.sin(t * 0.9 + i) * 0.35;
-                const wr = r - 9 + Math.sin(t * 1.3 + i * 1.2) * 4;
-                const alpha = (0.22 + Math.sin(t * 2 + i) * 0.12).toFixed(3);
-                ctx.shadowBlur  = 7;
-                ctx.fillStyle   = `rgba(175,110,255,${alpha})`;
-                ctx.beginPath();
-                ctx.arc(Math.cos(wa) * wr, Math.sin(wa) * wr, 3, 0, Math.PI * 2);
-                ctx.fill();
+                const wa = (i / 3) * Math.PI * 2 + t * 0.8;
+                const wx = x + Math.cos(wa) * (r + 6);
+                const wy = y + Math.sin(wa) * (r + 6);
+                ctx.moveTo(wx - 3, wy); ctx.lineTo(wx + 3, wy);
+                ctx.moveTo(wx, wy - 3); ctx.lineTo(wx, wy + 3);
             }
+            ctx.stroke();
+        } else {
+            ctx.shadowColor = '#8844ff';
+            ctx.shadowBlur = 6;
 
-            // ── Countdown above head ──
-            ctx.shadowColor = '#aa44ff';
-            ctx.shadowBlur  = 9;
-            ctx.font        = 'bold 11px monospace';
-            ctx.textAlign   = 'center';
+            // Progress arc
+            ctx.strokeStyle = 'rgba(150,55,255,0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+            ctx.stroke();
+
+            // Percentage text
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#bb88ff';
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle   = 'rgba(200,140,255,0.95)';
-            ctx.fillText(`${Math.ceil(cd)}s`, 0, -r - 11);
+            ctx.fillText(Math.round(pct * 100) + '%', x, y);
         }
 
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
 }

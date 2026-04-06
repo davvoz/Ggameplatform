@@ -182,14 +182,11 @@ export class Platform extends GameObject {
         const platformTop = y - this.height / 2;
         const spikeH      = 18;
         const spikeW      = 10;
-        const count       = 7;
+        const count       = 4;
         const totalSpan   = count * spikeW + (count - 1) * 2;
         const startX      = x - totalSpan / 2;
 
         ctx.save();
-        // Red glow
-        ctx.shadowColor = COLORS.PLATFORM_DEADLY;
-        ctx.shadowBlur  = 10;
 
         for (let i = 0; i < count; i++) {
             const sx = startX + i * (spikeW + 2);

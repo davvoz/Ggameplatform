@@ -13,6 +13,7 @@ import { PlatformFactory } from '../entities/Platform.js';
 import { EnemyFactory } from '../entities/Enemy.js';
 import { CollectibleFactory } from '../entities/Collectible.js';
 import { PowerUpFactory } from '../entities/PowerUp.js';
+import { compactInPlace, updateAndCompact } from '../core/ArrayUtils.js';
 
 export class PlayingState extends State {
     // Entities
@@ -242,7 +243,7 @@ export class PlayingState extends State {
         this.#comboDisplay = this.#player.combo;
 
         // Tick floating texts
-        this.#floatingTexts = this.#floatingTexts.filter(ft => {
+        updateAndCompact(this.#floatingTexts, ft => {
             ft.life -= dt;
             ft.screenY += ft.vy * dt;
             return ft.life > 0;
@@ -727,10 +728,10 @@ export class PlayingState extends State {
     #cleanup() {
         const cleanupThreshold = this.#cameraY + DESIGN_HEIGHT + 200;
 
-        this.#platforms = this.#platforms.filter(p => p.active && p.y < cleanupThreshold);
-        this.#enemies = this.#enemies.filter(e => e.active && e.y < cleanupThreshold);
-        this.#collectibles = this.#collectibles.filter(c => c.active && c.y < cleanupThreshold);
-        this.#powerUps = this.#powerUps.filter(p => p.active && p.y < cleanupThreshold);
+        compactInPlace(this.#platforms,    p => p.active && p.y < cleanupThreshold);
+        compactInPlace(this.#enemies,      e => e.active && e.y < cleanupThreshold);
+        compactInPlace(this.#collectibles, c => c.active && c.y < cleanupThreshold);
+        compactInPlace(this.#powerUps,     p => p.active && p.y < cleanupThreshold);
     }
 
     /**

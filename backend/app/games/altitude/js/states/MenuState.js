@@ -5,6 +5,7 @@
 import { State } from './State.js';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, FONTS } from '../config/Constants.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
+import { PrestigeBadgeRenderer } from '../graphics/PrestigeBadgeRenderer.js';
 
 export class MenuState extends State {
     #buttons = [];
@@ -12,6 +13,8 @@ export class MenuState extends State {
     #bgStars = [];
     #selectedIndex = 0;
     #inputCooldown = 0;
+    #prestigeBadge = new PrestigeBadgeRenderer();
+    #prestigeHeight = 0;
 
     constructor(game) {
         super(game);
@@ -72,6 +75,7 @@ export class MenuState extends State {
 
     update(dt) {
         this.#titlePhase += dt;
+        this.#prestigeBadge.update(dt);
 
         // Update stars
         for (const star of this.#bgStars) {
@@ -106,10 +110,10 @@ export class MenuState extends State {
             const ty = input.tapY;
             input.consumeTap();
 
-            const buttonY = 320;
+            const buttonY = 320 + this.#prestigeHeight;
             const buttonW = 200;
             const buttonH = 50;
-            const buttonGap = 70;
+            const buttonGap = 56;
 
             for (let i = 0; i < this.#buttons.length; i++) {
                 const by = buttonY + i * buttonGap;
@@ -146,8 +150,11 @@ export class MenuState extends State {
         // Title
         this.#drawTitle(ctx);
 
-        // High score
-        this.#drawHighScore(ctx);
+        // Prestige badge (between title and stats)
+        this.#prestigeHeight = this.#drawPrestige(ctx);
+
+        // Stats panel
+        this.#drawStats(ctx);
 
         // Buttons
         this.#drawButtons(ctx);
@@ -199,64 +206,57 @@ export class MenuState extends State {
 
     }
 
-    #drawHighScore(ctx) {
+    #drawPrestige(ctx) {
+        const count   = this._game.getPrestigeCount();
+        const bonuses = this._game.getPrestigeBonuses();
+        return this.#prestigeBadge.draw(
+            ctx, count, bonuses,
+            DESIGN_WIDTH / 2, 158,
+        );
+    }
+
+    #drawStats(ctx) {
+        const dy = this.#prestigeHeight;
+        const baseY = 196 + dy;
+        const cx = DESIGN_WIDTH / 2;
+        const panelW = 300;
+        const panelH = 92;
+        const panelX = (DESIGN_WIDTH - panelW) / 2;
+
+        // Panel background
+        ctx.save();
+        ctx.fillStyle = 'rgba(5, 10, 30, 0.5)';
+        ctx.strokeStyle = COLORS.UI_BORDER_DIM;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(panelX, baseY, panelW, panelH, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
         const highScore = this._game.save.highScore;
         const maxAlt = this._game.save.maxAltitude;
+        const coins = this._game.save.totalCoins;
 
-        //shadow
-        bitmapFont.drawText(ctx,
-            `High Score: ${highScore}`,
-            DESIGN_WIDTH / 2 + 2,
-            220 + 2,
-            30,
-            {
-                align: 'center',
-                letterSpacing: 0.3,
-                alpha: 1,
-                color: 'rgba(0,0,0,1)'
-            });
-        bitmapFont.drawText(ctx,
-            `High Score: ${highScore}`,
-            DESIGN_WIDTH / 2,
-            220,
-            30,
-            {
-                align: 'center',
-                letterSpacing: 0.3,
-                alpha: 1,
-                color: COLORS.NEON_PINK
-            });
+        this.#drawStatLine(ctx, `High Score: ${highScore}`, cx, baseY + 20, COLORS.NEON_PINK);
+        this.#drawStatLine(ctx, `Max Altitude: ${Math.floor(maxAlt)}m`, cx, baseY + 48, COLORS.NEON_GREEN);
+        this.#drawStatLine(ctx, `Coins: ${coins}`, cx, baseY + 76, COLORS.NEON_ORANGE);
+    }
 
-        //shadow
-        bitmapFont.drawText(ctx,
-            `Max Altitude: ${Math.floor(maxAlt)}m`,
-            DESIGN_WIDTH / 2 + 2,
-            260 + 2,
-            30,
-            {
-                align: 'center',
-                letterSpacing: 0.3,
-                alpha: 1,
-                color: 'rgba(0,0,0,1)'
-            });
-        bitmapFont.drawText(ctx,
-            `Max Altitude: ${Math.floor(maxAlt)}m`,
-            DESIGN_WIDTH / 2,
-            260,
-            30,
-            {
-                align: 'center',
-                letterSpacing: 0.3,
-                alpha: 1,
-                color: COLORS.NEON_GREEN
-            });
+    #drawStatLine(ctx, text, x, y, color) {
+        bitmapFont.drawText(ctx, text, x + 2, y + 2, 24, {
+            align: 'center', letterSpacing: 0.3, alpha: 1, color: 'rgba(0,0,0,1)',
+        });
+        bitmapFont.drawText(ctx, text, x, y, 24, {
+            align: 'center', letterSpacing: 0.3, alpha: 1, color,
+        });
     }
 
     #drawButtons(ctx) {
-        const buttonY = 320;
+        const buttonY = 320 + this.#prestigeHeight;
         const buttonW = 200;
         const buttonH = 50;
-        const buttonGap = 70;
+        const buttonGap = 56;
 
         this.#buttons.forEach((btn, i) => {
             const y = buttonY + i * buttonGap;
@@ -303,7 +303,7 @@ export class MenuState extends State {
     }
 
     #drawInstructions(ctx) {
-        const y = DESIGN_HEIGHT - 60;
+        const y = DESIGN_HEIGHT - 50;
 
         // Arrow chars not in bitmap sheet — keep as canvas text
         ctx.save();
@@ -316,29 +316,6 @@ export class MenuState extends State {
 
         bitmapFont.drawText(ctx, 'Space or Tap to jump', DESIGN_WIDTH / 2, y + 18, 22, {
             align: 'center', color: COLORS.UI_TEXT_DIM,
-        });
-
-        // Coins — emoji not in bitmap sheet, keep as canvas
-        const coins = this._game.save.totalCoins;
-        // ctx.save();
-        // ctx.textAlign = 'center';
-        // ctx.textBaseline = 'middle';
-        // ctx.fillStyle = COLORS.COIN_GOLD;
-        // ctx.font = `600 14px ${FONTS.UI}`;
-        // ctx.restore();
-        //shadow
-            bitmapFont.drawText(ctx, `${coins}`, DESIGN_WIDTH / 2 + 2, y - 18 + 2, 28, {
-                align: 'center',
-                color: 'rgba(0,0,0,1)',
-                alpha: 1,
-                letterSpacing: 0.5,
-            });
-        // Text
-        bitmapFont.drawText(ctx, ` ${coins}`, DESIGN_WIDTH / 2, y - 18, 28, {
-            align: 'center',
-            color: COLORS.NEON_ORANGE,
-            alpha: 1,
-            letterSpacing: 0.5,
         });
     }
 }

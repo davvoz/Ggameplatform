@@ -332,7 +332,7 @@ export const UPGRADE_CATALOG = {
         name: 'Air Dash',
         icon: '💨',
         category: 'mobility',
-        description: 'Quick horizontal burst',
+        description: 'Dash through enemies! Double-tap ←/→. +1/lvl',
         baseCost: 400,
         costScale: 2,
         maxLevel: 3, // Number of dashes per jump

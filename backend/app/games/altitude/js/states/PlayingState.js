@@ -278,16 +278,32 @@ export class PlayingState extends State {
 
         // Air dash — triggered by double-tap/double-press or horizontal swipe
         if (input.dashLeft) {
-            this.#player.dash(-1, this._game.sound);
+            if (this.#player.dash(-1, this._game.sound)) {
+                this.#dashBurst(-1);
+            }
             input.consumeDash();
         } else if (input.dashRight) {
-            this.#player.dash(1, this._game.sound);
+            if (this.#player.dash(1, this._game.sound)) {
+                this.#dashBurst(1);
+            }
             input.consumeDash();
         }
 
         // Update player physics
         const timeScale = this.#player.hasSlowTime ? 0.3 : 1;
         this.#player.update(dt, input, DESIGN_WIDTH);
+
+        // Continuous dash trail while dashing
+        if (this.#player.isDashing) {
+            this._game.particles.trail(this.#player.x, this.#player.y, {
+                color: '#88ddff',
+                size: 5,
+                sizeEnd: 0,
+                life: 0.15,
+                alpha: 0.5,
+                alphaEnd: 0,
+            });
+        }
     }
 
     #updateCamera(dt) {
@@ -567,6 +583,22 @@ export class PlayingState extends State {
             if (!enemy.active) continue;
             if (!this.#player.intersects(enemy)) continue;
 
+            // Dash-kill: dashing through enemies destroys them (including ghosts)
+            if (this.#player.isDashing) {
+                enemy.onStomp(this._game.particles, this._game.sound);
+                this._game.addScore(enemy.scoreValue * (1 + this.#player.combo * 0.5));
+                this._game.enemiesDefeated++;
+                this._game.shake.shake(6, 0.12);
+                this._game.sound.playCombo?.();
+                this.#floatingTexts.push({
+                    x: enemy.x,
+                    screenY: enemy.y - this.#cameraY - 20,
+                    text: 'DASH!',
+                    life: 0.8, maxLife: 0.8, vy: -60,
+                });
+                continue;
+            }
+
             // Check if stomping (falling down onto enemy)
             if (this.#player.vy > 0 &&
                 this.#player.top < enemy.centerY &&
@@ -648,6 +680,24 @@ export class PlayingState extends State {
             speed: 200,
             spread: 360,
         }, 20);
+    }
+
+    #dashBurst(direction) {
+        const px = this.#player.x;
+        const py = this.#player.y;
+        // Trail particles opposite to dash direction
+        this._game.particles.burst(px, py, {
+            color: '#88ddff',
+            size: 7,
+            sizeEnd: 0,
+            life: 0.25,
+            speed: 120,
+            angle: direction > 0 ? 180 : 0, // particles trail behind
+            spread: 50,
+            alpha: 0.8,
+            alphaEnd: 0,
+        }, 10);
+        this._game.shake.shake(4, 0.08);
     }
 
     #checkCollectibleCollisions() {

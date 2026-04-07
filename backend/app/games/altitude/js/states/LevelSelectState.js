@@ -266,12 +266,19 @@ export class LevelSelectState extends State {
         ctx.textBaseline = 'middle';
 
         if (unlocked) {
+             //shadow
+            bitmapFont.drawText(ctx, String(index + 1), x + CARD_W / 2 + 2, y + 28, 20, 
+            { align: 'center', color: 'rgba(0,0,0,0.8)' });
             // Level number
             bitmapFont.drawText(ctx, String(index + 1), x + CARD_W / 2, y + 26, 20, 
             { align: 'center', color: COLORS.NEON_GREEN });
 
+           //shadow
+           
+            bitmapFont.drawText(ctx, shortName, x + CARD_W / 2 + 2, y + 56, 17, 
+                { align: 'center', color: 'rgba(0,0,0,0.8)' });
             // Level name
-            bitmapFont.drawText(ctx, shortName, x + CARD_W / 2, y + 54, 15, 
+            bitmapFont.drawText(ctx, shortName, x + CARD_W / 2, y + 54, 17, 
                 { align: 'center', color: COLORS.UI_TEXT });
 
         } else {

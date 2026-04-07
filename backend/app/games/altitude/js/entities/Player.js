@@ -47,6 +47,11 @@ export class Player extends GameObject {
     // Glide
     #gliding = false;
 
+    // Dash state
+    #dashing = false;
+    #dashTimer = 0;
+    static #DASH_DURATION = 0.18; // seconds of dash (invincible + kills enemies)
+
     // Landing squash timer
     #landTimer = 0;
 
@@ -90,7 +95,8 @@ export class Player extends GameObject {
     get isGrounded() { return this.#grounded; }
     get isJumping() { return this.#jumping; }
     get isGliding() { return this.#gliding; }
-    get isInvincible() { return this.#invincible || this.#shieldActive; }
+    get isInvincible() { return this.#invincible || this.#shieldActive || this.#dashing; }
+    get isDashing() { return this.#dashing; }
     get lives() { return this.#lives; }
     get maxLives() { return 2 + (this.#stats.extraLives ?? 0); }
     get combo() { return this.#combo; }
@@ -98,6 +104,8 @@ export class Player extends GameObject {
     get stats() { return this.#stats; }
     get grounded() { return this.#grounded; }
     get canDoubleJump() { return this.#canDoubleJump; }
+    get dashesRemaining() { return this.#dashesRemaining; }
+    get dashCount() { return this.#stats.dashCount ?? 0; }
 
     // Ghost Repel perk
     get ghostRepelReady() {
@@ -151,6 +159,12 @@ export class Player extends GameObject {
 
     #updatePowerUps(dt) {
         const decay = dt;
+
+        // Dash timer
+        if (this.#dashing) {
+            this.#dashTimer -= decay;
+            if (this.#dashTimer <= 0) this.#dashing = false;
+        }
 
         if (this.#jetpackActive) {
             this.#jetpackTimer -= decay;
@@ -265,7 +279,9 @@ export class Player extends GameObject {
 
         // Determine animation
         let anim = 'idle';
-        if (this.#landTimer > 0) {
+        if (this.#dashing) {
+            anim = 'jump'; // stretch-like pose during dash
+        } else if (this.#landTimer > 0) {
             anim = 'land';
         } else if (this.#jetpackActive) {
             anim = 'jetpack';
@@ -336,13 +352,15 @@ export class Player extends GameObject {
     get spikeCount() { return this.#stats.spikeCount ?? 0; }
 
     /**
-     * Handle dash input
+     * Handle dash input — grants brief invincibility and kills enemies on contact
      */
     dash(direction, sound) {
         if (this.#dashesRemaining > 0 && !this.#grounded) {
-            this.vx = direction * 400;
-            this.vy = Math.min(this.vy, -100); // Slight upward boost
+            this.vx = direction * 500;
+            this.vy = Math.min(this.vy, -80);
             this.#dashesRemaining--;
+            this.#dashing = true;
+            this.#dashTimer = Player.#DASH_DURATION;
             sound?.playJump();
             return true;
         }
@@ -526,6 +544,9 @@ export class Player extends GameObject {
             double_jump:  this.#stats.hasDoubleJump,
             glide:        this.#stats.hasGlide,
             dash:         (this.#stats.dashCount ?? 0) > 0,
+            dashCount:    this.#stats.dashCount ?? 0,
+            dashRemaining: this.#dashesRemaining,
+            dashing:      this.#dashing,
             stomp:        (this.#stats.stompMultiplier ?? 1) > 1,
             shockwave:    !!this.#stats.hasShockwave,
             armor:        (this.#stats.knockbackResist ?? 0) > 0,

@@ -225,7 +225,8 @@ export class InputManager {
         this.#jumpPressed = currentJump;
         this.#prevJump = currentJump;
 
-        this.#glidePressed = keyGlide;
+        // Glide: hold jump key/touch while falling (Shift also works)
+        this.#glidePressed = keyGlide || keyJump || this.#touches.size > 0;
 
         const currentPause = keyPause;
         this.#pauseJustPressed = currentPause && !this.#prevPause;

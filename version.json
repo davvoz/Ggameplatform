@@ -1,8 +1,18 @@
 {
-  "version": "4.2.8",
-  "timestamp": "2026-04-06T22:22:35.933Z",
-  "buildNumber": 509,
+  "version": "4.2.9",
+  "timestamp": "2026-04-07T12:07:18.137Z",
+  "buildNumber": 510,
   "changelog": [
+    {
+      "version": "4.2.9",
+      "date": "2026-04-07",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[A]Implement dash mechanics and prestige badge rendering",
+        "🔖 Bump version to 4.2.8 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.8",
       "date": "2026-04-06",
@@ -82,15 +92,6 @@
       "changes": [
         "feat: [MP] Add modern pong",
         "🔖 Bump version to 4.1.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.1.4",
-      "date": "2026-03-29",
-      "type": "patch",
-      "changes": [
-        "fix: add iOS PWA safe area adjustments for community section",
-        "🔖 Bump version to 4.1.3 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "4.2.9",
-  "timestamp": "2026-04-07T12:07:18.137Z",
-  "buildNumber": 510,
+  "version": "4.2.10",
+  "timestamp": "2026-04-07T21:38:08.039Z",
+  "buildNumber": 511,
   "changelog": [
+    {
+      "version": "4.2.10",
+      "date": "2026-04-07",
+      "type": "patch",
+      "changes": [
+        "fix: [A] TRY Enhance performance optimizations for mobile devices",
+        "🔖 Bump version to 4.2.9 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.9",
       "date": "2026-04-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: update quest titles and descriptions to English",
         "🔖 Bump version to 4.2.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.0",
-      "date": "2026-03-31",
-      "type": "minor",
-      "changes": [
-        "feat: [MP] Add modern pong",
-        "🔖 Bump version to 4.1.4 [skip-version]"
       ]
     }
   ]

@@ -3,6 +3,8 @@
  * Single Responsibility: Manage frame timing and update/render cycle.
  */
 
+import { IS_MOBILE } from '../config/Constants.js';
+
 export class GameLoop {
     #callback;
     #animFrame = null;
@@ -12,7 +14,8 @@ export class GameLoop {
     
     // Fixed timestep (60 FPS physics)
     static FIXED_DT = 1 / 60;
-    static MAX_FRAME_TIME = 0.1; // Cap to prevent spiral of death
+    // Cap to prevent spiral of death — tighter on mobile (max 3 catch-up frames vs 6)
+    static MAX_FRAME_TIME = IS_MOBILE ? 0.05 : 0.1;
 
     constructor(callback) {
         this.#callback = callback;

@@ -5,6 +5,18 @@
  */
 
 // ═══════════════════════════════════════════════════════════════
+// DEVICE & PERFORMANCE
+// ═══════════════════════════════════════════════════════════════
+
+export const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+export const QUALITY = {
+    SHADOWS:       !IS_MOBILE,
+    MAX_PARTICLES: IS_MOBILE ? 150 : 500,
+    STAR_COUNT:    IS_MOBILE ? 15 : 30,
+};
+
+// ═══════════════════════════════════════════════════════════════
 // DISPLAY & RENDERING
 // ═══════════════════════════════════════════════════════════════
 

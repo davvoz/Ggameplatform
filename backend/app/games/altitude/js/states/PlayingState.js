@@ -4,7 +4,7 @@
  */
 
 import { State } from './State.js';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, GAME_SETTINGS, UPGRADE_CATALOG, TIME_BONUS } from '../config/Constants.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, GAME_SETTINGS, UPGRADE_CATALOG, TIME_BONUS, QUALITY } from '../config/Constants.js';
 import { drawUpgradeIcon } from '../graphics/UpgradeIcons.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
 import { getLevelData, generateInfiniteScreen } from '../config/LevelData.js';
@@ -72,6 +72,8 @@ export class PlayingState extends State {
         this.#infLastCpTime = 0;
         this.#infScreenCleared = 0;
         this.#infCheckpointAnim = null;
+        this.#bgGradient = null;
+        this.#bgZoneColor = null;
     }
 
     #initGame() {
@@ -908,14 +910,21 @@ export class PlayingState extends State {
         ctx.restore();
     }
 
+    // Cached background gradient (recreated only when zone changes)
+    #bgGradient = null;
+    #bgZoneColor = null;
+
     #drawBackground(ctx) {
         const zone = this._game.getCurrentZone();
 
-        // Gradient based on zone
-        const gradient = ctx.createLinearGradient(0, 0, 0, DESIGN_HEIGHT);
-        gradient.addColorStop(0, zone.bgColor);
-        gradient.addColorStop(1, COLORS.BG_SECONDARY);
-        ctx.fillStyle = gradient;
+        // Cache gradient — only recreate when zone changes
+        if (this.#bgZoneColor !== zone.bgColor) {
+            this.#bgZoneColor = zone.bgColor;
+            this.#bgGradient = ctx.createLinearGradient(0, 0, 0, DESIGN_HEIGHT);
+            this.#bgGradient.addColorStop(0, zone.bgColor);
+            this.#bgGradient.addColorStop(1, COLORS.BG_SECONDARY);
+        }
+        ctx.fillStyle = this.#bgGradient;
         ctx.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
 
         // Parallax stars
@@ -928,8 +937,9 @@ export class PlayingState extends State {
     #drawStars(ctx) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         const starOffset = (this.#cameraY * 0.1) % 100;
+        const count = QUALITY.STAR_COUNT;
 
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < count; i++) {
             const x = (i * 47 + 23) % DESIGN_WIDTH;
             const y = ((i * 73 + starOffset) % (DESIGN_HEIGHT + 100)) - 50;
             const size = 1 + (i % 3);

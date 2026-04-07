@@ -3,7 +3,7 @@
  * Single Responsibility: Handle canvas sizing and coordinate transformation.
  */
 
-import { DESIGN_WIDTH, DESIGN_HEIGHT } from '../config/Constants.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, IS_MOBILE } from '../config/Constants.js';
 
 export class Renderer {
     #canvas;
@@ -14,12 +14,37 @@ export class Renderer {
 
     constructor(canvas) {
         this.#canvas = canvas;
-        this.#ctx = canvas.getContext('2d');
+        // alpha:false → skip compositor blending with page background (perf win)
+        this.#ctx = canvas.getContext('2d', { alpha: false });
         this.#designWidth = DESIGN_WIDTH;
         this.#designHeight = DESIGN_HEIGHT;
+
+        // On mobile, disable Canvas2D shadows entirely.
+        // shadowBlur triggers a Gaussian blur pass on EVERY subsequent fill/stroke,
+        // which is the single biggest performance killer on mobile GPUs.
+        if (IS_MOBILE) {
+            try {
+                Object.defineProperty(this.#ctx, 'shadowBlur', {
+                    get() { return 0; },
+                    set() {},
+                    configurable: true,
+                });
+                Object.defineProperty(this.#ctx, 'shadowColor', {
+                    get() { return 'transparent'; },
+                    set() {},
+                    configurable: true,
+                });
+            } catch (_) { /* fallback: shadows remain active but slow */ }
+        }
+
         this.resize();
         
-        window.addEventListener('resize', () => this.resize());
+        // Debounce resize — mobile fires rapid resize events (keyboard, rotation)
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => this.resize(), 100);
+        });
     }
 
     get ctx() { return this.#ctx; }

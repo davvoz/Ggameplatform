@@ -4,6 +4,7 @@
  */
 
 import { updateAndCompact } from '../core/ArrayUtils.js';
+import { QUALITY } from '../config/Constants.js';
 
 export class Particle {
     constructor(x, y, config = {}) {
@@ -57,7 +58,7 @@ export class Particle {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
+        if (this.rotation !== 0) ctx.rotate(this.rotation);
         
         // Interpolate color
         ctx.fillStyle = this.color;
@@ -129,7 +130,7 @@ export class Particle {
 
 export class ParticleSystem {
     #particles = [];
-    #maxParticles = 500;
+    #maxParticles = QUALITY.MAX_PARTICLES;
 
     emit(x, y, config = {}, count = 1) {
         for (let i = 0; i < count; i++) {

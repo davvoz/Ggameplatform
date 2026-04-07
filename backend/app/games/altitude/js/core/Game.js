@@ -65,6 +65,13 @@ export class Game {
     #infiniteMode = false;
     #shopReturnState = 'menu';
 
+    // ── Performance monitor ───────────────────────────────────────
+    #perfFrames = 0;
+    #perfLastTime = 0;
+    #perfFps = 0;
+
+    #perfPeak = 0;       // worst frame time in last second
+
     constructor(canvas) {
         this.renderer = new Renderer(canvas);
         this.particles = new ParticleSystem();
@@ -122,6 +129,9 @@ export class Game {
     }
 
     #update(dt) {
+        // ── Perf timing start ─────────────────────────────────────────
+        const t0 = performance.now();
+
         // Update input
         this.input.update();
 
@@ -137,6 +147,17 @@ export class Game {
 
         // Render
         this.#render();
+
+        // ── Perf timing end ───────────────────────────────────────────
+        const elapsed = performance.now() - t0;
+        if (elapsed > this.#perfPeak) this.#perfPeak = elapsed;
+        this.#perfFrames++;
+        if (t0 - this.#perfLastTime >= 1000) {
+            this.#perfFps = this.#perfFrames;
+            this.#perfFrames = 0;
+            this.#perfLastTime = t0;
+            this.#perfPeak = 0;
+        }
     }
 
     #render() {
@@ -149,6 +170,34 @@ export class Game {
         // Draw current state
         this.fsm.draw(ctx);
 
+        ctx.restore();
+
+        // ── Performance overlay (bottom-left, always on top) ──────────
+        this.#drawPerfOverlay(ctx);
+    }
+
+    #drawPerfOverlay(ctx) {
+        const fps = this.#perfFps;
+        // Smooth gradient: 0 FPS = red, 30 = yellow, 60 = green
+        const t = Math.min(fps / 60, 1);  // 0..1
+        let r, g;
+        if (t < 0.5) {
+            // red → yellow  (0..30 FPS)
+            r = 255;
+            g = Math.round(t * 2 * 255);
+        } else {
+            // yellow → green (30..60 FPS)
+            r = Math.round((1 - (t - 0.5) * 2) * 255);
+            g = 255;
+        }
+        const color = `rgb(${r},${g},0)`;
+
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(this.renderer.width - 10, 10, 5, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
     }
 

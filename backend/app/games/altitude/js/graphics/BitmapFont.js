@@ -64,6 +64,11 @@ class BitmapFont {
     #sheetSym   = null;
     /** Resolved Promise once all sheets are loaded */
     #loading = null;
+    /** Reusable offscreen canvases for tinted text (avoid per-frame allocation) */
+    #tintTmp1 = null;
+    #tintCtx1 = null;
+    #tintTmp2 = null;
+    #tintCtx2 = null;
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -224,18 +229,36 @@ class BitmapFont {
         const tw = Math.ceil(totalW) + 2 || 2;
         const th = Math.ceil(charHeight) + 2;
 
-        // tmp1 — raw glyphs, transparent background
-        const tmp1   = document.createElement('canvas');
-        tmp1.width   = tw;
-        tmp1.height  = th;
-        const tc1 = tmp1.getContext('2d');
-        this.#renderGlyphs(tc1, text, 0, 0, charHeight, cw, spaceW, letterSpacing);
+        // Reuse offscreen canvases — avoids document.createElement per frame
+        if (!this.#tintTmp1) {
+            this.#tintTmp1 = document.createElement('canvas');
+            this.#tintCtx1 = this.#tintTmp1.getContext('2d');
+            this.#tintTmp2 = document.createElement('canvas');
+            this.#tintCtx2 = this.#tintTmp2.getContext('2d');
+        }
 
-        // tmp2 — solid color fill → multiply → mask
-        const tmp2   = document.createElement('canvas');
-        tmp2.width   = tw;
-        tmp2.height  = th;
-        const tc2 = tmp2.getContext('2d');
+        // Grow canvas when needed (setting width/height clears it).
+        // When reusing a larger canvas, clear the FULL surface to avoid stale pixels.
+        if (this.#tintTmp1.width < tw || this.#tintTmp1.height < th) {
+            this.#tintTmp1.width  = Math.max(this.#tintTmp1.width, tw);
+            this.#tintTmp1.height = Math.max(this.#tintTmp1.height, th);
+        } else {
+            this.#tintCtx1.clearRect(0, 0, this.#tintTmp1.width, this.#tintTmp1.height);
+        }
+        if (this.#tintTmp2.width < tw || this.#tintTmp2.height < th) {
+            this.#tintTmp2.width  = Math.max(this.#tintTmp2.width, tw);
+            this.#tintTmp2.height = Math.max(this.#tintTmp2.height, th);
+        } else {
+            this.#tintCtx2.clearRect(0, 0, this.#tintTmp2.width, this.#tintTmp2.height);
+        }
+
+        const tc1 = this.#tintCtx1;
+        const tc2 = this.#tintCtx2;
+        tc1.globalCompositeOperation = 'source-over';
+        tc2.globalCompositeOperation = 'source-over';
+
+        // tmp1 — raw glyphs, transparent background
+        this.#renderGlyphs(tc1, text, 0, 0, charHeight, cw, spaceW, letterSpacing);
 
         // Step A: fill with target color
         tc2.fillStyle = color;
@@ -243,14 +266,14 @@ class BitmapFont {
 
         // Step B: multiply — white × color = color; black × color = black
         tc2.globalCompositeOperation = 'multiply';
-        tc2.drawImage(tmp1, 0, 0);
+        tc2.drawImage(this.#tintTmp1, 0, 0);
 
         // Step C: destination-in — cut away pixels where glyphs had no alpha
         tc2.globalCompositeOperation = 'destination-in';
-        tc2.drawImage(tmp1, 0, 0);
+        tc2.drawImage(this.#tintTmp1, 0, 0);
 
-        // Composite onto main canvas
-        ctx.drawImage(tmp2, originX, originY);
+        // Composite only the needed region onto main canvas (crop away any stale area)
+        ctx.drawImage(this.#tintTmp2, 0, 0, tw, th, originX, originY, tw, th);
     }
 
     /** measureWidth variant that accepts pre-computed cw/spaceW to avoid redundant calls */

@@ -69,6 +69,9 @@ class BitmapFont {
     #tintCtx1 = null;
     #tintTmp2 = null;
     #tintCtx2 = null;
+    /** LRU cache for tinted text renders — key = "text|charHeight|color" */
+    #tintCache = new Map();
+    static #TINT_CACHE_MAX = 40;
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -229,6 +232,17 @@ class BitmapFont {
         const tw = Math.ceil(totalW) + 2 || 2;
         const th = Math.ceil(charHeight) + 2;
 
+        // ── LRU tint cache ────────────────────────────────────────────
+        const cacheKey = `${text}|${charHeight}|${color}`;
+        const cached = this.#tintCache.get(cacheKey);
+        if (cached) {
+            // Move to end (most recently used)
+            this.#tintCache.delete(cacheKey);
+            this.#tintCache.set(cacheKey, cached);
+            ctx.drawImage(cached, 0, 0, tw, th, originX, originY, tw, th);
+            return;
+        }
+
         // Reuse offscreen canvases — avoids document.createElement per frame
         if (!this.#tintTmp1) {
             this.#tintTmp1 = document.createElement('canvas');
@@ -271,6 +285,17 @@ class BitmapFont {
         // Step C: destination-in — cut away pixels where glyphs had no alpha
         tc2.globalCompositeOperation = 'destination-in';
         tc2.drawImage(this.#tintTmp1, 0, 0);
+
+        // Store in LRU cache — snapshot the rendered result into its own canvas
+        const cacheCanvas = document.createElement('canvas');
+        cacheCanvas.width = tw;
+        cacheCanvas.height = th;
+        cacheCanvas.getContext('2d').drawImage(this.#tintTmp2, 0, 0, tw, th, 0, 0, tw, th);
+        if (this.#tintCache.size >= BitmapFont.#TINT_CACHE_MAX) {
+            // Evict oldest (first key)
+            this.#tintCache.delete(this.#tintCache.keys().next().value);
+        }
+        this.#tintCache.set(cacheKey, cacheCanvas);
 
         // Composite only the needed region onto main canvas (crop away any stale area)
         ctx.drawImage(this.#tintTmp2, 0, 0, tw, th, originX, originY, tw, th);

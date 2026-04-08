@@ -4,7 +4,7 @@
  */
 
 import { GameObject } from './GameObject.js';
-import { ENEMY_TYPES, COLORS, DESIGN_WIDTH } from '../config/Constants.js';
+import { ENEMY_TYPES, COLORS, DESIGN_WIDTH, QUALITY } from '../config/Constants.js';
 import { SpriteGenerator } from '../graphics/SpriteGenerator.js';
 import { updateAndCompact } from '../core/ArrayUtils.js';
 
@@ -288,11 +288,13 @@ export class Enemy extends GameObject {
             ctx.arc(bullet.x, bullet.y - cameraY, 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // Glow
-            ctx.fillStyle = 'rgba(255, 0, 255, 0.3)';
-            ctx.beginPath();
-            ctx.arc(bullet.x, bullet.y - cameraY, 8, 0, Math.PI * 2);
-            ctx.fill();
+            // Glow (skip on mobile)
+            if (QUALITY.BULLET_GLOW) {
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y - cameraY, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     }
 

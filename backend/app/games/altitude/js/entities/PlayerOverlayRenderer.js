@@ -11,6 +11,8 @@
  *   2. Register one instance in PlayerOverlayManager.#overlays.
  */
 
+import { QUALITY } from '../config/Constants.js';
+
 // ── Base ──────────────────────────────────────────────────────────────────────
 class PlayerOverlay {
     _t = 0;
@@ -274,8 +276,18 @@ class JetpackOverlay extends PlayerOverlay {
                 r:    4 + Math.random() * 4.5,
             });
         }
-        this.#smoke.forEach(p => { p.ox += p.vx * dt; p.oy += p.vy * dt; p.age += dt; });
-        this.#smoke = this.#smoke.filter(p => p.age < p.life);
+        // Compact in-place to avoid creating a new array each frame
+        let write = 0;
+        for (let i = 0; i < this.#smoke.length; i++) {
+            const p = this.#smoke[i];
+            p.ox += p.vx * dt;
+            p.oy += p.vy * dt;
+            p.age += dt;
+            if (p.age < p.life) {
+                this.#smoke[write++] = p;
+            }
+        }
+        this.#smoke.length = write;
     }
 
     draw(ctx, x, y, h) {
@@ -799,6 +811,9 @@ export class PlayerOverlayManager {
         ['ghost_repel',  new GhostRepelOverlay()],
     ]);
 
+    /** Overlays to always draw even when FANCY_OVERLAYS is off (gameplay-critical) */
+    static #ESSENTIAL = new Set(['shield', 'jetpack', 'spike_head']);
+
     update(dt) {
         for (const ov of this.#overlays.values()) ov.update(dt);
     }
@@ -806,14 +821,20 @@ export class PlayerOverlayManager {
     /** Drawn BEFORE the sprite — receives full perks context object. */
     drawBehind(ctx, x, y, h, activePerks) {
         for (const [key, ov] of this.#overlays) {
-            if (activePerks[key]) ov.drawBehind(ctx, x, y, h, activePerks);
+            if (activePerks[key]) {
+                if (!QUALITY.FANCY_OVERLAYS && !PlayerOverlayManager.#ESSENTIAL.has(key)) continue;
+                ov.drawBehind(ctx, x, y, h, activePerks);
+            }
         }
     }
 
     /** Drawn AFTER the sprite — receives full perks context object. */
     draw(ctx, x, y, h, activePerks) {
         for (const [key, ov] of this.#overlays) {
-            if (activePerks[key]) ov.draw(ctx, x, y, h, activePerks);
+            if (activePerks[key]) {
+                if (!QUALITY.FANCY_OVERLAYS && !PlayerOverlayManager.#ESSENTIAL.has(key)) continue;
+                ov.draw(ctx, x, y, h, activePerks);
+            }
         }
     }
 }

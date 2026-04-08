@@ -1,12 +1,16 @@
 /**
  * GameLoop - Fixed timestep game loop with interpolation
  * Single Responsibility: Manage frame timing and update/render cycle.
+ *
+ * IMPORTANT: Physics updates run N times per frame (fixed dt),
+ * but render runs exactly ONCE per animation frame.
  */
 
 import { IS_MOBILE } from '../config/Constants.js';
 
 export class GameLoop {
-    #callback;
+    #updateCallback;
+    #renderCallback;
     #animFrame = null;
     #lastTime = 0;
     #accumulator = 0;
@@ -17,8 +21,9 @@ export class GameLoop {
     // Cap to prevent spiral of death — tighter on mobile (max 3 catch-up frames vs 6)
     static MAX_FRAME_TIME = IS_MOBILE ? 0.05 : 0.1;
 
-    constructor(callback) {
-        this.#callback = callback;
+    constructor(updateCallback, renderCallback) {
+        this.#updateCallback = updateCallback;
+        this.#renderCallback = renderCallback;
     }
 
     start() {
@@ -53,11 +58,14 @@ export class GameLoop {
         
         this.#accumulator += frameTime;
         
-        // Fixed timestep updates
+        // Fixed timestep updates (may run multiple times per frame)
         while (this.#accumulator >= GameLoop.FIXED_DT) {
-            this.#callback(GameLoop.FIXED_DT);
+            this.#updateCallback(GameLoop.FIXED_DT);
             this.#accumulator -= GameLoop.FIXED_DT;
         }
+
+        // Render exactly ONCE per animation frame
+        this.#renderCallback();
         
         this.#animFrame = requestAnimationFrame(this.#loop);
     };

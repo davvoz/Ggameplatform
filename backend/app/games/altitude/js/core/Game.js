@@ -82,7 +82,10 @@ export class Game {
         this.save = new SaveManager();
         this.platform = new PlatformBridge();
 
-        this.loop = new GameLoop((dt) => this.#update(dt));
+        this.loop = new GameLoop(
+            (dt) => this.#update(dt),
+            () => this.#render()
+        );
 
         this.#registerStates();
     }
@@ -129,9 +132,6 @@ export class Game {
     }
 
     #update(dt) {
-        // ── Perf timing start ─────────────────────────────────────────
-        const t0 = performance.now();
-
         // Update input
         this.input.update();
 
@@ -144,23 +144,12 @@ export class Game {
             this.fsm.update(dt);
             this.particles.update(dt);
         }
-
-        // Render
-        this.#render();
-
-        // ── Perf timing end ───────────────────────────────────────────
-        const elapsed = performance.now() - t0;
-        if (elapsed > this.#perfPeak) this.#perfPeak = elapsed;
-        this.#perfFrames++;
-        if (t0 - this.#perfLastTime >= 1000) {
-            this.#perfFps = this.#perfFrames;
-            this.#perfFrames = 0;
-            this.#perfLastTime = t0;
-            this.#perfPeak = 0;
-        }
     }
 
     #render() {
+        // ── Perf timing start ─────────────────────────────────────────
+        const t0 = performance.now();
+
         const ctx = this.renderer.ctx;
         this.renderer.clear();
 
@@ -174,6 +163,17 @@ export class Game {
 
         // ── Performance overlay (bottom-left, always on top) ──────────
         this.#drawPerfOverlay(ctx);
+
+        // ── Perf timing end ───────────────────────────────────────────
+        const elapsed = performance.now() - t0;
+        if (elapsed > this.#perfPeak) this.#perfPeak = elapsed;
+        this.#perfFrames++;
+        if (t0 - this.#perfLastTime >= 1000) {
+            this.#perfFps = this.#perfFrames;
+            this.#perfFrames = 0;
+            this.#perfLastTime = t0;
+            this.#perfPeak = 0;
+        }
     }
 
     #drawPerfOverlay(ctx) {

@@ -74,6 +74,7 @@ export class PlayingState extends State {
         this.#infCheckpointAnim = null;
         this.#bgGradient = null;
         this.#bgZoneColor = null;
+        this.#starCanvas = null;
     }
 
     #initGame() {
@@ -913,6 +914,9 @@ export class PlayingState extends State {
     // Cached background gradient (recreated only when zone changes)
     #bgGradient = null;
     #bgZoneColor = null;
+    // Pre-rendered star field (offscreen canvas)
+    #starCanvas = null;
+    #starCanvasH = 0;
 
     #drawBackground(ctx) {
         const zone = this._game.getCurrentZone();
@@ -927,25 +931,42 @@ export class PlayingState extends State {
         ctx.fillStyle = this.#bgGradient;
         ctx.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
 
-        // Parallax stars
+        // Parallax stars (pre-rendered offscreen)
         this.#drawStars(ctx);
 
         // Zone indicator
         bitmapFont.drawText(ctx, zone.name, 10, DESIGN_HEIGHT - 16, 12, { alpha: 0.3 });
     }
 
-    #drawStars(ctx) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        const starOffset = (this.#cameraY * 0.1) % 100;
+    #ensureStarCanvas() {
+        // Star canvas covers DESIGN_HEIGHT + scrollable wrap zone
+        const h = DESIGN_HEIGHT + 100;
+        if (this.#starCanvas) return;
+        this.#starCanvasH = h;
+        const c = document.createElement('canvas');
+        c.width = DESIGN_WIDTH;
+        c.height = h;
+        const sc = c.getContext('2d');
+        sc.fillStyle = 'rgba(255, 255, 255, 0.5)';
         const count = QUALITY.STAR_COUNT;
-
         for (let i = 0; i < count; i++) {
             const x = (i * 47 + 23) % DESIGN_WIDTH;
-            const y = ((i * 73 + starOffset) % (DESIGN_HEIGHT + 100)) - 50;
+            const y = (i * 73) % h;
             const size = 1 + (i % 3);
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
+            sc.beginPath();
+            sc.arc(x, y, size, 0, Math.PI * 2);
+            sc.fill();
+        }
+        this.#starCanvas = c;
+    }
+
+    #drawStars(ctx) {
+        this.#ensureStarCanvas();
+        const offset = ((this.#cameraY * 0.1) % this.#starCanvasH + this.#starCanvasH) % this.#starCanvasH;
+        // Draw the star canvas shifted by offset (wrapping)
+        ctx.drawImage(this.#starCanvas, 0, -offset);
+        if (offset > 0) {
+            ctx.drawImage(this.#starCanvas, 0, this.#starCanvasH - offset);
         }
     }
 
@@ -1110,9 +1131,14 @@ export class PlayingState extends State {
             const size = ft.large ? 24 : 18;
             ctx.shadowColor = col;
             ctx.shadowBlur = 12;
-            // Use bitmap font for pure ASCII text; fall back to canvas for emoji/Unicode
-            const hasUnicode = [...ft.text].some(ch => ch.codePointAt(0) > 127);
-            if (!hasUnicode) {
+            // Check for non-ASCII (cached on first draw to avoid per-frame spread)
+            if (ft._isUnicode === undefined) {
+                ft._isUnicode = false;
+                for (let i = 0; i < ft.text.length; i++) {
+                    if (ft.text.charCodeAt(i) > 127) { ft._isUnicode = true; break; }
+                }
+            }
+            if (!ft._isUnicode) {
                 bitmapFont.drawText(ctx, ft.text, 0, 0, size, {
                     align: 'center',
                     color: ft.large ? col : '#ffffff',
@@ -1189,6 +1215,12 @@ export class PlayingState extends State {
         else if (t <= silver) { color = TIME_BONUS.SILVER_COLOR; medalIcon = '\uD83E\uDD48'; } // 🥈
         else if (t <= bronze) { color = TIME_BONUS.BRONZE_COLOR; medalIcon = '\uD83E\uDD49'; } // 🥉
         else { color = TIME_BONUS.NONE_COLOR; medalIcon = '\u23F1'; } // ⏱
+
+        // Simplified timer for mobile — just colored text, no analog clock
+        if (!QUALITY.FANCY_TIMER) {
+            bitmapFont.drawText(ctx, PlayingState.#formatTime(t), DESIGN_WIDTH / 2, 30, 14, { align: 'center', color });
+            return;
+        }
 
         const cx = DESIGN_WIDTH / 2;
         const cy = 40;
@@ -1317,6 +1349,20 @@ export class PlayingState extends State {
         else if (screenTime <= S) { color = TIME_BONUS.SILVER_COLOR; medalIcon = ''; }
         else if (screenTime <= B) { color = TIME_BONUS.BRONZE_COLOR; medalIcon = ''; }
         else { color = TIME_BONUS.NONE_COLOR; medalIcon = ''; }
+
+        // Simplified timer for mobile — just colored text, no analog clock
+        if (!QUALITY.FANCY_TIMER) {
+            bitmapFont.drawText(ctx, PlayingState.#formatTime(screenTime), DESIGN_WIDTH / 2, 30, 14, { align: 'center', color });
+            // Still draw checkpoint animation if active
+            if (this.#infCheckpointAnim) {
+                const cp = this.#infCheckpointAnim;
+                const at = cp.life / cp.maxLife;
+                ctx.globalAlpha = at;
+                bitmapFont.drawText(ctx, cp.text, DESIGN_WIDTH / 2, 55, 12, { align: 'center', color: cp.color });
+                ctx.globalAlpha = 1;
+            }
+            return;
+        }
 
         const cx = DESIGN_WIDTH / 2;
         const cy = 40;

@@ -1,8 +1,17 @@
 {
-  "version": "4.2.10",
-  "timestamp": "2026-04-07T21:38:08.039Z",
-  "buildNumber": 511,
+  "version": "4.2.11",
+  "timestamp": "2026-04-08T00:29:37.335Z",
+  "buildNumber": 512,
   "changelog": [
+    {
+      "version": "4.2.11",
+      "date": "2026-04-08",
+      "type": "patch",
+      "changes": [
+        "fix:[A] Enhance mobile performance and visuals with quality adjustments",
+        "🔖 Bump version to 4.2.10 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.10",
       "date": "2026-04-07",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[MP]multiplayer coins bug",
         "🔖 Bump version to 4.2.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.1",
-      "date": "2026-03-31",
-      "type": "patch",
-      "changes": [
-        "fix: update quest titles and descriptions to English",
-        "🔖 Bump version to 4.2.0 [skip-version]"
       ]
     }
   ]

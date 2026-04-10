@@ -1,8 +1,17 @@
 {
-  "version": "5.0.1",
-  "timestamp": "2026-04-10T15:25:42.830Z",
-  "buildNumber": 514,
+  "version": "5.0.2",
+  "timestamp": "2026-04-10T17:13:53.024Z",
+  "buildNumber": 515,
   "changelog": [
+    {
+      "version": "5.0.2",
+      "date": "2026-04-10",
+      "type": "patch",
+      "changes": [
+        "fix : [GAMES] Sonar",
+        "🔖 Bump version to 5.0.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.1",
       "date": "2026-04-10",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: SURVIVOR ARENA recreate drones based on player's drone weapon level",
         "🔖 Bump version to 4.2.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.4",
-      "date": "2026-04-02",
-      "type": "patch",
-      "changes": [
-        "fix:[MP]characters animation",
-        "🔖 Bump version to 4.2.3 [skip-version]"
       ]
     }
   ]

@@ -1,7 +1,7 @@
 import { Renderer } from './Renderer.js';
 import { GameLoop } from './GameLoop.js';
-import { StateMachine } from '../states/StateMachine.js';
-import { TweenManager } from '../graphics/Tween.js';
+import { StateMachine } from '../../../shared/StateMachine.js';
+import { TweenManager } from '../../../shared/Tween.js';
 import { ParticleSystem } from '../graphics/ParticleSystem.js';
 import { ScreenShake } from '../graphics/ScreenShake.js';
 import { InputManager } from '../input/InputManager.js';

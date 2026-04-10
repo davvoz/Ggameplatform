@@ -5,7 +5,7 @@
 
 import { Renderer } from './Renderer.js';
 import { GameLoop } from './GameLoop.js';
-import { StateMachine } from '../states/StateMachine.js';
+import { StateMachine } from '../../../shared/StateMachine.js';
 import { ParticleSystem } from '../graphics/ParticleSystem.js';
 import { TweenManager } from '../graphics/Tween.js';
 import { ScreenShake } from '../graphics/ScreenShake.js';

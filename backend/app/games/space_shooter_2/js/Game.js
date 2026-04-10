@@ -279,13 +279,41 @@ class Game {
             }
         }
 
+        this._updateEntities(deltaTime, true);
+
+        this.collisionManager.checkCollisions();
+
+        em.cleanup();
+
+        this.perkEffectsManager.updatePerkEffects(deltaTime);
+
+        // ─── World 4 Quantum Field Effects ───
+        // Background activeZones affect gameplay when player/enemies are inside
+        if (this.backgroundFacade && this.currentLevel >= 91 && this.currentLevel <= 120) {
+            this._updateQuantumFieldEffects(deltaTime, em);
+        }
+
+        if (this.scoreManager.combo > 0) {
+            this.scoreManager.comboTimer -= deltaTime * this.perkSystem.getComboDecayMultiplier();
+            if (this.scoreManager.comboTimer <= 0) {
+                this.scoreManager.combo = 0;
+            }
+        }
+
+        this.waveManager.updateWaves(deltaTime);
+    }
+
+    // ── Shared entity update loop (used by updatePlaying & updateEntitiesPassive) ──
+    _updateEntities(deltaTime, checkBossEnter = false) {
+        const em = this.entityManager;
         const enemyDt = deltaTime * this.timeScale;
+
         for (const enemy of em.enemies) {
             enemy.update(enemyDt, this);
         }
 
         if (em.boss && em.boss.active) {
-            const wasEntering = em.boss.entering;
+            const wasEntering = checkBossEnter && em.boss.entering;
             em.boss.update(enemyDt, this);
             if (wasEntering && !em.boss.entering) {
                 this.postProcessing.shake(8, 0.4);
@@ -311,27 +339,25 @@ class Game {
         for (const exp of em.explosions) {
             exp.update(deltaTime);
         }
+    }
 
-        this.collisionManager.checkCollisions();
+    // ── Shared reset sequence (used by startGame & loadSavedGame) ──
+    _resetSystems() {
+        this.scoreManager.reset();
+        this.levelManager.reset();
+        this.waveManager.reset();
+        this.cinematicManager.reset();
+        this.perkEffectsManager.reset();
+        this.hudRenderer.reset();
+        this.entityManager.clearAll();
+        this.perkSystem.reset();
 
-        em.cleanup();
+        this.timeScale = 1;
+        this.bulletTimeActive = false;
+        this.bulletTimeTimer = 0;
 
-        this.perkEffectsManager.updatePerkEffects(deltaTime);
-
-        // ─── World 4 Quantum Field Effects ───
-        // Background activeZones affect gameplay when player/enemies are inside
-        if (this.backgroundFacade && this.currentLevel >= 91 && this.currentLevel <= 120) {
-            this._updateQuantumFieldEffects(deltaTime, em);
-        }
-
-        if (this.scoreManager.combo > 0) {
-            this.scoreManager.comboTimer -= deltaTime * this.perkSystem.getComboDecayMultiplier();
-            if (this.scoreManager.comboTimer <= 0) {
-                this.scoreManager.combo = 0;
-            }
-        }
-
-        this.waveManager.updateWaves(deltaTime);
+        this.hasContinued = false;
+        this.lastSentScore = 0;
     }
 
     // ════════════════════════════════════════════════
@@ -507,42 +533,10 @@ class Game {
             );
         }
 
-        // Enemies keep drifting / animating
-        const enemyDt = deltaTime * this.timeScale;
-        for (const enemy of em.enemies) {
-            enemy.update(enemyDt, this);
-        }
+        this._updateEntities(deltaTime, false);
 
-        if (em.boss && em.boss.active) {
-            em.boss.update(enemyDt, this);
-        }
-
-        if (em.miniBoss && em.miniBoss.active) {
-            em.miniBoss.update(enemyDt, this);
-        }
-
-        // Bullets keep flying
-        for (const bullet of em.bullets) {
-            const bulletDt = bullet.owner === 'enemy' ? enemyDt : deltaTime;
-            bullet.update(bulletDt, this);
-        }
-
-        em.updateHomingMissiles(deltaTime);
-
-        // Power-ups drift
-        for (const pu of em.powerUps) {
-            pu.update(deltaTime, this);
-        }
-
-        // Explosions animate out
-        for (const exp of em.explosions) {
-            exp.update(deltaTime);
-        }
-
-        // Cleanup off-screen entities
         em.cleanup();
 
-        // Keep perk visual effects running (drones, etc.)
         this.perkEffectsManager.updatePerkEffects(deltaTime);
     }
 
@@ -682,22 +676,7 @@ class Game {
         this.selectedUltimateId = ultimateId;
         this.difficulty = DIFFICULTY_CONFIG[difficultyId] || DIFFICULTY_CONFIG.boring;
 
-        this.scoreManager.reset();
-        this.levelManager.reset();
-        this.waveManager.reset();
-        this.cinematicManager.reset();
-        this.perkEffectsManager.reset();
-        this.hudRenderer.reset();
-        this.entityManager.clearAll();
-
-        this.timeScale = 1;
-        this.bulletTimeActive = false;
-        this.bulletTimeTimer = 0;
-
-        this.perkSystem.reset();
-
-        this.hasContinued = false;
-        this.lastSentScore = 0;
+        this._resetSystems();
 
         // Set starting level based on selected world (each world = 30 levels)
        // window.DEBUG_START_LEVEL = 115; // TODO: TEMP TEST — remove after testing
@@ -1137,18 +1116,7 @@ class Game {
         const g = this;
 
         // Reset everything (same as startGame)
-        g.scoreManager.reset();
-        g.levelManager.reset();
-        g.waveManager.reset();
-        g.cinematicManager.reset();
-        g.perkEffectsManager.reset();
-        g.hudRenderer.reset();
-        g.entityManager.clearAll();
-        g.perkSystem.reset();
-
-        g.timeScale = 1;
-        g.bulletTimeActive = false;
-        g.bulletTimeTimer = 0;
+        g._resetSystems();
 
         // Restore config
         g.difficulty = g._difficultyConfig[saveData.difficultyId] || g._difficultyConfig.boring;

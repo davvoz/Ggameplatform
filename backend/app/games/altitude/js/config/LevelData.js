@@ -21,6 +21,13 @@ function e(x, y, type)            { return { x, y, type }; }
 function c(x, y, type = 'coin')   { return { x, y, type }; }
 function pu(x, y, type)           { return { x, y, type }; }
 
+/** Cycle `templates` for `times` repetitions → flat array of screens. */
+function repeat(templates, times) {
+    const result = [];
+    for (let i = 0; i < times; i++) result.push(...templates);
+    return result;
+}
+
 /**
  * Each screen has a platforms array that guarantees a reachable path.
  * The player starts at the bottom platform of each screen.
@@ -39,10 +46,10 @@ export const LEVEL_DATA = [
         id: 1,
         name: 'Learning the Ropes',
         description: 'Master the basics — jump, land, climb.',
-        targetAltitude: 2100,  // px to climb to clear the level
+        targetAltitude: 2100,
         bgColor: '#0d1a2a',
         bgAccent: '#1a3a5a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22),
@@ -57,37 +64,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22),
-                    p(0.5, 0.36), p(0.2, 0.5), p(0.8, 0.5),
-                    p(0.5, 0.64), p(0.3, 0.78), p(0.7, 0.78),
-                    p(0.5, 0.9),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.25, 0.28), c(0.75, 0.28), c(0.5, 0.42),
-                    c(0.2, 0.56), c(0.8, 0.56),
-                ],
-                powerUps: [],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22),
-                    p(0.5, 0.36), p(0.2, 0.5), p(0.8, 0.5),
-                    p(0.5, 0.64), p(0.3, 0.78), p(0.7, 0.78),
-                    p(0.5, 0.9),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.25, 0.28), c(0.75, 0.28), c(0.5, 0.42),
-                    c(0.2, 0.56), c(0.8, 0.56),
-                ],
-                powerUps: [],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -101,7 +78,7 @@ export const LEVEL_DATA = [
         targetAltitude: 4200,
         bgColor: '#1a1a3a',
         bgAccent: '#3a2a5a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.25, 0.22, 'fragile'), p(0.75, 0.22),
@@ -132,69 +109,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.5, 0.15, 'spring_boots')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22, 'fragile'), p(0.75, 0.22),
-                    p(0.5, 0.36), p(0.2, 0.5, 'fragile'), p(0.8, 0.5, 'fragile'),
-                    p(0.5, 0.64, 'normal'), p(0.35, 0.78, 'fragile'), p(0.65, 0.78),
-                    p(0.5, 0.9),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'coin'),
-                    c(0.2, 0.56, 'gem'),  c(0.8, 0.56, 'coin'),
-                    c(0.5, 0.42, 'coin'),
-                ],
-                powerUps: [],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'fragile'), p(0.8, 0.2),
-                    p(0.5, 0.34, 'fragile'), p(0.25, 0.5), p(0.75, 0.5, 'fragile'),
-                    p(0.5, 0.65), p(0.2, 0.8, 'fragile'), p(0.8, 0.8),
-                    p(0.5, 0.92),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.56, 'coin'),
-                    c(0.75, 0.56, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'spring_boots')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22, 'fragile'), p(0.75, 0.22),
-                    p(0.5, 0.36), p(0.2, 0.5, 'fragile'), p(0.8, 0.5, 'fragile'),
-                    p(0.5, 0.64, 'normal'), p(0.35, 0.78, 'fragile'), p(0.65, 0.78),
-                    p(0.5, 0.9),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'coin'),
-                    c(0.2, 0.56, 'gem'),  c(0.8, 0.56, 'coin'),
-                    c(0.5, 0.42, 'coin'),
-                ],
-                powerUps: [],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'fragile'), p(0.8, 0.2),
-                    p(0.5, 0.34, 'fragile'), p(0.25, 0.5), p(0.75, 0.5, 'fragile'),
-                    p(0.5, 0.65), p(0.2, 0.8, 'fragile'), p(0.8, 0.8),
-                    p(0.5, 0.92),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.56, 'coin'),
-                    c(0.75, 0.56, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'spring_boots')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -208,7 +123,7 @@ export const LEVEL_DATA = [
         targetAltitude: 6300,
         bgColor: '#1a2a3a',
         bgAccent: '#2a4a6a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.3, 0.22, 'moving'), p(0.7, 0.22),
@@ -237,65 +152,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.8, 0.15, 'extra_life')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.3, 0.22, 'moving'), p(0.7, 0.22),
-                    p(0.5, 0.36, 'moving'), p(0.25, 0.5), p(0.75, 0.5, 'moving'),
-                    p(0.5, 0.64), p(0.3, 0.78, 'moving'), p(0.7, 0.78),
-                    p(0.5, 0.92),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.3, 0.28, 'coin'), c(0.7, 0.28, 'coin'),
-                    c(0.5, 0.42, 'gem'),  c(0.25, 0.56, 'coin'),
-                ],
-                powerUps: [pu(0.75, 0.56, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'normal'), p(0.8, 0.2, 'moving'),
-                    p(0.5, 0.33, 'fragile'), p(0.25, 0.48, 'moving'), p(0.75, 0.48),
-                    p(0.5, 0.62, 'moving'), p(0.25, 0.76), p(0.75, 0.76, 'fragile'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.5, 2.55, 'floater'), e(0.3, 0.4, 'floater'), e(0.7, 0.4, 'floater')],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.75, 0.54, 'coin'),
-                ],
-                powerUps: [pu(0.8, 0.15, 'extra_life')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.3, 0.22, 'moving'), p(0.7, 0.22),
-                    p(0.5, 0.36, 'moving'), p(0.25, 0.5), p(0.75, 0.5, 'moving'),
-                    p(0.5, 0.64), p(0.3, 0.78, 'moving'), p(0.7, 0.78),
-                    p(0.5, 0.92),
-                ],
-                enemies: [],
-                collectibles: [
-                    c(0.3, 0.28, 'coin'), c(0.7, 0.28, 'coin'),
-                    c(0.5, 0.42, 'gem'),  c(0.25, 0.56, 'coin'),
-                ],
-                powerUps: [pu(0.75, 0.56, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'normal'), p(0.8, 0.2, 'moving'),
-                    p(0.5, 0.33, 'fragile'), p(0.25, 0.48, 'moving'), p(0.75, 0.48),
-                    p(0.5, 0.62, 'moving'), p(0.25, 0.76), p(0.75, 0.76, 'fragile'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.5, 2.55, 'floater'), e(0.3, 0.4, 'floater'), e(0.7, 0.4, 'floater')],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.75, 0.54, 'coin'),
-                ],
-                powerUps: [pu(0.8, 0.15, 'extra_life')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -309,7 +166,7 @@ export const LEVEL_DATA = [
         targetAltitude: 8400,
         bgColor: '#2a1a3a',
         bgAccent: '#5a2a7a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.25, 0.24, 'bouncy'), p(0.75, 0.24),
@@ -340,69 +197,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.8, 0.12, 'extra_life')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.24, 'bouncy'), p(0.75, 0.24),
-                    p(0.5, 0.38, 'bouncy'), p(0.2, 0.52), p(0.8, 0.52, 'bouncy'),
-                    p(0.5, 0.66), p(0.35, 0.8, 'bouncy'), p(0.65, 0.8),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(0.8, 0.3, 'bat'), e(0.3, 0.55, 'floater')],
-                collectibles: [
-                    c(0.25, 0.3, 'gem'),  c(0.75, 0.3, 'coin'),
-                    c(0.5, 0.44, 'coin'), c(0.2, 0.58, 'coin'),
-                    c(0.8, 0.58, 'gem'),
-                ],
-                powerUps: [pu(0.5, 0.72, 'jetpack')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.22, 'bouncy'), p(0.8, 0.22, 'fragile'),
-                    p(0.5, 0.36, 'normal'), p(0.3, 0.5, 'bouncy'), p(0.7, 0.5),
-                    p(0.5, 0.64, 'bouncy'), p(0.25, 0.78), p(0.75, 0.78, 'moving'),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(0.5, 0.44, 'bat'), e(0.75, 0.57, 'bat')],
-                collectibles: [
-                    c(0.2, 0.28, 'coin'), c(0.8, 0.28, 'coin'),
-                    c(0.3, 0.56, 'gem'),  c(0.7, 0.56, 'coin'),
-                    c(0.5, 0.18, 'diamond'),
-                ],
-                powerUps: [pu(0.8, 0.12, 'extra_life')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.24, 'bouncy'), p(0.75, 0.24),
-                    p(0.5, 0.38, 'bouncy'), p(0.2, 0.52), p(0.8, 0.52, 'bouncy'),
-                    p(0.5, 0.66), p(0.35, 0.8, 'bouncy'), p(0.65, 0.8),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(0.8, 0.3, 'bat'), e(0.3, 0.55, 'floater')],
-                collectibles: [
-                    c(0.25, 0.3, 'gem'),  c(0.75, 0.3, 'coin'),
-                    c(0.5, 0.44, 'coin'), c(0.2, 0.58, 'coin'),
-                    c(0.8, 0.58, 'gem'),
-                ],
-                powerUps: [pu(0.5, 0.72, 'jetpack')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.22, 'bouncy'), p(0.8, 0.22, 'fragile'),
-                    p(0.5, 0.36, 'normal'), p(0.3, 0.5, 'bouncy'), p(0.7, 0.5),
-                    p(0.5, 0.64, 'bouncy'), p(0.25, 0.78), p(0.75, 0.78, 'moving'),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(0.5, 0.44, 'bat'), e(0.75, 0.57, 'bat')],
-                collectibles: [
-                    c(0.2, 0.28, 'coin'), c(0.8, 0.28, 'coin'),
-                    c(0.3, 0.56, 'gem'),  c(0.7, 0.56, 'coin'),
-                    c(0.5, 0.18, 'diamond'),
-                ],
-                powerUps: [pu(0.8, 0.12, 'extra_life')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -416,7 +211,7 @@ export const LEVEL_DATA = [
         targetAltitude: 10500,
         bgColor: '#2a2a4a',
         bgAccent: '#4a4a7a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.25, 0.22, 'cloud'), p(0.75, 0.22),
@@ -447,69 +242,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.75, 0.1, 'shield')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22, 'cloud'), p(0.75, 0.22),
-                    p(0.5, 0.35, 'cloud'), p(0.2, 0.49), p(0.8, 0.49, 'cloud'),
-                    p(0.5, 0.63), p(0.3, 0.77, 'cloud'), p(0.7, 0.77),
-                    p(0.5, 0.91),
-                ],
-                enemies: [e(0.5, 0.43, 'chaser')],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'gem'),
-                    c(0.5, 0.41, 'coin'), c(0.2, 0.55, 'coin'),
-                    c(0.8, 0.55, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'magnet')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.21, 'cloud'), p(0.8, 0.21, 'cloud'),
-                    p(0.5, 0.34, 'normal'), p(0.3, 0.48, 'cloud'), p(0.7, 0.48),
-                    p(0.5, 0.62, 'cloud'), p(0.25, 0.76, 'normal'), p(0.75, 0.76, 'cloud'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.35, 0.42, 'chaser'), e(0.65, 0.65, 'floater')],
-                collectibles: [
-                    c(0.2, 0.27, 'gem'),  c(0.8, 0.27, 'coin'),
-                    c(0.5, 0.4, 'coin'), c(0.3, 0.54, 'coin'),
-                    c(0.7, 0.54, 'gem'),
-                ],
-                powerUps: [pu(0.75, 0.1, 'shield')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22, 'cloud'), p(0.75, 0.22),
-                    p(0.5, 0.35, 'cloud'), p(0.2, 0.49), p(0.8, 0.49, 'cloud'),
-                    p(0.5, 0.63), p(0.3, 0.77, 'cloud'), p(0.7, 0.77),
-                    p(0.5, 0.91),
-                ],
-                enemies: [e(0.5, 0.43, 'chaser')],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'gem'),
-                    c(0.5, 0.41, 'coin'), c(0.2, 0.55, 'coin'),
-                    c(0.8, 0.55, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'magnet')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.21, 'cloud'), p(0.8, 0.21, 'cloud'),
-                    p(0.5, 0.34, 'normal'), p(0.3, 0.48, 'cloud'), p(0.7, 0.48),
-                    p(0.5, 0.62, 'cloud'), p(0.25, 0.76, 'normal'), p(0.75, 0.76, 'cloud'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.35, 0.42, 'chaser'), e(0.65, 0.65, 'floater')],
-                collectibles: [
-                    c(0.2, 0.27, 'gem'),  c(0.8, 0.27, 'coin'),
-                    c(0.5, 0.4, 'coin'), c(0.3, 0.54, 'coin'),
-                    c(0.7, 0.54, 'gem'),
-                ],
-                powerUps: [pu(0.75, 0.1, 'shield')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -523,7 +256,7 @@ export const LEVEL_DATA = [
         targetAltitude: 12600,
         bgColor: '#3a1a1a',
         bgAccent: '#6a2a2a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08),
@@ -554,69 +287,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.2, 0.15, 'extra_life')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.22), p(0.8, 0.22, 'deadly'),
-                    p(0.5, 0.36), p(0.15, 0.5, 'deadly'), p(0.75, 0.5),
-                    p(0.35, 0.64), p(0.85, 0.64, 'deadly'),
-                    p(0.5, 0.78), p(0.2, 0.92),
-                ],
-                enemies: [e(0.5, 0.3, 'shooter')],
-                collectibles: [
-                    c(0.2, 0.28, 'gem'),  c(0.5, 0.42, 'coin'),
-                    c(0.75, 0.56, 'coin'), c(0.35, 0.7, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.22), p(0.75, 0.22, 'deadly'),
-                    p(0.5, 0.35, 'fragile'), p(0.2, 0.49, 'deadly'), p(0.8, 0.49),
-                    p(0.5, 0.63), p(0.25, 0.77, 'deadly'), p(0.75, 0.77),
-                    p(0.5, 0.91),
-                ],
-                enemies: [e(0.6, 0.43, 'shooter'), e(0.4, 0.65, 'bat')],
-                collectibles: [
-                    c(0.25, 0.28, 'gem'),  c(0.8, 0.55, 'gem'),
-                    c(0.5, 0.41, 'coin'), c(0.75, 0.83, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.15, 'extra_life')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.22), p(0.8, 0.22, 'deadly'),
-                    p(0.5, 0.36), p(0.15, 0.5, 'deadly'), p(0.75, 0.5),
-                    p(0.35, 0.64), p(0.85, 0.64, 'deadly'),
-                    p(0.5, 0.78), p(0.2, 0.92),
-                ],
-                enemies: [e(0.5, 0.3, 'shooter')],
-                collectibles: [
-                    c(0.2, 0.28, 'gem'),  c(0.5, 0.42, 'coin'),
-                    c(0.75, 0.56, 'coin'), c(0.35, 0.7, 'coin'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.22), p(0.75, 0.22, 'deadly'),
-                    p(0.5, 0.35, 'fragile'), p(0.2, 0.49, 'deadly'), p(0.8, 0.49),
-                    p(0.5, 0.63), p(0.25, 0.77, 'deadly'), p(0.75, 0.77),
-                    p(0.5, 0.91),
-                ],
-                enemies: [e(0.6, 0.43, 'shooter'), e(0.4, 0.65, 'bat')],
-                collectibles: [
-                    c(0.25, 0.28, 'gem'),  c(0.8, 0.55, 'gem'),
-                    c(0.5, 0.41, 'coin'), c(0.75, 0.83, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.15, 'extra_life')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -630,7 +301,7 @@ export const LEVEL_DATA = [
         targetAltitude: 15000,
         bgColor: '#1a1a3a',
         bgAccent: '#3a3a6a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22, 'moving'),
@@ -660,67 +331,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.2, 0.12, 'extra_life')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22, 'moving'),
-                    p(0.5, 0.36), p(0.2, 0.5, 'fragile'), p(0.8, 0.5),
-                    p(0.5, 0.64), p(0.3, 0.78), p(0.7, 0.78, 'bouncy'),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(1.4, 0.3, 'ghost'), e(0.8, 0.58, 'ghost')],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'gem'),
-                    c(0.5, 0.42, 'coin'), c(0.2, 0.56, 'diamond'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'slow_time')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.21, 'cloud'), p(0.8, 0.21),
-                    p(0.5, 0.34, 'moving'), p(0.25, 0.48), p(0.75, 0.48, 'fragile'),
-                    p(0.5, 0.62), p(0.3, 0.76, 'moving'), p(0.7, 0.76),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.5, 0.42, 'ghost'), e(0.25, 0.65, 'chaser'), e(0.75, 0.65, 'ghost')],
-                collectibles: [
-                    c(0.2, 0.27, 'coin'), c(0.8, 0.27, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.54, 'coin'),
-                    c(0.75, 0.54, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.12, 'extra_life')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.25, 0.22), p(0.75, 0.22, 'moving'),
-                    p(0.5, 0.36), p(0.2, 0.5, 'fragile'), p(0.8, 0.5),
-                    p(0.5, 0.64), p(0.3, 0.78), p(0.7, 0.78, 'bouncy'),
-                    p(0.5, 0.92),
-                ],
-                enemies: [e(1.4, 0.3, 'ghost'), e(0.8, 0.58, 'ghost')],
-                collectibles: [
-                    c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'gem'),
-                    c(0.5, 0.42, 'coin'), c(0.2, 0.56, 'diamond'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'slow_time')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.21, 'cloud'), p(0.8, 0.21),
-                    p(0.5, 0.34, 'moving'), p(0.25, 0.48), p(0.75, 0.48, 'fragile'),
-                    p(0.5, 0.62), p(0.3, 0.76, 'moving'), p(0.7, 0.76),
-                    p(0.5, 0.9),
-                ],
-                enemies: [e(0.5, 0.42, 'ghost'), e(0.25, 0.65, 'chaser'), e(0.75, 0.65, 'ghost')],
-                collectibles: [
-                    c(0.2, 0.27, 'coin'), c(0.8, 0.27, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.54, 'coin'),
-                    c(0.75, 0.54, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.12, 'extra_life')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -734,7 +345,7 @@ export const LEVEL_DATA = [
         targetAltitude: 17400,
         bgColor: '#3a3a1a',
         bgAccent: '#6a6a2a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08),
@@ -772,83 +383,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.8, 0.14, 'extra_life')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.2), p(0.8, 0.2),
-                    p(0.5, 0.32, 'fragile'), p(0.25, 0.44), p(0.75, 0.44, 'moving'),
-                    p(0.5, 0.56, 'bouncy'), p(0.2, 0.68), p(0.8, 0.68, 'fragile'),
-                    p(0.5, 0.8), p(0.35, 0.92),
-                ],
-                enemies: [
-                    e(0.1, 0.26, 'shooter'),
-                    e(0.8, 0.5, 'bat'), e(0.7, 0.5, 'bat'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'gem'),  c(0.8, 0.26, 'gem'),
-                    c(0.5, 0.38, 'coin'), c(0.25, 0.5, 'coin'),
-                    c(0.75, 0.5, 'coin'), c(0.5, 0.62, 'diamond'),
-                ],
-                powerUps: [pu(0.5, 0.12, 'double_coins')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'moving'), p(0.8, 0.2),
-                    p(0.5, 0.33), p(0.25, 0.47, 'fragile'), p(0.75, 0.47, 'moving'),
-                    p(0.5, 0.61), p(0.2, 0.75, 'bouncy'), p(0.8, 0.75),
-                    p(0.5, 0.89),
-                ],
-                enemies: [
-                    e(0.35, 0.27, 'chaser'), e(0.65, 0.27, 'chaser'),
-                    e(0.5, 0.55, 'shooter'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.25, 0.53, 'coin'),
-                    c(0.75, 0.53, 'star'),
-                ],
-                powerUps: [pu(0.8, 0.14, 'extra_life')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.2), p(0.8, 0.2),
-                    p(0.5, 0.32, 'fragile'), p(0.25, 0.44), p(0.75, 0.44, 'moving'),
-                    p(0.5, 0.56, 'bouncy'), p(0.2, 0.68), p(0.8, 0.68, 'fragile'),
-                    p(0.5, 0.8), p(0.35, 0.92),
-                ],
-                enemies: [
-                    e(0.1, 0.26, 'shooter'),
-                    e(0.8, 0.5, 'bat'), e(0.7, 0.5, 'bat'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'gem'),  c(0.8, 0.26, 'gem'),
-                    c(0.5, 0.38, 'coin'), c(0.25, 0.5, 'coin'),
-                    c(0.75, 0.5, 'coin'), c(0.5, 0.62, 'diamond'),
-                ],
-                powerUps: [pu(0.5, 0.12, 'double_coins')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08), p(0.2, 0.2, 'moving'), p(0.8, 0.2),
-                    p(0.5, 0.33), p(0.25, 0.47, 'fragile'), p(0.75, 0.47, 'moving'),
-                    p(0.5, 0.61), p(0.2, 0.75, 'bouncy'), p(0.8, 0.75),
-                    p(0.5, 0.89),
-                ],
-                enemies: [
-                    e(0.35, 0.27, 'chaser'), e(0.65, 0.27, 'chaser'),
-                    e(0.5, 0.55, 'shooter'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.25, 0.53, 'coin'),
-                    c(0.75, 0.53, 'star'),
-                ],
-                powerUps: [pu(0.8, 0.14, 'extra_life')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -862,7 +397,7 @@ export const LEVEL_DATA = [
         targetAltitude: 20400,
         bgColor: '#1a0a2a',
         bgAccent: '#3a1a5a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08),
@@ -902,87 +437,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.2, 0.1, 'slow_time')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.21, 'cloud'), p(0.8, 0.21, 'moving'),
-                    p(0.5, 0.34, 'fragile'), p(0.25, 0.48), p(0.75, 0.48, 'bouncy'),
-                    p(0.5, 0.61, 'moving'), p(0.2, 0.74, 'deadly'), p(0.75, 0.74),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.28, 'ghost'),
-                    e(0.3, 0.42, 'chaser'), e(0.7, 0.55, 'shooter'),
-                ],
-                collectibles: [
-                    c(0.2, 0.27, 'gem'),   c(0.8, 0.27, 'gem'),
-                    c(0.5, 0.4, 'coin'),  c(0.25, 0.54, 'diamond'),
-                    c(0.75, 0.54, 'coin'),  c(0.75, 0.8, 'star'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'jetpack')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.21, 'moving'), p(0.75, 0.21, 'cloud'),
-                    p(0.5, 0.34, 'bouncy'), p(0.2, 0.48, 'fragile'), p(0.8, 0.48),
-                    p(0.5, 0.62, 'cloud'), p(0.3, 0.76, 'deadly'), p(0.7, 0.76),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.42, 'ghost'),
-                    e(0.25, 0.56, 'bat'), e(0.75, 0.65, 'shooter'),
-                    e(0.5, 0.25, 'chaser'),
-                ],
-                collectibles: [
-                    c(0.25, 0.27, 'gem'),  c(0.75, 0.27, 'coin'),
-                    c(0.8, 0.54, 'gem'),  c(0.5, 0.4, 'coin'),
-                    c(0.7, 0.82, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.1, 'slow_time')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.21, 'cloud'), p(0.8, 0.21, 'moving'),
-                    p(0.5, 0.34, 'fragile'), p(0.25, 0.48), p(0.75, 0.48, 'bouncy'),
-                    p(0.5, 0.61, 'moving'), p(0.2, 0.74, 'deadly'), p(0.75, 0.74),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.28, 'ghost'),
-                    e(0.3, 0.42, 'chaser'), e(0.7, 0.55, 'shooter'),
-                ],
-                collectibles: [
-                    c(0.2, 0.27, 'gem'),   c(0.8, 0.27, 'gem'),
-                    c(0.5, 0.4, 'coin'),  c(0.25, 0.54, 'diamond'),
-                    c(0.75, 0.54, 'coin'),  c(0.75, 0.8, 'star'),
-                ],
-                powerUps: [pu(0.5, 0.15, 'jetpack')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.21, 'moving'), p(0.75, 0.21, 'cloud'),
-                    p(0.5, 0.34, 'bouncy'), p(0.2, 0.48, 'fragile'), p(0.8, 0.48),
-                    p(0.5, 0.62, 'cloud'), p(0.3, 0.76, 'deadly'), p(0.7, 0.76),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.42, 'ghost'),
-                    e(0.25, 0.56, 'bat'), e(0.75, 0.65, 'shooter'),
-                    e(0.5, 0.25, 'chaser'),
-                ],
-                collectibles: [
-                    c(0.25, 0.27, 'gem'),  c(0.75, 0.27, 'coin'),
-                    c(0.8, 0.54, 'gem'),  c(0.5, 0.4, 'coin'),
-                    c(0.7, 0.82, 'star'),
-                ],
-                powerUps: [pu(0.2, 0.1, 'slow_time')],
-            },
-        ],
+        ], 3),
     },
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -996,7 +451,7 @@ export const LEVEL_DATA = [
         targetAltitude: 24000,
         bgColor: '#0a0a1a',
         bgAccent: '#1a2a5a',
-        screens: [
+        screens: repeat([
             {
                 platforms: [
                     p(0.5, 0.08),
@@ -1037,89 +492,7 @@ export const LEVEL_DATA = [
                 ],
                 powerUps: [pu(0.5, 0.14, 'double_coins')],
             },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.2, 'moving'), p(0.8, 0.2, 'cloud'),
-                    p(0.5, 0.33, 'fragile'), p(0.25, 0.47, 'bouncy'), p(0.75, 0.47, 'deadly'),
-                    p(0.5, 0.61, 'moving'), p(0.2, 0.75, 'cloud'), p(0.7, 0.75),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.27, 'ghost'),
-                    e(0.3, 0.41, 'shooter'), e(0.7, 0.41, 'chaser'),
-                    e(0.25, 0.68, 'bat'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'gem'),    c(0.8, 0.26, 'diamond'),
-                    c(0.5, 0.39, 'coin'),   c(0.25, 0.53, 'star'),
-                    c(0.5, 0.67, 'diamond'),
-                ],
-                powerUps: [pu(0.8, 0.53, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.21, 'cloud'),  p(0.75, 0.21, 'moving'),
-                    p(0.5, 0.34, 'bouncy'), p(0.2, 0.48, 'deadly'), p(0.8, 0.48, 'fragile'),
-                    p(0.5, 0.62, 'moving'), p(0.3, 0.76), p(0.7, 0.76, 'cloud'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.28, 'ghost'),
-                    e(0.35, 0.42, 'shooter'), e(0.65, 0.55, 'chaser'),
-                    e(0.5, 0.68, 'bat'),     e(0.25, 0.72, 'ghost'),
-                ],
-                collectibles: [
-                    c(0.25, 0.27, 'gem'),    c(0.75, 0.27, 'gem'),
-                    c(0.5, 0.4, 'diamond'),c(0.8, 0.54, 'star'),
-                    c(0.3, 0.82, 'star'),
-                ],
-                powerUps: [pu(0.5, 0.14, 'double_coins')],
-            },
-        
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.2, 0.2, 'moving'), p(0.8, 0.2, 'cloud'),
-                    p(0.5, 0.33, 'fragile'), p(0.25, 0.47, 'bouncy'), p(0.75, 0.47, 'deadly'),
-                    p(0.5, 0.61, 'moving'), p(0.2, 0.75, 'cloud'), p(0.7, 0.75),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.27, 'ghost'),
-                    e(0.3, 0.41, 'shooter'), e(0.7, 0.41, 'chaser'),
-                    e(0.25, 0.68, 'bat'),
-                ],
-                collectibles: [
-                    c(0.2, 0.26, 'gem'),    c(0.8, 0.26, 'diamond'),
-                    c(0.5, 0.39, 'coin'),   c(0.25, 0.53, 'star'),
-                    c(0.5, 0.67, 'diamond'),
-                ],
-                powerUps: [pu(0.8, 0.53, 'shield')],
-            },
-            {
-                platforms: [
-                    p(0.5, 0.08),
-                    p(0.25, 0.21, 'cloud'),  p(0.75, 0.21, 'moving'),
-                    p(0.5, 0.34, 'bouncy'), p(0.2, 0.48, 'deadly'), p(0.8, 0.48, 'fragile'),
-                    p(0.5, 0.62, 'moving'), p(0.3, 0.76), p(0.7, 0.76, 'cloud'),
-                    p(0.5, 0.9),
-                ],
-                enemies: [
-                    e(0.5, 0.28, 'ghost'),
-                    e(0.35, 0.42, 'shooter'), e(0.65, 0.55, 'chaser'),
-                    e(0.5, 0.68, 'bat'),     e(0.25, 0.72, 'ghost'),
-                ],
-                collectibles: [
-                    c(0.25, 0.27, 'gem'),    c(0.75, 0.27, 'gem'),
-                    c(0.5, 0.4, 'diamond'),c(0.8, 0.54, 'star'),
-                    c(0.3, 0.82, 'star'),
-                ],
-                powerUps: [pu(0.5, 0.14, 'double_coins')],
-            },
-        ],
+        ], 3),
     },
 ];
 

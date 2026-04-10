@@ -1,6 +1,6 @@
 import { Renderer } from './Renderer.js';
 import { GameLoop } from './GameLoop.js';
-import { TweenManager } from '../graphics/Tween.js';
+import { TweenManager } from '../../../shared/Tween.js';
 import { ParticleSystem } from '../graphics/ParticleSystem.js';
 import { Deck } from '../model/Deck.js';
 import { Hand } from '../model/Hand.js';
@@ -9,7 +9,7 @@ import { TableRenderer } from '../entities/TableRenderer.js';
 import { Croupier } from '../entities/Croupier.js';
 import { HUD } from '../ui/HUD.js';
 import { UIManager } from '../ui/UIManager.js';
-import { StateMachine } from '../states/StateMachine.js';
+import { StateMachine } from '../../../shared/StateMachine.js';
 import { BettingState } from '../states/BettingState.js';
 import { DealingState } from '../states/DealingState.js';
 import { PlayingState } from '../states/PlayingState.js';

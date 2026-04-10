@@ -1,5 +1,5 @@
 import GameObject from './GameObject.js';
-import Vector2 from '../utils/Vector2.js';
+import Vector2 from '../../../shared/Vector2.js';
 /**
  * Upgrades - Sistema di upgrade per Space Shooter
  * Include: Barrier, SmartMissile, e ProtectorDrone

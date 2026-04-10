@@ -9,12 +9,11 @@ export class PlatformBridge {
     #sessionId = null;
     #lastScoreSubmit = 0;
     #pendingSubmit = null;
-    #onReady = null;
     #initialized = false;
 
     constructor() {
         // Get SDK reference
-        this.#sdk = window.PlatformSDK || null;
+        this.#sdk = globalThis.PlatformSDK || null;
     }
 
     /**

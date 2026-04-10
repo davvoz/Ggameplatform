@@ -538,32 +538,12 @@ class PerkSystem {
     /** Return `count` random perks (weighted by rarity), no duplicates.
      *  Only perks whose `world` ≤ currentWorld are eligible. */
     getRandomSelection(count = 3, currentWorld = 1) {
-        const usedIds = new Set();
-        const pool = [];
-        for (const perk of PERK_CATALOG) {
-            if ((perk.world || 1) > currentWorld) continue;
-            if (usedIds.has(perk.id)) continue;
-            const cur = this.activePerks.get(perk.id) || 0;
-            if (cur >= perk.maxStacks) continue;
-            const w = PERK_RARITY[perk.rarity].weight;
-            for (let i = 0; i < w; i++) pool.push(perk);
-        }
-        const selected = [];
-        let attempts = 0;
-        while (selected.length < count && attempts < 300) {
-            attempts++;
-            if (pool.length === 0) break;
-            const perk = pool[Math.floor(Math.random() * pool.length)];
-            if (usedIds.has(perk.id)) continue;
-            usedIds.add(perk.id);
-            selected.push({
-                ...perk,
-                currentStacks: this.activePerks.get(perk.id) || 0,
-                rarityData: PERK_RARITY[perk.rarity],
-                categoryData: PERK_CATEGORIES[perk.category]
-            });
-        }
-        return selected;
+        const eligible = PERK_CATALOG.filter(p => {
+            if ((p.world || 1) > currentWorld) return false;
+            const cur = this.activePerks.get(p.id) || 0;
+            return cur < p.maxStacks;
+        });
+        return this._weightedRandomPick(eligible, count);
     }
 
     // ══════════════════════════════════
@@ -586,26 +566,7 @@ class PerkSystem {
             const cur = this.activePerks.get(p.id) || 0;
             return cur < p.maxStacks;
         });
-
-        // Weighted random pick without duplicates
-        const usedIds = new Set();
-        const pool = [];
-        for (const perk of eligible) {
-            const w = PERK_RARITY[perk.rarity].weight;
-            for (let i = 0; i < w; i++) pool.push(perk);
-        }
-
-        const selected = [];
-        let attempts = 0;
-        while (selected.length < count && attempts < 300) {
-            attempts++;
-            if (pool.length === 0) break;
-            const perk = pool[Math.floor(Math.random() * pool.length)];
-            if (usedIds.has(perk.id)) continue;
-            usedIds.add(perk.id);
-            selected.push(this._enrichPerk(perk));
-        }
-        return selected;
+        return this._weightedRandomPick(eligible, count);
     }
 
     /**
@@ -621,6 +582,27 @@ class PerkSystem {
                 return cur < p.maxStacks;
             })
             .map(p => this._enrichPerk(p));
+    }
+
+    /** @private Pick `count` weighted-random unique perks from an eligible list. */
+    _weightedRandomPick(eligible, count) {
+        const usedIds = new Set();
+        const pool = [];
+        for (const perk of eligible) {
+            const w = PERK_RARITY[perk.rarity].weight;
+            for (let i = 0; i < w; i++) pool.push(perk);
+        }
+        const selected = [];
+        let attempts = 0;
+        while (selected.length < count && attempts < 300) {
+            attempts++;
+            if (pool.length === 0) break;
+            const perk = pool[Math.floor(Math.random() * pool.length)];
+            if (usedIds.has(perk.id)) continue;
+            usedIds.add(perk.id);
+            selected.push(this._enrichPerk(perk));
+        }
+        return selected;
     }
 
     /** @private Attach runtime display data to a perk snapshot. */

@@ -89,11 +89,11 @@ export const PHYSICS = {
     // Player
     PLAYER_JUMP_FORCE: 650,
     PLAYER_MOVE_SPEED: 280,
-    PLAYER_AIR_CONTROL: 1.0,
+    PLAYER_AIR_CONTROL: 1,
     PLAYER_FRICTION: 0.88,
     
     // Bounce multipliers
-    BOUNCE_NORMAL: 1.0,
+    BOUNCE_NORMAL: 1,
     BOUNCE_SUPER: 1.5,
     BOUNCE_WEAK: 0.6,
 };

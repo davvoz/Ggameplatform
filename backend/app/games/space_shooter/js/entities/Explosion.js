@@ -209,7 +209,7 @@ class Explosion extends GameObject {
         /* SPARKS - velocity streaks */
         for (const p of this.particles) {
             if (p.type !== 'spark') continue;
-            const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+            const speed = Math.hypot(p.vx, p.vy);
             if (speed < 10) continue;
             const nx = p.vx / speed;
             const ny = p.vy / speed;

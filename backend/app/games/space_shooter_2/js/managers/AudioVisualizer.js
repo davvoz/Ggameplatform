@@ -282,7 +282,7 @@ export default class AudioVisualizer {
 
         const cx = w / 2;
         const cy = h * 0.45;
-        const diag = Math.sqrt(w * w + h * h);
+        const diag = Math.hypot(w, h);
 
         ctx.save();
         ctx.lineCap = 'round';

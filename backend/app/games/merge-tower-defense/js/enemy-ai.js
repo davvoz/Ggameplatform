@@ -57,7 +57,7 @@ export class AvoidanceBehavior {
 
             const dx = enemy.col - other.col;
             const dy = enemy.row - other.row;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = Math.hypot(dx, dy);
 
             if (distance > 0 && distance < this.detectionRadius) {
                 // Stronger avoidance when very close
@@ -94,7 +94,7 @@ export class AvoidanceBehavior {
 
             const dx = col - other.col;
             const dy = row - other.row;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = Math.hypot(dx, dy);
 
             if (distance < this.personalSpace) {
                 return true;

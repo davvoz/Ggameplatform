@@ -102,7 +102,7 @@ export class DamageCollisionHandler extends CollisionHandler {
         const bounceForce = 400;
         const dx = entity.x - (this.context.player.x + this.context.player.width / 2);
         const dy = entity.y - (this.context.player.y + this.context.player.height / 2);
-        const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+        const distance = Math.hypot(dx, dy) || 1;
 
         entity.velocityX = (dx / distance) * bounceForce;
         entity.velocityY = (dy / distance) * bounceForce - 100;

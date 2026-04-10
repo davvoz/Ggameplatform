@@ -1,17 +1,19 @@
+import { calculateXpData } from './level-widget.js';
+
 // Authentication Manager
 const AuthManager = {
     currentUser: null,
     platformEpoch: null,
 
-    // Get API base URL from window.ENV (set by env.js)
+    // Get API base URL from globalThis.ENV (set by env.js)
     get apiBase() {
-        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
         return `${apiUrl}/users`;
     },
 
     // Get Platform API base URL
     get platformApiBase() {
-        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
         return `${apiUrl}/api/platform`;
     },
 
@@ -67,8 +69,8 @@ const AuthManager = {
                     this.platformEpoch = serverEpoch;
                     
                     // Se non siamo sulla pagina auth, redirect
-                    if (!window.location.pathname.includes('auth.html')) {
-                        window.location.href = '/auth.html?reason=platform_reset';
+                    if (!globalThis.location.pathname.includes('auth.html')) {
+                        globalThis.location.href = '/auth.html?reason=platform_reset';
                         return false;
                     }
                 }
@@ -117,7 +119,7 @@ const AuthManager = {
         });
 
         // Close modal on outside click
-        window.addEventListener('click', (e) => {
+        globalThis.addEventListener('click', (e) => {
             const modal = document.getElementById('authModal');
             if (e.target === modal) {
                 this.hideAuthModal();
@@ -167,12 +169,12 @@ const AuthManager = {
         statusEl.className = 'status-message info';
 
         // Check if Keychain is installed
-        if (!window.steem_keychain) {
+        if (!globalThis.steem_keychain) {
             statusEl.textContent = '❌ Steem Keychain not found. Please install it first.';
             statusEl.className = 'status-message error';
 
             setTimeout(() => {
-                window.open('https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm', '_blank');
+                globalThis.open('https://chrome.google.com/webstore/detail/steem-keychain/lkcjlnjfpbikmcmbachjpdbijejflpcm', '_blank');
             }, 2000);
             return;
         }
@@ -183,7 +185,7 @@ const AuthManager = {
 
             const message = `Login to Game Platform - ${Date.now()}`;
 
-            window.steem_keychain.requestSignBuffer(
+            globalThis.steem_keychain.requestSignBuffer(
                 cleanUsername,
                 message,
                 'Posting',
@@ -270,7 +272,7 @@ const AuthManager = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cur8_multiplier: 1.0
+                    cur8_multiplier: 1
                 })
             });
 
@@ -308,7 +310,7 @@ const AuthManager = {
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
         // Dispatch custom event
-        window.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
+        globalThis.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
     },
 
     loadUserFromStorage() {
@@ -341,10 +343,10 @@ const AuthManager = {
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
         // Dispatch custom event
-        window.dispatchEvent(new Event('userLogout'));
+        globalThis.dispatchEvent(new Event('userLogout'));
 
         // Redirect to auth page
-        window.location.href = '/auth.html';
+        globalThis.location.href = '/auth.html';
     },
 
     async updateUI() {
@@ -433,7 +435,7 @@ const AuthManager = {
 
             // Carica info livello
             try {
-                const API_URL = window.ENV?.API_URL || window.location.origin;
+                const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
                 const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
                 if (response.ok) {
                     const levelInfo = await response.json();
@@ -452,9 +454,8 @@ const AuthManager = {
                                         <div class="level-badge-progress-fill"></div>
                                     </div>
                                     <span class="level-badge-progress-text">${(() => {
-                                        const xpIn = levelInfo.xp_in_level ?? (levelInfo.current_xp - levelInfo.xp_current_level || 0);
-                                        const xpReq = levelInfo.xp_required_for_next_level ?? levelInfo.xp_needed_for_next ?? (levelInfo.xp_next_level - levelInfo.xp_current_level);
-                                        return `${Math.round(xpIn)} / ${Math.round(xpReq)} XP`;
+                                        const { xpInLevel, xpRequiredForNext } = calculateXpData(levelInfo);
+                                        return `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`;
                                     })()}</span>
                                 </div>
                             </div>
@@ -482,13 +483,13 @@ const AuthManager = {
                 } else {
                     // Fallback se API non risponde
                     const cur8Total = this.currentUser.total_xp_earned || 0;
-                    const multiplier = this.currentUser.cur8_multiplier || 1.0;
+                    const multiplier = this.currentUser.cur8_multiplier || 1;
                     levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
                 }
             } catch (error) {
                 console.error('Failed to load level info:', error);
                 const cur8Total = this.currentUser.total_xp_earned || 0;
-                const multiplier = this.currentUser.cur8_multiplier || 1.0;
+                const multiplier = this.currentUser.cur8_multiplier || 1;
                 levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
             }
 
@@ -563,7 +564,7 @@ const AuthManager = {
                 return;
             }
 
-            const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+            const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
             const response = await fetch(`${apiUrl}/users/daily-access`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -104,13 +104,13 @@ class InputManager {
     isInJoystickZone(x, y) {
         const dx = x - this.joystickPos.x;
         const dy = y - this.joystickPos.y;
-        return Math.sqrt(dx * dx + dy * dy) < this.joystickBaseRadius * 1.5;
+        return Math.hypot(dx, dy) < this.joystickBaseRadius * 1.5;
     }
 
     isInFireButton(x, y) {
         const dx = x - this.fireButtonPos.x;
         const dy = y - this.fireButtonPos.y;
-        return Math.sqrt(dx * dx + dy * dy) < this.fireButtonPos.radius * 1.3;
+        return Math.hypot(dx, dy) < this.fireButtonPos.radius * 1.3;
     }
 
     isInUltimateButton(x, y) {
@@ -192,7 +192,7 @@ class InputManager {
     updateJoystickPosition(touchX, touchY) {
         const dx = touchX - this.joystickPos.x;
         const dy = touchY - this.joystickPos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist > this.joystickMaxDistance) {
             const angle = Math.atan2(dy, dx);

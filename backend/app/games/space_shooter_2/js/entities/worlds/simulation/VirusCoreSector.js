@@ -65,7 +65,7 @@ export class VirusCoreSector extends SimulationSectorRenderer {
             for (let j = i + 1; j < this.tendrils.length; j++) {
                 const b = this.tendrils[j];
                 const dx = a.x - b.x, dy = a.y - b.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.hypot(dx, dy);
                 if (dist < 120) {
                     ctx.globalAlpha = (1 - dist / 120) * 0.15;
                     ctx.beginPath();

@@ -166,7 +166,7 @@ class BossPart {
         const r = Math.min(this.width, this.height) / 2;
         const dx = cx - otherCX;
         const dy = cy - otherCY;
-        return Math.sqrt(dx * dx + dy * dy) < r + otherR;
+        return Math.hypot(dx, dy) < r + otherR;
     }
 
     render(ctx, assets) {

@@ -319,7 +319,7 @@ class Enemy extends LivingEntity {
             dy = dy > 0 ? dy - arena.height : dy + arena.height;
         }
         
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         const dirX = distance > 0 ? dx / distance : 0;
         const dirY = distance > 0 ? dy / distance : 0;
         
@@ -649,7 +649,7 @@ class Enemy extends LivingEntity {
             const targetY = this.target.y + Math.sin(this.circleAngle) * orbitDist;
             const dx = targetX - this.x;
             const dy = targetY - this.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const len = Math.hypot(dx, dy) || 1;
             this.velocity.set((dx / len) * this.speed, (dy / len) * this.speed);
         } else {
             // Approach player
@@ -738,7 +738,7 @@ class Enemy extends LivingEntity {
             const targetY = this.target.y + Math.sin(this.orbitAngle) * orbitDist;
             const dx = targetX - this.x;
             const dy = targetY - this.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const len = Math.hypot(dx, dy) || 1;
             this.velocity.set((dx / len) * this.speed, (dy / len) * this.speed);
         } else {
             this.velocity.set(dirToTarget.x * this.speed, dirToTarget.y * this.speed);

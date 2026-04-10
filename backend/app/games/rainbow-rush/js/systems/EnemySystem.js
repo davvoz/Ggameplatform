@@ -283,7 +283,7 @@ export class EnemySystem {
         
         const dx = projectile.x - playerCenterX;
         const dy = projectile.y - playerCenterY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         
         return dist < (projectile.radius + Math.max(player.width, player.height) / 2);
     }

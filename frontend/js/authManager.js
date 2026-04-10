@@ -1,3 +1,5 @@
+import { calculateXpData } from './level-widget.js';
+
 /**
  * Authentication Manager
  * Gestisce autenticazione utenti (Steem, Anonymous, Standard)
@@ -206,10 +208,7 @@ class AuthManager {
                 const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
                 if (response.ok) {
                     const levelInfo = await response.json();
-                    // Fallbacks for old/new field names
-                    const xpInLevel = levelInfo.xp_in_level ?? (levelInfo.current_xp - levelInfo.xp_current_level || 0);
-                    const xpRequired = levelInfo.xp_required_for_next_level ?? levelInfo.xp_needed_for_next ?? (levelInfo.xp_next_level - levelInfo.xp_current_level);
-                    const xpToNext = levelInfo.xp_to_next_level ?? Math.max(0, xpRequired - xpInLevel);
+                    const { xpInLevel, xpRequiredForNext: xpRequired } = calculateXpData(levelInfo);
 
                     levelBadgeContainer.innerHTML = `
                         <div class="level-badge-container">

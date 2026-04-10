@@ -812,7 +812,7 @@ class Projectile {
         // Calculate initial velocity
         const dx = this.targetX - x;
         const dy = this.targetY - y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         
         if (dist > 0) {
             this.vx = (dx / dist) * cannon.projectileSpeed;
@@ -852,7 +852,7 @@ class Projectile {
             // Ricalcola velocità per seguire il nemico
             const dx = this.targetX - this.x;
             const dy = this.targetY - this.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             
             if (dist > 0) {
                 this.vx = (dx / dist) * this.speed;

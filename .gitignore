@@ -314,3 +314,5 @@ backend/scripts/initialize_platform_from_backup_ignore.py
 
 #.agents directory for AI agents
 .agents/
+backend/scripts/register_modern_pong.old
+backend/scripts/register_altitude.old

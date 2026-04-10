@@ -99,7 +99,7 @@ export class GravityWell {
         if (!this.alive) return;
         const dx = this.#x - ball.x;
         const dy = this.#y - ball.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         if (dist < 5 || dist > this.#radius * 2) return;
 
         const force = this.#strength / (dist * dist) * (dt / 1000);

@@ -12,6 +12,29 @@
 // Bridge to new schema system - SchemaManager provides utility methods
 const schemaManager = typeof SchemaManager !== 'undefined' ? new SchemaManager() : null;
 
+// Shared render helpers to reduce duplication (SonarQube)
+const Renders = {
+    activeStatus: (value) => ({
+        type: 'html',
+        content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
+    }),
+    activeYesNo: (value) => ({
+        type: 'html',
+        content: value ? '<span style="color: #28a745;">✓ Sì</span>' : '<span style="color: #dc3545;">✗ No</span>'
+    }),
+    medal: (value) => value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅',
+    steemReward: (value) => ({
+        type: 'html',
+        content: `<strong style="color: #3b82f6; font-size: 1.1em;">${value} STEEM</strong>`
+    }),
+    coinRewardBold: (value) => ({
+        type: 'html',
+        content: `🪙 <strong style="color: #fbbf24;">${value}</strong>`
+    })
+};
+
+const ACTIONS_COLUMN = { key: 'actions', label: 'Azioni', type: 'actions' };
+
 const TABLE_DEFINITIONS = {
     games: {
         name: 'games',
@@ -146,11 +169,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data Modifica',
                 type: 'date'
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'game_id', type: 'STRING', pk: true },
@@ -232,11 +251,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Ultimo Login',
                 type: 'date'
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'user_id', type: 'STRING', pk: true, label: 'User ID' },
@@ -329,11 +344,7 @@ const TABLE_DEFINITIONS = {
                 type: 'json-preview',
                 maxLength: 30
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'session_id', type: 'STRING', pk: true },
@@ -414,11 +425,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data Modifica',
                 type: 'date'
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'rule_id', type: 'STRING', pk: true },
@@ -572,11 +579,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data',
                 type: 'date'
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'entry_id', type: 'STRING', pk: true },
@@ -646,11 +649,7 @@ const TABLE_DEFINITIONS = {
                 type: 'json-preview',
                 maxLength: 20
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'id', type: 'INTEGER', pk: true },
@@ -748,11 +747,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data Modifica',
                 type: 'date'
             },
-            {
-                key: 'actions',
-                label: 'Azioni',
-                type: 'actions'
-            }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'status_id', type: 'INTEGER', pk: true },
@@ -784,7 +779,7 @@ const TABLE_DEFINITIONS = {
             { key: 'total_spent', label: 'Total Spent', type: 'number', sortable: true },
             { key: 'last_updated', label: 'Last Updated', type: 'datetime', sortable: true },
             { key: 'created_at', label: 'Created', type: 'datetime', sortable: true },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'user_id', type: 'STRING', pk: true, fk: { table: 'users', field: 'user_id' } },
@@ -828,7 +823,7 @@ const TABLE_DEFINITIONS = {
             { key: 'description', label: 'Description', type: 'text', searchable: true },
             { key: 'balance_after', label: 'Balance After', type: 'number' },
             { key: 'created_at', label: 'Date', type: 'datetime', sortable: true },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'transaction_id', type: 'STRING', pk: true },
@@ -890,12 +885,9 @@ const TABLE_DEFINITIONS = {
                 key: 'is_active', 
                 label: 'Attivo', 
                 type: 'boolean',
-                render: (value) => ({
-                    type: 'html',
-                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
-                })
+                render: Renders.activeStatus
             },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'level', type: 'INTEGER', pk: true },
@@ -949,10 +941,7 @@ const TABLE_DEFINITIONS = {
                 key: 'is_active', 
                 label: 'Attivo', 
                 type: 'boolean',
-                render: (value) => ({
-                    type: 'html',
-                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
-                })
+                render: Renders.activeStatus
             },
             {
                 key: 'created_at',
@@ -964,7 +953,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data Modifica',
                 type: 'date'
             },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'reward_id', type: 'STRING', pk: true },
@@ -1021,7 +1010,7 @@ const TABLE_DEFINITIONS = {
             },
             { key: 'created_at', label: 'Data Creazione', type: 'date' },
             { key: 'updated_at', label: 'Data Modifica', type: 'date' },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'entry_id', type: 'STRING', pk: true },
@@ -1055,10 +1044,9 @@ const TABLE_DEFINITIONS = {
                 label: 'Rank Inizio', 
                 type: 'number',
                 render: (value, row) => {
-                    const medal = value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅';
                     return {
                         type: 'html',
-                        content: `${medal} <strong>${value}${row.rank_end && row.rank_end !== value ? ` - ${row.rank_end}` : ''}</strong>`
+                        content: `${Renders.medal(value)} <strong>${value}${row.rank_end && row.rank_end !== value ? ` - ${row.rank_end}` : ''}</strong>`
                     };
                 }
             },
@@ -1067,19 +1055,13 @@ const TABLE_DEFINITIONS = {
                 key: 'steem_reward', 
                 label: 'STEEM', 
                 type: 'number',
-                render: (value) => ({
-                    type: 'html',
-                    content: `<strong style="color: #3b82f6; font-size: 1.1em;">${value} STEEM</strong>`
-                })
+                render: Renders.steemReward
             },
             { 
                 key: 'coin_reward', 
                 label: 'Coins', 
                 type: 'number',
-                render: (value) => ({
-                    type: 'html',
-                    content: `🪙 <strong style="color: #fbbf24;">${value}</strong>`
-                })
+                render: Renders.coinRewardBold
             },
             { 
                 key: 'game_id', 
@@ -1099,10 +1081,7 @@ const TABLE_DEFINITIONS = {
                 key: 'is_active',
                 label: 'Attivo',
                 type: 'boolean',
-                render: (value) => ({
-                    type: 'html',
-                    content: value ? '<span style="color: #28a745;">✓ Attivo</span>' : '<span style="color: #dc3545;">✗ Disattivato</span>'
-                })
+                render: Renders.activeStatus
             },
             {
                 key: 'created_at',
@@ -1114,7 +1093,7 @@ const TABLE_DEFINITIONS = {
                 label: 'Data Modifica',
                 type: 'date'
             },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'reward_id', type: 'STRING', pk: true },
@@ -1160,10 +1139,9 @@ const TABLE_DEFINITIONS = {
                 label: 'Posizione', 
                 type: 'number',
                 render: (value) => {
-                    const medal = value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅';
                     return {
                         type: 'html',
-                        content: `${medal} <strong>${value}°</strong>`
+                        content: `${Renders.medal(value)} <strong>${value}°</strong>`
                     };
                 }
             },
@@ -1180,10 +1158,7 @@ const TABLE_DEFINITIONS = {
                 key: 'steem_reward', 
                 label: 'STEEM', 
                 type: 'number',
-                render: (value) => ({
-                    type: 'html',
-                    content: `<span style="color: #3b82f6; font-weight: bold;">${value} STEEM</span>`
-                })
+                render: Renders.steemReward
             },
             { 
                 key: 'coin_reward', 
@@ -1223,7 +1198,7 @@ const TABLE_DEFINITIONS = {
                 type: 'date'
             },
             { key: 'created_at', label: 'Data', type: 'date' },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'winner_id', type: 'STRING', pk: true },
@@ -1299,7 +1274,7 @@ const TABLE_DEFINITIONS = {
             },
             { key: 'created_at', label: 'Creato', type: 'datetime' },
             { key: 'updated_at', label: 'Aggiornato', type: 'datetime' },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'user_id', type: 'STRING', pk: true, fk: { table: 'users', field: 'user_id' } },
@@ -1357,14 +1332,11 @@ const TABLE_DEFINITIONS = {
                 key: 'is_active', 
                 label: 'Attivo', 
                 type: 'boolean',
-                render: (value) => ({
-                    type: 'html',
-                    content: value ? '<span style="color: #28a745;">✓ Sì</span>' : '<span style="color: #dc3545;">✗ No</span>'
-                })
+                render: Renders.activeYesNo
             },
             { key: 'created_at', label: 'Creato', type: 'datetime' },
             { key: 'updated_at', label: 'Aggiornato', type: 'datetime' },
-            { key: 'actions', label: 'Azioni', type: 'actions' }
+            ACTIONS_COLUMN
         ],
         fields: [
             { name: 'day', type: 'INTEGER', pk: true },

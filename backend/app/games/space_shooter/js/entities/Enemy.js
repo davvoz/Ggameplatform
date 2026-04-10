@@ -370,7 +370,7 @@ class Enemy extends GameObject {
                 if (game.player && game.player.active) {
                     const dx = well.x - game.player.position.x;
                     const dy = well.y - game.player.position.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const dist = Math.hypot(dx, dy);
                     if (dist < 200 && dist > 10) {
                         const force = (well.strength / dist) * deltaTime;
                         game.player.position.x += (dx / dist) * force;

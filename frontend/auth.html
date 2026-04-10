@@ -115,8 +115,8 @@
     <script src="/env.js"></script>
     
     <script>
-        // Get API URL from window.ENV
-        const API_BASE = `${window.ENV?.API_URL || 'http://localhost:8000'}/users`;
+        // Get API URL from globalThis.ENV
+        const API_BASE = `${globalThis.ENV?.API_URL || 'http://localhost:8000'}/users`;
         
         // Switch authentication method
         function switchAuthMethod(method) {
@@ -135,10 +135,7 @@
         
         // Check if Steem Keychain is installed
         function checkSteemKeychain() {
-            if (typeof window.steem_keychain === 'undefined') {
-                return false;
-            }
-            return true;
+            return globalThis.steem_keychain !== undefined;
         }
         
         // Login with Steem Keychain
@@ -174,7 +171,7 @@
             statusEl.innerHTML = '<span class="auth-loading"></span>Waiting for Keychain signature...';
             
             // Request signature from Keychain
-            window.steem_keychain.requestSignBuffer(
+            globalThis.steem_keychain.requestSignBuffer(
                 username,
                 message,
                 'Posting',
@@ -191,7 +188,7 @@
                                     username: username,
                                     signature: response.result,
                                     message: message,
-                                    cur8_multiplier: 1.0
+                                    cur8_multiplier: 1
                                 })
                             });
                             
@@ -207,7 +204,7 @@
                                 
                                 // Redirect to game platform after 2 seconds
                                 setTimeout(() => {
-                                    window.location.href = '/';
+                                    globalThis.location.href = '/';
                                 }, 2000);
                             } else {
                                 throw new Error(data.detail || 'Authentication failed');
@@ -276,7 +273,7 @@
                     body: JSON.stringify({
                         username: username,
                         posting_key: postingKey,
-                        cur8_multiplier: 1.0
+                        cur8_multiplier: 1
                     })
                 });
                 
@@ -295,7 +292,7 @@
                     
                     // Redirect to game platform after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/';
+                        globalThis.location.href = '/';
                     }, 2000);
                 } else {
                     throw new Error(data.detail || 'Authentication failed');
@@ -320,7 +317,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        cur8_multiplier: 1.0
+                        cur8_multiplier: 1
                     })
                 });
                 
@@ -336,7 +333,7 @@
                     
                     // Redirect to game platform after 1 second
                     setTimeout(() => {
-                        window.location.href = '/';
+                        globalThis.location.href = '/';
                     }, 1000);
                 } else {
                     throw new Error(data.detail || 'Failed to create anonymous user');
@@ -348,24 +345,9 @@
             }
         }
         
-        // Switch authentication method
-        function switchAuthMethod(method) {
-            // Update tabs
-            document.querySelectorAll('.method-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelector(`[data-method="${method}"]`).classList.add('active');
-            
-            // Update content
-            document.querySelectorAll('.auth-method-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${method}-content`).classList.add('active');
-        }
-
         // Show platform reset message if needed
         function showPlatformResetMessage() {
-            const urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(globalThis.location.search);
             if (urlParams.get('reason') === 'platform_reset') {
                 // Create notification banner
                 const banner = document.createElement('div');
@@ -407,12 +389,12 @@
                 document.body.prepend(banner);
                 
                 // Remove the query parameter from URL without reloading
-                window.history.replaceState({}, document.title, window.location.pathname);
+                globalThis.history.replaceState({}, document.title, globalThis.location.pathname);
             }
         }
 
         // Check if user is already logged in
-        window.addEventListener('load', () => {
+        globalThis.addEventListener('load', () => {
             // Show platform reset message if present
             showPlatformResetMessage();
             
@@ -420,7 +402,7 @@
             if (currentUser) {
                 const user = JSON.parse(currentUser);
                 if (confirm(`You are already authenticated as ${user.username || user.user_id}. Continue?`)) {
-                    window.location.href = '/';
+                    globalThis.location.href = '/';
                 } else {
                     localStorage.removeItem('currentUser');
                     localStorage.removeItem('authMethod');

@@ -56,7 +56,7 @@ export class InputManager {
         if (this.#touchActive) {
             const rawDx = this.#touchCurrentX - this.#touchStartX;
             const rawDy = this.#touchCurrentY - this.#touchStartY;
-            const dist = Math.sqrt(rawDx * rawDx + rawDy * rawDy);
+            const dist = Math.hypot(rawDx, rawDy);
 
             if (dist > this.#joystickDeadzone) {
                 const clampedDist = Math.min(dist, this.#joystickMaxDist);

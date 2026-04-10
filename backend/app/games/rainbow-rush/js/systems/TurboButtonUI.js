@@ -361,7 +361,7 @@ export class TurboButtonUI {
         
         const dx = x - this.buttonX;
         const dy = y - this.buttonY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         
         if (distance <= this.buttonRadius) {
             // Button clicked

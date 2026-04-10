@@ -812,7 +812,7 @@ export class Player {
     _distanceToCenterOf(obj) {
         const dx = (this.x + this.width / 2) - obj.x;
         const dy = (this.y + this.height / 2) - obj.y;
-        return Math.sqrt(dx * dx + dy * dy);
+        return Math.hypot(dx, dy);
     }
 
     checkPowerupCollision(powerup) {

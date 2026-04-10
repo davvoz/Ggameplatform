@@ -54,7 +54,7 @@ class Bullet extends GameObject {
         }
 
         // Pre-compute direction angle
-        const speed = Math.sqrt(vx * vx + vy * vy);
+        const speed = Math.hypot(vx, vy);
         this._dirAngle = speed > 0 ? Math.atan2(vy / speed, vx / speed) - Math.PI / 2 : 0;
         this._speed = speed;
     }
@@ -111,7 +111,7 @@ class Bullet extends GameObject {
                     this.damage = Math.max(1, Math.ceil(this.damage * this._bounceDmgMul));
                 }
                 // Recalculate direction angle
-                const spd = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+                const spd = Math.hypot(this.velocity.x, this.velocity.y);
                 this._dirAngle = spd > 0 ? Math.atan2(this.velocity.y / spd, this.velocity.x / spd) - Math.PI / 2 : 0;
             }
         } else if (this.isOffScreen(W, H)) {

@@ -844,7 +844,7 @@ export class Game {
         if (as_[ownKey] && ownPlayer) {
             const dx = as_[ownKey].x - ownPlayer.x;
             const dy = as_[ownKey].y - ownPlayer.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             if (dist > 40) {
                 // Teleport-level — hard snap
                 ownPlayer.x = as_[ownKey].x;
@@ -896,7 +896,7 @@ export class Game {
         if (s[ownKey] && ownPlayer) {
             const dx = s[ownKey].x - ownPlayer.x;
             const dy = s[ownKey].y - ownPlayer.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             if (dist > 40) {
                 ownPlayer.x = s[ownKey].x;
                 ownPlayer.y = s[ownKey].y;

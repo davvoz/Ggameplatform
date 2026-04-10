@@ -737,7 +737,7 @@ class ObstacleManager {
             
             const dx = coin.x - playerPos.x;
             const dz = coin.z - playerPos.z;
-            const distance = Math.sqrt(dx * dx + dz * dz);
+            const distance = Math.hypot(dx, dz);
             
             if (distance < 0.6) {
                 coin.collected = true;

@@ -1,4 +1,5 @@
 import { getCoinBalanceWidget } from './state.js';
+import imageUploadService from './ImageUploadService.js';
 
 /**
  * Steem Post Modal
@@ -13,9 +14,6 @@ class SteemPostModal {
         this.modalElement = null;
         this.previewData = null;
         this.uploadedImageUrl = null;
-        this.MAX_FILE_SIZE_MB = 15;
-        this.UPLOAD_TIMEOUT_MS = 60000;
-        this.API_ENDPOINT = 'https://imridd.eu.pythonanywhere.com/api/steem/free_upload_image';
     }
 
     /**
@@ -401,9 +399,8 @@ class SteemPostModal {
             return;
         }
 
-        const fileSizeInMB = file.size / (1024 * 1024);
-        if (fileSizeInMB > this.MAX_FILE_SIZE_MB) {
-            alert(`Image is too large. Maximum allowed size is ${this.MAX_FILE_SIZE_MB}MB.`);
+        if (!imageUploadService.isFileSizeValid(file)) {
+            alert(`Image is too large. Maximum allowed size is ${imageUploadService.MAX_FILE_SIZE_MB}MB.`);
             return;
         }
 
@@ -423,34 +420,9 @@ class SteemPostModal {
             statusEl.textContent = 'Uploading...';
             statusEl.style.color = '#ffd700';
 
-            // Compress and upload image
-            const compressedFile = await this.compressImage(file);
-            const base64Data = await this.fileToBase64(compressedFile);
-            
-            const payload = { image_base64: base64Data };
-            
-            const response = await this.fetchWithTimeout(
-                this.API_ENDPOINT,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                },
-                this.UPLOAD_TIMEOUT_MS
-            );
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server error: ${response.status} - ${errorText}`);
-            }
-
-            const data = await response.json();
-            
-            if (!data.image_url) {
-                throw new Error('Invalid response: missing image URL');
-            }
-
-            this.uploadedImageUrl = data.image_url;
+            // Upload image via shared service
+            const user = this.authManager.getUser();
+            this.uploadedImageUrl = await imageUploadService.uploadImage(file, user?.steem_username || user?.username);
 
             // Update status
             statusEl.textContent = '✓ Image uploaded successfully';
@@ -466,98 +438,7 @@ class SteemPostModal {
         }
     }
 
-    /**
-     * Compress image if needed
-     */
-    async compressImage(file, maxWidthHeight = 1920) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result; // Use data URL instead of blob URL
-                
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (width > maxWidthHeight || height > maxWidthHeight) {
-                        if (width > height) {
-                            height *= maxWidthHeight / width;
-                            width = maxWidthHeight;
-                        } else {
-                            width *= maxWidthHeight / height;
-                            height = maxWidthHeight;
-                        }
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const mimeType = file.type || 'image/jpeg';
-                    const quality = mimeType === 'image/png' ? 1.0 : 0.9;
-                    
-                    canvas.toBlob(
-                        blob => resolve(blob),
-                        mimeType,
-                        quality
-                    );
-                };
-                
-                img.onerror = () => reject(new Error('Error loading image'));
-            };
-            
-            reader.onerror = () => reject(new Error('Error reading file'));
-            reader.readAsDataURL(file);
-        });
-    }
 
-    /**
-     * Convert file to base64
-     */
-    fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            
-            reader.onloadend = () => {
-                try {
-                    if (!reader.result || typeof reader.result !== 'string') {
-                        throw new Error('Invalid file data');
-                    }
-                    
-                    const parts = reader.result.split(',');
-                    if (parts.length < 2) {
-                        throw new Error('Invalid image data format');
-                    }
-                    
-                    resolve(parts[1]);
-                } catch (error) {
-                    reject(error);
-                }
-            };
-            
-            reader.onerror = (error) => {
-                reject(new Error('Error reading file: ' + error));
-            };
-        });
-    }
-
-    /**
-     * Fetch with timeout
-     */
-    fetchWithTimeout(url, options, timeout) {
-        return Promise.race([
-            fetch(url, options),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Request timeout')), timeout)
-            )
-        ]);
-    }
 
     /**
      * Remove uploaded image

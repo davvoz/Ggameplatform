@@ -155,7 +155,7 @@ export class EnemyCollisionHandler extends DamageCollisionHandler {
     _isProjectileHit(proj, playerCenterX, playerCenterY) {
         const dx = proj.x - playerCenterX;
         const dy = proj.y - playerCenterY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         const hitRadius = proj.radius + Math.max(this.context.player.width, this.context.player.height) / 2;
         return dist < hitRadius;
     }

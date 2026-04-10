@@ -259,7 +259,7 @@ export class Ball {
     accelerate() {
         const oldTier = this.speedTier;
         this.#speed = Math.min(this.#speed * BALL_ACCELERATION, BALL_MAX_SPEED);
-        const magnitude = Math.sqrt(this.#vx * this.#vx + this.#vy * this.#vy);
+        const magnitude = Math.hypot(this.#vx, this.#vy);
         if (magnitude > 0) {
             this.#vx = (this.#vx / magnitude) * this.#speed;
             this.#vy = (this.#vy / magnitude) * this.#speed;
@@ -532,7 +532,7 @@ export class Ball {
 
         // Motion streaks — at tier 2+ draw velocity lines behind the ball
         if (sTier >= 2) {
-            const spd = Math.sqrt(this.#vx * this.#vx + this.#vy * this.#vy);
+            const spd = Math.hypot(this.#vx, this.#vy);
             if (spd > 0) {
                 const dx = -this.#vx / spd;
                 const dy = -this.#vy / spd;
@@ -599,7 +599,7 @@ export class Ball {
         /* ---- 8b. SHADOW BLAZE — dramatic purple inferno ---- */
         if (isShadowBlaze) {
             const now = Date.now();
-            const speed = Math.sqrt(this.#vx * this.#vx + this.#vy * this.#vy);
+            const speed = Math.hypot(this.#vx, this.#vy);
             const dirX = speed > 0 ? -this.#vx / speed : 0;
             const dirY = speed > 0 ? -this.#vy / speed : 0;
 
@@ -725,7 +725,7 @@ export class Ball {
         this.#vx = state.vx;
         this.#vy = state.vy;
         // Derive speed so guest sees correct speed visuals
-        this.#speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+        this.#speed = Math.hypot(state.vx, state.vy);
         if (state.fireball && !this.#fireball) {
             this.setFireball(3000);
         }

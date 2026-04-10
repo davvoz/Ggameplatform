@@ -1,65 +1,6 @@
 import AuthManager from './auth.js';
 import { checkUnclaimedQuests } from './nav.js';
-
-/**
- * Show level up modal
- */
-function showLevelUpModal(levelUpData) {
-    const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
-
-    // Check if user is anonymous
-    const currentUser = AuthManager?.currentUser;
-    const isAnonymous = currentUser?.is_anonymous === true;
-
-    const modal = document.createElement('div');
-    modal.className = 'level-up-modal';
-    modal.innerHTML = `
-        <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
-            <div class="level-up-animation">
-                <div class="level-up-rays"></div>
-                <div class="level-up-badge-container">
-                    <span class="level-up-badge">${badge}</span>
-                </div>
-            </div>
-            <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
-            <div class="level-up-levels">
-                <span class="old-level">${old_level}</span>
-                <span class="level-arrow">→</span>
-                <span class="new-level">${new_level}</span>
-            </div>
-            <div class="level-up-new-title">${title}</div>
-            ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-            ${!isAnonymous && coins_awarded > 0 ? `
-                <div class="level-up-reward">
-                    <span class="reward-icon">🪙</span>
-                    <span class="reward-amount">+${coins_awarded} Coins</span>
-                </div>
-            ` : ''}
-            <button class="level-up-close">Continue</button>
-        </div>
-    `;
-
-    // Load level-up styles if not already loaded
-    if (!document.querySelector('#level-up-styles')) {
-        const link = document.createElement('link');
-        link.id = 'level-up-styles';
-        link.rel = 'stylesheet';
-        link.href = '/css/level-widget.css';
-        document.head.appendChild(link);
-    }
-
-    document.body.appendChild(modal);
-
-    // Trigger animation
-    setTimeout(() => modal.classList.add('show'), 10);
-
-    // Close handler
-    const closeBtn = modal.querySelector('.level-up-close');
-    closeBtn.addEventListener('click', () => {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    });
-}
+import { showLevelUpModal } from './level-widget.js';
 
 /**
  * Highlight the "Da Claimare" filter button when there are unclaimed rewards

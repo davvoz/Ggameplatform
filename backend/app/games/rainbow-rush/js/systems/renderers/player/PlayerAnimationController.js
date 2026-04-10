@@ -225,7 +225,7 @@ export class PlayerAnimationController {
      * Get motion blur effect
      */
     getMotionBlur(player) {
-        const speed = Math.sqrt(player.velocityX ** 2 + player.velocityY ** 2);
+        const speed = Math.hypot(player.velocityX, player.velocityY);
 
         if (speed > 300) {
             return {

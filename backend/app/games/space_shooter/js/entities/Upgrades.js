@@ -828,7 +828,7 @@ class ProtectorDrone {
             if (enemy.active) {
                 const dx = enemy.position.x + enemy.width / 2 - this.x;
                 const dy = enemy.position.y + enemy.height / 2 - this.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.hypot(dx, dy);
                 
                 if (dist < closestDist) {
                     closestDist = dist;
@@ -968,7 +968,7 @@ class DroneBullet {
         const dy = this.vy * deltaTime;
         this.x += dx;
         this.y += dy;
-        this.distanceTraveled += Math.sqrt(dx * dx + dy * dy);
+        this.distanceTraveled += Math.hypot(dx, dy);
         
         // Check range
         if (this.distanceTraveled >= this.range) {
@@ -981,7 +981,7 @@ class DroneBullet {
             if (enemy.active && this.active) {
                 const ex = enemy.position.x + enemy.width / 2;
                 const ey = enemy.position.y + enemy.height / 2;
-                const dist = Math.sqrt((ex - this.x) ** 2 + (ey - this.y) ** 2);
+                const dist = Math.hypot(ex - this.x, ey - this.y);
                 
                 if (dist < enemy.width / 2 + this.size) {
                     enemy.takeDamage(this.damage, game);

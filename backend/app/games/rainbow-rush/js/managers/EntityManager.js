@@ -340,7 +340,7 @@ export class EntityManager {
             } else {
                 const dx = player.x - collectible.x;
                 const dy = (player.y + player.height / 2) - collectible.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.hypot(dx, dy);
                 if (dist > 5) {
                     // Faster magnet during turbo to compensate for increased speed
                     const magnetSpeed = player.isTurboActive ? 1200 : 400;

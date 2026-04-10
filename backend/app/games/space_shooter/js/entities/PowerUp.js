@@ -43,7 +43,7 @@ class PowerUp extends GameObject {
             const myCenter = this.getCenter();
             const dx = playerCenter.x - myCenter.x;
             const dy = playerCenter.y - myCenter.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             
             if (dist > 10) {
                 const magnetSpeed = 300;

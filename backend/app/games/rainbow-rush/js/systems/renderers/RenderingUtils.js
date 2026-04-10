@@ -38,7 +38,7 @@ export class RenderingUtils {
     static drawLine(renderer, x1, y1, x2, y2, color, width) {
         const dx = x2 - x1;
         const dy = y2 - y1;
-        const length = Math.sqrt(dx * dx + dy * dy);
+        const length = Math.hypot(dx, dy);
         const steps = Math.ceil(length / 5);
         
         for (let i = 0; i < steps; i++) {

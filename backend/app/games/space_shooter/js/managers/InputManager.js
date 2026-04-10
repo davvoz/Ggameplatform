@@ -135,7 +135,7 @@ class InputManager {
         const dx = x - this.joystickPos.x;
         const dy = y - this.joystickPos.y;
         // Zona di touch più ampia del joystick visibile
-        return Math.sqrt(dx * dx + dy * dy) < this.joystickBaseRadius * 1.5;
+        return Math.hypot(dx, dy) < this.joystickBaseRadius * 1.5;
     }
 
     /**
@@ -144,7 +144,7 @@ class InputManager {
     isInFireButton(x, y) {
         const dx = x - this.fireButtonPos.x;
         const dy = y - this.fireButtonPos.y;
-        return Math.sqrt(dx * dx + dy * dy) < this.fireButtonPos.radius * 1.3;
+        return Math.hypot(dx, dy) < this.fireButtonPos.radius * 1.3;
     }
 
     /**
@@ -262,7 +262,7 @@ class InputManager {
     updateJoystickPosition(x, y) {
         const dx = x - this.joystickPos.x;
         const dy = y - this.joystickPos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         
         let normX = dx;
         let normY = dy;

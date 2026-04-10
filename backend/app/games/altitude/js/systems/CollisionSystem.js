@@ -198,7 +198,7 @@ export class CollisionSystem {
 
                 const dx   = bullet.x - player.x;
                 const dy   = bullet.y - player.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.hypot(dx, dy);
 
                 if (dist < 20 && !player.isInvincible) {
                     bullet.active = false;
@@ -221,7 +221,7 @@ export class CollisionSystem {
             if (!enemy.active) continue;
             const dx   = enemy.x - x;
             const dy   = enemy.y - y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             if (dist < 80) {
                 enemy.onStomp(game.particles, game.sound);
                 game.addScore(enemy.scoreValue);

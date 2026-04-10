@@ -74,7 +74,7 @@ class Pickup extends Entity {
         if (dy > H / 2) dy -= H;
         if (dy < -H / 2) dy += H;
         
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         const dirX = distance > 0 ? dx / distance : 0;
         const dirY = distance > 0 ? dy / distance : 0;
         

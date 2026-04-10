@@ -4,6 +4,7 @@ import { steemAvatarService } from './SteemAvatarService.js';
 import { config } from './config.js';
 import AuthManager from './auth.js';
 import ConfirmModal from './ConfirmModal.js';
+import { buildLevelCardElement } from './level-widget.js';
 
 /**
  * UserProfileRenderer - Renders the public profile page for any user.
@@ -332,7 +333,6 @@ class UserProfileRenderer {
         const avatarHTML = this.buildAvatarHTML(steemUsername);
         const totalXP = user.total_xp_earned || 0;
         const multiplier = user.cur8_multiplier || 1.0;
-        const levelCardHTML = levelInfo ? this.buildLevelCardHTML(levelInfo, totalXP) : '';
         const highScoresHTML = this.buildHighScoresHTML(user.game_scores_enriched);
         const recentActivityHTML = this.buildRecentActivityHTML(stats.recentActivity);
         const memberSince = user.created_at
@@ -409,8 +409,7 @@ class UserProfileRenderer {
                             </div>
                         </div>
                         <div class="stats-right">
-                            <div class="level-card-container">
-                                ${levelCardHTML}
+                            <div class="level-card-container" id="publicLevelCardContainer">
                             </div>
                         </div>
                     </div>
@@ -449,6 +448,14 @@ class UserProfileRenderer {
                 </div>
             </div>
         `;
+
+        // Insert level card as DOM element (avoids innerHTML for user data)
+        if (levelInfo) {
+            const container = this.appContainer.querySelector('#publicLevelCardContainer');
+            if (container) {
+                container.appendChild(this.buildLevelCardElement(levelInfo, totalXP));
+            }
+        }
     }
 
     /**
@@ -512,51 +519,8 @@ class UserProfileRenderer {
     /**
      * Build level card HTML.
      */
-    buildLevelCardHTML(levelInfo, totalXP) {
-        const color = levelInfo.color || '#6366f1';
-        const xpInLevel = levelInfo?.xp_in_level ?? 0;
-        const xpRequiredForNext = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? 0;
-        const xpToNext = levelInfo?.xp_to_next_level ?? Math.max(0, (xpRequiredForNext || 0) - xpInLevel);
-        const progressPercent = levelInfo.progress_percent || 0;
-
-        const rightColumn = xpToNext > 0
-            ? `<div style="display:flex;flex-direction:column;gap:4px;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.6);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🎯 Next lvl</span>
-                    <span style="font-size:18px;font-weight:800;color:${color};text-shadow:0 1px 3px rgba(0,0,0,0.3);">${xpToNext.toFixed(0)}</span>
-                </div>`
-            : `<div style="grid-column:1/-1;text-align:center;padding:8px;background:linear-gradient(135deg,#FFD70033,#FFA50033);border-radius:6px;border:1px solid #FFD70044;">
-                    <span style="font-weight:800;font-size:14px;color:#FFD700;text-shadow:0 1px 3px rgba(0,0,0,0.4);letter-spacing:0.5px;">🏆 MAX LEVEL</span>
-                </div>`;
-
-        return `
-            <div style="width:100%;padding:16px;background:linear-gradient(135deg,${color}20,${color}08);border-radius:var(--radius-md);border:2px solid ${color}55;box-shadow:0 4px 12px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05);box-sizing:border-box;">
-                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-                    <div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,${color}33,${color}11);border-radius:50%;border:3px solid ${color}66;box-shadow:0 4px 12px ${color}44;">
-                        <span style="font-size:38px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
-                    </div>
-                    <div style="flex:1;">
-                        <div style="font-size:24px;font-weight:800;color:${color};text-shadow:0 2px 4px rgba(0,0,0,0.3);letter-spacing:0.5px;margin-bottom:4px;">Level ${levelInfo.current_level}</div>
-                        <div style="font-size:15px;font-weight:600;color:#fff;opacity:0.95;text-transform:uppercase;letter-spacing:1px;">${levelInfo.title}</div>
-                    </div>
-                </div>
-                <div style="margin-bottom:14px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:6px;">
-                        <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Progress</span>
-                        <span style="font-weight:800;font-size:14px;color:${color};text-shadow:0 1px 2px rgba(0,0,0,0.3);">${progressPercent.toFixed(1)}%</span>
-                    </div>
-                    <div style="height:12px;background:rgba(0,0,0,0.3);border-radius:6px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,0.4);position:relative;">
-                        <div style="height:100%;background:linear-gradient(90deg,${color},#8b5cf6,${color});width:${progressPercent}%;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 12px ${color}aa,inset 0 1px 0 rgba(255,255,255,0.2);"></div>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;background:rgba(0,0,0,0.2);border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
-                    <div style="display:flex;flex-direction:column;gap:4px;">
-                        <span style="font-size:11px;color:rgba(255,255,255,0.6);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">💰 Total XP</span>
-                        <span style="font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);">${totalXP.toFixed(0)}</span>
-                    </div>
-                    ${rightColumn}
-                </div>
-            </div>
-        `;
+    buildLevelCardElement(levelInfo, totalXP) {
+        return buildLevelCardElement(levelInfo, totalXP);
     }
 
     // ───────── UI State Methods ─────────

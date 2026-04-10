@@ -188,7 +188,7 @@ export class Collectible extends GameObject {
     attractTo(targetX, targetY, strength, dt) {
         const dx = targetX - this.x;
         const dy = targetY - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist > 0) {
             const speed = strength * dt;

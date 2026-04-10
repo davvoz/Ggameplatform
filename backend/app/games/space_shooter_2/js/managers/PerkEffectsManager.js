@@ -70,19 +70,19 @@ class PerkEffectsManager {
                         if (!e.active || e._isAlly) continue;
                         const ex = e.position.x + e.width / 2;
                         const ey = e.position.y + e.height / 2;
-                        const d = Math.sqrt((ex - dx) ** 2 + (ey - dy) ** 2);
+                        const d = Math.hypot(ex - dx, ey - dy);
                         if (d < nearDist) { nearDist = d; nearest = e; }
                     }
                     if (g.entityManager.miniBoss && g.entityManager.miniBoss.active) {
                         const mx = g.entityManager.miniBoss.position.x + g.entityManager.miniBoss.width / 2;
                         const my = g.entityManager.miniBoss.position.y + g.entityManager.miniBoss.height / 2;
-                        const d = Math.sqrt((mx - dx) ** 2 + (my - dy) ** 2);
+                        const d = Math.hypot(mx - dx, my - dy);
                         if (d < nearDist) { nearDist = d; nearest = g.entityManager.miniBoss; }
                     }
                     if (g.entityManager.boss && g.entityManager.boss.active) {
                         const bx = g.entityManager.boss.position.x + g.entityManager.boss.width / 2;
                         const by = g.entityManager.boss.position.y + g.entityManager.boss.height / 2;
-                        const d = Math.sqrt((bx - dx) ** 2 + (by - dy) ** 2);
+                        const d = Math.hypot(bx - dx, by - dy);
                         if (d < nearDist) { nearDist = d; nearest = g.entityManager.boss; }
                     }
                     if (nearest) {
@@ -159,7 +159,7 @@ class PerkEffectsManager {
                     if (!e.active || e._isAlly) continue;
                     const ex = e.position.x + e.width / 2;
                     const ey = e.position.y + e.height / 2;
-                    const d = Math.sqrt((ex - seg.x) ** 2 + (ey - seg.y) ** 2);
+                    const d = Math.hypot(ex - seg.x, ey - seg.y);
                     if (d < 28) {
                         const killed = e.takeDamage(dmgPerSec * deltaTime, g);
                         if (killed) g.scoreManager.onEnemyKilled(e);
@@ -195,7 +195,7 @@ class PerkEffectsManager {
                 if (!e.active || !e.config?.stealth) continue;
                 const ex = e.position.x + e.width / 2;
                 const ey = e.position.y + e.height / 2;
-                const d = Math.sqrt((ex - pcx) ** 2 + (ey - pcy) ** 2);
+                const d = Math.hypot(ex - pcx, ey - pcy);
                 if (d < revealRange) {
                     e.alpha = Math.max(e.alpha, 0.6); // force reveal
                 }
@@ -257,7 +257,7 @@ class PerkEffectsManager {
                             if (!e2.active || e2 === e || e2._isAlly || e2._virusInfected) continue;
                             const dx = (e2.position.x + e2.width / 2) - eCX;
                             const dy = (e2.position.y + e2.height / 2) - eCY;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            const dist = Math.hypot(dx, dy);
                             if (dist < 150) cands.push({ e: e2, d: dist });
                         }
                         cands.sort((a, b) => a.d - b.d);
@@ -289,7 +289,7 @@ class PerkEffectsManager {
                 if (!e.active || e._isAlly || hit.has(e)) continue;
                 const ex = e.position.x + e.width / 2;
                 const ey = e.position.y + e.height / 2;
-                const d = Math.sqrt((ex - cx) ** 2 + (ey - cy) ** 2);
+                const d = Math.hypot(ex - cx, ey - cy);
                 if (d < nearDist) { nearDist = d; nearest = e; }
             }
             if (!nearest) break;
@@ -315,7 +315,7 @@ class PerkEffectsManager {
             if (!e.active || e._isAlly) continue;
             const ex = e.position.x + e.width / 2;
             const ey = e.position.y + e.height / 2;
-            const d = Math.sqrt((ex - cx) ** 2 + (ey - cy) ** 2);
+            const d = Math.hypot(ex - cx, ey - cy);
             if (d <= radius) {
                 const killed = e.takeDamage(damage, g);
                 if (killed) g.scoreManager.onEnemyKilled(e);
@@ -324,7 +324,7 @@ class PerkEffectsManager {
         if (g.entityManager.boss && g.entityManager.boss.active) {
             const bx = g.entityManager.boss.position.x + g.entityManager.boss.width / 2;
             const by = g.entityManager.boss.position.y + g.entityManager.boss.height / 2;
-            const d = Math.sqrt((bx - cx) ** 2 + (by - cy) ** 2);
+            const d = Math.hypot(bx - cx, by - cy);
             if (d <= radius) {
                 const killed = g.entityManager.boss.takeDamage(damage, g);
                 if (killed) g.scoreManager.onBossKilled();
@@ -333,7 +333,7 @@ class PerkEffectsManager {
         if (g.entityManager.miniBoss && g.entityManager.miniBoss.active) {
             const bx = g.entityManager.miniBoss.position.x + g.entityManager.miniBoss.width / 2;
             const by = g.entityManager.miniBoss.position.y + g.entityManager.miniBoss.height / 2;
-            const d = Math.sqrt((bx - cx) ** 2 + (by - cy) ** 2);
+            const d = Math.hypot(bx - cx, by - cy);
             if (d <= radius) {
                 g.entityManager.miniBoss.takeDamage(damage, g);
             }

@@ -313,7 +313,7 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                     const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
                     const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
                     const dx = bx - ax, dy = by - ay;
-                    const segLen = Math.sqrt(dx * dx + dy * dy);
+                    const segLen = Math.hypot(dx, dy);
                     if (segLen < 1) { accDist += segLen; continue; }
                     const ux = dx / segLen, uy = dy / segLen;
                     const nx = -uy, ny = ux;
@@ -341,7 +341,7 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                     const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
                     const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
                     const dx = bx - ax, dy = by - ay;
-                    const segLen = Math.sqrt(dx * dx + dy * dy);
+                    const segLen = Math.hypot(dx, dy);
                     if (segLen < 1) { accDist += segLen; continue; }
                     const nx = -dy / segLen, ny = dx / segLen;
                     let d = boltGap - (accDist % boltGap);

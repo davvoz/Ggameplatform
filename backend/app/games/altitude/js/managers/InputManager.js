@@ -96,7 +96,7 @@ export class InputManager {
                 if (data) {
                     const dx = data.currentX - data.startX;
                     const dy = data.currentY - data.startY;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const dist = Math.hypot(dx, dy);
                     if (dist < 20) {
                         this.#pendingTapX = data.currentX;
                         this.#pendingTapY = data.currentY;
@@ -147,7 +147,7 @@ export class InputManager {
                 if (data) {
                     const dx = data.currentX - data.startX;
                     const dy = data.currentY - data.startY;
-                    if (Math.sqrt(dx * dx + dy * dy) < 20) {
+                    if (Math.hypot(dx, dy) < 20) {
                         this.#pendingTapX = data.currentX;
                         this.#pendingTapY = data.currentY;
                         this.#pendingTap = true;

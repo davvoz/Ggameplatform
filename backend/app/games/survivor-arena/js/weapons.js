@@ -78,7 +78,7 @@ class Projectile extends Entity {
         const dy = this.y - this.lastY;
         // Only add small movements (ignore wrap teleports)
         if (Math.abs(dx) < 100 && Math.abs(dy) < 100) {
-            this.distanceTraveled += Math.sqrt(dx * dx + dy * dy);
+            this.distanceTraveled += Math.hypot(dx, dy);
         }
         this.lastX = this.x;
         this.lastY = this.y;
@@ -1098,7 +1098,7 @@ class Weapon {
             // Fallback to direct calculation
             const dx = target.x - player.x;
             const dy = target.y - player.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const len = Math.hypot(dx, dy) || 1;
             aimDirection = { x: dx / len, y: dy / len };
         } else {
             // Fire in facing direction if no target
@@ -1344,7 +1344,7 @@ class Drone extends Entity {
         
         return {
             dx, dy,
-            distance: Math.sqrt(dx * dx + dy * dy)
+            distance: Math.hypot(dx, dy)
         };
     }
 

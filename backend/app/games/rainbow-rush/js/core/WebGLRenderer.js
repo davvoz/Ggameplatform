@@ -133,7 +133,7 @@ export class WebGLRenderer {
         // Calculate perpendicular vector for line thickness
         const dx = x2 - x1;
         const dy = y2 - y1;
-        const length = Math.sqrt(dx * dx + dy * dy);
+        const length = Math.hypot(dx, dy);
         
         if (length === 0) return; // Skip zero-length lines
         

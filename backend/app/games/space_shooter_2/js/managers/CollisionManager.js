@@ -101,7 +101,7 @@ class CollisionManager {
                                 if (!e2.active || e2 === enemy || e2._isAlly || e2._virusInfected) continue;
                                 const dx2 = (e2.position.x + e2.width / 2) - eCX2;
                                 const dy2 = (e2.position.y + e2.height / 2) - eCY2;
-                                const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                                const dist = Math.hypot(dx2, dy2);
                                 if (dist < 150) candidates.push({ e: e2, d: dist });
                             }
                             candidates.sort((a, b) => a.d - b.d);
@@ -263,7 +263,7 @@ class CollisionManager {
                     const bcy = bullet.position.y + bullet.height / 2;
                     const dx = bcx - pcx;
                     const dy = bcy - pcy;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const dist = Math.hypot(dx, dy);
                     if (dist < reflectRadius) {
                         // Reflect: reverse velocity and change owner to player
                         bullet.velocity.x = -bullet.velocity.x;
@@ -396,7 +396,7 @@ class CollisionManager {
                 if (magnetRange > 0) {
                     const dx = pcx - (pu.position.x + pu.width / 2);
                     const dy = pcy - (pu.position.y + pu.height / 2);
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const dist = Math.hypot(dx, dy);
                     if (dist < magnetRange && dist > 5) {
                         const pull = 300 / dist;
                         pu.position.x += (dx / dist) * pull * 0.016;

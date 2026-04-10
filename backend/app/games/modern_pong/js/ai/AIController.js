@@ -230,7 +230,7 @@ export class AIController {
 
             const dx = pu.x - character.x;
             const dy = pu.y - character.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
 
             // When ball is coming, only grab very nearby power-ups
             if (ballComing && dist > 70) continue;

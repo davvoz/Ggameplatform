@@ -100,7 +100,7 @@ class EntityManager {
 
         const dx = boss.position.x + boss.width / 2 - m.x;
         const dy = boss.position.y + boss.height / 2 - m.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist < currentClosestDist) {
             this.steerTowards(m, boss);
@@ -115,7 +115,7 @@ class EntityManager {
         m.vx += Math.cos(angle) * m.speed * 3 * (1 / 60);
         m.vy += Math.sin(angle) * m.speed * 3 * (1 / 60);
 
-        const spd = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+        const spd = Math.hypot(m.vx, m.vy);
         if (spd > m.speed) {
             m.vx = (m.vx / spd) * m.speed;
             m.vy = (m.vy / spd) * m.speed;
@@ -197,7 +197,7 @@ class EntityManager {
     getDistance(x1, y1, x2, y2) {
         const dx = x1 - x2;
         const dy = y1 - y2;
-        return Math.sqrt(dx * dx + dy * dy);
+        return Math.hypot(dx, dy);
     }
 
     createMissileExplosion(m, g) {

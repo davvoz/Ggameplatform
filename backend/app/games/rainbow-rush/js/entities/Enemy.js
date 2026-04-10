@@ -311,7 +311,7 @@ export class Enemy {
     updateChase(deltaTime, player) {
         const dx = player.x - this.x;
         const dy = player.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist <= this.chaseRange && dist > 10) {
             this.velocityX = (dx / dist) * this.speed;
@@ -328,7 +328,7 @@ export class Enemy {
     updateSmartChase(deltaTime, player) {
         const dx = player.x - this.x;
         const dy = player.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist <= this.chaseRange && dist > 10) {
             // Predict player position
@@ -337,7 +337,7 @@ export class Enemy {
             
             const pdx = predictX - this.x;
             const pdy = predictY - this.y;
-            const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+            const pdist = Math.hypot(pdx, pdy);
 
             if (pdist > 10) {
                 this.velocityX = (pdx / pdist) * this.speed;
@@ -387,7 +387,7 @@ export class Enemy {
         if (this.shootTimer >= this.shootInterval) {
             const dx = player.x - this.x;
             const dy = player.y - this.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
 
             if (dist <= this.shootRange) {
                 this.shoot(player);
@@ -506,7 +506,7 @@ export class Enemy {
     shoot(player) {
         const dx = player.x - this.x;
         const dy = player.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist > 0) {
             this.projectiles.push({
@@ -578,7 +578,7 @@ export class Enemy {
         const centerY = this.y + this.height / 2;
         const dx = centerX - circle.x;
         const dy = centerY - circle.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         return dist < (Math.max(this.width, this.height) / 2 + circle.radius);
     }
 

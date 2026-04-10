@@ -108,7 +108,7 @@ export class Enemy extends GameObject {
         // Chase player horizontally
         const dx = player.x - this.x;
         const dy = player.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         // Only chase if within range
         if (dist < 200) {
@@ -141,7 +141,7 @@ export class Enemy extends GameObject {
     #shoot(player) {
         const dx = player.x - this.x;
         const dy = player.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist > 300) return; // Don't shoot if too far
 
@@ -164,7 +164,7 @@ export class Enemy extends GameObject {
             // Moving toward target
             const dx = this.#swoopTarget.x - this.x;
             const dy = this.#swoopTarget.y - this.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
 
             if (dist < 10) {
                 // Reached target, return to start
@@ -213,7 +213,7 @@ export class Enemy extends GameObject {
         if (player && this.#state === 'idle') {
             const dx = player.x - this.x;
             const dy = player.y - this.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
 
             if (dist < 250 && dist > 0) {
                 const speed = this.#typeData.speed * dt;

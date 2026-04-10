@@ -355,7 +355,7 @@ export class HUDRenderer {
     checkPauseClick(x, y) {
         const dx = x - this.pauseButtonX;
         const dy = y - this.pauseButtonY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         return distance <= this.pauseButtonRadius;
     }
     

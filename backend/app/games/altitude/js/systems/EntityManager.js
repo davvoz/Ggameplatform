@@ -102,7 +102,7 @@ export class EntityManager {
             if (magnetRange > 0 && !collectible.isCollected) {
                 const dx = player.x - collectible.x;
                 const dy = player.y - collectible.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.hypot(dx, dy);
 
                 if (dist < magnetRange) {
                     collectible.attractTo(player.x, player.y, 400, dt);

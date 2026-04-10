@@ -48,7 +48,7 @@ export class BaseCollectible {
         const steps = 8;
         for (let i = 0; i < steps; i++) {
             const offset = (i - steps / 2) * (radiusY * 2 / steps);
-            const width = radiusX * Math.sqrt(1 - Math.pow(offset / radiusY, 2));
+            const width = radiusX * Math.hypot(1 - Math.pow(offset / radiusY, 2));
             if (width > 0) {
                 this.renderer.drawCircle(x, y + offset, width, color);
             }

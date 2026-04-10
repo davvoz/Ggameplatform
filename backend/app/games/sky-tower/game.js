@@ -646,7 +646,7 @@
             
             // Define organic zones using noise
             const getZoneType = (x, z) => {
-                const dist = Math.sqrt(x * x + z * z);
+                const dist = Math.hypot(x, z);
                 const noise1 = Math.sin(x * 0.1) * Math.cos(z * 0.1);
                 const noise2 = Math.sin(x * 0.23 + 100) * Math.cos(z * 0.23 + 100);
                 
@@ -717,7 +717,7 @@
                 for (let z = -40; z <= 10; z += spacing) {
                     if (!isBehindTower(x, z)) continue;
                     
-                    const distFromCenter = Math.sqrt(x * x + z * z);
+                    const distFromCenter = Math.hypot(x, z);
                     if (distFromCenter < 8) continue; // Increased from 4 to 8 for tower platform
                     
                     // Skip if ON a road
@@ -2066,7 +2066,7 @@
             const currentCameraZ = camera.position.z;
             const startY = camera.position.y;
             const endY = CONFIG.cameraHeight;
-            const startDistance = Math.sqrt(currentCameraX * currentCameraX + currentCameraZ * currentCameraZ);
+            const startDistance = Math.hypot(currentCameraX, currentCameraZ);
             const endDistance = startDistance + Math.max(10, towerHeight * 0.5); // Zoom out by 10 or half tower height
             
             // Animate camera position: scroll down and zoom out

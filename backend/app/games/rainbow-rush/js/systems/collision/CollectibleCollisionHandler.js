@@ -42,7 +42,7 @@ export class CollectibleCollisionHandler extends CollisionHandler {
         if (this.context.player.hasMagnet && collectible.type === 'collectible') {
             const dx = playerCenterX - collectible.x;
             const dy = playerCenterY - collectible.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = Math.hypot(dx, dy);
 
             if (distance < this.context.player.magnetRange && distance > 0) {
                 const attractionSpeed = 8;

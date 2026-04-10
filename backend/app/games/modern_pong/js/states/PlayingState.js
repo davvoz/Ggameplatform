@@ -313,7 +313,7 @@ export class PlayingState extends State {
             // Check overlap manually (don't bounce)
             const dx = ball.x - character.x;
             const dy = ball.y - character.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             const minDist = ball.radius + character.hitboxRadius;
             if (dist < minDist) {
                 // Fireball passes through! Consume and add cooldown

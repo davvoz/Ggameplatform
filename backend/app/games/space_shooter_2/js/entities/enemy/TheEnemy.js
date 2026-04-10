@@ -139,7 +139,7 @@ class Enemy extends GameObject {
         if (this.config.stealth && game.player && game.player.active) {
             const dx = (this.position.x + this.width / 2) - (game.player.position.x + game.player.width / 2);
             const dy = (this.position.y + this.height / 2) - (game.player.position.y + game.player.height / 2);
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             const targetAlpha = dist < 180 ? 1 : 0.08;
             this.alpha += (targetAlpha - this.alpha) * 3 * dt;
         }

@@ -26,13 +26,7 @@ from app.schemas import (
     QuestCreate, QuestUpdate,
     UserQuestCreate, UserQuestUpdate,
     GameStatusCreate, GameStatusUpdate,
-    UserCoinsCreate, UserCoinsUpdate,
-    CoinTransactionCreate, CoinTransactionUpdate,
-    LevelMilestoneCreate, LevelMilestoneUpdate,
-    LevelRewardCreate, LevelRewardUpdate,
-    WeeklyLeaderboardCreate, WeeklyLeaderboardUpdate,
-    LeaderboardRewardCreate, LeaderboardRewardUpdate,
-    WeeklyWinnerCreate, WeeklyWinnerUpdate,
+    UserCoinsCreate, UserCoinsUpdate, CoinTransactionUpdate,
     CampaignCreate, CampaignUpdate
 )
 from sqlalchemy import desc
@@ -47,6 +41,8 @@ router = APIRouter()
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-to-random-secret-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+USER_NOT_FOUND = "User not found"
 
 class LoginRequest(BaseModel):
     username: str
@@ -95,7 +91,7 @@ def verify_token_from_cookie(
     
     admin = db.query(AdminUser).filter_by(username=username, is_active=1).first()
     if not admin:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=401, detail=USER_NOT_FOUND)
     
     return username
 
@@ -107,7 +103,7 @@ async def admin_login_page():
     html_file = Path(__file__).parent.parent / "static" / "admin-login.html"
     return FileResponse(html_file)
 
-@router.post("/login")
+@router.post("/login", responses={401: {"description": "Not authenticated"}})
 async def admin_login(login_data: LoginRequest, response: Response, db: DbSession):
     """Admin login endpoint"""
     admin = db.query(AdminUser).filter_by(username=login_data.username, is_active=1).first()
@@ -141,7 +137,7 @@ async def admin_login(login_data: LoginRequest, response: Response, db: DbSessio
     return {"success": True, "redirect": "/admin/db-viewer"}
 
 
-@router.get("/form-options")
+@router.get("/form-options", responses={500: {"description": "Internal server error"}})
 async def get_form_options(db: DbSession):
     """
     Get all available options for foreign key fields in forms.
@@ -203,19 +199,19 @@ async def get_form_options(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/db-viewer", response_class=HTMLResponse)
+@router.get("/db-viewer", response_class=HTMLResponse, responses={401: {"description": "Not authenticated"}})
 async def db_viewer(username: CurrentUser):
     """Database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer-v2.html"
     return FileResponse(html_file)
 
-@router.get("/db-viewer-legacy", response_class=HTMLResponse)
+@router.get("/db-viewer-legacy", response_class=HTMLResponse, responses={401: {"description": "Not authenticated"}})
 async def db_viewer_legacy(username: CurrentUser):
     """Legacy database viewer interface - Protected with JWT cookie"""
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 
-@router.get("/db-stats")
+@router.get("/db-stats", responses={401: {"description": "Not authenticated"}})
 async def get_db_stats(username: CurrentUser):
     """Get database statistics - Protected with JWT cookie"""
     with get_db_session() as session:
@@ -564,7 +560,7 @@ async def export_database():
         "private_messages": private_messages
     }
 
-@router.get("/sessions/open")
+@router.get("/sessions/open", responses={500: {"description": "Internal server error"}})
 async def get_open_sessions_endpoint():
     """Get all open (unclosed) game sessions"""
     try:
@@ -577,7 +573,7 @@ async def get_open_sessions_endpoint():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/sessions/close-all")
+@router.post("/sessions/close-all", responses={500: {"description": "Internal server error"}})
 async def close_all_sessions(max_duration_seconds: int = None):
     """Force close all open sessions"""
     try:
@@ -590,7 +586,7 @@ async def close_all_sessions(max_duration_seconds: int = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/sessions/{session_id}/close")
+@router.post("/sessions/{session_id}/close", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def force_close_single_session(session_id: str):
     """Force close a specific open session"""
     try:
@@ -612,7 +608,7 @@ async def force_close_single_session(session_id: str):
 
 # ========== GAMES CRUD ENDPOINTS ==========
 
-@router.post("/games", status_code=201)
+@router.post("/games", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_game(game_data: GameRegister, db: DbSession):
     """Create a new game"""
     try:
@@ -627,7 +623,7 @@ async def create_game(game_data: GameRegister, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/games/{game_id}")
+@router.get("/games/{game_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_game(game_id: str, db: DbSession):
     """Get a game by ID"""
     try:
@@ -644,7 +640,7 @@ async def get_game(game_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/games/{game_id}")
+@router.put("/games/{game_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_game(game_id: str, game_data: GameUpdate, db: DbSession):
     """Update a game"""
     try:
@@ -666,7 +662,7 @@ async def update_game(game_id: str, game_data: GameUpdate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/games/{game_id}")
+@router.delete("/games/{game_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_game(game_id: str, db: DbSession):
     """Delete a game"""
     try:
@@ -685,7 +681,7 @@ async def delete_game(game_id: str, db: DbSession):
 
 # ========== USERS CRUD ENDPOINTS ==========
 
-@router.post("/users", status_code=201)
+@router.post("/users", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_user(user_data: UserCreate, db: DbSession):
     """Create a new user"""
     try:
@@ -700,7 +696,7 @@ async def create_user(user_data: UserCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/users/{user_id}")
+@router.get("/users/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_user(user_id: str, db: DbSession):
     """Get a user by ID"""
     try:
@@ -709,7 +705,7 @@ async def get_user(user_id: str, db: DbSession):
         
         user = service.get(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         return {"success": True, "data": user}
     except HTTPException:
         raise
@@ -717,7 +713,7 @@ async def get_user(user_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/users/{user_id}")
+@router.put("/users/{user_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_user(user_id: str, user_data: UserUpdate, db: DbSession):
     """Update a user"""
     try:
@@ -728,7 +724,7 @@ async def update_user(user_id: str, user_data: UserUpdate, db: DbSession):
         
         user = service.update(user_id, update_data)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         return {"success": True, "data": user}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -738,7 +734,7 @@ async def update_user(user_id: str, user_data: UserUpdate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_user(user_id: str, db: DbSession):
     """Delete a user"""
     try:
@@ -747,7 +743,7 @@ async def delete_user(user_id: str, db: DbSession):
         
         success = service.delete(user_id)
         if not success:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         return {"success": True, "message": "User deleted successfully"}
     except HTTPException:
         raise
@@ -757,7 +753,7 @@ async def delete_user(user_id: str, db: DbSession):
 
 # ========== GAME SESSIONS CRUD ENDPOINTS ==========
 
-@router.post("/game-sessions", status_code=201)
+@router.post("/game-sessions", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_session(session_data: GameSessionCreate, db: DbSession):
     """Create a new game session"""
     try:
@@ -772,7 +768,7 @@ async def create_session(session_data: GameSessionCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/game-sessions/{session_id}")
+@router.get("/game-sessions/{session_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_session(session_id: str, db: DbSession):
     """Get a game session by ID"""
     try:
@@ -789,7 +785,7 @@ async def get_session(session_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/game-sessions/{session_id}")
+@router.put("/game-sessions/{session_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_session(session_id: str, session_data: GameSessionUpdate, db: DbSession):
     """Update a game session"""
     try:
@@ -810,7 +806,7 @@ async def update_session(session_id: str, session_data: GameSessionUpdate, db: D
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/game-sessions/{session_id}")
+@router.delete("/game-sessions/{session_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_session(session_id: str, db: DbSession):
     """Delete a game session"""
     try:
@@ -829,7 +825,7 @@ async def delete_session(session_id: str, db: DbSession):
 
 # ========== LEADERBOARD CRUD ENDPOINTS ==========
 
-@router.post("/leaderboard-entries", status_code=201)
+@router.post("/leaderboard-entries", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: DbSession):
     """Create a new leaderboard entry"""
     try:
@@ -844,7 +840,7 @@ async def create_leaderboard_entry(entry_data: LeaderboardCreate, db: DbSession)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/leaderboard-entries/{entry_id}")
+@router.get("/leaderboard-entries/{entry_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_leaderboard_entry(entry_id: str, db: DbSession):
     """Get a leaderboard entry by ID"""
     try:
@@ -861,7 +857,7 @@ async def get_leaderboard_entry(entry_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/leaderboard-entries/{entry_id}")
+@router.put("/leaderboard-entries/{entry_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate, db: DbSession):
     """Update a leaderboard entry"""
     try:
@@ -882,7 +878,7 @@ async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/leaderboard-entries/{entry_id}")
+@router.delete("/leaderboard-entries/{entry_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_leaderboard_entry(entry_id: str, db: DbSession):
     """Delete a leaderboard entry"""
     try:
@@ -901,7 +897,7 @@ async def delete_leaderboard_entry(entry_id: str, db: DbSession):
 
 # ========== XP RULES CRUD ENDPOINTS ==========
 
-@router.post("/xp-rules", status_code=201)
+@router.post("/xp-rules", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_xp_rule(rule_data: XPRuleCreate, db: DbSession):
     """Create a new XP rule"""
     try:
@@ -916,7 +912,7 @@ async def create_xp_rule(rule_data: XPRuleCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/xp-rules/{rule_id}")
+@router.get("/xp-rules/{rule_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_xp_rule(rule_id: str, db: DbSession):
     """Get an XP rule by ID"""
     try:
@@ -933,7 +929,7 @@ async def get_xp_rule(rule_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/xp-rules/{rule_id}")
+@router.put("/xp-rules/{rule_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: DbSession):
     """Update an XP rule"""
     try:
@@ -954,7 +950,7 @@ async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/xp-rules/{rule_id}")
+@router.delete("/xp-rules/{rule_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_xp_rule(rule_id: str, db: DbSession):
     """Delete an XP rule"""
     try:
@@ -973,7 +969,7 @@ async def delete_xp_rule(rule_id: str, db: DbSession):
 
 # ========== QUESTS CRUD ENDPOINTS ==========
 
-@router.post("/quests-crud", status_code=201)
+@router.post("/quests-crud", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_quest(quest_data: QuestCreate, db: DbSession):
     """Create a new quest"""
     try:
@@ -988,7 +984,7 @@ async def create_quest(quest_data: QuestCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/quests-crud/{quest_id}")
+@router.get("/quests-crud/{quest_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_quest(quest_id: int, db: DbSession):
     """Get a quest by ID"""
     try:
@@ -1005,7 +1001,7 @@ async def get_quest(quest_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/quests-crud/{quest_id}")
+@router.put("/quests-crud/{quest_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_quest(quest_id: int, quest_data: QuestUpdate, db: DbSession):
     """Update a quest"""
     try:
@@ -1026,7 +1022,7 @@ async def update_quest(quest_id: int, quest_data: QuestUpdate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/quests-crud/{quest_id}")
+@router.delete("/quests-crud/{quest_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_quest(quest_id: int, db: DbSession):
     """Delete a quest"""
     try:
@@ -1045,7 +1041,7 @@ async def delete_quest(quest_id: int, db: DbSession):
 
 # ========== USER QUESTS CRUD ENDPOINTS ==========
 
-@router.post("/user-quests-crud", status_code=201)
+@router.post("/user-quests-crud", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_user_quest(user_quest_data: UserQuestCreate, db: DbSession):
     """Create a new user quest progress"""
     try:
@@ -1060,7 +1056,7 @@ async def create_user_quest(user_quest_data: UserQuestCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/user-quests-crud/{user_quest_id}")
+@router.get("/user-quests-crud/{user_quest_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_user_quest(user_quest_id: int, db: DbSession):
     """Get a user quest by ID"""
     try:
@@ -1077,7 +1073,7 @@ async def get_user_quest(user_quest_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/user-quests-crud/{user_quest_id}")
+@router.put("/user-quests-crud/{user_quest_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate, db: DbSession):
     """Update a user quest progress"""
     try:
@@ -1098,7 +1094,7 @@ async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/user-quests-crud/{user_quest_id}")
+@router.delete("/user-quests-crud/{user_quest_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_user_quest(user_quest_id: int, db: DbSession):
     """Delete a user quest progress"""
     try:
@@ -1117,7 +1113,7 @@ async def delete_user_quest(user_quest_id: int, db: DbSession):
 
 # ========== GAME STATUSES CRUD ENDPOINTS ==========
 
-@router.post("/game-statuses", status_code=201)
+@router.post("/game-statuses", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_game_status(status_data: GameStatusCreate, db: DbSession):
     """Create a new game status"""
     try:
@@ -1132,7 +1128,7 @@ async def create_game_status(status_data: GameStatusCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/game-statuses/{status_id}")
+@router.get("/game-statuses/{status_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_game_status(status_id: int, db: DbSession):
     """Get a game status by ID"""
     try:
@@ -1149,7 +1145,7 @@ async def get_game_status(status_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/game-statuses/{status_id}")
+@router.put("/game-statuses/{status_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: DbSession):
     """Update a game status"""
     try:
@@ -1170,7 +1166,7 @@ async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: 
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/game-statuses/{status_id}")
+@router.delete("/game-statuses/{status_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_game_status(status_id: int, db: DbSession):
     """Delete a game status"""
     try:
@@ -1189,7 +1185,7 @@ async def delete_game_status(status_id: int, db: DbSession):
 
 # ========== USER COINS CRUD ENDPOINTS ==========
 
-@router.post("/user-coins", status_code=201)
+@router.post("/user-coins", status_code=201, responses={500: {"description": "Internal server error"}})
 async def create_user_coins(coins_data: UserCoinsCreate, db: DbSession):
     """Create a new user coins record"""
     try:
@@ -1200,7 +1196,7 @@ async def create_user_coins(coins_data: UserCoinsCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/user-coins/{user_id}")
+@router.get("/user-coins/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_user_coins(user_id: str, db: DbSession):
     """Get user coins by user ID"""
     try:
@@ -1215,7 +1211,7 @@ async def get_user_coins(user_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/user-coins/{user_id}")
+@router.put("/user-coins/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: DbSession):
     """Update user coins"""
     try:
@@ -1240,7 +1236,7 @@ async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: DbSes
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/user-coins/{user_id}")
+@router.delete("/user-coins/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_user_coins(user_id: str, db: DbSession):
     """Delete user coins record"""
     try:
@@ -1261,7 +1257,7 @@ async def delete_user_coins(user_id: str, db: DbSession):
 
 # ========== COIN TRANSACTIONS CRUD ENDPOINTS ==========
 
-@router.get("/coin-transactions/{transaction_id}")
+@router.get("/coin-transactions/{transaction_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_coin_transaction(transaction_id: str, db: DbSession):
     """Get coin transaction by ID"""
     try:
@@ -1276,7 +1272,7 @@ async def get_coin_transaction(transaction_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/coin-transactions/{transaction_id}")
+@router.put("/coin-transactions/{transaction_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionUpdate, db: DbSession):
     """Update coin transaction (description only)"""
     try:
@@ -1298,7 +1294,7 @@ async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionU
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/coin-transactions/{transaction_id}")
+@router.delete("/coin-transactions/{transaction_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_coin_transaction(transaction_id: str, db: DbSession):
     """Delete coin transaction (use with caution - will affect balance calculations)"""
     try:
@@ -1320,7 +1316,7 @@ async def delete_coin_transaction(transaction_id: str, db: DbSession):
 
 # ============ LEVEL MILESTONES ENDPOINTS ============
 
-@router.get("/level-milestones")
+@router.get("/level-milestones", responses={500: {"description": "Internal server error"}})
 async def get_level_milestones(db: DbSession):
     """Get all level milestones"""
     try:
@@ -1331,7 +1327,7 @@ async def get_level_milestones(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/level-milestones")
+@router.post("/level-milestones", responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_level_milestone(milestone_data: dict, db: DbSession):
     """Create new level milestone"""
     try:
@@ -1366,7 +1362,7 @@ async def create_level_milestone(milestone_data: dict, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/level-milestones/{level}")
+@router.get("/level-milestones/{level}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_level_milestone(level: int, db: DbSession):
     """Get level milestone by level"""
     try:
@@ -1381,7 +1377,7 @@ async def get_level_milestone(level: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/level-milestones/{level}")
+@router.put("/level-milestones/{level}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_level_milestone(level: int, milestone_data: dict, db: DbSession):
     """Update level milestone"""
     try:
@@ -1414,7 +1410,7 @@ async def update_level_milestone(level: int, milestone_data: dict, db: DbSession
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/level-milestones/{level}")
+@router.delete("/level-milestones/{level}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_level_milestone(level: int, db: DbSession):
     """Delete level milestone"""
     try:
@@ -1435,7 +1431,7 @@ async def delete_level_milestone(level: int, db: DbSession):
 
 # ============ LEVEL REWARDS ENDPOINTS ============
 
-@router.get("/level-rewards")
+@router.get("/level-rewards", responses={500: {"description": "Internal server error"}})
 async def get_level_rewards(db: DbSession):
     """Get all level rewards"""
     try:
@@ -1446,7 +1442,7 @@ async def get_level_rewards(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/level-rewards")
+@router.post("/level-rewards", responses={500: {"description": "Internal server error"}})
 async def create_level_reward(reward_data: dict, db: DbSession):
     """Create new level reward"""
     try:
@@ -1479,7 +1475,7 @@ async def create_level_reward(reward_data: dict, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/level-rewards/{reward_id}")
+@router.get("/level-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_level_reward(reward_id: str, db: DbSession):
     """Get level reward by ID"""
     try:
@@ -1494,7 +1490,7 @@ async def get_level_reward(reward_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/level-rewards/{reward_id}")
+@router.put("/level-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_level_reward(reward_id: str, reward_data: dict, db: DbSession):
     """Update level reward"""
     try:
@@ -1527,7 +1523,7 @@ async def update_level_reward(reward_id: str, reward_data: dict, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/level-rewards/{reward_id}")
+@router.delete("/level-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_level_reward(reward_id: str, db: DbSession):
     """Delete level reward"""
     try:
@@ -1548,7 +1544,7 @@ async def delete_level_reward(reward_id: str, db: DbSession):
 
 # ============ WEEKLY LEADERBOARDS ENDPOINTS ============
 
-@router.get("/weekly-leaderboards")
+@router.get("/weekly-leaderboards", responses={500: {"description": "Internal server error"}})
 async def get_weekly_leaderboards(db: DbSession):
     """Get all weekly leaderboard entries"""
     try:
@@ -1562,7 +1558,7 @@ async def get_weekly_leaderboards(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/weekly-leaderboards/{entry_id}")
+@router.get("/weekly-leaderboards/{entry_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_weekly_leaderboard_entry(entry_id: str, db: DbSession):
     """Get weekly leaderboard entry by ID"""
     try:
@@ -1577,7 +1573,7 @@ async def get_weekly_leaderboard_entry(entry_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/weekly-leaderboards/{entry_id}")
+@router.put("/weekly-leaderboards/{entry_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: DbSession):
     """Update weekly leaderboard entry"""
     try:
@@ -1599,7 +1595,7 @@ async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: D
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/weekly-leaderboards/{entry_id}")
+@router.delete("/weekly-leaderboards/{entry_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_weekly_leaderboard_entry(entry_id: str, db: DbSession):
     """Delete weekly leaderboard entry"""
     try:
@@ -1620,7 +1616,7 @@ async def delete_weekly_leaderboard_entry(entry_id: str, db: DbSession):
 
 # ============ LEADERBOARD REWARDS ENDPOINTS ============
 
-@router.get("/leaderboard-rewards")
+@router.get("/leaderboard-rewards", responses={500: {"description": "Internal server error"}})
 async def get_leaderboard_rewards(db: DbSession):
     """Get all leaderboard rewards"""
     try:
@@ -1631,7 +1627,7 @@ async def get_leaderboard_rewards(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/leaderboard-rewards")
+@router.post("/leaderboard-rewards", responses={500: {"description": "Internal server error"}})
 async def create_leaderboard_reward(reward_data: dict, db: DbSession):
     """Create new leaderboard reward"""
     try:
@@ -1665,7 +1661,7 @@ async def create_leaderboard_reward(reward_data: dict, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/leaderboard-rewards/{reward_id}")
+@router.get("/leaderboard-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_leaderboard_reward(reward_id: int, db: DbSession):
     """Get leaderboard reward by ID"""
     try:
@@ -1680,7 +1676,7 @@ async def get_leaderboard_reward(reward_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/leaderboard-rewards/{reward_id}")
+@router.put("/leaderboard-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: DbSession):
     """Update leaderboard reward"""
     try:
@@ -1716,7 +1712,7 @@ async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: DbSes
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/leaderboard-rewards/{reward_id}")
+@router.delete("/leaderboard-rewards/{reward_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_leaderboard_reward(reward_id: str, db: DbSession):
     """Delete leaderboard reward"""
     try:
@@ -1737,7 +1733,7 @@ async def delete_leaderboard_reward(reward_id: str, db: DbSession):
 
 # ============ WEEKLY WINNERS ENDPOINTS ============
 
-@router.get("/weekly-winners")
+@router.get("/weekly-winners", responses={500: {"description": "Internal server error"}})
 async def get_weekly_winners(db: DbSession):
     """Get all weekly winners"""
     try:
@@ -1748,7 +1744,7 @@ async def get_weekly_winners(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/weekly-winners/{winner_id}")
+@router.get("/weekly-winners/{winner_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_weekly_winner(winner_id: int, db: DbSession):
     """Get weekly winner by ID"""
     try:
@@ -1763,7 +1759,7 @@ async def get_weekly_winner(winner_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/weekly-winners/{winner_id}")
+@router.put("/weekly-winners/{winner_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_weekly_winner(winner_id: str, winner_data: dict, db: DbSession):
     """Update weekly winner (mainly for marking reward_sent)"""
     try:
@@ -1788,7 +1784,7 @@ async def update_weekly_winner(winner_id: str, winner_data: dict, db: DbSession)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/weekly-winners/{winner_id}")
+@router.delete("/weekly-winners/{winner_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_weekly_winner(winner_id: str, db: DbSession):
     """Delete weekly winner"""
     try:
@@ -1809,7 +1805,7 @@ async def delete_weekly_winner(winner_id: str, db: DbSession):
 
 # ============ DAILY LOGIN REWARDS ENDPOINTS ============
 
-@router.get("/user_login_streak")
+@router.get("/user_login_streak", responses={500: {"description": "Internal server error"}})
 async def get_user_login_streaks(db: DbSession):
     """Get all user login streaks"""
     try:
@@ -1820,7 +1816,7 @@ async def get_user_login_streaks(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/user_login_streak/{user_id}")
+@router.get("/user_login_streak/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_user_login_streak(user_id: str, db: DbSession):
     """Get user login streak by user ID"""
     try:
@@ -1835,7 +1831,7 @@ async def get_user_login_streak(user_id: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/user_login_streak/{user_id}")
+@router.put("/user_login_streak/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_user_login_streak(user_id: str, streak_data: dict, db: DbSession):
     """Update user login streak"""
     try:
@@ -1863,7 +1859,7 @@ async def update_user_login_streak(user_id: str, streak_data: dict, db: DbSessio
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/user_login_streak/{user_id}")
+@router.delete("/user_login_streak/{user_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_user_login_streak(user_id: str, db: DbSession):
     """Delete user login streak"""
     try:
@@ -1884,7 +1880,7 @@ async def delete_user_login_streak(user_id: str, db: DbSession):
 
 # ============ DAILY LOGIN REWARD CONFIG ENDPOINTS ============
 
-@router.get("/daily_login_reward_config")
+@router.get("/daily_login_reward_config", responses={500: {"description": "Internal server error"}})
 async def get_daily_login_reward_configs(db: DbSession):
     """Get all daily login reward configurations"""
     try:
@@ -1895,7 +1891,7 @@ async def get_daily_login_reward_configs(db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/daily_login_reward_config/{day}")
+@router.get("/daily_login_reward_config/{day}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_daily_login_reward_config(day: int, db: DbSession):
     """Get daily login reward configuration by day"""
     try:
@@ -1910,7 +1906,7 @@ async def get_daily_login_reward_config(day: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/daily_login_reward_config/{day}")
+@router.put("/daily_login_reward_config/{day}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_daily_login_reward_config(day: int, config_data: dict, db: DbSession):
     """Update daily login reward configuration"""
     try:
@@ -1938,7 +1934,7 @@ async def update_daily_login_reward_config(day: int, config_data: dict, db: DbSe
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/daily_login_reward_config")
+@router.post("/daily_login_reward_config", responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_daily_login_reward_config(config_data: dict, db: DbSession):
     """Create new daily login reward configuration"""
     try:
@@ -1971,7 +1967,7 @@ async def create_daily_login_reward_config(config_data: dict, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/daily_login_reward_config/{day}")
+@router.delete("/daily_login_reward_config/{day}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_daily_login_reward_config(day: int, db: DbSession):
     """Delete daily login reward configuration"""
     try:
@@ -1992,7 +1988,7 @@ async def delete_daily_login_reward_config(day: int, db: DbSession):
 
 # ========== CAMPAIGNS CRUD ENDPOINTS ==========
 
-@router.post("/campaigns", status_code=201)
+@router.post("/campaigns", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_campaign(campaign_data: CampaignCreate, db: DbSession):
     """Create a new campaign"""
     try:
@@ -2007,7 +2003,7 @@ async def create_campaign(campaign_data: CampaignCreate, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/campaigns/{campaign_id}")
+@router.get("/campaigns/{campaign_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_campaign(campaign_id: int, db: DbSession):
     """Get a campaign by ID"""
     try:
@@ -2024,7 +2020,7 @@ async def get_campaign(campaign_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/campaigns/{campaign_id}")
+@router.put("/campaigns/{campaign_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: DbSession):
     """Update a campaign"""
     try:
@@ -2045,7 +2041,7 @@ async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: D
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/campaigns/{campaign_id}")
+@router.delete("/campaigns/{campaign_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_campaign(campaign_id: int, db: DbSession):
     """Delete a campaign"""
     try:
@@ -2064,7 +2060,7 @@ async def delete_campaign(campaign_id: int, db: DbSession):
 
 # ========== PLATFORM CONFIG CRUD ENDPOINTS ==========
 
-@router.post("/platform-config", status_code=201)
+@router.post("/platform-config", status_code=201, responses={400: {"description": "Bad request"}, 409: {"description": "Error 409"}, 500: {"description": "Internal server error"}})
 async def create_platform_config(request: Request, db: DbSession):
     """Create a new platform config entry"""
     try:
@@ -2092,7 +2088,7 @@ async def create_platform_config(request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/platform-config/{key}")
+@router.get("/platform-config/{key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_platform_config(key: str, db: DbSession):
     """Get a platform config entry by key"""
     try:
@@ -2106,7 +2102,7 @@ async def get_platform_config(key: str, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/platform-config/{key}")
+@router.put("/platform-config/{key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_platform_config(key: str, request: Request, db: DbSession):
     """Update a platform config entry"""
     try:
@@ -2130,7 +2126,7 @@ async def update_platform_config(key: str, request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/platform-config/{key}")
+@router.delete("/platform-config/{key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_platform_config(key: str, db: DbSession):
     """Delete a platform config entry"""
     try:
@@ -2150,7 +2146,7 @@ async def delete_platform_config(key: str, db: DbSession):
 
 # ========== PUSH SUBSCRIPTIONS CRUD ENDPOINTS ==========
 
-@router.post("/push-subscriptions", status_code=201)
+@router.post("/push-subscriptions", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_push_subscription(request: Request, db: DbSession):
     """Create a new push subscription"""
     try:
@@ -2179,7 +2175,7 @@ async def create_push_subscription(request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/push-subscriptions/{subscription_id}")
+@router.get("/push-subscriptions/{subscription_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_push_subscription(subscription_id: int, db: DbSession):
     """Get a push subscription by ID"""
     try:
@@ -2193,7 +2189,7 @@ async def get_push_subscription(subscription_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/push-subscriptions/{subscription_id}")
+@router.put("/push-subscriptions/{subscription_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_push_subscription(subscription_id: int, request: Request, db: DbSession):
     """Update a push subscription"""
     try:
@@ -2216,7 +2212,7 @@ async def update_push_subscription(subscription_id: int, request: Request, db: D
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/push-subscriptions/{subscription_id}")
+@router.delete("/push-subscriptions/{subscription_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_push_subscription(subscription_id: int, db: DbSession):
     """Delete a push subscription"""
     try:
@@ -2236,7 +2232,7 @@ async def delete_push_subscription(subscription_id: int, db: DbSession):
 
 # ========== COMMUNITY MESSAGES CRUD ENDPOINTS ==========
 
-@router.delete("/community-messages/{message_id}")
+@router.delete("/community-messages/{message_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_community_message(message_id: int, db: DbSession):
     """Delete a community chat message"""
     try:
@@ -2262,7 +2258,7 @@ async def delete_community_message(message_id: int, db: DbSession):
 
 # ========== GAME PROGRESS CRUD ENDPOINTS ==========
 
-@router.post("/game-progress", status_code=201)
+@router.post("/game-progress", status_code=201, responses={400: {"description": "Bad request"}, 409: {"description": "Error 409"}, 500: {"description": "Internal server error"}})
 async def create_game_progress(request: Request, db: DbSession):
     """Create a new game progress entry"""
     try:
@@ -2293,7 +2289,7 @@ async def create_game_progress(request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/game-progress/{progress_id}")
+@router.get("/game-progress/{progress_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_game_progress(progress_id: int, db: DbSession):
     """Get a game progress entry by ID"""
     try:
@@ -2307,7 +2303,7 @@ async def get_game_progress(progress_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/game-progress/{progress_id}")
+@router.put("/game-progress/{progress_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_game_progress(progress_id: int, request: Request, db: DbSession):
     """Update a game progress entry"""
     try:
@@ -2330,7 +2326,7 @@ async def update_game_progress(progress_id: int, request: Request, db: DbSession
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/game-progress/{progress_id}")
+@router.delete("/game-progress/{progress_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_game_progress(progress_id: int, db: DbSession):
     """Delete a game progress entry"""
     try:
@@ -2350,7 +2346,7 @@ async def delete_game_progress(progress_id: int, db: DbSession):
 
 # ========== USER CONNECTIONS CRUD ENDPOINTS ==========
 
-@router.post("/user-connections", status_code=201)
+@router.post("/user-connections", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_user_connection(request: Request, db: DbSession):
     """Create a new user connection"""
     try:
@@ -2380,7 +2376,7 @@ async def create_user_connection(request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/user-connections/{connection_id}")
+@router.get("/user-connections/{connection_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_user_connection(connection_id: int, db: DbSession):
     """Get a user connection by ID"""
     try:
@@ -2394,7 +2390,7 @@ async def get_user_connection(connection_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/user-connections/{connection_id}")
+@router.put("/user-connections/{connection_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_user_connection(connection_id: int, request: Request, db: DbSession):
     """Update a user connection"""
     try:
@@ -2419,7 +2415,7 @@ async def update_user_connection(connection_id: int, request: Request, db: DbSes
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/user-connections/{connection_id}")
+@router.delete("/user-connections/{connection_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_user_connection(connection_id: int, db: DbSession):
     """Delete a user connection"""
     try:
@@ -2439,7 +2435,7 @@ async def delete_user_connection(connection_id: int, db: DbSession):
 
 # ========== PRIVATE MESSAGES CRUD ENDPOINTS ==========
 
-@router.post("/private-messages", status_code=201)
+@router.post("/private-messages", status_code=201, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_private_message_admin(request: Request, db: DbSession):
     """Create a new private message (admin)"""
     try:
@@ -2472,7 +2468,7 @@ async def create_private_message_admin(request: Request, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/private-messages/{message_id}")
+@router.get("/private-messages/{message_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_private_message_admin(message_id: int, db: DbSession):
     """Get a private message by ID"""
     try:
@@ -2486,7 +2482,7 @@ async def get_private_message_admin(message_id: int, db: DbSession):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/private-messages/{message_id}")
+@router.put("/private-messages/{message_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_private_message_admin(message_id: int, request: Request, db: DbSession):
     """Update a private message"""
     try:
@@ -2509,7 +2505,7 @@ async def update_private_message_admin(message_id: int, request: Request, db: Db
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/private-messages/{message_id}")
+@router.delete("/private-messages/{message_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_private_message_admin(message_id: int, db: DbSession):
     """Delete a private message"""
     try:

@@ -111,7 +111,7 @@ export class InputHandler {
         
         const dx = this.pointerX - this.startX;
         const dy = this.pointerY - this.startY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         
         if (!this.isDragging && distance > this.dragThreshold) {
             this.isDragging = true;

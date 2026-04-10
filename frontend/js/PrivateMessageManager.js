@@ -106,98 +106,77 @@ class PrivateMessageAPI {
 
     // ─── REST ───
 
-    async fetchConnections() {
-        const res = await fetch(`${this.apiBase}/connections?user_id=${encodeURIComponent(this.userId)}`);
+    /** GET that returns `fallback` on failure. */
+    async _fetchJson(url, fallback) {
+        const res = await fetch(url);
+        if (!res.ok) return fallback;
+        return res.json();
+    }
+
+    /** POST / DELETE that throws on failure. */
+    async _mutateJson(url, method, errorLabel) {
+        const res = await fetch(url, { method });
         if (!res.ok) {
-            return [];
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.detail || errorLabel);
         }
         return res.json();
+    }
+
+    async fetchConnections() {
+        return this._fetchJson(`${this.apiBase}/connections?user_id=${encodeURIComponent(this.userId)}`, []);
     }
 
     async fetchPendingRequests() {
-        const res = await fetch(`${this.apiBase}/connections/pending?user_id=${encodeURIComponent(this.userId)}`);
-        if (!res.ok) {
-            return [];
-        }
-        return res.json();
+        return this._fetchJson(`${this.apiBase}/connections/pending?user_id=${encodeURIComponent(this.userId)}`, []);
     }
 
     async fetchConversation(peerId) {
-        const res = await fetch(
-            `${this.apiBase}/conversation?user_id=${encodeURIComponent(this.userId)}&peer_id=${encodeURIComponent(peerId)}`
+        return this._fetchJson(
+            `${this.apiBase}/conversation?user_id=${encodeURIComponent(this.userId)}&peer_id=${encodeURIComponent(peerId)}`, []
         );
-        if (!res.ok) {
-            return [];
-        }
-        return res.json();
     }
 
     async fetchConnectionStatus(otherId) {
-        const res = await fetch(
-            `${this.apiBase}/connections/status?user_id=${encodeURIComponent(this.userId)}&other_id=${encodeURIComponent(otherId)}`
+        return this._fetchJson(
+            `${this.apiBase}/connections/status?user_id=${encodeURIComponent(this.userId)}&other_id=${encodeURIComponent(otherId)}`,
+            { status: 'none' }
         );
-        if (!res.ok) {
-            return { status: 'none' };
-        }
-        return res.json();
     }
 
     async requestConnection(receiverId) {
-        const res = await fetch(
+        return this._mutateJson(
             `${this.apiBase}/connections/request?requester_id=${encodeURIComponent(this.userId)}&receiver_id=${encodeURIComponent(receiverId)}`,
-            { method: 'POST' }
+            'POST', 'Request failed'
         );
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || 'Request failed');
-        }
-        return res.json();
     }
 
     async acceptConnection(connectionId) {
-        const res = await fetch(
+        return this._mutateJson(
             `${this.apiBase}/connections/${connectionId}/accept?user_id=${encodeURIComponent(this.userId)}`,
-            { method: 'POST' }
+            'POST', 'Accept failed'
         );
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || 'Accept failed');
-        }
-        return res.json();
     }
 
     async rejectConnection(connectionId) {
-        const res = await fetch(
+        return this._mutateJson(
             `${this.apiBase}/connections/${connectionId}/reject?user_id=${encodeURIComponent(this.userId)}`,
-            { method: 'POST' }
+            'POST', 'Reject failed'
         );
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || 'Reject failed');
-        }
-        return res.json();
     }
 
     async disconnectConnection(connectionId) {
-        const res = await fetch(
+        return this._mutateJson(
             `${this.apiBase}/connections/${connectionId}?user_id=${encodeURIComponent(this.userId)}`,
-            { method: 'DELETE' }
+            'DELETE', 'Disconnect failed'
         );
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.detail || 'Disconnect failed');
-        }
-        return res.json();
     }
 
     async fetchUnreadCount() {
-        const res = await fetch(
-            `${this.apiBase}/unread-count?user_id=${encodeURIComponent(this.userId)}`
+        return this._fetchJson(
+            `${this.apiBase}/unread-count?user_id=${encodeURIComponent(this.userId)}`,
+            { unread: 0 }
         );
-        if (!res.ok) {
-            return { unread: 0 };
-        }
-        return res.json();
     }
 
     // ─── Private helpers ───
@@ -434,17 +413,10 @@ class PrivateMessageManager {
             const info = document.createElement('div');
             info.className = 'pm-pending-info';
 
-            const avatar = document.createElement('img');
-            avatar.className = 'pm-pending-avatar pm-clickable-avatar';
-            avatar.src = `https://steemitimages.com/u/${encodeURIComponent(req.requester_username || 'anonymous')}/avatar/small`;
-            avatar.alt = req.requester_username || '';
-            avatar.title = `View profile of ${req.requester_username || ''}`;
-            avatar.addEventListener('error', () => { avatar.style.display = 'none'; });
-            avatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                window.location.hash = `#/user/${encodeURIComponent(req.requester_id)}`;
-            });
-            info.appendChild(avatar);
+            info.appendChild(this._buildSteemAvatar(req.requester_username, {
+                className: 'pm-pending-avatar',
+                profileId: req.requester_id,
+            }));
 
             const name = document.createElement('span');
             name.className = 'pm-pending-name';
@@ -499,17 +471,10 @@ class PrivateMessageManager {
             item.dataset.peerUsername = conn.peer_username || '';
             item.dataset.connectionId = conn.id;
 
-            const avatar = document.createElement('img');
-            avatar.className = 'pm-connection-avatar pm-clickable-avatar';
-            avatar.src = `https://steemitimages.com/u/${encodeURIComponent(conn.peer_username || 'anonymous')}/avatar/small`;
-            avatar.alt = conn.peer_username || '';
-            avatar.title = `View profile of ${conn.peer_username || ''}`;
-            avatar.addEventListener('error', () => { avatar.style.display = 'none'; });
-            avatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                window.location.hash = `#/user/${encodeURIComponent(conn.peer_id)}`;
-            });
-            item.appendChild(avatar);
+            item.appendChild(this._buildSteemAvatar(conn.peer_username, {
+                className: 'pm-connection-avatar',
+                profileId: conn.peer_id,
+            }));
 
             const name = document.createElement('span');
             name.className = 'pm-connection-name';
@@ -1085,6 +1050,31 @@ class PrivateMessageManager {
 
     // ─── Utilities ───
 
+    /**
+     * Build a Steem avatar <img> element.
+     * @param {string} username
+     * @param {Object} [opts]
+     * @param {string} opts.className      - CSS class(es)
+     * @param {string} [opts.profileId]    - If set, avatar is clickable and navigates to user profile
+     * @returns {HTMLImageElement}
+     */
+    _buildSteemAvatar(username, { className = '', profileId = null } = {}) {
+        const avatar = document.createElement('img');
+        avatar.className = className;
+        avatar.src = `https://steemitimages.com/u/${encodeURIComponent(username || 'anonymous')}/avatar/small`;
+        avatar.alt = username || '';
+        avatar.addEventListener('error', () => { avatar.style.display = 'none'; });
+        if (profileId) {
+            avatar.classList.add('pm-clickable-avatar');
+            avatar.title = `View profile of ${username || ''}`;
+            avatar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.location.hash = `#/user/${encodeURIComponent(profileId)}`;
+            });
+        }
+        return avatar;
+    }
+
     _buildEmptyState(icon, text) {
         const wrapper = document.createElement('div');
         wrapper.className = 'pm-empty-state';
@@ -1116,12 +1106,9 @@ class PrivateMessageManager {
         profileLink.href = `#/user/${encodeURIComponent(peerId || peerUsername || '')}`;
         profileLink.title = `View profile of ${peerUsername || ''}`;
 
-        const avatar = document.createElement('img');
-        avatar.className = 'pm-chat-header-avatar';
-        avatar.src = `https://steemitimages.com/u/${encodeURIComponent(peerUsername || 'anonymous')}/avatar/small`;
-        avatar.alt = peerUsername || '';
-        avatar.addEventListener('error', () => { avatar.style.display = 'none'; });
-        profileLink.appendChild(avatar);
+        profileLink.appendChild(this._buildSteemAvatar(peerUsername, {
+            className: 'pm-chat-header-avatar',
+        }));
 
         const name = document.createElement('span');
         name.className = 'pm-chat-header-name';
@@ -1138,18 +1125,6 @@ class PrivateMessageManager {
         header.appendChild(disconnectBtn);
 
         return header;
-    }
-
-    _escapeHtml(text) {
-        if (!text) {
-            return '';
-        }
-        return String(text)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
     }
 
     _formatTime(timestamp) {

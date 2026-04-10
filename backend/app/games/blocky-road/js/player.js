@@ -177,14 +177,8 @@ class Player {
             .easing(TWEEN.Easing.Quadratic.InOut)
             .onUpdate(() => {
                 // Arc height calculation
-                const totalDistance = Math.sqrt(
-                    Math.pow(targetX - startPos.x, 2) + 
-                    Math.pow(targetZ - startPos.z, 2)
-                );
-                const currentDistance = Math.sqrt(
-                    Math.pow(this.mesh.position.x - startPos.x, 2) + 
-                    Math.pow(this.mesh.position.z - startPos.z, 2)
-                );
+                const totalDistance = Math.hypot(targetX - startPos.x, targetZ - startPos.z);
+                const currentDistance = Math.hypot(this.mesh.position.x - startPos.x, this.mesh.position.z - startPos.z);
                 const progress = currentDistance / totalDistance;
                 this.mesh.position.y = startPos.y + Math.sin(progress * Math.PI) * 0.8;
             })

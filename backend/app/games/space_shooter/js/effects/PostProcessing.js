@@ -44,7 +44,7 @@ class PostProcessing {
         const h = this.canvas.height;
         const cx = w / 2;
         const cy = h / 2;
-        const radius = Math.sqrt(cx * cx + cy * cy);
+        const radius = Math.hypot(cx, cy);
         
         this.vignetteGradient = this.ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
         this.vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');

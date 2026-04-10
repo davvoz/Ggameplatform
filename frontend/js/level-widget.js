@@ -1,6 +1,177 @@
 import AuthManager from './auth.js';
 
 /**
+ * Calculate XP data from level info, handling old/new backend field names.
+ */
+export function calculateXpData(levelInfo) {
+    const xpInLevel = levelInfo?.xp_in_level ?? (levelInfo?.current_xp - levelInfo?.xp_current_level || 0);
+    const xpRequiredForNext = levelInfo?.xp_required_for_next_level ?? levelInfo?.xp_needed_for_next ?? (levelInfo?.xp_next_level - levelInfo?.xp_current_level);
+    const xpToNext = levelInfo?.xp_to_next_level ?? Math.max(0, (xpRequiredForNext || 0) - xpInLevel);
+    return { xpInLevel, xpRequiredForNext, xpToNext };
+}
+
+/**
+ * Helper: create an element with optional className, textContent and children.
+ */
+function el(tag, className, textOrChildren) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (typeof textOrChildren === 'string') {
+        node.textContent = textOrChildren;
+    } else if (Array.isArray(textOrChildren)) {
+        for (const child of textOrChildren) {
+            if (child) node.appendChild(child);
+        }
+    }
+    return node;
+}
+
+/**
+ * Build the level card as a DOM element used by profile pages.
+ * Shared between ProfileRenderer and UserProfileRenderer.
+ * @returns {HTMLElement}
+ */
+export function buildLevelCardElement(levelInfo, totalXP) {
+    const color = levelInfo.color || '#6366f1';
+    const { xpToNext } = calculateXpData(levelInfo);
+    const progressPercent = levelInfo.progress_percent || 0;
+
+    // Card wrapper — set CSS custom property for dynamic color
+    const card = el('div', 'level-card');
+    card.style.setProperty('--lc-color', color);
+
+    // Header row (badge + level info)
+    const headerRow = el('div', 'level-card__header');
+    const badgeCircle = el('div', 'level-card__badge-circle', [
+        el('span', 'level-card__badge-icon', String(levelInfo.badge))
+    ]);
+    headerRow.appendChild(badgeCircle);
+
+    const infoCol = el('div', 'level-card__info', [
+        el('div', 'level-card__level-number', `Level ${levelInfo.current_level}`),
+        el('div', 'level-card__title', String(levelInfo.title))
+    ]);
+    headerRow.appendChild(infoCol);
+    card.appendChild(headerRow);
+
+    // Progress section
+    const progressSection = el('div', 'level-card__progress');
+    const progressHeader = el('div', 'level-card__progress-header', [
+        el('span', 'level-card__progress-label', 'Progress'),
+        el('span', 'level-card__progress-percent', `${progressPercent.toFixed(1)}%`)
+    ]);
+    progressSection.appendChild(progressHeader);
+
+    const progressTrack = el('div', 'level-card__progress-track');
+    const progressFill = el('div', 'level-card__progress-fill');
+    progressFill.style.width = `${progressPercent}%`;
+    progressTrack.appendChild(progressFill);
+    progressSection.appendChild(progressTrack);
+    card.appendChild(progressSection);
+
+    // Stats grid
+    const statsGrid = el('div', 'level-card__stats');
+
+    statsGrid.appendChild(el('div', 'level-card__stat', [
+        el('span', 'level-card__stat-label', '💰 Total XP'),
+        el('span', 'level-card__stat-value', totalXP.toFixed(0))
+    ]));
+
+    if (xpToNext > 0) {
+        statsGrid.appendChild(el('div', 'level-card__stat', [
+            el('span', 'level-card__stat-label', '🎯 Next lvl'),
+            el('span', 'level-card__stat-value--accent', xpToNext.toFixed(0))
+        ]));
+    } else {
+        statsGrid.appendChild(el('div', 'level-card__max-level', [
+            el('span', 'level-card__max-level-text', '🏆 MAX LEVEL')
+        ]));
+    }
+
+    card.appendChild(statsGrid);
+    return card;
+}
+
+/**
+ * Show a level-up modal/notification.
+ */
+export function showLevelUpModal(levelUpData) {
+    const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
+
+    const currentUser = AuthManager?.currentUser;
+    const isAnonymous = currentUser?.is_anonymous === true;
+
+    const modal = el('div', 'level-up-modal');
+
+    const content = el('div', `level-up-content ${is_milestone ? 'milestone' : ''}`.trim());
+
+    // Animation
+    const animation = el('div', 'level-up-animation');
+    animation.appendChild(el('div', 'level-up-rays'));
+    const badgeContainer = el('div', 'level-up-badge-container');
+    badgeContainer.appendChild(el('span', 'level-up-badge', String(badge)));
+    animation.appendChild(badgeContainer);
+    content.appendChild(animation);
+
+    // Title
+    content.appendChild(el('h2', 'level-up-title', '🎉 LEVEL UP! 🎉'));
+
+    // Levels
+    const levels = el('div', 'level-up-levels', [
+        el('span', 'old-level', String(old_level)),
+        el('span', 'level-arrow', '→'),
+        el('span', 'new-level', String(new_level))
+    ]);
+    content.appendChild(levels);
+
+    // New title
+    content.appendChild(el('div', 'level-up-new-title', String(title)));
+
+    // Milestone badge
+    if (is_milestone) {
+        content.appendChild(el('div', 'level-up-milestone-badge', '✨ MILESTONE ✨'));
+    }
+
+    // Reward
+    if (!isAnonymous && coins_awarded > 0) {
+        const reward = el('div', 'level-up-reward', [
+            el('span', 'reward-icon', '🪙'),
+            el('span', 'reward-amount', `+${coins_awarded} Coins`)
+        ]);
+        content.appendChild(reward);
+    }
+
+    // Close button
+    const closeBtn = el('button', 'level-up-close', 'Continue');
+    content.appendChild(closeBtn);
+
+    modal.appendChild(content);
+
+    if (!document.querySelector('#level-up-styles')) {
+        const link = document.createElement('link');
+        link.id = 'level-up-styles';
+        link.rel = 'stylesheet';
+        link.href = '/css/level-widget.css';
+        document.head.appendChild(link);
+    }
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    });
+
+    setTimeout(() => {
+        if (modal.parentElement) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    }, 5000);
+}
+
+/**
  * Level Widget - Display user level, progress, and handle level-up notifications
  */
 
@@ -44,35 +215,38 @@ class LevelWidget {
         if (!this.levelData) return;
 
         const { current_level, title, badge, progress_percent } = this.levelData;
+        const { xpInLevel, xpRequiredForNext } = calculateXpData(this.levelData);
 
-        // Support both old and new backend field names for per-level XP
-        const xp_in_level = this.levelData.xp_in_level ?? (this.levelData.current_xp - this.levelData.xp_current_level || 0);
-        const xp_required_for_next_level = this.levelData.xp_required_for_next_level ?? this.levelData.xp_needed_for_next ?? (this.levelData.xp_next_level - this.levelData.xp_current_level);
-        const xp_to_next_level = this.levelData.xp_to_next_level ?? Math.max(0, (xp_required_for_next_level || 0) - xp_in_level);
+        const widget = el('div', 'level-widget');
 
-        const html = `
-            <div class="level-widget">
-                <div class="level-header">
-                    <span class="level-badge">${badge}</span>
-                    <div class="level-info">
-                        <div class="level-number">Livello ${current_level}</div>
-                        <div class="level-title">${title}</div>
-                    </div>
-                </div>
-                <div class="level-progress-container">
-                    <div class="level-progress-bar">
-                        <div class="level-progress-fill" style="width: ${progress_percent}%"></div>
-                    </div>
-                    <div class="level-progress-text">${Math.round(xp_in_level)} / ${Math.round(xp_required_for_next_level)} XP</div>
-                </div>
-            </div>
-        `;
+        // Header
+        const header = el('div', 'level-header', [
+            el('span', 'level-badge', String(badge)),
+            el('div', 'level-info', [
+                el('div', 'level-number', `Livello ${current_level}`),
+                el('div', 'level-title', String(title))
+            ])
+        ]);
+        widget.appendChild(header);
+
+        // Progress
+        const progressContainer = el('div', 'level-progress-container');
+        const progressBar = el('div', 'level-progress-bar');
+        const progressFill = el('div', 'level-progress-fill');
+        progressFill.style.width = `${progress_percent}%`;
+        progressBar.appendChild(progressFill);
+        progressContainer.appendChild(progressBar);
+        progressContainer.appendChild(
+            el('div', 'level-progress-text', `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`)
+        );
+        widget.appendChild(progressContainer);
 
         if (this.container) {
-            this.container.innerHTML = html;
+            this.container.textContent = '';
+            this.container.appendChild(widget);
         }
 
-        return html;
+        return widget;
     }
 
     /**
@@ -97,59 +271,7 @@ class LevelWidget {
      * Show level-up modal/notification
      */
     showLevelUpNotification(levelUpData) {
-        const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
-
-        // Check if user is anonymous
-        const currentUser = AuthManager?.currentUser;
-        const isAnonymous = currentUser?.is_anonymous === true;
-
-        const modal = document.createElement('div');
-        modal.className = 'level-up-modal';
-        modal.innerHTML = `
-            <div class="level-up-content ${is_milestone ? 'milestone' : ''}">
-                <div class="level-up-animation">
-                    <div class="level-up-rays"></div>
-                    <div class="level-up-badge-container">
-                        <span class="level-up-badge">${badge}</span>
-                    </div>
-                </div>
-                <h2 class="level-up-title">🎉 LEVEL UP! 🎉</h2>
-                <div class="level-up-levels">
-                    <span class="old-level">${old_level}</span>
-                    <span class="level-arrow">→</span>
-                    <span class="new-level">${new_level}</span>
-                </div>
-                <div class="level-up-new-title">${title}</div>
-                ${is_milestone ? '<div class="level-up-milestone-badge">✨ MILESTONE ✨</div>' : ''}
-                ${!isAnonymous && coins_awarded > 0 ? `
-                    <div class="level-up-reward">
-                        <span class="reward-icon">🪙</span>
-                        <span class="reward-amount">+${coins_awarded} Coins</span>
-                    </div>
-                ` : ''}
-                <button class="level-up-close">Continua</button>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        // Trigger animation
-        setTimeout(() => modal.classList.add('show'), 10);
-
-        // Close handler
-        const closeBtn = modal.querySelector('.level-up-close');
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        });
-
-        // Auto-close after 5 seconds
-        setTimeout(() => {
-            if (modal.parentElement) {
-                modal.classList.remove('show');
-                setTimeout(() => modal.remove(), 300);
-            }
-        }, 5000);
+        showLevelUpModal(levelUpData);
     }
 }
 

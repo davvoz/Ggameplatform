@@ -2387,7 +2387,7 @@ class Game {
         return {
             dx,
             dy,
-            distance: Math.sqrt(dx * dx + dy * dy)
+            distance: Math.hypot(dx, dy)
         };
     }
 
@@ -3809,7 +3809,7 @@ class Game {
                     if (enemy.type === 'voidMine') {
                         const pullDx = enemy.x - this.player.x;
                         const pullDy = enemy.y - this.player.y;
-                        const pullLen = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
+                        const pullLen = Math.hypot(pullDx, pullDy) || 1;
                         this.player.x += (pullDx / pullLen) * 60;
                         this.player.y += (pullDy / pullLen) * 60;
                     }
@@ -5264,7 +5264,7 @@ class Game {
                 const segJags = arc.jags[s];
                 const dx = x2 - x1;
                 const dy = y2 - y1;
-                const len = Math.sqrt(dx * dx + dy * dy);
+                const len = Math.hypot(dx, dy);
                 if (len < 1) continue;
                 const nx = -dy / len;
                 const ny = dx / len;
@@ -5852,11 +5852,11 @@ class Game {
                 // Push outward from center + zigzag
                 const adx = mx - cx;
                 const ady = my - cy;
-                const adist = Math.sqrt(adx * adx + ady * ady) || 1;
+                const adist = Math.hypot(adx, ady) || 1;
                 const push = Math.sin(t * 6 + s * 2 + i) * 20;
                 const zigzag = Math.sin(t * 14 + s * 4 + i * 3) * 8;
-                const apx = -(e2.endY - e1.endY) / (Math.sqrt((e2.endX - e1.endX) ** 2 + (e2.endY - e1.endY) ** 2) || 1);
-                const apy = (e2.endX - e1.endX) / (Math.sqrt((e2.endX - e1.endX) ** 2 + (e2.endY - e1.endY) ** 2) || 1);
+                const apx = -(e2.endY - e1.endY) / (Math.hypot(e2.endX - e1.endX, e2.endY - e1.endY) || 1);
+                const apy = (e2.endX - e1.endX) / (Math.hypot(e2.endX - e1.endX, e2.endY - e1.endY) || 1);
                 ctx.lineTo(
                     mx + (adx / adist) * push + apx * zigzag,
                     my + (ady / adist) * push + apy * zigzag
@@ -6799,7 +6799,7 @@ class Game {
                 if (keys['d'] || keys['arrowright']) dx += 1;
 
                 if (dx !== 0 || dy !== 0) {
-                    const len = Math.sqrt(dx * dx + dy * dy);
+                    const len = Math.hypot(dx, dy);
                     this.input.movement.x = dx / len;
                     this.input.movement.y = dy / len;
                 } else {
@@ -6874,7 +6874,7 @@ class Game {
 
             const dx = touch.clientX - centerX;
             const dy = touch.clientY - centerY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const dist = Math.hypot(dx, dy);
             const maxDist = 50;
 
             if (dist > 0) {

@@ -10,7 +10,7 @@ export class CollisionSystem {
     static checkBallCharacter(ball, character) {
         const dx = ball.x - character.x;
         const dy = ball.y - character.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         const minDist = ball.radius + character.hitboxRadius;
 
         if (dist >= minDist) return false;
@@ -61,7 +61,7 @@ export class CollisionSystem {
 
         const dx = ball.x - powerUp.x;
         const dy = ball.y - powerUp.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist < ball.radius + powerUp.radius) {
             powerUp.collect();
@@ -79,7 +79,7 @@ export class CollisionSystem {
 
         const dx = character.x - powerUp.x;
         const dy = character.y - powerUp.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
 
         if (dist < character.hitboxRadius + powerUp.radius) {
             powerUp.collect();

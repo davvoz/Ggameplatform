@@ -200,7 +200,7 @@ class AllyController {
             if (!e.active || e._isAlly) continue;
             const dx = (e.position.x + e.width  / 2) - ax;
             const dy = (e.position.y + e.height / 2) - ay;
-            const d  = Math.sqrt(dx * dx + dy * dy);
+            const d  = Math.hypot(dx, dy);
             if (d < nearDist) { nearDist = d; nearest = e; }
         }
         return nearest;

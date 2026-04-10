@@ -376,7 +376,7 @@ export class FlightButtonUI {
         
         const dx = x - this.buttonX;
         const dy = y - this.buttonY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.hypot(dx, dy);
         
         const clicked = distance <= this.buttonRadius;
         

@@ -176,7 +176,7 @@ class GameSimulation:
 
             self._prepare_next_round()
 
-    async def stop(self):
+    def stop(self):
         """Signal the simulation to abort and exit."""
         self.phase = GamePhase.ABORTED
 

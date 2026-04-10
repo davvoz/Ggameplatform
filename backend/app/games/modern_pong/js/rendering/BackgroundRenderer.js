@@ -146,7 +146,7 @@ export class BackgroundRenderer {
     static #hashTheme(id) {
         let h = 0;
         for (let i = 0; i < id.length; i++) {
-            h = ((h << 5) - h + id.charCodeAt(i)) | 0;
+            h = Math.trunc((h * 31 + id.codePointAt(i)) % 1e9);
         }
         return Math.abs(h);
     }

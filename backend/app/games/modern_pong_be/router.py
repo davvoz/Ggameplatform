@@ -107,7 +107,7 @@ class GameRoom:
 
     # ── Server-authoritative simulation ──────────────────────────
 
-    async def start_game(self):
+    def start_game(self):
         """Create and start the authoritative simulation."""
         self.simulation = GameSimulation(
             rounds_to_win=self.rounds_to_win,
@@ -126,20 +126,20 @@ class GameRoom:
         try:
             await self.simulation.run()
         except asyncio.CancelledError:
-            pass
+            raise
         except Exception:
             logger.exception("Simulation crashed in room %s", self.room_code)
 
     async def stop_game(self):
         """Gracefully stop the running simulation."""
         if self.simulation:
-            await self.simulation.stop()
+            self.simulation.stop()
         if self._sim_task and not self._sim_task.done():
             self._sim_task.cancel()
             try:
                 await self._sim_task
             except asyncio.CancelledError:
-                pass
+                raise
 
     async def _on_simulation_event(self, event_type: str, data: dict):
         """Relay simulation events to **both** connected clients.
@@ -317,7 +317,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "type": "bothReady",
                             "opponentCharId": current_room.host_char,
                         })
-                        await current_room.start_game()
+                        current_room.start_game()
 
             # ----------------------------------------------------------
             # Ping / pong — RTT measurement

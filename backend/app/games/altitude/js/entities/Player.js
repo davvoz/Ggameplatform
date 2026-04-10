@@ -89,7 +89,7 @@ export class Player extends GameObject {
 
         this.#lives = this.maxLives;
         this.#dashesRemaining = this.#stats.dashCount;
-        this.#spikeTimers = Array(this.#stats.spikeCount ?? 0).fill(0);
+        this.#spikeTimers = new Array(this.#stats.spikeCount ?? 0).fill(0);
     }
 
     get isGrounded() { return this.#grounded; }
@@ -591,7 +591,7 @@ export class Player extends GameObject {
         this.#spikeHasteActive = false;
         this.#spikeHasteTimer  = 0;
         this.#dashesRemaining = this.#stats.dashCount;
-        this.#spikeTimers = Array(this.#stats.spikeCount ?? 0).fill(0);
+        this.#spikeTimers =  new Array(this.#stats.spikeCount ?? 0).fill(0);
         this.active = true;
     }
 }

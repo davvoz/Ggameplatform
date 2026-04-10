@@ -109,7 +109,7 @@ export class FloatingTextManager {
         if (ft._isUnicode === undefined) {
             ft._isUnicode = false;
             for (let i = 0; i < ft.text.length; i++) {
-                if (ft.text.charCodeAt(i) > 127) {
+                if (ft.text.codePointAt(i) > 127) {
                     ft._isUnicode = true;
                     break;
                 }

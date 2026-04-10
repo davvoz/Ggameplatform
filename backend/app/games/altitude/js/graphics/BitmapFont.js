@@ -187,9 +187,9 @@ class BitmapFont {
                 const sheet = isLower ? this.#sheetLower : this.#sheetUpper;
                 const src   = sheet ?? (isLower ? this.#sheetUpper : this.#sheetLower);
                 if (src) {
-                    const code  = ch.toUpperCase().charCodeAt(0) - 65;
+                    const code  = ch.toUpperCase().codePointAt(0) - 65;
                     const col   = code % COLS;
-                    const row   = (code / COLS) | 0;
+                    const row   = Math.trunc(code / COLS);                   
                     const cellW = src.width  / COLS;
                     const cellH = src.height / ROWS;
                     ctx.drawImage(src, col * cellW, row * cellH, cellW, cellH,
@@ -201,7 +201,7 @@ class BitmapFont {
                 if (src) {
                     const idx   = SYMBOL_MAP.get(ch);
                     const col   = idx % COLS;
-                    const row   = (idx / COLS) | 0;
+                    const row   = Math.trunc(idx / COLS);
                     const cellW = src.width  / COLS;
                     const cellH = src.height / ROWS;
                     const padX  = cellW * SYM_CELL_PAD;
@@ -395,8 +395,7 @@ class BitmapFont {
             px[pos * 4 + 3] = 0;                         // make transparent
 
             const xi = pos % W;
-            const yi = (pos / W) | 0;
-
+            const yi = Math.trunc(pos / W);
             const neighbours = [
                 xi > 0     ? pos - 1 : -1,
                 xi < W - 1 ? pos + 1 : -1,

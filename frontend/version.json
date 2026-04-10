@@ -1,8 +1,17 @@
 {
-  "version": "4.2.11",
-  "timestamp": "2026-04-08T00:29:37.335Z",
-  "buildNumber": 512,
+  "version": "5.0.0",
+  "timestamp": "2026-04-10T14:39:59.621Z",
+  "buildNumber": 513,
   "changelog": [
+    {
+      "version": "5.0.0",
+      "date": "2026-04-10",
+      "type": "major",
+      "changes": [
+        "BREAKING : BE refractor , [A] refraactor",
+        "🔖 Bump version to 4.2.11 [skip-version]"
+      ]
+    },
     {
       "version": "4.2.11",
       "date": "2026-04-08",
@@ -83,15 +92,6 @@
       "changes": [
         "Refactor code structure for improved readability and maintainability",
         "🔖 Bump version to 4.2.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.2",
-      "date": "2026-03-31",
-      "type": "patch",
-      "changes": [
-        "fix:[MP]multiplayer coins bug",
-        "🔖 Bump version to 4.2.1 [skip-version]"
       ]
     }
   ]

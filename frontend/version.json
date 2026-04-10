@@ -1,8 +1,17 @@
 {
-  "version": "5.0.3",
-  "timestamp": "2026-04-10T20:37:42.889Z",
-  "buildNumber": 516,
+  "version": "5.0.4",
+  "timestamp": "2026-04-10T22:20:58.604Z",
+  "buildNumber": 517,
   "changelog": [
+    {
+      "version": "5.0.4",
+      "date": "2026-04-10",
+      "type": "patch",
+      "changes": [
+        "fix:[GAMES] Sonar",
+        "🔖 Bump version to 5.0.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.3",
       "date": "2026-04-10",
@@ -83,15 +92,6 @@
       "changes": [
         "add altitude",
         "🔖 Bump version to 4.2.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.6",
-      "date": "2026-04-02",
-      "type": "patch",
-      "changes": [
-        "fix:[MP] fix multiplayer lags",
-        "🔖 Bump version to 4.2.5 [skip-version]"
       ]
     }
   ]

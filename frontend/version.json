@@ -1,8 +1,17 @@
 {
-  "version": "5.0.2",
-  "timestamp": "2026-04-10T17:13:53.024Z",
-  "buildNumber": 515,
+  "version": "5.0.3",
+  "timestamp": "2026-04-10T20:37:42.889Z",
+  "buildNumber": 516,
   "changelog": [
+    {
+      "version": "5.0.3",
+      "date": "2026-04-10",
+      "type": "patch",
+      "changes": [
+        "fix:[GAMES] Sonar",
+        "🔖 Bump version to 5.0.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.2",
       "date": "2026-04-10",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[MP] fix multiplayer lags",
         "🔖 Bump version to 4.2.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.5",
-      "date": "2026-04-02",
-      "type": "patch",
-      "changes": [
-        "fix: SURVIVOR ARENA recreate drones based on player's drone weapon level",
-        "🔖 Bump version to 4.2.4 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "5.0.0",
-  "timestamp": "2026-04-10T14:39:59.621Z",
-  "buildNumber": 513,
+  "version": "5.0.1",
+  "timestamp": "2026-04-10T15:25:42.830Z",
+  "buildNumber": 514,
   "changelog": [
+    {
+      "version": "5.0.1",
+      "date": "2026-04-10",
+      "type": "patch",
+      "changes": [
+        "fix : [MP][A] Sonar",
+        "🔖 Bump version to 5.0.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.0",
       "date": "2026-04-10",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[MP]characters animation",
         "🔖 Bump version to 4.2.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.3",
-      "date": "2026-03-31",
-      "type": "patch",
-      "changes": [
-        "Refactor code structure for improved readability and maintainability",
-        "🔖 Bump version to 4.2.2 [skip-version]"
       ]
     }
   ]

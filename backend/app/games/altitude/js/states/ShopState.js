@@ -52,68 +52,60 @@ export class ShopState extends State {
     }
 
     #handleTap(tx, ty) {
-        // ── Back button ───────────────────────────────────────────────────
-        const btn = ShopState.#BACK_BTN;
-        if (tx >= btn.x && tx <= btn.x + btn.w &&
-            ty >= btn.y && ty <= btn.y + btn.h) {
-            this._game.closeShop();
-            return;
-        }
+        if (this.#tapBackButton(tx, ty)) return;
+        if (this.#tapPrestigeButton(tx, ty)) return;
+        if (this.#tapCategoryTab(tx, ty)) return;
 
-        // ── Prestige button (only when everything is maxed) ───────────────
-        if (this.#isAllMaxed()) {
-            const pb = ShopState.#PRESTIGE_BTN;
-            if (tx >= pb.x && tx <= pb.x + pb.w &&
-                ty >= pb.y && ty <= pb.y + pb.h) {
-                this._game.openPrestige();
-                return;
-            }
-        }
-
-        // ── Category tabs  (y 75 – 135) ──────────────────────────────────
-        if (ty >= 75 && ty <= 135) {
-            const tabWidth = DESIGN_WIDTH / this.#categories.length;
-            const tappedCat = Math.floor(tx / tabWidth);
-            if (tappedCat >= 0 && tappedCat < this.#categories.length) {
-                this.#selectedCategory = tappedCat;
-                this.#selectedUpgrade = 0;
-                this.#scrollOffset = 0;
-                this._game.sound.playSelect();
-            }
-            return;
-        }
-
-        // ── Upgrade list ──────────────────────────────────────────────────
         const listStartY = 150;
         const itemHeight = 90;
-        const visibleItems = 4;
-        const listEndY = listStartY + itemHeight * visibleItems;
+        const listEndY = listStartY + itemHeight * 4;
 
-        if (tx >= 20 && tx <= DESIGN_WIDTH - 20 &&
-            ty >= listStartY && ty <= listEndY) {
-            const idx = Math.floor((ty - listStartY) / itemHeight) + this.#scrollOffset;
-            const upgrades = this.#getCurrentUpgrades();
-            if (idx >= 0 && idx < upgrades.length) {
-                if (idx === this.#selectedUpgrade) {
-                    // Tap selected row again = buy
-                    this.#purchaseUpgrade();
-                } else {
-                    this.#selectedUpgrade = idx;
-                    this._game.sound.playSelect();
-                }
+        if (this.#tapUpgradeItem(tx, ty, listStartY, listEndY, itemHeight)) return;
+        if (ty < listStartY && ty >= listStartY - 30) { this.#changeUpgrade(-1); return; }
+        if (ty > listEndY && ty <= listEndY + 30) { this.#changeUpgrade(1); return; }
+    }
+
+    #tapBackButton(tx, ty) {
+        const btn = ShopState.#BACK_BTN;
+        if (tx < btn.x || tx > btn.x + btn.w || ty < btn.y || ty > btn.y + btn.h) return false;
+        this._game.closeShop();
+        return true;
+    }
+
+    #tapPrestigeButton(tx, ty) {
+        if (!this.#isAllMaxed()) return false;
+        const pb = ShopState.#PRESTIGE_BTN;
+        if (tx < pb.x || tx > pb.x + pb.w || ty < pb.y || ty > pb.y + pb.h) return false;
+        this._game.openPrestige();
+        return true;
+    }
+
+    #tapCategoryTab(tx, ty) {
+        if (ty < 75 || ty > 135) return false;
+        const tabWidth = DESIGN_WIDTH / this.#categories.length;
+        const tappedCat = Math.floor(tx / tabWidth);
+        if (tappedCat >= 0 && tappedCat < this.#categories.length) {
+            this.#selectedCategory = tappedCat;
+            this.#selectedUpgrade = 0;
+            this.#scrollOffset = 0;
+            this._game.sound.playSelect();
+        }
+        return true;
+    }
+
+    #tapUpgradeItem(tx, ty, listStartY, listEndY, itemHeight) {
+        if (tx < 20 || tx > DESIGN_WIDTH - 20 || ty < listStartY || ty > listEndY) return false;
+        const idx = Math.floor((ty - listStartY) / itemHeight) + this.#scrollOffset;
+        const upgrades = this.#getCurrentUpgrades();
+        if (idx >= 0 && idx < upgrades.length) {
+            if (idx === this.#selectedUpgrade) {
+                this.#purchaseUpgrade();
+            } else {
+                this.#selectedUpgrade = idx;
+                this._game.sound.playSelect();
             }
-            return;
         }
-
-        // ── Scroll arrows ─────────────────────────────────────────────────
-        if (ty < listStartY && ty >= listStartY - 30) {
-            this.#changeUpgrade(-1);
-            return;
-        }
-        if (ty > listEndY && ty <= listEndY + 30) {
-            this.#changeUpgrade(1);
-            return;
-        }
+        return true;
     }
 
     #changeUpgrade(dir) {
@@ -261,7 +253,7 @@ export class ShopState extends State {
     #drawHeader(ctx) {
         ctx.save();
 
-        
+
         //shadow
         bitmapFont.drawText(ctx, 'UPGRADES', DESIGN_WIDTH / 2 + 2, 36, 28, {
             align: 'center', color: 'rgb(71, 67, 1)',
@@ -270,7 +262,7 @@ export class ShopState extends State {
         bitmapFont.drawText(ctx, 'UPGRADES', DESIGN_WIDTH / 2, 34, 28, {
             align: 'center', color: COLORS.NEON_CYAN,
         });
-        
+
 
         // Coins display
         ctx.fillStyle = COLORS.COIN_GOLD;
@@ -278,34 +270,34 @@ export class ShopState extends State {
         ctx.textAlign = 'center';
         //ctx.fillText(`💰 ${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62);
         //shadow
-        bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2 + 2, 62 + 2, 28, 
+        bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2 + 2, 62 + 2, 28,
             { align: 'center', color: 'rgba(0, 0, 0, 1)' });
-        bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62, 28, 
+        bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62, 28,
             { align: 'center', color: COLORS.COIN_GOLD });
         // Prestige banner or progress counter
         const btn = ShopState.#PRESTIGE_BTN;
         if (this.#isAllMaxed()) {
             const pulse = 0.7 + Math.sin(this.#animTime * 2.8) * 0.25;
             ctx.shadowColor = COLORS.NEON_YELLOW;
-            ctx.shadowBlur  = Math.floor(16 * pulse);
-            ctx.fillStyle   = COLORS.NEON_YELLOW;
+            ctx.shadowBlur = Math.floor(16 * pulse);
+            ctx.fillStyle = COLORS.NEON_YELLOW;
             ctx.strokeStyle = COLORS.NEON_YELLOW;
-            ctx.lineWidth   = 2;
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
             ctx.fill();
             ctx.stroke();
-            ctx.shadowBlur  = 0;
-            ctx.fillStyle   = COLORS.BG_PRIMARY;
-            ctx.font        = 'bold 13px monospace';
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = COLORS.BG_PRIMARY;
+            ctx.font = 'bold 13px monospace';
             ctx.textBaseline = 'middle';
             ctx.fillText('⭐  ALL MAXED! TAP HERE TO PRESTIGE  ⭐', DESIGN_WIDTH / 2, btn.y + btn.h / 2);
             ctx.textBaseline = 'alphabetic';
         } else {
             const { maxed, total, missing } = this.#getPrestigeProgress();
             ctx.textBaseline = 'middle';
-            ctx.font         = '12px monospace';
-            ctx.fillStyle    = COLORS.UI_TEXT_DIM;
+            ctx.font = '12px monospace';
+            ctx.fillStyle = COLORS.UI_TEXT_DIM;
             let label;
             if (missing.length === 1) {
                 label = `🔓 ${maxed} / ${total} — missing: ${missing[0].name} (${missing[0].category})`;
@@ -336,7 +328,7 @@ export class ShopState extends State {
                 ctx.fillStyle = 'rgba(0, 255, 255, 0.2)';
                 ctx.fillRect(x + 2, y, tabWidth - 4, 35);
 
-                
+
             }
 
             // Tab text
@@ -353,11 +345,11 @@ export class ShopState extends State {
             if (this.#isCategoryMaxed(cat)) {
                 ctx.fillStyle = COLORS.NEON_CYAN;
                 ctx.shadowColor = COLORS.NEON_CYAN;
-                ctx.shadowBlur  = 6;
-                ctx.font        = '9px monospace';
-                ctx.textAlign   = 'right';
+                ctx.shadowBlur = 6;
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'right';
                 ctx.fillText('✓', x + tabWidth - 4, y + 10);
-                ctx.shadowBlur  = 0;
+                ctx.shadowBlur = 0;
             }
         });
 
@@ -449,9 +441,9 @@ export class ShopState extends State {
         drawUpgradeIcon(ctx, upgrade.id, x + 5, y + 5, 50);
 
         //shadow
-            bitmapFont.drawText(ctx, upgrade.name, x + 60 + 2, y + 17 + 2, 25, {
-                color: COLORS.BG_PRIMARY,
-            });
+        bitmapFont.drawText(ctx, upgrade.name, x + 60 + 2, y + 17 + 2, 25, {
+            color: COLORS.BG_PRIMARY,
+        });
         // Name
         bitmapFont.drawText(ctx, upgrade.name, x + 60, y + 17, 25, {
             color: COLORS.UI_TEXT,

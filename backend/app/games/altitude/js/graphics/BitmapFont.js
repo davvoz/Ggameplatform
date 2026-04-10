@@ -184,38 +184,44 @@ class BitmapFont {
             const isLower = ch >= 'a' && ch <= 'z';
             const isUpper = ch >= 'A' && ch <= 'Z';
             if (isUpper || isLower) {
-                const sheet = isLower ? this.#sheetLower : this.#sheetUpper;
-                const src   = sheet ?? (isLower ? this.#sheetUpper : this.#sheetLower);
-                if (src) {
-                    const code  = ch.toUpperCase().codePointAt(0) - 65;
-                    const col   = code % COLS;
-                    const row   = Math.trunc(code / COLS);                   
-                    const cellW = src.width  / COLS;
-                    const cellH = src.height / ROWS;
-                    ctx.drawImage(src, col * cellW, row * cellH, cellW, cellH,
-                                  drawX, originY, cw, charHeight);
-                }
+                this.#drawLetterGlyph(ctx, ch, isLower, drawX, originY, charHeight, cw);
                 drawX += cw + letterSpacing;
             } else if (SYMBOL_MAP.has(ch)) {
-                const src = this.#sheetSym;
-                if (src) {
-                    const idx   = SYMBOL_MAP.get(ch);
-                    const col   = idx % COLS;
-                    const row   = Math.trunc(idx / COLS);
-                    const cellW = src.width  / COLS;
-                    const cellH = src.height / ROWS;
-                    const padX  = cellW * SYM_CELL_PAD;
-                    const padY  = cellH * SYM_CELL_PAD;
-                    ctx.drawImage(src,
-                                  col * cellW + padX, row * cellH + padY,
-                                  cellW - 2 * padX,   cellH - 2 * padY,
-                                  drawX, originY, cw, charHeight);
-                }
+                this.#drawSymbolGlyph(ctx, ch, drawX, originY, charHeight, cw);
                 drawX += cw + letterSpacing;
             } else if (ch === ' ') {
                 drawX += spaceW + letterSpacing;
             }
         }
+    }
+
+    #drawLetterGlyph(ctx, ch, isLower, drawX, originY, charHeight, cw) {
+        const sheet = isLower ? this.#sheetLower : this.#sheetUpper;
+        const src   = sheet ?? (isLower ? this.#sheetUpper : this.#sheetLower);
+        if (!src) return;
+        const code  = ch.toUpperCase().codePointAt(0) - 65;
+        const col   = code % COLS;
+        const row   = Math.trunc(code / COLS);
+        const cellW = src.width  / COLS;
+        const cellH = src.height / ROWS;
+        ctx.drawImage(src, col * cellW, row * cellH, cellW, cellH,
+                      drawX, originY, cw, charHeight);
+    }
+
+    #drawSymbolGlyph(ctx, ch, drawX, originY, charHeight, cw) {
+        const src = this.#sheetSym;
+        if (!src) return;
+        const idx   = SYMBOL_MAP.get(ch);
+        const col   = idx % COLS;
+        const row   = Math.trunc(idx / COLS);
+        const cellW = src.width  / COLS;
+        const cellH = src.height / ROWS;
+        const padX  = cellW * SYM_CELL_PAD;
+        const padY  = cellH * SYM_CELL_PAD;
+        ctx.drawImage(src,
+                      col * cellW + padX, row * cellH + padY,
+                      cellW - 2 * padX,   cellH - 2 * padY,
+                      drawX, originY, cw, charHeight);
     }
 
     /**

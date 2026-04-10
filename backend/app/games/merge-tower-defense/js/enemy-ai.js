@@ -5,7 +5,6 @@
  */
 
 import { CONFIG } from './config.js';
-import { Utils } from './utils.js';
 
 // ========== BASE MOVEMENT STRATEGY ==========
 
@@ -347,133 +346,91 @@ export class EnemyMovementController {
      * @param {Array} cannons - All towers (optional)
      */
     updateMovement(enemy, dt, currentTime, allEnemies, cannons = []) {
-        // Skip if dead
         if (enemy.isDead()) return;
+        if (enemy.stunnedUntil && currentTime < enemy.stunnedUntil) return;
 
-        // Skip if stunned
-        if (enemy.stunnedUntil && currentTime < enemy.stunnedUntil) {
-            return; // Cannot move while stunned
-        }
-
-        // Calculate effective speed (with slow effects)
-        const effectiveSpeed = currentTime < enemy.slowUntil 
-            ? enemy.speed * enemy.slowFactor 
+        const effectiveSpeed = currentTime < enemy.slowUntil
+            ? enemy.speed * enemy.slowFactor
             : enemy.speed;
 
-        // Initialize target column if not set
-        if (enemy._targetCol === undefined) {
-            enemy._targetCol = enemy.col;
-        }
-
-        // Store reference to all enemies for helper methods
+        if (enemy._targetCol === undefined) enemy._targetCol = enemy.col;
         enemy._allEnemies = allEnemies;
 
-        // Get wall position
         const wallRow = this.obstacles.getWallRow();
 
-        // === PHASE 1: Determine primary movement ===
-        let deltaCol = 0;
-        let deltaRow = 0;
+        // Phase 1: Primary movement delta
+        let { col: deltaCol, row: deltaRow } = this.#computeMovementDelta(enemy, dt, allEnemies, effectiveSpeed);
 
-        // Check for retreat first
-        if (this.retreat.shouldRetreat(enemy, allEnemies)) {
-            const retreatDelta = this.retreat.executeRetreat(enemy, dt);
-            deltaCol = retreatDelta.col;
-            deltaRow = retreatDelta.row;
-        } else if (enemy._isRetreating) {
-            // Continue retreat
-            const retreatDelta = this.retreat.executeRetreat(enemy, dt);
-            deltaCol = retreatDelta.col;
-            deltaRow = retreatDelta.row;
-        } else {
-            // Normal forward movement
-            deltaRow = effectiveSpeed * dt;
-        }
+        // Phase 2: Lane switching
+        this.#updateLaneSwitching(enemy, allEnemies, cannons, dt);
 
-        // === PHASE 2: Lane switching decision ===
-        if (!enemy._isRetreating && enemy._laneSwitchCooldown <= 0) {
-            const bestLane = this.laneSystem.findBestLane(enemy, allEnemies, cannons);
-            
-            if (bestLane !== null) {
-                enemy._targetCol = bestLane;
-                enemy._laneSwitchCooldown = this.laneSystem.laneSwitchCooldown;
-            }
-        }
-
-        // Update cooldown
-        if (enemy._laneSwitchCooldown > 0) {
-            enemy._laneSwitchCooldown -= dt;
-        }
-
-        // === PHASE 3: Avoidance forces ===
+        // Phase 3: Avoidance forces
         const avoidanceForce = this.avoidance.calculateAvoidance(enemy, allEnemies);
-        
-        // Apply avoidance to target column
         if (Math.abs(avoidanceForce.x) > 0.1) {
-            enemy._targetCol = Math.max(0, Math.min(CONFIG.COLS - 1, 
+            enemy._targetCol = Math.max(0, Math.min(CONFIG.COLS - 1,
                 enemy._targetCol + avoidanceForce.x * dt * 2));
         }
-
-        // Slow down if blocked ahead
         if (avoidanceForce.y < -0.2) {
             deltaRow *= Math.max(0.3, 1 + avoidanceForce.y * 0.5);
         }
 
-        // === PHASE 4: Lateral movement towards target column ===
+        // Phase 4: Lateral movement towards target column
         const colDiff = enemy._targetCol - enemy.col;
         if (Math.abs(colDiff) > 0.05) {
             const lateralSpeed = effectiveSpeed * this.lateralSpeedFactor * this.laneSystem.laneSwitchSpeed;
             deltaCol += Math.sign(colDiff) * Math.min(Math.abs(colDiff), lateralSpeed * dt);
         }
 
-        // === PHASE 5: Apply movement with bounds checking ===
-        let newCol = enemy.col + deltaCol;
+        // Phase 5: Bounds checking
+        let newCol = Math.max(0.2, Math.min(CONFIG.COLS - 1.2, enemy.col + deltaCol));
         let newRow = enemy.row + deltaRow;
+        if (newRow > wallRow) newRow = wallRow;
+        if (newRow < -1 && !enemy._isRetreating) newRow = -1;
 
-        // Clamp to grid bounds
-        newCol = Math.max(0.2, Math.min(CONFIG.COLS - 1.2, newCol));
-        
-        // Stop at wall
-        if (newRow > wallRow) {
-            newRow = wallRow;
-        }
+        // Phase 6: Collision adjustment
+        ({ col: newCol, row: newRow } = this.#adjustForCrowding(newCol, newRow, deltaRow, enemy, allEnemies));
 
-        // Don't move backward past spawn (except for retreat)
-        if (newRow < -1 && !enemy._isRetreating) {
-            newRow = -1;
-        }
-
-        // === PHASE 6: Final collision check ===
-        // Check if new position is crowded
-        if (!enemy._isRetreating && this.avoidance.isPositionCrowded(newCol, newRow, enemy, allEnemies)) {
-            // Try to adjust position slightly
-            const adjustments = [
-                { col: newCol - 0.3, row: newRow },
-                { col: newCol + 0.3, row: newRow },
-                { col: enemy.col, row: enemy.row + deltaRow * 0.5 }
-            ];
-
-            for (const adj of adjustments) {
-                if (!this.avoidance.isPositionCrowded(adj.col, adj.row, enemy, allEnemies) &&
-                    adj.col >= 0.2 && adj.col <= CONFIG.COLS - 1.2) {
-                    newCol = adj.col;
-                    newRow = adj.row;
-                    break;
-                }
-            }
-        }
-
-        // === PHASE 7: Apply final position ===
+        // Phase 7: Apply final position
         enemy.col = newCol;
         enemy.row = newRow;
-
-        // Update target column to match if very close
-        if (Math.abs(enemy.col - enemy._targetCol) < 0.1) {
-            enemy._targetCol = enemy.col;
-        }
-
-        // Set atWall flag
+        if (Math.abs(enemy.col - enemy._targetCol) < 0.1) enemy._targetCol = enemy.col;
         enemy.atWall = newRow >= wallRow - 0.1;
+    }
+
+    #computeMovementDelta(enemy, dt, allEnemies, effectiveSpeed) {
+        if (this.retreat.shouldRetreat(enemy, allEnemies) || enemy._isRetreating) {
+            return this.retreat.executeRetreat(enemy, dt);
+        }
+        return { col: 0, row: effectiveSpeed * dt };
+    }
+
+    #updateLaneSwitching(enemy, allEnemies, cannons, dt) {
+        if (!enemy._isRetreating && enemy._laneSwitchCooldown <= 0) {
+            const bestLane = this.laneSystem.findBestLane(enemy, allEnemies, cannons);
+            if (bestLane !== null) {
+                enemy._targetCol = bestLane;
+                enemy._laneSwitchCooldown = this.laneSystem.laneSwitchCooldown;
+            }
+        }
+        if (enemy._laneSwitchCooldown > 0) enemy._laneSwitchCooldown -= dt;
+    }
+
+    #adjustForCrowding(newCol, newRow, deltaRow, enemy, allEnemies) {
+        if (enemy._isRetreating || !this.avoidance.isPositionCrowded(newCol, newRow, enemy, allEnemies)) {
+            return { col: newCol, row: newRow };
+        }
+        const adjustments = [
+            { col: newCol - 0.3, row: newRow },
+            { col: newCol + 0.3, row: newRow },
+            { col: enemy.col, row: enemy.row + deltaRow * 0.5 }
+        ];
+        for (const adj of adjustments) {
+            if (!this.avoidance.isPositionCrowded(adj.col, adj.row, enemy, allEnemies) &&
+                adj.col >= 0.2 && adj.col <= CONFIG.COLS - 1.2) {
+                return { col: adj.col, row: adj.row };
+            }
+        }
+        return { col: newCol, row: newRow };
     }
 
     /**

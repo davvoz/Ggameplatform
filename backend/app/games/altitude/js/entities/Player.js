@@ -59,7 +59,7 @@ export class Player extends GameObject {
     static #SPIKE_COOLDOWN = 3.0;  // seconds to regenerate one spike
     #spikeTimers = [];              // per-spike cooldown remaining (0 = ready)
     #spikeHasteActive = false;
-    #spikeHasteTimer  = 0;
+    #spikeHasteTimer = 0;
 
     // Perk visual overlay renderer
     #overlays = new PlayerOverlayManager();
@@ -67,7 +67,7 @@ export class Player extends GameObject {
     constructor(x, y, stats = {}) {
         super(x, y, 34, 42);
         this.tag = 'player';
-        
+
         this.#stats = {
             jumpMultiplier: 1,
             ghostRepelLevel: 0,
@@ -158,48 +158,31 @@ export class Player extends GameObject {
     }
 
     #updatePowerUps(dt) {
-        const decay = dt;
+        [this.#dashing, this.#dashTimer] = Player.#decayTimer(this.#dashing, this.#dashTimer, dt);
+        [this.#jetpackActive, this.#jetpackTimer] = Player.#decayTimer(this.#jetpackActive, this.#jetpackTimer, dt);
+        [this.#shieldActive, this.#shieldTimer] = Player.#decayTimer(this.#shieldActive, this.#shieldTimer, dt);
+        [this.#magnetActive, this.#magnetTimer] = Player.#decayTimer(this.#magnetActive, this.#magnetTimer, dt);
+        [this.#springBootsActive, this.#springBootsTimer] = Player.#decayTimer(this.#springBootsActive, this.#springBootsTimer, dt);
+        [this.#slowTimeActive, this.#slowTimeTimer] = Player.#decayTimer(this.#slowTimeActive, this.#slowTimeTimer, dt);
+        [this.#doubleCoinsActive, this.#doubleCoinsTimer] = Player.#decayTimer(this.#doubleCoinsActive, this.#doubleCoinsTimer, dt);
+        [this.#spikeHasteActive, this.#spikeHasteTimer] = Player.#decayTimer(this.#spikeHasteActive, this.#spikeHasteTimer, dt);
 
-        // Dash timer
-        if (this.#dashing) {
-            this.#dashTimer -= decay;
-            if (this.#dashTimer <= 0) this.#dashing = false;
-        }
-
-        if (this.#jetpackActive) {
-            this.#jetpackTimer -= decay;
-            if (this.#jetpackTimer <= 0) this.#jetpackActive = false;
-        }
-        if (this.#shieldTimer > 0) {
-            this.#shieldTimer -= decay;
-            if (this.#shieldTimer <= 0) this.#shieldActive = false;
-        }
-        if (this.#magnetActive) {
-            this.#magnetTimer -= decay;
-            if (this.#magnetTimer <= 0) this.#magnetActive = false;
-        }
-        if (this.#springBootsActive) {
-            this.#springBootsTimer -= decay;
-            if (this.#springBootsTimer <= 0) this.#springBootsActive = false;
-        }
-        if (this.#slowTimeActive) {
-            this.#slowTimeTimer -= decay;
-            if (this.#slowTimeTimer <= 0) this.#slowTimeActive = false;
-        }
-        if (this.#doubleCoinsActive) {
-            this.#doubleCoinsTimer -= decay;
-            if (this.#doubleCoinsTimer <= 0) this.#doubleCoinsActive = false;
-        }
-        if (this.#spikeHasteActive) {
-            this.#spikeHasteTimer -= decay;
-            if (this.#spikeHasteTimer <= 0) this.#spikeHasteActive = false;
-        }
         // Tick down spike cooldowns (2.5× faster with haste)
         const spikeRate = this.#spikeHasteActive ? 2.5 : 1;
-        this.#spikeTimers = this.#spikeTimers.map(t => Math.max(0, t - decay * spikeRate));
+        this.#spikeTimers = this.#spikeTimers.map(t => Math.max(0, t - dt * spikeRate));
 
         // Ghost repel cooldown
         if (this.#ghostRepelCooldown > 0) this.#ghostRepelCooldown -= dt;
+    }
+
+    /**
+     * Decrement an active timer by decay. Returns [newActive, newTimer].
+     * Deactivates when the timer reaches zero.
+     */
+    static #decayTimer(active, timer, decay) {
+        if (!active) return [false, timer];
+        const t = timer - decay;
+        return [t > 0, t];
     }
 
     #updateCombo(dt) {
@@ -301,17 +284,18 @@ export class Player extends GameObject {
             this.#animTimer = 0;
         }
 
-        // Update frame
+        this.#advanceAnimFrame();
+    }
+
+    #advanceAnimFrame() {
         const sprite = SpriteGenerator.get('player');
-        if (sprite) {
-            const animData = sprite.animations[this.#currentAnim];
-            if (animData) {
-                const frameTime = 1 / animData.speed;
-                if (this.#animTimer >= frameTime) {
-                    this.#animTimer -= frameTime;
-                    this.#animFrame = (this.#animFrame + 1) % animData.count;
-                }
-            }
+        if (!sprite) return;
+        const animData = sprite.animations[this.#currentAnim];
+        if (!animData) return;
+        const frameTime = 1 / animData.speed;
+        if (this.#animTimer >= frameTime) {
+            this.#animTimer -= frameTime;
+            this.#animFrame = (this.#animFrame + 1) % animData.count;
         }
     }
 
@@ -475,7 +459,7 @@ export class Player extends GameObject {
                 break;
             case 'spike_haste':
                 this.#spikeHasteActive = true;
-                this.#spikeHasteTimer  = effectiveDuration;
+                this.#spikeHasteTimer = effectiveDuration;
                 break;
         }
     }
@@ -486,7 +470,7 @@ export class Player extends GameObject {
     draw(ctx, cameraY) {
         const screenX = this.x;
         const screenY = this.y - cameraY;
-        const perks   = this.#buildActivePerks();
+        const perks = this.#buildActivePerks();
 
         // ── Behind-sprite overlays: wings, rocket pods, armour plates ──────
         this.#overlays.drawBehind(ctx, screenX, screenY, this.height, perks);
@@ -534,35 +518,35 @@ export class Player extends GameObject {
     #buildActivePerks() {
         return {
             // Active power-ups (temporary)
-            jetpack:      this.#jetpackActive,
-            shield:       this.#shieldActive,
-            magnet:       this.#magnetActive,
+            jetpack: this.#jetpackActive,
+            shield: this.#shieldActive,
+            magnet: this.#magnetActive,
             spring_boots: this.#springBootsActive,
-            slow_time:    this.#slowTimeActive,
+            slow_time: this.#slowTimeActive,
             double_coins: this.#doubleCoinsActive,
             // Permanent stat-based perks
-            double_jump:  this.#stats.hasDoubleJump,
-            glide:        this.#stats.hasGlide,
-            dash:         (this.#stats.dashCount ?? 0) > 0,
-            dashCount:    this.#stats.dashCount ?? 0,
+            double_jump: this.#stats.hasDoubleJump,
+            glide: this.#stats.hasGlide,
+            dash: (this.#stats.dashCount ?? 0) > 0,
+            dashCount: this.#stats.dashCount ?? 0,
             dashRemaining: this.#dashesRemaining,
-            dashing:      this.#dashing,
-            stomp:        (this.#stats.stompMultiplier ?? 1) > 1,
-            shockwave:    !!this.#stats.hasShockwave,
-            armor:        (this.#stats.knockbackResist ?? 0) > 0,
-            spike_head:   (this.#stats.spikeCount ?? 0) > 0,
+            dashing: this.#dashing,
+            stomp: (this.#stats.stompMultiplier ?? 1) > 1,
+            shockwave: !!this.#stats.hasShockwave,
+            armor: (this.#stats.knockbackResist ?? 0) > 0,
+            spike_head: (this.#stats.spikeCount ?? 0) > 0,
             // Spike state for overlay
-            spikeCount:   this.#stats.spikeCount ?? 0,
-            spikeTimers:  [...this.#spikeTimers],
+            spikeCount: this.#stats.spikeCount ?? 0,
+            spikeTimers: [...this.#spikeTimers],
             spikeCooldown: Player.#SPIKE_COOLDOWN,
-            spike_haste:  this.#spikeHasteActive,
+            spike_haste: this.#spikeHasteActive,
             // Ghost repel state for overlay
-            ghost_repel:       (this.#stats.ghostRepelLevel ?? 0) > 0,
+            ghost_repel: (this.#stats.ghostRepelLevel ?? 0) > 0,
             ghostRepelCooldown: this.#ghostRepelCooldown,
-            ghostRepelMaxCd:    this.ghostRepelMaxCooldown,
+            ghostRepelMaxCd: this.ghostRepelMaxCooldown,
             // Animation state for overlays that respond to it
-            anim:         this.#currentAnim,
-            facing:       this.#facingRight ? 1 : -1,
+            anim: this.#currentAnim,
+            facing: this.#facingRight ? 1 : -1,
         };
     }
 
@@ -589,9 +573,9 @@ export class Player extends GameObject {
         this.#slowTimeActive = false;
         this.#doubleCoinsActive = false;
         this.#spikeHasteActive = false;
-        this.#spikeHasteTimer  = 0;
+        this.#spikeHasteTimer = 0;
         this.#dashesRemaining = this.#stats.dashCount;
-        this.#spikeTimers =  new Array(this.#stats.spikeCount ?? 0).fill(0);
+        this.#spikeTimers = new Array(this.#stats.spikeCount ?? 0).fill(0);
         this.active = true;
     }
 }

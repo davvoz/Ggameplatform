@@ -14,22 +14,22 @@ export class State {
      * Called when entering this state.
      * @param {Object} data - Optional data passed from transition
      */
-    enter(data) {}
+    enter(data) { /* no-op: override in subclass */ }
 
     /**
      * Called when exiting this state.
      */
-    exit() {}
+    exit() { /* no-op: override in subclass */ }
 
     /**
      * Update game logic.
      * @param {number} dt - Delta time in seconds
      */
-    update(dt) {}
+    update(dt) { /* no-op: override in subclass */ }
 
     /**
      * Render this state.
      * @param {CanvasRenderingContext2D} ctx
      */
-    draw(ctx) {}
+    draw(ctx) { /* no-op: override in subclass */ }
 }

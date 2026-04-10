@@ -347,7 +347,7 @@ class GameRoom:
             if player_id != exclude:
                 try:
                     await ws.send_json(message)
-                except:
+                except Exception:
                     pass
 
 
@@ -396,281 +396,217 @@ room_manager = RoomManager()
 # WebSocket Endpoint
 # =============================================================================
 
+async def _handle_create_room(
+    websocket: WebSocket, player_id: str, data: dict,
+    current_room: Optional[GameRoom], rm: RoomManager
+) -> Optional[GameRoom]:
+    username = data.get("username", "Player")
+    room = rm.create_room(player_id, username)
+    room.connections[player_id] = websocket
+    await websocket.send_json({
+        "type": "roomCreated",
+        "roomCode": room.room_code,
+        "playerId": player_id
+    })
+    return room
+
+
+async def _handle_join_room(
+    websocket: WebSocket, player_id: str, data: dict,
+    current_room: Optional[GameRoom], rm: RoomManager
+) -> Optional[GameRoom]:
+    room_code = data.get("roomCode", "").upper()
+    username = data.get("username", "Player")
+    room = rm.get_room(room_code)
+
+    if not room:
+        await websocket.send_json({"type": "error", "code": "ROOM_NOT_FOUND", "message": "Stanza non trovata"})
+        return current_room
+    if room.is_full:
+        await websocket.send_json({"type": "error", "code": "ROOM_FULL", "message": "Stanza piena"})
+        return current_room
+
+    room.add_guest(player_id, username)
+    room.connections[player_id] = websocket
+
+    await room.broadcast({"type": "playerJoined", "username": username, "playerId": player_id}, exclude=player_id)
+    await websocket.send_json({"type": "playerJoined", "username": room.host_name, "playerId": player_id})
+
+    room.start_game()
+    print(f"[Briscola WS] Game started - current_player: {room.game.current_player_id}")
+
+    for pid, ws in room.connections.items():
+        opponent_name = room.get_opponent_name(pid)
+        state = room.game.get_state_for_player(pid)
+        print(f"[Briscola WS] Sending gameStart to {pid}: is_your_turn={state['is_your_turn']}")
+        await ws.send_json({"type": "gameStart", "opponentName": opponent_name, "gameState": state})
+
+    return room
+
+
+def _track_game_session(result: dict, current_room: GameRoom, winner: str):
+    try:
+        from app.database import SessionLocal
+        from app.models import GameSession, User
+        from app.quest_tracker import track_quest_progress_for_session
+
+        db = SessionLocal()
+        try:
+            host_user = db.query(User).filter(User.username == current_room.host_name).first()
+            guest_user = db.query(User).filter(User.username == current_room.guest_name).first()
+
+            if host_user:
+                host_score = result.get("player1_score")
+                session_data = {
+                    'user_id': host_user.user_id, 'game_id': 'briscola', 'score': host_score,
+                    'duration_seconds': 300, 'xp_earned': 10,
+                    'extra_data': {'won': winner == current_room.host_id, 'player_score': host_score,
+                                   'opponent_score': result.get("player2_score"), 'is_ai': False, 'is_multiplayer': True}
+                }
+                track_quest_progress_for_session(db, session_data)
+
+            if guest_user:
+                guest_score = result.get("player2_score")
+                session_data = {
+                    'user_id': guest_user.user_id, 'game_id': 'briscola', 'score': guest_score,
+                    'duration_seconds': 300, 'xp_earned': 10,
+                    'extra_data': {'won': winner == current_room.guest_id, 'player_score': guest_score,
+                                   'opponent_score': result.get("player1_score"), 'is_ai': False, 'is_multiplayer': True}
+                }
+                track_quest_progress_for_session(db, session_data)
+
+            db.commit()
+        except Exception as e:
+            print(f"[Briscola] Error tracking multiplayer session: {e}")
+            db.rollback()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Briscola] Error in multiplayer tracking: {e}")
+
+
+async def _broadcast_round_end(current_room: GameRoom, result: dict):
+    await current_room.broadcast({
+        "type": "roundEnd",
+        "winner": result.get("round_winner"),
+        "points": result.get("points_won"),
+        "player1Score": result.get("player1_score"),
+        "player2Score": result.get("player2_score")
+    })
+    for pid, ws in current_room.connections.items():
+        state = current_room.game.get_state_for_player(pid)
+        await ws.send_json({"type": "stateUpdate", "state": state})
+
+    if result.get("is_game_over"):
+        winner = result.get("game_winner")
+        _track_game_session(result, current_room, winner)
+        await current_room.broadcast({
+            "type": "gameEnd",
+            "winner": winner,
+            "player1Score": result.get("player1_score"),
+            "player2Score": result.get("player2_score")
+        })
+
+
+async def _handle_play_card(
+    websocket: WebSocket, player_id: str, data: dict,
+    current_room: Optional[GameRoom], rm: RoomManager
+) -> Optional[GameRoom]:
+    if not current_room or not current_room.game:
+        await websocket.send_json({"type": "error", "message": "Nessuna partita in corso"})
+        return current_room
+
+    card_id = data.get("card", {}).get("id")
+    if not card_id:
+        return current_room
+
+    result = current_room.game.play_card(player_id, card_id)
+    if not result.get("success"):
+        await websocket.send_json({"type": "error", "message": result.get("error", "Errore")})
+        return current_room
+
+    for pid, ws in current_room.connections.items():
+        is_next = result.get("next_player") == pid
+        print(f"[Briscola WS] Sending cardPlayed to {pid}: isYourTurn={is_next}, next_player={result.get('next_player')}")
+        await ws.send_json({
+            "type": "cardPlayed",
+            "playerId": player_id,
+            "card": result.get("card"),
+            "roundComplete": result.get("round_complete", False),
+            "isYourTurn": is_next
+        })
+
+    if result.get("round_complete"):
+        await _broadcast_round_end(current_room, result)
+
+    return current_room
+
+
+async def _handle_leave(
+    websocket: WebSocket, player_id: str, data: dict,
+    current_room: Optional[GameRoom], rm: RoomManager
+) -> Optional[GameRoom]:
+    if current_room:
+        await current_room.broadcast({"type": "opponentDisconnected"}, exclude=player_id)
+        rm.remove_room(current_room.room_code)
+    return None
+
+
+async def _handle_rematch(
+    websocket: WebSocket, player_id: str, data: dict,
+    current_room: Optional[GameRoom], rm: RoomManager
+) -> Optional[GameRoom]:
+    if not current_room:
+        await websocket.send_json({"type": "error", "message": "Nessuna stanza attiva"})
+        return current_room
+
+    print(f"[Briscola WS] Rematch request from {player_id}")
+    print(f"[Briscola WS] Current rematch_requests: {current_room.rematch_requests}")
+
+    current_room.rematch_requests.add(player_id)
+    print(f"[Briscola WS] After add, rematch_requests: {current_room.rematch_requests}, len: {len(current_room.rematch_requests)}")
+
+    await current_room.broadcast({"type": "rematchRequested", "playerId": player_id}, exclude=player_id)
+
+    if len(current_room.rematch_requests) == 2:
+        print(f"[Briscola WS] Both players want rematch, starting new game")
+        current_room.start_game()
+        print(f"[Briscola WS] Rematch started - current_player: {current_room.game.current_player_id}")
+
+        for pid, ws in current_room.connections.items():
+            opponent_name = current_room.get_opponent_name(pid)
+            state = current_room.game.get_state_for_player(pid)
+            print(f"[Briscola WS] Sending rematchStart to {pid}: is_your_turn={state['is_your_turn']}")
+            await ws.send_json({"type": "rematchStart", "opponentName": opponent_name, "gameState": state})
+
+    return current_room
+
+
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    
+
     player_id = str(uuid.uuid4())
     current_room: Optional[GameRoom] = None
-    
+
+    _handlers = {
+        "createRoom": _handle_create_room,
+        "joinRoom":   _handle_join_room,
+        "playCard":   _handle_play_card,
+        "leave":      _handle_leave,
+        "rematch":    _handle_rematch,
+    }
+
     try:
         while True:
             data = await websocket.receive_json()
-            msg_type = data.get("type")
-            
-            if msg_type == "createRoom":
-                username = data.get("username", "Player")
-                room = room_manager.create_room(player_id, username)
-                room.connections[player_id] = websocket
-                current_room = room
-                
-                await websocket.send_json({
-                    "type": "roomCreated",
-                    "roomCode": room.room_code,
-                    "playerId": player_id
-                })
-            
-            elif msg_type == "joinRoom":
-                room_code = data.get("roomCode", "").upper()
-                username = data.get("username", "Player")
-                
-                room = room_manager.get_room(room_code)
-                
-                if not room:
-                    await websocket.send_json({
-                        "type": "error",
-                        "code": "ROOM_NOT_FOUND",
-                        "message": "Stanza non trovata"
-                    })
-                    continue
-                
-                if room.is_full:
-                    await websocket.send_json({
-                        "type": "error",
-                        "code": "ROOM_FULL",
-                        "message": "Stanza piena"
-                    })
-                    continue
-                
-                room.add_guest(player_id, username)
-                room.connections[player_id] = websocket
-                current_room = room
-                
-                # Notify host
-                await room.broadcast({
-                    "type": "playerJoined",
-                    "username": username,
-                    "playerId": player_id
-                }, exclude=player_id)
-                
-                # Send confirmation to guest
-                await websocket.send_json({
-                    "type": "playerJoined",
-                    "username": room.host_name,
-                    "playerId": player_id
-                })
-                
-                # Start game
-                room.start_game()
-                
-                print(f"[Briscola WS] Game started - current_player: {room.game.current_player_id}")
-                
-                # Send game start to both players
-                for pid, ws in room.connections.items():
-                    opponent_name = room.get_opponent_name(pid)
-                    state = room.game.get_state_for_player(pid)
-                    
-                    print(f"[Briscola WS] Sending gameStart to {pid}: is_your_turn={state['is_your_turn']}")
-                    
-                    await ws.send_json({
-                        "type": "gameStart",
-                        "opponentName": opponent_name,
-                        "gameState": state
-                    })
-            
-            elif msg_type == "playCard":
-                if not current_room or not current_room.game:
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": "Nessuna partita in corso"
-                    })
-                    continue
-                
-                card_id = data.get("card", {}).get("id")
-                if not card_id:
-                    continue
-                
-                result = current_room.game.play_card(player_id, card_id)
-                
-                if not result.get("success"):
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": result.get("error", "Errore")
-                    })
-                    continue
-                
-                # Broadcast card played to all players with their specific turn info
-                for pid, ws in current_room.connections.items():
-                    is_next = result.get("next_player") == pid
-                    print(f"[Briscola WS] Sending cardPlayed to {pid}: isYourTurn={is_next}, next_player={result.get('next_player')}")
-                    await ws.send_json({
-                        "type": "cardPlayed",
-                        "playerId": player_id,
-                        "card": result.get("card"),
-                        "roundComplete": result.get("round_complete", False),
-                        "isYourTurn": is_next
-                    })
-                
-                if result.get("round_complete"):
-                    # Send round result
-                    await current_room.broadcast({
-                        "type": "roundEnd",
-                        "winner": result.get("round_winner"),
-                        "points": result.get("points_won"),
-                        "player1Score": result.get("player1_score"),
-                        "player2Score": result.get("player2_score")
-                    })
-                    
-                    # Send updated hands
-                    for pid, ws in current_room.connections.items():
-                        state = current_room.game.get_state_for_player(pid)
-                        await ws.send_json({
-                            "type": "stateUpdate",
-                            "state": state
-                        })
-                    
-                    if result.get("is_game_over"):
-                        winner = result.get("game_winner")
-                        
-                        # Track game completion for both players
-                        try:
-                            from app.database import SessionLocal
-                            from app.models import GameSession, User
-                            from app.quest_tracker import track_quest_progress_for_session
-                            from datetime import datetime
-                            
-                            db = SessionLocal()
-                            
-                            try:
-                                # Get user IDs from room
-                                host_user = db.query(User).filter(User.username == current_room.host_name).first()
-                                guest_user = db.query(User).filter(User.username == current_room.guest_name).first()
-                                
-                                # Track session for host (player 1)
-                                if host_user:
-                                    host_won = winner == current_room.host_id
-                                    host_score = result.get("player1_score")
-                                    opponent_score = result.get("player2_score")
-                                    
-                                    session_data = {
-                                        'user_id': host_user.user_id,
-                                        'game_id': 'briscola',
-                                        'score': host_score,
-                                        'duration_seconds': 300,  # Estimate, could track actual time
-                                        'xp_earned': 10,  # Will be calculated by XP system
-                                        'extra_data': {
-                                            'won': host_won,
-                                            'player_score': host_score,
-                                            'opponent_score': opponent_score,
-                                            'is_ai': False,
-                                            'is_multiplayer': True
-                                        }
-                                    }
-                                    
-                                    track_quest_progress_for_session(db, session_data)
-                                
-                                # Track session for guest (player 2)
-                                if guest_user:
-                                    guest_won = winner == current_room.guest_id
-                                    guest_score = result.get("player2_score")
-                                    opponent_score = result.get("player1_score")
-                                    
-                                    session_data = {
-                                        'user_id': guest_user.user_id,
-                                        'game_id': 'briscola',
-                                        'score': guest_score,
-                                        'duration_seconds': 300,
-                                        'xp_earned': 10,
-                                        'extra_data': {
-                                            'won': guest_won,
-                                            'player_score': guest_score,
-                                            'opponent_score': opponent_score,
-                                            'is_ai': False,
-                                            'is_multiplayer': True
-                                        }
-                                    }
-                                    
-                                    track_quest_progress_for_session(db, session_data)
-                                
-                                db.commit()
-                            except Exception as e:
-                                print(f"[Briscola] Error tracking multiplayer session: {e}")
-                                db.rollback()
-                            finally:
-                                db.close()
-                        except Exception as e:
-                            print(f"[Briscola] Error in multiplayer tracking: {e}")
-                        
-                        await current_room.broadcast({
-                            "type": "gameEnd",
-                            "winner": winner,
-                            "player1Score": result.get("player1_score"),
-                            "player2Score": result.get("player2_score")
-                        })
-                        
-                        # Non eliminare la stanza - permetti rematch
-                        # room_manager.remove_room(current_room.room_code)
-            
-            elif msg_type == "leave":
-                if current_room:
-                    await current_room.broadcast({
-                        "type": "opponentDisconnected"
-                    }, exclude=player_id)
-                    room_manager.remove_room(current_room.room_code)
-                    current_room = None
-            
-            elif msg_type == "rematch":
-                if not current_room:
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": "Nessuna stanza attiva"
-                    })
-                    continue
-                
-                print(f"[Briscola WS] Rematch request from {player_id}")
-                print(f"[Briscola WS] Current rematch_requests: {current_room.rematch_requests}")
-                
-                # Aggiungi questo giocatore alle richieste di rematch
-                current_room.rematch_requests.add(player_id)
-                
-                print(f"[Briscola WS] After add, rematch_requests: {current_room.rematch_requests}, len: {len(current_room.rematch_requests)}")
-                
-                # Notifica l'avversario che questo giocatore vuole il rematch
-                await current_room.broadcast({
-                    "type": "rematchRequested",
-                    "playerId": player_id
-                }, exclude=player_id)
-                
-                # Se entrambi vogliono il rematch, riavvia il gioco
-                if len(current_room.rematch_requests) == 2:
-                    print(f"[Briscola WS] Both players want rematch, starting new game")
-                    
-                    # Riavvia il gioco
-                    current_room.start_game()
-                    
-                    print(f"[Briscola WS] Rematch started - current_player: {current_room.game.current_player_id}")
-                    
-                    # Invia lo stato del nuovo gioco a entrambi i giocatori
-                    for pid, ws in current_room.connections.items():
-                        opponent_name = current_room.get_opponent_name(pid)
-                        state = current_room.game.get_state_for_player(pid)
-                        
-                        print(f"[Briscola WS] Sending rematchStart to {pid}: is_your_turn={state['is_your_turn']}")
-                        
-                        await ws.send_json({
-                            "type": "rematchStart",
-                            "opponentName": opponent_name,
-                            "gameState": state
-                        })
-    
+            handler = _handlers.get(data.get("type"))
+            if handler:
+                current_room = await handler(websocket, player_id, data, current_room, room_manager)
     except WebSocketDisconnect:
         if current_room:
-            # Notify opponent
-            await current_room.broadcast({
-                "type": "opponentDisconnected"
-            }, exclude=player_id)
+            await current_room.broadcast({"type": "opponentDisconnected"}, exclude=player_id)
             room_manager.remove_room(current_room.room_code)
-    
     except Exception as e:
         print(f"[Briscola WS] Error: {e}")
         if current_room:

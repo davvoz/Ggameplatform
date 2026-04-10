@@ -89,7 +89,6 @@ export class PlatformBridge {
             }
             this.#sessionActive = true;
             this.#sessionId = `sdk_${Date.now()}`;
-            console.log('[PlatformBridge] Session started:', this.#sessionId);
             return this.#sessionId;
         } catch (error) {
             console.error('[PlatformBridge] Start session error:', error);
@@ -115,7 +114,6 @@ export class PlatformBridge {
                     levels_completed: Math.floor(stats.levelsCompleted   ?? 0),
                 };
                 this.#sdk.gameOver(score, { extra_data });
-                console.log('[PlatformBridge] Session ended — gameOver reported', score, extra_data);
             }
         } catch (error) {
             console.error('[PlatformBridge] End session error:', error);

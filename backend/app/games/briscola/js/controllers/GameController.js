@@ -145,22 +145,7 @@ export class GameController {
             player = 1;
         }
         
-        // In online mode, check if card is enabled (the server controls turns)
-        if (this.app.currentMode === 'online') {
-            if (element.classList.contains('disabled')) {
-
-                return;
-            }
-        } else {
-            // For local/AI modes, check game engine state
-            const state = this.app.gameEngine.getState();
-            
-            // Check if it's this player's turn
-            if (state.currentPlayer !== player) {
-
-                return;
-            }
-        }
+        if (this.#isTurnBlocked(player, element)) return;
         
         this.isProcessing = true;
 
@@ -217,6 +202,13 @@ export class GameController {
         }
         
         this.isProcessing = false;
+    }
+
+    #isTurnBlocked(player, element) {
+        if (this.app.currentMode === 'online') {
+            return element.classList.contains('disabled');
+        }
+        return this.app.gameEngine.getState().currentPlayer !== player;
     }
     
     /**

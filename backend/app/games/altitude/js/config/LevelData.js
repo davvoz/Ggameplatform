@@ -17,9 +17,9 @@
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function p(x, y, type = 'normal') { return { x, y, type }; }
-function e(x, y, type)            { return { x, y, type }; }
-function c(x, y, type = 'coin')   { return { x, y, type }; }
-function pu(x, y, type)           { return { x, y, type }; }
+function e(x, y, type) { return { x, y, type }; }
+function c(x, y, type = 'coin') { return { x, y, type }; }
+function pu(x, y, type) { return { x, y, type }; }
 
 /** Cycle `templates` for `times` repetitions → flat array of screens. */
 function repeat(templates, times) {
@@ -89,7 +89,7 @@ export const LEVEL_DATA = [
                 enemies: [],
                 collectibles: [
                     c(0.25, 0.28, 'coin'), c(0.75, 0.28, 'coin'),
-                    c(0.2, 0.56, 'gem'),  c(0.8, 0.56, 'coin'),
+                    c(0.2, 0.56, 'gem'), c(0.8, 0.56, 'coin'),
                     c(0.5, 0.42, 'coin'),
                 ],
                 powerUps: [],
@@ -104,7 +104,7 @@ export const LEVEL_DATA = [
                 enemies: [],
                 collectibles: [
                     c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.56, 'coin'),
+                    c(0.5, 0.4, 'gem'), c(0.25, 0.56, 'coin'),
                     c(0.75, 0.56, 'coin'),
                 ],
                 powerUps: [pu(0.5, 0.15, 'spring_boots')],
@@ -134,7 +134,7 @@ export const LEVEL_DATA = [
                 enemies: [],
                 collectibles: [
                     c(0.3, 0.28, 'coin'), c(0.7, 0.28, 'coin'),
-                    c(0.5, 0.42, 'gem'),  c(0.25, 0.56, 'coin'),
+                    c(0.5, 0.42, 'gem'), c(0.25, 0.56, 'coin'),
                 ],
                 powerUps: [pu(0.75, 0.56, 'shield')],
             },
@@ -148,7 +148,7 @@ export const LEVEL_DATA = [
                 enemies: [e(0.5, 2.55, 'floater'), e(0.3, 0.4, 'floater'), e(0.7, 0.4, 'floater')],
                 collectibles: [
                     c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.75, 0.54, 'coin'),
+                    c(0.5, 0.39, 'gem'), c(0.75, 0.54, 'coin'),
                 ],
                 powerUps: [pu(0.8, 0.15, 'extra_life')],
             },
@@ -176,7 +176,7 @@ export const LEVEL_DATA = [
                 ],
                 enemies: [e(0.8, 0.3, 'bat'), e(0.3, 0.55, 'floater')],
                 collectibles: [
-                    c(0.25, 0.3, 'gem'),  c(0.75, 0.3, 'coin'),
+                    c(0.25, 0.3, 'gem'), c(0.75, 0.3, 'coin'),
                     c(0.5, 0.44, 'coin'), c(0.2, 0.58, 'coin'),
                     c(0.8, 0.58, 'gem'),
                 ],
@@ -192,7 +192,7 @@ export const LEVEL_DATA = [
                 enemies: [e(0.5, 0.44, 'bat'), e(0.75, 0.57, 'bat')],
                 collectibles: [
                     c(0.2, 0.28, 'coin'), c(0.8, 0.28, 'coin'),
-                    c(0.3, 0.56, 'gem'),  c(0.7, 0.56, 'coin'),
+                    c(0.3, 0.56, 'gem'), c(0.7, 0.56, 'coin'),
                     c(0.5, 0.18, 'diamond'),
                 ],
                 powerUps: [pu(0.8, 0.12, 'extra_life')],
@@ -236,7 +236,7 @@ export const LEVEL_DATA = [
                 ],
                 enemies: [e(0.35, 0.42, 'chaser'), e(0.65, 0.65, 'floater')],
                 collectibles: [
-                    c(0.2, 0.27, 'gem'),  c(0.8, 0.27, 'coin'),
+                    c(0.2, 0.27, 'gem'), c(0.8, 0.27, 'coin'),
                     c(0.5, 0.4, 'coin'), c(0.3, 0.54, 'coin'),
                     c(0.7, 0.54, 'gem'),
                 ],
@@ -267,7 +267,7 @@ export const LEVEL_DATA = [
                 ],
                 enemies: [e(0.5, 0.3, 'shooter')],
                 collectibles: [
-                    c(0.2, 0.28, 'gem'),  c(0.5, 0.42, 'coin'),
+                    c(0.2, 0.28, 'gem'), c(0.5, 0.42, 'coin'),
                     c(0.75, 0.56, 'coin'), c(0.35, 0.7, 'coin'),
                 ],
                 powerUps: [pu(0.5, 0.15, 'shield')],
@@ -282,7 +282,7 @@ export const LEVEL_DATA = [
                 ],
                 enemies: [e(0.6, 0.43, 'shooter'), e(0.4, 0.65, 'bat')],
                 collectibles: [
-                    c(0.25, 0.28, 'gem'),  c(0.8, 0.55, 'gem'),
+                    c(0.25, 0.28, 'gem'), c(0.8, 0.55, 'gem'),
                     c(0.5, 0.41, 'coin'), c(0.75, 0.83, 'star'),
                 ],
                 powerUps: [pu(0.2, 0.15, 'extra_life')],
@@ -326,7 +326,7 @@ export const LEVEL_DATA = [
                 enemies: [e(0.5, 0.42, 'ghost'), e(0.25, 0.65, 'chaser'), e(0.75, 0.65, 'ghost')],
                 collectibles: [
                     c(0.2, 0.27, 'coin'), c(0.8, 0.27, 'coin'),
-                    c(0.5, 0.4, 'gem'),  c(0.25, 0.54, 'coin'),
+                    c(0.5, 0.4, 'gem'), c(0.25, 0.54, 'coin'),
                     c(0.75, 0.54, 'star'),
                 ],
                 powerUps: [pu(0.2, 0.12, 'extra_life')],
@@ -359,7 +359,7 @@ export const LEVEL_DATA = [
                     e(0.8, 0.5, 'bat'), e(0.7, 0.5, 'bat'),
                 ],
                 collectibles: [
-                    c(0.2, 0.26, 'gem'),  c(0.8, 0.26, 'gem'),
+                    c(0.2, 0.26, 'gem'), c(0.8, 0.26, 'gem'),
                     c(0.5, 0.38, 'coin'), c(0.25, 0.5, 'coin'),
                     c(0.75, 0.5, 'coin'), c(0.5, 0.62, 'diamond'),
                 ],
@@ -378,7 +378,7 @@ export const LEVEL_DATA = [
                 ],
                 collectibles: [
                     c(0.2, 0.26, 'coin'), c(0.8, 0.26, 'coin'),
-                    c(0.5, 0.39, 'gem'),  c(0.25, 0.53, 'coin'),
+                    c(0.5, 0.39, 'gem'), c(0.25, 0.53, 'coin'),
                     c(0.75, 0.53, 'star'),
                 ],
                 powerUps: [pu(0.8, 0.14, 'extra_life')],
@@ -411,9 +411,9 @@ export const LEVEL_DATA = [
                     e(0.3, 0.42, 'chaser'), e(0.7, 0.55, 'shooter'),
                 ],
                 collectibles: [
-                    c(0.2, 0.27, 'gem'),   c(0.8, 0.27, 'gem'),
-                    c(0.5, 0.4, 'coin'),  c(0.25, 0.54, 'diamond'),
-                    c(0.75, 0.54, 'coin'),  c(0.75, 0.8, 'star'),
+                    c(0.2, 0.27, 'gem'), c(0.8, 0.27, 'gem'),
+                    c(0.5, 0.4, 'coin'), c(0.25, 0.54, 'diamond'),
+                    c(0.75, 0.54, 'coin'), c(0.75, 0.8, 'star'),
                 ],
                 powerUps: [pu(0.5, 0.15, 'jetpack')],
             },
@@ -431,8 +431,8 @@ export const LEVEL_DATA = [
                     e(0.5, 0.25, 'chaser'),
                 ],
                 collectibles: [
-                    c(0.25, 0.27, 'gem'),  c(0.75, 0.27, 'coin'),
-                    c(0.8, 0.54, 'gem'),  c(0.5, 0.4, 'coin'),
+                    c(0.25, 0.27, 'gem'), c(0.75, 0.27, 'coin'),
+                    c(0.8, 0.54, 'gem'), c(0.5, 0.4, 'coin'),
                     c(0.7, 0.82, 'star'),
                 ],
                 powerUps: [pu(0.2, 0.1, 'slow_time')],
@@ -466,8 +466,8 @@ export const LEVEL_DATA = [
                     e(0.25, 0.68, 'bat'),
                 ],
                 collectibles: [
-                    c(0.2, 0.26, 'gem'),    c(0.8, 0.26, 'diamond'),
-                    c(0.5, 0.39, 'coin'),   c(0.25, 0.53, 'star'),
+                    c(0.2, 0.26, 'gem'), c(0.8, 0.26, 'diamond'),
+                    c(0.5, 0.39, 'coin'), c(0.25, 0.53, 'star'),
                     c(0.5, 0.67, 'diamond'),
                 ],
                 powerUps: [pu(0.8, 0.53, 'shield')],
@@ -475,7 +475,7 @@ export const LEVEL_DATA = [
             {
                 platforms: [
                     p(0.5, 0.08),
-                    p(0.25, 0.21, 'cloud'),  p(0.75, 0.21, 'moving'),
+                    p(0.25, 0.21, 'cloud'), p(0.75, 0.21, 'moving'),
                     p(0.5, 0.34, 'bouncy'), p(0.2, 0.48, 'deadly'), p(0.8, 0.48, 'fragile'),
                     p(0.5, 0.62, 'moving'), p(0.3, 0.76), p(0.7, 0.76, 'cloud'),
                     p(0.5, 0.9),
@@ -483,11 +483,11 @@ export const LEVEL_DATA = [
                 enemies: [
                     e(0.5, 0.28, 'ghost'),
                     e(0.35, 0.42, 'shooter'), e(0.65, 0.55, 'chaser'),
-                    e(0.5, 0.68, 'bat'),     e(0.25, 0.72, 'ghost'),
+                    e(0.5, 0.68, 'bat'), e(0.25, 0.72, 'ghost'),
                 ],
                 collectibles: [
-                    c(0.25, 0.27, 'gem'),    c(0.75, 0.27, 'gem'),
-                    c(0.5, 0.4, 'diamond'),c(0.8, 0.54, 'star'),
+                    c(0.25, 0.27, 'gem'), c(0.75, 0.27, 'gem'),
+                    c(0.5, 0.4, 'diamond'), c(0.8, 0.54, 'star'),
                     c(0.3, 0.82, 'star'),
                 ],
                 powerUps: [pu(0.5, 0.14, 'double_coins')],
@@ -518,9 +518,9 @@ export function generateInfiniteScreen(screenIndex) {
     const maxPlatformTypeIdx = Math.max(2, Math.floor(2 + difficulty * 5));
 
     const PLATFORM_POOL = ['normal', 'normal', 'fragile', 'moving', 'bouncy', 'cloud', 'deadly'];
-    const ENEMY_POOL    = ['bat', 'floater', 'chaser', 'shooter', 'ghost'];
-    const COIN_POOL     = ['coin', 'coin', 'gem', 'diamond', 'star'];
-    const PU_POOL       = ['shield', 'jetpack', 'magnet', 'spring_boots', 'slow_time', 'double_coins', 'extra_life'];
+    const ENEMY_POOL = ['bat', 'floater', 'chaser', 'shooter', 'ghost'];
+    const COIN_POOL = ['coin', 'coin', 'gem', 'diamond', 'star'];
+    const PU_POOL = ['shield', 'jetpack', 'magnet', 'spring_boots', 'slow_time', 'double_coins', 'extra_life'];
 
     const pick = (pool, seed, maxIdx) =>
         pool[Math.floor(rng(seed) * Math.min(maxIdx, pool.length))];
@@ -542,9 +542,16 @@ export function generateInfiniteScreen(screenIndex) {
         let t1 = pick(PLATFORM_POOL, i * 7 + 4, maxPlatformTypeIdx);
         let t2 = pick(PLATFORM_POOL, i * 7 + 6, maxPlatformTypeIdx);
         // Never put deadly near the very top
-        if (y < 0.25) { if (t1 === 'deadly') t1 = 'normal'; if (t2 === 'deadly') t2 = 'normal'; }
-        platforms.push({ x: x1, y, type: t1 });
-        platforms.push({ x: x2, y, type: t2 });
+        if (y < 0.25) {
+            if (t1 === 'deadly')
+                t1 = 'normal';
+            if (t2 === 'deadly')
+                t2 = 'normal';
+        }
+        platforms.push(
+            { x: x1, y, type: t1 },
+            { x: x2, y, type: t2 }
+        );
     }
 
     // Top platform — always a safe exit, roughly centred

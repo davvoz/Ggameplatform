@@ -45,9 +45,9 @@ export class GameMode {
     get levelTimer() { return 0; }
 
     // ── Infinite-mode HUD state (defaults for level mode) ─────────
-    get infScreenTimer()    { return 0; }
-    get infLastCpTime()     { return 0; }
-    get infScreenCleared()  { return 0; }
+    get infScreenTimer() { return 0; }
+    get infLastCpTime() { return 0; }
+    get infScreenCleared() { return 0; }
     get infCheckpointAnim() { return null; }
 
     /**
@@ -55,7 +55,9 @@ export class GameMode {
      *
      * @param {number} dt
      */
-    updateTimers(dt) {}
+    updateTimers(dt) {
+        /* no-op by default, override in infinite modes for timers */
+    }
 
     /**
      * Check whether the mode's completion condition is met.

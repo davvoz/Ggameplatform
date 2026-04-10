@@ -122,14 +122,14 @@ export class PlatformBridge {
      * Report pause
      */
     reportPause() {
-
+        // Platform SDK handles pause via event callback
     }
     
     /**
      * Report resume
      */
     reportResume() {
-
+        // Platform SDK handles resume via event callback
     }
     
     /**

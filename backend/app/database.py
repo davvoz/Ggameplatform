@@ -34,6 +34,7 @@ def get_db_session():
         yield session
         session.commit()
     except Exception as e:
+        print(f"⚠️  Database error: {e}")
         session.rollback()
         raise
     finally:
@@ -543,6 +544,104 @@ def create_game_session(user_id: str, game_id: str) -> dict:
         
         return game_session.to_dict()
 
+def _check_high_score(user, game_id: str, score: int) -> tuple:
+    """Check and update high score. Returns (is_new_high_score, previous_high_score)."""
+    game_scores = json.loads(user.game_scores) if user.game_scores else {}
+    previous_high_score = game_scores.get(game_id, 0)
+
+    if score > previous_high_score:
+        game_scores[game_id] = score
+        user.game_scores = json.dumps(game_scores)
+        print(f"[DB] New high score! {previous_high_score} -> {score}")
+        return True, previous_high_score
+
+    return False, previous_high_score
+
+
+def _apply_campaign_multiplier(db_session, game_id: str, xp_earned: float) -> tuple:
+    """Apply campaign XP multiplier if active. Returns (xp_earned, campaign_multiplier)."""
+    from app.models import Campaign
+    now_str = datetime.now(timezone.utc).isoformat()
+    active_campaigns = db_session.query(Campaign).filter(
+        Campaign.game_id == game_id,
+        Campaign.is_active == 1,
+        Campaign.start_date <= now_str,
+        Campaign.end_date >= now_str
+    ).all()
+
+    if not active_campaigns:
+        return xp_earned, 1.0
+
+    campaign_multiplier = max(c.xp_multiplier for c in active_campaigns)
+    xp_earned = round(xp_earned * campaign_multiplier, 2)
+    print(f"[DB] \U0001f3af Campaign active! Multiplier: {campaign_multiplier}x \u2192 XP: {xp_earned}")
+    return xp_earned, campaign_multiplier
+
+
+def _award_level_up_coins(db_session, user_id: str, levels_with_rewards: list) -> int:
+    """Award coins for each level gained. Returns total coins awarded."""
+    from app.services import CoinService
+    from app.repositories import RepositoryFactory
+
+    coins_repo = RepositoryFactory.create_usercoins_repository(db_session)
+    transaction_repo = RepositoryFactory.create_cointransaction_repository(db_session)
+    coin_service = CoinService(coins_repo, transaction_repo)
+    total_coins = 0
+
+    for level_data in levels_with_rewards:
+        level = level_data['level']
+        coins = level_data['coins']
+        if coins <= 0:
+            continue
+        print(f"[DB] 🪙 Awarding level-up coins: {coins} coins for level {level}")
+        try:
+            coin_service.award_coins(
+                user_id=user_id,
+                amount=coins,
+                transaction_type='level_up',
+                source_id=str(level),
+                description=f"Level {level} reached",
+                extra_data={"source": "level_up", "level": level}
+            )
+            total_coins += coins
+        except Exception as e:
+            print(f"[DB] ⚠️ Failed to award level-up coins for level {level}: {e}")
+
+    print(f"[DB] 💰 Total coins awarded for level-up: {total_coins}")
+    return total_coins
+
+
+def _handle_level_up(db_session, user, game_session, extra_data: dict, old_total_xp: float, new_total_xp: float) -> dict:
+    """Check for level up, award coins, update extra_data. Returns level_up_info."""
+    from app.level_system import LevelSystem
+
+    level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
+    if not level_up_info['leveled_up']:
+        return level_up_info
+
+    print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
+    levels_with_rewards = level_up_info.get('levels_with_rewards', [])
+    total_coins_awarded = 0
+
+    if levels_with_rewards and not user.is_anonymous:
+        total_coins_awarded = _award_level_up_coins(db_session, game_session.user_id, levels_with_rewards)
+    elif user.is_anonymous:
+        print("[DB] ⚠️ Skipping coin rewards for anonymous user")
+
+    extra_data['level_up'] = {
+        'old_level': level_up_info['old_level'],
+        'new_level': level_up_info['new_level'],
+        'title': level_up_info.get('title'),
+        'badge': level_up_info.get('badge'),
+        'coins_awarded': total_coins_awarded,
+        'levels_with_rewards': levels_with_rewards,
+        'is_milestone': level_up_info.get('is_milestone', False),
+        'coins_pending': False
+    }
+    level_up_info['coins_awarded'] = total_coins_awarded
+    return level_up_info
+
+
 def end_game_session(session_id: str, score: int, duration_seconds: int, extra_data: dict = None) -> dict:
     """End a game session and calculate XP earned using the rules system."""
     print(f"[DB] end_game_session called - session_id: {session_id}, score: {score}, duration: {duration_seconds}, extra_data: {extra_data}")
@@ -567,31 +666,15 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         multiplier = user.cur8_multiplier
         game_id = game_session.game_id
         
-        # Store extra_data in session for cumulative metrics
         if extra_data:
             game_session.extra_data = json.dumps(extra_data)
         
         print(f"[DB] User multiplier: {multiplier}, current total_xp: {user.total_xp_earned}")
         print(f"[DB] Extra data received: {extra_data}")
-                
-        # Parse current game scores
-        game_scores = json.loads(user.game_scores) if user.game_scores else {}
         
-        # Check if this is a new high score
-        is_new_high_score = False
-        previous_high_score = game_scores.get(game_id, 0)
+        is_new_high_score, previous_high_score = _check_high_score(user, game_id, score)
         
-        if score > previous_high_score:
-            is_new_high_score = True
-            game_scores[game_id] = score
-            user.game_scores = json.dumps(game_scores)
-            print(f"[DB] New high score! {previous_high_score} -> {score}")
-        
-        # Extract extra_data from session for cumulative metrics
         session_extra_data = json.loads(game_session.extra_data) if game_session.extra_data else {}
-        
-        # Calculate XP using the new rules system
-        # Se extra_data contiene xp_score, usalo per gli XP (continue: XP solo sul delta)
         xp_score = session_extra_data.get('xp_score', score) if session_extra_data else score
         print(f"[DB] Calculating XP... (score={score}, xp_score={xp_score})")
         xp_result = calculate_session_xp(
@@ -604,22 +687,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
             extra_data=session_extra_data
         )
         
-        xp_earned = xp_result['total_xp']
-        
-        # Apply campaign XP multiplier if game is in an active campaign
-        campaign_multiplier = 1.0
-        from app.models import Campaign
-        active_campaigns = session.query(Campaign).filter(
-            Campaign.game_id == game_id,
-            Campaign.is_active == 1,
-            Campaign.start_date <= datetime.now(timezone.utc).isoformat(),
-            Campaign.end_date >= datetime.now(timezone.utc).isoformat()
-        ).all()
-        if active_campaigns:
-            campaign_multiplier = max(c.xp_multiplier for c in active_campaigns)
-            xp_earned = round(xp_earned * campaign_multiplier, 2)
-            print(f"[DB] \U0001f3af Campaign active! Multiplier: {campaign_multiplier}x \u2192 XP: {xp_earned}")
-        
+        xp_earned, campaign_multiplier = _apply_campaign_multiplier(session, game_id, xp_result['total_xp'])
         xp_result['campaign_multiplier'] = campaign_multiplier
         xp_result['total_xp'] = xp_earned
         
@@ -649,71 +717,15 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         new_total_xp = user.total_xp_earned
         print(f"[DB] Updating user total_xp: {old_total_xp} -> {new_total_xp} (+{xp_earned})")
         
-        # Check for level up and award coins immediately
-        from app.level_system import LevelSystem
-        from app.services import CoinService
-        from app.repositories import RepositoryFactory
-        level_up_info = LevelSystem.check_level_up(old_total_xp, new_total_xp)
-        
-        if level_up_info['leveled_up']:
-            print(f"[DB] 🎉 LEVEL UP! {level_up_info['old_level']} -> {level_up_info['new_level']}")
-            
-            # Award level-up coins for ALL levels gained (skip for anonymous users)
-            levels_with_rewards = level_up_info.get('levels_with_rewards', [])
-            total_coins_awarded = 0
-            
-            if levels_with_rewards and not user.is_anonymous:
-                coins_repo = RepositoryFactory.create_usercoins_repository(session)
-                transaction_repo = RepositoryFactory.create_cointransaction_repository(session)
-                coin_service = CoinService(coins_repo, transaction_repo)
-                
-                # Award coins for each level that has rewards
-                for level_data in levels_with_rewards:
-                    level = level_data['level']
-                    coins = level_data['coins']
-                    
-                    if coins > 0:
-                        print(f"[DB] 🪙 Awarding level-up coins: {coins} coins for level {level}")
-                        try:
-                            coin_service.award_coins(
-                                user_id=game_session.user_id,
-                                amount=coins,
-                                transaction_type='level_up',
-                                source_id=str(level),
-                                description=f"Level {level} reached",
-                                extra_data={"source": "level_up", "level": level}
-                            )
-                            total_coins_awarded += coins
-                        except Exception as e:
-                            print(f"[DB] ⚠️ Failed to award level-up coins for level {level}: {e}")
-                
-                print(f"[DB] 💰 Total coins awarded for level-up: {total_coins_awarded}")
-            elif user.is_anonymous:
-                print(f"[DB] ⚠️ Skipping coin rewards for anonymous user")
-            
-            # Store level-up info in session extra_data for frontend
-            extra_data['level_up'] = {
-                'old_level': level_up_info['old_level'],
-                'new_level': level_up_info['new_level'],
-                'title': level_up_info.get('title'),
-                'badge': level_up_info.get('badge'),
-                'coins_awarded': total_coins_awarded,  # Total coins from all levels
-                'levels_with_rewards': levels_with_rewards,  # Details for each level
-                'is_milestone': level_up_info.get('is_milestone', False),
-                'coins_pending': False  # Coins awarded immediately
-            }
+        level_up_info = _handle_level_up(session, user, game_session, extra_data, old_total_xp, new_total_xp)
         
         # IMPORTANTE: Flush esplicito per attivare i trigger della leaderboard
-        # Il trigger 'after_flush_postexec' si attiva solo dopo un flush esplicito
         session.flush()
         
         result = game_session.to_dict()
-        
-        # Add XP breakdown to response for frontend display
         result['xp_breakdown'] = xp_result.get('rule_breakdown', [])
         result['base_xp'] = xp_result.get('base_xp', 0)
         
-        # Add level-up info to response if it happened
         if level_up_info['leveled_up']:
             result['level_up'] = {
                 'old_level': level_up_info['old_level'],
@@ -725,7 +737,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
             }
         
         # Track quest progress
-        print(f"[DB] Tracking quest progress...")
+        print("[DB] Tracking quest progress...")
         try:
             track_quest_progress_for_session(session, {
                 'user_id': game_session.user_id,
@@ -733,16 +745,12 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
                 'score': score,
                 'duration_seconds': duration_seconds,
                 'xp_earned': xp_earned,
-                'extra_data': extra_data  # Pass extra_data for game-specific quest tracking
+                'extra_data': extra_data
             })
-            print(f"[DB] Quest progress tracked")
+            print("[DB] Quest progress tracked")
         except Exception as e:
             print(f"[DB] ⚠️ Error tracking quest progress: {e}")
-            # Don't fail the session end if quest tracking fails
         
-    # Note: Leaderboard is automatically updated by the trigger system
-    # No need to manually recalculate ranks here
-    
     print(f"[DB] end_game_session completed successfully - XP earned: {xp_earned}")
     return result
 

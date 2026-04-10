@@ -112,56 +112,51 @@ export class AIPlayer {
      * Hard AI: Play first
      */
     playFirstHard(hand, briscola, gameState, isLateGame, isEndGame, scoreDiff) {
-        const briscolaCards = hand.filter(c => c.suit.id === briscola.id);
         const nonBriscolaCards = hand.filter(c => c.suit.id !== briscola.id);
-        
-        // In end game, if we're winning, play safe
-        if (isEndGame && scoreDiff > 0) {
-            return this.selectLowestCard(hand);
-        }
-        
-        // In end game, if we're losing, we need to be aggressive
+
+        if (isEndGame && scoreDiff > 0) return this.selectLowestCard(hand);
+
         if (isEndGame && scoreDiff < -10) {
-            // Play high cards to force opponent to use briscola
-            const highCards = hand.filter(c => c.points >= 10 && c.suit.id !== briscola.id);
-            if (highCards.length > 0) {
-                return highCards[0];
-            }
+            const card = this.#endGameAggressiveCard(hand, briscola);
+            if (card) return card;
         }
-        
-        // Late game: consider playing aces of suits where we also have tre
+
         if (isLateGame) {
-            for (const card of hand) {
-                if (card.value === 1 && card.suit.id !== briscola.id) {
-                    const hasTre = hand.some(c => c.value === 3 && c.suit.id === card.suit.id);
-                    if (hasTre) {
-                        return card; // Play ace, hoping to bait opponent
-                    }
-                }
+            const card = this.#lateGameAceBait(hand, briscola);
+            if (card) return card;
+        }
+
+        if (nonBriscolaCards.length > 0) return this.#cheapestNonBriscola(nonBriscolaCards);
+
+        return this.selectLowestCard(hand.filter(c => c.suit.id === briscola.id));
+    }
+
+    #endGameAggressiveCard(hand, briscola) {
+        const highCards = hand.filter(c => c.points >= 10 && c.suit.id !== briscola.id);
+        return highCards.length > 0 ? highCards[0] : null;
+    }
+
+    #lateGameAceBait(hand, briscola) {
+        for (const card of hand) {
+            if (card.value === 1 && card.suit.id !== briscola.id) {
+                const hasTre = hand.some(c => c.value === 3 && c.suit.id === card.suit.id);
+                if (hasTre) return card;
             }
         }
-        
-        // Normal play: play lowest non-briscola
-        if (nonBriscolaCards.length > 0) {
-            // Prefer cards from suits we have multiple of
-            const suitCounts = {};
-            for (const c of nonBriscolaCards) {
-                suitCounts[c.suit.id] = (suitCounts[c.suit.id] || 0) + 1;
-            }
-            
-            // Sort by: least valuable first, then prefer suits we have more of
-            const sorted = [...nonBriscolaCards].sort((a, b) => {
-                const valueA = a.points + a.strength * 0.1;
-                const valueB = b.points + b.strength * 0.1;
-                if (Math.abs(valueA - valueB) > 1) return valueA - valueB;
-                return suitCounts[b.suit.id] - suitCounts[a.suit.id];
-            });
-            
-            return sorted[0];
+        return null;
+    }
+
+    #cheapestNonBriscola(nonBriscolaCards) {
+        const suitCounts = {};
+        for (const c of nonBriscolaCards) {
+            suitCounts[c.suit.id] = (suitCounts[c.suit.id] || 0) + 1;
         }
-        
-        // Only briscola left - play lowest
-        return this.selectLowestCard(briscolaCards);
+        return [...nonBriscolaCards].sort((a, b) => {
+            const valueA = a.points + a.strength * 0.1;
+            const valueB = b.points + b.strength * 0.1;
+            if (Math.abs(valueA - valueB) > 1) return valueA - valueB;
+            return suitCounts[b.suit.id] - suitCounts[a.suit.id];
+        })[0];
     }
     
     /**

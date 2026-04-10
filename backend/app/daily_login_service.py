@@ -96,8 +96,6 @@ class DailyLoginService:
         # Build reward schedule with claim status
         rewards = []
         for day in range(1, 8):
-            status = "locked"  # Default
-            
             if day < daily_login.current_day:
                 status = "claimed"
             elif day == daily_login.current_day:

@@ -86,24 +86,23 @@ export class WaveManager {
         const { state } = this;
         const wave = state.wave;
 
-        if (state.specialWave === SPECIAL_WAVE.ASSALTO) {
-            return Utils.weightedRandom([
-                { value: 'RUSHER', weight: 15 }, { value: 'SHADOW', weight: 10 },
-                { value: 'NORMAL', weight: 8 },  { value: 'FLYER',  weight: 8 },
-            ]);
-        }
-        if (state.specialWave === SPECIAL_WAVE.DOPPIO_BOSS) {
-            return Utils.weightedRandom([
-                { value: 'BOSS',    weight: 8 },  { value: 'GOLEM',   weight: 6 },
-                { value: 'TANK',    weight: 15 }, { value: 'ARMORED', weight: 12 },
-                { value: 'NORMAL',  weight: 10 },
-            ]);
-        }
-        if (state.specialWave === SPECIAL_WAVE.INCUBO) {
-            return Utils.weightedRandom([
-                { value: 'VAMPIRE', weight: 15 }, { value: 'SHADOW', weight: 12 },
-                { value: 'SIREN',   weight: 14 }, { value: 'BOMBER', weight: 8 },
-            ]);
+        switch (state.specialWave) {
+            case SPECIAL_WAVE.ASSALTO:
+                return Utils.weightedRandom([
+                    { value: 'RUSHER', weight: 15 }, { value: 'SHADOW', weight: 10 },
+                    { value: 'NORMAL', weight: 8 },  { value: 'FLYER',  weight: 8 },
+                ]);
+            case SPECIAL_WAVE.DOPPIO_BOSS:
+                return Utils.weightedRandom([
+                    { value: 'BOSS',    weight: 8 },  { value: 'GOLEM',   weight: 6 },
+                    { value: 'TANK',    weight: 15 }, { value: 'ARMORED', weight: 12 },
+                    { value: 'NORMAL',  weight: 10 },
+                ]);
+            case SPECIAL_WAVE.INCUBO:
+                return Utils.weightedRandom([
+                    { value: 'VAMPIRE', weight: 15 }, { value: 'SHADOW', weight: 12 },
+                    { value: 'SIREN',   weight: 14 }, { value: 'BOMBER', weight: 8 },
+                ]);
         }
 
         const options = [

@@ -83,34 +83,31 @@ export class Card {
     compareWith(other, briscola, leadSuit = null) {
         const thisIsBriscola = this.suit.id === briscola.id;
         const otherIsBriscola = other.suit.id === briscola.id;
-        
+
         // Briscola beats non-briscola
-        if (thisIsBriscola && !otherIsBriscola) return 1;
-        if (!thisIsBriscola && otherIsBriscola) return -1;
-        
-        // Both are briscola or both are not
-        if (thisIsBriscola && otherIsBriscola) {
-            // Compare strength
-            return this.strength > other.strength ? 1 : (this.strength < other.strength ? -1 : 0);
-        }
-        
-        // Neither is briscola
-        // If we have a lead suit, only lead suit can win
+        if (thisIsBriscola !== otherIsBriscola) return thisIsBriscola ? 1 : -1;
+
+        // Both are briscola - compare strength
+        if (thisIsBriscola) return Math.sign(this.strength - other.strength);
+
+        // Neither is briscola - lead suit takes priority
         if (leadSuit) {
-            const thisIsLead = this.suit.id === leadSuit.id;
-            const otherIsLead = other.suit.id === leadSuit.id;
-            
-            if (thisIsLead && !otherIsLead) return 1;
-            if (!thisIsLead && otherIsLead) return -1;
+            const leadResult = this.#compareByLeadSuit(other, leadSuit);
+            if (leadResult !== null) return leadResult;
         }
-        
+
         // Same suit - compare strength
-        if (this.suit.id === other.suit.id) {
-            return this.strength > other.strength ? 1 : (this.strength < other.strength ? -1 : 0);
-        }
-        
+        if (this.suit.id === other.suit.id) return Math.sign(this.strength - other.strength);
+
         // Different non-briscola suits - first played wins (return 0 means lead wins)
         return 0;
+    }
+
+    #compareByLeadSuit(other, leadSuit) {
+        const thisIsLead = this.suit.id === leadSuit.id;
+        const otherIsLead = other.suit.id === leadSuit.id;
+        if (thisIsLead !== otherIsLead) return thisIsLead ? 1 : -1;
+        return null;
     }
     
     toString() {

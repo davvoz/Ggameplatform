@@ -26,10 +26,10 @@ export class InputManager {
     #upJustPressed = false;
     #downJustPressed = false;
     // Double-tap / double-press dash
-    #dashLeftPending  = false;
+    #dashLeftPending = false;
     #dashRightPending = false;
-    #dashLeftTimer    = 0;
-    #dashRightTimer   = 0;
+    #dashLeftTimer = 0;
+    #dashRightTimer = 0;
     static #DASH_WINDOW = 0.25; // seconds between two presses to count as dash
     // Tap position (touch end / mouse click)
     // Pending flags are set by async touch/mouse events and consumed on the next update() tick.
@@ -63,7 +63,7 @@ export class InputManager {
 
         // Touch
         const canvas = this.#renderer.canvas;
-        
+
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             for (const touch of e.changedTouches) {
@@ -103,8 +103,8 @@ export class InputManager {
                         this.#pendingTap = true;
                     } else if (dist > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
                         // Horizontal swipe → dash
-                        if (dx < 0) this.#dashLeftPending  = true;
-                        else        this.#dashRightPending = true;
+                        if (dx < 0) this.#dashLeftPending = true;
+                        else this.#dashRightPending = true;
                     }
                 }
                 this.#touches.delete(touch.identifier);
@@ -175,51 +175,26 @@ export class InputManager {
         this.#pendingTap = false;
 
         // Keyboard input
-        const keyLeft  = this.#keys.has('ArrowLeft')  || this.#keys.has('KeyA');
+        const keyLeft = this.#keys.has('ArrowLeft') || this.#keys.has('KeyA');
         const keyRight = this.#keys.has('ArrowRight') || this.#keys.has('KeyD');
-        this.#keyLeftPressed  = keyLeft;
+        this.#keyLeftPressed = keyLeft;
         this.#keyRightPressed = keyRight;
-        const keyUp    = this.#keys.has('ArrowUp')    || this.#keys.has('KeyW');
-        const keyDown  = this.#keys.has('ArrowDown')  || this.#keys.has('KeyS');
-        const keyJump  = this.#keys.has('Space') || keyUp;
+        const keyUp = this.#keys.has('ArrowUp') || this.#keys.has('KeyW');
+        const keyDown = this.#keys.has('ArrowDown') || this.#keys.has('KeyS');
+        const keyJump = this.#keys.has('Space') || keyUp;
         const keyGlide = this.#keys.has('ShiftLeft') || this.#keys.has('ShiftRight');
         const keyPause = this.#keys.has('Escape') || this.#keys.has('KeyP');
 
         // Touch input
-        let touchLeft = false;
-        let touchRight = false;
-        let touchTap = false;
-        let touchGlide = false;
-
-        const screenWidth = this.#renderer.width;
-        const screenMidX = screenWidth / 2;
-
-        for (const [, touch] of this.#touches) {
-            // Horizontal tilt based on touch position
-            const dx = touch.currentX - touch.startX;
-            
-            // Simple zone-based input
-            if (touch.currentX < screenMidX) {
-                touchLeft = true;
-            } else {
-                touchRight = true;
-            }
-
-            // Tap detection (new touch)
-            if (Math.abs(dx) < 20) {
-                touchTap = true;
-            }
-
-            // Hold for glide (touch held for a while)
-            touchGlide = this.#touches.size > 0;
-        }
+        const screenMidX = this.#renderer.width / 2;
+        const { touchLeft, touchRight, touchTap } = this.#readTouchInput(screenMidX);
 
         // Combine inputs
-        this.#leftPressed  = keyLeft  || touchLeft;
+        this.#leftPressed = keyLeft || touchLeft;
         this.#rightPressed = keyRight || touchRight;
-        this.#upPressed    = keyUp;
-        this.#downPressed  = keyDown;
-        
+        this.#upPressed = keyUp;
+        this.#downPressed = keyDown;
+
         const currentJump = keyJump || (touchTap && this.#touches.size > 0);
         this.#jumpJustPressed = currentJump && !this.#prevJump;
         this.#jumpPressed = currentJump;
@@ -232,14 +207,41 @@ export class InputManager {
         this.#pauseJustPressed = currentPause && !this.#prevPause;
         this.#prevPause = currentPause;
 
-        this.#leftJustPressed  = this.#leftPressed  && !this.#prevLeft;
+        this.#leftJustPressed = this.#leftPressed && !this.#prevLeft;
         this.#rightJustPressed = this.#rightPressed && !this.#prevRight;
-        this.#upJustPressed    = this.#upPressed    && !this.#prevUp;
-        this.#downJustPressed  = this.#downPressed  && !this.#prevDown;
+        this.#upJustPressed = this.#upPressed && !this.#prevUp;
+        this.#downJustPressed = this.#downPressed && !this.#prevDown;
 
-        // ── Dash double-tap / double-press detection ────────────────
+        this.#updateDashDetection();
+
+        this.#prevLeft = this.#leftPressed;
+        this.#prevRight = this.#rightPressed;
+        this.#prevUp = this.#upPressed;
+        this.#prevDown = this.#downPressed;
+    }
+
+    #readTouchInput(screenMidX) {
+        let touchLeft = false;
+        let touchRight = false;
+        let touchTap = false;
+
+        for (const [, touch] of this.#touches) {
+            const dx = touch.currentX - touch.startX;
+            if (touch.currentX < screenMidX) {
+                touchLeft = true;
+            } else {
+                touchRight = true;
+            }
+            if (Math.abs(dx) < 20) {
+                touchTap = true;
+            }
+        }
+        return { touchLeft, touchRight, touchTap };
+    }
+
+    #updateDashDetection() {
         const dt = 1 / 60; // approximate frame dt
-        if (this.#dashLeftTimer  > 0) this.#dashLeftTimer  -= dt;
+        if (this.#dashLeftTimer > 0) this.#dashLeftTimer -= dt;
         if (this.#dashRightTimer > 0) this.#dashRightTimer -= dt;
 
         if (this.#leftJustPressed) {
@@ -258,29 +260,24 @@ export class InputManager {
                 this.#dashRightTimer = InputManager.#DASH_WINDOW;
             }
         }
-
-        this.#prevLeft  = this.#leftPressed;
-        this.#prevRight = this.#rightPressed;
-        this.#prevUp    = this.#upPressed;
-        this.#prevDown  = this.#downPressed;
     }
 
-    get left()  { return this.#leftPressed; }
+    get left() { return this.#leftPressed; }
     get right() { return this.#rightPressed; }
-    get up()    { return this.#upPressed; }
-    get down()  { return this.#downPressed; }
-    get leftJustPressed()  { return this.#leftJustPressed; }
+    get up() { return this.#upPressed; }
+    get down() { return this.#downPressed; }
+    get leftJustPressed() { return this.#leftJustPressed; }
     get rightJustPressed() { return this.#rightJustPressed; }
-    get upJustPressed()    { return this.#upJustPressed; }
-    get downJustPressed()  { return this.#downJustPressed; }
-    get dashLeft()  { return this.#dashLeftPending; }
+    get upJustPressed() { return this.#upJustPressed; }
+    get downJustPressed() { return this.#downJustPressed; }
+    get dashLeft() { return this.#dashLeftPending; }
     get dashRight() { return this.#dashRightPending; }
     /** true only when the keyboard left/right key was just pressed (excludes touch) */
-    get keyLeftJustPressed()  { return this.#leftJustPressed && this.#keyLeftPressed; }
+    get keyLeftJustPressed() { return this.#leftJustPressed && this.#keyLeftPressed; }
     get keyRightJustPressed() { return this.#rightJustPressed && this.#keyRightPressed; }
     get justTapped() { return this.#justTapped; }
-    get tapX()       { return this.#tapX; }
-    get tapY()       { return this.#tapY; }
+    get tapX() { return this.#tapX; }
+    get tapY() { return this.#tapY; }
     get jump() { return this.#jumpPressed; }
     get jumpJustPressed() { return this.#jumpJustPressed; }
     get glide() { return this.#glidePressed; }
@@ -337,7 +334,7 @@ export class InputManager {
     }
 
     consumeDash() {
-        this.#dashLeftPending  = false;
+        this.#dashLeftPending = false;
         this.#dashRightPending = false;
     }
 }

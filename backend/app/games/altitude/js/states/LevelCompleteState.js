@@ -117,45 +117,41 @@ export class LevelCompleteState extends State {
         // Fade in buttons during phase 2
         if (this.#phase >= 2) {
             this.#btnAlpha = Math.min(1, this.#btnAlpha + dt * 3);
-            // Animate bonus counter
             this.#bonusAnim = Math.min(1, this.#bonusAnim + dt * 1.2);
         }
 
         // Flash decay
         if (this.#flashAlpha > 0) this.#flashAlpha = Math.max(0, this.#flashAlpha - dt * 3.0);
 
-        // Animate lightning strikes during phases 0 and 1
-        if (this.#phase < 2) {
-            const t2  = Math.max(0, this.#timer);
-            const len = Math.min(450, t2 * 400) * 0.85;
-            // Age and cull dead strikes
-            for (const s of this.#lightningStrikes) s.life -= dt;
-            this.#lightningStrikes = this.#lightningStrikes.filter(s => s.life > 0);
-            // Tick per-channel timers and fire new strikes
-            if (len > 20) {
-                for (const ch of this.#lightningChannels) {
-                    ch.timer -= dt;
-                    if (ch.timer <= 0) {
-                        this.#lightningStrikes.push(
-                            this.#spawnStrike(ch.angle, len,
-                                DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.22)
-                        );
-                        ch.timer = 0.10 + Math.random() * 0.42;
-                    }
+        if (this.#phase < 2) this.#updateLightning(dt);
+        if (this.#phase >= 2) this.#processTapInput();
+    }
+
+    #updateLightning(dt) {
+        const len = Math.min(450, Math.max(0, this.#timer) * 400) * 0.85;
+        for (const s of this.#lightningStrikes) s.life -= dt;
+        this.#lightningStrikes = this.#lightningStrikes.filter(s => s.life > 0);
+        if (len > 20) {
+            for (const ch of this.#lightningChannels) {
+                ch.timer -= dt;
+                if (ch.timer <= 0) {
+                    this.#lightningStrikes.push(
+                        this.#spawnStrike(ch.angle, len,
+                            DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.22)
+                    );
+                    ch.timer = 0.10 + Math.random() * 0.42;
                 }
             }
         }
+    }
 
-        // Input: tap/click only (mobile-first)
-        if (this.#phase >= 2) {
-            const input = this._game.input;
-
-            if (input.justTapped) {
-                const tx = input.tapX;
-                const ty = input.tapY;
-                input.consumeTap();
-                this.#handleTap(tx, ty);
-            }
+    #processTapInput() {
+        const input = this._game.input;
+        if (input.justTapped) {
+            const tx = input.tapX;
+            const ty = input.tapY;
+            input.consumeTap();
+            this.#handleTap(tx, ty);
         }
     }
 

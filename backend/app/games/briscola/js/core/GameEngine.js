@@ -249,42 +249,18 @@ export class GameEngine {
      * @param {number} winner - The round winner (draws first)
      */
     drawCards(winner) {
-        // No cards left to draw
         if (this.deck.remaining === 0) return;
-        
-        const firstDrawer = winner;
-        const secondDrawer = winner === 1 ? 2 : 1;
-        
-        // Winner draws first
-        if (this.deck.remaining > 0) {
-            const card = this.deck.draw();
-            if (card) {
-                if (firstDrawer === 1) {
-                    this.player1Hand.push(card);
-                } else {
-                    this.player2Hand.push(card);
-                }
 
-            }
-        }
-        
-        // Loser draws second
-        if (this.deck.remaining > 0) {
-            const card = this.deck.draw();
-            if (card) {
-                if (secondDrawer === 1) {
-                    this.player1Hand.push(card);
-                } else {
-                    this.player2Hand.push(card);
-                }
+        this.#dealCardTo(winner);
+        this.#dealCardTo(winner === 1 ? 2 : 1);
 
-            }
-        }
-        
-        // Clear briscola reference when deck is empty
-        if (this.deck.remaining === 0) {
-            this.briscolaCard = null;
-        }
+        if (this.deck.remaining === 0) this.briscolaCard = null;
+    }
+
+    #dealCardTo(player) {
+        if (this.deck.remaining === 0) return;
+        const card = this.deck.draw();
+        if (card) (player === 1 ? this.player1Hand : this.player2Hand).push(card);
     }
     
     /**

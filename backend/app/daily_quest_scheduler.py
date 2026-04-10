@@ -29,84 +29,84 @@ class DailyQuestScheduler:
         """Get today's date in YYYY-MM-DD format."""
         return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
+    def _reset_single_user_quest(self, user_quest, quest_title: str, today: str) -> bool:
+        """Reset a single user quest. Returns True if reset was performed."""
+        extra_data = json.loads(user_quest.extra_data) if user_quest.extra_data else {}
+
+        if extra_data.get('last_reset_date') == today:
+            return False
+
+        logger.info(f"🔄 Resetting daily quest '{quest_title}' for user {user_quest.user_id}")
+
+        last_completion = extra_data.get('last_completion_date')
+        extra_data['cumulative'] = None
+        extra_data['last_reset_date'] = today
+        if last_completion:
+            extra_data['last_completion_date'] = last_completion
+
+        user_quest.current_progress = 0
+        user_quest.is_completed = 0
+        user_quest.is_claimed = 0
+        user_quest.completed_at = None
+        user_quest.claimed_at = None
+        user_quest.extra_data = json.dumps(extra_data)
+        return True
+
+    def _process_quest_reset(self, session, quest, today: str) -> tuple:
+        """Process reset for all users of a single quest. Returns (reset_count, error_count)."""
+        reset_count = 0
+        errors_count = 0
+        config = json.loads(quest.config) if quest.config else {}
+
+        user_quests = session.query(UserQuest).filter(
+            UserQuest.quest_id == quest.quest_id
+        ).all()
+
+        for user_quest in user_quests:
+            try:
+                if self._reset_single_user_quest(user_quest, quest.title, today):
+                    reset_count += 1
+            except Exception:
+                errors_count += 1
+                logger.exception(f"Error resetting quest {quest.quest_id} for user {user_quest.user_id}")
+
+        return reset_count, errors_count
+
     def reset_daily_quests(self):
         """Reset all daily quests that were completed on a previous day."""
         today = self._get_today_date()
-        
-        # Skip if we already reset today
+
         if self.last_reset_date == today:
             logger.debug("Daily quest reset already done today, skipping")
             return
-        
+
         logger.info(f"🔄 Running daily quest reset check for {today}")
         reset_count = 0
         errors_count = 0
-        
+
         try:
             with get_db_session() as session:
-                # Find all completed daily quests
                 daily_quests = session.query(Quest).filter(
                     Quest.is_active == 1,
                     Quest.config.like('%"reset_period": "daily"%')
                 ).all()
-                
+
                 logger.info(f"Found {len(daily_quests)} daily quest definitions")
-                
+
                 for quest in daily_quests:
                     try:
-                        config = json.loads(quest.config) if quest.config else {}
-                        
-                        # Reset ALL user_quests for this daily quest (completed or in-progress)
-                        user_quests = session.query(UserQuest).filter(
-                            UserQuest.quest_id == quest.quest_id
-                        ).all()
-
-                        for user_quest in user_quests:
-                            try:
-                                extra_data = json.loads(user_quest.extra_data) if user_quest.extra_data else {}
-                                last_reset = extra_data.get('last_reset_date')
-
-                                # Skip if already reset today
-                                if last_reset == today:
-                                    continue
-
-                                logger.info(f"🔄 Resetting daily quest '{quest.title}' for user {user_quest.user_id}")
-
-                                # Preserve historical completion date if present
-                                last_completion = extra_data.get('last_completion_date')
-
-                                # Reset cumulative data (set to None so it gets re-initialized)
-                                extra_data['cumulative'] = None
-                                extra_data['last_reset_date'] = today
-
-                                # Restore last_completion_date if it existed
-                                if last_completion:
-                                    extra_data['last_completion_date'] = last_completion
-
-                                # Reset progress and completion state
-                                user_quest.current_progress = 0
-                                user_quest.is_completed = 0
-                                user_quest.is_claimed = 0
-                                user_quest.completed_at = None
-                                user_quest.claimed_at = None
-                                user_quest.extra_data = json.dumps(extra_data)
-
-                                reset_count += 1
-
-                            except Exception as e:
-                                errors_count += 1
-                                logger.exception(f"Error resetting quest {quest.quest_id} for user {user_quest.user_id}")
-                                
-                    except Exception as e:
+                        count, errors = self._process_quest_reset(session, quest, today)
+                        reset_count += count
+                        errors_count += errors
+                    except Exception:
                         errors_count += 1
                         logger.exception(f"Error processing quest {quest.quest_id}")
-                
-                # Commit all changes
+
                 session.commit()
-                
+
             self.last_reset_date = today
             logger.info(f"✅ Daily quest reset complete: {reset_count} quests reset, {errors_count} errors")
-            
+
         except Exception as e:
             logger.exception("Critical error during daily quest reset")
             send_telegram_error(

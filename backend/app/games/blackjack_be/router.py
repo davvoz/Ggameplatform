@@ -290,77 +290,61 @@ def play_dealer(game: GameSession):
         game.dealer_cards.append(game.deal_card())
 
 
-def resolve_hands(game: GameSession):
+def _resolve_hand(hand: "HandState", dealer_val: int, dealer_bj: bool, dealer_bust: bool):
+    """Set result and payout for a single hand. Returns the payout awarded."""
+    if hand.insurance_bet > 0 and dealer_bj:
+        hand.payout += hand.insurance_bet * int(INSURANCE_PAYOUT)
+
+    if hand.surrendered:
+        hand.result = "surrender"
+        hand.payout += hand.bet // 2
+        return hand.payout
+
+    if is_bust(hand.cards):
+        hand.result = "bust"
+        return hand.payout
+
+    if is_blackjack(hand.cards):
+        if dealer_bj:
+            hand.result = "push"
+            hand.payout += hand.bet
+        else:
+            hand.result = "blackjack"
+            hand.payout += int(hand.bet * BLACKJACK_PAYOUT)
+        return hand.payout
+
+    if dealer_bj:
+        hand.result = "lose"
+        return hand.payout
+
+    if dealer_bust:
+        hand.result = "win"
+        hand.payout += hand.bet * int(NORMAL_PAYOUT)
+        return hand.payout
+
+    player_val = hand_value(hand.cards)
+    if player_val > dealer_val:
+        hand.result = "win"
+        hand.payout += hand.bet * int(NORMAL_PAYOUT)
+    elif player_val < dealer_val:
+        hand.result = "lose"
+    else:
+        hand.result = "push"
+        hand.payout += hand.bet
+
+    return hand.payout
+
+
+def resolve_hands(game: "GameSession"):
     """Resolve each player hand against the dealer."""
     dealer_val = hand_value(game.dealer_cards)
     dealer_bj = is_blackjack(game.dealer_cards)
     dealer_bust = is_bust(game.dealer_cards)
 
-    total_payout = 0
-
-    for hand in game.hands:
-        player_val = hand_value(hand.cards)
-        player_bj = is_blackjack(hand.cards)
-        player_bust = is_bust(hand.cards)
-
-        # Insurance payout
-        if hand.insurance_bet > 0:
-            if dealer_bj:
-                hand.payout += hand.insurance_bet * int(INSURANCE_PAYOUT)
-
-        # Surrendered hand
-        if hand.surrendered:
-            hand.result = "surrender"
-            hand.payout += hand.bet // 2  # Return half the bet
-            total_payout += hand.payout
-            continue
-
-        # Player busted
-        if player_bust:
-            hand.result = "bust"
-            hand.payout += 0
-            total_payout += hand.payout
-            continue
-
-        # Player blackjack
-        if player_bj:
-            if dealer_bj:
-                hand.result = "push"
-                hand.payout += hand.bet  # Return original bet
-            else:
-                hand.result = "blackjack"
-                hand.payout += int(hand.bet * BLACKJACK_PAYOUT)
-            total_payout += hand.payout
-            continue
-
-        # Dealer blackjack beats player
-        if dealer_bj:
-            hand.result = "lose"
-            hand.payout += 0
-            total_payout += hand.payout
-            continue
-
-        # Dealer busted
-        if dealer_bust:
-            hand.result = "win"
-            hand.payout += hand.bet * int(NORMAL_PAYOUT)
-            total_payout += hand.payout
-            continue
-
-        # Compare values
-        if player_val > dealer_val:
-            hand.result = "win"
-            hand.payout += hand.bet * int(NORMAL_PAYOUT)
-        elif player_val < dealer_val:
-            hand.result = "lose"
-            hand.payout += 0
-        else:
-            hand.result = "push"
-            hand.payout += hand.bet  # Return bet
-
-        total_payout += hand.payout
-
-    game.total_payout = total_payout
+    game.total_payout = sum(
+        _resolve_hand(hand, dealer_val, dealer_bj, dealer_bust)
+        for hand in game.hands
+    )
     game.status = "resolved"
     game.resolved_at = time.time()
 
@@ -431,6 +415,83 @@ async def deal(
     return GameStateResponse(**state)
 
 
+def _do_hit(game: GameSession, hand: HandState):
+    hand.cards.append(game.deal_card())
+    if is_bust(hand.cards) or hand_value(hand.cards) == 21:
+        hand.stood = True
+        game.advance_hand()
+
+
+def _do_stand(game: GameSession, hand: HandState):
+    hand.stood = True
+    game.advance_hand()
+
+
+def _do_double(game: GameSession, hand: HandState, coin_service: CoinService, user_id: str):
+    transaction = coin_service.spend_coins(
+        user_id=user_id, amount=hand.bet,
+        transaction_type="blackjack_double", source_id="blackjack",
+        description=f"Blackjack double down: {hand.bet} coins"
+    )
+    if transaction is None:
+        raise HTTPException(status_code=400, detail="Insufficient balance for double down")
+    hand.bet *= 2
+    hand.doubled = True
+    hand.cards.append(game.deal_card())
+    hand.stood = True
+    game.advance_hand()
+
+
+def _do_split(game: GameSession, hand: HandState, coin_service: CoinService, user_id: str):
+    transaction = coin_service.spend_coins(
+        user_id=user_id, amount=game.initial_bet,
+        transaction_type="blackjack_split", source_id="blackjack",
+        description=f"Blackjack split: {game.initial_bet} coins"
+    )
+    if transaction is None:
+        raise HTTPException(status_code=400, detail="Insufficient balance for split")
+    card1, card2 = hand.cards[0], hand.cards[1]
+    hand.cards = [card1, game.deal_card()]
+    new_hand = HandState([card2, game.deal_card()], game.initial_bet)
+    game.hands.insert(game.active_hand_index + 1, new_hand)
+    if card1["rank"] == "A":
+        hand.stood = True
+        new_hand.stood = True
+        game.advance_hand()
+
+
+def _do_surrender(game: GameSession, hand: HandState):
+    hand.surrendered = True
+    game.advance_hand()
+
+
+def _do_insurance(hand: HandState, coin_service: CoinService, user_id: str):
+    insurance_amount = hand.bet // 2
+    transaction = coin_service.spend_coins(
+        user_id=user_id, amount=insurance_amount,
+        transaction_type="blackjack_insurance", source_id="blackjack",
+        description=f"Blackjack insurance: {insurance_amount} coins"
+    )
+    if transaction is None:
+        raise HTTPException(status_code=400, detail="Insufficient balance for insurance")
+    hand.insurance_bet = insurance_amount
+
+
+def _finalize_round(game: GameSession, coin_service: CoinService, user_id: str, game_id: str):
+    if not game.all_hands_done():
+        return
+    game.status = "dealer_turn"
+    play_dealer(game)
+    resolve_hands(game)
+    if game.total_payout > 0:
+        coin_service.award_coins(
+            user_id=user_id, amount=game.total_payout,
+            transaction_type="blackjack_win", source_id="blackjack",
+            description=f"Blackjack payout: {game.total_payout} coins"
+        )
+    active_games.pop(game_id, None)
+
+
 @router.post("/action", response_model=GameStateResponse)
 async def action(
     req: ActionRequest,
@@ -440,10 +501,8 @@ async def action(
     game = active_games.get(req.game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found or expired")
-
     if game.user_id != req.user_id:
         raise HTTPException(status_code=403, detail="Not your game")
-
     if game.status != "playing":
         raise HTTPException(status_code=400, detail="Game already resolved")
 
@@ -460,107 +519,19 @@ async def action(
 
     coin_service = get_coin_service(db)
 
-    # ── HIT ──
-    if req.action == "hit":
-        hand.cards.append(game.deal_card())
-        if is_bust(hand.cards) or hand_value(hand.cards) == 21:
-            hand.stood = True
-            game.advance_hand()
+    _dispatch = {
+        "hit":       lambda: _do_hit(game, hand),
+        "stand":     lambda: _do_stand(game, hand),
+        "double":    lambda: _do_double(game, hand, coin_service, req.user_id),
+        "split":     lambda: _do_split(game, hand, coin_service, req.user_id),
+        "surrender": lambda: _do_surrender(game, hand),
+        "insurance": lambda: _do_insurance(hand, coin_service, req.user_id),
+    }
+    _dispatch[req.action]()
 
-    # ── STAND ──
-    elif req.action == "stand":
-        hand.stood = True
-        game.advance_hand()
+    _finalize_round(game, coin_service, req.user_id, req.game_id)
 
-    # ── DOUBLE DOWN ──
-    elif req.action == "double":
-        # Charge additional bet
-        transaction = coin_service.spend_coins(
-            user_id=req.user_id,
-            amount=hand.bet,
-            transaction_type="blackjack_double",
-            source_id="blackjack",
-            description=f"Blackjack double down: {hand.bet} coins"
-        )
-        if transaction is None:
-            raise HTTPException(status_code=400, detail="Insufficient balance for double down")
-
-        hand.bet *= 2
-        hand.doubled = True
-        hand.cards.append(game.deal_card())
-        hand.stood = True
-        game.advance_hand()
-
-    # ── SPLIT ──
-    elif req.action == "split":
-        # Charge additional bet for the new hand
-        transaction = coin_service.spend_coins(
-            user_id=req.user_id,
-            amount=game.initial_bet,
-            transaction_type="blackjack_split",
-            source_id="blackjack",
-            description=f"Blackjack split: {game.initial_bet} coins"
-        )
-        if transaction is None:
-            raise HTTPException(status_code=400, detail="Insufficient balance for split")
-
-        # Split the hand
-        card1 = hand.cards[0]
-        card2 = hand.cards[1]
-        hand.cards = [card1, game.deal_card()]
-        new_hand = HandState([card2, game.deal_card()], game.initial_bet)
-
-        # Insert new hand after current
-        idx = game.active_hand_index
-        game.hands.insert(idx + 1, new_hand)
-
-        # If split aces, only one card each, auto-stand
-        if card1["rank"] == "A":
-            hand.stood = True
-            new_hand.stood = True
-            game.advance_hand()
-
-    # ── SURRENDER ──
-    elif req.action == "surrender":
-        hand.surrendered = True
-        game.advance_hand()
-
-    # ── INSURANCE ──
-    elif req.action == "insurance":
-        insurance_amount = hand.bet // 2
-        transaction = coin_service.spend_coins(
-            user_id=req.user_id,
-            amount=insurance_amount,
-            transaction_type="blackjack_insurance",
-            source_id="blackjack",
-            description=f"Blackjack insurance: {insurance_amount} coins"
-        )
-        if transaction is None:
-            raise HTTPException(status_code=400, detail="Insufficient balance for insurance")
-        hand.insurance_bet = insurance_amount
-
-    # Check if all hands are done → dealer plays
-    if game.all_hands_done():
-        game.status = "dealer_turn"
-        play_dealer(game)
-        resolve_hands(game)
-
-        # Pay out winnings
-        if game.total_payout > 0:
-            coin_service.award_coins(
-                user_id=req.user_id,
-                amount=game.total_payout,
-                transaction_type="blackjack_win",
-                source_id="blackjack",
-                description=f"Blackjack payout: {game.total_payout} coins"
-            )
-
-        # Remove from active games
-        active_games.pop(req.game_id, None)
-
-    # Get updated balance
     balance_data = coin_service.get_user_balance(req.user_id)
-
     state = game.to_dict(reveal_dealer=(game.status == "resolved"))
     state["balance"] = balance_data["balance"]
     return GameStateResponse(**state)

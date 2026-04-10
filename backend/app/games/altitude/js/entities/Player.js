@@ -4,9 +4,9 @@
  */
 
 import { GameObject } from './GameObject.js';
-import { PHYSICS, DESIGN_WIDTH, COLORS } from '../config/Constants.js';
+import { PHYSICS, COLORS } from '../config/Constants.js';
 import { SpriteGenerator } from '../graphics/SpriteGenerator.js';
-import { PlayerOverlayManager } from './PlayerOverlayRenderer.js';
+import { PlayerOverlayManager } from '../graphics/player_overlay_renderer/index.js';
 
 export class Player extends GameObject {
     // State

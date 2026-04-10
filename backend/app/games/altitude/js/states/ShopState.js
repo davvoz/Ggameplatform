@@ -448,13 +448,17 @@ export class ShopState extends State {
         // Icon — canvas-drawn pixel-art style (40×40 box starting at x+5, y+5)
         drawUpgradeIcon(ctx, upgrade.id, x + 5, y + 5, 50);
 
+        //shadow
+            bitmapFont.drawText(ctx, upgrade.name, x + 60 + 2, y + 17 + 2, 25, {
+                color: COLORS.BG_PRIMARY,
+            });
         // Name
-        bitmapFont.drawText(ctx, upgrade.name, x + 60, y + 17, 15, {
-            color: '#ffffff',
+        bitmapFont.drawText(ctx, upgrade.name, x + 60, y + 17, 25, {
+            color: COLORS.UI_TEXT,
         });
 
         // Description
-        ctx.fillStyle = '#aaaaaa';
+        ctx.fillStyle = COLORS.UI_TEXT_DIM;
         ctx.font = '11px monospace';
         ctx.textAlign = 'left';
         ctx.fillText(upgrade.description, x + 60, y + 38);
